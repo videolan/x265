@@ -65,7 +65,8 @@ private:
     Int                     m_pocLast;          ///< time index (POC)
     Int                     m_picsQueued;       ///< number of received pictures
     Int                     m_picsEncoded;      ///< number of coded pictures
-    TComList<TComPic*>      m_picList;          ///< dynamic list of input pictures
+    TComList<TComPic*>      m_picList;
+    TComList<TComPic*>      m_freeList;
     x265_picture_t         *m_recon;
 
     // quality control
@@ -107,11 +108,6 @@ public:
     int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
 
     Double printSummary();
-
-protected:
-
-    // TODO: will eventually be part of pre-lookahead
-    void addPicture(const x265_picture_t *pic);
 };
 
 //! \}

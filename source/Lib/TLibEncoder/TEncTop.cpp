@@ -113,12 +113,20 @@ Void TEncTop::destroy()
         delete pic;
     }
 
+    while (!m_freeList.empty())
+    {
+        TComPic* pic = m_freeList.popFront();
+        pic->destroy();
+        delete pic;
+    }
+
     if (m_recon)
         delete [] m_recon;
 
     if (m_lookahead)
         delete m_lookahead;
 
+    // thread pool release should always happen last
     if (m_threadPool)
         m_threadPool->release();
 }
@@ -130,50 +138,12 @@ Void TEncTop::init()
         m_GOPEncoder->init(this);
     }
 
-    int maxGOP = X265_MAX(1, getGOPSize()) + getGOPSize();
-    m_recon = new x265_picture_t[maxGOP];
-
-    // pre-allocate a mini-GOP of TComPic
-    for (int i = 0; i < maxGOP; i++)
-    {
-        TComPic *pic = new TComPic;
-        pic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-                    getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
-        if (param.bEnableSAO)
-        {
-            // TODO: these should be allocated on demand within the encoder
-            pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
-        }
-        pic->getSlice()->setPOC(MAX_INT);
-        m_picList.pushBack(pic);
-    }
+    m_recon = new x265_picture_t[X265_MAX(1, getGOPSize()) + getGOPSize()];
 
     m_analyzeI.setFrmRate(param.frameRate);
     m_analyzeP.setFrmRate(param.frameRate);
     m_analyzeB.setFrmRate(param.frameRate);
     m_analyzeAll.setFrmRate(param.frameRate);
-}
-
-void TEncTop::addPicture(const x265_picture_t *picture)
-{
-    TComSlice::sortPicList(m_picList);
-
-    TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    while (iterPic != m_picList.end())
-    {
-        TComPic *pic = *(iterPic++);
-        if (pic->getSlice()->isReferenced() == false)
-        {
-            pic->getSlice()->setPOC(++m_pocLast);
-            pic->getPicYuvOrg()->copyFromPicture(*picture);
-            pic->getPicYuvRec()->clearExtendedFlag();
-            pic->getSlice()->setReferenced(true);
-            pic->m_lowres.init(pic->getPicYuvOrg());
-            return;
-        }
-    }
-
-    assert(!"No room for added picture");
 }
 
 /**
@@ -187,7 +157,31 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
 {
     if (pic)
     {
-        addPicture(pic);
+        /* Copy input picture into a TComPic, prepare for lookahead */
+        TComPic *epic;
+        if (m_freeList.empty())
+        {
+            epic = new TComPic;
+            epic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
+                         getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
+            if (param.bEnableSAO)
+            {
+                // TODO: these should be allocated on demand within the encoder
+                epic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
+            }
+            epic->getSlice()->setPOC(MAX_INT);
+        }
+        else
+            epic = m_freeList.popBack();
+
+        epic->getSlice()->setPOC(++m_pocLast);
+        epic->getPicYuvOrg()->copyFromPicture(*pic);
+        epic->getPicYuvRec()->clearExtendedFlag();
+        epic->getSlice()->setReferenced(true);
+        epic->m_lowres.init(epic->getPicYuvOrg());
+
+        // to be replaced with lookahead logic
+        m_picList.pushBack(epic);
         m_picsQueued++;
     }
 
@@ -227,6 +221,21 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         }
 
         *pic_out = m_recon;
+    }
+
+    // move unreferenced pictures from picList to freeList for recycle
+    TComSlice::sortPicList(m_picList);
+    TComList<TComPic*>::iterator iterPic = m_picList.begin();
+    while (iterPic != m_picList.end())
+    {
+        TComPic *epic = *(iterPic++);
+        if (epic->getSlice()->isReferenced() == false)
+        {
+            m_picList.remove(epic);
+            m_freeList.pushBack(epic);
+            // iterator is invalidated by remove, restart scan
+            iterPic = m_picList.begin();
+        }
     }
 
     int ret = m_picsQueued;
