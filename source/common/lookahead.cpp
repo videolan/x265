@@ -100,7 +100,7 @@ void LookaheadFrame::destroy()
 }
 
 // (re) initialize lowres state
-void LookaheadFrame::init(TComPicYuv *orig)
+void LookaheadFrame::init(TComPicYuv * /*orig*/)
 {
     bIntraCalculated = false;
     memset(costEst, -1, sizeof(costEst));
