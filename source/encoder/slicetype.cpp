@@ -292,30 +292,22 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
             if (cost < bcost)
                 bcost = cost;
         }
-        fenc->lowresMvCosts[0][0][cu_xy] = bcost;
+        fenc->lowresCosts[0][0][cu_xy] = (int16_t)bcost;
     }
     
-    /* bcost is the BestIntraCost now */
+    int bestIntraCost = fenc->lowresCosts[0][0][cu_xy];
     int bestInterCost = X265_MIN(*fenc_costs[0], *fenc_costs[1]);
-    if (!b_bidir)
-    {
-        int intra = bcost < bestInterCost;
-        if (!intra)
-        {
-            bcost = bestInterCost;
-        }
-        fenc->intraMbs[b - p0] += intra;
-    }
+    if (b_bidir)
+        bcost = bestInterCost;
     else
-        bcost = bestInterCost; // if not bidir then bestInterCost is the best cost 
-    
-    if (p0 != p1)
     {
-        fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
-        fenc->costEst[b - p0][p1 - b] += bcost;      
+        fenc->intraMbs[b - p0] += bestIntraCost < bestInterCost;
+        bcost = X265_MIN(bestInterCost, bestIntraCost);
     }
-    fenc->lowresCosts[b - p0][p1 -b][cu_xy] = (uint16_t) bcost;
     
+    fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
+    fenc->costEst[b - p0][p1 - b] += bcost;      
+    fenc->lowresCosts[b - p0][p1 -b][cu_xy] = (uint16_t) bcost;
 }
 
 #if 0
