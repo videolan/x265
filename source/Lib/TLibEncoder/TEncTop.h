@@ -63,7 +63,6 @@ private:
 
     // picture
     Int                     m_pocLast;          ///< time index (POC)
-    TComList<TComPic*>      m_picList;
     TComList<TComPic*>      m_freeList;
 
     // quality control
@@ -105,6 +104,25 @@ public:
     TComScalingList* getScalingList()       { return &m_scalingList; }
 
     void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
+
+protected:
+
+    // DPB/RPS  (This should eventually be spun off into its own class)
+    Int                     m_lastIDR;
+    Bool                    m_bRefreshPending;
+    Int                     m_pocCRA;
+    TComList<TComPic*>      m_picList;
+
+    /* Establish references, manage DPB and RPS, runs in API thread context */
+    Void prepareEncode(TComPic *pic);
+
+    Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
+
+    Int getReferencePictureSetIdxForSOP(Int pocCur, Int GOPid);
+
+    NalUnitType getNalUnitType(Int curPoc, Int lastIdr);
+
+    Void arrangeLongtermPicturesInRPS(TComSlice *);
 };
 
 //! \}

@@ -60,6 +60,10 @@ TEncTop::TEncTop()
     m_GOPEncoder = NULL;
     ContextModel::buildNextStateTable();
 
+    m_lastIDR         = 0;
+    m_bRefreshPending = 0;
+    m_pocCRA          = 0;
+
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
     g_bJustDoIt = g_bEncDecTraceDisable;
@@ -175,8 +179,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     TComPic *fenc = m_lookahead->outputQueue.popFront();
     m_picList.pushBack(fenc);
 
-    // determine references, prepare encoder, single-threaded
-    m_GOPEncoder->prepareEncode(fenc, m_picList);
+    // determine references, set QP, etc
+    prepareEncode(fenc);
 
     // main encode processing, to be multi-threaded
     m_GOPEncoder->compressFrame(fenc, accessUnitOut);
@@ -212,6 +216,445 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         }
     }
     return 1;
+}
+
+Void TEncTop::prepareEncode(TComPic *pic)
+{
+    Int gopIdx = pic->m_lowres.gopIdx;
+    Int pocCurr = pic->getSlice()->getPOC();
+    TComSPS* sps = &m_GOPEncoder->m_sps;
+    TComPPS* pps = &m_GOPEncoder->m_pps;
+
+    Bool forceIntra = param.keyframeMax == 1 || (pocCurr % param.keyframeMax == 0) || pocCurr == 0;
+    m_GOPEncoder->m_frameEncoder->initSlice(pic, forceIntra, gopIdx, sps, pps);
+
+    TComSlice* slice = pic->getSlice();
+    if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
+        getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
+    {
+        m_lastIDR = pocCurr;
+    }
+    slice->setLastIDR(m_lastIDR);
+
+    if (slice->getSliceType() == B_SLICE && getGOPEntry(gopIdx).m_sliceType == 'P')
+    {
+        slice->setSliceType(P_SLICE);
+    }
+    if (pocCurr == 0)
+    {
+        slice->setTemporalLayerNonReferenceFlag(false);
+    }
+    else
+    {
+        // m_refPic is true if this frame is used as a motion reference
+        slice->setTemporalLayerNonReferenceFlag(!getGOPEntry(gopIdx).m_refPic);
+    }
+
+    // Set the nal unit type
+    slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR));
+
+    // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
+    if (slice->getTemporalLayerNonReferenceFlag())
+    {
+        if (slice->getNalUnitType() == NAL_UNIT_CODED_SLICE_TRAIL_R)
+        {
+            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TRAIL_N);
+        }
+        if (slice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_R)
+        {
+            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RADL_N);
+        }
+        if (slice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R)
+        {
+            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RASL_N);
+        }
+    }
+
+    // Do decoding refresh marking if any
+    slice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_picList);
+    selectReferencePictureSet(slice, pocCurr, gopIdx);
+    slice->getRPS()->setNumberOfLongtermPictures(0);
+
+    if ((slice->checkThatAllRefPicsAreAvailable(m_picList, slice->getRPS(), false) != 0) || (slice->isIRAP()))
+    {
+        slice->createExplicitReferencePictureSetFromReference(m_picList, slice->getRPS(), slice->isIRAP());
+    }
+    slice->applyReferencePictureSet(m_picList, slice->getRPS());
+
+    arrangeLongtermPicturesInRPS(slice);
+    TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
+    refPicListModification->setRefPicListModificationFlagL0(false);
+    refPicListModification->setRefPicListModificationFlagL1(false);
+    slice->setNumRefIdx(REF_PIC_LIST_0, min(getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
+    slice->setNumRefIdx(REF_PIC_LIST_1, min(getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
+
+    // TODO: Is this safe for frame parallelism?
+    slice->setRefPicList(m_picList);
+
+    // Slice type refinement
+    if ((slice->getSliceType() == B_SLICE) && (slice->getNumRefIdx(REF_PIC_LIST_1) == 0))
+    {
+        slice->setSliceType(P_SLICE);
+    }
+
+    if (slice->getSliceType() == B_SLICE)
+    {
+        // TODO: figure out what this is doing, replace with something more accurate
+        //       what is setColFromL0Flag() for?
+
+        // select colDir
+        UInt colDir = 1;
+        Int closeLeft = 1, closeRight = -1;
+        for (Int i = 0; i < getGOPEntry(gopIdx).m_numRefPics; i++)
+        {
+            Int ref = getGOPEntry(gopIdx).m_referencePics[i];
+            if (ref > 0 && (ref < closeRight || closeRight == -1))
+            {
+                closeRight = ref;
+            }
+            else if (ref < 0 && (ref > closeLeft || closeLeft == 1))
+            {
+                closeLeft = ref;
+            }
+        }
+
+        if (closeRight > -1)
+        {
+            closeRight = closeRight + getGOPEntry(gopIdx).m_POC - 1;
+        }
+        if (closeLeft < 1)
+        {
+            closeLeft = closeLeft + getGOPEntry(gopIdx).m_POC - 1;
+            while (closeLeft < 0)
+            {
+                closeLeft += getGOPSize();
+            }
+        }
+        Int leftQP = 0, rightQP = 0;
+        for (Int i = 0; i < getGOPSize(); i++)
+        {
+            if (getGOPEntry(i).m_POC == (closeLeft % getGOPSize()) + 1)
+            {
+                leftQP = getGOPEntry(i).m_QPOffset;
+            }
+            if (getGOPEntry(i).m_POC == (closeRight % getGOPSize()) + 1)
+            {
+                rightQP = getGOPEntry(i).m_QPOffset;
+            }
+        }
+
+        if (closeRight > -1 && rightQP < leftQP)
+        {
+            colDir = 0;
+        }
+        slice->setColFromL0Flag(1 - colDir);
+
+        Bool bLowDelay = true;
+        Int curPOC = slice->getPOC();
+        Int refIdx = 0;
+
+        for (refIdx = 0; refIdx < slice->getNumRefIdx(REF_PIC_LIST_0) && bLowDelay; refIdx++)
+        {
+            if (slice->getRefPic(REF_PIC_LIST_0, refIdx)->getPOC() > curPOC)
+            {
+                bLowDelay = false;
+            }
+        }
+
+        for (refIdx = 0; refIdx < slice->getNumRefIdx(REF_PIC_LIST_1) && bLowDelay; refIdx++)
+        {
+            if (slice->getRefPic(REF_PIC_LIST_1, refIdx)->getPOC() > curPOC)
+            {
+                bLowDelay = false;
+            }
+        }
+
+        slice->setCheckLDC(bLowDelay);
+    }
+    else
+    {
+        slice->setCheckLDC(true);
+    }
+
+    slice->setRefPOCList();
+    slice->setList1IdxToList0Idx();
+    slice->setEnableTMVPFlag(1);
+
+    Bool bGPBcheck = false;
+    if (slice->getSliceType() == B_SLICE)
+    {
+        if (slice->getNumRefIdx(REF_PIC_LIST_0) == slice->getNumRefIdx(REF_PIC_LIST_1))
+        {
+            bGPBcheck = true;
+            for (Int i = 0; i < slice->getNumRefIdx(REF_PIC_LIST_1); i++)
+            {
+                if (slice->getRefPOC(REF_PIC_LIST_1, i) != slice->getRefPOC(REF_PIC_LIST_0, i))
+                {
+                    bGPBcheck = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    slice->setMvdL1ZeroFlag(bGPBcheck);
+    slice->setNextSlice(false);
+    slice->setScalingList(getScalingList());
+    slice->getScalingList()->setUseTransformSkip(pps->getUseTransformSkip());
+
+    if (getUseASR() && !slice->isIntra())
+    {
+        Int gopSize = getGOPSize();
+        Int offset = (gopSize >> 1);
+        Int maxSR = param.searchRange;
+        Int numPredDir = slice->isInterP() ? 1 : 2;
+
+        for (Int dir = 0; dir <= numPredDir; dir++)
+        {
+            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
+            {
+                Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
+                Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + offset) / gopSize);
+
+                m_GOPEncoder->m_frameEncoder->setAdaptiveSearchRange(dir, refIdx, newSR);
+            }
+        }
+    }
+}
+
+// This is a function that
+// determines what Reference Picture Set to use
+// for a specific slice (with POC = POCCurr)
+Void TEncTop::selectReferencePictureSet(TComSlice* slice, Int curPOC, Int gopID)
+{
+    slice->setRPSidx(gopID);
+    UInt intraPeriod = param.keyframeMax;
+    Int gopSize = getGOPSize();
+
+    for (Int extraNum = gopSize; extraNum < getExtraRPSs() + gopSize; extraNum++)
+    {
+        if (intraPeriod > 0 && param.decodingRefreshType > 0)
+        {
+            Int POCIndex = curPOC % intraPeriod;
+            if (POCIndex == 0)
+            {
+                POCIndex = intraPeriod;
+            }
+            if (POCIndex == getGOPEntry(extraNum).m_POC)
+            {
+                slice->setRPSidx(extraNum);
+            }
+        }
+        else
+        {
+            if (curPOC == getGOPEntry(extraNum).m_POC)
+            {
+                slice->setRPSidx(extraNum);
+            }
+        }
+    }
+
+    slice->setRPS(m_GOPEncoder->m_sps.getRPSList()->getReferencePictureSet(slice->getRPSidx()));
+    slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
+}
+
+Int TEncTop::getReferencePictureSetIdxForSOP(Int curPOC, Int gopID)
+{
+    int rpsIdx = gopID;
+    UInt intraPeriod = param.keyframeMax;
+    Int gopSize = getGOPSize();
+
+    for (Int extraNum = gopSize; extraNum < getExtraRPSs() + gopSize; extraNum++)
+    {
+        if (intraPeriod > 0 && param.decodingRefreshType > 0)
+        {
+            Int POCIndex = curPOC % intraPeriod;
+            if (POCIndex == 0)
+            {
+                POCIndex = intraPeriod;
+            }
+            if (POCIndex == getGOPEntry(extraNum).m_POC)
+            {
+                rpsIdx = extraNum;
+            }
+        }
+        else
+        {
+            if (curPOC == getGOPEntry(extraNum).m_POC)
+            {
+                rpsIdx = extraNum;
+            }
+        }
+    }
+
+    return rpsIdx;
+}
+
+/** Function for deciding the nal_unit_type.
+ * \param pocCurr POC of the current picture
+ * \returns the nal unit type of the picture
+ * This function checks the configuration and returns the appropriate nal_unit_type for the picture.
+ */
+NalUnitType TEncTop::getNalUnitType(Int curPOC, Int lastIDR)
+{
+    if (curPOC == 0)
+    {
+        return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
+    }
+    if (curPOC % param.keyframeMax == 0)
+    {
+        if (param.decodingRefreshType == 1)
+        {
+            return NAL_UNIT_CODED_SLICE_CRA;
+        }
+        else if (param.decodingRefreshType == 2)
+        {
+            return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
+        }
+    }
+    if (m_pocCRA > 0)
+    {
+        if (curPOC < m_pocCRA)
+        {
+            // All leading pictures are being marked as TFD pictures here since current encoder uses all
+            // reference pictures while encoding leading pictures. An encoder can ensure that a leading
+            // picture can be still decodable when random accessing to a CRA/CRANT/BLA/BLANT picture by
+            // controlling the reference pictures used for encoding that leading picture. Such a leading
+            // picture need not be marked as a TFD picture.
+            return NAL_UNIT_CODED_SLICE_RASL_R;
+        }
+    }
+    if (lastIDR > 0)
+    {
+        if (curPOC < lastIDR)
+        {
+            return NAL_UNIT_CODED_SLICE_RADL_R;
+        }
+    }
+    return NAL_UNIT_CODED_SLICE_TRAIL_R;
+}
+
+static inline Int getLSB(Int poc, Int maxLSB)
+{
+    if (poc >= 0)
+    {
+        return poc % maxLSB;
+    }
+    else
+    {
+        return (maxLSB - ((-poc) % maxLSB)) % maxLSB;
+    }
+}
+
+// Function will arrange the long-term pictures in the decreasing order of poc_lsb_lt,
+// and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
+Void TEncTop::arrangeLongtermPicturesInRPS(TComSlice *slice)
+{
+    TComReferencePictureSet *rps = slice->getRPS();
+
+    if (!rps->getNumberOfLongtermPictures())
+    {
+        return;
+    }
+
+    // Arrange long-term reference pictures in the correct order of LSB and MSB,
+    // and assign values for pocLSBLT and MSB present flag
+    Int longtermPicsPoc[MAX_NUM_REF_PICS], longtermPicsLSB[MAX_NUM_REF_PICS], indices[MAX_NUM_REF_PICS];
+    Int longtermPicsMSB[MAX_NUM_REF_PICS];
+    Bool mSBPresentFlag[MAX_NUM_REF_PICS];
+    ::memset(longtermPicsPoc, 0, sizeof(longtermPicsPoc));  // Store POC values of LTRP
+    ::memset(longtermPicsLSB, 0, sizeof(longtermPicsLSB));  // Store POC LSB values of LTRP
+    ::memset(longtermPicsMSB, 0, sizeof(longtermPicsMSB));  // Store POC LSB values of LTRP
+    ::memset(indices, 0, sizeof(indices));                  // Indices to aid in tracking sorted LTRPs
+    ::memset(mSBPresentFlag, 0, sizeof(mSBPresentFlag));    // Indicate if MSB needs to be present
+
+    // Get the long-term reference pictures
+    Int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
+    Int i, ctr = 0;
+    Int maxPicOrderCntLSB = 1 << m_GOPEncoder->m_sps.getBitsForPOC();
+    for (i = rps->getNumberOfPictures() - 1; i >= offset; i--, ctr++)
+    {
+        longtermPicsPoc[ctr] = rps->getPOC(i);                              // LTRP POC
+        longtermPicsLSB[ctr] = getLSB(longtermPicsPoc[ctr], maxPicOrderCntLSB); // LTRP POC LSB
+        indices[ctr] = i;
+        longtermPicsMSB[ctr] = longtermPicsPoc[ctr] - longtermPicsLSB[ctr];
+    }
+
+    Int numLongPics = rps->getNumberOfLongtermPictures();
+    assert(ctr == numLongPics);
+
+    // Arrange pictures in decreasing order of MSB;
+    for (i = 0; i < numLongPics; i++)
+    {
+        for (Int j = 0; j < numLongPics - 1; j++)
+        {
+            if (longtermPicsMSB[j] < longtermPicsMSB[j + 1])
+            {
+                std::swap(longtermPicsPoc[j], longtermPicsPoc[j + 1]);
+                std::swap(longtermPicsLSB[j], longtermPicsLSB[j + 1]);
+                std::swap(longtermPicsMSB[j], longtermPicsMSB[j + 1]);
+                std::swap(indices[j], indices[j + 1]);
+            }
+        }
+    }
+
+    for (i = 0; i < numLongPics; i++)
+    {
+        // Check if MSB present flag should be enabled.
+        // Check if the buffer contains any pictures that have the same LSB.
+        TComList<TComPic*>::iterator iterPic = m_picList.begin();
+        TComPic* pic;
+        while (iterPic != m_picList.end())
+        {
+            pic = *iterPic;
+            if ((getLSB(pic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
+                (pic->getSlice()->isReferenced()) &&                                  // Reference picture
+                (pic->getPOC() != longtermPicsPoc[i]))                                // Not the LTRP itself
+            {
+                mSBPresentFlag[i] = true;
+                break;
+            }
+            iterPic++;
+        }
+    }
+
+    // tempArray for usedByCurr flag
+    Bool tempArray[MAX_NUM_REF_PICS];
+    ::memset(tempArray, 0, sizeof(tempArray));
+    for (i = 0; i < numLongPics; i++)
+    {
+        tempArray[i] = rps->getUsed(indices[i]);
+    }
+
+    // Now write the final values;
+    ctr = 0;
+    Int currMSB = 0, currLSB = 0;
+    // currPicPoc = currMSB + currLSB
+    currLSB = getLSB(slice->getPOC(), maxPicOrderCntLSB);
+    currMSB = slice->getPOC() - currLSB;
+
+    for (i = rps->getNumberOfPictures() - 1; i >= offset; i--, ctr++)
+    {
+        rps->setPOC(i, longtermPicsPoc[ctr]);
+        rps->setDeltaPOC(i, -slice->getPOC() + longtermPicsPoc[ctr]);
+        rps->setUsed(i, tempArray[ctr]);
+        rps->setPocLSBLT(i, longtermPicsLSB[ctr]);
+        rps->setDeltaPocMSBCycleLT(i, (currMSB - (longtermPicsPoc[ctr] - longtermPicsLSB[ctr])) / maxPicOrderCntLSB);
+        rps->setDeltaPocMSBPresentFlag(i, mSBPresentFlag[ctr]);
+
+        assert(rps->getDeltaPocMSBCycleLT(i) >= 0); // Non-negative value
+    }
+
+    for (i = rps->getNumberOfPictures() - 1, ctr = 1; i >= offset; i--, ctr++)
+    {
+        for (Int j = rps->getNumberOfPictures() - 1 - ctr; j >= offset; j--)
+        {
+            // Here at the encoder we know that we have set the full POC value for the LTRPs, hence we
+            // don't have to check the MSB present flag values for this constraint.
+            assert(rps->getPOC(i) != rps->getPOC(j)); // If assert fails, LTRP entry repeated in RPS!!!
+        }
+    }
 }
 
 int TEncTop::getStreamHeaders(AccessUnit& accessUnit)

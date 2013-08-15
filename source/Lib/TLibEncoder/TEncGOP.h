@@ -65,10 +65,11 @@ class TEncTop;
 /// GOP encoder class
 class TEncGOP
 {
-private:
+public:
 
     TEncTop*                m_top;
     TEncCfg*                m_cfg;
+    x265::FrameEncoder*     m_frameEncoder;
 
     SEIWriter               m_seiWriter;
     TComSPS                 m_sps;
@@ -78,23 +79,10 @@ private:
     UInt                    m_totalCoded;
     UInt                    m_lastBPSEI;
 
-    /* TODO: Split these DPB fields into a new class */
-    Int                     m_lastIDR;
-    Bool                    m_bRefreshPending;
-    Int                     m_pocCRA;
-    /* end DPB fields */
-    
-public:
-
-    x265::FrameEncoder*     m_frameEncoder;
-
     TEncGOP();
 
     Void destroy();
     Void init(TEncTop* top);
-
-    /* Establish references, manage DPB and RPS, runs in API thread context */
-    Void prepareEncode(TComPic *pic, TComList<TComPic*> picList);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     Void compressFrame(TComPic *pic, AccessUnit& accessUnitOut);
@@ -113,17 +101,6 @@ protected:
     Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream* outBitstreamRedirect);
 
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
-
-protected:
-
-    /* RPS / DPB methods */
-    Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
-
-    Int getReferencePictureSetIdxForSOP(Int pocCur, Int GOPid);
-
-    NalUnitType getNalUnitType(Int curPoc, Int lastIdr);
-
-    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*> picList);
 };
 
 //! \}
