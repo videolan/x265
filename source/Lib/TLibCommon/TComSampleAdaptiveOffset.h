@@ -204,7 +204,6 @@ public:
     Void processSaoCuOrg(Int addr, Int partIdx, Int yCbCr); //!< LCU-basd SAO process without slice granularity
     Void createPicSaoInfo(TComPic* pic);
     Void destroyPicSaoInfo();
-    Void processSaoBlock(Pel* dec, Pel* rest, Int stride, Int saoType, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
 
     Void resetLcuPart(SaoLcuParam* saoLcuParam);
     Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
