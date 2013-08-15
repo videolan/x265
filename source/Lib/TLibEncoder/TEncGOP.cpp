@@ -162,7 +162,7 @@ Void TEncGOP::init(TEncTop* top)
     if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
     {
         m_sps.getVuiParameters()->getHrdParameters()->setNumDU(0);
-        m_sps.setHrdParameters(m_cfg->param.frameRate, 0, 1000 /* m_cfg->getTargetBitrate() */, m_cfg->param.bframes > 0);
+        m_sps.setHrdParameters(m_cfg->param.frameRate, 0, m_cfg->param.rc.bitrate, m_cfg->param.bframes > 0);
     }
     if (m_cfg->getBufferingPeriodSEIEnabled() || m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
     {
