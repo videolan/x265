@@ -30,6 +30,7 @@ add_library(encoder ../../COPYING ../x265.h
     motion.cpp motion.h
     slicetype.cpp slicetype.h
     frameencoder.cpp frameencoder.h
+    framefilter.cpp framefilter.h
     ratecontrol.cpp ratecontrol.h
     compress.cpp)
 target_link_libraries(encoder common)
