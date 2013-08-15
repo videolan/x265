@@ -513,7 +513,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     x265::FrameEncoder*   frameEncoder = m_frameEncoder;
     TEncEntropy*          entropyCoder = frameEncoder->getEntropyCoder(0);
-    TEncSlice*            sliceEncoder = frameEncoder->getSliceEncoder();
     TEncCavlc*            cavlcCoder   = frameEncoder->getCavlcCoder();
     TEncSbac*             sbacCoder    = frameEncoder->getSingletonSbac();
     TEncBinCABAC*         binCABAC     = frameEncoder->getBinCABAC();
@@ -710,7 +709,7 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     slice->setNextSlice(true);
     slice->setRPS(pic->getSlice()->getRPS());
     slice->setRPSidx(pic->getSlice()->getRPSidx());
-    sliceEncoder->xDetermineStartAndBoundingCUAddr(pic, true);
+    frameEncoder->determineSliceBounds(pic, true);
 
     slice->allocSubstreamSizes(numSubstreams);
     for (UInt ui = 0; ui < numSubstreams; ui++)

@@ -163,6 +163,8 @@ public:
 
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams);
 
+    Void determineSliceBounds(TComPic* pic, Bool bEncodeSlice);
+
     void wait_lft()
     {
         if (m_cfg->param.bEnableLoopFilter)

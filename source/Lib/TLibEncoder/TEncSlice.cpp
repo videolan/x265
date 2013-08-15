@@ -36,25 +36,4 @@
 
 using namespace x265;
 
-/** Determines the starting and bounding LCU address of current slice / dependent slice
- * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
- * \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address
- */
-Void TEncSlice::xDetermineStartAndBoundingCUAddr(TComPic* pic, Bool bEncodeSlice)
-{
-    TComSlice* slice = pic->getSlice();
-    UInt numberOfCUsInFrame = pic->getNumCUsInFrame();
-    UInt boundingCUAddrSlice = numberOfCUsInFrame * pic->getNumPartInCU();
-
-    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-    slice->setSliceCurEndCUAddr(boundingCUAddrSlice);
-
-    if (!bEncodeSlice)
-    {
-        // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter
-        // end of entropy and/or reconstruction slice first. Set the flags accordingly.
-        slice->setNextSlice(false);
-    }
-}
-
 //! \}
