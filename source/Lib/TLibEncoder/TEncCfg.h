@@ -92,7 +92,6 @@ protected:
     Window    m_conformanceWindow;
     Window    m_defaultDisplayWindow;         ///< Represents the default display window parameters
     TComVPS   m_vps;
-    Int       m_framesToBeEncoded;
     Double    m_adLambdaModifier[MAX_TLAYER];
 
     /* profile & level */
@@ -220,8 +219,6 @@ public:
     Int getMaxRefPicNum() { return m_maxRefPicNum; }
 
     //====== Sequence ========
-    Int getFramesToBeEncoded()  { return m_framesToBeEncoded; }
-
     Double getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
     //==== Coding Structure ========
