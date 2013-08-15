@@ -116,10 +116,7 @@ TEncGOP::TEncGOP()
     m_totalCoded    = 0;
     m_bRefreshPending      = 0;
     m_pocCRA               = 0;
-    m_numLongTermRefPicSPS = 0;
     m_lastBPSEI            = 0;
-    ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
-    ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
 }
 
 TEncGOP::~TEncGOP()
@@ -153,12 +150,7 @@ Void TEncGOP::init(TEncTop* top)
     top->xInitPPS(&m_pps);
     top->xInitRPS(&m_sps);
 
-    m_sps.setNumLongTermRefPicSPS(m_numLongTermRefPicSPS);
-    for (Int k = 0; k < m_numLongTermRefPicSPS; k++)
-    {
-        m_sps.setLtRefPicPocLsbSps(k, m_ltRefPicPocLsbSps[k]);
-        m_sps.setUsedByCurrPicLtSPSFlag(k, m_ltRefPicUsedByCurrPicFlag[k]);
-    }
+    m_sps.setNumLongTermRefPicSPS(0);
     if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
     {
         m_sps.getVuiParameters()->getHrdParameters()->setNumDU(0);
