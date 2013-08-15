@@ -190,7 +190,6 @@ int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
 Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 {
     PPAScopeEvent(prepareEncode);
-    x265::FrameEncoder* frameEncoder = m_frameEncoder;
 
     Int gopIdx = pic->m_lowres.gopIdx;
     Int pocCurr = pic->getSlice()->getPOC();
@@ -203,7 +202,7 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 
     // Slice data initialization
     Bool forceIntra = m_cfg->param.keyframeMax == 1 || (pocCurr % m_cfg->param.keyframeMax == 0) || pocCurr == 0;
-    frameEncoder->initSlice(pic, forceIntra, gopIdx, &m_sps, &m_pps);
+    m_frameEncoder->initSlice(pic, forceIntra, gopIdx, &m_sps, &m_pps);
 
     TComSlice* slice = pic->getSlice();
     slice->setLastIDR(m_lastIDR);
@@ -383,13 +382,13 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 
         for (Int dir = 0; dir <= numPredDir; dir++)
         {
-            RefPicList  e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
             for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
             {
                 Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
                 Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + offset) / gopSize);
 
-                frameEncoder->setAdaptiveSearchRange(dir, refIdx, newSR);
+                m_frameEncoder->setAdaptiveSearchRange(dir, refIdx, newSR);
             }
         }
     }
@@ -1465,7 +1464,6 @@ Int TEncGOP::xGetFirstSeiLocation(AccessUnit &accessUnit)
         }
     }
 
-//  assert(it != accessUnit.end());  // Triggers with some legit configurations
     return seiStartPos;
 }
 
