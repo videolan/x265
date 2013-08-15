@@ -71,32 +71,30 @@ private:
     TEncTop*                m_top;
     TEncCfg*                m_cfg;
 
-    //  Data
+    SEIWriter               m_seiWriter;
+    TComSPS                 m_sps;
+    TComPPS                 m_pps;
+
+    /* TODO: Split these DPB fields into a new class */
     UInt                    m_numLongTermRefPicSPS;
     UInt                    m_ltRefPicPocLsbSps[33];
     Bool                    m_ltRefPicUsedByCurrPicFlag[33];
     Int                     m_lastIDR;
     UInt                    m_totalCoded;
-
-    SEIWriter               m_seiWriter;
-
     // clean decoding refresh
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
     UInt                    m_lastBPSEI;
     UInt                    m_tl0Idx;
     UInt                    m_rapIdx;
-
-    TComSPS                 m_sps;
-    TComPPS                 m_pps;
+    /* end DPB fields */
 
 public:
 
     x265::FrameEncoder*     m_frameEncoders;
 
     TEncGOP();
-
-    virtual ~TEncGOP();
+    ~TEncGOP();
 
     Void create();
     Void destroy();
@@ -108,24 +106,28 @@ public:
 
 protected:
 
-    Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
-
-    Int getReferencePictureSetIdxForSOP(Int pocCur, Int GOPid);
-
-    NalUnitType getNalUnitType(Int curPoc, Int lastIdr);
-
+    /* SEI/ NAL / Encode methods */
     Void xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUnit&);
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
 
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
-    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*> picList);
-
     Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream*& outBitstreamRedirect);
 
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
-}; // END CLASS DEFINITION TEncGOP
+
+protected:
+
+    /* RPS / DPB methods */
+    Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
+
+    Int getReferencePictureSetIdxForSOP(Int pocCur, Int GOPid);
+
+    NalUnitType getNalUnitType(Int curPoc, Int lastIdr);
+
+    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*> picList);
+};
 
 //! \}
 
