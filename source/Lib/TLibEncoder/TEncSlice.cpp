@@ -77,9 +77,6 @@ Void TEncSlice::init(TEncTop* top)
  - set temporal layer ID and the parameter sets
  .
  \param pcPic         picture class
- \param pocCurr       current POC
- \param iTimeOffset   POC offset for hierarchical structure
- \param iDepth        temporal layer depth
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
