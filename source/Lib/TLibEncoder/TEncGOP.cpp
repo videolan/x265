@@ -514,8 +514,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     }
     pic->compressMotion();
 
-    entropyCoder->setEntropyCoder(cavlcCoder, slice);
-
     calculateHashAndPSNR(pic, pic->getPicYuvRec(), accessUnit);
 
     if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
