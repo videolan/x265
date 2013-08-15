@@ -190,8 +190,7 @@ int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
 Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 {
     PPAScopeEvent(prepareEncode);
-    x265::FrameEncoder*   frameEncoder = m_frameEncoder;
-    TEncSlice*            sliceEncoder = frameEncoder->getSliceEncoder();
+    x265::FrameEncoder* frameEncoder = m_frameEncoder;
 
     Int gopIdx = pic->m_lowres.gopIdx;
     Int pocCurr = pic->getSlice()->getPOC();
@@ -204,7 +203,10 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 
     // Slice data initialization
     Bool forceIntra = m_cfg->param.keyframeMax == 1 || (pocCurr % m_cfg->param.keyframeMax == 0) || pocCurr == 0;
-    TComSlice* slice = sliceEncoder->initEncSlice(pic, frameEncoder, forceIntra, gopIdx, &m_sps, &m_pps);
+    frameEncoder->initSlice(pic, forceIntra, gopIdx, &m_sps, &m_pps);
+    frameEncoder->getSliceEncoder()->xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
+
+    TComSlice* slice = pic->getSlice();
     slice->setLastIDR(m_lastIDR);
 
     if (slice->getSliceType() == B_SLICE && m_cfg->getGOPEntry(gopIdx).m_sliceType == 'P')

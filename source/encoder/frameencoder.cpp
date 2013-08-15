@@ -308,6 +308,167 @@ void FrameEncoder::processRow(int row)
     }
 }
 
+void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID, TComSPS* sps, TComPPS *pps)
+{
+    TComSlice* slice = pic->getSlice();
+    slice->setSPS(sps);
+    slice->setPPS(pps);
+    slice->setSliceBits(0);
+    slice->setPic(pic);
+    slice->initSlice();
+    slice->setPicOutputFlag(true);
+
+    // slice type
+    SliceType sliceType = bForceISlice ? I_SLICE : B_SLICE;
+    slice->setSliceType(sliceType);
+    slice->setReferenced(true);
+
+    /* TODO: lookahead and DPB modeling should give us these values */
+    slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
+    slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
+
+    if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
+    {
+        slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());
+        slice->setDeblockingFilterOverrideFlag(!m_cfg->getLoopFilterOffsetInPPS());
+        slice->getPPS()->setPicDisableDeblockingFilterFlag(!m_cfg->param.bEnableLoopFilter);
+        slice->setDeblockingFilterDisable(!m_cfg->param.bEnableLoopFilter);
+        if (!slice->getDeblockingFilterDisable())
+        {
+            slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+            slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
+            slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+            slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
+        }
+    }
+    else
+    {
+        slice->setDeblockingFilterOverrideFlag(false);
+        slice->setDeblockingFilterDisable(false);
+        slice->setDeblockingFilterBetaOffsetDiv2(0);
+        slice->setDeblockingFilterTcOffsetDiv2(0);
+    }
+
+    // depth computation based on GOP size
+    Int depth = 0;
+    Int poc = slice->getPOC() % m_cfg->getGOPSize();
+    if (poc)
+    {
+        Int step = m_cfg->getGOPSize();
+        for (Int i = step >> 1; i >= 1; i >>= 1)
+        {
+            for (Int j = i; j < m_cfg->getGOPSize(); j += step)
+            {
+                if (j == poc)
+                {
+                    i = 0;
+                    break;
+                }
+            }
+
+            step >>= 1;
+            depth++;
+        }
+    }
+
+    slice->setDepth(depth);
+    slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
+
+    // ------------------------------------------------------------------------------------------------------------------
+    // QP setting
+    // ------------------------------------------------------------------------------------------------------------------
+
+    Double qpdouble;
+    Double lambda;
+    qpdouble = m_cfg->param.qp;
+    if (sliceType != I_SLICE)
+    {
+        if (!((qpdouble == -slice->getSPS()->getQpBDOffsetY()) && (slice->getSPS()->getUseLossless())))
+        {
+            qpdouble += m_cfg->getGOPEntry(gopID).m_QPOffset;
+        }
+    }
+
+    // TODO: Remove dQP?
+    // modify QP
+    Int* pdQPs = m_cfg->getdQPs();
+    if (pdQPs)
+    {
+        qpdouble += pdQPs[slice->getPOC()];
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------
+    // Lambda computation
+    // ------------------------------------------------------------------------------------------------------------------
+
+    Int qp;
+
+    // compute lambda value
+    Int    NumberBFrames = (m_cfg->getGOPSize() - 1);
+    Int    SHIFT_QP = 12;
+    Double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
+#if FULL_NBIT
+    Int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
+    Double qp_temp_orig = (Double)dQP - SHIFT_QP;
+#else
+    Int    bitdepth_luma_qp_scale = 0;
+#endif
+    Double qp_temp = (Double)qpdouble + bitdepth_luma_qp_scale - SHIFT_QP;
+
+    // Case #1: I or P-slices (key-frame)
+    Double qpFactor = m_cfg->getGOPEntry(gopID).m_QPFactor;
+    if (sliceType == I_SLICE)
+    {
+        qpFactor = 0.57 * lambda_scale;
+    }
+    lambda = qpFactor * pow(2.0, qp_temp / 3.0);
+
+    if (depth > 0)
+    {
+#if FULL_NBIT
+        lambda *= Clip3(2.00, 4.00, (qp_temp_orig / 6.0));
+#else
+        lambda *= Clip3(2.00, 4.00, (qp_temp / 6.0));
+#endif
+    }
+
+    qp = max(-sps->getQpBDOffsetY(), min(MAX_QP, (Int)floor(qpdouble + 0.5)));
+
+    if (slice->getSliceType() != I_SLICE)
+    {
+        lambda *= m_cfg->getLambdaModifier(0); // temporal layer 0
+    }
+
+    // for RDO
+    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
+    // instead we weight the distortion of chroma.
+    Double weight = 1.0;
+    Int qpc;
+    Int chromaQPOffset;
+
+    chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
+    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+    setCbDistortionWeight(weight);
+
+    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
+    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+    setCrDistortionWeight(weight);
+
+    // for RDOQ
+    setQPLambda(qp, lambda, lambda / weight);
+
+    // For SAO
+    slice->setLambda(lambda, lambda / weight);
+
+    slice->setSliceQp(qp);
+    slice->setSliceQpBase(qp);
+    slice->setSliceQpDelta(0);
+    slice->setSliceQpDeltaCb(0);
+    slice->setSliceQpDeltaCr(0);
+}
+
 // **************************************************************************
 // * LoopFilter
 // **************************************************************************

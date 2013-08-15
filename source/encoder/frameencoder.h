@@ -225,6 +225,8 @@ public:
         m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
     }
 
+    void initSlice(TComPic* pic, Bool bForceISlice, Int gopID, TComSPS* sps, TComPPS *pps);
+
     void wait_lft()
     {
         if (m_cfg->param.bEnableLoopFilter)
