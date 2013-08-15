@@ -1292,7 +1292,7 @@ NalUnitType TEncGOP::getNalUnitType(Int curPOC, Int lastIDR)
  *  \param codedSliceData contains the coded slice data (bitstream) to be concatenated to rNalu
  *  \param rNalu          target NAL unit
  */
-Void TEncGOP::xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream*& codedSliceData)
+Void TEncGOP::xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream* codedSliceData)
 {
     // Byte-align
     nalu.m_Bitstream.writeByteAlignment(); // Slice header byte-alignment

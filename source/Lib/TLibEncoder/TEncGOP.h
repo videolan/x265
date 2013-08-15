@@ -110,7 +110,7 @@ protected:
 
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
-    Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream*& outBitstreamRedirect);
+    Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream* outBitstreamRedirect);
 
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
 
