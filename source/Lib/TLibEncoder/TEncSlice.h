@@ -40,10 +40,10 @@
 
 // Include files
 #include "TLibCommon/CommonDef.h"
-#include "TLibCommon/TComList.h"
 #include "TLibCommon/TComPic.h"
-#include "TLibCommon/TComPicYuv.h"
-#include "TEncCu.h"
+#include "TLibCommon/TComBitstream.h"
+
+#include "TEncCfg.h"
 #include "WeightPredAnalysis.h"
 
 //! \ingroup TLibEncoder
