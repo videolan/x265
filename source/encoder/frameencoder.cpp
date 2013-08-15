@@ -30,6 +30,8 @@
 #include "frameencoder.h"
 #include "cturow.h"
 
+#include <math.h>
+
 using namespace x265;
 
 #if CU_STAT_LOGFILE
