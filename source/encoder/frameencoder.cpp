@@ -298,8 +298,8 @@ Void FrameEncoder::compressSlice(TComPic* pic)
         m_wp.xCalcACDCParamSlice(slice);
     }
 
-    Bool wpexplicit = (slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
-        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
+    bool wpexplicit = (slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
+                      (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
 
     if (wpexplicit)
     {
@@ -313,30 +313,18 @@ Void FrameEncoder::compressSlice(TComPic* pic)
         m_wp.xCheckWPEnable(slice);
     }
 
+    // Generate motion references
     Int numPredDir = slice->isInterP() ? 1 : 2;
-
-    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()))
+    for (Int l = 0; l < numPredDir; l++)
     {
-        for (Int refList = 0; refList < numPredDir; refList++)
+        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+        wpScalingParam *w = NULL;
+        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
         {
-            RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
-            {
-                // Generate weighted motion reference
-                wpScalingParam *w = &(slice->m_weightPredTable[picList][refIdxTemp][0]);
-                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), w);
-            }
-        }
-    }
-    else
-    {
-        for (Int refList = 0; refList < numPredDir; refList++)
-        {
-            RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
-            {
-                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), NULL);
-            }
+            TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
+            if ((slice->isInterP() && slice->getPPS()->getUseWP()))
+                w = slice->m_weightPredTable[list][ref];
+            slice->m_mref[list][ref] = recon->generateMotionReference(m_pool, w);
         }
     }
 
