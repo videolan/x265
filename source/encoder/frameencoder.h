@@ -36,6 +36,7 @@
 
 #include "wavefront.h"
 #include "framefilter.h"
+#include "cturow.h"
 
 class TEncTop;
 
@@ -43,40 +44,6 @@ namespace x265 {
 // private x265 namespace
 
 class ThreadPool;
-
-class CTURow
-{
-public:
-
-    TEncSbac               m_sbacCoder;
-    TEncSbac               m_rdGoOnSbacCoder;
-    TEncSbac               m_bufferSbacCoder;
-    TEncBinCABAC           m_binCoderCABAC;
-    TEncBinCABACCounter    m_rdGoOnBinCodersCABAC;
-    TComBitCounter         m_bitCounter;
-    TComRdCost             m_rdCost;
-    TEncEntropy            m_entropyCoder;
-    TEncSearch             m_search;
-    TEncCu                 m_cuCoder;
-    TComTrQuant            m_trQuant;
-    TEncSbac            ***m_rdSbacCoders;
-    TEncBinCABACCounter ***m_binCodersCABAC;
-
-    void create(TEncTop* top);
-
-    void destroy();
-
-    void init()
-    {
-        m_active = 0;
-    }
-
-    inline void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
-
-    /* Threading */
-    Lock                m_lock;
-    volatile bool       m_active;
-};
 
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront
