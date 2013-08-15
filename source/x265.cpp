@@ -389,6 +389,11 @@ struct CLIOptions
             this->input->setDimensions(param->sourceWidth, param->sourceHeight);
             this->input->setBitDepth(inputBitDepth);
         }
+        if (param->bEnableLoopFilter ^ param->bEnableSAO)
+        {
+            log(X265_LOG_ERROR, "Loopfilter and SAO must be same value\n");
+            return true;
+        }
 
         /* rules for input, output and internal bitdepths as per help text */
         if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
