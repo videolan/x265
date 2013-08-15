@@ -1264,11 +1264,12 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
     if (!slice->isReferenced())
         c += 32; // lower case if unreferenced
 
-    printf("\rPOC %4d ( %c-SLICE, nQP %d QP %d ) %10d bits",
+    printf("\rPOC %4d ( %c-SLICE, nQP %d QP %d Depth %d) %10d bits",
            slice->getPOC(),
            c,
            slice->getSliceQpBase(),
            slice->getSliceQp(),
+           slice->getDepth(),
            bits);
 
     printf(" [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
