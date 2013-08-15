@@ -339,14 +339,14 @@ Void FrameEncoder::compressSlice(TComPic* pic)
         m_pic->m_complete_enc[i] = 0;
     }
 
-    m_frameFilter.start(pic);
-
     if (!m_pool || !m_cfg->param.bEnableWavefront)
     {
         for (int i = 0; i < this->m_numRows; i++)
         {
             processRow(i);
         }
+
+        m_frameFilter.start(pic);
 
         if (m_cfg->param.bEnableLoopFilter)
         {
@@ -359,6 +359,8 @@ Void FrameEncoder::compressSlice(TComPic* pic)
     else
     {
         WaveFront::enqueue();
+
+        m_frameFilter.start(pic);
 
         // Enqueue first row, then block until worker threads complete the frame
         WaveFront::enqueueRow(0);
