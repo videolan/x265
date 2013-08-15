@@ -1132,13 +1132,17 @@ Void TComSampleAdaptiveOffset::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam*
     }
 }
 
+static Void xPCMRestoration(TComPic* pic);
+static Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
+static Void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText);
+
 /** PCM LF disable process.
  * \param pic picture (TComPic) pointer
  * \returns Void
  *
  * \note Replace filtered sample values of PCM mode blocks with the transmitted and reconstructed ones.
  */
-Void TComSampleAdaptiveOffset::PCMLFDisableProcess(TComPic* pic)
+Void PCMLFDisableProcess(TComPic* pic)
 {
     xPCMRestoration(pic);
 }
@@ -1147,7 +1151,7 @@ Void TComSampleAdaptiveOffset::PCMLFDisableProcess(TComPic* pic)
  * \param pic picture (TComPic) pointer
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pic)
+static Void xPCMRestoration(TComPic* pic)
 {
     Bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
 
@@ -1168,7 +1172,7 @@ Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pic)
  * \param depth CU depth
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth)
+static Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth)
 {
     TComPic* pic     = cu->getPic();
     UInt curNumParts = pic->getNumPartInCU() >> (depth << 1);
@@ -1204,7 +1208,7 @@ Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt absZOrderI
  * \param ttText texture component type
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText)
+static Void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
     Pel* src;

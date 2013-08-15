@@ -369,7 +369,7 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         SAOParam& saoParam = *slice->getPic()->getPicSym()->getSaoParam();
         sao->SAOProcess(&saoParam, pic->getSlice()->getLambdaLuma(), pic->getSlice()->getLambdaChroma(), pic->getSlice()->getDepth());
         sao->endSaoEnc();
-        sao->PCMLFDisableProcess(pic);
+        PCMLFDisableProcess(pic);
 
         pic->getSlice()->setSaoEnabledFlag((saoParam.bSaoFlag[0] == 1) ? true : false);
     }
