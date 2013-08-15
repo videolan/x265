@@ -87,10 +87,6 @@ public:
     Void setSearchRange(TComSlice* slice, x265::FrameEncoder *frameEncoder); ///< set ME range adaptively
 
     Void xDetermineStartAndBoundingCUAddr(TComPic* pic, Bool bEncodeSlice);
-
-private:
-
-    Double xGetQPValueAccordingToLambda(Double lambda);
 };
 
 //! \}

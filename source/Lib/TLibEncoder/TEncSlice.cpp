@@ -623,9 +623,4 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(TComPic* pic, Bool bEncodeSlice
     }
 }
 
-Double TEncSlice::xGetQPValueAccordingToLambda(Double lambda)
-{
-    return 4.2005 * log(lambda) + 13.7122;
-}
-
 //! \}
