@@ -61,16 +61,10 @@ enum SCALING_LIST_PARAMETER
     SCALING_LIST_DEFAULT,
 };
 
-//! \ingroup TLibEncoder
-//! \{
-
-// ====================================================================================================================
-// Constructor / destructor / initialization / destroy
-// ====================================================================================================================
 TEncGOP::TEncGOP()
 {
     m_cfg             = NULL;
-    m_frameEncoders   = NULL;
+    m_frameEncoder   = NULL;
     m_top             = NULL;
     m_lastIDR         = 0;
     m_totalCoded      = 0;
@@ -81,10 +75,10 @@ TEncGOP::TEncGOP()
 
 Void TEncGOP::destroy()
 {
-    if (m_frameEncoders)
+    if (m_frameEncoder)
     {
-        m_frameEncoders->destroy();
-        delete m_frameEncoders;
+        m_frameEncoder->destroy();
+        delete m_frameEncoder;
     }
 }
 
@@ -116,14 +110,14 @@ Void TEncGOP::init(TEncTop* top)
     m_sps.setTMVPFlagsPresent(true);
 
     int numRows = (m_cfg->param.sourceHeight + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
-    m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
-    m_frameEncoders->init(top, numRows);
+    m_frameEncoder = new x265::FrameEncoder(ThreadPool::getThreadPool());
+    m_frameEncoder->init(top, numRows);
 
     // set default slice level flag to the same as SPS level flag
     if (m_cfg->getUseScalingListId() == SCALING_LIST_OFF)
     {
-        m_frameEncoders->setFlatScalingList();
-        m_frameEncoders->setUseScalingList(false);
+        m_frameEncoder->setFlatScalingList();
+        m_frameEncoder->setUseScalingList(false);
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
     }
@@ -131,8 +125,8 @@ Void TEncGOP::init(TEncTop* top)
     {
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
-        m_frameEncoders->setScalingList(m_top->getScalingList());
-        m_frameEncoders->setUseScalingList(true);
+        m_frameEncoder->setScalingList(m_top->getScalingList());
+        m_frameEncoder->setUseScalingList(true);
     }
     else
     {
@@ -203,7 +197,7 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
 {
     PPAScopeEvent(TEncGOP_compressGOP);
 
-    x265::FrameEncoder*   frameEncoder = m_frameEncoders;
+    x265::FrameEncoder*   frameEncoder = m_frameEncoder;
     TEncEntropy*          entropyCoder = frameEncoder->getEntropyCoder(0);
     TEncSlice*            sliceEncoder = frameEncoder->getSliceEncoder();
     TEncCavlc*            cavlcCoder   = frameEncoder->getCavlcCoder();

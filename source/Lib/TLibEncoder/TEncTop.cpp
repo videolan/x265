@@ -158,7 +158,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             if (param.bEnableSAO)
             {
                 // TODO: these should be allocated on demand within the encoder
-                pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
+                pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoder->getSAO());
             }
             pic->getSlice()->setPOC(MAX_INT);
         }

@@ -88,7 +88,7 @@ private:
 
 public:
 
-    x265::FrameEncoder*     m_frameEncoders;
+    x265::FrameEncoder*     m_frameEncoder;
 
     TEncGOP();
     ~TEncGOP() {}
