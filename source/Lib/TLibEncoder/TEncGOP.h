@@ -91,8 +91,7 @@ public:
 
 protected:
 
-    /* SEI/ NAL / Encode methods */
-    Void xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUnit&);
+    Void calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit&);
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets();
 

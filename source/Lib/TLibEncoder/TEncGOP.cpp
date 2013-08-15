@@ -522,56 +522,9 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     }
     pic->compressMotion();
 
-    const Char* digestStr = NULL;
-    if (m_cfg->getDecodedPictureHashSEIEnabled())
-    {
-        SEIDecodedPictureHash sei_recon_picture_digest;
-        if (m_cfg->getDecodedPictureHashSEIEnabled() == 1)
-        {
-            /* calculate MD5sum for entire reconstructed picture */
-            sei_recon_picture_digest.method = SEIDecodedPictureHash::MD5;
-            calcMD5(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
-            digestStr = digestToString(sei_recon_picture_digest.digest, 16);
-        }
-        else if (m_cfg->getDecodedPictureHashSEIEnabled() == 2)
-        {
-            sei_recon_picture_digest.method = SEIDecodedPictureHash::CRC;
-            calcCRC(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
-            digestStr = digestToString(sei_recon_picture_digest.digest, 2);
-        }
-        else if (m_cfg->getDecodedPictureHashSEIEnabled() == 3)
-        {
-            sei_recon_picture_digest.method = SEIDecodedPictureHash::CHECKSUM;
-            calcChecksum(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
-            digestStr = digestToString(sei_recon_picture_digest.digest, 4);
-        }
-        OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
+    entropyCoder->setEntropyCoder(cavlcCoder, slice);
 
-        /* write the SEI messages */
-        entropyCoder->setEntropyCoder(cavlcCoder, slice);
-        m_seiWriter.writeSEImessage(onalu.m_Bitstream, sei_recon_picture_digest, slice->getSPS());
-        writeRBSPTrailingBits(onalu.m_Bitstream);
-
-        accessUnit.insert(accessUnit.end(), new NALUnitEBSP(onalu));
-    }
-
-    xCalculateAddPSNR(pic, pic->getPicYuvRec(), accessUnit);
-
-    if (digestStr && m_cfg->param.logLevel >= X265_LOG_DEBUG)
-    {
-        if (m_cfg->getDecodedPictureHashSEIEnabled() == 1)
-        {
-            fprintf(stderr, " [MD5:%s]", digestStr);
-        }
-        else if (m_cfg->getDecodedPictureHashSEIEnabled() == 2)
-        {
-            fprintf(stderr, " [CRC:%s]", digestStr);
-        }
-        else if (m_cfg->getDecodedPictureHashSEIEnabled() == 3)
-        {
-            fprintf(stderr, " [Checksum:%s]", digestStr);
-        }
-    }
+    calculateHashAndPSNR(pic, pic->getPicYuvRec(), accessUnit);
 
     if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
         (m_sps.getVuiParametersPresentFlag()) &&
@@ -649,7 +602,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         if (m_cfg->getPictureTimingSEIEnabled())
         {
             OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
-            entropyCoder->setEntropyCoder(cavlcCoder, slice);
             m_seiWriter.writeSEImessage(onalu.m_Bitstream, pictureTimingSEI, slice->getSPS());
             writeRBSPTrailingBits(onalu.m_Bitstream);
             UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
@@ -666,7 +618,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         }
         if (m_cfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag())
         {
-            entropyCoder->setEntropyCoder(cavlcCoder, slice);
             for (Int i = 0; i < (pictureTimingSEI.m_numDecodingUnitsMinus1 + 1); i++)
             {
                 OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
@@ -717,13 +668,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
                 }
             }
         }
-    }
-
-    if (m_cfg->param.logLevel >= X265_LOG_DEBUG)
-    {
-        /* logging: insert a newline at end of picture period */
-        fprintf(stderr, "\n");
-        fflush(stderr);
     }
 
     m_totalCoded++;
@@ -885,7 +829,7 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
     return ssd;
 }
 
-Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUnit& accessUnit)
+Void TEncGOP::calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit& accessUnit)
 {
     //===== calculate PSNR =====
     Int stride = recon->getStride();
@@ -909,6 +853,38 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
     Double psnrY = (ssdY ? 10.0 * log10(refValueY / (Double)ssdY) : 99.99);
     Double psnrU = (ssdU ? 10.0 * log10(refValueC / (Double)ssdU) : 99.99);
     Double psnrV = (ssdV ? 10.0 * log10(refValueC / (Double)ssdV) : 99.99);
+
+    const Char* digestStr = NULL;
+    if (m_cfg->getDecodedPictureHashSEIEnabled())
+    {
+        SEIDecodedPictureHash sei_recon_picture_digest;
+        if (m_cfg->getDecodedPictureHashSEIEnabled() == 1)
+        {
+            /* calculate MD5sum for entire reconstructed picture */
+            sei_recon_picture_digest.method = SEIDecodedPictureHash::MD5;
+            calcMD5(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
+            digestStr = digestToString(sei_recon_picture_digest.digest, 16);
+        }
+        else if (m_cfg->getDecodedPictureHashSEIEnabled() == 2)
+        {
+            sei_recon_picture_digest.method = SEIDecodedPictureHash::CRC;
+            calcCRC(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
+            digestStr = digestToString(sei_recon_picture_digest.digest, 2);
+        }
+        else if (m_cfg->getDecodedPictureHashSEIEnabled() == 3)
+        {
+            sei_recon_picture_digest.method = SEIDecodedPictureHash::CHECKSUM;
+            calcChecksum(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
+            digestStr = digestToString(sei_recon_picture_digest.digest, 4);
+        }
+        OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
+
+        /* write the SEI messages */
+        m_seiWriter.writeSEImessage(onalu.m_Bitstream, sei_recon_picture_digest, pic->getSlice()->getSPS());
+        writeRBSPTrailingBits(onalu.m_Bitstream);
+
+        accessUnit.insert(accessUnit.end(), new NALUnitEBSP(onalu));
+    }
 
     /* calculate the size of the access unit, excluding:
      *  - any AnnexB contributions (start_code_prefix, zero_byte, etc.,)
@@ -948,36 +924,54 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
         m_top->m_analyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
 
-    if (m_cfg->param.logLevel < X265_LOG_DEBUG)
-        return;
-
-    Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
-
-    if (!slice->isReferenced())
-        c += 32; // lower case if unreferenced
-
-    printf("\rPOC %4d ( %c-SLICE, nQP %d QP %d Depth %d) %10d bits",
-           slice->getPOC(),
-           c,
-           slice->getSliceQpBase(),
-           slice->getSliceQp(),
-           slice->getDepth(),
-           bits);
-
-    printf(" [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
-
-    if (slice->isIntra())
-        return;
-    Int numLists = slice->isInterP() ? 1 : 2;
-    for (Int refList = 0; refList < numLists; refList++)
+    if (m_cfg->param.logLevel >= X265_LOG_DEBUG)
     {
-        printf(" [L%d ", refList);
-        for (Int iRefIndex = 0; iRefIndex < slice->getNumRefIdx(RefPicList(refList)); iRefIndex++)
-        {
-            printf("%d ", slice->getRefPOC(RefPicList(refList), iRefIndex) - slice->getLastIDR());
-        }
+        Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
 
-        printf("]");
+        if (!slice->isReferenced())
+            c += 32; // lower case if unreferenced
+
+        fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d Depth %d) %10d bits",
+               slice->getPOC(),
+               c,
+               slice->getSliceQpBase(),
+               slice->getSliceQp(),
+               slice->getDepth(),
+               bits);
+
+        fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
+
+        if (!slice->isIntra())
+        {
+            Int numLists = slice->isInterP() ? 1 : 2;
+            for (Int list = 0; list < numLists; list++)
+            {
+                fprintf(stderr, " [L%d ", list);
+                for (Int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
+                {
+                    fprintf(stderr, "%d ", slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR());
+                }
+
+                fprintf(stderr, "]");
+            }
+        }
+        if (digestStr)
+        {
+            if (m_cfg->getDecodedPictureHashSEIEnabled() == 1)
+            {
+                fprintf(stderr, " [MD5:%s]", digestStr);
+            }
+            else if (m_cfg->getDecodedPictureHashSEIEnabled() == 2)
+            {
+                fprintf(stderr, " [CRC:%s]", digestStr);
+            }
+            else if (m_cfg->getDecodedPictureHashSEIEnabled() == 3)
+            {
+                fprintf(stderr, " [Checksum:%s]", digestStr);
+            }
+        }
+        fprintf(stderr, "\n");
+        fflush(stderr);
     }
 }
 
