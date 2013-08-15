@@ -55,7 +55,6 @@
 TEncTop::TEncTop()
 {
     m_pocLast = -1;
-    m_picsEncoded = 0;
     m_maxRefPicNum = 0;
     m_lookahead = NULL;
     m_GOPEncoder = NULL;

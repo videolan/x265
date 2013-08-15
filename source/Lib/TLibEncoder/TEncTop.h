@@ -63,7 +63,6 @@ private:
 
     // picture
     Int                     m_pocLast;          ///< time index (POC)
-    Int                     m_picsEncoded;
     TComList<TComPic*>      m_picList;
     TComList<TComPic*>      m_freeList;
 
