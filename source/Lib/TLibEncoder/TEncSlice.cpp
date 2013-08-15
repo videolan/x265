@@ -70,47 +70,6 @@ Void TEncSlice::init(TEncTop* top)
     m_cfg = top;
 }
 
-/**
- - non-referenced frame marking
- - QP computation based on temporal structure
- - lambda computation based on QP
- - set temporal layer ID and the parameter sets
- .
- \param pcPic         picture class
- \param pSPS          SPS associated with the slice
- \param pPPS          PPS associated with the slice
- */
-Void TEncSlice::resetQP(TComPic* pic, FrameEncoder *frameEncoder, Int sliceQP, Double lambda)
-{
-    TComSlice* slice = pic->getSlice();
-
-    // store lambda
-    slice->setSliceQp(sliceQP);
-    slice->setSliceQpBase(sliceQP);
-
-    // for RDO
-    // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
-    Double weight;
-    Int qpc;
-    Int chromaQPOffset;
-
-    chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    qpc = Clip3(0, 57, sliceQP + chromaQPOffset);
-    weight = pow(2.0, (sliceQP - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    frameEncoder->setCbDistortionWeight(weight);
-
-    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, 57, sliceQP + chromaQPOffset);
-    weight = pow(2.0, (sliceQP - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    frameEncoder->setCrDistortionWeight(weight);
-
-    // for RDOQ
-    frameEncoder->setQPLambda(sliceQP, lambda, lambda / weight);
-
-    // For SAO
-    slice->setLambda(lambda, lambda / weight);
-}
-
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================

@@ -75,8 +75,6 @@ public:
     Void destroy();
     Void init(TEncTop* top);
 
-    Void resetQP(TComPic* pic, x265::FrameEncoder *frameEncoder, Int sliceQP, Double lambda);
-
     Void compressSlice(TComPic* pic, x265::FrameEncoder* frameEncoder); ///< analysis stage of slice
 
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams, x265::FrameEncoder* frameEncoder);
