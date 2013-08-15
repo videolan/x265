@@ -83,8 +83,7 @@ Void TEncSlice::init(TEncTop* top)
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
-TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncoder, Bool bForceISlice, Int pocCurr,
-                                   Int gopID, TComSPS* sps, TComPPS *pps)
+TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncoder, Bool bForceISlice, Int gopID, TComSPS* sps, TComPPS *pps)
 {
     Double qpdouble;
     Double lambda;
@@ -127,7 +126,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
 
     // slice type
-    SliceType sliceType = (pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : B_SLICE;
+    SliceType sliceType = bForceISlice ? I_SLICE : B_SLICE;
     slice->setSliceType(sliceType);
     slice->setReferenced(true);
 
@@ -219,7 +218,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
 
 #if HB_LAMBDA_FOR_LDC
     // restore original slice type
-    sliceType = (pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : sliceType;
+    sliceType = bForceISlice ? I_SLICE : sliceType;
     slice->setSliceType(sliceType);
 #endif
 
@@ -234,6 +233,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
+
     /* TODO: lookahead and DPB modeling should give us these values */
     slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
     slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);

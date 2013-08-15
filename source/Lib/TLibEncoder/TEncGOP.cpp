@@ -206,8 +206,8 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
     }
 
     // Slice data initialization
-    Bool forceIntra = m_cfg->param.keyframeMax == 1 || pocCurr == 0;
-    TComSlice* slice = sliceEncoder->initEncSlice(pic, frameEncoder, forceIntra, pocCurr, gopIdx, &m_sps, &m_pps);
+    Bool forceIntra = m_cfg->param.keyframeMax == 1 || (pocCurr % m_cfg->param.keyframeMax == 0) || pocCurr == 0;
+    TComSlice* slice = sliceEncoder->initEncSlice(pic, frameEncoder, forceIntra, gopIdx, &m_sps, &m_pps);
     slice->setLastIDR(m_lastIDR);
 
     if (slice->getSliceType() == B_SLICE && m_cfg->getGOPEntry(gopIdx).m_sliceType == 'P')
