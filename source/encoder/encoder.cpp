@@ -221,11 +221,11 @@ void Encoder::configure(x265_param_t *_param)
     int nullpad[2] = { 0, 0 };
     setPad(nullpad);
 
-    m_progressiveSourceFlag = 1;
-    m_interlacedSourceFlag = 0;
-    m_nonPackedConstraintFlag = 0;
-    m_frameOnlyConstraintFlag = 0;
-    m_bUseASR = false;    // adapt search range based on temporal distances
+    m_progressiveSourceFlag = true;
+    m_interlacedSourceFlag = false;
+    m_nonPackedConstraintFlag = false;
+    m_frameOnlyConstraintFlag = false;
+    m_bUseASR = false; // adapt search range based on temporal distances
     m_dqpTable = NULL;
     m_recoveryPointSEIEnabled = 0;
     m_bufferingPeriodSEIEnabled = 0;
@@ -234,32 +234,32 @@ void Encoder::configure(x265_param_t *_param)
     m_gradualDecodingRefreshInfoEnabled = 0;
     m_decodingUnitInfoSEIEnabled = 0;
     m_useScalingListId = 0;
-    m_recalculateQPAccordingToLambda = 0;
+    m_recalculateQPAccordingToLambda = false;
     m_activeParameterSetsSEIEnabled = 0;
-    m_vuiParametersPresentFlag = 0;
+    m_vuiParametersPresentFlag = false;
     m_minSpatialSegmentationIdc = 0;
     m_aspectRatioIdc = 0;
     m_sarWidth = 0;
     m_sarHeight = 0;
-    m_overscanInfoPresentFlag = 0;
-    m_overscanAppropriateFlag = 0;
-    m_videoSignalTypePresentFlag = 0;
+    m_overscanInfoPresentFlag = false;
+    m_overscanAppropriateFlag = false;
+    m_videoSignalTypePresentFlag = false;
     m_videoFormat = 5;
-    m_videoFullRangeFlag = 0;
-    m_colourDescriptionPresentFlag = 0;
+    m_videoFullRangeFlag = false;
+    m_colourDescriptionPresentFlag = false;
     m_colourPrimaries = 2;
     m_transferCharacteristics = 2;
     m_matrixCoefficients = 2;
-    m_chromaLocInfoPresentFlag = 0;
+    m_chromaLocInfoPresentFlag = false;
     m_chromaSampleLocTypeTopField = 0;
     m_chromaSampleLocTypeBottomField = 0;
-    m_neutralChromaIndicationFlag = 0;
+    m_neutralChromaIndicationFlag = false;
     m_defaultDisplayWindow.setWindow(0, 0, 0, 0);
-    m_frameFieldInfoPresentFlag = 0;
-    m_pocProportionalToTimingFlag = 0;
+    m_frameFieldInfoPresentFlag = false;
+    m_pocProportionalToTimingFlag = false;
     m_numTicksPocDiffOneMinus1 = 0;
-    m_bitstreamRestrictionFlag = 0;
-    m_motionVectorsOverPicBoundariesFlag = 0;
+    m_bitstreamRestrictionFlag = false;
+    m_motionVectorsOverPicBoundariesFlag = false;
     m_maxBytesPerPicDenom = 2;
     m_maxBitsPerMinCuDenom = 1;
     m_log2MaxMvLengthHorizontal = 15;
@@ -267,12 +267,12 @@ void Encoder::configure(x265_param_t *_param)
     m_usePCM = 0;
     m_pcmLog2MinSize = 3;
     m_pcmLog2MaxSize = 5;
-    m_bPCMInputBitDepthFlag = 1;
-    m_bPCMFilterDisableFlag = 0;
+    m_bPCMInputBitDepthFlag = true;
+    m_bPCMFilterDisableFlag = false;
 
-    m_useLossless = 0;  // x264 configures this via --qp=0
-    m_TransquantBypassEnableFlag = 0;
-    m_CUTransquantBypassFlagValue = 0;
+    m_useLossless = false;  // x264 configures this via --qp=0
+    m_TransquantBypassEnableFlag = false;
+    m_CUTransquantBypassFlagValue = false;
 }
 
 static inline int _confirm(bool bflag, const char* message)
