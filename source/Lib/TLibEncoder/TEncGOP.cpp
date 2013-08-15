@@ -238,8 +238,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     /* write various header sets. */
 
-    entropyCoder->setEntropyCoder(cavlcCoder, slice);
-
     if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
         (m_sps.getVuiParametersPresentFlag()) &&
         ((m_sps.getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
@@ -284,8 +282,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
             || (m_sps.getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())))
     {
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-        entropyCoder->setEntropyCoder(cavlcCoder, slice);
-        entropyCoder->setBitstream(&nalu.m_Bitstream);
 
         SEIBufferingPeriod sei_buffering_period;
 
@@ -336,8 +332,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         {
             // Gradual decoding refresh SEI
             OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-            entropyCoder->setEntropyCoder(cavlcCoder, slice);
-            entropyCoder->setBitstream(&nalu.m_Bitstream);
 
             SEIGradualDecodingRefreshInfo seiGradualDecodingRefreshInfo;
             seiGradualDecodingRefreshInfo.m_gdrForegroundFlag = true; // Indicating all "foreground"
@@ -348,8 +342,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         }
         // Recovery point SEI
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-        entropyCoder->setEntropyCoder(cavlcCoder, slice);
-        entropyCoder->setBitstream(&nalu.m_Bitstream);
 
         SEIRecoveryPoint sei_recovery_point;
         sei_recovery_point.m_recoveryPocCnt    = 0;
