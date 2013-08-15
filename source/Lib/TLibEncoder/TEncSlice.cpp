@@ -82,10 +82,7 @@ Void TEncSlice::init(TEncTop* top)
  */
 TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncoder, Bool bForceISlice, Int gopID, TComSPS* sps, TComPPS *pps)
 {
-    Double qpdouble;
-    Double lambda;
     TComSlice* slice = pic->getSlice();
-
     slice->setSPS(sps);
     slice->setPPS(pps);
     slice->setSliceBits(0);
@@ -93,45 +90,69 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     slice->initSlice();
     slice->setPicOutputFlag(true);
 
-    // depth computation based on GOP size
-    Int depth;
-    {
-        Int poc = slice->getPOC() % m_cfg->getGOPSize();
-        if (poc == 0)
-        {
-            depth = 0;
-        }
-        else
-        {
-            Int step = m_cfg->getGOPSize();
-            depth    = 0;
-            for (Int i = step >> 1; i >= 1; i >>= 1)
-            {
-                for (Int j = i; j < m_cfg->getGOPSize(); j += step)
-                {
-                    if (j == poc)
-                    {
-                        i = 0;
-                        break;
-                    }
-                }
-
-                step >>= 1;
-                depth++;
-            }
-        }
-    }
-
     // slice type
     SliceType sliceType = bForceISlice ? I_SLICE : B_SLICE;
     slice->setSliceType(sliceType);
     slice->setReferenced(true);
 
+    /* TODO: lookahead and DPB modeling should give us these values */
+    slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
+    slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
+
+    if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
+    {
+        slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());
+        slice->setDeblockingFilterOverrideFlag(!m_cfg->getLoopFilterOffsetInPPS());
+        slice->getPPS()->setPicDisableDeblockingFilterFlag(!m_cfg->param.bEnableLoopFilter);
+        slice->setDeblockingFilterDisable(!m_cfg->param.bEnableLoopFilter);
+        if (!slice->getDeblockingFilterDisable())
+        {
+            slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+            slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
+            slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+            slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
+        }
+    }
+    else
+    {
+        slice->setDeblockingFilterOverrideFlag(false);
+        slice->setDeblockingFilterDisable(false);
+        slice->setDeblockingFilterBetaOffsetDiv2(0);
+        slice->setDeblockingFilterTcOffsetDiv2(0);
+    }
+
+    // depth computation based on GOP size
+    Int depth = 0;
+    Int poc = slice->getPOC() % m_cfg->getGOPSize();
+    if (poc)
+    {
+        Int step = m_cfg->getGOPSize();
+        for (Int i = step >> 1; i >= 1; i >>= 1)
+        {
+            for (Int j = i; j < m_cfg->getGOPSize(); j += step)
+            {
+                if (j == poc)
+                {
+                    i = 0;
+                    break;
+                }
+            }
+
+            step >>= 1;
+            depth++;
+        }
+    }
+
+    slice->setDepth(depth);
+    slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
+    xStoreWPparam(pps->getUseWP(), pps->getWPBiPred());
+
     // ------------------------------------------------------------------------------------------------------------------
     // QP setting
     // ------------------------------------------------------------------------------------------------------------------
 
-    // TODO: Real rate control here
+    Double qpdouble;
+    Double lambda;
     qpdouble = m_cfg->param.qp;
     if (sliceType != I_SLICE)
     {
@@ -192,7 +213,8 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
 
     // for RDO
-    // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
+    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
+    // instead we weight the distortion of chroma.
     Double weight = 1.0;
     Int qpc;
     Int chromaQPOffset;
@@ -231,35 +253,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
 
-    /* TODO: lookahead and DPB modeling should give us these values */
-    slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
-    slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
-
-    if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
-    {
-        slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());
-        slice->setDeblockingFilterOverrideFlag(!m_cfg->getLoopFilterOffsetInPPS());
-        slice->getPPS()->setPicDisableDeblockingFilterFlag(!m_cfg->param.bEnableLoopFilter);
-        slice->setDeblockingFilterDisable(!m_cfg->param.bEnableLoopFilter);
-        if (!slice->getDeblockingFilterDisable())
-        {
-            slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
-            slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
-            slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
-            slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
-        }
-    }
-    else
-    {
-        slice->setDeblockingFilterOverrideFlag(false);
-        slice->setDeblockingFilterDisable(false);
-        slice->setDeblockingFilterBetaOffsetDiv2(0);
-        slice->setDeblockingFilterTcOffsetDiv2(0);
-    }
-
-    slice->setDepth(depth);
-    slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
-    xStoreWPparam(pps->getUseWP(), pps->getWPBiPred());
     return slice;
 }
 
