@@ -187,9 +187,6 @@ int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
     return 0;
 }
 
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
 Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 {
     PPAScopeEvent(prepareEncode);
@@ -375,6 +372,118 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
     slice->setNextSlice(false);
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
+}
+
+// This is a function that
+// determines what Reference Picture Set to use
+// for a specific slice (with POC = POCCurr)
+Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int curPOC, Int gopID)
+{
+    slice->setRPSidx(gopID);
+    UInt intraPeriod = m_cfg->param.keyframeMax;
+    Int gopSize = m_cfg->getGOPSize();
+
+    for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
+    {
+        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
+        {
+            Int POCIndex = curPOC % intraPeriod;
+            if (POCIndex == 0)
+            {
+                POCIndex = intraPeriod;
+            }
+            if (POCIndex == m_cfg->getGOPEntry(extraNum).m_POC)
+            {
+                slice->setRPSidx(extraNum);
+            }
+        }
+        else
+        {
+            if (curPOC == m_cfg->getGOPEntry(extraNum).m_POC)
+            {
+                slice->setRPSidx(extraNum);
+            }
+        }
+    }
+
+    slice->setRPS(m_sps.getRPSList()->getReferencePictureSet(slice->getRPSidx()));
+    slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
+}
+
+Int TEncGOP::getReferencePictureSetIdxForSOP(Int curPOC, Int gopID)
+{
+    int rpsIdx = gopID;
+    UInt intraPeriod = m_cfg->param.keyframeMax;
+    Int gopSize = m_cfg->getGOPSize();
+
+    for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
+    {
+        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
+        {
+            Int POCIndex = curPOC % intraPeriod;
+            if (POCIndex == 0)
+            {
+                POCIndex = intraPeriod;
+            }
+            if (POCIndex == m_cfg->getGOPEntry(extraNum).m_POC)
+            {
+                rpsIdx = extraNum;
+            }
+        }
+        else
+        {
+            if (curPOC == m_cfg->getGOPEntry(extraNum).m_POC)
+            {
+                rpsIdx = extraNum;
+            }
+        }
+    }
+
+    return rpsIdx;
+}
+
+/** Function for deciding the nal_unit_type.
+ * \param pocCurr POC of the current picture
+ * \returns the nal unit type of the picture
+ * This function checks the configuration and returns the appropriate nal_unit_type for the picture.
+ */
+NalUnitType TEncGOP::getNalUnitType(Int curPOC, Int lastIDR)
+{
+    if (curPOC == 0)
+    {
+        return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
+    }
+    if (curPOC % m_cfg->param.keyframeMax == 0)
+    {
+        if (m_cfg->param.decodingRefreshType == 1)
+        {
+            return NAL_UNIT_CODED_SLICE_CRA;
+        }
+        else if (m_cfg->param.decodingRefreshType == 2)
+        {
+            return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
+        }
+    }
+    if (m_pocCRA > 0)
+    {
+        if (curPOC < m_pocCRA)
+        {
+            // All leading pictures are being marked as TFD pictures here since current encoder uses all
+            // reference pictures while encoding leading pictures. An encoder can ensure that a leading
+            // picture can be still decodable when random accessing to a CRA/CRANT/BLA/BLANT picture by
+            // controlling the reference pictures used for encoding that leading picture. Such a leading
+            // picture need not be marked as a TFD picture.
+            return NAL_UNIT_CODED_SLICE_RASL_R;
+        }
+    }
+    if (lastIDR > 0)
+    {
+        if (curPOC < lastIDR)
+        {
+            return NAL_UNIT_CODED_SLICE_RADL_R;
+        }
+    }
+    return NAL_UNIT_CODED_SLICE_TRAIL_R;
 }
 
 Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
@@ -958,78 +1067,6 @@ SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
     return seiDisplayOrientation;
 }
 
-// This is a function that
-// determines what Reference Picture Set to use
-// for a specific slice (with POC = POCCurr)
-Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int curPOC, Int gopID)
-{
-    slice->setRPSidx(gopID);
-    UInt intraPeriod = m_cfg->param.keyframeMax;
-    Int gopSize = m_cfg->getGOPSize();
-
-    for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
-    {
-        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
-        {
-            Int POCIndex = curPOC % intraPeriod;
-            if (POCIndex == 0)
-            {
-                POCIndex = intraPeriod;
-            }
-            if (POCIndex == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                slice->setRPSidx(extraNum);
-            }
-        }
-        else
-        {
-            if (curPOC == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                slice->setRPSidx(extraNum);
-            }
-        }
-    }
-
-    slice->setRPS(m_sps.getRPSList()->getReferencePictureSet(slice->getRPSidx()));
-    slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
-}
-
-Int TEncGOP::getReferencePictureSetIdxForSOP(Int curPOC, Int gopID)
-{
-    int rpsIdx = gopID;
-    UInt intraPeriod = m_cfg->param.keyframeMax;
-    Int gopSize = m_cfg->getGOPSize();
-
-    for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
-    {
-        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
-        {
-            Int POCIndex = curPOC % intraPeriod;
-            if (POCIndex == 0)
-            {
-                POCIndex = intraPeriod;
-            }
-            if (POCIndex == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                rpsIdx = extraNum;
-            }
-        }
-        else
-        {
-            if (curPOC == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                rpsIdx = extraNum;
-            }
-        }
-    }
-
-    return rpsIdx;
-}
-
-// ====================================================================================================================
-// Protected member functions
-// ====================================================================================================================
-
 #define VERBOSE_RATE 0
 #if VERBOSE_RATE
 static const Char* nalUnitTypeToString(NalUnitType type)
@@ -1249,50 +1286,6 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
 
         printf("]");
     }
-}
-
-/** Function for deciding the nal_unit_type.
- * \param pocCurr POC of the current picture
- * \returns the nal unit type of the picture
- * This function checks the configuration and returns the appropriate nal_unit_type for the picture.
- */
-NalUnitType TEncGOP::getNalUnitType(Int curPOC, Int lastIDR)
-{
-    if (curPOC == 0)
-    {
-        return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-    }
-    if (curPOC % m_cfg->param.keyframeMax == 0)
-    {
-        if (m_cfg->param.decodingRefreshType == 1)
-        {
-            return NAL_UNIT_CODED_SLICE_CRA;
-        }
-        else if (m_cfg->param.decodingRefreshType == 2)
-        {
-            return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-        }
-    }
-    if (m_pocCRA > 0)
-    {
-        if (curPOC < m_pocCRA)
-        {
-            // All leading pictures are being marked as TFD pictures here since current encoder uses all
-            // reference pictures while encoding leading pictures. An encoder can ensure that a leading
-            // picture can be still decodable when random accessing to a CRA/CRANT/BLA/BLANT picture by
-            // controlling the reference pictures used for encoding that leading picture. Such a leading
-            // picture need not be marked as a TFD picture.
-            return NAL_UNIT_CODED_SLICE_RASL_R;
-        }
-    }
-    if (lastIDR > 0)
-    {
-        if (curPOC < lastIDR)
-        {
-            return NAL_UNIT_CODED_SLICE_RADL_R;
-        }
-    }
-    return NAL_UNIT_CODED_SLICE_TRAIL_R;
 }
 
 /** Attaches the input bitstream to the stream in the output NAL unit
