@@ -62,10 +62,6 @@ namespace x265 { class FrameEncoder; }
 class TEncSlice : public WeightPredAnalysis
 {
 public:
-    TEncCfg* m_cfg;
-
-    Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams, x265::FrameEncoder* frameEncoder);
-
     Void xDetermineStartAndBoundingCUAddr(TComPic* pic, Bool bEncodeSlice);
 };
 

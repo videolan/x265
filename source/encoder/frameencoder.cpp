@@ -73,7 +73,6 @@ void FrameEncoder::init(TEncTop *top, int numRows)
 {
     m_cfg = top;
     m_numRows = numRows;
-    m_sliceEncoder.m_cfg = m_cfg;
 
     if (top->param.bEnableSAO)
     {
@@ -395,6 +394,183 @@ Void FrameEncoder::compressSlice(TComPic* pic)
         fprintf(fp, "8x8   : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[3] * 100) / cntTotalCu[3], (double)(cntSkipCu[3] * 100) / cntTotalCu[3]);
     }
 #endif // if LOGGING
+}
+
+Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
+{
+    PPAScopeEvent(TEncSlice_encodeSlice);
+
+    // choose entropy coder
+    TEncEntropy *entropyCoder = getEntropyCoder(0);
+    TEncSbac *sbacCoder = getSingletonSbac();
+    TComSlice* slice = pic->getSlice();
+
+    resetEncoder();
+    getCuEncoder(0)->setBitCounter(NULL);
+    entropyCoder->setEntropyCoder(sbacCoder, slice);
+
+    UInt cuAddr;
+    UInt startCUAddr = 0;
+    UInt boundingCUAddr = slice->getSliceCurEndCUAddr();
+
+    // Appropriate substream bitstream is switched later.
+    // for every CU
+#if ENC_DEC_TRACE
+    g_bJustDoIt = g_bEncDecTraceEnable;
+#endif
+    DTRACE_CABAC_VL(g_nSymbolCounter++);
+    DTRACE_CABAC_T("\tPOC: ");
+    DTRACE_CABAC_V(pic->getPOC());
+    DTRACE_CABAC_T("\n");
+#if ENC_DEC_TRACE
+    g_bJustDoIt = g_bEncDecTraceDisable;
+#endif
+
+    const int  bWaveFrontsynchro = m_cfg->param.bEnableWavefront;
+    const UInt heightInLCUs = pic->getPicSym()->getFrameHeightInCU();
+    const Int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
+    UInt bitsOriginallyInSubstreams = 0;
+
+    for (Int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
+    {
+        getBufferSBac(substrmIdx)->loadContexts(sbacCoder); //init. state
+        bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
+    }
+
+    UInt widthInLCUs  = pic->getPicSym()->getFrameWidthInCU();
+    UInt col = 0, lin = 0, subStrm = 0;
+    cuAddr = (startCUAddr / pic->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
+                                                       an encoding order index, so we need to convert the index (startCUAddr)
+                                                       into the real raster scan address (cuAddr) via the CUOrderMap */
+    UInt encCUOrder;
+    for (encCUOrder = startCUAddr / pic->getNumPartInCU();
+         encCUOrder < (boundingCUAddr + pic->getNumPartInCU() - 1) / pic->getNumPartInCU();
+         cuAddr = ++encCUOrder)
+    {
+        col     = cuAddr % widthInLCUs;
+        lin     = cuAddr / widthInLCUs;
+        subStrm = lin % numSubstreams;
+
+        entropyCoder->setBitstream(&substreams[subStrm]);
+
+        // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
+        if ((numSubstreams > 1) && (col == 0) && bWaveFrontsynchro)
+        {
+            // We'll sync if the TR is available.
+            TComDataCU *cuUp = pic->getCU(cuAddr)->getCUAbove();
+            UInt widthInCU = pic->getFrameWidthInCU();
+            TComDataCU *cuTr = NULL;
+
+            // CHECK_ME: here can be optimize a little, do it later
+            if (cuUp && ((cuAddr % widthInCU + 1) < widthInCU))
+            {
+                cuTr = pic->getCU(cuAddr - widthInCU + 1);
+            }
+            if (true /*bEnforceSliceRestriction*/ && ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
+            {
+                // TR not available.
+            }
+            else
+            {
+                // TR is available, we use it.
+                getSbacCoder(subStrm)->loadContexts(getBufferSBac(lin - 1));
+            }
+        }
+        sbacCoder->load(getSbacCoder(subStrm)); //this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
+
+        TComDataCU* cu = pic->getCU(cuAddr);
+        if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
+        {
+            SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+            Int numCuInWidth     = saoParam->numCuInWidth;
+            Int cuAddrInSlice    = cuAddr;
+            Int rx = cuAddr % numCuInWidth;
+            Int ry = cuAddr / numCuInWidth;
+            Int allowMergeLeft = 1;
+            Int allowMergeUp   = 1;
+            Int addr = cu->getAddr();
+            allowMergeLeft = (rx > 0) && (cuAddrInSlice != 0);
+            allowMergeUp = (ry > 0) && (cuAddrInSlice >= 0);
+            if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
+            {
+                Int mergeLeft = saoParam->saoLcuParam[0][addr].mergeLeftFlag;
+                Int mergeUp = saoParam->saoLcuParam[0][addr].mergeUpFlag;
+                if (allowMergeLeft)
+                {
+                    entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeLeft);
+                }
+                else
+                {
+                    mergeLeft = 0;
+                }
+                if (mergeLeft == 0)
+                {
+                    if (allowMergeUp)
+                    {
+                        entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeUp);
+                    }
+                    else
+                    {
+                        mergeUp = 0;
+                    }
+                    if (mergeUp == 0)
+                    {
+                        for (Int compIdx = 0; compIdx < 3; compIdx++)
+                        {
+                            if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
+                            {
+                                entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else if (slice->getSPS()->getUseSAO())
+        {
+            Int addr = cu->getAddr();
+            SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+            for (Int cIdx = 0; cIdx < 3; cIdx++)
+            {
+                SaoLcuParam *saoLcuParam = &(saoParam->saoLcuParam[cIdx][addr]);
+                if (((cIdx == 0) && !slice->getSaoEnabledFlag()) || ((cIdx == 1 || cIdx == 2) && !slice->getSaoEnabledFlagChroma()))
+                {
+                    saoLcuParam->mergeUpFlag   = 0;
+                    saoLcuParam->mergeLeftFlag = 0;
+                    saoLcuParam->subTypeIdx    = 0;
+                    saoLcuParam->typeIdx       = -1;
+                    saoLcuParam->offset[0]     = 0;
+                    saoLcuParam->offset[1]     = 0;
+                    saoLcuParam->offset[2]     = 0;
+                    saoLcuParam->offset[3]     = 0;
+                }
+            }
+        }
+
+#if ENC_DEC_TRACE
+        g_bJustDoIt = g_bEncDecTraceEnable;
+#endif
+        getCuEncoder(0)->setEntropyCoder(entropyCoder);
+        getCuEncoder(0)->encodeCU(cu);
+
+#if ENC_DEC_TRACE
+        g_bJustDoIt = g_bEncDecTraceDisable;
+#endif
+
+        // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
+        getSbacCoder(subStrm)->load(sbacCoder);
+
+        // Store probabilities of second LCU in line into buffer
+        if ((numSubstreams > 1) && (col == 1) && bWaveFrontsynchro)
+        {
+            getBufferSBac(lin)->loadContexts(getSbacCoder(subStrm));
+        }
+    }
+
+    if (slice->getPPS()->getCabacInitPresentFlag())
+    {
+        entropyCoder->determineCabacInitIdx();
+    }
 }
 
 void FrameEncoder::processRow(int row)

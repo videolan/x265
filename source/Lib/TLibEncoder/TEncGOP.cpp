@@ -774,7 +774,7 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     slice->setTileOffstForMultES(oneBitstreamPerSliceLength);
     slice->setTileLocationCount(0);
-    sliceEncoder->encodeSlice(pic, outStreams, frameEncoder);
+    frameEncoder->encodeSlice(pic, outStreams);
 
     {
         // Construct the final bitstream by flushing and concatenating substreams.
