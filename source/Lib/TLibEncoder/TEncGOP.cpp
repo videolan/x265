@@ -194,18 +194,15 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 
     Int gopIdx = pic->m_lowres.gopIdx;
     Int pocCurr = pic->getSlice()->getPOC();
+    Bool forceIntra = m_cfg->param.keyframeMax == 1 || (pocCurr % m_cfg->param.keyframeMax == 0) || pocCurr == 0;
+    m_frameEncoder->initSlice(pic, forceIntra, gopIdx, &m_sps, &m_pps);
 
+    TComSlice* slice = pic->getSlice();
     if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
         getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
     {
         m_lastIDR = pocCurr;
     }
-
-    // Slice data initialization
-    Bool forceIntra = m_cfg->param.keyframeMax == 1 || (pocCurr % m_cfg->param.keyframeMax == 0) || pocCurr == 0;
-    m_frameEncoder->initSlice(pic, forceIntra, gopIdx, &m_sps, &m_pps);
-
-    TComSlice* slice = pic->getSlice();
     slice->setLastIDR(m_lastIDR);
 
     if (slice->getSliceType() == B_SLICE && m_cfg->getGOPEntry(gopIdx).m_sliceType == 'P')
