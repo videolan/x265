@@ -235,12 +235,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     // For SAO
     slice->setLambda(lambda, lambda / weight);
 
-    if (m_cfg->getUseRecalculateQPAccordingToLambda())
-    {
-        qpdouble = xGetQPValueAccordingToLambda(lambda);
-        qp = max(-sps->getQpBDOffsetY(), min(MAX_QP, (Int)floor(qpdouble + 0.5)));
-    }
-
     slice->setSliceQp(qp);
     slice->setSliceQpBase(qp);
     slice->setSliceQpDelta(0);

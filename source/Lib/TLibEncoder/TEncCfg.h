@@ -160,7 +160,6 @@ protected:
 
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-    Bool      m_recalculateQPAccordingToLambda;               ///< recalculate QP value according to the lambda value
     Int       m_activeParameterSetsSEIEnabled;                ///< enable active parameter set SEI message
     Bool      m_vuiParametersPresentFlag;                     ///< enable generation of VUI parameters
     Bool      m_aspectRatioInfoPresentFlag;                   ///< Signals whether aspect_ratio_idc is present
@@ -287,8 +286,6 @@ public:
     Bool getTransquantBypassEnableFlag() { return m_TransquantBypassEnableFlag; }
 
     Bool getCUTransquantBypassFlagValue() { return m_CUTransquantBypassFlagValue; }
-
-    Bool getUseRecalculateQPAccordingToLambda() { return m_recalculateQPAccordingToLambda; }
 
     Int getActiveParameterSetsSEIEnabled() { return m_activeParameterSetsSEIEnabled; }
 
