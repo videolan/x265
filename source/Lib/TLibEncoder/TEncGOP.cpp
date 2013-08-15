@@ -461,6 +461,8 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
     outStreams = new TComOutputBitstream[numSubstreams];
 
     // Slice compression, most of the hard work is done here
+    // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
+    // wave-front behind the CU compression and reconstruction
     sliceEncoder->compressSlice(pic, frameEncoder);
 
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
@@ -482,9 +484,9 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
         sao->createPicSaoInfo(pic);
     }
 
-    entropyCoder->setEntropyCoder(cavlcCoder, slice);
-
     /* write various header sets. */
+
+    entropyCoder->setEntropyCoder(cavlcCoder, slice);
 
     if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
         (m_sps.getVuiParametersPresentFlag()) &&
@@ -971,6 +973,8 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
         fprintf(stderr, "\n");
         fflush(stderr);
     }
+
+    m_totalCoded++;
 
     delete[] outStreams;
     delete bitstreamRedirect;
