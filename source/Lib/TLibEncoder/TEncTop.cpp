@@ -181,7 +181,11 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     TComPic *fenc = m_lookahead->outputQueue.popFront();
     m_picList.pushBack(fenc);
 
-    m_GOPEncoder->compressFrame(fenc, m_picList, accessUnitOut);
+    // determine references, prepare encoder, single-threaded
+    m_GOPEncoder->prepareEncode(fenc, m_picList);
+
+    // main encode processing, to be multi-threaded
+    m_GOPEncoder->compressFrame(fenc, accessUnitOut);
 
     if (pic_out)
     {

@@ -190,30 +190,11 @@ int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
-Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit& accessUnit)
+Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
 {
-    PPAScopeEvent(TEncGOP_compressGOP);
-
+    PPAScopeEvent(prepareEncode);
     x265::FrameEncoder*   frameEncoder = m_frameEncoder;
-    TEncEntropy*          entropyCoder = frameEncoder->getEntropyCoder(0);
     TEncSlice*            sliceEncoder = frameEncoder->getSliceEncoder();
-    TEncCavlc*            cavlcCoder   = frameEncoder->getCavlcCoder();
-    TEncSbac*             sbacCoder    = frameEncoder->getSingletonSbac();
-    TEncBinCABAC*         binCABAC     = frameEncoder->getBinCABAC();
-    TComBitCounter*       bitCounter   = frameEncoder->getBitCounter();
-    TEncSampleAdaptiveOffset* sao      = frameEncoder->getSAO();
-
-    Int                   picSptDpbOutputDuDelay = 0;
-    UInt*                 accumBitsDU = NULL;
-    UInt*                 accumNalsDU = NULL;
-    UInt                  oneBitstreamPerSliceLength = 0; // TODO: Remove
-    TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
-    TComOutputBitstream*  outStreams = NULL;
-    Bool bBufferingPeriodSEIPresentInAU = false;
-    Bool bPictureTimingSEIPresentInAU = false;
-
-    SEIPictureTiming pictureTimingSEI;
-    SEIDecodingUnitInfo decodingUnitInfoSEI;
 
     Int gopIdx = pic->m_lowres.gopIdx;
     Int pocCurr = pic->getSlice()->getPOC();
@@ -281,10 +262,10 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
     slice->setNumRefIdx(REF_PIC_LIST_0, min(m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
     slice->setNumRefIdx(REF_PIC_LIST_1, min(m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
 
-    //  Set reference list
+    // Set reference list
     slice->setRefPicList(picList);
 
-    //  Slice info. refinement
+    // Slice type refinement
     if ((slice->getSliceType() == B_SLICE) && (slice->getNumRefIdx(REF_PIC_LIST_1) == 0))
     {
         slice->setSliceType(P_SLICE);
@@ -369,7 +350,6 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
         slice->setCheckLDC(true);
     }
 
-    //-------------------------------------------------------------
     slice->setRefPOCList();
     slice->setList1IdxToList0Idx();
     slice->setEnableTMVPFlag(1);
@@ -390,10 +370,38 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
             }
         }
     }
+
     slice->setMvdL1ZeroFlag(bGPBcheck);
     slice->setNextSlice(false);
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
+}
+
+Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
+{
+    PPAScopeEvent(compressFrame);
+
+    x265::FrameEncoder*   frameEncoder = m_frameEncoder;
+    TEncEntropy*          entropyCoder = frameEncoder->getEntropyCoder(0);
+    TEncSlice*            sliceEncoder = frameEncoder->getSliceEncoder();
+    TEncCavlc*            cavlcCoder   = frameEncoder->getCavlcCoder();
+    TEncSbac*             sbacCoder    = frameEncoder->getSingletonSbac();
+    TEncBinCABAC*         binCABAC     = frameEncoder->getBinCABAC();
+    TComBitCounter*       bitCounter   = frameEncoder->getBitCounter();
+    TEncSampleAdaptiveOffset* sao      = frameEncoder->getSAO();
+    TComSlice*            slice        = pic->getSlice();
+
+    Int                   picSptDpbOutputDuDelay = 0;
+    UInt*                 accumBitsDU = NULL;
+    UInt*                 accumNalsDU = NULL;
+    UInt                  oneBitstreamPerSliceLength = 0; // TODO: Remove
+    TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
+    TComOutputBitstream*  outStreams = NULL;
+    Bool bBufferingPeriodSEIPresentInAU = false;
+    Bool bPictureTimingSEIPresentInAU = false;
+
+    SEIPictureTiming pictureTimingSEI;
+    SEIDecodingUnitInfo decodingUnitInfoSEI;
 
     if (m_cfg->getUseASR())
     {

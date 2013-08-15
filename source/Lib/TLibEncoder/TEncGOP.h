@@ -97,7 +97,11 @@ public:
     Void destroy();
     Void init(TEncTop* top);
 
-    Void compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit& accessUnitOut);
+    /* Establish references, manage DPB and RPS, runs in API thread context */
+    Void prepareEncode(TComPic *pic, TComList<TComPic*> picList);
+
+    /* analyze / compress frame, can be run in parallel within reference constraints */
+    Void compressFrame(TComPic *pic, AccessUnit& accessUnitOut);
 
     int getStreamHeaders(AccessUnit& accessUnitOut);
 
