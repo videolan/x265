@@ -46,30 +46,6 @@
 
 using namespace x265;
 
-//! \ingroup TLibEncoder
-//! \{
-
-// ====================================================================================================================
-// Constructor / destructor / create / destroy
-// ====================================================================================================================
-
-TEncSlice::TEncSlice()
-{}
-
-TEncSlice::~TEncSlice()
-{}
-
-Void TEncSlice::create(Int, Int, UInt, UInt, UChar)
-{}
-
-Void TEncSlice::destroy()
-{}
-
-Void TEncSlice::init(TEncTop* top)
-{
-    m_cfg = top;
-}
-
 #if CU_STAT_LOGFILE
 int cntInter[4], cntIntra[4], cntSplit[4],  totalCU;
 int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;

@@ -149,7 +149,6 @@ void FrameEncoder::destroy()
         delete[] m_rows;
     }
 
-    m_sliceEncoder.destroy();
     if (m_cfg->param.bEnableSAO)
     {
         m_sao.destroy();
@@ -162,9 +161,8 @@ void FrameEncoder::init(TEncTop *top, int numRows)
 {
     m_cfg = top;
     m_numRows = numRows;
+    m_sliceEncoder.m_cfg = m_cfg;
 
-    m_sliceEncoder.init(top);
-    m_sliceEncoder.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, (UChar)g_maxCUDepth);
     if (top->param.bEnableSAO)
     {
         m_sao.setSaoLcuBoundary(top->param.saoLcuBoundary);

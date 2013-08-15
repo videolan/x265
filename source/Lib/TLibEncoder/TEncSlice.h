@@ -61,21 +61,10 @@ namespace x265 { class FrameEncoder; }
 /// slice encoder class
 class TEncSlice : public WeightPredAnalysis
 {
-private:
-
-    // encoder configuration
-    TEncCfg* m_cfg; ///< encoder configuration class
-
 public:
+    TEncCfg* m_cfg;
 
-    TEncSlice();
-    virtual ~TEncSlice();
-
-    Void create(Int width, Int height, UInt maxCUWidth, UInt maxCUHeight, UChar totalDepth);
-    Void destroy();
-    Void init(TEncTop* top);
-
-    Void compressSlice(TComPic* pic, x265::FrameEncoder* frameEncoder); ///< analysis stage of slice
+    Void compressSlice(TComPic* pic, x265::FrameEncoder* frameEncoder);
 
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams, x265::FrameEncoder* frameEncoder);
 
