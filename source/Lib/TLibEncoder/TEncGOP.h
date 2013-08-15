@@ -94,7 +94,7 @@ protected:
     /* SEI/ NAL / Encode methods */
     Void xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUnit&);
 
-    SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
+    SEIActiveParameterSets* xCreateSEIActiveParameterSets();
 
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 

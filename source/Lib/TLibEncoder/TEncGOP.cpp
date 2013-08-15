@@ -161,7 +161,7 @@ int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
 
     if (m_cfg->getActiveParameterSetsSEIEnabled())
     {
-        SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets(&m_sps);
+        SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets();
 
         entropyCoder->setBitstream(&nalu.m_Bitstream);
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, &m_sps);
@@ -735,7 +735,7 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     if (accumNalsDU != NULL) delete [] accumNalsDU;
 }
 
-SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
+SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets()
 {
     SEIActiveParameterSets *seiActiveParameterSets = new SEIActiveParameterSets();
 
@@ -744,7 +744,7 @@ SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
     seiActiveParameterSets->m_noParamSetUpdateFlag = false;
     seiActiveParameterSets->numSpsIdsMinus1 = 0;
     seiActiveParameterSets->activeSeqParamSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
-    seiActiveParameterSets->activeSeqParamSetId[0] = sps->getSPSId();
+    seiActiveParameterSets->activeSeqParamSetId[0] = m_sps.getSPSId();
     return seiActiveParameterSets;
 }
 
