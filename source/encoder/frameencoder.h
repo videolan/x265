@@ -140,8 +140,6 @@ public:
 
     TComBitCounter*         getBitCounter()    { return &m_bitCounter; }
 
-    TEncSlice*              getSliceEncoder()  { return &m_sliceEncoder; }
-
     void resetEntropy(TComSlice *slice)
     {
         for (int i = 0; i < this->m_numRows; i++)
@@ -183,7 +181,6 @@ protected:
     FrameFilter              m_frameFilter;
     TEncSampleAdaptiveOffset m_sao;
     TComBitCounter           m_bitCounter;
-    TEncSlice                m_sliceEncoder;
     TEncCfg*                 m_cfg;
 
     TComPic*                 m_pic;

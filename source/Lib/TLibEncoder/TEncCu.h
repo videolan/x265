@@ -55,7 +55,6 @@
 class TEncTop;
 class TEncSbac;
 class TEncCavlc;
-class TEncSlice;
 
 // ====================================================================================================================
 // Class definition

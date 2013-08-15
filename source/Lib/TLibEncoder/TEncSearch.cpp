@@ -2314,7 +2314,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     Int numPredDir = cu->getSlice()->isInterP() ? 1 : 2;
     UInt biPDistTemp = MAX_INT;
 
-    /* TODO: this could be as high as TEncSlice::compressSlice() */
+    /* TODO: this could be as high as FrameEncoder::prepareEncode() */
     TComPicYuv *fenc = cu->getSlice()->getPic()->getPicYuvOrg();
     m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
 
