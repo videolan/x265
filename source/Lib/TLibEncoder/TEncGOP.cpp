@@ -374,6 +374,26 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
     slice->setNextSlice(false);
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
+
+    if (m_cfg->getUseASR() && !slice->isIntra())
+    {
+        Int gopSize = m_cfg->getGOPSize();
+        Int offset = (gopSize >> 1);
+        Int maxSR = m_cfg->param.searchRange;
+        Int numPredDir = slice->isInterP() ? 1 : 2;
+
+        for (Int dir = 0; dir <= numPredDir; dir++)
+        {
+            RefPicList  e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
+            {
+                Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
+                Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + offset) / gopSize);
+
+                frameEncoder->setAdaptiveSearchRange(dir, refIdx, newSR);
+            }
+        }
+    }
 }
 
 // This is a function that
@@ -513,11 +533,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     SEIPictureTiming pictureTimingSEI;
     SEIDecodingUnitInfo decodingUnitInfoSEI;
-
-    if (m_cfg->getUseASR())
-    {
-        sliceEncoder->setSearchRange(slice, frameEncoder);
-    }
 
     Int numSubstreams = m_top->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
     outStreams = new TComOutputBitstream[numSubstreams];

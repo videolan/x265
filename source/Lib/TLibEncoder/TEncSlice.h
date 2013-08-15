@@ -79,8 +79,6 @@ public:
 
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams, x265::FrameEncoder* frameEncoder);
 
-    Void setSearchRange(TComSlice* slice, x265::FrameEncoder *frameEncoder); ///< set ME range adaptively
-
     Void xDetermineStartAndBoundingCUAddr(TComPic* pic, Bool bEncodeSlice);
 };
 

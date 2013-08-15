@@ -70,31 +70,6 @@ Void TEncSlice::init(TEncTop* top)
     m_cfg = top;
 }
 
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
-
-Void TEncSlice::setSearchRange(TComSlice* slice, FrameEncoder *frameEncoder)
-{
-    Int currPOC = slice->getPOC();
-    Int gopSize = m_cfg->getGOPSize();
-    Int offset = (gopSize >> 1);
-    Int maxSR = m_cfg->param.searchRange;
-    Int numPredDir = slice->isInterP() ? 1 : 2;
-
-    for (Int dir = 0; dir <= numPredDir; dir++)
-    {
-        RefPicList  e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
-        {
-            Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
-            Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(currPOC - refPOC) + offset) / gopSize);
-
-            frameEncoder->setAdaptiveSearchRange(dir, refIdx, newSR);
-        }
-    }
-}
-
 #if CU_STAT_LOGFILE
 int cntInter[4], cntIntra[4], cntSplit[4],  totalCU;
 int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;
