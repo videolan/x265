@@ -204,7 +204,6 @@ Void TEncGOP::prepareEncode(TComPic *pic, TComList<TComPic*> picList)
     // Slice data initialization
     Bool forceIntra = m_cfg->param.keyframeMax == 1 || (pocCurr % m_cfg->param.keyframeMax == 0) || pocCurr == 0;
     frameEncoder->initSlice(pic, forceIntra, gopIdx, &m_sps, &m_pps);
-    frameEncoder->getSliceEncoder()->xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
 
     TComSlice* slice = pic->getSlice();
     slice->setLastIDR(m_lastIDR);
@@ -540,7 +539,7 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     // Slice compression, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
     // wave-front behind the CU compression and reconstruction
-    sliceEncoder->compressSlice(pic, frameEncoder);
+    frameEncoder->compressSlice(pic);
 
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)

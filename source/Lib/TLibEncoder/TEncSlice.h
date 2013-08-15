@@ -64,8 +64,6 @@ class TEncSlice : public WeightPredAnalysis
 public:
     TEncCfg* m_cfg;
 
-    Void compressSlice(TComPic* pic, x265::FrameEncoder* frameEncoder);
-
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams, x265::FrameEncoder* frameEncoder);
 
     Void xDetermineStartAndBoundingCUAddr(TComPic* pic, Bool bEncodeSlice);

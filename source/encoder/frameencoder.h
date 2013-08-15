@@ -32,6 +32,7 @@
 #include "TLibEncoder/TEncSearch.h"
 #include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
+#include "TLibEncoder/WeightPredAnalysis.h"
 
 #include "wavefront.h"
 
@@ -123,8 +124,6 @@ public:
     void init(TEncTop *top, int numRows);
 
     void destroy();
-
-    void encode(TComPic *pic);
 
     void processRow(int row);
 
@@ -227,6 +226,8 @@ public:
 
     void initSlice(TComPic* pic, Bool bForceISlice, Int gopID, TComSPS* sps, TComPPS *pps);
 
+    void compressSlice(TComPic *pic);
+
     void wait_lft()
     {
         if (m_cfg->param.bEnableLoopFilter)
@@ -238,6 +239,7 @@ public:
 
 protected:
 
+    WeightPredAnalysis       m_wp;
     TEncSbac                 m_sbacCoder;
     TEncBinCABAC             m_binCoderCABAC;
     TEncCavlc                m_cavlcCoder;

@@ -186,126 +186,6 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     }
 }
 
-void FrameEncoder::encode(TComPic *pic)
-{
-    int bEnableLoopFilter = m_cfg->param.bEnableLoopFilter;
-    m_pic = pic;
-
-    // reset entropy coders
-    m_sbacCoder.init(&m_binCoderCABAC);
-    for (int i = 0; i < this->m_numRows; i++)
-    {
-        m_rows[i].init();
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, pic->getSlice());
-        m_rows[i].m_entropyCoder.resetEntropy();
-        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
-        m_pic->m_complete_enc[i] = 0;
-    }
-
-    m_frameFilter.start(pic);
-
-    if (!m_pool || !m_cfg->param.bEnableWavefront)
-    {
-        for (int i = 0; i < this->m_numRows; i++)
-        {
-            processRow(i);
-        }
-        // Loopfilter
-        if (bEnableLoopFilter)
-        {
-            for (int i = 0; i < this->m_numRows; i++)
-            {
-                m_frameFilter.processRow(i);
-            }
-        }
-    }
-    else
-    {
-        WaveFront::enqueue();
-
-        // Enqueue first row, then block until worker threads complete the frame
-        WaveFront::enqueueRow(0);
-
-        m_completionEvent.wait();
-
-        WaveFront::dequeue();
-
-        // Dummy, I think we need not pend here
-        if (bEnableLoopFilter)
-        {
-            //wait_lft();
-        }
-    }
-}
-
-void FrameEncoder::processRow(int row)
-{
-    PPAScopeEvent(Thread_ProcessRow);
-
-    // Called by worker threads
-    CTURow& curRow  = m_rows[row];
-    CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
-
-    const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
-    const uint32_t lineStartCUAddr = row * numCols;
-    for (UInt col = m_pic->m_complete_enc[row]; col < numCols; col++)
-    {
-        const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* cu = m_pic->getCU(cuAddr);
-        cu->initCU(m_pic, cuAddr);
-
-        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
-        codeRow.m_entropyCoder.resetEntropy();
-
-        TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
-
-        // TODO: Keep atomic running totals for rate control?
-        // cu->m_totalBits;
-        // cu->m_totalCost;
-        // cu->m_totalDistortion;
-
-        // Completed CU processing
-        m_pic->m_complete_enc[row]++;
-
-        // Active Loopfilter
-        if (row > 0)
-        {
-            // NOTE: my version, it need check active flag
-            m_frameFilter.enqueueRow(row - 1);
-        }
-
-        if (m_pic->m_complete_enc[row] >= 2 && row < m_numRows - 1)
-        {
-            ScopedLock below(m_rows[row + 1].m_lock);
-            if (m_rows[row + 1].m_active == false &&
-                m_pic->m_complete_enc[row + 1] + 2 <= m_pic->m_complete_enc[row])
-            {
-                m_rows[row + 1].m_active = true;
-                WaveFront::enqueueRow(row + 1);
-            }
-        }
-
-        ScopedLock self(curRow.m_lock);
-        if (row > 0 && m_pic->m_complete_enc[row] < numCols - 1 && m_pic->m_complete_enc[row - 1] < m_pic->m_complete_enc[row] + 2)
-        {
-            curRow.m_active = false;
-            return;
-        }
-        if (m_cfg->param.bEnableWavefront && checkHigherPriorityRow(row))
-        {
-            curRow.m_active = false;
-            return;
-        }
-    }
-
-    // this row of CTUs has been encoded
-    if (row == m_numRows - 1)
-    {
-        m_completionEvent.trigger();
-    }
-}
-
 void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID, TComSPS* sps, TComPPS *pps)
 {
     TComSlice* slice = pic->getSlice();
@@ -346,6 +226,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID, TComSPS
         slice->setDeblockingFilterBetaOffsetDiv2(0);
         slice->setDeblockingFilterTcOffsetDiv2(0);
     }
+    m_wp.xStoreWPparam(pps->getUseWP(), pps->getWPBiPred());
 
     // depth computation based on GOP size
     Int depth = 0;
@@ -465,6 +346,231 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID, TComSPS
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
+}
+
+#if CU_STAT_LOGFILE
+int cntInter[4], cntIntra[4], cntSplit[4],  totalCU;
+int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;
+int cntSkipCu[4], cntTotalCu[4];
+extern FILE * fp, * fp1;
+#endif
+Void FrameEncoder::compressSlice(TComPic* pic)
+{
+#if CU_STAT_LOGFILE
+
+    for (int i = 0; i < 4; i++)
+    {
+        cntInter[i] = 0;
+        cntIntra[i] = 0;
+        cntSplit[i] = 0;
+        cntSkipCu[i] = 0;
+        cntTotalCu[i] = 0;
+        for (int j = 0; j < 4; j++)
+        {
+            if (j < 3)
+            {
+                cuIntraDistribution[i][j] = 0;
+            }
+            cuInterDistribution[i][j] = 0;
+        }
+    }
+
+    totalCU = 0;
+    cntIntraNxN = 0;
+#endif // if CU_STAT_LOGFILE
+
+    TComSlice* slice = pic->getSlice();
+    slice->setSliceSegmentBits(0);
+    m_pic = pic;
+
+    m_sliceEncoder.xDetermineStartAndBoundingCUAddr(pic, false);
+
+    //------------------------------------------------------------------------------
+    //  Weighted Prediction parameters estimation.
+    //------------------------------------------------------------------------------
+    // calculate AC/DC values for current picture
+    if (slice->getPPS()->getUseWP() || slice->getPPS()->getWPBiPred())
+    {
+        m_wp.xCalcACDCParamSlice(slice);
+    }
+
+    Bool wpexplicit = (slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
+        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
+
+    if (wpexplicit)
+    {
+        //------------------------------------------------------------------------------
+        //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
+        //------------------------------------------------------------------------------
+        m_wp.xEstimateWPParamSlice(slice);
+        slice->initWpScaling();
+
+        // check WP on/off
+        m_wp.xCheckWPEnable(slice);
+    }
+
+    Int numPredDir = slice->isInterP() ? 1 : 2;
+
+    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()))
+    {
+        for (Int refList = 0; refList < numPredDir; refList++)
+        {
+            RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
+            {
+                // Generate weighted motion reference
+                wpScalingParam *w = &(slice->m_weightPredTable[picList][refIdxTemp][0]);
+                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), w);
+            }
+        }
+    }
+    else
+    {
+        for (Int refList = 0; refList < numPredDir; refList++)
+        {
+            RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
+            {
+                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), NULL);
+            }
+        }
+    }
+
+    // reset entropy coders
+    m_sbacCoder.init(&m_binCoderCABAC);
+    for (int i = 0; i < this->m_numRows; i++)
+    {
+        m_rows[i].init();
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, pic->getSlice());
+        m_rows[i].m_entropyCoder.resetEntropy();
+        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
+        m_pic->m_complete_enc[i] = 0;
+    }
+
+    m_frameFilter.start(pic);
+
+    if (!m_pool || !m_cfg->param.bEnableWavefront)
+    {
+        for (int i = 0; i < this->m_numRows; i++)
+        {
+            processRow(i);
+        }
+
+        if (m_cfg->param.bEnableLoopFilter)
+        {
+            for (int i = 0; i < this->m_numRows; i++)
+            {
+                m_frameFilter.processRow(i);
+            }
+        }
+    }
+    else
+    {
+        WaveFront::enqueue();
+
+        // Enqueue first row, then block until worker threads complete the frame
+        WaveFront::enqueueRow(0);
+
+        m_completionEvent.wait();
+
+        WaveFront::dequeue();
+    }
+
+    if (m_cfg->param.bEnableWavefront)
+    {
+        slice->setNextSlice(true);
+    }
+
+    m_wp.xRestoreWPparam(slice);
+
+#if CU_STAT_LOGFILE
+    if (slice->getSliceType() == P_SLICE)
+    {
+        fprintf(fp, " FRAME  - P FRAME \n");
+        fprintf(fp, "64x64 : Inter [%.2f %%  (2Nx2N %.2f %%,  Nx2N %.2f %% , 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f%% )] Split[%.2f] %% Skipped[%.2f]%% \n", (double)(cntInter[0] * 100) / cntTotalCu[0], (double)(cuInterDistribution[0][0] * 100) / cntInter[0],  (double)(cuInterDistribution[0][2] * 100) / cntInter[0], (double)(cuInterDistribution[0][1] * 100) / cntInter[0], (double)(cuInterDistribution[0][3] * 100) / cntInter[0], (double)(cntIntra[0] * 100) / cntTotalCu[0], (double)(cuIntraDistribution[0][0] * 100) / cntIntra[0], (double)(cuIntraDistribution[0][1] * 100) / cntIntra[0], (double)(cuIntraDistribution[0][2] * 100) / cntIntra[0], (double)(cntSplit[0] * 100) / cntTotalCu[0], (double)(cntSkipCu[0] * 100) / cntTotalCu[0]);
+        fprintf(fp, "32x32 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f %% )] Split[%.2f] %% Skipped[%.2f] %%\n", (double)(cntInter[1] * 100) / cntTotalCu[1], (double)(cuInterDistribution[1][0] * 100) / cntInter[1],  (double)(cuInterDistribution[1][2] * 100) / cntInter[1], (double)(cuInterDistribution[1][1] * 100) / cntInter[1], (double)(cuInterDistribution[1][3] * 100) / cntInter[1], (double)(cntIntra[1] * 100) / cntTotalCu[1], (double)(cuIntraDistribution[1][0] * 100) / cntIntra[1], (double)(cuIntraDistribution[1][1] * 100) / cntIntra[1], (double)(cuIntraDistribution[1][2] * 100) / cntIntra[1], (double)(cntSplit[1] * 100) / cntTotalCu[1], (double)(cntSkipCu[1] * 100) / cntTotalCu[1]);
+        fprintf(fp, "16x16 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f %% )] Split[%.2f] %% Skipped[%.2f]%% \n", (double)(cntInter[2] * 100) / cntTotalCu[2], (double)(cuInterDistribution[2][0] * 100) / cntInter[2],  (double)(cuInterDistribution[2][2] * 100) / cntInter[2], (double)(cuInterDistribution[2][1] * 100) / cntInter[2], (double)(cuInterDistribution[2][3] * 100) / cntInter[2], (double)(cntIntra[2] * 100) / cntTotalCu[2], (double)(cuIntraDistribution[2][0] * 100) / cntIntra[2], (double)(cuIntraDistribution[2][1] * 100) / cntIntra[2], (double)(cuIntraDistribution[2][2] * 100) / cntIntra[2], (double)(cntSplit[2] * 100) / cntTotalCu[2], (double)(cntSkipCu[2] * 100) / cntTotalCu[2]);
+        fprintf(fp, "8x8 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f  %% Planar %.2f %% Ang %.2f %%) NxN[%.2f] %% ] Skipped[%.2f] %% \n \n", (double)(cntInter[3] * 100) / cntTotalCu[3], (double)(cuInterDistribution[3][0] * 100) / cntInter[3],  (double)(cuInterDistribution[3][2] * 100) / cntInter[3], (double)(cuInterDistribution[3][1] * 100) / cntInter[3], (double)(cuInterDistribution[3][3] * 100) / cntInter[3], (double)((cntIntra[3]) * 100) / cntTotalCu[3], (double)(cuIntraDistribution[3][0] * 100) / cntIntra[3], (double)(cuIntraDistribution[3][1] * 100) / cntIntra[3], (double)(cuIntraDistribution[3][2] * 100) / cntIntra[3], (double)(cntIntraNxN * 100) / cntIntra[3], (double)(cntSkipCu[3] * 100) / cntTotalCu[3]);
+    }
+
+    else
+    {
+        fprintf(fp, " FRAME - I FRAME \n");
+        fprintf(fp, "64x64 : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[0] * 100) / cntTotalCu[0], (double)(cntSkipCu[0] * 100) / cntTotalCu[0]);
+        fprintf(fp, "32x32 : Intra [%.2f %%] Skipped [%.2f %%] \n", (double)(cntIntra[1] * 100) / cntTotalCu[1], (double)(cntSkipCu[1] * 100) / cntTotalCu[1]);
+        fprintf(fp, "16x16 : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[2] * 100) / cntTotalCu[2], (double)(cntSkipCu[2] * 100) / cntTotalCu[2]);
+        fprintf(fp, "8x8   : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[3] * 100) / cntTotalCu[3], (double)(cntSkipCu[3] * 100) / cntTotalCu[3]);
+    }
+
+#endif // if LOGGING
+}
+
+void FrameEncoder::processRow(int row)
+{
+    PPAScopeEvent(Thread_ProcessRow);
+
+    // Called by worker threads
+    CTURow& curRow  = m_rows[row];
+    CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
+
+    const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
+    const uint32_t lineStartCUAddr = row * numCols;
+    for (UInt col = m_pic->m_complete_enc[row]; col < numCols; col++)
+    {
+        const uint32_t cuAddr = lineStartCUAddr + col;
+        TComDataCU* cu = m_pic->getCU(cuAddr);
+        cu->initCU(m_pic, cuAddr);
+
+        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
+        codeRow.m_entropyCoder.resetEntropy();
+
+        TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
+
+        // TODO: Keep atomic running totals for rate control?
+        // cu->m_totalBits;
+        // cu->m_totalCost;
+        // cu->m_totalDistortion;
+
+        // Completed CU processing
+        m_pic->m_complete_enc[row]++;
+
+        // Active Loopfilter
+        if (row > 0)
+        {
+            // NOTE: my version, it need check active flag
+            m_frameFilter.enqueueRow(row - 1);
+        }
+
+        if (m_pic->m_complete_enc[row] >= 2 && row < m_numRows - 1)
+        {
+            ScopedLock below(m_rows[row + 1].m_lock);
+            if (m_rows[row + 1].m_active == false &&
+                m_pic->m_complete_enc[row + 1] + 2 <= m_pic->m_complete_enc[row])
+            {
+                m_rows[row + 1].m_active = true;
+                WaveFront::enqueueRow(row + 1);
+            }
+        }
+
+        ScopedLock self(curRow.m_lock);
+        if (row > 0 && m_pic->m_complete_enc[row] < numCols - 1 && m_pic->m_complete_enc[row - 1] < m_pic->m_complete_enc[row] + 2)
+        {
+            curRow.m_active = false;
+            return;
+        }
+        if (m_cfg->param.bEnableWavefront && checkHigherPriorityRow(row))
+        {
+            curRow.m_active = false;
+            return;
+        }
+    }
+
+    // this row of CTUs has been encoded
+    if (row == m_numRows - 1)
+    {
+        m_completionEvent.trigger();
+    }
 }
 
 // **************************************************************************
