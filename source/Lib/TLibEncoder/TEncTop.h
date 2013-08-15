@@ -96,9 +96,9 @@ public:
     Void xInitPPS(TComPPS *pps);
     Void xInitRPS(TComSPS *sps);
 
-    int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, AccessUnit& accessUnitOut);
+    int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, AccessUnit& accessUnit);
 
-    int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
+    int getStreamHeaders(AccessUnit& accessUnit);
 
     Double printSummary();
 

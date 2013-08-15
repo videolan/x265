@@ -135,14 +135,11 @@ Void TEncGOP::init(TEncTop* top)
     }
 }
 
-int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
+int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
 {
-    x265::FrameEncoder* frameEncoder = &m_frameEncoders[0];
+    x265::FrameEncoder* frameEncoder = m_frameEncoder;
     TEncEntropy*        entropyCoder = frameEncoder->getEntropyCoder(0);
     TEncCavlc*          cavlcCoder   = frameEncoder->getCavlcCoder();
-
-    accessUnits.push_back(AccessUnit());
-    AccessUnit& accessUnit = accessUnits.back();
 
     entropyCoder->setEntropyCoder(cavlcCoder, NULL);
 

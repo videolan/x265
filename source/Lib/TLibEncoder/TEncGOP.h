@@ -99,7 +99,7 @@ public:
 
     Void compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit& accessUnitOut);
 
-    int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
+    int getStreamHeaders(AccessUnit& accessUnitOut);
 
 protected:
 

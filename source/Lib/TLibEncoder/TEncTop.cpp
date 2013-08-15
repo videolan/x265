@@ -216,9 +216,9 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     return 1;
 }
 
-int TEncTop::getStreamHeaders(std::list<AccessUnit>& accessUnitsOut)
+int TEncTop::getStreamHeaders(AccessUnit& accessUnit)
 {
-    return m_GOPEncoder->getStreamHeaders(accessUnitsOut);
+    return m_GOPEncoder->getStreamHeaders(accessUnit);
 }
 
 Double TEncTop::printSummary()
