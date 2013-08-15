@@ -53,47 +53,7 @@
 using namespace std;
 using namespace x265;
 
-/**
- * Produce an ascii(hex) representation of picture digest.
- *
- * Returns: a statically allocated null-terminated string.  DO NOT FREE.
- */
-inline const char*digestToString(const unsigned char digest[3][16], int numChar)
-{
-    const char* hex = "0123456789abcdef";
-    static char string[99];
-    int cnt = 0;
-
-    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
-    {
-        for (int i = 0; i < numChar; i++)
-        {
-            string[cnt++] = hex[digest[yuvIdx][i] >> 4];
-            string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
-        }
-
-        string[cnt++] = ',';
-    }
-
-    string[cnt - 1] = '\0';
-    return string;
-}
-
-static inline Int getLSB(Int poc, Int maxLSB)
-{
-    if (poc >= 0)
-    {
-        return poc % maxLSB;
-    }
-    else
-    {
-        return (maxLSB - ((-poc) % maxLSB)) % maxLSB;
-    }
-}
-
-// ====================================================================================================================
-// Enumeration
-// ====================================================================================================================
+static const char *digestToString(const unsigned char digest[3][16], int numChar);
 
 enum SCALING_LIST_PARAMETER
 {
@@ -109,23 +69,15 @@ enum SCALING_LIST_PARAMETER
 // ====================================================================================================================
 TEncGOP::TEncGOP()
 {
-    m_cfg           = NULL;
-    m_frameEncoders = NULL;
-    m_top           = NULL;
-    m_lastIDR       = 0;
-    m_totalCoded    = 0;
-    m_bRefreshPending      = 0;
-    m_pocCRA               = 0;
-    m_lastBPSEI            = 0;
+    m_cfg             = NULL;
+    m_frameEncoders   = NULL;
+    m_top             = NULL;
+    m_lastIDR         = 0;
+    m_totalCoded      = 0;
+    m_bRefreshPending = 0;
+    m_pocCRA          = 0;
+    m_lastBPSEI       = 0;
 }
-
-TEncGOP::~TEncGOP()
-{}
-
-/** Create list to contain pointers to LCU start addresses of slice.
- */
-Void TEncGOP::create()
-{}
 
 Void TEncGOP::destroy()
 {
@@ -1365,6 +1317,18 @@ Void TEncGOP::xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit
     codedSliceData->clear();
 }
 
+static inline Int getLSB(Int poc, Int maxLSB)
+{
+    if (poc >= 0)
+    {
+        return poc % maxLSB;
+    }
+    else
+    {
+        return (maxLSB - ((-poc) % maxLSB)) % maxLSB;
+    }
+}
+
 // Function will arrange the long-term pictures in the decreasing order of poc_lsb_lt,
 // and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
 Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *slice, TComList<TComPic*> picList)
@@ -1497,4 +1461,29 @@ Int TEncGOP::xGetFirstSeiLocation(AccessUnit &accessUnit)
     return seiStartPos;
 }
 
+/**
+ * Produce an ascii(hex) representation of picture digest.
+ *
+ * Returns: a statically allocated null-terminated string.  DO NOT FREE.
+ */
+const char*digestToString(const unsigned char digest[3][16], int numChar)
+{
+    const char* hex = "0123456789abcdef";
+    static char string[99];
+    int cnt = 0;
+
+    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+    {
+        for (int i = 0; i < numChar; i++)
+        {
+            string[cnt++] = hex[digest[yuvIdx][i] >> 4];
+            string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
+        }
+
+        string[cnt++] = ',';
+    }
+
+    string[cnt - 1] = '\0';
+    return string;
+}
 //! \}

@@ -91,9 +91,9 @@ public:
     x265::FrameEncoder*     m_frameEncoders;
 
     TEncGOP();
-    ~TEncGOP();
+    ~TEncGOP() {}
 
-    Void create();
+    Void create() {}
     Void destroy();
     Void init(TEncTop* top);
 
