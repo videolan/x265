@@ -468,7 +468,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
             {
                 cuTr = pic->getCU(cuAddr - widthInCU + 1);
             }
-            if (true /*bEnforceSliceRestriction*/ && ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
+            if (/*bEnforceSliceRestriction &&*/ ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
             {
                 // TR not available.
             }
