@@ -131,7 +131,6 @@ FrameEncoder::FrameEncoder(ThreadPool* pool)
     : WaveFront(pool)
     , m_frameFilter(pool)
     , m_cfg(NULL)
-    , m_slice(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
 {}
@@ -189,24 +188,23 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     }
 }
 
-void FrameEncoder::encode(TComPic *pic, TComSlice *slice)
+void FrameEncoder::encode(TComPic *pic)
 {
     int bEnableLoopFilter = m_cfg->param.bEnableLoopFilter;
     m_pic = pic;
-    m_slice = slice;
 
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init();
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_slice);
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, pic->getSlice());
         m_rows[i].m_entropyCoder.resetEntropy();
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
         m_pic->m_complete_enc[i] = 0;
     }
 
-    m_frameFilter.start(pic, slice);
+    m_frameFilter.start(pic);
 
     if (!m_pool || !m_cfg->param.bEnableWavefront)
     {
@@ -258,11 +256,11 @@ void FrameEncoder::processRow(int row)
         TComDataCU* cu = m_pic->getCU(cuAddr);
         cu->initCU(m_pic, cuAddr);
 
-        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_slice);
+        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
 
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        codeRow.processCU(cu, m_slice, bufSbac, m_cfg->param.bEnableWavefront && col == 1);
+        codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
         // TODO: Keep atomic running totals for rate control?
         // cu->m_totalBits;
@@ -316,7 +314,6 @@ void FrameEncoder::processRow(int row)
 FrameFilter::FrameFilter(ThreadPool* pool)
     : WaveFront(pool)
     , m_cfg(NULL)
-    , m_slice(NULL)
     , m_pic(NULL)
     , m_complete_lftV(NULL)
     , m_rows_active(NULL)
@@ -380,17 +377,16 @@ void FrameFilter::init(TEncTop *top, int numRows)
     }
 }
 
-void FrameFilter::start(TComPic *pic, TComSlice *slice)
+void FrameFilter::start(TComPic *pic)
 {
     m_pic = pic;
-    m_slice = slice;
 
     for (int i = 0; i < m_numRows; i++)
     {
         if (m_cfg->param.bEnableLoopFilter)
         {
             // TODO: I think this flag unused since we remove Tiles
-            m_loopFilter[i].setCfg(slice->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
+            m_loopFilter[i].setCfg(pic->getSlice()->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
             m_pic->m_complete_lft[i] = 0;
             m_rows_active[i] = false;
             m_complete_lftV[i] = 0;

@@ -89,7 +89,7 @@ public:
 
     void destroy();
 
-    void start(TComPic *pic, TComSlice* slice);
+    void start(TComPic *pic);
     void wait();
 
     void enqueueRow(int row);
@@ -99,7 +99,6 @@ public:
 protected:
     TEncCfg*                 m_cfg;
 
-    TComSlice*               m_slice;
     TComPic*                 m_pic;
     volatile uint32_t*       m_complete_lftV;
     volatile bool*           m_rows_active;
@@ -125,7 +124,7 @@ public:
 
     void destroy();
 
-    void encode(TComPic *pic, TComSlice* slice);
+    void encode(TComPic *pic);
 
     void processRow(int row);
 
@@ -198,8 +197,6 @@ public:
 
     TEncCu*      getCuEncoder(int row)         { return &this->m_rows[row].m_cuCoder; }
 
-    TComSlice*   getSlice()                    { return m_slice; }
-
     /* Frame singletons, last the life of the encoder */
     TEncSbac*               getSingletonSbac() { return &m_sbacCoder; }
 
@@ -248,7 +245,6 @@ protected:
     TEncSlice                m_sliceEncoder;
     TEncCfg*                 m_cfg;
 
-    TComSlice*               m_slice;
     TComPic*                 m_pic;
 
     int                      m_numRows;

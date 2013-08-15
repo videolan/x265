@@ -388,7 +388,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
         }
     }
 
-    frameEncoder->encode(pic, slice);
+    frameEncoder->encode(pic);
 
     if (m_cfg->param.bEnableWavefront)
     {
