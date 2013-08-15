@@ -64,7 +64,7 @@ enum SCALING_LIST_PARAMETER
 TEncGOP::TEncGOP()
 {
     m_cfg             = NULL;
-    m_frameEncoder   = NULL;
+    m_frameEncoder    = NULL;
     m_top             = NULL;
     m_lastIDR         = 0;
     m_totalCoded      = 0;
@@ -532,7 +532,7 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     SEIPictureTiming pictureTimingSEI;
     SEIDecodingUnitInfo decodingUnitInfoSEI;
 
-    Int numSubstreams = m_top->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
+    Int numSubstreams = m_cfg->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
     outStreams = new TComOutputBitstream[numSubstreams];
 
     // Slice compression, most of the hard work is done here
@@ -653,9 +653,9 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
         m_lastBPSEI = m_totalCoded;
     }
-    if ((m_top->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
+    if ((m_cfg->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
     {
-        if (m_top->getGradualDecodingRefreshInfoEnabled() && !slice->getRapPicFlag())
+        if (m_cfg->getGradualDecodingRefreshInfoEnabled() && !slice->getRapPicFlag())
         {
             // Gradual decoding refresh SEI
             OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
@@ -1212,8 +1212,8 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
 {
     //===== calculate PSNR =====
     Int stride = recon->getStride();
-    Int width  = recon->getWidth() - m_top->getPad(0);
-    Int height = recon->getHeight() - m_top->getPad(1);
+    Int width  = recon->getWidth() - m_cfg->getPad(0);
+    Int height = recon->getHeight() - m_cfg->getPad(1);
     Int size = width * height;
 
     UInt64 ssdY = computeSSD(pic->getPicYuvOrg()->getLumaAddr(), recon->getLumaAddr(), stride, width, height);
