@@ -37,14 +37,13 @@
 #ifndef __WEIGHTPREDANALYSIS__
 #define __WEIGHTPREDANALYSIS__
 
-#include "../TLibCommon/TypeDef.h"
-#include "../TLibCommon/TComSlice.h"
-#include "TEncCavlc.h"
+#include "TLibCommon/TypeDef.h"
+#include "TLibCommon/TComSlice.h"
 
 class WeightPredAnalysis
 {
     Bool m_weighted_pred_flag;
-    Bool  m_weighted_bipred_flag;
+    Bool m_weighted_bipred_flag;
     wpScalingParam  m_wp[2][MAX_NUM_REF][3];
 
     Int64   xCalcDCValueSlice(TComSlice *slice, Pel *pPel, Int *iSample);
