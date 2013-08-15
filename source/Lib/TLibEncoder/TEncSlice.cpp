@@ -235,12 +235,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     // For SAO
     slice->setLambda(lambda, lambda / weight);
 
-#if HB_LAMBDA_FOR_LDC
-    // restore original slice type
-    sliceType = bForceISlice ? I_SLICE : sliceType;
-    slice->setSliceType(sliceType);
-#endif
-
     if (m_cfg->getUseRecalculateQPAccordingToLambda())
     {
         qpdouble = xGetQPValueAccordingToLambda(lambda);

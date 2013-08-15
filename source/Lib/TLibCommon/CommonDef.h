@@ -164,7 +164,6 @@ extern void *x265_malloc(size_t size);
 
 // Explicit temporal layer QP offset
 #define MAX_TLAYER                  8 ///< max number of temporal layer
-#define HB_LAMBDA_FOR_LDC           1 ///< use of B-style lambda for non-key pictures in low-delay mode
 
 // Adaptive search range depending on POC difference
 #define ADAPT_SR_SCALE              1 ///< division factor for adaptive search range
