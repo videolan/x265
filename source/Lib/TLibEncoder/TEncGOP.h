@@ -74,25 +74,22 @@ private:
     TComSPS                 m_sps;
     TComPPS                 m_pps;
 
+    // number of coded frames ago a buffering period SEI message was emitted
+    UInt                    m_totalCoded;
+    UInt                    m_lastBPSEI;
+
     /* TODO: Split these DPB fields into a new class */
     Int                     m_lastIDR;
-    UInt                    m_totalCoded;
-    // clean decoding refresh
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
-    UInt                    m_lastBPSEI;
-    UInt                    m_tl0Idx;
-    UInt                    m_rapIdx;
     /* end DPB fields */
-
+    
 public:
 
     x265::FrameEncoder*     m_frameEncoder;
 
     TEncGOP();
-    ~TEncGOP() {}
 
-    Void create() {}
     Void destroy();
     Void init(TEncTop* top);
 

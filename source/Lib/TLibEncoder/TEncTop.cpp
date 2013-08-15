@@ -84,13 +84,7 @@ Void TEncTop::create()
         exit(1);
     }
 
-    // create processing unit classes
     m_GOPEncoder = new TEncGOP;
-    if (m_GOPEncoder)
-    {
-        m_GOPEncoder->create();
-    }
-
     m_lookahead = new x265::Lookahead(this);
 }
 

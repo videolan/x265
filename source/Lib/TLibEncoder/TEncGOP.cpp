@@ -66,11 +66,13 @@ TEncGOP::TEncGOP()
     m_cfg             = NULL;
     m_frameEncoder    = NULL;
     m_top             = NULL;
+
     m_lastIDR         = 0;
-    m_totalCoded      = 0;
     m_bRefreshPending = 0;
     m_pocCRA          = 0;
+ 
     m_lastBPSEI       = 0;
+    m_totalCoded      = 0;
 }
 
 Void TEncGOP::destroy()
@@ -137,9 +139,8 @@ Void TEncGOP::init(TEncTop* top)
 
 int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
 {
-    x265::FrameEncoder* frameEncoder = m_frameEncoder;
-    TEncEntropy*        entropyCoder = frameEncoder->getEntropyCoder(0);
-    TEncCavlc*          cavlcCoder   = frameEncoder->getCavlcCoder();
+    TEncEntropy* entropyCoder = m_frameEncoder->getEntropyCoder(0);
+    TEncCavlc*   cavlcCoder   = m_frameEncoder->getCavlcCoder();
 
     entropyCoder->setEntropyCoder(cavlcCoder, NULL);
 
