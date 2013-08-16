@@ -401,8 +401,8 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     }
 
     slice->setSliceSegmentBits(0);
-
-    determineSliceBounds(pic, false);
+    determineSliceBounds(pic);
+    slice->setNextSlice(false);
 
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
@@ -567,7 +567,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     slice->setNextSlice(true);
     slice->setRPS(pic->getSlice()->getRPS());
     slice->setRPSidx(pic->getSlice()->getRPSidx());
-    determineSliceBounds(pic, true);
+    determineSliceBounds(pic);
 
     slice->allocSubstreamSizes(numSubstreams);
     for (int i = 0; i < numSubstreams; i++)
@@ -916,10 +916,9 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 }
 
 /** Determines the starting and bounding LCU address of current slice / dependent slice
- * \param bEncodeSlice Identifies if the calling function is compressFrame() [false] or encodeSlice() [true]
  * \returns Updates startCUAddr, boundingCUAddr with appropriate LCU address
  */
-Void FrameEncoder::determineSliceBounds(TComPic* pic, Bool bEncodeSlice)
+Void FrameEncoder::determineSliceBounds(TComPic* pic)
 {
     TComSlice* slice = pic->getSlice();
     UInt numberOfCUsInFrame = pic->getNumCUsInFrame();
@@ -927,13 +926,6 @@ Void FrameEncoder::determineSliceBounds(TComPic* pic, Bool bEncodeSlice)
 
     // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
     slice->setSliceCurEndCUAddr(boundingCUAddrSlice);
-
-    if (!bEncodeSlice)
-    {
-        // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter
-        // end of entropy and/or reconstruction slice first. Set the flags accordingly.
-        slice->setNextSlice(false);
-    }
 }
 
 void FrameEncoder::processRow(int row)
