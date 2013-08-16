@@ -26,7 +26,9 @@
 #include "x265.h"
 #include "common.h"
 #include "threadpool.h"
+
 #include "encoder.h"
+#include "bitcost.h"
 
 #include <stdio.h>
 #include <string.h>

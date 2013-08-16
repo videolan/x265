@@ -25,6 +25,7 @@
 
 #include "TLibEncoder/TEncTop.h"
 #include "PPA/ppa.h"
+#include "cturow.h"
 
 using namespace x265;
 

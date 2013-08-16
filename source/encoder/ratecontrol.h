@@ -25,8 +25,11 @@
 #ifndef __RATECONTROL__
 #define __RATECONTROL__
 
-#include "TLibEncoder/TEncTop.h"
 #include "TLibCommon/TComRom.h"
+#include "TLibCommon/TComPic.h"
+
+#include "lookahead.h"
+#include "slicetype.h"
 #include <stdint.h>
 #include <math.h>
 

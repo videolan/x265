@@ -37,11 +37,15 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/ContextModel.h"
-#include "TEncTop.h"
+#include "TLibCommon/TComPic.h"
 #include "primitives.h"
-#include "slicetype.h"
-#include "NALwrite.h"
 #include "common.h"
+
+#include "TEncTop.h"
+#include "NALwrite.h"
+
+#include "slicetype.h"
+#include "frameencoder.h"
 
 #include <limits.h>
 #include <math.h> // sqrt
@@ -58,7 +62,7 @@ TEncTop::TEncTop()
     m_pocLast = -1;
     m_maxRefPicNum = 0;
     m_lookahead = NULL;
-    m_GOPEncoder = NULL;
+    m_frameEncoder = NULL;
     ContextModel::buildNextStateTable();
 
     m_lastIDR         = 0;
@@ -89,17 +93,16 @@ Void TEncTop::create()
         exit(1);
     }
 
-    m_GOPEncoder = new TEncGOP;
+    m_frameEncoder = new x265::FrameEncoder(m_threadPool);
     m_lookahead = new x265::Lookahead(this);
 }
 
 Void TEncTop::destroy()
 {
-    // destroy processing unit classes
-    if (m_GOPEncoder)
+    if (m_frameEncoder)
     {
-        m_GOPEncoder->destroy();
-        delete m_GOPEncoder;
+        m_frameEncoder->destroy();
+        delete m_frameEncoder;
     }
 
     while (!m_picList.empty())
@@ -126,15 +129,21 @@ Void TEncTop::destroy()
 
 Void TEncTop::init()
 {
-    if (m_GOPEncoder)
+    if (m_frameEncoder)
     {
-        m_GOPEncoder->init(this);
+        int numRows = (param.sourceHeight + g_maxCUHeight - 1) / g_maxCUHeight;
+        m_frameEncoder->init(this, numRows);
     }
 
     m_analyzeI.setFrmRate(param.frameRate);
     m_analyzeP.setFrmRate(param.frameRate);
     m_analyzeB.setFrmRate(param.frameRate);
     m_analyzeAll.setFrmRate(param.frameRate);
+}
+
+int TEncTop::getStreamHeaders(AccessUnit& accessUnit)
+{
+    return m_frameEncoder->getStreamHeaders(accessUnit);
 }
 
 /**
@@ -157,7 +166,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             if (param.bEnableSAO)
             {
                 // TODO: these should be allocated on demand within the encoder
-                pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoder->getSAO());
+                pic->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
             }
             pic->getSlice()->setPOC(MAX_INT);
         }
@@ -181,10 +190,11 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     m_picList.pushBack(fenc);
 
     // determine references, set QP, etc
-    prepareEncode(fenc);
+    prepareEncode(fenc, m_frameEncoder);
 
     // main encode processing, to be multi-threaded
-    m_GOPEncoder->compressFrame(fenc, accessUnitOut);
+    m_frameEncoder->compressFrame(fenc, accessUnitOut);
+
     calculateHashAndPSNR(fenc, accessUnitOut);
 
     if (pic_out)
@@ -220,15 +230,13 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     return 1;
 }
 
-Void TEncTop::prepareEncode(TComPic *pic)
+Void TEncTop::prepareEncode(TComPic *pic, x265::FrameEncoder *frameEncoder)
 {
     Int gopIdx = pic->m_lowres.gopIdx;
     Int pocCurr = pic->getSlice()->getPOC();
-    TComSPS* sps = &m_GOPEncoder->m_sps;
-    TComPPS* pps = &m_GOPEncoder->m_pps;
 
     Bool forceIntra = param.keyframeMax == 1 || (pocCurr % param.keyframeMax == 0) || pocCurr == 0;
-    m_GOPEncoder->m_frameEncoder->initSlice(pic, forceIntra, gopIdx, sps, pps);
+    frameEncoder->initSlice(pic, forceIntra, gopIdx);
 
     TComSlice* slice = pic->getSlice();
     if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
@@ -402,7 +410,7 @@ Void TEncTop::prepareEncode(TComPic *pic)
     slice->setMvdL1ZeroFlag(bGPBcheck);
     slice->setNextSlice(false);
     slice->setScalingList(getScalingList());
-    slice->getScalingList()->setUseTransformSkip(pps->getUseTransformSkip());
+    slice->getScalingList()->setUseTransformSkip(frameEncoder->m_pps.getUseTransformSkip());
 }
 
 // This is a function that
@@ -437,7 +445,7 @@ Void TEncTop::selectReferencePictureSet(TComSlice* slice, Int curPOC, Int gopID)
         }
     }
 
-    slice->setRPS(m_GOPEncoder->m_sps.getRPSList()->getReferencePictureSet(slice->getRPSidx()));
+    slice->setRPS(m_frameEncoder->m_sps.getRPSList()->getReferencePictureSet(slice->getRPSidx()));
     slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
 }
 
@@ -554,10 +562,10 @@ Void TEncTop::arrangeLongtermPicturesInRPS(TComSlice *slice)
     // Get the long-term reference pictures
     Int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
     Int i, ctr = 0;
-    Int maxPicOrderCntLSB = 1 << m_GOPEncoder->m_sps.getBitsForPOC();
+    Int maxPicOrderCntLSB = 1 << m_frameEncoder->m_sps.getBitsForPOC();
     for (i = rps->getNumberOfPictures() - 1; i >= offset; i--, ctr++)
     {
-        longtermPicsPoc[ctr] = rps->getPOC(i);                              // LTRP POC
+        longtermPicsPoc[ctr] = rps->getPOC(i);                                  // LTRP POC
         longtermPicsLSB[ctr] = getLSB(longtermPicsPoc[ctr], maxPicOrderCntLSB); // LTRP POC LSB
         indices[ctr] = i;
         longtermPicsMSB[ctr] = longtermPicsPoc[ctr] - longtermPicsLSB[ctr];
@@ -637,11 +645,6 @@ Void TEncTop::arrangeLongtermPicturesInRPS(TComSlice *slice)
             assert(rps->getPOC(i) != rps->getPOC(j)); // If assert fails, LTRP entry repeated in RPS!!!
         }
     }
-}
-
-int TEncTop::getStreamHeaders(AccessUnit& accessUnit)
-{
-    return m_GOPEncoder->getStreamHeaders(accessUnit);
 }
 
 Double TEncTop::printSummary()
@@ -872,7 +875,7 @@ Void TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
 
         /* write the SEI messages */
         OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
-        m_GOPEncoder->m_seiWriter.writeSEImessage(onalu.m_Bitstream, sei_recon_picture_digest, pic->getSlice()->getSPS());
+        m_frameEncoder->m_seiWriter.writeSEImessage(onalu.m_Bitstream, sei_recon_picture_digest, pic->getSlice()->getSPS());
         writeRBSPTrailingBits(onalu.m_Bitstream);
 
         accessUnit.insert(accessUnit.end(), new NALUnitEBSP(onalu));

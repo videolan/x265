@@ -43,11 +43,14 @@
 // Include files
 #include "TLibCommon/AccessUnit.h"
 #include "TEncCfg.h"
-#include "TEncGOP.h"
 #include "TEncAnalyze.h"
 #include "threading.h"
 
-namespace x265 { struct Lookahead; class ThreadPool; }
+namespace x265 {
+class FrameEncoder;
+struct Lookahead;
+class ThreadPool;
+}
 
 //! \ingroup TLibEncoder
 //! \{
@@ -68,9 +71,9 @@ private:
     // quality control
     TComScalingList         m_scalingList;      ///< quantization matrix information
 
-    TEncGOP*                m_GOPEncoder;
     x265::ThreadPool*       m_threadPool;
     x265::Lookahead*        m_lookahead;
+    x265::FrameEncoder*     m_frameEncoder;
 
     /* Collect statistics globally */
     x265::Lock              m_statLock;
@@ -114,7 +117,7 @@ protected:
     TComList<TComPic*>      m_picList;
 
     /* Establish references, manage DPB and RPS, runs in API thread context */
-    Void prepareEncode(TComPic *pic);
+    Void prepareEncode(TComPic *pic, x265::FrameEncoder *frameEncoder);
 
     Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
 

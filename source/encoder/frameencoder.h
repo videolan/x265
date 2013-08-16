@@ -33,6 +33,9 @@
 #include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
 #include "TLibEncoder/WeightPredAnalysis.h"
+#include "TLibEncoder/TEncSampleAdaptiveOffset.h"
+#include "TLibEncoder/SEIwrite.h"
+#include "TLibEncoder/TEncCavlc.h"
 
 #include "wavefront.h"
 #include "framefilter.h"
@@ -155,8 +158,14 @@ public:
         m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
     }
 
-    void initSlice(TComPic* pic, Bool bForceISlice, Int gopID, TComSPS* sps, TComPPS *pps);
+    int getStreamHeaders(AccessUnit& accessUnitOut);
 
+    void initSlice(TComPic* pic, Bool bForceISlice, Int gopID);
+
+    /* analyze / compress frame, can be run in parallel within reference constraints */
+    Void compressFrame(TComPic *pic, AccessUnit& accessUnitOut);
+
+    /* called by compressFrame to perform wave-front analysis */
     void compressSlice(TComPic *pic);
 
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams);
@@ -172,7 +181,14 @@ public:
         }
     }
 
+    SEIWriter                m_seiWriter;
+    TComSPS                  m_sps;
+    TComPPS                  m_pps;
+
 protected:
+
+    TEncTop*                 m_top;
+    TEncCfg*                 m_cfg;
 
     WeightPredAnalysis       m_wp;
     TEncSbac                 m_sbacCoder;
@@ -181,7 +197,6 @@ protected:
     FrameFilter              m_frameFilter;
     TEncSampleAdaptiveOffset m_sao;
     TComBitCounter           m_bitCounter;
-    TEncCfg*                 m_cfg;
 
     TComPic*                 m_pic;
 
