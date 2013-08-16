@@ -495,57 +495,6 @@ Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
     }
 }
 
-Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType eTxt, Short* residual, UInt addr, UInt stride, UInt width, UInt height, UInt maxTrMode, UInt trMode, TCoeff* coeff)
-{
-    if (!cu->getCbf(absPartIdx, eTxt, trMode))
-    {
-        return;
-    }
-    const UInt stopTrMode = cu->getTransformIdx(absPartIdx);
-
-    if (trMode == stopTrMode)
-    {
-        UInt depth      = cu->getDepth(absPartIdx) + trMode;
-        UInt log2TrSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
-        if (eTxt != TEXT_LUMA && log2TrSize == 2)
-        {
-            UInt qpDiv = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
-            if ((absPartIdx % qpDiv) != 0)
-            {
-                return;
-            }
-            width  <<= 1;
-            height <<= 1;
-        }
-        Short* resi = residual + addr;
-        Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
-        assert(scalingListType < 6);
-        invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, resi, stride, coeff, width, height, scalingListType, cu->getTransformSkip(absPartIdx, eTxt));
-    }
-    else
-    {
-        trMode++;
-        width  >>= 1;
-        height >>= 1;
-        Int trWidth = width, trHeight = height;
-        UInt addrOffset = trHeight * stride;
-        UInt coefOffset = trWidth * trHeight;
-        UInt partOffset = cu->getTotalNumPart() >> (trMode << 1);
-        {
-            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr, stride, width, height, maxTrMode, trMode, coeff);
-            coeff += coefOffset;
-            absPartIdx += partOffset;
-            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr + trWidth, stride, width, height, maxTrMode, trMode, coeff);
-            coeff += coefOffset;
-            absPartIdx += partOffset;
-            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr + addrOffset, stride, width, height, maxTrMode, trMode, coeff);
-            coeff += coefOffset;
-            absPartIdx += partOffset;
-            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr + addrOffset + trWidth, stride, width, height, maxTrMode, trMode, coeff);
-        }
-    }
-}
-
 // ------------------------------------------------------------------------------------------------
 // Logical transform
 // ------------------------------------------------------------------------------------------------
