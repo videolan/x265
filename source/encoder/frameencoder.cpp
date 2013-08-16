@@ -489,13 +489,6 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     }
 #endif // if LOGGING
 
-    if (m_cfg->param.bEnableWavefront)
-    {
-        slice->setNextSlice(true);
-    }
-
-    m_wp.xRestoreWPparam(slice);
-
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
     {
@@ -503,10 +496,11 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         m_sao.calcSaoStatsCu_BeforeDblk(pic);
     }
 
-    //-- Loop filter
+    // wait for loop filter completion
     if (m_cfg->param.bEnableLoopFilter)
     {
-        wait_lft();
+        m_frameFilter.wait();
+        m_frameFilter.dequeue();
     }
 
     if (m_sps.getUseSAO())
@@ -514,6 +508,13 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
         m_sao.createPicSaoInfo(pic);
     }
+
+    if (m_cfg->param.bEnableWavefront)
+    {
+        slice->setNextSlice(true);
+    }
+
+    m_wp.xRestoreWPparam(slice);
 
     if ((m_cfg->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
     {
@@ -555,18 +556,16 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
         m_sao.startSaoEnc(pic, entropyCoder, getRDGoOnSbacCoder(0));
 
-        SAOParam& saoParam = *slice->getPic()->getPicSym()->getSaoParam();
-        m_sao.SAOProcess(&saoParam, pic->getSlice()->getLambdaLuma(), pic->getSlice()->getLambdaChroma(), pic->getSlice()->getDepth());
+        SAOParam* saoParam = pic->getPicSym()->getSaoParam();
+        m_sao.SAOProcess(saoParam, slice->getLambdaLuma(), slice->getLambdaChroma(), slice->getDepth());
         m_sao.endSaoEnc();
         PCMLFDisableProcess(pic);
 
-        pic->getSlice()->setSaoEnabledFlag((saoParam.bSaoFlag[0] == 1) ? true : false);
+        slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
     }
 
     // Reconstruction slice
     slice->setNextSlice(true);
-    slice->setRPS(pic->getSlice()->getRPS());
-    slice->setRPSidx(pic->getSlice()->getRPSidx());
     determineSliceBounds(pic);
 
     slice->allocSubstreamSizes(numSubstreams);
@@ -692,51 +691,6 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     delete[] outStreams;
     delete bitstreamRedirect;
-}
-
-Void FrameEncoder::compressCTURows(TComPic* pic)
-{
-    // reset entropy coders
-    m_sbacCoder.init(&m_binCoderCABAC);
-    for (int i = 0; i < this->m_numRows; i++)
-    {
-        m_rows[i].init();
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, pic->getSlice());
-        m_rows[i].m_entropyCoder.resetEntropy();
-        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
-        m_pic->m_complete_enc[i] = 0;
-    }
-
-    if (!m_pool || !m_cfg->param.bEnableWavefront)
-    {
-        for (int i = 0; i < this->m_numRows; i++)
-        {
-            processRow(i);
-        }
-
-        m_frameFilter.start(pic);
-
-        if (m_cfg->param.bEnableLoopFilter)
-        {
-            for (int i = 0; i < this->m_numRows; i++)
-            {
-                m_frameFilter.processRow(i);
-            }
-        }
-    }
-    else
-    {
-        WaveFront::enqueue();
-
-        m_frameFilter.start(pic);
-
-        // Enqueue first row, then block until worker threads complete the frame
-        WaveFront::enqueueRow(0);
-
-        m_completionEvent.wait();
-
-        WaveFront::dequeue();
-    }
 }
 
 Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
@@ -920,12 +874,56 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
  */
 Void FrameEncoder::determineSliceBounds(TComPic* pic)
 {
-    TComSlice* slice = pic->getSlice();
     UInt numberOfCUsInFrame = pic->getNumCUsInFrame();
     UInt boundingCUAddrSlice = numberOfCUsInFrame * pic->getNumPartInCU();
 
     // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-    slice->setSliceCurEndCUAddr(boundingCUAddrSlice);
+    pic->getSlice()->setSliceCurEndCUAddr(boundingCUAddrSlice);
+}
+
+Void FrameEncoder::compressCTURows(TComPic* pic)
+{
+    // reset entropy coders
+    m_sbacCoder.init(&m_binCoderCABAC);
+    for (int i = 0; i < this->m_numRows; i++)
+    {
+        m_rows[i].init();
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, pic->getSlice());
+        m_rows[i].m_entropyCoder.resetEntropy();
+        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
+        m_pic->m_complete_enc[i] = 0;
+    }
+
+    if (m_pool && m_cfg->param.bEnableWavefront)
+    {
+        WaveFront::enqueue();
+
+        m_frameFilter.start(pic);
+
+        // Enqueue first row, then block until worker threads complete the frame
+        WaveFront::enqueueRow(0);
+
+        m_completionEvent.wait();
+
+        WaveFront::dequeue();
+    }
+    else
+    {
+        for (int i = 0; i < this->m_numRows; i++)
+        {
+            processRow(i);
+        }
+
+        m_frameFilter.start(pic);
+
+        if (m_cfg->param.bEnableLoopFilter)
+        {
+            for (int i = 0; i < this->m_numRows; i++)
+            {
+                m_frameFilter.processRow(i);
+            }
+        }
+    }
 }
 
 void FrameEncoder::processRow(int row)

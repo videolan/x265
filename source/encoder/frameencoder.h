@@ -172,15 +172,6 @@ public:
 
     Void determineSliceBounds(TComPic* pic);
 
-    void wait_lft()
-    {
-        if (m_cfg->param.bEnableLoopFilter)
-        {
-            m_frameFilter.wait();
-            m_frameFilter.dequeue();
-        }
-    }
-
     SEIWriter                m_seiWriter;
     TComSPS                  m_sps;
     TComPPS                  m_pps;
