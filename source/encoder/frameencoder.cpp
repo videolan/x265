@@ -290,6 +290,24 @@ Void FrameEncoder::compressSlice(TComPic* pic)
 
     determineSliceBounds(pic, false);
 
+    if (m_cfg->getUseASR() && !slice->isIntra())
+    {
+        Int pocCurr = slice->getPOC();
+        Int maxSR = m_cfg->param.searchRange;
+        Int numPredDir = slice->isInterP() ? 1 : 2;
+
+        for (Int dir = 0; dir <= numPredDir; dir++)
+        {
+            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
+            {
+                Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
+                Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
+                setAdaptiveSearchRange(dir, refIdx, newSR);
+            }
+        }
+    }
+
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
     //------------------------------------------------------------------------------

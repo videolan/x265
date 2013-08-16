@@ -401,26 +401,6 @@ Void TEncTop::prepareEncode(TComPic *pic)
     slice->setNextSlice(false);
     slice->setScalingList(getScalingList());
     slice->getScalingList()->setUseTransformSkip(pps->getUseTransformSkip());
-
-    if (getUseASR() && !slice->isIntra())
-    {
-        Int gopSize = getGOPSize();
-        Int offset = (gopSize >> 1);
-        Int maxSR = param.searchRange;
-        Int numPredDir = slice->isInterP() ? 1 : 2;
-
-        for (Int dir = 0; dir <= numPredDir; dir++)
-        {
-            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
-            {
-                Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
-                Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + offset) / gopSize);
-
-                m_GOPEncoder->m_frameEncoder->setAdaptiveSearchRange(dir, refIdx, newSR);
-            }
-        }
-    }
 }
 
 // This is a function that
