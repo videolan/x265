@@ -166,7 +166,7 @@ public:
     Void compressFrame(TComPic *pic, AccessUnit& accessUnitOut);
 
     /* called by compressFrame to perform wave-front analysis */
-    void compressSlice(TComPic *pic);
+    void compressCTURows(TComPic *pic);
 
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams);
 

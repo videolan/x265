@@ -474,10 +474,10 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     cntIntraNxN = 0;
 #endif // if CU_STAT_LOGFILE
 
-    // Slice compression, most of the hard work is done here
+    // Analyze CTU rows, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
     // wave-front behind the CU compression and reconstruction
-    compressSlice(pic);
+    compressCTURows(pic);
 
 #if CU_STAT_LOGFILE
     if (slice->getSliceType() != I_SLICE)
@@ -708,7 +708,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     delete bitstreamRedirect;
 }
 
-Void FrameEncoder::compressSlice(TComPic* pic)
+Void FrameEncoder::compressCTURows(TComPic* pic)
 {
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);
@@ -931,7 +931,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 }
 
 /** Determines the starting and bounding LCU address of current slice / dependent slice
- * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
+ * \param bEncodeSlice Identifies if the calling function is compressFrame() [false] or encodeSlice() [true]
  * \returns Updates startCUAddr, boundingCUAddr with appropriate LCU address
  */
 Void FrameEncoder::determineSliceBounds(TComPic* pic, Bool bEncodeSlice)
