@@ -154,9 +154,8 @@ void FrameEncoder::init(TEncTop *top, int numRows)
 int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
 {
     TEncEntropy* entropyCoder = getEntropyCoder(0);
-    TEncCavlc*   cavlcCoder   = getCavlcCoder();
 
-    entropyCoder->setEntropyCoder(cavlcCoder, NULL);
+    entropyCoder->setEntropyCoder(&m_cavlcCoder, NULL);
 
     /* headers for start of bitstream */
     OutputNALUnit nalu(NAL_UNIT_VPS);
@@ -376,14 +375,8 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 {
     PPAScopeEvent(compressFrame);
 
-    /* TODO: use member variables directly here */
-    TEncEntropy*          entropyCoder = getEntropyCoder(0);
-    TEncCavlc*            cavlcCoder   = getCavlcCoder();
-    TEncSbac*             sbacCoder    = getSingletonSbac();
-    TEncBinCABAC*         binCABAC     = getBinCABAC();
-    TComBitCounter*       bitCounter   = getBitCounter();
-    TEncSampleAdaptiveOffset* sao      = getSAO();
-    TComSlice*            slice        = pic->getSlice();
+    TEncEntropy* entropyCoder = getEntropyCoder(0);
+    TComSlice*   slice        = pic->getSlice();
 
     Int numSubstreams = m_cfg->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
     TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
@@ -508,8 +501,8 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
     {
-        sao->resetStats();
-        sao->calcSaoStatsCu_BeforeDblk(pic);
+        m_sao.resetStats();
+        m_sao.calcSaoStatsCu_BeforeDblk(pic);
     }
 
     //-- Loop filter
@@ -521,7 +514,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     if (m_sps.getUseSAO())
     {
         pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
-        sao->createPicSaoInfo(pic);
+        m_sao.createPicSaoInfo(pic);
     }
 
     if ((m_cfg->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
@@ -557,16 +550,16 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     if (m_sps.getUseSAO())
     {
         // set entropy coder for RD
-        entropyCoder->setEntropyCoder(sbacCoder, slice);
+        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
         entropyCoder->resetEntropy();
-        entropyCoder->setBitstream(bitCounter);
+        entropyCoder->setBitstream(&m_bitCounter);
 
         // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
-        sao->startSaoEnc(pic, entropyCoder, getRDGoOnSbacCoder(0));
+        m_sao.startSaoEnc(pic, entropyCoder, getRDGoOnSbacCoder(0));
 
         SAOParam& saoParam = *slice->getPic()->getPicSym()->getSaoParam();
-        sao->SAOProcess(&saoParam, pic->getSlice()->getLambdaLuma(), pic->getSlice()->getLambdaChroma(), pic->getSlice()->getDepth());
-        sao->endSaoEnc();
+        m_sao.SAOProcess(&saoParam, pic->getSlice()->getLambdaLuma(), pic->getSlice()->getLambdaChroma(), pic->getSlice()->getDepth());
+        m_sao.endSaoEnc();
         PCMLFDisableProcess(pic);
 
         pic->getSlice()->setSaoEnabledFlag((saoParam.bSaoFlag[0] == 1) ? true : false);
@@ -584,7 +577,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         outStreams[i].clear();
     }
 
-    entropyCoder->setEntropyCoder(cavlcCoder, slice);
+    entropyCoder->setEntropyCoder(&m_cavlcCoder, slice);
     entropyCoder->resetEntropy();
 
     /* start slice NALunit */
@@ -607,17 +600,17 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         // We've not completed our slice header info yet, do the alignment later.
     }
 
-    sbacCoder->init((TEncBinIf*)binCABAC);
-    entropyCoder->setEntropyCoder(sbacCoder, slice);
+    m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
+    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
     resetEntropy(slice);
 
     if (slice->isNextSlice())
     {
         // set entropy coder for writing
-        sbacCoder->init((TEncBinIf*)binCABAC);
+        m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
         resetEntropy(slice);
-        getSbacCoder(0)->load(sbacCoder);
+        getSbacCoder(0)->load(&m_sbacCoder);
 
         //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
         entropyCoder->setEntropyCoder(getSbacCoder(0), slice); 
@@ -638,7 +631,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     }
     slice->setFinalized(true);
 
-    sbacCoder->load(getSbacCoder(0));
+    m_sbacCoder.load(getSbacCoder(0));
 
     slice->setTileOffstForMultES(oneBitstreamPerSliceLength);
     slice->setTileLocationCount(0);
@@ -667,7 +660,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         }
 
         // Complete the slice header info.
-        entropyCoder->setEntropyCoder(cavlcCoder, slice);
+        entropyCoder->setEntropyCoder(&m_cavlcCoder, slice);
         entropyCoder->setBitstream(&nalu.m_Bitstream);
         entropyCoder->encodeTilesWPPEntryPoint(slice);
 
@@ -699,7 +692,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     if (m_sps.getUseSAO())
     {
-        sao->destroyPicSaoInfo();
+        m_sao.destroyPicSaoInfo();
         pic->destroyNonDBFilterInfo();
     }
     pic->compressMotion();
@@ -759,12 +752,11 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 
     // choose entropy coder
     TEncEntropy *entropyCoder = getEntropyCoder(0);
-    TEncSbac *sbacCoder = getSingletonSbac();
     TComSlice* slice = pic->getSlice();
 
     resetEncoder();
     getCuEncoder(0)->setBitCounter(NULL);
-    entropyCoder->setEntropyCoder(sbacCoder, slice);
+    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
 
     UInt cuAddr;
     UInt startCUAddr = 0;
@@ -790,7 +782,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 
     for (Int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
     {
-        getBufferSBac(substrmIdx)->loadContexts(sbacCoder); //init. state
+        getBufferSBac(substrmIdx)->loadContexts(&m_sbacCoder); //init. state
         bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
     }
 
@@ -833,7 +825,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
                 getSbacCoder(subStrm)->loadContexts(getBufferSBac(lin - 1));
             }
         }
-        sbacCoder->load(getSbacCoder(subStrm)); //this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
+        m_sbacCoder.load(getSbacCoder(subStrm)); //this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
 
         TComDataCU* cu = pic->getCU(cuAddr);
         if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
@@ -915,7 +907,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 #endif
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-        getSbacCoder(subStrm)->load(sbacCoder);
+        getSbacCoder(subStrm)->load(&m_sbacCoder);
 
         // Store probabilities of second LCU in line into buffer
         if ((numSubstreams > 1) && (col == 1) && bWaveFrontsynchro)
