@@ -280,7 +280,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         memcpy(pAbove0, pix_cur - 1 - stride, cu_size + 1);
 
         // Copy Left
-        for (int i = 0; i < fenc->cuWidth + 1; i++)
+        for (int i = 0; i < cu_size + 1; i++)
         {
             pLeft0[i] = pix_cur[-1 - stride + i * stride];
         }
