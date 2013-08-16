@@ -261,11 +261,38 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
 
         Int nLog2SizeMinus2 = g_convertToBit[cu_size]; // partition size
 
-        /* TODO: These need to be declared on stack and copied into */
-        pixel *pAbove0 = fenc->m_lumaPlane[0][0] + pel_offset - fenc->m_lumaStride;
-        pixel *pAbove1 = fenc->m_lumaPlane[0][0] + pel_offset - fenc->cuHeight;
-        pixel *pLeft0  = fenc->m_lumaPlane[0][0] + pel_offset + fenc->m_lumaStride;
-        pixel *pLeft1  = fenc->m_lumaPlane[0][0] + pel_offset + fenc->cuWidth;
+        pixel _above0[32 * 4 + 1], *const pAbove0 = _above0 + 2 * 32;
+        pixel _above1[32 * 4 + 1], *const pAbove1 = _above1 + 2 * 32;
+        pixel _left0[32 * 4 + 1], *const pLeft0 = _left0 + 2 * 32;
+        pixel _left1[32 * 4 + 1], *const pLeft1 = _left1 + 2 * 32;
+
+        // CHECK_ME: I don't know why there fenc->m_lumaStride and fenc->stride seems same but in different class, please select right one
+        // CHECK_ME: I assume fenc is reconstruct frame
+        pixel *pix_cur = fenc->m_lumaPlane[0][0] + pel_offset;
+
+        // Copy Above
+        memcpy(pAbove0, pix_cur - 1 - stride, cu_size + 1);
+
+        // Copy Left
+        for(int i = 0; i < fenc->cuWidth + 1; i++)
+        {
+            pLeft0[i] = pix_cur[-1 - stride + i * stride];
+        }
+
+        memset(pAbove0 + cu_size + 1, pAbove0[cu_size], cu_size);
+        memset(pLeft0 + cu_size + 1, pLeft0[cu_size], cu_size);
+
+        // filtering with [1 2 1]
+        // assume getUseStrongIntraSmoothing() is disabled
+        pAbove1[0] = pAbove0[0];
+        pAbove1[cu_size - 1] = pAbove0[cu_size - 1];
+        pLeft1[0] = pLeft0[0];
+        pLeft1[cu_size - 1] = pLeft0[cu_size - 1];
+        for(int i = 1; i < cu_size - 1; i++)
+        {
+            pAbove1[i] = (pAbove0[i - 1] + 2 * pAbove0[i] + pAbove0[i + 1] + 2) >> 2;
+            pLeft1[i] = (pLeft0[i - 1] + 2 * pLeft0[i] + pLeft0[i + 1] + 2) >> 2;
+        }
 
         ALIGN_VAR_32(pixel, predictions[35 * 32 * 32]);
         int predsize = cu_size * cu_size;
