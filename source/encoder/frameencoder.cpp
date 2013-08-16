@@ -391,10 +391,79 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     UInt oneBitstreamPerSliceLength = 0; // TODO: Remove
 
+    if (m_cfg->getUseASR() && !slice->isIntra())
+    {
+        Int pocCurr = slice->getPOC();
+        Int maxSR = m_cfg->param.searchRange;
+        Int numPredDir = slice->isInterP() ? 1 : 2;
+
+        for (Int dir = 0; dir <= numPredDir; dir++)
+        {
+            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
+            {
+                Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
+                Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
+                setAdaptiveSearchRange(dir, refIdx, newSR);
+            }
+        }
+    }
+
+    slice->setSliceSegmentBits(0);
+
+    determineSliceBounds(pic, false);
+
+    //------------------------------------------------------------------------------
+    //  Weighted Prediction parameters estimation.
+    //------------------------------------------------------------------------------
+    // calculate AC/DC values for current picture
+    m_wp.xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
+    if (slice->getPPS()->getUseWP() || slice->getPPS()->getWPBiPred())
+    {
+        m_wp.xCalcACDCParamSlice(slice);
+    }
+
+    bool wpexplicit = (slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
+        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
+
+    if (wpexplicit)
+    {
+        //------------------------------------------------------------------------------
+        //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
+        //------------------------------------------------------------------------------
+        m_wp.xEstimateWPParamSlice(slice);
+        slice->initWpScaling();
+
+        // check WP on/off
+        m_wp.xCheckWPEnable(slice);
+    }
+
+    // Generate motion references
+    Int numPredDir = slice->isInterP() ? 1 : 2;
+    for (Int l = 0; l < numPredDir; l++)
+    {
+        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+        wpScalingParam *w = NULL;
+        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        {
+            TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
+            if ((slice->isInterP() && slice->getPPS()->getUseWP()))
+                w = slice->m_weightPredTable[list][ref];
+            slice->m_mref[list][ref] = recon->generateMotionReference(m_pool, w);
+        }
+    }
+
     // Slice compression, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
     // wave-front behind the CU compression and reconstruction
     compressSlice(pic);
+
+    if (m_cfg->param.bEnableWavefront)
+    {
+        slice->setNextSlice(true);
+    }
+
+    m_wp.xRestoreWPparam(slice);
 
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
@@ -622,69 +691,6 @@ Void FrameEncoder::compressSlice(TComPic* pic)
     cntIntraNxN = 0;
 #endif // if CU_STAT_LOGFILE
 
-    TComSlice* slice = pic->getSlice();
-    slice->setSliceSegmentBits(0);
-
-    determineSliceBounds(pic, false);
-
-    if (m_cfg->getUseASR() && !slice->isIntra())
-    {
-        Int pocCurr = slice->getPOC();
-        Int maxSR = m_cfg->param.searchRange;
-        Int numPredDir = slice->isInterP() ? 1 : 2;
-
-        for (Int dir = 0; dir <= numPredDir; dir++)
-        {
-            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
-            {
-                Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
-                Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
-                setAdaptiveSearchRange(dir, refIdx, newSR);
-            }
-        }
-    }
-
-    //------------------------------------------------------------------------------
-    //  Weighted Prediction parameters estimation.
-    //------------------------------------------------------------------------------
-    // calculate AC/DC values for current picture
-    m_wp.xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
-    if (slice->getPPS()->getUseWP() || slice->getPPS()->getWPBiPred())
-    {
-        m_wp.xCalcACDCParamSlice(slice);
-    }
-
-    bool wpexplicit = (slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
-                      (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
-
-    if (wpexplicit)
-    {
-        //------------------------------------------------------------------------------
-        //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
-        //------------------------------------------------------------------------------
-        m_wp.xEstimateWPParamSlice(slice);
-        slice->initWpScaling();
-
-        // check WP on/off
-        m_wp.xCheckWPEnable(slice);
-    }
-
-    // Generate motion references
-    Int numPredDir = slice->isInterP() ? 1 : 2;
-    for (Int l = 0; l < numPredDir; l++)
-    {
-        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        wpScalingParam *w = NULL;
-        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
-        {
-            TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
-            if ((slice->isInterP() && slice->getPPS()->getUseWP()))
-                w = slice->m_weightPredTable[list][ref];
-            slice->m_mref[list][ref] = recon->generateMotionReference(m_pool, w);
-        }
-    }
-
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);
     for (int i = 0; i < this->m_numRows; i++)
@@ -726,13 +732,6 @@ Void FrameEncoder::compressSlice(TComPic* pic)
 
         WaveFront::dequeue();
     }
-
-    if (m_cfg->param.bEnableWavefront)
-    {
-        slice->setNextSlice(true);
-    }
-
-    m_wp.xRestoreWPparam(slice);
 
 #if CU_STAT_LOGFILE
     if (slice->getSliceType() == P_SLICE)
