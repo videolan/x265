@@ -689,27 +689,6 @@ Void TEncGOP::calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit& 
     }
 }
 
-/** Function for finding the position to insert the first of APS and non-nested BP, PT, DU info SEI messages.
- * \param accessUnit Access Unit of the current picture
- * This function finds the position to insert the first of APS and non-nested BP, PT, DU info SEI messages.
- */
-Int TEncGOP::xGetFirstSeiLocation(AccessUnit &accessUnit)
-{
-    // Find the location of the first SEI message
-    AccessUnit::iterator it;
-    Int seiStartPos = 0;
-
-    for (it = accessUnit.begin(); it != accessUnit.end(); it++, seiStartPos++)
-    {
-        if ((*it)->isSei() || (*it)->isVcl())
-        {
-            break;
-        }
-    }
-
-    return seiStartPos;
-}
-
 /**
  * Produce an ascii(hex) representation of picture digest.
  *

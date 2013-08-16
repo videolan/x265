@@ -88,8 +88,6 @@ public:
 protected:
 
     Void calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit&);
-
-    Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
 };
 
 //! \}
