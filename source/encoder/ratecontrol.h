@@ -25,13 +25,7 @@
 #ifndef __RATECONTROL__
 #define __RATECONTROL__
 
-#include "TLibCommon/TComRom.h"
-#include "TLibCommon/TComPic.h"
-
-#include "lookahead.h"
-#include "slicetype.h"
-#include <stdint.h>
-#include <math.h>
+#include "TLibCommon/CommonDef.h"
 
 #define BASE_FRAME_DURATION 0.04
 
@@ -41,7 +35,11 @@
 
 #define CLIP_DURATION(f) Clip3(f, MIN_FRAME_DURATION, MAX_FRAME_DURATION)
 
+class TComPic;
+
 namespace x265 {
+struct LookaheadFrame;
+
 struct RateControlEntry
 {
     int pictType;
@@ -97,16 +95,6 @@ struct RateControl
     double rateEstimateQscale(LookaheadFrame* lframe); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
     double getQScale(double rateFactor);
-
-    double qScale2qp(double qScale)
-    {
-        return 12.0 + 6.0 * log(qScale / 0.85);
-    }
-
-    double qp2qScale(double _qp)
-    {
-        return 0.85 * pow(2.0, (_qp - 12.0) / 6.0);
-    }
 };
 }
 

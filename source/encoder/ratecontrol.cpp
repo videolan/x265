@@ -25,8 +25,19 @@
 #include "TLibCommon/TComPic.h"
 #include "lookahead.h"
 #include "rateControl.h"
+#include <math.h>
 
 using namespace x265;
+
+static inline double qScale2qp(double qScale)
+{
+    return 12.0 + 6.0 * log(qScale / 0.85);
+}
+
+static inline double qp2qScale(double qp)
+{
+    return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
+}
 
 RateControl::RateControl(x265_param_t * param)
 {
