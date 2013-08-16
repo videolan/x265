@@ -561,28 +561,28 @@ int Lookahead::scenecutInternal(int p0, int p1, int /* realScenecut */)
 
     int icost = frame->costEst[0][0];
     int pcost = frame->costEst[p1 - p0][0];
-    float f_bias;
-    int i_gop_size = frame->frameNum - last_keyframe;
-    float f_thresh_max = (float)(cfg->param.scenecutThreshold / 100.0);
+    float bias;
+    int gopSize = frame->frameNum - last_keyframe;
+    float threshMax = (float)(cfg->param.scenecutThreshold / 100.0);
     /* magic numbers pulled out of thin air */
-    float f_thresh_min = (float)(f_thresh_max * 0.25);
+    float threshMin = (float)(threshMax * 0.25);
     int res;
 
     if (cfg->param.keyframeMin == cfg->param.keyframeMax)
-        f_thresh_min = f_thresh_max;
-    if (i_gop_size <= cfg->param.keyframeMin / 4)
-        f_bias = f_thresh_min / 4;
-    else if (i_gop_size <= cfg->param.keyframeMin)
-        f_bias = f_thresh_min * i_gop_size / cfg->param.keyframeMin;
+        threshMin = threshMax;
+    if (gopSize <= cfg->param.keyframeMin / 4)
+        bias = threshMin / 4;
+    else if (gopSize <= cfg->param.keyframeMin)
+        bias = threshMin * gopSize / cfg->param.keyframeMin;
     else
     {
-        f_bias = f_thresh_min
-            + (f_thresh_max - f_thresh_min)
-            * (i_gop_size - cfg->param.keyframeMin)
+        bias = threshMin
+            + (threshMax - threshMin)
+            * (gopSize - cfg->param.keyframeMin)
             / (cfg->param.keyframeMax - cfg->param.keyframeMin);
     }
 
-    res = pcost >= (1.0 - f_bias) * icost;
+    res = pcost >= (1.0 - bias) * icost;
     return res;
 }
 
