@@ -386,9 +386,21 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         }
     }
 
-    // If current NALU is the first NALU of slice (containing slice header) and more NALUs exist (due to multiple dependent slices) then buffer it.
-    // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
-    xAttachSliceDataToNalUnit(entropyCoder, nalu, bitstreamRedirect);
+    // If current NALU is the first NALU of slice (containing slice header) and
+    // more NALUs exist (due to multiple dependent slices) then buffer it.  If
+    // current NALU is the last NALU of slice and a NALU was buffered, then (a)
+    // Write current NALU (b) Update an write buffered NALU at appropriate
+    // location in NALU list.
+    nalu.m_Bitstream.writeByteAlignment(); // Slice header byte-alignment
+
+    // Perform bitstream concatenation
+    if (bitstreamRedirect->getNumberOfWrittenBits() > 0)
+    {
+        nalu.m_Bitstream.addSubstream(bitstreamRedirect);
+    }
+    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    bitstreamRedirect->clear();
+
     accessUnit.push_back(new NALUnitEBSP(nalu));
     oneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits(); // length of bitstream after byte-alignment
 
@@ -675,27 +687,6 @@ Void TEncGOP::calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit& 
         fprintf(stderr, "\n");
         fflush(stderr);
     }
-}
-
-/** Attaches the input bitstream to the stream in the output NAL unit
-    Updates rNalu to contain concatenated bitstream. rpcBitstreamRedirect is cleared at the end of this function call.
- *  \param codedSliceData contains the coded slice data (bitstream) to be concatenated to rNalu
- *  \param rNalu          target NAL unit
- */
-Void TEncGOP::xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream* codedSliceData)
-{
-    // Byte-align
-    nalu.m_Bitstream.writeByteAlignment(); // Slice header byte-alignment
-
-    // Perform bitstream concatenation
-    if (codedSliceData->getNumberOfWrittenBits() > 0)
-    {
-        nalu.m_Bitstream.addSubstream(codedSliceData);
-    }
-
-    entropyCoder->setBitstream(&nalu.m_Bitstream);
-
-    codedSliceData->clear();
 }
 
 /** Function for finding the position to insert the first of APS and non-nested BP, PT, DU info SEI messages.
