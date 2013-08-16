@@ -779,7 +779,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
         bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
     }
 
-    UInt widthInLCUs  = pic->getPicSym()->getFrameWidthInCU();
+    UInt widthInLCUs = pic->getPicSym()->getFrameWidthInCU();
     UInt col = 0, lin = 0, subStrm = 0;
     cuAddr = (startCUAddr / pic->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
                                                        an encoding order index, so we need to convert the index (startCUAddr)
