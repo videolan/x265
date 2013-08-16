@@ -32,6 +32,7 @@ add_library(encoder ../../COPYING ../x265.h
     frameencoder.cpp frameencoder.h
     framefilter.cpp framefilter.h
     cturow.cpp cturow.h
+    dpb.cpp dpb.h
     ratecontrol.cpp ratecontrol.h
     compress.cpp)
 target_link_libraries(encoder common)

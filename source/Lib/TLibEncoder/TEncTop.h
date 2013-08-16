@@ -48,6 +48,7 @@
 
 namespace x265 {
 class FrameEncoder;
+class DPB;
 struct Lookahead;
 class ThreadPool;
 }
@@ -74,6 +75,7 @@ private:
     x265::ThreadPool*       m_threadPool;
     x265::Lookahead*        m_lookahead;
     x265::FrameEncoder*     m_frameEncoder;
+    x265::DPB*              m_dpb;
 
     /* Collect statistics globally */
     x265::Lock              m_statLock;
@@ -107,25 +109,6 @@ public:
     void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     Void calculateHashAndPSNR(TComPic* pic, AccessUnit&);
-
-protected:
-
-    // DPB/RPS  (This should eventually be spun off into its own class)
-    Int                     m_lastIDR;
-    Bool                    m_bRefreshPending;
-    Int                     m_pocCRA;
-    TComList<TComPic*>      m_picList;
-
-    /* Establish references, manage DPB and RPS, runs in API thread context */
-    Void prepareEncode(TComPic *pic, x265::FrameEncoder *frameEncoder);
-
-    Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
-
-    Int getReferencePictureSetIdxForSOP(Int pocCur, Int GOPid);
-
-    NalUnitType getNalUnitType(Int curPoc, Int lastIdr);
-
-    Void arrangeLongtermPicturesInRPS(TComSlice *);
 };
 
 //! \}

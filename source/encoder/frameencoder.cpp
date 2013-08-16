@@ -224,6 +224,8 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     SliceType sliceType = bForceISlice ? I_SLICE : B_SLICE;
     slice->setSliceType(sliceType);
     slice->setReferenced(true);
+    slice->setScalingList(m_top->getScalingList());
+    slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
 
     /* TODO: lookahead and DPB modeling should give us these values */
     slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
