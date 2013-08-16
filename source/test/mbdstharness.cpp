@@ -256,8 +256,8 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         int cmp_size = sizeof(int) * height * width;
         int numCoeff = height * width;
 
-        optReturnValue = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
         refReturnValue = ref(mintbuf1 + j, mintbuf2 + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff);
+        optReturnValue = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
 
         if (memcmp(mintbuf3, mintbuf5, cmp_size))
             return false;

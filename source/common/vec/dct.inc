@@ -3912,56 +3912,43 @@ uint32_t quant(int* coef,
     int qBits8 = qBits - 8;
     uint32_t acSum = 0;
     int dstOffset = 0;
+    __m128i acSum4 = _mm_setzero_si128();
+    __m128i addVec = _mm_set1_epi32(add);
 
-    for (int blockpos = 0; blockpos < numCoeff; blockpos = blockpos + 4)
+    for (int blockpos = 0; blockpos < numCoeff; blockpos += 8)
     {
-        Vec4i addVec(add);
+        __m128i level1 = _mm_loadu_si128((__m128i*)(coef + blockpos));
 
-        Vec4i zero(0);
-        Vec4i one(1);
+        __m128i sign1 = _mm_cmplt_epi32(level1, _mm_setzero_si128());
 
-        Vec4i level1;
-        level1.load(coef + blockpos);
+        __m128i qCoeff1 = _mm_loadu_si128((__m128i*)(quantCoeff + blockpos));
+        __m128i tmplevel1 = _mm_mullo_epi32(_mm_abs_epi32(level1), qCoeff1);
+        level1 = _mm_srai_epi32(_mm_add_epi32(tmplevel1, addVec), qBits);
+        __m128i deltaU1 = _mm_srai_epi32(_mm_sub_epi32(tmplevel1, _mm_slli_epi32(level1, qBits)), qBits8);
+        _mm_storeu_si128((__m128i*)(deltaU + blockpos), deltaU1);
+        acSum4 = _mm_add_epi32(acSum4, level1);
+        level1 = _mm_sub_epi32(_mm_xor_si128(level1, sign1), sign1);
+        level1 = _mm_cvtepi16_epi32(_mm_packs_epi32(level1, level1));
+        _mm_storeu_si128((__m128i*)(qCoef + dstOffset), level1);
 
-        Vec4i sign1;
-        sign1 = level1 < zero;
-        sign1 = sign1 | one;
+        __m128i level2 = _mm_loadu_si128((__m128i*)(coef + blockpos + 4));
+        __m128i sign2 = _mm_cmplt_epi32(level2, _mm_setzero_si128());
 
-        Vec4i qCoeff1;
-        qCoeff1.load(quantCoeff + blockpos);
-        Vec4i tmplevel1 = abs(level1) * qCoeff1;
-        level1 = (tmplevel1 + addVec) >> qBits;
-        Vec4i deltaU1 = ((tmplevel1 - (level1 << qBits)) >> qBits8);
-        deltaU1.store(deltaU + blockpos);
-        acSum = acSum + horizontal_add(level1);
-        level1 = level1 * sign1;
+        __m128i qCoeff2 = _mm_loadu_si128((__m128i*)(quantCoeff + blockpos + 4));
+        __m128i tmplevel2 = _mm_mullo_epi32(_mm_abs_epi32(level2), qCoeff2);
+        level2 = _mm_srai_epi32(_mm_add_epi32(tmplevel2, addVec), qBits);
+        __m128i deltaU2 = _mm_srai_epi32(_mm_sub_epi32(tmplevel2, _mm_slli_epi32(level2, qBits)), qBits8);
+        _mm_storeu_si128((__m128i*)(deltaU + blockpos + 4), deltaU2);
+        acSum4 = _mm_add_epi32(acSum4, level2);
+        level2 = _mm_sub_epi32(_mm_xor_si128(level2, sign2), sign2);
+        level2 = _mm_cvtepi16_epi32(_mm_packs_epi32(level2, level2));
+        _mm_storeu_si128((__m128i*)(qCoef + dstOffset + 4), level2);
 
-        blockpos += 4;
-
-        Vec4i level2;
-        level2.load(coef + blockpos);
-
-        Vec4i sign2;
-        sign2 = level2 < zero;
-        sign2 = sign2 | one;
-
-        Vec4i qCoeff2;
-        qCoeff2.load(quantCoeff + blockpos);
-        Vec4i tmplevel2 = abs(level2) * qCoeff2;
-        level2 = (tmplevel2 + addVec) >> qBits;
-        Vec4i deltaU2 = ((tmplevel2 - (level2 << qBits)) >> qBits8);
-        deltaU2.store(deltaU + blockpos);
-        acSum = acSum + horizontal_add(level2);
-        level2 = level2 * sign2;
-
-        Vec8s level = compress_saturated(level1, level2);
-        Vec4i qCoef_n0_n3 = extend_low(level);
-        Vec4i qCoef_n4_n7 = extend_high(level);
-        qCoef_n0_n3.store(qCoef + dstOffset);
-        dstOffset += 4;
-        qCoef_n4_n7.store(qCoef + dstOffset);
-        dstOffset += 4;
+        dstOffset += 8;
     }
+    acSum4 = _mm_hadd_epi32(acSum4, acSum4);
+    acSum4 = _mm_hadd_epi32(acSum4, acSum4);
+    acSum  = _mm_cvtsi128_si32(acSum4);
 
     return acSum;
 }
@@ -3975,7 +3962,9 @@ namespace x265 {
 void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
 {
     p.dequant = dequant;
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
     p.quant = quant;
+#endif
 
 #if !HIGH_BIT_DEPTH && INSTRSET > X265_CPU_LEVEL_SSSE3
     p.dct[DST_4x4] = dst4;
