@@ -136,7 +136,7 @@ public:
     /* Frame singletons, last the life of the encoder */
     TEncSbac*               getSingletonSbac() { return &m_sbacCoder; }
 
-    TEncSampleAdaptiveOffset* getSAO()         { return &m_sao; }
+    TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao[0]; }
 
     TEncCavlc*              getCavlcCoder()    { return &m_cavlcCoder; }
 
@@ -187,7 +187,6 @@ protected:
     TEncBinCABAC             m_binCoderCABAC;
     TEncCavlc                m_cavlcCoder;
     FrameFilter              m_frameFilter;
-    TEncSampleAdaptiveOffset m_sao;
     TComBitCounter           m_bitCounter;
 
     TComPic*                 m_pic;

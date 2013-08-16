@@ -73,6 +73,12 @@ TEncSampleAdaptiveOffset::~TEncSampleAdaptiveOffset()
 {}
 
 // ====================================================================================================================
+// Static
+// ====================================================================================================================
+Int64  ****TEncSampleAdaptiveOffset::m_countPreDblk = NULL;
+Int64  ****TEncSampleAdaptiveOffset::m_offsetOrgPreDblk = NULL;
+
+// ====================================================================================================================
 // Constants
 // ====================================================================================================================
 
@@ -466,51 +472,54 @@ Void TEncSampleAdaptiveOffset::destroyEncBuffer()
     }
     Int numLcu = m_numCuInWidth * m_numCuInHeight;
 
-    for (Int i = 0; i < numLcu; i++)
-    {
-        for (Int j = 0; j < 3; j++)
-        {
-            for (Int k = 0; k < MAX_NUM_SAO_TYPE; k++)
-            {
-                if (m_countPreDblk[i][j][k])
-                {
-                    delete [] m_countPreDblk[i][j][k];
-                }
-                if (m_offsetOrgPreDblk[i][j][k])
-                {
-                    delete [] m_offsetOrgPreDblk[i][j][k];
-                }
-            }
-
-            if (m_countPreDblk[i][j])
-            {
-                delete [] m_countPreDblk[i][j];
-            }
-            if (m_offsetOrgPreDblk[i][j])
-            {
-                delete [] m_offsetOrgPreDblk[i][j];
-            }
-        }
-
-        if (m_countPreDblk[i])
-        {
-            delete [] m_countPreDblk[i];
-        }
-        if (m_offsetOrgPreDblk[i])
-        {
-            delete [] m_offsetOrgPreDblk[i];
-        }
-    }
-
     if (m_countPreDblk)
     {
-        delete [] m_countPreDblk;
-        m_countPreDblk = NULL;
-    }
-    if (m_offsetOrgPreDblk)
-    {
-        delete [] m_offsetOrgPreDblk;
-        m_offsetOrgPreDblk = NULL;
+        for (Int i = 0; i < numLcu; i++)
+        {
+            for (Int j = 0; j < 3; j++)
+            {
+                for (Int k = 0; k < MAX_NUM_SAO_TYPE; k++)
+                {
+                    if (m_countPreDblk[i][j][k])
+                    {
+                        delete [] m_countPreDblk[i][j][k];
+                    }
+                    if (m_offsetOrgPreDblk[i][j][k])
+                    {
+                        delete [] m_offsetOrgPreDblk[i][j][k];
+                    }
+                }
+
+                if (m_countPreDblk[i][j])
+                {
+                    delete [] m_countPreDblk[i][j];
+                }
+                if (m_offsetOrgPreDblk[i][j])
+                {
+                    delete [] m_offsetOrgPreDblk[i][j];
+                }
+            }
+
+            if (m_countPreDblk[i])
+            {
+                delete [] m_countPreDblk[i];
+            }
+            if (m_offsetOrgPreDblk[i])
+            {
+                delete [] m_offsetOrgPreDblk[i];
+            }
+        }
+
+        if (m_countPreDblk)
+        {
+            delete [] m_countPreDblk;
+            m_countPreDblk = NULL;
+        }
+        if (m_offsetOrgPreDblk)
+        {
+            delete [] m_offsetOrgPreDblk;
+            m_offsetOrgPreDblk = NULL;
+        }
     }
 
     Int maxDepth = 4;
@@ -570,22 +579,27 @@ Void TEncSampleAdaptiveOffset::createEncBuffer()
     }
 
     Int numLcu = m_numCuInWidth * m_numCuInHeight;
-    m_countPreDblk  = new Int64 * **[numLcu];
-    m_offsetOrgPreDblk = new Int64 * **[numLcu];
-    for (Int i = 0; i < numLcu; i++)
+    if (m_countPreDblk == NULL)
     {
-        m_countPreDblk[i]  = new Int64 * *[3];
-        m_offsetOrgPreDblk[i] = new Int64 * *[3];
+        assert(m_offsetOrgPreDblk == NULL);
 
-        for (Int j = 0; j < 3; j++)
+        m_countPreDblk  = new Int64 * **[numLcu];
+        m_offsetOrgPreDblk = new Int64 * **[numLcu];
+        for (Int i = 0; i < numLcu; i++)
         {
-            m_countPreDblk[i][j] = new Int64 *[MAX_NUM_SAO_TYPE];
-            m_offsetOrgPreDblk[i][j] = new Int64 *[MAX_NUM_SAO_TYPE];
+            m_countPreDblk[i]  = new Int64 * *[3];
+            m_offsetOrgPreDblk[i] = new Int64 * *[3];
 
-            for (Int k = 0; k < MAX_NUM_SAO_TYPE; k++)
+            for (Int j = 0; j < 3; j++)
             {
-                m_countPreDblk[i][j][k]   = new Int64[MAX_NUM_SAO_CLASS];
-                m_offsetOrgPreDblk[i][j][k] = new Int64[MAX_NUM_SAO_CLASS];
+                m_countPreDblk[i][j] = new Int64 *[MAX_NUM_SAO_TYPE];
+                m_offsetOrgPreDblk[i][j] = new Int64 *[MAX_NUM_SAO_TYPE];
+
+                for (Int k = 0; k < MAX_NUM_SAO_TYPE; k++)
+                {
+                    m_countPreDblk[i][j][k]   = new Int64[MAX_NUM_SAO_CLASS];
+                    m_offsetOrgPreDblk[i][j][k] = new Int64[MAX_NUM_SAO_CLASS];
+                }
             }
         }
     }
@@ -1488,6 +1502,307 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pic)
     }
 }
 
+Void TEncSampleAdaptiveOffset::calcSaoStatsLCu_BeforeDblk(TComPic* pic, Int addr)
+{
+    Int yCbCr;
+    Int x, y;
+    TComSPS *pTmpSPS =  pic->getSlice()->getSPS();
+
+    Pel* fenc;
+    Pel* pRec;
+    Int stride;
+    Int lcuHeight = pTmpSPS->getMaxCUHeight();
+    Int lcuWidth  = pTmpSPS->getMaxCUWidth();
+    UInt rPelX;
+    UInt bPelY;
+    Int64* stats;
+    Int64* count;
+    Int classIdx;
+    Int picWidthTmp = 0;
+    Int picHeightTmp = 0;
+    Int startX;
+    Int startY;
+    Int endX;
+    Int endY;
+    Int firstX, firstY;
+
+    Int j, k;
+
+    Int isChroma;
+    Int numSkipLine, numSkipLineRight;
+
+    UInt lPelX, tPelY;
+    TComDataCU *pTmpCu;
+    Pel* pTableBo;
+
+    lcuHeight = pTmpSPS->getMaxCUHeight();
+    lcuWidth  = pTmpSPS->getMaxCUWidth();
+    pTmpCu = pic->getCU(addr);
+    lPelX   = pTmpCu->getCUPelX();
+    tPelY   = pTmpCu->getCUPelY();
+    for (yCbCr = 0; yCbCr < 3; yCbCr++)
+    {
+        isChroma = (yCbCr != 0) ? 1 : 0;
+
+        for (j = 0; j < MAX_NUM_SAO_TYPE; j++)
+        {
+            for (k = 0; k < MAX_NUM_SAO_CLASS; k++)
+            {
+                TEncSampleAdaptiveOffset::m_countPreDblk[addr][yCbCr][j][k] = 0;
+                TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][yCbCr][j][k] = 0;
+            }
+        }
+
+        if (yCbCr == 0)
+        {
+            picWidthTmp  = m_picWidth;
+            picHeightTmp = m_picHeight;
+        }
+        else if (yCbCr == 1)
+        {
+            picWidthTmp  = m_picWidth  >> isChroma;
+            picHeightTmp = m_picHeight >> isChroma;
+            lcuWidth     = lcuWidth    >> isChroma;
+            lcuHeight    = lcuHeight   >> isChroma;
+            lPelX       = lPelX      >> isChroma;
+            tPelY       = tPelY      >> isChroma;
+        }
+        rPelX       = lPelX + lcuWidth;
+        bPelY       = tPelY + lcuHeight;
+        rPelX       = rPelX > picWidthTmp  ? picWidthTmp  : rPelX;
+        bPelY       = bPelY > picHeightTmp ? picHeightTmp : bPelY;
+        lcuWidth     = rPelX - lPelX;
+        lcuHeight    = bPelY - tPelY;
+
+        stride    =  (yCbCr == 0) ? pic->getStride() : pic->getCStride();
+        pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
+
+        //if(iSaoType == BO)
+
+        numSkipLine = isChroma ? 1 : 3;
+        numSkipLineRight = isChroma ? 2 : 4;
+
+        stats = TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][yCbCr][SAO_BO];
+        count = TEncSampleAdaptiveOffset::m_countPreDblk[addr][yCbCr][SAO_BO];
+
+        fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+        pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
+
+        startX   = (rPelX == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
+        startY   = (bPelY == picHeightTmp) ? lcuHeight : lcuHeight - numSkipLine;
+
+        for (y = 0; y < lcuHeight; y++)
+        {
+            for (x = 0; x < lcuWidth; x++)
+            {
+                if (x < startX && y < startY)
+                    continue;
+
+                classIdx = pTableBo[pRec[x]];
+                if (classIdx)
+                {
+                    stats[classIdx] += (fenc[x] - pRec[x]);
+                    count[classIdx]++;
+                }
+            }
+
+            fenc += stride;
+            pRec += stride;
+        }
+
+        Int signLeft;
+        Int signRight;
+        Int signDown;
+        Int signDown1;
+        Int signDown2;
+
+        UInt uiEdgeType;
+
+        //if (iSaoType == EO_0)
+
+        numSkipLine = isChroma ? 1 : 3;
+        numSkipLineRight = isChroma ? 3 : 5;
+
+        stats = TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][yCbCr][SAO_EO_0];
+        count = TEncSampleAdaptiveOffset::m_countPreDblk[addr][yCbCr][SAO_EO_0];
+
+        fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+        pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
+
+        startX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
+        startY   = (bPelY == picHeightTmp) ? lcuHeight : lcuHeight - numSkipLine;
+        firstX   = (lPelX == 0) ? 1 : 0;
+        endX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
+
+        for (y = 0; y < lcuHeight; y++)
+        {
+            signLeft = xSign(pRec[firstX] - pRec[firstX - 1]);
+            for (x = firstX; x < endX; x++)
+            {
+                signRight =  xSign(pRec[x] - pRec[x + 1]);
+                uiEdgeType =  signRight + signLeft + 2;
+                signLeft  = -signRight;
+
+                if (x < startX && y < startY)
+                    continue;
+
+                stats[m_eoTable[uiEdgeType]] += (fenc[x] - pRec[x]);
+                count[m_eoTable[uiEdgeType]]++;
+            }
+
+            fenc += stride;
+            pRec += stride;
+        }
+
+        //if (iSaoType == EO_1)
+
+        numSkipLine = isChroma ? 2 : 4;
+        numSkipLineRight = isChroma ? 2 : 4;
+
+        stats = TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][yCbCr][SAO_EO_1];
+        count = TEncSampleAdaptiveOffset::m_countPreDblk[addr][yCbCr][SAO_EO_1];
+
+        fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+        pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
+
+        startX   = (rPelX == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
+        startY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
+        firstY = (tPelY == 0) ? 1 : 0;
+        endY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
+        if (firstY == 1)
+        {
+            fenc += stride;
+            pRec += stride;
+        }
+
+        for (x = 0; x < lcuWidth; x++)
+        {
+            m_upBuff1[x] = xSign(pRec[x] - pRec[x - stride]);
+        }
+
+        for (y = firstY; y < endY; y++)
+        {
+            for (x = 0; x < lcuWidth; x++)
+            {
+                signDown     =  xSign(pRec[x] - pRec[x + stride]);
+                uiEdgeType    =  signDown + m_upBuff1[x] + 2;
+                m_upBuff1[x] = -signDown;
+
+                if (x < startX && y < startY)
+                    continue;
+
+                stats[m_eoTable[uiEdgeType]] += (fenc[x] - pRec[x]);
+                count[m_eoTable[uiEdgeType]]++;
+            }
+
+            fenc += stride;
+            pRec += stride;
+        }
+
+        //if (iSaoType == EO_2)
+
+        numSkipLine = isChroma ? 2 : 4;
+        numSkipLineRight = isChroma ? 3 : 5;
+
+        stats = TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][yCbCr][SAO_EO_2];
+        count = TEncSampleAdaptiveOffset::m_countPreDblk[addr][yCbCr][SAO_EO_2];
+
+        fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+        pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
+
+        startX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
+        startY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
+        firstX   = (lPelX == 0) ? 1 : 0;
+        firstY = (tPelY == 0) ? 1 : 0;
+        endX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
+        endY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
+        if (firstY == 1)
+        {
+            fenc += stride;
+            pRec += stride;
+        }
+
+        for (x = firstX; x < endX; x++)
+        {
+            m_upBuff1[x] = xSign(pRec[x] - pRec[x - stride - 1]);
+        }
+
+        for (y = firstY; y < endY; y++)
+        {
+            signDown2 = xSign(pRec[stride + startX] - pRec[startX - 1]);
+            for (x = firstX; x < endX; x++)
+            {
+                signDown1      =  xSign(pRec[x] - pRec[x + stride + 1]);
+                uiEdgeType      =  signDown1 + m_upBuff1[x] + 2;
+                m_upBufft[x + 1] = -signDown1;
+
+                if (x < startX && y < startY)
+                    continue;
+
+                stats[m_eoTable[uiEdgeType]] += (fenc[x] - pRec[x]);
+                count[m_eoTable[uiEdgeType]]++;
+            }
+
+            m_upBufft[firstX] = signDown2;
+            m_swap     = m_upBuff1;
+            m_upBuff1 = m_upBufft;
+            m_upBufft = m_swap;
+
+            pRec += stride;
+            fenc += stride;
+        }
+
+        //if (iSaoType == EO_3)
+
+        numSkipLine = isChroma ? 2 : 4;
+        numSkipLineRight = isChroma ? 3 : 5;
+
+        stats = TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][yCbCr][SAO_EO_3];
+        count = TEncSampleAdaptiveOffset::m_countPreDblk[addr][yCbCr][SAO_EO_3];
+
+        fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+        pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
+
+        startX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
+        startY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
+        firstX   = (lPelX == 0) ? 1 : 0;
+        firstY = (tPelY == 0) ? 1 : 0;
+        endX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
+        endY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
+        if (firstY == 1)
+        {
+            fenc += stride;
+            pRec += stride;
+        }
+
+        for (x = firstX - 1; x < endX; x++)
+        {
+            m_upBuff1[x] = xSign(pRec[x] - pRec[x - stride + 1]);
+        }
+
+        for (y = firstY; y < endY; y++)
+        {
+            for (x = firstX; x < endX; x++)
+            {
+                signDown1      =  xSign(pRec[x] - pRec[x + stride - 1]);
+                uiEdgeType      =  signDown1 + m_upBuff1[x] + 2;
+                m_upBuff1[x - 1] = -signDown1;
+
+                if (x < startX && y < startY)
+                    continue;
+
+                stats[m_eoTable[uiEdgeType]] += (fenc[x] - pRec[x]);
+                count[m_eoTable[uiEdgeType]]++;
+            }
+
+            m_upBuff1[endX - 1] = xSign(pRec[endX - 1 + stride] - pRec[endX]);
+
+            pRec += stride;
+            fenc += stride;
+        }
+    }
+}
+
 /** get SAO statistics
  * \param  *psQTPart,  yCbCr
  */
@@ -1834,8 +2149,8 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
                         m_offset[compIdx][j][k] = 0;
                         if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
                         {
-                            m_count[compIdx][j][k] = m_countPreDblk[addr][compIdx][j][k];
-                            m_offsetOrg[compIdx][j][k] = m_offsetOrgPreDblk[addr][compIdx][j][k];
+                            m_count[compIdx][j][k] = TEncSampleAdaptiveOffset::m_countPreDblk[addr][compIdx][j][k];
+                            m_offsetOrg[compIdx][j][k] = TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][compIdx][j][k];
                         }
                         else
                         {

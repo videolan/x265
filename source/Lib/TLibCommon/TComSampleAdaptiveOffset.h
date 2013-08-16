@@ -186,10 +186,10 @@ public:
     Void create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight);
     Void destroy();
 
-    Int  convertLevelRowCol2Idx(Int level, Int row, Int col);
+    Int  convertLevelRowCol2Idx(Int level, Int row, Int col) const;
 
-    Void initSAOParam(SAOParam* saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr);
-    Void allocSaoParam(SAOParam* saoParam);
+    Void initSAOParam(SAOParam* saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr) const;
+    Void allocSaoParam(SAOParam* saoParam) const;
     Void resetSAOParam(SAOParam* saoParam);
     static Void freeSaoParam(SAOParam* saoParam);
 

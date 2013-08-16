@@ -119,7 +119,7 @@ const UInt TComSampleAdaptiveOffset::m_maxDepth = SAO_MAX_DEPTH;
 /** convert Level Row Col to Idx
  * \param   level,  row,  col
  */
-Int  TComSampleAdaptiveOffset::convertLevelRowCol2Idx(Int level, Int row, Int col)
+Int  TComSampleAdaptiveOffset::convertLevelRowCol2Idx(Int level, Int row, Int col) const
 {
     Int idx;
 
@@ -336,7 +336,7 @@ Void TComSampleAdaptiveOffset::destroy()
 /** allocate memory for SAO parameters
  * \param    *saoParam
  */
-Void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *saoParam)
+Void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *saoParam) const
 {
     saoParam->maxSplitLevel = m_maxSplitLevel;
     saoParam->saoPart[0] = new SAOQTPart[m_numCulPartsLevel[saoParam->maxSplitLevel]];
@@ -355,7 +355,7 @@ Void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *saoParam)
 /** initialize SAO parameters
  * \param    *saoParam,  iPartLevel,  iPartRow,  iPartCol,  iParentPartIdx,  StartCUX,  EndCUX,  StartCUY,  EndCUY,  yCbCr
  */
-Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr)
+Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr) const
 {
     Int j;
     Int partIdx = convertLevelRowCol2Idx(partLevel, partRow, partCol);

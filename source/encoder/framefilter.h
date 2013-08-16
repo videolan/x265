@@ -27,6 +27,7 @@
 
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComLoopFilter.h"
+#include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
 #include "threading.h"
 #include "wavefront.h"
@@ -52,6 +53,7 @@ public:
     void destroy();
 
     void start(TComPic *pic);
+    void end();
 
     void wait();
 
@@ -69,9 +71,10 @@ protected:
 
 public:
 
-    TComLoopFilter*     m_loopFilter;
-    int                 m_numRows;
-    Event               m_completionEvent;
+    TComLoopFilter*             m_loopFilter;
+    TEncSampleAdaptiveOffset*   m_sao;
+    int                         m_numRows;
+    Event                       m_completionEvent;
 };
 
 }

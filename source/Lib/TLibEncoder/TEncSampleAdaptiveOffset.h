@@ -65,8 +65,8 @@ private:
     Int64  ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  ***m_offset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  ***m_offsetOrg; //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
-    Int64  ****m_countPreDblk;    //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    Int64  ****m_offsetOrgPreDblk; //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    static Int64  ****m_countPreDblk;    //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    static Int64  ****m_offsetOrgPreDblk; //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  **m_rate;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     Int64  **m_dist;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     Double **m_cost;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
@@ -96,6 +96,7 @@ public:
     Void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
     Void calcSaoStatsCuOrg(Int addr, Int partIdx, Int yCbCr);
     Void calcSaoStatsCu_BeforeDblk(TComPic* pic);
+    Void calcSaoStatsLCu_BeforeDblk(TComPic* pic, Int addr);
     Void destroyEncBuffer();
     Void createEncBuffer();
     Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag);

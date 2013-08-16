@@ -71,11 +71,6 @@ void FrameEncoder::destroy()
         delete[] m_rows;
     }
 
-    if (m_cfg->param.bEnableSAO)
-    {
-        m_sao.destroy();
-        m_sao.destroyEncBuffer();
-    }
     m_frameFilter.destroy();
 }
 
@@ -85,14 +80,6 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_cfg = top;
     m_numRows = numRows;
 
-    if (m_cfg->param.bEnableSAO)
-    {
-        m_sao.setSaoLcuBoundary(m_cfg->param.saoLcuBoundary);
-        m_sao.setSaoLcuBasedOptimization(m_cfg->param.saoLcuBasedOptimization);
-        m_sao.setMaxNumOffsetsPerPic(m_cfg->getMaxNumOffsetsPerPic());
-        m_sao.create(m_cfg->param.sourceWidth, m_cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
-        m_sao.createEncBuffer();
-    }
     m_frameFilter.init(top, numRows);
 
     m_rows = new CTURow[m_numRows];
@@ -467,6 +454,11 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     cntIntraNxN = 0;
 #endif // if CU_STAT_LOGFILE
 
+    if (m_sps.getUseSAO())
+    {
+        pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
+    }
+
     // Analyze CTU rows, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
     // wave-front behind the CU compression and reconstruction
@@ -491,24 +483,11 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     }
 #endif // if LOGGING
 
-    // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-    if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
-    {
-        m_sao.resetStats();
-        m_sao.calcSaoStatsCu_BeforeDblk(pic);
-    }
-
     // wait for loop filter completion
     if (m_cfg->param.bEnableLoopFilter)
     {
         m_frameFilter.wait();
         m_frameFilter.dequeue();
-    }
-
-    if (m_sps.getUseSAO())
-    {
-        pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
-        m_sao.createPicSaoInfo(pic);
     }
 
     if (m_cfg->param.bEnableWavefront)
@@ -556,11 +535,11 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         entropyCoder->setBitstream(&m_bitCounter);
 
         // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
-        m_sao.startSaoEnc(pic, entropyCoder, getRDGoOnSbacCoder(0));
+        getSAO()->startSaoEnc(pic, entropyCoder, getRDGoOnSbacCoder(0));
 
         SAOParam* saoParam = pic->getPicSym()->getSaoParam();
-        m_sao.SAOProcess(saoParam, slice->getLambdaLuma(), slice->getLambdaChroma(), slice->getDepth());
-        m_sao.endSaoEnc();
+        getSAO()->SAOProcess(saoParam, slice->getLambdaLuma(), slice->getLambdaChroma(), slice->getDepth());
+        getSAO()->endSaoEnc();
         PCMLFDisableProcess(pic);
 
         slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
@@ -686,7 +665,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     if (m_sps.getUseSAO())
     {
-        m_sao.destroyPicSaoInfo();
+        m_frameFilter.end();
         pic->destroyNonDBFilterInfo();
     }
     pic->compressMotion();
