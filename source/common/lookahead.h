@@ -51,6 +51,8 @@ struct LookaheadFrame : public ReferencePlanes
     int    cuHeight; // height of lowres frame in downscale CUs
     int    bframes;
     bool   bIntraCalculated;
+    int    frameNum;  // Presentation frame number 
+    int    scenecut;  // Set to zero if the frame cannot possibly be part of a real scenecut. 
 
     int    sliceType; // Slice type decided by lookahead
     int    gopIdx;    // temp output for fixed-GOP pseudo-lookahead

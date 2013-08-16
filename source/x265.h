@@ -198,6 +198,7 @@ typedef struct x265_param_t
     int       lookaheadDepth;                  ///< Number of frames to use for lookahead, determines encoder latency
     int       bFrameAdaptive;                  ///< 0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling
     int       bFrameBias;
+    int       scenecutThreshold;               ///< how aggressively to insert extra I frames 
 
     // Intra coding tools
     int       bEnableConstrainedIntra;         ///< enable constrained intra prediction (ignore inter predicted reference samples)

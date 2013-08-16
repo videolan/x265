@@ -32,6 +32,18 @@ class TEncCfg;
 
 // arbitrary, but low because SATD scores are 1/4 normal
 #define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
+#define X265_LOOKAHEAD_MAX 250
+
+/* Slice type */
+#define X265_TYPE_AUTO          0x0000  /* Let x264 choose the right type */
+#define X265_TYPE_IDR           0x0001
+#define X265_TYPE_I             0x0002
+#define X265_TYPE_P             0x0003
+#define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
+#define X265_TYPE_B             0x0005
+#define X265_TYPE_KEYFRAME      0x0006  /* IDR or I depending on b_open_gop option */
+#define IS_X265_TYPE_I(x) ((x)==X265_TYPE_I || (x)==X265_TYPE_IDR)
+#define IS_X265_TYPE_B(x) ((x)==X265_TYPE_B || (x)==X265_TYPE_BREF)
 
 namespace x265 {
 // private namespace
@@ -47,6 +59,8 @@ struct Lookahead
     int              frameQueueSize;
     int              bAdaptMode;
     int              numDecided;
+    uint8_t          analyse_keyframe;
+    int              last_keyframe;
 
     TComList<TComPic*> inputQueue;       // input pictures in order received
     TComList<TComPic*> outputQueue;      // pictures to be encoded, in encode order
@@ -60,6 +74,11 @@ struct Lookahead
 
     int estimateFrameCost(int p0, int p1, int b, int bIntraPenalty);
     void estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
+    void slicetypeAnalyse(int key_frame);
+    int scenecut(int p0, int p1, int real_scenecut, int num_frames, int i_max_search);
+    int scenecut_internal( int p0, int p1, int real_scenecut);
+    void slicetypePath( int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
+    int slicetypePathCost( char *path, int threshold);
 };
 
 }

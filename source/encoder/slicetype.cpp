@@ -345,6 +345,325 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     fenc->lowresCosts[b - p0][p1 - b][cu_xy] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
 
+void Lookahead::slicetypeAnalyse(int keyframe)
+{
+    int num_frames, orig_num_frames, keyint_limit, framecnt;
+    int i_max_search = X265_MIN(frameQueueSize , X265_LOOKAHEAD_MAX );    
+    int cu_count = 0; //need to calculate
+    int cost1p0, cost2p0, cost1b1, cost2p1;
+    int reset_start;
+
+    /* vbv_lookahead =  i_vbv_buffer_size && i_lookahead; need clarifications here atpresent default 1 */
+    int vbv_lookahead = 1;    
+
+    // TODO source frames assigned into Lookahead->frames[] for Further Processing
+    for (framecnt = 0; framecnt < i_max_search && frames[framecnt]->sliceType == X265_TYPE_AUTO; framecnt++)
+    {
+        ;//frames[framecnt] = source Frame
+    }
+    
+    //TODO if framecount = 0 then call x264_macroblock_tree(), currently ignored 
+
+    keyint_limit = cfg->param.keyframeMax - frames[0]->frameNum + last_keyframe - 1;
+    orig_num_frames = num_frames = X265_MIN( framecnt, keyint_limit );
+    
+    /* This is important psy-wise: if we have a non-scenecut keyframe,
+    * there will be significant visual artifacts if the frames just before
+    * go down in quality due to being referenced less, despite it being
+    * more RD-optimal. */
+    
+    if (vbv_lookahead)
+        num_frames = framecnt;
+    else if (num_frames < framecnt)
+        num_frames++;
+    else if (num_frames == 0) 
+    {
+        frames[1]->sliceType = X265_TYPE_I;
+        return;
+    }
+     
+    int num_bframes = 0;
+    int num_analysed_frames = num_frames;
+    if (cfg->param.scenecutThreshold && scenecut(0, 1, 1, orig_num_frames, i_max_search) )
+    {
+        frames[1]->sliceType = X265_TYPE_I;
+        return;
+    }
+
+    if (cfg->param.bframes )
+    {
+        if ( cfg->param.bFrameAdaptive == X265_B_ADAPT_TRELLIS )
+        {
+            if ( num_frames > 1 )
+            {
+                char best_paths[X265_BFRAME_MAX + 1][X265_LOOKAHEAD_MAX + 1] = { "", "P" };
+                int best_path_index = num_frames % (X265_BFRAME_MAX + 1);
+                 
+                /* Perform the frametype analysis. */
+                for ( int j = 2; j <= num_frames; j++ )
+                {
+                    slicetypePath(j, best_paths);
+                }
+                
+                num_bframes = strspn(best_paths[best_path_index], "B");
+                /* Load the results of the analysis into the frame types. */
+                for ( int j = 1; j < num_frames; j++ )
+                {
+                    frames[j]->sliceType  = best_paths[best_path_index][j - 1] == 'B' ? X265_TYPE_B : X265_TYPE_P;
+                }
+            }
+            frames[num_frames]->sliceType = X265_TYPE_P;
+        }
+        else if ( cfg->param.bFrameAdaptive == X265_B_ADAPT_FAST )
+        {
+            for (int i = 0; i <= num_frames - 2; )
+            {
+                cost2p1 = estimateFrameCost(i + 0, i + 2, i + 2, 1);
+                if ( frames[i + 2]->intraMbs[2] > cu_count / 2 )
+                {
+                    frames[i + 1]->sliceType = X265_TYPE_P;
+                    frames[i + 2]->sliceType = X265_TYPE_P;
+                    i += 2;
+                    continue;
+                }
+                
+                cost1b1 = estimateFrameCost( i + 0, i + 2, i + 1, 0);
+                cost1p0 = estimateFrameCost( i + 0, i + 1, i + 1, 0);
+                cost2p0 = estimateFrameCost( i + 1, i + 2, i + 2, 0);
+                
+                if ( cost1p0 + cost2p0 < cost1b1 + cost2p1 )
+                {
+                    frames[i + 1]->sliceType = X265_TYPE_P; 
+                    i += 1;
+                    continue;
+                }
+
+// arbitrary and untuned
+#define INTER_THRESH 300
+#define P_SENS_BIAS (50 - cfg->param.bFrameBias)
+                frames[i + 1]->sliceType = X265_TYPE_B;
+                
+                int j;
+                for (j = i + 2; j <= X265_MIN(i + cfg->param.bframes, num_frames - 1); j++)
+                {
+                    int pthresh = X265_MAX(INTER_THRESH - P_SENS_BIAS * (j - i - 1), INTER_THRESH / 10);
+                    int pcost = estimateFrameCost( i + 0, j + 1, j + 1, 1);
+                    if (pcost > pthresh * cu_count || frames[j + 1]->intraMbs[j - i + 1] > cu_count / 3)
+                         break;
+                    frames[j]->sliceType = X265_TYPE_B;
+                }
+                
+                frames[j]->sliceType = X265_TYPE_P;
+                i = j;
+            }
+            frames[num_frames]->sliceType = X265_TYPE_P;
+            num_bframes = 0;
+            while (num_bframes < num_frames && frames[num_bframes + 1]->sliceType == X265_TYPE_B)
+            {
+                num_bframes++;
+            }
+        }
+        else
+        {
+            num_bframes = X265_MIN(num_frames - 1, cfg->param.bframes);
+            for (int j = 1; j < num_frames; j++)
+            {
+                 frames[j]->sliceType = (j % (num_bframes + 1)) ? X265_TYPE_B : X265_TYPE_P;
+            }
+            frames[num_frames]->sliceType = X265_TYPE_P;
+        }
+        /* Check scenecut on the first minigop. */
+        for (int j = 1; j < num_bframes + 1; j++)
+        {
+            if (cfg->param.scenecutThreshold && scenecut(j, j + 1, 0, orig_num_frames, i_max_search))
+            {
+                frames[j]->sliceType = X265_TYPE_P;
+                num_analysed_frames = j;
+                break;
+            }
+        }        
+        reset_start = keyframe ? 1 : X265_MIN(num_bframes + 2, num_analysed_frames + 1);
+    }
+    else
+    {
+        for (int j = 1; j <= num_frames; j++)
+        {
+            frames[j]->sliceType = X265_TYPE_P;
+        }
+        reset_start = !keyframe + 1;
+        num_bframes = 0;
+    }
+     
+    // TODO if rc.b_mb_tree Enabled the need to call  x264_macroblock_tree currently Ignored the call
+     
+    /* Restore frametypes for all frames that haven't actually been decided yet. */
+    for (int j = reset_start; j <= num_frames; j++)
+    {
+        frames[j]->sliceType = X265_TYPE_AUTO;
+    }
+}
+
+int Lookahead::scenecut(int p0, int p1, int real_scenecut, int num_frames, int i_max_search)
+{
+    /* Only do analysis during a normal scenecut check. */
+    if (real_scenecut && cfg->param.bframes)
+    {
+        int origmaxp1 = p0 + 1;
+        /* Look ahead to avoid coding short flashes as scenecuts. */
+        if (cfg->param.bFrameAdaptive == X265_B_ADAPT_TRELLIS)
+            /* Don't analyse any more frames than the trellis would have covered. */
+            origmaxp1 += cfg->param.bframes;
+        else
+            origmaxp1++;
+        int maxp1 = X265_MIN(origmaxp1, num_frames);
+
+        /* Where A and B are scenes: AAAAAABBBAAAAAA
+         * If BBB is shorter than (maxp1-p0), it is detected as a flash
+         * and not considered a scenecut. */
+        for (int curp1 = p1; curp1 <= maxp1; curp1++)
+        {
+            if (!scenecut_internal(p0, curp1, 0))
+                /* Any frame in between p0 and cur_p1 cannot be a real scenecut. */
+                for ( int i = curp1; i > p0; i-- )
+                {
+                    frames[i]->scenecut = 0;
+                }
+        }
+
+        /* Where A-F are scenes: AAAAABBCCDDEEFFFFFF
+         * If each of BB ... EE are shorter than (maxp1-p0), they are
+         * detected as flashes and not considered scenecuts.
+         * Instead, the first F frame becomes a scenecut.
+         * If the video ends before F, no frame becomes a scenecut. */
+        for (int curp0 = p0; curp0 <= maxp1; curp0++)
+        {
+            if (origmaxp1 > i_max_search || (curp0 < maxp1 && scenecut_internal( curp0, maxp1, 0)))
+                /* If cur_p0 is the p0 of a scenecut, it cannot be the p1 of a scenecut. */
+                frames[curp0]->scenecut = 0;
+        }
+    }
+
+    /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts. */
+    if (!frames[p1]->scenecut)
+        return 0;
+    return scenecut_internal(p0, p1, real_scenecut);
+}
+
+int Lookahead::scenecut_internal( int p0, int p1, int real_scenecut)
+{
+    LookaheadFrame *frame = frames[p1];
+    estimateFrameCost(p0, p1, p1, 0);
+    
+    int icost = frame->costEst[0][0];
+    int pcost = frame->costEst[p1 - p0][0];
+    float f_bias;
+    int i_gop_size = frame->frameNum - last_keyframe;
+    float f_thresh_max = (float) (cfg->param.scenecutThreshold / 100.0);
+    /* magic numbers pulled out of thin air */
+    float f_thresh_min = (float) (f_thresh_max * 0.25);
+    int res;
+    
+    if (cfg->param.keyframeMin == cfg->param.keyframeMax)
+        f_thresh_min = f_thresh_max;
+    if (i_gop_size <= cfg->param.keyframeMin / 4)
+        f_bias = f_thresh_min / 4;
+    else if (i_gop_size <= cfg->param.keyframeMin)
+        f_bias = f_thresh_min * i_gop_size / cfg->param.keyframeMin;
+    else
+    {
+        f_bias = f_thresh_min
+            + (f_thresh_max - f_thresh_min) 
+            * (i_gop_size - cfg->param.keyframeMin)
+            / (cfg->param.keyframeMax - cfg->param.keyframeMin);
+    }
+    
+    res = pcost >= (1.0 - f_bias) * icost;
+    return res;
+}
+
+void Lookahead::slicetypePath(int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1])
+{
+    char paths[2][X265_LOOKAHEAD_MAX + 1];
+    int num_paths = X265_MIN(cfg->param.bframes + 1, length);
+    int best_cost = me.COST_MAX;
+    int idx = 0;
+     
+    /* Iterate over all currently possible paths */
+    for (int path = 0; path < num_paths; path++)
+    {
+        /* Add suffixes to the current path */
+        int len = length - (path + 1);
+        memcpy(paths[idx], best_paths[len % (X265_BFRAME_MAX + 1)], len);
+        memset(paths[idx] + len, 'B', path);
+        strcpy(paths[idx] + len + path, "P");
+         
+        /* Calculate the actual cost of the current path */
+        int cost = slicetypePathCost(paths[idx], best_cost);
+        if (cost < best_cost)
+        {
+            best_cost = cost;
+            idx ^= 1;
+        }
+    }
+    
+    /* Store the best path. */
+    memcpy(best_paths[length % (X265_BFRAME_MAX + 1)], paths[idx ^ 1], length);
+    
+}
+
+int Lookahead::slicetypePathCost( char *path, int threshold)
+{
+    int loc = 1;
+    int cost = 0;
+    int cur_p = 0;
+    
+    path--; /* Since the 1st path element is really the second frame */
+    while ( path[loc] )
+    {
+        int next_p = loc;
+        /* Find the location of the next P-frame. */
+        while ( path[next_p] != 'P' )
+        {
+            next_p++;
+        }
+  
+        /* Add the cost of the P-frame found above */
+        cost += estimateFrameCost(cur_p, next_p, next_p, 0);
+        /* Early terminate if the cost we have found is larger than the best path cost so far */
+        if (cost > threshold)
+             break;
+        
+        /* Keep some B-frames as references: 0=off, 1=strict hierarchical, 2=normal */
+        //TODO Add this into param
+        int bframe_pyramid = 0; 
+         
+        if (bframe_pyramid && next_p - cur_p > 2)
+        {
+            int middle = cur_p + (next_p - cur_p) / 2;
+            cost += estimateFrameCost(cur_p, next_p, middle, 0);
+            for (int next_b = loc; next_b < middle && cost < threshold; next_b++)
+            {
+                cost += estimateFrameCost( cur_p, middle, next_b, 0);
+            }
+            
+            for (int next_b = middle + 1; next_b < next_p && cost < threshold; next_b++)
+            {
+                cost += estimateFrameCost( middle, next_p, next_b, 0);
+            }
+        }
+        else
+            for (int next_b = loc; next_b < next_p && cost < threshold; next_b++)
+            {
+                cost += estimateFrameCost( cur_p, next_p, next_b, 0);
+            }
+            
+            loc = next_p + 1;
+            cur_p = next_p;
+    }
+    
+    return cost;
+}
+
 #if 0
 // Indexed by pic_struct values
 static const uint8_t delta_tfi_divisor[10] = { 0, 2, 1, 1, 2, 2, 3, 3, 4, 6 };
