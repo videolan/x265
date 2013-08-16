@@ -50,6 +50,7 @@ namespace x265 {
 class FrameEncoder;
 class DPB;
 struct Lookahead;
+struct RateControl;
 class ThreadPool;
 }
 
@@ -76,6 +77,7 @@ private:
     x265::Lookahead*        m_lookahead;
     x265::FrameEncoder*     m_frameEncoder;
     x265::DPB*              m_dpb;
+    x265::RateControl*      m_rateControl;
 
     /* Collect statistics globally */
     x265::Lock              m_statLock;

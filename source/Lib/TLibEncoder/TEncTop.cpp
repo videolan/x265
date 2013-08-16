@@ -46,6 +46,7 @@
 
 #include "slicetype.h"
 #include "frameencoder.h"
+#include "ratecontrol.h"
 #include "dpb.h"
 
 #include <math.h> // log10
@@ -63,7 +64,9 @@ TEncTop::TEncTop()
     m_maxRefPicNum = 0;
     m_lookahead = NULL;
     m_frameEncoder = NULL;
+    m_rateControl = NULL;
     m_dpb = NULL;
+
     ContextModel::buildNextStateTable();
 
 #if ENC_DEC_TRACE
@@ -93,6 +96,7 @@ Void TEncTop::create()
     m_frameEncoder = new x265::FrameEncoder(m_threadPool);
     m_lookahead = new x265::Lookahead(this);
     m_dpb = new x265::DPB(this);
+    m_rateControl = new x265::RateControl(&param);
 }
 
 Void TEncTop::destroy()
@@ -115,6 +119,9 @@ Void TEncTop::destroy()
 
     if (m_dpb)
         delete m_dpb;
+
+    if (m_rateControl)
+        delete m_rateControl;
 
     // thread pool release should always happen last
     if (m_threadPool)
@@ -186,10 +193,14 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     // determine references, set QP, etc
     m_dpb->prepareEncode(fenc, m_frameEncoder);
 
+    //m_rateControl->rateControlStart(pic);
+
     // main encode processing, to be multi-threaded
     m_frameEncoder->compressFrame(fenc, accessUnitOut);
 
     calculateHashAndPSNR(fenc, accessUnitOut);
+
+    //m_rateControl->rateControlEnd(m_analyzeAll.getBits());
 
     if (pic_out)
     {

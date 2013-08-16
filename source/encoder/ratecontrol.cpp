@@ -22,6 +22,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComPic.h"
+#include "lookahead.h"
 #include "rateControl.h"
 
 using namespace x265;
@@ -66,21 +68,17 @@ RateControl::RateControl(x265_param_t * param)
     cbrDecay = 1.0;
 }
 
-void RateControl::rateControlInit(TComSlice* frame)
+void RateControl::rateControlStart(TComPic* pic)
 {
-    curFrame = frame;
-    frameType = frame->getSliceType();
-}
-
-void RateControl::rateControlStart(LookaheadFrame *lFrame)
-{
+    curFrame = pic->getSlice();
+    frameType = curFrame->getSliceType();
     rce = new RateControlEntry();
     double q;
 
     //Always enabling ABR
     if (rateControlMode == X265_RC_ABR)
     {
-        q = qScale2qp(rateEstimateQscale(lFrame));
+        q = qScale2qp(rateEstimateQscale(&pic->m_lowres));
     }
     else
         q = 0; // TODO
@@ -94,6 +92,8 @@ void RateControl::rateControlStart(LookaheadFrame *lFrame)
 
     if (frameType != B_SLICE)
         lastNonBPictType = frameType;
+    /* set the fianl changed QP to slice structure*/
+    curFrame->setSliceQp(qp); 
 }
 
 void RateControl::accumPQpUpdate()
@@ -107,7 +107,7 @@ void RateControl::accumPQpUpdate()
         accumPQp += qpm;
 }
 
-double RateControl::rateEstimateQscale(LookaheadFrame * /*lframe*/)
+double RateControl::rateEstimateQscale(LookaheadFrame* lframe )
 {
     double q;
     // ratecontrol_entry_t rce = UNINIT(rce);
@@ -160,7 +160,9 @@ double RateControl::rateEstimateQscale(LookaheadFrame * /*lframe*/)
          * tolerances, the bit distribution approaches that of 2pass. */
 
         double wantedBits, overflow = 1;
-        lastSatd = 0;     //TODO:need to get this from lookahead  //x264_rc_analyse_slice( h );
+        int p0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getPOC();
+        int p1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getPOC();
+        lastSatd = lframe->costEst[curFrame->getPOC() - p0][p1 - curFrame->getPOC()] ;     //TODO:need to get this from lookahead  //x264_rc_analyse_slice( h );
         rce->pCount = ncu;
 
         shortTermCplxSum *= 0.5;
