@@ -445,7 +445,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int /* lastPos */ )
+Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int lastPos )
 {
     if (transQuantBypass)
     {
@@ -479,7 +479,9 @@ Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
 
         const UInt log2BlockSize = g_convertToBit[width];
 
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+	lastPos = !lastPos; // prevent warning
+#else
         // DC only
         if (lastPos == 0 && !((width == 4) && (mode != REG_DCT)))
         {
