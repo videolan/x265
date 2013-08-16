@@ -111,7 +111,7 @@ void RateControl::rateControlStart(TComPic* pic)
 
     if (frameType != B_SLICE)
         lastNonBPictType = frameType;
-    /* set the fianl changed QP to slice structure*/
+    /* set the final changed QP to slice structure*/
     curFrame->setSliceQp(qp); 
 }
 
