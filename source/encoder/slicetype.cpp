@@ -553,7 +553,7 @@ int Lookahead::scenecut(int p0, int p1, int realScenecut, int num_frames, int ma
     return scenecutInternal(p0, p1, realScenecut);
 }
 
-int Lookahead::scenecutInternal(int p0, int p1, int realScenecut)
+int Lookahead::scenecutInternal(int p0, int p1, int /* realScenecut */)
 {
     LookaheadFrame *frame = frames[p1];
 
