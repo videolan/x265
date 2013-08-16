@@ -74,15 +74,15 @@ public:
     Void  resetEntropy();
     Void  determineCabacInitIdx() {}
 
-    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;  }
+    Void  setBitstream(TComBitIf* p)  { m_bitIf = p;  }
 
     Void  setSlice(TComSlice* p)      { m_pcSlice = p; }
 
-    Void  resetBits()                 { m_pcBitIf->resetBits(); }
+    Void  resetBits()                 { m_bitIf->resetBits(); }
 
     Void  resetCoeffCost()            { m_uiCoeffCost = 0; }
 
-    UInt  getNumberOfWrittenBits()    { return m_pcBitIf->getNumberOfWrittenBits(); }
+    UInt  getNumberOfWrittenBits()    { return m_bitIf->getNumberOfWrittenBits(); }
 
     UInt  getCoeffCost()              { return m_uiCoeffCost; }
 

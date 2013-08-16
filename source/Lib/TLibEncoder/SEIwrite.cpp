@@ -262,13 +262,13 @@ Void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
         WRITE_UVLC(sei.activeSeqParamSetId[i], "active_seq_param_set_id");
     }
 
-    UInt uiBits = m_pcBitIf->getNumberOfWrittenBits();
-    UInt uiAlignedBits = (8 - (uiBits & 7)) % 8;
-    if (uiAlignedBits)
+    UInt bits = m_bitIf->getNumberOfWrittenBits();
+    UInt alignedBits = (8 - (bits & 7)) % 8;
+    if (alignedBits)
     {
         WRITE_FLAG(1, "alignment_bit");
-        uiAlignedBits--;
-        while (uiAlignedBits--)
+        alignedBits--;
+        while (alignedBits--)
         {
             WRITE_FLAG(0, "alignment_bit");
         }
@@ -331,7 +331,7 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
     xWriteByteAlign();
 }
 
-Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sps)
+Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps)
 {
     Int i;
     TComVUI *vui = sps->getVuiParameters();
@@ -346,8 +346,8 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
 
     if (hrd->getCpbDpbDelaysPresentFlag())
     {
-        WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1),                                         "au_cpb_removal_delay_minus1");
-        WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1),                                          "pic_dpb_output_delay");
+        WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_minus1");
+        WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1), "pic_dpb_output_delay");
         if (hrd->getSubPicCpbParamsPresentFlag())
         {
             WRITE_CODE(sei.m_picDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_dpb_output_du_delay");
@@ -358,14 +358,14 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
             WRITE_FLAG(sei.m_duCommonCpbRemovalDelayFlag, "du_common_cpb_removal_delay_flag");
             if (sei.m_duCommonCpbRemovalDelayFlag)
             {
-                WRITE_CODE(sei.m_duCommonCpbRemovalDelayMinus1, (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                       "du_common_cpb_removal_delay_minus1");
+                WRITE_CODE(sei.m_duCommonCpbRemovalDelayMinus1, (hrd->getDuCpbRemovalDelayLengthMinus1() + 1), "du_common_cpb_removal_delay_minus1");
             }
             for (i = 0; i <= sei.m_numDecodingUnitsMinus1; i++)
             {
                 WRITE_UVLC(sei.m_numNalusInDuMinus1[i],  "num_nalus_in_du_minus1");
                 if ((!sei.m_duCommonCpbRemovalDelayFlag) && (i < sei.m_numDecodingUnitsMinus1))
                 {
-                    WRITE_CODE(sei.m_duCpbRemovalDelayMinus1[i], (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                        "du_cpb_removal_delay_minus1");
+                    WRITE_CODE(sei.m_duCpbRemovalDelayMinus1[i], (hrd->getDuCpbRemovalDelayLengthMinus1() + 1), "du_cpb_removal_delay_minus1");
                 }
             }
         }
@@ -402,10 +402,10 @@ Void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefr
 
 Void SEIWriter::xWriteByteAlign()
 {
-    if (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
+    if (m_bitIf->getNumberOfWrittenBits() % 8 != 0)
     {
         WRITE_FLAG(1, "bit_equal_to_one");
-        while (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
+        while (m_bitIf->getNumberOfWrittenBits() % 8 != 0)
         {
             WRITE_FLAG(0, "bit_equal_to_zero");
         }

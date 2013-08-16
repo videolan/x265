@@ -95,7 +95,7 @@ Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
 Void SyntaxElementWriter::xWriteCode(UInt uiCode, UInt uiLength)
 {
     assert(uiLength > 0);
-    m_pcBitIf->write(uiCode, uiLength);
+    m_bitIf->write(uiCode, uiLength);
 }
 
 Void SyntaxElementWriter::xWriteUvlc(UInt uiCode)
@@ -112,8 +112,8 @@ Void SyntaxElementWriter::xWriteUvlc(UInt uiCode)
     }
 
     // Take care of cases where uiLength > 32
-    m_pcBitIf->write(0, uiLength >> 1);
-    m_pcBitIf->write(uiCode, (uiLength + 1) >> 1);
+    m_bitIf->write(0, uiLength >> 1);
+    m_bitIf->write(uiCode, (uiLength + 1) >> 1);
 }
 
 Void SyntaxElementWriter::xWriteSvlc(Int iCode)
@@ -126,7 +126,7 @@ Void SyntaxElementWriter::xWriteSvlc(Int iCode)
 
 Void SyntaxElementWriter::xWriteFlag(UInt uiCode)
 {
-    m_pcBitIf->write(uiCode, 1);
+    m_bitIf->write(uiCode, 1);
 }
 
 //! \}

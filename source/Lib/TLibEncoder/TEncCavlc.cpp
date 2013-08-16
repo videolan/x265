@@ -67,7 +67,7 @@ Void  xTraceSliceHeader(TComSlice *)
 
 TEncCavlc::TEncCavlc()
 {
-    m_pcBitIf           = NULL;
+    m_bitIf           = NULL;
     m_uiCoeffCost       = 0;
 }
 
@@ -1238,8 +1238,8 @@ Void TEncCavlc::codeScalingList(TComScalingList* scalingList)
 #if SCALING_LIST_OUTPUT_RESULT
     Int startBit;
     Int startTotalBit;
-    startBit = m_pcBitIf->getNumberOfWrittenBits();
-    startTotalBit = m_pcBitIf->getNumberOfWrittenBits();
+    startBit = m_bitIf->getNumberOfWrittenBits();
+    startTotalBit = m_bitIf->getNumberOfWrittenBits();
 #endif
 
     //for each size
@@ -1248,7 +1248,7 @@ Void TEncCavlc::codeScalingList(TComScalingList* scalingList)
         for (listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
 #if SCALING_LIST_OUTPUT_RESULT
-            startBit = m_pcBitIf->getNumberOfWrittenBits();
+            startBit = m_bitIf->getNumberOfWrittenBits();
 #endif
             scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
             WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
@@ -1261,13 +1261,13 @@ Void TEncCavlc::codeScalingList(TComScalingList* scalingList)
                 xCodeScalingList(scalingList, sizeId, listId);
             }
 #if SCALING_LIST_OUTPUT_RESULT
-            printf("Matrix [%d][%d] Bit %d\n", sizeId, listId, m_pcBitIf->getNumberOfWrittenBits() - startBit);
+            printf("Matrix [%d][%d] Bit %d\n", sizeId, listId, m_bitIf->getNumberOfWrittenBits() - startBit);
 #endif
         }
     }
 
 #if SCALING_LIST_OUTPUT_RESULT
-    printf("Total Bit %d\n", m_pcBitIf->getNumberOfWrittenBits() - startTotalBit);
+    printf("Total Bit %d\n", m_bitIf->getNumberOfWrittenBits() - startTotalBit);
 #endif
 }
 

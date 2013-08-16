@@ -65,28 +65,28 @@ class SyntaxElementWriter
 {
 protected:
 
-    TComBitIf*    m_pcBitIf;
+    TComBitIf*    m_bitIf;
 
     SyntaxElementWriter()
-        : m_pcBitIf(NULL)
+        : m_bitIf(NULL)
     {}
 
     virtual ~SyntaxElementWriter() {}
 
-    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;  }
+    Void  setBitstream(TComBitIf* p)  { m_bitIf = p;  }
 
-    Void  xWriteCode(UInt uiCode, UInt uiLength);
-    Void  xWriteUvlc(UInt uiCode);
-    Void  xWriteSvlc(Int iCode);
-    Void  xWriteFlag(UInt uiCode);
+    Void  xWriteCode(UInt code, UInt len);
+    Void  xWriteUvlc(UInt code);
+    Void  xWriteSvlc(Int code);
+    Void  xWriteFlag(UInt code);
 #if ENC_DEC_TRACE
-    Void  xWriteCodeTr(UInt value, UInt  length, const Char *pSymbolName);
-    Void  xWriteUvlcTr(UInt value,               const Char *pSymbolName);
-    Void  xWriteSvlcTr(Int value,               const Char *pSymbolName);
-    Void  xWriteFlagTr(UInt value,               const Char *pSymbolName);
+    Void  xWriteCodeTr(UInt value, UInt  length, const Char *symbolName);
+    Void  xWriteUvlcTr(UInt value,               const Char *symbolName);
+    Void  xWriteSvlcTr(Int value,                const Char *symbolName);
+    Void  xWriteFlagTr(UInt value,               const Char *symbolName);
 #endif
 
-    UInt  xConvertToUInt(Int iValue) {  return (iValue <= 0) ? -iValue << 1 : (iValue << 1) - 1; }
+    UInt  xConvertToUInt(Int val) { return (val <= 0) ? -val << 1 : (val << 1) - 1; }
 };
 
 //! \}
