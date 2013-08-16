@@ -27,14 +27,6 @@
 
 #include "TLibCommon/CommonDef.h"
 
-#define BASE_FRAME_DURATION 0.04
-
-/* Arbitrary limitations as a sanity check. */
-#define MAX_FRAME_DURATION 1.00
-#define MIN_FRAME_DURATION 0.01
-
-#define CLIP_DURATION(f) Clip3(f, MIN_FRAME_DURATION, MAX_FRAME_DURATION)
-
 class TComPic;
 
 namespace x265 {
