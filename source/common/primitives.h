@@ -196,6 +196,7 @@ typedef void (*blockcpy_sc_t)(int bx, int by, short *dst, intptr_t dstride, uint
 typedef void (*pixelsub_sp_t)(int bx, int by, short *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixeladd_ss_t)(int bx, int by, short *dst, intptr_t dstride, short *src0, short *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixeladd_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
+typedef void (*blockfil_s_t)(short *dst, intptr_t dstride, short val);
 
 typedef void (*intra_dc_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int bFilter);
 typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width);
@@ -250,6 +251,7 @@ struct EncoderPrimitives
     blockcpy_ps_t   blockcpy_ps;                // block copy pixel from short
     blockcpy_sp_t   blockcpy_sp;                // block copy short from pixel
     blockcpy_sc_t   blockcpy_sc;                // block copy short from unsigned char
+    blockfil_s_t    blockfil_s[NUM_SQUARE_BLOCKS];  // block fill with value
     cvt16to32_t     cvt16to32;
     cvt16to32_shl_t cvt16to32_shl;
     cvt16to16_shl_t cvt16to16_shl;

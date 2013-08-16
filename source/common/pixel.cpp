@@ -416,6 +416,18 @@ void blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b, intpt
     }
 }
 
+template <int size>
+void blockfil_s_c(short *dst, intptr_t dstride, short val)
+{
+    for (int y = 0; y < size; y++)
+    {
+        for (int x = 0; x < size; x++)
+        {
+            dst[y * dstride + x] = val;
+        }
+    }
+}
+
 void convert16to32(short *src, int *dst, int num)
 {
     for (int i = 0; i < num; i++)
@@ -722,6 +734,12 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.blockcpy_ps = blockcopy_p_s;
     p.blockcpy_sp = blockcopy_s_p;
     p.blockcpy_sc = blockcopy_s_c;
+
+    p.blockfil_s[BLOCK_4x4]   = blockfil_s_c<4>;
+    p.blockfil_s[BLOCK_8x8]   = blockfil_s_c<8>;
+    p.blockfil_s[BLOCK_16x16] = blockfil_s_c<16>;
+    p.blockfil_s[BLOCK_32x32] = blockfil_s_c<32>;
+    p.blockfil_s[BLOCK_64x64] = blockfil_s_c<64>;
 
     p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;
