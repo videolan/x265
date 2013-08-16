@@ -213,7 +213,7 @@ typedef void (*idct_t)(int *src, short *dst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, short *residual, int stride);
 typedef void (*calcrecon_t)(pixel* pred, short* residual, pixel* recon, short* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
-typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff);
+typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff, int* lastPos);
 typedef void (*dequant_t)(const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
                           unsigned int trSizeLog2, int *dequantCoef);
 

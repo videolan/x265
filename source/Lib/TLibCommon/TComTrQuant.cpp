@@ -255,7 +255,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan
 }
 
 UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, Int height,
-                         TextType ttype, UInt absPartIdx)
+                         TextType ttype, UInt absPartIdx, int *lastPos)
 {
     UInt acSum = 0;
     Int add = 0;
@@ -263,7 +263,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
 
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
     {
-        acSum = xRateDistOptQuant(cu, coef, qCoef, width, height, ttype, absPartIdx);
+        acSum = xRateDistOptQuant(cu, coef, qCoef, width, height, ttype, absPartIdx, lastPos);
     }
     else
     {
@@ -321,7 +321,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
 
         Int numCoeff = width * height;
-        acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
+        acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
 
         if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
             signBitHidingHDQ(qCoef, coef, scan, deltaU, width, height);
@@ -403,6 +403,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
                                UInt        height,
                                TextType    ttype,
                                UInt        absPartIdx,
+                               int*        lastPos,
                                Bool        useTransformSkip)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -441,7 +442,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
         const UInt log2BlockSize = g_convertToBit[width];
         x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
-    return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx);
+    return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
 Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip /*= false*/ )
@@ -630,7 +631,7 @@ Void TComTrQuant::xITransformSkip(Int* coef, Short* residual, UInt stride, Int w
  * coding engines using probability models like CABAC
  */
 UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height,
-                                    TextType ttype, UInt absPartIdx)
+                                    TextType ttype, UInt absPartIdx, int *lastPos)
 {
     UInt log2TrSize = g_convertToBit[width] + 2;
     UInt absSum = 0;
@@ -975,6 +976,8 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
         Int blkPos = scan[pos];
         Int level  = dstCoeff[blkPos];
         absSum += level;
+        if (level)
+            *lastPos = blkPos;
         dstCoeff[blkPos] = (srcCoeff[blkPos] < 0) ? -level : level;
     }
 

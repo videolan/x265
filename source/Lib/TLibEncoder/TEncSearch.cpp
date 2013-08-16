@@ -539,12 +539,13 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 
     //--- transform and quantization ---
     UInt absSum = 0;
+    int lastPos = -1;
     cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
 
     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
     m_trQuant->selectLambda(TEXT_LUMA);
 
-    absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, height, TEXT_LUMA, absPartIdx, useTransformSkip);
+    absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, height, TEXT_LUMA, absPartIdx, &lastPos, useTransformSkip);
 
     //--- set coded block flag ---
     cu->setCbfSubParts((absSum ? 1 : 0) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -667,6 +668,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         }
         //--- transform and quantization ---
         UInt absSum = 0;
+        int lastPos = -1;
 
         Int curChromaQpOffset;
         if (ttype == TEXT_CHROMA_U)
@@ -681,7 +683,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
         m_trQuant->selectLambda(TEXT_CHROMA);
 
-        absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, height, ttype, absPartIdx, useTransformSkipChroma);
+        absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, height, ttype, absPartIdx, &lastPos, useTransformSkipChroma);
 
         //--- set coded block flag ---
         cu->setCbfSubParts((absSum ? 1 : 0) << origTrDepth, ttype, absPartIdx, cu->getDepth(0) + trDepth);
@@ -3289,6 +3291,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
     UInt singleBits = 0;
     UInt singleDist = 0;
     UInt absSumY = 0, absSumU = 0, absSumV = 0;
+    int lastPosY = -1, lastPosU = -1, lastPosV = -1;
     UInt bestTransformMode[3] = { 0 };
 
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
@@ -3332,7 +3335,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         m_trQuant->selectLambda(TEXT_LUMA);
 
         absSumY = m_trQuant->transformNxN(cu, resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, coeffCurY,
-                                          trWidth, trHeight, TEXT_LUMA, absPartIdx);
+                                          trWidth, trHeight, TEXT_LUMA, absPartIdx, &lastPosY);
 
         cu->setCbfSubParts(absSumY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
@@ -3349,12 +3352,12 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             m_trQuant->selectLambda(TEXT_CHROMA);
 
             absSumU = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth, coeffCurU,
-                                              trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx);
+                                              trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx, &lastPosU);
 
             curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
             absSumV = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth, coeffCurV,
-                                              trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx);
+                                              trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx, &lastPosV);
 
             cu->setCbfSubParts(absSumU ? setCbf : 0, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) + trModeC);
             cu->setCbfSubParts(absSumV ? setCbf : 0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) + trModeC);
@@ -3605,6 +3608,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         if (checkTransformSkipY)
         {
             UInt nonZeroDistY = 0, absSumTransformSkipY;
+            int lastPosTransformSkipY = -1;
             UInt64 singleCostY = MAX_INT64;
 
             Short *curResiY = m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
@@ -3632,7 +3636,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
             m_trQuant->selectLambda(TEXT_LUMA);
             absSumTransformSkipY = m_trQuant->transformNxN(cu, resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, coeffCurY,
-                                                           trWidth, trHeight, TEXT_LUMA, absPartIdx, true);
+                                                           trWidth, trHeight, TEXT_LUMA, absPartIdx, &lastPosTransformSkipY, true);
             cu->setCbfSubParts(absSumTransformSkipY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
             if (absSumTransformSkipY != 0)
@@ -3678,6 +3682,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         if (bCodeChroma && checkTransformSkipUV)
         {
             UInt nonZeroDistU = 0, nonZeroDistV = 0, absSumTransformSkipU, absSumTransformSkipV;
+            int lastPosTransformSkipU = -1, lastPosTransformSkipV = -1;
             UInt64 singleCostU = MAX_INT64;
             UInt64 singleCostV = MAX_INT64;
 
@@ -3711,11 +3716,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             m_trQuant->selectLambda(TEXT_CHROMA);
 
             absSumTransformSkipU = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth, coeffCurU,
-                                                           trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx, true);
+                                                           trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx, &lastPosTransformSkipU, true);
             curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
             absSumTransformSkipV = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth, coeffCurV,
-                                                           trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx, true);
+                                                           trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx, &lastPosTransformSkipV, true);
 
             cu->setCbfSubParts(absSumTransformSkipU ? setCbf : 0, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) + trModeC);
             cu->setCbfSubParts(absSumTransformSkipV ? setCbf : 0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) + trModeC);

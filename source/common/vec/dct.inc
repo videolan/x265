@@ -3907,16 +3907,21 @@ uint32_t quant(int* coef,
                int* qCoef,
                int  qBits,
                int  add,
-               int  numCoeff)
+               int  numCoeff,
+               int* lastPos)
 {
     int qBits8 = qBits - 8;
     uint32_t acSum = 0;
     int dstOffset = 0;
     __m128i acSum4 = _mm_setzero_si128();
     __m128i addVec = _mm_set1_epi32(add);
+    __m128i maskPos4 = _mm_setr_epi32(0, 1, 2, 3);
+    __m128i posNext4 = _mm_set1_epi32(4);
+    __m128i lastPos4 = _mm_set1_epi32(-1);
 
     for (int blockpos = 0; blockpos < numCoeff; blockpos += 8)
     {
+        __m128i maskZero;
         __m128i level1 = _mm_loadu_si128((__m128i*)(coef + blockpos));
 
         __m128i sign1 = _mm_cmplt_epi32(level1, _mm_setzero_si128());
@@ -3927,9 +3932,17 @@ uint32_t quant(int* coef,
         __m128i deltaU1 = _mm_srai_epi32(_mm_sub_epi32(tmplevel1, _mm_slli_epi32(level1, qBits)), qBits8);
         _mm_storeu_si128((__m128i*)(deltaU + blockpos), deltaU1);
         acSum4 = _mm_add_epi32(acSum4, level1);
+
+        maskZero = _mm_cmpeq_epi32(level1, _mm_setzero_si128());
+        //lastPos4 = _mm_or_si128(_mm_andnot_si128(maskZero, maskPos4), _mm_and_si128(maskZero, lastPos4));
+        //lastPos4 = _mm_blendv_epi8(maskPos4, lastPos4, maskZero);
+        lastPos4 = _mm_max_epi32(lastPos4, _mm_or_si128(maskZero, maskPos4));
+        maskPos4 = _mm_add_epi32(maskPos4, posNext4);
+
         level1 = _mm_sub_epi32(_mm_xor_si128(level1, sign1), sign1);
         level1 = _mm_cvtepi16_epi32(_mm_packs_epi32(level1, level1));
         _mm_storeu_si128((__m128i*)(qCoef + dstOffset), level1);
+
 
         __m128i level2 = _mm_loadu_si128((__m128i*)(coef + blockpos + 4));
         __m128i sign2 = _mm_cmplt_epi32(level2, _mm_setzero_si128());
@@ -3940,6 +3953,13 @@ uint32_t quant(int* coef,
         __m128i deltaU2 = _mm_srai_epi32(_mm_sub_epi32(tmplevel2, _mm_slli_epi32(level2, qBits)), qBits8);
         _mm_storeu_si128((__m128i*)(deltaU + blockpos + 4), deltaU2);
         acSum4 = _mm_add_epi32(acSum4, level2);
+
+        maskZero = _mm_cmpeq_epi32(level2, _mm_setzero_si128());
+        //lastPos4 = _mm_or_si128(_mm_andnot_si128(maskZero, maskPos4), _mm_and_si128(maskZero, lastPos4));
+        //lastPos4 = _mm_blendv_epi8(maskPos4, lastPos4, maskZero);
+        lastPos4 = _mm_max_epi32(lastPos4, _mm_or_si128(maskZero, maskPos4));
+        maskPos4 = _mm_add_epi32(maskPos4, posNext4);
+
         level2 = _mm_sub_epi32(_mm_xor_si128(level2, sign2), sign2);
         level2 = _mm_cvtepi16_epi32(_mm_packs_epi32(level2, level2));
         _mm_storeu_si128((__m128i*)(qCoef + dstOffset + 4), level2);
@@ -3949,6 +3969,11 @@ uint32_t quant(int* coef,
     acSum4 = _mm_hadd_epi32(acSum4, acSum4);
     acSum4 = _mm_hadd_epi32(acSum4, acSum4);
     acSum  = _mm_cvtsi128_si32(acSum4);
+
+    lastPos4 = _mm_max_epi32(lastPos4, _mm_shuffle_epi32(lastPos4, 0x0E));
+    lastPos4 = _mm_max_epi32(lastPos4, _mm_shuffle_epi32(lastPos4, 0x01));
+    int tmp = _mm_cvtsi128_si32(lastPos4);
+    *lastPos = tmp;
 
     return acSum;
 }

@@ -772,7 +772,7 @@ void dequant_c(const int* quantCoef, int* coef, int width, int height, int per, 
     }
 }
 
-uint32_t quant_c(int* coef, int* quantCoeff, int* deltaU, int* qCoef, int qBits, int add, int numCoeff)
+uint32_t quant_c(int* coef, int* quantCoeff, int* deltaU, int* qCoef, int qBits, int add, int numCoeff, int* lastPos)
 {
     int qBits8 = qBits - 8;
     uint32_t acSum = 0;
@@ -786,6 +786,8 @@ uint32_t quant_c(int* coef, int* quantCoeff, int* deltaU, int* qCoef, int qBits,
 
         int tmplevel = abs(level) * quantCoeff[blockpos];
         level = ((tmplevel + add) >> qBits);
+        if (level)
+            *lastPos = blockpos;
         deltaU[blockpos] = ((tmplevel - (level << qBits)) >> qBits8);
         acSum += level;
         level *= sign;

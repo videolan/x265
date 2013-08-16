@@ -238,6 +238,13 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
 {
     int j = 0;
 
+    // fill again to avoid error Q value
+    for (int i = 0; i < mb_t_size; i++)
+    {
+        mintbuf1[i] = rand() & PIXEL_MAX;
+        mintbuf2[i] = rand() & PIXEL_MAX;
+    }
+
     for (int i = 0; i <= 5; i++)
     {
         int width = (rand() % 4 + 1) * 4;
@@ -255,9 +262,10 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         int valueToAdd = rand() % (32 * 1024);
         int cmp_size = sizeof(int) * height * width;
         int numCoeff = height * width;
+        int optLastPos = -1, refLastPos = -1;
 
-        refReturnValue = ref(mintbuf1 + j, mintbuf2 + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff);
-        optReturnValue = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
+        refReturnValue = ref(mintbuf1 + j, mintbuf2 + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff, &refLastPos);
+        optReturnValue = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff, &optLastPos);
 
         if (memcmp(mintbuf3, mintbuf5, cmp_size))
             return false;
@@ -266,6 +274,9 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
             return false;
 
         if (optReturnValue != refReturnValue)
+            return false;
+
+        if (optLastPos != refLastPos)
             return false;
 
         j += 16;
@@ -357,6 +368,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.quant)
     {
         printf("quant\t\t");
-        REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
+        int dummy = -1;
+        REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32, &dummy);
     }
 }

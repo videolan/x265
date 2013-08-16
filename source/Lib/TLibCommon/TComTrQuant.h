@@ -125,7 +125,7 @@ public:
 
     // transform & inverse transform functions
     UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
-                      TextType ttype, UInt absPartIdx, Bool useTransformSkip = false);
+                      TextType ttype, UInt absPartIdx, int* lastPos, Bool useTransformSkip = false);
 
     Void invtransformNxN(Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip = false);
 
@@ -195,10 +195,10 @@ private:
 
     Void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, Int* deltaU, Int width, Int height);
 
-    UInt xQuant(TComDataCU* cu, Int* src, TCoeff* dst, Int width, Int height, TextType ttype, UInt absPartIdx);
+    UInt xQuant(TComDataCU* cu, Int* src, TCoeff* dst, Int width, Int height, TextType ttype, UInt absPartIdx, int *lastPos);
 
     // RDOQ functions
-    UInt xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height, TextType ttype, UInt absPartIdx);
+    UInt xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height, TextType ttype, UInt absPartIdx, int *lastPos);
 
     inline UInt xGetCodedLevel(Double& codedCost, Double& codedCost0, Double& codedCostSig, Int levelDouble,
                                  UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,
