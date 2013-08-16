@@ -50,7 +50,6 @@
 #include "SEIwrite.h"
 
 #include "TEncAnalyze.h"
-#include "threading.h"
 #include "frameencoder.h"
 
 //! \ingroup TLibEncoder
@@ -58,11 +57,6 @@
 
 class TEncTop;
 
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
-
-/// GOP encoder class
 class TEncGOP
 {
 public:
@@ -79,15 +73,10 @@ public:
 
     Void destroy();
     Void init(TEncTop* top);
+    int getStreamHeaders(AccessUnit& accessUnitOut);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     Void compressFrame(TComPic *pic, AccessUnit& accessUnitOut);
-
-    int getStreamHeaders(AccessUnit& accessUnitOut);
-
-protected:
-
-    Void calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit&);
 };
 
 //! \}

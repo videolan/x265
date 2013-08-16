@@ -72,14 +72,12 @@ private:
     x265::ThreadPool*       m_threadPool;
     x265::Lookahead*        m_lookahead;
 
-public:
-
     /* Collect statistics globally */
-    x265::Lock  m_statLock;
-    TEncAnalyze m_analyzeAll;
-    TEncAnalyze m_analyzeI;
-    TEncAnalyze m_analyzeP;
-    TEncAnalyze m_analyzeB;
+    x265::Lock              m_statLock;
+    TEncAnalyze             m_analyzeAll;
+    TEncAnalyze             m_analyzeI;
+    TEncAnalyze             m_analyzeP;
+    TEncAnalyze             m_analyzeB;
 
 public:
 
@@ -104,6 +102,8 @@ public:
     TComScalingList* getScalingList()       { return &m_scalingList; }
 
     void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
+
+    Void calculateHashAndPSNR(TComPic* pic, AccessUnit&);
 
 protected:
 
