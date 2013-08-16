@@ -25,7 +25,6 @@ endif(MSVC)
 
 add_library(encoder ../../COPYING ../x265.h
     ${LIBENCODER_SRC} ${LIBENCODER_HDR}
-    encoder.cpp encoder.h
     bitcost.cpp bitcost.h
     motion.cpp motion.h
     slicetype.cpp slicetype.h
@@ -34,5 +33,5 @@ add_library(encoder ../../COPYING ../x265.h
     cturow.cpp cturow.h
     dpb.cpp dpb.h
     ratecontrol.cpp ratecontrol.h
-    compress.cpp)
+    compress.cpp encoder.cpp)
 target_link_libraries(encoder common)

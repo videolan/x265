@@ -103,18 +103,17 @@ protected:
     Bool m_interlacedSourceFlag;
     Bool m_nonPackedConstraintFlag;
     Bool m_frameOnlyConstraintFlag;
+    Int       m_pad[2];
 
     //====== Coding Structure ========
-
     Int       m_gopSize;
     GOPEntry  m_gopList[MAX_GOP];
     Int       m_extraRPSs;
     Int       m_maxDecPicBuffering[MAX_TLAYER];
     Int       m_numReorderPics[MAX_TLAYER];
-    Int       m_pad[2];
-
     Int       m_maxRefPicNum;                   ///< this is used to mimic the sliding mechanism used by the decoder
                                                 // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
+    bool initializeGOP(x265_param_t *_param);
 
     //======= Transform =============
     UInt      m_quadtreeTULog2MaxSize;
