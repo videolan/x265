@@ -555,7 +555,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     {
         Int scalingListType = 0 + g_eTTable[(Int)TEXT_LUMA];
         assert(scalingListType < 6);
-        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, height, scalingListType, useTransformSkip);
+        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, height, scalingListType, useTransformSkip, lastPos);
     }
     else
     {

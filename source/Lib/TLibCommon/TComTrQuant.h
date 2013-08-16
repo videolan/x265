@@ -127,7 +127,7 @@ public:
     UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
                       TextType ttype, UInt absPartIdx, int* lastPos, Bool useTransformSkip = false);
 
-    Void invtransformNxN(Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip = false);
+    Void invtransformNxN(Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip = false, int lastPos = MAX_INT);
 
     Void invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType ttype, Short* residual, UInt addr, UInt stride,
                               UInt width, UInt height, UInt maxTrMode, UInt trMode, TCoeff* coeff);

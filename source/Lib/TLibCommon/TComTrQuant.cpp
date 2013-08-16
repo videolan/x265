@@ -445,7 +445,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip /*= false*/ )
+Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip /*= false*/, int lastPos )
 {
     if (transQuantBypass)
     {
@@ -474,6 +474,27 @@ Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
     }
     else
     {
+        // CHECK_ME: we can't here when no any coeff
+        assert(lastPos >= 0);
+
+#if !HIGH_BIT_DEPTH
+        // DC only
+        if (lastPos == 0 && !((width == 4) && (mode != REG_DCT)))
+        {
+            int dc = (((m_tmpCoeff[0] * 64 + 64) >> 7) * 64 + 2048) >> 12;
+
+            for(int i = 0; i < width; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    residual[i * stride + j] = dc;
+                }
+            }
+
+            return;
+        }
+#endif
+
         // TODO: this may need larger data types for X265_DEPTH > 8
         const UInt log2BlockSize = g_convertToBit[width];
         x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
