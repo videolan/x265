@@ -272,8 +272,6 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         pixel _left0[32 * 4 + 1], *const pLeft0 = _left0 + 2 * 32;
         pixel _left1[32 * 4 + 1], *const pLeft1 = _left1 + 2 * 32;
 
-        // CHECK_ME: I don't know why there fenc->m_lumaStride and fenc->stride seems same but in different class, please select right one
-        // CHECK_ME: I assume fenc is reconstruct frame
         pixel *pix_cur = fenc->m_lumaPlane[0][0] + pel_offset;
 
         // Copy Above
@@ -353,7 +351,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
 
 void Lookahead::slicetypeAnalyse(int keyframe)
 {
-    int num_frames, orig_num_frames, keyint_limit, framecnt;
+    int num_frames, origNumFrames, keyint_limit, framecnt;
     int maxSearch = X265_MIN(frameQueueSize, X265_LOOKAHEAD_MAX);
     int cu_count = 0; //need to calculate
     int cost1p0, cost2p0, cost1b1, cost2p1;
@@ -367,7 +365,7 @@ void Lookahead::slicetypeAnalyse(int keyframe)
     }
 
     keyint_limit = cfg->param.keyframeMax - frames[0]->frameNum + last_keyframe - 1;
-    orig_num_frames = num_frames = X265_MIN(framecnt, keyint_limit);
+    origNumFrames = num_frames = X265_MIN(framecnt, keyint_limit);
 
     /* This is important psy-wise: if we have a non-scenecut keyframe,
      * there will be significant visual artifacts if the frames just before
@@ -386,7 +384,7 @@ void Lookahead::slicetypeAnalyse(int keyframe)
 
     int num_bframes = 0;
     int num_analysed_frames = num_frames;
-    if (cfg->param.scenecutThreshold && scenecut(0, 1, 1, orig_num_frames, maxSearch))
+    if (cfg->param.scenecutThreshold && scenecut(0, 1, 1, origNumFrames, maxSearch))
     {
         frames[1]->sliceType = X265_TYPE_I;
         return;
@@ -479,7 +477,7 @@ void Lookahead::slicetypeAnalyse(int keyframe)
         /* Check scenecut on the first minigop. */
         for (int j = 1; j < num_bframes + 1; j++)
         {
-            if (cfg->param.scenecutThreshold && scenecut(j, j + 1, 0, orig_num_frames, maxSearch))
+            if (cfg->param.scenecutThreshold && scenecut(j, j + 1, 0, origNumFrames, maxSearch))
             {
                 frames[j]->sliceType = X265_TYPE_P;
                 num_analysed_frames = j;
