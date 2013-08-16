@@ -89,10 +89,6 @@ protected:
 
     Void calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit&);
 
-    SEIActiveParameterSets* xCreateSEIActiveParameterSets();
-
-    SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
-
     Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream* outBitstreamRedirect);
 
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);

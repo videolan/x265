@@ -158,25 +158,33 @@ int TEncGOP::getStreamHeaders(AccessUnit& accessUnit)
 
     if (m_cfg->getActiveParameterSetsSEIEnabled())
     {
-        SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets();
+        SEIActiveParameterSets sei;
+        sei.activeVPSId = m_cfg->getVPS()->getVPSId();
+        sei.m_fullRandomAccessFlag = false;
+        sei.m_noParamSetUpdateFlag = false;
+        sei.numSpsIdsMinus1 = 0;
+        sei.activeSeqParamSetId.resize(sei.numSpsIdsMinus1 + 1);
+        sei.activeSeqParamSetId[0] = m_sps.getSPSId();
 
         entropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, &m_sps);
+        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_Bitstream);
         accessUnit.push_back(new NALUnitEBSP(nalu));
-        delete sei;
     }
 
     if (m_cfg->getDisplayOrientationSEIAngle())
     {
-        SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();
+        SEIDisplayOrientation sei;
+        sei.cancelFlag = false;
+        sei.horFlip = false;
+        sei.verFlip = false;
+        sei.anticlockwiseRotation = m_cfg->getDisplayOrientationSEIAngle();
 
         nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
         entropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, &m_sps);
+        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_Bitstream);
         accessUnit.push_back(new NALUnitEBSP(nalu));
-        delete sei;
     }
     return 0;
 }
@@ -395,30 +403,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     delete[] outStreams;
     delete bitstreamRedirect;
-}
-
-SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets()
-{
-    SEIActiveParameterSets *seiActiveParameterSets = new SEIActiveParameterSets();
-
-    seiActiveParameterSets->activeVPSId = m_cfg->getVPS()->getVPSId();
-    seiActiveParameterSets->m_fullRandomAccessFlag = false;
-    seiActiveParameterSets->m_noParamSetUpdateFlag = false;
-    seiActiveParameterSets->numSpsIdsMinus1 = 0;
-    seiActiveParameterSets->activeSeqParamSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
-    seiActiveParameterSets->activeSeqParamSetId[0] = m_sps.getSPSId();
-    return seiActiveParameterSets;
-}
-
-SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
-{
-    SEIDisplayOrientation *seiDisplayOrientation = new SEIDisplayOrientation();
-
-    seiDisplayOrientation->cancelFlag = false;
-    seiDisplayOrientation->horFlip = false;
-    seiDisplayOrientation->verFlip = false;
-    seiDisplayOrientation->anticlockwiseRotation = m_cfg->getDisplayOrientationSEIAngle();
-    return seiDisplayOrientation;
 }
 
 #define VERBOSE_RATE 0
