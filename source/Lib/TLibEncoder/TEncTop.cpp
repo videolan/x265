@@ -48,6 +48,8 @@
 #include "frameencoder.h"
 #include "dpb.h"
 
+#include <math.h> // log10
+
 //! \ingroup TLibEncoder
 //! \{
 
