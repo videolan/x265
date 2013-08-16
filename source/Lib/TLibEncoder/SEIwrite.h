@@ -53,8 +53,6 @@ public:
 
 protected:
 
-    TComSPS *m_pSPS;
-
     Void xWriteSEIpayloadData(const SEI& sei, TComSPS *sps);
     Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
     Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
