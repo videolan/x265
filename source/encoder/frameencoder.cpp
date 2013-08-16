@@ -382,8 +382,6 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
 
-    UInt oneBitstreamPerSliceLength = 0; // TODO: Remove
-
     if (m_cfg->getUseASR() && !slice->isIntra())
     {
         Int pocCurr = slice->getPOC();
@@ -582,11 +580,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     /* start slice NALunit */
     OutputNALUnit nalu(slice->getNalUnitType(), 0);
-    Bool sliceSegment = (!slice->isNextSlice());
-    if (!sliceSegment)
-    {
-        oneBitstreamPerSliceLength = 0; // start of a new slice
-    }
+    Bool sliceSegment = !slice->isNextSlice();
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     entropyCoder->encodeSliceHeader(slice);
 
@@ -633,7 +627,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     m_sbacCoder.load(getSbacCoder(0));
 
-    slice->setTileOffstForMultES(oneBitstreamPerSliceLength);
+    slice->setTileOffstForMultES(0);
     slice->setTileLocationCount(0);
     encodeSlice(pic, outStreams);
 
@@ -688,7 +682,6 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     bitstreamRedirect->clear();
 
     accessUnit.push_back(new NALUnitEBSP(nalu));
-    oneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits(); // length of bitstream after byte-alignment
 
     if (m_sps.getUseSAO())
     {
