@@ -23,41 +23,38 @@
 
 #include "TLibCommon/TComList.h"
 #include "TLibCommon/TComPicYuv.h"
-#include "x265.h"
 #include "common.h"
 #include "threadpool.h"
 
 #include "TLibEncoder/TEncTop.h"
 #include "bitcost.h"
+#include "x265.h"
 
 #include <stdio.h>
 #include <string.h>
 
-namespace x265 {
-class Encoder : public TEncTop
+using namespace x265;
+
+/* "Glue" interface class between TEncTop and C API */
+
+struct x265_t : public TEncTop
 {
-public:
+    x265_t();
 
     std::vector<x265_nal_t> m_nals;
     std::string             m_packetData;
 
-    Encoder()
-    {
-        // preallocate these containers
-        m_packetData.reserve(4096);
-        m_nals.reserve(4);
-    }
-
     void configure(x265_param_t *param);
     void determineLevelAndProfile(x265_param_t *param);
 };
+
+x265_t::x265_t()
+{
+    m_packetData.reserve(4096);
+    m_nals.reserve(4);
 }
 
-struct x265_t : public x265::Encoder {};
-
-using namespace x265;
-
-void Encoder::determineLevelAndProfile(x265_param_t *_param)
+void x265_t::determineLevelAndProfile(x265_param_t *_param)
 {
     // this is all based on the table at on Wikipedia at
     // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
@@ -177,7 +174,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *_param)
     x265_log(_param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
 }
 
-void Encoder::configure(x265_param_t *_param)
+void x265_t::configure(x265_param_t *_param)
 {
     // Trim the thread pool if WPP is disabled
     if (_param->bEnableWavefront == 0)
