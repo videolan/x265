@@ -251,7 +251,6 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
         slice->setDeblockingFilterBetaOffsetDiv2(0);
         slice->setDeblockingFilterTcOffsetDiv2(0);
     }
-    m_wp.xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
 
     // depth computation based on GOP size
     Int depth = 0;
@@ -650,6 +649,7 @@ Void FrameEncoder::compressSlice(TComPic* pic)
     //  Weighted Prediction parameters estimation.
     //------------------------------------------------------------------------------
     // calculate AC/DC values for current picture
+    m_wp.xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
     if (slice->getPPS()->getUseWP() || slice->getPPS()->getWPBiPred())
     {
         m_wp.xCalcACDCParamSlice(slice);
