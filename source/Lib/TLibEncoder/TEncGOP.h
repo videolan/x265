@@ -75,10 +75,6 @@ public:
     TComSPS                 m_sps;
     TComPPS                 m_pps;
 
-    // number of coded frames ago a buffering period SEI message was emitted
-    UInt                    m_totalCoded;
-    UInt                    m_lastBPSEI;
-
     TEncGOP();
 
     Void destroy();

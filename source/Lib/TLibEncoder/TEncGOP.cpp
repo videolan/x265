@@ -66,9 +66,6 @@ TEncGOP::TEncGOP()
     m_cfg             = NULL;
     m_frameEncoder    = NULL;
     m_top             = NULL;
-
-    m_lastBPSEI       = 0;
-    m_totalCoded      = 0;
 }
 
 Void TEncGOP::destroy()
@@ -197,17 +194,9 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     TEncSampleAdaptiveOffset* sao      = frameEncoder->getSAO();
     TComSlice*            slice        = pic->getSlice();
 
-    Int                   picSptDpbOutputDuDelay = 0;
-    UInt*                 accumBitsDU = NULL;
-    UInt*                 accumNalsDU = NULL;
     UInt                  oneBitstreamPerSliceLength = 0; // TODO: Remove
     TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  outStreams = NULL;
-    Bool bBufferingPeriodSEIPresentInAU = false;
-    Bool bPictureTimingSEIPresentInAU = false;
-
-    SEIPictureTiming pictureTimingSEI;
-    SEIDecodingUnitInfo decodingUnitInfoSEI;
 
     Int numSubstreams = m_cfg->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
     outStreams = new TComOutputBitstream[numSubstreams];
@@ -236,96 +225,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
         sao->createPicSaoInfo(pic);
     }
 
-    /* write various header sets. */
-
-    if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
-        (m_sps.getVuiParametersPresentFlag()) &&
-        ((m_sps.getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
-            || (m_sps.getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())))
-    {
-        if (m_sps.getVuiParameters()->getHrdParameters()->getSubPicCpbParamsPresentFlag())
-        {
-            UInt numDU = m_sps.getVuiParameters()->getHrdParameters()->getNumDU();
-            pictureTimingSEI.m_numDecodingUnitsMinus1 = (numDU - 1);
-            pictureTimingSEI.m_duCommonCpbRemovalDelayFlag = false;
-
-            if (pictureTimingSEI.m_numNalusInDuMinus1 == NULL)
-            {
-                pictureTimingSEI.m_numNalusInDuMinus1 = new UInt[numDU];
-            }
-            if (pictureTimingSEI.m_duCpbRemovalDelayMinus1 == NULL)
-            {
-                pictureTimingSEI.m_duCpbRemovalDelayMinus1  = new UInt[numDU];
-            }
-            if (accumBitsDU == NULL)
-            {
-                accumBitsDU = new UInt[numDU];
-            }
-            if (accumNalsDU == NULL)
-            {
-                accumNalsDU = new UInt[numDU];
-            }
-        }
-        pictureTimingSEI.m_auCpbRemovalDelay = std::max<Int>(1, m_totalCoded - m_lastBPSEI); // Syntax element signaled as minus, hence the .
-        pictureTimingSEI.m_picDpbOutputDelay = m_sps.getNumReorderPics(0) + slice->getPOC() - m_totalCoded;
-        Int factor = m_sps.getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2;
-        pictureTimingSEI.m_picDpbOutputDuDelay = factor * pictureTimingSEI.m_picDpbOutputDelay;
-        if (m_cfg->getDecodingUnitInfoSEIEnabled())
-        {
-            picSptDpbOutputDuDelay = factor * pictureTimingSEI.m_picDpbOutputDelay;
-        }
-    }
-
-    if ((m_cfg->getBufferingPeriodSEIEnabled()) && (slice->getSliceType() == I_SLICE) &&
-        (m_sps.getVuiParametersPresentFlag()) &&
-        ((m_sps.getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
-            || (m_sps.getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())))
-    {
-        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-
-        SEIBufferingPeriod sei_buffering_period;
-
-        UInt initialCpbRemovalDelay = (90000 / 2);              // 0.5 sec
-        sei_buffering_period.m_initialCpbRemovalDelay[0][0]     = initialCpbRemovalDelay;
-        sei_buffering_period.m_initialCpbRemovalDelayOffset[0][0]     = initialCpbRemovalDelay;
-        sei_buffering_period.m_initialCpbRemovalDelay[0][1]     = initialCpbRemovalDelay;
-        sei_buffering_period.m_initialCpbRemovalDelayOffset[0][1]     = initialCpbRemovalDelay;
-
-        Double dTmp = (Double)m_sps.getVuiParameters()->getTimingInfo()->getNumUnitsInTick() / (Double)m_sps.getVuiParameters()->getTimingInfo()->getTimeScale();
-
-        UInt tmp = (UInt)(dTmp * 90000.0);
-        initialCpbRemovalDelay -= tmp;
-        initialCpbRemovalDelay -= tmp / (m_sps.getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2);
-        sei_buffering_period.m_initialAltCpbRemovalDelay[0][0]  = initialCpbRemovalDelay;
-        sei_buffering_period.m_initialAltCpbRemovalDelayOffset[0][0]  = initialCpbRemovalDelay;
-        sei_buffering_period.m_initialAltCpbRemovalDelay[0][1]  = initialCpbRemovalDelay;
-        sei_buffering_period.m_initialAltCpbRemovalDelayOffset[0][1]  = initialCpbRemovalDelay;
-
-        sei_buffering_period.m_rapCpbParamsPresentFlag = 0;
-        //for the concatenation, it can be set to one during splicing.
-        sei_buffering_period.m_concatenationFlag = 0;
-        //since the temporal layer HRD is not ready, we assumed it is fixed
-        sei_buffering_period.m_auCpbRemovalDelayDelta = 1;
-        sei_buffering_period.m_cpbDelayOffset = 0;
-        sei_buffering_period.m_dpbDelayOffset = 0;
-
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_buffering_period, slice->getSPS());
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-        {
-            UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-            UInt offsetPosition = 0;
-            AccessUnit::iterator it = accessUnit.begin();
-            for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
-            {
-                it++;
-            }
-
-            accessUnit.insert(it, new NALUnitEBSP(nalu));
-            bBufferingPeriodSEIPresentInAU = true;
-        }
-
-        m_lastBPSEI = m_totalCoded;
-    }
     if ((m_cfg->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
     {
         if (m_cfg->getGradualDecodingRefreshInfoEnabled() && !slice->getRapPicFlag())
@@ -485,28 +384,6 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     accessUnit.push_back(new NALUnitEBSP(nalu));
     oneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits(); // length of bitstream after byte-alignment
 
-    if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
-        (m_sps.getVuiParametersPresentFlag()) &&
-        ((m_sps.getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
-            || (m_sps.getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())) &&
-        (m_sps.getVuiParameters()->getHrdParameters()->getSubPicCpbParamsPresentFlag()))
-    {
-        UInt numNalus = 0;
-        UInt numRBSPBytes = 0;
-        for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
-        {
-            UInt numRBSPBytes_nal = UInt((*it)->m_nalUnitData.str().size());
-            if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
-            {
-                numRBSPBytes += numRBSPBytes_nal;
-                numNalus++;
-            }
-        }
-
-        accumBitsDU[0] = (numRBSPBytes << 3);
-        accumNalsDU[0] = numNalus; // SEI not counted for bit count; hence shouldn't be counted for # of NALUs - only for consistency
-    }
-
     if (m_sps.getUseSAO())
     {
         sao->destroyPicSaoInfo();
@@ -516,157 +393,8 @@ Void TEncGOP::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
     calculateHashAndPSNR(pic, pic->getPicYuvRec(), accessUnit);
 
-    if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
-        (m_sps.getVuiParametersPresentFlag()) &&
-        ((m_sps.getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
-            || (m_sps.getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())))
-    {
-        TComVUI *vui = m_sps.getVuiParameters();
-        TComHRD *hrd = vui->getHrdParameters();
-
-        if (hrd->getSubPicCpbParamsPresentFlag())
-        {
-            Int i;
-            UInt64 tmp64;
-            UInt prev = 0;
-            UInt numDU = (pictureTimingSEI.m_numDecodingUnitsMinus1 + 1);
-            UInt *pCRD = &pictureTimingSEI.m_duCpbRemovalDelayMinus1[0];
-            UInt maxDiff = (hrd->getTickDivisorMinus2() + 2) - 1;
-
-            for (i = 0; i < numDU; i++)
-            {
-                pictureTimingSEI.m_numNalusInDuMinus1[i] = (i == 0) ? (accumNalsDU[i] - 1) : (accumNalsDU[i] - accumNalsDU[i - 1] - 1);
-            }
-
-            if (numDU == 1)
-            {
-                pCRD[0] = 0; /* don't care */
-            }
-            else
-            {
-                pCRD[numDU - 1] = 0; /* by definition */
-                UInt tmp = 0;
-                UInt accum = 0;
-                int bitrate = m_cfg->param.rc.bitrate;
-
-                for (i = (numDU - 2); i >= 0; i--)
-                {
-                    tmp64 = (((accumBitsDU[numDU - 1] - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / bitrate);
-                    if ((UInt)tmp64 > maxDiff)
-                    {
-                        tmp++;
-                    }
-                }
-
-                prev = 0;
-
-                UInt flag = 0;
-                for (i = (numDU - 2); i >= 0; i--)
-                {
-                    flag = 0;
-                    tmp64 = (((accumBitsDU[numDU - 1] - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / bitrate);
-
-                    if ((UInt)tmp64 > maxDiff)
-                    {
-                        if (prev >= maxDiff - tmp)
-                        {
-                            tmp64 = prev + 1;
-                            flag = 1;
-                        }
-                        else tmp64 = maxDiff - tmp + 1;
-                    }
-                    pCRD[i] = (UInt)tmp64 - prev - 1;
-                    if ((Int)pCRD[i] < 0)
-                    {
-                        pCRD[i] = 0;
-                    }
-                    else if (tmp > 0 && flag == 1)
-                    {
-                        tmp--;
-                    }
-                    accum += pCRD[i] + 1;
-                    prev = accum;
-                }
-            }
-        }
-        if (m_cfg->getPictureTimingSEIEnabled())
-        {
-            OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
-            m_seiWriter.writeSEImessage(onalu.m_Bitstream, pictureTimingSEI, slice->getSPS());
-            writeRBSPTrailingBits(onalu.m_Bitstream);
-            UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-            // Insert PT SEI after APS and BP SEI
-            UInt offsetPosition = bBufferingPeriodSEIPresentInAU;
-            AccessUnit::iterator it = accessUnit.begin();
-            for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
-            {
-                it++;
-            }
-
-            accessUnit.insert(it, new NALUnitEBSP(onalu));
-            bPictureTimingSEIPresentInAU = true;
-        }
-        if (m_cfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag())
-        {
-            for (Int i = 0; i < (pictureTimingSEI.m_numDecodingUnitsMinus1 + 1); i++)
-            {
-                OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
-
-                SEIDecodingUnitInfo tempSEI;
-                tempSEI.m_decodingUnitIdx = i;
-                tempSEI.m_duSptCpbRemovalDelay = pictureTimingSEI.m_duCpbRemovalDelayMinus1[i] + 1;
-                tempSEI.m_dpbOutputDuDelayPresentFlag = false;
-                tempSEI.m_picSptDpbOutputDuDelay = picSptDpbOutputDuDelay;
-
-                AccessUnit::iterator it = accessUnit.begin();
-                // Insert the first one in the right location, before the first slice
-                if (i == 0)
-                {
-                    // Insert before the first slice.
-                    m_seiWriter.writeSEImessage(onalu.m_Bitstream, tempSEI, slice->getSPS());
-                    writeRBSPTrailingBits(onalu.m_Bitstream);
-                    UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                    // Insert DU info SEI after APS, BP and PT SEI
-                    UInt offsetPosition = bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU;
-                    for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
-                    {
-                        it++;
-                    }
-
-                    accessUnit.insert(it, new NALUnitEBSP(onalu));
-                }
-                else
-                {
-                    it = accessUnit.begin();
-                    // For the second decoding unit onwards we know how many NALUs are present
-                    for (Int ctr = 0; it != accessUnit.end(); it++)
-                    {
-                        if (ctr == accumNalsDU[i - 1])
-                        {
-                            // Insert before the first slice.
-                            m_seiWriter.writeSEImessage(onalu.m_Bitstream, tempSEI, slice->getSPS());
-                            writeRBSPTrailingBits(onalu.m_Bitstream);
-
-                            accessUnit.insert(it, new NALUnitEBSP(onalu));
-                            break;
-                        }
-                        if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
-                        {
-                            ctr++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    m_totalCoded++;
-
     delete[] outStreams;
     delete bitstreamRedirect;
-
-    if (accumBitsDU != NULL) delete [] accumBitsDU;
-    if (accumNalsDU != NULL) delete [] accumNalsDU;
 }
 
 SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets()
