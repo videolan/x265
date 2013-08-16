@@ -69,8 +69,8 @@ int sse_pp8(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
         fref += strideFref;
     }
 
-    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 8));
-    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 4));
+    sum = _mm_hadd_epi32(sum, sum);
+    sum = _mm_hadd_epi32(sum, sum);
     return _mm_cvtsi128_si32(sum);
 }
 
