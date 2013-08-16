@@ -445,7 +445,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip /*= false*/, int lastPos )
+Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int /* lastPos */ )
 {
     if (transQuantBypass)
     {
