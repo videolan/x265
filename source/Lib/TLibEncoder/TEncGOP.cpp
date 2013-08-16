@@ -53,8 +53,6 @@
 using namespace std;
 using namespace x265;
 
-static const char *digestToString(const unsigned char digest[3][16], int numChar);
-
 enum SCALING_LIST_PARAMETER
 {
     SCALING_LIST_OFF,
@@ -543,6 +541,32 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
     return ssd;
 }
 
+/**
+ * Produce an ascii(hex) representation of picture digest.
+ *
+ * Returns: a statically allocated null-terminated string.  DO NOT FREE.
+ */
+static const char*digestToString(const unsigned char digest[3][16], int numChar)
+{
+    const char* hex = "0123456789abcdef";
+    static char string[99];
+    int cnt = 0;
+
+    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+    {
+        for (int i = 0; i < numChar; i++)
+        {
+            string[cnt++] = hex[digest[yuvIdx][i] >> 4];
+            string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
+        }
+
+        string[cnt++] = ',';
+    }
+
+    string[cnt - 1] = '\0';
+    return string;
+}
+
 Void TEncGOP::calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit& accessUnit)
 {
     //===== calculate PSNR =====
@@ -688,30 +712,3 @@ Void TEncGOP::calculateHashAndPSNR(TComPic* pic, TComPicYuv* recon, AccessUnit& 
         fflush(stderr);
     }
 }
-
-/**
- * Produce an ascii(hex) representation of picture digest.
- *
- * Returns: a statically allocated null-terminated string.  DO NOT FREE.
- */
-const char*digestToString(const unsigned char digest[3][16], int numChar)
-{
-    const char* hex = "0123456789abcdef";
-    static char string[99];
-    int cnt = 0;
-
-    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
-    {
-        for (int i = 0; i < numChar; i++)
-        {
-            string[cnt++] = hex[digest[yuvIdx][i] >> 4];
-            string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
-        }
-
-        string[cnt++] = ',';
-    }
-
-    string[cnt - 1] = '\0';
-    return string;
-}
-//! \}
