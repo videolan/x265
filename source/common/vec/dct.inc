@@ -3901,6 +3901,7 @@ void idct32(int *src, short *dst, intptr_t stride)
     }
 }
 
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 uint32_t quant(int* coef,
                int* quantCoeff,
                int* deltaU,
@@ -3977,6 +3978,7 @@ uint32_t quant(int* coef,
 
     return acSum;
 }
+#endif
 }
 
 #include "utils.h"
