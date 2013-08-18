@@ -765,18 +765,21 @@ me_hex2:
 
     bmv += square1[bdir] * 2;
 
-    /* QPEL square refinement, do not remeasure 0 offset */
-    bdir = 0;
-    for (int i = 1; i < 9; i++)
+    if (!ref->m_isLowres)
     {
-        MV qmv = bmv + square1[i];
-        MV fmv = qmv >> 2;
-        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
-        int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
-        COPY2_IF_LT(bcost, cost, bdir, i);
-    }
+        /* QPEL square refinement, do not remeasure 0 offset */
+        bdir = 0;
+        for (int i = 1; i < 9; i++)
+        {
+            MV qmv = bmv + square1[i];
+            MV fmv = qmv >> 2;
+            pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+            int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
+            COPY2_IF_LT(bcost, cost, bdir, i);
+        }
 
-    bmv += square1[bdir];
+        bmv += square1[bdir];
+    }
 
     x265_emms();
     outQMv = bmv;
