@@ -225,7 +225,12 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     int bcost = me.COST_MAX;
     int listused = 0;
 
-    // TODO: calculate search extents
+    // establish search bounds that don't cross extended frame boundaries
+    mvmin.x = (uint16_t)(-cux * cu_size - 8);
+    mvmin.y = (uint16_t)(-cuy * cu_size - 8);
+    mvmax.x = (uint16_t)((fenc->cuWidth - cux - 1) * cu_size + 8);
+    mvmax.y = (uint16_t)((fenc->cuHeight - cuy - 1) * cu_size + 8);
+
     for (int i = 0; i < 1 + bidir; i++)
     {
         if (!do_search[i])
