@@ -32,6 +32,7 @@ void LookaheadFrame::create(TComPic *pic, int _bframes)
     TComPicYuv *orig = pic->getPicYuvOrg();
     TComPicSym *sym = pic->getPicSym();
 
+    m_isLowres = true;
     width = orig->getWidth() / 2;
     lines = orig->getHeight() / 2;
     stride = width + 2 * orig->getLumaMarginX();

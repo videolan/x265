@@ -38,7 +38,7 @@ namespace x265 {
 class ReferencePlanes
 {
 public:
-    ReferencePlanes() : m_isWeighted(false) {}
+    ReferencePlanes() : m_isWeighted(false), m_isLowres(false) {}
 
     void setWeight(const wpScalingParam&);
     bool matchesWeight(const wpScalingParam&);
@@ -51,6 +51,7 @@ public:
     int  m_shift;
     int  m_round;
     bool m_isWeighted;
+    bool m_isLowres;
 };
 
 class MotionReference : public ReferencePlanes, public JobProvider
