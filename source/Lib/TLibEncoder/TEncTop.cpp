@@ -36,7 +36,6 @@
 */
 
 #include "TLibCommon/CommonDef.h"
-#include "TLibCommon/ContextModel.h"
 #include "TLibCommon/TComPic.h"
 #include "primitives.h"
 #include "common.h"
@@ -66,8 +65,6 @@ TEncTop::TEncTop()
     m_frameEncoder = NULL;
     m_rateControl = NULL;
     m_dpb = NULL;
-
-    ContextModel::buildNextStateTable();
 
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");

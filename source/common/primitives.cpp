@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
+#include "TLibCommon/ContextModel.h"
 #include "primitives.h"
 #include "instrset.h"
 #include "common.h"
@@ -91,6 +92,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 {
     // initialize global variables
     initROM();
+    ContextModel::buildNextStateTable();
 
     if (cpuid < 0)
     {
