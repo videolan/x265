@@ -63,10 +63,10 @@ Void ContextModel::init(Int qp, Int initValue)
     Int  offset     = ((initValue & 15) << 3) - 16;
     Int  initState  =  min(max(1, (((slope * qp) >> 4) + offset)), 126);
     UInt mpState    = (initState >= 64);
-    m_ucState       = ((mpState ? (initState - 64) : (63 - initState)) << 1) + mpState;
+    m_state       = ((mpState ? (initState - 64) : (63 - initState)) << 1) + mpState;
 }
 
-const UChar ContextModel::m_aucNextStateMPS[128] =
+const UChar ContextModel::s_nextStateMPS[128] =
 {
     2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
     18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
@@ -78,7 +78,7 @@ const UChar ContextModel::m_aucNextStateMPS[128] =
     114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 124, 125, 126, 127
 };
 
-const UChar ContextModel::m_aucNextStateLPS[128] =
+const UChar ContextModel::s_nextStateLPS[128] =
 {
     1, 0, 0, 1, 2, 3, 4, 5, 4, 5, 8, 9, 8, 9, 10, 11,
     12, 13, 14, 15, 16, 17, 18, 19, 18, 19, 22, 23, 22, 23, 24, 25,
@@ -98,12 +98,12 @@ Void ContextModel::buildNextStateTable()
     {
         for (Int j = 0; j < 2; j++)
         {
-            m_nextState[i][j] = ((i & 1) == j) ? m_aucNextStateMPS[i] : m_aucNextStateLPS[i];
+            m_nextState[i][j] = ((i & 1) == j) ? s_nextStateMPS[i] : s_nextStateLPS[i];
         }
     }
 }
 
-const Int ContextModel::m_entropyBits[128] =
+const Int ContextModel::s_entropyBits[128] =
 {
     // Corrected table, most notably for last state
     0x07b23, 0x085f9, 0x074a0, 0x08cbc, 0x06ee4, 0x09354, 0x067f4, 0x09c1b, 0x060b0, 0x0a62a, 0x05a9c, 0x0af5b, 0x0548d, 0x0b955, 0x04f56, 0x0c2a9,
