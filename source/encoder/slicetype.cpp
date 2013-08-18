@@ -341,8 +341,12 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
 
     if (!bidir)
     {
-        fenc->intraMbs[b - p0] += fenc->intraCost[cu_xy] < bcost;
-        COPY2_IF_LT(bcost, fenc->intraCost[cu_xy], listused, 0);
+        if (fenc->intraCost[cu_xy] < bcost)
+        {
+            fenc->intraMbs[b - p0]++;
+            bcost = fenc->intraCost[cu_xy];
+            listused = 0;
+        }
     }
 
     /* For I frames these costs were accumulated earlier */
