@@ -61,6 +61,8 @@ struct Lookahead
     int              numDecided;
     uint8_t          analyse_keyframe;
     int              last_keyframe;
+    int              cuWidth;  // width of lowres frame in downscale CUs
+    int              cuHeight; // height of lowres frame in downscale CUs
 
     TComList<TComPic*> inputQueue;       // input pictures in order received
     TComList<TComPic*> outputQueue;      // pictures to be encoded, in encode order

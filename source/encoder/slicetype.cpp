@@ -110,6 +110,8 @@ void Lookahead::slicetypeDecide()
     if (numDecided == 0)
     {
         TComPic *pic = inputQueue.popFront();
+        this->cuWidth = pic->getPicSym()->getFrameWidthInCU();
+        this->cuHeight = pic->getPicSym()->getFrameHeightInCU();
         pic->m_lowres.sliceType = X265_SLICE_TYPE_I;
         pic->m_lowres.gopIdx = 0;
         outputQueue.pushBack(pic);
@@ -175,9 +177,9 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
          * This considerably improves MV prediction overall. */
         // TODO: use lowres MVs as motion candidates in full-res search
         me.setSourcePlane(fenc->m_lumaPlane[0][0], fenc->m_lumaStride);
-        for (int i = fenc->cuWidth - 1; i >= 0; i--)
+        for (int i = cuWidth - 1; i >= 0; i--)
         {
-            for (int j = fenc->cuHeight - 1; j >= 0; j--)
+            for (int j = cuHeight - 1; j >= 0; j--)
             {
                 estimateCUCost(j, i, p0, p1, b, do_search);
             }
@@ -194,8 +196,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
     if (bIntraPenalty)
     {
         // arbitrary penalty for I-blocks after B-frames
-        int nmb = fenc->cuWidth * fenc->cuHeight;
-        score += (uint64_t)score * fenc->intraMbs[b - p0] / (nmb * 8);
+        score += (uint64_t)score * fenc->intraMbs[b - p0] / (cuWidth * cuHeight * 8);
     }
     x265_emms();
     return score;
@@ -208,7 +209,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     LookaheadFrame *fenc  = frames[b];
 
     const int bidir = (b < p1);
-    const int cu_xy = cux + cuy * fenc->cuWidth;
+    const int cu_xy = cux + cuy * cuWidth;
     const int stride = fenc->stride;
     const int cu_size = g_maxCUWidth / 2;
     const int pel_offset = cu_size * cux + cu_size * cuy * stride;
@@ -228,8 +229,8 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     // establish search bounds that don't cross extended frame boundaries
     mvmin.x = (uint16_t)(-cux * cu_size - 8);
     mvmin.y = (uint16_t)(-cuy * cu_size - 8);
-    mvmax.x = (uint16_t)((fenc->cuWidth - cux - 1) * cu_size + 8);
-    mvmax.y = (uint16_t)((fenc->cuHeight - cuy - 1) * cu_size + 8);
+    mvmax.x = (uint16_t)((cuWidth - cux - 1) * cu_size + 8);
+    mvmax.y = (uint16_t)((cuHeight - cuy - 1) * cu_size + 8);
 
     for (int i = 0; i < 1 + bidir; i++)
     {
@@ -244,15 +245,15 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         mvc[0] = 0;
         mvc[2] = 0;
 #define MVC(mv) mvc[numc++] = mv;
-        if (cux < fenc->cuWidth - 1)
+        if (cux < cuWidth - 1)
             MVC(fenc_mv[1]);
-        if (cuy < fenc->cuHeight - 1)
+        if (cuy < cuHeight - 1)
         {
-            MVC(fenc_mv[fenc->cuWidth]);
+            MVC(fenc_mv[cuWidth]);
             if (cux > 0)
-                MVC(fenc_mv[fenc->cuWidth - 1]);
-            if (cux < fenc->cuWidth - 1)
-                MVC(fenc_mv[fenc->cuWidth + 1]);
+                MVC(fenc_mv[cuWidth - 1]);
+            if (cux < cuWidth - 1)
+                MVC(fenc_mv[cuWidth + 1]);
         }
 #undef MVC
         if (numc <= 1)

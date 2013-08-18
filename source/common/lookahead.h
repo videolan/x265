@@ -47,8 +47,6 @@ struct LookaheadFrame : public ReferencePlanes
     int    stride;   // distance to below pixel
     int    width;    // width of lowres frame in pixels
     int    lines;    // height of lowres frame in pixel lines
-    int    cuWidth;  // width of lowres frame in downscale CUs
-    int    cuHeight; // height of lowres frame in downscale CUs
     int    bframes;
     bool   bIntraCalculated;
     int    frameNum;  // Presentation frame number 
