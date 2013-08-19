@@ -58,7 +58,7 @@ void LookaheadFrame::create(TComPic *pic, int _bframes)
     lumaPlane[0][3] = lumaPlane[1][2] = lumaPlane[1][3] = lumaPlane[0][2];
     lumaPlane[2][3] = lumaPlane[3][2] = lumaPlane[3][3] = lumaPlane[2][2];
 
-    intraCost = (int*)X265_MALLOC(MV, sym->getNumberOfCUsInFrame());
+    intraCost = (int*)X265_MALLOC(int, sym->getNumberOfCUsInFrame());
 
     for (int i = 0; i < bframes + 2; i++)
     {
