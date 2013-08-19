@@ -302,14 +302,9 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         int predsize = cu_size * cu_size;
 
         // generate 35 intra predictions into tmp
-        pixel *above = pAbove0;
-        pixel *left  = pLeft0;
-        if (cu_size >= 8)
-        {
-            above = pAbove1;
-            left  = pLeft1;
-        }
         primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, predictions, cu_size, cu_size, (cu_size <= 16));
+        pixel *above = (cu_size >= 8) ? pAbove1 : pAbove0;
+        pixel *left  = (cu_size >= 8) ? pLeft1 : pLeft0;
         primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, predictions + predsize, cu_size, cu_size);
         x265::primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cu_size <= 16));
 
@@ -317,13 +312,13 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
         x265::primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
         x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
-        int icost = me.COST_MAX;
+        int icost = me.COST_MAX, cost;
         for (UInt mode = 0; mode < 35; mode++)
         {
-            bool transpose = (mode >= 2) && (mode < 18);
-            pixel *cmp = (transpose ? buf_trans : me.fenc);
-            intptr_t srcStride = (transpose ? cu_size : FENC_STRIDE);
-            int cost = sa8d(cmp, srcStride, &predictions[mode * predsize], cu_size);
+            if ((mode >= 2) && (mode < 18))
+                cost = sa8d(buf_trans, cu_size, &predictions[mode * predsize], cu_size);
+            else
+                cost = sa8d(me.fenc, FENC_STRIDE, &predictions[mode * predsize], cu_size);
             if (cost < icost)
                 icost = cost;
         }
