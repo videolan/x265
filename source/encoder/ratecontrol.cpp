@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComPic.h"
-#include "lookahead.h"
+#include "lowres.h"
 #include "rateControl.h"
 #include <math.h>
 

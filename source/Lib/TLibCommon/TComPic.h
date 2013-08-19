@@ -42,7 +42,7 @@
 #include "CommonDef.h"
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
-#include "lookahead.h"
+#include "lowres.h"
 
 //! \ingroup TLibCommon
 //! \{

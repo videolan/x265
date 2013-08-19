@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComPic.h"
-#include "lookahead.h"
+#include "lowres.h"
 #include "mv.h"
 
 using namespace x265;

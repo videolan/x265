@@ -25,7 +25,7 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComPic.h"
 #include "primitives.h"
-#include "lookahead.h"
+#include "lowres.h"
 
 #include "TLibEncoder/TEncCfg.h"
 #include "slicetype.h"

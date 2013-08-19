@@ -46,7 +46,7 @@ add_library(common ../../COPYING
     TShortYUV.cpp TShortYUV.h mv.h
     reference.cpp reference.h
     common.cpp common.h
-    lookahead.cpp lookahead.h)
+    lowres.cpp lowres.h)
     
 if(ENABLE_PRIMITIVES_VEC)
     add_subdirectory(vec)
