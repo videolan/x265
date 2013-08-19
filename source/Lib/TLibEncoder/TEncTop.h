@@ -66,12 +66,8 @@ class TEncTop : public TEncCfg
 {
 private:
 
-    // picture
     Int                     m_pocLast;          ///< time index (POC)
     TComList<TComPic*>      m_freeList;
-
-    // quality control
-    TComScalingList         m_scalingList;      ///< quantization matrix information
 
     x265::ThreadPool*       m_threadPool;
     x265::Lookahead*        m_lookahead;
@@ -79,12 +75,18 @@ private:
     x265::DPB*              m_dpb;
     x265::RateControl*      m_rateControl;
 
+    /* frame parallelism */
+    int                     m_curEncoder;
+
     /* Collect statistics globally */
     x265::Lock              m_statLock;
     TEncAnalyze             m_analyzeAll;
     TEncAnalyze             m_analyzeI;
     TEncAnalyze             m_analyzeP;
     TEncAnalyze             m_analyzeB;
+
+    // quality control
+    TComScalingList         m_scalingList;      ///< quantization matrix information
 
 public:
 

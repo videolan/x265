@@ -50,6 +50,8 @@
 
 #include <math.h> // log10
 
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -61,6 +63,7 @@ TEncTop::TEncTop()
 {
     m_pocLast = -1;
     m_maxRefPicNum = 0;
+    m_curEncoder = 0;
     m_lookahead = NULL;
     m_frameEncoder = NULL;
     m_rateControl = NULL;
@@ -188,41 +191,72 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     if (flush)
         m_lookahead->flush();
 
-    if (m_lookahead->outputQueue.empty())
-        return 0;
+    FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
+    m_curEncoder = (m_curEncoder + 1) % param.frameNumThreads;
+    int ret = 0;
 
-    // pop a single frame from decided list, encode and return AU and recon
-    TComPic *fenc = m_lookahead->outputQueue.popFront();
-    m_dpb->m_picList.pushBack(fenc);
+    // getEncodedPicture() should block until the FrameEncoder has completed
+    // encoding the frame.  This is how back-pressure through the API is
+    // accomplished when the encoder is full.
+    TComPic *out = curEncoder->getEncodedPicture(accessUnitOut);
 
-    // determine references, set QP, etc
-    m_dpb->prepareEncode(fenc, m_frameEncoder);
-
-    //m_rateControl->rateControlStart(pic);
-
-    // main encode processing, to be multi-threaded
-    m_frameEncoder->compressFrame(fenc, accessUnitOut);
-
-    calculateHashAndPSNR(fenc, accessUnitOut);
-
-    //m_rateControl->rateControlEnd(m_analyzeAll.getBits());
-
-    if (pic_out)
+    if (!out && flush)
     {
-        TComPicYuv *recpic = fenc->getPicYuvRec();
-        pic_out->poc = fenc->getSlice()->getPOC();
-        pic_out->bitDepth = sizeof(Pel) * 8;
-        pic_out->planes[0] = recpic->getLumaAddr();
-        pic_out->stride[0] = recpic->getStride();
-        pic_out->planes[1] = recpic->getCbAddr();
-        pic_out->stride[1] = recpic->getCStride();
-        pic_out->planes[2] = recpic->getCrAddr();
-        pic_out->stride[2] = recpic->getCStride();
+        // if the current encoder did not return an output picture and we are
+        // flushing, check all the other encoders in logical order until
+        // we find an output picture or have cycled around.  We cannot return
+        // 0 until the entire stream is flushed
+        // (can only be an issue when --frames < --frame-threads)
+        int flushed = m_curEncoder;
+        do 
+        {
+            curEncoder = &m_frameEncoder[m_curEncoder];
+            m_curEncoder = (m_curEncoder + 1) % param.frameNumThreads;
+            out = curEncoder->getEncodedPicture(accessUnitOut);
+        }
+        while (!out && flushed != m_curEncoder);
+    }
+    if (out)
+    {
+        if (pic_out)
+        {
+            TComPicYuv *recpic = out->getPicYuvRec();
+            pic_out->poc = out->getSlice()->getPOC();
+            pic_out->bitDepth = sizeof(Pel) * 8;
+            pic_out->planes[0] = recpic->getLumaAddr();
+            pic_out->stride[0] = recpic->getStride();
+            pic_out->planes[1] = recpic->getCbAddr();
+            pic_out->stride[1] = recpic->getCStride();
+            pic_out->planes[2] = recpic->getCrAddr();
+            pic_out->stride[2] = recpic->getCStride();
+        }
+
+        calculateHashAndPSNR(out, accessUnitOut);
+
+        //m_rateControl->rateControlEnd(m_analyzeAll.getBits());
+
+        m_dpb->recycleUnreferenced(m_freeList);
+
+        ret = 1;
     }
 
-    m_dpb->recycleUnreferenced(m_freeList);
+    if (!m_lookahead->outputQueue.empty())
+    {
+        // pop a single frame from decided list, prepare, then provide to frame encoder
+        // curEncoder is guaranteed to be idle at this point
+        TComPic *fenc = m_lookahead->outputQueue.popFront();
 
-    return 1;
+        // determine references, set QP, etc
+        m_dpb->m_picList.pushBack(fenc);
+        m_dpb->prepareEncode(fenc, curEncoder);
+
+        //m_rateControl->rateControlStart(pic);
+
+        // main encode processing, TBD multi-threading
+        curEncoder->compressFrame(fenc);
+    }
+
+    return ret;
 }
 
 Double TEncTop::printSummary()

@@ -367,7 +367,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     slice->setSliceQpDeltaCr(0);
 }
 
-Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
+Void FrameEncoder::compressFrame(TComPic *pic)
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
 
@@ -516,7 +516,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
             m_seiWriter.writeSEImessage(nalu.m_Bitstream, seiGradualDecodingRefreshInfo, slice->getSPS());
             writeRBSPTrailingBits(nalu.m_Bitstream);
-            accessUnit.push_back(new NALUnitEBSP(nalu));
+            m_accessUnit.push_back(new NALUnitEBSP(nalu));
         }
         // Recovery point SEI
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
@@ -528,7 +528,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recovery_point, slice->getSPS());
         writeRBSPTrailingBits(nalu.m_Bitstream);
-        accessUnit.push_back(new NALUnitEBSP(nalu));
+        m_accessUnit.push_back(new NALUnitEBSP(nalu));
     }
 
     /* use the main bitstream buffer for storing the marshaled picture */
@@ -668,7 +668,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     bitstreamRedirect->clear();
 
-    accessUnit.push_back(new NALUnitEBSP(nalu));
+    m_accessUnit.push_back(new NALUnitEBSP(nalu));
 
     if (m_sps.getUseSAO())
     {
@@ -981,3 +981,21 @@ void FrameEncoder::processRow(int row)
         m_completionEvent.trigger();
     }
 }
+
+TComPic *FrameEncoder::getEncodedPicture(AccessUnit& accessUnit)
+{
+    if (m_pic)
+    {
+        /* TODO: frame parallelism - block here until worker thread completes */
+
+        TComPic *ret = m_pic;
+        m_pic = NULL;
+
+        // move NALs from member variable list to end of user's container
+        accessUnit.splice(accessUnit.end(), m_accessUnit);
+        return ret;
+    }
+
+    return NULL;
+}
+

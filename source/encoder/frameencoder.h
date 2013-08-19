@@ -166,7 +166,7 @@ public:
     void initSlice(TComPic* pic, Bool bForceISlice, Int gopID);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
-    Void compressFrame(TComPic *pic, AccessUnit& accessUnitOut);
+    Void compressFrame(TComPic *pic);
 
     /* called by compressFrame to perform wave-front analysis */
     void compressCTURows(TComPic *pic);
@@ -174,6 +174,8 @@ public:
     Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams);
 
     Void determineSliceBounds(TComPic* pic);
+
+    TComPic *getEncodedPicture(AccessUnit& accessUnit);
 
     SEIWriter                m_seiWriter;
     TComSPS                  m_sps;
@@ -191,7 +193,9 @@ protected:
     FrameFilter              m_frameFilter;
     TComBitCounter           m_bitCounter;
 
+    /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;
+    AccessUnit               m_accessUnit;
 
     int                      m_numRows;
     CTURow*                  m_rows;
