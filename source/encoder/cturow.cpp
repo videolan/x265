@@ -107,19 +107,19 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
 
 void CTURow::destroy()
 {
-    for (UInt iDepth = 0; iDepth < g_maxCUDepth + 1; iDepth++)
+    for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
-        for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
+        for (Int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
         {
-            delete m_rdSbacCoders[iDepth][iCIIdx];
-            delete m_binCodersCABAC[iDepth][iCIIdx];
+            delete m_rdSbacCoders[depth][ciIdx];
+            delete m_binCodersCABAC[depth][ciIdx];
         }
     }
 
-    for (UInt iDepth = 0; iDepth < g_maxCUDepth + 1; iDepth++)
+    for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
-        delete [] m_rdSbacCoders[iDepth];
-        delete [] m_binCodersCABAC[iDepth];
+        delete [] m_rdSbacCoders[depth];
+        delete [] m_binCodersCABAC[depth];
     }
 
     delete[] m_rdSbacCoders;
