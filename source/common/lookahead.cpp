@@ -33,10 +33,12 @@ void LookaheadFrame::create(TComPic *pic, int _bframes)
     TComPicSym *sym = pic->getPicSym();
 
     isLowres = true;
+    bframes = _bframes;
     width = orig->getWidth() / 2;
     lines = orig->getHeight() / 2;
     stride = width + 2 * orig->getLumaMarginX();
-    bframes = _bframes;
+    if (stride & 31)
+        stride += 32 - (stride & 31);
 
     /* allocate lowres buffers */
     for (int i = 0; i < 4; i++)
@@ -105,7 +107,7 @@ void LookaheadFrame::destroy()
 }
 
 // (re) initialize lowres state
-void LookaheadFrame::init(TComPicYuv * /*orig*/)
+void LookaheadFrame::init(TComPicYuv *orig)
 {
     bIntraCalculated = false;
     memset(costEst, -1, sizeof(costEst));
@@ -123,16 +125,14 @@ void LookaheadFrame::init(TComPicYuv * /*orig*/)
         lowresMvs[1][i]->x = 0x7fff;
     }
 
-#if 0  // Disabled until this can be properly debugged, crashes reported with GCC on Windows
     /* downscale and generate 4 HPEL planes for lookahead */
     x265::primitives.frame_init_lowres_core(orig->getLumaAddr(),
-        m_lumaPlane[0][0], m_lumaPlane[2][0], m_lumaPlane[0][2], m_lumaPlane[2][2],
+        lumaPlane[0][0], lumaPlane[2][0], lumaPlane[0][2], lumaPlane[2][2],
         orig->getStride(), stride, width, lines);
 
     /* extend hpel planes for motion search */
-    orig->xExtendPicCompBorder(m_lumaPlane[0][0], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
-    orig->xExtendPicCompBorder(m_lumaPlane[2][0], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
-    orig->xExtendPicCompBorder(m_lumaPlane[0][2], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
-    orig->xExtendPicCompBorder(m_lumaPlane[2][2], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
-#endif
+    orig->xExtendPicCompBorder(lumaPlane[0][0], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
+    orig->xExtendPicCompBorder(lumaPlane[2][0], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
+    orig->xExtendPicCompBorder(lumaPlane[0][2], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
+    orig->xExtendPicCompBorder(lumaPlane[2][2], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
 }
