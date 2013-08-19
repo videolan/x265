@@ -33,7 +33,7 @@ namespace x265 {
 #pragma warning(disable: 4201) // non-standard extension used (nameless struct/union)
 #endif
 
-class MV
+struct MV
 {
 public:
 
