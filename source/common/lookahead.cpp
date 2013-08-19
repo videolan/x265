@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-void LookaheadFrame::create(TComPic *pic, int _bframes)
+void Lowres::create(TComPic *pic, int _bframes)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
     TComPicSym *sym = pic->getPicSym();
@@ -78,7 +78,7 @@ void LookaheadFrame::create(TComPic *pic, int _bframes)
     }
 }
 
-void LookaheadFrame::destroy()
+void Lowres::destroy()
 {
     for (int i = 0; i < 4; i++)
     {
@@ -107,7 +107,7 @@ void LookaheadFrame::destroy()
 }
 
 // (re) initialize lowres state
-void LookaheadFrame::init(TComPicYuv *orig)
+void Lowres::init(TComPicYuv *orig)
 {
     bIntraCalculated = false;
     memset(costEst, -1, sizeof(costEst));

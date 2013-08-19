@@ -48,27 +48,26 @@ class TEncCfg;
 namespace x265 {
 // private namespace
 
-struct LookaheadFrame;
+struct Lowres;
 
 struct Lookahead
 {
     TEncCfg         *cfg;
     MotionEstimate   me;
-    LookaheadFrame **frames;
+    Lowres          *frames[X265_LOOKAHEAD_MAX];
     int              bframes;
     int              frameQueueSize;
     int              bAdaptMode;
     int              numDecided;
     uint8_t          analyse_keyframe;
     int              last_keyframe;
-    int              cuWidth;  // width of lowres frame in downscale CUs
-    int              cuHeight; // height of lowres frame in downscale CUs
+    int              cuWidth;       // width of lowres frame in downscale CUs
+    int              cuHeight;      // height of lowres frame in downscale CUs
 
-    TComList<TComPic*> inputQueue;       // input pictures in order received
-    TComList<TComPic*> outputQueue;      // pictures to be encoded, in encode order
+    TComList<TComPic*> inputQueue;  // input pictures in order received
+    TComList<TComPic*> outputQueue; // pictures to be encoded, in encode order
 
     Lookahead(TEncCfg *);
-    ~Lookahead();
 
     void addPicture(TComPic*);
     void flush();
@@ -77,11 +76,11 @@ struct Lookahead
     int estimateFrameCost(int p0, int p1, int b, int bIntraPenalty);
     void estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
 
-    void slicetypeAnalyse(int key_frame);
-    int scenecut(int p0, int p1, int realScenecut, int num_frames, int maxSearch);
-    int scenecutInternal( int p0, int p1, int realScenecut);
-    void slicetypePath( int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
-    int slicetypePathCost( char *path, int threshold);
+    void slicetypeAnalyse(int keyframe);
+    int scenecut(int p0, int p1, int realScenecut, int numFrames, int maxSearch);
+    int scenecutInternal(int p0, int p1, int realScenecut);
+    void slicetypePath(int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
+    int slicetypePathCost(char *path, int threshold);
 };
 
 }

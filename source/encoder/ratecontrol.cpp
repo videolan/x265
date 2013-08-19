@@ -126,7 +126,7 @@ void RateControl::accumPQpUpdate()
         accumPQp += qpm;
 }
 
-double RateControl::rateEstimateQscale(LookaheadFrame* lframe )
+double RateControl::rateEstimateQscale(Lowres* lframe )
 {
     double q;
     // ratecontrol_entry_t rce = UNINIT(rce);

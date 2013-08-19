@@ -30,7 +30,7 @@
 class TComPic;
 
 namespace x265 {
-struct LookaheadFrame;
+struct Lowres;
 
 struct RateControlEntry
 {
@@ -84,7 +84,7 @@ struct RateControl
     RateControl(x265_param_t * param);    // constructor for initializing values for ratecontrol vars
     void rateControlStart(TComPic* pic);  // to be called for each frame to process RateCOntrol and set QP
     int rateControlEnd(int64_t bits);
-    double rateEstimateQscale(LookaheadFrame* lframe); // main logic for calculating QP based on ABR
+    double rateEstimateQscale(Lowres* lframe); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
     double getQScale(double rateFactor);
 };

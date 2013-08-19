@@ -71,13 +71,6 @@ Lookahead::Lookahead(TEncCfg *_cfg)
     frameQueueSize = param->lookaheadDepth;
     bframes = param->bframes;
     bAdaptMode = param->bFrameAdaptive;
-    frames = new LookaheadFrame*[param->lookaheadDepth];
-}
-
-Lookahead::~Lookahead()
-{
-    if (frames)
-        delete [] frames;
 }
 
 void Lookahead::addPicture(TComPic *pic)
@@ -145,7 +138,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
 {
     int score = 0;
     int do_search[2];
-    LookaheadFrame *fenc;
+    Lowres *fenc;
 
     fenc = frames[b];
 
@@ -198,9 +191,9 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
 
 void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2])
 {
-    LookaheadFrame *fref0 = frames[p0];
-    LookaheadFrame *fref1 = frames[p1];
-    LookaheadFrame *fenc  = frames[b];
+    Lowres *fref0 = frames[p0];
+    Lowres *fref1 = frames[p1];
+    Lowres *fenc  = frames[b];
 
     const int bidir = (b < p1);
     const int cu_xy = cux + cuy * cuWidth;
@@ -554,7 +547,7 @@ int Lookahead::scenecut(int p0, int p1, int realScenecut, int num_frames, int ma
 
 int Lookahead::scenecutInternal(int p0, int p1, int /* realScenecut */)
 {
-    LookaheadFrame *frame = frames[p1];
+    Lowres *frame = frames[p1];
 
     estimateFrameCost(p0, p1, p1, 0);
 

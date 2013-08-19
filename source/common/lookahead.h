@@ -40,7 +40,7 @@ namespace x265 {
 #define X265_SLICE_TYPE_P     1
 #define X265_SLICE_TYPE_B     2
 
-struct LookaheadFrame : public ReferencePlanes
+struct Lowres : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
     pixel *buffer[4];
