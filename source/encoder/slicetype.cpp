@@ -1,9 +1,8 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Jason Garrett-Glaser <darkshikari@gmail.com>
- *          Loren Merritt <lorenm@u.washington.edu>
- *          Dylan Yudaken <dyudaken@gmail.com>
+ * Authors: Gopu Govindaswamy <gopu@multicorewareinc.com>
+ *          Steve Borho <steve@borho.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
