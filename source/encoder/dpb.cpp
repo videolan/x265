@@ -25,6 +25,7 @@
 #include "TLibCommon/TComSlice.h"
 #include "TLibEncoder/TEncCfg.h"
 
+#include "PPA/ppa.h"
 #include "dpb.h"
 #include "frameencoder.h"
 
@@ -64,6 +65,8 @@ void DPB::recycleUnreferenced(TComList<TComPic*> freeList)
 
 void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 {
+    PPAScopeEvent(DPB_prepareEncode);
+
     int gopIdx = pic->m_lowres.gopIdx;
     int pocCurr = pic->getSlice()->getPOC();
 

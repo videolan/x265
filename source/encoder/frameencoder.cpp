@@ -362,7 +362,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
 
 Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 {
-    PPAScopeEvent(compressFrame);
+    PPAScopeEvent(FrameEncoder_compressFrame);
 
     TEncEntropy* entropyCoder = getEntropyCoder(0);
     TComSlice*   slice        = pic->getSlice();
@@ -676,7 +676,7 @@ Void FrameEncoder::compressFrame(TComPic *pic, AccessUnit& accessUnit)
 
 Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 {
-    PPAScopeEvent(TEncSlice_encodeSlice);
+    PPAScopeEvent(FrameEncoder_encodeSlice);
 
     // choose entropy coder
     TEncEntropy *entropyCoder = getEntropyCoder(0);
