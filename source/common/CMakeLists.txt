@@ -34,7 +34,7 @@ if(MSVC)
         "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 
-add_library(common
+add_library(common ../../COPYING
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
