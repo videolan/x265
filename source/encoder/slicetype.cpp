@@ -40,13 +40,7 @@
 // This file was originally borrowed from x264 source tree circa Dec 4, 2012
 // with x264 bug fixes applied from Dec 11th and Jan 8th 2013.  But without
 // taking any of the threading changes because we will eventually use the x265
-// thread pool and wavefront processing.
-
-// Under Construction
-#if defined(_MSC_VER)
-#pragma warning(disable: 4100) // unused formal parameter
-#pragma warning(disable: 4189) // unused local variable
-#endif
+// thread pool and wavefront processing.  It has since been adopted for x265
 
 using namespace x265;
 
