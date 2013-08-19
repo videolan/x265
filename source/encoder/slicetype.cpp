@@ -156,7 +156,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
         score = fenc->costEst[b - p0][p1 - b];
     else
     {
-        /* For each list, check to see whether we have lowres motion-searched this reference frame before. */
+        /* For each list, check to see whether we have lowres motion-searched this reference */
         do_search[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
         do_search[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
 
@@ -166,8 +166,9 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
         fenc->costEst[b - p0][p1 - b] = 0;
         fenc->costEst[b - p0][p1 - b] = 0;
 
-        /* Lowres lookahead goes backwards because the MVs are used as predictors in the main encode.
-         * This considerably improves MV prediction overall. */
+        /* Lowres lookahead goes backwards because the MVs are used as
+         * predictors in the main encode.  This considerably improves MV
+         * prediction overall. */
         // TODO: use lowres MVs as motion candidates in full-res search
         me.setSourcePlane(fenc->lumaPlane[0][0], fenc->lumaStride);
         for (int i = cuWidth - 1; i >= 0; i--)
