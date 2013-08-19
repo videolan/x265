@@ -68,10 +68,10 @@ void CTURow::create(TEncTop* top)
 
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
 {
-    TEncBinCABAC* pcRDSbacCoder = (TEncBinCABAC*)m_rdSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
+    TEncBinCABAC* rdSbacCoder = (TEncBinCABAC*)m_rdSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
 
-    pcRDSbacCoder->setBinCountingEnableFlag(false);
-    pcRDSbacCoder->setBinsCoded(0);
+    rdSbacCoder->setBinCountingEnableFlag(false);
+    rdSbacCoder->setBinsCoded(0);
 
     if (bufferSbac)
     {
@@ -90,13 +90,13 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
     m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST], slice);
     m_entropyCoder.setBitstream(&m_bitCounter);
     m_cuCoder.setBitCounter(&m_bitCounter);
-    pcRDSbacCoder->setBinCountingEnableFlag(true);
+    rdSbacCoder->setBinCountingEnableFlag(true);
     m_bitCounter.resetBits();
-    pcRDSbacCoder->setBinsCoded(0);
+    rdSbacCoder->setBinsCoded(0);
 
     m_cuCoder.encodeCU(cu);  // Count bits
 
-    pcRDSbacCoder->setBinCountingEnableFlag(false);
+    rdSbacCoder->setBinCountingEnableFlag(false);
 
     if (bSaveSBac)
     {
