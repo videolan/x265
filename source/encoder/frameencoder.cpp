@@ -944,13 +944,6 @@ void FrameEncoder::processRow(int row)
         // Completed CU processing
         m_pic->m_complete_enc[row]++;
 
-        // Active Loopfilter
-        if (row > 0)
-        {
-            // NOTE: my version, it need check active flag
-            m_frameFilter.enqueueRow(row - 1);
-        }
-
         if (m_pic->m_complete_enc[row] >= 2 && row < m_numRows - 1)
         {
             ScopedLock below(m_rows[row + 1].m_lock);
@@ -973,6 +966,13 @@ void FrameEncoder::processRow(int row)
             curRow.m_active = false;
             return;
         }
+    }
+
+    // Active Loopfilter
+    if (row > 0)
+    {
+        // NOTE: my version, it need check active flag
+        m_frameFilter.enqueueRow(row - 1);
     }
 
     // this row of CTUs has been encoded

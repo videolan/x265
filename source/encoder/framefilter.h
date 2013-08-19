@@ -65,13 +65,12 @@ protected:
 
     TEncCfg*            m_cfg;
     TComPic*            m_pic;
-    volatile uint32_t*  m_complete_lftV;
-    volatile bool*      m_rows_active;
-    Lock*               m_locks;
+    volatile bool       m_lft_active;
+    Lock                m_lock;
 
 public:
 
-    TComLoopFilter*             m_loopFilter;
+    TComLoopFilter              m_loopFilter;
     TEncSampleAdaptiveOffset*   m_sao;
     int                         m_numRows;
     Event                       m_completionEvent;
