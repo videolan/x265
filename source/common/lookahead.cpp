@@ -121,8 +121,8 @@ void LookaheadFrame::init(TComPicYuv *orig)
     }
     for (int i = 0; i < bframes + 1; i++)
     {
-        lowresMvs[0][i]->x = 0x7fff;
-        lowresMvs[1][i]->x = 0x7fff;
+        lowresMvs[0][i][0].x = 0x7FFF;
+        lowresMvs[1][i][0].x = 0x7FFF;
     }
 
     /* downscale and generate 4 HPEL planes for lookahead */
