@@ -35,9 +35,8 @@ typedef WpScalingParam wpScalingParam;
 namespace x265 {
 // private x265 namespace
 
-class ReferencePlanes
+struct ReferencePlanes
 {
-public:
     ReferencePlanes() : m_isWeighted(false), m_isLowres(false) {}
 
     void setWeight(const wpScalingParam&);
