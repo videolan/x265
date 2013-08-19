@@ -142,7 +142,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     do \
     { \
         MV fmv = qmv >> 2; \
-        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset; \
+        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset; \
         (cost) = sad(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride); \
     } while (0)
 
@@ -252,8 +252,8 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    MV &             outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
-    size_t stride = ref->m_lumaStride;
-    pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
+    size_t stride = ref->lumaStride;
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
 
     setMVP(qmvp);
 
@@ -758,14 +758,14 @@ me_hex2:
     {
         MV qmv = bmv + square1[i] * 2;
         MV fmv = qmv >> 2;
-        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
         int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
     bmv += square1[bdir] * 2;
 
-    if (!ref->m_isLowres)
+    if (!ref->isLowres)
     {
         /* QPEL square refinement, do not remeasure 0 offset */
         bdir = 0;
@@ -773,7 +773,7 @@ me_hex2:
         {
             MV qmv = bmv + square1[i];
             MV fmv = qmv >> 2;
-            pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+            pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
             int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
@@ -797,8 +797,8 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
                                        int              merange)
 {
     ALIGN_VAR_16(int, costs[16]);
-    pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
-    size_t stride = ref->m_lumaStride;
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    size_t stride = ref->lumaStride;
 
     MV omv = bmv;
     int saved = bcost;

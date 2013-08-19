@@ -464,7 +464,7 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
 Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *ref, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic)
 {
     //assert(bi == false);
-    Int refStride = ref->m_lumaStride;
+    Int refStride = ref->lumaStride;
     Int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
 
     Int dstStride = dstPic->getStride();
@@ -474,7 +474,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *re
     Int yFrac = mv->y & 0x3;
     TComPicYuv* pic = cu->getSlice()->getPic()->getPicYuvOrg();
     Int blkOffset = pic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) - pic->getLumaAddr();
-    Pel* src = ref->m_lumaPlane[xFrac][yFrac] + blkOffset + refOffset;
+    Pel* src = ref->lumaPlane[xFrac][yFrac] + blkOffset + refOffset;
     Int srcStride = refStride;
 
     x265::primitives.blockcpy_pp(width, height, dst, dstStride, src, srcStride);

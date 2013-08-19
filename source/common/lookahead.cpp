@@ -32,7 +32,7 @@ void LookaheadFrame::create(TComPic *pic, int _bframes)
     TComPicYuv *orig = pic->getPicYuvOrg();
     TComPicSym *sym = pic->getPicSym();
 
-    m_isLowres = true;
+    isLowres = true;
     width = orig->getWidth() / 2;
     lines = orig->getHeight() / 2;
     stride = width + 2 * orig->getLumaMarginX();
@@ -45,16 +45,16 @@ void LookaheadFrame::create(TComPic *pic, int _bframes)
     }
 
     int padoffset = stride * orig->getLumaMarginY() + orig->getLumaMarginX();
-    m_lumaPlane[0][0] = buffer[0] + padoffset;
-    m_lumaPlane[2][0] = buffer[1] + padoffset;
-    m_lumaPlane[0][2] = buffer[2] + padoffset;
-    m_lumaPlane[2][2] = buffer[3] + padoffset;
+    lumaPlane[0][0] = buffer[0] + padoffset;
+    lumaPlane[2][0] = buffer[1] + padoffset;
+    lumaPlane[0][2] = buffer[2] + padoffset;
+    lumaPlane[2][2] = buffer[3] + padoffset;
 
     /* for now, use HPEL planes for QPEL offsets */
-    m_lumaPlane[0][1] = m_lumaPlane[1][0] = m_lumaPlane[1][1] = m_lumaPlane[0][0];
-    m_lumaPlane[2][1] = m_lumaPlane[3][0] = m_lumaPlane[3][1] = m_lumaPlane[2][0];
-    m_lumaPlane[0][3] = m_lumaPlane[1][2] = m_lumaPlane[1][3] = m_lumaPlane[0][2];
-    m_lumaPlane[2][3] = m_lumaPlane[3][2] = m_lumaPlane[3][3] = m_lumaPlane[2][2];
+    lumaPlane[0][1] = lumaPlane[1][0] = lumaPlane[1][1] = lumaPlane[0][0];
+    lumaPlane[2][1] = lumaPlane[3][0] = lumaPlane[3][1] = lumaPlane[2][0];
+    lumaPlane[0][3] = lumaPlane[1][2] = lumaPlane[1][3] = lumaPlane[0][2];
+    lumaPlane[2][3] = lumaPlane[3][2] = lumaPlane[3][3] = lumaPlane[2][2];
 
     intraCost = (int*)X265_MALLOC(MV, sym->getNumberOfCUsInFrame());
 

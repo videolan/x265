@@ -41,20 +41,20 @@ using namespace x265;
 
 void ReferencePlanes::setWeight(const wpScalingParam& w)
 {
-    m_weight = w.inputWeight;
-    m_offset = w.inputOffset * (1 << (X265_DEPTH - 8));
-    m_shift  = w.log2WeightDenom;
-    m_round  = (w.log2WeightDenom >= 1) ? (1 << (w.log2WeightDenom - 1)) : (0);
-    m_isWeighted = true;
+    weight = w.inputWeight;
+    offset = w.inputOffset * (1 << (X265_DEPTH - 8));
+    shift  = w.log2WeightDenom;
+    round  = (w.log2WeightDenom >= 1) ? (1 << (w.log2WeightDenom - 1)) : (0);
+    isWeighted = true;
 }
 
 bool ReferencePlanes::matchesWeight(const wpScalingParam& w)
 {
-    if (!m_isWeighted)
+    if (!isWeighted)
         return false;
 
-    if ((m_weight == w.inputWeight) && (m_shift == (int)w.log2WeightDenom) &&
-        (m_offset == w.inputOffset * (1 << (X265_DEPTH - 8))))
+    if ((weight == w.inputWeight) && (shift == (int)w.log2WeightDenom) &&
+        (offset == w.inputOffset * (1 << (X265_DEPTH - 8))))
         return true;
 
     return false;
@@ -66,10 +66,10 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
     m_reconPic = pic;
     int width = pic->getWidth();
     int height = pic->getHeight();
-    m_lumaStride = pic->getStride();
-    m_startPad = pic->m_lumaMarginY * m_lumaStride + pic->m_lumaMarginX;
+    lumaStride = pic->getStride();
+    m_startPad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
     m_intStride = width + s_tmpMarginX * 4;
-    m_extendOffset = s_tmpMarginY * m_lumaStride + s_tmpMarginX;
+    m_extendOffset = s_tmpMarginY * lumaStride + s_tmpMarginX;
     m_offsetToLuma = s_tmpMarginY * 2 * m_intStride  + s_tmpMarginX * 2;
     m_filterWidth = width + s_tmpMarginX * 2;
     m_filterHeight = height + s_tmpMarginY * 2;
@@ -86,14 +86,14 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
         {
             for (int j = 0; j < 4; j++)
             {
-                m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
+                lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
             }
         }
     }
     else
     {
         /* directly reference the pre-extended integer pel plane */
-        m_lumaPlane[0][0] = pic->m_picBufY + m_startPad;
+        lumaPlane[0][0] = pic->m_picBufY + m_startPad;
 
         for (int i = 0; i < 4; i++)
         {
@@ -101,7 +101,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
             {
                 if (i == 0 && j == 0)
                     continue;
-                m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
+                lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
             }
         }
     }
@@ -115,11 +115,11 @@ MotionReference::~MotionReference()
     {
         for (int j = 0; j < 4; j++)
         {
-            if (i == 0 && j == 0 && !m_isWeighted)
+            if (i == 0 && j == 0 && !isWeighted)
                 continue;
-            if (m_lumaPlane[i][j])
+            if (lumaPlane[i][j])
             {
-                X265_FREE(m_lumaPlane[i][j] - m_startPad);
+                X265_FREE(lumaPlane[i][j] - m_startPad);
             }
         }
     }
@@ -136,33 +136,33 @@ void MotionReference::generateReferencePlanes()
         short* intPtrB = m_intermediateValues + 2 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
         short* intPtrC = m_intermediateValues + 3 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
 
-        int bufOffset = -(s_tmpMarginY + s_intMarginY) * m_lumaStride - (s_tmpMarginX + s_intMarginX);
+        int bufOffset = -(s_tmpMarginY + s_intMarginY) * lumaStride - (s_tmpMarginX + s_intMarginX);
         pixel *srcPtr = m_reconPic->getLumaAddr() + bufOffset;
 
         /* This one function call generates the four intermediate (short) planes for each
          * QPEL offset in the horizontal direction.  At the same time it outputs the three
          * Y=0 output (padded pixel) planes since they require no vertical interpolation */
-        if (m_isWeighted)
+        if (isWeighted)
         {
-            primitives.filterHwghtd(srcPtr, m_lumaStride,                            // source buffer
+            primitives.filterHwghtd(srcPtr, lumaStride,                            // source buffer
                                     intPtrF, intPtrA, intPtrB, intPtrC, m_intStride, // 4 intermediate HPEL buffers
-                                    m_lumaPlane[0][0] + bufOffset,
-                                    m_lumaPlane[1][0] + bufOffset,
-                                    m_lumaPlane[2][0] + bufOffset,
-                                    m_lumaPlane[3][0] + bufOffset, m_lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
+                                    lumaPlane[0][0] + bufOffset,
+                                    lumaPlane[1][0] + bufOffset,
+                                    lumaPlane[2][0] + bufOffset,
+                                    lumaPlane[3][0] + bufOffset, lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
                                     m_filterWidth + (2 * s_intMarginX),              // filter dimensions with margins
                                     m_filterHeight + (2 * s_intMarginY),
                                     m_reconPic->m_lumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
                                     m_reconPic->m_lumaMarginY - s_tmpMarginY - s_intMarginY,
-                                    m_weight, m_round, m_shift, m_offset);
+                                    weight, round, shift, offset);
        }
        else
        {
-            primitives.filterHmulti(srcPtr, m_lumaStride,                        // source buffer
+            primitives.filterHmulti(srcPtr, lumaStride,                        // source buffer
                                 intPtrF, intPtrA, intPtrB, intPtrC, m_intStride, // 4 intermediate HPEL buffers
-                                m_lumaPlane[1][0] + bufOffset,
-                                m_lumaPlane[2][0] + bufOffset,
-                                m_lumaPlane[3][0] + bufOffset, m_lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
+                                lumaPlane[1][0] + bufOffset,
+                                lumaPlane[2][0] + bufOffset,
+                                lumaPlane[3][0] + bufOffset, lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
                                 m_filterWidth + (2 * s_intMarginX),              // filter dimensions with margins
                                 m_filterHeight + (2 * s_intMarginY),
                                 m_reconPic->m_lumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
@@ -223,19 +223,19 @@ void MotionReference::generateReferencePlane(int x)
     short* intPtr = filteredBlockTmp + s_intMarginY * m_intStride + s_intMarginX;
 
     /* the Y=0 plane was generated during horizontal interpolation */
-    pixel *dstPtr1 = m_lumaPlane[x][1] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
-    pixel *dstPtr2 = m_lumaPlane[x][2] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
-    pixel *dstPtr3 = m_lumaPlane[x][3] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
+    pixel *dstPtr1 = lumaPlane[x][1] - s_tmpMarginY * lumaStride - s_tmpMarginX;
+    pixel *dstPtr2 = lumaPlane[x][2] - s_tmpMarginY * lumaStride - s_tmpMarginX;
+    pixel *dstPtr3 = lumaPlane[x][3] - s_tmpMarginY * lumaStride - s_tmpMarginX;
 
-    if (m_isWeighted)
+    if (isWeighted)
     {
-        primitives.filterVwghtd(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight,
+        primitives.filterVwghtd(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, lumaStride, m_filterWidth, m_filterHeight,
                                 m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY,
-                                m_weight, m_round, m_shift, m_offset);
+                                weight, round, shift, offset);
     }
     else
     {
-        primitives.filterVmulti(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight,
+        primitives.filterVmulti(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, lumaStride, m_filterWidth, m_filterHeight,
                                 m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY);
     }
 }

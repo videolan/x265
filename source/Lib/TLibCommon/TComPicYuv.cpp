@@ -254,7 +254,7 @@ x265::MotionReference* TComPicYuv::generateMotionReference(x265::ThreadPool *poo
             if (mref->matchesWeight(*w))
                 return mref;
         }
-        else if (mref->m_isWeighted == false)
+        else if (mref->isWeighted == false)
             return mref;
     }
     mref = new x265::MotionReference(this, pool, w);

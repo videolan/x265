@@ -37,20 +37,20 @@ namespace x265 {
 
 struct ReferencePlanes
 {
-    ReferencePlanes() : m_isWeighted(false), m_isLowres(false) {}
+    ReferencePlanes() : isWeighted(false), isLowres(false) {}
 
     void setWeight(const wpScalingParam&);
     bool matchesWeight(const wpScalingParam&);
 
     /* indexed by [hpelx|qpelx][hpely|qpely] */
-    pixel* m_lumaPlane[4][4];
-    int  m_lumaStride;
-    int  m_weight;
-    int  m_offset;
-    int  m_shift;
-    int  m_round;
-    bool m_isWeighted;
-    bool m_isLowres;
+    pixel* lumaPlane[4][4];
+    bool isWeighted;
+    bool isLowres;
+    int  lumaStride;
+    int  weight;
+    int  offset;
+    int  shift;
+    int  round;
 };
 
 class MotionReference : public ReferencePlanes, public JobProvider

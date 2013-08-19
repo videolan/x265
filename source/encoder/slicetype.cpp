@@ -176,7 +176,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
         /* Lowres lookahead goes backwards because the MVs are used as predictors in the main encode.
          * This considerably improves MV prediction overall. */
         // TODO: use lowres MVs as motion candidates in full-res search
-        me.setSourcePlane(fenc->m_lumaPlane[0][0], fenc->m_lumaStride);
+        me.setSourcePlane(fenc->lumaPlane[0][0], fenc->lumaStride);
         for (int i = cuWidth - 1; i >= 0; i--)
         {
             for (int j = cuHeight - 1; j >= 0; j--)
@@ -278,7 +278,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         pixel _left0[32 * 4 + 1], *const pLeft0 = _left0 + 2 * 32;
         pixel _left1[32 * 4 + 1], *const pLeft1 = _left1 + 2 * 32;
 
-        pixel *pix_cur = fenc->m_lumaPlane[0][0] + pel_offset;
+        pixel *pix_cur = fenc->lumaPlane[0][0] + pel_offset;
 
         // Copy Above
         memcpy(pAbove0, pix_cur - 1 - stride, cu_size + 1);
