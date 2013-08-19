@@ -90,7 +90,12 @@ Void TEncTop::create()
         exit(1);
     }
 
-    m_frameEncoder = new x265::FrameEncoder(m_threadPool);
+    m_frameEncoder = new x265::FrameEncoder[param.frameNumThreads];
+    if (m_frameEncoder)
+    {
+        for (int i = 0; i < param.frameNumThreads; i++)
+            m_frameEncoder[i].setThreadPool(m_threadPool);
+    }
     m_lookahead = new x265::Lookahead(this);
     m_dpb = new x265::DPB(this);
     m_rateControl = new x265::RateControl(&param);
@@ -100,8 +105,9 @@ Void TEncTop::destroy()
 {
     if (m_frameEncoder)
     {
-        m_frameEncoder->destroy();
-        delete m_frameEncoder;
+        for (int i = 0; i < param.frameNumThreads; i++)
+            m_frameEncoder[i].destroy();
+        delete [] m_frameEncoder;
     }
 
     while (!m_freeList.empty())
@@ -130,7 +136,8 @@ Void TEncTop::init()
     if (m_frameEncoder)
     {
         int numRows = (param.sourceHeight + g_maxCUHeight - 1) / g_maxCUHeight;
-        m_frameEncoder->init(this, numRows);
+        for (int i = 0; i < param.frameNumThreads; i++)
+            m_frameEncoder[i].init(this, numRows);
     }
 
     m_analyzeI.setFrmRate(param.frameRate);

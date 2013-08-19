@@ -175,6 +175,7 @@ typedef struct x265_param_t
     int       logLevel;
     int       bEnableWavefront;                ///< enable wavefront parallel processing
     int       poolNumThreads;                  ///< number of threads to allocate for thread pool
+    int       frameNumThreads;                 ///< number of concurrently encoded frames
 
     int       internalBitDepth;                ///< bit-depth the codec operates at
 

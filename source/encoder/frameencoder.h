@@ -54,9 +54,11 @@ class FrameEncoder : public WaveFront
 {
 public:
 
-    FrameEncoder(ThreadPool *);
+    FrameEncoder();
 
     virtual ~FrameEncoder() {}
+
+    void setThreadPool(ThreadPool *p);
 
     void init(TEncTop *top, int numRows);
 

@@ -50,6 +50,8 @@ public:
 
     virtual ~JobProvider() {}
 
+    void setThreadPool(ThreadPool *p) { m_pool = p; }
+
     // Register this job provider with the thread pool, jobs are available
     void enqueue();
 

@@ -48,14 +48,21 @@ enum SCALING_LIST_PARAMETER
     SCALING_LIST_DEFAULT,
 };
 
-FrameEncoder::FrameEncoder(ThreadPool* pool)
-    : WaveFront(pool)
+FrameEncoder::FrameEncoder()
+    : WaveFront(NULL)
     , m_top(NULL)
     , m_cfg(NULL)
-    , m_frameFilter(pool)
+    , m_frameFilter(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
-{}
+{
+}
+
+void FrameEncoder::setThreadPool(ThreadPool *p)
+{
+    m_pool = p;
+    m_frameFilter.setThreadPool(p);
+}
 
 void FrameEncoder::destroy()
 {

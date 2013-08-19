@@ -113,6 +113,7 @@ extern "C"
 void x265_param_default(x265_param_t *param)
 {
     memset(param, 0, sizeof(x265_param_t));
+    param->frameNumThreads = 1;
     param->logLevel = X265_LOG_INFO;
     param->searchMethod = X265_STAR_SEARCH;
     param->searchRange = 64;
@@ -212,7 +213,8 @@ int x265_check_params(x265_param_t *param)
             "Search Range must be more than 0");
     CONFIRM(param->keyframeMax < 0 && !param->bOpenGOP,
             "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
-
+    CONFIRM(param->frameNumThreads <= 0,
+            "frameNumThreads (--frame-threads) must be 1 or higher");
     CONFIRM(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CONFIRM(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
     CONFIRM(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
