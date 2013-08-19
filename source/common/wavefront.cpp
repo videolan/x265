@@ -63,6 +63,23 @@ inline int _BitScanReverse64(DWORD *id, uint64_t x64) // fake 64bit CLZ
     else
         return *id = 0;
 }
+
+inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
+{
+    uint32_t high32 = (uint32_t)(x64 >> 32);
+    uint32_t low32 = (uint32_t)x64;
+
+    if (high32)
+    {
+        _BitScanForward(id, high32);
+        *id += 32;
+        return 1;
+    }
+    else if (low32)
+        return _BitScanForward(id, low32);
+    else
+        return *id = 0;
+}
 #endif // if !_WIN64
 
 #if _WIN32_WINNT <= _WIN32_WINNT_WINXP
@@ -89,7 +106,7 @@ FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
 #endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 
-#define CLZ64(id, x)                    _BitScanReverse64(&id, x)
+#define CLZ64(id, x)                    _BitScanForward64(&id, x)
 #define ATOMIC_CAS(ptr, oldval, newval) (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 
 #endif // ifdef __GNUC__
