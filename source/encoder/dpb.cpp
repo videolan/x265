@@ -71,6 +71,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     int pocCurr = pic->getSlice()->getPOC();
 
     Bool forceIntra = m_cfg->param.keyframeMax == 1 || (pocCurr % m_cfg->param.keyframeMax == 0) || pocCurr == 0;
+    m_picList.pushBack(pic);
     frameEncoder->initSlice(pic, forceIntra, gopIdx);
 
     TComSlice* slice = pic->getSlice();

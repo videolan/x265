@@ -247,7 +247,6 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         TComPic *fenc = m_lookahead->outputQueue.popFront();
 
         // determine references, set QP, etc
-        m_dpb->m_picList.pushBack(fenc);
         m_dpb->prepareEncode(fenc, curEncoder);
 
         //m_rateControl->rateControlStart(pic);
