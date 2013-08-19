@@ -143,10 +143,10 @@ Void TEncTop::init()
             m_frameEncoder[i].init(this, numRows);
     }
 
-    m_analyzeI.setFrmRate(param.frameRate);
-    m_analyzeP.setFrmRate(param.frameRate);
-    m_analyzeB.setFrmRate(param.frameRate);
-    m_analyzeAll.setFrmRate(param.frameRate);
+    m_analyzeI.setFrameRate(param.frameRate);
+    m_analyzeP.setFrameRate(param.frameRate);
+    m_analyzeB.setFrameRate(param.frameRate);
+    m_analyzeAll.setFrameRate(param.frameRate);
 }
 
 int TEncTop::getStreamHeaders(AccessUnit& accessUnit)

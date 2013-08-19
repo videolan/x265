@@ -88,7 +88,7 @@ public:
 
     UInt    getNumPic() { return m_uiNumPic;   }
 
-    Void    setFrmRate(Double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
+    Void    setFrameRate(Double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
 
     Void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
 
