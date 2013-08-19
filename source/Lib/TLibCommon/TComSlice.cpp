@@ -290,7 +290,7 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
         if (m_sliceType == I_SLICE)
         {
             ::memset(m_refPicList, 0, sizeof(m_refPicList));
-            ::memset(m_numRefIdx,   0, sizeof(m_numRefIdx));
+            ::memset(m_numRefIdx,  0, sizeof(m_numRefIdx));
 
             return;
         }
