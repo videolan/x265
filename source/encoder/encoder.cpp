@@ -184,7 +184,8 @@ void x265_t::configure(x265_param_t *_param)
     int actual = ThreadPool::getThreadPool()->getThreadCount();
     if (actual > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled\n", actual);
+        x265_log(_param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled (%d streams)\n",
+            actual, (_param->sourceHeight + _param->maxCUSize - 1) / _param->maxCUSize);
     }
     else
     {

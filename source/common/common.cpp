@@ -330,10 +330,6 @@ void x265_print_params(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max           : open-gop\n");
     else
         x265_log(param, X265_LOG_INFO, "Keyframe min / max           : %d / %d\n", param->keyframeMin, param->keyframeMax);
-    if (param->bEnableWavefront)
-    {
-        x265_log(param, X265_LOG_INFO, "WaveFrontSubstreams          : %d\n", (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize);
-    }
     x265_log(param, X265_LOG_INFO, "QP                           : %d\n", param->qp);
     if (param->cbQpOffset || param->crQpOffset)
     {
