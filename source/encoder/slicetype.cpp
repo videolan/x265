@@ -343,11 +343,11 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     fenc->lowresCosts[b - p0][p1 - b][cu_xy] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
 
-void Lookahead::slicetypeAnalyse(int keyframe)
+void Lookahead::slicetypeAnalyse(bool bKeyframe)
 {
     int num_frames, origNumFrames, keyint_limit, framecnt;
     int maxSearch = X265_MIN(frameQueueSize, X265_LOOKAHEAD_MAX);
-    int cu_count = 0; //need to calculate
+    int cuCount = cuWidth * cuHeight;
     int cost1p0, cost2p0, cost1b1, cost2p1;
     int reset_start;
     int vbv_lookahead = 0;
@@ -414,7 +414,7 @@ void Lookahead::slicetypeAnalyse(int keyframe)
             for (int i = 0; i <= num_frames - 2; )
             {
                 cost2p1 = estimateFrameCost(i + 0, i + 2, i + 2, 1);
-                if (frames[i + 2]->intraMbs[2] > cu_count / 2)
+                if (frames[i + 2]->intraMbs[2] > cuCount / 2)
                 {
                     frames[i + 1]->sliceType = X265_TYPE_P;
                     frames[i + 2]->sliceType = X265_TYPE_P;
@@ -443,7 +443,7 @@ void Lookahead::slicetypeAnalyse(int keyframe)
                 {
                     int pthresh = X265_MAX(INTER_THRESH - P_SENS_BIAS * (j - i - 1), INTER_THRESH / 10);
                     int pcost = estimateFrameCost(i + 0, j + 1, j + 1, 1);
-                    if (pcost > pthresh * cu_count || frames[j + 1]->intraMbs[j - i + 1] > cu_count / 3)
+                    if (pcost > pthresh * cuCount || frames[j + 1]->intraMbs[j - i + 1] > cuCount / 3)
                         break;
                     frames[j]->sliceType = X265_TYPE_B;
                 }
@@ -479,7 +479,7 @@ void Lookahead::slicetypeAnalyse(int keyframe)
             }
         }
 
-        reset_start = keyframe ? 1 : X265_MIN(num_bframes + 2, num_analysed_frames + 1);
+        reset_start = bKeyframe ? 1 : X265_MIN(num_bframes + 2, num_analysed_frames + 1);
     }
     else
     {
@@ -488,7 +488,7 @@ void Lookahead::slicetypeAnalyse(int keyframe)
             frames[j]->sliceType = X265_TYPE_P;
         }
 
-        reset_start = !keyframe + 1;
+        reset_start = !bKeyframe + 1;
         num_bframes = 0;
     }
 

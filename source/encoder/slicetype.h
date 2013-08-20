@@ -76,7 +76,7 @@ struct Lookahead
     int estimateFrameCost(int p0, int p1, int b, int bIntraPenalty);
     void estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
 
-    void slicetypeAnalyse(int keyframe);
+    void slicetypeAnalyse(bool bKeyframe);
     int scenecut(int p0, int p1, int realScenecut, int numFrames, int maxSearch);
     int scenecutInternal(int p0, int p1, int realScenecut);
     void slicetypePath(int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
