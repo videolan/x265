@@ -175,8 +175,8 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
 
         score = fenc->costEst[b - p0][p1 - b];
 
-        if (b != p1) /* have to check use of 120 magical number but followed by x264 used here */
-            score = (uint64_t)score * 100 / (120) + bframe_bias;
+        if (b != p1)
+            score = (uint64_t)score * 100 / (120 + bframe_bias);
 
         fenc->costEst[b - p0][p1 - b] = score;
     }
