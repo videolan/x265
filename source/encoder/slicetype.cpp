@@ -65,14 +65,9 @@ static inline void x265_median_mv(MV &dst, MV a, MV b, MV c)
 Lookahead::Lookahead(TEncCfg *_cfg)
 {
     this->cfg = _cfg;
-    x265_param_t *param = &_cfg->param;
     numDecided = 0;
     me.setQP(X265_LOOKAHEAD_QP, 1.0);
     me.setSearchMethod(X265_HEX_SEARCH);
-    frameQueueSize = param->lookaheadDepth;
-    bframes = param->bframes;
-    bFrameBias = param->bFrameBias;
-    bAdaptMode = param->bFrameAdaptive;
 }
 
 void Lookahead::addPicture(TComPic *pic)
@@ -81,7 +76,7 @@ void Lookahead::addPicture(TComPic *pic)
     pic->m_lowres.frameNum = pic->getSlice()->getPOC();
 
     inputQueue.pushBack(pic);
-    if (inputQueue.size() == (size_t)frameQueueSize)
+    if (inputQueue.size() == (size_t)cfg->param.lookaheadDepth)
         slicetypeDecide();
 }
 
@@ -179,7 +174,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         score = fenc->costEst[b - p0][p1 - b];
 
         if (b != p1)
-            score = (uint64_t)score * 100 / (120 + bFrameBias);
+            score = (uint64_t)score * 100 / (120 + cfg->param.bFrameBias);
 
         fenc->costEst[b - p0][p1 - b] = score;
     }
@@ -348,7 +343,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
 void Lookahead::slicetypeAnalyse(bool bKeyframe)
 {
     int num_frames, origNumFrames, keyint_limit, framecnt;
-    int maxSearch = X265_MIN(frameQueueSize, X265_LOOKAHEAD_MAX);
+    int maxSearch = X265_MIN(cfg->param.lookaheadDepth, X265_LOOKAHEAD_MAX);
     int cuCount = cuWidth * cuHeight;
     int cost1p0, cost2p0, cost1b1, cost2p1;
     int reset_start;
