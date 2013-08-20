@@ -167,7 +167,6 @@ protected:
     Int   *m_upBuff1;
     Int   *m_upBuff2;
     Int   *m_upBufft;
-    Int   *m_swap;
     TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
     Pel* m_tmpU1;

@@ -72,7 +72,6 @@ TComSampleAdaptiveOffset::TComSampleAdaptiveOffset()
     m_upBuff1 = NULL;
     m_upBuff2 = NULL;
     m_upBufft = NULL;
-    m_swap = NULL;
 
     m_tmpU1 = NULL;
     m_tmpU2 = NULL;
@@ -585,6 +584,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int addr, Int saoType, Int yCbCr)
     Pel *tmpU;
     Pel *clipTbl = NULL;
     Int *offsetBo = NULL;
+    Int *tmp_swap;
 
     picWidthTmp  = m_picWidth  >> isChroma;
     picHeightTmp = m_picHeight >> isChroma;
@@ -721,9 +721,9 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int addr, Int saoType, Int yCbCr)
 
             m_upBufft[startX] = signDown2;
 
-            m_swap    = m_upBuff1;
+            tmp_swap  = m_upBuff1;
             m_upBuff1 = m_upBufft;
-            m_upBufft = m_swap;
+            m_upBufft = tmp_swap;
 
             rec += stride;
         }

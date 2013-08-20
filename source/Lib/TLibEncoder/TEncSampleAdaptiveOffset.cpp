@@ -669,6 +669,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, I
     UInt edgeType;
     Int x, y;
     Pel *pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
+    Int *tmp_swap;
 
     //--------- Band offset-----------//
     stat = stats[SAO_BO];
@@ -805,9 +806,9 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, I
 
         m_upBufft[startX] = xSign(pRec[stride + startX] - pRec[startX - 1]);
 
-        m_swap    = m_upBuff1;
+        tmp_swap  = m_upBuff1;
         m_upBuff1 = m_upBufft;
-        m_upBufft = m_swap;
+        m_upBufft = tmp_swap;
 
         pRec  += stride;
         fenc  += stride;
@@ -944,6 +945,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int addr, Int partIdx, Int yCbC
     Int iEndX;
     Int iEndY;
     Pel* pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
+    Int *tmp_swap;
 
     Int iIsChroma = (yCbCr != 0) ? 1 : 0;
     Int numSkipLine = iIsChroma ? 2 : 4;
@@ -1133,9 +1135,9 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int addr, Int partIdx, Int yCbC
                 }
 
                 m_upBufft[iStartX] = iSignDown2;
-                m_swap     = m_upBuff1;
+                tmp_swap  = m_upBuff1;
                 m_upBuff1 = m_upBufft;
-                m_upBufft = m_swap;
+                m_upBufft = tmp_swap;
 
                 pRec += stride;
                 fenc += stride;
@@ -1226,6 +1228,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pic)
     UInt lPelX, tPelY;
     TComDataCU *pTmpCu;
     Pel* pTableBo;
+    Int *tmp_swap;
 
     for (idxY = 0; idxY < frameHeightInCU; idxY++)
     {
@@ -1441,9 +1444,9 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pic)
                     }
 
                     m_upBufft[firstX] = signDown2;
-                    m_swap     = m_upBuff1;
+                    tmp_swap  = m_upBuff1;
                     m_upBuff1 = m_upBufft;
-                    m_upBufft = m_swap;
+                    m_upBufft = tmp_swap;
 
                     pRec += stride;
                     fenc += stride;
@@ -1534,6 +1537,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsLCu_BeforeDblk(TComPic* pic, Int addr
     UInt lPelX, tPelY;
     TComDataCU *pTmpCu;
     Pel* pTableBo;
+    Int *tmp_swap;
 
     lcuHeight = pTmpSPS->getMaxCUHeight();
     lcuWidth  = pTmpSPS->getMaxCUWidth();
@@ -1744,9 +1748,9 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsLCu_BeforeDblk(TComPic* pic, Int addr
             }
 
             m_upBufft[firstX] = signDown2;
-            m_swap     = m_upBuff1;
+            tmp_swap  = m_upBuff1;
             m_upBuff1 = m_upBufft;
-            m_upBufft = m_swap;
+            m_upBufft = tmp_swap;
 
             pRec += stride;
             fenc += stride;
