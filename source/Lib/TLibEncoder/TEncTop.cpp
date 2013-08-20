@@ -733,7 +733,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
 
     if (getUseLossless())
     {
-        if ((getMaxCuDQPDepth() == 0) && (param.qp == lowestQP))
+        if ((getMaxCuDQPDepth() == 0) && (param.rc.qp == lowestQP))
         {
             bUseDQP = false;
         }

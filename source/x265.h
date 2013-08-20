@@ -233,7 +233,6 @@ typedef struct x265_param_t
     int       saoLcuBasedOptimization;         ///< SAO LCU-based optimization
 
     // coding quality
-    int       qp;                              ///< QP value of key-picture (integer)
     int       cbQpOffset;                      ///< Chroma Cb QP Offset (0:default)
     int       crQpOffset;                      ///< Chroma Cr QP Offset (0:default)
     int       rdPenalty;                       ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
@@ -250,6 +249,8 @@ typedef struct x265_param_t
         double    pbFactor;
         int       qpStep;
         RcMethod  rateControlMode;
+        int       qp;                          ///< Constant QP base value
+        int       rateFactor;                  ///< Constant rate factor (CRF)
     } rc;
 }
 x265_param_t;

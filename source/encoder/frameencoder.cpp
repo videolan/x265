@@ -275,7 +275,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
 
     Double qpdouble;
     Double lambda;
-    qpdouble = m_cfg->param.qp;
+    qpdouble = m_cfg->param.rc.qp;
     if (sliceType != I_SLICE)
     {
         if (!((qpdouble == -slice->getSPS()->getQpBDOffsetY()) && (slice->getSPS()->getUseLossless())))

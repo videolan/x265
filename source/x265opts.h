@@ -73,7 +73,7 @@ OPT("no-weightbp",     param->bEnableWeightedBiPred,        no_argument, 0, "Dis
 OPT("weightbp",        param->bEnableWeightedBiPred,        no_argument, 0, "Enable weighted (bidirectional) prediction in B slices")
 
 HELP("QP and rate distortion options:")
-OPT("qp",              param->qp,                     required_argument, 'q', "Base QP for CQP mode")
+OPT("qp",              param->rc.qp,                  required_argument, 'q', "Base QP for CQP mode")
 OPT("cbqpoffs",        param->cbQpOffset,             required_argument, 0, "Chroma Cb QP Offset")
 OPT("crqpoffs",        param->crQpOffset,             required_argument, 0, "Chroma Cr QP Offset")
 OPT("no-rdoq",         param->bEnableRDOQ,                  no_argument, 0, "Disable RDO quantization")

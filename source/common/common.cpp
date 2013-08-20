@@ -126,7 +126,6 @@ void x265_param_default(x265_param_t *param)
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
     param->bEnableRDO = 1;
-    param->qp = 32;
     param->bEnableLoopFilter = 1;
     param->bEnableSAO = 1;
     param->bEnableWavefront = 1;
@@ -146,7 +145,8 @@ void x265_param_default(x265_param_t *param)
     param->rc.ipFactor = 1.4f;
     param->rc.pbFactor = 1.3f;
     param->rc.qpStep = 4;
-    param->rc.rateControlMode = X265_RC_ABR;
+    param->rc.rateControlMode = X265_RC_CQP;
+    param->rc.qp = 32;
 }
 
 extern "C"
@@ -199,7 +199,7 @@ int x265_check_params(x265_param_t *param)
 
     CONFIRM(param->internalBitDepth > x265_max_bit_depth,
             "InternalBitDepth must be <= x265_max_bit_depth");
-    CONFIRM(param->qp < -6 * (param->internalBitDepth - 8) || param->qp > 51,
+    CONFIRM(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > 51,
             "QP exceeds supported range (-QpBDOffsety to 51)");
     CONFIRM(param->frameRate <= 0,
             "Frame rate must be more than 1");
@@ -249,6 +249,8 @@ int x265_check_params(x265_param_t *param)
             "Picture width must be an integer multiple of the specified chroma subsampling");
     CONFIRM(param->sourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0,
             "Picture height must be an integer multiple of the specified chroma subsampling");
+    CONFIRM(param->rc.rateControlMode < X265_RC_ABR || param->rc.rateControlMode > X265_RC_CRF,
+            "Rate control mode is out of range");
 
     // max CU size should be power of 2
     uint32_t ui = param->maxCUSize;
@@ -330,7 +332,18 @@ void x265_print_params(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max           : open-gop\n");
     else
         x265_log(param, X265_LOG_INFO, "Keyframe min / max           : %d / %d\n", param->keyframeMin, param->keyframeMax);
-    x265_log(param, X265_LOG_INFO, "QP                           : %d\n", param->qp);
+    switch(param->rc.rateControlMode)
+    {
+    case X265_RC_ABR:
+        x265_log(param, X265_LOG_INFO, "Rate Control                 : ABR-%d kbps\n", param->rc.bitrate);
+        break;
+    case X265_RC_CQP:
+        x265_log(param, X265_LOG_INFO, "Rate Control                 : CQP-%d\n", param->rc.qp);
+        break;
+    case X265_RC_CRF:
+        x265_log(param, X265_LOG_INFO, "Rate Control                 : CRF-%d\n", param->rc.rateFactor);
+        break;
+    }
     if (param->cbQpOffset || param->crQpOffset)
     {
         x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
