@@ -95,25 +95,27 @@ void Lookahead::flush()
 
 void Lookahead::slicetypeDecide()
 {
-#if 0
-    slicetypeAnalyse(false);
-#else
-    // Fake lookahead using HM's fixed GOP structure
-
     // Special case for POC 0, send directly to output queue as I slice
     if (numDecided == 0)
     {
         TComPic *pic = inputQueue.popFront();
+        // Finish initialization now that we have a picture
         this->cuWidth = pic->getPicSym()->getFrameWidthInCU();
         this->cuHeight = pic->getPicSym()->getFrameHeightInCU();
+
         pic->m_lowres.sliceType = X265_SLICE_TYPE_I;
         pic->m_lowres.gopIdx = 0;
-        outputQueue.pushBack(pic);
-        numDecided++;
         frames[0] = &pic->m_lowres;
         estimateFrameCost(0, 0, 0, false);
+        outputQueue.pushBack(pic);
+        numDecided++;
         return;
     }
+
+#if 0
+    slicetypeAnalyse(false);
+#else
+    // Fake lookahead using HM's fixed GOP structure
 
     int batchSize = cfg->getGOPSize();
     for (int i = 0; i < batchSize; i++)
