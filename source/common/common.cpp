@@ -343,7 +343,7 @@ void x265_print_params(x265_param_t *param)
     {
         x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
-    x265_log(param, X265_LOG_INFO, "enabled coding tools: ");
+    x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
