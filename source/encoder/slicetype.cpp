@@ -355,7 +355,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
         frames[framecnt] = &((*iterPic++)->m_lowres);
     }
 
-    keyint_limit = cfg->param.keyframeMax - frames[0]->frameNum + last_keyframe - 1;
+    keyint_limit = cfg->param.keyframeMax - frames[0]->frameNum + lastKeyframe - 1;
     origNumFrames = num_frames = X265_MIN(framecnt, keyint_limit);
 
     /* This is important psy-wise: if we have a non-scenecut keyframe,
@@ -553,7 +553,7 @@ int Lookahead::scenecutInternal(int p0, int p1, bool /* bRealScenecut */)
     int icost = frame->costEst[0][0];
     int pcost = frame->costEst[p1 - p0][0];
     float bias;
-    int gopSize = frame->frameNum - last_keyframe;
+    int gopSize = frame->frameNum - lastKeyframe;
     float threshMax = (float)(cfg->param.scenecutThreshold / 100.0);
     /* magic numbers pulled out of thin air */
     float threshMin = (float)(threshMax * 0.25);

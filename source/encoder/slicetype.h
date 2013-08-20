@@ -56,7 +56,7 @@ struct Lookahead
     MotionEstimate   me;
     Lowres          *frames[X265_LOOKAHEAD_MAX];
     int              numDecided;
-    int              last_keyframe;
+    int              lastKeyframe;
     int              cuWidth;       // width of lowres frame in downscale CUs
     int              cuHeight;      // height of lowres frame in downscale CUs
 
