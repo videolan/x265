@@ -142,7 +142,7 @@ void Lookahead::slicetypeDecide()
 #endif
 }
 
-int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
+int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 {
     int score = 0;
     int do_search[2];
