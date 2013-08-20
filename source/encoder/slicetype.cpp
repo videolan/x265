@@ -505,10 +505,10 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     }
 }
 
-int Lookahead::scenecut(int p0, int p1, int realScenecut, int num_frames, int maxSearch)
+int Lookahead::scenecut(int p0, int p1, bool bRealScenecut, int num_frames, int maxSearch)
 {
     /* Only do analysis during a normal scenecut check. */
-    if (realScenecut && cfg->param.bframes)
+    if (bRealScenecut && cfg->param.bframes)
     {
         int origmaxp1 = p0 + 1;
         /* Look ahead to avoid coding short flashes as scenecuts. */
@@ -548,10 +548,10 @@ int Lookahead::scenecut(int p0, int p1, int realScenecut, int num_frames, int ma
     /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts. */
     if (!frames[p1]->scenecut)
         return 0;
-    return scenecutInternal(p0, p1, realScenecut);
+    return scenecutInternal(p0, p1, bRealScenecut);
 }
 
-int Lookahead::scenecutInternal(int p0, int p1, int /* realScenecut */)
+int Lookahead::scenecutInternal(int p0, int p1, bool /* bRealScenecut */)
 {
     Lowres *frame = frames[p1];
 
