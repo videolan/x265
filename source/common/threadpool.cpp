@@ -34,23 +34,6 @@
 #include <sys/sysctl.h>
 #endif
 
-#ifdef __GNUC__          /* GCCs builtin atomics */
-
-#include <unistd.h>
-#include <limits.h>
-#define ATOMIC_INC(ptr) __sync_add_and_fetch((volatile int*)ptr, 1)
-#define ATOMIC_DEC(ptr) __sync_add_and_fetch((volatile int*)ptr, -1)
-#define GIVE_UP_TIME()  usleep(0)
-
-#elif defined(_MSC_VER)  /* Windows atomic intrinsics */
-
-#include <intrin.h>
-#define ATOMIC_INC(ptr) InterlockedIncrement((volatile LONG*)ptr)
-#define ATOMIC_DEC(ptr) InterlockedDecrement((volatile LONG*)ptr)
-#define GIVE_UP_TIME()  Sleep(0)
-
-#endif // ifdef __GNUC__
-
 namespace x265 {
 // x265 private namespace
 
