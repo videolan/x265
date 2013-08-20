@@ -77,6 +77,7 @@ Lookahead::Lookahead(TEncCfg *_cfg)
 void Lookahead::addPicture(TComPic *pic)
 {
     pic->m_lowres.init(pic->getPicYuvOrg());
+    pic->m_lowres.frameNum = pic->getSlice()->getPOC();
 
     inputQueue.pushBack(pic);
     if (inputQueue.size() == (size_t)frameQueueSize)
