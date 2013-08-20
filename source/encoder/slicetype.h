@@ -52,15 +52,15 @@ struct Lowres;
 
 struct Lookahead
 {
-    TEncCfg         *cfg;
     MotionEstimate   me;
+    TEncCfg         *cfg;
+    pixel           *predictions;   // buffer for 35 intra predictions
     Lowres          *frames[X265_LOOKAHEAD_MAX];
     int              merange;
     int              numDecided;
     int              lastKeyframe;
     int              cuWidth;       // width of lowres frame in downscale CUs
     int              cuHeight;      // height of lowres frame in downscale CUs
-    pixel           *predictions;   // buffer for 35 intra predictions
 
     TComList<TComPic*> inputQueue;  // input pictures in order received
     TComList<TComPic*> outputQueue; // pictures to be encoded, in encode order
