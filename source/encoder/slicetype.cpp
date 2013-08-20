@@ -92,6 +92,9 @@ void Lookahead::flush()
 
 void Lookahead::slicetypeDecide()
 {
+#if 0
+    slicetypeAnalyse(false);
+#else
     // Fake lookahead using HM's fixed GOP structure
 
     // Special case for POC 0, send directly to output queue as I slice
@@ -134,6 +137,7 @@ void Lookahead::slicetypeDecide()
         {
             inputQueue.popFront();
         }
+#endif
 }
 
 int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
