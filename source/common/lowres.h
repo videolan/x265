@@ -44,7 +44,6 @@ struct Lowres : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
     pixel *buffer[4];
-    int    stride;   // distance to below pixel
     int    width;    // width of lowres frame in pixels
     int    lines;    // height of lowres frame in pixel lines
     int    bframes;

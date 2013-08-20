@@ -195,9 +195,8 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
 
     const int bidir = (b < p1);
     const int cu_xy = cux + cuy * cuWidth;
-    const int stride = fenc->stride;
     const int cu_size = g_maxCUWidth / 2;
-    const int pel_offset = cu_size * cux + cu_size * cuy * stride;
+    const int pel_offset = cu_size * cux + cu_size * cuy * fenc->lumaStride;
     const int merange = 16;
 
     me.setSourcePU(pel_offset, cu_size, cu_size);
@@ -266,12 +265,12 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         pixel *pix_cur = fenc->lumaPlane[0][0] + pel_offset;
 
         // Copy Above
-        memcpy(pAbove0, pix_cur - 1 - stride, cu_size + 1);
+        memcpy(pAbove0, pix_cur - 1 - fenc->lumaStride, cu_size + 1);
 
         // Copy Left
         for (int i = 0; i < cu_size + 1; i++)
         {
-            pLeft0[i] = pix_cur[-1 - stride + i * stride];
+            pLeft0[i] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
         }
 
         memset(pAbove0 + cu_size + 1, pAbove0[cu_size], cu_size);
