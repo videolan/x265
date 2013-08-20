@@ -171,11 +171,17 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         me.setSourcePlane(fenc->lumaPlane[0][0], fenc->lumaStride);
         for (int j = cuHeight - 1; j >= 0; j--)
         {
+            if (!fenc->bIntraCalculated)
+                fenc->rowSatds[0][0][j] = 0;
+            fenc->rowSatds[b - p0][p1 - b][j] = 0;
+
             for (int i = cuWidth - 1; i >= 0; i--)
             {
                 estimateCUCost(i, j, p0, p1, b, bDoSearch);
             }
         }
+
+        fenc->bIntraCalculated = true;
 
         score = fenc->costEst[b - p0][p1 - b];
 
@@ -259,8 +265,6 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
 
     if (!fenc->bIntraCalculated)
     {
-        fenc->bIntraCalculated = true;
-
         Int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
 
         pixel _above0[32 * 4 + 1], *const pAbove0 = _above0 + 2 * 32;
