@@ -141,7 +141,7 @@ void Lookahead::slicetypeDecide()
 int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 {
     int score = 0;
-    int do_search[2];
+    bool bDoSearch[2];
     Lowres *fenc = frames[b];
 
     if (fenc->costEst[b - p0][p1 - b] >= 0 && fenc->rowSatds[b - p0][p1 - b][0] != -1)
@@ -149,11 +149,11 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
     else
     {
         /* For each list, check to see whether we have lowres motion-searched this reference */
-        do_search[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
-        do_search[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
+        bDoSearch[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
+        bDoSearch[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
 
-        if (do_search[0]) fenc->lowresMvs[0][b - p0 - 1][0].x = 0;
-        if (do_search[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
+        if (bDoSearch[0]) fenc->lowresMvs[0][b - p0 - 1][0].x = 0;
+        if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
 
         fenc->costEst[b - p0][p1 - b] = 0;
 
@@ -166,7 +166,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         {
             for (int j = cuHeight - 1; j >= 0; j--)
             {
-                estimateCUCost(j, i, p0, p1, b, do_search);
+                estimateCUCost(j, i, p0, p1, b, bDoSearch);
             }
         }
 
@@ -187,7 +187,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
     return score;
 }
 
-void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2])
+void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2])
 {
     Lowres *fref0 = frames[p0];
     Lowres *fref1 = frames[p1];
@@ -218,7 +218,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
 
     for (int i = 0; i < 1 + bidir; i++)
     {
-        if (!do_search[i])
+        if (!bDoSearch[i])
             continue;
 
         int numc = 0;
