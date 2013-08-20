@@ -55,6 +55,7 @@ struct Lookahead
     TEncCfg         *cfg;
     MotionEstimate   me;
     Lowres          *frames[X265_LOOKAHEAD_MAX];
+    int              merange;
     int              numDecided;
     int              lastKeyframe;
     int              cuWidth;       // width of lowres frame in downscale CUs

@@ -68,6 +68,7 @@ Lookahead::Lookahead(TEncCfg *_cfg)
     numDecided = 0;
     me.setQP(X265_LOOKAHEAD_QP, 1.0);
     me.setSearchMethod(X265_HEX_SEARCH);
+    merange = 16;
 }
 
 void Lookahead::addPicture(TComPic *pic)
@@ -193,30 +194,29 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     Lowres *fref1 = frames[p1];
     Lowres *fenc  = frames[b];
 
-    const int bidir = (b < p1);
-    const int cu_xy = cux + cuy * cuWidth;
-    const int cu_size = g_maxCUWidth / 2;
-    const int pel_offset = cu_size * cux + cu_size * cuy * fenc->lumaStride;
-    const int merange = 16;
+    const bool bBidir = (b < p1);
+    const int cuXY = cux + cuy * cuWidth;
+    const int cuSize = g_maxCUWidth / 2;
+    const int pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
 
-    me.setSourcePU(pel_offset, cu_size, cu_size);
+    me.setSourcePU(pelOffset, cuSize, cuSize);
 
-    MV(*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cu_xy],
-                         &fenc->lowresMvs[1][p1 - b - 1][cu_xy] };
-    int(*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cu_xy],
-                            &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
+    MV(*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cuXY],
+                         &fenc->lowresMvs[1][p1 - b - 1][cuXY] };
+    int(*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cuXY],
+                            &fenc->lowresMvCosts[1][p1 - b - 1][cuXY] };
 
     MV mvmin, mvmax;
     int bcost = me.COST_MAX;
     int listused = 0;
 
     // establish search bounds that don't cross extended frame boundaries
-    mvmin.x = (uint16_t)(-cux * cu_size - 8);
-    mvmin.y = (uint16_t)(-cuy * cu_size - 8);
-    mvmax.x = (uint16_t)((cuWidth - cux - 1) * cu_size + 8);
-    mvmax.y = (uint16_t)((cuHeight - cuy - 1) * cu_size + 8);
+    mvmin.x = (uint16_t)(-cux * cuSize - 8);
+    mvmin.y = (uint16_t)(-cuy * cuSize - 8);
+    mvmax.x = (uint16_t)((cuWidth - cux - 1) * cuSize + 8);
+    mvmax.y = (uint16_t)((cuHeight - cuy - 1) * cuSize + 8);
 
-    for (int i = 0; i < 1 + bidir; i++)
+    for (int i = 0; i < 1 + bBidir; i++)
     {
         if (!bDoSearch[i])
             continue;
@@ -255,48 +255,48 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     {
         fenc->bIntraCalculated = true;
 
-        Int nLog2SizeMinus2 = g_convertToBit[cu_size]; // partition size
+        Int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
 
         pixel _above0[32 * 4 + 1], *const pAbove0 = _above0 + 2 * 32;
         pixel _above1[32 * 4 + 1], *const pAbove1 = _above1 + 2 * 32;
         pixel _left0[32 * 4 + 1], *const pLeft0 = _left0 + 2 * 32;
         pixel _left1[32 * 4 + 1], *const pLeft1 = _left1 + 2 * 32;
 
-        pixel *pix_cur = fenc->lumaPlane[0][0] + pel_offset;
+        pixel *pix_cur = fenc->lumaPlane[0][0] + pelOffset;
 
         // Copy Above
-        memcpy(pAbove0, pix_cur - 1 - fenc->lumaStride, cu_size + 1);
+        memcpy(pAbove0, pix_cur - 1 - fenc->lumaStride, cuSize + 1);
 
         // Copy Left
-        for (int i = 0; i < cu_size + 1; i++)
+        for (int i = 0; i < cuSize + 1; i++)
         {
             pLeft0[i] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
         }
 
-        memset(pAbove0 + cu_size + 1, pAbove0[cu_size], cu_size);
-        memset(pLeft0 + cu_size + 1, pLeft0[cu_size], cu_size);
+        memset(pAbove0 + cuSize + 1, pAbove0[cuSize], cuSize);
+        memset(pLeft0 + cuSize + 1, pLeft0[cuSize], cuSize);
 
         // filtering with [1 2 1]
         // assume getUseStrongIntraSmoothing() is disabled
         pAbove1[0] = pAbove0[0];
-        pAbove1[cu_size - 1] = pAbove0[cu_size - 1];
+        pAbove1[cuSize - 1] = pAbove0[cuSize - 1];
         pLeft1[0] = pLeft0[0];
-        pLeft1[cu_size - 1] = pLeft0[cu_size - 1];
-        for (int i = 1; i < cu_size - 1; i++)
+        pLeft1[cuSize - 1] = pLeft0[cuSize - 1];
+        for (int i = 1; i < cuSize - 1; i++)
         {
             pAbove1[i] = (pAbove0[i - 1] + 2 * pAbove0[i] + pAbove0[i + 1] + 2) >> 2;
             pLeft1[i] = (pLeft0[i - 1] + 2 * pLeft0[i] + pLeft0[i + 1] + 2) >> 2;
         }
 
         ALIGN_VAR_32(pixel, predictions[35 * 32 * 32]);
-        int predsize = cu_size * cu_size;
+        int predsize = cuSize * cuSize;
 
         // generate 35 intra predictions into tmp
-        primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, predictions, cu_size, cu_size, (cu_size <= 16));
-        pixel *above = (cu_size >= 8) ? pAbove1 : pAbove0;
-        pixel *left  = (cu_size >= 8) ? pLeft1 : pLeft0;
-        primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, predictions + predsize, cu_size, cu_size);
-        x265::primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cu_size <= 16));
+        primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, predictions, cuSize, cuSize, (cuSize <= 16));
+        pixel *above = (cuSize >= 8) ? pAbove1 : pAbove0;
+        pixel *left  = (cuSize >= 8) ? pLeft1 : pLeft0;
+        primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, predictions + predsize, cuSize, cuSize);
+        x265::primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cuSize <= 16));
 
         // calculate 35 satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
@@ -306,25 +306,25 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         for (UInt mode = 0; mode < 35; mode++)
         {
             if ((mode >= 2) && (mode < 18))
-                cost = sa8d(buf_trans, cu_size, &predictions[mode * predsize], cu_size);
+                cost = sa8d(buf_trans, cuSize, &predictions[mode * predsize], cuSize);
             else
-                cost = sa8d(me.fenc, FENC_STRIDE, &predictions[mode * predsize], cu_size);
+                cost = sa8d(me.fenc, FENC_STRIDE, &predictions[mode * predsize], cuSize);
             if (cost < icost)
                 icost = cost;
         }
 
         // TOOD: i_icost += intra_penalty + lowres_penalty;
-        fenc->intraCost[cu_xy] = icost;
+        fenc->intraCost[cuXY] = icost;
         fenc->rowSatds[0][0][cuy] += icost;
         fenc->costEst[0][0] += icost;
     }
 
-    if (!bidir)
+    if (!bBidir)
     {
-        if (fenc->intraCost[cu_xy] < bcost)
+        if (fenc->intraCost[cuXY] < bcost)
         {
             fenc->intraMbs[b - p0]++;
-            bcost = fenc->intraCost[cu_xy];
+            bcost = fenc->intraCost[cuXY];
             listused = 0;
         }
     }
@@ -335,7 +335,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
         fenc->costEst[b - p0][p1 - b] += bcost;
     }
-    fenc->lowresCosts[b - p0][p1 - b][cu_xy] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
+    fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
 
 void Lookahead::slicetypeAnalyse(bool bKeyframe)
