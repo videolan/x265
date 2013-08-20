@@ -163,11 +163,11 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
          * prediction overall. */
         // TODO: use lowres MVs as motion candidates in full-res search
         me.setSourcePlane(fenc->lumaPlane[0][0], fenc->lumaStride);
-        for (int i = cuWidth - 1; i >= 0; i--)
+        for (int j = cuHeight - 1; j >= 0; j--)
         {
-            for (int j = cuHeight - 1; j >= 0; j--)
+            for (int i = cuWidth - 1; i >= 0; i--)
             {
-                estimateCUCost(j, i, p0, p1, b, bDoSearch);
+                estimateCUCost(i, j, p0, p1, b, bDoSearch);
             }
         }
 
