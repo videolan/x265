@@ -249,7 +249,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
 
-        //m_rateControl->rateControlStart(pic);
+        //m_lookahead->getEstimatedPictureCost(fenc);  // TODO: move into rate control
+        //m_rateControl->rateControlStart(fenc);
 
         // main encode processing, TBD multi-threading
         curEncoder->compressFrame(fenc);

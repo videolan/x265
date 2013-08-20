@@ -71,6 +71,7 @@ struct Lookahead
     void addPicture(TComPic*);
     void flush();
     void slicetypeDecide();
+    int getEstimatedPictureCost(TComPic *pic);
 
     int estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty);
     void estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);

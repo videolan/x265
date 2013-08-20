@@ -105,8 +105,6 @@ void Lookahead::slicetypeDecide()
 
         pic->m_lowres.sliceType = X265_SLICE_TYPE_I;
         pic->m_lowres.gopIdx = 0;
-        frames[0] = &pic->m_lowres;
-        estimateFrameCost(0, 0, 0, false);
         outputQueue.pushBack(pic);
         numDecided++;
         return;
@@ -145,6 +143,38 @@ void Lookahead::slicetypeDecide()
             inputQueue.popFront();
         }
 #endif
+}
+
+// Called by RateControl to get the estimated SATD cost for a given picture.
+// It assumes dpb->prepareEncode() has already been called for the picture and
+// all the references are established
+int Lookahead::getEstimatedPictureCost(TComPic *pic)
+{
+    // POC distances to each reference
+    int d0, d1;
+    switch (pic->getSlice()->getSliceType())
+    {
+    case I_SLICE:
+        frames[0] = &pic->m_lowres;
+        return estimateFrameCost(0, 0, 0, false);
+        break;
+    case P_SLICE:
+        d0 = pic->getSlice()->getPOC() - pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
+        frames[0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[d0] = &pic->m_lowres;
+        return estimateFrameCost(0, d0, d0, false);
+        break;
+    case B_SLICE:
+        d0 = pic->getSlice()->getPOC() - pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
+        d1 = pic->getSlice()->getRefPOC(REF_PIC_LIST_1, 0) - pic->getSlice()->getPOC();
+        frames[0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[d0] = &pic->m_lowres;
+        frames[d0+d1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
+        return estimateFrameCost(0, d0+d1, d0, false);
+        break;
+    }
+
+    return -1;
 }
 
 int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
