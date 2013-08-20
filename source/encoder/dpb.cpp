@@ -134,7 +134,6 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     slice->setNumRefIdx(REF_PIC_LIST_0, min(m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
     slice->setNumRefIdx(REF_PIC_LIST_1, min(m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
 
-    // TODO: Is this safe for frame parallelism?
     slice->setRefPicList(m_picList);
 
     // Slice type refinement
