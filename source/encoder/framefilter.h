@@ -40,7 +40,7 @@ namespace x265 {
 class ThreadPool;
 
 // Manages the wave-front processing of a single frame loopfilter
-class FrameFilter : public WaveFront
+class FrameFilter : public JobProvider
 {
 public:
 
@@ -58,6 +58,7 @@ public:
     void wait();
 
     void enqueueRow(int row);
+    bool findJob();
 
     void processRow(int row);
 
@@ -65,7 +66,6 @@ protected:
 
     TEncCfg*            m_cfg;
     TComPic*            m_pic;
-    volatile bool       m_lft_active;
     Lock                m_lock;
 
 public:
@@ -73,6 +73,11 @@ public:
     TComLoopFilter              m_loopFilter;
     TEncSampleAdaptiveOffset*   m_sao;
     int                         m_numRows;
+
+    // TODO: if you want thread priority logic, add col here
+    volatile int                row_ready;
+    volatile int                row_done;
+
     Event                       m_completionEvent;
 };
 

@@ -974,6 +974,7 @@ void FrameEncoder::processRow(int row)
     // this row of CTUs has been encoded
     if (row == m_numRows - 1)
     {
+        m_frameFilter.enqueueRow(row);
         m_completionEvent.trigger();
     }
 }

@@ -33,10 +33,9 @@ using namespace x265;
 // * LoopFilter
 // **************************************************************************
 FrameFilter::FrameFilter(ThreadPool* pool)
-    : WaveFront(pool)
+    : JobProvider(pool)
     , m_cfg(NULL)
     , m_pic(NULL)
-    , m_lft_active(false)
     , m_sao(NULL)
 {}
 
@@ -59,6 +58,21 @@ void FrameFilter::destroy()
     }
 }
 
+bool FrameFilter::findJob()
+{
+    ScopedLock self(m_lock);
+
+    // NOTE: only one thread can be here
+    if (row_done < row_ready)
+    {
+        // NOTE: not need atom operator here because we lock before
+        row_done++;
+        processRow(row_done);
+        return true;
+    }
+    return false;
+}
+
 void FrameFilter::init(TEncTop *top, int numRows)
 {
     m_cfg = top;
@@ -77,12 +91,6 @@ void FrameFilter::init(TEncTop *top, int numRows)
             m_sao[i].createEncBuffer();
         }
     }
-
-    if (!WaveFront::init(m_numRows))
-    {
-        assert(!"Unable to initialize job queue.");
-        m_pool = NULL;
-    }
 }
 
 void FrameFilter::start(TComPic *pic)
@@ -90,7 +98,8 @@ void FrameFilter::start(TComPic *pic)
     m_pic = pic;
 
     m_loopFilter.setCfg(pic->getSlice()->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
-    m_lft_active = false;
+    row_ready = -1;
+    row_done = -1;
     for (int i = 0; i < m_numRows; i++)
     {
         if (m_cfg->param.bEnableLoopFilter)
@@ -103,7 +112,7 @@ void FrameFilter::start(TComPic *pic)
 
     if (m_cfg->param.bEnableLoopFilter && m_pool && m_cfg->param.bEnableWavefront)
     {
-        WaveFront::enqueue();
+        JobProvider::enqueue();
     }
 }
 
@@ -111,7 +120,7 @@ void FrameFilter::wait()
 {
     // Block until worker threads complete the frame
     m_completionEvent.wait();
-    WaveFront::dequeue();
+    JobProvider::dequeue();
 }
 
 void FrameFilter::end()
@@ -127,12 +136,10 @@ void FrameFilter::end()
 
 void FrameFilter::enqueueRow(int row)
 {
-    ScopedLock self(m_lock);
-
-    if (!m_lft_active)
-    {
-        WaveFront::enqueueRow(row);
-    }
+    assert(row < m_numRows);
+    // NOTE: not need atom here since we have only one writer and reader
+    row_ready = row;
+    m_pool->pokeIdleThread();
 }
 
 void FrameFilter::processRow(int row)
@@ -143,13 +150,6 @@ void FrameFilter::processRow(int row)
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-
-    {
-        ScopedLock self(m_lock);
-        if (m_lft_active)
-            return;
-        m_lft_active = true;
-    }
 
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
@@ -178,23 +178,6 @@ void FrameFilter::processRow(int row)
     {
         TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
         m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
-    }
-
-    // Active next row when possible
-    ScopedLock self(m_lock);
-    m_lft_active = false;
-    if (row + 2 < m_numRows)
-    {
-        if (m_pic->m_complete_enc[row + 2] == numCols)
-        {
-            WaveFront::enqueueRow(row + 1);
-        }
-    }
-
-    // Active last row
-    if (row == m_numRows - 2)
-    {
-        WaveFront::enqueueRow(row + 1);
     }
 
     // this row of CTUs has been encoded
