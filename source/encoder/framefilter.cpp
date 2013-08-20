@@ -36,7 +36,6 @@ FrameFilter::FrameFilter(ThreadPool* pool)
     : JobProvider(pool)
     , m_cfg(NULL)
     , m_pic(NULL)
-    , m_sao(NULL)
 {}
 
 void FrameFilter::destroy()
@@ -47,14 +46,10 @@ void FrameFilter::destroy()
     {
         assert(m_cfg->param.bEnableSAO);
         m_loopFilter.destroy();
-        for (int i = 0; i < m_numRows; ++i)
-        {
-            // NOTE: I don't check sao flag since loopfilter and sao have same control status
-            m_sao[i].destroy();
-            m_sao[i].destroyEncBuffer();
-        }
 
-        delete[] m_sao;
+        // NOTE: I don't check sao flag since loopfilter and sao have same control status
+        m_sao.destroy();
+        m_sao.destroyEncBuffer();
     }
 }
 
@@ -80,16 +75,12 @@ void FrameFilter::init(TEncTop *top, int numRows)
 
     if (top->param.bEnableLoopFilter)
     {
-        m_sao = new TEncSampleAdaptiveOffset[numRows];
         m_loopFilter.create(g_maxCUDepth);
-        for (int i = 0; i < m_numRows; ++i)
-        {
-            m_sao[i].setSaoLcuBoundary(top->param.saoLcuBoundary);
-            m_sao[i].setSaoLcuBasedOptimization(top->param.saoLcuBasedOptimization);
-            m_sao[i].setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
-            m_sao[i].create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
-            m_sao[i].createEncBuffer();
-        }
+        m_sao.setSaoLcuBoundary(top->param.saoLcuBoundary);
+        m_sao.setSaoLcuBasedOptimization(top->param.saoLcuBasedOptimization);
+        m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
+        m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
+        m_sao.createEncBuffer();
     }
 }
 
@@ -100,14 +91,11 @@ void FrameFilter::start(TComPic *pic)
     m_loopFilter.setCfg(pic->getSlice()->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
     row_ready = -1;
     row_done = -1;
-    for (int i = 0; i < m_numRows; i++)
+    if (m_cfg->param.bEnableLoopFilter)
     {
-        if (m_cfg->param.bEnableLoopFilter)
-        {
-            if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
-                m_sao[i].resetStats();
-            m_sao[i].createPicSaoInfo(pic);
-        }
+        if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
+            m_sao.resetStats();
+        m_sao.createPicSaoInfo(pic);
     }
 
     if (m_cfg->param.bEnableLoopFilter && m_pool && m_cfg->param.bEnableWavefront)
@@ -127,10 +115,7 @@ void FrameFilter::end()
 {
     if (m_cfg->param.bEnableLoopFilter)
     {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_sao[i].destroyPicSaoInfo();
-        }
+        m_sao.destroyPicSaoInfo();
     }
 }
 
@@ -157,7 +142,7 @@ void FrameFilter::processRow(int row)
         for (UInt col = 0; col < numCols; col++)
         {
             const uint32_t cuAddr = lineStartCUAddr + col;
-            m_sao[row].calcSaoStatsLCu_BeforeDblk(m_pic, cuAddr);
+            m_sao.calcSaoStatsLCu_BeforeDblk(m_pic, cuAddr);
         }
     }
 

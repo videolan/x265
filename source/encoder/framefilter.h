@@ -71,7 +71,7 @@ protected:
 public:
 
     TComLoopFilter              m_loopFilter;
-    TEncSampleAdaptiveOffset*   m_sao;
+    TEncSampleAdaptiveOffset    m_sao;
     int                         m_numRows;
 
     // TODO: if you want thread priority logic, add col here
