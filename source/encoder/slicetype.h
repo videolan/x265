@@ -56,6 +56,7 @@ struct Lookahead
     MotionEstimate   me;
     Lowres          *frames[X265_LOOKAHEAD_MAX];
     int              bframes;
+    int              bFrameBias;
     int              frameQueueSize;
     int              bAdaptMode;
     int              numDecided;

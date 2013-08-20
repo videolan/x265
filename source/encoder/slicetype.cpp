@@ -71,6 +71,7 @@ Lookahead::Lookahead(TEncCfg *_cfg)
     me.setSearchMethod(X265_HEX_SEARCH);
     frameQueueSize = param->lookaheadDepth;
     bframes = param->bframes;
+    bFrameBias = param->bFrameBias;
     bAdaptMode = param->bFrameAdaptive;
 }
 
@@ -146,12 +147,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 {
     int score = 0;
     int do_search[2];
-    Lowres *fenc;
-
-    fenc = frames[b];
-
-    /* Currently Default set as 0 this should be param->bframebias */
-    int bframe_bias = 0;
+    Lowres *fenc = frames[b];
 
     if (fenc->costEst[b - p0][p1 - b] >= 0 && fenc->rowSatds[b - p0][p1 - b][0] != -1)
         score = fenc->costEst[b - p0][p1 - b];
@@ -183,7 +179,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         score = fenc->costEst[b - p0][p1 - b];
 
         if (b != p1)
-            score = (uint64_t)score * 100 / (120 + bframe_bias);
+            score = (uint64_t)score * 100 / (120 + bFrameBias);
 
         fenc->costEst[b - p0][p1 - b] = score;
     }
