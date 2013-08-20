@@ -66,9 +66,15 @@ Lookahead::Lookahead(TEncCfg *_cfg)
 {
     this->cfg = _cfg;
     numDecided = 0;
+    predictions = (pixel*)X265_MALLOC(pixel, 35 * g_maxCUWidth * g_maxCUHeight / 4);
     me.setQP(X265_LOOKAHEAD_QP, 1.0);
     me.setSearchMethod(X265_HEX_SEARCH);
     merange = 16;
+}
+
+Lookahead::~Lookahead()
+{
+    if (predictions) X265_FREE(predictions);
 }
 
 void Lookahead::addPicture(TComPic *pic)
@@ -288,7 +294,6 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
             pLeft1[i] = (pLeft0[i - 1] + 2 * pLeft0[i] + pLeft0[i + 1] + 2) >> 2;
         }
 
-        ALIGN_VAR_32(pixel, predictions[35 * 32 * 32]);
         int predsize = cuSize * cuSize;
 
         // generate 35 intra predictions into tmp

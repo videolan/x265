@@ -60,11 +60,13 @@ struct Lookahead
     int              lastKeyframe;
     int              cuWidth;       // width of lowres frame in downscale CUs
     int              cuHeight;      // height of lowres frame in downscale CUs
+    pixel           *predictions;   // buffer for 35 intra predictions
 
     TComList<TComPic*> inputQueue;  // input pictures in order received
     TComList<TComPic*> outputQueue; // pictures to be encoded, in encode order
 
     Lookahead(TEncCfg *);
+    ~Lookahead();
 
     void addPicture(TComPic*);
     void flush();
