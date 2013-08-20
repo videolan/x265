@@ -107,6 +107,8 @@ void Lookahead::slicetypeDecide()
         pic->m_lowres.gopIdx = 0;
         outputQueue.pushBack(pic);
         numDecided++;
+        frames[0] = &pic->m_lowres;
+        estimateFrameCost(0, 0, 0, false);
         return;
     }
 
