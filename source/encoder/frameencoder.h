@@ -198,6 +198,7 @@ protected:
     AccessUnit               m_accessUnit;
 
     int                      m_numRows;
+    int                      row_delay;
     CTURow*                  m_rows;
     Event                    m_completionEvent;
 };
