@@ -221,10 +221,6 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
 
-    /* TODO: lookahead and DPB modeling should give us these values */
-    slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
-    slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
-
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
         slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());
