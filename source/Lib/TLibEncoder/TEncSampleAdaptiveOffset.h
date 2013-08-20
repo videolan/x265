@@ -95,8 +95,7 @@ public:
     Void calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr);
     Void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
     Void calcSaoStatsCuOrg(Int addr, Int partIdx, Int yCbCr);
-    Void calcSaoStatsCu_BeforeDblk(TComPic* pic);
-    Void calcSaoStatsLCu_BeforeDblk(TComPic* pic, Int addr);
+    Void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int idxY);
     Void destroyEncBuffer();
     Void createEncBuffer();
     Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag);

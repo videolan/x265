@@ -139,11 +139,7 @@ void FrameFilter::processRow(int row)
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
     {
-        for (UInt col = 0; col < numCols; col++)
-        {
-            const uint32_t cuAddr = lineStartCUAddr + col;
-            m_sao.calcSaoStatsLCu_BeforeDblk(m_pic, cuAddr);
-        }
+        m_sao.calcSaoStatsRowCus_BeforeDblk(m_pic, row);
     }
 
     for (UInt col = 0; col < numCols; col++)
