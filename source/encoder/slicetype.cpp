@@ -156,7 +156,6 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         if (do_search[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
 
         fenc->costEst[b - p0][p1 - b] = 0;
-        fenc->costEst[b - p0][p1 - b] = 0;
 
         /* Lowres lookahead goes backwards because the MVs are used as
          * predictors in the main encode.  This considerably improves MV
