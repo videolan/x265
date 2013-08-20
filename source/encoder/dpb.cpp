@@ -542,6 +542,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         SET5(6, m_refIdc, 1, 0, 1, 1, 1);
         SET5(7, m_refIdc, 1, 1, 1, 1, 0);
         m_gopSize = 8;
+        _param->bframes = 8; // this fixed GOP structure can use refs 8 frames away
     }
     else
     {
