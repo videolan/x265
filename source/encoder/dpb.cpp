@@ -82,9 +82,6 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     }
     slice->setLastIDR(m_lastIDR);
 
-    slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive);
-    slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive);
-
     if (slice->getSliceType() == B_SLICE && m_cfg->getGOPEntry(gopIdx).m_sliceType == 'P')
     {
         slice->setSliceType(P_SLICE);
