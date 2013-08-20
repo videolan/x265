@@ -59,7 +59,6 @@ struct Lookahead
     int              frameQueueSize;
     int              bAdaptMode;
     int              numDecided;
-    uint8_t          analyse_keyframe;
     int              last_keyframe;
     int              cuWidth;       // width of lowres frame in downscale CUs
     int              cuHeight;      // height of lowres frame in downscale CUs
