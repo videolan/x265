@@ -233,7 +233,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         calculateHashAndPSNR(out, accessUnitOut);
 
-        //m_rateControl->rateControlEnd(m_analyzeAll.getBits());
+       
 
         m_dpb->recycleUnreferenced(m_freeList);
 
@@ -530,7 +530,7 @@ Void TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     {
         m_analyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
-
+    m_rateControl->rateControlEnd(bits);
     if (param.logLevel >= X265_LOG_DEBUG)
     {
         Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
