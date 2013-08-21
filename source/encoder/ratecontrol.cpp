@@ -35,8 +35,10 @@ using namespace x265;
 #define MAX_FRAME_DURATION 1.00
 #define MIN_FRAME_DURATION 0.01
 
-#define CLIP_DURATION(f) Clip3(f, MIN_FRAME_DURATION, MAX_FRAME_DURATION)
+#define CLIP_DURATION(f) Clip3( MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
+/* The qscale - qp conversion is specified in the standards. 
+Approx qscale increases by 12%  with every qp increment */
 static inline double qScale2qp(double qScale)
 {
     return 12.0 + 6.0 * log(qScale / 0.85);
@@ -56,20 +58,23 @@ RateControl::RateControl(x265_param_t * param)
     bitrate = param->rc.bitrate * 1000;
     frameDuration = 1.0 / param->frameRate;
     rateControlMode = param->rc.rateControlMode;
-    ncu = (int)((param->sourceHeight * param->sourceWidth) / pow(2.0, (int)param->maxCUSize));
+    ncu = (int)((param->sourceHeight * param->sourceWidth) / pow((int)param->maxCUSize, 2.0));
     lastNonBPictType = -1;
-    qCompress = param->rc.qCompress;
-    ipFactor = param->rc.ipFactor;
+    // heuristics- encoder specific
+    qCompress = param->rc.qCompress;      //tweak and test for x265. 
+    ipFactor = param->rc.ipFactor;        
     pbFactor = param->rc.pbFactor;
     totalBits = 0;
+    shortTermCplxSum = 0;
+    shortTermCplxCount = 0;
     if (rateControlMode == X265_RC_ABR)
     {
         //TODO : confirm this value. obtained it from x264 when crf is disabled , abr enabled.
-        //h->param.rc.i_rc_method == X264_RC_CRF ? h->param.rc.f_rf_constant : 24
+        //h->param.rc.i_rc_method == X264_RC_CRF ? h->param.rc.f_rf_constant : 24  -- can be tweaked for x265.
 #define ABR_INIT_QP (24  + QP_BD_OFFSET)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP)*accumPNorm;
-        /* estimated ratio that produces a reasonable QP for the first I-frame */
+        /* estimated ratio that produces a reasonable QP for the first I-frame  - needs to be tweaked for x265*/
         cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
         wantedBitsWindow = 1.0 * bitrate / fps;
         lastNonBPictType = I_SLICE;
@@ -80,9 +85,10 @@ RateControl::RateControl(x265_param_t * param)
     {
         lastQScaleFor[i] = qp2qScale(ABR_INIT_QP);
         lmin[i] = qp2qScale(MIN_QP);
-        lmax[i] = qp2qScale(MAX_QP);
+        lmax[i] = qp2qScale(MAX_QP);  // maxQP val in x264 = 51+18
     }
 
+    //qstep - value set as encoder specific.
     lstep = pow(2, param->rc.qpStep / 6.0);
     cbrDecay = 1.0;
 }
@@ -100,9 +106,9 @@ void RateControl::rateControlStart(TComPic* pic)
         q = qScale2qp(rateEstimateQscale(&pic->m_lowres));
     }
     else
-        q = 0; // TODO
-    q = Clip3((int)q, MIN_QP, MAX_QP);
-    qp = Clip3((int)(q + 0.5f), 0, MAX_QP);
+        q = 0;
+    q = Clip3(MIN_QP, MAX_QP, (int)q);
+    qp = Clip3(0, MAX_QP, (int)(q + 0.5f));
     qpaRc = qpm = q;    // qpaRc is set in the rate_control_mb call in x264. we are updating here itself.
     if (rce)
         rce->newQp = qp;
@@ -200,13 +206,13 @@ double RateControl::rateEstimateQscale(Lowres* lframe)
         if (lastSatd)
         {
             // TODO: need to check the thread_frames  - add after min chen plugs in frame parallelism.
-            int iFrameDone = fps + 1 - 0;   //h->i_thread_frames;
+            double iFrameDone = curFrame->getPOC() + 1 - 1;   //h->i_thread_frames;
             double timeDone = iFrameDone / fps;
             wantedBits = timeDone * bitrate;
             if (wantedBits > 0)
             {
                 abrBuffer *= X265_MAX(1, sqrt(timeDone));
-                overflow = Clip3(1.0 + (totalBits - wantedBits) / abrBuffer, .5, 2.0);
+                overflow = Clip3(.5, 2.0, 1.0 + (totalBits - wantedBits) / abrBuffer);
                 q *= overflow;
             }
         }
@@ -218,7 +224,7 @@ double RateControl::rateEstimateQscale(Lowres* lframe)
             q = qp2qScale(accumPQp / accumPNorm);
             q /= fabs(ipFactor);
         }
-        else if (fps > 0)
+        else if (curFrame->getPOC() > 0)
         {
             if (rateControlMode != X265_RC_CRF)
             {
@@ -226,23 +232,23 @@ double RateControl::rateEstimateQscale(Lowres* lframe)
                  * overflow control in areas of rapidly oscillating complexity */
                 double lqmin = lastQScaleFor[pictType] / lstep;
                 double lqmax = lastQScaleFor[pictType] * lstep;
-                if (overflow > 1.1 && fps > 3)
+                if (overflow > 1.1 && curFrame->getPOC() > 3)
                     lqmax *= lstep;
                 else if (overflow < 0.9)
                     lqmin /= lstep;
 
-                q = Clip3(q, lqmin, lqmax);
+                q = Clip3(lqmin, lqmax, q);
             }
         }
 
         //FIXME use get_diff_limited_q() ?
         double lmin1 = lmin[pictType];
         double lmax1 = lmax[pictType];
-        q = Clip3(q, lmin1, lmax1);
+        q = Clip3(lmin1, lmax1, q);
         lastQScaleFor[pictType] =
             lastQScale = q;
 
-        if (!fps == 0)
+        if (!curFrame->getPOC() == 0)
             lastQScaleFor[P_SLICE] = q * fabs(ipFactor);
 
         return q;
