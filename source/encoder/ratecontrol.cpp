@@ -51,6 +51,7 @@ static inline double qp2qScale(double qp)
 
 RateControl::RateControl(x265_param_t * param)
 {
+    rce = NULL;
     keyFrameInterval = param->keyframeMax;
     fps = param->frameRate;
     bframes = param->bframes;
@@ -100,13 +101,13 @@ void RateControl::rateControlStart(TComPic* pic)
     rce = new RateControlEntry();
     double q;
 
-    //Always enabling ABR
     if (rateControlMode == X265_RC_ABR)
     {
         q = qScale2qp(rateEstimateQscale(&pic->m_lowres));
     }
     else
         q = 0;
+
     q = Clip3(MIN_QP, MAX_QP, (int)q);
     qp = Clip3(0, MAX_QP, (int)(q + 0.5f));
     qpaRc = qpm = q;    // qpaRc is set in the rate_control_mb call in x264. we are updating here itself.
@@ -294,7 +295,10 @@ int RateControl::rateControlEnd(int64_t bits)
         wantedBitsWindow *= cbrDecay;
     }
     totalBits += bits;
-    delete rce;
-    rce = NULL;
+    if (rce)
+    {
+        delete rce;
+        rce = NULL;
+    }
     return 0;
 }
