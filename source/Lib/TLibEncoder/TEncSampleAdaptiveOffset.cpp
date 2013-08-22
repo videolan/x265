@@ -53,6 +53,8 @@ TEncSampleAdaptiveOffset::TEncSampleAdaptiveOffset()
     m_count = NULL;
     m_offset = NULL;
     m_offsetOrg = NULL;
+    m_countPreDblk = NULL;
+    m_offsetOrgPreDblk = NULL;
     m_rate = NULL;
     m_dist = NULL;
     m_cost = NULL;
@@ -75,8 +77,6 @@ TEncSampleAdaptiveOffset::~TEncSampleAdaptiveOffset()
 // ====================================================================================================================
 // Static
 // ====================================================================================================================
-Int64  ****TEncSampleAdaptiveOffset::m_countPreDblk = NULL;
-Int64  ****TEncSampleAdaptiveOffset::m_offsetOrgPreDblk = NULL;
 
 // ====================================================================================================================
 // Constants
@@ -470,56 +470,14 @@ Void TEncSampleAdaptiveOffset::destroyEncBuffer()
         delete [] m_offsetOrg;
         m_offsetOrg = NULL;
     }
-    Int numLcu = m_numCuInWidth * m_numCuInHeight;
 
     if (m_countPreDblk)
     {
-        for (Int i = 0; i < numLcu; i++)
-        {
-            for (Int j = 0; j < 3; j++)
-            {
-                for (Int k = 0; k < MAX_NUM_SAO_TYPE; k++)
-                {
-                    if (m_countPreDblk[i][j][k])
-                    {
-                        delete [] m_countPreDblk[i][j][k];
-                    }
-                    if (m_offsetOrgPreDblk[i][j][k])
-                    {
-                        delete [] m_offsetOrgPreDblk[i][j][k];
-                    }
-                }
+        delete[] m_countPreDblk;
+        m_countPreDblk = NULL;
 
-                if (m_countPreDblk[i][j])
-                {
-                    delete [] m_countPreDblk[i][j];
-                }
-                if (m_offsetOrgPreDblk[i][j])
-                {
-                    delete [] m_offsetOrgPreDblk[i][j];
-                }
-            }
-
-            if (m_countPreDblk[i])
-            {
-                delete [] m_countPreDblk[i];
-            }
-            if (m_offsetOrgPreDblk[i])
-            {
-                delete [] m_offsetOrgPreDblk[i];
-            }
-        }
-
-        if (m_countPreDblk)
-        {
-            delete [] m_countPreDblk;
-            m_countPreDblk = NULL;
-        }
-        if (m_offsetOrgPreDblk)
-        {
-            delete [] m_offsetOrgPreDblk;
-            m_offsetOrgPreDblk = NULL;
-        }
+        delete[] m_offsetOrgPreDblk;
+        m_offsetOrgPreDblk = NULL;
     }
 
     Int maxDepth = 4;
@@ -583,25 +541,8 @@ Void TEncSampleAdaptiveOffset::createEncBuffer()
     {
         assert(m_offsetOrgPreDblk == NULL);
 
-        m_countPreDblk  = new Int64 * **[numLcu];
-        m_offsetOrgPreDblk = new Int64 * **[numLcu];
-        for (Int i = 0; i < numLcu; i++)
-        {
-            m_countPreDblk[i]  = new Int64 * *[3];
-            m_offsetOrgPreDblk[i] = new Int64 * *[3];
-
-            for (Int j = 0; j < 3; j++)
-            {
-                m_countPreDblk[i][j] = new Int64 *[MAX_NUM_SAO_TYPE];
-                m_offsetOrgPreDblk[i][j] = new Int64 *[MAX_NUM_SAO_TYPE];
-
-                for (Int k = 0; k < MAX_NUM_SAO_TYPE; k++)
-                {
-                    m_countPreDblk[i][j][k]   = new Int64[MAX_NUM_SAO_CLASS];
-                    m_offsetOrgPreDblk[i][j][k] = new Int64[MAX_NUM_SAO_CLASS];
-                }
-            }
-        }
+        m_countPreDblk  = new Int64[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+        m_offsetOrgPreDblk = new Int64[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     }
 
     Int maxDepth = 4;
@@ -1218,7 +1159,6 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int i
 
     Int idxX;
     Int frameWidthInCU  = m_numCuInWidth;
-    Int j, k;
 
     Int isChroma;
     Int numSkipLine, numSkipLineRight;
@@ -1237,18 +1177,12 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int i
             pTmpCu = pic->getCU(addr);
             lPelX   = pTmpCu->getCUPelX();
             tPelY   = pTmpCu->getCUPelY();
+
+            memset(m_countPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(Int64));
+            memset(m_offsetOrgPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(Int64));
             for (yCbCr = 0; yCbCr < 3; yCbCr++)
             {
                 isChroma = (yCbCr != 0) ? 1 : 0;
-
-                for (j = 0; j < MAX_NUM_SAO_TYPE; j++)
-                {
-                    for (k = 0; k < MAX_NUM_SAO_CLASS; k++)
-                    {
-                        m_countPreDblk[addr][yCbCr][j][k] = 0;
-                        m_offsetOrgPreDblk[addr][yCbCr][j][k] = 0;
-                    }
-                }
 
                 if (yCbCr == 0)
                 {
