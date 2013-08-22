@@ -61,9 +61,11 @@ RateControl::RateControl(x265_param_t * param)
     rateControlMode = param->rc.rateControlMode;
     ncu = (int)((param->sourceHeight * param->sourceWidth) / pow((int)param->maxCUSize, 2.0));
     lastNonBPictType = -1;
+    baseQp = param->rc.qp;
+
     // heuristics- encoder specific
-    qCompress = param->rc.qCompress;      //tweak and test for x265. 
-    ipFactor = param->rc.ipFactor;        
+    qCompress = param->rc.qCompress; // tweak and test for x265. 
+    ipFactor = param->rc.ipFactor;
     pbFactor = param->rc.pbFactor;
     totalBits = 0;
     shortTermCplxSum = 0;
@@ -99,14 +101,17 @@ void RateControl::rateControlStart(TComPic* pic)
     curFrame = pic->getSlice();
     frameType = curFrame->getSliceType();
     rce = new RateControlEntry();
-    double q;
+    double q = 0;
 
-    if (rateControlMode == X265_RC_ABR)
+    switch (rateControlMode)
     {
+    case X265_RC_ABR:
         q = qScale2qp(rateEstimateQscale(&pic->m_lowres));
+        break;
+    case X265_RC_CQP:
+        q = baseQp;
+        break;
     }
-    else
-        q = 0;
 
     q = Clip3(MIN_QP, MAX_QP, (int)q);
     qp = Clip3(0, MAX_QP, (int)(q + 0.5f));

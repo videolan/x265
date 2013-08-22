@@ -51,6 +51,7 @@ struct RateControl
     int fps;                    /* current frame rate TODO: need to initaialize in init */
     int keyFrameInterval;       /* TODO: need to initialize in init */
     int qp;                     /* updated qp for current frame */
+    int baseQp;                 /* CQP base QP */
     double frameDuration;        /* current frame duration in seconds */
     double qpm;                  /* qp for current macroblock: precise double for AQ */
     double qpaRc;                /* average of macroblocks' qp before aq */
