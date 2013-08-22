@@ -66,7 +66,7 @@ protected:
 
     TEncCfg*            m_cfg;
     TComPic*            m_pic;
-    Lock                m_lock;
+    volatile int        active_lft;
 
 public:
 
