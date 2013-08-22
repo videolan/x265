@@ -48,7 +48,7 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(TEncTop *top, int numRows);
+    void init(TEncTop *top, int numRows, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
 
     void destroy();
 
@@ -72,6 +72,8 @@ public:
 
     TComLoopFilter              m_loopFilter;
     TEncSampleAdaptiveOffset    m_sao;
+    TEncEntropy*                m_entropyCoder;
+    TEncSbac*                   m_rdGoOnSbacCoder;
     int                         m_numRows;
 
     // TODO: if you want thread priority logic, add col here

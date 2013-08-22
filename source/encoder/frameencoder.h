@@ -75,12 +75,15 @@ public:
         }
     }
 
-    void setQPLambda(Int QP, double lumaLambda, double chromaLambda)
+    void setQPLambda(Int QP, double lumaLambda, double chromaLambda, int depth)
     {
         for (int i = 0; i < m_numRows; i++)
         {
             m_rows[i].m_search.setQPLambda(QP, lumaLambda, chromaLambda);
         }
+        m_frameFilter.m_sao.lumaLambda = lumaLambda;
+        m_frameFilter.m_sao.chromaLambd = chromaLambda;
+        m_frameFilter.m_sao.depth = depth;
     }
 
     void setCbDistortionWeight(double weight)

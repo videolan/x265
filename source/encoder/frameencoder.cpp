@@ -88,8 +88,6 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_numRows = numRows;
     row_delay = (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary) ? 2 : 1;;
 
-    m_frameFilter.init(top, numRows);
-
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
     {
@@ -101,6 +99,8 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
     }
+
+    m_frameFilter.init(top, numRows, getEntropyCoder(0), getRDGoOnSbacCoder(0));
 
     // initialize SPS
     top->xInitSPS(&m_sps);
@@ -352,7 +352,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     setCrDistortionWeight(weight);
 
     // for RDOQ
-    setQPLambda(qp, lambda, lambda / weight);
+    setQPLambda(qp, lambda, lambda / weight, slice->getDepth());
 
     // For SAO
     slice->setLambda(lambda, lambda / weight);
@@ -529,25 +529,21 @@ Void FrameEncoder::compressFrame(TComPic *pic)
     }
 
     /* use the main bitstream buffer for storing the marshaled picture */
-    entropyCoder->setBitstream(NULL);
-
     if (m_sps.getUseSAO())
     {
-        // set entropy coder for RD
-        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-        entropyCoder->resetEntropy();
-        entropyCoder->setBitstream(&m_bitCounter);
-
-        // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
-        getSAO()->startSaoEnc(pic, entropyCoder, getRDGoOnSbacCoder(0));
-
         SAOParam* saoParam = pic->getPicSym()->getSaoParam();
-        getSAO()->SAOProcess(saoParam, slice->getLambdaLuma(), slice->getLambdaChroma(), slice->getDepth());
-        getSAO()->endSaoEnc();
-        PCMLFDisableProcess(pic);
+
+        if (!getSAO()->getSaoLcuBasedOptimization())
+        {
+            getSAO()->SAOProcess(saoParam);
+            getSAO()->endSaoEnc();
+            PCMLFDisableProcess(pic);
+        }
 
         slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
     }
+
+    entropyCoder->setBitstream(NULL);
 
     // Reconstruction slice
     slice->setNextSlice(true);

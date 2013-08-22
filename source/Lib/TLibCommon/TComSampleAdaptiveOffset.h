@@ -169,8 +169,8 @@ protected:
     Int   *m_upBufft;
     TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
-    Pel* m_tmpU1;
-    Pel* m_tmpU2;
+    Pel* m_tmpU1[3];
+    Pel* m_tmpU2[3];
     Pel* m_tmpL1;
     Pel* m_tmpL2;
     Int     m_maxNumOffsetsPerPic;
@@ -193,10 +193,9 @@ public:
     static Void freeSaoParam(SAOParam* saoParam);
 
     Void SAOProcess(SAOParam* saoParam);
-    Void processSaoCu(Int addr, Int saoType, Int yCbCr);
     Pel* getPicYuvAddr(TComPicYuv* picYuv, Int yCbCr, Int addr = 0);
 
-    Void processSaoCuOrg(Int addr, Int partIdx, Int yCbCr); //!< LCU-basd SAO process without slice granularity
+    Void processSaoCu(Int addr, Int partIdx, Int yCbCr); //!< LCU-basd SAO process without slice granularity
     Void createPicSaoInfo(TComPic* pic);
     Void destroyPicSaoInfo();
 
@@ -204,6 +203,7 @@ public:
     Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
     Void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr);
     Void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr);
+    Void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, Int yCbCr);
     Void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
 
     Bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
@@ -216,6 +216,8 @@ public:
     Void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
 };
 Void PCMLFDisableProcess(TComPic* pic);
+Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
+
 
 //! \}
 #endif // ifndef __TCOMSAMPLEADAPTIVEOFFSET__

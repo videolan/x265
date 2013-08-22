@@ -37,6 +37,8 @@ FrameFilter::FrameFilter(ThreadPool* pool)
     , m_cfg(NULL)
     , m_pic(NULL)
     , active_lft(FALSE)
+    , m_entropyCoder(NULL)
+    , m_rdGoOnSbacCoder(NULL)
 {}
 
 void FrameFilter::destroy()
@@ -73,10 +75,14 @@ bool FrameFilter::findJob()
     return false;
 }
 
-void FrameFilter::init(TEncTop *top, int numRows)
+void FrameFilter::init(TEncTop *top, int numRows, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
 {
     m_cfg = top;
     m_numRows = numRows;
+
+    // NOTE: for sao only, DON'T use before first row finished
+    m_entropyCoder = entropyCoder;
+    m_rdGoOnSbacCoder = rdGoOnSbacCoder;
 
     if (top->param.bEnableLoopFilter)
     {
@@ -99,9 +105,12 @@ void FrameFilter::start(TComPic *pic)
     active_lft = FALSE;
     if (m_cfg->param.bEnableLoopFilter)
     {
-        if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
-            m_sao.resetStats();
+        m_sao.resetStats();
         m_sao.createPicSaoInfo(pic);
+
+        SAOParam* saoParam = pic->getPicSym()->getSaoParam();
+        m_sao.resetSAOParam(saoParam);
+        m_sao.rdoSaoUnitRowInit(saoParam);
     }
 
     if (m_cfg->param.bEnableLoopFilter && m_pool && m_cfg->param.bEnableWavefront)
@@ -139,6 +148,13 @@ void FrameFilter::processRow(int row)
 
     // Called by worker threads
 
+    // NOTE: We are here only active both of loopfilter and sao, and row 0 always finished, so we can safe to reuse row[0]'s data 
+    if (row == 0)
+    {
+        // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
+        m_sao.startSaoEnc(m_pic, m_entropyCoder, m_rdGoOnSbacCoder);
+    }
+
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
 
@@ -167,9 +183,61 @@ void FrameFilter::processRow(int row)
         m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
     }
 
+    // SAO
+    SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
+    if (m_sao.getSaoLcuBasedOptimization())
+    {
+        m_sao.rdoSaoUnitRow(saoParam, row);
+
+        // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
+        if (row > 0)
+        {
+            // NOTE: these flag is not use in this mode
+            assert(saoParam->oneUnitFlag[0] == false);
+            assert(saoParam->oneUnitFlag[1] == false);
+            assert(saoParam->oneUnitFlag[2] == false);
+
+            if (saoParam->bSaoFlag[0])
+            {
+                m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row - 1, 0);
+            }
+            if (saoParam->bSaoFlag[1])
+            {
+                m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row - 1, 1);
+                m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row - 1, 2);
+            }
+
+            // TODO: this code is NOT VERIFY because TransformSkip and PCM mode have some bugs, they always not active!
+            Bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+            if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+            {
+                for (UInt col = 0; col < numCols; col++)
+                {
+                    const uint32_t cuAddr = lineStartCUAddr + col;
+                    TComDataCU* cu = m_pic->getCU(cuAddr);
+
+                    xPCMCURestoration(cu, 0, 0);
+                }
+            }
+        }
+    }
+
     // this row of CTUs has been encoded
     if (row == m_numRows - 1)
     {
+        m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());
+
+        // Process Last row of SAO
+        if (saoParam->bSaoFlag[0])
+        {
+            m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row, 0);
+        }
+        if (saoParam->bSaoFlag[1])
+        {
+            m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row, 1);
+            m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
+        }
+
         m_completionEvent.trigger();
     }
 }

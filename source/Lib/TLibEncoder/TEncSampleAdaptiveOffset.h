@@ -78,6 +78,10 @@ private:
     Double  m_depthSaoRate[2][4];
 
 public:
+    double  lumaLambda;
+    double  chromaLambd;
+    int     depth;
+    Int     numNoSao[2];
 
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
@@ -85,7 +89,7 @@ public:
     Void startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
     Void endSaoEnc();
     Void resetStats();
-    Void SAOProcess(SAOParam *saoParam, Double lambda, Double lambdaChroma, Int depth);
+    Void SAOProcess(SAOParam *saoParam);
 
     Void runQuadTreeDecision(SAOQTPart *psQTPart, Int partIdx, Double &costFinal, Int maxLevel, Double lambda, Int yCbCr);
     Void rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double lambda, Int yCbCr);
@@ -94,7 +98,6 @@ public:
     Void getSaoStats(SAOQTPart *psQTPart, Int yCbCr);
     Void calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr);
     Void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
-    Void calcSaoStatsCuOrg(Int addr, Int partIdx, Int yCbCr);
     Void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int idxY);
     Void destroyEncBuffer();
     Void createEncBuffer();
@@ -109,6 +112,10 @@ public:
     Void setMaxNumOffsetsPerPic(Int val) { m_maxNumOffsetsPerPic = val; }
 
     Int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
+
+    Void rdoSaoUnitRowInit(SAOParam *saoParam);
+    Void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);
+    Void rdoSaoUnitRow(SAOParam *saoParam, Int idxY);
 };
 
 //! \}
