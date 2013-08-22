@@ -84,16 +84,6 @@ if(ENABLE_PPA)
     endif(UNIX)
 endif(ENABLE_PPA)
 
-include_directories(. Lib common encoder)
-add_subdirectory(common)
-add_subdirectory(encoder)
-
-# Test applications
-option(ENABLE_TESTS "Enable Unit Tests" OFF)
-if(ENABLE_TESTS)
-    add_subdirectory(test)
-endif(ENABLE_TESTS)
-
 if (WIN32)
     # Visual leak detector
     find_package(VLD)
@@ -106,9 +96,19 @@ if (WIN32)
     option(WINXP_SUPPORT "Make binaries compatible with Windows XP" OFF)
     if(WINXP_SUPPORT)
         # force workarounds for atomic intrinsics introduced after XP
-        add_definitions(-D_WIN32_WINNT=0x501)
+        add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WINXP)
     endif(WINXP_SUPPORT)
 endif()
+
+include_directories(. Lib common encoder)
+add_subdirectory(common)
+add_subdirectory(encoder)
+
+# Test applications
+option(ENABLE_TESTS "Enable Unit Tests" OFF)
+if(ENABLE_TESTS)
+    add_subdirectory(test)
+endif(ENABLE_TESTS)
 
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
