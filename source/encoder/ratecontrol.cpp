@@ -111,6 +111,10 @@ void RateControl::rateControlStart(TComPic* pic)
     case X265_RC_CQP:
         q = baseQp;
         break;
+    case X265_RC_CRF:
+    default:
+        assert(!"unimplemented");
+        break;
     }
 
     q = Clip3(MIN_QP, MAX_QP, (int)q);
