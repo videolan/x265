@@ -41,7 +41,7 @@ using namespace x265;
 Approx qscale increases by 12%  with every qp increment */
 static inline double qScale2qp(double qScale)
 {
-    return 12.0 + 6.0 * log(qScale / 0.85);
+    return 12.0 + 6.0 * (double)(log(qScale / 0.85)/log (2));
 }
 
 static inline double qp2qScale(double qp)
@@ -78,17 +78,17 @@ RateControl::RateControl(x265_param_t * param)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame  - needs to be tweaked for x265*/
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
+        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.6);
         wantedBitsWindow = 1.0 * bitrate / fps;
         lastNonBPictType = I_SLICE;
     }
-    ipOffset = 6.0 * log(param->rc.ipFactor);
-    pbOffset = 6.0 * log(param->rc.pbFactor);
+    ipOffset = 6.0 * (float)(log(param->rc.ipFactor)/log(2));
+    pbOffset = 6.0 * (float)(log(param->rc.pbFactor)/log(2));
     for (int i = 0; i < 3; i++)
     {
         lastQScaleFor[i] = qp2qScale(ABR_INIT_QP);
         lmin[i] = qp2qScale(MIN_QP);
-        lmax[i] = qp2qScale(MAX_QP);  // maxQP val in x264 = 51+18
+        lmax[i] = qp2qScale(MAX_QP+18);  // maxQP val in x264 = 51+18
     }
 
     //qstep - value set as encoder specific.
@@ -117,7 +117,7 @@ void RateControl::rateControlStart(TComPic* pic)
         break;
     }
 
-    q = Clip3(MIN_QP, MAX_QP, (int)q);
+    q = Clip3((double)MIN_QP, (double)MAX_QP, q);
     qp = Clip3(0, MAX_QP, (int)(q + 0.5f));
     qpaRc = qpm = q;    // qpaRc is set in the rate_control_mb call in x264. we are updating here itself.
     if (rce)
@@ -258,7 +258,7 @@ double RateControl::rateEstimateQscale(Lowres* lframe)
         lastQScaleFor[pictType] =
             lastQScale = q;
 
-        if (!curFrame->getPOC() == 0)
+        if (curFrame->getPOC() == 0)
             lastQScaleFor[P_SLICE] = q * fabs(ipFactor);
 
         return q;
