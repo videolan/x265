@@ -1535,30 +1535,18 @@ Void TEncSampleAdaptiveOffset::resetStats()
  */
 Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam)
 {
-    if (m_saoLcuBasedOptimization)
-    {
-        // Why be here?
-        assert(0);
-
-        rdoSaoUnitAll(saoParam, lumaLambda, chromaLambd, depth);
-    }
-    else
-    {
-        Double costFinal = 0;
-        saoParam->bSaoFlag[0] = 1;
-        saoParam->bSaoFlag[1] = 0;
-        costFinal = 0;
-        getSaoStats(saoParam->saoPart[0], 0);
-        runQuadTreeDecision(saoParam->saoPart[0], 0, costFinal, m_maxSplitLevel, lumaLambda, 0);
-        saoParam->bSaoFlag[0] = costFinal < 0 ? 1 : 0;
-        if (saoParam->bSaoFlag[0])
-        {
-            convertQT2SaoUnit(saoParam, 0, 0);
-            assignSaoUnitSyntax(saoParam->saoLcuParam[0],  saoParam->saoPart[0], saoParam->oneUnitFlag[0]);
-        }
-    }
+    assert(m_saoLcuBasedOptimization == false);
+    Double costFinal = 0;
+    saoParam->bSaoFlag[0] = 1;
+    saoParam->bSaoFlag[1] = 0;
+    costFinal = 0;
+    getSaoStats(saoParam->saoPart[0], 0);
+    runQuadTreeDecision(saoParam->saoPart[0], 0, costFinal, m_maxSplitLevel, lumaLambda, 0);
+    saoParam->bSaoFlag[0] = costFinal < 0 ? 1 : 0;
     if (saoParam->bSaoFlag[0])
     {
+        convertQT2SaoUnit(saoParam, 0, 0);
+        assignSaoUnitSyntax(saoParam->saoLcuParam[0], saoParam->saoPart[0], saoParam->oneUnitFlag[0]);
         processSaoUnitAll(saoParam->saoLcuParam[0], saoParam->oneUnitFlag[0], 0);
     }
     if (saoParam->bSaoFlag[1])
@@ -1688,200 +1676,6 @@ Void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SA
                 }
             }
         }
-    }
-}
-
-/** rate distortion optimization of all SAO units
- * \param saoParam SAO parameters
- * \param lambda
- * \param lambdaChroma
- */
-Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma, Int curDepth)
-{
-    Int idxY;
-    Int idxX;
-    Int frameHeightInCU = saoParam->numCuInHeight;
-    Int frameWidthInCU  = saoParam->numCuInWidth;
-    Int j, k;
-    Int addr = 0;
-    Int addrUp = -1;
-    Int addrLeft = -1;
-    Int compIdx = 0;
-    SaoLcuParam mergeSaoParam[3][2];
-    Double compDistortion[3];
-
-    saoParam->bSaoFlag[0] = true;
-    saoParam->bSaoFlag[1] = true;
-    saoParam->oneUnitFlag[0] = false;
-    saoParam->oneUnitFlag[1] = false;
-    saoParam->oneUnitFlag[2] = false;
-
-    numNoSao[0] = 0; // Luma
-    numNoSao[1] = 0; // Chroma
-    if (curDepth > 0 && m_depthSaoRate[0][curDepth - 1] > SAO_ENCODING_RATE)
-    {
-        saoParam->bSaoFlag[0] = false;
-    }
-    if (curDepth > 0 && m_depthSaoRate[1][curDepth - 1] > SAO_ENCODING_RATE_CHROMA)
-    {
-        saoParam->bSaoFlag[1] = false;
-    }
-
-    for (idxY = 0; idxY < frameHeightInCU; idxY++)
-    {
-        for (idxX = 0; idxX < frameWidthInCU; idxX++)
-        {
-            addr     = idxX  + frameWidthInCU * idxY;
-            addrUp   = addr < frameWidthInCU ? -1 : idxX   + frameWidthInCU * (idxY - 1);
-            addrLeft = idxX == 0               ? -1 : idxX - 1 + frameWidthInCU * idxY;
-            Int allowMergeLeft = 1;
-            Int allowMergeUp   = 1;
-            UInt rate;
-            Double bestCost, mergeCost;
-            if (idxX == 0)
-            {
-                allowMergeLeft = 0;
-            }
-            if (idxY == 0)
-            {
-                allowMergeUp = 0;
-            }
-
-            compDistortion[0] = 0;
-            compDistortion[1] = 0;
-            compDistortion[2] = 0;
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_CURR_BEST]);
-            if (allowMergeLeft)
-            {
-                m_entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(0);
-            }
-            if (allowMergeUp)
-            {
-                m_entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(0);
-            }
-            m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
-            // reset stats Y, Cb, Cr
-            for (compIdx = 0; compIdx < 3; compIdx++)
-            {
-                for (j = 0; j < MAX_NUM_SAO_TYPE; j++)
-                {
-                    for (k = 0; k < MAX_NUM_SAO_CLASS; k++)
-                    {
-                        m_offset[compIdx][j][k] = 0;
-                        if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
-                        {
-                            m_count[compIdx][j][k] = TEncSampleAdaptiveOffset::m_countPreDblk[addr][compIdx][j][k];
-                            m_offsetOrg[compIdx][j][k] = TEncSampleAdaptiveOffset::m_offsetOrgPreDblk[addr][compIdx][j][k];
-                        }
-                        else
-                        {
-                            m_count[compIdx][j][k] = 0;
-                            m_offsetOrg[compIdx][j][k] = 0;
-                        }
-                    }
-                }
-
-                saoParam->saoLcuParam[compIdx][addr].typeIdx       =  -1;
-                saoParam->saoLcuParam[compIdx][addr].mergeUpFlag   = 0;
-                saoParam->saoLcuParam[compIdx][addr].mergeLeftFlag = 0;
-                saoParam->saoLcuParam[compIdx][addr].subTypeIdx    = 0;
-                if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                {
-                    calcSaoStatsCu(addr, compIdx,  compIdx);
-                }
-            }
-
-            saoComponentParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, 0,  lambda, &mergeSaoParam[0][0], &compDistortion[0]);
-            sao2ChromaParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, lambdaChroma, &mergeSaoParam[1][0], &mergeSaoParam[2][0], &compDistortion[0]);
-            if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
-            {
-                // Cost of new SAO_params
-                m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_CURR_BEST]);
-                m_rdGoOnSbacCoder->resetBits();
-                if (allowMergeLeft)
-                {
-                    m_entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(0);
-                }
-                if (allowMergeUp)
-                {
-                    m_entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(0);
-                }
-                for (compIdx = 0; compIdx < 3; compIdx++)
-                {
-                    if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                    {
-                        m_entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
-                    }
-                }
-
-                rate = m_entropyCoder->getNumberOfWrittenBits();
-                bestCost = compDistortion[0] + (Double)rate;
-                m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
-
-                // Cost of Merge
-                for (Int mergeUp = 0; mergeUp < 2; ++mergeUp)
-                {
-                    if ((allowMergeLeft && (mergeUp == 0)) || (allowMergeUp && (mergeUp == 1)))
-                    {
-                        m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_CURR_BEST]);
-                        m_rdGoOnSbacCoder->resetBits();
-                        if (allowMergeLeft)
-                        {
-                            m_entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(1 - mergeUp);
-                        }
-                        if (allowMergeUp && (mergeUp == 1))
-                        {
-                            m_entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(1);
-                        }
-
-                        rate = m_entropyCoder->getNumberOfWrittenBits();
-                        mergeCost = compDistortion[mergeUp + 1] + (Double)rate;
-                        if (mergeCost < bestCost)
-                        {
-                            bestCost = mergeCost;
-                            m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
-                            for (compIdx = 0; compIdx < 3; compIdx++)
-                            {
-                                mergeSaoParam[compIdx][mergeUp].mergeLeftFlag = 1 - mergeUp;
-                                mergeSaoParam[compIdx][mergeUp].mergeUpFlag = mergeUp;
-                                if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                                {
-                                    copySaoUnit(&saoParam->saoLcuParam[compIdx][addr], &mergeSaoParam[compIdx][mergeUp]);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (saoParam->saoLcuParam[0][addr].typeIdx == -1)
-                {
-                    numNoSao[0]++;
-                }
-                if (saoParam->saoLcuParam[1][addr].typeIdx == -1)
-                {
-                    numNoSao[1] += 2;
-                }
-                m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_TEMP_BEST]);
-                m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_CURR_BEST]);
-            }
-        }
-    }
-
-    if (!saoParam->bSaoFlag[0])
-    {
-        m_depthSaoRate[0][curDepth] = 1.0;
-    }
-    else
-    {
-        m_depthSaoRate[0][curDepth] = numNoSao[0] / ((Double)frameHeightInCU * frameWidthInCU);
-    }
-    if (!saoParam->bSaoFlag[1])
-    {
-        m_depthSaoRate[1][curDepth] = 1.0;
-    }
-    else
-    {
-        m_depthSaoRate[1][curDepth] = numNoSao[1] / ((Double)frameHeightInCU * frameWidthInCU * 2);
     }
 }
 

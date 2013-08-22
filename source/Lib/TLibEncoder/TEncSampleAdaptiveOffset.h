@@ -103,7 +103,6 @@ public:
     Void createEncBuffer();
     Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag);
     Void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, Int dir);
-    Void rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma, Int depth);
     Void saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
     Void sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);
     inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, Int shift);
