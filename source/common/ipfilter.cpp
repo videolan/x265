@@ -462,6 +462,22 @@ void extendPicCompBorder(pixel* txt, int stride, int width, int height, int marg
     }
 }
 
+void extendCURowColBorder(pixel* txt, int stride, int width, int height, int marginX)
+{
+    int   x, y;
+
+    for (y = 0; y < height; y++)
+    {
+        for (x = 0; x < marginX; x++)
+        {
+            txt[-marginX + x] = txt[0];
+            txt[width + x] = txt[width - 1];
+        }
+
+        txt += stride;
+    }
+}
+
 void filterVerticalMultiplaneExtend(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
 {
     filterVertical_s_p<8>(src, srcStride, dstI, dstStride, block_width, block_height, g_lumaFilter[2]);
@@ -485,6 +501,23 @@ void filterHorizontalMultiplaneExtend(pixel *src, int srcStride, short *midF, sh
     extendPicCompBorder(pDstA, pDstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY);
+}
+
+void filterHorizontalExtendCol(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX)
+{
+    filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
+    filterHorizontal_p_s<8>(src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
+    filterHorizontal_p_s<8>(src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
+    filterHorizontal_p_s<8>(src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
+    
+    filterConvertShortToPel(midA, midStride, pDstA, pDstStride, block_width, block_height);
+    filterConvertShortToPel(midB, midStride, pDstB, pDstStride, block_width, block_height);
+    filterConvertShortToPel(midC, midStride, pDstC, pDstStride, block_width, block_height);
+    
+    extendCURowColBorder(pDstA, pDstStride, block_width, block_height, marginX);
+    extendCURowColBorder(pDstB, pDstStride, block_width, block_height, marginX);
+    extendCURowColBorder(pDstC, pDstStride, block_width, block_height, marginX);
+
 }
 
 void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int scale, int round, int shift, int offset)
@@ -587,5 +620,7 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 
     p.filterVwghtd = filterVerticalWeighted;         
     p.filterHwghtd = filterHorizontalWeighted;
+    
+    p.filterHCU = filterHorizontalExtendCol;
 }
 }
