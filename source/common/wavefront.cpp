@@ -94,7 +94,7 @@ bool WaveFront::findJob()
             if (oldval == 0) // race condition
                 break;
 
-            CLZ64(id, oldval);
+            CTZ64(id, oldval);
             uint64_t newval = oldval & ~(1LL << id);
 
             if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
