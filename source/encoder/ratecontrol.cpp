@@ -41,7 +41,7 @@ using namespace x265;
 Approx qscale increases by 12%  with every qp increment */
 static inline double qScale2qp(double qScale)
 {
-    return 12.0 + 6.0 * (double)log2f(qScale / 0.85f);
+    return 12.0 + 6.0 * (double)log2(qScale / 0.85);
 }
 
 static inline double qp2qScale(double qp)
