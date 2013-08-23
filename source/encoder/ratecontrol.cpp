@@ -41,7 +41,7 @@ using namespace x265;
 Approx qscale increases by 12%  with every qp increment */
 static inline double qScale2qp(double qScale)
 {
-    return 12.0 + 6.0 * (double)log2(qScale / 0.85);
+    return 12.0 + 6.0 * (double)X265_LOG2(qScale / 0.85);
 }
 
 static inline double qp2qScale(double qp)
@@ -82,8 +82,8 @@ RateControl::RateControl(x265_param_t * param)
         wantedBitsWindow = 1.0 * bitrate / fps;
         lastNonBPictType = I_SLICE;
     }
-    ipOffset = 6.0 * (float)(log2(param->rc.ipFactor));
-    pbOffset = 6.0 * (float)(log2(param->rc.pbFactor));
+    ipOffset = 6.0 * (float)(X265_LOG2(param->rc.ipFactor));
+    pbOffset = 6.0 * (float)(X265_LOG2(param->rc.pbFactor));
     for (int i = 0; i < 3; i++)
     {
         lastQScaleFor[i] = qp2qScale(ABR_INIT_QP);

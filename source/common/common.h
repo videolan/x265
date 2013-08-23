@@ -113,8 +113,13 @@
 #define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)
 #endif // if ENABLE_CYCLE_COUNTERS
 
-#define log2f(x) (logf(x)/0.693147180559945f)
-#define log2(x) (log(x)/0.693147180559945)
+#if defined(_MSC_VER)
+#define X265_LOG2F(x) (logf(x)*1.44269504088896405f)
+#define X265_LOG2(x) (log(x)*1.4426950408889640513713538072172)
+#else
+#define X265_LOG2F(x) log2f(x)
+#define X265_LOG2(x)  log2(x)
+#endif
 
 /* defined in common.cpp */
 void x265_log(x265_param_t *param, int level, const char *fmt, ...);
