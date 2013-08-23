@@ -30,9 +30,10 @@
 #undef ALWAYSINLINE
 #define ALWAYSINLINE  __forceinline
 #pragma warning(disable: 4100) // unused formal parameters
+#pragma warning(disable: 4799) // MMX warning EMMS
 #endif
-#pragma warning(disable: 4799) // MMX warning , EMMS
 
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 #ifdef X86_64
 template<int ly>
 int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
@@ -184,7 +185,6 @@ int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
         T20 = _mm_sad_epu8(T03, T13);
         sum0 = _mm_add_epi32(sum0, T20);
     }
-
     else if ((ly % 8) == 0)
     {
         for (int i = 0; i < ly; i += 8)
@@ -831,6 +831,7 @@ int sad_8(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 }
 
 #endif /* ifdef X86_64 */
+#endif /* SSE41 */
 
 template<int ly>
 int sad_12(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
