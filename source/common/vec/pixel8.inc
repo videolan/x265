@@ -1939,16 +1939,18 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
 {
     int x, y;
     Vec8s tmp;
-    Vec4i vw0(w0), vsrc, iofs(IF_INTERNAL_OFFS), ofs(offset), vround(round), vdst; 
+
+    Vec4i vw0(w0), vsrc, iofs(IF_INTERNAL_OFFS), ofs(offset), vround(round), vdst;
     for (y = height - 1; y >= 0; y--)
     {
         for (x = 0; x <= width - 4; x += 4)
-        {  
+        {
             tmp  = load_partial(const_int(8), src + x);
             vsrc = extend_low(tmp);
             vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
             store_partial(const_int(4), dst + x, compress_unsafe(compress_saturated(vdst, vdst), 0));
         }
+
         if (width > x)
         {
             tmp  = load_partial(const_int(4), src + x);
@@ -2371,6 +2373,7 @@ void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel
     res[2] = horizontal_add(sum3);
     res[3] = horizontal_add(sum4);
 }
+
 #endif /* if INSTRSET >= X265_CPU_LEVEL_AVX2 */
 
 #if INSTRSET >= X265_CPU_LEVEL_SSSE3
@@ -2401,7 +2404,7 @@ void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
     __m128i T22 = _mm_avg_epu8(T14, T15);
     __m128i T23 = _mm_avg_epu8(T16, T17);
 
-    _mm_storeu_si128((__m128i*)&dst[ 0], T20);
+    _mm_storeu_si128((__m128i*)&dst[0], T20);
     _mm_storeu_si128((__m128i*)&dst[16], T21);
     _mm_storeu_si128((__m128i*)&dst[32], T22);
     _mm_storeu_si128((__m128i*)&dst[48], T23);
@@ -2442,4 +2445,5 @@ void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
         _mm_storeu_si128((__m128i*)&dst[(i >> 1) * 32 + 16], _mm_packus_epi16(S22, S23));
     }
 }
+
 #endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
