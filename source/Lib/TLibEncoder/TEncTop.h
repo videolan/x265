@@ -112,7 +112,7 @@ public:
 
     void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
-    Void calculateHashAndPSNR(TComPic* pic, AccessUnit&);
+    Double calculateHashAndPSNR(TComPic* pic, AccessUnit&); //Returns number of bits in current encoded pic
 };
 
 //! \}

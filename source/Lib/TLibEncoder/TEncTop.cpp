@@ -231,9 +231,9 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             pic_out->stride[2] = recpic->getCStride();
         }
 
-        calculateHashAndPSNR(out, accessUnitOut);
-
-       
+        Double bits = calculateHashAndPSNR(out, accessUnitOut);
+        
+        m_rateControl->rateControlEnd(bits);       
 
         m_dpb->recycleUnreferenced(m_freeList);
 
@@ -433,7 +433,9 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
     return string;
 }
 
-Void TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
+/* Returns Number of bits in current encoded pic */
+
+Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
 {
     TComPicYuv* recon = pic->getPicYuvRec();
     TComPicYuv* orig  = pic->getPicYuvOrg();
@@ -530,7 +532,7 @@ Void TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     {
         m_analyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
-    m_rateControl->rateControlEnd(bits);
+    
     if (param.logLevel >= X265_LOG_DEBUG)
     {
         Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
@@ -580,6 +582,8 @@ Void TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
         fprintf(stderr, "\n");
         fflush(stderr);
     }
+
+    return bits;
 }
 
 Void TEncTop::xInitSPS(TComSPS *pcSPS)
