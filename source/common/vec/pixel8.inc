@@ -106,7 +106,6 @@ int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
         T20 = _mm_sad_epu8(T03, T13);
         sum0 = _mm_add_epi32(sum0, T20);
     }
-
     else if (ly == 16)
     {
         T00 = _mm_loadl_epi64((__m128i*)(fenc + (0) * fencstride));
@@ -877,6 +876,7 @@ int sad_12(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
     return horizontal_add(sum);
 }
 
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int ly>
 int sad_16(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
@@ -1110,6 +1110,7 @@ int sad_16(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 
     return _mm_cvtsi128_si32(sum0);
 }
+#endif
 
 template<int ly>
 int sad_24(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride)
@@ -1313,6 +1314,7 @@ int sad_64(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
     return horizontal_add(sum);
 }
 
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int ly>
 void sad_x3_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
@@ -1663,7 +1665,6 @@ void sad_x3_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T20);
         res[2] = res[2] + _mm_extract_epi32(sum0, 0);
     }
-
     else if ((ly % 8) == 0)
     {
         res[0] = res[1] = res[2] = 0;
@@ -2179,7 +2180,6 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[2] = res[2] + _mm_cvtsi128_si32(sum0);
     }
-
     else if ((ly % 8) == 0)
     {
         res[0] = res[1] = res[2] = 0;
@@ -2284,7 +2284,6 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
             res[2] = res[2] + _mm_cvtsi128_si32(sum0);
         }
     }
-
     else
     {
         res[0] = res[1] = res[2] = 0;
@@ -2341,6 +2340,7 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         }
     }
 }
+#endif
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>

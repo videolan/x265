@@ -410,8 +410,8 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 {
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
     SET_FUNC_PRIMITIVE_TABLE(sad, sad_, pixelcmp_t)
-#endif
     SET_FUNC_PRIMITIVE_TABLE(sad_x3, sad_x3_, pixelcmp_x3_t)
+#endif
     SET_FUNC_PRIMITIVE_TABLE(sad_x4, sad_x4_, pixelcmp_x4_t)
 
 #if !HIGH_BIT_DEPTH && INSTRSET >= X265_CPU_LEVEL_AVX2 && (defined(__GNUC__) || defined(__INTEL_COMPILER))
