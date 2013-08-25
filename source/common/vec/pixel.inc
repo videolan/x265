@@ -5,6 +5,8 @@
  *          Mandar Gurav <mandar@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Min Chen <min.chen@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Nabajit Deka <nabajit@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -415,8 +417,8 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
     SET_FUNC_PRIMITIVE_TABLE(sad, sad_, pixelcmp_t)
     SET_FUNC_PRIMITIVE_TABLE(sad_x3, sad_x3_, pixelcmp_x3_t)
-#endif
     SET_FUNC_PRIMITIVE_TABLE(sad_x4, sad_x4_, pixelcmp_x4_t)
+#endif
 
 #if !HIGH_BIT_DEPTH && INSTRSET >= X265_CPU_LEVEL_AVX2 && (defined(__GNUC__) || defined(__INTEL_COMPILER))
     SET_FUNC_PRIMITIVE_TABLE_WIDTH(32, sad, sad_avx2_, pixelcmp_t)
