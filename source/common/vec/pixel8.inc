@@ -2246,7 +2246,6 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[2] = _mm_cvtsi128_si32(sum0);
     }
-
    else if (ly == 8)
     {
         T00 = _mm_loadl_epi64((__m128i*)(fenc + (0) * FENC_STRIDE));
