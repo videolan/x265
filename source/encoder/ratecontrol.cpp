@@ -24,7 +24,7 @@
 
 #include "TLibCommon/TComPic.h"
 #include "lowres.h"
-#include "rateControl.h"
+#include "ratecontrol.h"
 #include <math.h>
 
 using namespace x265;
