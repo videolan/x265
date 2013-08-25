@@ -3208,7 +3208,6 @@ void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
         sum0 = _mm_add_epi32(sum0, sum1);
         res[2] = _mm_cvtsi128_si32(sum0);
     }
-
     else if (ly == 8)
     {
         T00 = _mm_load_si128((__m128i*)(fenc + (0) * FENC_STRIDE));
@@ -3329,7 +3328,6 @@ void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
         sum0 = _mm_add_epi32(sum0, sum1);
         res[2] = res[2] + _mm_cvtsi128_si32(sum0);
     }
-
     else if (ly == 16)
     {
         T00 = _mm_load_si128((__m128i*)(fenc + (0) * FENC_STRIDE));
@@ -3568,7 +3566,6 @@ void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
         sum0 = _mm_add_epi32(sum0, sum1);
         res[2] = res[2] + _mm_cvtsi128_si32(sum0);
     }
-
     else if ((ly % 8) == 0)
     {
         res[0] = res[1] = res[2] = 0;
@@ -3693,7 +3690,6 @@ void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
             res[2] = res[2] + _mm_cvtsi128_si32(sum0);
         }
     }
-
     else
     {
         res[0] = res[1] = res[2] = 0;
