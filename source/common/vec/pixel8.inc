@@ -4768,7 +4768,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum0 = _mm_add_pi16(sum0, T21);
         sum0 = _mm_add_pi16(sum0, T22);
         sum0 = _mm_add_pi16(sum0, T23);
-        res[0] = _m_to_int(sum0);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref2 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref2 + 1 * frefstride));
@@ -4784,7 +4783,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum1 = _mm_add_pi16(sum1, T21);
         sum1 = _mm_add_pi16(sum1, T22);
         sum1 = _mm_add_pi16(sum1, T23);
-        res[1] = _m_to_int(sum1);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref3 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref3 + 1 * frefstride));
@@ -4800,7 +4798,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum2 = _mm_add_pi16(sum2, T21);
         sum2 = _mm_add_pi16(sum2, T22);
         sum2 = _mm_add_pi16(sum2, T23);
-        res[2] = _m_to_int(sum2);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref4 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref4 + 1 * frefstride));
@@ -4816,7 +4813,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum3 = _mm_add_pi16(sum3, T21);
         sum3 = _mm_add_pi16(sum3, T22);
         sum3 = _mm_add_pi16(sum3, T23);
-        res[3] = _m_to_int(sum3);
     }
     else if (ly == 8)
     {
@@ -4855,7 +4851,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum0 = _mm_add_pi16(sum0, T25);
         sum0 = _mm_add_pi16(sum0, T26);
         sum0 = _mm_add_pi16(sum0, T27);
-        res[0] = _m_to_int(sum0);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref2 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref2 + 1 * frefstride));
@@ -4883,7 +4878,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum1 = _mm_add_pi16(sum1, T25);
         sum1 = _mm_add_pi16(sum1, T26);
         sum1 = _mm_add_pi16(sum1, T27);
-        res[1] = _m_to_int(sum1);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref3 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref3 + 1 * frefstride));
@@ -4911,7 +4905,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum2 = _mm_add_pi16(sum2, T25);
         sum2 = _mm_add_pi16(sum2, T26);
         sum2 = _mm_add_pi16(sum2, T27);
-        res[2] = _m_to_int(sum2);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref4 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref4 + 1 * frefstride));
@@ -4939,7 +4932,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum3 = _mm_add_pi16(sum3, T25);
         sum3 = _mm_add_pi16(sum3, T26);
         sum3 = _mm_add_pi16(sum3, T27);
-        res[3] = _m_to_int(sum3);
     }
     else if (ly == 16)
     {
@@ -5013,7 +5005,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum0 = _mm_add_pi16(sum0, T25);
         sum0 = _mm_add_pi16(sum0, T26);
         sum0 = _mm_add_pi16(sum0, T27);
-        res[0] = _m_to_int(sum0);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref2 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref2 + 1 * frefstride));
@@ -5068,7 +5059,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum1 = _mm_add_pi16(sum1, T25);
         sum1 = _mm_add_pi16(sum1, T26);
         sum1 = _mm_add_pi16(sum1, T27);
-        res[1] = _m_to_int(sum1);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref3 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref3 + 1 * frefstride));
@@ -5123,7 +5113,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum2 = _mm_add_pi16(sum2, T25);
         sum2 = _mm_add_pi16(sum2, T26);
         sum2 = _mm_add_pi16(sum2, T27);
-        res[2] = _m_to_int(sum2);
 
         T10 = _mm_cvtsi32_si64(*(int*)(fref4 + 0 * frefstride));
         T11 = _mm_cvtsi32_si64(*(int*)(fref4 + 1 * frefstride));
@@ -5178,7 +5167,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         sum3 = _mm_add_pi16(sum3, T25);
         sum3 = _mm_add_pi16(sum3, T26);
         sum3 = _mm_add_pi16(sum3, T27);
-        res[3] = _m_to_int(sum3);
     }
     else if ((ly % 8) == 0)
     {
@@ -5219,7 +5207,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum0 = _mm_add_pi16(sum0, T25);
             sum0 = _mm_add_pi16(sum0, T26);
             sum0 = _mm_add_pi16(sum0, T27);
-            res[0] = _m_to_int(sum0);
 
             T10 = _mm_cvtsi32_si64(*(int*)(fref2 + (i + 0) * frefstride));
             T11 = _mm_cvtsi32_si64(*(int*)(fref2 + (i + 1) * frefstride));
@@ -5247,7 +5234,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum1 = _mm_add_pi16(sum1, T25);
             sum1 = _mm_add_pi16(sum1, T26);
             sum1 = _mm_add_pi16(sum1, T27);
-            res[1] = _m_to_int(sum1);
 
             T10 = _mm_cvtsi32_si64(*(int*)(fref3 + (i + 0) * frefstride));
             T11 = _mm_cvtsi32_si64(*(int*)(fref3 + (i + 1) * frefstride));
@@ -5275,7 +5261,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum2 = _mm_add_pi16(sum2, T25);
             sum2 = _mm_add_pi16(sum2, T26);
             sum2 = _mm_add_pi16(sum2, T27);
-            res[2] = _m_to_int(sum2);
 
             T10 = _mm_cvtsi32_si64(*(int*)(fref4 + (i + 0) * frefstride));
             T11 = _mm_cvtsi32_si64(*(int*)(fref4 + (i + 1) * frefstride));
@@ -5303,7 +5288,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum3 = _mm_add_pi16(sum3, T25);
             sum3 = _mm_add_pi16(sum3, T26);
             sum3 = _mm_add_pi16(sum3, T27);
-            res[3] = _m_to_int(sum3);
         }
     }
     else
@@ -5329,7 +5313,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum0 = _mm_add_pi16(sum0, T21);
             sum0 = _mm_add_pi16(sum0, T22);
             sum0 = _mm_add_pi16(sum0, T23);
-            res[0] = _m_to_int(sum0);
 
             T10 = _mm_cvtsi32_si64(*(int*)(fref2 + (i + 0) * frefstride));
             T11 = _mm_cvtsi32_si64(*(int*)(fref2 + (i + 1) * frefstride));
@@ -5345,7 +5328,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum1 = _mm_add_pi16(sum1, T21);
             sum1 = _mm_add_pi16(sum1, T22);
             sum1 = _mm_add_pi16(sum1, T23);
-            res[1] = _m_to_int(sum1);
 
             T10 = _mm_cvtsi32_si64(*(int*)(fref3 + (i + 0) * frefstride));
             T11 = _mm_cvtsi32_si64(*(int*)(fref3 + (i + 1) * frefstride));
@@ -5361,7 +5343,6 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum2 = _mm_add_pi16(sum2, T21);
             sum2 = _mm_add_pi16(sum2, T22);
             sum2 = _mm_add_pi16(sum2, T23);
-            res[2] = _m_to_int(sum2);
 
             T10 = _mm_cvtsi32_si64(*(int*)(fref4 + (i + 0) * frefstride));
             T11 = _mm_cvtsi32_si64(*(int*)(fref4 + (i + 1) * frefstride));
@@ -5377,9 +5358,13 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
             sum3 = _mm_add_pi16(sum3, T21);
             sum3 = _mm_add_pi16(sum3, T22);
             sum3 = _mm_add_pi16(sum3, T23);
-            res[3] = _m_to_int(sum3);
         }
     }
+
+	res[0] = _m_to_int(sum0);
+	res[1] = _m_to_int(sum1);
+	res[2] = _m_to_int(sum2);
+	res[3] = _m_to_int(sum3);
 }
 
 #endif /* ifdef X86_64 */
