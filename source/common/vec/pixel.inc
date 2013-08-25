@@ -30,7 +30,6 @@
 #include <assert.h>
 
 namespace {
-
 #if HIGH_BIT_DEPTH
 #include "pixel16.inc"
 #else
@@ -313,6 +312,7 @@ void transpose32(pixel* dst, pixel* src, intptr_t srcstride)
 void blockfil_s_4(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
+
     T00 = _mm_cvtsi32_si128(val);
     T00 = _mm_shufflelo_epi16(T00, 0);
 
@@ -325,6 +325,7 @@ void blockfil_s_4(short *dst, intptr_t dstride, short val)
 void blockfil_s_8(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
+
     T00 = _mm_cvtsi32_si128(val);
     T00 = _mm_shufflelo_epi16(T00, 0);
     T00 = _mm_shuffle_epi32(T00, 0);
@@ -342,19 +343,20 @@ void blockfil_s_8(short *dst, intptr_t dstride, short val)
 void blockfil_s_16(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
+
     T00 = _mm_cvtsi32_si128(val);
     T00 = _mm_shufflelo_epi16(T00, 0);
     T00 = _mm_shuffle_epi32(T00, 0);
 
-    for(int i = 0; i < 16; i += 4)
+    for (int i = 0; i < 16; i += 4)
     {
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride    ], T00);
+        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride + 8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride    ], T00);
+        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride + 8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 2) * dstride    ], T00);
+        _mm_storeu_si128((__m128i*)&dst[(i + 2) * dstride], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 2) * dstride + 8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 3) * dstride    ], T00);
+        _mm_storeu_si128((__m128i*)&dst[(i + 3) * dstride], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 3) * dstride + 8], T00);
     }
 }
@@ -362,22 +364,24 @@ void blockfil_s_16(short *dst, intptr_t dstride, short val)
 void blockfil_s_32(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
+
     T00 = _mm_cvtsi32_si128(val);
     T00 = _mm_shufflelo_epi16(T00, 0);
     T00 = _mm_shuffle_epi32(T00, 0);
 
-    for(int i = 0; i < 32; i += 2)
+    for (int i = 0; i < 32; i += 2)
     {
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride     ], T00);
+        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride +  8], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride + 16], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride + 24], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride     ], T00);
+        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride +  8], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride + 16], T00);
         _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride + 24], T00);
     }
 }
+
 #endif // !HIGH_BIT_DEPTH
 }  // end anonymous namespace
 
