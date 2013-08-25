@@ -5361,10 +5361,10 @@ void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
         }
     }
 
-	res[0] = _m_to_int(sum0);
-	res[1] = _m_to_int(sum1);
-	res[2] = _m_to_int(sum2);
-	res[3] = _m_to_int(sum3);
+    res[0] = _m_to_int(sum0);
+    res[1] = _m_to_int(sum1);
+    res[2] = _m_to_int(sum2);
+    res[3] = _m_to_int(sum3);
 }
 
 #endif /* ifdef X86_64 */
