@@ -1110,7 +1110,8 @@ int sad_16(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 
     return _mm_cvtsi128_si32(sum0);
 }
-#endif
+
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 template<int ly>
 int sad_24(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride)
@@ -2340,7 +2341,8 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         }
     }
 }
-#endif
+
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>
