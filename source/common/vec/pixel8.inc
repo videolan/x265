@@ -210,7 +210,7 @@ int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
     return sum;
 }
 
-#else /* ifdef X86_64 */
+#else /* if HAVE_MMX */
 
 template<int ly>
 int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
@@ -434,7 +434,7 @@ int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
     return _mm_extract_epi32(sum0, 0);
 }
 
-#endif /* ifdef X86_64 */
+#endif /* if HAVE_MMX */
 
 #ifdef X86_64
 template<int ly>
