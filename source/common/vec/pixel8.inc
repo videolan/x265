@@ -35,7 +35,7 @@
 #pragma warning(disable: 4799) // MMX warning EMMS
 #endif
 
-#define HAVE_MMX (!((_MSC_VER) && (X86_64)))
+#define HAVE_MMX (!(defined(_MSC_VER) && defined(X86_64)) || defined(__INTEL_COMPILER) || defined(__GCC__))
 
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
 #if HAVE_MMX
