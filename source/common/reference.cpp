@@ -174,11 +174,18 @@ void MotionReference::generateReferencePlanes()
        else
        {
             int midStride = m_reconPic->getWidth();
+            int height = g_maxCUHeight;
             for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
             {
                 int isLast = (i == m_reconPic->m_numCuInHeight - 1);
-                int rowAddr = i * g_maxCUHeight * lumaStride;
-                int rowAddrMid = (i * g_maxCUHeight) * midStride;
+                int rowAddr = i * height * lumaStride;
+                int rowAddrMid = (i * height) * midStride;
+                if (isLast)
+                {
+                    int rem = m_reconPic->getHeight() % height;
+                    if (rem)
+                        height = rem;
+                }
 
                 primitives.filterRowH(m_reconPic->getLumaAddr() + rowAddr,
                                       lumaStride,
@@ -190,7 +197,7 @@ void MotionReference::generateReferencePlanes()
                                       lumaPlane[2][0] + rowAddr,
                                       lumaPlane[3][0] + rowAddr,
                                       m_reconPic->getWidth(),
-                                      g_maxCUHeight,
+                                      height,
                                       m_reconPic->getLumaMarginX(),
                                       m_reconPic->getLumaMarginY(),
                                       i,
@@ -265,13 +272,20 @@ void MotionReference::generateReferencePlane(const int x)
     else
     {
         int midStride = m_reconPic->getWidth();
+        int height = g_maxCUHeight;
         for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
         {
             int isLast = (i == m_reconPic->m_numCuInHeight - 1);
-            int proch = g_maxCUHeight + (i == 0 ? -4 : 0) + (isLast ? 4 : 0);
             int offs = (i == 0 ? 0 : 4);
-            int rowAddr = (i * g_maxCUHeight - offs) * lumaStride;
-            int rowAddrMid = (i * g_maxCUHeight - offs) * midStride;
+            int rowAddr = (i * height - offs) * lumaStride;
+            int rowAddrMid = (i * height - offs) * midStride;
+            if (isLast)
+            {
+                int rem = m_reconPic->getHeight() % height;
+                if (rem)
+                    height = rem;
+            }
+            int proch = height + (i == 0 ? -4 : 0) + (isLast ? 4 : 0);
 
             if (x == 0)
             {
