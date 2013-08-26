@@ -245,6 +245,12 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // curEncoder is guaranteed to be idle at this point
         TComPic *fenc = m_lookahead->outputQueue.popFront();
 
+        //Initialise slice in Frame Encoder
+        int pocCurr = fenc->getSlice()->getPOC();
+        Bool forceIntra = m_dpb->m_cfg->param.keyframeMax == 1 || (pocCurr % m_dpb->m_cfg->param.keyframeMax == 0) || pocCurr == 0;
+        int gopIdx = fenc->m_lowres.gopIdx;
+        curEncoder->initSlice(fenc, forceIntra, gopIdx);
+
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
 
