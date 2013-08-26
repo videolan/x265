@@ -2745,7 +2745,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 }
 
 // AMVP
-Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIfx, MV& mvPred, UInt* distBiP)
+Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIdx, MV& mvPred, UInt* distBiP)
 {
     AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
 
@@ -2759,7 +2759,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
     cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
     // Fill the MV Candidates
-    cu->fillMvpCand(partIdx, partAddr, picList, refIfx, amvpInfo);
+    cu->fillMvpCand(partIdx, partAddr, picList, refIdx, amvpInfo);
 
     bestMv = amvpInfo->m_mvCand[0];
     if (amvpInfo->m_num <= 1)
@@ -2771,7 +2771,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
 
         if (cu->getSlice()->getMvdL1ZeroFlag() && picList == REF_PIC_LIST_1)
         {
-            (*distBiP) = xGetTemplateCost(cu, partAddr, &m_predTempYuv, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
+            (*distBiP) = xGetTemplateCost(cu, partAddr, &m_predTempYuv, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIdx, roiWidth, roiHeight);
         }
         return;
     }
@@ -2781,7 +2781,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
     //-- Check Minimum Cost.
     for (i = 0; i < amvpInfo->m_num; i++)
     {
-        UInt cost = xGetTemplateCost(cu, partAddr, &m_predTempYuv, amvpInfo->m_mvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
+        UInt cost = xGetTemplateCost(cu, partAddr, &m_predTempYuv, amvpInfo->m_mvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIdx, roiWidth, roiHeight);
         if (bestCost > cost)
         {
             bestCost = cost;
