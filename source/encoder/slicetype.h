@@ -59,8 +59,8 @@ struct Lookahead
     int              merange;
     int              numDecided;
     int              lastKeyframe;
-    int              cuWidth;       // width of lowres frame in downscale CUs
-    int              cuHeight;      // height of lowres frame in downscale CUs
+    int              widthInCU;       // width of lowres frame in downscale CUs
+    int              heightInCU;      // height of lowres frame in downscale CUs
 
     TComList<TComPic*> inputQueue;  // input pictures in order received
     TComList<TComPic*> outputQueue; // pictures to be encoded, in encode order

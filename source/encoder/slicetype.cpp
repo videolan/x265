@@ -70,8 +70,8 @@ Lookahead::Lookahead(TEncCfg *_cfg)
     me.setQP(X265_LOOKAHEAD_QP, 1.0);
     me.setSearchMethod(X265_HEX_SEARCH);
     merange = 16;
-    cuWidth = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    cuHeight = ((cfg->param.sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    widthInCU = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    heightInCU = ((cfg->param.sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
 }
 
 Lookahead::~Lookahead()
@@ -209,13 +209,13 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
          * prediction overall. */
         // TODO: use lowres MVs as motion candidates in full-res search
         me.setSourcePlane(fenc->lumaPlane[0][0], fenc->lumaStride);
-        for (int j = cuHeight - 1; j >= 0; j--)
+        for (int j = heightInCU - 1; j >= 0; j--)
         {
             if (!fenc->bIntraCalculated)
                 fenc->rowSatds[0][0][j] = 0;
             fenc->rowSatds[b - p0][p1 - b][j] = 0;
 
-            for (int i = cuWidth - 1; i >= 0; i--)
+            for (int i = widthInCU - 1; i >= 0; i--)
             {
                 estimateCUCost(i, j, p0, p1, b, bDoSearch);
             }
@@ -234,7 +234,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
     if (bIntraPenalty)
     {
         // arbitrary penalty for I-blocks after B-frames
-        score += (uint64_t)score * fenc->intraMbs[b - p0] / (cuWidth * cuHeight * 8);
+        score += (uint64_t)score * fenc->intraMbs[b - p0] / (widthInCU * heightInCU * 8);
     }
     x265_emms();
     return score;
@@ -247,7 +247,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     Lowres *fenc  = frames[b];
 
     const bool bBidir = (b < p1);
-    const int cuXY = cux + cuy * cuWidth;
+    const int cuXY = cux + cuy * widthInCU;
     const int cuSize = X265_LOWRES_CU_SIZE;
     const int pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
 
@@ -265,8 +265,8 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     // establish search bounds that don't cross extended frame boundaries
     mvmin.x = (uint16_t)(-cux * cuSize - 8);
     mvmin.y = (uint16_t)(-cuy * cuSize - 8);
-    mvmax.x = (uint16_t)((cuWidth - cux - 1) * cuSize + 8);
-    mvmax.y = (uint16_t)((cuHeight - cuy - 1) * cuSize + 8);
+    mvmax.x = (uint16_t)((widthInCU - cux - 1) * cuSize + 8);
+    mvmax.y = (uint16_t)((heightInCU - cuy - 1) * cuSize + 8);
 
     for (int i = 0; i < 1 + bBidir; i++)
     {
@@ -281,15 +281,15 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         mvc[0] = 0;
         mvc[2] = 0;
 #define MVC(mv) mvc[numc++] = mv;
-        if (cux < cuWidth - 1)
+        if (cux < widthInCU - 1)
             MVC(fenc_mv[1]);
-        if (cuy < cuHeight - 1)
+        if (cuy < heightInCU - 1)
         {
-            MVC(fenc_mv[cuWidth]);
+            MVC(fenc_mv[widthInCU]);
             if (cux > 0)
-                MVC(fenc_mv[cuWidth - 1]);
-            if (cux < cuWidth - 1)
-                MVC(fenc_mv[cuWidth + 1]);
+                MVC(fenc_mv[widthInCU - 1]);
+            if (cux < widthInCU - 1)
+                MVC(fenc_mv[widthInCU + 1]);
         }
 #undef MVC
         if (numc <= 1)
@@ -391,7 +391,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
 {
     int num_frames, origNumFrames, keyint_limit, framecnt;
     int maxSearch = X265_MIN(cfg->param.lookaheadDepth, X265_LOOKAHEAD_MAX);
-    int cuCount = cuWidth * cuHeight;
+    int cuCount = widthInCU * heightInCU;
     int cost1p0, cost2p0, cost1b1, cost2p1;
     int reset_start;
     int vbv_lookahead = 0;
