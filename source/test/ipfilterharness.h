@@ -45,8 +45,6 @@ protected:
     bool check_IPFilter_primitive(x265::ipfilter_sp_t ref, x265::ipfilter_sp_t opt);
     bool check_IPFilter_primitive(x265::ipfilter_p2s_t ref, x265::ipfilter_p2s_t opt);
     bool check_IPFilter_primitive(x265::ipfilter_s2p_t ref, x265::ipfilter_s2p_t opt);
-    bool check_filterVMultiplane(x265::filterVmulti_t ref, x265::filterVmulti_t opt);
-    bool check_filterHMultiplane(x265::filterHmulti_t ref, x265::filterHmulti_t opt);
     bool check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x265::filterHwghtd_t opt);
     bool check_filterVMultiplaneWghtd(x265::filterVwghtd_t ref, x265::filterVwghtd_t opt);
     bool check_filterHMultiplaneCU(x265::cuRowfilterHmulti_t ref, x265::cuRowfilterHmulti_t opt);
