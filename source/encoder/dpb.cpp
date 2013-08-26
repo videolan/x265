@@ -100,15 +100,17 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
     if (slice->getTemporalLayerNonReferenceFlag())
     {
-        switch(slice->getNalUnitType())
+        switch (slice->getNalUnitType())
         {
             case NAL_UNIT_CODED_SLICE_TRAIL_R:
-                slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TRAIL_N); break;                
+                slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TRAIL_N); break;
             case NAL_UNIT_CODED_SLICE_RADL_R:
                 slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RADL_N); break;
             case NAL_UNIT_CODED_SLICE_RASL_R: 
                 slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RASL_N); break;
-        }        
+            default:
+                break;
+        }
     }
 
     // Do decoding refresh marking if any
