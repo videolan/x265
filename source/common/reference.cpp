@@ -269,9 +269,9 @@ void MotionReference::generateReferencePlane(const int x)
         {
             int isLast = (i == m_reconPic->m_numCuInHeight - 1);
             int proch = g_maxCUHeight + (i == 0 ? -4 : 0) + (isLast ? 4 : 0);
-            int offset = (i == 0 ? 0 : 4);
-            int rowAddr = (i * g_maxCUHeight - offset) * lumaStride;
-            int rowAddrMid = (i * g_maxCUHeight - offset) * midStride;
+            int offs = (i == 0 ? 0 : 4);
+            int rowAddr = (i * g_maxCUHeight - offs) * lumaStride;
+            int rowAddrMid = (i * g_maxCUHeight - offs) * midStride;
 
             if (x == 0)
             {
