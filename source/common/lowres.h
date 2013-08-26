@@ -33,7 +33,12 @@ class TComPic;
 
 namespace x265 {
 
-#define X265_BFRAME_MAX 16
+// Use the same size blocks as x264.  Using larger blocks seems to give artificially
+// high cost estimates (intra and inter both suffer)
+#define X265_LOWRES_CU_SIZE   8
+#define X265_LOWRES_CU_BITS   3
+
+#define X265_BFRAME_MAX      16
 
 #define X265_SLICE_TYPE_AUTO -1
 #define X265_SLICE_TYPE_I     0

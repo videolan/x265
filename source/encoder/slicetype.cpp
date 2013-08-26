@@ -70,6 +70,8 @@ Lookahead::Lookahead(TEncCfg *_cfg)
     me.setQP(X265_LOOKAHEAD_QP, 1.0);
     me.setSearchMethod(X265_HEX_SEARCH);
     merange = 16;
+    cuWidth = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    cuHeight = ((cfg->param.sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
 }
 
 Lookahead::~Lookahead()
@@ -99,10 +101,6 @@ void Lookahead::slicetypeDecide()
     if (numDecided == 0)
     {
         TComPic *pic = inputQueue.popFront();
-        // Finish initialization now that we have a picture
-        this->cuWidth = pic->getPicSym()->getFrameWidthInCU();
-        this->cuHeight = pic->getPicSym()->getFrameHeightInCU();
-
         pic->m_lowres.sliceType = X265_SLICE_TYPE_I;
         pic->m_lowres.gopIdx = 0;
         outputQueue.pushBack(pic);
@@ -250,7 +248,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
 
     const bool bBidir = (b < p1);
     const int cuXY = cux + cuy * cuWidth;
-    const int cuSize = g_maxCUWidth / 2;
+    const int cuSize = X265_LOWRES_CU_SIZE;
     const int pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
 
     me.setSourcePU(pelOffset, cuSize, cuSize);
