@@ -2761,8 +2761,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
     // Fill the MV Candidates
     cu->fillMvpCand(partIdx, partAddr, picList, refIfx, amvpInfo);
 
-    bestIdx = 0;
-    bestMv  = amvpInfo->m_mvCand[0];
+    bestMv = amvpInfo->m_mvCand[0];
     if (amvpInfo->m_num <= 1)
     {
         mvPred = bestMv;
