@@ -56,7 +56,7 @@ public:
 
     void prepareEncode(TComPic*, x265::FrameEncoder*);
 
-    void recycleUnreferenced(TComList<TComPic*> freeList);
+    void recycleUnreferenced(TComList<TComPic*>& freeList);
 
 protected:
 

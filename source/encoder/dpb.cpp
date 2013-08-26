@@ -41,7 +41,7 @@ DPB::~DPB()
     }
 }
 
-void DPB::recycleUnreferenced(TComList<TComPic*> freeList)
+void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
 {
     // move unreferenced pictures from picList to freeList for recycle
     TComSlice::sortPicList(m_picList);
