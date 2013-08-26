@@ -77,7 +77,6 @@ private:
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
     // ------------------------------------------------------------------------------------------------
-
     Int   m_picWidth;          ///< Width of picture
     Int   m_picHeight;         ///< Height of picture
 
@@ -98,6 +97,8 @@ private:
     Bool  m_bIsBorderExtended;
 
 public:
+    Int   m_numCuInWidth;
+    Int   m_numCuInHeight;
 
     TComPicYuv();
     virtual ~TComPicYuv();

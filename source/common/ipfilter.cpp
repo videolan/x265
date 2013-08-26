@@ -478,31 +478,6 @@ void extendCURowColBorder(pixel* txt, int stride, int width, int height, int mar
     }
 }
 
-void filterVerticalMultiplaneExtend(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
-{
-    filterVertical_s_p<8>(src, srcStride, dstI, dstStride, block_width, block_height, g_lumaFilter[2]);
-    filterVertical_s_p<8>(src, srcStride, dstE, dstStride, block_width, block_height, g_lumaFilter[1]);
-    filterVertical_s_p<8>(src, srcStride, dstP, dstStride, block_width, block_height, g_lumaFilter[3]);
-    extendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
-}
-
-void filterHorizontalMultiplaneExtend(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
-{
-    filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
-    filterHorizontal_p_s<8>(src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
-    filterHorizontal_p_s<8>(src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
-    filterHorizontal_p_s<8>(src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
-    filterConvertShortToPel(midA, midStride, pDstA, pDstStride, block_width, block_height);
-    filterConvertShortToPel(midB, midStride, pDstB, pDstStride, block_width, block_height);
-    filterConvertShortToPel(midC, midStride, pDstC, pDstStride, block_width, block_height);
-
-    extendPicCompBorder(pDstA, pDstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY);
-}
-
 void filterHorizontalExtendCol(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX)
 {
     filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
@@ -594,6 +569,147 @@ void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI,
 }
 }
 
+void filterRowH(pixel *src, int srcStride, short* midA, short* midB, short* midC, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow)
+{
+    // Extend FullPel Left and Right
+    extendCURowColBorder(src, srcStride, width, height, marginX);
+
+    // Extend FullPel Top
+    if (row == 0)
+    {
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(src - marginX - (y + 1) * srcStride, src - marginX, sizeof(pixel) * (width + (marginX << 1)));
+        }
+    }
+
+    // Extend FullPel Bottom
+    if (isLastRow)
+    {
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(src - marginX + (height + y) * srcStride, src - marginX + (height - 1) * srcStride, sizeof(pixel) * (width + (marginX << 1)));
+        }
+    }
+    filterHorizontal_p_s<8>(src, srcStride, midA, midStride, width, height, g_lumaFilter[1]);
+    filterHorizontal_p_s<8>(src, srcStride, midB, midStride, width, height, g_lumaFilter[2]);
+    filterHorizontal_p_s<8>(src, srcStride, midC, midStride, width, height, g_lumaFilter[3]);
+    filterConvertShortToPel(midA, midStride, dstA, srcStride, width, height);
+    filterConvertShortToPel(midB, midStride, dstB, srcStride, width, height);
+    filterConvertShortToPel(midC, midStride, dstC, srcStride, width, height);
+
+    // Extend SubPel Left and Right
+    extendCURowColBorder(dstA, srcStride, width, height, marginX);
+    extendCURowColBorder(dstB, srcStride, width, height, marginX);
+    extendCURowColBorder(dstC, srcStride, width, height, marginX);
+
+    if (row == 0)
+    {
+        // Extend SubPel Top
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(dstA - marginX - (y + 1) * srcStride, dstA - marginX, sizeof(pixel) * srcStride);
+            ::memcpy(dstB - marginX - (y + 1) * srcStride, dstB - marginX, sizeof(pixel) * srcStride);
+            ::memcpy(dstC - marginX - (y + 1) * srcStride, dstC - marginX, sizeof(pixel) * srcStride);
+        }
+
+        // Extend midPel Top(only 3 rows)
+        for(int y = 0; y < 3; y++)
+        {
+            ::memcpy(midA - (y + 1) * midStride, midA, midStride * sizeof(short));
+            ::memcpy(midB - (y + 1) * midStride, midB, midStride * sizeof(short));
+            ::memcpy(midC - (y + 1) * midStride, midC, midStride * sizeof(short));
+        }
+    }
+
+    if (isLastRow)
+    {
+        // Extend SubPel Bottom
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(dstA - marginX + (height + y) * srcStride, dstA - marginX + (height - 1) * srcStride, sizeof(pixel) * srcStride);
+            ::memcpy(dstB - marginX + (height + y) * srcStride, dstB - marginX + (height - 1) * srcStride, sizeof(pixel) * srcStride);
+            ::memcpy(dstC - marginX + (height + y) * srcStride, dstC - marginX + (height - 1) * srcStride, sizeof(pixel) * srcStride);
+        }
+
+        // Extend midPel Bottom(only 4 rows)
+        for(int y = 0; y < 4; y++)
+        {
+            ::memcpy(midA + (height + y) * midStride, midA + (height - 1) * midStride, midStride * sizeof(short));
+            ::memcpy(midB + (height + y) * midStride, midB + (height - 1) * midStride, midStride * sizeof(short));
+            ::memcpy(midC + (height + y) * midStride, midC + (height - 1) * midStride, midStride * sizeof(short));
+        }
+    }
+}
+
+void filterRowV_0(pixel *src, int srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow)
+{
+    filterVertical_p_p<8>(src, srcStride, dstA, srcStride, width, height, g_lumaFilter[1]);
+    filterVertical_p_p<8>(src, srcStride, dstB, srcStride, width, height, g_lumaFilter[2]);
+    filterVertical_p_p<8>(src, srcStride, dstC, srcStride, width, height, g_lumaFilter[3]);
+
+    // Extend SubPel Left and Right
+    extendCURowColBorder(dstA, srcStride, width, height, marginX);
+    extendCURowColBorder(dstB, srcStride, width, height, marginX);
+    extendCURowColBorder(dstC, srcStride, width, height, marginX);
+
+    if (row == 0)
+    {
+        // Extend SubPel Top
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(dstA - marginX - (y + 1) * srcStride, dstA - marginX, sizeof(pixel) * srcStride);
+            ::memcpy(dstB - marginX - (y + 1) * srcStride, dstB - marginX, sizeof(pixel) * srcStride);
+            ::memcpy(dstC - marginX - (y + 1) * srcStride, dstC - marginX, sizeof(pixel) * srcStride);
+        }
+    }
+
+    if (isLastRow)
+    {
+        // Extend SubPel Bottom
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(dstA - marginX + (height + y) * srcStride, dstA - marginX + (height - 1) * srcStride, sizeof(pixel) * srcStride);
+            ::memcpy(dstB - marginX + (height + y) * srcStride, dstB - marginX + (height - 1) * srcStride, sizeof(pixel) * srcStride);
+            ::memcpy(dstC - marginX + (height + y) * srcStride, dstC - marginX + (height - 1) * srcStride, sizeof(pixel) * srcStride);
+        }
+    }
+}
+
+void filterRowV_N(short *midA, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow)
+{
+    filterVertical_s_p<8>(midA, midStride, dstA, dstStride, width, height, g_lumaFilter[1]);
+    filterVertical_s_p<8>(midA, midStride, dstB, dstStride, width, height, g_lumaFilter[2]);
+    filterVertical_s_p<8>(midA, midStride, dstC, dstStride, width, height, g_lumaFilter[3]);
+
+    // Extend SubPel Left and Right
+    extendCURowColBorder(dstA, dstStride, width, height, marginX);
+    extendCURowColBorder(dstB, dstStride, width, height, marginX);
+    extendCURowColBorder(dstC, dstStride, width, height, marginX);
+
+    if (row == 0)
+    {
+        // Extend SubPel Top
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(dstA - marginX - (y + 1) * dstStride, dstA - marginX, sizeof(pixel) * dstStride);
+            ::memcpy(dstB - marginX - (y + 1) * dstStride, dstB - marginX, sizeof(pixel) * dstStride);
+            ::memcpy(dstC - marginX - (y + 1) * dstStride, dstC - marginX, sizeof(pixel) * dstStride);
+        }
+    }
+
+    if (isLastRow)
+    {
+        // Extend SubPel Bottom
+        for(int y = 0; y < marginY; y++)
+        {
+            ::memcpy(dstA - marginX + (height + y) * dstStride, dstA - marginX + (height - 1) * dstStride, sizeof(pixel) * dstStride);
+            ::memcpy(dstB - marginX + (height + y) * dstStride, dstB - marginX + (height - 1) * dstStride, sizeof(pixel) * dstStride);
+            ::memcpy(dstC - marginX + (height + y) * dstStride, dstC - marginX + (height - 1) * dstStride, sizeof(pixel) * dstStride);
+        }
+    }
+}
+
 namespace x265 {
 // x265 private namespace
 
@@ -615,8 +731,9 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;
 
-    p.filterVmulti = filterVerticalMultiplaneExtend;
-    p.filterHmulti = filterHorizontalMultiplaneExtend;
+    p.filterRowH = filterRowH;
+    p.filterRowV_0 = filterRowV_0;
+    p.filterRowV_N = filterRowV_N;
 
     p.filterVwghtd = filterVerticalWeighted;         
     p.filterHwghtd = filterHorizontalWeighted;

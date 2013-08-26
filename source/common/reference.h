@@ -68,7 +68,7 @@ public:
 protected:
 
     bool findJob();
-    void generateReferencePlane(int idx);
+    void generateReferencePlane(const int idx);
 
     intptr_t     m_startPad;
     TComPicYuv  *m_reconPic;
@@ -89,6 +89,7 @@ protected:
     int         m_filterWidth;
     int         m_filterHeight;
     short      *m_intermediateValues;
+    short      *m_midBuf[4];  // 0: Full, 1:1/4, 2:2/4, 3:3/4
 
     MotionReference& operator =(const MotionReference&);
 };

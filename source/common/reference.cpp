@@ -79,6 +79,13 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
     size_t padwidth = width + pic->m_lumaMarginX * 2;
     size_t padheight = height + pic->m_lumaMarginY * 2;
 
+    for (int i = 0; i < 4; i++)
+    {
+        // TODO: I am not sure [0] need space when weight, for safe I alloc either, but I DON'T FILL [0] anymore
+        m_midBuf[i] = new short[width * (height + 3 + 4)];  // middle buffer extend size: left(0), right(0), top(3), bottom(4)
+        m_midBuf[i] += 3 * width;
+    }
+
     if (w) 
     {
         setWeight(*w);
@@ -111,8 +118,16 @@ MotionReference::~MotionReference()
 {
     JobProvider::flush();
 
+    int width = m_reconPic->getWidth();
+
     for (int i = 0; i < 4; i++)
     {
+        m_midBuf[i] -= 3 * width;
+        if (m_midBuf[i])
+        {
+            delete[] m_midBuf[i];
+            m_midBuf[i] = NULL;
+        }
         for (int j = 0; j < 4; j++)
         {
             if (i == 0 && j == 0 && !isWeighted)
@@ -158,15 +173,29 @@ void MotionReference::generateReferencePlanes()
        }
        else
        {
-            primitives.filterHmulti(srcPtr, lumaStride,                        // source buffer
-                                intPtrF, intPtrA, intPtrB, intPtrC, m_intStride, // 4 intermediate HPEL buffers
-                                lumaPlane[1][0] + bufOffset,
-                                lumaPlane[2][0] + bufOffset,
-                                lumaPlane[3][0] + bufOffset, lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
-                                m_filterWidth + (2 * s_intMarginX),              // filter dimensions with margins
-                                m_filterHeight + (2 * s_intMarginY),
-                                m_reconPic->m_lumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
-                                m_reconPic->m_lumaMarginY - s_tmpMarginY - s_intMarginY);
+            int midStride = m_reconPic->getWidth();
+            for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
+            {
+                int isLast = (i == m_reconPic->m_numCuInHeight - 1);
+                int rowAddr = i * g_maxCUHeight * lumaStride;
+                int rowAddrMid = (i * g_maxCUHeight) * midStride;
+
+                primitives.filterRowH(m_reconPic->getLumaAddr() + rowAddr,
+                                      lumaStride,
+                                      m_midBuf[1] + rowAddrMid,
+                                      m_midBuf[2] + rowAddrMid,
+                                      m_midBuf[3] + rowAddrMid,
+                                      midStride,
+                                      lumaPlane[1][0] + rowAddr,
+                                      lumaPlane[2][0] + rowAddr,
+                                      lumaPlane[3][0] + rowAddr,
+                                      m_reconPic->getWidth(),
+                                      g_maxCUHeight,
+                                      m_reconPic->getLumaMarginX(),
+                                      m_reconPic->getLumaMarginY(),
+                                      i,
+                                      isLast);
+            }
         }
     }
 
@@ -214,7 +243,7 @@ bool MotionReference::findJob()
     return false;
 }
 
-void MotionReference::generateReferencePlane(int x)
+void MotionReference::generateReferencePlane(const int x)
 {
     PPAScopeEvent(GenerateReferencePlanes);
 
@@ -235,7 +264,44 @@ void MotionReference::generateReferencePlane(int x)
     }
     else
     {
-        primitives.filterVmulti(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, lumaStride, m_filterWidth, m_filterHeight,
-                                m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY);
+        int midStride = m_reconPic->getWidth();
+        for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
+        {
+            int isLast = (i == m_reconPic->m_numCuInHeight - 1);
+            int proch = g_maxCUHeight + (i == 0 ? -4 : 0) + (isLast ? 4 : 0);
+            int offset = (i == 0 ? 0 : 4);
+            int rowAddr = (i * g_maxCUHeight - offset) * lumaStride;
+            int rowAddrMid = (i * g_maxCUHeight - offset) * midStride;
+
+            if (x == 0)
+            {
+                primitives.filterRowV_0(m_reconPic->getLumaAddr() + rowAddr,
+                                        lumaStride,
+                                        lumaPlane[0][1] + rowAddr,
+                                        lumaPlane[0][2] + rowAddr,
+                                        lumaPlane[0][3] + rowAddr,
+                                        m_reconPic->getWidth(),
+                                        proch,
+                                        m_reconPic->getLumaMarginX(),
+                                        m_reconPic->getLumaMarginY(),
+                                        i,
+                                        isLast);
+            }
+            else
+            {
+                primitives.filterRowV_N(m_midBuf[x] + rowAddrMid,
+                                        midStride,
+                                        lumaPlane[x][1] + rowAddr,
+                                        lumaPlane[x][2] + rowAddr,
+                                        lumaPlane[x][3] + rowAddr,
+                                        lumaStride,
+                                        m_reconPic->getWidth(),
+                                        proch,
+                                        m_reconPic->getLumaMarginX(),
+                                        m_reconPic->getLumaMarginY(),
+                                        i,
+                                        isLast);
+            }
+        }
     }
 }

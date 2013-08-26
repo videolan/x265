@@ -218,15 +218,15 @@ typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef,
 typedef void (*dequant_t)(const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
                           unsigned int trSizeLog2, int *dequantCoef);
 
-typedef void (*filterVmulti_t)(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
-                               int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterVwghtd_t)(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width,
                                int block_height, int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
-typedef void (*filterHmulti_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
-                               pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterHwghtd_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
                                pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height,
                                int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
+typedef void (*filterRowH_t)(pixel *src, int srcStride, short* midA, short* midB, short* midC, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
+typedef void (*filterRowV_0_t)(pixel *src, int srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
+typedef void (*filterRowV_N_t)(short *midA, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow);
+
 typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
@@ -266,8 +266,9 @@ struct EncoderPrimitives
     ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
     ipfilter_p2s_t  ipfilter_p2s;
     ipfilter_s2p_t  ipfilter_s2p;
-    filterVmulti_t  filterVmulti;
-    filterHmulti_t  filterHmulti;
+    filterRowH_t    filterRowH;
+    filterRowV_0_t  filterRowV_0;
+    filterRowV_N_t  filterRowV_N;
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;
