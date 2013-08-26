@@ -2370,7 +2370,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                         bitsTemp += refIdxTmp + 1;
                         if (refIdxTmp == cu->getSlice()->getNumRefIdx(picList) - 1) bitsTemp--;
                     }
-                    xEstimateMvPredAMVP(cu, partIdx, picList, refIdxTmp, mvPred[refList][refIdxTmp], false, &biPDistTemp);
+                    xEstimateMvPredAMVP(cu, partIdx, picList, refIdxTmp, mvPred[refList][refIdxTmp], &biPDistTemp);
                     mvpIdx[refList][refIdxTmp] = cu->getMVPIdx(picList, partAddr);
                     mvpNum[refList][refIdxTmp] = cu->getMVPNum(picList, partAddr);
 
@@ -2745,7 +2745,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 }
 
 // AMVP
-Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIfx, MV& mvPred, Bool bFilled, UInt* distBiP)
+Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIfx, MV& mvPred, UInt* distBiP)
 {
     AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
 
@@ -2757,11 +2757,9 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
     Int  i;
 
     cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
+
     // Fill the MV Candidates
-    if (!bFilled)
-    {
-        cu->fillMvpCand(partIdx, partAddr, picList, refIfx, amvpInfo);
-    }
+    cu->fillMvpCand(partIdx, partAddr, picList, refIfx, amvpInfo);
 
     bestIdx = 0;
     bestMv  = amvpInfo->m_mvCand[0];
@@ -2776,13 +2774,6 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
         {
             (*distBiP) = xGetTemplateCost(cu, partAddr, &m_predTempYuv, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
         }
-        return;
-    }
-
-    if (bFilled)
-    {
-        assert(cu->getMVPIdx(picList, partAddr) >= 0);
-        mvPred = amvpInfo->m_mvCand[cu->getMVPIdx(picList, partAddr)];
         return;
     }
 

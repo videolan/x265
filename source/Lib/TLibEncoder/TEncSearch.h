@@ -206,7 +206,7 @@ protected:
     // --------------------------------------------------------------------------------------------
 
     Void xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIdx,
-                             x265::MV& mvPred, Bool bFilled = false, UInt* distBiP = NULL);
+                             x265::MV& mvPred, UInt* distBiP = NULL);
 
     Void xCheckBestMVP(TComDataCU* cu, RefPicList picList, x265::MV cMv, x265::MV& mvPred, Int& mvpIdx,
                        UInt& outBits, UInt& outCost);
