@@ -35,8 +35,183 @@
 #pragma warning(disable: 4799) // MMX warning EMMS
 #endif
 
+#define HAVE_MMX (!((_MSC_VER) && (X86_64)))
+
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
-#ifdef X86_64
+#if HAVE_MMX
+template<int ly>
+int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
+{
+    assert((ly % 4) == 0);
+
+    __m64 sum0 = _mm_setzero_si64();
+
+    __m64 T00, T01, T02, T03;
+    __m64 T10, T11, T12, T13;
+    __m64 T20, T21, T22, T23;
+
+    if ((ly % 16) == 0)
+    {
+        for (int i = 0; i < ly; i += 16)
+        {
+            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 0) * fencstride));
+            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 1) * fencstride));
+            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 2) * fencstride));
+            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 3) * fencstride));
+
+            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 0) * frefstride));
+            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 1) * frefstride));
+            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 2) * frefstride));
+            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 3) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+
+            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 4) * fencstride));
+            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 5) * fencstride));
+            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 6) * fencstride));
+            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 7) * fencstride));
+
+            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 4) * frefstride));
+            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 5) * frefstride));
+            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 6) * frefstride));
+            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 7) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+
+            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 8) * fencstride));
+            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 9) * fencstride));
+            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 10) * fencstride));
+            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 11) * fencstride));
+
+            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 8) * frefstride));
+            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 9) * frefstride));
+            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 10) * frefstride));
+            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 11) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+
+            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 12) * fencstride));
+            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 13) * fencstride));
+            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 14) * fencstride));
+            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 15) * fencstride));
+
+            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 12) * frefstride));
+            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 13) * frefstride));
+            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 14) * frefstride));
+            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 15) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+        }
+    }
+    else if ((ly % 8) == 0)
+    {
+        for (int i = 0; i < ly; i += 8)
+        {
+            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 0) * fencstride));
+            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 1) * fencstride));
+            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 2) * fencstride));
+            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 3) * fencstride));
+
+            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 0) * frefstride));
+            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 1) * frefstride));
+            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 2) * frefstride));
+            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 3) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+
+            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 4) * fencstride));
+            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 5) * fencstride));
+            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 6) * fencstride));
+            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 7) * fencstride));
+
+            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 4) * frefstride));
+            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 5) * frefstride));
+            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 6) * frefstride));
+            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 7) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < ly; i += 4)
+        {
+            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 0) * fencstride));
+            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 1) * fencstride));
+            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 2) * fencstride));
+            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 3) * fencstride));
+
+            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 0) * frefstride));
+            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 1) * frefstride));
+            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 2) * frefstride));
+            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 3) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+        }
+    }
+    // 8 * 255 -> 11 bits x 8 -> 14 bits
+    int sum = _m_to_int(sum0);
+    return sum;
+}
+
+#else /* ifdef X86_64 */
+
 template<int ly>
 int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
@@ -257,179 +432,6 @@ int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
     sum1 = _mm_shuffle_epi32(sum0, 2);
     sum0 = _mm_add_epi32(sum0, sum1);
     return _mm_extract_epi32(sum0, 0);
-}
-
-#else /* ifdef X86_64 */
-
-template<int ly>
-int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
-{
-    assert((ly % 4) == 0);
-
-    __m64 sum0 = _mm_setzero_si64();
-
-    __m64 T00, T01, T02, T03;
-    __m64 T10, T11, T12, T13;
-    __m64 T20, T21, T22, T23;
-
-    if ((ly % 16) == 0)
-    {
-        for (int i = 0; i < ly; i += 16)
-        {
-            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 0) * fencstride));
-            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 1) * fencstride));
-            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 2) * fencstride));
-            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 3) * fencstride));
-
-            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 0) * frefstride));
-            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 1) * frefstride));
-            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 2) * frefstride));
-            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 3) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-
-            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 4) * fencstride));
-            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 5) * fencstride));
-            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 6) * fencstride));
-            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 7) * fencstride));
-
-            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 4) * frefstride));
-            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 5) * frefstride));
-            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 6) * frefstride));
-            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 7) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-
-            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 8) * fencstride));
-            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 9) * fencstride));
-            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 10) * fencstride));
-            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 11) * fencstride));
-
-            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 8) * frefstride));
-            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 9) * frefstride));
-            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 10) * frefstride));
-            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 11) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-
-            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 12) * fencstride));
-            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 13) * fencstride));
-            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 14) * fencstride));
-            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 15) * fencstride));
-
-            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 12) * frefstride));
-            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 13) * frefstride));
-            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 14) * frefstride));
-            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 15) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-        }
-    }
-    else if ((ly % 8) == 0)
-    {
-        for (int i = 0; i < ly; i += 8)
-        {
-            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 0) * fencstride));
-            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 1) * fencstride));
-            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 2) * fencstride));
-            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 3) * fencstride));
-
-            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 0) * frefstride));
-            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 1) * frefstride));
-            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 2) * frefstride));
-            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 3) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-
-            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 4) * fencstride));
-            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 5) * fencstride));
-            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 6) * fencstride));
-            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 7) * fencstride));
-
-            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 4) * frefstride));
-            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 5) * frefstride));
-            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 6) * frefstride));
-            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 7) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-        }
-    }
-    else
-    {
-        for (int i = 0; i < ly; i += 4)
-        {
-            T00 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 0) * fencstride));
-            T01 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 1) * fencstride));
-            T02 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 2) * fencstride));
-            T03 = _mm_cvtsi32_si64(*(int*)(fenc + (i + 3) * fencstride));
-
-            T10 = _mm_cvtsi32_si64(*(int*)(fref + (i + 0) * frefstride));
-            T11 = _mm_cvtsi32_si64(*(int*)(fref + (i + 1) * frefstride));
-            T12 = _mm_cvtsi32_si64(*(int*)(fref + (i + 2) * frefstride));
-            T13 = _mm_cvtsi32_si64(*(int*)(fref + (i + 3) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-        }
-    }
-    // 8 * 255 -> 11 bits x 8 -> 14 bits
-    int sum = _m_to_int(sum0);
-    return sum;
 }
 
 #endif /* ifdef X86_64 */
