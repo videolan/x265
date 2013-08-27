@@ -248,7 +248,7 @@ typedef struct x265_param_t
         double    ipFactor;
         double    pbFactor;
         int       qpStep;
-        RcMethod  rateControlMode;
+        int       rateControlMode;             ///<Values corresponding to RcMethod 
         int       qp;                          ///< Constant QP base value
         int       rateFactor;                  ///< Constant rate factor (CRF)
     } rc;
