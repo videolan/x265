@@ -284,14 +284,6 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
         }
     }
 
-    // TODO: Remove dQP?
-    // modify QP
-    Int* pdQPs = m_cfg->getdQPs();
-    if (pdQPs)
-    {
-        qpdouble += pdQPs[slice->getPOC()];
-    }
-
     // ------------------------------------------------------------------------------------------------------------------
     // Lambda computation
     // ------------------------------------------------------------------------------------------------------------------
