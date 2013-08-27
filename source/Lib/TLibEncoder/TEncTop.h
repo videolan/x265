@@ -112,8 +112,9 @@ public:
 
     void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
-    Double calculateHashAndPSNR(TComPic* pic, AccessUnit&); //Returns number of bits in current encoded pic
-	Void TEncTop::computeLambdaForQp( TComSlice* slice);
+    Double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
+
+    Void computeLambdaForQp(TComSlice* slice);
 };
 
 //! \}

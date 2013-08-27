@@ -97,7 +97,9 @@ Void TEncTop::create()
     if (m_frameEncoder)
     {
         for (int i = 0; i < param.frameNumThreads; i++)
+        {
             m_frameEncoder[i].setThreadPool(m_threadPool);
+        }
     }
     m_lookahead = new x265::Lookahead(this);
     m_dpb = new x265::DPB(this);
@@ -109,7 +111,10 @@ Void TEncTop::destroy()
     if (m_frameEncoder)
     {
         for (int i = 0; i < param.frameNumThreads; i++)
+        {
             m_frameEncoder[i].destroy();
+        }
+
         delete [] m_frameEncoder;
     }
 
@@ -140,7 +145,9 @@ Void TEncTop::init()
     {
         int numRows = (param.sourceHeight + g_maxCUHeight - 1) / g_maxCUHeight;
         for (int i = 0; i < param.frameNumThreads; i++)
+        {
             m_frameEncoder[i].init(this, numRows);
+        }
     }
 
     m_analyzeI.setFrameRate(param.frameRate);
@@ -170,13 +177,13 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         {
             pic = new TComPic;
             pic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-                         getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
+                        getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
             if (param.bEnableSAO)
             {
                 // TODO: these should be allocated on demand within the encoder
                 // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
                 pic->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
-            }            
+            }
         }
         else
             pic = m_freeList.popBack();
@@ -207,7 +214,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // 0 until the entire stream is flushed
         // (can only be an issue when --frames < --frame-threads)
         int flushed = m_curEncoder;
-        do 
+        do
         {
             curEncoder = &m_frameEncoder[m_curEncoder];
             m_curEncoder = (m_curEncoder + 1) % param.frameNumThreads;
@@ -231,8 +238,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         }
 
         Double bits = calculateHashAndPSNR(out, accessUnitOut);
-        
-        m_rateControl->rateControlEnd(bits);       
+
+        m_rateControl->rateControlEnd(bits);
 
         m_dpb->recycleUnreferenced(m_freeList);
 
@@ -254,11 +261,10 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
 
-
         /*uncomment the below function for enabling Ratecontrol code*/
-        //int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);  
+        //int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);
         //m_rateControl->rateControlStart(fenc, lookAheadCost);
-		//computeLambdaForQp(fenc->getSlice());
+        //computeLambdaForQp(fenc->getSlice());
 
         // main encode processing, TBD multi-threading
         curEncoder->compressFrame(fenc);
@@ -359,14 +365,20 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
+            {
                 ssd += x265::primitives.sse_pp[x265::PARTITION_64x64](fenc + x, stride, rec + x, stride);
+            }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
+            {
                 ssd += x265::primitives.sse_pp[x265::PARTITION_16x64](fenc + x, stride, rec + x, stride);
+            }
 
         for (; x + 4 <= width; x += 4)
+        {
             ssd += x265::primitives.sse_pp[x265::PARTITION_4x64](fenc + x, stride, rec + x, stride);
+        }
 
         fenc += stride * 64;
         rec += stride * 64;
@@ -379,14 +391,20 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
+            {
                 ssd += x265::primitives.sse_pp[x265::PARTITION_64x16](fenc + x, stride, rec + x, stride);
+            }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
+            {
                 ssd += x265::primitives.sse_pp[x265::PARTITION_16x16](fenc + x, stride, rec + x, stride);
+            }
 
         for (; x + 4 <= width; x += 4)
+        {
             ssd += x265::primitives.sse_pp[x265::PARTITION_4x16](fenc + x, stride, rec + x, stride);
+        }
 
         fenc += stride * 16;
         rec += stride * 16;
@@ -399,14 +417,20 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
+            {
                 ssd += x265::primitives.sse_pp[x265::PARTITION_64x4](fenc + x, stride, rec + x, stride);
+            }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
+            {
                 ssd += x265::primitives.sse_pp[x265::PARTITION_16x4](fenc + x, stride, rec + x, stride);
+            }
 
         for (; x + 4 <= width; x += 4)
+        {
             ssd += x265::primitives.sse_pp[x265::PARTITION_4x4](fenc + x, stride, rec + x, stride);
+        }
 
         fenc += stride * 4;
         rec += stride * 4;
@@ -540,7 +564,7 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     {
         m_analyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
-    
+
     if (param.logLevel >= X265_LOG_DEBUG)
     {
         Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
@@ -549,12 +573,12 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
             c += 32; // lower case if unreferenced
 
         fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d Depth %d) %10d bits",
-               slice->getPOC(),
-               c,
-               slice->getSliceQpBase(),
-               slice->getSliceQp(),
-               slice->getDepth(),
-               bits);
+                slice->getPOC(),
+                c,
+                slice->getSliceQpBase(),
+                slice->getSliceQp(),
+                slice->getDepth(),
+                bits);
 
         fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
 
@@ -788,11 +812,13 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     {
         histogram[i] = 0;
     }
+
     for (Int i = 0; i < getGOPSize(); i++)
     {
         assert(getGOPEntry(i).m_numRefPicsActive >= 0 && getGOPEntry(i).m_numRefPicsActive <= MAX_NUM_REF);
         histogram[getGOPEntry(i).m_numRefPicsActive]++;
     }
+
     Int maxHist = -1;
     Int bestPos = 0;
     for (Int i = 0; i <= MAX_NUM_REF; i++)
@@ -803,6 +829,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
             bestPos = i;
         }
     }
+
     assert(bestPos <= 15);
     pcPPS->setNumRefIdxL0DefaultActive(bestPos);
     pcPPS->setNumRefIdxL1DefaultActive(bestPos);
@@ -946,21 +973,18 @@ Void TEncTop::xInitRPS(TComSPS *pcSPS)
     }
 }
 
-
-Void TEncTop::computeLambdaForQp( TComSlice* slice)
-{  
-	FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
-	Int lambda;
-	Int qp = slice->getSliceQp();
-
-    
-   
+Void TEncTop::computeLambdaForQp(TComSlice* slice)
+{
+    FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
+    Int lambda;
+    Int qp = slice->getSliceQp();
 
     // compute lambda value
     Int    NumberBFrames = (getGOPSize() - 1);
     Int    SHIFT_QP = 12;
     Double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
     Double qpFactor;
+
 #if FULL_NBIT
     Int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
     Double qp_temp_orig = (Double)dQP - SHIFT_QP;
@@ -970,12 +994,13 @@ Void TEncTop::computeLambdaForQp( TComSlice* slice)
     Double qp_temp = (Double)qp + bitdepth_luma_qp_scale - SHIFT_QP;
 
     // Case #1: I or P-slices (key-frame)
-    if(slice->getPOC() % 4 == 3)
+    if (slice->getPOC() % 4 == 3)
     {
-         qpFactor = 0.578;
-    } else
+        qpFactor = 0.578;
+    }
+    else
     {
-         qpFactor = 0.4624;
+        qpFactor = 0.4624;
     }
     if (slice->getSliceType() == I_SLICE)
     {
@@ -983,12 +1008,12 @@ Void TEncTop::computeLambdaForQp( TComSlice* slice)
     }
     lambda = qpFactor * pow(2.0, qp_temp / 3.0);
 
-     // depth computation based on GOP size
+    // depth computation based on GOP size
     Int depth = 0;
     Int poc = slice->getPOC() % getGOPSize();
     if (poc)
     {
-        Int step =getGOPSize();
+        Int step = getGOPSize();
         for (Int i = step >> 1; i >= 1; i >>= 1)
         {
             for (Int j = i; j < getGOPSize(); j += step)
@@ -1018,11 +1043,10 @@ Void TEncTop::computeLambdaForQp( TComSlice* slice)
 
     if (slice->getSliceType() != I_SLICE)
     {
-        lambda *=getLambdaModifier(0); // temporal layer 0
-
+        lambda *= getLambdaModifier(0); // temporal layer 0
     }
 
-		  // for RDO
+    // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
     Double weight = 1.0;

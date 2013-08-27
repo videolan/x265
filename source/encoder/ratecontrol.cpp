@@ -196,7 +196,7 @@ double RateControl::rateEstimateQscale()
          * tolerances, the bit distribution approaches that of 2pass. */
 
         double wantedBits, overflow = 1;
-		rce->pCount = ncu;
+        rce->pCount = ncu;
 
         shortTermCplxSum *= 0.5;
         shortTermCplxCount *= 0.5;
