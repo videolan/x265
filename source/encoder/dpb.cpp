@@ -245,7 +245,6 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 
 void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer)
 {
-    curPoc;
     TComPic * refPic;
     unsigned int poci=0, numNeg=0, numPos=0;
 
