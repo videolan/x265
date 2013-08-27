@@ -290,5 +290,5 @@ extern Int  g_eTTable[4];
 // Map Luma samples to chroma samples
 extern const Int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
 extern const Int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
-
+extern const int x265_HM_lambda2_tab[MAX_QP+1];
 #endif  //__TCOMROM__

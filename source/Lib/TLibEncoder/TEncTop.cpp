@@ -47,7 +47,7 @@
 #include "frameencoder.h"
 #include "ratecontrol.h"
 #include "dpb.h"
-
+#include "TLibCommon/TComRom.h"
 #include <math.h> // log10
 
 using namespace x265;
@@ -254,8 +254,11 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
 
-        //m_lookahead->getEstimatedPictureCost(fenc);  // TODO: move into rate control
-        //m_rateControl->rateControlStart(fenc);
+
+        /*uncomment the below function for enabling Ratecontrol code*/
+        //int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);  
+        //m_rateControl->rateControlStart(fenc, lookAheadCost);
+		//computeLambdaForQp(fenc->getSlice());
 
         // main encode processing, TBD multi-threading
         curEncoder->compressFrame(fenc);
@@ -941,6 +944,43 @@ Void TEncTop::xInitRPS(TComSPS *pcSPS)
             }
         }
     }
+}
+
+
+Void TEncTop::computeLambdaForQp( TComSlice* slice)
+{  
+	FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
+	Int lambda;
+	Int qp = slice->getSliceQp();
+	lambda = x265_HM_lambda2_tab[qp];
+
+		  // for RDO
+    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
+    // instead we weight the distortion of chroma.
+    Double weight = 1.0;
+    Int qpc;
+    Int chromaQPOffset;
+
+    chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
+    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+    curEncoder->setCbDistortionWeight(weight);
+
+    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
+    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+    curEncoder->setCrDistortionWeight(weight);
+
+    // for RDOQ
+    curEncoder->setQPLambda(qp, lambda, lambda / weight, slice->getDepth());
+
+    // For SAO
+    slice->setLambda(lambda, lambda / weight);
+
+    slice->setSliceQpBase(qp);
+    slice->setSliceQpDelta(0);
+    slice->setSliceQpDeltaCb(0);
+    slice->setSliceQpDeltaCr(0);
 }
 
 //! \}

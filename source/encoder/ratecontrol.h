@@ -83,9 +83,9 @@ struct RateControl
     int64_t totalBits;   /* totalbits used for already encoded frames */
 
     RateControl(x265_param_t * param);    // constructor for initializing values for ratecontrol vars
-    void rateControlStart(TComPic* pic);  // to be called for each frame to process RateCOntrol and set QP
+    void rateControlStart(TComPic* pic, int lookAheadCost);  // to be called for each frame to process RateCOntrol and set QP
     int rateControlEnd(int64_t bits);
-    double rateEstimateQscale(Lowres* lframe); // main logic for calculating QP based on ABR
+    double rateEstimateQscale(); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
     double getQScale(double rateFactor);
 };

@@ -96,17 +96,24 @@ RateControl::RateControl(x265_param_t * param)
     cbrDecay = 1.0;
 }
 
-void RateControl::rateControlStart(TComPic* pic)
+void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
 {
     curFrame = pic->getSlice();
     frameType = curFrame->getSliceType();
     rce = new RateControlEntry();
+    lastSatd = lookAheadCost;
     double q = 0;
 
     switch (rateControlMode)
     {
     case X265_RC_ABR:
-        q = qScale2qp(rateEstimateQscale(&pic->m_lowres));
+        q = qScale2qp(rateEstimateQscale());
+        q = Clip3((double)MIN_QP, (double)(MAX_QP+18), q);
+        qp = Clip3(0, (MAX_QP+18), (int)(q + 0.5f));
+        qpaRc = qpm = q;    // qpaRc is set in the rate_control_mb call in x264. we are updating here itself.
+        if (rce)
+            rce->newQp = qp;
+        accumPQpUpdate();
         break;
     case X265_RC_CQP:
         q = baseQp;
@@ -117,13 +124,7 @@ void RateControl::rateControlStart(TComPic* pic)
         break;
     }
 
-    q = Clip3((double)MIN_QP, (double)MAX_QP, q);
-    qp = Clip3(0, MAX_QP, (int)(q + 0.5f));
-    qpaRc = qpm = q;    // qpaRc is set in the rate_control_mb call in x264. we are updating here itself.
-    if (rce)
-        rce->newQp = qp;
-
-    accumPQpUpdate();
+    
 
     if (frameType != B_SLICE)
         lastNonBPictType = frameType;
@@ -142,7 +143,7 @@ void RateControl::accumPQpUpdate()
         accumPQp += qpm;
 }
 
-double RateControl::rateEstimateQscale(Lowres* lframe)
+double RateControl::rateEstimateQscale()
 {
     double q;
     // ratecontrol_entry_t rce = UNINIT(rce);
@@ -195,10 +196,7 @@ double RateControl::rateEstimateQscale(Lowres* lframe)
          * tolerances, the bit distribution approaches that of 2pass. */
 
         double wantedBits, overflow = 1;
-        int p0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getPOC();
-        int p1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getPOC();
-        lastSatd = lframe->costEst[curFrame->getPOC() - p0][p1 - curFrame->getPOC()] ;     //TODO:need to get this from lookahead  //x264_rc_analyse_slice( h );
-        rce->pCount = ncu;
+		rce->pCount = ncu;
 
         shortTermCplxSum *= 0.5;
         shortTermCplxCount *= 0.5;
