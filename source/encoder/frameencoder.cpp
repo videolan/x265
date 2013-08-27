@@ -109,7 +109,6 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_pps.setSPS(&m_sps);
 
     top->xInitPPS(&m_pps);
-    top->xInitRPS(&m_sps);
 
     m_sps.setNumLongTermRefPicSPS(0);
     if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())

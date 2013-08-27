@@ -44,7 +44,6 @@ DPB::~DPB()
 void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
 {
     // move unreferenced pictures from picList to freeList for recycle
-    TComSlice::sortPicList(m_picList);
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
     while (iterPic != m_picList.end())
     {
@@ -70,7 +69,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     int gopIdx = pic->m_lowres.gopIdx;
     int pocCurr = pic->getSlice()->getPOC();
     
-    m_picList.pushBack(pic);
+    m_picList.pushFront(pic);
     
     TComSlice* slice = pic->getSlice();
     if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
@@ -84,15 +83,8 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     {
         slice->setSliceType(P_SLICE);
     }
-    if (pocCurr == 0)
-    {
-        slice->setTemporalLayerNonReferenceFlag(false);
-    }
-    else
-    {
-        // m_refPic is true if this frame is used as a motion reference
-        slice->setTemporalLayerNonReferenceFlag(!m_cfg->getGOPEntry(gopIdx).m_refPic);
-    }
+    slice->setReferenced(slice->getSliceType() != B_SLICE);
+    slice->setTemporalLayerNonReferenceFlag(!slice->isReferenced());
 
     // Set the nal unit type
     slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR));
@@ -115,21 +107,19 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 
     // Do decoding refresh marking if any
     slice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_picList);
-    selectReferencePictureSet(slice, frameEncoder, pocCurr, gopIdx);
-    slice->getRPS()->setNumberOfLongtermPictures(0);
+ 
+    computeRPS(pocCurr, slice->isIRAP(), slice->getLocalRPS(), /*slice->getSPS()->getMaxDecPicBuffering(0)*/ 1);
+    slice->setRPS(slice->getLocalRPS());                
+    slice->setRPSidx(-1);              //   To force using RPS from slice, rather than from SPS
 
-    if ((slice->checkThatAllRefPicsAreAvailable(m_picList, slice->getRPS(), false) != 0) || (slice->isIRAP()))
-    {
-        slice->createExplicitReferencePictureSetFromReference(m_picList, slice->getRPS(), slice->isIRAP());
-    }
     slice->applyReferencePictureSet(m_picList, slice->getRPS());
 
     arrangeLongtermPicturesInRPS(slice, frameEncoder);
     TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
     refPicListModification->setRefPicListModificationFlagL0(false);
     refPicListModification->setRefPicListModificationFlagL1(false);
-    slice->setNumRefIdx(REF_PIC_LIST_0, min(m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
-    slice->setNumRefIdx(REF_PIC_LIST_1, min(m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
+    slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->getNumberOfNegativePictures()));   // Ensuring L0 contains just the -ve POC
+    slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->getNumberOfPositivePictures()));
 
     slice->setRefPicList(m_picList);
 
@@ -145,11 +135,13 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
         //       what is setColFromL0Flag() for?
 
         // select colDir
+        TComReferencePictureSet *rps = slice->getRPS();
+
         UInt colDir = 1;
         int closeLeft = 1, closeRight = -1;
-        for (int i = 0; i < m_cfg->getGOPEntry(gopIdx).m_numRefPics; i++)
+        for (int i = 0; i < rps->m_numberOfPictures; i++)
         {
-            int ref = m_cfg->getGOPEntry(gopIdx).m_referencePics[i];
+            int ref = rps->m_deltaPOC[i];
             if (ref > 0 && (ref < closeRight || closeRight == -1))
             {
                 closeRight = ref;
@@ -532,7 +524,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         /* encoder_randomaccess_main */
         int offsets[] = { 1, 2, 3, 4, 4, 3, 4, 4 };
         double factors[] = { 0, 0.442, 0.3536, 0.3536, 0.68 };
-        int pocs[] = { 8, 4, 2, 1, 3, 6, 5, 7 };
+        int pocs[] = { 1, 3, 2, 5, 4, 7, 6, 8};
         int rps[] = { 0, 4, 2, 1, -2, -3, 1, -2 };
         for (int i = 0; i < 8; i++)
         {
@@ -540,7 +532,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
             m_gopList[i].m_QPFactor = factors[offsets[i]];
             m_gopList[i].m_QPOffset = offsets[i];
             m_gopList[i].m_deltaRPS = rps[i];
-            m_gopList[i].m_sliceType = 'B';
+            m_gopList[i].m_sliceType = (pocs[i]%2)? 'P': 'B';
             m_gopList[i].m_numRefPicsActive = i ? 2 : 4;
             m_gopList[i].m_numRefPics = i == 1 ? 3 : 4;
             m_gopList[i].m_interRPSPrediction = i ? 1 : 0;
