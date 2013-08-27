@@ -952,7 +952,75 @@ Void TEncTop::computeLambdaForQp( TComSlice* slice)
 	FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
 	Int lambda;
 	Int qp = slice->getSliceQp();
-	lambda = x265_HM_lambda2_tab[qp];
+
+    
+   
+
+    // compute lambda value
+    Int    NumberBFrames = (getGOPSize() - 1);
+    Int    SHIFT_QP = 12;
+    Double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
+    Double qpFactor;
+#if FULL_NBIT
+    Int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
+    Double qp_temp_orig = (Double)dQP - SHIFT_QP;
+#else
+    Int    bitdepth_luma_qp_scale = 0;
+#endif
+    Double qp_temp = (Double)qp + bitdepth_luma_qp_scale - SHIFT_QP;
+
+    // Case #1: I or P-slices (key-frame)
+    if(slice->getPOC() % 4 == 3)
+    {
+         qpFactor = 0.578;
+    } else
+    {
+         qpFactor = 0.4624;
+    }
+    if (slice->getSliceType() == I_SLICE)
+    {
+        qpFactor = 0.57 * lambda_scale;
+    }
+    lambda = qpFactor * pow(2.0, qp_temp / 3.0);
+
+     // depth computation based on GOP size
+    Int depth = 0;
+    Int poc = slice->getPOC() % getGOPSize();
+    if (poc)
+    {
+        Int step =getGOPSize();
+        for (Int i = step >> 1; i >= 1; i >>= 1)
+        {
+            for (Int j = i; j < getGOPSize(); j += step)
+            {
+                if (j == poc)
+                {
+                    i = 0;
+                    break;
+                }
+            }
+
+            step >>= 1;
+            depth++;
+        }
+    }
+
+    if (depth > 0)
+    {
+#if FULL_NBIT
+        lambda *= Clip3(2.00, 4.00, (qp_temp_orig / 6.0));
+#else
+        lambda *= Clip3(2.00, 4.00, (qp_temp / 6.0));
+#endif
+    }
+
+    //qp = max(-m_sps.getQpBDOffsetY(), min(MAX_QP, (Int)floor(qpdouble + 0.5)));
+
+    if (slice->getSliceType() != I_SLICE)
+    {
+        lambda *=getLambdaModifier(0); // temporal layer 0
+
+    }
 
 		  // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
