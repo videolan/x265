@@ -1316,14 +1316,14 @@ TComPPS::~TComPPS()
 }
 
 TComReferencePictureSet::TComReferencePictureSet()
-    : m_numberOfPictures(0)
-    , m_numberOfNegativePictures(0)
-    , m_numberOfPositivePictures(0)
-    , m_numberOfLongtermPictures(0)
-    , m_interRPSPrediction(0)
-    , m_deltaRIdxMinus1(0)
+    : m_deltaRIdxMinus1(0)
     , m_deltaRPS(0)
     , m_numRefIdc(0)
+    , m_numberOfPictures(0)
+    , m_numberOfNegativePictures(0)
+    , m_numberOfPositivePictures(0)
+    , m_interRPSPrediction(0)
+    , m_numberOfLongtermPictures(0)
 {
     ::memset(m_deltaPOC, 0, sizeof(m_deltaPOC));
     ::memset(m_POC, 0, sizeof(m_POC));
