@@ -66,24 +66,30 @@ class TComReferencePictureSet
 {
 private:
 
-    Int  m_numberOfPictures;
-    Int  m_numberOfNegativePictures;
-    Int  m_numberOfPositivePictures;
-    Int  m_numberOfLongtermPictures;
-    Int  m_deltaPOC[MAX_NUM_REF_PICS];
-    Int  m_POC[MAX_NUM_REF_PICS];
-    Bool m_used[MAX_NUM_REF_PICS];
-    Bool m_interRPSPrediction;
+    // Parameters for inter RPS prediction
     Int  m_deltaRIdxMinus1;
     Int  m_deltaRPS;
     Int  m_numRefIdc;
     Int  m_refIdc[MAX_NUM_REF_PICS + 1];
+
+    // Parameters for long term references
     Bool m_bCheckLTMSB[MAX_NUM_REF_PICS];
     Int  m_pocLSBLT[MAX_NUM_REF_PICS];
     Int  m_deltaPOCMSBCycleLT[MAX_NUM_REF_PICS];
     Bool m_deltaPocMSBPresentFlag[MAX_NUM_REF_PICS];
 
 public:
+
+    Int  m_numberOfPictures;
+    Int  m_numberOfNegativePictures;
+    Int  m_numberOfPositivePictures;
+    Int  m_deltaPOC[MAX_NUM_REF_PICS];
+    Bool m_used[MAX_NUM_REF_PICS];
+    Int  m_POC[MAX_NUM_REF_PICS];
+
+    Bool m_interRPSPrediction;
+    Int  m_numberOfLongtermPictures;          // Zero when disabled
+
 
     TComReferencePictureSet();
     virtual ~TComReferencePictureSet();

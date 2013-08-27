@@ -243,6 +243,36 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     slice->setNextSlice(false);
 }
 
+void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer)
+{
+    curPoc;
+    TComPic * refPic;
+    unsigned int poci=0, numNeg=0, numPos=0;
+
+    TComList<TComPic*>::iterator iterPic = m_picList.begin();
+    while ((iterPic != m_picList.end())&&(poci<maxDecPicBuffer))
+    {
+        refPic = *(iterPic);
+        if ((refPic->getPOC() != curPoc)&&(refPic->getSlice()->isReferenced()))
+        {
+            rps->m_POC[poci] = refPic->getPOC();
+            rps->m_deltaPOC[poci] = rps->m_POC[poci] - curPoc;
+            (rps->m_deltaPOC[poci] < 0) ? numNeg++: numPos++;
+            rps->m_used[poci] = true && (!isRAP);
+            poci++;
+        }
+        iterPic++;
+    }
+
+    rps->m_numberOfPictures = poci;
+    rps->m_numberOfPositivePictures = numPos;
+    rps->m_numberOfNegativePictures = numNeg;
+    rps->m_numberOfLongtermPictures = 0;
+    rps->m_interRPSPrediction = false;          // To be changed later when needed
+
+    rps->sortDeltaPOC();                        // TO DO: check whether entire process of sorting is needed here
+}
+
 // This is a function that determines what Reference Picture Set to use for a
 // specific slice (with POC = POCCurr)
 void DPB::selectReferencePictureSet(TComSlice* slice, FrameEncoder *frameEncoder, int curPOC, int gopID)

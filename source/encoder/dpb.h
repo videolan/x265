@@ -43,6 +43,8 @@ public:
     bool               m_bRefreshPending;
     TEncCfg*           m_cfg;
     TComList<TComPic*> m_picList;
+    int                m_maxRefL0;
+    int                m_maxRefL1;
 
     DPB(TEncCfg *cfg)
         : m_cfg(cfg)
@@ -50,6 +52,8 @@ public:
         m_lastIDR = 0;
         m_pocCRA = 0;
         m_bRefreshPending = false;
+        m_maxRefL0 = 1;             //TODO: This values should later be fetched from input params
+        m_maxRefL1 = 1;
     }
 
     ~DPB();
@@ -61,6 +65,8 @@ public:
 protected:
 
     void selectReferencePictureSet(TComSlice* slice, x265::FrameEncoder*, int curPoc, int gopID);
+
+    void computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer);
 
     int getReferencePictureSetIdxForSOP(int pocCur, int GOPid);
 
