@@ -36,7 +36,7 @@ FrameFilter::FrameFilter(ThreadPool* pool)
     : JobProvider(pool)
     , m_cfg(NULL)
     , m_pic(NULL)
-    , active_lft(false)
+    , active_lft(FALSE)
     , m_entropyCoder(NULL)
     , m_rdGoOnSbacCoder(NULL)
 {}
@@ -59,7 +59,7 @@ void FrameFilter::destroy()
 bool FrameFilter::findJob()
 {
     // Check the lock
-    if (ATOMIC_CAS32(&active_lft, false, true) == true)
+    if (ATOMIC_CAS32(&active_lft, FALSE, TRUE) == TRUE)
         return false;
 
     // NOTE: only one thread can be here
@@ -68,10 +68,10 @@ bool FrameFilter::findJob()
         // NOTE: not need atom operator here because we lock before
         row_done++;
         processRow(row_done);
-        active_lft = false;
+        active_lft = FALSE;
         return true;
     }
-    active_lft = false;
+    active_lft = FALSE;
     return false;
 }
 
@@ -102,7 +102,7 @@ void FrameFilter::start(TComPic *pic)
     m_loopFilter.setCfg(pic->getSlice()->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
     row_ready = -1;
     row_done = -1;
-    active_lft = false;
+    active_lft = FALSE;
     if (m_cfg->param.bEnableLoopFilter)
     {
         m_sao.resetStats();
