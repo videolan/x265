@@ -41,9 +41,9 @@ DPB::~DPB()
     }
 }
 
+// move unreferenced pictures from picList to freeList for recycle
 void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
 {
-    // move unreferenced pictures from picList to freeList for recycle
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
     while (iterPic != m_picList.end())
     {
@@ -52,7 +52,7 @@ void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
         {
             pic->getPicYuvRec()->clearReferences();
             pic->getPicYuvRec()->clearExtendedFlag();
-            
+
             // iterator is invalidated by remove, restart scan
             m_picList.remove(pic);
             iterPic = m_picList.begin();
@@ -68,9 +68,9 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 
     int gopIdx = pic->m_lowres.gopIdx;
     int pocCurr = pic->getSlice()->getPOC();
-    
+
     m_picList.pushFront(pic);
-    
+
     TComSlice* slice = pic->getSlice();
     if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
         getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
@@ -94,14 +94,17 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     {
         switch (slice->getNalUnitType())
         {
-            case NAL_UNIT_CODED_SLICE_TRAIL_R:
-                slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TRAIL_N); break;
-            case NAL_UNIT_CODED_SLICE_RADL_R:
-                slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RADL_N); break;
-            case NAL_UNIT_CODED_SLICE_RASL_R: 
-                slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RASL_N); break;
-            default:
-                break;
+        case NAL_UNIT_CODED_SLICE_TRAIL_R:
+            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TRAIL_N);
+            break;
+        case NAL_UNIT_CODED_SLICE_RADL_R:
+            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RADL_N);
+            break;
+        case NAL_UNIT_CODED_SLICE_RASL_R:
+            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RASL_N);
+            break;
+        default:
+            break;
         }
     }
 
@@ -109,7 +112,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     decodingRefreshMarking(pocCurr, slice->getNalUnitType());
 
     computeRPS(pocCurr, slice->isIRAP(), slice->getLocalRPS(), slice->getSPS()->getMaxDecPicBuffering(0));
-    slice->setRPS(slice->getLocalRPS());                
+    slice->setRPS(slice->getLocalRPS());
     slice->setRPSidx(-1);              //   To force using RPS from slice, rather than from SPS
 
     applyReferencePictureSet(slice->getRPS(), pocCurr); // Mark pictures in m_piclist as unreferenced if they are not included in RPS
@@ -120,7 +123,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     refPicListModification->setRefPicListModificationFlagL1(false);
     slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->getNumberOfNegativePictures()));   // Ensuring L0 contains just the -ve POC
     slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->getNumberOfPositivePictures()));
-
+      
     slice->setRefPicList(m_picList);
 
     // Slice type refinement
@@ -238,18 +241,18 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer)
 {
     TComPic * refPic;
-    unsigned int poci=0, numNeg=0, numPos=0;
+    unsigned int poci = 0, numNeg = 0, numPos = 0;
 
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    while ((iterPic != m_picList.end())&&(poci<maxDecPicBuffer))
+    while ((iterPic != m_picList.end()) && (poci < maxDecPicBuffer))
     {
         refPic = *(iterPic);
-        if ((refPic->getPOC() != curPoc)&&(refPic->getSlice()->isReferenced()))
+        if ((refPic->getPOC() != curPoc) && (refPic->getSlice()->isReferenced()))
         {
             rps->m_POC[poci] = refPic->getPOC();
             rps->m_deltaPOC[poci] = rps->m_POC[poci] - curPoc;
-            (rps->m_deltaPOC[poci] < 0) ? numNeg++: numPos++;
-            rps->m_used[poci] = true && (!isRAP);
+            (rps->m_deltaPOC[poci] < 0) ? numNeg++ : numPos++;
+            rps->m_used[poci] = !isRAP;
             poci++;
         }
         iterPic++;
@@ -662,7 +665,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         /* encoder_randomaccess_main */
         int offsets[] = { 1, 2, 3, 4, 4, 3, 4, 4 };
         double factors[] = { 0, 0.442, 0.3536, 0.3536, 0.68 };
-        int pocs[] = { 1, 3, 2, 5, 4, 7, 6, 8};
+        int pocs[] = { 1, 3, 2, 5, 4, 7, 6, 8};     //For alternate P/B frames
         int rps[] = { 0, 4, 2, 1, -2, -3, 1, -2 };
         for (int i = 0; i < 8; i++)
         {
@@ -740,7 +743,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         {
             _param->keyframeMax += m_gopSize - remain;
             x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
-                m_gopSize, _param->keyframeMax);
+                     m_gopSize, _param->keyframeMax);
         }
         if (_param->bframes && _param->keyframeMax < 16)
         {
@@ -763,7 +766,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         // this check goes away when we have a real lookahead
         x265_log(_param, X265_LOG_WARNING, "Lookahead depth must be at least one GOP\n");
         _param->lookaheadDepth = m_gopSize;
-    }
+    }    
 
     bool verifiedGOP = false;
     bool errorGOP = false;
