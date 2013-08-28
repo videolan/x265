@@ -79,7 +79,7 @@ RateControl::RateControl(x265_param_t * param)
         accumPQp = (ABR_INIT_QP)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame  - needs to be tweaked for x265*/
         cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.6);
-        wantedBitsWindow = 1.0 * bitrate / framerate;
+        wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
     }
     ipOffset = 6.0 * (float)(X265_LOG2(param->rc.ipFactor));
@@ -122,9 +122,7 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
     default:
         assert(!"unimplemented");
         break;
-    }
-
-    
+    }   
 
     if (frameType != B_SLICE)
         lastNonBPictType = frameType;
