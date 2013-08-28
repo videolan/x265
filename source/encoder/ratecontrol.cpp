@@ -53,6 +53,7 @@ RateControl::RateControl(x265_param_t * param)
 {
     rce = NULL;
     keyFrameInterval = param->keyframeMax;
+    frameThreads = param->frameNumThreads;
     framerate = param->frameRate;
     bframes = param->bframes;
     rateTolerance = param->rc.rateTolerance;
@@ -212,8 +213,7 @@ double RateControl::rateEstimateQscale()
          * Don't run it if the frame complexity is zero either. */
         if (lastSatd)
         {
-            // TODO: need to check the thread_frames  - add after min chen plugs in frame parallelism.
-            double iFrameDone = curFrame->getPOC() + 1 - 1;   //h->i_thread_frames;
+            double iFrameDone = curFrame->getPOC() + 1 - frameThreads;
             double timeDone = iFrameDone / framerate;
             wantedBits = timeDone * bitrate;
             if (wantedBits > 0)
