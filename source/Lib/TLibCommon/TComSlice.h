@@ -1556,8 +1556,6 @@ public:
 
     Void      checkCRA(TComReferencePictureSet *rps, Int& pocCRA, Bool& prevRAPisBLA);
 
-    Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& picList);
-
     Void      setSliceType(SliceType e)               { m_sliceType = e; }
 
     Void      setSliceQp(Int i)                       { m_sliceQp = i; }
@@ -1631,7 +1629,6 @@ public:
 
     Void setTLayerInfo(UInt tlayer);
     Void decodingMarking(TComList<TComPic*>& picList, Int gopSize, Int& maxRefPicNum);
-    Void applyReferencePictureSet(TComList<TComPic*>& picList, TComReferencePictureSet *rps);
     Int  checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool printErrors, Int pocRandomAccess = 0);
     Void createExplicitReferencePictureSetFromReference(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool isRAP);
 

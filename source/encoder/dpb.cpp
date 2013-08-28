@@ -106,13 +106,13 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     }
 
     // Do decoding refresh marking if any
-    slice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_picList);
- 
+    decodingRefreshMarking(pocCurr, slice->getNalUnitType());
+
     computeRPS(pocCurr, slice->isIRAP(), slice->getLocalRPS(), slice->getSPS()->getMaxDecPicBuffering(0));
     slice->setRPS(slice->getLocalRPS());                
     slice->setRPSidx(-1);              //   To force using RPS from slice, rather than from SPS
 
-    slice->applyReferencePictureSet(m_picList, slice->getRPS());
+    applyReferencePictureSet(slice->getRPS(), pocCurr); // Mark pictures in m_piclist as unreferenced if they are not included in RPS
 
     arrangeLongtermPicturesInRPS(slice, frameEncoder);
     TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
@@ -261,7 +261,145 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
     rps->m_numberOfLongtermPictures = 0;
     rps->m_interRPSPrediction = false;          // To be changed later when needed
 
-    rps->sortDeltaPOC();                        // TO DO: check whether entire process of sorting is needed here
+    rps->sortDeltaPOC();
+}
+
+/** Function for marking the reference pictures when an IDR/CRA/CRANT/BLA/BLANT is encountered.
+ * \param pocCRA POC of the CRA/CRANT/BLA/BLANT picture
+ * \param bRefreshPending flag indicating if a deferred decoding refresh is pending
+ * \param picList reference to the reference picture list
+ * This function marks the reference pictures as "unused for reference" in the following conditions.
+ * If the nal_unit_type is IDR/BLA/BLANT, all pictures in the reference picture list
+ * are marked as "unused for reference"
+ *    If the nal_unit_type is BLA/BLANT, set the pocCRA to the temporal reference of the current picture.
+ * Otherwise
+ *    If the bRefreshPending flag is true (a deferred decoding refresh is pending) and the current
+ *    temporal reference is greater than the temporal reference of the latest CRA/CRANT/BLA/BLANT picture (pocCRA),
+ *    mark all reference pictures except the latest CRA/CRANT/BLA/BLANT picture as "unused for reference" and set
+ *    the bRefreshPending flag to false.
+ *    If the nal_unit_type is CRA/CRANT, set the bRefreshPending flag to true and pocCRA to the temporal
+ *    reference of the current picture.
+ * Note that the current picture is already placed in the reference list and its marking is not changed.
+ * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
+ */
+Void DPB::decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType)
+{
+    TComPic* outPic;
+
+    if (nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
+        || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+        || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
+        || nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+        || nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR or BLA picture
+    {        
+        // mark all pictures as not used for reference
+        TComList<TComPic*>::iterator iterPic = m_picList.begin();
+        while (iterPic != m_picList.end())
+        {
+            outPic = *(iterPic);
+            if (outPic->getPOC() != pocCurr)
+                outPic->getSlice()->setReferenced(false);
+            iterPic++;
+        }
+
+        if (nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
+            || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+            || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP)
+        {
+            m_pocCRA = pocCurr;
+        }
+    }
+    else // CRA or No DR
+    {
+        if (m_bRefreshPending == true && pocCurr > m_pocCRA) // CRA reference marking pending
+        {
+            TComList<TComPic*>::iterator iterPic = m_picList.begin();
+            while (iterPic != m_picList.end())
+            {
+                outPic = *(iterPic);
+                if (outPic->getPOC() != pocCurr && outPic->getPOC() != m_pocCRA)
+                    outPic->getSlice()->setReferenced(false);
+                iterPic++;
+            }
+
+            m_bRefreshPending = false;
+        }
+        if (nalUnitType == NAL_UNIT_CODED_SLICE_CRA) // CRA picture found
+        {
+            m_bRefreshPending = true;
+            m_pocCRA = pocCurr;
+        }
+    }
+}
+
+/** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet */
+Void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
+{
+    TComPic* outPic;
+    Int i, isReference;
+
+    // loop through all pictures in the reference picture buffer
+    TComList<TComPic*>::iterator iterPic = m_picList.begin();
+    while (iterPic != m_picList.end())
+    {
+        outPic = *(iterPic++);
+
+        if (!outPic->getSlice()->isReferenced())
+        {
+            continue;
+        }
+
+        isReference = 0;
+        // loop through all pictures in the Reference Picture Set
+        // to see if the picture should be kept as reference picture
+        for (i = 0; i < rps->getNumberOfPositivePictures() + rps->getNumberOfNegativePictures(); i++)
+        {
+            if (!outPic->getIsLongTerm() && outPic->getPicSym()->getSlice()->getPOC() == curPoc + rps->getDeltaPOC(i))
+            {
+                isReference = 1;
+                outPic->setUsedByCurr(rps->getUsed(i) == 1);
+                outPic->setIsLongTerm(0);
+            }
+        }
+
+        for (; i < rps->getNumberOfPictures(); i++)
+        {
+            if (rps->getCheckLTMSBPresent(i) == true)
+            {
+                if (outPic->getIsLongTerm() && (outPic->getPicSym()->getSlice()->getPOC()) == rps->getPOC(i))
+                {
+                    isReference = 1;
+                    outPic->setUsedByCurr(rps->getUsed(i) == 1);
+                }
+            }
+            else
+            {
+                if (outPic->getIsLongTerm() && (outPic->getPicSym()->getSlice()->getPOC() %
+                                                (1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC())) == rps->getPOC(i) %
+                    (1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC()))
+                {
+                    isReference = 1;
+                    outPic->setUsedByCurr(rps->getUsed(i) == 1);
+                }
+            }
+        }
+
+        // mark the picture as "unused for reference" if it is not in
+        // the Reference Picture Set
+        if (outPic->getPicSym()->getSlice()->getPOC() != curPoc && isReference == 0)
+        {
+            outPic->getSlice()->setReferenced(false);
+            outPic->setUsedByCurr(0);
+            outPic->setIsLongTerm(0);
+        }
+        // TODO: Do we require this check here
+        // check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
+
+        /*if (this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
+        {
+            assert(outPic->getSlice()->isReferenced() == 0);
+        }*/
+    }
 }
 
 // This is a function that determines what Reference Picture Set to use for a
