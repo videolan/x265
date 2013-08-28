@@ -70,7 +70,7 @@ public:
 
     void threadMain();
 
-    volatile static int   s_sleepCount;
+    static volatile int s_sleepCount;
     static Event s_wakeEvent;
 };
 
