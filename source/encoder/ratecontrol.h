@@ -48,7 +48,7 @@ struct RateControl
     TComSlice *curFrame;        /* all info abt the current frame */
     SliceType frameType;        /* Current frame type */
     int ncu;                    /* number of CUs in a frame */
-    int fps;                    /* current frame rate TODO: need to initaialize in init */
+    int framerate;                    /* current frame rate TODO: need to initaialize in init */
     int keyFrameInterval;       /* TODO: need to initialize in init */
     int qp;                     /* updated qp for current frame */
     int baseQp;                 /* CQP base QP */

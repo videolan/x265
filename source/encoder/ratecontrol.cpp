@@ -53,7 +53,7 @@ RateControl::RateControl(x265_param_t * param)
 {
     rce = NULL;
     keyFrameInterval = param->keyframeMax;
-    fps = param->frameRate;
+    framerate = param->frameRate;
     bframes = param->bframes;
     rateTolerance = param->rc.rateTolerance;
     bitrate = param->rc.bitrate * 1000;
@@ -79,7 +79,7 @@ RateControl::RateControl(x265_param_t * param)
         accumPQp = (ABR_INIT_QP)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame  - needs to be tweaked for x265*/
         cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.6);
-        wantedBitsWindow = 1.0 * bitrate / fps;
+        wantedBitsWindow = 1.0 * bitrate / framerate;
         lastNonBPictType = I_SLICE;
     }
     ipOffset = 6.0 * (float)(X265_LOG2(param->rc.ipFactor));
@@ -215,7 +215,7 @@ double RateControl::rateEstimateQscale()
         {
             // TODO: need to check the thread_frames  - add after min chen plugs in frame parallelism.
             double iFrameDone = curFrame->getPOC() + 1 - 1;   //h->i_thread_frames;
-            double timeDone = iFrameDone / fps;
+            double timeDone = iFrameDone / framerate;
             wantedBits = timeDone * bitrate;
             if (wantedBits > 0)
             {
