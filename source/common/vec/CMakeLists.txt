@@ -1,6 +1,14 @@
 if (MSVC)
     add_definitions(/wd4127) # conditional expression is constant
     add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
+    if ("$ENV{CXX}" STREQUAL "icl")
+        add_definitions(/Qwd111)    # statement is unreachable
+        add_definitions(/Qwd128)    # loop is unreachable
+        add_definitions(/Qwd177)    # declared function is unused
+        add_definitions(/Qwd185)    # dynamic initialization in unreachable code
+        add_definitions(/Qwd280)    # conditional expression is constant
+        add_definitions(/Qwd13200)  # function using MMX does not call EMMS
+    endif()
     set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp
         blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp
         pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
