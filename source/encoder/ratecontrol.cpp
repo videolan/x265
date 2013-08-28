@@ -62,6 +62,7 @@ RateControl::RateControl(x265_param_t * param)
     ncu = (int)((param->sourceHeight * param->sourceWidth) / pow((int)param->maxCUSize, 2.0));
     lastNonBPictType = -1;
     baseQp = param->rc.qp;
+    qpm = qp = baseQp;
 
     // heuristics- encoder specific
     qCompress = param->rc.qCompress; // tweak and test for x265. 
