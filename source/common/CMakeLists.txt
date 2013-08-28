@@ -32,6 +32,9 @@ if(MSVC)
     # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
+    if ("$ENV{CXX}" STREQUAL "icl")
+        add_definitions(/Qwd2557) # signed/unsigned mismatch
+    endif()
 endif(MSVC)
 
 add_library(common ../../COPYING
