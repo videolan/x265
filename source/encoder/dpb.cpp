@@ -123,7 +123,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     refPicListModification->setRefPicListModificationFlagL1(false);
     slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->getNumberOfNegativePictures()));   // Ensuring L0 contains just the -ve POC
     slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->getNumberOfPositivePictures()));
-      
+
     slice->setRefPicList(m_picList);
 
     // Slice type refinement
@@ -294,7 +294,7 @@ Void DPB::decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType)
         || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
         || nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
         || nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR or BLA picture
-    {        
+    {
         // mark all pictures as not used for reference
         TComList<TComPic*>::iterator iterPic = m_picList.begin();
         while (iterPic != m_picList.end())
@@ -403,73 +403,6 @@ Void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
             assert(outPic->getSlice()->isReferenced() == 0);
         }*/
     }
-}
-
-// This is a function that determines what Reference Picture Set to use for a
-// specific slice (with POC = POCCurr)
-void DPB::selectReferencePictureSet(TComSlice* slice, FrameEncoder *frameEncoder, int curPOC, int gopID)
-{
-    slice->setRPSidx(gopID);
-    UInt intraPeriod = m_cfg->param.keyframeMax;
-    int gopSize = m_cfg->getGOPSize();
-
-    for (int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
-    {
-        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
-        {
-            int POCIndex = curPOC % intraPeriod;
-            if (POCIndex == 0)
-            {
-                POCIndex = intraPeriod;
-            }
-            if (POCIndex == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                slice->setRPSidx(extraNum);
-            }
-        }
-        else
-        {
-            if (curPOC == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                slice->setRPSidx(extraNum);
-            }
-        }
-    }
-
-    slice->setRPS(frameEncoder->m_sps.getRPSList()->getReferencePictureSet(slice->getRPSidx()));
-    slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
-}
-
-int DPB::getReferencePictureSetIdxForSOP(int curPOC, int gopID)
-{
-    int rpsIdx = gopID;
-    int gopSize = m_cfg->getGOPSize();
-    UInt intraPeriod = m_cfg->param.keyframeMax;
-
-    for (int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
-    {
-        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
-        {
-            int POCIndex = curPOC % intraPeriod;
-            if (POCIndex == 0)
-            {
-                POCIndex = intraPeriod;
-            }
-            if (POCIndex == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                rpsIdx = extraNum;
-            }
-        }
-        else
-        {
-            if (curPOC == m_cfg->getGOPEntry(extraNum).m_POC)
-            {
-                rpsIdx = extraNum;
-            }
-        }
-    }
-
-    return rpsIdx;
 }
 
 /** Function for deciding the nal_unit_type.
@@ -665,19 +598,15 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         /* encoder_randomaccess_main */
         int offsets[] = { 1, 2, 3, 4, 4, 3, 4, 4 };
         double factors[] = { 0, 0.442, 0.3536, 0.3536, 0.68 };
-        int pocs[] = { 1, 3, 2, 5, 4, 7, 6, 8};     //For alternate P/B frames
-        int rps[] = { 0, 4, 2, 1, -2, -3, 1, -2 };
+        int pocs[] = { 1, 3, 2, 5, 4, 7, 6, 8 };     //For alternate P/B frames
         for (int i = 0; i < 8; i++)
         {
             m_gopList[i].m_POC = pocs[i];
             m_gopList[i].m_QPFactor = factors[offsets[i]];
             m_gopList[i].m_QPOffset = offsets[i];
-            m_gopList[i].m_deltaRPS = rps[i];
-            m_gopList[i].m_sliceType = (pocs[i]%2)? 'P': 'B';
-            m_gopList[i].m_numRefPicsActive = i ? 2 : 4;
-            m_gopList[i].m_numRefPics = i == 1 ? 3 : 4;
-            m_gopList[i].m_interRPSPrediction = i ? 1 : 0;
-            m_gopList[i].m_numRefIdc = i == 2 ? 4 : 5;
+            m_gopList[i].m_sliceType = (pocs[i] % 2) ? 'P' : 'B';
+            m_gopList[i].m_numRefPicsActive = 1;
+            m_gopList[i].m_numRefPics = 2;
         }
 
 #define SET4(id, VAR, a, b, c, d) \
@@ -766,226 +695,8 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         // this check goes away when we have a real lookahead
         x265_log(_param, X265_LOG_WARNING, "Lookahead depth must be at least one GOP\n");
         _param->lookaheadDepth = m_gopSize;
-    }    
-
-    bool verifiedGOP = false;
-    bool errorGOP = false;
-    int checkGOP = 1;
-    int numRefs = 1;
-
-    int refList[MAX_NUM_REF_PICS + 1];
-    refList[0] = 0;
-    bool isOK[MAX_GOP];
-    for (Int i = 0; i < MAX_GOP; i++)
-    {
-        isOK[i] = false;
     }
 
-    int numOK = 0;
-    if (_param->bOpenGOP == false)
-        CONFIRM(_param->keyframeMax % m_gopSize != 0, "Intra period must be a multiple of GOPSize");
-
-    m_extraRPSs = 0;
-    // start looping through frames in coding order until we can verify that the GOP structure is correct.
-    while (!verifiedGOP && !errorGOP)
-    {
-        Int curGOP = (checkGOP - 1) % m_gopSize;
-        Int curPOC = ((checkGOP - 1) / m_gopSize) * m_gopSize + m_gopList[curGOP].m_POC;
-        if (m_gopList[curGOP].m_POC < 0)
-        {
-            printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
-            errorGOP = true;
-        }
-        else
-        {
-            //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
-            Bool beforeI = false;
-            for (Int i = 0; i < m_gopList[curGOP].m_numRefPics; i++)
-            {
-                Int absPOC = curPOC + m_gopList[curGOP].m_referencePics[i];
-                if (absPOC < 0)
-                {
-                    beforeI = true;
-                }
-                else
-                {
-                    Bool found = false;
-                    for (Int j = 0; j < numRefs; j++)
-                    {
-                        if (refList[j] == absPOC)
-                        {
-                            found = true;
-                            for (Int k = 0; k < m_gopSize; k++)
-                            {
-                                if (absPOC % m_gopSize == m_gopList[k].m_POC % m_gopSize)
-                                {
-                                    m_gopList[k].m_refPic = true;
-                                    m_gopList[curGOP].m_usedByCurrPic[i] = 1;
-                                }
-                            }
-                        }
-                    }
-
-                    if (!found)
-                    {
-                        printf("\nError: ref pic %d is not available for GOP frame %d\n", m_gopList[curGOP].m_referencePics[i], curGOP + 1);
-                        errorGOP = true;
-                    }
-                }
-            }
-
-            if (!beforeI && !errorGOP)
-            {
-                //all ref frames were present
-                if (!isOK[curGOP])
-                {
-                    numOK++;
-                    isOK[curGOP] = true;
-                    if (numOK == m_gopSize)
-                    {
-                        verifiedGOP = true;
-                    }
-                }
-            }
-            else
-            {
-                //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
-                m_gopList[m_gopSize + m_extraRPSs] = m_gopList[curGOP];
-                Int newRefs = 0;
-                for (Int i = 0; i < m_gopList[curGOP].m_numRefPics; i++)
-                {
-                    Int absPOC = curPOC + m_gopList[curGOP].m_referencePics[i];
-                    if (absPOC >= 0)
-                    {
-                        m_gopList[m_gopSize + m_extraRPSs].m_referencePics[newRefs] = m_gopList[curGOP].m_referencePics[i];
-                        m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[newRefs] = m_gopList[curGOP].m_usedByCurrPic[i];
-                        newRefs++;
-                    }
-                }
-
-                Int numPrefRefs = m_gopList[curGOP].m_numRefPicsActive;
-
-                for (Int offset = -1; offset > -checkGOP; offset--)
-                {
-                    //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
-                    Int offGOP = (checkGOP - 1 + offset) % m_gopSize;
-                    Int offPOC = ((checkGOP - 1 + offset) / m_gopSize) * m_gopSize + m_gopList[offGOP].m_POC;
-                    if (offPOC >= 0)
-                    {
-                        Bool newRef = false;
-                        for (Int i = 0; i < numRefs; i++)
-                        {
-                            if (refList[i] == offPOC)
-                            {
-                                newRef = true;
-                            }
-                        }
-
-                        for (Int i = 0; i < newRefs; i++)
-                        {
-                            if (m_gopList[m_gopSize + m_extraRPSs].m_referencePics[i] == offPOC - curPOC)
-                            {
-                                newRef = false;
-                            }
-                        }
-
-                        if (newRef)
-                        {
-                            Int insertPoint = newRefs;
-                            //this picture can be added, find appropriate place in list and insert it.
-                            m_gopList[offGOP].m_refPic = true;
-                            for (Int j = 0; j < newRefs; j++)
-                            {
-                                if (m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j] < offPOC - curPOC || m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j] > 0)
-                                {
-                                    insertPoint = j;
-                                    break;
-                                }
-                            }
-
-                            Int prev = offPOC - curPOC;
-                            Int prevUsed = 1;
-                            for (Int j = insertPoint; j < newRefs + 1; j++)
-                            {
-                                Int newPrev = m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j];
-                                Int newUsed = m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[j];
-                                m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j] = prev;
-                                m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[j] = prevUsed;
-                                prevUsed = newUsed;
-                                prev = newPrev;
-                            }
-
-                            newRefs++;
-                        }
-                    }
-                    if (newRefs >= numPrefRefs)
-                    {
-                        break;
-                    }
-                }
-
-                m_gopList[m_gopSize + m_extraRPSs].m_numRefPics = newRefs;
-                m_gopList[m_gopSize + m_extraRPSs].m_POC = curPOC;
-                if (m_extraRPSs == 0)
-                {
-                    m_gopList[m_gopSize + m_extraRPSs].m_interRPSPrediction = 0;
-                    m_gopList[m_gopSize + m_extraRPSs].m_numRefIdc = 0;
-                }
-                else
-                {
-                    Int rIdx =  m_gopSize + m_extraRPSs - 1;
-                    Int refPOC = m_gopList[rIdx].m_POC;
-                    Int refPics = m_gopList[rIdx].m_numRefPics;
-                    Int newIdc = 0;
-                    for (Int i = 0; i <= refPics; i++)
-                    {
-                        Int deltaPOC = ((i != refPics) ? m_gopList[rIdx].m_referencePics[i] : 0); // check if the reference abs POC is >= 0
-                        Int absPOCref = refPOC + deltaPOC;
-                        Int refIdc = 0;
-                        for (Int j = 0; j < m_gopList[m_gopSize + m_extraRPSs].m_numRefPics; j++)
-                        {
-                            if ((absPOCref - curPOC) == m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j])
-                            {
-                                if (m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[j])
-                                {
-                                    refIdc = 1;
-                                }
-                                else
-                                {
-                                    refIdc = 2;
-                                }
-                            }
-                        }
-
-                        m_gopList[m_gopSize + m_extraRPSs].m_refIdc[newIdc] = refIdc;
-                        newIdc++;
-                    }
-
-                    m_gopList[m_gopSize + m_extraRPSs].m_interRPSPrediction = 1;
-                    m_gopList[m_gopSize + m_extraRPSs].m_numRefIdc = newIdc;
-                    m_gopList[m_gopSize + m_extraRPSs].m_deltaRPS = refPOC - m_gopList[m_gopSize + m_extraRPSs].m_POC;
-                }
-                curGOP = m_gopSize + m_extraRPSs;
-                m_extraRPSs++;
-            }
-            numRefs = 0;
-            for (Int i = 0; i < m_gopList[curGOP].m_numRefPics; i++)
-            {
-                Int absPOC = curPOC + m_gopList[curGOP].m_referencePics[i];
-                if (absPOC >= 0)
-                {
-                    refList[numRefs] = absPOC;
-                    numRefs++;
-                }
-            }
-
-            refList[numRefs] = curPOC;
-            numRefs++;
-        }
-        checkGOP++;
-    }
-
-    CONFIRM(errorGOP, "Invalid GOP structure given");
     for (Int i = 0; i < m_gopSize; i++)
     {
         CONFIRM(m_gopList[i].m_sliceType != 'B' && m_gopList[i].m_sliceType != 'P', "Slice type must be equal to B or P");
