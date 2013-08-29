@@ -3002,14 +3002,18 @@ Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin,
 Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
 {
     ALIGN_VAR_32(pixel, fenc[64 * 64]);
+    int costs[16];
+
     Int srchRngHorLeft   = mvmin->x;
     Int srchRngHorRight  = mvmax->x;
     Int srchRngVerTop    = mvmin->y;
     Int srchRngVerBottom = mvmax->y;
 
-    x265::pixelcmp_t sad = x265::primitives.sad[x265::PartitionFromSizes(patternKey->getROIYWidth(), patternKey->getROIYHeight())];
+    int part = x265::PartitionFromSizes(patternKey->getROIYWidth(), patternKey->getROIYHeight());
+    x265::pixelcmp_t sad = x265::primitives.sad[part];
+    x265::pixelcmp_x4_t sad_x4 = x265::primitives.sad_x4[part];
     x265::primitives.blockcpy_pp(patternKey->getROIYWidth(), patternKey->getROIYHeight(), fenc, 64, patternKey->getROIY(), patternKey->getPatternLStride());
-    refY += (srchRngVerTop * stride);
+    refY += srchRngVerTop * stride;
 
     // find min. distortion position
     UInt bcost = MAX_UINT;
@@ -3018,12 +3022,37 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
         for (Int x = srchRngHorLeft; x <= srchRngHorRight; x++)
         {
             MV mv(x, y);
-            UInt cost = sad(fenc, 64, refY + x, stride) + m_bc.mvcost(mv << 2);
-
-            if (cost < bcost)
+            if (x + 3 <= srchRngHorRight)
             {
-                bcost = cost;
-                outmv = mv;
+                pixel *pix_base = refY + x;
+                sad_x4(fenc,
+                    pix_base,
+                    pix_base + 1,
+                    pix_base + 2,
+                    pix_base + 3,
+                    stride, costs);
+                costs[0] += m_bc.mvcost(mv << 2);
+                COPY2_IF_LT(bcost, costs[0], outmv, mv);
+                mv.x++;
+                costs[1] += m_bc.mvcost(mv << 2);
+                COPY2_IF_LT(bcost, costs[1], outmv, mv);
+                mv.x++;
+                costs[2] += m_bc.mvcost(mv << 2);
+                COPY2_IF_LT(bcost, costs[2], outmv, mv);
+                mv.x++;
+                costs[3] += m_bc.mvcost(mv << 2);
+                COPY2_IF_LT(bcost, costs[3], outmv, mv);
+                x += 3;
+            }
+            else
+            {
+                UInt cost = sad(fenc, 64, refY + x, stride) + m_bc.mvcost(mv << 2);
+
+                if (cost < bcost)
+                {
+                    bcost = cost;
+                    outmv = mv;
+                }
             }
         }
 
