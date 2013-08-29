@@ -732,7 +732,7 @@ me_hex2:
                     costs[2] += mvcost(tmv << 2);
                     COPY2_IF_LT(bcost, costs[2], bmv, tmv);
                     tmv.x++;
-                    costs[3] += mvcost(tmv << 3);
+                    costs[3] += mvcost(tmv << 2);
                     COPY2_IF_LT(bcost, costs[3], bmv, tmv);
                 }
                 else
