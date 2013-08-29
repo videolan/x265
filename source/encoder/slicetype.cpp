@@ -185,6 +185,8 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
     return -1;
 }
 
+#define NUM_CUS (widthInCU > 2 && heightInCU > 2 ? (widthInCU - 2) * (heightInCU - 2) : widthInCU * heightInCU)
+
 int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 {
     int score = 0;
@@ -234,7 +236,8 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
     if (bIntraPenalty)
     {
         // arbitrary penalty for I-blocks after B-frames
-        score += (uint64_t)score * fenc->intraMbs[b - p0] / (widthInCU * heightInCU * 8);
+        int ncu = NUM_CUS;
+        score += (uint64_t)score * fenc->intraMbs[b - p0] / (ncu * 8);
     }
     x265_emms();
     return score;
@@ -250,6 +253,10 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     const int cuXY = cux + cuy * widthInCU;
     const int cuSize = X265_LOWRES_CU_SIZE;
     const int pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
+
+    // should this CU's cost contribute to the frame cost?
+    const bool bFrameScoreCU = (cux > 0 && cux < widthInCU - 1 &&
+                                cuy > 0 && cuy < heightInCU - 1) || widthInCU <= 2 || heightInCU <= 2;
 
     me.setSourcePU(pelOffset, cuSize, cuSize);
 
@@ -365,14 +372,14 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         // TOOD: i_icost += intra_penalty + lowres_penalty;
         fenc->intraCost[cuXY] = icost;
         fenc->rowSatds[0][0][cuy] += icost;
-        fenc->costEst[0][0] += icost;
+        if (bFrameScoreCU) fenc->costEst[0][0] += icost;
     }
 
     if (!bBidir)
     {
         if (fenc->intraCost[cuXY] < bcost)
         {
-            fenc->intraMbs[b - p0]++;
+            if (bFrameScoreCU) fenc->intraMbs[b - p0]++;
             bcost = fenc->intraCost[cuXY];
             listused = 0;
         }
@@ -382,7 +389,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     if (p0 != p1)
     {
         fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
-        fenc->costEst[b - p0][p1 - b] += bcost;
+        if (bFrameScoreCU) fenc->costEst[b - p0][p1 - b] += bcost;
     }
     fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
@@ -391,7 +398,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
 {
     int num_frames, origNumFrames, keyint_limit, framecnt;
     int maxSearch = X265_MIN(cfg->param.lookaheadDepth, X265_LOOKAHEAD_MAX);
-    int cuCount = widthInCU * heightInCU;
+    int cuCount = NUM_CUS;
     int cost1p0, cost2p0, cost1b1, cost2p1;
     int reset_start;
     int vbv_lookahead = 0;
