@@ -3001,12 +3001,14 @@ Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin,
 
 Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
 {
+    ALIGN_VAR_32(pixel, fenc[64 * 64]);
     Int srchRngHorLeft   = mvmin->x;
     Int srchRngHorRight  = mvmax->x;
     Int srchRngVerTop    = mvmin->y;
     Int srchRngVerBottom = mvmax->y;
 
-    m_rdCost->setDistParam(patternKey, refY, stride, m_distParam);
+    x265::pixelcmp_t sad = x265::primitives.sad[x265::PartitionFromSizes(patternKey->getROIYWidth(), patternKey->getROIYHeight())];
+    x265::primitives.blockcpy_pp(patternKey->getROIYWidth(), patternKey->getROIYHeight(), fenc, 64, patternKey->getROIY(), patternKey->getPatternLStride());
     refY += (srchRngVerTop * stride);
 
     // find min. distortion position
@@ -3016,8 +3018,7 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
         for (Int x = srchRngHorLeft; x <= srchRngHorRight; x++)
         {
             MV mv(x, y);
-            m_distParam.fref = refY + x;
-            UInt cost = m_distParam.distFunc(&m_distParam) + m_bc.mvcost(mv << 2);
+            UInt cost = sad(fenc, 64, refY + x, stride) + m_bc.mvcost(mv << 2);
 
             if (cost < bcost)
             {
