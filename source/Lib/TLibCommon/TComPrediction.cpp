@@ -474,10 +474,34 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *re
     Int yFrac = mv->y & 0x3;
     TComPicYuv* pic = cu->getSlice()->getPic()->getPicYuvOrg();
     Int blkOffset = pic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) - pic->getLumaAddr();
-    Pel* src = ref->lumaPlane[xFrac][yFrac] + blkOffset + refOffset;
+    Pel* src = ref->m_reconPic->getLumaAddr() + blkOffset + refOffset;
     Int srcStride = refStride;
 
-    x265::primitives.blockcpy_pp(width, height, dst, dstStride, src, srcStride);
+    if (yFrac == 0)
+    {
+        if (xFrac != 0)
+        {
+            x265::primitives.ipfilter_pp[FILTER_H_P_P_8]((pixel*)src, refStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[xFrac]);
+        }
+        else
+        {
+            x265::primitives.blockcpy_pp(width, height, dst, dstStride, src, srcStride);
+        }
+    }
+    else if (xFrac == 0)
+    {
+        x265::primitives.ipfilter_pp[FILTER_H_P_P_8]((pixel*)src, refStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[yFrac]);
+    }
+    else
+    {
+        Int tmpStride = width;
+        Int filterSize = NTAPS_LUMA;
+        Int halfFilterSize = (filterSize >> 1);
+        Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
+        primitives.ipfilter_ps[FILTER_H_P_S_8]((pixel*)src - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        free(tmp);
+    }
 }
 
 //Motion compensated block for biprediction

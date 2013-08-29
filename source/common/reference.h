@@ -64,6 +64,7 @@ public:
     void generateReferencePlanes();
 
     MotionReference *m_next;
+    TComPicYuv  *m_reconPic;
 
 protected:
 
@@ -71,7 +72,6 @@ protected:
     void generateReferencePlane(const int idx);
 
     intptr_t     m_startPad;
-    TComPicYuv  *m_reconPic;
     volatile int m_workerCount;
     volatile int m_finishedPlanes;
     Event        m_completionEvent;
