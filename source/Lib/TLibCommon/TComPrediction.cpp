@@ -44,7 +44,7 @@ using namespace x265;
 //! \ingroup TLibCommon
 //! \{
 
-const UChar m_aucIntraFilter[5] =
+static const UChar intraFilterThreshold[5] =
 {
     10, //4x4
     7,  //8x8
@@ -157,7 +157,7 @@ Void TComPrediction::predIntraLumaAng(UInt dirMode, Pel* dst, UInt stride, Int s
     Pel *src = m_predBuf;
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
     Int diff = min<Int>(abs((Int)dirMode - HOR_IDX), abs((Int)dirMode - VER_IDX));
-    UChar filterIdx = diff > m_aucIntraFilter[log2BlkSize - 2] ? 1 : 0;
+    UChar filterIdx = diff > intraFilterThreshold[log2BlkSize - 2] ? 1 : 0;
     if (dirMode == DC_IDX)
     {
         filterIdx = 0; //no smoothing for DC or LM chroma
