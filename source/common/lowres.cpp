@@ -79,6 +79,9 @@ void Lowres::create(TComPic *pic, int _bframes)
         lowresMvCosts[0][i] = (int*)X265_MALLOC(int, cuCount);
         lowresMvCosts[1][i] = (int*)X265_MALLOC(int, cuCount);
     }
+    
+    for(int i = 0; i < X265_BFRAME_MAX + 2; i++)
+        intraMbs[i] = 0;
 }
 
 void Lowres::destroy()
