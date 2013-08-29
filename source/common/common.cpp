@@ -58,25 +58,29 @@ void *x265_malloc(size_t size)
 {
     return _aligned_malloc(size, ALIGNBYTES);
 }
+
 void x265_free(void *ptr)
 {
     if (ptr) _aligned_free(ptr);
 }
-#else
+
+#else // if _WIN32
 void *x265_malloc(size_t size)
 {
     void *ptr;
+
     if (posix_memalign((void**)&ptr, ALIGNBYTES, size) == 0)
         return ptr;
     else
         return NULL;
 }
+
 void x265_free(void *ptr)
 {
     if (ptr) free(ptr);
 }
-#endif
 
+#endif // if _WIN32
 
 void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 {
@@ -139,8 +143,8 @@ void x265_param_default(x265_param_t *param)
     param->bEnableTSkipFast = 1;
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->lookaheadDepth = 10;
-    param->rc.bitrate = 1000;
-    param->rc.rateTolerance = 1;
+    param->rc.bitrate = 500;
+    param->rc.rateTolerance = 0.1;
     param->rc.qCompress = 0.6;
     param->rc.ipFactor = 1.4f;
     param->rc.pbFactor = 1.3f;
@@ -155,8 +159,7 @@ int x265_param_apply_profile(x265_param_t *param, const char *profile)
     if (!profile)
         return 0;
     if (!strcmp(profile, "main"))
-    {
-    }
+    {}
     else if (!strcmp(profile, "main10"))
     {
 #if HIGH_BIT_DEPTH
@@ -249,7 +252,7 @@ int x265_check_params(x265_param_t *param)
             "Picture width must be an integer multiple of the specified chroma subsampling");
     CONFIRM(param->sourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0,
             "Picture height must be an integer multiple of the specified chroma subsampling");
-    CONFIRM(param->rc.rateControlMode < X265_RC_ABR || param->rc.rateControlMode > X265_RC_CRF,
+    CONFIRM(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
             "Rate control mode is out of range");
 
     // max CU size should be power of 2
@@ -272,6 +275,7 @@ int x265_set_globals(x265_param_t *param)
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
     static int once /* = 0 */;
+
     if (once)
     {
         if (param->maxCUSize != g_maxCUWidth)
@@ -332,7 +336,7 @@ void x265_print_params(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max           : open-gop\n");
     else
         x265_log(param, X265_LOG_INFO, "Keyframe min / max           : %d / %d\n", param->keyframeMin, param->keyframeMax);
-    switch(param->rc.rateControlMode)
+    switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
         x265_log(param, X265_LOG_INFO, "Rate Control                 : ABR-%d kbps\n", param->rc.bitrate);
@@ -344,6 +348,7 @@ void x265_print_params(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "Rate Control                 : CRF-%d\n", param->rc.rateFactor);
         break;
     }
+
     if (param->cbQpOffset || param->crQpOffset)
     {
         x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
