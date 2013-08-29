@@ -223,6 +223,14 @@ void FrameFilter::processRow(int row)
     }
 
     // this row of CTUs has been encoded
+
+    // TODO: extend margins for motion reference
+
+    // Notify other FrameEncoders that this row of reconstructed pixels is available
+    m_pic->m_reconRowCount++;
+    for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
+        m_pic->m_reconRowWait.trigger();
+
     if (row == m_numRows - 1)
     {
         m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());

@@ -57,6 +57,8 @@ TComPic::TComPic()
     , m_bCheckLTMSB(false)
     , m_complete_enc(NULL)
 {
+    m_reconRowCount = 0;
+    m_countRefEncoders = 0;
     memset(&m_lowres, 0, sizeof(m_lowres));
 }
 

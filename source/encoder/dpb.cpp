@@ -48,10 +48,11 @@ void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
     while (iterPic != m_picList.end())
     {
         TComPic *pic = *(iterPic++);
-        if (pic->getSlice()->isReferenced() == false)
+        if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
         {
             pic->getPicYuvRec()->clearReferences();
             pic->getPicYuvRec()->clearExtendedFlag();
+            pic->m_reconRowCount = 0;
 
             // iterator is invalidated by remove, restart scan
             m_picList.remove(pic);
@@ -236,6 +237,20 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 
     slice->setMvdL1ZeroFlag(bGPBcheck);
     slice->setNextSlice(false);
+
+    /* Increment reference count of all motion-referenced frames.  This serves two purposes. First
+     * it prevents the frame from being recycled, and second the referenced frames know how many
+     * other FrameEncoders are using them for motion reference */
+    Int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+    for (Int l = 0; l < numPredDir; l++)
+    {
+        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        {
+            TComPic *refpic = slice->getRefPic(list, ref);
+            ATOMIC_INC(&refpic->m_countRefEncoders);
+        }
+    }
 }
 
 void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer)

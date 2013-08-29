@@ -43,6 +43,7 @@
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
 #include "lowres.h"
+#include "threading.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -70,6 +71,11 @@ private:
 public:
 
     volatile uint32_t*    m_complete_enc;       // Array of Col number that was finished stage encode
+
+    //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
+    volatile uint32_t     m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
+    volatile uint32_t     m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
+    x265::Event           m_reconRowWait;       // event triggered m_countRefEncoders time each time a recon row is completed
 
     x265::Lowres          m_lowres;
 

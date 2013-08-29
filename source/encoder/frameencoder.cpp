@@ -363,6 +363,7 @@ Void FrameEncoder::compressFrame(TComPic *pic)
     TComSlice*   slice        = pic->getSlice();
 
     Int numSubstreams = m_cfg->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
+    // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
     TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
 
@@ -414,7 +415,7 @@ Void FrameEncoder::compressFrame(TComPic *pic)
     }
 
     // Generate motion references
-    Int numPredDir = slice->isInterP() ? 1 : 2;
+    Int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (Int l = 0; l < numPredDir; l++)
     {
         RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -661,6 +662,17 @@ Void FrameEncoder::compressFrame(TComPic *pic)
     }
     pic->compressMotion();
 
+    /* Decrement referenced frame reference counts, allow them to be recycled */
+    for (Int l = 0; l < numPredDir; l++)
+    {
+        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        {
+            TComPic *refpic = slice->getRefPic(list, ref);
+            ATOMIC_DEC(&refpic->m_countRefEncoders);
+        }
+    }
+
     delete[] outStreams;
     delete bitstreamRedirect;
 }
@@ -866,13 +878,43 @@ Void FrameEncoder::compressCTURows(TComPic* pic)
         m_pic->m_complete_enc[i] = 0;
     }
 
+    m_referenceRowsAvailable = 0;
+
     if (m_pool && m_cfg->param.bEnableWavefront)
     {
         WaveFront::enqueue();
 
         m_frameFilter.start(pic);
 
-        // Enqueue first row, then block until worker threads complete the frame
+        TComSlice* slice = m_pic->getSlice();
+        Int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+        for (int row = 0; row < m_numRows; row++)
+        {
+            UInt min = m_numRows;
+            for (Int l = 0; l < numPredDir; l++)
+            {
+                RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+                for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                {
+                    TComPic *refpic = slice->getRefPic(list, ref);
+                    while (refpic->m_reconRowCount <= (UInt) row)
+                        refpic->m_reconRowWait.wait();
+                    min = X265_MIN(min, refpic->m_reconRowCount);
+                }
+            }
+
+            m_referenceRowsAvailable = min;
+            row = min;
+
+#if 0 // incomplete signaling of available recon reference rows
+            if (row > 0)
+            {
+                if (!m_rows[row + 1].m_active && (row == 1 || m_pic->m_complete_enc[row - 2] > 1))
+                    WaveFront::enqueueRow(row - 1);
+            }
+#endif
+        }
+
         WaveFront::enqueueRow(0);
 
         m_completionEvent.wait();
