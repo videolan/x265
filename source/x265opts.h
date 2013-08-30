@@ -69,8 +69,9 @@ OPT("bframes",         param->bframes,                required_argument, 'b', "M
 OPT("bframe-bias",     param->bFrameBias,             required_argument, 0, "Bias towards B frame decisions")
 OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")
 OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")
-OPT("no-weightbp",     param->bEnableWeightedBiPred,        no_argument, 0, "Disable weighted (bidirectional) prediction in B slices")
-OPT("weightbp",        param->bEnableWeightedBiPred,        no_argument, 0, "Enable weighted (bidirectional) prediction in B slices")
+// Disabled because weighted bi prediction is busted
+//OPT("no-weightbp",     param->bEnableWeightedBiPred,        no_argument, 0, "Disable weighted (bidirectional) prediction in B slices")
+//OPT("weightbp",        param->bEnableWeightedBiPred,        no_argument, 0, "Enable weighted (bidirectional) prediction in B slices")
 
 HELP("QP, rate control and rate distortion options:")
 OPT("rc-mode",         param->rc.rateControlMode,     required_argument, 0, "Rate Control mode - 0: ABR, 1: ConstQP (default:1)")
