@@ -80,7 +80,7 @@ RateControl::RateControl(x265_param_t * param)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame  - needs to be tweaked for x265*/
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(4 * ncu, 0.5);
+        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(2 *ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
     }
