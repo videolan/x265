@@ -115,8 +115,8 @@ Void TComRdCost::init()
     m_distortionFunctions[28] = TComRdCost::xGetHADs;
 }
 
-// Setting the Distortion Parameter for Inter (ME)
-Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride, DistParam& distParam)
+// Setting the Distortion Parameter for Inter (subpel ME with step)
+Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride, DistParam& distParam, Bool hadMe)
 {
     // set Original & Curr Pointer / Stride
     distParam.fenc = patternKey->getROIY();
@@ -124,41 +124,6 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride,
 
     distParam.fencstride = patternKey->getPatternLStride();
     distParam.frefstride = refStride;
-
-    // set Block Width / Height
-    distParam.cols    = patternKey->getROIYWidth();
-    distParam.rows    = patternKey->getROIYHeight();
-    distParam.distFunc = m_distortionFunctions[DF_SAD + g_convertToBit[distParam.cols] + 1];
-
-    if (distParam.cols == 12)
-    {
-        distParam.distFunc = m_distortionFunctions[43];
-    }
-    else if (distParam.cols == 24)
-    {
-        distParam.distFunc = m_distortionFunctions[44];
-    }
-    else if (distParam.cols == 48)
-    {
-        distParam.distFunc = m_distortionFunctions[45];
-    }
-
-    // initialize
-    distParam.subShift  = 0;
-}
-
-// Setting the Distortion Parameter for Inter (subpel ME with step)
-Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride, Int step, DistParam& distParam, Bool hadMe)
-{
-    // set Original & Curr Pointer / Stride
-    distParam.fenc = patternKey->getROIY();
-    distParam.fref = refY;
-
-    distParam.fencstride = patternKey->getPatternLStride();
-    distParam.frefstride = refStride * step;
-
-    // set Step for interpolated buffer
-    distParam.step = step;
 
     // set Block Width / Height
     distParam.cols = patternKey->getROIYWidth();
@@ -1590,14 +1555,13 @@ UInt TComRdCost::xGetHADs4(DistParam* distParam)
     Int  rows = distParam->rows;
     Int  strideCur = distParam->frefstride;
     Int  strideOrg = distParam->fencstride;
-    Int  step = distParam->step;
     UInt sum = 0;
 
     Int  offsetOrg = strideOrg << 2;
     Int  offsetCur = strideCur << 2;
     for (Int y = 0; y < rows; y += 4)
     {
-        sum += xCalcHADs4x4(org, cur, strideOrg, strideCur, step);
+        sum += xCalcHADs4x4(org, cur, strideOrg, strideCur, 1);
         org += offsetOrg;
         cur += offsetCur;
     }
@@ -1616,7 +1580,7 @@ UInt TComRdCost::xGetHADs8(DistParam* distParam)
     Int  rows = distParam->rows;
     Int  strideCur = distParam->frefstride;
     Int  strideOrg = distParam->fencstride;
-    Int  step = distParam->step;
+    Int  step = 1;
     Int  y;
 
     UInt uiSum = 0;
@@ -1653,7 +1617,7 @@ UInt TComRdCost::xGetHADs(DistParam* distParam)
     Int  cols = distParam->cols;
     Int  strideCur = distParam->frefstride;
     Int  strideOrg = distParam->fencstride;
-    Int  step = distParam->step;
+    Int  step = 1;
 
     Int  x, y;
     UInt sum = 0;

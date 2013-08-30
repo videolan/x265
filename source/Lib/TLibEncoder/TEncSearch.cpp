@@ -227,7 +227,7 @@ Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
 UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Int fracBits, MV& inOutMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr)
 {
     ALIGN_VAR_32(Pel, qref[64 * 64]);
-    m_rdCost->setDistParam(patternKey, qref, 64, 1, m_distParam, true);
+    m_rdCost->setDistParam(patternKey, qref, 64, m_distParam, true);
     const MV* mvRefine = (fracBits == 2 ? s_mvRefineHpel : s_mvRefineQPel);
 
     Int  stride = refPic->getStride();

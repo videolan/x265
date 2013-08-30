@@ -429,7 +429,7 @@ UInt TComRdCostWeightPrediction::xGetHADs4w(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->rows;
     Int  iStrideCur = pcDtParam->frefstride;
     Int  iStrideOrg = pcDtParam->fencstride;
-    Int  iStep  = pcDtParam->step;
+    Int  iStep  = 1;
     Int  y;
     Int  iOffsetOrg = iStrideOrg << 2;
     Int  iOffsetCur = iStrideCur << 2;
@@ -457,7 +457,7 @@ UInt TComRdCostWeightPrediction::xGetHADs8w(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->rows;
     Int  iStrideCur = pcDtParam->frefstride;
     Int  iStrideOrg = pcDtParam->fencstride;
-    Int  iStep  = pcDtParam->step;
+    Int  iStep  = 1;
     Int  y;
 
     UInt uiSum = 0;
@@ -494,7 +494,7 @@ UInt TComRdCostWeightPrediction::xGetHADsw(DistParam* pcDtParam)
     Int  iCols   = pcDtParam->cols;
     Int  iStrideCur = pcDtParam->frefstride;
     Int  iStrideOrg = pcDtParam->fencstride;
-    Int  iStep  = pcDtParam->step;
+    Int  iStep  = 1;
 
     Int  x, y;
 

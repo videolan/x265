@@ -119,7 +119,6 @@ public:
     Int   frefstride;
     Int   rows;
     Int   cols;
-    Int   step;
     FpDistFunc distFunc;
 
     Bool            applyWeight;   // whether weighted prediction is used or not
@@ -137,7 +136,6 @@ public:
         frefstride = 0;
         rows = 0;
         cols = 0;
-        step = 1;
         distFunc = NULL;
         subShift = 0;
     }
@@ -197,8 +195,7 @@ public:
     // Distortion Functions
     Void    init();
 
-    Void    setDistParam(TComPattern* patternKey, Pel* refy, Int refstride,           DistParam& distParam);
-    Void    setDistParam(TComPattern* patternKey, Pel* refy, Int refstride, Int step, DistParam& distParam, Bool bHADME = false);
+    Void    setDistParam(TComPattern* patternKey, Pel* refy, Int refstride, DistParam& distParam, Bool bHADME = false);
 
 private:
 
