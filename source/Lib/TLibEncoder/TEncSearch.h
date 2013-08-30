@@ -105,7 +105,6 @@ protected:
 
     // RD computation
     DistParam       m_distParam;
-    Int             m_mvCostScale;
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
     Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
@@ -134,8 +133,7 @@ public:
 protected:
 
     /// motion vector refinement used in fractional-pel accuracy
-    UInt xPatternRefinement(TComPattern* patternKey, x265::MV baseRefMv, Int fracBits, x265::MV& outFracMv, TComPicYuv* refPic, Int offset,
-                            TComDataCU* cu, UInt partAddr);
+    UInt xPatternRefinement(TComPattern* patternKey, Int fracBits, x265::MV& outFracMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr);
 
     UInt xGetInterPredictionError(TComDataCU* cu, Int partIdx);
 
@@ -240,9 +238,8 @@ protected:
     Void xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, x265::MV* mvmin, x265::MV* mvmax,
                         x265::MV& outmv, UInt& ruiSAD);
 
-    Void xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, Int stride,
-                               x265::MV* mvfpel, x265::MV& mvhpel, x265::MV& mvqpel,
-                               UInt& outCost, TComPicYuv* refPic, UInt partAddr);
+    Void xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, x265::MV& mvfpel, UInt& outCost,
+                               TComPicYuv* refPic, UInt partAddr);
 
     Void xExtDIFUpSamplingH(TComPattern* pcPattern);
     Void xExtDIFUpSamplingQ(TComPattern* patternKey, x265::MV halfPelRef);

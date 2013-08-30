@@ -165,11 +165,6 @@ public:
 
     Pel*  getCrAddr(Int cuAddr, Int absZOrderIdx) { return m_picOrgV + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
 
-    /* Access functions for m_filteredBlock */
-    Pel* getLumaFilterBlock(int ver, int hor) { return (Pel*)m_refList->lumaPlane[hor][ver]; }
-
-    Pel* getLumaFilterBlock(int ver, int hor, Int cuAddr, Int absZOrderIdx) { return (Pel*)m_refList->lumaPlane[hor][ver] + m_cuOffsetY[cuAddr] + m_buOffsetY[g_zscanToRaster[absZOrderIdx]]; }
-
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous
     // ------------------------------------------------------------------------------------------------

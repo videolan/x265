@@ -224,35 +224,54 @@ Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
     m_bc.setQP(QP, m_rdCost->getSADLambda());
 }
 
-UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int fracBits, MV& outFracMv, TComPicYuv* refPic, Int offset, TComDataCU* cu, UInt partAddr)
+UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Int fracBits, MV& inOutMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr)
 {
-    UInt  cost;
-    UInt  bcost = MAX_UINT;
-    Pel*  fref;
-    UInt  bestDir = 0;
-    Int   stride = refPic->getStride();
-
-    m_rdCost->setDistParam(patternKey, refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset, stride, 1, m_distParam, true);
-
+    ALIGN_VAR_32(Pel, qref[64 * 64]);
+    m_rdCost->setDistParam(patternKey, qref, 64, 1, m_distParam, true);
     const MV* mvRefine = (fracBits == 2 ? s_mvRefineHpel : s_mvRefineQPel);
+
+    Int  stride = refPic->getStride();
+    int  width = patternKey->getROIYWidth();
+    int  height = patternKey->getROIYHeight();
+    Pel *fref = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
+
+    /* temp buffer for intermediate outputs of horizontal interpolation */
+    Int filterSize = NTAPS_LUMA;
+    Int tmpStride = width;
+    Int halfFilterSize = (filterSize >> 1);
+    Short *tmp = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
+
+    UInt bcost = MAX_UINT;
+    UInt bestDir = 0;
     for (int i = 0; i < 9; i++)
     {
-        // TODO: this is overly complicated, but it mainly needs to be deleted
-        MV cMvTest = baseRefMv + mvRefine[i];
+        MV mv = (inOutMv + mvRefine[i]) * fracBits;
+        Pel *src = fref + (mv.x >> 2) + (mv.y >> 2) * stride;
 
-        Int horVal = cMvTest.x * fracBits;
-        Int verVal = cMvTest.y * fracBits;
-        fref = refPic->getLumaFilterBlock(verVal & 3, horVal & 3, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset;
-        if (horVal < 0)
-            fref -= 1;
-        if (verVal < 0)
+        Int xFrac = mv.x & 0x3;
+        Int yFrac = mv.y & 0x3;
+        if (yFrac == 0)
         {
-            fref -= stride;
+            if (xFrac != 0)
+            {
+                x265::primitives.ipfilter_pp[FILTER_H_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[xFrac]);
+            }
+            else
+            {
+                x265::primitives.blockcpy_pp(width, height, qref, 64, src, stride);
+            }
         }
-        m_distParam.fref = fref;
+        else if (xFrac == 0)
+        {
+            x265::primitives.ipfilter_pp[FILTER_V_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[yFrac]);
+        }
+        else
+        {
+            primitives.ipfilter_ps[FILTER_H_P_S_8](src - (halfFilterSize - 1) * stride, stride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
+            primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, qref, 64, width, height, g_lumaFilter[yFrac]);
+        }
 
-        cMvTest = outFracMv + mvRefine[i];
-        cost = m_distParam.distFunc(&m_distParam) + m_bc.mvcost(cMvTest * fracBits);
+        UInt cost = m_distParam.distFunc(&m_distParam) + m_bc.mvcost(mv);
 
         if (cost < bcost)
         {
@@ -261,7 +280,8 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int f
         }
     }
 
-    outFracMv = mvRefine[bestDir];
+    free(tmp);
+    inOutMv += mvRefine[bestDir];
     return bcost;
 }
 
@@ -2968,16 +2988,10 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     m_bc.setMVP(*mvp);
 
     // Do integer search
-    m_mvCostScale = 2;
     xPatternSearch(patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
 
-    TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec(); //For new xPatternSearchFracDiff
-    MV mvHpel, mvQpel;
-    xPatternSearchFracDIF(cu, patternKey, stride, &outmv, mvHpel, mvQpel, outCost, refPic, partAddr);
-
-    outmv <<= 2;
-    outmv += (mvHpel <<= 1);
-    outmv += mvQpel;
+    TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec();
+    xPatternSearchFracDIF(cu, patternKey, outmv, outCost, refPic, partAddr);
 
     UInt mvbits = m_bc.bitcost(outmv);
     outBits += mvbits;
@@ -3062,28 +3076,14 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
     outcost = bcost - m_bc.mvcost(outmv << 2);
 }
 
-Void TEncSearch::xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, Int stride, MV* mvfpel, MV& outMvHPel,
-                                       MV& outMvQPel, UInt& outCost, TComPicYuv* refPic, UInt partAddr)
+Void TEncSearch::xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, MV& mvfpel, UInt& outCost,
+                                       TComPicYuv* refPic, UInt partAddr)
 {
-    Int offset = mvfpel->x + mvfpel->y * stride;
-    MV baseRefMv(0, 0);
+    mvfpel <<= 1; // now HPEL
+    xPatternRefinement(patternKey, 2, mvfpel, refPic, cu, partAddr);
 
-    outMvHPel = *mvfpel;
-    outMvHPel <<= 1;
-
-    m_mvCostScale = 1;
-    outCost = xPatternRefinement(patternKey, baseRefMv, 2, outMvHPel, refPic, offset, cu, partAddr);
-
-    baseRefMv = outMvHPel;
-    baseRefMv <<= 1;
-
-    outMvQPel = *mvfpel;
-    outMvQPel <<= 1;
-    outMvQPel += outMvHPel;
-    outMvQPel <<= 1;
-
-    m_mvCostScale = 0;
-    outCost = xPatternRefinement(patternKey, baseRefMv, 1, outMvQPel, refPic, offset, cu, partAddr);
+    mvfpel <<= 1; // now QPEL
+    outCost = xPatternRefinement(patternKey, 1, mvfpel, refPic, cu, partAddr);
 }
 
 /** encode residual and calculate rate-distortion for a CU block
