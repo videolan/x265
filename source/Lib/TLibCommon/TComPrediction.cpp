@@ -486,7 +486,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *re
     }
     else if (xFrac == 0)
     {
-        x265::primitives.ipfilter_pp[FILTER_H_P_P_8]((pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        x265::primitives.ipfilter_pp[FILTER_V_P_P_8]((pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[yFrac]);
     }
     else
     {
