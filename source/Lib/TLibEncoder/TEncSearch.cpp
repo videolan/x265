@@ -2942,12 +2942,12 @@ Void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mv
 }
 
 UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templateCand, MV mvCand, Int mvpIdx,
-                                  Int mvpCandCount, RefPicList picList, Int refIfx, Int sizex, Int sizey)
+                                  Int mvpCandCount, RefPicList picList, Int refIdx, Int sizex, Int sizey)
 {
     cu->clipMv(mvCand);
 
     // prediction pattern
-    MotionReference* ref = cu->getSlice()->m_mref[picList][refIfx];
+    MotionReference* ref = cu->getSlice()->m_mref[picList][refIdx];
     xPredInterLumaBlk(cu, ref, partAddr, &mvCand, sizex, sizey, templateCand);
 
     // calc distortion
@@ -4407,13 +4407,13 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef)
 
 /** set wp tables
  * \param TComDataCU* cu
- * \param refIfx
+ * \param refIdx
  * \param picList
  * \returns Void
  */
-Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIfx, RefPicList picList)
+Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIdx, RefPicList picList)
 {
-    if (refIfx < 0)
+    if (refIdx < 0)
     {
         m_distParam.applyWeight = false;
         return;
@@ -4425,8 +4425,8 @@ Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIfx, RefPicList p
     m_distParam.applyWeight = (slice->getSliceType() == P_SLICE && pps->getUseWP()) || (slice->getSliceType() == B_SLICE && pps->getWPBiPred());
     if (!m_distParam.applyWeight) return;
 
-    Int refIdx0 = (picList == REF_PIC_LIST_0) ? refIfx : (-1);
-    Int refIdx1 = (picList == REF_PIC_LIST_1) ? refIfx : (-1);
+    Int refIdx0 = (picList == REF_PIC_LIST_0) ? refIdx : (-1);
+    Int refIdx1 = (picList == REF_PIC_LIST_1) ? refIdx : (-1);
 
     getWpScaling(cu, refIdx0, refIdx1, wp0, wp1);
 
