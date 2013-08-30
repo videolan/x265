@@ -844,7 +844,7 @@ Void TEncTop::computeLambdaForQp(TComSlice* slice)
 {
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
     Int qp = slice->getSliceQp();
-    Int lambda = x265_lambda2_tab[qp] / 256;
+    Int lambda = x265_lambda2_tab[qp] >> 8;
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
@@ -855,11 +855,11 @@ Void TEncTop::computeLambdaForQp(TComSlice* slice)
 
     chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 1.0); // takes into account of the chroma qp mapping and chroma qp Offset
+    weight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     curEncoder->setCbDistortionWeight(weight);
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 1.0); // takes into account of the chroma qp mapping and chroma qp Offset
+    weight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     curEncoder->setCrDistortionWeight(weight);
 
     // for RDOQ
