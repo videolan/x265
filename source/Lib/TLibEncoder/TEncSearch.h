@@ -86,8 +86,6 @@ protected:
     UChar*          m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipTComYuv;
 
-    x265::BitCost   m_bc; // TODO: m_bc will go away with HM ME
-
     // interface to option
     TEncCfg*        m_cfg;
 
@@ -237,9 +235,6 @@ protected:
 
     Void xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, x265::MV* mvmin, x265::MV* mvmax,
                         x265::MV& outmv, UInt& ruiSAD);
-
-    Void xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, x265::MV& mvfpel, UInt& outCost,
-                               TComPicYuv* refPic, UInt partAddr);
 
     Void xExtDIFUpSamplingH(TComPattern* pcPattern);
     Void xExtDIFUpSamplingQ(TComPattern* patternKey, x265::MV halfPelRef);
