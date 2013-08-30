@@ -82,8 +82,8 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
     for (int i = 0; i < 4; i++)
     {
         // TODO: I am not sure [0] need space when weight, for safe I alloc either, but I DON'T FILL [0] anymore
-        m_midBuf[i] = new short[width * (height + 3 + 4)];  // middle buffer extend size: left(0), right(0), top(3), bottom(4)
-        m_midBuf[i] += 3 * width;
+        m_midBuf[i] = new short[(width + 7) * (height + 7 + 7)];  // middle buffer extend size: left(4), right(3), top(7), bottom(7)
+        m_midBuf[i] += 7 * (width + 7) + 4;
     }
 
     if (w) 
@@ -122,7 +122,7 @@ MotionReference::~MotionReference()
 
     for (int i = 0; i < 4; i++)
     {
-        m_midBuf[i] -= 3 * width;
+        m_midBuf[i] -= 7 * (width + 7) + 4;
         if (m_midBuf[i])
         {
             delete[] m_midBuf[i];
@@ -173,7 +173,7 @@ void MotionReference::generateReferencePlanes()
        }
        else
        {
-            int midStride = m_reconPic->getWidth();
+            int midStride = m_reconPic->getWidth() + 7;
             int height = g_maxCUHeight;
             for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
             {
@@ -271,7 +271,7 @@ void MotionReference::generateReferencePlane(const int x)
     }
     else
     {
-        int midStride = m_reconPic->getWidth();
+        int midStride = m_reconPic->getWidth() + 7;
         int height = g_maxCUHeight;
         for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
         {
