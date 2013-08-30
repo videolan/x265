@@ -843,7 +843,6 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
 Void TEncTop::computeLambdaForQp(TComSlice* slice)
 {
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
-    Int lambda;
     Int qp = slice->getSliceQp();
     Int lambda = x265_lambda2_tab[qp] / 256;
 
