@@ -232,7 +232,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int f
     UInt  bestDir = 0;
     Int   stride = refPic->getStride();
 
-    m_rdCost->setDistParam(patternKey, refPic->getLumaFilterBlock(0, 0, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset, stride, 1, m_distParam, true);
+    m_rdCost->setDistParam(patternKey, refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset, stride, 1, m_distParam, true);
 
     const MV* mvRefine = (fracBits == 2 ? s_mvRefineHpel : s_mvRefineQPel);
     for (int i = 0; i < 9; i++)
@@ -242,7 +242,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int f
 
         Int horVal = cMvTest.x * fracBits;
         Int verVal = cMvTest.y * fracBits;
-        fref =  refPic->getLumaFilterBlock(verVal & 3, horVal & 3, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset;
+        fref = refPic->getLumaFilterBlock(verVal & 3, horVal & 3, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset;
         if (horVal < 0)
             fref -= 1;
         if (verVal < 0)
