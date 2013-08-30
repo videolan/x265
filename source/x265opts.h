@@ -67,8 +67,10 @@ OPT("open-gop",        param->bOpenGOP,                     no_argument, 0, "Onl
 OPT("rc-lookahead",    param->lookaheadDepth,         required_argument, 0, "Number of frames for frame-type lookahead (determines encoder latency)")
 OPT("bframes",         param->bframes,                required_argument, 'b', "Maximum number of consecutive b-frames (now it only enables B GOP structure)")
 OPT("bframe-bias",     param->bFrameBias,             required_argument, 0, "Bias towards B frame decisions")
-OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")
-OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")
+// Disabled because weighted uni-prediction was busted by not using
+// pre-generated planes in motion compensation
+//OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")
+//OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")
 // Disabled because weighted bi prediction is busted
 //OPT("no-weightbp",     param->bEnableWeightedBiPred,        no_argument, 0, "Disable weighted (bidirectional) prediction in B slices")
 //OPT("weightbp",        param->bEnableWeightedBiPred,        no_argument, 0, "Enable weighted (bidirectional) prediction in B slices")
