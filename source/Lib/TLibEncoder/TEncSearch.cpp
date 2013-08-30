@@ -2982,9 +2982,9 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     xSetSearchRange(cu, outmv, merange, mvmin, mvmax);
     //setWpScalingDistParam(cu, refIdxPred, picList);
 
-    Pel* fref = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
-    Int  stride = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getStride();
     TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec();
+    Pel* fref = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
+    Int  stride = refPic->getStride();
 
     // Configure the MV bit cost calculator
     m_me.setMVP(*mvp);
