@@ -223,15 +223,15 @@ Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
     m_me.setQP(QP, m_rdCost->getSADLambda());
 }
 
-UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Int fracBits, MV& inOutMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr)
+UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Pel *fenc, Int fracBits, MV& inOutMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr)
 {
     ALIGN_VAR_32(Pel, qref[64 * 64]);
-    m_rdCost->setDistParam(patternKey, qref, 64, m_distParam, true);
     const MV* mvRefine = (fracBits == 2 ? s_mvRefineHpel : s_mvRefineQPel);
 
     Int  stride = refPic->getStride();
     int  width = patternKey->getROIYWidth();
     int  height = patternKey->getROIYHeight();
+    x265::pixelcmp_t satd = x265::primitives.satd[x265::PartitionFromSizes(width, height)];
     Pel *fref = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
 
     /* temp buffer for intermediate outputs of horizontal interpolation */
@@ -270,7 +270,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Int fracBits, MV& i
             primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, qref, 64, width, height, g_lumaFilter[yFrac]);
         }
 
-        UInt cost = m_distParam.distFunc(&m_distParam) + m_me.mvcost(mv);
+        UInt cost = satd(fenc, FENC_STRIDE, qref, 64) + m_me.mvcost(mv);
 
         if (cost < bcost)
         {
@@ -2960,6 +2960,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
                                    MV& outmv, UInt& outBits, UInt& outCost)
 {
     /* This function only performs bidirectional search */
+    ALIGN_VAR_32(pixel, fenc[64 * 64]);
     Int merange = m_bipredSearchRange;
     UInt partAddr;
     Int width, height;
@@ -2974,11 +2975,12 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     // Search key pattern initialization
     TComPattern* patternKey = cu->getPattern();
     patternKey->initPattern(yuv->getLumaAddr(partAddr), yuv->getCbAddr(partAddr), yuv->getCrAddr(partAddr), width, height, yuv->getStride(), 0, 0);
+    // copy smoothed pixels into aligned fenc buffer
+    x265::primitives.blockcpy_pp(width, height, fenc, 64, yuv->getLumaAddr(partAddr), yuv->getStride());
 
     MV mvmin, mvmax;
-
     xSetSearchRange(cu, outmv, merange, mvmin, mvmax);
-    setWpScalingDistParam(cu, refIdxPred, picList);
+    //setWpScalingDistParam(cu, refIdxPred, picList);
 
     Pel* fref = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
     Int  stride = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getStride();
@@ -2988,13 +2990,13 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     m_me.setMVP(*mvp);
 
     // Do integer search
-    xPatternSearch(patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
+    xPatternSearch(patternKey, fenc, fref, stride, &mvmin, &mvmax, outmv, outCost);
 
     outmv <<= 1; // now HPEL
-    xPatternRefinement(patternKey, 2, outmv, refPic, cu, partAddr);
+    xPatternRefinement(patternKey, fenc, 2, outmv, refPic, cu, partAddr);
 
     outmv <<= 1; // now QPEL
-    outCost = xPatternRefinement(patternKey, 1, outmv, refPic, cu, partAddr);
+    outCost = xPatternRefinement(patternKey, fenc, 1, outmv, refPic, cu, partAddr);
 
     UInt mvbits = m_me.bitcost(outmv);
     outBits += mvbits;
@@ -3016,11 +3018,8 @@ Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin,
     mvmax >>= 2;
 }
 
-Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
+Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
 {
-    ALIGN_VAR_32(pixel, fenc[64 * 64]);
-    int costs[16];
-
     Int srchRngHorLeft   = mvmin->x;
     Int srchRngHorRight  = mvmax->x;
     Int srchRngVerTop    = mvmin->y;
@@ -3029,7 +3028,8 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
     int part = x265::PartitionFromSizes(patternKey->getROIYWidth(), patternKey->getROIYHeight());
     x265::pixelcmp_t sad = x265::primitives.sad[part];
     x265::pixelcmp_x4_t sad_x4 = x265::primitives.sad_x4[part];
-    x265::primitives.blockcpy_pp(patternKey->getROIYWidth(), patternKey->getROIYHeight(), fenc, 64, patternKey->getROIY(), patternKey->getPatternLStride());
+    int costs[16];
+
     refY += srchRngVerTop * stride;
 
     // find min. distortion position
@@ -3063,7 +3063,7 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
             }
             else
             {
-                UInt cost = sad(fenc, 64, refY + x, stride) + m_me.mvcost(mv << 2);
+                UInt cost = sad(fenc, FENC_STRIDE, refY + x, stride) + m_me.mvcost(mv << 2);
 
                 if (cost < bcost)
                 {
