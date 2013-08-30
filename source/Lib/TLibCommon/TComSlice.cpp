@@ -1328,7 +1328,7 @@ Void TComReferencePictureSet::printDeltaPOC()
 }
 
 TComRPSList::TComRPSList()
-    : m_referencePictureSets(NULL)
+    : m_referencePictureSets(NULL), m_numberOfReferencePictureSets(0)
 {}
 
 TComRPSList::~TComRPSList()
