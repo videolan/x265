@@ -2344,7 +2344,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
         UInt listCost[2] = { MAX_UINT, MAX_UINT };
         UInt bits[3];
         UInt costbi = MAX_UINT;
-        UInt costTemp;
+        UInt costTemp = 0;
         UInt bitsTemp;
         UInt bestBiPDist = MAX_INT;
         MV   mvValidList1;
@@ -4405,14 +4405,9 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef)
     primitives.ipfilter_sp[FILTER_V_S_P_8](intPtr, intStride, dstPtr, dstStride, width, height, g_lumaFilter[3]);
 }
 
-/** set wp tables
- * \param TComDataCU* cu
- * \param refIdx
- * \param picList
- * \returns Void
- */
-Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIdx, RefPicList picList)
+Void  TEncSearch::setWpScalingDistParam(TComDataCU*, Int, RefPicList)
 {
+#if 0 // dead code
     if (refIdx < 0)
     {
         m_distParam.applyWeight = false;
@@ -4443,6 +4438,7 @@ Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIdx, RefPicList p
     {
         m_distParam.wpCur = wp1;
     }
+#endif
 }
 
 //! \}
