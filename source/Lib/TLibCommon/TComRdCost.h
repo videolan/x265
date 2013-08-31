@@ -39,6 +39,7 @@
 #define __TCOMRDCOST__
 
 #include "CommonDef.h"
+#include <math.h>
 
 //! \ingroup TLibCommon
 //! \{
