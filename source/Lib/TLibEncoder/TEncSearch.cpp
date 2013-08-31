@@ -249,28 +249,30 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Pel *fenc, Int frac
 
         Int xFrac = mv.x & 0x3;
         Int yFrac = mv.y & 0x3;
+        UInt cost = m_me.mvcost(mv);
         if (yFrac == 0)
         {
-            if (xFrac != 0)
+            if (xFrac == 0)
             {
-                x265::primitives.ipfilter_pp[FILTER_H_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[xFrac]);
+                cost += satd(fenc, FENC_STRIDE, src, stride);
             }
             else
             {
-                x265::primitives.blockcpy_pp(width, height, qref, 64, src, stride);
+                x265::primitives.ipfilter_pp[FILTER_H_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[xFrac]);
+                cost += satd(fenc, FENC_STRIDE, qref, 64);
             }
         }
         else if (xFrac == 0)
         {
             x265::primitives.ipfilter_pp[FILTER_V_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[yFrac]);
+            cost += satd(fenc, FENC_STRIDE, qref, 64);
         }
         else
         {
             primitives.ipfilter_ps[FILTER_H_P_S_8](src - (halfFilterSize - 1) * stride, stride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
             primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, qref, 64, width, height, g_lumaFilter[yFrac]);
+            cost += satd(fenc, FENC_STRIDE, qref, 64);
         }
-
-        UInt cost = satd(fenc, FENC_STRIDE, qref, 64) + m_me.mvcost(mv);
 
         if (cost < bcost)
         {
@@ -3028,7 +3030,7 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, I
     int part = x265::PartitionFromSizes(patternKey->getROIYWidth(), patternKey->getROIYHeight());
     x265::pixelcmp_t sad = x265::primitives.sad[part];
     x265::pixelcmp_x4_t sad_x4 = x265::primitives.sad_x4[part];
-    int costs[16];
+    ALIGN_VAR_32(int, costs[16]);
 
     refY += srchRngVerTop * stride;
 
