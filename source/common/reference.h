@@ -66,7 +66,7 @@ public:
     MotionReference *m_next;
     TComPicYuv  *m_reconPic;
     pixel      *m_subpelbuf;
-    short      *m_intermediate;
+    short      *m_intermediateValues;
 
 protected:
 
@@ -90,7 +90,7 @@ protected:
     intptr_t    m_offsetToLuma;
     int         m_filterWidth;
     int         m_filterHeight;
-    short      *m_intermediateValues;
+    
     short      *m_midBuf[4];  // 0: Full, 1:1/4, 2:2/4, 3:3/4
 
     MotionReference& operator =(const MotionReference&);
