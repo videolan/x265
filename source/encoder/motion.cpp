@@ -146,8 +146,13 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     do \
     { \
         MV fmv = qmv >> 2; \
-        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset; \
-        (cost) = sad(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride); \
+        if ((qmv.x & 3) || (qmv.y & 3)) \
+        { \
+            generateSubpel(qmv, mref); \
+            cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, 64) + mvcost(qmv); \
+        } \
+        else \
+            cost = satd(fenc, FENC_STRIDE, fref + fmv.y * stride + fmv.x, stride) + mvcost(qmv); \
     } while (0)
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
@@ -766,16 +771,16 @@ me_hex2:
         int cost;
 
         /* TODO this will go away until will use lumaplane */
-        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        pixel *fref = ref->lumaPlane[0][0] + blockOffset;
 
         if ((qmv.x & 3) || (qmv.y & 3)) // if its not a FPEL then
         {
             generateSubpel(qmv, mref);
-            cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, stride) + mvcost(qmv);
+            cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, 64) + mvcost(qmv);
         }
         else
         {
-            cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
+            cost = satd(fenc, FENC_STRIDE, fref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
         }
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
@@ -793,16 +798,16 @@ me_hex2:
             int cost;
 
             /* TODO this will go away until will use lumaplane */
-            pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+            pixel *fref = ref->lumaPlane[0][0] + blockOffset;
 
             if ((qmv.x & 3) || (qmv.y & 3)) // if its not a FPEL then
             {
                 generateSubpel(qmv, mref);
-                cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, stride) + mvcost(qmv);
+                cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, 64) + mvcost(qmv);
             }
             else
             {
-                cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
+                cost = satd(fenc, FENC_STRIDE, fref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
             }
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
@@ -1090,7 +1095,7 @@ void MotionEstimate::generateSubpel(MV qmv, MotionReference *mref)
     }
     else
     {
-        int tmpStride = 64;
+        int tmpStride = 64 + NTAPS_LUMA - 1;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.ipfilter_ps[FILTER_H_P_S_8]((pixel*)src - (halfFilterSize - 1) * srcStride,  srcStride, mref->m_intermediateValues, tmpStride, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
