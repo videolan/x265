@@ -65,6 +65,8 @@ public:
 
     MotionReference *m_next;
     TComPicYuv  *m_reconPic;
+    pixel      *m_subpelbuf;
+    short      *m_intermediate;
 
 protected:
 

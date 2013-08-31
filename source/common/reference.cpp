@@ -86,7 +86,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
         m_midBuf[i] += 7 * (width + 7) + 4;
     }
 
-    if (w) 
+    if (w)
     {
         setWeight(*w);
         for (int i = 0; i < 4; i++)
@@ -112,6 +112,10 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
             }
         }
     }
+
+    /* for sub pel output */
+    m_subpelbuf = (pixel*)X265_MALLOC(pixel, 64 * 64);
+    m_intermediate = (short*)X265_MALLOC(short, (64 * (64 + NTAPS_LUMA - 1) * sizeof(short)));
 }
 
 MotionReference::~MotionReference()
@@ -138,6 +142,12 @@ MotionReference::~MotionReference()
             }
         }
     }
+
+    if (m_subpelbuf)
+        X265_FREE(m_subpelbuf);
+
+    if (m_intermediate)
+        X265_FREE(m_intermediate);
 }
 
 void MotionReference::generateReferencePlanes()
@@ -170,12 +180,12 @@ void MotionReference::generateReferencePlanes()
                                     m_reconPic->m_lumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
                                     m_reconPic->m_lumaMarginY - s_tmpMarginY - s_intMarginY,
                                     weight, round, shift, offset);
-       }
-       else
-       {
+        }
+        else
+        {
             int midStride = m_reconPic->getWidth() + 7;
             int height = g_maxCUHeight;
-            for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
+            for (int i = 0; i < m_reconPic->m_numCuInHeight; i++)
             {
                 int isLast = (i == m_reconPic->m_numCuInHeight - 1);
                 int rowAddr = i * height * lumaStride;
@@ -273,7 +283,7 @@ void MotionReference::generateReferencePlane(const int x)
     {
         int midStride = m_reconPic->getWidth() + 7;
         int height = g_maxCUHeight;
-        for(int i = 0; i < m_reconPic->m_numCuInHeight; i++ )
+        for (int i = 0; i < m_reconPic->m_numCuInHeight; i++)
         {
             int isLast = (i == m_reconPic->m_numCuInHeight - 1);
             int offs = (i == 0 ? 0 : 4);

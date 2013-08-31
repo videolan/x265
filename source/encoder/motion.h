@@ -52,6 +52,9 @@ protected:
     int partEnum;
     int searchMethod;
 
+    int blockwidth;
+    int blockheight;
+
     MotionEstimate& operator =(const MotionEstimate&);
 
 public:
@@ -86,6 +89,8 @@ public:
     inline int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
     int motionEstimate(ReferencePlanes *ref, const MV & mvmin, const MV & mvmax, const MV & qmvp, int numCandidates, const MV * mvc, int merange, MV & outQMv);
+
+    void generateSubpel(MV qmv, MotionReference *ref);
 
 protected:
 
