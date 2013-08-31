@@ -39,9 +39,6 @@
 #define __TCOMRDCOST__
 
 #include "CommonDef.h"
-#include "TComPattern.h"
-
-#include "TComSlice.h"
 
 //! \ingroup TLibCommon
 //! \{
