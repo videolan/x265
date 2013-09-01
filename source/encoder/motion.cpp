@@ -260,7 +260,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
 {
     ALIGN_VAR_16(int, costs[16]);
     size_t stride = ref->lumaStride;
-    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    pixel *fref = ref->fpelPlane + blockOffset;
 
     setMVP(qmvp);
 
@@ -798,7 +798,7 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
                                        int              merange)
 {
     ALIGN_VAR_16(int, costs[16]);
-    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    pixel *fref = ref->fpelPlane + blockOffset;
     size_t stride = ref->lumaStride;
 
     MV omv = bmv;

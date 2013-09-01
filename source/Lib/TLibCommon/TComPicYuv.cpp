@@ -238,7 +238,7 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-x265::MotionReference* TComPicYuv::generateMotionReference(x265::ThreadPool *pool, wpScalingParam *w)
+x265::MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
 {
     if (!m_bIsBorderExtended)
     {
@@ -260,8 +260,7 @@ x265::MotionReference* TComPicYuv::generateMotionReference(x265::ThreadPool *poo
         else if (mref->isWeighted == false)
             return mref;
     }
-    mref = new x265::MotionReference(this, pool, w);
-    //mref->generateReferencePlanes();
+    mref = new x265::MotionReference(this, w);
     mref->m_next = m_refList;
     m_refList = mref;
     return mref;

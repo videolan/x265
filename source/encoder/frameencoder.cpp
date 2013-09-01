@@ -425,7 +425,7 @@ Void FrameEncoder::compressFrame(TComPic *pic)
             TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
             if ((slice->isInterP() && slice->getPPS()->getUseWP()))
                 w = slice->m_weightPredTable[list][ref];
-            slice->m_mref[list][ref] = recon->generateMotionReference(m_pool, w);
+            slice->m_mref[list][ref] = recon->generateMotionReference(w);
         }
     }
 

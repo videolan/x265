@@ -25,8 +25,6 @@
 #define __REFERENCE__
 
 #include "primitives.h"
-#include "threading.h"
-#include "threadpool.h"
 
 class TComPicYuv;
 struct WpScalingParam;
@@ -42,8 +40,9 @@ struct ReferencePlanes
     void setWeight(const wpScalingParam&);
     bool matchesWeight(const wpScalingParam&);
 
-    /* indexed by [hpelx|qpelx][hpely|qpely] */
-    pixel* lumaPlane[4][4];
+    pixel* fpelPlane;
+    pixel* lowresPlane[4];
+
     bool isWeighted;
     bool isLowres;
     int  lumaStride;
@@ -53,44 +52,20 @@ struct ReferencePlanes
     int  round;
 };
 
-class MotionReference : public ReferencePlanes, public JobProvider
+class MotionReference : public ReferencePlanes
 {
 public:
 
-    MotionReference(TComPicYuv*, ThreadPool *, wpScalingParam* w = NULL);
+    MotionReference(TComPicYuv*, wpScalingParam* w = NULL);
 
     ~MotionReference();
 
-    void generateReferencePlanes();
-
     MotionReference *m_next;
-    TComPicYuv  *m_reconPic;
+    TComPicYuv      *m_reconPic;
 
 protected:
 
-    bool findJob();
-    void generateReferencePlane(const int idx);
-
-    intptr_t     m_startPad;
-    volatile int m_workerCount;
-    volatile int m_finishedPlanes;
-    Event        m_completionEvent;
-    short       *m_intermediateValues;
-
-    // Generate subpels for entire frame with a margin of tmpMargin
-    static const int s_tmpMarginX = 4;
-    static const int s_tmpMarginY = 4;
-
-    static const int s_intMarginX = 0;    // Extra margin for horizontal filter
-    static const int s_intMarginY = 4;
-
-    int         m_intStride;
-    intptr_t    m_extendOffset;
-    intptr_t    m_offsetToLuma;
-    int         m_filterWidth;
-    int         m_filterHeight;
-    
-    short      *m_midBuf[4];  // 0: Full, 1:1/4, 2:2/4, 3:3/4
+    intptr_t         m_startPad;
 
     MotionReference& operator =(const MotionReference&);
 };
