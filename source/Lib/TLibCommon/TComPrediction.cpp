@@ -459,7 +459,6 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
  * \param width    Width of block
  * \param height   Height of block
  * \param dstPic   Pointer to destination picture
- * \param bi       Flag indicating whether bipred is used
  */
 Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *ref, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic)
 {
@@ -473,20 +472,17 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *re
 
     Int xFrac = mv->x & 0x3;
     Int yFrac = mv->y & 0x3;
-    if (yFrac == 0)
+    if ((yFrac | xFrac) == 0)
     {
-        if (xFrac != 0)
-        {
-            x265::primitives.ipfilter_pp[FILTER_H_P_P_8]((pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[xFrac]);
-        }
-        else
-        {
-            x265::primitives.blockcpy_pp(width, height, dst, dstStride, src, srcStride);
-        }
+        primitives.blockcpy_pp(width, height, dst, dstStride, src, srcStride);
+    }
+    else if (yFrac == 0)
+    {
+        primitives.ipfilter_pp[FILTER_H_P_P_8](src, srcStride, dst, dstStride, width, height, g_lumaFilter[xFrac]);
     }
     else if (xFrac == 0)
     {
-        x265::primitives.ipfilter_pp[FILTER_V_P_P_8]((pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        primitives.ipfilter_pp[FILTER_V_P_P_8](src, srcStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
     }
     else
     {
@@ -494,8 +490,8 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *re
         Int filterSize = NTAPS_LUMA;
         Int halfFilterSize = (filterSize >> 1);
         Short *tmp = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
-        primitives.ipfilter_ps[FILTER_H_P_S_8]((pixel*)src - (halfFilterSize - 1) * srcStride,  srcStride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
-        primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, (pixel*)dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        primitives.ipfilter_ps[FILTER_H_P_S_8](src - (halfFilterSize - 1) * srcStride,  srcStride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
         free(tmp);
     }
 }
