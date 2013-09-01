@@ -513,7 +513,7 @@ void transpose(pixel* dst, pixel* src, intptr_t stride)
     }
 }
 
-void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
     for (y = height - 1; y >= 0; y--)

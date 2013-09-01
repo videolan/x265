@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 template<int N>
-void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
+void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
@@ -221,7 +221,7 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
 }
 
 template<int N>
-void filterVertical_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
+void filterVertical_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
@@ -415,7 +415,7 @@ void filterVertical_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, in
 }
 
 template<int N>
-void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
+void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
     int offset;
@@ -518,7 +518,7 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
 }
 
 template<int N>
-void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, const short *coeff)
+void filterHorizontal_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
@@ -613,7 +613,7 @@ void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, 
     }
 }
 
-void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void filterConvertPelToShort(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height)
 {
     pixel* srcOrg = src;
     short* dstOrg = dst;
@@ -653,7 +653,7 @@ void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStrid
     }
 }
 
-void filterConvertShortToPel(short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
+void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
 {
     short* srcOrg = src;
     pixel* dstOrg = dst;

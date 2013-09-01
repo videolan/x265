@@ -183,12 +183,12 @@ typedef int  (*pixelcmp_sp_t)(short *fenc, intptr_t fencstride, pixel *fref, int
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
 typedef void (*ipfilter_t)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height);
-typedef void (*ipfilter_pp_t)(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_ps_t)(pixel *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_sp_t)(short *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_ss_t)(short *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_p2s_t)(pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
-typedef void (*ipfilter_s2p_t)(short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
+typedef void (*ipfilter_pp_t)(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_sp_t)(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_ss_t)(short *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_p2s_t)(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height);
+typedef void (*ipfilter_s2p_t)(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height);
 typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_sp_t)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_ps_t)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
@@ -218,21 +218,21 @@ typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef,
 typedef void (*dequant_t)(const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
                           unsigned int trSizeLog2, int *dequantCoef);
 
-typedef void (*filterVwghtd_t)(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width,
+typedef void (*filterVwghtd_t)(short *src, intptr_t srcStride, pixel *dstE, pixel *dstI, pixel *dstP, intptr_t dstStride, int block_width,
                                int block_height, int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
-typedef void (*filterHwghtd_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
-                               pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height,
+typedef void (*filterHwghtd_t)(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride,
+                               pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height,
                                int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
-typedef void (*filterRowH_t)(pixel *src, int srcStride, short* midA, short* midB, short* midC, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
-typedef void (*filterRowV_0_t)(pixel *src, int srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
-typedef void (*filterRowV_N_t)(short *midA, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow);
+typedef void (*filterRowH_t)(pixel *src, intptr_t srcStride, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
+typedef void (*filterRowV_0_t)(pixel *src, intptr_t srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
+typedef void (*filterRowV_N_t)(short *midA, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow);
 
-typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*weightpUni_t)(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
-typedef void (*cuRowfilterHmulti_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
-                               pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height, int marginX);
+typedef void (*cuRowfilterHmulti_t)(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride,
+                               pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height, int marginX);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,

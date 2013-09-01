@@ -29,7 +29,7 @@
 
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int N>
-void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     src -= (N / 2 - 1) * srcStride;
 
@@ -294,8 +294,8 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         _mm_storeu_si128((__m128i*)(dstP + row * dstStride + X - 16), tmp16p); \
 }
 
-void filterVerticalMultiplaneExtend(short *src, int srcStride,
-                                    pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
+void filterVerticalMultiplaneExtend(short *src, intptr_t srcStride,
+                                    pixel *dstE, pixel *dstI, pixel *dstP, intptr_t dstStride,
                                     int block_width, int block_height,
                                     int marginX, int marginY)
 {
@@ -503,8 +503,8 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
         *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
 
-void filterVerticalWeighted(short *src, int srcStride,
-                            pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
+void filterVerticalWeighted(short *src, intptr_t srcStride,
+                            pixel *dstE, pixel *dstI, pixel *dstP, intptr_t dstStride,
                             int block_width, int block_height,
                             int marginX, int marginY,
                             int scale, int wround, int wshift, int woffset)
@@ -663,8 +663,8 @@ void filterVerticalWeighted(short *src, int srcStride,
 }
 
 template<int N>
-void filterVertical_p_p(pixel *src, int srcStride,
-                        pixel *dst, int dstStride,
+void filterVertical_p_p(pixel *src, intptr_t srcStride,
+                        pixel *dst, intptr_t dstStride,
                         int width, int height,
                         const short *coeff)
 {
@@ -938,7 +938,7 @@ void filterVertical_p_p(pixel *src, int srcStride,
 
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int N>
-void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     int row, col;
     int offset;
@@ -1051,9 +1051,9 @@ ALIGN_VAR_32(const int8_t, ipfilterH_1[][16]) =
     { 0, 1,  -5, 17, 58, -10, 4, -1,  0, 1,  -5, 17, 58, -10, 4, -1},
 };
 
-void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
-                                      short *intF, short* intA, short* intB, short* intC, int intStride,
-                                      pixel *dstA, pixel *dstB, pixel *dstC, int dstStride,
+void filterHorizontalMultiplaneExtend(pixel *src, intptr_t srcStride,
+                                      short *intF, short* intA, short* intB, short* intC, intptr_t intStride,
+                                      pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride,
                                       int block_width, int block_height,
                                       int marginX, int marginY)
 {
@@ -1297,9 +1297,9 @@ void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
     }
 }
 
-void filterHorizontalWeighted(pixel *src, int srcStride,
-                              short *intF, short* intA, short* intB, short* intC, int intStride,
-                              pixel * dstF, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride,
+void filterHorizontalWeighted(pixel *src, intptr_t srcStride,
+                              short *intF, short* intA, short* intB, short* intC, intptr_t intStride,
+                              pixel * dstF, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride,
                               int block_width, int block_height,
                               int marginX, int marginY, int scale, int wround, int wshift, int woffset)
 {
@@ -1746,11 +1746,11 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
     }
 }
 
-void filterHorizontalExtendCol(pixel *src, int srcStride,
-                                      short *intF, short* intA, short* intB, short* intC, int intStride,
-                                      pixel *dstA, pixel *dstB, pixel *dstC, int dstStride,
-                                      int block_width, int block_height,
-                                      int marginX)
+void filterHorizontalExtendCol(pixel *src, intptr_t srcStride,
+                               short *intF, short* intA, short* intB, short* intC, intptr_t intStride,
+                               pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride,
+                               int block_width, int block_height,
+                               int marginX)
 {
     int row, col;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
@@ -2028,7 +2028,7 @@ void filterHorizontalExtendCol(pixel *src, int srcStride,
 
 #if INSTRSET >= X265_CPU_LEVEL_SSSE3
 template<int N>
-void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     src -= (N / 2 - 1);
 
@@ -2123,7 +2123,7 @@ void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, 
 
 #endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
 
-void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void filterConvertPelToShort(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height)
 {
     pixel* srcOrg = src;
     short* dstOrg = dst;
@@ -2163,7 +2163,7 @@ void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStrid
     }
 }
 
-void filterConvertShortToPel(short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
+void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
 {
     short* srcOrg = src;
     pixel* dstOrg = dst;

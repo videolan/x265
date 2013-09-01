@@ -34,11 +34,9 @@
 
 namespace {
 template<int N>
-void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
-    int cStride = srcStride;
-
-    src -= (N / 2 - 1) * cStride;
+    src -= (N / 2 - 1) * srcStride;
 
     int offset;
     short maxVal;
@@ -57,22 +55,22 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * coeff[0];
-            sum += src[col + 1 * cStride] * coeff[1];
+            sum  = src[col + 0 * srcStride] * coeff[0];
+            sum += src[col + 1 * srcStride] * coeff[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * coeff[2];
-                sum += src[col + 3 * cStride] * coeff[3];
+                sum += src[col + 2 * srcStride] * coeff[2];
+                sum += src[col + 3 * srcStride] * coeff[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * coeff[4];
-                sum += src[col + 5 * cStride] * coeff[5];
+                sum += src[col + 4 * srcStride] * coeff[4];
+                sum += src[col + 5 * srcStride] * coeff[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * coeff[6];
-                sum += src[col + 7 * cStride] * coeff[7];
+                sum += src[col + 6 * srcStride] * coeff[6];
+                sum += src[col + 7 * srcStride] * coeff[7];
             }
 
             short val = (short)((sum + offset) >> shift);
@@ -89,7 +87,7 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
 }
 
 template<int N>
-void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     int cStride = 1;
 
@@ -139,7 +137,7 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
 }
 
 template<int N>
-void filterVertical_s_s(short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_s_s(short *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     short c[8];
 
@@ -161,8 +159,7 @@ void filterVertical_s_s(short *src, int srcStride, short *dst, int dstStride, in
         c[7] = coeff[7];
     }
 
-    int cStride =  srcStride;
-    src -= (N / 2 - 1) * cStride;
+    src -= (N / 2 - 1) * srcStride;
     int shift = IF_FILTER_PREC;
     int row, col;
     for (row = 0; row < height; row++)
@@ -171,22 +168,22 @@ void filterVertical_s_s(short *src, int srcStride, short *dst, int dstStride, in
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * c[0];
-            sum += src[col + 1 * cStride] * c[1];
+            sum  = src[col + 0 * srcStride] * c[0];
+            sum += src[col + 1 * srcStride] * c[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * c[2];
-                sum += src[col + 3 * cStride] * c[3];
+                sum += src[col + 2 * srcStride] * c[2];
+                sum += src[col + 3 * srcStride] * c[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * c[4];
-                sum += src[col + 5 * cStride] * c[5];
+                sum += src[col + 4 * srcStride] * c[4];
+                sum += src[col + 5 * srcStride] * c[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * c[6];
-                sum += src[col + 7 * cStride] * c[7];
+                sum += src[col + 6 * srcStride] * c[6];
+                sum += src[col + 7 * srcStride] * c[7];
             }
 
             short val = (short)((sum) >> shift);
@@ -199,7 +196,7 @@ void filterVertical_s_s(short *src, int srcStride, short *dst, int dstStride, in
 }
 
 template<int N>
-void filterVertical_p_s(pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     short c[8];
 
@@ -221,8 +218,7 @@ void filterVertical_p_s(pixel *src, int srcStride, short *dst, int dstStride, in
         c[7] = coeff[7];
     }
 
-    int Stride =  srcStride;
-    src -= (N / 2 - 1) * Stride;
+    src -= (N / 2 - 1) * srcStride;
     Int offset;
     Int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     Int shift = IF_FILTER_PREC;
@@ -237,22 +233,22 @@ void filterVertical_p_s(pixel *src, int srcStride, short *dst, int dstStride, in
         {
             int sum;
 
-            sum  = src[col + 0 * Stride] * c[0];
-            sum += src[col + 1 * Stride] * c[1];
+            sum  = src[col + 0 * srcStride] * c[0];
+            sum += src[col + 1 * srcStride] * c[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * Stride] * c[2];
-                sum += src[col + 3 * Stride] * c[3];
+                sum += src[col + 2 * srcStride] * c[2];
+                sum += src[col + 3 * srcStride] * c[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * Stride] * c[4];
-                sum += src[col + 5 * Stride] * c[5];
+                sum += src[col + 4 * srcStride] * c[4];
+                sum += src[col + 5 * srcStride] * c[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * Stride] * c[6];
-                sum += src[col + 7 * Stride] * c[7];
+                sum += src[col + 6 * srcStride] * c[6];
+                sum += src[col + 7 * srcStride] * c[7];
             }
 
             short val = (short)((sum + offset) >> shift);
@@ -265,7 +261,7 @@ void filterVertical_p_s(pixel *src, int srcStride, short *dst, int dstStride, in
 }
 
 template<int N>
-void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     src -= N / 2 - 1;
 
@@ -310,7 +306,7 @@ void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, 
     }
 }
 
-void filterConvertShortToPel(short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
+void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     short offset = IF_INTERNAL_OFFS;
@@ -335,7 +331,7 @@ void filterConvertShortToPel(short *src, int srcStride, pixel *dst, int dstStrid
     }
 }
 
-void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void filterConvertPelToShort(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int row, col;
@@ -354,7 +350,7 @@ void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStrid
 }
 
 template<int N>
-void filterVertical_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     short c[8];
 
@@ -376,8 +372,7 @@ void filterVertical_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, in
         c[7] = coeff[7];
     }
 
-    int Stride = srcStride;
-    src -= (N / 2 - 1) * Stride;
+    src -= (N / 2 - 1) * srcStride;
 
     int offset;
     short maxVal;
@@ -397,22 +392,22 @@ void filterVertical_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, in
         {
             int sum;
 
-            sum  = src[col + 0 * Stride] * c[0];
-            sum += src[col + 1 * Stride] * c[1];
+            sum  = src[col + 0 * srcStride] * c[0];
+            sum += src[col + 1 * srcStride] * c[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * Stride] * c[2];
-                sum += src[col + 3 * Stride] * c[3];
+                sum += src[col + 2 * srcStride] * c[2];
+                sum += src[col + 3 * srcStride] * c[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * Stride] * c[4];
-                sum += src[col + 5 * Stride] * c[5];
+                sum += src[col + 4 * srcStride] * c[4];
+                sum += src[col + 5 * srcStride] * c[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * Stride] * c[6];
-                sum += src[col + 7 * Stride] * c[7];
+                sum += src[col + 6 * srcStride] * c[6];
+                sum += src[col + 7 * srcStride] * c[7];
             }
 
             short val = (short)((sum + offset) >> shift);
@@ -427,14 +422,14 @@ void filterVertical_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, in
     }
 }
 
-void filterVertical_short_pel_multiplane(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
+void filterVertical_short_pel_multiplane(short *src, intptr_t srcStride, pixel *dstE, pixel *dstI, pixel *dstP, intptr_t dstStride, int block_width, int block_height)
 {
     filterVertical_s_p<8>(src, srcStride, dstI, dstStride, block_width, block_height, g_lumaFilter[2]);
     filterVertical_s_p<8>(src, srcStride, dstE, dstStride, block_width, block_height, g_lumaFilter[1]);
     filterVertical_s_p<8>(src, srcStride, dstP, dstStride, block_width, block_height, g_lumaFilter[3]);
 }
 
-void extendPicCompBorder(pixel* txt, int stride, int width, int height, int marginX, int marginY)
+void extendPicCompBorder(pixel* txt, intptr_t stride, int width, int height, int marginX, int marginY)
 {
     int   x, y;
 
@@ -462,7 +457,7 @@ void extendPicCompBorder(pixel* txt, int stride, int width, int height, int marg
     }
 }
 
-void extendCURowColBorder(pixel* txt, int stride, int width, int height, int marginX)
+void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, int marginX)
 {
     int   x, y;
 
@@ -478,24 +473,24 @@ void extendCURowColBorder(pixel* txt, int stride, int width, int height, int mar
     }
 }
 
-void filterHorizontalExtendCol(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX)
+void filterHorizontalExtendCol(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height, int marginX)
 {
     filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
     filterHorizontal_p_s<8>(src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
     filterHorizontal_p_s<8>(src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
     filterHorizontal_p_s<8>(src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
     
-    filterConvertShortToPel(midA, midStride, pDstA, pDstStride, block_width, block_height);
-    filterConvertShortToPel(midB, midStride, pDstB, pDstStride, block_width, block_height);
-    filterConvertShortToPel(midC, midStride, pDstC, pDstStride, block_width, block_height);
+    filterConvertShortToPel(midA, midStride, dstA, dstStride, block_width, block_height);
+    filterConvertShortToPel(midB, midStride, dstB, dstStride, block_width, block_height);
+    filterConvertShortToPel(midC, midStride, dstC, dstStride, block_width, block_height);
     
-    extendCURowColBorder(pDstA, pDstStride, block_width, block_height, marginX);
-    extendCURowColBorder(pDstB, pDstStride, block_width, block_height, marginX);
-    extendCURowColBorder(pDstC, pDstStride, block_width, block_height, marginX);
+    extendCURowColBorder(dstA, dstStride, block_width, block_height, marginX);
+    extendCURowColBorder(dstB, dstStride, block_width, block_height, marginX);
+    extendCURowColBorder(dstC, dstStride, block_width, block_height, marginX);
 
 }
 
-void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int scale, int round, int shift, int offset)
+void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int scale, int round, int shift, int offset)
 {
     Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     shift = shift + shiftNum;
@@ -519,8 +514,8 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
 }
 
 // filterHorizontal, Multiplane, Weighted
-void filterHorizontalWeighted(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
-                              pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height,
+void filterHorizontalWeighted(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride,
+                              pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height,
                               int marginX, int marginY, int scale, int round, int shift, int offset)
 {
     filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
@@ -540,8 +535,8 @@ void filterHorizontalWeighted(pixel *src, int srcStride, short *midF, short* mid
 }
 
 // filterVertical, Multiplane, Weighted
-void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP,
-                            int dstStride, int block_width, int block_height, int marginX, int marginY,
+void filterVerticalWeighted(short *src, intptr_t srcStride, pixel *dstE, pixel *dstI, pixel *dstP,
+                            intptr_t dstStride, int block_width, int block_height, int marginX, int marginY,
                             int scale, int round, int shift, int offset)
 {
     short* intI, *intE, *intP;    
@@ -569,7 +564,7 @@ void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI,
 }
 }
 
-void filterRowH(pixel *src, int srcStride, short* midA, short* midB, short* midC, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow)
+void filterRowH(pixel *src, intptr_t srcStride, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow)
 {
     // Extend FullPel Left and Right
     extendCURowColBorder(src, srcStride, width, height, marginX);
@@ -661,7 +656,7 @@ void filterRowH(pixel *src, int srcStride, short* midA, short* midB, short* midC
     }
 }
 
-void filterRowV_0(pixel *src, int srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow)
+void filterRowV_0(pixel *src, intptr_t srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow)
 {
     int row_first = (row == 0 ? 4 : 0);
     int row_last = (isLastRow ? 3 : 0);
@@ -698,7 +693,7 @@ void filterRowV_0(pixel *src, int srcStride, pixel *dstA, pixel *dstB, pixel *ds
     }
 }
 
-void filterRowV_N(short *midA, int midStride, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow)
+void filterRowV_N(short *midA, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow)
 {
     int row_first = (row == 0 ? 4 : 0);
     int row_last = (isLastRow ? 3 : 0);
