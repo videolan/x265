@@ -101,9 +101,6 @@ protected:
     Int             m_adaptiveRange[2][33];
     x265::MV        m_mvPredictors[3];
 
-    // RD computation
-    DistParam       m_distParam;
-
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
     Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
 

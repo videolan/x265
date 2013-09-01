@@ -104,6 +104,13 @@ include_directories(. Lib common encoder)
 add_subdirectory(common)
 add_subdirectory(encoder)
 
+option(ENABLE_STATICLIB "Enable statically linked encoder library x265enc" OFF)
+if(ENABLE_STATICLIB)
+    include(mergestaticlibs)
+    merge_static_libs(x265enc encoder common)
+    target_link_libraries(x265enc ${PLATFORM_LIBS})
+endif()
+
 # Test applications
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
 if(ENABLE_TESTS)
@@ -126,5 +133,5 @@ if(ENABLE_CLI)
     add_executable(x265 ${EXTRAS} ../COPYING
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
-    target_link_libraries(x265 InputFiles OutputFiles encoder ${PLATFORM_LIBS})
+    target_link_libraries(x265 InputFiles OutputFiles encoder common ${PLATFORM_LIBS})
 endif(ENABLE_CLI)

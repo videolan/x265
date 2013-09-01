@@ -39,122 +39,17 @@
 #define __TCOMRDCOST__
 
 #include "CommonDef.h"
-#include "TComPattern.h"
-
-#include "TComSlice.h"
-#include "TComRdCostWeightPrediction.h"
+#include <math.h>
 
 //! \ingroup TLibCommon
 //! \{
 
-/// distortion function index
-enum DFunc
-{
-    DF_DEFAULT  = 0,
-    DF_SSE      = 1,    ///< general size SSE
-    DF_SSE4     = 2,    ///<   4xM SSE
-    DF_SSE8     = 3,    ///<   8xM SSE
-    DF_SSE16    = 4,    ///<  16xM SSE
-    DF_SSE32    = 5,    ///<  32xM SSE
-    DF_SSE64    = 6,    ///<  64xM SSE
-    DF_SSE16N   = 7,    ///< 16NxM SSE
-
-    DF_SAD      = 8,    ///< general size SAD
-    DF_SAD4     = 9,    ///<   4xM SAD
-    DF_SAD8     = 10,   ///<   8xM SAD
-    DF_SAD16    = 11,   ///<  16xM SAD
-    DF_SAD32    = 12,   ///<  32xM SAD
-    DF_SAD64    = 13,   ///<  64xM SAD
-    DF_SAD16N   = 14,   ///< 16NxM SAD
-
-    DF_SADS     = 15,   ///< general size SAD with step
-    DF_SADS4    = 16,   ///<   4xM SAD with step
-    DF_SADS8    = 17,   ///<   8xM SAD with step
-    DF_SADS16   = 18,   ///<  16xM SAD with step
-    DF_SADS32   = 19,   ///<  32xM SAD with step
-    DF_SADS64   = 20,   ///<  64xM SAD with step
-    DF_SADS16N  = 21,   ///< 16NxM SAD with step
-
-    DF_HADS     = 22,   ///< general size Hadamard with step
-    DF_HADS4    = 23,   ///<   4xM HAD with step
-    DF_HADS8    = 24,   ///<   8xM HAD with step
-    DF_HADS16   = 25,   ///<  16xM HAD with step
-    DF_HADS32   = 26,   ///<  32xM HAD with step
-    DF_HADS64   = 27,   ///<  64xM HAD with step
-    DF_HADS16N  = 28,   ///< 16NxM HAD with step
-
-    DF_SAD12    = 43,
-    DF_SAD24    = 44,
-    DF_SAD48    = 45,
-
-    DF_SADS12   = 46,
-    DF_SADS24   = 47,
-    DF_SADS48   = 48,
-
-    DF_SSE_FRAME = 50   ///< Frame-based SSE
-};
-
-class DistParam;
 class TComPattern;
 
-// ====================================================================================================================
-// Type definition
-// ====================================================================================================================
-
-// for function pointer
-typedef UInt (*FpDistFunc) (DistParam*);
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
-
-/// distortion parameter class
-class DistParam
-{
-public:
-
-    Pel*  fenc;
-    Pel*  fref;
-    Int   fencstride;
-    Int   frefstride;
-    Int   rows;
-    Int   cols;
-    FpDistFunc distFunc;
-
-    Bool            applyWeight;   // whether weighted prediction is used or not
-    wpScalingParam  *wpCur;         // weighted prediction scaling parameters for current ref
-
-    // (vertical) subsampling shift (for reducing complexity)
-    // - 0 = no subsampling, 1 = even rows, 2 = every 4th, etc.
-    Int   subShift;
-
-    DistParam()
-    {
-        fenc = NULL;
-        fref = NULL;
-        fencstride = 0;
-        frefstride = 0;
-        rows = 0;
-        cols = 0;
-        distFunc = NULL;
-        subShift = 0;
-    }
-};
-
-class DistParamSSE : public DistParam
-{
-public:
-
-    Short* ptr1;
-    Short* ptr2;
-};
-
 /// RD cost computation class
-class TComRdCost : public TComRdCostWeightPrediction
+class TComRdCost
 {
 private:
-
-    FpDistFunc              m_distortionFunctions[64]; // [eDFunc]
 
     Double                  m_lambda2;
 
@@ -170,15 +65,23 @@ private:
 
 public:
 
-    TComRdCost();
+    Void setLambda(Double lambda)
+    {
+        m_lambda2         = lambda;
+        m_lambda          = sqrt(m_lambda2);
+        m_lambdaMotionSAD = (UInt64)floor(65536.0 * m_lambda);
+        m_lambdaMotionSSE = (UInt64)floor(65536.0 * m_lambda2);
+    }
 
-    virtual ~TComRdCost();
+    Void setCbDistortionWeight(Double cbDistortionWeight)
+    {
+        m_cbDistortionWeight = (UInt)floor(256.0 * cbDistortionWeight);
+    }
 
-    Void setLambda(Double lambda2);
-
-    Void setCbDistortionWeight(Double cbDistortionWeight);
-
-    Void setCrDistortionWeight(Double crDistortionWeight);
+    Void setCrDistortionWeight(Double crDistortionWeight)
+    {
+        m_crDistortionWeight = (UInt)floor(256.0 * crDistortionWeight);
+    }
 
     inline UInt64  calcRdCost(UInt distortion, UInt bits) { return distortion + ((bits * m_lambdaMotionSSE + 32768) >> 16); }
 
@@ -191,40 +94,6 @@ public:
     inline UInt    scaleChromaDistCr(UInt dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
 
     inline Double  getSADLambda() const                   { return m_lambda; }
-
-    // Distortion Functions
-    Void    init();
-
-    Void    setDistParam(TComPattern* patternKey, Pel* refy, Int refstride, DistParam& distParam, Bool bHADME = false);
-
-private:
-
-    static UInt xGetSSE(DistParam* dtParam);
-    static UInt xGetSSE4(DistParam* dtParam);
-    static UInt xGetSSE8(DistParam* dtParam);
-    static UInt xGetSSE16(DistParam* dtParam);
-    static UInt xGetSSE32(DistParam* dtParam);
-    static UInt xGetSSE64(DistParam* dtParam);
-    static UInt xGetSSE16N(DistParam* dtParam);
-
-    static UInt xGetSAD(DistParam* dtParam);
-    static UInt xGetSAD4(DistParam* dtParam);
-    static UInt xGetSAD8(DistParam* dtParam);
-    static UInt xGetSAD16(DistParam* dtParam);
-    static UInt xGetSAD32(DistParam* dtParam);
-    static UInt xGetSAD64(DistParam* dtParam);
-    static UInt xGetSAD16N(DistParam* dtParam);
-
-    static UInt xGetSAD12(DistParam* dtParam);
-    static UInt xGetSAD24(DistParam* dtParam);
-    static UInt xGetSAD48(DistParam* dtParam);
-
-    static UInt xGetHADs4(DistParam* dtParam);
-    static UInt xGetHADs8(DistParam* dtParam);
-    static UInt xGetHADs(DistParam* dtParam);
-
-    static UInt xCalcHADs4x4(Pel *fenc, Pel *fref, Int fencstride, Int frefstride, Int step);
-    static UInt xCalcHADs8x8(Pel *fenc, Pel *fref, Int fencstride, Int frefstride, Int step);
 };
 
 //! \}
