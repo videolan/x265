@@ -91,7 +91,7 @@ public:
 
     int motionEstimate(ReferencePlanes *ref, const MV & mvmin, const MV & mvmax, const MV & qmvp, int numCandidates, const MV * mvc, int merange, MV & outQMv);
 
-    int subpelSatd(const MV& qmv, pixel *fref);
+    int subpelCompare(ReferencePlanes *ref, const MV & qmv, pixelcmp_t);
 
 protected:
 

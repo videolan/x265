@@ -277,7 +277,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     // measure SAD cost at clipped QPEL MVP
     MV pmv = qmvp.clipped(qmvmin, qmvmax);
     MV bestpre = pmv;
-    int bprecost = subpelSatd(pmv, fref);
+    int bprecost = subpelCompare(ref, pmv, sad);
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
@@ -304,7 +304,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         MV m = mvc[i].clipped(qmvmin, qmvmax);
         if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            int cost = subpelSatd(m, fref);
+            int cost = subpelCompare(ref, m, sad);
             cost += mvcost(m);
             if (cost < bprecost)
             {
@@ -762,7 +762,7 @@ me_hex2:
     for (int i = 0; i < 9; i++)
     {
         MV qmv = bmv + square1[i] * 2;
-        cost = subpelSatd(qmv, fref);
+        cost = subpelCompare(ref, qmv, satd);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
@@ -775,7 +775,7 @@ me_hex2:
         for (int i = 1; i < 9; i++)
         {
             MV qmv = bmv + square1[i];
-            cost = subpelSatd(qmv, fref);
+            cost = subpelCompare(ref, qmv, satd);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
 
@@ -1029,34 +1029,54 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
     } // dist > 8
 }
 
-int MotionEstimate::subpelSatd(const MV& qmv, pixel *fref)
+int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_t cmp)
 {
-    fref += (qmv.x >> 2) + (qmv.y >> 2) * fencLumaStride;
-    int xFrac = qmv.x & 0x3;
-    int yFrac = qmv.y & 0x3;
-
-    if (yFrac == 0)
+    if (ref->isLowres)
     {
-        if (xFrac != 0)
+        if ((qmv.x | qmv.y) & 1)
         {
-            primitives.ipfilter_pp[FILTER_H_P_P_8](fref, fencLumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[xFrac]);
+            /* QPel (TODO: (A+B+1)>>1 average primitive) */
+            int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+            pixel *fref = ref->lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
+            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
         }
         else
         {
-            return satd(fenc, FENC_STRIDE, fref, fencLumaStride) + mvcost(qmv);
+            /* FPEL/HPEL */
+            int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+            pixel *fref = ref->lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
+            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
         }
-    }
-    else if (xFrac == 0)
-    {
-        primitives.ipfilter_pp[FILTER_V_P_P_8](fref, fencLumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
     }
     else
     {
-        int filterSize = NTAPS_LUMA;
-        int halfFilterSize = (filterSize >> 1);
-        primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * fencLumaStride, fencLumaStride, immedVal, blockwidth, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
-        primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
-    }
+        pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
+        int xFrac = qmv.x & 0x3;
+        int yFrac = qmv.y & 0x3;
 
-    return satd(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost(qmv);
+        if (yFrac == 0)
+        {
+            if (xFrac != 0)
+            {
+                primitives.ipfilter_pp[FILTER_H_P_P_8](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[xFrac]);
+            }
+            else
+            {
+                return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
+            }
+        }
+        else if (xFrac == 0)
+        {
+            primitives.ipfilter_pp[FILTER_V_P_P_8](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
+        }
+        else
+        {
+            int filterSize = NTAPS_LUMA;
+            int halfFilterSize = (filterSize >> 1);
+            primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, blockwidth, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
+            primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
+        }
+
+        return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost(qmv);
+    }
 }
