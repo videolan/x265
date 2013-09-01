@@ -37,8 +37,6 @@ class MotionEstimate : public BitCost
 protected:
 
     /* Aligned copy of original pixels, extra room for manual alignment */
-    pixel  fenc_buf[64 * FENC_STRIDE + 32];
-
     pixel *fencplane;
     intptr_t fencLumaStride;
 
@@ -52,6 +50,9 @@ protected:
     int partEnum;
     int searchMethod;
 
+    /* subpel generation buffers */
+    pixel *subpelbuf;
+    short *immedVal;
     int blockwidth;
     int blockheight;
 
@@ -65,7 +66,7 @@ public:
 
     MotionEstimate();
 
-    ~MotionEstimate() {}
+    virtual ~MotionEstimate();
 
     void setSearchMethod(int i) { searchMethod = i; }
 
@@ -90,7 +91,7 @@ public:
 
     int motionEstimate(ReferencePlanes *ref, const MV & mvmin, const MV & mvmax, const MV & qmvp, int numCandidates, const MV * mvc, int merange, MV & outQMv);
 
-    void generateSubpel(MV qmv, MotionReference *ref);
+    int subpelSatd(const MV& qmv, pixel *fref);
 
 protected:
 

@@ -65,8 +65,6 @@ public:
 
     MotionReference *m_next;
     TComPicYuv  *m_reconPic;
-    pixel      *m_subpelbuf;
-    short      *m_intermediateValues;
 
 protected:
 
@@ -77,6 +75,7 @@ protected:
     volatile int m_workerCount;
     volatile int m_finishedPlanes;
     Event        m_completionEvent;
+    short       *m_intermediateValues;
 
     // Generate subpels for entire frame with a margin of tmpMargin
     static const int s_tmpMarginX = 4;

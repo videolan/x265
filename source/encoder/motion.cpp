@@ -61,8 +61,19 @@ MotionEstimate::MotionEstimate()
     if (size_scale[0] == 0)
         init_scales();
 
-    // fenc must be 32 byte aligned
-    fenc = (pixel*)((char*)fenc_buf + ((32 - (size_t)(&fenc_buf[0])) & 31));
+    fenc = (pixel*)X265_MALLOC(pixel, 64*64);
+    subpelbuf = (pixel*)X265_MALLOC(pixel, 64 * 64);
+    immedVal = (short*)X265_MALLOC(short, 64 * (64 + NTAPS_LUMA - 1));
+}
+
+MotionEstimate::~MotionEstimate()
+{
+    if (fenc)
+        X265_FREE(fenc);
+    if (subpelbuf)
+        X265_FREE(subpelbuf);
+    if (immedVal)
+        X265_FREE(immedVal);
 }
 
 void MotionEstimate::setSourcePU(int offset, int width, int height)
@@ -140,19 +151,6 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
         cost += mvcost(MV(mx, my) << 2); \
         COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
-    } while (0)
-
-#define COST_QMV(cost, qmv) \
-    do \
-    { \
-        MV fmv = qmv >> 2; \
-        if ((qmv.x & 3) || (qmv.y & 3)) \
-        { \
-            generateSubpel(qmv, mref); \
-            cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, 64) + mvcost(qmv); \
-        } \
-        else \
-            cost = satd(fenc, FENC_STRIDE, fref + fmv.y * stride + fmv.x, stride) + mvcost(qmv); \
     } while (0)
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
@@ -263,7 +261,6 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     ALIGN_VAR_16(int, costs[16]);
     size_t stride = ref->lumaStride;
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-    MotionReference * mref = (MotionReference*)ref;
 
     setMVP(qmvp);
 
@@ -279,9 +276,8 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
 
     // measure SAD cost at clipped QPEL MVP
     MV pmv = qmvp.clipped(qmvmin, qmvmax);
-    int bprecost;
     MV bestpre = pmv;
-    COST_QMV(bprecost, pmv); // ignore MVD cost for clipped MVP
+    int bprecost = subpelSatd(pmv, fref);
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
@@ -308,8 +304,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         MV m = mvc[i].clipped(qmvmin, qmvmax);
         if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            int cost;
-            COST_QMV(cost, m);
+            int cost = subpelSatd(m, fref);
             cost += mvcost(m);
             if (cost < bprecost)
             {
@@ -762,26 +757,12 @@ me_hex2:
         bmv = bmv.toQPel(); // promote search bmv to qpel
 
     /* HPEL square refinement, dir 0 has no offset - remeasures bmv with SATD */
-    int bdir = 0;
+    int bdir = 0, cost;
     bcost = COST_MAX;
     for (int i = 0; i < 9; i++)
     {
         MV qmv = bmv + square1[i] * 2;
-        MV fmv = qmv >> 2;
-        int cost;
-
-        /* TODO this will go away until will use lumaplane */
-        pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-
-        if ((qmv.x & 3) || (qmv.y & 3)) // if its not a FPEL then
-        {
-            generateSubpel(qmv, mref);
-            cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, 64) + mvcost(qmv);
-        }
-        else
-        {
-            cost = satd(fenc, FENC_STRIDE, fref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
-        }
+        cost = subpelSatd(qmv, fref);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
@@ -794,21 +775,7 @@ me_hex2:
         for (int i = 1; i < 9; i++)
         {
             MV qmv = bmv + square1[i];
-            MV fmv = qmv >> 2;
-            int cost;
-
-            /* TODO this will go away until will use lumaplane */
-            pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-
-            if ((qmv.x & 3) || (qmv.y & 3)) // if its not a FPEL then
-            {
-                generateSubpel(qmv, mref);
-                cost = satd(fenc, FENC_STRIDE, mref->m_subpelbuf, 64) + mvcost(qmv);
-            }
-            else
-            {
-                cost = satd(fenc, FENC_STRIDE, fref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
-            }
+            cost = subpelSatd(qmv, fref);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
 
@@ -1062,45 +1029,34 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
     } // dist > 8
 }
 
-void MotionEstimate::generateSubpel(MV qmv, MotionReference *mref)
+int MotionEstimate::subpelSatd(const MV& qmv, pixel *fref)
 {
+    fref += (qmv.x >> 2) + (qmv.y >> 2) * fencLumaStride;
     int xFrac = qmv.x & 0x3;
     int yFrac = qmv.y & 0x3;
 
-    int srcStride = mref->lumaStride;
-    int dstStride = 64; //TODO: Replace with macro for max ctu size
-
-    int refOffset = (qmv.x >> 2) + (qmv.y >> 2) * srcStride;
-
-    /* TODO this will Go away untill we use lumaplane[][] */
-    Pel* src = mref->lumaPlane[0][0];
-
-    src = src + refOffset + blockOffset;
-    
     if (yFrac == 0)
     {
         if (xFrac != 0)
         {
-            x265::primitives.ipfilter_pp[FILTER_H_P_P_8]((pixel*)src, srcStride, (pixel*)mref->m_subpelbuf, dstStride, blockwidth, blockheight, g_lumaFilter[xFrac]);
+            primitives.ipfilter_pp[FILTER_H_P_P_8](fref, fencLumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[xFrac]);
         }
         else
         {
-            x265::primitives.blockcpy_pp(blockwidth, blockheight, mref->m_subpelbuf, dstStride, src, srcStride);
+            return satd(fenc, FENC_STRIDE, fref, fencLumaStride) + mvcost(qmv);
         }
     }
     else if (xFrac == 0)
     {
-        x265::primitives.ipfilter_pp[FILTER_V_P_P_8]((pixel*)src, srcStride, (pixel*)mref->m_subpelbuf, dstStride, blockwidth, blockheight, g_lumaFilter[yFrac]);
+        primitives.ipfilter_pp[FILTER_V_P_P_8](fref, fencLumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
     }
     else
     {
-        int tmpStride = blockwidth;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
-        Short *tmp = (Short*)X265_MALLOC(Short, blockwidth * (blockheight + filterSize - 1));
+        primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * fencLumaStride, fencLumaStride, immedVal, blockwidth, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
+    }
 
-        primitives.ipfilter_ps[FILTER_H_P_S_8]((pixel*)src - (halfFilterSize - 1) * srcStride,  srcStride, tmp, tmpStride, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
-        primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, (pixel*)mref->m_subpelbuf, dstStride, blockwidth, blockheight, g_lumaFilter[yFrac]);
-        X265_FREE(tmp);
-    }    
+    return satd(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost(qmv);
 }

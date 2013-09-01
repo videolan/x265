@@ -112,10 +112,6 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
             }
         }
     }
-
-    /* for sub pel output */
-    m_subpelbuf = (pixel*)X265_MALLOC(pixel, 64 * 64); //TODO: Is there a macro for max_ctu_size? 
-
 }
 
 MotionReference::~MotionReference()
@@ -142,10 +138,6 @@ MotionReference::~MotionReference()
             }
         }
     }
-
-    if (m_subpelbuf)
-        X265_FREE(m_subpelbuf);
-
 }
 
 void MotionReference::generateReferencePlanes()
