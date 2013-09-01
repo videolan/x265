@@ -261,7 +261,7 @@ x265::MotionReference* TComPicYuv::generateMotionReference(x265::ThreadPool *poo
             return mref;
     }
     mref = new x265::MotionReference(this, pool, w);
-    mref->generateReferencePlanes();
+    //mref->generateReferencePlanes();
     mref->m_next = m_refList;
     m_refList = mref;
     return mref;
