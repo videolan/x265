@@ -25,7 +25,7 @@
 #include "common.h"
 #include "motion.h"
 #include "x265.h"
-#include "TLibCommon\TComRom.h"
+#include "TLibCommon/TComRom.h"
 
 #include <string.h>
 #include <stdio.h>
