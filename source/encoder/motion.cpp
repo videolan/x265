@@ -78,8 +78,6 @@ MotionEstimate::~MotionEstimate()
 
 void MotionEstimate::setSourcePU(int offset, int width, int height)
 {
-    blockOffset = offset;
-
     /* copy PU block into cache */
     primitives.blockcpy_pp(width, height, fenc, FENC_STRIDE, fencplane + offset, fencLumaStride);
 
@@ -92,6 +90,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 
     blockwidth = width;
     blockheight = height;
+    blockOffset = offset;
 }
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
@@ -304,8 +303,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         MV m = mvc[i].clipped(qmvmin, qmvmax);
         if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            int cost = subpelCompare(ref, m, sad);
-            cost += mvcost(m);
+            int cost = subpelCompare(ref, m, sad) + mvcost(m);
             if (cost < bprecost)
             {
                 bprecost = cost;
@@ -762,7 +760,7 @@ me_hex2:
     for (int i = 0; i < 9; i++)
     {
         MV qmv = bmv + square1[i] * 2;
-        cost = subpelCompare(ref, qmv, satd);
+        cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
@@ -773,7 +771,7 @@ me_hex2:
     for (int i = 1; i < 9; i++)
     {
         MV qmv = bmv + square1[i];
-        cost = subpelCompare(ref, qmv, satd);
+        cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
@@ -1044,14 +1042,14 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             for (int y = 0; y < blockheight; y++)
                 for (int x = 0; x < blockwidth; x++)
                     subpelbuf[y * FENC_STRIDE + x] = (frefA[y * ref->lumaStride + x] + frefB[y * ref->lumaStride + x] + 1) >> 1;
-            return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost(qmv);
+            return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
         }
         else
         {
             /* FPEL/HPEL */
             int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
             pixel *fref = ref->lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
+            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride);
         }
     }
     else
@@ -1062,7 +1060,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
 
         if ((yFrac | xFrac) == 0)
         {
-            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
+            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride);
         }
         else if (yFrac == 0)
         {
@@ -1080,6 +1078,6 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
         }
 
-        return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost(qmv);
+        return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
     }
 }
