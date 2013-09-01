@@ -62,19 +62,20 @@ extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
 /* Use primitives for the best available vector architecture */
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if defined(__GNUC__) || defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#if defined(__INTEL_COMPILER)
     if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
-#endif
-
-#if defined(__INTEL_COMPILER)
 
     if (cpuid > 6) Setup_Vec_Primitives_avx(p);
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
 
 #elif defined(__GNUC__)
-    // TODO: Cannot get XOP intrinsics to build with GCC or icpc
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+    if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
+    if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
+    if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
+#endif
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
     if (cpuid > 6) Setup_Vec_Primitives_avx(p);
 #endif
@@ -83,6 +84,9 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
 #endif
 
 #elif defined(_MSC_VER)
+    if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
+    if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
+    if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
 
 #if _MSC_VER >= 1700 // VC10
     if (cpuid > 6) hasXOP() ? Setup_Vec_Primitives_xop(p) : Setup_Vec_Primitives_avx(p);

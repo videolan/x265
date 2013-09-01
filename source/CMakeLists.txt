@@ -47,6 +47,18 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
         # likely be removed as well.
         add_definitions(-fabi-version=6)
     endif()
+elseif(APPLE)
+    exec_program(uname ARGS -v OUTPUT_VARIABLE DARWIN_VERSION)
+    string(REGEX MATCH "[0-9]+" DARWIN_VERSION ${DARWIN_VERSION})
+    message(STATUS "DARWIN_VERSION=${DARWIN_VERSION}")
+    if (DARWIN_VERSION GREATER 12)
+        # Detect Mac OS X 10.8 llvm/gcc frankenstein's monster
+        if (${CMAKE_CXX_COMPILER} STREQUAL "/usr/bin/c++")
+            execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+            set(GCC 1)
+            add_definitions(-Wall -Wextra -Werror -Wshadow)
+        endif()
+    endif()
 endif()
 
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)

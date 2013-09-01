@@ -42,27 +42,29 @@ if (MSVC)
     endif()
 endif()
 if(GCC)
-    set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp
-        blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp
-        pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
-        ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp
-        dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
-        intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp)
-    set_source_files_properties(
-        sse3.cpp blockcopy-sse3.cpp pixel-sse3.cpp ipfilter-sse3.cpp dct-sse3.cpp intra-sse3.cpp
-        PROPERTIES COMPILE_FLAGS "-msse3")
-    set_source_files_properties(
-        ssse3.cpp blockcopy-ssse3.cpp pixel-ssse3.cpp ipfilter-ssse3.cpp dct-ssse3.cpp intra-ssse3.cpp
-        PROPERTIES COMPILE_FLAGS "-mssse3")
-    set_source_files_properties(
-        sse41.cpp blockcopy-sse41.cpp pixel-sse41.cpp ipfilter-sse41.cpp dct-sse41.cpp intra-sse41.cpp
-        PROPERTIES COMPILE_FLAGS "-msse4.1")
-    if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.6)
-        set(PRIMITIVES ${PRIMITIVES}
-            blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp)
+    if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.3)
+        set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp
+            blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp
+            pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
+            ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp
+            dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
+            intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp)
         set_source_files_properties(
-            blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp
-            PROPERTIES COMPILE_FLAGS "-mavx")
+            sse3.cpp blockcopy-sse3.cpp pixel-sse3.cpp ipfilter-sse3.cpp dct-sse3.cpp intra-sse3.cpp
+            PROPERTIES COMPILE_FLAGS "-msse3")
+        set_source_files_properties(
+            ssse3.cpp blockcopy-ssse3.cpp pixel-ssse3.cpp ipfilter-ssse3.cpp dct-ssse3.cpp intra-ssse3.cpp
+            PROPERTIES COMPILE_FLAGS "-mssse3")
+        set_source_files_properties(
+            sse41.cpp blockcopy-sse41.cpp pixel-sse41.cpp ipfilter-sse41.cpp dct-sse41.cpp intra-sse41.cpp
+            PROPERTIES COMPILE_FLAGS "-msse4.1")
+        if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.6)
+            set(PRIMITIVES ${PRIMITIVES}
+                blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp)
+            set_source_files_properties(
+                blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp
+                PROPERTIES COMPILE_FLAGS "-mavx")
+        endif()
     endif()
     if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.7)
         set(PRIMITIVES ${PRIMITIVES}
