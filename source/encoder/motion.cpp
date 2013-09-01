@@ -1076,8 +1076,7 @@ void MotionEstimate::generateSubpel(MV qmv, MotionReference *mref)
     Pel* src = mref->lumaPlane[0][0];
 
     src = src + refOffset + blockOffset;
-    mref->m_intermediateValues = (short*)X265_MALLOC(short, (64 * (64 + NTAPS_LUMA - 1)));
-
+    
     if (yFrac == 0)
     {
         if (xFrac != 0)
@@ -1095,12 +1094,13 @@ void MotionEstimate::generateSubpel(MV qmv, MotionReference *mref)
     }
     else
     {
-        int tmpStride = 64 + NTAPS_LUMA - 1;
+        int tmpStride = blockwidth;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
-        primitives.ipfilter_ps[FILTER_H_P_S_8]((pixel*)src - (halfFilterSize - 1) * srcStride,  srcStride, mref->m_intermediateValues, tmpStride, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
-        primitives.ipfilter_sp[FILTER_V_S_P_8](mref->m_intermediateValues + (halfFilterSize - 1) * tmpStride, tmpStride, (pixel*)mref->m_subpelbuf, dstStride, blockwidth, blockheight, g_lumaFilter[yFrac]);
-    }
+        Short *tmp = (Short*)X265_MALLOC(Short, blockwidth * (blockheight + filterSize - 1));
 
-    X265_FREE(mref->m_intermediateValues);
+        primitives.ipfilter_ps[FILTER_H_P_S_8]((pixel*)src - (halfFilterSize - 1) * srcStride,  srcStride, tmp, tmpStride, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, (pixel*)mref->m_subpelbuf, dstStride, blockwidth, blockheight, g_lumaFilter[yFrac]);
+        X265_FREE(tmp);
+    }    
 }
