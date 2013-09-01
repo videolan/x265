@@ -768,19 +768,16 @@ me_hex2:
 
     bmv += square1[bdir] * 2;
 
-    if (!ref->isLowres)
+    /* QPEL square refinement, do not remeasure 0 offset */
+    bdir = 0;
+    for (int i = 1; i < 9; i++)
     {
-        /* QPEL square refinement, do not remeasure 0 offset */
-        bdir = 0;
-        for (int i = 1; i < 9; i++)
-        {
-            MV qmv = bmv + square1[i];
-            cost = subpelCompare(ref, qmv, satd);
-            COPY2_IF_LT(bcost, cost, bdir, i);
-        }
-
-        bmv += square1[bdir];
+        MV qmv = bmv + square1[i];
+        cost = subpelCompare(ref, qmv, satd);
+        COPY2_IF_LT(bcost, cost, bdir, i);
     }
+
+    bmv += square1[bdir];
 
     x265_emms();
     outQMv = bmv;
@@ -1035,10 +1032,19 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
     {
         if ((qmv.x | qmv.y) & 1)
         {
-            /* QPel (TODO: (A+B+1)>>1 average primitive) */
-            int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-            pixel *fref = ref->lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
+            /* QPel: use H.264's simple QPEL generation from averaged HPEL pixels */
+            int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+            pixel *frefA = ref->lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
+
+            MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
+            int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
+            pixel *frefB = ref->lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * ref->lumaStride;
+
+            /* TODO: make this into a lowres MC primitive */
+            for (int y = 0; y < blockheight; y++)
+                for (int x = 0; x < blockwidth; x++)
+                    subpelbuf[y * FENC_STRIDE + x] = (frefA[y * ref->lumaStride + x] + frefB[y * ref->lumaStride + x] + 1) >> 1;
+            return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost(qmv);
         }
         else
         {
