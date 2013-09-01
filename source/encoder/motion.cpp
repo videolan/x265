@@ -61,9 +61,9 @@ MotionEstimate::MotionEstimate()
     if (size_scale[0] == 0)
         init_scales();
 
-    fenc = (pixel*)X265_MALLOC(pixel, 64*64);
-    subpelbuf = (pixel*)X265_MALLOC(pixel, 64 * 64);
-    immedVal = (short*)X265_MALLOC(short, 64 * (64 + NTAPS_LUMA - 1));
+    fenc = (pixel*)X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
+    subpelbuf = (pixel*)X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
+    immedVal = (short*)X265_MALLOC(short, MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA - 1));
 }
 
 MotionEstimate::~MotionEstimate()
