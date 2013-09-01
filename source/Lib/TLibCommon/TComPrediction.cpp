@@ -86,6 +86,9 @@ TComPrediction::~TComPrediction()
         delete [] m_lumaRecBuffer;
     }
 
+    if (m_immedVals)
+        X265_FREE(m_immedVals);
+
     Int i, j;
     for (i = 0; i < 4; i++)
     {
@@ -131,6 +134,7 @@ Void TComPrediction::initTempBuff()
         m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE);
 
         m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE);
+        m_immedVals = (short*)X265_MALLOC(short, 64 * (64 + NTAPS_LUMA - 1));
     }
 
     if (m_lumaRecStride != (MAX_CU_SIZE >> 1) + 1)
@@ -489,10 +493,8 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *re
         Int tmpStride = width;
         Int filterSize = NTAPS_LUMA;
         Int halfFilterSize = (filterSize >> 1);
-        Short *tmp = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
-        primitives.ipfilter_ps[FILTER_H_P_S_8](src - (halfFilterSize - 1) * srcStride,  srcStride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
-        primitives.ipfilter_sp[FILTER_V_S_P_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
-        free(tmp);
+        primitives.ipfilter_ps[FILTER_H_P_S_8](src - (halfFilterSize - 1) * srcStride,  srcStride, m_immedVals, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_8](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
     }
 }
 
