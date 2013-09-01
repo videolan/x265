@@ -1054,16 +1054,13 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
         int xFrac = qmv.x & 0x3;
         int yFrac = qmv.y & 0x3;
 
-        if (yFrac == 0)
+        if ((yFrac | xFrac) == 0)
         {
-            if (xFrac != 0)
-            {
-                primitives.ipfilter_pp[FILTER_H_P_P_8](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[xFrac]);
-            }
-            else
-            {
-                return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
-            }
+            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost(qmv);
+        }
+        else if (yFrac == 0)
+        {
+            primitives.ipfilter_pp[FILTER_H_P_P_8](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[xFrac]);
         }
         else if (xFrac == 0)
         {
