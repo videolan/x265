@@ -101,7 +101,7 @@ void Lookahead::slicetypeDecide()
     if (numDecided == 0)
     {
         TComPic *pic = inputQueue.popFront();
-        pic->m_lowres.sliceType = X265_SLICE_TYPE_I;
+        pic->m_lowres.sliceType = X265_TYPE_I;
         pic->m_lowres.gopIdx = 0;
         outputQueue.pushBack(pic);
         numDecided++;

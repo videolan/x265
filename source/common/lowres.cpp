@@ -111,7 +111,7 @@ void Lowres::init(TComPicYuv *orig)
 {
     bIntraCalculated = false;
     memset(costEst, -1, sizeof(costEst));
-    sliceType = X265_SLICE_TYPE_AUTO;
+    sliceType = X265_TYPE_AUTO;
     for (int y = 0; y < bframes + 2; y++)
     {
         for (int x = 0; x < bframes + 2; x++)

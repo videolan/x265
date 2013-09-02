@@ -28,6 +28,7 @@
 #include "common.h"
 #include "reference.h"
 #include "mv.h"
+#include "slicetype.h"
 
 class TComPic;
 
@@ -39,11 +40,6 @@ namespace x265 {
 #define X265_LOWRES_CU_BITS   3
 
 #define X265_BFRAME_MAX      16
-
-#define X265_SLICE_TYPE_AUTO -1
-#define X265_SLICE_TYPE_I     0
-#define X265_SLICE_TYPE_P     1
-#define X265_SLICE_TYPE_B     2
 
 struct Lowres : public ReferencePlanes
 {
