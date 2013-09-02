@@ -141,9 +141,13 @@ void x265_param_default(x265_param_t *param)
     param->bEnableRDOQTS = 1;
     param->bEnableTransformSkip = 1;
     param->bEnableTSkipFast = 1;
+    
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->lookaheadDepth = 10;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
+    param->keyframeMin = 0;
+    param->keyframeMax = 250;
+    
     param->rc.bitrate = 500;
     param->rc.rateTolerance = 0.1;
     param->rc.qCompress = 0.6;
