@@ -64,7 +64,6 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
     p.filterVwghtd = filterVerticalWeighted;
 #if !(defined(_MSC_VER) && _MSC_VER == 1500 && X86_64)
     p.filterHwghtd = filterHorizontalWeighted;
-    p.filterHCU     = filterHorizontalExtendCol;
 #endif
 #endif
 }

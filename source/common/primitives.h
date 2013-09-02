@@ -231,8 +231,6 @@ typedef void (*weightpUni_t)(short *src, pixel *dst, intptr_t srcStride, intptr_
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
-typedef void (*cuRowfilterHmulti_t)(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride,
-                               pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height, int marginX);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -295,8 +293,6 @@ struct EncoderPrimitives
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
     downscale_t     frame_init_lowres_core;
-
-    cuRowfilterHmulti_t filterHCU;
 };
 
 /* This copy of the table is what gets used by the encoder.

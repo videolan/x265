@@ -776,6 +776,5 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.filterVwghtd = filterVerticalWeighted;         
     p.filterHwghtd = filterHorizontalWeighted;
     
-    p.filterHCU = filterHorizontalExtendCol;
 }
 }
