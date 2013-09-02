@@ -112,6 +112,25 @@ void Lookahead::slicetypeDecide()
 #if 0
     slicetypeAnalyse(false);
 
+    // This will work only in all-P config
+    int dframes;
+    for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
+    {}
+
+    TComPic *pic;
+    for (int i = 1; i <= dframes && i <= inputQueue.size(); i++)
+    {
+        pic = inputQueue.popFront();
+        pic->m_lowres.gopIdx = (pic->getPOC() - 1) % (cfg->getGOPSize());
+        outputQueue.pushBack(pic);
+        if (pic->m_lowres.sliceType == X265_TYPE_I)
+        {
+            lastKeyframe = pic->getPOC();
+        }
+    }
+
+#else // if 0
+      // Fake lookahead using HM's fixed GOP structure
     int batchSize = cfg->getGOPSize();
     for (int i = 0; i < batchSize; i++)
     {
