@@ -105,13 +105,12 @@ void Lookahead::slicetypeDecide()
         pic->m_lowres.gopIdx = 0;
         outputQueue.pushBack(pic);
         numDecided++;
+        lastKeyframe = 0;
         return;
     }
 
 #if 0
     slicetypeAnalyse(false);
-#else
-    // Fake lookahead using HM's fixed GOP structure
 
     int batchSize = cfg->getGOPSize();
     for (int i = 0; i < batchSize; i++)
@@ -140,7 +139,8 @@ void Lookahead::slicetypeDecide()
         {
             inputQueue.popFront();
         }
-#endif
+
+#endif // if 0
 }
 
 // Called by RateControl to get the estimated SATD cost for a given picture.
@@ -153,6 +153,7 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
     int poc = pic->getSlice()->getPOC();
     int l0poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
     int l1poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_1, 0);
+
     switch (pic->getSlice()->getSliceType())
     {
     case I_SLICE:
@@ -171,8 +172,8 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
             d1 = l1poc - poc;
             frames[0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
             frames[d0] = &pic->m_lowres;
-            frames[d0+d1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
-            return estimateFrameCost(0, d0+d1, d0, false);
+            frames[d0 + d1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
+            return estimateFrameCost(0, d0 + d1, d0, false);
         }
         else
         {
@@ -404,12 +405,13 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     int vbv_lookahead = 0;
 
     TComList<TComPic*>::iterator iterPic = inputQueue.begin();
-    for (framecnt = 0; framecnt < maxSearch; framecnt++)
+    for (framecnt = 0; (framecnt < maxSearch) && (framecnt < inputQueue.size()); framecnt++)
     {
-        frames[framecnt] = &((*iterPic++)->m_lowres);
+        frames[framecnt + 1] = &((*iterPic++)->m_lowres);
+        frames[framecnt + 1]->sliceType = X265_TYPE_AUTO;
     }
 
-    keyint_limit = cfg->param.keyframeMax - frames[0]->frameNum + lastKeyframe - 1;
+    keyint_limit = cfg->param.keyframeMax - frames[1]->frameNum + lastKeyframe;
     origNumFrames = num_frames = X265_MIN(framecnt, keyint_limit);
 
     /* This is important psy-wise: if we have a non-scenecut keyframe,
@@ -544,6 +546,12 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     }
 
     // TODO if rc.b_mb_tree Enabled the need to call  x264_macroblock_tree currently Ignored the call
+
+    for (int j = keyint_limit + 1; j <= num_frames; j += cfg->param.keyframeMax)
+    {
+        frames[j]->sliceType = X265_TYPE_I;
+        reset_start = X265_MIN(reset_start, j + 1);
+    }
 
     /* Restore frametypes for all frames that haven't actually been decided yet. */
     for (int j = reset_start; j <= num_frames; j++)
