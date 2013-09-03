@@ -50,7 +50,6 @@ typedef       bool                Bool;
 typedef       unsigned char       UChar;
 typedef       unsigned short      UShort;
 typedef       unsigned int        UInt;
-typedef       double              Double;
 typedef       float               Float;
 
 // ====================================================================================================================

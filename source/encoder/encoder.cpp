@@ -448,7 +448,7 @@ EXTERN_CYCLE_COUNTER(ME);
 extern "C"
 void x265_encoder_close(x265_t *encoder, double *outPsnr)
 {
-    Double globalPsnr = encoder->printSummary();
+    double globalPsnr = encoder->printSummary();
 
     if (outPsnr)
         *outPsnr = globalPsnr;

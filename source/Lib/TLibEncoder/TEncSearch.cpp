@@ -216,7 +216,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE);
 }
 
-void TEncSearch::setQPLambda(int QP, Double lambdaLuma, Double lambdaChroma)
+void TEncSearch::setQPLambda(int QP, double lambdaLuma, double lambdaChroma)
 {
     m_rdCost->setLambda(lambdaLuma);
     m_trQuant->setLambda(lambdaLuma, lambdaChroma);

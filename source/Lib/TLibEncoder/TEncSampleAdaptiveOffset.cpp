@@ -97,7 +97,7 @@ TEncSampleAdaptiveOffset::~TEncSampleAdaptiveOffset()
 // ====================================================================================================================
 
 #if HIGH_BIT_DEPTH
-inline Double xRoundIbdi2(Double x)
+inline double xRoundIbdi2(double x)
 {
     return ((x) > 0) ? (int)(((int)(x) + (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))) : ((int)(((int)(x) - (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))));
 }
@@ -106,7 +106,7 @@ inline Double xRoundIbdi2(Double x)
 /** rounding with IBDI
  * \param  x
  */
-inline Double xRoundIbdi(Double x)
+inline double xRoundIbdi(double x)
 {
 #if HIGH_BIT_DEPTH
     return X265_DEPTH > 8 ? xRoundIbdi2(x) : ((x) >= 0 ? ((int)((x) + 0.5)) : ((int)((x) - 0.5)));
@@ -118,7 +118,7 @@ inline Double xRoundIbdi(Double x)
 /** process SAO for one partition
  * \param  *psQTPart, partIdx, lambda
  */
-void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, Double lambda, int yCbCr)
+void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int yCbCr)
 {
     int typeIdx;
     int numTotalType = MAX_NUM_SAO_TYPE;
@@ -130,10 +130,10 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, D
 
     m_distOrg[partIdx] =  0;
 
-    Double bestRDCostTableBo = MAX_DOUBLE;
+    double bestRDCostTableBo = MAX_DOUBLE;
     int    bestClassTableBo  = 0;
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
-    Double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
+    double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
 
     int allowMergeLeft;
     int allowMergeUp;
@@ -184,7 +184,7 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, D
             if (typeIdx == SAO_BO)
             {
                 // Estimate Best Position
-                Double currentRDCost = 0.0;
+                double currentRDCost = 0.0;
 
                 for (int i = 0; i < SAO_MAX_BO_CLASSES - SAO_BO_LEN + 1; i++)
                 {
@@ -250,7 +250,7 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, D
             m_dist[partIdx][typeIdx] = estDist;
             m_rate[partIdx][typeIdx] = m_entropyCoder->getNumberOfWrittenBits();
 
-            m_cost[partIdx][typeIdx] = (Double)((Double)m_dist[partIdx][typeIdx] + lambda * (Double)m_rate[partIdx][typeIdx]);
+            m_cost[partIdx][typeIdx] = (double)((double)m_dist[partIdx][typeIdx] + lambda * (double)m_rate[partIdx][typeIdx]);
 
             if (m_cost[partIdx][typeIdx] < m_costPartBest[partIdx])
             {
@@ -264,7 +264,7 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, D
         {
             if (m_distOrg[partIdx] < m_costPartBest[partIdx])
             {
-                m_costPartBest[partIdx] = (Double)m_distOrg[partIdx] + m_entropyCoder->getNumberOfWrittenBits() * lambda;
+                m_costPartBest[partIdx] = (double)m_distOrg[partIdx] + m_entropyCoder->getNumberOfWrittenBits() * lambda;
                 m_typePartBest[partIdx] = -1;
                 m_rdGoOnSbacCoder->store(m_rdSbacCoders[onePart->partLevel][CI_TEMP_BEST]);
             }
@@ -321,7 +321,7 @@ void TEncSampleAdaptiveOffset::disablePartTree(SAOQTPart *psQTPart, int partIdx)
 /** Run quadtree decision function
  * \param  partIdx, pcPicOrg, pcPicDec, pcPicRest, &costFinal
  */
-void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, int partIdx, Double &costFinal, int maxLevel, Double lambda, int yCbCr)
+void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, int partIdx, double &costFinal, int maxLevel, double lambda, int yCbCr)
 {
     SAOQTPart* onePart = &(qtPart[partIdx]);
 
@@ -341,8 +341,8 @@ void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, int partId
     // SAO for sub 4 parts
     if (onePart->partLevel < maxLevel)
     {
-        Double costNotSplit = lambda + onePart->minCost;
-        Double costSplit    = lambda;
+        double costNotSplit = lambda + onePart->minCost;
+        double costSplit    = lambda;
 
         for (int i = 0; i < NUM_DOWN_PART; i++)
         {
@@ -514,12 +514,12 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
 void TEncSampleAdaptiveOffset::createEncBuffer()
 {
     m_distOrg = new Int64[m_numTotalParts];
-    m_costPartBest = new Double[m_numTotalParts];
+    m_costPartBest = new double[m_numTotalParts];
     m_typePartBest = new int[m_numTotalParts];
 
     m_rate = new Int64*[m_numTotalParts];
     m_dist = new Int64*[m_numTotalParts];
-    m_cost = new Double*[m_numTotalParts];
+    m_cost = new double*[m_numTotalParts];
 
     m_count  = new Int64 * *[m_numTotalParts];
     m_offset = new Int64 * *[m_numTotalParts];
@@ -529,7 +529,7 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     {
         m_rate[i] = new Int64[MAX_NUM_SAO_TYPE];
         m_dist[i] = new Int64[MAX_NUM_SAO_TYPE];
-        m_cost[i] = new Double[MAX_NUM_SAO_TYPE];
+        m_cost[i] = new double[MAX_NUM_SAO_TYPE];
 
         m_count[i] = new Int64 *[MAX_NUM_SAO_TYPE];
         m_offset[i] = new Int64 *[MAX_NUM_SAO_TYPE];
@@ -1538,7 +1538,7 @@ void TEncSampleAdaptiveOffset::resetStats()
 void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam)
 {
     assert(m_saoLcuBasedOptimization == false);
-    Double costFinal = 0;
+    double costFinal = 0;
     saoParam->bSaoFlag[0] = 1;
     saoParam->bSaoFlag[1] = 0;
     costFinal = 0;
@@ -1710,7 +1710,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus)
     }
     else
     {
-        m_depthSaoRate[0][depth] = numNoSao[0] / ((Double)numlcus);
+        m_depthSaoRate[0][depth] = numNoSao[0] / ((double)numlcus);
     }
     if (!saoParam->bSaoFlag[1])
     {
@@ -1718,7 +1718,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus)
     }
     else
     {
-        m_depthSaoRate[1][depth] = numNoSao[1] / ((Double)numlcus * 2);
+        m_depthSaoRate[1][depth] = numNoSao[1] / ((double)numlcus * 2);
     }
 }
 
@@ -1732,7 +1732,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
     int addrLeft = -1;
     int compIdx = 0;
     SaoLcuParam mergeSaoParam[3][2];
-    Double compDistortion[3];
+    double compDistortion[3];
 
     {
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
@@ -1743,7 +1743,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             int allowMergeLeft = 1;
             int allowMergeUp   = 1;
             UInt rate;
-            Double bestCost, mergeCost;
+            double bestCost, mergeCost;
             if (idxX == 0)
             {
                 allowMergeLeft = 0;
@@ -1821,7 +1821,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 }
 
                 rate = m_entropyCoder->getNumberOfWrittenBits();
-                bestCost = compDistortion[0] + (Double)rate;
+                bestCost = compDistortion[0] + (double)rate;
                 m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
 
                 // Cost of Merge
@@ -1841,7 +1841,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                         }
 
                         rate = m_entropyCoder->getNumberOfWrittenBits();
-                        mergeCost = compDistortion[mergeUp + 1] + (Double)rate;
+                        mergeCost = compDistortion[mergeUp + 1] + (double)rate;
                         if (mergeCost < bestCost)
                         {
                             bestCost = mergeCost;
@@ -1882,7 +1882,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
  * \param yCbCr color component index
  * \param lambda
  */
-inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(int compIdx, int typeIdx, int shift, Double lambda, int *currentDistortionTableBo, Double *currentRdCostTableBo)
+inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int *currentDistortionTableBo, double *currentRdCostTableBo)
 {
     Int64 estDist = 0;
     int classIdx;
@@ -1898,7 +1898,7 @@ inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(int compIdx, int typeIdx, 
         }
         if (m_count[compIdx][typeIdx][classIdx])
         {
-            m_offset[compIdx][typeIdx][classIdx] = (Int64)xRoundIbdi((Double)(m_offsetOrg[compIdx][typeIdx][classIdx] << (X265_DEPTH - 8)) / (Double)(m_count[compIdx][typeIdx][classIdx] << saoBitIncrease));
+            m_offset[compIdx][typeIdx][classIdx] = (Int64)xRoundIbdi((double)(m_offsetOrg[compIdx][typeIdx][classIdx] << (X265_DEPTH - 8)) / (double)(m_count[compIdx][typeIdx][classIdx] << saoBitIncrease));
             m_offset[compIdx][typeIdx][classIdx] = Clip3(-saoOffsetTh + 1, saoOffsetTh - 1, (int)m_offset[compIdx][typeIdx][classIdx]);
             if (typeIdx < 4)
             {
@@ -1932,12 +1932,12 @@ inline Int64 TEncSampleAdaptiveOffset::estSaoDist(Int64 count, Int64 offset, Int
     return (count * offset * offset - offsetOrg * offset * 2) >> shift;
 }
 
-inline Int64 TEncSampleAdaptiveOffset::estIterOffset(int typeIdx, int classIdx, Double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int *currentDistortionTableBo, Double *currentRdCostTableBo, int offsetTh)
+inline Int64 TEncSampleAdaptiveOffset::estIterOffset(int typeIdx, int classIdx, double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh)
 {
     //Clean up, best_q_offset.
     Int64 iterOffset, tempOffset;
     Int64 tempDist, tempRate;
-    Double tempCost, tempMinCost;
+    double tempCost, tempMinCost;
     Int64 offsetOutput = 0;
 
     iterOffset = offsetInput;
@@ -1954,7 +1954,7 @@ inline Int64 TEncSampleAdaptiveOffset::estIterOffset(int typeIdx, int classIdx, 
         // Do the dequntization before distorion calculation
         tempOffset  = iterOffset << bitIncrease;
         tempDist    = estSaoDist(count, tempOffset, offsetOrg, shift);
-        tempCost    = ((Double)tempDist + lambda * (Double)tempRate);
+        tempCost    = ((double)tempDist + lambda * (double)tempRate);
         if (tempCost < tempMinCost)
         {
             tempMinCost = tempCost;
@@ -1971,7 +1971,7 @@ inline Int64 TEncSampleAdaptiveOffset::estIterOffset(int typeIdx, int classIdx, 
     return offsetOutput;
 }
 
-void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *compDistortion)
+void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int yCbCr, double lambda, SaoLcuParam *compSaoParam, double *compDistortion)
 {
     int typeIdx;
 
@@ -1987,15 +1987,15 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
     resetSaoUnit(&compSaoParam[0]);
     resetSaoUnit(&compSaoParam[1]);
 
-    Double dCostPartBest = MAX_DOUBLE;
+    double dCostPartBest = MAX_DOUBLE;
 
-    Double  bestRDCostTableBo = MAX_DOUBLE;
+    double  bestRDCostTableBo = MAX_DOUBLE;
     int     bestClassTableBo    = 0;
     int     currentDistortionTableBo[MAX_NUM_SAO_CLASS];
-    Double  currentRdCostTableBo[MAX_NUM_SAO_CLASS];
+    double  currentRdCostTableBo[MAX_NUM_SAO_CLASS];
 
     SaoLcuParam   saoLcuParamRdo;
-    Double   estRate = 0;
+    double   estRate = 0;
 
     resetSaoUnit(&saoLcuParamRdo);
 
@@ -2014,7 +2014,7 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
         if (typeIdx == SAO_BO)
         {
             // Estimate Best Position
-            Double currentRDCost = 0.0;
+            double currentRDCost = 0.0;
 
             for (int i = 0; i < SAO_MAX_BO_CLASSES - SAO_BO_LEN + 1; i++)
             {
@@ -2055,7 +2055,7 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
         m_entropyCoder->encodeSaoOffset(&saoLcuParamRdo, yCbCr);
 
         estRate = m_entropyCoder->getNumberOfWrittenBits();
-        m_cost[yCbCr][typeIdx] = (Double)((Double)estDist + lambda * (Double)estRate);
+        m_cost[yCbCr][typeIdx] = (double)((double)estDist + lambda * (double)estRate);
 
         if (m_cost[yCbCr][typeIdx] < dCostPartBest)
         {
@@ -2065,7 +2065,7 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
         }
     }
 
-    compDistortion[0] += ((Double)bestDist / lambda);
+    compDistortion[0] += ((double)bestDist / lambda);
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_TEMP_BEST]);
     m_entropyCoder->encodeSaoOffset(saoLcuParam, yCbCr);
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
@@ -2106,12 +2106,12 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
             compSaoParam[idxNeighbor].mergeUpFlag   = idxNeighbor;
             compSaoParam[idxNeighbor].mergeLeftFlag = !idxNeighbor;
 
-            compDistortion[idxNeighbor + 1] += ((Double)estDist / lambda);
+            compDistortion[idxNeighbor + 1] += ((double)estDist / lambda);
         }
     }
 }
 
-void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion)
+void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion)
 {
     int typeIdx;
 
@@ -2136,15 +2136,15 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
     resetSaoUnit(saoMergeParam[1][0]);
     resetSaoUnit(saoMergeParam[1][1]);
 
-    Double costPartBest = MAX_DOUBLE;
+    double costPartBest = MAX_DOUBLE;
 
-    Double  bestRDCostTableBo;
+    double  bestRDCostTableBo;
     int     bestClassTableBo[2]    = { 0, 0 };
     int     currentDistortionTableBo[MAX_NUM_SAO_CLASS];
-    Double  currentRdCostTableBo[MAX_NUM_SAO_CLASS];
+    double  currentRdCostTableBo[MAX_NUM_SAO_CLASS];
 
     SaoLcuParam   saoLcuParamRdo[2];
-    Double   estRate = 0;
+    double   estRate = 0;
 
     resetSaoUnit(&saoLcuParamRdo[0]);
     resetSaoUnit(&saoLcuParamRdo[1]);
@@ -2165,7 +2165,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
             // Estimate Best Position
             for (int compIdx = 0; compIdx < 2; compIdx++)
             {
-                Double currentRDCost = 0.0;
+                double currentRDCost = 0.0;
                 bestRDCostTableBo = MAX_DOUBLE;
                 estDist[compIdx] = estSaoTypeDist(compIdx + 1, typeIdx, shift, lambda, currentDistortionTableBo, currentRdCostTableBo);
                 for (int i = 0; i < SAO_MAX_BO_CLASSES - SAO_BO_LEN + 1; i++)
@@ -2218,7 +2218,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
         }
 
         estRate = m_entropyCoder->getNumberOfWrittenBits();
-        m_cost[1][typeIdx] = (Double)((Double)(estDist[0] + estDist[1])  + lambda * (Double)estRate);
+        m_cost[1][typeIdx] = (double)((double)(estDist[0] + estDist[1])  + lambda * (double)estRate);
 
         if (m_cost[1][typeIdx] < costPartBest)
         {
@@ -2229,7 +2229,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
         }
     }
 
-    distortion[0] += ((Double)bestDist / lambda);
+    distortion[0] += ((double)bestDist / lambda);
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_TEMP_BEST]);
     m_entropyCoder->encodeSaoOffset(saoLcuParam[0], 1);
     m_entropyCoder->encodeSaoOffset(saoLcuParam[1], 2);
@@ -2272,7 +2272,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
                 copySaoUnit(saoMergeParam[compIdx][idxNeighbor], saoLcuParamNeighbor[compIdx]);
                 saoMergeParam[compIdx][idxNeighbor]->mergeUpFlag   = idxNeighbor;
                 saoMergeParam[compIdx][idxNeighbor]->mergeLeftFlag = !idxNeighbor;
-                distortion[idxNeighbor + 1] += ((Double)estDist[compIdx] / lambda);
+                distortion[idxNeighbor + 1] += ((double)estDist[compIdx] / lambda);
             }
         }
     }

@@ -279,8 +279,8 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, int gopID)
     // QP setting
     // ------------------------------------------------------------------------------------------------------------------
 
-    Double qpdouble;
-    Double lambda;
+    double qpdouble;
+    double lambda;
     qpdouble = m_cfg->param.rc.qp;
     if (sliceType != I_SLICE)
     {
@@ -299,17 +299,17 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, int gopID)
     // compute lambda value
     int    NumberBFrames = (m_cfg->getGOPSize() - 1);
     int    SHIFT_QP = 12;
-    Double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
+    double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (double)NumberBFrames);
 #if FULL_NBIT
     int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
-    Double qp_temp_orig = (Double)dQP - SHIFT_QP;
+    double qp_temp_orig = (double)dQP - SHIFT_QP;
 #else
     int    bitdepth_luma_qp_scale = 0;
 #endif
-    Double qp_temp = (Double)qpdouble + bitdepth_luma_qp_scale - SHIFT_QP;
+    double qp_temp = (double)qpdouble + bitdepth_luma_qp_scale - SHIFT_QP;
 
     // Case #1: I or P-slices (key-frame)
-    Double qpFactor = m_cfg->getGOPEntry(gopID).m_QPFactor;
+    double qpFactor = m_cfg->getGOPEntry(gopID).m_QPFactor;
     if (sliceType == I_SLICE)
     {
         qpFactor = 0.57 * lambda_scale;
@@ -335,7 +335,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, int gopID)
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
-    Double weight = 1.0;
+    double weight = 1.0;
     int qpc;
     int chromaQPOffset;
 

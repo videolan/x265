@@ -122,7 +122,7 @@ public:
 
     void setRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
-    void setQPLambda(int QP, Double lambdaLuma, Double lambdaChroma);
+    void setQPLambda(int QP, double lambdaLuma, double lambdaChroma);
 
     TEncSearch();
     virtual ~TEncSearch();

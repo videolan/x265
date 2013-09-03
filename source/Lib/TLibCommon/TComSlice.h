@@ -1412,8 +1412,8 @@ private:
     UInt        m_colRefIdx;
     UInt        m_maxNumMergeCand;
 
-    Double      m_lumaLambda;
-    Double      m_chromaLambda;
+    double      m_lumaLambda;
+    double      m_chromaLambda;
 
     Bool        m_bEqualRef[2][MAX_NUM_REF][MAX_NUM_REF];
 
@@ -1607,11 +1607,11 @@ public:
 
     Bool      isInterP()                    { return m_sliceType == P_SLICE; }
 
-    void      setLambda(Double d, Double e) { m_lumaLambda = d; m_chromaLambda = e; }
+    void      setLambda(double d, double e) { m_lumaLambda = d; m_chromaLambda = e; }
 
-    Double    getLambdaLuma()               { return m_lumaLambda; }
+    double    getLambdaLuma()               { return m_lumaLambda; }
 
-    Double    getLambdaChroma()             { return m_chromaLambda; }
+    double    getLambdaChroma()             { return m_chromaLambda; }
 
     void      initEqualRef();
 

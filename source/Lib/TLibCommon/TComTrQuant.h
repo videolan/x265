@@ -135,14 +135,14 @@ public:
     // Misc functions
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset);
 
-    void setLambda(Double lambdaLuma, Double lambdaChroma) { m_lumaLambda = lambdaLuma; m_chromaLambda = lambdaChroma; }
+    void setLambda(double lambdaLuma, double lambdaChroma) { m_lumaLambda = lambdaLuma; m_chromaLambda = lambdaChroma; }
 
     void selectLambda(TextType ttype) { m_lambda = (ttype == TEXT_LUMA) ? m_lumaLambda : m_chromaLambda; }
 
     void initScalingList();
     void destroyScalingList();
     void setErrScaleCoeff(UInt list, UInt size, UInt qp);
-    Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
+    double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
 
     int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
 
@@ -173,9 +173,9 @@ protected:
 
     QpParam  m_qpParam;
 
-    Double   m_lambda;
-    Double   m_lumaLambda;
-    Double   m_chromaLambda;
+    double   m_lambda;
+    double   m_lumaLambda;
+    double   m_chromaLambda;
 
     UInt     m_maxTrSize;
     Bool     m_useRDOQ;
@@ -187,7 +187,7 @@ protected:
     int*     m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
     int*     m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
 
-    Double  *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];
+    double  *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];
 
 private:
 
@@ -200,23 +200,23 @@ private:
     // RDOQ functions
     UInt xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height, TextType ttype, UInt absPartIdx, int *lastPos);
 
-    inline UInt xGetCodedLevel(Double& codedCost, Double& codedCost0, Double& codedCostSig, int levelDouble,
+    inline UInt xGetCodedLevel(double& codedCost, double& codedCost0, double& codedCostSig, int levelDouble,
                                  UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,
-                                 UInt c1Idx, UInt c2Idx, int qbits, Double scale, Bool bLast) const;
+                                 UInt c1Idx, UInt c2Idx, int qbits, double scale, Bool bLast) const;
 
-    inline Double xGetICRateCost(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
+    inline double xGetICRateCost(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 
     inline int    xGetICRate(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 
-    inline Double xGetRateLast(UInt posx, UInt posy) const;
+    inline double xGetRateLast(UInt posx, UInt posy) const;
 
-    inline Double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
+    inline double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
 
-    inline Double xGetRateSigCoef(UShort sig, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
+    inline double xGetRateSigCoef(UShort sig, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
 
-    inline Double xGetICost(Double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
+    inline double xGetICost(double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
 
-    inline Double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
+    inline double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
     void xDeQuant(const TCoeff* src, int* dst, int width, int height, int scalingListType);
 

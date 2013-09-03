@@ -49,7 +49,7 @@ struct GOPEntry
 {
     int m_POC;
     int m_QPOffset;
-    Double m_QPFactor;
+    double m_QPFactor;
     Bool m_refPic;
     int m_numRefPicsActive;
     char m_sliceType;
@@ -95,7 +95,7 @@ protected:
     Window    m_conformanceWindow;
     Window    m_defaultDisplayWindow;         ///< Represents the default display window parameters
     TComVPS   m_vps;
-    Double    m_adLambdaModifier[MAX_TLAYER];
+    double    m_adLambdaModifier[MAX_TLAYER];
 
     /* profile & level */
     Profile::Name m_profile;
@@ -220,7 +220,7 @@ public:
     int getMaxRefPicNum() { return m_maxRefPicNum; }
 
     //====== Sequence ========
-    Double getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
+    double getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
     //==== Coding Structure ========
 

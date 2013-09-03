@@ -107,13 +107,13 @@ public:
 
     int getStreamHeaders(AccessUnit& accessUnit);
 
-    Double printSummary();
+    double printSummary();
 
     TComScalingList* getScalingList()       { return &m_scalingList; }
 
     void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
-    Double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
+    double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
 
     void computeLambdaForQp(TComSlice* slice);
 };

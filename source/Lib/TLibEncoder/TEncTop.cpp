@@ -237,7 +237,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             pic_out->stride[2] = recpic->getCStride();
         }
 
-        Double bits = calculateHashAndPSNR(out, accessUnitOut);
+        double bits = calculateHashAndPSNR(out, accessUnitOut);
 
         m_rateControl->rateControlEnd(bits);
 
@@ -274,7 +274,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     return ret;
 }
 
-Double TEncTop::printSummary()
+double TEncTop::printSummary()
 {
     if (param.logLevel >= X265_LOG_INFO)
     {
@@ -468,7 +468,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
 
 /* Returns Number of bits in current encoded pic */
 
-Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
+double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
 {
     TComPicYuv* recon = pic->getPicYuvRec();
     TComPicYuv* orig  = pic->getPicYuvOrg();
@@ -490,11 +490,11 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
 
     int maxvalY = 255 << (X265_DEPTH - 8);
     int maxvalC = 255 << (X265_DEPTH - 8);
-    Double refValueY = (Double)maxvalY * maxvalY * size;
-    Double refValueC = (Double)maxvalC * maxvalC * size / 4.0;
-    Double psnrY = (ssdY ? 10.0 * log10(refValueY / (Double)ssdY) : 99.99);
-    Double psnrU = (ssdU ? 10.0 * log10(refValueC / (Double)ssdU) : 99.99);
-    Double psnrV = (ssdV ? 10.0 * log10(refValueC / (Double)ssdV) : 99.99);
+    double refValueY = (double)maxvalY * maxvalY * size;
+    double refValueC = (double)maxvalC * maxvalC * size / 4.0;
+    double psnrY = (ssdY ? 10.0 * log10(refValueY / (double)ssdY) : 99.99);
+    double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
+    double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
     const char* digestStr = NULL;
     if (getDecodedPictureHashSEIEnabled())
@@ -551,19 +551,19 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     x265::ScopedLock s(m_statLock);
 
     //===== add PSNR =====
-    m_analyzeAll.addResult(psnrY, psnrU, psnrV, (Double)bits);
+    m_analyzeAll.addResult(psnrY, psnrU, psnrV, (double)bits);
     TComSlice*  slice = pic->getSlice();
     if (slice->isIntra())
     {
-        m_analyzeI.addResult(psnrY, psnrU, psnrV, (Double)bits);
+        m_analyzeI.addResult(psnrY, psnrU, psnrV, (double)bits);
     }
     if (slice->isInterP())
     {
-        m_analyzeP.addResult(psnrY, psnrU, psnrV, (Double)bits);
+        m_analyzeP.addResult(psnrY, psnrU, psnrV, (double)bits);
     }
     if (slice->isInterB())
     {
-        m_analyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
+        m_analyzeB.addResult(psnrY, psnrU, psnrV, (double)bits);
     }
 
     if (param.logLevel >= X265_LOG_DEBUG)
@@ -849,7 +849,7 @@ void TEncTop::computeLambdaForQp(TComSlice* slice)
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
-    Double weight = 1.0;
+    double weight = 1.0;
     int qpc;
     int chromaQPOffset;
 

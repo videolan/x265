@@ -89,7 +89,7 @@ typedef struct _SaoQTPart
 
     //---- encoder only start -----//
     Bool        bProcessed;
-    Double      minCost;
+    double      minCost;
     Int64       minDist;
     int         minRate;
     //---- encoder only end -----//

@@ -236,8 +236,8 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, int log2Denom)
                 Int64 refAC = refWeightACDCParam[comp].ac;
 
                 // calculating inputWeight and inputOffset params
-                Double dWeight = (refAC == 0) ? (Double)1.0 : Clip3(-16.0, 15.0, ((Double)currAC / (Double)refAC));
-                int weight = (int)(0.5 + dWeight * (Double)(1 << log2Denom));
+                double dWeight = (refAC == 0) ? (double)1.0 : Clip3(-16.0, 15.0, ((double)currAC / (double)refAC));
+                int weight = (int)(0.5 + dWeight * (double)(1 << log2Denom));
                 int offset = (int)(((currDC << log2Denom) - ((Int64)weight * refDC) + (Int64)realOffset) >> realLog2Denom);
 
                 // Chroma offset range limitation
@@ -315,8 +315,8 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
             iSADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, weightPredTable[refList][refIdxTmp][2].inputWeight, weightPredTable[refList][refIdxTmp][2].inputOffset);
             iSADnoWP += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, iDefaultWeight, 0);
 
-            Double dRatio = ((Double)iSADWP / (Double)iSADnoWP);
-            if (dRatio >= (Double)DTHRESH)
+            double dRatio = ((double)iSADWP / (double)iSADnoWP);
+            if (dRatio >= (double)DTHRESH)
             {
                 for (int comp = 0; comp < 3; comp++)
                 {
