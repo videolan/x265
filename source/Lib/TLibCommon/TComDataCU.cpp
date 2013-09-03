@@ -2757,7 +2757,7 @@ void TComDataCU::clearCbf(UInt idx, TextType ttype, UInt numParts)
 
 /** Set a I_PCM flag for all sub-partitions of a partition.
  * \param bIpcmFlag I_PCM flag
- * \param absPartIdx patition index
+ * \param absPartIdx partition index
  * \param depth CU depth
  * \returns void
  */
