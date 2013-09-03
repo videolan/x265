@@ -1498,12 +1498,12 @@ void TComTrQuant::xSetScalingListEnc(TComScalingList *scalingList, UInt listId, 
 {
     UInt width = g_scalingListSizeX[sizeId];
     UInt height = g_scalingListSizeX[sizeId];
-    UInt ratio = g_scalingListSizeX[sizeId] / min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
+    UInt ratio = g_scalingListSizeX[sizeId] / X265_MIN(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
     int *quantcoeff;
     int *coeff = scalingList->getScalingListAddress(sizeId, listId);
 
     quantcoeff   = getQuantCoeff(listId, qp, sizeId);
-    processScalingListEnc(coeff, quantcoeff, g_quantScales[qp] << 4, height, width, ratio, min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
+    processScalingListEnc(coeff, quantcoeff, g_quantScales[qp] << 4, height, width, ratio, X265_MIN(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
 }
 
 /** set quantized matrix coefficient for decode
@@ -1516,12 +1516,12 @@ void TComTrQuant::xSetScalingListDec(TComScalingList *scalingList, UInt listId, 
 {
     UInt width = g_scalingListSizeX[sizeId];
     UInt height = g_scalingListSizeX[sizeId];
-    UInt ratio = g_scalingListSizeX[sizeId] / min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
+    UInt ratio = g_scalingListSizeX[sizeId] / X265_MIN(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
     int *dequantcoeff;
     int *coeff = scalingList->getScalingListAddress(sizeId, listId);
 
     dequantcoeff = getDequantCoeff(listId, qp, sizeId);
-    processScalingListDec(coeff, dequantcoeff, g_invQuantScales[qp], height, width, ratio, min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
+    processScalingListDec(coeff, dequantcoeff, g_invQuantScales[qp], height, width, ratio, X265_MIN(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
 }
 
 /** set flat matrix value to quantized coefficient

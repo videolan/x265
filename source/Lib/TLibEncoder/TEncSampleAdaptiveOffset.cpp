@@ -75,10 +75,10 @@ TEncSampleAdaptiveOffset::TEncSampleAdaptiveOffset()
     m_depthSaoRate[1][2] = 0;
     m_depthSaoRate[1][3] = 0;
 
-    m_saoBitIncreaseY = max(X265_DEPTH - 10, 0);
-    m_saoBitIncreaseC = max(X265_DEPTH - 10, 0);
-    m_offsetThY = 1 << min(X265_DEPTH - 5, 5);
-    m_offsetThC = 1 << min(X265_DEPTH - 5, 5);
+    m_saoBitIncreaseY = X265_MAX(X265_DEPTH - 10, 0);
+    m_saoBitIncreaseC = X265_MAX(X265_DEPTH - 10, 0);
+    m_offsetThY = 1 << X265_MIN(X265_DEPTH - 5, 5);
+    m_offsetThC = 1 << X265_MIN(X265_DEPTH - 5, 5);
 }
 
 TEncSampleAdaptiveOffset::~TEncSampleAdaptiveOffset()

@@ -176,7 +176,7 @@ void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
 
     /* various structures are overloaded to store per component data.
      * m_iNumTotalParts must allow for sufficient storage in any allocated arrays */
-    m_numTotalParts  = max(3, m_numCulPartsLevel[m_maxSplitLevel]);
+    m_numTotalParts  = X265_MAX(3, m_numCulPartsLevel[m_maxSplitLevel]);
 
     UInt pixelRangeY = 1 << X265_DEPTH;
     UInt boRangeShiftY = X265_DEPTH - SAO_BO_BITS;
@@ -812,8 +812,8 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 void TComSampleAdaptiveOffset::SAOProcess(SAOParam* saoParam)
 {
     {
-        m_saoBitIncreaseY = max(X265_DEPTH - 10, 0);
-        m_saoBitIncreaseC = max(X265_DEPTH - 10, 0);
+        m_saoBitIncreaseY = X265_MAX(X265_DEPTH - 10, 0);
+        m_saoBitIncreaseC = X265_MAX(X265_DEPTH - 10, 0);
 
         if (m_saoLcuBasedOptimization)
         {

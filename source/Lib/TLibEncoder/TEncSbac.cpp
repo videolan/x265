@@ -805,7 +805,7 @@ void TEncSbac::codeDeltaQP(TComDataCU* cu, UInt absPartIdx)
     iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY / 2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY / 2);
 
     UInt uiAbsDQp = (UInt)((iDQp > 0) ? iDQp  : (-iDQp));
-    UInt TUValue = min((int)uiAbsDQp, CU_DQP_TU_CMAX);
+    UInt TUValue = X265_MIN((int)uiAbsDQp, CU_DQP_TU_CMAX);
     xWriteUnaryMaxSymbol(TUValue, &m_cCUDeltaQpSCModel.get(0, 0, 0), 1, CU_DQP_TU_CMAX);
     if (uiAbsDQp >= CU_DQP_TU_CMAX)
     {
@@ -1244,7 +1244,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UIn
             c1 = 1;
             ContextModel *baseCtxMod = (eTType == TEXT_LUMA) ? m_cCUOneSCModel.get(0, 0) + 4 * uiCtxSet : m_cCUOneSCModel.get(0, 0) + NUM_ONE_FLAG_CTX_LUMA + 4 * uiCtxSet;
 
-            int numC1Flag = min(numNonZero, C1FLAG_NUMBER);
+            int numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             int firstC2FlagIdx = -1;
             for (int idx = 0; idx < numC1Flag; idx++)
             {
@@ -1460,7 +1460,7 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* pcEstBitsSbac, int width,
 {
     int firstCtx = 1, numCtx = 8;
 
-    if (max(width, height) >= 16)
+    if (X265_MAX(width, height) >= 16)
     {
         firstCtx = (eTType == TEXT_LUMA) ? 21 : 12;
         numCtx = (eTType == TEXT_LUMA) ? 6 : 3;

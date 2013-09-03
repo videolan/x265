@@ -2422,7 +2422,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
     {
         return;
     }
-    int numRefIdx = (getSlice()->isInterB()) ? min(m_slice->getNumRefIdx(REF_PIC_LIST_0), m_slice->getNumRefIdx(REF_PIC_LIST_1)) : m_slice->getNumRefIdx(REF_PIC_LIST_0);
+    int numRefIdx = (getSlice()->isInterB()) ? X265_MIN(m_slice->getNumRefIdx(REF_PIC_LIST_0), m_slice->getNumRefIdx(REF_PIC_LIST_1)) : m_slice->getNumRefIdx(REF_PIC_LIST_0);
     int r = 0;
     int refcnt = 0;
     while (arrayAddr < getSlice()->getMaxNumMergeCand())
@@ -2728,8 +2728,8 @@ void TComDataCU::clipMv(MV& outMV, int rowsAvailable)
     int ymax = (ylimit + offset - m_cuPelY - 1) << mvshift;
     int ymin = (-(int)g_maxCUHeight - offset - (int)m_cuPelY + 1) << mvshift;
 
-    outMV.x = min(xmax, max(xmin, (int)outMV.x));
-    outMV.y = min(ymax, max(ymin, (int)outMV.y));
+    outMV.x = X265_MIN(xmax, X265_MAX(xmin, (int)outMV.x));
+    outMV.y = X265_MIN(ymax, X265_MAX(ymin, (int)outMV.y));
 }
 
 UInt TComDataCU::getIntraSizeIdx(UInt absPartIdx)

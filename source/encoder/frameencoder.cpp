@@ -325,7 +325,7 @@ void FrameEncoder::initSlice(TComPic* pic, bool bForceISlice, int gopID)
 #endif
     }
 
-    qp = max(-m_sps.getQpBDOffsetY(), min(MAX_QP, (int)floor(qpdouble + 0.5)));
+    qp = X265_MAX(-m_sps.getQpBDOffsetY(), X265_MIN(MAX_QP, (int)floor(qpdouble + 0.5)));
 
     if (slice->getSliceType() != I_SLICE)
     {

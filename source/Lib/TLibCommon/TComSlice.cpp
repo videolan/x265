@@ -1414,7 +1414,7 @@ bool TComSlice::checkDefaultScalingList()
     {
         for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
-            if (!memcmp(getScalingList()->getScalingListAddress(sizeId, listId), getScalingList()->getScalingListDefaultAddress(sizeId, listId), sizeof(int) * min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
+            if (!memcmp(getScalingList()->getScalingListAddress(sizeId, listId), getScalingList()->getScalingListDefaultAddress(sizeId, listId), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
                 && ((sizeId < SCALING_LIST_16x16) || (getScalingList()->getScalingListDC(sizeId, listId) == 16))) // check DC value
             {
                 defaultCounter++;
@@ -1432,7 +1432,7 @@ bool TComSlice::checkDefaultScalingList()
  */
 void TComScalingList::processRefMatrix(UInt sizeId, UInt listId, UInt refListId)
 {
-    ::memcpy(getScalingListAddress(sizeId, listId), ((listId == refListId) ? getScalingListDefaultAddress(sizeId, refListId) : getScalingListAddress(sizeId, refListId)), sizeof(int) * min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
+    ::memcpy(getScalingListAddress(sizeId, listId), ((listId == refListId) ? getScalingListDefaultAddress(sizeId, refListId) : getScalingListAddress(sizeId, refListId)), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
 }
 
 /** parse syntax information
@@ -1457,7 +1457,7 @@ bool TComScalingList::xParseScalingList(char* pchFile)
 
     for (sizeIdc = 0; sizeIdc < SCALING_LIST_SIZE_NUM; sizeIdc++)
     {
-        size = min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeIdc]);
+        size = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeIdc]);
         for (listIdc = 0; listIdc < g_scalingListNum[sizeIdc]; listIdc++)
         {
             src = getScalingListAddress(sizeIdc, listIdc);
@@ -1524,7 +1524,7 @@ void TComScalingList::init()
     {
         for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
-            m_scalingListCoef[sizeId][listId] = new int[min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])];
+            m_scalingListCoef[sizeId][listId] = new int[X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])];
         }
     }
 
@@ -1582,7 +1582,7 @@ int* TComScalingList::getScalingListDefaultAddress(UInt sizeId, UInt listId)
  */
 void TComScalingList::processDefaultMarix(UInt sizeId, UInt listId)
 {
-    ::memcpy(getScalingListAddress(sizeId, listId), getScalingListDefaultAddress(sizeId, listId), sizeof(int) * min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
+    ::memcpy(getScalingListAddress(sizeId, listId), getScalingListDefaultAddress(sizeId, listId), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
     setScalingListDC(sizeId, listId, SCALING_LIST_DC);
 }
 

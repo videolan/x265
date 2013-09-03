@@ -1280,7 +1280,7 @@ void TEncCavlc::codeScalingList(TComScalingList* scalingList)
  */
 void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId)
 {
-    int coefNum = min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
+    int coefNum = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
     UInt* scan  = (sizeId == 0) ? g_sigLastScan[SCAN_DIAG][1] :  g_sigLastScanCG32x32;
     int nextCoef = SCALING_LIST_START_VALUE;
     int data;
@@ -1329,8 +1329,9 @@ bool TComScalingList::checkPredMode(UInt sizeId, UInt listId)
 {
     for (int predListIdx = (int)listId; predListIdx >= 0; predListIdx--)
     {
-        if (!memcmp(getScalingListAddress(sizeId, listId), ((listId == predListIdx) ?
-                                                            getScalingListDefaultAddress(sizeId, predListIdx) : getScalingListAddress(sizeId, predListIdx)), sizeof(int) * min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
+        if (!memcmp(getScalingListAddress(sizeId, listId),
+                    ((listId == predListIdx) ? getScalingListDefaultAddress(sizeId, predListIdx) : getScalingListAddress(sizeId, predListIdx)),
+                    sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
             && ((sizeId < SCALING_LIST_16x16) || (getScalingListDC(sizeId, listId) == getScalingListDC(sizeId, predListIdx)))) // check DC value
         {
             setRefMatrixId(sizeId, listId, predListIdx);
