@@ -294,6 +294,10 @@ extern Int  g_eTTable[4];
 extern const Int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
 extern const Int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 extern const int x265_lambda2_tab[MAX_QP+1];
+
+// CABAC tables
+extern const UChar g_lpsTable[64][4];
+extern const UChar g_renormTable[32];
 }
 
 #endif  //__TCOMROM__

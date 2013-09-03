@@ -188,12 +188,12 @@ Void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &rcCtxModel)
     m_uiBinsCoded += m_binCountIncrement;
     rcCtxModel.setBinsCoded(1);
 
-    UInt  uiLPS   = TComCABACTables::sm_aucLPSTable[rcCtxModel.getState()][(m_uiRange >> 6) & 3];
+    UInt  uiLPS   = g_lpsTable[rcCtxModel.getState()][(m_uiRange >> 6) & 3];
     m_uiRange    -= uiLPS;
 
     if (binValue != rcCtxModel.getMps())
     {
-        Int numBits = TComCABACTables::sm_aucRenormTable[uiLPS >> 3];
+        Int numBits = g_renormTable[uiLPS >> 3];
         m_uiLow     = (m_uiLow + m_uiRange) << numBits;
         m_uiRange   = uiLPS << numBits;
         rcCtxModel.updateLPS();
