@@ -2322,519 +2322,24 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
 {
     assert((ly % 4) == 0);
 
-    __m64 sum0 = _mm_setzero_si64();
-    __m64 sum1 = _mm_setzero_si64();
-    __m64 sum2 = _mm_setzero_si64();
-
-    __m64 T00, T01, T02, T03, T04, T05, T06, T07;
-    __m64 T0, T1, T2, T3, T4, T5, T6, T7;
-    __m64 T10, T11, T12, T13, T14, T15, T16, T17;
-    __m64 T20, T21, T22, T23, T24, T25, T26, T27;
-
     if (ly == 4)
     {
-        T00 = (*(__m64*)(fenc + 0 * FENC_STRIDE));
-        T01 = (*(__m64*)(fenc + 1 * FENC_STRIDE));
-        T02 = (*(__m64*)(fenc + 2 * FENC_STRIDE));
-        T03 = (*(__m64*)(fenc + 3 * FENC_STRIDE));
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
 
-        T10 = (*(__m64*)(fref1 + 0 * frefstride));
-        T11 = (*(__m64*)(fref1 + 1 * frefstride));
-        T12 = (*(__m64*)(fref1 + 2 * frefstride));
-        T13 = (*(__m64*)(fref1 + 3 * frefstride));
+        __m128i sum0;
 
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-
-        sum0 = _mm_add_pi16(sum0, T20);
-        sum0 = _mm_add_pi16(sum0, T21);
-        sum0 = _mm_add_pi16(sum0, T22);
-        sum0 = _mm_add_pi16(sum0, T23);
-
-        T10 = (*(__m64*)(fref2 + 0 * frefstride));
-        T11 = (*(__m64*)(fref2 + 1 * frefstride));
-        T12 = (*(__m64*)(fref2 + 2 * frefstride));
-        T13 = (*(__m64*)(fref2 + 3 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-
-        sum1 = _mm_add_pi16(sum1, T20);
-        sum1 = _mm_add_pi16(sum1, T21);
-        sum1 = _mm_add_pi16(sum1, T22);
-        sum1 = _mm_add_pi16(sum1, T23);
-
-        T10 = (*(__m64*)(fref3 + 0 * frefstride));
-        T11 = (*(__m64*)(fref3 + 1 * frefstride));
-        T12 = (*(__m64*)(fref3 + 2 * frefstride));
-        T13 = (*(__m64*)(fref3 + 3 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-
-        sum2 = _mm_add_pi16(sum2, T20);
-        sum2 = _mm_add_pi16(sum2, T21);
-        sum2 = _mm_add_pi16(sum2, T22);
-        sum2 = _mm_add_pi16(sum2, T23);
-    }
-    else if (ly == 8)
-    {
-        T00 = (*(__m64*)(fenc + 0 * FENC_STRIDE));
-        T01 = (*(__m64*)(fenc + 1 * FENC_STRIDE));
-        T02 = (*(__m64*)(fenc + 2 * FENC_STRIDE));
-        T03 = (*(__m64*)(fenc + 3 * FENC_STRIDE));
-        T04 = (*(__m64*)(fenc + 4 * FENC_STRIDE));
-        T05 = (*(__m64*)(fenc + 5 * FENC_STRIDE));
-        T06 = (*(__m64*)(fenc + 6 * FENC_STRIDE));
-        T07 = (*(__m64*)(fenc + 7 * FENC_STRIDE));
-
-        T10 = (*(__m64*)(fref1 + 0 * frefstride));
-        T11 = (*(__m64*)(fref1 + 1 * frefstride));
-        T12 = (*(__m64*)(fref1 + 2 * frefstride));
-        T13 = (*(__m64*)(fref1 + 3 * frefstride));
-        T14 = (*(__m64*)(fref1 + 4 * frefstride));
-        T15 = (*(__m64*)(fref1 + 5 * frefstride));
-        T16 = (*(__m64*)(fref1 + 6 * frefstride));
-        T17 = (*(__m64*)(fref1 + 7 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-        T24 = _mm_sad_pu8(T04, T14);
-        T25 = _mm_sad_pu8(T05, T15);
-        T26 = _mm_sad_pu8(T06, T16);
-        T27 = _mm_sad_pu8(T07, T17);
-
-        sum0 = _mm_add_pi16(sum0, T20);
-        sum0 = _mm_add_pi16(sum0, T21);
-        sum0 = _mm_add_pi16(sum0, T22);
-        sum0 = _mm_add_pi16(sum0, T23);
-        sum0 = _mm_add_pi16(sum0, T24);
-        sum0 = _mm_add_pi16(sum0, T25);
-        sum0 = _mm_add_pi16(sum0, T26);
-        sum0 = _mm_add_pi16(sum0, T27);
-
-        T10 = (*(__m64*)(fref2 + 0 * frefstride));
-        T11 = (*(__m64*)(fref2 + 1 * frefstride));
-        T12 = (*(__m64*)(fref2 + 2 * frefstride));
-        T13 = (*(__m64*)(fref2 + 3 * frefstride));
-        T14 = (*(__m64*)(fref2 + 4 * frefstride));
-        T15 = (*(__m64*)(fref2 + 5 * frefstride));
-        T16 = (*(__m64*)(fref2 + 6 * frefstride));
-        T17 = (*(__m64*)(fref2 + 7 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-        T24 = _mm_sad_pu8(T04, T14);
-        T25 = _mm_sad_pu8(T05, T15);
-        T26 = _mm_sad_pu8(T06, T16);
-        T27 = _mm_sad_pu8(T07, T17);
-
-        sum1 = _mm_add_pi16(sum1, T20);
-        sum1 = _mm_add_pi16(sum1, T21);
-        sum1 = _mm_add_pi16(sum1, T22);
-        sum1 = _mm_add_pi16(sum1, T23);
-        sum1 = _mm_add_pi16(sum1, T24);
-        sum1 = _mm_add_pi16(sum1, T25);
-        sum1 = _mm_add_pi16(sum1, T26);
-        sum1 = _mm_add_pi16(sum1, T27);
-
-        T10 = (*(__m64*)(fref3 + 0 * frefstride));
-        T11 = (*(__m64*)(fref3 + 1 * frefstride));
-        T12 = (*(__m64*)(fref3 + 2 * frefstride));
-        T13 = (*(__m64*)(fref3 + 3 * frefstride));
-        T14 = (*(__m64*)(fref3 + 4 * frefstride));
-        T15 = (*(__m64*)(fref3 + 5 * frefstride));
-        T16 = (*(__m64*)(fref3 + 6 * frefstride));
-        T17 = (*(__m64*)(fref3 + 7 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-        T24 = _mm_sad_pu8(T04, T14);
-        T25 = _mm_sad_pu8(T05, T15);
-        T26 = _mm_sad_pu8(T06, T16);
-        T27 = _mm_sad_pu8(T07, T17);
-
-        sum2 = _mm_add_pi16(sum2, T20);
-        sum2 = _mm_add_pi16(sum2, T21);
-        sum2 = _mm_add_pi16(sum2, T22);
-        sum2 = _mm_add_pi16(sum2, T23);
-        sum2 = _mm_add_pi16(sum2, T24);
-        sum2 = _mm_add_pi16(sum2, T25);
-        sum2 = _mm_add_pi16(sum2, T26);
-        sum2 = _mm_add_pi16(sum2, T27);
-    }
-    else if (ly == 16)
-    {
-        T00 = (*(__m64*)(fenc + 0 * FENC_STRIDE));
-        T01 = (*(__m64*)(fenc + 1 * FENC_STRIDE));
-        T02 = (*(__m64*)(fenc + 2 * FENC_STRIDE));
-        T03 = (*(__m64*)(fenc + 3 * FENC_STRIDE));
-        T04 = (*(__m64*)(fenc + 4 * FENC_STRIDE));
-        T05 = (*(__m64*)(fenc + 5 * FENC_STRIDE));
-        T06 = (*(__m64*)(fenc + 6 * FENC_STRIDE));
-        T07 = (*(__m64*)(fenc + 7 * FENC_STRIDE));
-        T0 = (*(__m64*)(fenc +  8 * FENC_STRIDE));
-        T1 = (*(__m64*)(fenc +  9 * FENC_STRIDE));
-        T2 = (*(__m64*)(fenc +  10 * FENC_STRIDE));
-        T3 = (*(__m64*)(fenc +  11 * FENC_STRIDE));
-        T4 = (*(__m64*)(fenc + 12 * FENC_STRIDE));
-        T5 = (*(__m64*)(fenc + 13 * FENC_STRIDE));
-        T6 = (*(__m64*)(fenc + 14 * FENC_STRIDE));
-        T7 = (*(__m64*)(fenc + 15 * FENC_STRIDE));
-
-        T10 = (*(__m64*)(fref1 + 0 * frefstride));
-        T11 = (*(__m64*)(fref1 + 1 * frefstride));
-        T12 = (*(__m64*)(fref1 + 2 * frefstride));
-        T13 = (*(__m64*)(fref1 + 3 * frefstride));
-        T14 = (*(__m64*)(fref1 + 4 * frefstride));
-        T15 = (*(__m64*)(fref1 + 5 * frefstride));
-        T16 = (*(__m64*)(fref1 + 6 * frefstride));
-        T17 = (*(__m64*)(fref1 + 7 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-        T24 = _mm_sad_pu8(T04, T14);
-        T25 = _mm_sad_pu8(T05, T15);
-        T26 = _mm_sad_pu8(T06, T16);
-        T27 = _mm_sad_pu8(T07, T17);
-
-        sum0 = _mm_add_pi16(sum0, T20);
-        sum0 = _mm_add_pi16(sum0, T21);
-        sum0 = _mm_add_pi16(sum0, T22);
-        sum0 = _mm_add_pi16(sum0, T23);
-        sum0 = _mm_add_pi16(sum0, T24);
-        sum0 = _mm_add_pi16(sum0, T25);
-        sum0 = _mm_add_pi16(sum0, T26);
-        sum0 = _mm_add_pi16(sum0, T27);
-
-        T10 = (*(__m64*)(fref1 + 8 * frefstride));
-        T11 = (*(__m64*)(fref1 + 9 * frefstride));
-        T12 = (*(__m64*)(fref1 + 10 * frefstride));
-        T13 = (*(__m64*)(fref1 + 11 * frefstride));
-        T14 = (*(__m64*)(fref1 + 12 * frefstride));
-        T15 = (*(__m64*)(fref1 + 13 * frefstride));
-        T16 = (*(__m64*)(fref1 + 14 * frefstride));
-        T17 = (*(__m64*)(fref1 + 15 * frefstride));
-
-        T20 = _mm_sad_pu8(T0, T10);
-        T21 = _mm_sad_pu8(T1, T11);
-        T22 = _mm_sad_pu8(T2, T12);
-        T23 = _mm_sad_pu8(T3, T13);
-        T24 = _mm_sad_pu8(T4, T14);
-        T25 = _mm_sad_pu8(T5, T15);
-        T26 = _mm_sad_pu8(T6, T16);
-        T27 = _mm_sad_pu8(T7, T17);
-
-        sum0 = _mm_add_pi16(sum0, T20);
-        sum0 = _mm_add_pi16(sum0, T21);
-        sum0 = _mm_add_pi16(sum0, T22);
-        sum0 = _mm_add_pi16(sum0, T23);
-        sum0 = _mm_add_pi16(sum0, T24);
-        sum0 = _mm_add_pi16(sum0, T25);
-        sum0 = _mm_add_pi16(sum0, T26);
-        sum0 = _mm_add_pi16(sum0, T27);
-
-        T10 = (*(__m64*)(fref2 + 0 * frefstride));
-        T11 = (*(__m64*)(fref2 + 1 * frefstride));
-        T12 = (*(__m64*)(fref2 + 2 * frefstride));
-        T13 = (*(__m64*)(fref2 + 3 * frefstride));
-        T14 = (*(__m64*)(fref2 + 4 * frefstride));
-        T15 = (*(__m64*)(fref2 + 5 * frefstride));
-        T16 = (*(__m64*)(fref2 + 6 * frefstride));
-        T17 = (*(__m64*)(fref2 + 7 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-        T24 = _mm_sad_pu8(T04, T14);
-        T25 = _mm_sad_pu8(T05, T15);
-        T26 = _mm_sad_pu8(T06, T16);
-        T27 = _mm_sad_pu8(T07, T17);
-
-        sum1 = _mm_add_pi16(sum1, T20);
-        sum1 = _mm_add_pi16(sum1, T21);
-        sum1 = _mm_add_pi16(sum1, T22);
-        sum1 = _mm_add_pi16(sum1, T23);
-        sum1 = _mm_add_pi16(sum1, T24);
-        sum1 = _mm_add_pi16(sum1, T25);
-        sum1 = _mm_add_pi16(sum1, T26);
-        sum1 = _mm_add_pi16(sum1, T27);
-
-        T10 = (*(__m64*)(fref2 + 8 * frefstride));
-        T11 = (*(__m64*)(fref2 + 9 * frefstride));
-        T12 = (*(__m64*)(fref2 + 10 * frefstride));
-        T13 = (*(__m64*)(fref2 + 11 * frefstride));
-        T14 = (*(__m64*)(fref2 + 12 * frefstride));
-        T15 = (*(__m64*)(fref2 + 13 * frefstride));
-        T16 = (*(__m64*)(fref2 + 14 * frefstride));
-        T17 = (*(__m64*)(fref2 + 15 * frefstride));
-
-        T20 = _mm_sad_pu8(T0, T10);
-        T21 = _mm_sad_pu8(T1, T11);
-        T22 = _mm_sad_pu8(T2, T12);
-        T23 = _mm_sad_pu8(T3, T13);
-        T24 = _mm_sad_pu8(T4, T14);
-        T25 = _mm_sad_pu8(T5, T15);
-        T26 = _mm_sad_pu8(T6, T16);
-        T27 = _mm_sad_pu8(T7, T17);
-
-        sum1 = _mm_add_pi16(sum1, T20);
-        sum1 = _mm_add_pi16(sum1, T21);
-        sum1 = _mm_add_pi16(sum1, T22);
-        sum1 = _mm_add_pi16(sum1, T23);
-        sum1 = _mm_add_pi16(sum1, T24);
-        sum1 = _mm_add_pi16(sum1, T25);
-        sum1 = _mm_add_pi16(sum1, T26);
-        sum1 = _mm_add_pi16(sum1, T27);
-
-        T10 = (*(__m64*)(fref3 + 0 * frefstride));
-        T11 = (*(__m64*)(fref3 + 1 * frefstride));
-        T12 = (*(__m64*)(fref3 + 2 * frefstride));
-        T13 = (*(__m64*)(fref3 + 3 * frefstride));
-        T14 = (*(__m64*)(fref3 + 4 * frefstride));
-        T15 = (*(__m64*)(fref3 + 5 * frefstride));
-        T16 = (*(__m64*)(fref3 + 6 * frefstride));
-        T17 = (*(__m64*)(fref3 + 7 * frefstride));
-
-        T20 = _mm_sad_pu8(T00, T10);
-        T21 = _mm_sad_pu8(T01, T11);
-        T22 = _mm_sad_pu8(T02, T12);
-        T23 = _mm_sad_pu8(T03, T13);
-        T24 = _mm_sad_pu8(T04, T14);
-        T25 = _mm_sad_pu8(T05, T15);
-        T26 = _mm_sad_pu8(T06, T16);
-        T27 = _mm_sad_pu8(T07, T17);
-
-        sum2 = _mm_add_pi16(sum2, T20);
-        sum2 = _mm_add_pi16(sum2, T21);
-        sum2 = _mm_add_pi16(sum2, T22);
-        sum2 = _mm_add_pi16(sum2, T23);
-        sum2 = _mm_add_pi16(sum2, T24);
-        sum2 = _mm_add_pi16(sum2, T25);
-        sum2 = _mm_add_pi16(sum2, T26);
-        sum2 = _mm_add_pi16(sum2, T27);
-
-        T10 = (*(__m64*)(fref3 + 8 * frefstride));
-        T11 = (*(__m64*)(fref3 + 9 * frefstride));
-        T12 = (*(__m64*)(fref3 + 10 * frefstride));
-        T13 = (*(__m64*)(fref3 + 11 * frefstride));
-        T14 = (*(__m64*)(fref3 + 12 * frefstride));
-        T15 = (*(__m64*)(fref3 + 13 * frefstride));
-        T16 = (*(__m64*)(fref3 + 14 * frefstride));
-        T17 = (*(__m64*)(fref3 + 15 * frefstride));
-
-        T20 = _mm_sad_pu8(T0, T10);
-        T21 = _mm_sad_pu8(T1, T11);
-        T22 = _mm_sad_pu8(T2, T12);
-        T23 = _mm_sad_pu8(T3, T13);
-        T24 = _mm_sad_pu8(T4, T14);
-        T25 = _mm_sad_pu8(T5, T15);
-        T26 = _mm_sad_pu8(T6, T16);
-        T27 = _mm_sad_pu8(T7, T17);
-
-        sum2 = _mm_add_pi16(sum2, T20);
-        sum2 = _mm_add_pi16(sum2, T21);
-        sum2 = _mm_add_pi16(sum2, T22);
-        sum2 = _mm_add_pi16(sum2, T23);
-        sum2 = _mm_add_pi16(sum2, T24);
-        sum2 = _mm_add_pi16(sum2, T25);
-        sum2 = _mm_add_pi16(sum2, T26);
-        sum2 = _mm_add_pi16(sum2, T27);
-    }
-    else if ((ly % 8) == 0)
-    {
-        for (int i = 0; i < ly; i += 8)
-        {
-            T00 = (*(__m64*)(fenc + (i + 0) * FENC_STRIDE));
-            T01 = (*(__m64*)(fenc + (i + 1) * FENC_STRIDE));
-            T02 = (*(__m64*)(fenc + (i + 2) * FENC_STRIDE));
-            T03 = (*(__m64*)(fenc + (i + 3) * FENC_STRIDE));
-            T04 = (*(__m64*)(fenc + (i + 4) * FENC_STRIDE));
-            T05 = (*(__m64*)(fenc + (i + 5) * FENC_STRIDE));
-            T06 = (*(__m64*)(fenc + (i + 6) * FENC_STRIDE));
-            T07 = (*(__m64*)(fenc + (i + 7) * FENC_STRIDE));
-
-            T10 = (*(__m64*)(fref1 + (i + 0) * frefstride));
-            T11 = (*(__m64*)(fref1 + (i + 1) * frefstride));
-            T12 = (*(__m64*)(fref1 + (i + 2) * frefstride));
-            T13 = (*(__m64*)(fref1 + (i + 3) * frefstride));
-            T14 = (*(__m64*)(fref1 + (i + 4) * frefstride));
-            T15 = (*(__m64*)(fref1 + (i + 5) * frefstride));
-            T16 = (*(__m64*)(fref1 + (i + 6) * frefstride));
-            T17 = (*(__m64*)(fref1 + (i + 7) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-            T24 = _mm_sad_pu8(T04, T14);
-            T25 = _mm_sad_pu8(T05, T15);
-            T26 = _mm_sad_pu8(T06, T16);
-            T27 = _mm_sad_pu8(T07, T17);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-            sum0 = _mm_add_pi16(sum0, T24);
-            sum0 = _mm_add_pi16(sum0, T25);
-            sum0 = _mm_add_pi16(sum0, T26);
-            sum0 = _mm_add_pi16(sum0, T27);
-
-            T10 = (*(__m64*)(fref2 + (i + 0) * frefstride));
-            T11 = (*(__m64*)(fref2 + (i + 1) * frefstride));
-            T12 = (*(__m64*)(fref2 + (i + 2) * frefstride));
-            T13 = (*(__m64*)(fref2 + (i + 3) * frefstride));
-            T14 = (*(__m64*)(fref2 + (i + 4) * frefstride));
-            T15 = (*(__m64*)(fref2 + (i + 5) * frefstride));
-            T16 = (*(__m64*)(fref2 + (i + 6) * frefstride));
-            T17 = (*(__m64*)(fref2 + (i + 7) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-            T24 = _mm_sad_pu8(T04, T14);
-            T25 = _mm_sad_pu8(T05, T15);
-            T26 = _mm_sad_pu8(T06, T16);
-            T27 = _mm_sad_pu8(T07, T17);
-
-            sum1 = _mm_add_pi16(sum1, T20);
-            sum1 = _mm_add_pi16(sum1, T21);
-            sum1 = _mm_add_pi16(sum1, T22);
-            sum1 = _mm_add_pi16(sum1, T23);
-            sum1 = _mm_add_pi16(sum1, T24);
-            sum1 = _mm_add_pi16(sum1, T25);
-            sum1 = _mm_add_pi16(sum1, T26);
-            sum1 = _mm_add_pi16(sum1, T27);
-
-            T10 = (*(__m64*)(fref3 + (i + 0) * frefstride));
-            T11 = (*(__m64*)(fref3 + (i + 1) * frefstride));
-            T12 = (*(__m64*)(fref3 + (i + 2) * frefstride));
-            T13 = (*(__m64*)(fref3 + (i + 3) * frefstride));
-            T14 = (*(__m64*)(fref3 + (i + 4) * frefstride));
-            T15 = (*(__m64*)(fref3 + (i + 5) * frefstride));
-            T16 = (*(__m64*)(fref3 + (i + 6) * frefstride));
-            T17 = (*(__m64*)(fref3 + (i + 7) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-            T24 = _mm_sad_pu8(T04, T14);
-            T25 = _mm_sad_pu8(T05, T15);
-            T26 = _mm_sad_pu8(T06, T16);
-            T27 = _mm_sad_pu8(T07, T17);
-
-            sum2 = _mm_add_pi16(sum2, T20);
-            sum2 = _mm_add_pi16(sum2, T21);
-            sum2 = _mm_add_pi16(sum2, T22);
-            sum2 = _mm_add_pi16(sum2, T23);
-            sum2 = _mm_add_pi16(sum2, T24);
-            sum2 = _mm_add_pi16(sum2, T25);
-            sum2 = _mm_add_pi16(sum2, T26);
-            sum2 = _mm_add_pi16(sum2, T27);
-        }
-    }
-    else
-    {
-        for (int i = 0; i < ly; i += 4)
-        {
-            T00 = (*(__m64*)(fenc + (i + 0) * FENC_STRIDE));
-            T01 = (*(__m64*)(fenc + (i + 1) * FENC_STRIDE));
-            T02 = (*(__m64*)(fenc + (i + 2) * FENC_STRIDE));
-            T03 = (*(__m64*)(fenc + (i + 3) * FENC_STRIDE));
-
-            T10 = (*(__m64*)(fref1 + (i + 0) * frefstride));
-            T11 = (*(__m64*)(fref1 + (i + 1) * frefstride));
-            T12 = (*(__m64*)(fref1 + (i + 2) * frefstride));
-            T13 = (*(__m64*)(fref1 + (i + 3) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum0 = _mm_add_pi16(sum0, T20);
-            sum0 = _mm_add_pi16(sum0, T21);
-            sum0 = _mm_add_pi16(sum0, T22);
-            sum0 = _mm_add_pi16(sum0, T23);
-
-            T10 = (*(__m64*)(fref2 + (i + 0) * frefstride));
-            T11 = (*(__m64*)(fref2 + (i + 1) * frefstride));
-            T12 = (*(__m64*)(fref2 + (i + 2) * frefstride));
-            T13 = (*(__m64*)(fref2 + (i + 3) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum1 = _mm_add_pi16(sum1, T20);
-            sum1 = _mm_add_pi16(sum1, T21);
-            sum1 = _mm_add_pi16(sum1, T22);
-            sum1 = _mm_add_pi16(sum1, T23);
-
-            T10 = (*(__m64*)(fref3 + (i + 0) * frefstride));
-            T11 = (*(__m64*)(fref3 + (i + 1) * frefstride));
-            T12 = (*(__m64*)(fref3 + (i + 2) * frefstride));
-            T13 = (*(__m64*)(fref3 + (i + 3) * frefstride));
-
-            T20 = _mm_sad_pu8(T00, T10);
-            T21 = _mm_sad_pu8(T01, T11);
-            T22 = _mm_sad_pu8(T02, T12);
-            T23 = _mm_sad_pu8(T03, T13);
-
-            sum2 = _mm_add_pi16(sum2, T20);
-            sum2 = _mm_add_pi16(sum2, T21);
-            sum2 = _mm_add_pi16(sum2, T22);
-            sum2 = _mm_add_pi16(sum2, T23);
-        }
-    }
-
-    res[0] = _m_to_int(sum0);
-    res[1] = _m_to_int(sum1);
-    res[2] = _m_to_int(sum2);
-}
-
-#else /* if HAVE_MMX */
-
-template<int ly>
-void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
-{
-    assert((ly % 4) == 0);
-    __m128i sum0 = _mm_setzero_si128();
-
-    __m128i T00, T01, T02, T03;
-    __m128i T10, T11, T12, T13;
-    __m128i T20, T21;
-
-    if (ly == 4)
-    {
-        T00 = _mm_loadl_epi64((__m128i*)(fenc + (0) * FENC_STRIDE));
-        T01 = _mm_loadl_epi64((__m128i*)(fenc + (1) * FENC_STRIDE));
+        // fenc = fenc + (0) * FENC_STRIDE, fenc + FENC_STRIDE = fenc + (1) * FENC_STRIDE
+        T00 = _mm_loadl_epi64((__m128i*)(fenc));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + FENC_STRIDE));
         T01 = _mm_unpacklo_epi64(T00, T01);
         T02 = _mm_loadl_epi64((__m128i*)(fenc + (2) * FENC_STRIDE));
         T03 = _mm_loadl_epi64((__m128i*)(fenc + (3) * FENC_STRIDE));
         T03 = _mm_unpacklo_epi64(T02, T03);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref1 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref1 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref1));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref1 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref1 + (3) * frefstride));
@@ -2847,8 +2352,8 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[0] = _mm_cvtsi128_si32(sum0);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref2 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref2 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref2));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref2 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref2 + (3) * frefstride));
@@ -2861,8 +2366,8 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[1] = _mm_cvtsi128_si32(sum0);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref3 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref3 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref3));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref3 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref3 + (3) * frefstride));
@@ -2877,15 +2382,21 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
     }
     else if (ly == 8)
     {
-        T00 = _mm_loadl_epi64((__m128i*)(fenc + (0) * FENC_STRIDE));
-        T01 = _mm_loadl_epi64((__m128i*)(fenc + (1) * FENC_STRIDE));
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
+
+        __m128i sum0;
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + FENC_STRIDE));
         T01 = _mm_unpacklo_epi64(T00, T01);
         T02 = _mm_loadl_epi64((__m128i*)(fenc + (2) * FENC_STRIDE));
         T03 = _mm_loadl_epi64((__m128i*)(fenc + (3) * FENC_STRIDE));
         T03 = _mm_unpacklo_epi64(T02, T03);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref1 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref1 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref1));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref1 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref1 + (3) * frefstride));
@@ -2898,8 +2409,8 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[0] = _mm_cvtsi128_si32(sum0);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref2 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref2 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref2));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref2 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref2 + (3) * frefstride));
@@ -2912,8 +2423,8 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[1] = _mm_cvtsi128_si32(sum0);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref3 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref3 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref3));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref3 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref3 + (3) * frefstride));
@@ -2977,15 +2488,21 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
     }
     else if (ly == 16)
     {
-        T00 = _mm_loadl_epi64((__m128i*)(fenc + (0) * FENC_STRIDE));
-        T01 = _mm_loadl_epi64((__m128i*)(fenc + (1) * FENC_STRIDE));
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
+
+        __m128i sum0;
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + FENC_STRIDE));
         T01 = _mm_unpacklo_epi64(T00, T01);
         T02 = _mm_loadl_epi64((__m128i*)(fenc + (2) * FENC_STRIDE));
         T03 = _mm_loadl_epi64((__m128i*)(fenc + (3) * FENC_STRIDE));
         T03 = _mm_unpacklo_epi64(T02, T03);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref1 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref1 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref1));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref1 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref1 + (3) * frefstride));
@@ -2998,8 +2515,8 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[0] = _mm_cvtsi128_si32(sum0);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref2 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref2 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref2));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref2 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref2 + (3) * frefstride));
@@ -3012,8 +2529,8 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
         sum0 = _mm_add_epi32(sum0, T21);
         res[1] = _mm_cvtsi128_si32(sum0);
 
-        T10 = _mm_loadl_epi64((__m128i*)(fref3 + (0) * frefstride));
-        T11 = _mm_loadl_epi64((__m128i*)(fref3 + (1) * frefstride));
+        T10 = _mm_loadl_epi64((__m128i*)(fref3));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + frefstride));
         T11 = _mm_unpacklo_epi64(T10, T11);
         T12 = _mm_loadl_epi64((__m128i*)(fref3 + (2) * frefstride));
         T13 = _mm_loadl_epi64((__m128i*)(fref3 + (3) * frefstride));
@@ -3175,6 +2692,558 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
     }
     else if ((ly % 8) == 0)
     {
+        __m64 sum0 = _mm_setzero_si64();
+        __m64 sum1 = _mm_setzero_si64();
+        __m64 sum2 = _mm_setzero_si64();
+
+        __m64 T00, T01, T02, T03, T04, T05, T06, T07;
+        __m64 T10, T11, T12, T13, T14, T15, T16, T17;
+        __m64 T20, T21, T22, T23, T24, T25, T26, T27;
+
+        for (int i = 0; i < ly; i += 8)
+        {
+            T00 = (*(__m64*)(fenc + (i + 0) * FENC_STRIDE));
+            T01 = (*(__m64*)(fenc + (i + 1) * FENC_STRIDE));
+            T02 = (*(__m64*)(fenc + (i + 2) * FENC_STRIDE));
+            T03 = (*(__m64*)(fenc + (i + 3) * FENC_STRIDE));
+            T04 = (*(__m64*)(fenc + (i + 4) * FENC_STRIDE));
+            T05 = (*(__m64*)(fenc + (i + 5) * FENC_STRIDE));
+            T06 = (*(__m64*)(fenc + (i + 6) * FENC_STRIDE));
+            T07 = (*(__m64*)(fenc + (i + 7) * FENC_STRIDE));
+
+            T10 = (*(__m64*)(fref1 + (i + 0) * frefstride));
+            T11 = (*(__m64*)(fref1 + (i + 1) * frefstride));
+            T12 = (*(__m64*)(fref1 + (i + 2) * frefstride));
+            T13 = (*(__m64*)(fref1 + (i + 3) * frefstride));
+            T14 = (*(__m64*)(fref1 + (i + 4) * frefstride));
+            T15 = (*(__m64*)(fref1 + (i + 5) * frefstride));
+            T16 = (*(__m64*)(fref1 + (i + 6) * frefstride));
+            T17 = (*(__m64*)(fref1 + (i + 7) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+            T24 = _mm_sad_pu8(T04, T14);
+            T25 = _mm_sad_pu8(T05, T15);
+            T26 = _mm_sad_pu8(T06, T16);
+            T27 = _mm_sad_pu8(T07, T17);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+            sum0 = _mm_add_pi16(sum0, T24);
+            sum0 = _mm_add_pi16(sum0, T25);
+            sum0 = _mm_add_pi16(sum0, T26);
+            sum0 = _mm_add_pi16(sum0, T27);
+
+            T10 = (*(__m64*)(fref2 + (i + 0) * frefstride));
+            T11 = (*(__m64*)(fref2 + (i + 1) * frefstride));
+            T12 = (*(__m64*)(fref2 + (i + 2) * frefstride));
+            T13 = (*(__m64*)(fref2 + (i + 3) * frefstride));
+            T14 = (*(__m64*)(fref2 + (i + 4) * frefstride));
+            T15 = (*(__m64*)(fref2 + (i + 5) * frefstride));
+            T16 = (*(__m64*)(fref2 + (i + 6) * frefstride));
+            T17 = (*(__m64*)(fref2 + (i + 7) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+            T24 = _mm_sad_pu8(T04, T14);
+            T25 = _mm_sad_pu8(T05, T15);
+            T26 = _mm_sad_pu8(T06, T16);
+            T27 = _mm_sad_pu8(T07, T17);
+
+            sum1 = _mm_add_pi16(sum1, T20);
+            sum1 = _mm_add_pi16(sum1, T21);
+            sum1 = _mm_add_pi16(sum1, T22);
+            sum1 = _mm_add_pi16(sum1, T23);
+            sum1 = _mm_add_pi16(sum1, T24);
+            sum1 = _mm_add_pi16(sum1, T25);
+            sum1 = _mm_add_pi16(sum1, T26);
+            sum1 = _mm_add_pi16(sum1, T27);
+
+            T10 = (*(__m64*)(fref3 + (i + 0) * frefstride));
+            T11 = (*(__m64*)(fref3 + (i + 1) * frefstride));
+            T12 = (*(__m64*)(fref3 + (i + 2) * frefstride));
+            T13 = (*(__m64*)(fref3 + (i + 3) * frefstride));
+            T14 = (*(__m64*)(fref3 + (i + 4) * frefstride));
+            T15 = (*(__m64*)(fref3 + (i + 5) * frefstride));
+            T16 = (*(__m64*)(fref3 + (i + 6) * frefstride));
+            T17 = (*(__m64*)(fref3 + (i + 7) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+            T24 = _mm_sad_pu8(T04, T14);
+            T25 = _mm_sad_pu8(T05, T15);
+            T26 = _mm_sad_pu8(T06, T16);
+            T27 = _mm_sad_pu8(T07, T17);
+
+            sum2 = _mm_add_pi16(sum2, T20);
+            sum2 = _mm_add_pi16(sum2, T21);
+            sum2 = _mm_add_pi16(sum2, T22);
+            sum2 = _mm_add_pi16(sum2, T23);
+            sum2 = _mm_add_pi16(sum2, T24);
+            sum2 = _mm_add_pi16(sum2, T25);
+            sum2 = _mm_add_pi16(sum2, T26);
+            sum2 = _mm_add_pi16(sum2, T27);
+        }
+
+        res[0] = _m_to_int(sum0);
+        res[1] = _m_to_int(sum1);
+        res[2] = _m_to_int(sum2);
+    }
+    else
+    {
+        __m64 sum0 = _mm_setzero_si64();
+        __m64 sum1 = _mm_setzero_si64();
+        __m64 sum2 = _mm_setzero_si64();
+
+        __m64 T00, T01, T02, T03;
+        __m64 T10, T11, T12, T13;
+        __m64 T20, T21, T22, T23;
+
+        for (int i = 0; i < ly; i += 4)
+        {
+            T00 = (*(__m64*)(fenc + (i + 0) * FENC_STRIDE));
+            T01 = (*(__m64*)(fenc + (i + 1) * FENC_STRIDE));
+            T02 = (*(__m64*)(fenc + (i + 2) * FENC_STRIDE));
+            T03 = (*(__m64*)(fenc + (i + 3) * FENC_STRIDE));
+
+            T10 = (*(__m64*)(fref1 + (i + 0) * frefstride));
+            T11 = (*(__m64*)(fref1 + (i + 1) * frefstride));
+            T12 = (*(__m64*)(fref1 + (i + 2) * frefstride));
+            T13 = (*(__m64*)(fref1 + (i + 3) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum0 = _mm_add_pi16(sum0, T20);
+            sum0 = _mm_add_pi16(sum0, T21);
+            sum0 = _mm_add_pi16(sum0, T22);
+            sum0 = _mm_add_pi16(sum0, T23);
+
+            T10 = (*(__m64*)(fref2 + (i + 0) * frefstride));
+            T11 = (*(__m64*)(fref2 + (i + 1) * frefstride));
+            T12 = (*(__m64*)(fref2 + (i + 2) * frefstride));
+            T13 = (*(__m64*)(fref2 + (i + 3) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum1 = _mm_add_pi16(sum1, T20);
+            sum1 = _mm_add_pi16(sum1, T21);
+            sum1 = _mm_add_pi16(sum1, T22);
+            sum1 = _mm_add_pi16(sum1, T23);
+
+            T10 = (*(__m64*)(fref3 + (i + 0) * frefstride));
+            T11 = (*(__m64*)(fref3 + (i + 1) * frefstride));
+            T12 = (*(__m64*)(fref3 + (i + 2) * frefstride));
+            T13 = (*(__m64*)(fref3 + (i + 3) * frefstride));
+
+            T20 = _mm_sad_pu8(T00, T10);
+            T21 = _mm_sad_pu8(T01, T11);
+            T22 = _mm_sad_pu8(T02, T12);
+            T23 = _mm_sad_pu8(T03, T13);
+
+            sum2 = _mm_add_pi16(sum2, T20);
+            sum2 = _mm_add_pi16(sum2, T21);
+            sum2 = _mm_add_pi16(sum2, T22);
+            sum2 = _mm_add_pi16(sum2, T23);
+        }
+
+        res[0] = _m_to_int(sum0);
+        res[1] = _m_to_int(sum1);
+        res[2] = _m_to_int(sum2);
+    }
+}
+
+#else /* if HAVE_MMX */
+
+template<int ly>
+void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+{
+    assert((ly % 4) == 0);
+
+    if (ly == 4)
+    {
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
+        __m128i sum0;
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + FENC_STRIDE));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (2) * FENC_STRIDE));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (3) * FENC_STRIDE));
+        T03 = _mm_unpacklo_epi64(T02, T03);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref1));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref1 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref1 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[0] = _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref2));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref2 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref2 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[1] = _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref3));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref3 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref3 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[2] = _mm_cvtsi128_si32(sum0);
+    }
+    else if (ly == 8)
+    {
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
+        __m128i sum0;
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + FENC_STRIDE));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (2) * FENC_STRIDE));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (3) * FENC_STRIDE));
+        T03 = _mm_unpacklo_epi64(T02, T03);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref1));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref1 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref1 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[0] = _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref2));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref2 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref2 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[1] = _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref3));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref3 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref3 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[2] = _mm_cvtsi128_si32(sum0);
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc + (4) * FENC_STRIDE));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + (5) * FENC_STRIDE));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (6) * FENC_STRIDE));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (7) * FENC_STRIDE));
+        T03 = _mm_unpacklo_epi64(T02, T03);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref1 + (4) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + (5) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref1 + (6) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref1 + (7) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[0] = res[0] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref2 + (4) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + (5) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref2 + (6) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref2 + (7) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[1] = res[1] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref3 + (4) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + (5) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref3 + (6) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref3 + (7) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[2] = res[2] + _mm_cvtsi128_si32(sum0);
+    }
+    else if (ly == 16)
+    {
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
+        __m128i sum0;
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + FENC_STRIDE));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (2) * FENC_STRIDE));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (3) * FENC_STRIDE));
+        T03 = _mm_unpacklo_epi64(T02, T03);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref1));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref1 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref1 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[0] = _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref2));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref2 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref2 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[1] = _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref3));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref3 + (2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref3 + (3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[2] = _mm_cvtsi128_si32(sum0);
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc + (4) * FENC_STRIDE));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + (5) * FENC_STRIDE));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (6) * FENC_STRIDE));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (7) * FENC_STRIDE));
+        T03 = _mm_unpacklo_epi64(T02, T03);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref1 + (4) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + (5) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref1 + (6) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref1 + (7) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[0] = res[0] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref2 + (4) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + (5) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref2 + (6) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref2 + (7) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[1] = res[1] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref3 + (4) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + (5) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref3 + (6) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref3 + (7) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[2] = res[2] + _mm_cvtsi128_si32(sum0);
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc + (8) * FENC_STRIDE));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + (9) * FENC_STRIDE));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (10) * FENC_STRIDE));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (11) * FENC_STRIDE));
+        T03 = _mm_unpacklo_epi64(T02, T03);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref1 + (8) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + (9) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref1 + (10) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref1 + (11) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[0] = res[0] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref2 + (8) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + (9) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref2 + (10) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref2 + (11) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[1] = res[1] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref3 + (8) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + (9) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref3 + (10) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref3 + (11) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[2] = res[2] + _mm_cvtsi128_si32(sum0);
+
+        T00 = _mm_loadl_epi64((__m128i*)(fenc + (12) * FENC_STRIDE));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + (13) * FENC_STRIDE));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (14) * FENC_STRIDE));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (15) * FENC_STRIDE));
+        T03 = _mm_unpacklo_epi64(T02, T03);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref1 + (12) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref1 + (13) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref1 + (14) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref1 + (15) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[0] = res[0] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref2 + (12) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref2 + (13) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref2 + (14) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref2 + (15) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[1] = res[1] + _mm_cvtsi128_si32(sum0);
+
+        T10 = _mm_loadl_epi64((__m128i*)(fref3 + (12) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref3 + (13) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref3 + (14) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref3 + (15) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+
+        T20 = _mm_sad_epu8(T01, T11);
+        T21 = _mm_sad_epu8(T03, T13);
+        T21 = _mm_add_epi32(T20, T21);
+        sum0 = _mm_shuffle_epi32(T21, 2);
+        sum0 = _mm_add_epi32(sum0, T21);
+        res[2] = res[2] + _mm_cvtsi128_si32(sum0);
+    }
+    else if ((ly % 8) == 0)
+    {
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
+        __m128i sum0 = _mm_setzero_si128();
+
         res[0] = res[1] = res[2] = 0;
         for (int i = 0; i < ly; i += 8)
         {
@@ -3279,6 +3348,11 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
     }
     else
     {
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21;
+        __m128i sum0 = _mm_setzero_si128();
+
         res[0] = res[1] = res[2] = 0;
         for (int i = 0; i < ly; i += 4)
         {
@@ -3335,6 +3409,7 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
 }
 
 #endif /* if HAVE_MMX */
+
 #endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
