@@ -448,7 +448,7 @@ public:
     Void          setMVPIdxSubParts(Int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
     Void          setMVPNumSubParts(Int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
 
-    Void          clipMv(x265::MV& outMV);
+    Void          clipMv(x265::MV& outMV, int rowsAvailable = 0);
 
     Void          getMvPredLeft(x265::MV& mvPred)       { mvPred = m_mvFieldA.mv; }
 

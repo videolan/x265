@@ -2946,6 +2946,7 @@ Void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mv
 UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templateCand, MV mvCand, Int mvpIdx,
                                   Int mvpCandCount, RefPicList picList, Int refIdx, Int sizex, Int sizey)
 {
+    // TODO: does it clip with m_referenceRowsAvailable?
     cu->clipMv(mvCand);
 
     // prediction pattern
@@ -3013,8 +3014,8 @@ Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin,
     mvmin = mvp - dist;
     mvmax = mvp + dist;
 
-    cu->clipMv(mvmin);
-    cu->clipMv(mvmax);
+    cu->clipMv(mvmin, m_referenceRowsAvailable);
+    cu->clipMv(mvmax, m_referenceRowsAvailable);
 
     mvmin >>= 2;
     mvmax >>= 2;

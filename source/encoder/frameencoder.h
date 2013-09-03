@@ -50,7 +50,7 @@ namespace x265 {
 class ThreadPool;
 
 // Manages the wave-front processing of a single encoding frame
-class FrameEncoder : public WaveFront
+class FrameEncoder : public WaveFront, public x265::Thread
 {
 public:
 
@@ -180,6 +180,23 @@ public:
 
     TComPic *getEncodedPicture(AccessUnit& accessUnit);
 
+    // Frame parallelism
+    void threadMain(void)
+    {
+        while(m_threadActive)
+        {
+            m_enable.wait();
+            if (!m_threadActive)
+                break;
+            compressFrame(m_pic);
+            m_done.trigger();
+        }
+    }
+
+    Event                    m_enable;
+    Event                    m_done;
+    bool                     m_threadActive;
+
     SEIWriter                m_seiWriter;
     TComSPS                  m_sps;
     TComPPS                  m_pps;
@@ -199,7 +216,7 @@ protected:
     /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;
     AccessUnit               m_accessUnit;
-    int                      m_referenceRowsAvailable;
+    volatile int             m_referenceRowsAvailable;
 
     int                      m_numRows;
     int                      row_delay;

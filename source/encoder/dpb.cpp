@@ -51,7 +51,6 @@ void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
         if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
         {
             pic->getPicYuvRec()->clearReferences();
-            pic->getPicYuvRec()->clearExtendedFlag();
             pic->m_reconRowCount = 0;
 
             // iterator is invalidated by remove, restart scan

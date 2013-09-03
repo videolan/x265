@@ -41,6 +41,11 @@ bool WaveFront::init(int numRows)
         m_queuedBitmap = new uint64_t[m_numWords];
         if (m_queuedBitmap)
             memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
+
+        m_enableBitmap = new uint64_t[m_numWords];
+        if (m_enableBitmap)
+            memset((void*)m_enableBitmap, 0, sizeof(uint64_t) * m_numWords);
+        
         return m_queuedBitmap != NULL;
     }
 
@@ -54,6 +59,11 @@ WaveFront::~WaveFront()
         delete[] m_queuedBitmap;
         m_queuedBitmap = NULL;
     }
+    if (m_enableBitmap)
+    {
+        delete[] m_enableBitmap;
+        m_enableBitmap = NULL;
+    }
 }
 
 void WaveFront::enqueueRow(int row)
@@ -64,6 +74,15 @@ void WaveFront::enqueueRow(int row)
     assert(row < m_numRows);
     ATOMIC_OR(&m_queuedBitmap[row >> 6], bit);
     m_pool->pokeIdleThread();
+}
+
+void WaveFront::enableRow(int row)
+{
+    // thread safe
+    uint64_t bit = 1LL << (row & 63);
+
+    assert(row < m_numRows);
+    ATOMIC_OR(&m_enableBitmap[row >> 6], bit);
 }
 
 bool WaveFront::checkHigherPriorityRow(int curRow)
@@ -95,8 +114,14 @@ bool WaveFront::findJob()
                 break;
 
             CTZ64(id, oldval);
-            uint64_t newval = oldval & ~(1LL << id);
 
+            // NOTE: if the lowest row is unavailable, so we don't check higher row
+            if (!(m_enableBitmap[w] & (1LL << id)))
+            {
+                return false;
+            }
+
+            uint64_t newval = oldval & ~(1LL << id);
             if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
             {
                 // we cleared the bit, process row

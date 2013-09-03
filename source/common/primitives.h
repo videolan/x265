@@ -226,6 +226,8 @@ typedef void (*filterHwghtd_t)(pixel *src, intptr_t srcStride, short *midF, shor
 typedef void (*filterRowH_t)(pixel *src, intptr_t srcStride, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
 typedef void (*filterRowV_0_t)(pixel *src, intptr_t srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
 typedef void (*filterRowV_N_t)(short *midA, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow);
+typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
+
 
 typedef void (*weightpUni_t)(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
@@ -267,6 +269,8 @@ struct EncoderPrimitives
     filterRowH_t    filterRowH;
     filterRowV_0_t  filterRowV_0;
     filterRowV_N_t  filterRowV_N;
+    extendCURowBorder_t extendRowBorder;
+
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;

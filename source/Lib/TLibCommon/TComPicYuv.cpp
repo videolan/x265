@@ -60,8 +60,6 @@ TComPicYuv::TComPicYuv()
     m_picOrgV = NULL;
 
     m_refList = NULL;
-
-    m_bIsBorderExtended = false;
 }
 
 TComPicYuv::~TComPicYuv()
@@ -97,8 +95,6 @@ Void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCU
     m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
     m_picOrgV = m_picBufV + m_chromaMarginY * getCStride() + m_chromaMarginX;
-
-    m_bIsBorderExtended = false;
 
     m_cuOffsetY = new Int[numCuInWidth * numCuInHeight];
     m_cuOffsetC = new Int[numCuInWidth * numCuInHeight];
@@ -240,14 +236,8 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
 
 x265::MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
 {
-    if (!m_bIsBorderExtended)
-    {
-        /* HPEL generation requires luma integer plane to already be extended */
-        xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(), getHeight(), m_lumaMarginX, m_lumaMarginY);
-        xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
-        xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
-        m_bIsBorderExtended = true;
-    }
+    /* HPEL generation requires luma integer plane to already be extended */
+    // NOTE: We extend border every CURow, so I remove code here
 
     MotionReference *mref;
     for (mref = m_refList; mref != NULL; mref = mref->m_next)

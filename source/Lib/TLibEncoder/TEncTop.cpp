@@ -268,7 +268,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         }
 
         // main encode processing, TBD multi-threading
-        curEncoder->compressFrame(fenc);
+        curEncoder->m_enable.trigger();
     }
 
     return ret;

@@ -2715,14 +2715,17 @@ Bool TComDataCU::isBipredRestriction(UInt puIdx)
     return false;
 }
 
-Void TComDataCU::clipMv(MV& outMV)
+Void TComDataCU::clipMv(MV& outMV, int rowsAvailable)
 {
     Int mvshift = 2;
     Int offset = 8;
     Int xmax = (m_slice->getSPS()->getPicWidthInLumaSamples() + offset - m_cuPelX - 1) << mvshift;
     Int xmin = (-(Int)g_maxCUWidth - offset - (Int)m_cuPelX + 1) << mvshift;
 
-    Int ymax = (m_slice->getSPS()->getPicHeightInLumaSamples() + offset - m_cuPelY - 1) << mvshift;
+    int ylimit = m_slice->getSPS()->getPicHeightInLumaSamples();
+    if (rowsAvailable)
+        ylimit = X265_MIN(rowsAvailable * g_maxCUHeight, ylimit);
+    Int ymax = (ylimit + offset - m_cuPelY - 1) << mvshift;
     Int ymin = (-(Int)g_maxCUHeight - offset - (Int)m_cuPelY + 1) << mvshift;
 
     outMV.x = min(xmax, max(xmin, (Int)outMV.x));

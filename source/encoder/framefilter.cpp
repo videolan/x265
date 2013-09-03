@@ -226,10 +226,44 @@ void FrameFilter::processRow(int row)
 
     // TODO: extend margins for motion reference
 
-    // Notify other FrameEncoders that this row of reconstructed pixels is available
-    m_pic->m_reconRowCount++;
-    for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
-        m_pic->m_reconRowWait.trigger();
+    TComPicYuv *recon = m_pic->getPicYuvRec();
+    if (row > 0)
+    {
+        // TODO: Remove when we confirm below code is right
+        //recon->xExtendPicCompBorder(recon->getLumaAddr(), recon->getStride(), recon->getWidth(), recon->getHeight(), recon->m_lumaMarginX, recon->m_lumaMarginY);
+        //recon->xExtendPicCompBorder(recon->getCbAddr(), recon->getCStride(), recon->getWidth() >> 1, recon->getHeight() >> 1, recon->m_chromaMarginX, recon->m_chromaMarginY);
+        //recon->xExtendPicCompBorder(recon->getCrAddr(), recon->getCStride(), recon->getWidth() >> 1, recon->getHeight() >> 1, recon->m_chromaMarginX, recon->m_chromaMarginY);
+        // Border extend Left and Right
+        primitives.extendRowBorder(recon->getLumaAddr(lineStartCUAddr - numCols), recon->getStride(), recon->getWidth(), g_maxCUHeight, recon->getLumaMarginX());
+        primitives.extendRowBorder(recon->getCbAddr(lineStartCUAddr - numCols), recon->getCStride(), recon->getWidth() >> 1, g_maxCUHeight >> 1, recon->getChromaMarginX());
+        primitives.extendRowBorder(recon->getCrAddr(lineStartCUAddr - numCols), recon->getCStride(), recon->getWidth() >> 1, g_maxCUHeight >> 1, recon->getChromaMarginX());
+
+        // Border extend Top
+        if (row == 1)
+        {
+            const intptr_t stride = recon->getStride();
+            const intptr_t strideC = recon->getCStride();
+            Pel *pixY = recon->getLumaAddr(lineStartCUAddr - numCols) - recon->getLumaMarginX();
+            Pel *pixU = recon->getCbAddr(lineStartCUAddr - numCols) - recon->getChromaMarginX();
+            Pel *pixV = recon->getCrAddr(lineStartCUAddr - numCols) - recon->getChromaMarginX();
+
+            for(int y = 0; y < recon->getLumaMarginY(); y++)
+            {
+                memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(Pel));
+            }
+
+            for(int y = 0; y < recon->getChromaMarginY(); y++)
+            {
+                memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(Pel));
+                memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(Pel));
+            }
+        }
+
+        // Notify other FrameEncoders that this row of reconstructed pixels is available
+        m_pic->m_reconRowCount++;
+        for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
+            m_pic->m_reconRowWait.trigger();
+    }
 
     if (row == m_numRows - 1)
     {
@@ -247,5 +281,40 @@ void FrameFilter::processRow(int row)
         }
 
         m_completionEvent.trigger();
+
+        // TODO: Remove when we confirm below code is right
+        //recon->xExtendPicCompBorder(recon->getLumaAddr(), recon->getStride(), recon->getWidth(), recon->getHeight(), recon->m_lumaMarginX, recon->m_lumaMarginY);
+        //recon->xExtendPicCompBorder(recon->getCbAddr(), recon->getCStride(), recon->getWidth() >> 1, recon->getHeight() >> 1, recon->m_chromaMarginX, recon->m_chromaMarginY);
+        //recon->xExtendPicCompBorder(recon->getCrAddr(), recon->getCStride(), recon->getWidth() >> 1, recon->getHeight() >> 1, recon->m_chromaMarginX, recon->m_chromaMarginY);
+        // Border extend Left and Right
+        const int realH = ((recon->getHeight() % g_maxCUHeight) ? (recon->getHeight() % g_maxCUHeight) : g_maxCUHeight);
+        primitives.extendRowBorder(recon->getLumaAddr(lineStartCUAddr), recon->getStride(), recon->getWidth(), realH, recon->getLumaMarginX());
+        primitives.extendRowBorder(recon->getCbAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> 1, realH >> 1, recon->getChromaMarginX());
+        primitives.extendRowBorder(recon->getCrAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> 1, realH >> 1, recon->getChromaMarginX());
+
+        // Border extend Bottom
+        {
+            const intptr_t stride = recon->getStride();
+            const intptr_t strideC = recon->getCStride();
+            Pel *pixY = recon->getLumaAddr(lineStartCUAddr) - recon->getLumaMarginX() + (realH - 1) * stride;
+            Pel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
+            Pel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
+
+            for(int y = 0; y < recon->getLumaMarginY(); y++)
+            {
+                memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(Pel));
+            }
+
+            for(int y = 0; y < recon->getChromaMarginY(); y++)
+            {
+                memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(Pel));
+                memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(Pel));
+            }
+        }
+
+        // Notify other FrameEncoders that this row of reconstructed pixels is available
+        m_pic->m_reconRowCount++;
+        for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
+            m_pic->m_reconRowWait.trigger();
     }
 }

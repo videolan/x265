@@ -55,6 +55,7 @@ FrameEncoder::FrameEncoder()
     , m_frameFilter(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
+    , m_threadActive(true)
 {
 }
 
@@ -68,6 +69,10 @@ void FrameEncoder::destroy()
 {
     JobProvider::flush();  // ensure no worker threads are using this frame
 
+    // TODO: waitting thread exit
+    m_threadActive = false;
+    m_enable.trigger();
+
     if (m_rows)
     {
         for (int i = 0; i < m_numRows; ++i)
@@ -79,6 +84,8 @@ void FrameEncoder::destroy()
     }
 
     m_frameFilter.destroy();
+
+    stop();
 }
 
 void FrameEncoder::init(TEncTop *top, int numRows)
@@ -143,6 +150,7 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         printf("error : ScalingList == %d not supported\n", m_top->getUseScalingListId());
         assert(0);
     }
+    start();
 }
 
 int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
@@ -874,7 +882,9 @@ Void FrameEncoder::compressCTURows(TComPic* pic)
         m_rows[i].init();
         m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, pic->getSlice());
         m_rows[i].m_entropyCoder.resetEntropy();
+
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
+
         m_pic->m_complete_enc[i] = 0;
     }
 
@@ -897,22 +907,15 @@ Void FrameEncoder::compressCTURows(TComPic* pic)
                 for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
                     TComPic *refpic = slice->getRefPic(list, ref);
-                    while (refpic->m_reconRowCount <= (UInt) row)
+                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < (UInt) row + 2))
                         refpic->m_reconRowWait.wait();
                     min = X265_MIN(min, refpic->m_reconRowCount);
                 }
             }
 
             m_referenceRowsAvailable = min;
-            row = min;
 
-#if 0 // incomplete signaling of available recon reference rows
-            if (row > 0)
-            {
-                if (!m_rows[row + 1].m_active && (row == 1 || m_pic->m_complete_enc[row - 2] > 1))
-                    WaveFront::enqueueRow(row - 1);
-            }
-#endif
+            WaveFront::enableRow(row);
         }
 
         WaveFront::enqueueRow(0);
@@ -959,6 +962,7 @@ void FrameEncoder::processRow(int row)
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
 
+        codeRow.m_search.m_referenceRowsAvailable = m_referenceRowsAvailable;
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
@@ -1015,6 +1019,7 @@ TComPic *FrameEncoder::getEncodedPicture(AccessUnit& accessUnit)
     if (m_pic)
     {
         /* TODO: frame parallelism - block here until worker thread completes */
+        m_done.wait();
 
         TComPic *ret = m_pic;
         m_pic = NULL;

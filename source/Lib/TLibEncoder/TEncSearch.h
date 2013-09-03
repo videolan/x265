@@ -68,6 +68,7 @@ class TEncSearch : public TComPrediction
 public:
 
     x265::MotionEstimate m_me;
+    int             m_referenceRowsAvailable;
 
 protected:
 

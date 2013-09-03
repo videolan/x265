@@ -94,8 +94,6 @@ private:
     Int   m_stride;
     Int   m_strideC;
 
-    Bool  m_bIsBorderExtended;
-
 public:
     Int   m_numCuInWidth;
     Int   m_numCuInHeight;
@@ -132,7 +130,9 @@ public:
 
     Int   getLumaMarginY() { return m_lumaMarginY; }
 
-    Int   getChromaMargin() { return m_chromaMarginX; }
+    Int   getChromaMarginX() { return m_chromaMarginX; }
+
+    Int   getChromaMarginY() { return m_chromaMarginY; }
 
     // ------------------------------------------------------------------------------------------------
     //  Access function for picture buffer
@@ -180,9 +180,6 @@ public:
 
     //  Dump picture
     Void  dump(Char* pFileName, Bool bAdd = false);
-
-    // Set border extension flag
-    Void  clearExtendedFlag() { m_bIsBorderExtended = false; }
 
     friend class x265::MotionReference;
 }; // END CLASS DEFINITION TComPicYuv
