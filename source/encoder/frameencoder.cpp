@@ -56,8 +56,7 @@ FrameEncoder::FrameEncoder()
     , m_frameFilter(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
-{
-}
+{}
 
 void FrameEncoder::setThreadPool(ThreadPool *p)
 {
@@ -93,7 +92,7 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_top = top;
     m_cfg = top;
     m_numRows = numRows;
-    row_delay = (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary) ? 2 : 1;;
+    row_delay = (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary) ? 2 : 1;
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
@@ -454,6 +453,7 @@ Void FrameEncoder::compressFrame(TComPic *pic)
             cuInterDistribution[i][j] = 0;
         }
     }
+
     totalCU = 0;
     cntIntraNxN = 0;
 #endif // if CU_STAT_LOGFILE
@@ -587,7 +587,7 @@ Void FrameEncoder::compressFrame(TComPic *pic)
         getSbacCoder(0)->load(&m_sbacCoder);
 
         //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
-        entropyCoder->setEntropyCoder(getSbacCoder(0), slice); 
+        entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
         entropyCoder->resetEntropy();
 
         // File writing
@@ -754,7 +754,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
             {
                 cuTr = pic->getCU(cuAddr - widthInCU + 1);
             }
-            if (/*bEnforceSliceRestriction &&*/ ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
+            if ( /*bEnforceSliceRestriction &&*/ ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
             {
                 // TR not available.
             }
@@ -907,8 +907,11 @@ Void FrameEncoder::compressCTURows(TComPic* pic)
                 for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
                     TComPic *refpic = slice->getRefPic(list, ref);
-                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < (UInt) row + 2))
+                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < (UInt)row + 2))
+                    {
                         refpic->m_reconRowWait.wait();
+                    }
+
                     min = X265_MIN(min, refpic->m_reconRowCount);
                 }
             }
@@ -1031,4 +1034,3 @@ TComPic *FrameEncoder::getEncodedPicture(AccessUnit& accessUnit)
 
     return NULL;
 }
-

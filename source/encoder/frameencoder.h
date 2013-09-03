@@ -81,6 +81,7 @@ public:
         {
             m_rows[i].m_search.setQPLambda(QP, lumaLambda, chromaLambda);
         }
+
         m_frameFilter.m_sao.lumaLambda = lumaLambda;
         m_frameFilter.m_sao.chromaLambd = chromaLambda;
         m_frameFilter.m_sao.depth = depth;
@@ -183,7 +184,7 @@ public:
     // Frame parallelism
     void threadMain(void)
     {
-        while(m_threadActive)
+        while (m_threadActive)
         {
             m_enable.wait();
             if (!m_threadActive)
@@ -223,7 +224,6 @@ protected:
     CTURow*                  m_rows;
     Event                    m_completionEvent;
 };
-
 }
 
 #endif // ifndef __FRAMEENCODER__

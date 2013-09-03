@@ -71,7 +71,6 @@ struct Lookahead
     void slicetypePath(int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
     int slicetypePathCost(char *path, int threshold);
 };
-
 }
 
-#endif
+#endif // ifndef _SLICETYPE_H_

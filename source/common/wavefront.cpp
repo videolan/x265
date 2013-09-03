@@ -45,7 +45,7 @@ bool WaveFront::init(int numRows)
         m_enableBitmap = new uint64_t[m_numWords];
         if (m_enableBitmap)
             memset((void*)m_enableBitmap, 0, sizeof(uint64_t) * m_numWords);
-        
+
         return m_queuedBitmap != NULL;
     }
 
@@ -92,8 +92,11 @@ bool WaveFront::checkHigherPriorityRow(int curRow)
 
     // Check full bitmap words before curRow
     for (int i = 0; i < fullwords; i++)
+    {
         if (m_queuedBitmap[i])
             return true;
+    }
+
     // check the partially masked bitmap word of curRow
     if (m_queuedBitmap[fullwords] & mask)
         return true;

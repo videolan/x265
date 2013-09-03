@@ -82,7 +82,6 @@ public:
 
     Event                       m_completionEvent;
 };
-
 }
 
 #endif // ifndef __FRAMEFILTER__

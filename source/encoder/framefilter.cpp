@@ -148,7 +148,7 @@ void FrameFilter::processRow(int row)
 
     // Called by worker threads
 
-    // NOTE: We are here only active both of loopfilter and sao, and row 0 always finished, so we can safe to reuse row[0]'s data 
+    // NOTE: We are here only active both of loopfilter and sao, and row 0 always finished, so we can safe to reuse row[0]'s data
     if (row == 0)
     {
         // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
@@ -247,12 +247,12 @@ void FrameFilter::processRow(int row)
             Pel *pixU = recon->getCbAddr(lineStartCUAddr - numCols) - recon->getChromaMarginX();
             Pel *pixV = recon->getCrAddr(lineStartCUAddr - numCols) - recon->getChromaMarginX();
 
-            for(int y = 0; y < recon->getLumaMarginY(); y++)
+            for (int y = 0; y < recon->getLumaMarginY(); y++)
             {
                 memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(Pel));
             }
 
-            for(int y = 0; y < recon->getChromaMarginY(); y++)
+            for (int y = 0; y < recon->getChromaMarginY(); y++)
             {
                 memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(Pel));
                 memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(Pel));
@@ -262,7 +262,9 @@ void FrameFilter::processRow(int row)
         // Notify other FrameEncoders that this row of reconstructed pixels is available
         m_pic->m_reconRowCount++;
         for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
+        {
             m_pic->m_reconRowWait.trigger();
+        }
     }
 
     if (row == m_numRows - 1)
@@ -300,12 +302,12 @@ void FrameFilter::processRow(int row)
             Pel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
             Pel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
 
-            for(int y = 0; y < recon->getLumaMarginY(); y++)
+            for (int y = 0; y < recon->getLumaMarginY(); y++)
             {
                 memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(Pel));
             }
 
-            for(int y = 0; y < recon->getChromaMarginY(); y++)
+            for (int y = 0; y < recon->getChromaMarginY(); y++)
             {
                 memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(Pel));
                 memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(Pel));
@@ -315,6 +317,8 @@ void FrameFilter::processRow(int row)
         // Notify other FrameEncoders that this row of reconstructed pixels is available
         m_pic->m_reconRowCount++;
         for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
+        {
             m_pic->m_reconRowWait.trigger();
+        }
     }
 }

@@ -38,6 +38,7 @@ class FrameEncoder;
 class DPB
 {
 public:
+
     int                m_lastIDR;
     int                m_pocCRA;
     bool               m_bRefreshPending;
@@ -73,7 +74,6 @@ protected:
 
     NalUnitType getNalUnitType(int curPoc, int lastIdr);
 };
-
 }
 
 #endif // __DPB_H__
