@@ -152,8 +152,8 @@ public:
 
     void codeScalingList(TComScalingList* scalingList);
     void xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId);
-    void codeDFFlag(UInt uiCode, const Char *pSymbolName);
-    void codeDFSvlc(Int iCode, const Char *pSymbolName);
+    void codeDFFlag(UInt uiCode, const char *pSymbolName);
+    void codeDFSvlc(Int iCode, const char *pSymbolName);
 };
 }
 //! \}

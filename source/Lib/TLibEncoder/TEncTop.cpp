@@ -298,7 +298,7 @@ Double TEncTop::printSummary()
 
 #define VERBOSE_RATE 0
 #if VERBOSE_RATE
-static const Char* nalUnitTypeToString(NalUnitType type)
+static const char* nalUnitTypeToString(NalUnitType type)
 {
     switch (type)
     {
@@ -496,7 +496,7 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     Double psnrU = (ssdU ? 10.0 * log10(refValueC / (Double)ssdU) : 99.99);
     Double psnrV = (ssdV ? 10.0 * log10(refValueC / (Double)ssdV) : 99.99);
 
-    const Char* digestStr = NULL;
+    const char* digestStr = NULL;
     if (getDecodedPictureHashSEIEnabled())
     {
         SEIDecodedPictureHash sei_recon_picture_digest;
@@ -568,7 +568,7 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
 
     if (param.logLevel >= X265_LOG_DEBUG)
     {
-        Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
+        char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
 
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced

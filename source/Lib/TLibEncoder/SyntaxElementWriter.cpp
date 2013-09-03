@@ -45,7 +45,7 @@ using namespace x265;
 
 #if ENC_DEC_TRACE
 
-void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const char *pSymbolName)
 {
     xWriteCode(value, length);
     if (g_HLSTraceEnable)
@@ -62,7 +62,7 @@ void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const Char *pS
     }
 }
 
-void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const char *pSymbolName)
 {
     xWriteUvlc(value);
     if (g_HLSTraceEnable)
@@ -72,7 +72,7 @@ void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const Char *pSymbolName)
     }
 }
 
-void  SyntaxElementWriter::xWriteSvlcTr(Int value, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteSvlcTr(Int value, const char *pSymbolName)
 {
     xWriteSvlc(value);
     if (g_HLSTraceEnable)
@@ -82,7 +82,7 @@ void  SyntaxElementWriter::xWriteSvlcTr(Int value, const Char *pSymbolName)
     }
 }
 
-void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteFlagTr(UInt value, const char *pSymbolName)
 {
     xWriteFlag(value);
     if (g_HLSTraceEnable)

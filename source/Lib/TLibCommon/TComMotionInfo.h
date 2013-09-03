@@ -88,7 +88,7 @@ private:
 
     x265::MV* m_mv;
     x265::MV* m_mvd;
-    Char*     m_refIdx;
+    char*     m_refIdx;
     UInt      m_numPartitions;
     AMVPInfo  m_cAMVPInfo;
 
@@ -151,7 +151,7 @@ public:
         m_refIdx = src->m_refIdx + offset;
     }
 
-    void compress(Char* pePredMode, Int scale);
+    void compress(char* pePredMode, Int scale);
 };
 }
 

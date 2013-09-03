@@ -83,13 +83,13 @@ TEncCavlc::~TEncCavlc()
 void TEncCavlc::resetEntropy()
 {}
 
-void TEncCavlc::codeDFFlag(UInt code, const Char *symbolName)
+void TEncCavlc::codeDFFlag(UInt code, const char *symbolName)
 {
     (void)symbolName;
     WRITE_FLAG(code, symbolName);
 }
 
-void TEncCavlc::codeDFSvlc(Int code, const Char *symbolName)
+void TEncCavlc::codeDFSvlc(Int code, const char *symbolName)
 {
     (void)symbolName;
     WRITE_SVLC(code, symbolName);

@@ -46,7 +46,7 @@ namespace x265 {
 //! \ingroup TLibEncoder
 //! \{
 
-static const Char emulation_prevention_three_byte[] = { 3 };
+static const char emulation_prevention_three_byte[] = { 3 };
 
 void writeNalUnitHeader(ostream& out, OutputNALUnit& nalu)       // nal_unit_header()
 {
@@ -119,7 +119,7 @@ void write(ostream& out, OutputNALUnit& nalu)
         }
     }
 
-    out.write((Char*)&(*rbsp.begin()), rbsp.end() - rbsp.begin());
+    out.write((char*)&(*rbsp.begin()), rbsp.end() - rbsp.begin());
 
     /* 7.4.1.1
      * ... when the last byte of the RBSP data is equal to 0x00 (which can

@@ -334,7 +334,7 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
             const NALUnitEBSP& nalu = **it;
             int size = 0; /* size of annexB unit in bytes */
 
-            static const Char start_code_prefix[] = { 0, 0, 0, 1 };
+            static const char start_code_prefix[] = { 0, 0, 0, 1 };
             if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
             {
                 /* From AVC, When any of the following conditions are fulfilled, the
@@ -397,7 +397,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
             const NALUnitEBSP& nalu = **it;
             int size = 0; /* size of annexB unit in bytes */
 
-            static const Char start_code_prefix[] = { 0, 0, 0, 1 };
+            static const char start_code_prefix[] = { 0, 0, 0, 1 };
             if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
             {
                 /* From AVC, When any of the following conditions are fulfilled, the

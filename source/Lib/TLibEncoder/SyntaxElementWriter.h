@@ -83,10 +83,10 @@ protected:
     void  xWriteSvlc(Int code);
     void  xWriteFlag(UInt code);
 #if ENC_DEC_TRACE
-    void  xWriteCodeTr(UInt value, UInt  length, const Char *symbolName);
-    void  xWriteUvlcTr(UInt value,               const Char *symbolName);
-    void  xWriteSvlcTr(Int value,                const Char *symbolName);
-    void  xWriteFlagTr(UInt value,               const Char *symbolName);
+    void  xWriteCodeTr(UInt value, UInt  length, const char *symbolName);
+    void  xWriteUvlcTr(UInt value,               const char *symbolName);
+    void  xWriteSvlcTr(Int value,                const char *symbolName);
+    void  xWriteFlagTr(UInt value,               const char *symbolName);
 #endif
 
     UInt  xConvertToUInt(Int val) { return (val <= 0) ? -val << 1 : (val << 1) - 1; }

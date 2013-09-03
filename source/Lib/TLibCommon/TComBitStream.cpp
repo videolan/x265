@@ -66,9 +66,9 @@ TComOutputBitstream::~TComOutputBitstream()
 // Public member functions
 // ====================================================================================================================
 
-Char* TComOutputBitstream::getByteStream() const
+char* TComOutputBitstream::getByteStream() const
 {
-    return (Char*)&m_fifo->front();
+    return (char*)&m_fifo->front();
 }
 
 UInt TComOutputBitstream::getByteStreamLength()

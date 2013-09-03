@@ -112,16 +112,16 @@ void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize
     m_numPartitions = numPartition;
     m_unitSize = unitSize;
 
-    m_qp     = (Char*)X265_MALLOC(Char,   numPartition);
+    m_qp     = (char*)X265_MALLOC(char,   numPartition);
     m_depth  = (UChar*)X265_MALLOC(UChar, numPartition);
     m_width  = (UChar*)X265_MALLOC(UChar, numPartition);
     m_height = (UChar*)X265_MALLOC(UChar, numPartition);
 
     m_skipFlag = new Bool[numPartition];
 
-    m_partSizes = new Char[numPartition];
+    m_partSizes = new char[numPartition];
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
-    m_predModes = new Char[numPartition];
+    m_predModes = new char[numPartition];
     m_cuTransquantBypass = new Bool[numPartition];
 
     m_bMergeFlags     = (Bool*)X265_MALLOC(Bool,  numPartition);
@@ -139,12 +139,12 @@ void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize
     m_cbf[1] = (UChar*)X265_MALLOC(UChar, numPartition);
     m_cbf[2] = (UChar*)X265_MALLOC(UChar, numPartition);
 
-    m_mvpIdx[0] = new Char[numPartition];
-    m_mvpIdx[1] = new Char[numPartition];
-    m_mvpNum[0] = new Char[numPartition];
-    m_mvpNum[1] = new Char[numPartition];
-    memset(m_mvpIdx[0], -1, numPartition * sizeof(Char));
-    memset(m_mvpIdx[1], -1, numPartition * sizeof(Char));
+    m_mvpIdx[0] = new char[numPartition];
+    m_mvpIdx[1] = new char[numPartition];
+    m_mvpNum[0] = new char[numPartition];
+    m_mvpNum[1] = new char[numPartition];
+    memset(m_mvpIdx[0], -1, numPartition * sizeof(char));
+    memset(m_mvpIdx[1], -1, numPartition * sizeof(char));
 
     m_trCoeffY  = (TCoeff*)X265_MALLOC(TCoeff, width * height);
     m_trCoeffCb = (TCoeff*)X265_MALLOC(TCoeff, width * height / 4);
@@ -479,7 +479,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, Int qp)
     Int iSizeInUchar = sizeof(UChar) * m_numPartitions;
     Int iSizeInBool  = sizeof(Bool) * m_numPartitions;
 
-    Int sizeInChar = sizeof(Char) * m_numPartitions;
+    Int sizeInChar = sizeof(char) * m_numPartitions;
     memset(m_qp, qp, sizeInChar);
 
     memset(m_bMergeFlags,     0, iSizeInBool);
@@ -682,7 +682,7 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool
     Int iSizeInUchar  = sizeof(UChar) * numPartition;
     Int iSizeInBool   = sizeof(Bool) * numPartition;
 
-    Int sizeInChar  = sizeof(Char) * numPartition;
+    Int sizeInChar  = sizeof(char) * numPartition;
     memcpy(m_skipFlag  + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * numPartition);
     memcpy(m_qp        + offset, cu->getQP(),             sizeInChar);
     memcpy(m_partSizes + offset, cu->getPartitionSize(),  sizeof(*m_partSizes) * numPartition);
@@ -751,7 +751,7 @@ void TComDataCU::copyToPic(UChar uhDepth)
     Int iSizeInUchar  = sizeof(UChar) * m_numPartitions;
     Int iSizeInBool   = sizeof(Bool) * m_numPartitions;
 
-    Int sizeInChar  = sizeof(Char) * m_numPartitions;
+    Int sizeInChar  = sizeof(char) * m_numPartitions;
 
     memcpy(rpcCU->getSkipFlag() + m_absIdxInLCU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
 
@@ -817,7 +817,7 @@ void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
     Int sizeInUchar = sizeof(UChar) * qNumPart;
     Int sizeInBool  = sizeof(Bool) * qNumPart;
 
-    Int sizeInChar  = sizeof(Char) * qNumPart;
+    Int sizeInChar  = sizeof(char) * qNumPart;
     memcpy(cu->getSkipFlag() + partOffset, m_skipFlag,   sizeof(*m_skipFlag)   * qNumPart);
 
     memcpy(cu->getQP() + partOffset, m_qp, sizeInChar);
@@ -1234,9 +1234,9 @@ TComDataCU* TComDataCU::getQpMinCuAbove(UInt& aPartUnitIdx, UInt curAbsIdxInLCU)
 
 /** Get reference QP from left QpMinCu or latest coded QP
 *\param   uiCurrAbsIdxInLCU
-*\returns Char   reference QP value
+*\returns char   reference QP value
 */
-Char TComDataCU::getRefQP(UInt curAbsIdxInLCU)
+char TComDataCU::getRefQP(UInt curAbsIdxInLCU)
 {
     UInt lPartIdx = 0, aPartIdx = 0;
     TComDataCU* cULeft  = getQpMinCuLeft(lPartIdx, m_absIdxInLCU + curAbsIdxInLCU);
@@ -1258,7 +1258,7 @@ Int TComDataCU::getLastValidPartIdx(Int absPartIdx)
     return lastValidPartIdx;
 }
 
-Char TComDataCU::getLastCodedQP(UInt absPartIdx)
+char TComDataCU::getLastCodedQP(UInt absPartIdx)
 {
     UInt quPartIdxMask = ~((1 << ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) - 1);
     Int lastValidPartIdx = getLastValidPartIdx(absPartIdx & quPartIdxMask);
@@ -1699,12 +1699,12 @@ void TComDataCU::setInterDirSubParts(UInt dir, UInt absPartIdx, UInt partIdx, UI
 
 void TComDataCU::setMVPIdxSubParts(Int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth)
 {
-    setSubPart<Char>(mvpIdx, m_mvpIdx[picList], absPartIdx, depth, partIdx);
+    setSubPart<char>(mvpIdx, m_mvpIdx[picList], absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setMVPNumSubParts(Int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth)
 {
-    setSubPart<Char>(iMVPNum, m_mvpNum[picList], absPartIdx, depth, partIdx);
+    setSubPart<char>(iMVPNum, m_mvpNum[picList], absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setTrIdxSubParts(UInt uiTrIdx, UInt absPartIdx, UInt depth)

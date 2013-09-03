@@ -206,7 +206,7 @@ public:
 
     void     checkDcOfMatrix();
     void     processRefMatrix(UInt sizeId, UInt listId, UInt refListId);
-    Bool     xParseScalingList(Char* pchFile);
+    Bool     xParseScalingList(char* pchFile);
 
 private:
 

@@ -47,7 +47,6 @@ namespace x265 {
 
 typedef       bool                Bool;
 
-typedef       char                Char;
 typedef       unsigned char       UChar;
 typedef       short               Short;
 typedef       unsigned short      UShort;

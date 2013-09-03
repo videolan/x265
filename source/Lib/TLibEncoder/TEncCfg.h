@@ -52,7 +52,7 @@ struct GOPEntry
     Double m_QPFactor;
     Bool m_refPic;
     Int m_numRefPicsActive;
-    Char m_sliceType;
+    char m_sliceType;
     Int m_numRefPics;
     Int m_referencePics[MAX_NUM_REF_PICS];
     Int m_usedByCurrPic[MAX_NUM_REF_PICS];

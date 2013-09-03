@@ -95,7 +95,7 @@ public:
 
     void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
 
-    void    printOut(Char cDelim)
+    void    printOut(char cDelim)
     {
         Double dFps     = m_dFrmRate; //--CFG_KDY
         Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
@@ -127,7 +127,7 @@ public:
         fclose(pFile);
     }
 
-    void    printSummary(Char ch)
+    void    printSummary(char ch)
     {
         FILE* pFile = NULL;
 

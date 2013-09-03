@@ -177,7 +177,7 @@ extern const UChar g_convertTxtTypeToIdx[4];
 // Misc.
 // ====================================================================================================================
 
-extern Char g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
+extern char g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
 #ifndef ENC_DEC_TRACE
 # define ENC_DEC_TRACE 0
@@ -229,7 +229,7 @@ enum ScalingListSize
     SCALING_LIST_SIZE_NUM
 };
 
-static const Char MatrixType[4][6][20] =
+static const char MatrixType[4][6][20] =
 {
     {
         "INTRA4X4_LUMA",
@@ -260,7 +260,7 @@ static const Char MatrixType[4][6][20] =
         "INTER32X32_LUMA",
     },
 };
-static const Char MatrixType_DC[4][12][22] =
+static const char MatrixType_DC[4][12][22] =
 {
     {},
     {},

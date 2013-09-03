@@ -61,7 +61,7 @@ void TComCUMvField::create(UInt numPartition)
 
     m_mv     = new MV[numPartition];
     m_mvd    = new MV[numPartition];
-    m_refIdx = new Char[numPartition];
+    m_refIdx = new char[numPartition];
 
     m_numPartitions = numPartition;
 }
@@ -323,7 +323,7 @@ void TComCUMvField::setAllMvd(const MV& mvd, PartSize cuMode, Int partAddr, UInt
 
 void TComCUMvField::setAllRefIdx(Int refIdx, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
 {
-    setAll(m_refIdx, static_cast<Char>(refIdx), cuMode, partAddr, depth, partIdx);
+    setAll(m_refIdx, static_cast<char>(refIdx), cuMode, partAddr, depth, partIdx);
 }
 
 void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
@@ -336,7 +336,7 @@ void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, I
  * \param predMode   Pointer to prediction modes
  * \param scale      Factor by which to subsample motion information
  */
-void TComCUMvField::compress(Char* predMode, Int scale)
+void TComCUMvField::compress(char* predMode, Int scale)
 {
     Int N = scale * scale;
 

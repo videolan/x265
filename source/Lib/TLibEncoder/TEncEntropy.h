@@ -119,8 +119,8 @@ public:
     virtual void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)   = 0;
     virtual void updateContextTables(SliceType eSliceType, Int iQp)   = 0;
 
-    virtual void codeDFFlag(UInt uiCode, const Char *pSymbolName) = 0;
-    virtual void codeDFSvlc(Int iCode, const Char *pSymbolName)   = 0;
+    virtual void codeDFFlag(UInt uiCode, const char *pSymbolName) = 0;
+    virtual void codeDFSvlc(Int iCode, const char *pSymbolName)   = 0;
 
     virtual ~TEncEntropyIf() {}
 };
