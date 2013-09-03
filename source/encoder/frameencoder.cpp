@@ -50,12 +50,12 @@ enum SCALING_LIST_PARAMETER
 
 FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
+    , m_threadActive(true)
     , m_top(NULL)
     , m_cfg(NULL)
     , m_frameFilter(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
-    , m_threadActive(true)
 {
 }
 
