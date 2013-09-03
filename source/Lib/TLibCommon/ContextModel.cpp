@@ -56,13 +56,13 @@ using namespace x265;
  \param  qp         input QP value
  \param  initValue  8 bit initialization value
  */
-void ContextModel::init(Int qp, Int initValue)
+void ContextModel::init(int qp, int initValue)
 {
     qp = Clip3(0, 51, qp);
 
-    Int  slope      = (initValue >> 4) * 5 - 45;
-    Int  offset     = ((initValue & 15) << 3) - 16;
-    Int  initState  =  min(max(1, (((slope * qp) >> 4) + offset)), 126);
+    int  slope      = (initValue >> 4) * 5 - 45;
+    int  offset     = ((initValue & 15) << 3) - 16;
+    int  initState  =  min(max(1, (((slope * qp) >> 4) + offset)), 126);
     UInt mpState    = (initState >= 64);
     m_state       = ((mpState ? (initState - 64) : (63 - initState)) << 1) + mpState;
 }
@@ -95,16 +95,16 @@ UChar ContextModel::m_nextState[128][2];
 
 void ContextModel::buildNextStateTable()
 {
-    for (Int i = 0; i < 128; i++)
+    for (int i = 0; i < 128; i++)
     {
-        for (Int j = 0; j < 2; j++)
+        for (int j = 0; j < 2; j++)
         {
             m_nextState[i][j] = ((i & 1) == j) ? s_nextStateMPS[i] : s_nextStateLPS[i];
         }
     }
 }
 
-const Int ContextModel::s_entropyBits[128] =
+const int ContextModel::s_entropyBits[128] =
 {
     // Corrected table, most notably for last state
     0x07b23, 0x085f9, 0x074a0, 0x08cbc, 0x06ee4, 0x09354, 0x067f4, 0x09c1b, 0x060b0, 0x0a62a, 0x05a9c, 0x0af5b, 0x0548d, 0x0b955, 0x04f56, 0x0c2a9,

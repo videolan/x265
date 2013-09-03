@@ -63,7 +63,7 @@ TComPicSym::TComPicSym()
     , m_cuData(NULL)
 {}
 
-void TComPicSym::create(Int picWidth, Int picHeight, UInt maxWidth, UInt maxHeight, UInt maxDepth)
+void TComPicSym::create(int picWidth, int picHeight, UInt maxWidth, UInt maxHeight, UInt maxDepth)
 {
     UInt i;
 
@@ -103,7 +103,7 @@ void TComPicSym::destroy()
     }
     m_slice = NULL;
 
-    for (Int i = 0; i < m_numCUsInFrame; i++)
+    for (int i = 0; i < m_numCUsInFrame; i++)
     {
         m_cuData[i]->destroy();
         delete m_cuData[i];

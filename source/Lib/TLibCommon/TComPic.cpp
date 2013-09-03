@@ -65,7 +65,7 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes)
+void TComPic::create(int width, int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, int bframes)
 {
     m_picSym = new TComPicSym;
     m_picSym->create(width, height, maxWidth, maxHeight, maxDepth);
@@ -138,14 +138,14 @@ void TComPic::compressMotion()
  * \param bNDBFilterCrossSliceBoundary cross-slice-boundary in-loop filtering; true for "cross".
  * \param numTiles number of tiles in picture
  */
-void TComPic::createNonDBFilterInfo(Int lastSlicecuAddr, Int sliceGranularityDepth)
+void TComPic::createNonDBFilterInfo(int lastSlicecuAddr, int sliceGranularityDepth)
 {
     UInt maxNumSUInLCU = getNumPartInCU();
     UInt numLCUInPic   = getNumCUsInFrame();
     UInt picWidth      = getSlice()->getSPS()->getPicWidthInLumaSamples();
     UInt picHeight     = getSlice()->getSPS()->getPicHeightInLumaSamples();
-    Int  numLCUsInPicWidth = getFrameWidthInCU();
-    Int  numLCUsInPicHeight = getFrameHeightInCU();
+    int  numLCUsInPicWidth = getFrameWidthInCU();
+    int  numLCUsInPicHeight = getFrameHeightInCU();
     UInt maxNumSUInLCUWidth = getNumPartInWidth();
     UInt maxNumSUInLCUHeight = getNumPartInHeight();
 
@@ -235,7 +235,7 @@ void TComPic::createNonDBFilterInfo(Int lastSlicecuAddr, Int sliceGranularityDep
  * \param picWidth picture width
  * \param picHeight picture height
  */
-void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
+void TComPic::createNonDBFilterInfoLCU(int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, int sliceGranularyDepth, UInt picWidth, UInt picHeight)
 {
     UInt LCUX          = cu->getCUPelX();
     UInt LCUY          = cu->getCUPelY();

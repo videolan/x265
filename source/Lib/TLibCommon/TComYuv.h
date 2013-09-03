@@ -78,18 +78,18 @@ private:
     UInt m_cwidth;
     UInt m_cheight;
 
-    static Int getAddrOffset(UInt partUnitIdx, UInt width)
+    static int getAddrOffset(UInt partUnitIdx, UInt width)
     {
-        Int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
-        Int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]];
+        int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
+        int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]];
 
         return blkX + blkY * width;
     }
 
-    static Int getAddrOffset(UInt unitIdx, UInt size, UInt width)
+    static int getAddrOffset(UInt unitIdx, UInt size, UInt width)
     {
-        Int blkX = (unitIdx * size) &  (width - 1);
-        Int blkY = (unitIdx * size) & ~(width - 1);
+        int blkX = (unitIdx * size) &  (width - 1);
+        int blkY = (unitIdx * size) & ~(width - 1);
 
         return blkX + blkY * size;
     }

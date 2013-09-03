@@ -46,7 +46,7 @@ using namespace x265;
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
-ContextModel3DBuffer::ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, Int &count)
+ContextModel3DBuffer::ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, int &count)
     : m_sizeX(uiSizeX)
     , m_sizeXY(uiSizeX * uiSizeY)
     , m_sizeXYZ(uiSizeX * uiSizeY * uiSizeZ)
@@ -67,11 +67,11 @@ ContextModel3DBuffer::ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSi
  * \param  iQp             input QP value
  * \param  psCtxModel      given probability table
  */
-void ContextModel3DBuffer::initBuffer(SliceType sliceType, Int qp, UChar* ctxModel)
+void ContextModel3DBuffer::initBuffer(SliceType sliceType, int qp, UChar* ctxModel)
 {
     ctxModel += sliceType * m_sizeXYZ;
 
-    for (Int n = 0; n < m_sizeXYZ; n++)
+    for (int n = 0; n < m_sizeXYZ; n++)
     {
         m_contextModel[n].init(qp, ctxModel[n]);
         m_contextModel[n].setBinsCoded(0);
@@ -85,13 +85,13 @@ void ContextModel3DBuffer::initBuffer(SliceType sliceType, Int qp, UChar* ctxMod
  * \param  qp             input QP value
  * \param  ctxModel      given probability table
  */
-UInt ContextModel3DBuffer::calcCost(SliceType sliceType, Int qp, UChar* ctxModel)
+UInt ContextModel3DBuffer::calcCost(SliceType sliceType, int qp, UChar* ctxModel)
 {
     UInt cost = 0;
 
     ctxModel += sliceType * m_sizeXYZ;
 
-    for (Int n = 0; n < m_sizeXYZ; n++)
+    for (int n = 0; n < m_sizeXYZ; n++)
     {
         ContextModel tmpContextModel;
         tmpContextModel.init(qp, ctxModel[n]);

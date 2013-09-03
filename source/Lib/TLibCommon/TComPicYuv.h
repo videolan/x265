@@ -80,39 +80,39 @@ private:
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
     // ------------------------------------------------------------------------------------------------
-    Int   m_picWidth;          ///< Width of picture
-    Int   m_picHeight;         ///< Height of picture
+    int   m_picWidth;          ///< Width of picture
+    int   m_picHeight;         ///< Height of picture
 
-    Int   m_cuWidth;           ///< Width of Coding Unit (CU)
-    Int   m_cuHeight;          ///< Height of Coding Unit (CU)
-    Int*  m_cuOffsetY;
-    Int*  m_cuOffsetC;
-    Int*  m_buOffsetY;
-    Int*  m_buOffsetC;
+    int   m_cuWidth;           ///< Width of Coding Unit (CU)
+    int   m_cuHeight;          ///< Height of Coding Unit (CU)
+    int*  m_cuOffsetY;
+    int*  m_cuOffsetC;
+    int*  m_buOffsetY;
+    int*  m_buOffsetC;
 
-    Int   m_lumaMarginX;
-    Int   m_lumaMarginY;
-    Int   m_chromaMarginX;
-    Int   m_chromaMarginY;
-    Int   m_stride;
-    Int   m_strideC;
+    int   m_lumaMarginX;
+    int   m_lumaMarginY;
+    int   m_chromaMarginX;
+    int   m_chromaMarginY;
+    int   m_stride;
+    int   m_strideC;
 
 public:
-    Int   m_numCuInWidth;
-    Int   m_numCuInHeight;
+    int   m_numCuInWidth;
+    int   m_numCuInHeight;
 
     TComPicYuv();
     virtual ~TComPicYuv();
 
-    void xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int marginX, Int marginY);
+    void xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int marginX, int marginY);
     // ------------------------------------------------------------------------------------------------
     //  Memory management
     // ------------------------------------------------------------------------------------------------
 
-    void  create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
+    void  create(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
     void  destroy();
 
-    void  createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
+    void  createLuma(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
     void  destroyLuma();
 
     void  clearReferences();
@@ -121,21 +121,21 @@ public:
     //  Get information of picture
     // ------------------------------------------------------------------------------------------------
 
-    Int   getWidth()      { return m_picWidth; }
+    int   getWidth()      { return m_picWidth; }
 
-    Int   getHeight()     { return m_picHeight; }
+    int   getHeight()     { return m_picHeight; }
 
-    Int   getStride()     { return m_stride; }
+    int   getStride()     { return m_stride; }
 
-    Int   getCStride()    { return m_strideC; }
+    int   getCStride()    { return m_strideC; }
 
-    Int   getLumaMarginX() { return m_lumaMarginX; }
+    int   getLumaMarginX() { return m_lumaMarginX; }
 
-    Int   getLumaMarginY() { return m_lumaMarginY; }
+    int   getLumaMarginY() { return m_lumaMarginY; }
 
-    Int   getChromaMarginX() { return m_chromaMarginX; }
+    int   getChromaMarginX() { return m_chromaMarginX; }
 
-    Int   getChromaMarginY() { return m_chromaMarginY; }
+    int   getChromaMarginY() { return m_chromaMarginY; }
 
     // ------------------------------------------------------------------------------------------------
     //  Access function for picture buffer
@@ -156,17 +156,17 @@ public:
     Pel*  getCrAddr()     { return m_picOrgV; }
 
     //  Access starting position of original picture for specific coding unit (CU) or partition unit (PU)
-    Pel*  getLumaAddr(Int cuAddr) { return m_picOrgY + m_cuOffsetY[cuAddr]; }
+    Pel*  getLumaAddr(int cuAddr) { return m_picOrgY + m_cuOffsetY[cuAddr]; }
 
-    Pel*  getCbAddr(Int cuAddr) { return m_picOrgU + m_cuOffsetC[cuAddr]; }
+    Pel*  getCbAddr(int cuAddr) { return m_picOrgU + m_cuOffsetC[cuAddr]; }
 
-    Pel*  getCrAddr(Int cuAddr) { return m_picOrgV + m_cuOffsetC[cuAddr]; }
+    Pel*  getCrAddr(int cuAddr) { return m_picOrgV + m_cuOffsetC[cuAddr]; }
 
-    Pel*  getLumaAddr(Int cuAddr, Int absZOrderIdx) { return m_picOrgY + m_cuOffsetY[cuAddr] + m_buOffsetY[g_zscanToRaster[absZOrderIdx]]; }
+    Pel*  getLumaAddr(int cuAddr, int absZOrderIdx) { return m_picOrgY + m_cuOffsetY[cuAddr] + m_buOffsetY[g_zscanToRaster[absZOrderIdx]]; }
 
-    Pel*  getCbAddr(Int cuAddr, Int absZOrderIdx) { return m_picOrgU + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+    Pel*  getCbAddr(int cuAddr, int absZOrderIdx) { return m_picOrgU + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
 
-    Pel*  getCrAddr(Int cuAddr, Int absZOrderIdx) { return m_picOrgV + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+    Pel*  getCrAddr(int cuAddr, int absZOrderIdx) { return m_picOrgV + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
 
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous

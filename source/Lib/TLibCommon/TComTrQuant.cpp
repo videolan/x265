@@ -48,7 +48,7 @@ using namespace x265;
 
 typedef struct
 {
-    Int    nnzBeforePos0;
+    int    nnzBeforePos0;
     Double codedLevelAndDist; // distortion and level cost only
     Double uncodedDist;  // all zero coded block distortion
     Double sigCost;
@@ -74,7 +74,7 @@ TComTrQuant::TComTrQuant()
 
     // allocate temporary buffers
     // OPT_ME: I may reduce this to short and output matched, but I am not sure it is right.
-    m_tmpCoeff = (Int*)X265_MALLOC(Int, MAX_CU_SIZE * MAX_CU_SIZE);
+    m_tmpCoeff = (int*)X265_MALLOC(int, MAX_CU_SIZE * MAX_CU_SIZE);
 
     // allocate bit estimation class (for RDOQ)
     m_estBitsSbac = new estBitsSbacStruct;
@@ -108,9 +108,9 @@ TComTrQuant::~TComTrQuant()
  *
  * return void
  */
-void TComTrQuant::setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset)
+void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset)
 {
-    Int qpScaled;
+    int qpScaled;
 
     if (ttype == TEXT_LUMA)
     {
@@ -133,16 +133,16 @@ void TComTrQuant::setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chr
 }
 
 // To minimize the distortion only. No rate is considered.
-void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan, Int* deltaU, Int width, Int height)
+void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan, int* deltaU, int width, int height)
 {
-    Int lastCG = -1;
-    Int absSum = 0;
-    Int n;
+    int lastCG = -1;
+    int absSum = 0;
+    int n;
 
-    for (Int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+    for (int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
     {
-        Int  subPos = subSet << LOG2_SCAN_SET_SIZE;
-        Int  firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
+        int  subPos = subSet << LOG2_SCAN_SET_SIZE;
+        int  firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
         absSum = 0;
 
         for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
@@ -178,7 +178,7 @@ void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan
             UInt signbit = (qCoef[scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
             if (signbit != (absSum & 0x1)) //compare signbit with sum_parity
             {
-                Int minCostInc = MAX_INT,  minPos = -1, finalChange = 0, curCost = MAX_INT, curChange = 0;
+                int minCostInc = MAX_INT,  minPos = -1, finalChange = 0, curCost = MAX_INT, curChange = 0;
 
                 for (n = (lastCG == 1 ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
@@ -256,11 +256,11 @@ void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan
     } // TU loop
 }
 
-UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, Int height,
+UInt TComTrQuant::xQuant(TComDataCU* cu, int* coef, TCoeff* qCoef, int width, int height,
                          TextType ttype, UInt absPartIdx, int *lastPos)
 {
     UInt acSum = 0;
-    Int add = 0;
+    int add = 0;
     Bool useRDOQ = cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ;
 
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
@@ -273,13 +273,13 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
         UInt scanIdx = cu->getCoefScanIdx(absPartIdx, width, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
         const UInt *scan = g_sigLastScan[scanIdx][log2BlockSize - 1];
 
-        Int deltaU[32 * 32];
+        int deltaU[32 * 32];
 
         QpParam cQpBase;
-        Int qpbase = cu->getSlice()->getSliceQpBase();
+        int qpbase = cu->getSlice()->getSliceQpBase();
 
-        Int qpScaled;
-        Int qpBDOffset = (ttype == TEXT_LUMA) ? cu->getSlice()->getSPS()->getQpBDOffsetY() : cu->getSlice()->getSPS()->getQpBDOffsetC();
+        int qpScaled;
+        int qpBDOffset = (ttype == TEXT_LUMA) ? cu->getSlice()->getSPS()->getQpBDOffsetY() : cu->getSlice()->getSPS()->getQpBDOffsetC();
 
         if (ttype == TEXT_LUMA)
         {
@@ -287,7 +287,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
         }
         else
         {
-            Int chromaQPOffset;
+            int chromaQPOffset;
             if (ttype == TEXT_CHROMA_U)
             {
                 chromaQPOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
@@ -312,17 +312,17 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
         cQpBase.setQpParam(qpScaled);
 
         UInt log2TrSize = g_convertToBit[width] + 2;
-        Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)ttype];
+        int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(int)ttype];
         assert(scalingListType < 6);
-        Int *quantCoeff = 0;
+        int *quantCoeff = 0;
         quantCoeff = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
 
-        Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
+        int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
-        Int qbits = QUANT_SHIFT + cQpBase.m_per + transformShift;
+        int qbits = QUANT_SHIFT + cQpBase.m_per + transformShift;
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
 
-        Int numCoeff = width * height;
+        int numCoeff = width * height;
         acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
 
         if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
@@ -332,18 +332,18 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
     return acSum;
 }
 
-void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
+void TComTrQuant::xDeQuant(const TCoeff* qCoef, int* coef, int width, int height, int scalingListType)
 {
-    if (width > (Int)m_maxTrSize)
+    if (width > (int)m_maxTrSize)
     {
         width  = m_maxTrSize;
         height = m_maxTrSize;
     }
 
-    Int shift, add, coeffQ;
+    int shift, add, coeffQ;
     UInt log2TrSize = g_convertToBit[width] + 2;
 
-    Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
 
     shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
@@ -352,13 +352,13 @@ void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height
     if (getUseScalingList())
     {
         shift += 4;
-        Int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
+        int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
 
         if (shift > m_qpParam.m_per)
         {
             add = 1 << (shift - m_qpParam.m_per - 1);
 
-            for (Int n = 0; n < width * height; n++)
+            for (int n = 0; n < width * height; n++)
             {
                 clipQCoef = Clip3(-32768, 32767, qCoef[n]);
                 coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift -  m_qpParam.m_per);
@@ -367,7 +367,7 @@ void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height
         }
         else
         {
-            for (Int n = 0; n < width * height; n++)
+            for (int n = 0; n < width * height; n++)
             {
                 clipQCoef = Clip3(-32768, 32767, qCoef[n]);
                 coeffQ   = Clip3(-32768, 32767, clipQCoef * dequantCoef[n]); // Clip to avoid possible overflow in following shift left operation
@@ -378,9 +378,9 @@ void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height
     else
     {
         add = 1 << (shift - 1);
-        Int scale = g_invQuantScales[m_qpParam.m_rem] << m_qpParam.m_per;
+        int scale = g_invQuantScales[m_qpParam.m_rem] << m_qpParam.m_per;
 
-        for (Int n = 0; n < width * height; n++)
+        for (int n = 0; n < width * height; n++)
         {
             clipQCoef = Clip3(-32768, 32767, qCoef[n]);
             coeffQ = (clipQCoef * scale + add) >> shift;
@@ -447,7 +447,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int lastPos )
+void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, Bool useTransformSkip, int lastPos )
 {
     if (transQuantBypass)
     {
@@ -463,11 +463,11 @@ void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, short* resi
     }
 
     // Values need to pass as input parameter in dequant
-    Int per = m_qpParam.m_per;
-    Int rem = m_qpParam.m_rem;
+    int per = m_qpParam.m_per;
+    int rem = m_qpParam.m_rem;
     Bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_convertToBit[width] + 2;
-    Int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
+    int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
     x265::primitives.dequant(coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 
     if (useTransformSkip == true)
@@ -510,7 +510,7 @@ void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, short* resi
  *  \param size transform size (size x size)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-void TComTrQuant::xIT(UInt mode, Int* coeff, short* residual, UInt stride, Int width, Int /*height*/)
+void TComTrQuant::xIT(UInt mode, int* coeff, short* residual, UInt stride, int width, int /*height*/)
 {
     // TODO: this may need larger data types for X265_DEPTH > 8
     const UInt log2BlockSize = g_convertToBit[width];
@@ -523,13 +523,13 @@ void TComTrQuant::xIT(UInt mode, Int* coeff, short* residual, UInt stride, Int w
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
+void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, int* coeff, int width, int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
-    Int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+    int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     UInt transformSkipShift;
-    Int  j, k;
+    int  j, k;
     if (shift >= 0)
     {
         x265::primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, width);
@@ -537,7 +537,7 @@ void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, Int* coeff, Int 
     else
     {
         //The case when X265_DEPTH > 13
-        Int offset;
+        int offset;
         transformSkipShift = -shift;
         offset = (1 << (transformSkipShift - 1));
         for (j = 0; j < height; j++)
@@ -556,13 +556,13 @@ void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, Int* coeff, Int 
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xITransformSkip(Int* coef, short* residual, UInt stride, Int width, Int height)
+void TComTrQuant::xITransformSkip(int* coef, short* residual, UInt stride, int width, int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
-    Int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+    int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     UInt transformSkipShift;
-    Int  j, k;
+    int  j, k;
     if (shift > 0)
     {
         transformSkipShift = shift;
@@ -598,23 +598,23 @@ void TComTrQuant::xITransformSkip(Int* coef, short* residual, UInt stride, Int w
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
-UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height,
+UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height,
                                     TextType ttype, UInt absPartIdx, int *lastPos)
 {
     UInt log2TrSize = g_convertToBit[width] + 2;
     UInt absSum = 0;
-    Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     UInt       goRiceParam      = 0;
     Double     blockUncodedCost = 0;
     const UInt log2BlkSize      = g_convertToBit[width] + 2;
-    Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)ttype];
+    int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(int)ttype];
 
     assert(scalingListType < 6);
 
-    Int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
+    int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
     Double *errScaleOrg = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_qpParam.m_rem);
-    Int *qCoefOrg = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
-    Int *qCoef = qCoefOrg;
+    int *qCoefOrg = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
+    int *qCoef = qCoefOrg;
     Double *errScale = errScaleOrg;
     UInt scanIdx = cu->getCoefScanIdx(absPartIdx, width, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
 
@@ -622,10 +622,10 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
     Double costSig[32 * 32];
     Double costCoeff0[32 * 32];
 
-    Int rateIncUp[32 * 32];
-    Int rateIncDown[32 * 32];
-    Int sigRateDelta[32 * 32];
-    Int deltaU[32 * 32];
+    int rateIncUp[32 * 32];
+    int rateIncDown[32 * 32];
+    int sigRateDelta[32 * 32];
+    int deltaU[32 * 32];
 
     const UInt * scanCG;
     scanCG = g_sigLastScan[scanIdx][log2BlkSize > 3 ? log2BlkSize - 2 - 1 : 0];
@@ -643,41 +643,41 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
 
     UInt   numBlkSide  = width / MLS_CG_SIZE;
     UInt   ctxSet      = 0;
-    Int    c1          = 1;
-    Int    c2          = 0;
+    int    c1          = 1;
+    int    c2          = 0;
     Double baseCost    = 0;
-    Int    lastScanPos = -1;
+    int    lastScanPos = -1;
     UInt   c1Idx       = 0;
     UInt   c2Idx       = 0;
-    Int    cgLastScanPos = -1;
-    Int    baseLevel;
+    int    cgLastScanPos = -1;
+    int    baseLevel;
 
     const UInt *scan = g_sigLastScan[scanIdx][log2BlkSize - 1];
 
     ::memset(sigCoeffGroupFlag, 0, sizeof(UInt) * MLS_GRP_NUM);
 
     UInt cgNum = width * height >> MLS_CG_SIZE;
-    Int scanPos;
+    int scanPos;
     coeffGroupRDStats rdStats;
 
-    for (Int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
+    for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
     {
         UInt cgBlkPos = scanCG[cgScanPos];
         UInt cgPosY   = cgBlkPos / numBlkSide;
         UInt cgPosX   = cgBlkPos - (cgPosY * numBlkSide);
         ::memset(&rdStats, 0, sizeof(coeffGroupRDStats));
 
-        const Int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, width, height);
-        for (Int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
+        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, width, height);
+        for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
             scanPos = cgScanPos * cgSize + scanPosinCG;
             //===== quantization =====
             UInt blkPos = scan[scanPos];
             // set coeff
-            Int Q = qCoef[blkPos];
+            int Q = qCoef[blkPos];
             Double scaleFactor = errScale[blkPos];
-            Int levelDouble    = srcCoeff[blkPos];
-            levelDouble        = (Int)std::min<Int64>((Int64)abs((Int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
+            int levelDouble    = srcCoeff[blkPos];
+            levelDouble        = (int)std::min<Int64>((Int64)abs((int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
 
             UInt maxAbsLevel = (levelDouble + (1 << (qbits - 1))) >> qbits;
 
@@ -721,10 +721,10 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
                                                    c1Idx, c2Idx, qbits, scaleFactor, 0);
                     sigRateDelta[blkPos] = m_estBitsSbac->significantBits[ctxSig][1] - m_estBitsSbac->significantBits[ctxSig][0];
                 }
-                deltaU[blkPos] = (levelDouble - ((Int)level << qbits)) >> (qbits - 8);
+                deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
                 if (level > 0)
                 {
-                    Int rateNow = xGetICRate(level, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx);
+                    int rateNow = xGetICRate(level, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx);
                     rateIncUp[blkPos] = xGetICRate(level + 1, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx) - rateNow;
                     rateIncDown[blkPos] = xGetICRate(level - 1, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx) - rateNow;
                 }
@@ -845,7 +845,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
                                 costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(0, ctxSig);
                             }
                             // reset coeffs to 0 in this block
-                            for (Int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
+                            for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
                             {
                                 scanPos      = cgScanPos * cgSize + scanPosinCG;
                                 UInt blkPos = scan[scanPos];
@@ -875,8 +875,8 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
     }
 
     Double bestCost = 0;
-    Int    ctxCbf = 0;
-    Int    bestLastIdxp1 = 0;
+    int    ctxCbf = 0;
+    int    bestLastIdxp1 = 0;
     if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && cu->getTransformIdx(absPartIdx) == 0)
     {
         ctxCbf    = 0;
@@ -892,14 +892,14 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
     }
 
     Bool foundLast = false;
-    for (Int cgScanPos = cgLastScanPos; cgScanPos >= 0; cgScanPos--)
+    for (int cgScanPos = cgLastScanPos; cgScanPos >= 0; cgScanPos--)
     {
         UInt cgBlkPos = scanCG[cgScanPos];
 
         baseCost -= costCoeffGroupSig[cgScanPos];
         if (sigCoeffGroupFlag[cgBlkPos])
         {
-            for (Int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
+            for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
             {
                 scanPos = cgScanPos * cgSize + scanPosinCG;
                 if (scanPos > lastScanPos) continue;
@@ -939,10 +939,10 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
         } // end if (sigCoeffGroupFlag[ cgBlkPos ])
     } // end for
 
-    for (Int pos = 0; pos < bestLastIdxp1; pos++)
+    for (int pos = 0; pos < bestLastIdxp1; pos++)
     {
-        Int blkPos = scan[pos];
-        Int level  = dstCoeff[blkPos];
+        int blkPos = scan[pos];
+        int level  = dstCoeff[blkPos];
         absSum += level;
         if (level)
             *lastPos = blkPos;
@@ -950,7 +950,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
     }
 
     //===== clean uncoded coefficients =====
-    for (Int pos = bestLastIdxp1; pos <= lastScanPos; pos++)
+    for (int pos = bestLastIdxp1; pos <= lastScanPos; pos++)
     {
         dstCoeff[scan[pos]] = 0;
     }
@@ -961,14 +961,14 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
                 g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))
                 / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)))
                 + 0.5);
-        Int lastCG = -1;
-        Int tmpSum = 0;
-        Int n;
+        int lastCG = -1;
+        int tmpSum = 0;
+        int n;
 
-        for (Int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+        for (int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
         {
-            Int subPos = subSet << LOG2_SCAN_SET_SIZE;
-            Int firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
+            int subPos = subSet << LOG2_SCAN_SET_SIZE;
+            int firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
             tmpSum = 0;
 
             for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
@@ -1006,7 +1006,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
                 {
                     // calculate the cost
                     Int64 minCostInc = MAX_INT64, curCost = MAX_INT64;
-                    Int minPos = -1, finalChange = 0, curChange = 0;
+                    int minPos = -1, finalChange = 0, curChange = 0;
 
                     for (n = (lastCG == 1 ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
@@ -1097,7 +1097,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
  * \param height height of the block
  * \returns pattern for current coefficient group
  */
-Int TComTrQuant::calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, Int width, Int height)
+int TComTrQuant::calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, int width, int height)
 {
     if (width == 4 && height == 4) return -1;
 
@@ -1127,14 +1127,14 @@ Int TComTrQuant::calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, U
  * \param textureType texture type (TEXT_LUMA...)
  * \returns ctxInc for current scan position
  */
-Int TComTrQuant::getSigCtxInc(Int      patternSigCtx,
+int TComTrQuant::getSigCtxInc(int      patternSigCtx,
                               UInt     scanIdx,
-                              Int      posX,
-                              Int      posY,
-                              Int      log2BlockSize,
+                              int      posX,
+                              int      posY,
+                              int      log2BlockSize,
                               TextType ttype)
 {
-    const Int ctxIndMap[16] =
+    const int ctxIndMap[16] =
     {
         0, 1, 4, 5,
         2, 3, 4, 5,
@@ -1152,11 +1152,11 @@ Int TComTrQuant::getSigCtxInc(Int      patternSigCtx,
         return ctxIndMap[4 * posY + posX];
     }
 
-    Int offset = log2BlockSize == 3 ? (scanIdx == SCAN_DIAG ? 9 : 15) : (ttype == TEXT_LUMA ? 21 : 12);
+    int offset = log2BlockSize == 3 ? (scanIdx == SCAN_DIAG ? 9 : 15) : (ttype == TEXT_LUMA ? 21 : 12);
 
-    Int posXinSubset = posX - ((posX >> 2) << 2);
-    Int posYinSubset = posY - ((posY >> 2) << 2);
-    Int cnt = 0;
+    int posXinSubset = posX - ((posX >> 2) << 2);
+    int posYinSubset = posY - ((posY >> 2) << 2);
+    int cnt = 0;
     if (patternSigCtx == 0)
     {
         cnt = posXinSubset + posYinSubset <= 2 ? (posXinSubset + posYinSubset == 0 ? 2 : 1) : 0;
@@ -1196,7 +1196,7 @@ Int TComTrQuant::getSigCtxInc(Int      patternSigCtx,
 inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
                                           Double& codedCost0,
                                           Double& codedCostSig,
-                                          Int     levelDouble,
+                                          int     levelDouble,
                                           UInt    maxAbsLevel,
                                           UShort  ctxNumSig,
                                           UShort  ctxNumOne,
@@ -1204,7 +1204,7 @@ inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
                                           UShort  absGoRice,
                                           UInt    c1Idx,
                                           UInt    c2Idx,
-                                          Int     qbits,
+                                          int     qbits,
                                           Double  scaleFactor,
                                           Bool    last) const
 {
@@ -1231,7 +1231,7 @@ inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
     }
 
     UInt minAbsLevel = (maxAbsLevel > 1 ? maxAbsLevel - 1 : 1);
-    for (Int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
+    for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
         Double err     = Double(levelDouble  - (absLevel << qbits));
         Double curCost = err * err * scaleFactor + xGetICRateCost(absLevel, ctxNumOne, ctxNumAbs, absGoRice, c1Idx, c2Idx);
@@ -1311,14 +1311,14 @@ inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
     return xGetICost(rate);
 }
 
-inline Int TComTrQuant::xGetICRate(UInt   absLevel,
+inline int TComTrQuant::xGetICRate(UInt   absLevel,
                                      UShort ctxNumOne,
                                      UShort ctxNumAbs,
                                      UShort absGoRice,
                                      UInt   c1Idx,
                                      UInt   c2Idx) const
 {
-    Int rate = 0;
+    int rate = 0;
     UInt baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
 
     if (absLevel >= baseLevel)
@@ -1330,7 +1330,7 @@ inline Int TComTrQuant::xGetICRate(UInt   absLevel,
         if (expGolomb)
         {
             absLevel = symbol - maxVlc;
-            Int egs = 1;
+            int egs = 1;
             for (UInt max = 2; absLevel >= max; max <<= 1, egs += 2)
             {}
 
@@ -1403,7 +1403,7 @@ inline Double TComTrQuant::xGetRateLast(UInt posx, UInt posy) const
  * \returns ctxInc for current scan position
  */
 UInt TComTrQuant::getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cgPosX, UInt cgPosY,
-                                         Int width, Int height)
+                                         int width, int height)
 {
     UInt right = 0;
     UInt lower = 0;
@@ -1471,10 +1471,10 @@ void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
 void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
 {
     UInt log2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
-    Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
     UInt i, maxNumCoeff = g_scalingListSize[size];
-    Int *quantCoeff;
+    int *quantCoeff;
     Double *errScale;
 
     quantCoeff   = getQuantCoeff(list, qp, size);
@@ -1498,12 +1498,12 @@ void TComTrQuant::xSetScalingListEnc(TComScalingList *scalingList, UInt listId, 
 {
     UInt width = g_scalingListSizeX[sizeId];
     UInt height = g_scalingListSizeX[sizeId];
-    UInt ratio = g_scalingListSizeX[sizeId] / min(MAX_MATRIX_SIZE_NUM, (Int)g_scalingListSizeX[sizeId]);
-    Int *quantcoeff;
-    Int *coeff = scalingList->getScalingListAddress(sizeId, listId);
+    UInt ratio = g_scalingListSizeX[sizeId] / min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
+    int *quantcoeff;
+    int *coeff = scalingList->getScalingListAddress(sizeId, listId);
 
     quantcoeff   = getQuantCoeff(listId, qp, sizeId);
-    processScalingListEnc(coeff, quantcoeff, g_quantScales[qp] << 4, height, width, ratio, min(MAX_MATRIX_SIZE_NUM, (Int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
+    processScalingListEnc(coeff, quantcoeff, g_quantScales[qp] << 4, height, width, ratio, min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
 }
 
 /** set quantized matrix coefficient for decode
@@ -1516,12 +1516,12 @@ void TComTrQuant::xSetScalingListDec(TComScalingList *scalingList, UInt listId, 
 {
     UInt width = g_scalingListSizeX[sizeId];
     UInt height = g_scalingListSizeX[sizeId];
-    UInt ratio = g_scalingListSizeX[sizeId] / min(MAX_MATRIX_SIZE_NUM, (Int)g_scalingListSizeX[sizeId]);
-    Int *dequantcoeff;
-    Int *coeff = scalingList->getScalingListAddress(sizeId, listId);
+    UInt ratio = g_scalingListSizeX[sizeId] / min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
+    int *dequantcoeff;
+    int *coeff = scalingList->getScalingListAddress(sizeId, listId);
 
     dequantcoeff = getDequantCoeff(listId, qp, sizeId);
-    processScalingListDec(coeff, dequantcoeff, g_invQuantScales[qp], height, width, ratio, min(MAX_MATRIX_SIZE_NUM, (Int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
+    processScalingListDec(coeff, dequantcoeff, g_invQuantScales[qp], height, width, ratio, min(MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->getScalingListDC(sizeId, listId));
 }
 
 /** set flat matrix value to quantized coefficient
@@ -1552,10 +1552,10 @@ void TComTrQuant::setFlatScalingList()
 void TComTrQuant::xsetFlatScalingList(UInt list, UInt size, UInt qp)
 {
     UInt i, num = g_scalingListSize[size];
-    Int *quantcoeff;
-    Int *dequantcoeff;
-    Int quantScales = g_quantScales[qp];
-    Int invQuantScales = g_invQuantScales[qp] << 4;
+    int *quantcoeff;
+    int *dequantcoeff;
+    int quantScales = g_quantScales[qp];
+    int invQuantScales = g_invQuantScales[qp] << 4;
 
     quantcoeff   = getQuantCoeff(list, qp, size);
     dequantcoeff = getDequantCoeff(list, qp, size);
@@ -1577,10 +1577,10 @@ void TComTrQuant::xsetFlatScalingList(UInt list, UInt size, UInt qp)
  * \param sizuNum matrix size
  * \param dc dc parameter
  */
-void TComTrQuant::processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc)
+void TComTrQuant::processScalingListEnc(int *coeff, int *quantcoeff, int quantScales, UInt height, UInt width, UInt ratio, int sizuNum, UInt dc)
 {
-    Int nsqth = (height < width) ? 4 : 1; //height ratio for NSQT
-    Int nsqtw = (width < height) ? 4 : 1; //width ratio for NSQT
+    int nsqth = (height < width) ? 4 : 1; //height ratio for NSQT
+    int nsqtw = (width < height) ? 4 : 1; //width ratio for NSQT
 
     for (UInt j = 0; j < height; j++)
     {
@@ -1606,7 +1606,7 @@ void TComTrQuant::processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantSc
  * \param sizuNum matrix size
  * \param dc dc parameter
  */
-void TComTrQuant::processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc)
+void TComTrQuant::processScalingListDec(int *coeff, int *dequantcoeff, int invQuantScales, UInt height, UInt width, UInt ratio, int sizuNum, UInt dc)
 {
     for (UInt j = 0; j < height; j++)
     {
@@ -1632,8 +1632,8 @@ void TComTrQuant::initScalingList()
         {
             for (UInt qp = 0; qp < SCALING_LIST_REM_NUM; qp++)
             {
-                m_quantCoef[sizeId][listId][qp] = new Int[g_scalingListSize[sizeId]];
-                m_dequantCoef[sizeId][listId][qp] = new Int[g_scalingListSize[sizeId]];
+                m_quantCoef[sizeId][listId][qp] = new int[g_scalingListSize[sizeId]];
+                m_dequantCoef[sizeId][listId][qp] = new int[g_scalingListSize[sizeId]];
                 m_errScale[sizeId][listId][qp] = new Double[g_scalingListSize[sizeId]];
             }
         }

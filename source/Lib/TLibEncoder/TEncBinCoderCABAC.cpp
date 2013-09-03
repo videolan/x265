@@ -193,7 +193,7 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &rcCtxModel)
 
     if (binValue != rcCtxModel.getMps())
     {
-        Int numBits = g_renormTable[uiLPS >> 3];
+        int numBits = g_renormTable[uiLPS >> 3];
         m_uiLow     = (m_uiLow + m_uiRange) << numBits;
         m_uiRange   = uiLPS << numBits;
         rcCtxModel.updateLPS();
@@ -246,11 +246,11 @@ void TEncBinCABAC::encodeBinEP(UInt binValue)
  * \param binValues bin values
  * \param numBins number of bins
  */
-void TEncBinCABAC::encodeBinsEP(UInt binValues, Int numBins)
+void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
 {
     m_uiBinsCoded += numBins & - m_binCountIncrement;
 
-    for (Int i = 0; i < numBins; i++)
+    for (int i = 0; i < numBins; i++)
     {
         DTRACE_CABAC_VL(g_nSymbolCounter++)
         DTRACE_CABAC_T("\tEPsymbol=")

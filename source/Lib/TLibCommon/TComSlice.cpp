@@ -89,12 +89,12 @@ TComSlice::TComSlice()
 
     initEqualRef();
 
-    for (Int idx = 0; idx < MAX_NUM_REF; idx++)
+    for (int idx = 0; idx < MAX_NUM_REF; idx++)
     {
         m_list1IdxToList0Idx[idx] = -1;
     }
 
-    for (Int numCount = 0; numCount < MAX_NUM_REF; numCount++)
+    for (int numCount = 0; numCount < MAX_NUM_REF; numCount++)
     {
         m_refPicList[0][numCount] = NULL;
         m_refPicList[1][numCount] = NULL;
@@ -165,10 +165,10 @@ void  TComSlice::sortPicList(TComList<TComPic*>& picList)
     TComList<TComPic*>::iterator iterPicExtract_1;
     TComList<TComPic*>::iterator iterPicInsert;
 
-    for (Int i = 1; i < (Int)(picList.size()); i++)
+    for (int i = 1; i < (int)(picList.size()); i++)
     {
         iterPicExtract = picList.begin();
-        for (Int j = 0; j < i; j++)
+        for (int j = 0; j < i; j++)
         {
             iterPicExtract++;
         }
@@ -195,7 +195,7 @@ void  TComSlice::sortPicList(TComList<TComPic*>& picList)
     }
 }
 
-TComPic* TComSlice::xGetRefPic(TComList<TComPic*>& picList, Int poc)
+TComPic* TComSlice::xGetRefPic(TComList<TComPic*>& picList, int poc)
 {
     TComList<TComPic*>::iterator iterPic = picList.begin();
     TComPic* pic = NULL;
@@ -213,13 +213,13 @@ TComPic* TComSlice::xGetRefPic(TComList<TComPic*>& picList, Int poc)
     return pic;
 }
 
-TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, Int poc, Bool pocHasMsb)
+TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, int poc, Bool pocHasMsb)
 {
     TComList<TComPic*>::iterator  iterPic = picList.begin();
     TComPic* pic = *(iterPic);
     TComPic* stPic = pic;
 
-    Int pocCycle = 1 << getSPS()->getBitsForPOC();
+    int pocCycle = 1 << getSPS()->getBitsForPOC();
     if (!pocHasMsb)
     {
         poc = poc % pocCycle;
@@ -230,7 +230,7 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, Int poc, Boo
         pic = *(iterPic);
         if (pic && pic->getPOC() != this->getPOC() && pic->getSlice()->isReferenced())
         {
-            Int picPoc = pic->getPOC();
+            int picPoc = pic->getPOC();
             if (!pocHasMsb)
             {
                 picPoc = picPoc % pocCycle;
@@ -258,9 +258,9 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, Int poc, Boo
 
 void TComSlice::setRefPOCList()
 {
-    for (Int dir = 0; dir < 2; dir++)
+    for (int dir = 0; dir < 2; dir++)
     {
-        for (Int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
+        for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
         {
             m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
         }
@@ -269,7 +269,7 @@ void TComSlice::setRefPOCList()
 
 void TComSlice::setList1IdxToList0Idx()
 {
-    Int idxL0, idxL1;
+    int idxL0, idxL1;
 
     for (idxL1 = 0; idxL1 < getNumRefIdx(REF_PIC_LIST_1); idxL1++)
     {
@@ -308,7 +308,7 @@ void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
     UInt numPocStCurr0 = 0;
     UInt numPocStCurr1 = 0;
     UInt numPocLtCurr = 0;
-    Int i;
+    int i;
 
     for (i = 0; i < m_rps->getNumberOfNegativePictures(); i++)
     {
@@ -354,7 +354,7 @@ void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
     // ref_pic_list_init
     TComPic* rpsCurrList0[MAX_NUM_REF + 1];
     TComPic* rpsCurrList1[MAX_NUM_REF + 1];
-    Int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
+    int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
     if (checkNumPocTotalCurr)
     {
         // The variable NumPocTotalCurr is derived as specified in subclause 7.4.7.2. It is a requirement of bitstream conformance
@@ -380,7 +380,7 @@ void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
         m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
     }
 
-    Int cIdx = 0;
+    int cIdx = 0;
     for (i = 0; i < numPocStCurr0; i++, cIdx++)
     {
         rpsCurrList0[cIdx] = refPicSetStCurr0[i];
@@ -421,7 +421,7 @@ void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
 
     ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
 
-    for (Int rIdx = 0; rIdx < m_numRefIdx[0]; rIdx++)
+    for (int rIdx = 0; rIdx < m_numRefIdx[0]; rIdx++)
     {
         cIdx = m_refPicListModification.getRefPicListModificationFlagL0() ? m_refPicListModification.getRefPicSetIdxL0(rIdx) : rIdx % numPocTotalCurr;
         assert(cIdx >= 0 && cIdx < numPocTotalCurr);
@@ -436,7 +436,7 @@ void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
     }
     else
     {
-        for (Int rIdx = 0; rIdx < m_numRefIdx[1]; rIdx++)
+        for (int rIdx = 0; rIdx < m_numRefIdx[1]; rIdx++)
         {
             cIdx = m_refPicListModification.getRefPicListModificationFlagL1() ? m_refPicListModification.getRefPicSetIdxL1(rIdx) : rIdx % numPocTotalCurr;
             assert(cIdx >= 0 && cIdx < numPocTotalCurr);
@@ -446,9 +446,9 @@ void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
     }
 }
 
-Int TComSlice::getNumRpsCurrTempList()
+int TComSlice::getNumRpsCurrTempList()
 {
-    Int numRpsCurrTempList = 0;
+    int numRpsCurrTempList = 0;
 
     if (m_sliceType == I_SLICE)
     {
@@ -467,11 +467,11 @@ Int TComSlice::getNumRpsCurrTempList()
 
 void TComSlice::initEqualRef()
 {
-    for (Int dir = 0; dir < 2; dir++)
+    for (int dir = 0; dir < 2; dir++)
     {
-        for (Int refIdx1 = 0; refIdx1 < MAX_NUM_REF; refIdx1++)
+        for (int refIdx1 = 0; refIdx1 < MAX_NUM_REF; refIdx1++)
         {
-            for (Int refIdx2 = refIdx1; refIdx2 < MAX_NUM_REF; refIdx2++)
+            for (int refIdx2 = refIdx1; refIdx2 < MAX_NUM_REF; refIdx2++)
             {
                 m_bEqualRef[dir][refIdx1][refIdx2] = m_bEqualRef[dir][refIdx2][refIdx1] = (refIdx1 == refIdx2 ? true : false);
             }
@@ -479,9 +479,9 @@ void TComSlice::initEqualRef()
     }
 }
 
-void TComSlice::checkCRA(TComReferencePictureSet *rps, Int& pocCRA, Bool& prevRAPisBLA)
+void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, Bool& prevRAPisBLA)
 {
-    for (Int i = 0; i < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i++)
+    for (int i = 0; i < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i++)
     {
         if (pocCRA < MAX_UINT && getPOC() > pocCRA)
         {
@@ -489,7 +489,7 @@ void TComSlice::checkCRA(TComReferencePictureSet *rps, Int& pocCRA, Bool& prevRA
         }
     }
 
-    for (Int i = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i < rps->getNumberOfPictures(); i++)
+    for (int i = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i < rps->getNumberOfPictures(); i++)
     {
         if (pocCRA < MAX_UINT && getPOC() > pocCRA)
         {
@@ -527,7 +527,7 @@ void TComSlice::copySliceInfo(TComSlice *src)
 {
     assert(src != NULL);
 
-    Int i, j, k;
+    int i, j, k;
 
     m_poc                 = src->m_poc;
     m_nalUnitType         = src->m_nalUnitType;
@@ -600,9 +600,9 @@ void TComSlice::copySliceInfo(TComSlice *src)
 
     m_sliceCurEndCUAddr = src->m_sliceCurEndCUAddr;
     m_nextSlice = src->m_nextSlice;
-    for (Int e = 0; e < 2; e++)
+    for (int e = 0; e < 2; e++)
     {
-        for (Int n = 0; n < MAX_NUM_REF; n++)
+        for (int n = 0; n < MAX_NUM_REF; n++)
         {
             memcpy(m_weightPredTable[e][n], src->m_weightPredTable[e][n], sizeof(wpScalingParam) * 3);
         }
@@ -620,13 +620,13 @@ void TComSlice::copySliceInfo(TComSlice *src)
 
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet.
 */
-Int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool printErrors, Int pocRandomAccess)
+int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool printErrors, int pocRandomAccess)
 {
     TComPic* outPic;
-    Int i, isAvailable;
-    Int atLeastOneLost = 0;
-    Int atLeastOneRemoved = 0;
-    Int iPocLost = 0;
+    int i, isAvailable;
+    int atLeastOneLost = 0;
+    int atLeastOneRemoved = 0;
+    int iPocLost = 0;
 
     // loop through all long-term pictures in the Reference Picture Set
     // to see if the picture should be kept as reference picture
@@ -662,9 +662,9 @@ Int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TCom
             {
                 outPic = *(iterPic++);
 
-                Int pocCycle = 1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC();
-                Int curPoc = outPic->getPicSym()->getSlice()->getPOC();
-                Int refPoc = rps->getPOC(i);
+                int pocCycle = 1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC();
+                int curPoc = outPic->getPicSym()->getSlice()->getPOC();
+                int refPoc = rps->getPOC(i);
                 if (!rps->getCheckLTMSBPresent(i))
                 {
                     curPoc = curPoc % pocCycle;
@@ -771,10 +771,10 @@ Int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TCom
 void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool isRAP)
 {
     TComPic* outPic;
-    Int i, j;
-    Int k = 0;
-    Int nrOfNegativePictures = 0;
-    Int nrOfPositivePictures = 0;
+    int i, j;
+    int k = 0;
+    int nrOfNegativePictures = 0;
+    int nrOfPositivePictures = 0;
     TComReferencePictureSet* refRPS = this->getLocalRPS();
 
     // loop through all pictures in the Reference Picture Set
@@ -820,15 +820,15 @@ void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*
     }
     else
     {
-        Int rIdx =  this->getRPSidx() - rps->getDeltaRIdxMinus1() - 1;
-        Int deltaRPS = rps->getDeltaRPS();
+        int rIdx =  this->getRPSidx() - rps->getDeltaRIdxMinus1() - 1;
+        int deltaRPS = rps->getDeltaRPS();
         const TComReferencePictureSet *refRPSOther = this->getSPS()->getRPSList()->getReferencePictureSet(rIdx);
-        Int refPics = refRPSOther->getNumberOfPictures();
-        Int newIdc = 0;
+        int refPics = refRPSOther->getNumberOfPictures();
+        int newIdc = 0;
         for (i = 0; i <= refPics; i++)
         {
-            Int deltaPOC = ((i != refPics) ? refRPSOther->getDeltaPOC(i) : 0); // check if the reference abs POC is >= 0
-            Int refIdc = 0;
+            int deltaPOC = ((i != refPics) ? refRPSOther->getDeltaPOC(i) : 0); // check if the reference abs POC is >= 0
+            int refIdc = 0;
             for (j = 0; j < refRPS->getNumberOfPictures(); j++) // loop through the  pictures in the new RPS
             {
                 if ((deltaPOC + deltaRPS) == refRPS->getDeltaPOC(j))
@@ -872,7 +872,7 @@ void TComSlice::getWpAcDcParam(wpACDCParam *&wp)
  */
 void TComSlice::initWpAcDcParam()
 {
-    for (Int comp = 0; comp < 3; comp++)
+    for (int comp = 0; comp < 3; comp++)
     {
         m_weightACDCParam[comp].ac = 0;
         m_weightACDCParam[comp].dc = 0;
@@ -885,7 +885,7 @@ void TComSlice::initWpAcDcParam()
  * \param *&wpScalingParam
  * \returns void
  */
-void TComSlice::getWpScaling(RefPicList l, Int refIdx, wpScalingParam *&wp)
+void TComSlice::getWpScaling(RefPicList l, int refIdx, wpScalingParam *&wp)
 {
     wp = m_weightPredTable[l][refIdx];
 }
@@ -896,11 +896,11 @@ void TComSlice::getWpScaling(RefPicList l, Int refIdx, wpScalingParam *&wp)
  */
 void  TComSlice::resetWpScaling()
 {
-    for (Int e = 0; e < 2; e++)
+    for (int e = 0; e < 2; e++)
     {
-        for (Int i = 0; i < MAX_NUM_REF; i++)
+        for (int i = 0; i < MAX_NUM_REF; i++)
         {
-            for (Int yuv = 0; yuv < 3; yuv++)
+            for (int yuv = 0; yuv < 3; yuv++)
             {
                 wpScalingParam  *pwp = &(m_weightPredTable[e][i][yuv]);
                 pwp->bPresentFlag    = false;
@@ -918,11 +918,11 @@ void  TComSlice::resetWpScaling()
  */
 void  TComSlice::initWpScaling()
 {
-    for (Int e = 0; e < 2; e++)
+    for (int e = 0; e < 2; e++)
     {
-        for (Int i = 0; i < MAX_NUM_REF; i++)
+        for (int i = 0; i < MAX_NUM_REF; i++)
         {
-            for (Int yuv = 0; yuv < 3; yuv++)
+            for (int yuv = 0; yuv < 3; yuv++)
             {
                 wpScalingParam  *pwp = &(m_weightPredTable[e][i][yuv]);
                 if (!pwp->bPresentFlag)
@@ -955,7 +955,7 @@ TComVPS::TComVPS()
     , m_hrdOpSetIdx(NULL)
     , m_cprmsPresentFlag(NULL)
 {
-    for (Int i = 0; i < MAX_TLAYER; i++)
+    for (int i = 0; i < MAX_TLAYER; i++)
     {
         m_numReorderPics[i] = 0;
         m_maxDecPicBuffering[i] = 1;
@@ -1014,7 +1014,7 @@ TComSPS::TComSPS()
     , m_vuiParametersPresentFlag(false)
     , m_vuiParameters()
 {
-    for (Int i = 0; i < MAX_TLAYER; i++)
+    for (int i = 0; i < MAX_TLAYER; i++)
     {
         m_maxLatencyIncrease[i] = 0;
         m_maxDecPicBuffering[i] = 1;
@@ -1032,7 +1032,7 @@ TComSPS::~TComSPS()
     m_RPSList.destroy();
 }
 
-void  TComSPS::createRPSList(Int numRPS)
+void  TComSPS::createRPSList(int numRPS)
 {
     m_RPSList.destroy();
     m_RPSList.create(numRPS);
@@ -1115,7 +1115,7 @@ void TComSPS::setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, Bool ra
 /*
    Note: only the case of "vps_max_temporal_layers_minus1 = 0" is supported.
 */
-    Int i, j;
+    int i, j;
     UInt birateValue, cpbSizeValue;
     UInt ducpbSizeValue;
     UInt duBitRateValue = 0;
@@ -1199,52 +1199,52 @@ TComReferencePictureSet::TComReferencePictureSet()
 TComReferencePictureSet::~TComReferencePictureSet()
 {}
 
-void TComReferencePictureSet::setUsed(Int bufferNum, Bool used)
+void TComReferencePictureSet::setUsed(int bufferNum, Bool used)
 {
     m_used[bufferNum] = used;
 }
 
-void TComReferencePictureSet::setDeltaPOC(Int bufferNum, Int deltaPOC)
+void TComReferencePictureSet::setDeltaPOC(int bufferNum, int deltaPOC)
 {
     m_deltaPOC[bufferNum] = deltaPOC;
 }
 
-void TComReferencePictureSet::setNumberOfPictures(Int numberOfPictures)
+void TComReferencePictureSet::setNumberOfPictures(int numberOfPictures)
 {
     m_numberOfPictures = numberOfPictures;
 }
 
-Int TComReferencePictureSet::getUsed(Int bufferNum) const
+int TComReferencePictureSet::getUsed(int bufferNum) const
 {
     return m_used[bufferNum];
 }
 
-Int TComReferencePictureSet::getDeltaPOC(Int bufferNum) const
+int TComReferencePictureSet::getDeltaPOC(int bufferNum) const
 {
     return m_deltaPOC[bufferNum];
 }
 
-Int TComReferencePictureSet::getNumberOfPictures() const
+int TComReferencePictureSet::getNumberOfPictures() const
 {
     return m_numberOfPictures;
 }
 
-Int TComReferencePictureSet::getPOC(Int bufferNum) const
+int TComReferencePictureSet::getPOC(int bufferNum) const
 {
     return m_POC[bufferNum];
 }
 
-void TComReferencePictureSet::setPOC(Int bufferNum, Int POC)
+void TComReferencePictureSet::setPOC(int bufferNum, int POC)
 {
     m_POC[bufferNum] = POC;
 }
 
-Bool TComReferencePictureSet::getCheckLTMSBPresent(Int bufferNum)
+Bool TComReferencePictureSet::getCheckLTMSBPresent(int bufferNum)
 {
     return m_bCheckLTMSB[bufferNum];
 }
 
-void TComReferencePictureSet::setCheckLTMSBPresent(Int bufferNum, Bool b)
+void TComReferencePictureSet::setCheckLTMSBPresent(int bufferNum, Bool b)
 {
     m_bCheckLTMSB[bufferNum] = b;
 }
@@ -1254,16 +1254,16 @@ void TComReferencePictureSet::setCheckLTMSBPresent(Int bufferNum, Bool b)
  * \param iRefIdc
  * \returns void
  */
-void TComReferencePictureSet::setRefIdc(Int bufferNum, Int refIdc)
+void TComReferencePictureSet::setRefIdc(int bufferNum, int refIdc)
 {
     m_refIdc[bufferNum] = refIdc;
 }
 
 /** get the reference idc value at uiBufferNum
  * \param uiBufferNum
- * \returns Int
+ * \returns int
  */
-Int  TComReferencePictureSet::getRefIdc(Int bufferNum) const
+int  TComReferencePictureSet::getRefIdc(int bufferNum) const
 {
     return m_refIdc[bufferNum];
 }
@@ -1276,13 +1276,13 @@ Int  TComReferencePictureSet::getRefIdc(Int bufferNum) const
 void TComReferencePictureSet::sortDeltaPOC()
 {
     // sort in increasing order (smallest first)
-    for (Int j = 1; j < getNumberOfPictures(); j++)
+    for (int j = 1; j < getNumberOfPictures(); j++)
     {
-        Int deltaPOC = getDeltaPOC(j);
+        int deltaPOC = getDeltaPOC(j);
         Bool used = getUsed(j);
-        for (Int k = j - 1; k >= 0; k--)
+        for (int k = j - 1; k >= 0; k--)
         {
-            Int temp = getDeltaPOC(k);
+            int temp = getDeltaPOC(k);
             if (deltaPOC < temp)
             {
                 setDeltaPOC(k + 1, temp);
@@ -1294,10 +1294,10 @@ void TComReferencePictureSet::sortDeltaPOC()
     }
 
     // flip the negative values to largest first
-    Int numNegPics = getNumberOfNegativePictures();
-    for (Int j = 0, k = numNegPics - 1; j < numNegPics >> 1; j++, k--)
+    int numNegPics = getNumberOfNegativePictures();
+    for (int j = 0, k = numNegPics - 1; j < numNegPics >> 1; j++, k--)
     {
-        Int deltaPOC = getDeltaPOC(j);
+        int deltaPOC = getDeltaPOC(j);
         Bool used = getUsed(j);
         setDeltaPOC(j, getDeltaPOC(k));
         setUsed(j, getUsed(k));
@@ -1313,7 +1313,7 @@ void TComReferencePictureSet::sortDeltaPOC()
 void TComReferencePictureSet::printDeltaPOC()
 {
     printf("DeltaPOC = { ");
-    for (Int j = 0; j < getNumberOfPictures(); j++)
+    for (int j = 0; j < getNumberOfPictures(); j++)
     {
         printf("%d%s ", getDeltaPOC(j), (getUsed(j) == 1) ? "*" : "");
     }
@@ -1321,7 +1321,7 @@ void TComReferencePictureSet::printDeltaPOC()
     if (getInterRPSPrediction())
     {
         printf("}, RefIdc = { ");
-        for (Int j = 0; j < getNumRefIdc(); j++)
+        for (int j = 0; j < getNumRefIdc(); j++)
         {
             printf("%d ", getRefIdc(j));
         }
@@ -1337,7 +1337,7 @@ TComRPSList::TComRPSList()
 TComRPSList::~TComRPSList()
 {}
 
-void TComRPSList::create(Int numberOfReferencePictureSets)
+void TComRPSList::create(int numberOfReferencePictureSets)
 {
     m_numberOfReferencePictureSets = numberOfReferencePictureSets;
     m_referencePictureSets = new TComReferencePictureSet[numberOfReferencePictureSets];
@@ -1353,17 +1353,17 @@ void TComRPSList::destroy()
     m_referencePictureSets = NULL;
 }
 
-TComReferencePictureSet* TComRPSList::getReferencePictureSet(Int referencePictureSetNum)
+TComReferencePictureSet* TComRPSList::getReferencePictureSet(int referencePictureSetNum)
 {
     return &m_referencePictureSets[referencePictureSetNum];
 }
 
-Int TComRPSList::getNumberOfReferencePictureSets() const
+int TComRPSList::getNumberOfReferencePictureSets() const
 {
     return m_numberOfReferencePictureSets;
 }
 
-void TComRPSList::setNumberOfReferencePictureSets(Int numberOfReferencePictureSets)
+void TComRPSList::setNumberOfReferencePictureSets(int numberOfReferencePictureSets)
 {
     m_numberOfReferencePictureSets = numberOfReferencePictureSets;
 }
@@ -1414,7 +1414,7 @@ Bool TComSlice::checkDefaultScalingList()
     {
         for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
-            if (!memcmp(getScalingList()->getScalingListAddress(sizeId, listId), getScalingList()->getScalingListDefaultAddress(sizeId, listId), sizeof(Int) * min(MAX_MATRIX_COEF_NUM, (Int)g_scalingListSize[sizeId])) // check value of matrix
+            if (!memcmp(getScalingList()->getScalingListAddress(sizeId, listId), getScalingList()->getScalingListDefaultAddress(sizeId, listId), sizeof(int) * min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
                 && ((sizeId < SCALING_LIST_16x16) || (getScalingList()->getScalingListDC(sizeId, listId) == 16))) // check DC value
             {
                 defaultCounter++;
@@ -1432,7 +1432,7 @@ Bool TComSlice::checkDefaultScalingList()
  */
 void TComScalingList::processRefMatrix(UInt sizeId, UInt listId, UInt refListId)
 {
-    ::memcpy(getScalingListAddress(sizeId, listId), ((listId == refListId) ? getScalingListDefaultAddress(sizeId, refListId) : getScalingListAddress(sizeId, refListId)), sizeof(Int) * min(MAX_MATRIX_COEF_NUM, (Int)g_scalingListSize[sizeId]));
+    ::memcpy(getScalingListAddress(sizeId, listId), ((listId == refListId) ? getScalingListDefaultAddress(sizeId, refListId) : getScalingListAddress(sizeId, refListId)), sizeof(int) * min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
 }
 
 /** parse syntax information
@@ -1445,7 +1445,7 @@ Bool TComScalingList::xParseScalingList(char* pchFile)
     char line[1024];
     UInt sizeIdc, listIdc;
     UInt i, size = 0;
-    Int *src = 0, data;
+    int *src = 0, data;
     char *ret;
     UInt  retval;
 
@@ -1457,7 +1457,7 @@ Bool TComScalingList::xParseScalingList(char* pchFile)
 
     for (sizeIdc = 0; sizeIdc < SCALING_LIST_SIZE_NUM; sizeIdc++)
     {
-        size = min(MAX_MATRIX_COEF_NUM, (Int)g_scalingListSize[sizeIdc]);
+        size = min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeIdc]);
         for (listIdc = 0; listIdc < g_scalingListNum[sizeIdc]; listIdc++)
         {
             src = getScalingListAddress(sizeIdc, listIdc);
@@ -1524,7 +1524,7 @@ void TComScalingList::init()
     {
         for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
-            m_scalingListCoef[sizeId][listId] = new Int[min(MAX_MATRIX_COEF_NUM, (Int)g_scalingListSize[sizeId])];
+            m_scalingListCoef[sizeId][listId] = new int[min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])];
         }
     }
 
@@ -1549,9 +1549,9 @@ void TComScalingList::destroy()
  * \param listId list index
  * \returns pointer of quantization matrix
  */
-Int* TComScalingList::getScalingListDefaultAddress(UInt sizeId, UInt listId)
+int* TComScalingList::getScalingListDefaultAddress(UInt sizeId, UInt listId)
 {
-    Int *src = 0;
+    int *src = 0;
 
     switch (sizeId)
     {
@@ -1582,7 +1582,7 @@ Int* TComScalingList::getScalingListDefaultAddress(UInt sizeId, UInt listId)
  */
 void TComScalingList::processDefaultMarix(UInt sizeId, UInt listId)
 {
-    ::memcpy(getScalingListAddress(sizeId, listId), getScalingListDefaultAddress(sizeId, listId), sizeof(Int) * min(MAX_MATRIX_COEF_NUM, (Int)g_scalingListSize[sizeId]));
+    ::memcpy(getScalingListAddress(sizeId, listId), getScalingListDefaultAddress(sizeId, listId), sizeof(int) * min(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
     setScalingListDC(sizeId, listId, SCALING_LIST_DC);
 }
 
@@ -1617,13 +1617,13 @@ ParameterSetManager::~ParameterSetManager()
 
 //! activate a SPS from a active parameter sets SEI message
 //! \returns true, if activation is successful
-Bool ParameterSetManager::activateSPSWithSEI(Int spsId)
+Bool ParameterSetManager::activateSPSWithSEI(int spsId)
 {
     TComSPS *sps = m_spsMap.getPS(spsId);
 
     if (sps)
     {
-        Int vpsId = sps->getVPSId();
+        int vpsId = sps->getVPSId();
         if (m_vpsMap.getPS(vpsId))
         {
             m_activeVPSId = vpsId;
@@ -1644,13 +1644,13 @@ Bool ParameterSetManager::activateSPSWithSEI(Int spsId)
 
 //! activate a PPS and depending on isIDR parameter also SPS and VPS
 //! \returns true, if activation is successful
-Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIRAP)
+Bool ParameterSetManager::activatePPS(int ppsId, Bool isIRAP)
 {
     TComPPS *pps = m_ppsMap.getPS(ppsId);
 
     if (pps)
     {
-        Int spsId = pps->getSPSId();
+        int spsId = pps->getSPSId();
         if (!isIRAP && (spsId != m_activeSPSId))
         {
             printf("Warning: tried to activate PPS referring to a inactive SPS at non-IRAP.");
@@ -1659,7 +1659,7 @@ Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIRAP)
         TComSPS *sps = m_spsMap.getPS(spsId);
         if (sps)
         {
-            Int vpsId = sps->getVPSId();
+            int vpsId = sps->getVPSId();
             if (!isIRAP && (vpsId != m_activeVPSId))
             {
                 printf("Warning: tried to activate PPS referring to a inactive VPS at non-IRAP.");

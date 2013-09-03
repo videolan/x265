@@ -65,7 +65,7 @@ TComPicYuv::TComPicYuv()
 TComPicYuv::~TComPicYuv()
 {}
 
-void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::create(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -74,8 +74,8 @@ void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCU
     m_cuWidth  = maxCUWidth;
     m_cuHeight = maxCUHeight;
 
-    Int numCuInWidth  = (m_picWidth + m_cuWidth - 1)  / m_cuWidth;
-    Int numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
+    int numCuInWidth  = (m_picWidth + m_cuWidth - 1)  / m_cuWidth;
+    int numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
 
     m_numCuInWidth = numCuInWidth;
     m_numCuInHeight = numCuInHeight;
@@ -96,22 +96,22 @@ void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCU
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
     m_picOrgV = m_picBufV + m_chromaMarginY * getCStride() + m_chromaMarginX;
 
-    m_cuOffsetY = new Int[numCuInWidth * numCuInHeight];
-    m_cuOffsetC = new Int[numCuInWidth * numCuInHeight];
-    for (Int cuRow = 0; cuRow < numCuInHeight; cuRow++)
+    m_cuOffsetY = new int[numCuInWidth * numCuInHeight];
+    m_cuOffsetC = new int[numCuInWidth * numCuInHeight];
+    for (int cuRow = 0; cuRow < numCuInHeight; cuRow++)
     {
-        for (Int cuCol = 0; cuCol < numCuInWidth; cuCol++)
+        for (int cuCol = 0; cuCol < numCuInWidth; cuCol++)
         {
             m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
             m_cuOffsetC[cuRow * numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight / 2) + cuCol * (m_cuWidth / 2);
         }
     }
 
-    m_buOffsetY = new Int[(size_t)1 << (2 * maxCUDepth)];
-    m_buOffsetC = new Int[(size_t)1 << (2 * maxCUDepth)];
-    for (Int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
+    m_buOffsetY = new int[(size_t)1 << (2 * maxCUDepth)];
+    m_buOffsetC = new int[(size_t)1 << (2 * maxCUDepth)];
+    for (int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
     {
-        for (Int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
+        for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
         {
             m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
             m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * (maxCUHeight / 2 >> maxCUDepth) + buCol * (maxCUWidth / 2 >> maxCUDepth);
@@ -152,7 +152,7 @@ void  TComPicYuv::clearReferences()
     }
 }
 
-void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::createLuma(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -160,8 +160,8 @@ void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt m
     m_cuWidth  = maxCUWidth;
     m_cuHeight = maxCUHeight;
 
-    Int numCuInWidth  = m_picWidth  / m_cuWidth  + (m_picWidth  % m_cuWidth  != 0);
-    Int numCuInHeight = m_picHeight / m_cuHeight + (m_picHeight % m_cuHeight != 0);
+    int numCuInWidth  = m_picWidth  / m_cuWidth  + (m_picWidth  % m_cuWidth  != 0);
+    int numCuInHeight = m_picHeight / m_cuHeight + (m_picHeight % m_cuHeight != 0);
 
     m_lumaMarginX = g_maxCUWidth  + 16; // for 16-byte alignment
     m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
@@ -169,21 +169,21 @@ void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt m
     m_picBufY = (Pel*)X265_MALLOC(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
     m_picOrgY = m_picBufY + m_lumaMarginY * getStride() + m_lumaMarginX;
 
-    m_cuOffsetY = new Int[numCuInWidth * numCuInHeight];
+    m_cuOffsetY = new int[numCuInWidth * numCuInHeight];
     m_cuOffsetC = NULL;
-    for (Int cuRow = 0; cuRow < numCuInHeight; cuRow++)
+    for (int cuRow = 0; cuRow < numCuInHeight; cuRow++)
     {
-        for (Int cuCol = 0; cuCol < numCuInWidth; cuCol++)
+        for (int cuCol = 0; cuCol < numCuInWidth; cuCol++)
         {
             m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
         }
     }
 
-    m_buOffsetY = new Int[(size_t)1 << (2 * maxCUDepth)];
+    m_buOffsetY = new int[(size_t)1 << (2 * maxCUDepth)];
     m_buOffsetC = NULL;
-    for (Int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
+    for (int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
     {
-        for (Int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
+        for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
         {
             m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
         }
@@ -256,9 +256,9 @@ x265::MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
     return mref;
 }
 
-void TComPicYuv::xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)
+void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int iMarginX, int iMarginY)
 {
-    Int x, y;
+    int x, y;
 
     /* TODO: this should become a performance primitive */
     for (y = 0; y < height; y++)
@@ -298,10 +298,10 @@ void TComPicYuv::dump(char* pFileName, Bool bAdd)
         pFile = fopen(pFileName, "ab");
     }
 
-    Int shift = X265_DEPTH - 8;
-    Int offset = (shift > 0) ? (1 << (shift - 1)) : 0;
+    int shift = X265_DEPTH - 8;
+    int offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
-    Int   x, y;
+    int   x, y;
     UChar uc;
 
     Pel* pelY   = getLumaAddr();

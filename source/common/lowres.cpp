@@ -53,7 +53,7 @@ void Lowres::create(TComPic *pic, int _bframes)
 
     int cuWidth = (width + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     int cuHeight = (lines + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    Int cuCount = cuWidth * cuHeight;
+    int cuCount = cuWidth * cuHeight;
 
     intraCost = (int*)X265_MALLOC(int, cuCount);
 

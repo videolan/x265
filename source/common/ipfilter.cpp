@@ -221,9 +221,9 @@ void filterVertical_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t dst
     }
 
     src -= (N / 2 - 1) * srcStride;
-    Int offset;
-    Int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
-    Int shift = IF_FILTER_PREC;
+    int offset;
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    int shift = IF_FILTER_PREC;
 
     shift -=  headRoom;
     offset = -IF_INTERNAL_OFFS << shift;
@@ -497,7 +497,7 @@ void filterHorizontalExtendCol(pixel *src, intptr_t srcStride, short *midF, shor
 
 void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int scale, int round, int shift, int offset)
 {
-    Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     shift = shift + shiftNum;
     round = shift ? (1 << (shift - 1)) : 0;
 

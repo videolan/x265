@@ -58,7 +58,7 @@ public:
 
     void  encodeBin(UInt binValue,  ContextModel& rcCtxModel);
     void  encodeBinEP(UInt binValue);
-    void  encodeBinsEP(UInt binValues, Int numBins);
+    void  encodeBinsEP(UInt binValues, int numBins);
     void  encodeBinTrm(UInt binValue);
 };
 

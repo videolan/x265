@@ -43,7 +43,7 @@ void CTURow::create(TEncTop* top)
         m_rdSbacCoders[depth]  = new TEncSbac*[CI_NUM];
         m_binCodersCABAC[depth] = new TEncBinCABACCounter*[CI_NUM];
 
-        for (Int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+        for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
         {
             m_rdSbacCoders[depth][ciIdx] = new TEncSbac;
             m_binCodersCABAC[depth][ciIdx] = new TEncBinCABACCounter;
@@ -109,7 +109,7 @@ void CTURow::destroy()
 {
     for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
-        for (Int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+        for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
         {
             delete m_rdSbacCoders[depth][ciIdx];
             delete m_binCodersCABAC[depth][ciIdx];

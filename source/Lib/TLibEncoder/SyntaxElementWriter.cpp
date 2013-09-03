@@ -72,7 +72,7 @@ void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const char *pSymbolName)
     }
 }
 
-void  SyntaxElementWriter::xWriteSvlcTr(Int value, const char *pSymbolName)
+void  SyntaxElementWriter::xWriteSvlcTr(int value, const char *pSymbolName)
 {
     xWriteSvlc(value);
     if (g_HLSTraceEnable)
@@ -118,7 +118,7 @@ void SyntaxElementWriter::xWriteUvlc(UInt uiCode)
     m_bitIf->write(uiCode, (uiLength + 1) >> 1);
 }
 
-void SyntaxElementWriter::xWriteSvlc(Int iCode)
+void SyntaxElementWriter::xWriteSvlc(int iCode)
 {
     UInt uiCode;
 

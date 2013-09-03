@@ -360,8 +360,8 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, UInt offsetLuma, UInt offsetC
         }
         if (log2TrafoSize > 2)
         {
-            Int trWidth = width >> 1;
-            Int trHeight = height >> 1;
+            int trWidth = width >> 1;
+            int trHeight = height >> 1;
             if (cbfU)
             {
                 m_pcEntropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffCb() + offsetChroma), absPartIdx, trWidth, trHeight, depth, TEXT_CHROMA_U);
@@ -602,7 +602,7 @@ void TEncEntropy::encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartId
     m_pcEntropyCoderIf->codeCoeffNxN(cu, pcCoeff, absPartIdx, uiTrWidth, uiTrHeight, depth, ttype);
 }
 
-void TEncEntropy::estimateBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType)
+void TEncEntropy::estimateBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType)
 {
     eTType = eTType == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
 
@@ -615,7 +615,7 @@ void TEncEntropy::estimateBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int h
 void TEncEntropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx)
 {
     UInt symbol;
-    Int i;
+    int i;
 
     symbol = saoLcuParam->typeIdx + 1;
     if (compIdx != 2)
@@ -628,7 +628,7 @@ void TEncEntropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx)
         {
             saoLcuParam->subTypeIdx = saoLcuParam->typeIdx;
         }
-        Int offsetTh = 1 << min(X265_DEPTH - 5, 5);
+        int offsetTh = 1 << min(X265_DEPTH - 5, 5);
         if (saoLcuParam->typeIdx == SAO_BO)
         {
             for (i = 0; i < saoLcuParam->length; i++)
@@ -673,7 +673,7 @@ void TEncEntropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx)
 * \param  iCUAddrUpInSlice
 * \param  bLFCrossSliceBoundaryFlag
  */
-void TEncEntropy::encodeSaoUnitInterleaving(Int compIdx, Bool saoFlag, Int rx, Int ry, SaoLcuParam* saoLcuParam, Int cuAddrInSlice, Int cuAddrUpInSlice, Int allowMergeLeft, Int allowMergeUp)
+void TEncEntropy::encodeSaoUnitInterleaving(int compIdx, Bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
 {
     if (saoFlag)
     {
@@ -703,11 +703,11 @@ void TEncEntropy::encodeSaoUnitInterleaving(Int compIdx, Bool saoFlag, Int rx, I
     }
 }
 
-Int TEncEntropy::countNonZeroCoeffs(TCoeff* pcCoef, UInt size)
+int TEncEntropy::countNonZeroCoeffs(TCoeff* pcCoef, UInt size)
 {
-    Int count = 0;
+    int count = 0;
 
-    for (Int i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
     {
         count += pcCoef[i] != 0;
     }

@@ -47,8 +47,8 @@ private:
 
     static int getAddrOffset(unsigned int idx, unsigned int size, unsigned int width)
     {
-        Int blkX = (idx * size) &  (width - 1);
-        Int blkY = (idx * size) & ~(width - 1);
+        int blkX = (idx * size) &  (width - 1);
+        int blkY = (idx * size) & ~(width - 1);
 
         return blkX + blkY * size;
     }

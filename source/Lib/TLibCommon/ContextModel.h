@@ -66,7 +66,7 @@ public:
 
     void  setStateAndMps(UChar ucState, UChar ucMPS) { m_state = (ucState << 1) + ucMPS; } ///< set state and MPS
 
-    void init(Int qp, Int initValue);   ///< initialize state with initial probability
+    void init(int qp, int initValue);   ///< initialize state with initial probability
 
     void updateLPS()
     {
@@ -78,15 +78,15 @@ public:
         m_state = s_nextStateMPS[m_state];
     }
 
-    Int getEntropyBits(short val) { return s_entropyBits[m_state ^ val]; }
+    int getEntropyBits(short val) { return s_entropyBits[m_state ^ val]; }
 
-    void update(Int binVal)
+    void update(int binVal)
     {
         m_state = m_nextState[m_state][binVal];
     }
 
     static void buildNextStateTable();
-    static Int getEntropyBitsTrm(Int val) { return s_entropyBits[126 ^ val]; }
+    static int getEntropyBitsTrm(int val) { return s_entropyBits[126 ^ val]; }
 
     void setBinsCoded(UInt val)   { m_binsCoded = val;  }
 
@@ -97,7 +97,7 @@ private:
     UChar         m_state;  ///< internal state variable
     static const UChar s_nextStateMPS[128];
     static const UChar s_nextStateLPS[128];
-    static const Int   s_entropyBits[128];
+    static const int   s_entropyBits[128];
     static UChar  m_nextState[128][2];
     UInt          m_binsCoded;
 };

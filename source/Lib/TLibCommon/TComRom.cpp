@@ -50,7 +50,7 @@ void initROM()
 {
     if (g_sigLastScan[0][0] == 0)
     {
-        Int i, c;
+        int i, c;
 
         // g_convertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
         ::memset(g_convertToBit, -1, sizeof(g_convertToBit));
@@ -80,7 +80,7 @@ void destroyROM()
 {
     if (g_sigLastScan[0][0])
     {
-        for (Int i = 0; i < MAX_CU_DEPTH; i++)
+        for (int i = 0; i < MAX_CU_DEPTH; i++)
         {
             delete[] g_sigLastScan[0][i];
             delete[] g_sigLastScan[1][i];
@@ -95,7 +95,7 @@ void destroyROM()
 // Data structure related table & variable
 // ====================================================================================================================
 
-Int  g_bitDepth = 8;
+int  g_bitDepth = 8;
 UInt g_maxCUWidth  = MAX_CU_SIZE;
 UInt g_maxCUHeight = MAX_CU_SIZE;
 UInt g_maxCUDepth  = MAX_CU_DEPTH;
@@ -109,7 +109,7 @@ UInt g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
 void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
 {
-    Int stride = 1 << (maxDepth - 1);
+    int stride = 1 << (maxDepth - 1);
 
     if (depth == maxDepth)
     {
@@ -118,7 +118,7 @@ void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
     }
     else
     {
-        Int step = stride >> depth;
+        int step = stride >> depth;
         initZscanToRaster(maxDepth, depth + 1, startVal,                        curIdx);
         initZscanToRaster(maxDepth, depth + 1, startVal + step,                 curIdx);
         initZscanToRaster(maxDepth, depth + 1, startVal + step * stride,        curIdx);
@@ -193,12 +193,12 @@ const short g_chromaFilter[8][NTAPS_CHROMA] =
     { -2, 10, 58, -2 }
 };
 
-Int g_quantScales[6] =
+int g_quantScales[6] =
 {
     26214, 23302, 20560, 18396, 16384, 14564
 };
 
-Int g_invQuantScales[6] =
+int g_invQuantScales[6] =
 {
     40, 45, 51, 57, 64, 72
 };
@@ -344,7 +344,7 @@ const UInt g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
 
 const UInt g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
 
-void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int height)
+void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, int width, int height)
 {
     const UInt  numScanPos  = UInt(width * width);
     UInt        nextScanPos = 0;
@@ -358,8 +358,8 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
         }
         for (UInt scanLine = 0; nextScanPos < numScanPos; scanLine++)
         {
-            Int primDim = Int(scanLine);
-            Int scndDim = 0;
+            int primDim = int(scanLine);
+            int scndDim = 0;
             while (primDim >= width)
             {
                 scndDim++;
@@ -395,8 +395,8 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
             UInt offsetScan = 16 * blk;
             for (UInt scanLine = 0; nextScanPos < 16; scanLine++)
             {
-                Int primDim = Int(scanLine);
-                Int scndDim = 0;
+                int primDim = int(scanLine);
+                int scndDim = 0;
                 while (primDim >= 4)
                 {
                     scndDim++;
@@ -418,14 +418,14 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
     if (width > 2)
     {
         UInt numBlkSide = width >> 2;
-        for (Int blkY = 0; blkY < numBlkSide; blkY++)
+        for (int blkY = 0; blkY < numBlkSide; blkY++)
         {
-            for (Int blkX = 0; blkX < numBlkSide; blkX++)
+            for (int blkX = 0; blkX < numBlkSide; blkX++)
             {
                 UInt offset = blkY * 4 * width + blkX * 4;
-                for (Int y = 0; y < 4; y++)
+                for (int y = 0; y < 4; y++)
                 {
-                    for (Int x = 0; x < 4; x++)
+                    for (int x = 0; x < 4; x++)
                     {
                         buffH[cnt] = y * width + x + offset;
                         cnt++;
@@ -435,14 +435,14 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
         }
 
         cnt = 0;
-        for (Int blkX = 0; blkX < numBlkSide; blkX++)
+        for (int blkX = 0; blkX < numBlkSide; blkX++)
         {
-            for (Int blkY = 0; blkY < numBlkSide; blkY++)
+            for (int blkY = 0; blkY < numBlkSide; blkY++)
             {
                 UInt offset    = blkY * 4 * width + blkX * 4;
-                for (Int x = 0; x < 4; x++)
+                for (int x = 0; x < 4; x++)
                 {
-                    for (Int y = 0; y < 4; y++)
+                    for (int y = 0; y < 4; y++)
                     {
                         buffV[cnt] = y * width + x + offset;
                         cnt++;
@@ -453,9 +453,9 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
     }
     else
     {
-        for (Int y = 0; y < height; y++)
+        for (int y = 0; y < height; y++)
         {
-            for (Int iX = 0; iX < width; iX++)
+            for (int iX = 0; iX < width; iX++)
             {
                 buffH[cnt] = y * width + iX;
                 cnt++;
@@ -463,9 +463,9 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
         }
 
         cnt = 0;
-        for (Int x = 0; x < width; x++)
+        for (int x = 0; x < width; x++)
         {
-            for (Int iY = 0; iY < height; iY++)
+            for (int iY = 0; iY < height; iY++)
             {
                 buffV[cnt] = iY * width + x;
                 cnt++;
@@ -474,7 +474,7 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
     }
 }
 
-Int g_quantTSDefault4x4[16] =
+int g_quantTSDefault4x4[16] =
 {
     16, 16, 16, 16,
     16, 16, 16, 16,
@@ -482,7 +482,7 @@ Int g_quantTSDefault4x4[16] =
     16, 16, 16, 16
 };
 
-Int g_quantIntraDefault8x8[64] =
+int g_quantIntraDefault8x8[64] =
 {
     16, 16, 16, 16, 17, 18, 21, 24,
     16, 16, 16, 16, 17, 19, 22, 25,
@@ -494,7 +494,7 @@ Int g_quantIntraDefault8x8[64] =
     24, 25, 29, 36, 47, 65, 88, 115
 };
 
-Int g_quantInterDefault8x8[64] =
+int g_quantInterDefault8x8[64] =
 {
     16, 16, 16, 16, 17, 18, 20, 24,
     16, 16, 16, 17, 18, 20, 24, 25,
@@ -508,10 +508,10 @@ Int g_quantInterDefault8x8[64] =
 UInt g_scalingListSize[4] = { 16, 64, 256, 1024 };
 UInt g_scalingListSizeX[4] = { 4, 8, 16,  32 };
 UInt g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 2 };
-Int  g_eTTable[4] = { 0, 3, 1, 2 };
+int  g_eTTable[4] = { 0, 3, 1, 2 };
 
-const Int g_winUnitX[] = { 1, 2, 2, 1 };
-const Int g_winUnitY[] = { 1, 2, 1, 1 };
+const int g_winUnitX[] = { 1, 2, 2, 1 };
+const int g_winUnitY[] = { 1, 2, 1, 1 };
 
 const int x265_lambda2_tab[MAX_QP + 1] =
 {

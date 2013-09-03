@@ -65,7 +65,7 @@ namespace x265 {
 
 void initROM();
 void destroyROM();
-void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int height);
+void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, int width, int height);
 
 // ====================================================================================================================
 // Data structure related table & variable
@@ -103,8 +103,8 @@ extern UInt g_puOffset[8];
 #define SHIFT_INV_1ST          7 // Shift after first inverse transform stage
 #define SHIFT_INV_2ND         12 // Shift after second inverse transform stage
 
-extern Int g_quantScales[6];     // Q(QP%6)
-extern Int g_invQuantScales[6];  // IQ(QP%6)
+extern int g_quantScales[6];     // Q(QP%6)
+extern int g_invQuantScales[6];  // IQ(QP%6)
 extern const short g_t4[4][4];
 extern const short g_t8[8][8];
 extern const short g_t16[16][16];
@@ -154,7 +154,7 @@ extern const UChar g_intraModeNumFast[7];
 // Bit-depth
 // ====================================================================================================================
 
-extern Int g_bitDepth;
+extern int g_bitDepth;
 
 /** clip x, such that 0 <= x <= #g_maxLumaVal */
 template<typename T>
@@ -277,22 +277,22 @@ static const char MatrixType_DC[4][12][22] =
         "INTER32X32_LUMA_DC",
     },
 };
-extern Int g_quantIntraDefault8x8[64];
-extern Int g_quantIntraDefault16x16[256];
-extern Int g_quantIntraDefault32x32[1024];
-extern Int g_quantInterDefault8x8[64];
-extern Int g_quantInterDefault16x16[256];
-extern Int g_quantInterDefault32x32[1024];
-extern Int g_quantTSDefault4x4[16];
+extern int g_quantIntraDefault8x8[64];
+extern int g_quantIntraDefault16x16[256];
+extern int g_quantIntraDefault32x32[1024];
+extern int g_quantInterDefault8x8[64];
+extern int g_quantInterDefault16x16[256];
+extern int g_quantInterDefault32x32[1024];
+extern int g_quantTSDefault4x4[16];
 extern UInt g_scalingListSize[SCALING_LIST_SIZE_NUM];
 extern UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
 extern UInt g_scalingListNum[SCALING_LIST_SIZE_NUM];
-extern Int  g_eTTable[4];
+extern int  g_eTTable[4];
 //! \}
 
 // Map Luma samples to chroma samples
-extern const Int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
-extern const Int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
+extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
+extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 extern const int x265_lambda2_tab[MAX_QP+1];
 
 // CABAC tables

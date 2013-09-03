@@ -104,8 +104,8 @@ private:
     TEncSbac*    m_rdGoOnSbacCoder;
 
     UInt         m_LCUPredictionSAD;
-    Int          m_addSADDepth;
-    Int          m_temporalSAD;
+    int          m_addSADDepth;
+    int          m_temporalSAD;
     UChar        m_totalDepth;
 
     Bool         m_bEncodeDQP;
@@ -144,7 +144,7 @@ protected:
     void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth);
     void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt partitionIndex);
     void xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
-    Int  xComputeQP(TComDataCU* cu);
+    int  xComputeQP(TComDataCU* cu);
     void xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth);
 
     void xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, Bool *earlyDetectionSkipMode,

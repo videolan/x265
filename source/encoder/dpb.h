@@ -67,7 +67,7 @@ protected:
     void computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer);
 
     void applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc);
-    void decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType);
+    void decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType);
 
     void arrangeLongtermPicturesInRPS(TComSlice *, x265::FrameEncoder *frameEncoder);
 

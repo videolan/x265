@@ -173,7 +173,7 @@ void TComOutputBitstream::writeByteAlignment()
     writeAlignZero();
 }
 
-Int TComOutputBitstream::countStartCodeEmulations()
+int TComOutputBitstream::countStartCodeEmulations()
 {
     UInt cnt = 0;
 

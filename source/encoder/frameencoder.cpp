@@ -210,7 +210,7 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
     return 0;
 }
 
-void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
+void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, int gopID)
 {
     m_pic = pic;
     TComSlice* slice = pic->getSlice();
@@ -251,14 +251,14 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     }
 
     // depth computation based on GOP size
-    Int depth = 0;
-    Int poc = slice->getPOC() % m_cfg->getGOPSize();
+    int depth = 0;
+    int poc = slice->getPOC() % m_cfg->getGOPSize();
     if (poc)
     {
-        Int step = m_cfg->getGOPSize();
-        for (Int i = step >> 1; i >= 1; i >>= 1)
+        int step = m_cfg->getGOPSize();
+        for (int i = step >> 1; i >= 1; i >>= 1)
         {
-            for (Int j = i; j < m_cfg->getGOPSize(); j += step)
+            for (int j = i; j < m_cfg->getGOPSize(); j += step)
             {
                 if (j == poc)
                 {
@@ -294,17 +294,17 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     // Lambda computation
     // ------------------------------------------------------------------------------------------------------------------
 
-    Int qp;
+    int qp;
 
     // compute lambda value
-    Int    NumberBFrames = (m_cfg->getGOPSize() - 1);
-    Int    SHIFT_QP = 12;
+    int    NumberBFrames = (m_cfg->getGOPSize() - 1);
+    int    SHIFT_QP = 12;
     Double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
 #if FULL_NBIT
-    Int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
+    int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
     Double qp_temp_orig = (Double)dQP - SHIFT_QP;
 #else
-    Int    bitdepth_luma_qp_scale = 0;
+    int    bitdepth_luma_qp_scale = 0;
 #endif
     Double qp_temp = (Double)qpdouble + bitdepth_luma_qp_scale - SHIFT_QP;
 
@@ -325,7 +325,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
 #endif
     }
 
-    qp = max(-m_sps.getQpBDOffsetY(), min(MAX_QP, (Int)floor(qpdouble + 0.5)));
+    qp = max(-m_sps.getQpBDOffsetY(), min(MAX_QP, (int)floor(qpdouble + 0.5)));
 
     if (slice->getSliceType() != I_SLICE)
     {
@@ -336,8 +336,8 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
     Double weight = 1.0;
-    Int qpc;
-    Int chromaQPOffset;
+    int qpc;
+    int chromaQPOffset;
 
     chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, 57, qp + chromaQPOffset);
@@ -369,24 +369,24 @@ void FrameEncoder::compressFrame(TComPic *pic)
     TEncEntropy* entropyCoder = getEntropyCoder(0);
     TComSlice*   slice        = pic->getSlice();
 
-    Int numSubstreams = m_cfg->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
+    int numSubstreams = m_cfg->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
     // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
     TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
 
     if (m_cfg->getUseASR() && !slice->isIntra())
     {
-        Int pocCurr = slice->getPOC();
-        Int maxSR = m_cfg->param.searchRange;
-        Int numPredDir = slice->isInterP() ? 1 : 2;
+        int pocCurr = slice->getPOC();
+        int maxSR = m_cfg->param.searchRange;
+        int numPredDir = slice->isInterP() ? 1 : 2;
 
-        for (Int dir = 0; dir <= numPredDir; dir++)
+        for (int dir = 0; dir <= numPredDir; dir++)
         {
             RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            for (Int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
+            for (int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
             {
-                Int refPOC = slice->getRefPic(e, refIdx)->getPOC();
-                Int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
+                int refPOC = slice->getRefPic(e, refIdx)->getPOC();
+                int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
                 setAdaptiveSearchRange(dir, refIdx, newSR);
             }
         }
@@ -422,12 +422,12 @@ void FrameEncoder::compressFrame(TComPic *pic)
     }
 
     // Generate motion references
-    Int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
-    for (Int l = 0; l < numPredDir; l++)
+    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+    for (int l = 0; l < numPredDir; l++)
     {
         RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
         wpScalingParam *w = NULL;
-        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
         {
             TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
             if ((slice->isInterP() && slice->getPPS()->getUseWP()))
@@ -639,8 +639,8 @@ void FrameEncoder::compressFrame(TComPic *pic)
         entropyCoder->encodeTilesWPPEntryPoint(slice);
 
         // Substreams...
-        Int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
-        for (Int i = 0; i < nss; i++)
+        int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
+        for (int i = 0; i < nss; i++)
         {
             bitstreamRedirect->addSubstream(&outStreams[i]);
         }
@@ -671,10 +671,10 @@ void FrameEncoder::compressFrame(TComPic *pic)
     pic->compressMotion();
 
     /* Decrement referenced frame reference counts, allow them to be recycled */
-    for (Int l = 0; l < numPredDir; l++)
+    for (int l = 0; l < numPredDir; l++)
     {
         RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
         {
             TComPic *refpic = slice->getRefPic(list, ref);
             ATOMIC_DEC(&refpic->m_countRefEncoders);
@@ -716,10 +716,10 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 
     const int  bWaveFrontsynchro = m_cfg->param.bEnableWavefront;
     const UInt heightInLCUs = pic->getPicSym()->getFrameHeightInCU();
-    const Int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
+    const int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
     UInt bitsOriginallyInSubstreams = 0;
 
-    for (Int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
+    for (int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
     {
         getBufferSBac(substrmIdx)->loadContexts(&m_sbacCoder); //init. state
         bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
@@ -770,19 +770,19 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
         if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-            Int numCuInWidth     = saoParam->numCuInWidth;
-            Int cuAddrInSlice    = cuAddr;
-            Int rx = cuAddr % numCuInWidth;
-            Int ry = cuAddr / numCuInWidth;
-            Int allowMergeLeft = 1;
-            Int allowMergeUp   = 1;
-            Int addr = cu->getAddr();
+            int numCuInWidth     = saoParam->numCuInWidth;
+            int cuAddrInSlice    = cuAddr;
+            int rx = cuAddr % numCuInWidth;
+            int ry = cuAddr / numCuInWidth;
+            int allowMergeLeft = 1;
+            int allowMergeUp   = 1;
+            int addr = cu->getAddr();
             allowMergeLeft = (rx > 0) && (cuAddrInSlice != 0);
             allowMergeUp = (ry > 0) && (cuAddrInSlice >= 0);
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
-                Int mergeLeft = saoParam->saoLcuParam[0][addr].mergeLeftFlag;
-                Int mergeUp = saoParam->saoLcuParam[0][addr].mergeUpFlag;
+                int mergeLeft = saoParam->saoLcuParam[0][addr].mergeLeftFlag;
+                int mergeUp = saoParam->saoLcuParam[0][addr].mergeUpFlag;
                 if (allowMergeLeft)
                 {
                     entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeLeft);
@@ -803,7 +803,7 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
                     }
                     if (mergeUp == 0)
                     {
-                        for (Int compIdx = 0; compIdx < 3; compIdx++)
+                        for (int compIdx = 0; compIdx < 3; compIdx++)
                         {
                             if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
                             {
@@ -816,9 +816,9 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
         }
         else if (slice->getSPS()->getUseSAO())
         {
-            Int addr = cu->getAddr();
+            int addr = cu->getAddr();
             SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-            for (Int cIdx = 0; cIdx < 3; cIdx++)
+            for (int cIdx = 0; cIdx < 3; cIdx++)
             {
                 SaoLcuParam *saoLcuParam = &(saoParam->saoLcuParam[cIdx][addr]);
                 if (((cIdx == 0) && !slice->getSaoEnabledFlag()) || ((cIdx == 1 || cIdx == 2) && !slice->getSaoEnabledFlagChroma()))
@@ -897,14 +897,14 @@ void FrameEncoder::compressCTURows(TComPic* pic)
         m_frameFilter.start(pic);
 
         TComSlice* slice = m_pic->getSlice();
-        Int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+        int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
         for (int row = 0; row < m_numRows; row++)
         {
             UInt min = m_numRows;
-            for (Int l = 0; l < numPredDir; l++)
+            for (int l = 0; l < numPredDir; l++)
             {
                 RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-                for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
                     TComPic *refpic = slice->getRefPic(list, ref);
                     while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < (UInt)row + 2))

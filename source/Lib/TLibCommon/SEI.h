@@ -142,11 +142,11 @@ public:
 
     virtual ~SEIActiveParameterSets() {}
 
-    Int activeVPSId;
+    int activeVPSId;
     Bool m_fullRandomAccessFlag;
     Bool m_noParamSetUpdateFlag;
-    Int numSpsIdsMinus1;
-    std::vector<Int> activeSeqParamSetId;
+    int numSpsIdsMinus1;
+    std::vector<int> activeSeqParamSetId;
 };
 
 class SEIBufferingPeriod : public SEI
@@ -237,10 +237,10 @@ public:
 
     virtual ~SEIDecodingUnitInfo() {}
 
-    Int m_decodingUnitIdx;
-    Int m_duSptCpbRemovalDelay;
+    int m_decodingUnitIdx;
+    int m_duSptCpbRemovalDelay;
     Bool m_dpbOutputDuDelayPresentFlag;
-    Int m_picSptDpbOutputDuDelay;
+    int m_picSptDpbOutputDuDelay;
 };
 
 class SEIRecoveryPoint : public SEI
@@ -253,7 +253,7 @@ public:
 
     virtual ~SEIRecoveryPoint() {}
 
-    Int  m_recoveryPocCnt;
+    int  m_recoveryPocCnt;
     Bool m_exactMatchingFlag;
     Bool m_brokenLinkFlag;
 };

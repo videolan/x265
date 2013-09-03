@@ -74,7 +74,7 @@ public:
         }
     }
 
-    void setQPLambda(Int QP, double lumaLambda, double chromaLambda, int depth)
+    void setQPLambda(int QP, double lumaLambda, double chromaLambda, int depth)
     {
         for (int i = 0; i < m_numRows; i++)
         {
@@ -166,7 +166,7 @@ public:
 
     int getStreamHeaders(AccessUnit& accessUnitOut);
 
-    void initSlice(TComPic* pic, Bool bForceISlice, Int gopID);
+    void initSlice(TComPic* pic, Bool bForceISlice, int gopID);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame(TComPic *pic);

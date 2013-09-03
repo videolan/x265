@@ -79,7 +79,7 @@ enum NDBFBlockBorderTag
 /// Non-deblocking filter processing block information
 struct NDBFBlockInfo
 {
-    Int   sliceID; //!< slice ID
+    int   sliceID; //!< slice ID
     UInt  startSU; //!< starting SU z-scan address in LCU
     UInt  endSU;  //!< ending SU z-scan address in LCU
     UInt  widthSU; //!< number of SUs in width
@@ -125,7 +125,7 @@ private:
     UChar*        m_width;         ///< array of widths
     UChar*        m_height;        ///< array of heights
     UChar*        m_depth;         ///< array of depths
-    Int           m_unitSize;         ///< size of a "minimum partition"
+    int           m_unitSize;         ///< size of a "minimum partition"
 
     // -------------------------------------------------------------------------------------------------------------------
     // CU data
@@ -182,16 +182,16 @@ private:
 protected:
 
     /// add possible motion vector predictor candidates
-    Bool          xAddMVPCand(AMVPInfo* info, RefPicList picList, Int refIdx, UInt partUnitIdx, MVP_DIR dir);
+    Bool          xAddMVPCand(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir);
 
-    Bool          xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, Int refIdx, UInt partUnitIdx, MVP_DIR dir);
+    Bool          xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir);
 
     void          deriveRightBottomIdx(UInt partIdx, UInt& outPartIdxRB);
 
-    Bool          xGetColMVP(RefPicList picList, Int cuAddr, Int partUnitIdx, x265::MV& outMV, Int& outRefIdx);
+    Bool          xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, x265::MV& outMV, int& outRefIdx);
 
     /// compute scaling factor from POC difference
-    Int           xGetDistScaleFactor(Int curPOC, Int curRefPOC, Int colPOC, Int colRefPOC);
+    int           xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC);
 
     void xDeriveCenterIdx(UInt partIdx, UInt& outPartIdxCenter);
 
@@ -209,12 +209,12 @@ public:
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
 
-    void          create(UInt numPartition, UInt width, UInt height, Int unitSize);
+    void          create(UInt numPartition, UInt width, UInt height, int unitSize);
     void          destroy();
 
     void          initCU(TComPic* pic, UInt cuAddr);
-    void          initEstData(UInt depth, Int qp);
-    void          initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, Int qp);
+    void          initEstData(UInt depth, int qp);
+    void          initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, int qp);
     void          setOutsideCUPart(UInt absPartIdx, UInt depth);
 
     void          copySubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth);
@@ -258,7 +258,7 @@ public:
 
     char*         getPartitionSize()                      { return m_partSizes; }
 
-    Int           getUnitSize()                           { return m_unitSize; }
+    int           getUnitSize()                           { return m_unitSize; }
 
     PartSize      getPartitionSize(UInt uiIdx)            { return static_cast<PartSize>(m_partSizes[uiIdx]); }
 
@@ -307,10 +307,10 @@ public:
 
     void          setQP(UInt uiIdx, char value) { m_qp[uiIdx] =  value; }
 
-    void          setQPSubParts(Int qp,   UInt absPartIdx, UInt depth);
-    Int           getLastValidPartIdx(Int iAbsPartIdx);
+    void          setQPSubParts(int qp,   UInt absPartIdx, UInt depth);
+    int           getLastValidPartIdx(int iAbsPartIdx);
     char          getLastCodedQP(UInt absPartIdx);
-    void          setQPSubCUs(Int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf);
+    void          setQPSubCUs(int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf);
   
     Bool          isLosslessCoded(UInt absPartIdx);
 
@@ -424,7 +424,7 @@ public:
     // member functions for accessing partition information
     // -------------------------------------------------------------------------------------------------------------------
 
-    void          getPartIndexAndSize(UInt partIdx, UInt& ruiPartAddr, Int& riWidth, Int& riHeight);
+    void          getPartIndexAndSize(UInt partIdx, UInt& ruiPartAddr, int& riWidth, int& riHeight);
     UChar         getNumPartInter();
     Bool          isFirstAbsZorderIdxInDepth(UInt absPartIdx, UInt depth);
 
@@ -434,23 +434,23 @@ public:
 
     void          getMvField(TComDataCU* cu, UInt absPartIdx, RefPicList picList, TComMvField& rcMvField);
 
-    void          fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, Int refIdx, AMVPInfo* info);
-    Bool          isDiffMER(Int xN, Int yN, Int xP, Int yP);
-    void          getPartPosition(UInt partIdx, Int& xP, Int& yP, Int& nPSW, Int& nPSH);
-    void          setMVPIdx(RefPicList picList, UInt uiIdx, Int mvpIdx)  { m_mvpIdx[picList][uiIdx] = (char)mvpIdx; }
+    void          fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, int refIdx, AMVPInfo* info);
+    Bool          isDiffMER(int xN, int yN, int xP, int yP);
+    void          getPartPosition(UInt partIdx, int& xP, int& yP, int& nPSW, int& nPSH);
+    void          setMVPIdx(RefPicList picList, UInt uiIdx, int mvpIdx)  { m_mvpIdx[picList][uiIdx] = (char)mvpIdx; }
 
-    Int           getMVPIdx(RefPicList picList, UInt uiIdx)               { return m_mvpIdx[picList][uiIdx]; }
+    int           getMVPIdx(RefPicList picList, UInt uiIdx)               { return m_mvpIdx[picList][uiIdx]; }
 
     char*         getMVPIdx(RefPicList picList)                          { return m_mvpIdx[picList]; }
 
-    void          setMVPNum(RefPicList picList, UInt uiIdx, Int iMVPNum) { m_mvpNum[picList][uiIdx] = (char)iMVPNum; }
+    void          setMVPNum(RefPicList picList, UInt uiIdx, int iMVPNum) { m_mvpNum[picList][uiIdx] = (char)iMVPNum; }
 
-    Int           getMVPNum(RefPicList picList, UInt uiIdx)              { return m_mvpNum[picList][uiIdx]; }
+    int           getMVPNum(RefPicList picList, UInt uiIdx)              { return m_mvpNum[picList][uiIdx]; }
 
     char*         getMVPNum(RefPicList picList)                          { return m_mvpNum[picList]; }
 
-    void          setMVPIdxSubParts(Int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
-    void          setMVPNumSubParts(Int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
+    void          setMVPIdxSubParts(int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
+    void          setMVPNumSubParts(int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
 
     void          clipMv(x265::MV& outMV, int rowsAvailable = 0);
 
@@ -503,7 +503,7 @@ public:
     void          deriveLeftBottomIdxAdi(UInt& ruiPartIdxLB, UInt  partOffset, UInt partDepth);
 
     Bool          hasEqualMotion(UInt absPartIdx, TComDataCU* pcCandCU, UInt uiCandAbsPartIdx);
-    void          getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvField* pcMFieldNeighbours, UChar* puhInterDirNeighbours, Int& numValidMergeCand, Int mrgCandIdx = -1);
+    void          getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvField* pcMFieldNeighbours, UChar* puhInterDirNeighbours, int& numValidMergeCand, int mrgCandIdx = -1);
     void          deriveLeftRightTopIdxGeneral(UInt absPartIdx, UInt partIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT);
     void          deriveLeftBottomIdxGeneral(UInt absPartIdx, UInt partIdx, UInt& ruiPartIdxLB);
 
@@ -523,7 +523,7 @@ public:
     UInt          getIntraSizeIdx(UInt absPartIdx);
 
     void          getAllowedChromaDir(UInt absPartIdx, UInt* uiModeList);
-    Int           getIntraDirLumaPredictor(UInt absPartIdx, Int* uiIntraDirPred, Int* piMode = NULL);
+    int           getIntraDirLumaPredictor(UInt absPartIdx, int* uiIntraDirPred, int* piMode = NULL);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for SBAC context
@@ -551,7 +551,7 @@ namespace RasterAddress {
  * \param numUnitsPerRow Number of units in a row
  * \return Result of test
  */
-static inline Bool isEqualCol(Int addrA, Int addrB, Int numUnitsPerRow)
+static inline Bool isEqualCol(int addrA, int addrB, int numUnitsPerRow)
 {
     // addrA % numUnitsPerRow == addrB % numUnitsPerRow
     return ((addrA ^ addrB) &  (numUnitsPerRow - 1)) == 0;
@@ -563,7 +563,7 @@ static inline Bool isEqualCol(Int addrA, Int addrB, Int numUnitsPerRow)
  * \param numUnitsPerRow Number of units in a row
  * \return Result of test
  */
-static inline Bool isEqualRow(Int addrA, Int addrB, Int numUnitsPerRow)
+static inline Bool isEqualRow(int addrA, int addrB, int numUnitsPerRow)
 {
     // addrA / numUnitsPerRow == addrB / numUnitsPerRow
     return ((addrA ^ addrB) & ~(numUnitsPerRow - 1)) == 0;
@@ -575,7 +575,7 @@ static inline Bool isEqualRow(Int addrA, Int addrB, Int numUnitsPerRow)
  * \param numUnitsPerRow Number of units in a row
  * \return Result of test
  */
-static inline Bool isEqualRowOrCol(Int addrA, Int addrB, Int numUnitsPerRow)
+static inline Bool isEqualRowOrCol(int addrA, int addrB, int numUnitsPerRow)
 {
     return isEqualCol(addrA, addrB, numUnitsPerRow) | isEqualRow(addrA, addrB, numUnitsPerRow);
 }
@@ -585,7 +585,7 @@ static inline Bool isEqualRowOrCol(Int addrA, Int addrB, Int numUnitsPerRow)
  * \param numUnitsPerRow Number of units in a row
  * \return Result of test
  */
-static inline Bool isZeroCol(Int addr, Int numUnitsPerRow)
+static inline Bool isZeroCol(int addr, int numUnitsPerRow)
 {
     // addr % numUnitsPerRow == 0
     return (addr & (numUnitsPerRow - 1)) == 0;
@@ -596,7 +596,7 @@ static inline Bool isZeroCol(Int addr, Int numUnitsPerRow)
  * \param numUnitsPerRow Number of units in a row
  * \return Result of test
  */
-static inline Bool isZeroRow(Int addr, Int numUnitsPerRow)
+static inline Bool isZeroRow(int addr, int numUnitsPerRow)
 {
     // addr / numUnitsPerRow == 0
     return (addr & ~(numUnitsPerRow - 1)) == 0;
@@ -608,7 +608,7 @@ static inline Bool isZeroRow(Int addr, Int numUnitsPerRow)
  * \param numUnitsPerRow Number of units in a row
  * \return Result of test
  */
-static inline Bool lessThanCol(Int addr, Int val, Int numUnitsPerRow)
+static inline Bool lessThanCol(int addr, int val, int numUnitsPerRow)
 {
     // addr % numUnitsPerRow < val
     return (addr & (numUnitsPerRow - 1)) < val;
@@ -620,7 +620,7 @@ static inline Bool lessThanCol(Int addr, Int val, Int numUnitsPerRow)
  * \param numUnitsPerRow Number of units in a row
  * \return Result of test
  */
-static inline Bool lessThanRow(Int addr, Int val, Int numUnitsPerRow)
+static inline Bool lessThanRow(int addr, int val, int numUnitsPerRow)
 {
     // addr / numUnitsPerRow < val
     return addr < val * numUnitsPerRow;

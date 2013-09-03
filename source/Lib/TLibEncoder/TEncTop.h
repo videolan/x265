@@ -67,7 +67,7 @@ class TEncTop : public TEncCfg
 {
 private:
 
-    Int                     m_pocLast;          ///< time index (POC)
+    int                     m_pocLast;          ///< time index (POC)
     TComList<TComPic*>      m_freeList;
 
     x265::ThreadPool*       m_threadPool;

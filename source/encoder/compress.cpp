@@ -114,7 +114,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
     UInt stride = m_modePredYuv[5][depth]->getStride();
     UInt rdModeList[FAST_UDI_MAX_RDMODE_NUM];
     UInt numModesForFullRD = g_intraModeNumFast[widthBits];
-    Int nLog2SizeMinus2 = g_convertToBit[width];
+    int nLog2SizeMinus2 = g_convertToBit[width];
     x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
 
     {
@@ -217,15 +217,15 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
             CandNum += m_search->xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, CandCostList);
         }
 
-        Int preds[3] = { -1, -1, -1 };
-        Int mode = -1;
-        Int numCand = cu->getIntraDirLumaPredictor(partOffset, preds, &mode);
+        int preds[3] = { -1, -1, -1 };
+        int mode = -1;
+        int numCand = cu->getIntraDirLumaPredictor(partOffset, preds, &mode);
         if (mode >= 0)
         {
             numCand = mode;
         }
 
-        for (Int j = 0; j < numCand; j++)
+        for (int j = 0; j < numCand; j++)
         {
             Bool mostProbableModeIncluded = false;
             UInt mostProbableMode = preds[j];
@@ -292,7 +292,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     UInt tpely = outTempCU->getCUPelY();
     UInt bpely = tpely + outTempCU->getHeight(0) - 1;
     TComDataCU* subTempPartCU, * subBestPartCU;
-    Int qp = outTempCU->getQP(0);
+    int qp = outTempCU->getQP(0);
 #if EARLY_EXIT_NO_RDO
     UInt64 nxnCost = 0;
 #endif
@@ -360,7 +360,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
             bTrySplitDQP = bTrySplit;
 
-            if ((Int)depth <= m_addSADDepth)
+            if ((int)depth <= m_addSADDepth)
             {
                 m_LCUPredictionSAD += m_temporalSAD;
                 m_addSADDepth = depth;

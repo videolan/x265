@@ -69,8 +69,8 @@ protected:
     TComSlice*    m_pcSlice;
     UInt          m_uiCoeffCost;
 
-    void codeShortTermRefPicSet(TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx);
-    Bool findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag);
+    void codeShortTermRefPicSet(TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, int idx);
+    Bool findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, int ltrpPOC, Bool usedFlag);
 
 public:
 
@@ -94,7 +94,7 @@ public:
     void  codeSPS(TComSPS* pcSPS);
     void  codePPS(TComPPS* pcPPS);
     void  codeSliceHeader(TComSlice* slice);
-    void  codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
+    void  codePTL(TComPTL* pcPTL, Bool profilePresentFlag, int maxNumSubLayersMinus1);
     void  codeProfileTier(ProfileTierLevel* ptl);
     void  codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
     void  codeTilesWPPEntryPoint(TComSlice* pSlice);
@@ -113,9 +113,9 @@ public:
 
     void codeSaoUflc(UInt, UInt) { printf("Not supported\n"); assert(0); }
 
-    void updateContextTables(SliceType, Int, Bool) {}
+    void updateContextTables(SliceType, int, Bool) {}
 
-    void updateContextTables(SliceType, Int) {}
+    void updateContextTables(SliceType, int) {}
 
     void codeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx);
     void codeSkipFlag(TComDataCU* cu, UInt absPartIdx);
@@ -146,14 +146,14 @@ public:
     void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType);
     void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType eTType);
 
-    void estBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
+    void estBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType);
 
     void xCodePredWeightTable(TComSlice* slice);
 
     void codeScalingList(TComScalingList* scalingList);
     void xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId);
     void codeDFFlag(UInt uiCode, const char *pSymbolName);
-    void codeDFSvlc(Int iCode, const char *pSymbolName);
+    void codeDFSvlc(int iCode, const char *pSymbolName);
 };
 }
 //! \}

@@ -109,7 +109,7 @@ void TEncCu::create(UChar totalDepth, UInt maxWidth)
 
     m_origYuv = new TComYuv*[m_totalDepth - 1];
 
-    for (Int i = 0; i < m_totalDepth - 1; i++)
+    for (int i = 0; i < m_totalDepth - 1; i++)
     {
         UInt numPartitions = 1 << ((m_totalDepth - i - 1) << 1);
         UInt width  = maxWidth  >> i;
@@ -181,7 +181,7 @@ void TEncCu::create(UChar totalDepth, UInt maxWidth)
 
 void TEncCu::destroy()
 {
-    for (Int i = 0; i < m_totalDepth - 1; i++)
+    for (int i = 0; i < m_totalDepth - 1; i++)
     {
         if (m_interCU_2Nx2N[i])
         {
@@ -593,7 +593,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UI
     UInt rpelx = lpelx + outBestCU->getWidth(0)  - 1;
     UInt tpelx = outBestCU->getCUPelY();
     UInt bpely = tpelx + outBestCU->getHeight(0) - 1;
-    Int qp = outTempCU->getQP(0);
+    int qp = outTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
@@ -807,7 +807,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt de
     UInt tpely = outBestCU->getCUPelY();
     UInt bpely = tpely + outBestCU->getHeight(0) - 1;
 
-    Int qp = outTempCU->getQP(0);
+    int qp = outTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
     TComSlice* slice = outTempCU->getPic()->getSlice();
@@ -1285,7 +1285,7 @@ void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
             m_entropyCoder->encodeTerminatingBit(bTerminateSlice ? 1 : 0);
     }
 
-    Int numberOfWrittenBits = 0;
+    int numberOfWrittenBits = 0;
     if (m_bitCounter)
     {
         numberOfWrittenBits = m_entropyCoder->getNumberOfWrittenBits();
@@ -1293,7 +1293,7 @@ void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
 
     // Calculate slice end IF this CU puts us over slice bit size.
     UInt granularitySize = cu->getPic()->getNumPartInCU();
-    Int granularityEnd = ((cu->getSCUAddr() + absPartIdx) / granularitySize) * granularitySize;
+    int granularityEnd = ((cu->getSCUAddr() + absPartIdx) / granularitySize) * granularitySize;
     if (granularityEnd <= 0)
     {
         granularityEnd += max(granularitySize, (cu->getPic()->getNumPartInCU() >> (depth << 1)));
@@ -1313,9 +1313,9 @@ void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
  * \param cu Target CU
  * \returns quantization parameter
  */
-Int TEncCu::xComputeQP(TComDataCU* cu)
+int TEncCu::xComputeQP(TComDataCU* cu)
 {
-    Int baseQP = cu->getSlice()->getSliceQp();
+    int baseQP = cu->getSlice()->getSliceQp();
 
     return Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, baseQP);
 }
@@ -1428,7 +1428,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     assert(outTempCU->getSlice()->getSliceType() != I_SLICE);
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar interDirNeighbours[MRG_MAX_NUM_CANDS];
-    Int numValidMergeCand = 0;
+    int numValidMergeCand = 0;
 
     for (UInt i = 0; i < outTempCU->getSlice()->getMaxNumMergeCand(); ++i)
     {
@@ -1440,7 +1440,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
 
-    Int mergeCandBuffer[MRG_MAX_NUM_CANDS];
+    int mergeCandBuffer[MRG_MAX_NUM_CANDS];
     for (UInt i = 0; i < numValidMergeCand; ++i)
     {
         mergeCandBuffer[i] = 0;
@@ -1497,7 +1497,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     }
 
                     outTempCU->setSkipFlagSubParts(outTempCU->getQtRootCbf(0) == 0, 0, depth);
-                    Int origQP = outTempCU->getQP(0);
+                    int origQP = outTempCU->getQP(0);
                     xCheckDQP(outTempCU);
                     if (outTempCU->m_totalCost < outBestCU->m_totalCost)
                     {
@@ -1534,14 +1534,14 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                 }
                 else
                 {
-                    Int mvsum = 0;
+                    int mvsum = 0;
                     for (UInt refListIdx = 0; refListIdx < 2; refListIdx++)
                     {
                         if (outBestCU->getSlice()->getNumRefIdx(RefPicList(refListIdx)) > 0)
                         {
                             TComCUMvField* pcCUMvField = outBestCU->getCUMvField(RefPicList(refListIdx));
-                            Int hor = abs(pcCUMvField->getMvd(0).x);
-                            Int ver = abs(pcCUMvField->getMvd(0).y);
+                            int hor = abs(pcCUMvField->getMvd(0).x);
+                            int ver = abs(pcCUMvField->getMvd(0).y);
                             mvsum += hor + ver;
                         }
                     }
@@ -1766,7 +1766,7 @@ void TEncCu::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 {
     // TODO: SJB - there are multiple implementations of this function, it should be an AMVPInfo method
     dst->m_num = src->m_num;
-    for (Int i = 0; i < src->m_num; i++)
+    for (int i = 0; i < src->m_num; i++)
     {
         dst->m_mvCand[i] = src->m_mvCand[i];
     }
@@ -1832,9 +1832,9 @@ void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
     Pel* dstY = cu->getPCMSampleY();
     UInt srcStride = fencYuv->getStride();
 
-    for (Int y = 0; y < height; y++)
+    for (int y = 0; y < height; y++)
     {
-        for (Int x = 0; x < width; x++)
+        for (int x = 0; x < width; x++)
         {
             dstY[x] = srcY[x];
         }
@@ -1853,9 +1853,9 @@ void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
     UInt heightC = height >> 1;
     UInt widthC = width >> 1;
 
-    for (Int y = 0; y < heightC; y++)
+    for (int y = 0; y < heightC; y++)
     {
-        for (Int x = 0; x < widthC; x++)
+        for (int x = 0; x < widthC; x++)
         {
             dstCb[x] = srcCb[x];
             dstCr[x] = srcCr[x];

@@ -109,8 +109,8 @@ public:
 
 private:
 
-    void  xWriteUnarySymbol(UInt uiSymbol, ContextModel* pcSCModel, Int offset);
-    void  xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, Int offset, UInt uiMaxSymbol);
+    void  xWriteUnarySymbol(UInt uiSymbol, ContextModel* pcSCModel, int offset);
+    void  xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, int offset, UInt uiMaxSymbol);
     void  xWriteEpExGolomb(UInt uiSymbol, UInt uiCount);
     void  xWriteCoefRemainExGolomb(UInt symbol, UInt &rParam);
 
@@ -119,7 +119,7 @@ private:
 
     void codeDFFlag(UInt /*uiCode*/, const char* /*pSymbolName*/)       { printf("Not supported in codeDFFlag()\n"); assert(0); exit(1); }
 
-    void codeDFSvlc(Int /*iCode*/, const char* /*pSymbolName*/)         { printf("Not supported in codeDFSvlc()\n"); assert(0); exit(1); }
+    void codeDFSvlc(int /*iCode*/, const char* /*pSymbolName*/)         { printf("Not supported in codeDFSvlc()\n"); assert(0); exit(1); }
 
 protected:
 
@@ -157,7 +157,7 @@ public:
 
     void codeDeltaQP(TComDataCU* cu, UInt absPartIdx);
 
-    void codeLastSignificantXY(UInt posx, UInt posy, Int width, Int height, TextType eTType, UInt uiScanIdx);
+    void codeLastSignificantXY(UInt posx, UInt posy, int width, int height, TextType eTType, UInt uiScanIdx);
     void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType);
     void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType eTType);
 
@@ -165,14 +165,14 @@ public:
     // for RD-optimizatioon
     // -------------------------------------------------------------------------------------------------------------------
 
-    void estBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
+    void estBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType);
     void estCBFBit(estBitsSbacStruct* pcEstBitsSbac);
     void estSignificantCoeffGroupMapBit(estBitsSbacStruct* pcEstBitsSbac, TextType eTType);
-    void estSignificantMapBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
+    void estSignificantMapBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType);
     void estSignificantCoefficientsBit(estBitsSbacStruct* pcEstBitsSbac, TextType eTType);
 
-    void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish = true);
-    void updateContextTables(SliceType eSliceType, Int iQp) { this->updateContextTables(eSliceType, iQp, true); }
+    void updateContextTables(SliceType eSliceType, int iQp, Bool bExecuteFinish = true);
+    void updateContextTables(SliceType eSliceType, int iQp) { this->updateContextTables(eSliceType, iQp, true); }
 
     TEncBinIf* getEncBinIf()  { return m_pcBinIf; }
 
@@ -181,7 +181,7 @@ private:
     UInt                 m_uiLastQp;
 
     ContextModel         m_contextModels[MAX_NUM_CTX_MOD];
-    Int                  m_numContextModels;
+    int                  m_numContextModels;
     ContextModel3DBuffer m_cCUSplitFlagSCModel;
     ContextModel3DBuffer m_cCUSkipFlagSCModel;
     ContextModel3DBuffer m_cCUMergeFlagExtSCModel;

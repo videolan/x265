@@ -85,7 +85,7 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    void          create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes);
+    void          create(int width, int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, int bframes);
 
     virtual void  destroy();
 
@@ -105,7 +105,7 @@ public:
 
     TComSlice*    getSlice()              { return m_picSym->getSlice(); }
 
-    Int           getPOC()                { return m_picSym->getSlice()->getPOC(); }
+    int           getPOC()                { return m_picSym->getSlice()->getPOC(); }
 
     TComDataCU*   getCU(UInt cuAddr)    { return m_picSym->getCU(cuAddr); }
 
@@ -133,9 +133,9 @@ public:
 
     UInt          getParPelY(UChar partIdx) { return getParPelX(partIdx); }
 
-    Int           getStride()             { return m_reconPicYuv->getStride(); }
+    int           getStride()             { return m_reconPicYuv->getStride(); }
 
-    Int           getCStride()            { return m_reconPicYuv->getCStride(); }
+    int           getCStride()            { return m_reconPicYuv->getCStride(); }
 
     void          compressMotion();
 
@@ -143,8 +143,8 @@ public:
 
     Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
 
-    void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth);
-    void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
+    void          createNonDBFilterInfo(int lastSliceCUAddr, int sliceGranularityDepth);
+    void          createNonDBFilterInfoLCU(int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     void          destroyNonDBFilterInfo();
 }; // END CLASS DEFINITION TComPic
 }

@@ -228,7 +228,7 @@ void SEIWriter::xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei)
 
     WRITE_CODE(sei.method, 8, "hash_type");
 
-    for (Int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
     {
         if (sei.method == SEIDecodedPictureHash::MD5)
         {
@@ -259,7 +259,7 @@ void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
 
     assert(sei.activeSeqParamSetId.size() == (sei.numSpsIdsMinus1 + 1));
 
-    for (Int i = 0; i < sei.activeSeqParamSetId.size(); i++)
+    for (int i = 0; i < sei.activeSeqParamSetId.size(); i++)
     {
         WRITE_UVLC(sei.activeSeqParamSetId[i], "active_seq_param_set_id");
     }
@@ -296,7 +296,7 @@ void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
 
 void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps)
 {
-    Int i, nalOrVcl;
+    int i, nalOrVcl;
     TComVUI *vui = sps->getVuiParameters();
     TComHRD *hrd = vui->getHrdParameters();
 
@@ -335,7 +335,7 @@ void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
 
 void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps)
 {
-    Int i;
+    int i;
     TComVUI *vui = sps->getVuiParameters();
     TComHRD *hrd = vui->getHrdParameters();
 

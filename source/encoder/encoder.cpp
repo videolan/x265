@@ -220,7 +220,7 @@ void x265_t::configure(x265_param_t *_param)
     vps.setMaxTLayers(1);
     vps.setTemporalNestingFlag(true);
     vps.setMaxLayers(1);
-    for (Int i = 0; i < MAX_TLAYER; i++)
+    for (int i = 0; i < MAX_TLAYER; i++)
     {
         vps.setNumReorderPics(m_numReorderPics[i], i);
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);

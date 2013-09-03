@@ -70,7 +70,7 @@ public:
 
     virtual void  encodeBin(UInt bin,  ContextModel& ctx) = 0;
     virtual void  encodeBinEP(UInt bin) = 0;
-    virtual void  encodeBinsEP(UInt bins, Int numBins) = 0;
+    virtual void  encodeBinsEP(UInt bins, int numBins) = 0;
     virtual void  encodeBinTrm(UInt bin) = 0;
 
     virtual TEncBinCABAC*   getTEncBinCABAC()  { return 0; }

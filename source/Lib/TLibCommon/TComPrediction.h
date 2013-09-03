@@ -64,8 +64,8 @@ protected:
 
     Pel*      m_predBuf;
     Pel*      m_predAllAngsBuf;
-    Int       m_predBufStride;
-    Int       m_predBufHeight;
+    int       m_predBufStride;
+    int       m_predBufHeight;
 
     // references sample for IntraPrediction
     TComYuv   m_predYuv[2];
@@ -80,20 +80,20 @@ protected:
 
     short*    m_immedVals;
     Pel*      m_lumaRecBuffer; ///< array for down-sampled reconstructed luma sample
-    Int       m_lumaRecStride; ///< stride of m_lumaRecBuffer
+    int       m_lumaRecStride; ///< stride of m_lumaRecBuffer
 
     // motion compensation functions
-    void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv);
-    void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv);
-    void xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
-    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);
-    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
-    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);
+    void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TComYuv* outPredYuv);
+    void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TShortYUV* outPredYuv);
+    void xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *refPic, UInt partAddr, x265::MV *mv, int width, int height, TComYuv *dstPic);
+    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, int width, int height, TShortYUV *dstPic);
+    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, int width, int height, TComYuv *dstPic);
+    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, int width, int height, TShortYUV *dstPic);
     
-    void xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int height, TComYuv*& outPredYuv);
-    void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partAddr, Int width, Int height, TComYuv*& outDstYuv);
+    void xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int height, TComYuv*& outPredYuv);
+    void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partAddr, int width, int height, TComYuv*& outDstYuv);
 
-    void xGetLLSPrediction(TComPattern* pcPattern, Int* src0, Int srcstride, Pel* dst0, Int dststride, UInt width, UInt height, UInt ext0);
+    void xGetLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, Pel* dst0, int dststride, UInt width, UInt height, UInt ext0);
 
     Bool xCheckIdenticalMotion(TComDataCU* cu, UInt PartAddr);
 
@@ -107,20 +107,20 @@ public:
     void initTempBuff();
 
     // inter
-    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, Int partIdx = -1);
+    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, int partIdx = -1);
 
     // motion vector prediction
     void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, x265::MV& mvPred);
 
     // Angular Intra
-    void predIntraLumaAng(UInt dirMode, Pel* pred, UInt stride, Int width);
-    void predIntraChromaAng(Pel* src, UInt dirMode, Pel* pred, UInt stride, Int width);
+    void predIntraLumaAng(UInt dirMode, Pel* pred, UInt stride, int width);
+    void predIntraChromaAng(Pel* src, UInt dirMode, Pel* pred, UInt stride, int width);
 
     Pel* getPredicBuf()             { return m_predBuf; }
 
-    Int  getPredicBufWidth()        { return m_predBufStride; }
+    int  getPredicBufWidth()        { return m_predBufStride; }
 
-    Int  getPredicBufHeight()       { return m_predBufHeight; }
+    int  getPredicBufHeight()       { return m_predBufHeight; }
 };
 }
 //! \}

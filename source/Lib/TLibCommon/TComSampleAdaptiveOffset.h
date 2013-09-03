@@ -68,22 +68,22 @@ enum SAOType
 
 typedef struct _SaoQTPart
 {
-    Int         bestType;
-    Int         length;
-    Int         subTypeIdx;                ///< indicates EO class or BO band position
-    Int         offset[4];
-    Int         startCUX;
-    Int         startCUY;
-    Int         endCUX;
-    Int         endCUY;
+    int         bestType;
+    int         length;
+    int         subTypeIdx;                ///< indicates EO class or BO band position
+    int         offset[4];
+    int         startCUX;
+    int         startCUY;
+    int         endCUX;
+    int         endCUY;
 
-    Int         partIdx;
-    Int         partLevel;
-    Int         partCol;
-    Int         partRow;
+    int         partIdx;
+    int         partLevel;
+    int         partCol;
+    int         partRow;
 
-    Int         downPartsIdx[NUM_DOWN_PART];
-    Int         upPartIdx;
+    int         downPartsIdx[NUM_DOWN_PART];
+    int         upPartIdx;
 
     Bool        bSplit;
 
@@ -91,7 +91,7 @@ typedef struct _SaoQTPart
     Bool        bProcessed;
     Double      minCost;
     Int64       minDist;
-    Int         minRate;
+    int         minRate;
     //---- encoder only end -----//
 } SAOQTPart;
 
@@ -99,23 +99,23 @@ typedef struct _SaoLcuParam
 {
     Bool       mergeUpFlag;
     Bool       mergeLeftFlag;
-    Int        typeIdx;
-    Int        subTypeIdx;                ///< indicates EO class or BO band position
-    Int        offset[4];
-    Int        partIdx;
-    Int        partIdxTmp;
-    Int        length;
+    int        typeIdx;
+    int        subTypeIdx;                ///< indicates EO class or BO band position
+    int        offset[4];
+    int        partIdx;
+    int        partIdxTmp;
+    int        length;
 } SaoLcuParam;
 
 struct SAOParam
 {
     Bool       bSaoFlag[2];
     SAOQTPart* saoPart[3];
-    Int        maxSplitLevel;
+    int        maxSplitLevel;
     Bool         oneUnitFlag[3];
     SaoLcuParam* saoLcuParam[3];
-    Int          numCuInHeight;
-    Int          numCuInWidth;
+    int          numCuInHeight;
+    int          numCuInWidth;
     ~SAOParam();
 };
 
@@ -140,22 +140,22 @@ protected:
     TComPic* m_pic;
 
     static const UInt m_maxDepth;
-    static const Int m_numCulPartsLevel[5];
+    static const int m_numCulPartsLevel[5];
     static const UInt m_eoTable[9];
-    static const Int m_numClass[MAX_NUM_SAO_TYPE];
+    static const int m_numClass[MAX_NUM_SAO_TYPE];
 
-    Int *m_offsetBo;
-    Int *m_chromaOffsetBo;
-    Int m_offsetEo[LUMA_GROUP_NUM];
+    int *m_offsetBo;
+    int *m_chromaOffsetBo;
+    int m_offsetEo[LUMA_GROUP_NUM];
 
-    Int  m_picWidth;
-    Int  m_picHeight;
+    int  m_picWidth;
+    int  m_picHeight;
     UInt m_maxSplitLevel;
     UInt m_maxCUWidth;
     UInt m_maxCUHeight;
-    Int  m_numCuInWidth;
-    Int  m_numCuInHeight;
-    Int  m_numTotalParts;
+    int  m_numCuInWidth;
+    int  m_numCuInHeight;
+    int  m_numTotalParts;
 
     UInt m_saoBitIncreaseY;
     UInt m_saoBitIncreaseC; //for chroma
@@ -167,16 +167,16 @@ protected:
     Pel   *m_chromaClipTable;
     Pel   *m_chromaClipTableBase;
     Pel   *m_chromaTableBo;
-    Int   *m_upBuff1;
-    Int   *m_upBuff2;
-    Int   *m_upBufft;
+    int   *m_upBuff1;
+    int   *m_upBuff2;
+    int   *m_upBufft;
     TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
     Pel* m_tmpU1[3];
     Pel* m_tmpU2[3];
     Pel* m_tmpL1;
     Pel* m_tmpL2;
-    Int     m_maxNumOffsetsPerPic;
+    int     m_maxNumOffsetsPerPic;
     Bool    m_saoLcuBoundary;
     Bool    m_saoLcuBasedOptimization;
 
@@ -188,25 +188,25 @@ public:
     void create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight);
     void destroy();
 
-    Int  convertLevelRowCol2Idx(Int level, Int row, Int col) const;
+    int  convertLevelRowCol2Idx(int level, int row, int col) const;
 
-    void initSAOParam(SAOParam* saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr) const;
+    void initSAOParam(SAOParam* saoParam, int partLevel, int partRow, int partCol, int parentPartIdx, int startCUX, int endCUX, int startCUY, int endCUY, int yCbCr) const;
     void allocSaoParam(SAOParam* saoParam) const;
     void resetSAOParam(SAOParam* saoParam);
     static void freeSaoParam(SAOParam* saoParam);
 
     void SAOProcess(SAOParam* saoParam);
-    Pel* getPicYuvAddr(TComPicYuv* picYuv, Int yCbCr, Int addr = 0);
+    Pel* getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr = 0);
 
-    void processSaoCu(Int addr, Int partIdx, Int yCbCr); //!< LCU-basd SAO process without slice granularity
+    void processSaoCu(int addr, int partIdx, int yCbCr); //!< LCU-basd SAO process without slice granularity
     void createPicSaoInfo(TComPic* pic);
     void destroyPicSaoInfo();
 
     void resetLcuPart(SaoLcuParam* saoLcuParam);
-    void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
-    void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr);
-    void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr);
-    void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, Int yCbCr);
+    void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, int yCbCr);
+    void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, int yCbCr);
+    void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, int yCbCr);
+    void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr);
     void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
 
     Bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }

@@ -114,13 +114,13 @@ public:
     virtual void codeSaoMerge(UInt uiCode) = 0;
     virtual void codeSaoTypeIdx(UInt uiCode) = 0;
     virtual void codeSaoUflc(UInt uiLength, UInt   uiCode) = 0;
-    virtual void estBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType) = 0;
+    virtual void estBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType) = 0;
 
-    virtual void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)   = 0;
-    virtual void updateContextTables(SliceType eSliceType, Int iQp)   = 0;
+    virtual void updateContextTables(SliceType eSliceType, int iQp, Bool bExecuteFinish)   = 0;
+    virtual void updateContextTables(SliceType eSliceType, int iQp)   = 0;
 
     virtual void codeDFFlag(UInt uiCode, const char *pSymbolName) = 0;
-    virtual void codeDFSvlc(Int iCode, const char *pSymbolName)   = 0;
+    virtual void codeDFSvlc(int iCode, const char *pSymbolName)   = 0;
 
     virtual ~TEncEntropyIf() {}
 };
@@ -187,9 +187,9 @@ public:
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
     void encodeQP(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
+    void updateContextTables(SliceType eSliceType, int iQp, Bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
 
-    void updateContextTables(SliceType eSliceType, Int iQp)                        { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
+    void updateContextTables(SliceType eSliceType, int iQp)                        { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
 
     void encodeScalingList(TComScalingList* scalingList);
 
@@ -203,10 +203,10 @@ public:
 
     void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt depth, TextType ttype);
 
-    void estimateBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
+    void estimateBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType);
     void    encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
-    void    encodeSaoUnitInterleaving(Int compIdx, Bool saoFlag, Int rx, Int ry, SaoLcuParam* saoLcuParam, Int cuAddrInSlice, Int cuAddrUpInSlice, Int allowMergeLeft, Int allowMergeUp);
-    static Int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
+    void    encodeSaoUnitInterleaving(int compIdx, Bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+    static int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
 }; // END CLASS DEFINITION TEncEntropy
 }
 //! \}

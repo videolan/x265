@@ -336,18 +336,18 @@ static const char* nalUnitTypeToString(NalUnitType type)
 //       (we do not yet have a switch to disable PSNR reporting)
 //   2 - it would be better to accumulate SSD of each CTU at the end of processCTU() while it is cache-hot
 //       in fact, we almost certainly are already measuring the CTU distortion and not accumulating it
-static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
+static UInt64 computeSSD(Pel *fenc, Pel *rec, int stride, int width, int height)
 {
     UInt64 ssd = 0;
 
     if ((width | height) & 3)
     {
         /* Slow Path */
-        for (Int y = 0; y < height; y++)
+        for (int y = 0; y < height; y++)
         {
-            for (Int x = 0; x < width; x++)
+            for (int x = 0; x < width; x++)
             {
-                Int diff = (Int)(fenc[x] - rec[x]);
+                int diff = (int)(fenc[x] - rec[x]);
                 ssd += diff * diff;
             }
 
@@ -358,11 +358,11 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
         return ssd;
     }
 
-    Int y = 0;
+    int y = 0;
     /* Consume Y in chunks of 64 */
     for (; y + 64 <= height; y += 64)
     {
-        Int x = 0;
+        int x = 0;
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
@@ -388,7 +388,7 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
     /* Consume Y in chunks of 16 */
     for (; y + 16 <= height; y += 16)
     {
-        Int x = 0;
+        int x = 0;
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
@@ -414,7 +414,7 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
     /* Consume Y in chunks of 4 */
     for (; y + 4 <= height; y += 4)
     {
-        Int x = 0;
+        int x = 0;
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
@@ -474,10 +474,10 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     TComPicYuv* orig  = pic->getPicYuvOrg();
 
     //===== calculate PSNR =====
-    Int stride = recon->getStride();
-    Int width  = recon->getWidth() - getPad(0);
-    Int height = recon->getHeight() - getPad(1);
-    Int size = width * height;
+    int stride = recon->getStride();
+    int width  = recon->getWidth() - getPad(0);
+    int height = recon->getHeight() - getPad(1);
+    int size = width * height;
 
     UInt64 ssdY = computeSSD(orig->getLumaAddr(), recon->getLumaAddr(), stride, width, height);
 
@@ -488,8 +488,8 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     UInt64 ssdU = computeSSD(orig->getCbAddr(), recon->getCbAddr(), stride, width, height);
     UInt64 ssdV = computeSSD(orig->getCrAddr(), recon->getCrAddr(), stride, width, height);
 
-    Int maxvalY = 255 << (X265_DEPTH - 8);
-    Int maxvalC = 255 << (X265_DEPTH - 8);
+    int maxvalY = 255 << (X265_DEPTH - 8);
+    int maxvalC = 255 << (X265_DEPTH - 8);
     Double refValueY = (Double)maxvalY * maxvalY * size;
     Double refValueC = (Double)maxvalC * maxvalC * size / 4.0;
     Double psnrY = (ssdY ? 10.0 * log10(refValueY / (Double)ssdY) : 99.99);
@@ -585,11 +585,11 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
 
         if (!slice->isIntra())
         {
-            Int numLists = slice->isInterP() ? 1 : 2;
-            for (Int list = 0; list < numLists; list++)
+            int numLists = slice->isInterP() ? 1 : 2;
+            for (int list = 0; list < numLists; list++)
             {
                 fprintf(stderr, " [L%d ", list);
-                for (Int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
+                for (int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
                 {
                     fprintf(stderr, "%d ", slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR());
                 }
@@ -654,8 +654,8 @@ void TEncTop::xInitSPS(TComSPS *pcSPS)
     pcSPS->setMaxCUHeight(g_maxCUHeight);
     pcSPS->setMaxCUDepth(g_maxCUDepth);
 
-    Int minCUSize = pcSPS->getMaxCUWidth() >> (pcSPS->getMaxCUDepth() - g_addCUDepth);
-    Int log2MinCUSize = 0;
+    int minCUSize = pcSPS->getMaxCUWidth() >> (pcSPS->getMaxCUDepth() - g_addCUDepth);
+    int log2MinCUSize = 0;
     while (minCUSize > 1)
     {
         minCUSize >>= 1;
@@ -679,7 +679,7 @@ void TEncTop::xInitSPS(TComSPS *pcSPS)
 
     pcSPS->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
 
-    Int i;
+    int i;
 
     for (i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
     {
@@ -766,7 +766,7 @@ void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setConstrainedIntraPred(param.bEnableConstrainedIntra);
     Bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
 
-    Int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
+    int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
 
     if (getUseLossless())
     {
@@ -808,21 +808,21 @@ void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
 
     /* TODO: this must be replaced with a user-parameter or hard-coded value */
-    Int histogram[MAX_NUM_REF + 1];
-    for (Int i = 0; i <= MAX_NUM_REF; i++)
+    int histogram[MAX_NUM_REF + 1];
+    for (int i = 0; i <= MAX_NUM_REF; i++)
     {
         histogram[i] = 0;
     }
 
-    for (Int i = 0; i < getGOPSize(); i++)
+    for (int i = 0; i < getGOPSize(); i++)
     {
         assert(getGOPEntry(i).m_numRefPicsActive >= 0 && getGOPEntry(i).m_numRefPicsActive <= MAX_NUM_REF);
         histogram[getGOPEntry(i).m_numRefPicsActive]++;
     }
 
-    Int maxHist = -1;
-    Int bestPos = 0;
-    for (Int i = 0; i <= MAX_NUM_REF; i++)
+    int maxHist = -1;
+    int bestPos = 0;
+    for (int i = 0; i <= MAX_NUM_REF; i++)
     {
         if (histogram[i] > maxHist)
         {
@@ -843,15 +843,15 @@ void TEncTop::xInitPPS(TComPPS *pcPPS)
 void TEncTop::computeLambdaForQp(TComSlice* slice)
 {
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
-    Int qp = slice->getSliceQp();
-    Int lambda = x265_lambda2_tab[qp] >> 8;
+    int qp = slice->getSliceQp();
+    int lambda = x265_lambda2_tab[qp] >> 8;
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
     Double weight = 1.0;
-    Int qpc;
-    Int chromaQPOffset;
+    int qpc;
+    int chromaQPOffset;
 
     chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, 57, qp + chromaQPOffset);

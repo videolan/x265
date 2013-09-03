@@ -205,12 +205,12 @@ void partialButterfly32(short *src, short *dst, int shift, int line)
     }
 }
 
-void partialButterfly8(short *src, short *dst, Int shift, Int line)
+void partialButterfly8(short *src, short *dst, int shift, int line)
 {
-    Int j, k;
-    Int E[4], O[4];
-    Int EE[2], EO[2];
-    Int add = 1 << (shift - 1);
+    int j, k;
+    int E[4], O[4];
+    int EE[2], EO[2];
+    int add = 1 << (shift - 1);
 
     for (j = 0; j < line; j++)
     {
@@ -242,11 +242,11 @@ void partialButterfly8(short *src, short *dst, Int shift, Int line)
     }
 }
 
-void partialButterflyInverse4(short *src, short *dst, Int shift, Int line)
+void partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
-    Int j;
-    Int E[2], O[2];
-    Int add = 1 << (shift - 1);
+    int j;
+    int E[2], O[2];
+    int add = 1 << (shift - 1);
 
     for (j = 0; j < line; j++)
     {
@@ -267,12 +267,12 @@ void partialButterflyInverse4(short *src, short *dst, Int shift, Int line)
     }
 }
 
-void partialButterflyInverse8(short *src, short *dst, Int shift, Int line)
+void partialButterflyInverse8(short *src, short *dst, int shift, int line)
 {
-    Int j, k;
-    Int E[4], O[4];
-    Int EE[2], EO[2];
-    Int add = 1 << (shift - 1);
+    int j, k;
+    int E[4], O[4];
+    int EE[2], EO[2];
+    int add = 1 << (shift - 1);
 
     for (j = 0; j < line; j++)
     {
@@ -305,11 +305,11 @@ void partialButterflyInverse8(short *src, short *dst, Int shift, Int line)
 
 void partialButterflyInverse16(short *src, short *dst, int shift, int line)
 {
-    Int j, k;
-    Int E[8], O[8];
-    Int EE[4], EO[4];
-    Int EEE[2], EEO[2];
-    Int add = 1 << (shift - 1);
+    int j, k;
+    int E[8], O[8];
+    int EE[4], EO[4];
+    int EEE[2], EEO[2];
+    int add = 1 << (shift - 1);
 
     for (j = 0; j < line; j++)
     {
@@ -354,7 +354,7 @@ void partialButterflyInverse16(short *src, short *dst, int shift, int line)
     }
 }
 
-void partialButterflyInverse32(short *src, short *dst, Int shift, Int line)
+void partialButterflyInverse32(short *src, short *dst, int shift, int line)
 {
     int j, k;
     int E[16], O[16];
@@ -418,11 +418,11 @@ void partialButterflyInverse32(short *src, short *dst, Int shift, Int line)
     }
 }
 
-void partialButterfly4(short *src, short *dst, Int shift, Int line)
+void partialButterfly4(short *src, short *dst, int shift, int line)
 {
-    Int j;
-    Int E[2], O[2];
-    Int add = 1 << (shift - 1);
+    int j;
+    int E[2], O[2];
+    int add = 1 << (shift - 1);
 
     for (j = 0; j < line; j++)
     {

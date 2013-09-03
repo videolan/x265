@@ -75,16 +75,16 @@ private:
     Double **m_cost;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     Double *m_costPartBest; //[MAX_NUM_SAO_PART];
     Int64  *m_distOrg;    //[MAX_NUM_SAO_PART];
-    Int    *m_typePartBest; //[MAX_NUM_SAO_PART];
-    Int     m_offsetThY;
-    Int     m_offsetThC;
+    int    *m_typePartBest; //[MAX_NUM_SAO_PART];
+    int     m_offsetThY;
+    int     m_offsetThC;
     Double  m_depthSaoRate[2][4];
 
 public:
     double  lumaLambda;
     double  chromaLambd;
     int     depth;
-    Int     numNoSao[2];
+    int     numNoSao[2];
 
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
@@ -94,30 +94,30 @@ public:
     void resetStats();
     void SAOProcess(SAOParam *saoParam);
 
-    void runQuadTreeDecision(SAOQTPart *psQTPart, Int partIdx, Double &costFinal, Int maxLevel, Double lambda, Int yCbCr);
-    void rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double lambda, Int yCbCr);
+    void runQuadTreeDecision(SAOQTPart *psQTPart, int partIdx, Double &costFinal, int maxLevel, Double lambda, int yCbCr);
+    void rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, Double lambda, int yCbCr);
 
-    void disablePartTree(SAOQTPart *psQTPart, Int partIdx);
-    void getSaoStats(SAOQTPart *psQTPart, Int yCbCr);
-    void calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr);
-    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
-    void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int idxY);
+    void disablePartTree(SAOQTPart *psQTPart, int partIdx);
+    void getSaoStats(SAOQTPart *psQTPart, int yCbCr);
+    void calcSaoStatsCu(int addr, int partIdx, int yCbCr);
+    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, int yCbCr);
+    void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int idxY);
     void destroyEncBuffer();
     void createEncBuffer();
     void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag);
-    void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, Int dir);
-    void saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
-    void sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);
-    inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, Int shift);
-    inline Int64 estIterOffset(Int typeIdx, Int classIdx, Double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, Int shift, Int bitIncrease, Int *currentDistortionTableBo, Double *currentRdCostTableBo, Int offsetTh);
-    inline Int64 estSaoTypeDist(Int compIdx, Int typeIdx, Int shift, Double lambda, Int *currentDistortionTableBo, Double *currentRdCostTableBo);
-    void setMaxNumOffsetsPerPic(Int val) { m_maxNumOffsetsPerPic = val; }
+    void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, int dir);
+    void saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
+    void sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);
+    inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, int shift);
+    inline Int64 estIterOffset(int typeIdx, int classIdx, Double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int *currentDistortionTableBo, Double *currentRdCostTableBo, int offsetTh);
+    inline Int64 estSaoTypeDist(int compIdx, int typeIdx, int shift, Double lambda, int *currentDistortionTableBo, Double *currentRdCostTableBo);
+    void setMaxNumOffsetsPerPic(int val) { m_maxNumOffsetsPerPic = val; }
 
-    Int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
+    int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
 
     void rdoSaoUnitRowInit(SAOParam *saoParam);
     void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);
-    void rdoSaoUnitRow(SAOParam *saoParam, Int idxY);
+    void rdoSaoUnitRow(SAOParam *saoParam, int idxY);
 };
 }
 //! \}

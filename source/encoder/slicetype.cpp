@@ -332,7 +332,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
 
     if (!fenc->bIntraCalculated)
     {
-        Int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
+        int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
 
         pixel _above0[32 * 4 + 1], *const pAbove0 = _above0 + 2 * 32;
         pixel _above1[32 * 4 + 1], *const pAbove1 = _above1 + 2 * 32;

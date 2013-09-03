@@ -31,7 +31,7 @@
 // Vector class versions of macroblock performance primitives
 
 #include "primitives.h"
-#include "TLibCommon/TypeDef.h"    // TCoeff, Int, UInt
+#include "TLibCommon/TypeDef.h"    // TCoeff, int, UInt
 #include "TLibCommon/TComRom.h"
 
 #include <assert.h>

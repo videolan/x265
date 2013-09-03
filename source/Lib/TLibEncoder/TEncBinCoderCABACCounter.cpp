@@ -91,7 +91,7 @@ void TEncBinCABACCounter::encodeBinEP(UInt /*binValue*/)
  * \param binValues bin values
  * \param numBins number of bins
  */
-void TEncBinCABACCounter::encodeBinsEP(UInt /*binValues*/, Int numBins)
+void TEncBinCABACCounter::encodeBinsEP(UInt /*binValues*/, int numBins)
 {
     m_uiBinsCoded += numBins & - m_binCountIncrement;
     m_fracBits += 32768 * numBins;

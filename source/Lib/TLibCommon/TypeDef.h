@@ -48,9 +48,7 @@ namespace x265 {
 typedef       bool                Bool;
 
 typedef       unsigned char       UChar;
-typedef       short               Short;
 typedef       unsigned short      UShort;
-typedef       int                 Int;
 typedef       unsigned int        UInt;
 typedef       double              Double;
 typedef       float               Float;
@@ -74,12 +72,12 @@ typedef unsigned long long  UInt64;
 #if HIGH_BIT_DEPTH
 typedef UShort Pel;            // 16-bit pixel type
 #define X265_DEPTH g_bitDepth  // runtime configurable bit depth
-extern Int g_bitDepth;
+extern int g_bitDepth;
 #else
 typedef UChar  Pel;            // 8-bit pixel type
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif
-typedef Int    TCoeff;         // transform coefficient
+typedef int    TCoeff;         // transform coefficient
 
 // ====================================================================================================================
 // Enumeration

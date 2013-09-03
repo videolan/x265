@@ -70,7 +70,7 @@ protected:
 
 public:
 
-    ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, Int &count);
+    ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, int &count);
     ~ContextModel3DBuffer() {}
 
     // access functions
@@ -90,9 +90,9 @@ public:
     }
 
     // initialization & copy functions
-    void initBuffer(SliceType eSliceType, Int iQp, UChar* ctxModel);          ///< initialize 3D buffer by slice type & QP
+    void initBuffer(SliceType eSliceType, int iQp, UChar* ctxModel);          ///< initialize 3D buffer by slice type & QP
 
-    UInt calcCost(SliceType sliceType, Int qp, UChar* ctxModel);      ///< determine cost of choosing a probability table based on current probabilities
+    UInt calcCost(SliceType sliceType, int qp, UChar* ctxModel);      ///< determine cost of choosing a probability table based on current probabilities
 
     /** copy from another buffer
      * \param src buffer to copy from

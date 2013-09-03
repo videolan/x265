@@ -240,11 +240,11 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     /* Increment reference count of all motion-referenced frames.  This serves two purposes. First
      * it prevents the frame from being recycled, and second the referenced frames know how many
      * other FrameEncoders are using them for motion reference */
-    Int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
-    for (Int l = 0; l < numPredDir; l++)
+    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+    for (int l = 0; l < numPredDir; l++)
     {
         RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (Int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
         {
             TComPic *refpic = slice->getRefPic(list, ref);
             ATOMIC_INC(&refpic->m_countRefEncoders);
@@ -299,7 +299,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
  * Note that the current picture is already placed in the reference list and its marking is not changed.
  * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
  */
-void DPB::decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType)
+void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 {
     TComPic* outPic;
 
@@ -353,7 +353,7 @@ void DPB::decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType)
 void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
 {
     TComPic* outPic;
-    Int i, isReference;
+    int i, isReference;
 
     // loop through all pictures in the reference picture buffer
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
@@ -711,25 +711,25 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         _param->lookaheadDepth = m_gopSize;
     }
 
-    for (Int i = 0; i < m_gopSize; i++)
+    for (int i = 0; i < m_gopSize; i++)
     {
         CONFIRM(m_gopList[i].m_sliceType != 'B' && m_gopList[i].m_sliceType != 'P', "Slice type must be equal to B or P");
     }
 
-    for (Int i = 0; i < MAX_TLAYER; i++)
+    for (int i = 0; i < MAX_TLAYER; i++)
     {
         m_numReorderPics[i] = 0;
         m_maxDecPicBuffering[i] = 1;
     }
 
-    for (Int i = 0; i < m_gopSize; i++)
+    for (int i = 0; i < m_gopSize; i++)
     {
         if (m_gopList[i].m_numRefPics + 1 > m_maxDecPicBuffering[0])
         {
             m_maxDecPicBuffering[0] = m_gopList[i].m_numRefPics + 1;
         }
-        Int highestDecodingNumberWithLowerPOC = 0;
-        for (Int j = 0; j < m_gopSize; j++)
+        int highestDecodingNumberWithLowerPOC = 0;
+        for (int j = 0; j < m_gopSize; j++)
         {
             if (m_gopList[j].m_POC <= m_gopList[i].m_POC)
             {
@@ -737,8 +737,8 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
             }
         }
 
-        Int numReorder = 0;
-        for (Int j = 0; j < highestDecodingNumberWithLowerPOC; j++)
+        int numReorder = 0;
+        for (int j = 0; j < highestDecodingNumberWithLowerPOC; j++)
         {
             if (m_gopList[j].m_POC > m_gopList[i].m_POC)
             {
@@ -752,7 +752,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         }
     }
 
-    for (Int i = 0; i < MAX_TLAYER - 1; i++)
+    for (int i = 0; i < MAX_TLAYER - 1; i++)
     {
         // a lower layer can not have higher value of m_numReorderPics than a higher layer
         if (m_numReorderPics[i + 1] < m_numReorderPics[i])

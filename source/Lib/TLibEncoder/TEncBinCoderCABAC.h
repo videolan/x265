@@ -70,7 +70,7 @@ public:
 
     void  encodeBin(UInt binValue, ContextModel& rcCtxModel);
     void  encodeBinEP(UInt binValue);
-    void  encodeBinsEP(UInt binValues, Int numBins);
+    void  encodeBinsEP(UInt binValues, int numBins);
     void  encodeBinTrm(UInt binValue);
 
     TEncBinCABAC* getTEncBinCABAC() { return this; }
@@ -92,10 +92,10 @@ protected:
     UInt                m_uiLow;
     UInt                m_uiRange;
     UInt                m_bufferedByte;
-    Int                 m_numBufferedBytes;
-    Int                 m_bitsLeft;
+    int                 m_numBufferedBytes;
+    int                 m_bitsLeft;
     UInt                m_uiBinsCoded;
-    Int                 m_binCountIncrement;
+    int                 m_binCountIncrement;
     UInt64              m_fracBits;
 };
 }

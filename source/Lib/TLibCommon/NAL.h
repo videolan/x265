@@ -55,8 +55,8 @@ struct NALUnit
 
     /** construct an NALunit structure with given header values. */
     NALUnit(NalUnitType nalUnitType,
-            Int         temporalId = 0,
-            Int         reservedZero6Bits = 0)
+            int         temporalId = 0,
+            int         reservedZero6Bits = 0)
         : m_nalUnitType(nalUnitType)
         , m_temporalId(temporalId)
         , m_reservedZero6Bits(reservedZero6Bits)
