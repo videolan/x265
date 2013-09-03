@@ -75,10 +75,10 @@ protected:
     /* This holds final interpolated pixel values (0-255). Hence memory is stored as Pel. */
     TComYuv   m_filteredBlock[4][4];
 
-    /* This holds intermediate values for filtering operations which need to maintain Short precision */
+    /* This holds intermediate values for filtering operations which need to maintain short precision */
     TShortYUV m_filteredBlockTmp[4];
 
-    Short*    m_immedVals;
+    short*    m_immedVals;
     Pel*      m_lumaRecBuffer; ///< array for down-sampled reconstructed luma sample
     Int       m_lumaRecStride; ///< stride of m_lumaRecBuffer
 

@@ -398,7 +398,7 @@ void TComTrQuant::init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransf
 }
 
 UInt TComTrQuant::transformNxN(TComDataCU* cu,
-                               Short*      residual,
+                               short*      residual,
                                UInt        stride,
                                TCoeff*     coeff,
                                UInt        width,
@@ -415,7 +415,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
         {
             for (UInt j = 0; j < width; j++)
             {
-                coeff[k * width + j] = ((Short)residual[k * stride + j]);
+                coeff[k * width + j] = ((short)residual[k * stride + j]);
                 absSum += abs(residual[k * stride + j]);
             }
         }
@@ -447,7 +447,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int lastPos )
+void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int lastPos )
 {
     if (transQuantBypass)
     {
@@ -455,7 +455,7 @@ void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
         {
             for (UInt j = 0; j < width; j++)
             {
-                residual[k * stride + j] = (Short)(coeff[k * width + j]);
+                residual[k * stride + j] = (short)(coeff[k * width + j]);
             }
         }
 
@@ -510,7 +510,7 @@ void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
  *  \param size transform size (size x size)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-void TComTrQuant::xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int /*height*/)
+void TComTrQuant::xIT(UInt mode, Int* coeff, short* residual, UInt stride, Int width, Int /*height*/)
 {
     // TODO: this may need larger data types for X265_DEPTH > 8
     const UInt log2BlockSize = g_convertToBit[width];
@@ -523,7 +523,7 @@ void TComTrQuant::xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int w
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
+void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
@@ -556,7 +556,7 @@ void TComTrQuant::xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int 
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xITransformSkip(Int* coef, Short* residual, UInt stride, Int width, Int height)
+void TComTrQuant::xITransformSkip(Int* coef, short* residual, UInt stride, Int width, Int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;

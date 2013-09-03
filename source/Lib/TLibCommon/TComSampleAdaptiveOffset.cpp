@@ -203,7 +203,7 @@ void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
     m_upBuff1++;
     m_upBuff2++;
     m_upBufft++;
-    Short i;
+    short i;
 
     UInt maxY  = (1 << X265_DEPTH) - 1;
     UInt minY  = 0;

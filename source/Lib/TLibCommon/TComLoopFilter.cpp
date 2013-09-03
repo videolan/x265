@@ -769,14 +769,14 @@ inline void TComLoopFilter::xPelFilterLuma(Pel* src, Int offset, Int tc, Bool sw
 {
     Int delta;
 
-    Short m4  = (Short)src[0];
-    Short m3  = (Short)src[-offset];
-    Short m5  = (Short)src[offset];
-    Short m2  = (Short)src[-offset * 2];
-    Short m6  = (Short)src[offset * 2];
-    Short m1  = (Short)src[-offset * 3];
-    Short m7  = (Short)src[offset * 3];
-    Short m0  = (Short)src[-offset * 4];
+    short m4  = (short)src[0];
+    short m3  = (short)src[-offset];
+    short m5  = (short)src[offset];
+    short m2  = (short)src[-offset * 2];
+    short m6  = (short)src[offset * 2];
+    short m1  = (short)src[-offset * 3];
+    short m7  = (short)src[offset * 3];
+    short m0  = (short)src[-offset * 4];
 
     if (sw)
     {
@@ -839,10 +839,10 @@ inline void TComLoopFilter::xPelFilterChroma(Pel* src, Int offset, Int tc, Bool 
 {
     Int delta;
 
-    Short m4  = (Short)src[0];
-    Short m3  = (Short)src[-offset];
-    Short m5  = (Short)src[offset];
-    Short m2  = (Short)src[-offset * 2];
+    short m4  = (short)src[0];
+    short m3  = (short)src[-offset];
+    short m5  = (short)src[offset];
+    short m2  = (short)src[-offset * 2];
 
     delta = Clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
     src[-offset] = (Pel)ClipC(m3 + delta);
@@ -869,10 +869,10 @@ inline void TComLoopFilter::xPelFilterChroma(Pel* src, Int offset, Int tc, Bool 
  */
 inline Bool TComLoopFilter::xUseStrongFiltering(Int offset, Int d, Int beta, Int tc, Pel* src)
 {
-    Short m4  = (Short)src[0];
-    Short m3  = (Short)src[-offset];
-    Short m7  = (Short)src[offset * 3];
-    Short m0  = (Short)src[-offset * 4];
+    short m4  = (short)src[0];
+    short m3  = (short)src[-offset];
+    short m7  = (short)src[offset * 3];
+    short m0  = (short)src[-offset * 4];
 
     Int d_strong = abs(m0 - m3) + abs(m7 - m4);
 

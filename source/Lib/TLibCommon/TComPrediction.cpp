@@ -506,7 +506,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     Int dstStride = dstPic->m_width;
-    Short *dst    = dstPic->getLumaAddr(partAddr);
+    short *dst    = dstPic->getLumaAddr(partAddr);
 
     Int xFrac = mv->x & 0x3;
     Int yFrac = mv->y & 0x3;
@@ -531,7 +531,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
         Int tmpStride = width;
         Int filterSize = NTAPS_LUMA;
         Int halfFilterSize = (filterSize >> 1);
-        Short *tmp = (Short*)X265_MALLOC(Short, width * (height + filterSize - 1));
+        short *tmp = (short*)X265_MALLOC(short, width * (height + filterSize - 1));
 
         x265::primitives.ipfilter_ps[FILTER_H_P_S_8](ref - (halfFilterSize - 1) * refStride, refStride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
         x265::primitives.ipfilter_ss[FILTER_V_S_S_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
@@ -595,7 +595,7 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     else
     {
         Int     extStride = cxWidth;
-        Short*  extY      = (Short*)X265_MALLOC(Short, cxWidth * (cxHeight + filterSize - 1));
+        short*  extY      = (short*)X265_MALLOC(short, cxWidth * (cxHeight + filterSize - 1));
 
         primitives.ipfilter_ps[FILTER_H_P_S_4](refCb - (halfFilterSize - 1) * refStride, refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
         primitives.ipfilter_sp[FILTER_V_S_P_4](extY + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
@@ -618,8 +618,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     Pel* refCb = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
     Pel* refCr = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-    Short* dstCb = dstPic->getCbAddr(partAddr);
-    Short* dstCr = dstPic->getCrAddr(partAddr);
+    short* dstCb = dstPic->getCbAddr(partAddr);
+    short* dstCr = dstPic->getCrAddr(partAddr);
 
     Int xFrac = mv->x & 0x7;
     Int yFrac = mv->y & 0x7;
@@ -651,7 +651,7 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     else
     {
         Int    extStride = cxWidth;
-        Short* extY      = (Short*)X265_MALLOC(Short, cxWidth * (cxHeight + filterSize - 1));
+        short* extY      = (short*)X265_MALLOC(short, cxWidth * (cxHeight + filterSize - 1));
         x265::primitives.ipfilter_ps[FILTER_H_P_S_4](refCb - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
         x265::primitives.ipfilter_ss[FILTER_V_S_S_4](extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
         x265::primitives.ipfilter_ps[FILTER_H_P_S_4](refCr - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);

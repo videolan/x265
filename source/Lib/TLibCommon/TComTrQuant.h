@@ -127,10 +127,10 @@ public:
     void init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast);
 
     // transform & inverse transform functions
-    UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
+    UInt transformNxN(TComDataCU* cu, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
                       TextType ttype, UInt absPartIdx, int* lastPos, Bool useTransformSkip = false);
 
-    void invtransformNxN(Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip = false, int lastPos = MAX_INT);
+    void invtransformNxN(Bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip = false, int lastPos = MAX_INT);
 
     // Misc functions
     void setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset);
@@ -191,7 +191,7 @@ protected:
 
 private:
 
-    void xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height);
+    void xTransformSkip(short* resiBlock, UInt stride, Int* coeff, Int width, Int height);
 
     void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, Int* deltaU, Int width, Int height);
 
@@ -220,9 +220,9 @@ private:
 
     void xDeQuant(const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);
 
-    void xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height);
+    void xIT(UInt mode, Int* coeff, short* residual, UInt stride, Int width, Int height);
 
-    void xITransformSkip(Int* coeff, Short* residual, UInt stride, Int width, Int height);
+    void xITransformSkip(Int* coeff, short* residual, UInt stride, Int width, Int height);
 };
 }
 //! \}

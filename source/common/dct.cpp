@@ -205,7 +205,7 @@ void partialButterfly32(short *src, short *dst, int shift, int line)
     }
 }
 
-void partialButterfly8(Short *src, Short *dst, Int shift, Int line)
+void partialButterfly8(short *src, short *dst, Int shift, Int line)
 {
     Int j, k;
     Int E[4], O[4];
@@ -242,7 +242,7 @@ void partialButterfly8(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
+void partialButterflyInverse4(short *src, short *dst, Int shift, Int line)
 {
     Int j;
     Int E[2], O[2];
@@ -267,7 +267,7 @@ void partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void partialButterflyInverse8(Short *src, Short *dst, Int shift, Int line)
+void partialButterflyInverse8(short *src, short *dst, Int shift, Int line)
 {
     Int j, k;
     Int E[4], O[4];
@@ -354,7 +354,7 @@ void partialButterflyInverse16(short *src, short *dst, int shift, int line)
     }
 }
 
-void partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
+void partialButterflyInverse32(short *src, short *dst, Int shift, Int line)
 {
     int j, k;
     int E[16], O[16];
@@ -418,7 +418,7 @@ void partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void partialButterfly4(Short *src, Short *dst, Int shift, Int line)
+void partialButterfly4(short *src, short *dst, Int shift, Int line)
 {
     Int j;
     Int E[2], O[2];
@@ -447,8 +447,8 @@ void dst4_c(short *src, int *dst, intptr_t stride)
     const int shift_1st = 1;
     const int shift_2nd = 8;
 
-    ALIGN_VAR_32(Short, coef[4 * 4]);
-    ALIGN_VAR_32(Short, block[4 * 4]);
+    ALIGN_VAR_32(short, coef[4 * 4]);
+    ALIGN_VAR_32(short, block[4 * 4]);
 
     for (int i = 0; i < 4; i++)
     {
@@ -475,8 +475,8 @@ void dct4_c(short *src, int *dst, intptr_t stride)
     const int shift_1st = 1;
     const int shift_2nd = 8;
 
-    ALIGN_VAR_32(Short, coef[4 * 4]);
-    ALIGN_VAR_32(Short, block[4 * 4]);
+    ALIGN_VAR_32(short, coef[4 * 4]);
+    ALIGN_VAR_32(short, block[4 * 4]);
 
     for (int i = 0; i < 4; i++)
     {
@@ -502,8 +502,8 @@ void dct8_c(short *src, int *dst, intptr_t stride)
     const int shift_1st = 2;
     const int shift_2nd = 9;
 
-    ALIGN_VAR_32(Short, coef[8 * 8]);
-    ALIGN_VAR_32(Short, block[8 * 8]);
+    ALIGN_VAR_32(short, coef[8 * 8]);
+    ALIGN_VAR_32(short, block[8 * 8]);
 
     for (int i = 0; i < 8; i++)
     {
@@ -530,8 +530,8 @@ void dct16_c(short *src, int *dst, intptr_t stride)
     const int shift_1st = 3;
     const int shift_2nd = 10;
 
-    ALIGN_VAR_32(Short, coef[16 * 16]);
-    ALIGN_VAR_32(Short, block[16 * 16]);
+    ALIGN_VAR_32(short, coef[16 * 16]);
+    ALIGN_VAR_32(short, block[16 * 16]);
 
     for (int i = 0; i < 16; i++)
     {
@@ -558,8 +558,8 @@ void dct32_c(short *src, int *dst, intptr_t stride)
     const int shift_1st = 4;
     const int shift_2nd = 11;
 
-    ALIGN_VAR_32(Short, coef[32 * 32]);
-    ALIGN_VAR_32(Short, block[32 * 32]);
+    ALIGN_VAR_32(short, coef[32 * 32]);
+    ALIGN_VAR_32(short, block[32 * 32]);
 
     for (int i = 0; i < 32; i++)
     {
@@ -586,8 +586,8 @@ void idst4_c(int *src, short *dst, intptr_t stride)
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, coef[4 * 4]);
-    ALIGN_VAR_32(Short, block[4 * 4]);
+    ALIGN_VAR_32(short, coef[4 * 4]);
+    ALIGN_VAR_32(short, block[4 * 4]);
 
 #define N (4)
     for (int i = 0; i < N; i++)
@@ -614,8 +614,8 @@ void idct4_c(int *src, short *dst, intptr_t stride)
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, coef[4 * 4]);
-    ALIGN_VAR_32(Short, block[4 * 4]);
+    ALIGN_VAR_32(short, coef[4 * 4]);
+    ALIGN_VAR_32(short, block[4 * 4]);
 
 #define N (4)
     for (int i = 0; i < N; i++)
@@ -642,8 +642,8 @@ void idct8_c(int *src, short *dst, intptr_t stride)
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, coef[8 * 8]);
-    ALIGN_VAR_32(Short, block[8 * 8]);
+    ALIGN_VAR_32(short, coef[8 * 8]);
+    ALIGN_VAR_32(short, block[8 * 8]);
 
 #define N (8)
     for (int i = 0; i < N; i++)
@@ -669,8 +669,8 @@ void idct16_c(int *src, short *dst, intptr_t stride)
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, coef[16 * 16]);
-    ALIGN_VAR_32(Short, block[16 * 16]);
+    ALIGN_VAR_32(short, coef[16 * 16]);
+    ALIGN_VAR_32(short, block[16 * 16]);
 
 #define N (16)
     for (int i = 0; i < N; i++)
@@ -696,8 +696,8 @@ void idct32_c(int *src, short *dst, intptr_t stride)
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, coef[32 * 32]);
-    ALIGN_VAR_32(Short, block[32 * 32]);
+    ALIGN_VAR_32(short, coef[32 * 32]);
+    ALIGN_VAR_32(short, block[32 * 32]);
 
 #define N (32)
     for (int i = 0; i < N; i++)

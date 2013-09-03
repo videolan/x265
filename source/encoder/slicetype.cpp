@@ -35,7 +35,7 @@
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
 
-// Short history:
+// short history:
 //
 // This file was originally borrowed from x264 source tree circa Dec 4, 2012
 // with x264 bug fixes applied from Dec 11th and Jan 8th 2013.  But without

@@ -85,7 +85,7 @@ void TShortYUV::subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int tr
 
     Pel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
     Pel* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    Short* dst = getLumaAddr(trUnitIdx, partSize);
+    short* dst = getLumaAddr(trUnitIdx, partSize);
 
     int src0Stride = srcYuv0->getStride();
     int src1Stride = srcYuv1->getStride();
@@ -102,8 +102,8 @@ void TShortYUV::subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int 
     Pel* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
     Pel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
     Pel* srcV1 = srcYuv1->getCrAddr(trUnitIdx, partSize);
-    Short* dstU = getCbAddr(trUnitIdx, partSize);
-    Short* dstV = getCrAddr(trUnitIdx, partSize);
+    short* dstU = getCbAddr(trUnitIdx, partSize);
+    short* dstV = getCrAddr(trUnitIdx, partSize);
 
     int src0Stride = srcYuv0->getCStride();
     int src1Stride = srcYuv1->getCStride();

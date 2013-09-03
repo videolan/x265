@@ -43,22 +43,22 @@
 
 using namespace x265;
 
-static inline Pel weightBidirY(Int w0, Short P0, Int w1, Short P1, Int round, Int shift, Int offset)
+static inline Pel weightBidirY(Int w0, short P0, Int w1, short P1, Int round, Int shift, Int offset)
 {
     return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
 }
 
-static inline Pel weightBidirC(Int w0, Short P0, Int w1, Short P1, Int round, Int shift, Int offset)
+static inline Pel weightBidirC(Int w0, short P0, Int w1, short P1, Int round, Int shift, Int offset)
 {
     return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
 }
 
-static inline Pel weightUnidirY(Int w0, Short P0, Int round, Int shift, Int offset)
+static inline Pel weightUnidirY(Int w0, short P0, Int round, Int shift, Int offset)
 {
     return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
-static inline Pel weightUnidirC(Int w0, Short P0, Int round, Int shift, Int offset)
+static inline Pel weightUnidirC(Int w0, short P0, Int round, Int shift, Int offset)
 {
     return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
@@ -198,13 +198,13 @@ void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, U
 {
     Int x, y;
 
-    Short* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
-    Short* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
-    Short* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
+    short* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    short* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    short* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Short* srcY1  = srcYuv1->getLumaAddr(partUnitIdx);
-    Short* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
-    Short* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
+    short* srcY1  = srcYuv1->getLumaAddr(partUnitIdx);
+    short* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
+    short* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
 
     Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
     Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
@@ -408,9 +408,9 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt
 
 void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool justChroma)
 {
-    Short* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
-    Short* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
-    Short* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
+    short* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    short* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    short* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
     Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
     Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);

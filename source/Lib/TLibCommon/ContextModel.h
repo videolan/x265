@@ -78,7 +78,7 @@ public:
         m_state = s_nextStateMPS[m_state];
     }
 
-    Int getEntropyBits(Short val) { return s_entropyBits[m_state ^ val]; }
+    Int getEntropyBits(short val) { return s_entropyBits[m_state ^ val]; }
 
     void update(Int binVal)
     {

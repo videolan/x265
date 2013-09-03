@@ -105,10 +105,10 @@ extern UInt g_puOffset[8];
 
 extern Int g_quantScales[6];     // Q(QP%6)
 extern Int g_invQuantScales[6];  // IQ(QP%6)
-extern const Short g_t4[4][4];
-extern const Short g_t8[8][8];
-extern const Short g_t16[16][16];
-extern const Short g_t32[32][32];
+extern const short g_t4[4][4];
+extern const short g_t8[8][8];
+extern const short g_t16[16][16];
+extern const short g_t32[32][32];
 
 // ====================================================================================================================
 // Subpel interpolation defines and constants
@@ -120,8 +120,8 @@ extern const Short g_t32[32][32];
 #define IF_FILTER_PREC    6                            ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
-extern const Short g_lumaFilter[4][NTAPS_LUMA];     ///< Luma filter taps
-extern const Short g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
+extern const short g_lumaFilter[4][NTAPS_LUMA];     ///< Luma filter taps
+extern const short g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
 // ====================================================================================================================
 // Luma QP to Chroma QP mapping
