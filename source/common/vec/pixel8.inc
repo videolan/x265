@@ -437,7 +437,7 @@ int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 
     sum1 = _mm_shuffle_epi32(sum0, 2);
     sum0 = _mm_add_epi32(sum0, sum1);
-    return _mm_extract_epi32(sum0, 0);
+    return _mm_cvtsi128_si32(sum0);
 }
 
 #endif /* if HAVE_MMX */
