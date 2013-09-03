@@ -128,9 +128,9 @@ public:
 
     // transform & inverse transform functions
     UInt transformNxN(TComDataCU* cu, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
-                      TextType ttype, UInt absPartIdx, int* lastPos, Bool useTransformSkip = false);
+                      TextType ttype, UInt absPartIdx, int* lastPos, bool useTransformSkip = false);
 
-    void invtransformNxN(Bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, Bool useTransformSkip = false, int lastPos = MAX_INT);
+    void invtransformNxN(bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
 
     // Misc functions
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset);
@@ -148,9 +148,9 @@ public:
 
     int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
 
-    void setUseScalingList(Bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
+    void setUseScalingList(bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
 
-    Bool getUseScalingList() { return m_scalingListEnabledFlag; }
+    bool getUseScalingList() { return m_scalingListEnabledFlag; }
 
     void setFlatScalingList();
     void xsetFlatScalingList(UInt list, UInt size, UInt qp);
@@ -178,10 +178,10 @@ protected:
     double   m_chromaLambda;
 
     UInt     m_maxTrSize;
-    Bool     m_useRDOQ;
-    Bool     m_useRDOQTS;
-    Bool     m_useTransformSkipFast;
-    Bool     m_scalingListEnabledFlag;
+    bool     m_useRDOQ;
+    bool     m_useRDOQTS;
+    bool     m_useTransformSkipFast;
+    bool     m_scalingListEnabledFlag;
 
     int*     m_tmpCoeff;
     int*     m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
@@ -202,7 +202,7 @@ private:
 
     inline UInt xGetCodedLevel(double& codedCost, double& codedCost0, double& codedCostSig, int levelDouble,
                                  UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,
-                                 UInt c1Idx, UInt c2Idx, int qbits, double scale, Bool bLast) const;
+                                 UInt c1Idx, UInt c2Idx, int qbits, double scale, bool bLast) const;
 
     inline double xGetICRateCost(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 

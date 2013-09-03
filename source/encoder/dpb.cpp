@@ -186,7 +186,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
         }
         slice->setColFromL0Flag(1 - colDir);
 
-        Bool bLowDelay = true;
+        bool bLowDelay = true;
         int curPOC = slice->getPOC();
         int refIdx = 0;
 
@@ -217,7 +217,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     slice->setList1IdxToList0Idx();
     slice->setEnableTMVPFlag(1);
 
-    Bool bGPBcheck = false;
+    bool bGPBcheck = false;
     if (slice->getSliceType() == B_SLICE)
     {
         if (slice->getNumRefIdx(REF_PIC_LIST_0) == slice->getNumRefIdx(REF_PIC_LIST_1))
@@ -490,7 +490,7 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice, x265::FrameEncoder *fra
     // and assign values for pocLSBLT and MSB present flag
     int longtermPicsPoc[MAX_NUM_REF_PICS], longtermPicsLSB[MAX_NUM_REF_PICS], indices[MAX_NUM_REF_PICS];
     int longtermPicsMSB[MAX_NUM_REF_PICS];
-    Bool mSBPresentFlag[MAX_NUM_REF_PICS];
+    bool mSBPresentFlag[MAX_NUM_REF_PICS];
     ::memset(longtermPicsPoc, 0, sizeof(longtermPicsPoc));  // Store POC values of LTRP
     ::memset(longtermPicsLSB, 0, sizeof(longtermPicsLSB));  // Store POC LSB values of LTRP
     ::memset(longtermPicsMSB, 0, sizeof(longtermPicsMSB));  // Store POC LSB values of LTRP
@@ -548,7 +548,7 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice, x265::FrameEncoder *fra
     }
 
     // tempArray for usedByCurr flag
-    Bool tempArray[MAX_NUM_REF_PICS];
+    bool tempArray[MAX_NUM_REF_PICS];
     ::memset(tempArray, 0, sizeof(tempArray));
     for (i = 0; i < numLongPics; i++)
     {

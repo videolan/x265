@@ -103,7 +103,7 @@ public:
     void xInitPPS(TComPPS *pps);
     void xInitRPS(TComSPS *sps);
 
-    int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, AccessUnit& accessUnit);
+    int encode(bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, AccessUnit& accessUnit);
 
     int getStreamHeaders(AccessUnit& accessUnit);
 

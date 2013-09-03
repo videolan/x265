@@ -166,7 +166,7 @@ public:
 
     int getStreamHeaders(AccessUnit& accessUnitOut);
 
-    void initSlice(TComPic* pic, Bool bForceISlice, int gopID);
+    void initSlice(TComPic* pic, bool bForceISlice, int gopID);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame(TComPic *pic);

@@ -117,14 +117,14 @@ void TComDataCU::create(UInt numPartition, UInt width, UInt height, int unitSize
     m_width  = (UChar*)X265_MALLOC(UChar, numPartition);
     m_height = (UChar*)X265_MALLOC(UChar, numPartition);
 
-    m_skipFlag = new Bool[numPartition];
+    m_skipFlag = new bool[numPartition];
 
     m_partSizes = new char[numPartition];
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
     m_predModes = new char[numPartition];
-    m_cuTransquantBypass = new Bool[numPartition];
+    m_cuTransquantBypass = new bool[numPartition];
 
-    m_bMergeFlags     = (Bool*)X265_MALLOC(Bool,  numPartition);
+    m_bMergeFlags     = (bool*)X265_MALLOC(bool,  numPartition);
     m_mergeIndex      = (UChar*)X265_MALLOC(UChar, numPartition);
     m_lumaIntraDir    = (UChar*)X265_MALLOC(UChar, numPartition);
     m_chromaIntraDir  = (UChar*)X265_MALLOC(UChar, numPartition);
@@ -153,7 +153,7 @@ void TComDataCU::create(UInt numPartition, UInt width, UInt height, int unitSize
     memset(m_trCoeffCb, 0, width * height / 4 * sizeof(TCoeff));
     memset(m_trCoeffCr, 0, width * height / 4 * sizeof(TCoeff));
 
-    m_iPCMFlags   = (Bool*)X265_MALLOC(Bool, numPartition);
+    m_iPCMFlags   = (bool*)X265_MALLOC(bool, numPartition);
     m_iPCMSampleY  = (Pel*)X265_MALLOC(Pel, width * height);
     m_iPCMSampleCb = (Pel*)X265_MALLOC(Pel, width * height / 4);
     m_iPCMSampleCr = (Pel*)X265_MALLOC(Pel, width * height / 4);
@@ -215,7 +215,7 @@ const NDBFBlockInfo& NDBFBlockInfo::operator =(const NDBFBlockInfo& src)
     this->posY   = src.posY;
     this->width  = src.width;
     this->height = src.height;
-    ::memcpy(this->isBorderAvailable, src.isBorderAvailable, sizeof(Bool) * ((int)NUM_SGU_BORDER));
+    ::memcpy(this->isBorderAvailable, src.isBorderAvailable, sizeof(bool) * ((int)NUM_SGU_BORDER));
     this->allBordersAvailable = src.allBordersAvailable;
 
     return *this;
@@ -477,7 +477,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, int qp)
     m_numPartitions    = cu->getTotalNumPart() >> 2;
 
     int iSizeInUchar = sizeof(UChar) * m_numPartitions;
-    int iSizeInBool  = sizeof(Bool) * m_numPartitions;
+    int iSizeInBool  = sizeof(bool) * m_numPartitions;
 
     int sizeInChar = sizeof(char) * m_numPartitions;
     memset(m_qp, qp, sizeInChar);
@@ -667,7 +667,7 @@ void TComDataCU::copyInterPredInfoFrom(TComDataCU* cu, UInt absPartIdx, RefPicLi
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool isRDObasedAnalysis)
+void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, bool isRDObasedAnalysis)
 {
     assert(partUnitIdx < 4);
     if (isRDObasedAnalysis)
@@ -680,7 +680,7 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool
 
     UInt numPartition = cu->getTotalNumPart();
     int iSizeInUchar  = sizeof(UChar) * numPartition;
-    int iSizeInBool   = sizeof(Bool) * numPartition;
+    int iSizeInBool   = sizeof(bool) * numPartition;
 
     int sizeInChar  = sizeof(char) * numPartition;
     memcpy(m_skipFlag  + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * numPartition);
@@ -749,7 +749,7 @@ void TComDataCU::copyToPic(UChar uhDepth)
     rpcCU->m_totalBits       = m_totalBits;
 
     int iSizeInUchar  = sizeof(UChar) * m_numPartitions;
-    int iSizeInBool   = sizeof(Bool) * m_numPartitions;
+    int iSizeInBool   = sizeof(bool) * m_numPartitions;
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
@@ -815,7 +815,7 @@ void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
     cu->m_totalBits       = m_totalBits;
 
     int sizeInUchar = sizeof(UChar) * qNumPart;
-    int sizeInBool  = sizeof(Bool) * qNumPart;
+    int sizeInBool  = sizeof(bool) * qNumPart;
 
     int sizeInChar  = sizeof(char) * qNumPart;
     memcpy(cu->getSkipFlag() + partOffset, m_skipFlag,   sizeof(*m_skipFlag)   * qNumPart);
@@ -868,7 +868,7 @@ void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
 // Other public functions
 // --------------------------------------------------------------------------------------------------------------------
 
-TComDataCU* TComDataCU::getPULeft(UInt& lPartUnitIdx, UInt curPartUnitIdx, Bool  bEnforceSliceRestriction, Bool  bEnforceTileRestriction)
+TComDataCU* TComDataCU::getPULeft(UInt& lPartUnitIdx, UInt curPartUnitIdx, bool  bEnforceSliceRestriction, bool  bEnforceTileRestriction)
 {
     UInt absPartIdx       = g_zscanToRaster[curPartUnitIdx];
     UInt absZorderCUIdx   = g_zscanToRaster[m_absIdxInLCU];
@@ -898,8 +898,8 @@ TComDataCU* TComDataCU::getPULeft(UInt& lPartUnitIdx, UInt curPartUnitIdx, Bool 
     return m_cuLeft;
 }
 
-TComDataCU* TComDataCU::getPUAbove(UInt& aPartUnitIdx, UInt  curPartUnitIdx, Bool bEnforceSliceRestriction, Bool planarAtLCUBoundary,
-                                   Bool bEnforceTileRestriction)
+TComDataCU* TComDataCU::getPUAbove(UInt& aPartUnitIdx, UInt  curPartUnitIdx, bool bEnforceSliceRestriction, bool planarAtLCUBoundary,
+                                   bool bEnforceTileRestriction)
 {
     UInt absPartIdx       = g_zscanToRaster[curPartUnitIdx];
     UInt absZorderCUIdx   = g_zscanToRaster[m_absIdxInLCU];
@@ -934,7 +934,7 @@ TComDataCU* TComDataCU::getPUAbove(UInt& aPartUnitIdx, UInt  curPartUnitIdx, Boo
     return m_cuAbove;
 }
 
-TComDataCU* TComDataCU::getPUAboveLeft(UInt& alPartUnitIdx, UInt curPartUnitIdx, Bool bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUAboveLeft(UInt& alPartUnitIdx, UInt curPartUnitIdx, bool bEnforceSliceRestriction)
 {
     UInt absPartIdx       = g_zscanToRaster[curPartUnitIdx];
     UInt absZorderCUIdx   = g_zscanToRaster[m_absIdxInLCU];
@@ -982,7 +982,7 @@ TComDataCU* TComDataCU::getPUAboveLeft(UInt& alPartUnitIdx, UInt curPartUnitIdx,
     return m_cuAboveLeft;
 }
 
-TComDataCU* TComDataCU::getPUAboveRight(UInt& arPartUnitIdx, UInt curPartUnitIdx, Bool bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUAboveRight(UInt& arPartUnitIdx, UInt curPartUnitIdx, bool bEnforceSliceRestriction)
 {
     UInt absPartIdxRT     = g_zscanToRaster[curPartUnitIdx];
     UInt absZorderCUIdx   = g_zscanToRaster[m_absIdxInLCU] + m_width[0] / m_pic->getMinCUWidth() - 1;
@@ -1037,7 +1037,7 @@ TComDataCU* TComDataCU::getPUAboveRight(UInt& arPartUnitIdx, UInt curPartUnitIdx
     return m_cuAboveRight;
 }
 
-TComDataCU* TComDataCU::getPUBelowLeft(UInt& blPartUnitIdx, UInt curPartUnitIdx, Bool bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUBelowLeft(UInt& blPartUnitIdx, UInt curPartUnitIdx, bool bEnforceSliceRestriction)
 {
     UInt absPartIdxLB     = g_zscanToRaster[curPartUnitIdx];
     UInt absZorderCUIdxLB = g_zscanToRaster[m_absIdxInLCU] + (m_height[0] / m_pic->getMinCUHeight() - 1) * m_pic->getNumPartInWidth();
@@ -1081,7 +1081,7 @@ TComDataCU* TComDataCU::getPUBelowLeft(UInt& blPartUnitIdx, UInt curPartUnitIdx,
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUBelowLeftAdi(UInt& blPartUnitIdx,  UInt curPartUnitIdx, UInt partUnitOffset, Bool bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUBelowLeftAdi(UInt& blPartUnitIdx,  UInt curPartUnitIdx, UInt partUnitOffset, bool bEnforceSliceRestriction)
 {
     UInt absPartIdxLB     = g_zscanToRaster[curPartUnitIdx];
     UInt absZorderCUIdxLB = g_zscanToRaster[m_absIdxInLCU] + ((m_height[0] / m_pic->getMinCUHeight()) - 1) * m_pic->getNumPartInWidth();
@@ -1126,7 +1126,7 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(UInt& blPartUnitIdx,  UInt curPartUnit
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& arPartUnitIdx, UInt curPartUnitIdx, UInt partUnitOffset, Bool bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& arPartUnitIdx, UInt curPartUnitIdx, UInt partUnitOffset, bool bEnforceSliceRestriction)
 {
     UInt absPartIdxRT     = g_zscanToRaster[curPartUnitIdx];
     UInt absZorderCUIdx   = g_zscanToRaster[m_absIdxInLCU] + (m_width[0] / m_pic->getMinCUWidth()) - 1;
@@ -1289,7 +1289,7 @@ char TComDataCU::getLastCodedQP(UInt absPartIdx)
  * \param   absPartIdx
  * \returns true if the CU is coded in lossless coding mode; false if otherwise
  */
-Bool TComDataCU::isLosslessCoded(UInt absPartIdx)
+bool TComDataCU::isLosslessCoded(UInt absPartIdx)
 {
     return getSlice()->getPPS()->getTransquantBypassEnableFlag() && getCUTransquantBypass(absPartIdx);
 }
@@ -1502,7 +1502,7 @@ void TComDataCU::setDepthSubParts(UInt depth, UInt absPartIdx)
     memset(m_depth + absPartIdx, depth, sizeof(UChar) * curPartNum);
 }
 
-Bool TComDataCU::isFirstAbsZorderIdxInDepth(UInt absPartIdx, UInt depth)
+bool TComDataCU::isFirstAbsZorderIdxInDepth(UInt absPartIdx, UInt depth)
 {
     UInt curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
@@ -1515,12 +1515,12 @@ void TComDataCU::setPartSizeSubParts(PartSize mode, UInt absPartIdx, UInt depth)
     memset(m_partSizes + absPartIdx, mode, m_pic->getNumPartInCU() >> (2 * depth));
 }
 
-void TComDataCU::setCUTransquantBypassSubParts(Bool flag, UInt absPartIdx, UInt depth)
+void TComDataCU::setCUTransquantBypassSubParts(bool flag, UInt absPartIdx, UInt depth)
 {
     memset(m_cuTransquantBypass + absPartIdx, flag, m_pic->getNumPartInCU() >> (2 * depth));
 }
 
-void TComDataCU::setSkipFlagSubParts(Bool skip, UInt absPartIdx, UInt depth)
+void TComDataCU::setSkipFlagSubParts(bool skip, UInt absPartIdx, UInt depth)
 {
     assert(sizeof(*m_skipFlag) == 1);
     memset(m_skipFlag + absPartIdx, skip, m_pic->getNumPartInCU() >> (2 * depth));
@@ -1532,7 +1532,7 @@ void TComDataCU::setPredModeSubParts(PredMode eMode, UInt absPartIdx, UInt depth
     memset(m_predModes + absPartIdx, eMode, m_pic->getNumPartInCU() >> (2 * depth));
 }
 
-void TComDataCU::setQPSubCUs(int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf)
+void TComDataCU::setQPSubCUs(int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, bool &foundNonZeroCbf)
 {
     UInt curPartNumb = m_pic->getNumPartInCU() >> (depth << 1);
     UInt curPartNumQ = curPartNumb >> 2;
@@ -1675,7 +1675,7 @@ void TComDataCU::setSubPart(T param, T* baseLCU, UInt cuAddr, UInt cuDepth, UInt
     }
 }
 
-void TComDataCU::setMergeFlagSubParts(Bool bMergeFlag, UInt absPartIdx, UInt partIdx, UInt depth)
+void TComDataCU::setMergeFlagSubParts(bool bMergeFlag, UInt absPartIdx, UInt partIdx, UInt depth)
 {
     setSubPart(bMergeFlag, m_bMergeFlags, absPartIdx, depth, partIdx);
 }
@@ -2077,7 +2077,7 @@ void TComDataCU::deriveLeftBottomIdxAdi(UInt& outPartIdxLB, UInt partOffset, UIn
     outPartIdxLB    = g_rasterToZscan[absIdx];
 }
 
-Bool TComDataCU::hasEqualMotion(UInt absPartIdx, TComDataCU* candCU, UInt candAbsPartIdx)
+bool TComDataCU::hasEqualMotion(UInt absPartIdx, TComDataCU* candCU, UInt candAbsPartIdx)
 {
     if (getInterDir(absPartIdx) != candCU->getInterDir(candAbsPartIdx))
     {
@@ -2111,7 +2111,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
                                          int& numValidMergeCand, int mrgCandIdx)
 {
     UInt absPartAddr = m_absIdxInLCU + absPartIdx;
-    Bool abCandIsInter[MRG_MAX_NUM_CANDS];
+    bool abCandIsInter[MRG_MAX_NUM_CANDS];
 
     for (UInt i = 0; i < getSlice()->getMaxNumMergeCand(); ++i)
     {
@@ -2136,7 +2136,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
     UInt leftPartIdx = 0;
     TComDataCU* cuLeft = 0;
     cuLeft = getPULeft(leftPartIdx, partIdxLB);
-    Bool isAvailableA1 = cuLeft &&
+    bool isAvailableA1 = cuLeft &&
         cuLeft->isDiffMER(xP - 1, yP + nPSH - 1, xP, yP) &&
         !(puIdx == 1 && (curPS == SIZE_Nx2N || curPS == SIZE_nLx2N || curPS == SIZE_nRx2N)) &&
         !cuLeft->isIntra(leftPartIdx);
@@ -2167,7 +2167,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
     UInt abovePartIdx = 0;
     TComDataCU* cuAbove = 0;
     cuAbove = getPUAbove(abovePartIdx, partIdxRT);
-    Bool isAvailableB1 = cuAbove &&
+    bool isAvailableB1 = cuAbove &&
         cuAbove->isDiffMER(xP + nPSW - 1, yP - 1, xP, yP) &&
         !(puIdx == 1 && (curPS == SIZE_2NxN || curPS == SIZE_2NxnU || curPS == SIZE_2NxnD)) &&
         !cuAbove->isIntra(abovePartIdx);
@@ -2198,7 +2198,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
     UInt aboveRightPartIdx = 0;
     TComDataCU* cuAboveRight = 0;
     cuAboveRight = getPUAboveRight(aboveRightPartIdx, partIdxRT);
-    Bool isAvailableB0 = cuAboveRight &&
+    bool isAvailableB0 = cuAboveRight &&
         cuAboveRight->isDiffMER(xP + nPSW, yP - 1, xP, yP) &&
         !cuAboveRight->isIntra(aboveRightPartIdx);
     if (isAvailableB0 && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, cuAboveRight, aboveRightPartIdx)))
@@ -2228,7 +2228,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
     UInt leftBottomPartIdx = 0;
     TComDataCU* cuLeftBottom = 0;
     cuLeftBottom = this->getPUBelowLeft(leftBottomPartIdx, partIdxLB);
-    Bool isAvailableA0 = cuLeftBottom &&
+    bool isAvailableA0 = cuLeftBottom &&
         cuLeftBottom->isDiffMER(xP - 1, yP + nPSH, xP, yP) &&
         !cuLeftBottom->isIntra(leftBottomPartIdx);
     if (isAvailableA0 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuLeftBottom, leftBottomPartIdx)))
@@ -2259,7 +2259,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
         UInt aboveLeftPartIdx = 0;
         TComDataCU* cuAboveLeft = 0;
         cuAboveLeft = getPUAboveLeft(aboveLeftPartIdx, absPartAddr);
-        Bool isAvailableB2 = cuAboveLeft &&
+        bool isAvailableB2 = cuAboveLeft &&
             cuAboveLeft->isDiffMER(xP - 1, yP - 1, xP, yP) &&
             !cuAboveLeft->isIntra(aboveLeftPartIdx);
         if (isAvailableB2 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuAboveLeft, aboveLeftPartIdx))
@@ -2334,7 +2334,7 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
         }
 
         refIdx = 0;
-        Bool bExistMV = false;
+        bool bExistMV = false;
         UInt partIdxCenter;
         UInt curLCUIdx = getAddr();
         int dir = 0;
@@ -2454,9 +2454,9 @@ void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt puIdx, TComMvFiel
 /** Check whether the current PU and a spatial neighboring PU are in a same ME region.
  * \param xN, xN   location of the upper-left corner pixel of a neighboring PU
  * \param xP, yP   location of the upper-left corner pixel of the current PU
- * \returns Bool
+ * \returns bool
  */
-Bool TComDataCU::isDiffMER(int xN, int yN, int xP, int yP)
+bool TComDataCU::isDiffMER(int xN, int yN, int xP, int yP)
 {
     UInt plevel = this->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() + 2;
 
@@ -2547,7 +2547,7 @@ void TComDataCU::getPartPosition(UInt partIdx, int& xP, int& yP, int& nPSW, int&
 void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, int refIdx, AMVPInfo* info)
 {
     MV mvp;
-    Bool bAddedSmvp = false;
+    bool bAddedSmvp = false;
 
     info->m_num = 0;
     if (refIdx < 0)
@@ -2558,7 +2558,7 @@ void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, in
     //-- Get Spatial MV
     UInt partIdxLT, partIdxRT, partIdxLB;
     UInt numPartInCUWidth = m_pic->getNumPartInWidth();
-    Bool bAdded = false;
+    bool bAdded = false;
 
     deriveLeftRightTopIdx(partIdx, partIdxLT, partIdxRT);
     deriveLeftBottomIdx(partIdx, partIdxLB);
@@ -2701,7 +2701,7 @@ void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, in
     }
 }
 
-Bool TComDataCU::isBipredRestriction(UInt puIdx)
+bool TComDataCU::isBipredRestriction(UInt puIdx)
 {
     int width = 0;
     int height = 0;
@@ -2761,18 +2761,18 @@ void TComDataCU::clearCbf(UInt idx, TextType ttype, UInt numParts)
  * \param depth CU depth
  * \returns void
  */
-void TComDataCU::setIPCMFlagSubParts(Bool bIpcmFlag, UInt absPartIdx, UInt depth)
+void TComDataCU::setIPCMFlagSubParts(bool bIpcmFlag, UInt absPartIdx, UInt depth)
 {
     UInt curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_iPCMFlags + absPartIdx, bIpcmFlag, sizeof(Bool) * curPartNum);
+    memset(m_iPCMFlags + absPartIdx, bIpcmFlag, sizeof(bool) * curPartNum);
 }
 
 /** Test whether the current block is skipped
  * \param partIdx Block index
  * \returns Flag indicating whether the block is skipped
  */
-Bool TComDataCU::isSkipped(UInt partIdx)
+bool TComDataCU::isSkipped(UInt partIdx)
 {
     return getSkipFlag(partIdx);
 }
@@ -2785,7 +2785,7 @@ Bool TComDataCU::isSkipped(UInt partIdx)
 #pragma warning(disable: 4701) // potentially uninitialized local variables
 #endif
 
-Bool TComDataCU::xAddMVPCand(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir)
+bool TComDataCU::xAddMVPCand(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir)
 {
     TComDataCU* tmpCU = NULL;
     UInt idx = 0;
@@ -2867,9 +2867,9 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* info, RefPicList picList, int refIdx, UIn
  * \param refIdx
  * \param partUnitIdx
  * \param dir
- * \returns Bool
+ * \returns bool
  */
-Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir)
+bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir)
 {
     TComDataCU* tmpCU = NULL;
     UInt idx = 0;
@@ -2927,8 +2927,8 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, int refIdx
     int neibPOC = curPOC;
     int neibRefPOC;
 
-    Bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, refIdx)->getIsLongTerm();
-    Bool bIsNeibRefLongTerm = false;
+    bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, refIdx)->getIsLongTerm();
+    bool bIsNeibRefLongTerm = false;
 
     //---------------  V1 (END) ------------------//
     if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0)
@@ -3000,9 +3000,9 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, int refIdx
  * \param cuAddr
  * \param partUnitIdx
  * \param outRefIdx
- * \returns Bool
+ * \returns bool
  */
-Bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx)
+bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx)
 {
     UInt absPartAddr = partUnitIdx;
 
@@ -3046,8 +3046,8 @@ Bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV&
     colmv = colCU->getCUMvField(colRefPicList)->getMv(absPartAddr);
 
     curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
-    Bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, outRefIdx)->getIsLongTerm();
-    Bool bIsColRefLongTerm = colCU->getSlice()->getIsUsedAsLongTerm(colRefPicList, colRefIdx);
+    bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, outRefIdx)->getIsLongTerm();
+    bool bIsColRefLongTerm = colCU->getSlice()->getIsUsedAsLongTerm(colRefPicList, colRefIdx);
 
     if (bIsCurrRefLongTerm != bIsColRefLongTerm)
     {
@@ -3123,7 +3123,7 @@ void TComDataCU::compressMV()
     }
 }
 
-UInt TComDataCU::getCoefScanIdx(UInt absPartIdx, UInt width, Bool bIsLuma, Bool bIsIntra)
+UInt TComDataCU::getCoefScanIdx(UInt absPartIdx, UInt width, bool bIsLuma, bool bIsIntra)
 {
     UInt uiCTXIdx;
     UInt scanIdx;
@@ -3204,15 +3204,15 @@ UInt TComDataCU::getSCUAddr()
  * \param bIndependentTileBoundaryEnabled true for independent tile boundary enabled
  */
 void TComDataCU::setNDBFilterBlockBorderAvailability(UInt /*numLCUInPicWidth*/, UInt /*numLCUInPicHeight*/, UInt numSUInLCUWidth, UInt numSUInLCUHeight,
-                                                     UInt picWidth, UInt picHeight, Bool bTopTileBoundary, Bool bDownTileBoundary, Bool bLeftTileBoundary,
-                                                     Bool bRightTileBoundary, Bool bIndependentTileBoundaryEnabled)
+                                                     UInt picWidth, UInt picHeight, bool bTopTileBoundary, bool bDownTileBoundary, bool bLeftTileBoundary,
+                                                     bool bRightTileBoundary, bool bIndependentTileBoundaryEnabled)
 {
     UInt lpelx, tpely;
     UInt width, height;
-    Bool bPicRBoundary, bPicBBoundary, bPicTBoundary, bPicLBoundary;
-    Bool bLCURBoundary = false, bLCUBBoundary = false, bLCUTBoundary = false, bLCULBoundary = false;
-    Bool* bAvailBorder;
-    Bool* bAvail;
+    bool bPicRBoundary, bPicBBoundary, bPicTBoundary, bPicLBoundary;
+    bool bLCURBoundary = false, bLCUBBoundary = false, bLCUTBoundary = false, bLCULBoundary = false;
+    bool* bAvailBorder;
+    bool* bAvail;
     UInt rTLSU, rBRSU, widthSU;
     UInt numSGU = (UInt)m_vNDFBlock.size();
 

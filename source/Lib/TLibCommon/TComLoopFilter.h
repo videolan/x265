@@ -54,8 +54,8 @@ namespace x265 {
 /// parameters for deblocking filter
 typedef struct _LFCUParam
 {
-    Bool bLeftEdge;                       ///< indicates left edge
-    Bool bTopEdge;                        ///< indicates top edge
+    bool bLeftEdge;                       ///< indicates left edge
+    bool bTopEdge;                        ///< indicates top edge
 } LFCUParam;
 
 // ====================================================================================================================
@@ -69,10 +69,10 @@ private:
 
     UInt      m_numPartitions;
     UChar*    m_blockingStrength[2];            ///< Bs for [Ver/Hor][Y/U/V][Blk_Idx]
-    Bool*     m_bEdgeFilter[2];
+    bool*     m_bEdgeFilter[2];
     LFCUParam m_lfcuParam;                ///< status structure
 
-    Bool      m_bLFCrossTileBoundary;
+    bool      m_bLFCrossTileBoundary;
 
 protected:
 
@@ -100,15 +100,15 @@ protected:
         }
     }
 
-    void xSetEdgefilterMultiple(TComDataCU* cu, UInt absZOrderIdx, UInt depth, int dir, int edgeIdx, Bool bValue, UInt widthInBaseUnits = 0, UInt heightInBaseUnits = 0);
+    void xSetEdgefilterMultiple(TComDataCU* cu, UInt absZOrderIdx, UInt depth, int dir, int edgeIdx, bool bValue, UInt widthInBaseUnits = 0, UInt heightInBaseUnits = 0);
 
     void xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, int dir, int edge);
     void xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, int dir, int edge);
 
-    inline void xPelFilterLuma(Pel* src, int offset, int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, int iThrCut, Bool bFilterSecondP, Bool bFilterSecondQ);
-    inline void xPelFilterChroma(Pel* src, int offset, int tc, Bool bPartPNoFilter, Bool bPartQNoFilter);
+    inline void xPelFilterLuma(Pel* src, int offset, int tc, bool sw, bool bPartPNoFilter, bool bPartQNoFilter, int iThrCut, bool bFilterSecondP, bool bFilterSecondQ);
+    inline void xPelFilterChroma(Pel* src, int offset, int tc, bool bPartPNoFilter, bool bPartQNoFilter);
 
-    inline Bool xUseStrongFiltering(int offset, int d, int beta, int tc, Pel* src);
+    inline bool xUseStrongFiltering(int offset, int d, int beta, int tc, Pel* src);
     inline int xCalcDP(Pel* src, int offset);
     inline int xCalcDQ(Pel* src, int offset);
 
@@ -124,7 +124,7 @@ public:
     void  destroy();
 
     /// set configuration
-    void setCfg(Bool bLFCrossTileBoundary);
+    void setCfg(bool bLFCrossTileBoundary);
 
     /// picture-level deblocking filter
     void loopFilterPic(TComPic* pic);

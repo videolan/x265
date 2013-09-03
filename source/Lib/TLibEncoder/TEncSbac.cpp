@@ -204,7 +204,7 @@ void TEncSbac::determineCabacInitIdx()
 
 /** The function does the followng: Write out terminate bit. Flush CABAC. Intialize CABAC states. Start CABAC.
  */
-void TEncSbac::updateContextTables(SliceType eSliceType, int iQp, Bool bExecuteFinish)
+void TEncSbac::updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish)
 {
     m_pcBinIf->encodeBinTrm(1);
     if (bExecuteFinish) m_pcBinIf->finish();
@@ -303,7 +303,7 @@ void TEncSbac::xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, int 
         return;
     }
 
-    Bool bCodeLast = (uiMaxSymbol > uiSymbol);
+    bool bCodeLast = (uiMaxSymbol > uiSymbol);
 
     while (--uiSymbol)
     {
@@ -610,7 +610,7 @@ void TEncSbac::codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx)
     DTRACE_CABAC_T("\n")
 }
 
-void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiple)
+void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMultiple)
 {
     UInt dir[4], j;
     int preds[4][3] = { { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 } };
@@ -759,8 +759,8 @@ void TEncSbac::codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
     m_pcBinIf->encodeBin(iHor != 0 ? 1 : 0, *pCtx);
     m_pcBinIf->encodeBin(iVer != 0 ? 1 : 0, *pCtx);
 
-    const Bool bHorAbsGr0 = iHor != 0;
-    const Bool bVerAbsGr0 = iVer != 0;
+    const bool bHorAbsGr0 = iHor != 0;
+    const bool bVerAbsGr0 = iVer != 0;
     const UInt uiHorAbs   = 0 > iHor ? -iHor : iHor;
     const UInt uiVerAbs   = 0 > iVer ? -iVer : iVer;
     pCtx++;
@@ -873,7 +873,7 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, UInt absPartIdx)
 {
     UInt uiIPCM = (cu->getIPCMFlag(absPartIdx) == true) ? 1 : 0;
 
-    Bool writePCMSampleFlag = cu->getIPCMFlag(absPartIdx);
+    bool writePCMSampleFlag = cu->getIPCMFlag(absPartIdx);
 
     m_pcBinIf->encodeBinTrm(uiIPCM);
 
@@ -1100,7 +1100,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UIn
     UInt uiScanIdx = cu->getCoefScanIdx(absPartIdx, width, eTType == TEXT_LUMA, cu->isIntra(absPartIdx));
     const UInt *scan = g_sigLastScan[uiScanIdx][uiLog2BlockSize - 1];
 
-    Bool beValid;
+    bool beValid;
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         beValid = false;
@@ -1234,7 +1234,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UIn
 
         if (numNonZero > 0)
         {
-            Bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
+            bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
             UInt uiCtxSet = (iSubSet > 0 && eTType == TEXT_LUMA) ? 2 : 0;
 
             if (c1 == 0)
@@ -1325,7 +1325,7 @@ void TEncSbac::codeSaoMaxUvlc(UInt code, UInt maxSymbol)
     }
 
     int i;
-    Bool bCodeLast = (maxSymbol > code);
+    bool bCodeLast = (maxSymbol > code);
 
     if (code == 0)
     {

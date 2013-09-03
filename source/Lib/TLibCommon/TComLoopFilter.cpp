@@ -87,7 +87,7 @@ TComLoopFilter::~TComLoopFilter()
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
-void TComLoopFilter::setCfg(Bool bLFCrossTileBoundary)
+void TComLoopFilter::setCfg(bool bLFCrossTileBoundary)
 {
     m_bLFCrossTileBoundary = bLFCrossTileBoundary;
 }
@@ -99,7 +99,7 @@ void TComLoopFilter::create(UInt maxCuDepth)
     for (UInt dir = 0; dir < 2; dir++)
     {
         m_blockingStrength[dir] = new UChar[m_numPartitions];
-        m_bEdgeFilter[dir] = new Bool[m_numPartitions];
+        m_bEdgeFilter[dir] = new bool[m_numPartitions];
     }
 }
 
@@ -134,7 +134,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
         TComDataCU* cu = pic->getCU(cuAddr);
 
         ::memset(m_blockingStrength[EDGE_VER], 0, sizeof(UChar) * m_numPartitions);
-        ::memset(m_bEdgeFilter[EDGE_VER], 0, sizeof(Bool) * m_numPartitions);
+        ::memset(m_bEdgeFilter[EDGE_VER], 0, sizeof(bool) * m_numPartitions);
 
         // CU-based deblocking
         xDeblockCU(cu, 0, 0, EDGE_VER);
@@ -145,7 +145,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
         {
             cu = pic->getCU(cuAddr-1);
             ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(UChar) * m_numPartitions);
-            ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(Bool) * m_numPartitions);
+            ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(bool) * m_numPartitions);
 
             xDeblockCU(cu, 0, 0, EDGE_HOR);
         }
@@ -155,7 +155,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
     {
         TComDataCU* cu = pic->getCU(pic->getNumCUsInFrame()-1);
         ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(UChar) * m_numPartitions);
-        ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(Bool) * m_numPartitions);
+        ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(bool) * m_numPartitions);
 
         xDeblockCU(cu, 0, 0, EDGE_HOR);
     }
@@ -164,7 +164,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
 void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir)
 {
     ::memset(m_blockingStrength[dir], 0, sizeof(UChar) * m_numPartitions);
-    ::memset(m_bEdgeFilter[dir], 0, sizeof(Bool) * m_numPartitions);
+    ::memset(m_bEdgeFilter[dir], 0, sizeof(bool) * m_numPartitions);
 
     // CU-based deblocking
     xDeblockCU(cu, 0, 0, dir);
@@ -243,7 +243,7 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, i
     }
 }
 
-void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, UInt scanIdx, UInt depth, int dir, int edgeIdx, Bool bValue, UInt widthInBaseUnits, UInt heightInBaseUnits)
+void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, UInt scanIdx, UInt depth, int dir, int edgeIdx, bool bValue, UInt widthInBaseUnits, UInt heightInBaseUnits)
 {
     if (widthInBaseUnits == 0)
     {
@@ -544,9 +544,9 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt dep
     UInt bsAbsIdx = 0, bs = 0;
     int  offset, srcStep;
 
-    Bool  bPCMFilter = (cu->getSlice()->getSPS()->getUsePCM() && cu->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
-    Bool  bPartPNoFilter = false;
-    Bool  bPartQNoFilter = false;
+    bool  bPCMFilter = (cu->getSlice()->getSPS()->getUsePCM() && cu->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+    bool  bPartPNoFilter = false;
+    bool  bPartQNoFilter = false;
     UInt  partP = 0;
     UInt  partQ = 0;
     TComDataCU* cuP = cu;
@@ -624,10 +624,10 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt dep
 
                 if (d < beta)
                 {
-                    Bool bFilterP = (dp < sideThreshold);
-                    Bool bFilterQ = (dq < sideThreshold);
+                    bool bFilterP = (dp < sideThreshold);
+                    bool bFilterQ = (dq < sideThreshold);
 
-                    Bool sw =  xUseStrongFiltering(offset, 2 * d0, beta, tc, tmpsrc + srcStep * (idx * pelsInPart + blkIdx * 4 + 0))
+                    bool sw =  xUseStrongFiltering(offset, 2 * d0, beta, tc, tmpsrc + srcStep * (idx * pelsInPart + blkIdx * 4 + 0))
                         && xUseStrongFiltering(offset, 2 * d3, beta, tc, tmpsrc + srcStep * (idx * pelsInPart + blkIdx * 4 + 3));
 
                     for (int i = 0; i < DEBLOCK_SMALLEST_BLOCK / 2; i++)
@@ -655,9 +655,9 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt d
 
     const UInt lcuWidthInBaseUnits = cu->getPic()->getNumPartInWidth();
 
-    Bool  bPCMFilter = (cu->getSlice()->getSPS()->getUsePCM() && cu->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
-    Bool  bPartPNoFilter = false;
-    Bool  bPartQNoFilter = false;
+    bool  bPCMFilter = (cu->getSlice()->getSPS()->getUsePCM() && cu->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+    bool  bPartPNoFilter = false;
+    bool  bPartQNoFilter = false;
     UInt  partP;
     UInt  partQ;
     TComDataCU* cuP;
@@ -765,7 +765,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt d
  \param bFilterSecondP  decision weak filter/no filter for partP
  \param bFilterSecondQ  decision weak filter/no filter for partQ
 */
-inline void TComLoopFilter::xPelFilterLuma(Pel* src, int offset, int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, int thrCut, Bool bFilterSecondP, Bool bFilterSecondQ)
+inline void TComLoopFilter::xPelFilterLuma(Pel* src, int offset, int tc, bool sw, bool bPartPNoFilter, bool bPartQNoFilter, int thrCut, bool bFilterSecondP, bool bFilterSecondQ)
 {
     int delta;
 
@@ -835,7 +835,7 @@ inline void TComLoopFilter::xPelFilterLuma(Pel* src, int offset, int tc, Bool sw
  \param bPartPNoFilter  indicator to disable filtering on partP
  \param bPartQNoFilter  indicator to disable filtering on partQ
  */
-inline void TComLoopFilter::xPelFilterChroma(Pel* src, int offset, int tc, Bool bPartPNoFilter, Bool bPartQNoFilter)
+inline void TComLoopFilter::xPelFilterChroma(Pel* src, int offset, int tc, bool bPartPNoFilter, bool bPartQNoFilter)
 {
     int delta;
 
@@ -867,7 +867,7 @@ inline void TComLoopFilter::xPelFilterChroma(Pel* src, int offset, int tc, Bool 
  \param tc              tc value
  \param src           pointer to picture data
  */
-inline Bool TComLoopFilter::xUseStrongFiltering(int offset, int d, int beta, int tc, Pel* src)
+inline bool TComLoopFilter::xUseStrongFiltering(int offset, int d, int beta, int tc, Pel* src)
 {
     short m4  = (short)src[0];
     short m3  = (short)src[-offset];

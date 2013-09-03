@@ -210,7 +210,7 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
     return 0;
 }
 
-void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, int gopID)
+void FrameEncoder::initSlice(TComPic* pic, bool bForceISlice, int gopID)
 {
     m_pic = pic;
     TComSlice* slice = pic->getSlice();
@@ -560,7 +560,7 @@ void FrameEncoder::compressFrame(TComPic *pic)
 
     /* start slice NALunit */
     OutputNALUnit nalu(slice->getNalUnitType(), 0);
-    Bool sliceSegment = !slice->isNextSlice();
+    bool sliceSegment = !slice->isNextSlice();
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     entropyCoder->encodeSliceHeader(slice);
 

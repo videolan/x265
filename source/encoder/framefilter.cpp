@@ -208,7 +208,7 @@ void FrameFilter::processRow(int row)
             }
 
             // TODO: this code is NOT VERIFY because TransformSkip and PCM mode have some bugs, they always not active!
-            Bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+            bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
             if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
             {
                 for (UInt col = 0; col < numCols; col++)

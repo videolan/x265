@@ -178,7 +178,7 @@ void TComPic::createNonDBFilterInfo(int lastSlicecuAddr, int sliceGranularityDep
     TPelY     = LCUY + g_rasterToPelY[g_zscanToRaster[firstCUInStartLCU]];
     currSU    = firstCUInStartLCU;
 
-    Bool bMoveToNextLCU = false;
+    bool bMoveToNextLCU = false;
 
     while (!(LPelX < picWidth) || !(TPelY < picHeight))
     {

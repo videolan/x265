@@ -75,7 +75,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     m_entropyCoder->encodeIPCMInfo(cu, 0, true);
 
     // Encode Coefficients
-    Bool bCodeDQP = getdQPFlag();
+    bool bCodeDQP = getdQPFlag();
     m_entropyCoder->encodeCoeff(cu, 0, depth, cu->getWidth(0), cu->getHeight(0), bCodeDQP);
     setdQPFlag(bCodeDQP);
 
@@ -227,7 +227,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
 
         for (int j = 0; j < numCand; j++)
         {
-            Bool mostProbableModeIncluded = false;
+            bool mostProbableModeIncluded = false;
             UInt mostProbableMode = preds[j];
 
             for (UInt i = 0; i < numModesForFullRD; i++)
@@ -250,7 +250,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
 }
 
 /** check RD costs for a CU block encoded with merge */
-void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartSize partSize, Bool bUseMRG)
+void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartSize partSize, bool bUseMRG)
 {
     UChar depth = outTempCU->getDepth(0);
 
@@ -283,10 +283,10 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
-    Bool bTrySplit = true;
-    Bool bSubBranch = true;
-    Bool bTrySplitDQP = true;
-    Bool bBoundary = false;
+    bool bTrySplit = true;
+    bool bSubBranch = true;
+    bool bTrySplitDQP = true;
+    bool bBoundary = false;
     UInt lpelx = outTempCU->getCUPelX();
     UInt rpelx = lpelx + outTempCU->getWidth(0)  - 1;
     UInt tpely = outTempCU->getCUPelY();
@@ -298,9 +298,9 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #endif
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
-    Bool bSliceEnd = slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() &&
+    bool bSliceEnd = slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() &&
         slice->getSliceCurEndCUAddr() < outTempCU->getSCUAddr() + outTempCU->getTotalNumPart();
-    Bool bInsidePicture = (rpelx < outTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) &&
+    bool bInsidePicture = (rpelx < outTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) &&
         (bpely < outTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     // We need to split, so don't try these modes.
@@ -332,7 +332,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         }
 
         /* Compute  Merge Cost */
-        Bool earlyDetectionSkip = false;
+        bool earlyDetectionSkip = false;
 
         xCheckRDCostMerge2Nx2N(m_bestMergeCU[depth], m_mergeCU[depth], &earlyDetectionSkip, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
 
@@ -495,7 +495,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 TComPic* subPic = subTempPartCU->getPic();
                 m_origYuv[nextDepth]->copyFromPicYuv(subPic->getPicYuvOrg(), subTempPartCU->getAddr(), subTempPartCU->getZorderIdxInCU());
                 TComSlice * pcSubSlice = subTempPartCU->getPic()->getSlice();
-                Bool subSliceEnd = subTempPartCU->getSCUAddr() < slice->getSliceCurEndCUAddr()
+                bool subSliceEnd = subTempPartCU->getSCUAddr() < slice->getSliceCurEndCUAddr()
                     && pcSubSlice->getSliceCurEndCUAddr() < subTempPartCU->getSCUAddr() + subTempPartCU->getTotalNumPart();
                 if (!subSliceEnd && (subTempPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
                     (subTempPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples()))
@@ -540,7 +540,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             subBestPartCU = NULL;
             subTempPartCU->initSubCU(outTempCU, nextDepth_partIndex, nextDepth, qp); // clear sub partition datas or init.
 
-            Bool bInSlice = subTempPartCU->getSCUAddr() < slice->getSliceCurEndCUAddr();
+            bool bInSlice = subTempPartCU->getSCUAddr() < slice->getSliceCurEndCUAddr();
             if (bInSlice && (subTempPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
                 (subTempPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples()))
             {
@@ -578,7 +578,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
         if ((g_maxCUWidth >> depth) == outTempCU->getSlice()->getPPS()->getMinCuDQPSize() && outTempCU->getSlice()->getPPS()->getUseDQP())
         {
-            Bool hasResidual = false;
+            bool hasResidual = false;
             for (UInt uiBlkIdx = 0; uiBlkIdx < outTempCU->getTotalNumPart(); uiBlkIdx++)
             {
                 if (outTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || outTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) ||
@@ -592,7 +592,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             UInt targetPartIdx = 0;
             if (hasResidual)
             {
-                Bool foundNonZeroCbf = false;
+                bool foundNonZeroCbf = false;
                 outTempCU->setQPSubCUs(outTempCU->getRefQP(targetPartIdx), outTempCU, 0, depth, foundNonZeroCbf);
                 assert(foundNonZeroCbf);
             }

@@ -168,7 +168,7 @@ int TEncTop::getStreamHeaders(AccessUnit& accessUnit)
  \param   accessUnitsOut      output bitstream
  \retval                      number of encoded pictures
  */
-int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pic_out, AccessUnit& accessUnitOut)
+int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pic_out, AccessUnit& accessUnitOut)
 {
     if (pic_in)
     {
@@ -254,7 +254,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         // Initialise slice in Frame Encoder
         int pocCurr = fenc->getSlice()->getPOC();
-        Bool forceIntra = m_dpb->m_cfg->param.keyframeMax == 1 || (pocCurr % m_dpb->m_cfg->param.keyframeMax == 0) || pocCurr == 0;
+        bool forceIntra = m_dpb->m_cfg->param.keyframeMax == 1 || (pocCurr % m_dpb->m_cfg->param.keyframeMax == 0) || pocCurr == 0;
         int gopIdx = fenc->m_lowres.gopIdx;
         curEncoder->initSlice(fenc, forceIntra, gopIdx);
 
@@ -764,7 +764,7 @@ void TEncTop::xInitSPS(TComSPS *pcSPS)
 void TEncTop::xInitPPS(TComPPS *pcPPS)
 {
     pcPPS->setConstrainedIntraPred(param.bEnableConstrainedIntra);
-    Bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
+    bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
 
     int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
 

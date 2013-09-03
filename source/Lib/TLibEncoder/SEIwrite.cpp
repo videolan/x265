@@ -158,7 +158,7 @@ void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
     setBitstream(&bs_count);
 
 #if ENC_DEC_TRACE
-    Bool traceEnable = g_HLSTraceEnable;
+    bool traceEnable = g_HLSTraceEnable;
     g_HLSTraceEnable = false;
 #endif
     xWriteSEIpayloadData(sei, sps);

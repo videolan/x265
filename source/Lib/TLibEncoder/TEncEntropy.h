@@ -100,7 +100,7 @@ public:
     virtual void codeQtRootCbf(TComDataCU* cu, UInt absPartIdx) = 0;
     virtual void codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth) = 0;
     virtual void codeQtRootCbfZero(TComDataCU* cu) = 0;
-    virtual void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiplePU) = 0;
+    virtual void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMultiplePU) = 0;
 
     virtual void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx) = 0;
     virtual void codeInterDir(TComDataCU* cu, UInt absPartIdx) = 0;
@@ -116,7 +116,7 @@ public:
     virtual void codeSaoUflc(UInt uiLength, UInt   uiCode) = 0;
     virtual void estBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType) = 0;
 
-    virtual void updateContextTables(SliceType eSliceType, int iQp, Bool bExecuteFinish)   = 0;
+    virtual void updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish)   = 0;
     virtual void updateContextTables(SliceType eSliceType, int iQp)   = 0;
 
     virtual void codeDFFlag(UInt uiCode, const char *pSymbolName) = 0;
@@ -163,31 +163,31 @@ public:
     // SPS
     void encodeSPS(TComSPS* pcSPS);
     void encodePPS(TComPPS* pcPPS);
-    void encodeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth, Bool bRD = false);
-    void encodeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void encodeSkipFlag(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void encodePUWise(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
+    void encodeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth, bool bRD = false);
+    void encodeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodeSkipFlag(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodePUWise(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
     void encodeInterDirPU(TComDataCU* pcSubCU, UInt absPartIdx);
     void encodeRefFrmIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, RefPicList eRefList);
     void encodeMvdPU(TComDataCU* pcSubCU, UInt absPartIdx, RefPicList eRefList);
     void encodeMVPIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, RefPicList eRefList);
     void encodeMergeFlag(TComDataCU* cu, UInt absPartIdx);
-    void encodeMergeIndex(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void encodePredMode(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void encodePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth, Bool bRD = false);
-    void encodeIPCMInfo(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void encodePredInfo(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void encodeIntraDirModeLuma(TComDataCU* cu, UInt absPartIdx, Bool isMultiplePU = false);
+    void encodeMergeIndex(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodePredMode(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth, bool bRD = false);
+    void encodeIPCMInfo(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodePredInfo(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodeIntraDirModeLuma(TComDataCU* cu, UInt absPartIdx, bool isMultiplePU = false);
 
-    void encodeIntraDirModeChroma(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
+    void encodeIntraDirModeChroma(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
 
     void encodeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx);
     void encodeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth);
     void encodeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth);
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
-    void encodeQP(TComDataCU* cu, UInt absPartIdx, Bool bRD = false);
-    void updateContextTables(SliceType eSliceType, int iQp, Bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
+    void encodeQP(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
 
     void updateContextTables(SliceType eSliceType, int iQp)                        { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
 
@@ -195,17 +195,17 @@ public:
 
 private:
 
-    void xEncodeTransform(TComDataCU* cu, UInt offsetLumaOffset, UInt offsetChroma, UInt absPartIdx, UInt depth, UInt width, UInt height, UInt uiTrIdx, Bool& bCodeDQP);
+    void xEncodeTransform(TComDataCU* cu, UInt offsetLumaOffset, UInt offsetChroma, UInt absPartIdx, UInt depth, UInt width, UInt height, UInt uiTrIdx, bool& bCodeDQP);
 
 public:
 
-    void encodeCoeff(TComDataCU* cu, UInt absPartIdx, UInt depth, UInt width, UInt height, Bool& bCodeDQP);
+    void encodeCoeff(TComDataCU* cu, UInt absPartIdx, UInt depth, UInt width, UInt height, bool& bCodeDQP);
 
     void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt depth, TextType ttype);
 
     void estimateBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType);
     void    encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
-    void    encodeSaoUnitInterleaving(int compIdx, Bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+    void    encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
     static int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
 }; // END CLASS DEFINITION TEncEntropy
 }

@@ -95,7 +95,7 @@ protected:
 
     void xGetLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, Pel* dst0, int dststride, UInt width, UInt height, UInt ext0);
 
-    Bool xCheckIdenticalMotion(TComDataCU* cu, UInt PartAddr);
+    bool xCheckIdenticalMotion(TComDataCU* cu, UInt PartAddr);
 
 public:
 

@@ -69,8 +69,8 @@ protected:
     TComSlice*    m_pcSlice;
     UInt          m_uiCoeffCost;
 
-    void codeShortTermRefPicSet(TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, int idx);
-    Bool findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, int ltrpPOC, Bool usedFlag);
+    void codeShortTermRefPicSet(TComReferencePictureSet* pcRPS, bool calledFromSliceHeader, int idx);
+    bool findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, int ltrpPOC, bool usedFlag);
 
 public:
 
@@ -94,9 +94,9 @@ public:
     void  codeSPS(TComSPS* pcSPS);
     void  codePPS(TComPPS* pcPPS);
     void  codeSliceHeader(TComSlice* slice);
-    void  codePTL(TComPTL* pcPTL, Bool profilePresentFlag, int maxNumSubLayersMinus1);
+    void  codePTL(TComPTL* pcPTL, bool profilePresentFlag, int maxNumSubLayersMinus1);
     void  codeProfileTier(ProfileTierLevel* ptl);
-    void  codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
+    void  codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
     void  codeTilesWPPEntryPoint(TComSlice* pSlice);
     void  codeTerminatingBit(UInt uilsLast);
     void  codeSliceFinish();
@@ -113,7 +113,7 @@ public:
 
     void codeSaoUflc(UInt, UInt) { printf("Not supported\n"); assert(0); }
 
-    void updateContextTables(SliceType, int, Bool) {}
+    void updateContextTables(SliceType, int, bool) {}
 
     void updateContextTables(SliceType, int) {}
 
@@ -135,7 +135,7 @@ public:
     void codeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
-    void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiple);
+    void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMultiple);
     void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx);
     void codeInterDir(TComDataCU* cu, UInt absPartIdx);
     void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList);

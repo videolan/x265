@@ -67,9 +67,9 @@ private:
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
 
-    Bool                  m_bUsedByCurr;          // Used by current picture
-    Bool                  m_bIsLongTerm;          // IS long term picture
-    Bool                  m_bCheckLTMSB;
+    bool                  m_bUsedByCurr;          // Used by current picture
+    bool                  m_bIsLongTerm;          // IS long term picture
+    bool                  m_bCheckLTMSB;
 
 public:
 
@@ -89,17 +89,17 @@ public:
 
     virtual void  destroy();
 
-    Bool          getUsedByCurr()           { return m_bUsedByCurr; }
+    bool          getUsedByCurr()           { return m_bUsedByCurr; }
 
-    void          setUsedByCurr(Bool bUsed) { m_bUsedByCurr = bUsed; }
+    void          setUsedByCurr(bool bUsed) { m_bUsedByCurr = bUsed; }
 
-    Bool          getIsLongTerm()           { return m_bIsLongTerm; }
+    bool          getIsLongTerm()           { return m_bIsLongTerm; }
 
-    void          setIsLongTerm(Bool lt)    { m_bIsLongTerm = lt; }
+    void          setIsLongTerm(bool lt)    { m_bIsLongTerm = lt; }
 
-    void          setCheckLTMSBPresent(Bool b) { m_bCheckLTMSB = b; }
+    void          setCheckLTMSBPresent(bool b) { m_bCheckLTMSB = b; }
 
-    Bool          getCheckLTMSBPresent()  { return m_bCheckLTMSB; }
+    bool          getCheckLTMSBPresent()  { return m_bCheckLTMSB; }
 
     TComPicSym*   getPicSym()             { return m_picSym; }
 

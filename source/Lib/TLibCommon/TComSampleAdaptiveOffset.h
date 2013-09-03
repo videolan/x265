@@ -85,10 +85,10 @@ typedef struct _SaoQTPart
     int         downPartsIdx[NUM_DOWN_PART];
     int         upPartIdx;
 
-    Bool        bSplit;
+    bool        bSplit;
 
     //---- encoder only start -----//
-    Bool        bProcessed;
+    bool        bProcessed;
     double      minCost;
     Int64       minDist;
     int         minRate;
@@ -97,8 +97,8 @@ typedef struct _SaoQTPart
 
 typedef struct _SaoLcuParam
 {
-    Bool       mergeUpFlag;
-    Bool       mergeLeftFlag;
+    bool       mergeUpFlag;
+    bool       mergeLeftFlag;
     int        typeIdx;
     int        subTypeIdx;                ///< indicates EO class or BO band position
     int        offset[4];
@@ -109,10 +109,10 @@ typedef struct _SaoLcuParam
 
 struct SAOParam
 {
-    Bool       bSaoFlag[2];
+    bool       bSaoFlag[2];
     SAOQTPart* saoPart[3];
     int        maxSplitLevel;
-    Bool         oneUnitFlag[3];
+    bool         oneUnitFlag[3];
     SaoLcuParam* saoLcuParam[3];
     int          numCuInHeight;
     int          numCuInWidth;
@@ -177,8 +177,8 @@ protected:
     Pel* m_tmpL1;
     Pel* m_tmpL2;
     int     m_maxNumOffsetsPerPic;
-    Bool    m_saoLcuBoundary;
-    Bool    m_saoLcuBasedOptimization;
+    bool    m_saoLcuBoundary;
+    bool    m_saoLcuBasedOptimization;
 
 public:
 
@@ -205,15 +205,15 @@ public:
     void resetLcuPart(SaoLcuParam* saoLcuParam);
     void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, int yCbCr);
     void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, int yCbCr);
-    void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, int yCbCr);
+    void processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr);
     void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr);
     void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
 
-    Bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
+    bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
 
     void setSaoLcuBasedOptimization(int bVal)  { m_saoLcuBasedOptimization = bVal != 0; }
 
-    Bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
+    bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 
     void resetSaoUnit(SaoLcuParam* saoUnit);
     void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);

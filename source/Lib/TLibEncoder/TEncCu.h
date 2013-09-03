@@ -108,8 +108,8 @@ private:
     int          m_temporalSAD;
     UChar        m_totalDepth;
 
-    Bool         m_bEncodeDQP;
-    Bool         m_abortFlag; // aborts recursion when the child CU costs more than parent CU
+    bool         m_bEncodeDQP;
+    bool         m_abortFlag; // aborts recursion when the child CU costs more than parent CU
 
 public:
 
@@ -147,11 +147,11 @@ protected:
     int  xComputeQP(TComDataCU* cu);
     void xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth);
 
-    void xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, Bool *earlyDetectionSkipMode,
+    void xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
                                 TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
     void xComputeCostIntraInInter(TComDataCU*& outTempCU, PartSize partSize);
-    void xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, Bool bUseMRG = false);
-    void xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYUV, PartSize partSize, Bool bUseMRG = false);
+    void xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, bool bUseMRG = false);
+    void xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYUV, PartSize partSize, bool bUseMRG = false);
     void xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv, TComYuv* outReconYuv);
     void xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     void xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
@@ -164,12 +164,12 @@ protected:
     void xCopyYuv2Tmp(UInt uhPartUnitIdx, UInt depth);
     void xCopyYuv2Best(UInt partUnitIdx, UInt uiNextDepth);
 
-    Bool getdQPFlag()        { return m_bEncodeDQP; }
+    bool getdQPFlag()        { return m_bEncodeDQP; }
 
-    void setdQPFlag(Bool b)  { m_bEncodeDQP = b; }
+    void setdQPFlag(bool b)  { m_bEncodeDQP = b; }
 
-    void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver,
-                           Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver);
+    void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
+                           bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);
 
     void xFillPCMBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };

@@ -182,7 +182,7 @@ public:
     x265::MotionReference* generateMotionReference(wpScalingParam *w);
 
     //  Dump picture
-    void  dump(char* pFileName, Bool bAdd = false);
+    void  dump(char* pFileName, bool bAdd = false);
 
     friend class x265::MotionReference;
 }; // END CLASS DEFINITION TComPicYuv

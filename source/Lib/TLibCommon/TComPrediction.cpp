@@ -181,7 +181,7 @@ void TComPrediction::predIntraLumaAng(UInt dirMode, Pel* dst, UInt stride, int s
     }
 
     // get starting pixel in block
-    Bool bFilter = (size <= 16);
+    bool bFilter = (size <= 16);
 
     // Create the prediction
     if (dirMode == PLANAR_IDX)
@@ -231,7 +231,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, UInt dirMode, Pel* dst, UInt s
  * \param TComDataCU* cu
  * \param UInt PartAddr
  */
-Bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, UInt partAddr)
+bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, UInt partAddr)
 {
     if (cu->getSlice()->isInterB() && !cu->getSlice()->getPPS()->getWPBiPred())
     {

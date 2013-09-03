@@ -70,7 +70,7 @@ WeightPredAnalysis::WeightPredAnalysis()
  * \param TComSlice *slice
  * \returns void
  */
-Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
+bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
 {
     //===== calculate AC/DC value =====
     TComPicYuv*   pPic = slice->getPic()->getPicYuvOrg();
@@ -115,7 +115,7 @@ Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
  * \param weighted_bipred_idc
  * \returns void
  */
-void  WeightPredAnalysis::xStoreWPparam(Bool weighted_pred_flag, Bool weighted_bipred_flag)
+void  WeightPredAnalysis::xStoreWPparam(bool weighted_pred_flag, bool weighted_bipred_flag)
 {
     m_weighted_pred_flag = weighted_pred_flag;
     m_weighted_bipred_flag = weighted_bipred_flag;
@@ -176,12 +176,12 @@ void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
 
 /** estimate wp tables for explicit wp
  * \param TComSlice *slice
- * \returns Bool
+ * \returns bool
  */
-Bool  WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *slice)
+bool  WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *slice)
 {
     int iDenom  = 6;
-    Bool validRangeFlag = false;
+    bool validRangeFlag = false;
 
     if (slice->getNumRefIdx(REF_PIC_LIST_0) > 3)
     {
@@ -208,9 +208,9 @@ Bool  WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *slice)
 
 /** update wp tables for explicit wp w.r.t ramge limitation
  * \param TComSlice *slice
- * \returns Bool
+ * \returns bool
  */
-Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, int log2Denom)
+bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, int log2Denom)
 {
     int numPredDir = slice->isInterP() ? 1 : 2;
 
@@ -274,9 +274,9 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, int log2Denom)
  * \param TComSlice *slice
  * \param wpScalingParam
  * \param iDenom
- * \returns Bool
+ * \returns bool
  */
-Bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], int iDenom)
+bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], int iDenom)
 {
     TComPicYuv*   pPic = slice->getPic()->getPicYuvOrg();
     int width  = pPic->getWidth();

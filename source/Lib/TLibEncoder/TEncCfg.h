@@ -50,7 +50,7 @@ struct GOPEntry
     int m_POC;
     int m_QPOffset;
     double m_QPFactor;
-    Bool m_refPic;
+    bool m_refPic;
     int m_numRefPicsActive;
     char m_sliceType;
     int m_numRefPics;
@@ -102,10 +102,10 @@ protected:
     Level::Tier   m_levelTier;
     Level::Name   m_level;
 
-    Bool m_progressiveSourceFlag;
-    Bool m_interlacedSourceFlag;
-    Bool m_nonPackedConstraintFlag;
-    Bool m_frameOnlyConstraintFlag;
+    bool m_progressiveSourceFlag;
+    bool m_interlacedSourceFlag;
+    bool m_nonPackedConstraintFlag;
+    bool m_frameOnlyConstraintFlag;
     int       m_pad[2];
 
     //====== Coding Structure ========
@@ -123,29 +123,29 @@ protected:
     UInt      m_quadtreeTULog2MinSize;
 
     //====== Loop/Deblock Filter ========
-    Bool      m_loopFilterOffsetInPPS;
+    bool      m_loopFilterOffsetInPPS;
     int       m_loopFilterBetaOffsetDiv2;
     int       m_loopFilterTcOffsetDiv2;
     int       m_maxNumOffsetsPerPic;
 
     //====== Lossless ========
-    Bool      m_useLossless;
+    bool      m_useLossless;
 
     //====== Quality control ========
     int       m_maxCuDQPDepth;                  //  Max. depth for a minimum CuDQP (0:default)
 
     //====== Tool list ========
-    Bool      m_bUseASR;
+    bool      m_bUseASR;
     int*      m_dqpTable;
-    Bool      m_usePCM;
+    bool      m_usePCM;
     UInt      m_pcmLog2MaxSize;
     UInt      m_pcmLog2MinSize;
 
-    Bool      m_bPCMInputBitDepthFlag;
+    bool      m_bPCMInputBitDepthFlag;
     UInt      m_pcmBitDepthLuma;
     UInt      m_pcmBitDepthChroma;
-    Bool      m_bPCMFilterDisableFlag;
-    Bool      m_loopFilterAcrossTilesEnabledFlag;
+    bool      m_bPCMFilterDisableFlag;
+    bool      m_loopFilterAcrossTilesEnabledFlag;
 
     int       m_bufferingPeriodSEIEnabled;
     int       m_pictureTimingSEIEnabled;
@@ -160,32 +160,32 @@ protected:
 
     int       m_useScalingListId;                             ///< Using quantization matrix i.e. 0=off, 1=default.
 
-    Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
-    Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
+    bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
+    bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
     int       m_activeParameterSetsSEIEnabled;                ///< enable active parameter set SEI message
-    Bool      m_vuiParametersPresentFlag;                     ///< enable generation of VUI parameters
-    Bool      m_aspectRatioInfoPresentFlag;                   ///< Signals whether aspect_ratio_idc is present
+    bool      m_vuiParametersPresentFlag;                     ///< enable generation of VUI parameters
+    bool      m_aspectRatioInfoPresentFlag;                   ///< Signals whether aspect_ratio_idc is present
     int       m_aspectRatioIdc;                               ///< aspect_ratio_idc
     int       m_sarWidth;                                     ///< horizontal size of the sample aspect ratio
     int       m_sarHeight;                                    ///< vertical size of the sample aspect ratio
-    Bool      m_overscanInfoPresentFlag;                      ///< Signals whether overscan_appropriate_flag is present
-    Bool      m_overscanAppropriateFlag;                      ///< Indicates whether conformant decoded pictures are suitable for display using overscan
-    Bool      m_videoSignalTypePresentFlag;                   ///< Signals whether video_format, video_full_range_flag, and colour_description_present_flag are present
+    bool      m_overscanInfoPresentFlag;                      ///< Signals whether overscan_appropriate_flag is present
+    bool      m_overscanAppropriateFlag;                      ///< Indicates whether conformant decoded pictures are suitable for display using overscan
+    bool      m_videoSignalTypePresentFlag;                   ///< Signals whether video_format, video_full_range_flag, and colour_description_present_flag are present
     int       m_videoFormat;                                  ///< Indicates representation of pictures
-    Bool      m_videoFullRangeFlag;                           ///< Indicates the black level and range of luma and chroma signals
-    Bool      m_colourDescriptionPresentFlag;                 ///< Signals whether colour_primaries, transfer_characteristics and matrix_coefficients are present
+    bool      m_videoFullRangeFlag;                           ///< Indicates the black level and range of luma and chroma signals
+    bool      m_colourDescriptionPresentFlag;                 ///< Signals whether colour_primaries, transfer_characteristics and matrix_coefficients are present
     int       m_colourPrimaries;                              ///< Indicates chromaticity coordinates of the source primaries
     int       m_transferCharacteristics;                      ///< Indicates the opto-electronic transfer characteristics of the source
     int       m_matrixCoefficients;                           ///< Describes the matrix coefficients used in deriving luma and chroma from RGB primaries
-    Bool      m_chromaLocInfoPresentFlag;                     ///< Signals whether chroma_sample_loc_type_top_field and chroma_sample_loc_type_bottom_field are present
+    bool      m_chromaLocInfoPresentFlag;                     ///< Signals whether chroma_sample_loc_type_top_field and chroma_sample_loc_type_bottom_field are present
     int       m_chromaSampleLocTypeTopField;                  ///< Specifies the location of chroma samples for top field
     int       m_chromaSampleLocTypeBottomField;               ///< Specifies the location of chroma samples for bottom field
-    Bool      m_neutralChromaIndicationFlag;                  ///< Indicates that the value of all decoded chroma samples is equal to 1<<(BitDepthCr-1)
-    Bool      m_frameFieldInfoPresentFlag;                    ///< Indicates that pic_struct and other field coding related values are present in picture timing SEI messages
-    Bool      m_pocProportionalToTimingFlag;                  ///< Indicates that the POC value is proportional to the output time w.r.t. first picture in CVS
+    bool      m_neutralChromaIndicationFlag;                  ///< Indicates that the value of all decoded chroma samples is equal to 1<<(BitDepthCr-1)
+    bool      m_frameFieldInfoPresentFlag;                    ///< Indicates that pic_struct and other field coding related values are present in picture timing SEI messages
+    bool      m_pocProportionalToTimingFlag;                  ///< Indicates that the POC value is proportional to the output time w.r.t. first picture in CVS
     int       m_numTicksPocDiffOneMinus1;                     ///< Number of ticks minus 1 that for a POC difference of one
-    Bool      m_bitstreamRestrictionFlag;                     ///< Signals whether bitstream restriction parameters are present
-    Bool      m_motionVectorsOverPicBoundariesFlag;           ///< Indicates that no samples outside the picture boundaries are used for inter prediction
+    bool      m_bitstreamRestrictionFlag;                     ///< Signals whether bitstream restriction parameters are present
+    bool      m_motionVectorsOverPicBoundariesFlag;           ///< Indicates that no samples outside the picture boundaries are used for inter prediction
     int       m_minSpatialSegmentationIdc;                    ///< Indicates the maximum size of the spatial segments in the pictures in the coded video sequence
     int       m_maxBytesPerPicDenom;                          ///< Indicates a number of bytes not exceeded by the sum of the sizes of the VCL NAL units associated with any coded picture
     int       m_maxBitsPerMinCuDenom;                         ///< Indicates an upper bound for the number of bits of coding_unit() data
@@ -236,7 +236,7 @@ public:
     UInt getQuadtreeTULog2MinSize() const { return m_quadtreeTULog2MinSize; }
 
     //==== Loop/Deblock Filter ========
-    Bool getLoopFilterOffsetInPPS() { return m_loopFilterOffsetInPPS; }
+    bool getLoopFilterOffsetInPPS() { return m_loopFilterOffsetInPPS; }
 
     int getLoopFilterBetaOffset() { return m_loopFilterBetaOffsetDiv2; }
 
@@ -246,16 +246,16 @@ public:
     int getMaxCuDQPDepth() { return m_maxCuDQPDepth; }
 
     //====== Lossless ========
-    Bool getUseLossless() { return m_useLossless; }
+    bool getUseLossless() { return m_useLossless; }
 
     //==== Tool list ========
-    Bool getUseASR() { return m_bUseASR; }
+    bool getUseASR() { return m_bUseASR; }
 
-    Bool getPCMInputBitDepthFlag() { return m_bPCMInputBitDepthFlag; }
+    bool getPCMInputBitDepthFlag() { return m_bPCMInputBitDepthFlag; }
 
-    Bool getPCMFilterDisableFlag() { return m_bPCMFilterDisableFlag; }
+    bool getPCMFilterDisableFlag() { return m_bPCMFilterDisableFlag; }
 
-    Bool getUsePCM() { return m_usePCM; }
+    bool getUsePCM() { return m_usePCM; }
 
     UInt getPCMLog2MaxSize() { return m_pcmLog2MaxSize; }
 
@@ -265,7 +265,7 @@ public:
 
     int   getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
 
-    Bool  getLFCrossTileBoundaryFlag() { return m_loopFilterAcrossTilesEnabledFlag; }
+    bool  getLFCrossTileBoundaryFlag() { return m_loopFilterAcrossTilesEnabledFlag; }
 
     int   getDecodedPictureHashSEIEnabled() { return param.bEnableDecodedPictureHashSEI; }
 
@@ -285,15 +285,15 @@ public:
 
     int  getUseScalingListId() { return m_useScalingListId; }
 
-    Bool getTransquantBypassEnableFlag() { return m_TransquantBypassEnableFlag; }
+    bool getTransquantBypassEnableFlag() { return m_TransquantBypassEnableFlag; }
 
-    Bool getCUTransquantBypassFlagValue() { return m_CUTransquantBypassFlagValue; }
+    bool getCUTransquantBypassFlagValue() { return m_CUTransquantBypassFlagValue; }
 
     int getActiveParameterSetsSEIEnabled() { return m_activeParameterSetsSEIEnabled; }
 
-    Bool getVuiParametersPresentFlag() { return m_vuiParametersPresentFlag; }
+    bool getVuiParametersPresentFlag() { return m_vuiParametersPresentFlag; }
 
-    Bool getAspectRatioInfoPresentFlag() { return m_aspectRatioInfoPresentFlag; }
+    bool getAspectRatioInfoPresentFlag() { return m_aspectRatioInfoPresentFlag; }
 
     int getAspectRatioIdc() { return m_aspectRatioIdc; }
 
@@ -301,17 +301,17 @@ public:
 
     int getSarHeight() { return m_sarHeight; }
 
-    Bool getOverscanInfoPresentFlag() { return m_overscanInfoPresentFlag; }
+    bool getOverscanInfoPresentFlag() { return m_overscanInfoPresentFlag; }
 
-    Bool getOverscanAppropriateFlag() { return m_overscanAppropriateFlag; }
+    bool getOverscanAppropriateFlag() { return m_overscanAppropriateFlag; }
 
-    Bool getVideoSignalTypePresentFlag() { return m_videoSignalTypePresentFlag; }
+    bool getVideoSignalTypePresentFlag() { return m_videoSignalTypePresentFlag; }
 
     int getVideoFormat() { return m_videoFormat; }
 
-    Bool getVideoFullRangeFlag() { return m_videoFullRangeFlag; }
+    bool getVideoFullRangeFlag() { return m_videoFullRangeFlag; }
 
-    Bool getColourDescriptionPresentFlag() { return m_colourDescriptionPresentFlag; }
+    bool getColourDescriptionPresentFlag() { return m_colourDescriptionPresentFlag; }
 
     int getColourPrimaries() { return m_colourPrimaries; }
 
@@ -319,25 +319,25 @@ public:
 
     int getMatrixCoefficients() { return m_matrixCoefficients; }
 
-    Bool getChromaLocInfoPresentFlag() { return m_chromaLocInfoPresentFlag; }
+    bool getChromaLocInfoPresentFlag() { return m_chromaLocInfoPresentFlag; }
 
     int getChromaSampleLocTypeTopField() { return m_chromaSampleLocTypeTopField; }
 
     int getChromaSampleLocTypeBottomField() { return m_chromaSampleLocTypeBottomField; }
 
-    Bool getNeutralChromaIndicationFlag() { return m_neutralChromaIndicationFlag; }
+    bool getNeutralChromaIndicationFlag() { return m_neutralChromaIndicationFlag; }
 
     Window &getDefaultDisplayWindow() { return m_defaultDisplayWindow; }
 
-    Bool getFrameFieldInfoPresentFlag() { return m_frameFieldInfoPresentFlag; }
+    bool getFrameFieldInfoPresentFlag() { return m_frameFieldInfoPresentFlag; }
 
-    Bool getPocProportionalToTimingFlag() { return m_pocProportionalToTimingFlag; }
+    bool getPocProportionalToTimingFlag() { return m_pocProportionalToTimingFlag; }
 
     int getNumTicksPocDiffOneMinus1() { return m_numTicksPocDiffOneMinus1;    }
 
-    Bool getBitstreamRestrictionFlag() { return m_bitstreamRestrictionFlag; }
+    bool getBitstreamRestrictionFlag() { return m_bitstreamRestrictionFlag; }
 
-    Bool getMotionVectorsOverPicBoundariesFlag() { return m_motionVectorsOverPicBoundariesFlag; }
+    bool getMotionVectorsOverPicBoundariesFlag() { return m_motionVectorsOverPicBoundariesFlag; }
 
     int getMinSpatialSegmentationIdc() { return m_minSpatialSegmentationIdc; }
 
@@ -349,13 +349,13 @@ public:
 
     int getLog2MaxMvLengthVertical() { return m_log2MaxMvLengthVertical; }
 
-    Bool getProgressiveSourceFlag() const { return m_progressiveSourceFlag; }
+    bool getProgressiveSourceFlag() const { return m_progressiveSourceFlag; }
 
-    Bool getInterlacedSourceFlag() const { return m_interlacedSourceFlag; }
+    bool getInterlacedSourceFlag() const { return m_interlacedSourceFlag; }
 
-    Bool getNonPackedConstraintFlag() const { return m_nonPackedConstraintFlag; }
+    bool getNonPackedConstraintFlag() const { return m_nonPackedConstraintFlag; }
 
-    Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
+    bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
 };
 }
 //! \}

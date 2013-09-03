@@ -285,7 +285,7 @@ void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int hei
     }
 }
 
-void TComPicYuv::dump(char* pFileName, Bool bAdd)
+void TComPicYuv::dump(char* pFileName, bool bAdd)
 {
     FILE* pFile;
 

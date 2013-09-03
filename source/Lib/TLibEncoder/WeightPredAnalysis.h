@@ -45,8 +45,8 @@ namespace x265 {
 
 class WeightPredAnalysis
 {
-    Bool m_weighted_pred_flag;
-    Bool m_weighted_bipred_flag;
+    bool m_weighted_pred_flag;
+    bool m_weighted_bipred_flag;
     wpScalingParam  m_wp[2][MAX_NUM_REF][3];
 
     Int64   xCalcDCValueSlice(TComSlice *slice, Pel *pPel, int *iSample);
@@ -58,17 +58,17 @@ class WeightPredAnalysis
     Int64   xCalcDCValue(Pel *pPel, int width, int height, int stride);
     Int64   xCalcACValue(Pel *pPel, int width, int height, int stride, Int64 iDC);
     Int64   xCalcSADvalueWP(int bitDepth, Pel *pOrgPel, Pel *pRefPel, int width, int height, int iOrgStride, int iRefStride, int iDenom, int inputWeight, int inputOffset);
-    Bool    xSelectWP(TComSlice * slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], int iDenom);
-    Bool    xUpdatingWPParameters(TComSlice* slice, int log2Denom);
+    bool    xSelectWP(TComSlice * slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], int iDenom);
+    bool    xUpdatingWPParameters(TComSlice* slice, int log2Denom);
 
 public:
 
     WeightPredAnalysis();
 
     // WP analysis :
-    Bool  xCalcACDCParamSlice(TComSlice *slice);
-    Bool  xEstimateWPParamSlice(TComSlice *slice);
-    void  xStoreWPparam(Bool weighted_pred_flag, Bool weighted_bipred_flag);
+    bool  xCalcACDCParamSlice(TComSlice *slice);
+    bool  xEstimateWPParamSlice(TComSlice *slice);
+    void  xStoreWPparam(bool weighted_pred_flag, bool weighted_bipred_flag);
     void  xRestoreWPparam(TComSlice *slice);
     void  xCheckWPEnable(TComSlice *slice);
 };

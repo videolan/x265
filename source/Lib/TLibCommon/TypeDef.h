@@ -45,10 +45,9 @@ namespace x265 {
 // Basic type redefinition
 // ====================================================================================================================
 
-typedef       bool                Bool;
-typedef       unsigned char       UChar;
-typedef       unsigned short      UShort;
-typedef       unsigned int        UInt;
+typedef unsigned char  UChar;
+typedef unsigned short UShort;
+typedef unsigned int   UInt;
 
 // ====================================================================================================================
 // 64-bit integer type

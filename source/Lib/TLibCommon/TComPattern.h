@@ -141,14 +141,14 @@ public:
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, int picStride);
+    void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, int picStride);
 
     /// constrained intra prediction
-    Bool  isAboveLeftAvailable(TComDataCU* cu, UInt partIdxLT);
-    int   isAboveAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, Bool* bValidFlags);
-    int   isLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, Bool* bValidFlags);
-    int   isAboveRightAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, Bool* bValidFlags);
-    int   isBelowLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, Bool* bValidFlags);
+    bool  isAboveLeftAvailable(TComDataCU* cu, UInt partIdxLT);
+    int   isAboveAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, bool* bValidFlags);
+    int   isLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, bool* bValidFlags);
+    int   isAboveRightAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, bool* bValidFlags);
+    int   isBelowLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, bool* bValidFlags);
 };
 }
 //! \}

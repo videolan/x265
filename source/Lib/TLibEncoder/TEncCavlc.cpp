@@ -102,7 +102,7 @@ void TEncCavlc::codeDFSvlc(int code, const char *symbolName)
                                                     // this should be done with encoder only decision
                                                     // but because of the absence of reference frame management, the related code was hard coded currently
 
-void TEncCavlc::codeShortTermRefPicSet(TComReferencePictureSet* rps, Bool calledFromSliceHeader, int idx)
+void TEncCavlc::codeShortTermRefPicSet(TComReferencePictureSet* rps, bool calledFromSliceHeader, int idx)
 {
 #if PRINT_RPS_INFO
     int lastBits = getNumberOfWrittenBits();
@@ -304,7 +304,7 @@ void TEncCavlc::codeVUI(TComVUI *pcVUI, TComSPS* pcSPS)
     }
 }
 
-void TEncCavlc::codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1)
+void TEncCavlc::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, UInt maxNumSubLayersMinus1)
 {
     if (commonInfPresentFlag)
     {
@@ -413,7 +413,7 @@ void TEncCavlc::codeSPS(TComSPS* pcSPS)
 
     WRITE_UVLC(pcSPS->getBitsForPOC() - 4,                 "log2_max_pic_order_cnt_lsb_minus4");
 
-    const Bool subLayerOrderingInfoPresentFlag = 1;
+    const bool subLayerOrderingInfoPresentFlag = 1;
     WRITE_FLAG(subLayerOrderingInfoPresentFlag,       "sps_sub_layer_ordering_info_present_flag");
     for (UInt i = 0; i <= pcSPS->getMaxTLayers() - 1; i++)
     {
@@ -504,7 +504,7 @@ void TEncCavlc::codeVPS(TComVPS* pcVPS)
     assert(pcVPS->getMaxTLayers() > 1 || pcVPS->getTemporalNestingFlag());
     WRITE_CODE(0xffff,                              16,        "vps_reserved_ffff_16bits");
     codePTL(pcVPS->getPTL(), true, pcVPS->getMaxTLayers() - 1);
-    const Bool subLayerOrderingInfoPresentFlag = 1;
+    const bool subLayerOrderingInfoPresentFlag = 1;
     WRITE_FLAG(subLayerOrderingInfoPresentFlag,              "vps_sub_layer_ordering_info_present_flag");
     for (UInt i = 0; i <= pcVPS->getMaxTLayers() - 1; i++)
     {
@@ -707,7 +707,7 @@ void TEncCavlc::codeSliceHeader(TComSlice* slice)
 
                     if (rps->getDeltaPocMSBPresentFlag(i))
                     {
-                        Bool deltaFlag = false;
+                        bool deltaFlag = false;
                         //  First LTRP from SPS                 ||  First LTRP from SH                              || curr LSB            != prev LSB
                         if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->getPocLSBLT(i) != prevLSB))
                         {
@@ -749,7 +749,7 @@ void TEncCavlc::codeSliceHeader(TComSlice* slice)
 
         if (!slice->isIntra())
         {
-            Bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != slice->getPPS()->getNumRefIdxL0DefaultActive() || (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != slice->getPPS()->getNumRefIdxL1DefaultActive()));
+            bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != slice->getPPS()->getNumRefIdxL0DefaultActive() || (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != slice->getPPS()->getNumRefIdxL1DefaultActive()));
             WRITE_FLAG(overrideFlag ? 1 : 0,                               "num_ref_idx_active_override_flag");
             if (overrideFlag)
             {
@@ -830,7 +830,7 @@ void TEncCavlc::codeSliceHeader(TComSlice* slice)
             {
                 SliceType sliceType   = slice->getSliceType();
                 int  encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
-                Bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
+                bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
                 slice->setCabacInitFlag(encCabacInitFlag);
                 WRITE_FLAG(encCabacInitFlag ? 1 : 0, "cabac_init_flag");
             }
@@ -885,8 +885,8 @@ void TEncCavlc::codeSliceHeader(TComSlice* slice)
             }
         }
 
-        Bool isSAOEnabled = (!slice->getSPS()->getUseSAO()) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
-        Bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
+        bool isSAOEnabled = (!slice->getSPS()->getUseSAO()) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
+        bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
 
         if (isSAOEnabled || isDBFEnabled)
         {
@@ -899,7 +899,7 @@ void TEncCavlc::codeSliceHeader(TComSlice* slice)
     }
 }
 
-void TEncCavlc::codePTL(TComPTL* pcPTL, Bool profilePresentFlag, int maxNumSubLayersMinus1)
+void TEncCavlc::codePTL(TComPTL* pcPTL, bool profilePresentFlag, int maxNumSubLayersMinus1)
 {
     if (profilePresentFlag)
     {
@@ -1096,7 +1096,7 @@ void TEncCavlc::codeIPCMInfo(TComDataCU*, UInt)
     assert(0);
 }
 
-void TEncCavlc::codeIntraDirLumaAng(TComDataCU*, UInt, Bool)
+void TEncCavlc::codeIntraDirLumaAng(TComDataCU*, UInt, bool)
 {
     assert(0);
 }
@@ -1152,9 +1152,9 @@ void TEncCavlc::estBit(estBitsSbacStruct*, int, int, TextType)
 void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
 {
     wpScalingParam  *wp;
-    Bool            bChroma     = true; // color always present in HEVC ?
+    bool            bChroma     = true; // color always present in HEVC ?
     int             iNbRef       = (slice->getSliceType() == B_SLICE) ? (2) : (1);
-    Bool            bDenomCoded  = false;
+    bool            bDenomCoded  = false;
     UInt            mode = 0;
     UInt            uiTotalSignalledWeightFlags = 0;
 
@@ -1235,7 +1235,7 @@ void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
 void TEncCavlc::codeScalingList(TComScalingList* scalingList)
 {
     UInt listId, sizeId;
-    Bool scalingListPredModeFlag;
+    bool scalingListPredModeFlag;
 
 #if SCALING_LIST_OUTPUT_RESULT
     int startBit;
@@ -1308,9 +1308,9 @@ void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt
     }
 }
 
-Bool TEncCavlc::findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, int ltrpPOC, Bool usedFlag)
+bool TEncCavlc::findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, int ltrpPOC, bool usedFlag)
 {
-    // Bool state = true, state2 = false;
+    // bool state = true, state2 = false;
     int lsb = ltrpPOC % (1 << slice->getSPS()->getBitsForPOC());
 
     for (int k = 0; k < slice->getSPS()->getNumLongTermRefPicSPS(); k++)
@@ -1325,7 +1325,7 @@ Bool TEncCavlc::findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, int ltrpPOC
     return false;
 }
 
-Bool TComScalingList::checkPredMode(UInt sizeId, UInt listId)
+bool TComScalingList::checkPredMode(UInt sizeId, UInt listId)
 {
     for (int predListIdx = (int)listId; predListIdx >= 0; predListIdx--)
     {

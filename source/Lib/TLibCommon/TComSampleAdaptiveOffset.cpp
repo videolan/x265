@@ -857,7 +857,7 @@ Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int 
  * \param oneUnitFlag one unit flag
  * \param yCbCr color componet index
  */
-void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, int yCbCr)
+void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr)
 {
     Pel *rec;
     int picWidthTmp;
@@ -896,7 +896,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
     int stride;
     Pel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
-    Bool mergeLeftFlag;
+    bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
 
     offsetBo = (yCbCr == 0) ? m_offsetBo : m_chromaOffsetBo;
@@ -1066,7 +1066,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     int stride;
     Pel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
-    Bool mergeLeftFlag;
+    bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
 
     offsetBo = (yCbCr == 0) ? m_offsetBo : m_chromaOffsetBo;
@@ -1322,7 +1322,7 @@ void PCMLFDisableProcess(TComPic* pic)
  */
 static void xPCMRestoration(TComPic* pic)
 {
-    Bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+    bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
 
     if (bPCMFilter || pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {

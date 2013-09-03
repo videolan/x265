@@ -143,8 +143,8 @@ public:
     virtual ~SEIActiveParameterSets() {}
 
     int activeVPSId;
-    Bool m_fullRandomAccessFlag;
-    Bool m_noParamSetUpdateFlag;
+    bool m_fullRandomAccessFlag;
+    bool m_noParamSetUpdateFlag;
     int numSpsIdsMinus1;
     std::vector<int> activeSeqParamSetId;
 };
@@ -170,14 +170,14 @@ public:
     virtual ~SEIBufferingPeriod() {}
 
     UInt m_bpSeqParameterSetId;
-    Bool m_rapCpbParamsPresentFlag;
-    Bool m_cpbDelayOffset;
-    Bool m_dpbDelayOffset;
+    bool m_rapCpbParamsPresentFlag;
+    bool m_cpbDelayOffset;
+    bool m_dpbDelayOffset;
     UInt m_initialCpbRemovalDelay[MAX_CPB_CNT][2];
     UInt m_initialCpbRemovalDelayOffset[MAX_CPB_CNT][2];
     UInt m_initialAltCpbRemovalDelay[MAX_CPB_CNT][2];
     UInt m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
-    Bool m_concatenationFlag;
+    bool m_concatenationFlag;
     UInt m_auCpbRemovalDelayDelta;
 };
 
@@ -210,13 +210,13 @@ public:
 
     UInt  m_picStruct;
     UInt  m_sourceScanType;
-    Bool  m_duplicateFlag;
+    bool  m_duplicateFlag;
 
     UInt  m_auCpbRemovalDelay;
     UInt  m_picDpbOutputDelay;
     UInt  m_picDpbOutputDuDelay;
     UInt  m_numDecodingUnitsMinus1;
-    Bool  m_duCommonCpbRemovalDelayFlag;
+    bool  m_duCommonCpbRemovalDelayFlag;
     UInt  m_duCommonCpbRemovalDelayMinus1;
     UInt* m_numNalusInDuMinus1;
     UInt* m_duCpbRemovalDelayMinus1;
@@ -239,7 +239,7 @@ public:
 
     int m_decodingUnitIdx;
     int m_duSptCpbRemovalDelay;
-    Bool m_dpbOutputDuDelayPresentFlag;
+    bool m_dpbOutputDuDelayPresentFlag;
     int m_picSptDpbOutputDuDelay;
 };
 
@@ -254,8 +254,8 @@ public:
     virtual ~SEIRecoveryPoint() {}
 
     int  m_recoveryPocCnt;
-    Bool m_exactMatchingFlag;
-    Bool m_brokenLinkFlag;
+    bool m_exactMatchingFlag;
+    bool m_brokenLinkFlag;
 };
 
 class SEIDisplayOrientation : public SEI
@@ -272,13 +272,13 @@ public:
 
     virtual ~SEIDisplayOrientation() {}
 
-    Bool cancelFlag;
-    Bool horFlip;
-    Bool verFlip;
+    bool cancelFlag;
+    bool horFlip;
+    bool verFlip;
 
     UInt anticlockwiseRotation;
-    Bool persistenceFlag;
-    Bool extensionFlag;
+    bool persistenceFlag;
+    bool extensionFlag;
 };
 
 class SEIGradualDecodingRefreshInfo : public SEI
@@ -293,7 +293,7 @@ public:
 
     virtual ~SEIGradualDecodingRefreshInfo() {}
 
-    Bool m_gdrForegroundFlag;
+    bool m_gdrForegroundFlag;
 };
 
 typedef std::list<SEI*> SEIMessages;

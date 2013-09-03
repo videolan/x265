@@ -142,17 +142,17 @@ public:
     UInt xUpdateCandList(UInt mode, UInt64 cost, UInt fastCandNum, UInt* CandModeList, UInt64* CandCostList);
 
     void preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv);
-    void estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, UInt& ruiDistC, Bool bLumaOnly);
+    void estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, UInt& ruiDistC, bool bLumaOnly);
 
     void estIntraPredChromaQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv,
                               TComYuv* reconYuv, UInt precalcDistC);
 
     /// encoder estimation - inter prediction (non-skip)
-    void predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, Bool bUseMRG = false);
+    void predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, bool bUseMRG = false);
 
     /// encode residual and compute rd-cost for inter mode
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TShortYUV* bestResiYuv,
-                                   TComYuv* reconYuv, Bool bSkipRes);
+                                   TComYuv* reconYuv, bool bSkipRes);
 
     /// set ME search range
     void setAdaptiveSearchRange(int dir, int refIdx, int merange) { m_adaptiveRange[dir][refIdx] = merange; }
@@ -164,11 +164,11 @@ public:
 
     UInt estimateHeaderBits(TComDataCU* cu, UInt absPartIdx);
 
-    void xRecurIntraCodingQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* fencYuv,
-                             TComYuv* predYuv, TShortYUV* resiYuv, UInt& distY, UInt& distC, Bool bCheckFirst,
+    void xRecurIntraCodingQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, bool bLumaOnly, TComYuv* fencYuv,
+                             TComYuv* predYuv, TShortYUV* resiYuv, UInt& distY, UInt& distC, bool bCheckFirst,
                              UInt64& dRDCost);
 
-    void xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* reconYuv);
+    void xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, bool bLumaOnly, TComYuv* reconYuv);
 
 protected:
 
@@ -176,11 +176,11 @@ protected:
     // Intra search
     // --------------------------------------------------------------------------------------------
 
-    void xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
+    void xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, bool bLuma, bool bChroma);
 
     void xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype);
-    void xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
-    UInt xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
+    void xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, bool bLuma, bool bChroma);
+    UInt xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, bool bLuma, bool bChroma);
     UInt xGetIntraBitsQTChroma(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt uiChromaId);
     void xIntraCodingLumaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
                              TShortYUV* resiYuv, UInt& outDist, int default0Save1Load2 = 0);
@@ -193,8 +193,8 @@ protected:
 
     void xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* reconYuv);
 
-    void xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
-    void xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
+    void xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, bool bLumaOnly);
+    void xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, bool bLumaOnly);
     void xStoreIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2);
     void xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2);
 
@@ -213,7 +213,7 @@ protected:
 
     void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
     UInt xGetMvpIdxBits(int idx, int num);
-    void xGetBlkBits(PartSize cuMode, Bool bPSlice, int partIdx, UInt lastMode, UInt blockBit[3]);
+    void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, UInt lastMode, UInt blockBit[3]);
 
     void xMergeEstimation(TComDataCU* cu, int partIdx, UInt& uiInterDir,
                           TComMvField* pacMvField, UInt& mergeIndex, UInt& outCost,
@@ -241,10 +241,10 @@ protected:
     // T & Q & Q-1 & T-1
     // -------------------------------------------------------------------------------------------------------------------
 
-    void xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, UInt depth, Bool bSubdivAndCbf, TextType ttype);
+    void xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, UInt depth, bool bSubdivAndCbf, TextType ttype);
     void xEstimateResidualQT(TComDataCU* cu, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth,
                              UInt64 &rdCost, UInt &outBits, UInt &outDist, UInt *puiZeroDist);
-    void xSetResidualQTData(TComDataCU* cu, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, Bool bSpatial);
+    void xSetResidualQTData(TComDataCU* cu, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, bool bSpatial);
 
     // -------------------------------------------------------------------------------------------------------------------
     // compute symbol bits

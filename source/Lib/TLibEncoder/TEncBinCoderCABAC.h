@@ -79,9 +79,9 @@ public:
 
     UInt  getBinsCoded() { return m_uiBinsCoded; }
 
-    void  setBinCountingEnableFlag(Bool bFlag) { m_binCountIncrement = bFlag ? 1 : 0; }
+    void  setBinCountingEnableFlag(bool bFlag) { m_binCountIncrement = bFlag ? 1 : 0; }
 
-    Bool  getBinCountingEnableFlag() { return m_binCountIncrement != 0; }
+    bool  getBinCountingEnableFlag() { return m_binCountIncrement != 0; }
 
 protected:
 

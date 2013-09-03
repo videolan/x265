@@ -135,7 +135,7 @@ void TComSlice::initSlice()
     m_enableTMVPFlag = true;
 }
 
-Bool TComSlice::getRapPicFlag()
+bool TComSlice::getRapPicFlag()
 {
     return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
            || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
@@ -213,7 +213,7 @@ TComPic* TComSlice::xGetRefPic(TComList<TComPic*>& picList, int poc)
     return pic;
 }
 
-TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, int poc, Bool pocHasMsb)
+TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, int poc, bool pocHasMsb)
 {
     TComList<TComPic*>::iterator  iterPic = picList.begin();
     TComPic* pic = *(iterPic);
@@ -285,7 +285,7 @@ void TComSlice::setList1IdxToList0Idx()
     }
 }
 
-void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotalCurr)
+void TComSlice::setRefPicList(TComList<TComPic*>& picList, bool checkNumPocTotalCurr)
 {
     if (!checkNumPocTotalCurr)
     {
@@ -479,7 +479,7 @@ void TComSlice::initEqualRef()
     }
 }
 
-void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, Bool& prevRAPisBLA)
+void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRAPisBLA)
 {
     for (int i = 0; i < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i++)
     {
@@ -620,7 +620,7 @@ void TComSlice::copySliceInfo(TComSlice *src)
 
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet.
 */
-int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool printErrors, int pocRandomAccess)
+int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, bool printErrors, int pocRandomAccess)
 {
     TComPic* outPic;
     int i, isAvailable;
@@ -768,7 +768,7 @@ int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TCom
 
 /** Function for constructing an explicit Reference Picture Set out of the available pictures in a referenced Reference Picture Set
 */
-void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool isRAP)
+void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*>& picList, TComReferencePictureSet *rps, bool isRAP)
 {
     TComPic* outPic;
     int i, j;
@@ -1038,7 +1038,7 @@ void  TComSPS::createRPSList(int numRPS)
     m_RPSList.create(numRPS);
 }
 
-void TComSPS::setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess)
+void TComSPS::setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, bool randomAccess)
 {
     if (!getVuiParametersPresentFlag())
     {
@@ -1078,7 +1078,7 @@ void TComSPS::setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, Bool ra
         break;
     }
 
-    Bool rateCnt = (bitRate > 0);
+    bool rateCnt = (bitRate > 0);
     hrd->setNalHrdParametersPresentFlag(rateCnt);
     hrd->setVclHrdParametersPresentFlag(rateCnt);
 
@@ -1199,7 +1199,7 @@ TComReferencePictureSet::TComReferencePictureSet()
 TComReferencePictureSet::~TComReferencePictureSet()
 {}
 
-void TComReferencePictureSet::setUsed(int bufferNum, Bool used)
+void TComReferencePictureSet::setUsed(int bufferNum, bool used)
 {
     m_used[bufferNum] = used;
 }
@@ -1239,12 +1239,12 @@ void TComReferencePictureSet::setPOC(int bufferNum, int POC)
     m_POC[bufferNum] = POC;
 }
 
-Bool TComReferencePictureSet::getCheckLTMSBPresent(int bufferNum)
+bool TComReferencePictureSet::getCheckLTMSBPresent(int bufferNum)
 {
     return m_bCheckLTMSB[bufferNum];
 }
 
-void TComReferencePictureSet::setCheckLTMSBPresent(int bufferNum, Bool b)
+void TComReferencePictureSet::setCheckLTMSBPresent(int bufferNum, bool b)
 {
     m_bCheckLTMSB[bufferNum] = b;
 }
@@ -1279,7 +1279,7 @@ void TComReferencePictureSet::sortDeltaPOC()
     for (int j = 1; j < getNumberOfPictures(); j++)
     {
         int deltaPOC = getDeltaPOC(j);
-        Bool used = getUsed(j);
+        bool used = getUsed(j);
         for (int k = j - 1; k >= 0; k--)
         {
             int temp = getDeltaPOC(k);
@@ -1298,7 +1298,7 @@ void TComReferencePictureSet::sortDeltaPOC()
     for (int j = 0, k = numNegPics - 1; j < numNegPics >> 1; j++, k--)
     {
         int deltaPOC = getDeltaPOC(j);
-        Bool used = getUsed(j);
+        bool used = getUsed(j);
         setDeltaPOC(j, getDeltaPOC(k));
         setUsed(j, getUsed(k));
         setDeltaPOC(k, deltaPOC);
@@ -1406,7 +1406,7 @@ void TComSlice::setDefaultScalingList()
 /** check if use default quantization matrix
  * \returns true if use default quantization matrix in all size
 */
-Bool TComSlice::checkDefaultScalingList()
+bool TComSlice::checkDefaultScalingList()
 {
     UInt defaultCounter = 0;
 
@@ -1439,7 +1439,7 @@ void TComScalingList::processRefMatrix(UInt sizeId, UInt listId, UInt refListId)
  *  \param pchFile syntax information
  *  \returns false if successful
  */
-Bool TComScalingList::xParseScalingList(char* pchFile)
+bool TComScalingList::xParseScalingList(char* pchFile)
 {
     FILE *fp;
     char line[1024];
@@ -1617,7 +1617,7 @@ ParameterSetManager::~ParameterSetManager()
 
 //! activate a SPS from a active parameter sets SEI message
 //! \returns true, if activation is successful
-Bool ParameterSetManager::activateSPSWithSEI(int spsId)
+bool ParameterSetManager::activateSPSWithSEI(int spsId)
 {
     TComSPS *sps = m_spsMap.getPS(spsId);
 
@@ -1644,7 +1644,7 @@ Bool ParameterSetManager::activateSPSWithSEI(int spsId)
 
 //! activate a PPS and depending on isIDR parameter also SPS and VPS
 //! \returns true, if activation is successful
-Bool ParameterSetManager::activatePPS(int ppsId, Bool isIRAP)
+bool ParameterSetManager::activatePPS(int ppsId, bool isIRAP)
 {
     TComPPS *pps = m_ppsMap.getPS(ppsId);
 

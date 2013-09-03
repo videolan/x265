@@ -609,7 +609,7 @@ inline int xSign(int x)
  * \param  height block height
  * \param  bBorderAvail availabilities of block border pixels
  */
-void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, int yCbCr)
+void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, UInt width, UInt height, bool* bBorderAvail, int yCbCr)
 {
     Int64 *stat, *count;
     int classIdx, posShift, startX, endX, startY, endY, signLeft, signRight, signDown, signDown1;
@@ -1622,7 +1622,7 @@ void TEncSampleAdaptiveOffset::checkMerge(SaoLcuParam * saoUnitCurr, SaoLcuParam
  * \param oneUnitFlag SAO one unit flag
  * \param yCbCr color component Index
  */
-void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag)
+void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, bool &oneUnitFlag)
 {
     if (saoPart->bSplit == 0)
     {

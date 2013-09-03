@@ -80,7 +80,7 @@ TComWeightPrediction::TComWeightPrediction()
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, Bool bRound)
+void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound)
 {
     int x, y;
 
@@ -194,7 +194,7 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt 
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, Bool bRound)
+void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound)
 {
     int x, y;
 
@@ -475,10 +475,10 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
 {
     TComSlice*      slice = cu->getSlice();
     const TComPPS*  pps     = cu->getSlice()->getPPS();
-    Bool            wpBiPred = pps->getWPBiPred();
+    bool            wpBiPred = pps->getWPBiPred();
     wpScalingParam* pwp;
-    Bool            bBiDir   = (refIdx0 >= 0 && refIdx1 >= 0);
-    Bool            bUniDir  = !bBiDir;
+    bool            bBiDir   = (refIdx0 >= 0 && refIdx1 >= 0);
+    bool            bUniDir  = !bBiDir;
 
     if (bUniDir || wpBiPred)
     { // explicit --------------------

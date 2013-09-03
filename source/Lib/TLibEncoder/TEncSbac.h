@@ -148,7 +148,7 @@ public:
     void codeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
-    void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiple);
+    void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMultiple);
 
     void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx);
     void codeInterDir(TComDataCU* cu, UInt absPartIdx);
@@ -171,7 +171,7 @@ public:
     void estSignificantMapBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType);
     void estSignificantCoefficientsBit(estBitsSbacStruct* pcEstBitsSbac, TextType eTType);
 
-    void updateContextTables(SliceType eSliceType, int iQp, Bool bExecuteFinish = true);
+    void updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish = true);
     void updateContextTables(SliceType eSliceType, int iQp) { this->updateContextTables(eSliceType, iQp, true); }
 
     TEncBinIf* getEncBinIf()  { return m_pcBinIf; }

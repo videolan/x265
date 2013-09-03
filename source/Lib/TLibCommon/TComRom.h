@@ -185,10 +185,10 @@ extern char g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
 #if ENC_DEC_TRACE
 extern FILE*  g_hTrace;
-extern Bool   g_bJustDoIt;
-extern const Bool g_bEncDecTraceEnable;
-extern const Bool g_bEncDecTraceDisable;
-extern Bool   g_HLSTraceEnable;
+extern bool   g_bJustDoIt;
+extern const bool g_bEncDecTraceEnable;
+extern const bool g_bEncDecTraceDisable;
+extern bool   g_HLSTraceEnable;
 extern UInt64 g_nSymbolCounter;
 
 #define COUNTER_START    1

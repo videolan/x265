@@ -153,7 +153,7 @@ bool IntraPredHarness::check_angular_primitive(x265::intra_ang_t ref, x265::intr
     int j = ADI_BUF_STRIDE;
 
     int pmode;
-    Bool bFilter;
+    bool bFilter;
 
     for (int width = 4; width <= 32; width <<= 1)
     {
@@ -196,7 +196,7 @@ bool IntraPredHarness::check_allangs_primitive(const x265::intra_allangs_t ref[]
 {
     int j = ADI_BUF_STRIDE;
 
-    Bool isLuma;
+    bool isLuma;
 
     for (int size = 2; size <= 5; size++)
     {

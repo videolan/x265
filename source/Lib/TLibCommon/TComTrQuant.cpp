@@ -261,7 +261,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, int* coef, TCoeff* qCoef, int width, in
 {
     UInt acSum = 0;
     int add = 0;
-    Bool useRDOQ = cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ;
+    bool useRDOQ = cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ;
 
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
     {
@@ -406,7 +406,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
                                TextType    ttype,
                                UInt        absPartIdx,
                                int*        lastPos,
-                               Bool        useTransformSkip)
+                               bool        useTransformSkip)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
     {
@@ -447,7 +447,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, Bool useTransformSkip, int lastPos )
+void TComTrQuant::invtransformNxN( bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip, int lastPos )
 {
     if (transQuantBypass)
     {
@@ -465,7 +465,7 @@ void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, short* resi
     // Values need to pass as input parameter in dequant
     int per = m_qpParam.m_per;
     int rem = m_qpParam.m_rem;
-    Bool useScalingList = getUseScalingList();
+    bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_convertToBit[width] + 2;
     int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
     x265::primitives.dequant(coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
@@ -891,7 +891,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCo
         baseCost += xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][1]);
     }
 
-    Bool foundLast = false;
+    bool foundLast = false;
     for (int cgScanPos = cgLastScanPos; cgScanPos >= 0; cgScanPos--)
     {
         UInt cgBlkPos = scanCG[cgScanPos];
@@ -1206,7 +1206,7 @@ inline UInt TComTrQuant::xGetCodedLevel(double& codedCost,
                                           UInt    c2Idx,
                                           int     qbits,
                                           double  scaleFactor,
-                                          Bool    last) const
+                                          bool    last) const
 {
     double curCostSig   = 0;
     UInt   bestAbsLevel = 0;
@@ -1325,7 +1325,7 @@ inline int TComTrQuant::xGetICRate(UInt   absLevel,
     {
         UInt symbol   = absLevel - baseLevel;
         UInt maxVlc   = g_goRiceRange[absGoRice];
-        Bool expGolomb = (symbol > maxVlc);
+        bool expGolomb = (symbol > maxVlc);
 
         if (expGolomb)
         {
