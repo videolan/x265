@@ -459,15 +459,18 @@ void extendPicCompBorder(pixel* txt, intptr_t stride, int width, int height, int
 
 void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, int marginX)
 {
-    int   x, y;
-
-    for (y = 0; y < height; y++)
+    for (int y = 0; y < height; y++)
     {
-        for (x = 0; x < marginX; x++)
+#if HIGH_BIT_DEPTH
+        for (int x = 0; x < marginX; x++)
         {
             txt[-marginX + x] = txt[0];
             txt[width + x] = txt[width - 1];
         }
+#else
+        ::memset(txt - marginX, txt[0], marginX);
+        ::memset(txt + width, txt[width - 1], marginX);
+#endif
 
         txt += stride;
     }
