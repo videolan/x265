@@ -168,8 +168,8 @@ void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
     m_numCuInHeight  = m_picHeight / m_maxCUHeight;
     m_numCuInHeight += (m_picHeight % m_maxCUHeight) ? 1 : 0;
 
-    int maxSplitLevelHeight = (int)(logf((Float)m_numCuInHeight) / logf(2.0));
-    int maxSplitLevelWidth  = (int)(logf((Float)m_numCuInWidth) / logf(2.0));
+    int maxSplitLevelHeight = (int)(logf((float)m_numCuInHeight) / logf(2.0));
+    int maxSplitLevelWidth  = (int)(logf((float)m_numCuInWidth) / logf(2.0));
 
     m_maxSplitLevel = (maxSplitLevelHeight < maxSplitLevelWidth) ? (maxSplitLevelHeight) : (maxSplitLevelWidth);
     m_maxSplitLevel = (m_maxSplitLevel < m_maxDepth) ? (m_maxSplitLevel) : (m_maxDepth);

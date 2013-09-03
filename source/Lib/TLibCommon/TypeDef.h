@@ -46,11 +46,9 @@ namespace x265 {
 // ====================================================================================================================
 
 typedef       bool                Bool;
-
 typedef       unsigned char       UChar;
 typedef       unsigned short      UShort;
 typedef       unsigned int        UInt;
-typedef       float               Float;
 
 // ====================================================================================================================
 // 64-bit integer type
