@@ -149,11 +149,6 @@ void TEncTop::init()
             m_frameEncoder[i].init(this, numRows);
         }
     }
-
-    m_analyzeI.setFrameRate(param.frameRate);
-    m_analyzeP.setFrameRate(param.frameRate);
-    m_analyzeB.setFrameRate(param.frameRate);
-    m_analyzeAll.setFrameRate(param.frameRate);
 }
 
 int TEncTop::getStreamHeaders(AccessUnit& accessUnit)
@@ -276,21 +271,22 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
 double TEncTop::printSummary()
 {
+    double fps = (double)param.frameRate;
     if (param.logLevel >= X265_LOG_INFO)
     {
-        m_analyzeI.printOut('i');
-        m_analyzeP.printOut('p');
-        m_analyzeB.printOut('b');
-        m_analyzeAll.printOut('a');
+        m_analyzeI.printOut('i', fps);
+        m_analyzeP.printOut('p', fps);
+        m_analyzeB.printOut('b', fps);
+        m_analyzeAll.printOut('a', fps);
     }
 
 #if _SUMMARY_OUT_
-    m_analyzeAll.printSummaryOut();
+    m_analyzeAll.printSummaryOut(fps);
 #endif
 #if _SUMMARY_PIC_
-    m_analyzeI.printSummary('I');
-    m_analyzeP.printSummary('P');
-    m_analyzeB.printSummary('B');
+    m_analyzeI.printSummary('I', fps);
+    m_analyzeP.printSummary('P', fps);
+    m_analyzeB.printSummary('B', fps);
 #endif
 
     return (m_analyzeAll.getPsnrY() * 6 + m_analyzeAll.getPsnrU() + m_analyzeAll.getPsnrV()) / (8 * m_analyzeAll.getNumPic());

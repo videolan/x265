@@ -38,17 +38,11 @@
 #ifndef __TENCANALYZE__
 #define __TENCANALYZE__
 
+#include "TLibCommon/CommonDef.h"
+
 #include <stdio.h>
 #include <memory.h>
 #include <assert.h>
-#include "TLibCommon/CommonDef.h"
-
-//! \ingroup TLibEncoder
-//! \{
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
 
 namespace x265 {
 // private namespace
@@ -58,109 +52,105 @@ class TEncAnalyze
 {
 private:
 
-    double    m_dPSNRSumY;
-    double    m_dPSNRSumU;
-    double    m_dPSNRSumV;
-    double    m_dAddBits;
-    UInt      m_uiNumPic;
-    double    m_dFrmRate; //--CFG_KDY
+    double    m_psnrSumY;
+    double    m_psnrSumU;
+    double    m_psnrSumV;
+    double    m_accBits;
+    UInt      m_numPics;
 
 public:
 
-    TEncAnalyze() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
+    TEncAnalyze() { m_psnrSumY = m_psnrSumU = m_psnrSumV = m_accBits = m_numPics = 0; }
 
-    virtual ~TEncAnalyze()  {}
-
-    void  addResult(double psnrY, double psnrU, double psnrV, double bits)
+    void addResult(double psnrY, double psnrU, double psnrV, double bits)
     {
-        m_dPSNRSumY += psnrY;
-        m_dPSNRSumU += psnrU;
-        m_dPSNRSumV += psnrV;
-        m_dAddBits  += bits;
-
-        m_uiNumPic++;
+        m_psnrSumY += psnrY;
+        m_psnrSumU += psnrU;
+        m_psnrSumV += psnrV;
+        m_accBits  += bits;
+        m_numPics++;
     }
 
-    double  getPsnrY()  { return m_dPSNRSumY;  }
+    double  getPsnrY()  { return m_psnrSumY; }
 
-    double  getPsnrU()  { return m_dPSNRSumU;  }
+    double  getPsnrU()  { return m_psnrSumU; }
 
-    double  getPsnrV()  { return m_dPSNRSumV;  }
+    double  getPsnrV()  { return m_psnrSumV; }
 
-    double  getBits()   { return m_dAddBits;   }
+    double  getBits()   { return m_accBits;  }
 
-    UInt    getNumPic() { return m_uiNumPic;   }
+    UInt    getNumPic() { return m_numPics;  }
 
-    void    setFrameRate(double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
+    void    clear() { m_psnrSumY = m_psnrSumU = m_psnrSumV = m_accBits = m_numPics = 0; }
 
-    void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
-
-    void    printOut(char cDelim)
+    void printOut(char delim, double fps)
     {
-        double dFps     = m_dFrmRate; //--CFG_KDY
-        double dScale   = dFps / 1000 / (double)m_uiNumPic;
+        double scale = fps / 1000 / (double)m_numPics;
 
-        if (m_uiNumPic == 0)
+        if (m_numPics == 0)
             return;
 
-        if (cDelim == 'a')
+        if (delim == 'a')
             fprintf(stderr, "x265 [info]: global:        ");
         else
-            fprintf(stderr, "x265 [info]: frame %c:%-6d ", cDelim - 32, m_uiNumPic);
+            fprintf(stderr, "x265 [info]: frame %c:%-6d ", delim - 32, m_numPics);
         fprintf(stderr, "kb/s: %-8.2lf PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf\n",
-                getBits() * dScale,
+                getBits() * scale,
                 getPsnrY() / (double)getNumPic(),
                 getPsnrU() / (double)getNumPic(),
                 getPsnrV() / (double)getNumPic());
     }
 
-    void    printSummaryOut()
+    void printSummaryOut(double fps)
     {
-        FILE* pFile = fopen("summaryTotal.txt", "at");
-        double dFps     =   m_dFrmRate; //--CFG_KDY
-        double dScale   = dFps / 1000 / (double)m_uiNumPic;
+        FILE* fp = fopen("summaryTotal.txt", "at");
+        if (fp)
+        {
+            double scale = fps / 1000 / (double)m_numPics;
 
-        fprintf(pFile, "%f\t %f\t %f\t %f\n", getBits() * dScale,
+            fprintf(fp, "%f\t %f\t %f\t %f\n", getBits() * scale,
                 getPsnrY() / (double)getNumPic(),
                 getPsnrU() / (double)getNumPic(),
                 getPsnrV() / (double)getNumPic());
-        fclose(pFile);
+
+            fclose(fp);
+        }
     }
 
-    void    printSummary(char ch)
+    void printSummary(char ch, double fps)
     {
-        FILE* pFile = NULL;
+        FILE* fp = NULL;
 
         switch (ch)
         {
         case 'I':
-            pFile = fopen("summary_I.txt", "at");
+            fp = fopen("summary_I.txt", "at");
             break;
         case 'P':
-            pFile = fopen("summary_P.txt", "at");
+            fp = fopen("summary_P.txt", "at");
             break;
         case 'B':
-            pFile = fopen("summary_B.txt", "at");
+            fp = fopen("summary_B.txt", "at");
             break;
         default:
             assert(0);
             return;
-            break;
         }
 
-        double dFps     =   m_dFrmRate; //--CFG_KDY
-        double dScale   = dFps / 1000 / (double)m_uiNumPic;
+        if (fp)
+        {
+            double scale = fps / 1000 / (double)m_numPics;
 
-        fprintf(pFile, "%f\t %f\t %f\t %f\n",
-                getBits() * dScale,
+            fprintf(fp, "%f\t %f\t %f\t %f\n",
+                getBits() * scale,
                 getPsnrY() / (double)getNumPic(),
                 getPsnrU() / (double)getNumPic(),
                 getPsnrV() / (double)getNumPic());
 
-        fclose(pFile);
+            fclose(fp);
+        }
     }
 };
 }
-//! \}
 
-#endif // !defined(_TENCANALYZE_)
+#endif

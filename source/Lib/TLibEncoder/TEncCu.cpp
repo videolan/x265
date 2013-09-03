@@ -38,7 +38,6 @@
 #include <stdio.h>
 #include "TEncTop.h"
 #include "TEncCu.h"
-#include "TEncAnalyze.h"
 #include "PPA/ppa.h"
 #include "primitives.h"
 #include "common.h"
