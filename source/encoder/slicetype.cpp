@@ -424,7 +424,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     int vbv_lookahead = 0;
 
     TComList<TComPic*>::iterator iterPic = inputQueue.begin();
-    for (framecnt = 0; (framecnt < maxSearch) && (framecnt < inputQueue.size()); framecnt++)
+    for (framecnt = 0; (framecnt < maxSearch) && (framecnt < (int)inputQueue.size()); framecnt++)
     {
         frames[framecnt + 1] = &((*iterPic++)->m_lowres);
         frames[framecnt + 1]->sliceType = X265_TYPE_AUTO;
