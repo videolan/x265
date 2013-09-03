@@ -44,6 +44,9 @@
 //! \ingroup TLibCommon
 //! \{
 
+namespace x265 {
+// private namespace
+
 #define DEBLOCK_SMALLEST_BLOCK  8
 #define EDGE_VER                0
 #define EDGE_HOR                1
@@ -135,7 +138,7 @@ public:
         return sm_betaTable[indexB];
     }
 };
-
+}
 //! \}
 
 #endif // ifndef __TCOMLOOPFILTER__

@@ -47,12 +47,13 @@
 #include "threading.h"
 
 namespace x265 {
+// private namespace
+
 class FrameEncoder;
 class DPB;
 struct Lookahead;
 struct RateControl;
 class ThreadPool;
-}
 
 //! \ingroup TLibEncoder
 //! \{
@@ -116,7 +117,7 @@ public:
 
     Void computeLambdaForQp(TComSlice* slice);
 };
-
+}
 //! \}
 
 #endif // __TENCTOP__

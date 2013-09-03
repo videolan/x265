@@ -38,6 +38,8 @@
 #include "TLibCommon/CommonDef.h"
 #include "SyntaxElementWriter.h"
 
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 

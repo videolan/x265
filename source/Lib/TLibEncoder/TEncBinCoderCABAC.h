@@ -44,6 +44,9 @@
 //! \ingroup TLibEncoder
 //! \{
 
+namespace x265 {
+// private namespace
+
 class TEncBinCABAC : public TEncBinIf
 {
 public:
@@ -66,20 +69,20 @@ public:
     Void  resetBits();
     UInt  getNumWrittenBits();
 
-    Void  encodeBin(UInt binValue,  ContextModel& rcCtxModel);
+    Void  encodeBin(UInt binValue, ContextModel& rcCtxModel);
     Void  encodeBinEP(UInt binValue);
     Void  encodeBinsEP(UInt binValues, Int numBins);
     Void  encodeBinTrm(UInt binValue);
 
-    TEncBinCABAC* getTEncBinCABAC()  { return this; }
+    TEncBinCABAC* getTEncBinCABAC() { return this; }
 
-    Void  setBinsCoded(UInt val)  { m_uiBinsCoded = val;               }
+    Void  setBinsCoded(UInt val) { m_uiBinsCoded = val; }
 
-    UInt  getBinsCoded()              { return m_uiBinsCoded;                }
+    UInt  getBinsCoded() { return m_uiBinsCoded; }
 
-    Void  setBinCountingEnableFlag(Bool bFlag)  { m_binCountIncrement = bFlag ? 1 : 0; }
+    Void  setBinCountingEnableFlag(Bool bFlag) { m_binCountIncrement = bFlag ? 1 : 0; }
 
-    Bool  getBinCountingEnableFlag()              { return m_binCountIncrement != 0;     }
+    Bool  getBinCountingEnableFlag() { return m_binCountIncrement != 0; }
 
 protected:
 
@@ -96,7 +99,7 @@ protected:
     Int                 m_binCountIncrement;
     UInt64              m_fracBits;
 };
-
+}
 //! \}
 
 #endif // ifndef __TENC_BIN_CODER_CABAC__

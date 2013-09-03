@@ -39,6 +39,8 @@
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 

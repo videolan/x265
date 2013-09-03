@@ -27,9 +27,6 @@
 #include "TLibCommon/TComList.h"
 #include "motion.h"
 
-class TComPic;
-class TEncCfg;
-
 // arbitrary, but low because SATD scores are 1/4 normal
 #define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
 #define X265_LOOKAHEAD_MAX 250
@@ -38,6 +35,8 @@ namespace x265 {
 // private namespace
 
 struct Lowres;
+class TComPic;
+class TEncCfg;
 
 struct Lookahead
 {

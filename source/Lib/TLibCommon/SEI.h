@@ -38,6 +38,9 @@
 #include <vector>
 #include <cstring>
 
+namespace x265 {
+// private namespace
+
 //! \ingroup TLibCommon
 //! \{
 class TComSPS;
@@ -303,7 +306,7 @@ SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 
 /// delete list of SEI messages (freeing the referenced objects)
 Void deleteSEIs(SEIMessages &seiList);
-
+}
 //! \}
 
 #endif // ifndef _SEI_

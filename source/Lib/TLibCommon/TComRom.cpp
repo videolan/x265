@@ -39,9 +39,8 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <stdio.h>
-// ====================================================================================================================
-// Initialize / destroy functions
-// ====================================================================================================================
+
+namespace x265 {
 
 //! \ingroup TLibCommon
 //! \{
@@ -108,7 +107,7 @@ UInt g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 
 UInt g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
-Void initZscanToRaster(Int maxDepth, Int depth, UInt startVal, UInt*& curIdx)
+Void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
 {
     Int stride = 1 << (maxDepth - 1);
 
@@ -522,5 +521,5 @@ const int x265_lambda2_tab[MAX_QP + 1] =
   43871,  56371,  72432,  93070,  119587, 153661, 197441, 253697,
   325982, 418861, 538203, 691549, 888585, 1141764, 1467077, 1885077,
   2422177, 3112305 };
-
+}
 //! \}

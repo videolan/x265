@@ -33,10 +33,10 @@
 #include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
 
-class TEncTop;
-
 namespace x265 {
 // private x265 namespace
+
+class TEncTop;
 
 /* manages the state of encoding one row of CTU blocks.  When
  * WPP is active, several rows will be simultaneously encoded.

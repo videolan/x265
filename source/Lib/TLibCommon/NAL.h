@@ -34,10 +34,13 @@
 #ifndef _NAL_
 #define _NAL_ 1
 
-#include <vector>
-#include <sstream>
 #include "CommonDef.h"
 #include "x265.h"
+#include <vector>
+#include <sstream>
+
+namespace x265 {
+// private namespace
 
 class TComOutputBitstream;
 
@@ -111,7 +114,7 @@ struct NALUnitEBSP : public NALUnit
      */
     NALUnitEBSP(OutputNALUnit& nalu);
 };
-
+}
 //! \}
 
 #endif // ifndef _NAL_

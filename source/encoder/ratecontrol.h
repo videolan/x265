@@ -27,10 +27,10 @@
 
 #include "TLibCommon/CommonDef.h"
 
-class TComPic;
-
 namespace x265 {
+
 struct Lowres;
+class TComPic;
 
 struct RateControlEntry
 {

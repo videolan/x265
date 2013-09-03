@@ -39,11 +39,15 @@
 
 #ifndef __TCOMYUV__
 #define __TCOMYUV__
-#include <assert.h>
+
 #include "CommonDef.h"
-#include "TComPicYuv.h"
+#include "TComRom.h"
+
+namespace x265 {
+// private namespace
 
 class TShortYUV;
+class TComPicYuv;
 
 //! \ingroup TLibCommon
 //! \{
@@ -200,7 +204,7 @@ public:
 
     UInt getCWidth()    { return m_cwidth;  }
 }; // END CLASS DEFINITION TComYuv
-
+}
 //! \}
 
 #endif // __TCOMYUV__

@@ -43,6 +43,9 @@
 #include "TComMotionInfo.h"
 #include "TComPattern.h"
 
+namespace x265 {
+// private namespace
+
 class TComYuv;
 
 // ====================================================================================================================
@@ -67,5 +70,6 @@ public:
     Void  xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partIdx, Int width, Int height, TComYuv* outDstYuv);
     Void  xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, Int refIdx0, Int refIdx1, UInt partIdx, Int width, Int height, TComYuv* outDstYuv);
 };
+}
 
 #endif // ifndef __TCOMWEIGHTPREDICTION__

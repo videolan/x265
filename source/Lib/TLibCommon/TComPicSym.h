@@ -43,6 +43,9 @@
 #include "TComSlice.h"
 #include "TComDataCU.h"
 
+namespace x265 {
+// private namespace
+
 struct SAOParam;
 class TComSampleAdaptiveOffset;
 
@@ -109,7 +112,7 @@ public:
     SAOParam *getSaoParam()               { return m_saoParam; }
 
 }; // END CLASS DEFINITION TComPicSym
-
+}
 //! \}
 
 #endif // __TCOMPICSYM__

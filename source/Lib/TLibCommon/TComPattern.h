@@ -44,6 +44,9 @@
 //! \ingroup TLibCommon
 //! \{
 
+namespace x265 {
+// private namespace
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -147,7 +150,7 @@ private:
     Int   isAboveRightAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, Bool* bValidFlags);
     Int   isBelowLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, Bool* bValidFlags);
 };
-
+}
 //! \}
 
 #endif // __TCOMPATTERN__

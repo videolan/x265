@@ -37,6 +37,9 @@
 #include "SyntaxElementWriter.h"
 #include "TLibCommon/SEI.h"
 
+namespace x265 {
+// private namespace
+
 class TComBitIf;
 
 //! \ingroup TLibEncoder
@@ -65,7 +68,7 @@ protected:
     Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
     Void xWriteByteAlign();
 };
-
+}
 //! \}
 
 #endif // ifndef _SEI_WRITE_

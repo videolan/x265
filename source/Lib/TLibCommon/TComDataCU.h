@@ -51,6 +51,10 @@
 #include <algorithm>
 #include <vector>
 
+namespace x265 {
+// private namespace
+
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -622,7 +626,7 @@ static inline Bool lessThanRow(Int addr, Int val, Int numUnitsPerRow)
     return addr < val * numUnitsPerRow;
 }
 }
-
+}
 //! \}
 
 #endif // ifndef _TCOMDATACU_

@@ -41,6 +41,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace x265;
 
 //! \ingroup TLibCommon
 //! \{

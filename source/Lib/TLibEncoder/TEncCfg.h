@@ -42,6 +42,9 @@
 #include "TLibCommon/TComSlice.h"
 #include <assert.h>
 
+namespace x265 {
+// private namespace
+
 struct GOPEntry
 {
     Int m_POC;
@@ -354,7 +357,7 @@ public:
 
     Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
 };
-
+}
 //! \}
 
 #endif // __TENCCFG__

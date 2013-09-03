@@ -41,6 +41,8 @@
 #include <stdio.h>
 #include <math.h>
 
+namespace x265 {
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -1442,5 +1444,5 @@ static Void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth,
         src += stride;
     }
 }
-
+}
 //! \}

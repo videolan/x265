@@ -26,14 +26,13 @@
 
 #include "TLibCommon/TComList.h"
 
-class TComPic;
-class TComSlice;
-class TEncCfg;
-
 namespace x265 {
 // private namespace for x265
 
 class FrameEncoder;
+class TComPic;
+class TComSlice;
+class TEncCfg;
 
 class DPB
 {

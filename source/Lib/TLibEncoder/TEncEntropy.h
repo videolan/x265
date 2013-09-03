@@ -46,6 +46,9 @@
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 
+namespace x265 {
+// private namespace
+
 class TEncSbac;
 class TEncCavlc;
 class SEI;
@@ -59,25 +62,25 @@ class TEncEntropyIf
 {
 public:
 
-    virtual Void  resetEntropy()                = 0;
-    virtual Void  determineCabacInitIdx()                = 0;
-    virtual Void  setBitstream(TComBitIf* p)  = 0;
-    virtual Void  setSlice(TComSlice* p)  = 0;
-    virtual Void  resetBits()                = 0;
-    virtual Void  resetCoeffCost()                = 0;
-    virtual UInt  getNumberOfWrittenBits()                = 0;
-    virtual UInt  getCoeffCost()                = 0;
+    virtual Void  resetEntropy() = 0;
+    virtual Void  determineCabacInitIdx() = 0;
+    virtual Void  setBitstream(TComBitIf* p) = 0;
+    virtual Void  setSlice(TComSlice* p) = 0;
+    virtual Void  resetBits() = 0;
+    virtual Void  resetCoeffCost() = 0;
+    virtual UInt  getNumberOfWrittenBits() = 0;
+    virtual UInt  getCoeffCost() = 0;
 
-    virtual Void  codeVPS(TComVPS* pcVPS)                                      = 0;
-    virtual Void  codeSPS(TComSPS* pcSPS)                                      = 0;
-    virtual Void  codePPS(TComPPS* pcPPS)                                      = 0;
-    virtual Void  codeSliceHeader(TComSlice* slice)                                  = 0;
+    virtual Void  codeVPS(TComVPS* pcVPS) = 0;
+    virtual Void  codeSPS(TComSPS* pcSPS) = 0;
+    virtual Void  codePPS(TComPPS* pcPPS) = 0;
+    virtual Void  codeSliceHeader(TComSlice* slice) = 0;
 
-    virtual Void  codeTilesWPPEntryPoint(TComSlice* pSlice)     = 0;
-    virtual Void  codeTerminatingBit(UInt uilsLast)                                       = 0;
-    virtual Void  codeSliceFinish()                                                      = 0;
+    virtual Void  codeTilesWPPEntryPoint(TComSlice* pSlice) = 0;
+    virtual Void  codeTerminatingBit(UInt uilsLast) = 0;
+    virtual Void  codeSliceFinish() = 0;
     virtual Void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
-    virtual Void codeScalingList(TComScalingList* scalingList)      = 0;
+    virtual Void codeScalingList(TComScalingList* scalingList) = 0;
 
 public:
 
@@ -101,8 +104,8 @@ public:
 
     virtual Void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx) = 0;
     virtual Void codeInterDir(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual Void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)      = 0;
-    virtual Void codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)      = 0;
+    virtual Void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
+    virtual Void codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
     virtual Void codeDeltaQP(TComDataCU* cu, UInt absPartIdx) = 0;
     virtual Void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType) = 0;
     virtual Void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType eTType) = 0;
@@ -134,19 +137,19 @@ private:
 public:
 
     Void    setEntropyCoder(TEncEntropyIf* e, TComSlice* slice);
-    Void    setBitstream(TComBitIf* p)          { m_pcEntropyCoderIf->setBitstream(p);  }
+    Void    setBitstream(TComBitIf* p) { m_pcEntropyCoderIf->setBitstream(p);  }
 
-    Void    resetBits()                        { m_pcEntropyCoderIf->resetBits();      }
+    Void    resetBits() { m_pcEntropyCoderIf->resetBits();      }
 
-    Void    resetCoeffCost()                        { m_pcEntropyCoderIf->resetCoeffCost(); }
+    Void    resetCoeffCost() { m_pcEntropyCoderIf->resetCoeffCost(); }
 
-    UInt    getNumberOfWrittenBits()                        { return m_pcEntropyCoderIf->getNumberOfWrittenBits(); }
+    UInt    getNumberOfWrittenBits() { return m_pcEntropyCoderIf->getNumberOfWrittenBits(); }
 
-    UInt    getCoeffCost()                        { return m_pcEntropyCoderIf->getCoeffCost(); }
+    UInt    getCoeffCost() { return m_pcEntropyCoderIf->getCoeffCost(); }
 
-    Void    resetEntropy()                        { m_pcEntropyCoderIf->resetEntropy();  }
+    Void    resetEntropy() { m_pcEntropyCoderIf->resetEntropy();  }
 
-    Void    determineCabacInitIdx()                        { m_pcEntropyCoderIf->determineCabacInitIdx(); }
+    Void    determineCabacInitIdx() { m_pcEntropyCoderIf->determineCabacInitIdx(); }
 
     Void    encodeSliceHeader(TComSlice* slice);
     Void    encodeTilesWPPEntryPoint(TComSlice* pSlice);
@@ -196,7 +199,7 @@ private:
 
 public:
 
-    Void encodeCoeff(TComDataCU* cu,                 UInt absPartIdx, UInt depth, UInt width, UInt height, Bool& bCodeDQP);
+    Void encodeCoeff(TComDataCU* cu, UInt absPartIdx, UInt depth, UInt width, UInt height, Bool& bCodeDQP);
 
     Void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt depth, TextType ttype);
 
@@ -205,7 +208,7 @@ public:
     Void    encodeSaoUnitInterleaving(Int compIdx, Bool saoFlag, Int rx, Int ry, SaoLcuParam* saoLcuParam, Int cuAddrInSlice, Int cuAddrUpInSlice, Int allowMergeLeft, Int allowMergeUp);
     static Int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
 }; // END CLASS DEFINITION TEncEntropy
-
+}
 //! \}
 
 #endif // __TENCENTROPY__

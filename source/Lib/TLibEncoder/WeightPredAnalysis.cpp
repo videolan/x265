@@ -35,11 +35,13 @@
     \brief    weighted prediction encoder class
 */
 
-#include "../TLibCommon/TypeDef.h"
-#include "../TLibCommon/TComSlice.h"
-#include "../TLibCommon/TComPic.h"
-#include "../TLibCommon/TComPicYuv.h"
+#include "TLibCommon/TypeDef.h"
+#include "TLibCommon/TComSlice.h"
+#include "TLibCommon/TComPic.h"
+#include "TLibCommon/TComPicYuv.h"
 #include "WeightPredAnalysis.h"
+
+using namespace x265;
 
 #define ABS(a)    ((a) < 0 ? -(a) : (a))
 #define DTHRESH (0.99)

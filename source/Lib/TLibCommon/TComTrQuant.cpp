@@ -44,6 +44,8 @@
 #include <math.h>
 #include <memory.h>
 
+using namespace x265;
+
 typedef struct
 {
     Int    nnzBeforePos0;
@@ -675,7 +677,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
             Int Q = qCoef[blkPos];
             Double scaleFactor = errScale[blkPos];
             Int levelDouble    = srcCoeff[blkPos];
-            levelDouble        = (Int)min<Int64>((Int64)abs((Int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
+            levelDouble        = (Int)std::min<Int64>((Int64)abs((Int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
 
             UInt maxAbsLevel = (levelDouble + (1 << (qbits - 1))) >> qbits;
 
@@ -738,7 +740,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
                 {
                     if (level  > 3 * (1 << goRiceParam))
                     {
-                        goRiceParam = min<UInt>(goRiceParam + 1, 4);
+                        goRiceParam = std::min<UInt>(goRiceParam + 1, 4);
                     }
                 }
                 if (level >= 1)
@@ -1333,11 +1335,11 @@ inline Int TComTrQuant::xGetICRate(UInt   absLevel,
             {}
 
             rate   += egs << 15;
-            symbol = min<UInt>(symbol, (maxVlc + 1));
+            symbol = std::min<UInt>(symbol, (maxVlc + 1));
         }
 
         UShort prefLen = UShort(symbol >> absGoRice) + 1;
-        UShort numBins = min<UInt>(prefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
+        UShort numBins = std::min<UInt>(prefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
 
         rate += numBins << 15;
 

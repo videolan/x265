@@ -39,6 +39,8 @@
 #include "TComPattern.h"
 #include "TComDataCU.h"
 
+using namespace x265;
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -557,7 +559,7 @@ Pel* TComPattern::getPredictorPtr(UInt dirMode, UInt log2BlkSize, Pel* adiBuf)
     Pel* src;
 
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
-    Int diff = min<Int>(abs((Int)dirMode - HOR_IDX), abs((Int)dirMode - VER_IDX));
+    Int diff = std::min<Int>(abs((Int)dirMode - HOR_IDX), abs((Int)dirMode - VER_IDX));
     UChar ucFiltIdx = diff > m_intraFilter[log2BlkSize - 2] ? 1 : 0;
     if (dirMode == DC_IDX)
     {

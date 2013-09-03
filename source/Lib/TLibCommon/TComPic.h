@@ -45,6 +45,9 @@
 #include "lowres.h"
 #include "threading.h"
 
+namespace x265 {
+// private namespace
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -144,7 +147,7 @@ public:
     Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
 }; // END CLASS DEFINITION TComPic
-
+}
 //! \}
 
 #endif // __TCOMPIC__

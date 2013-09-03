@@ -47,6 +47,9 @@
 #include "TShortYUV.h"
 #include "reference.h"
 
+namespace x265 {
+// private namespace
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -119,7 +122,7 @@ public:
 
     Int  getPredicBufHeight()       { return m_predBufHeight; }
 };
-
+}
 //! \}
 
 #endif // __TCOMPREDICTION__

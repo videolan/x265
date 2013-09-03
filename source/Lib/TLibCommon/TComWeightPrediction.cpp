@@ -41,6 +41,8 @@
 #include "TComPrediction.h"
 #include "primitives.h"
 
+using namespace x265;
+
 static inline Pel weightBidirY(Int w0, Short P0, Int w1, Short P1, Int round, Int shift, Int offset)
 {
     return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));

@@ -56,6 +56,9 @@
 //! \ingroup TLibEncoder
 //! \{
 
+namespace x265 {
+// private namespace
+
 class TEncCu;
 
 // ====================================================================================================================
@@ -67,7 +70,7 @@ class TEncSearch : public TComPrediction
 {
 public:
 
-    x265::MotionEstimate m_me;
+    MotionEstimate  m_me;
     int             m_referenceRowsAvailable;
 
 protected:
@@ -100,7 +103,7 @@ protected:
     Int             m_bipredSearchRange; // Search range for bi-prediction
     Int             m_searchMethod;
     Int             m_adaptiveRange[2][33];
-    x265::MV        m_mvPredictors[3];
+    MV              m_mvPredictors[3];
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
     Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
@@ -251,7 +254,7 @@ protected:
 
     Void setWpScalingDistParam(TComDataCU* cu, Int refIdx, RefPicList picList);
 };
-
+}
 //! \}
 
 #endif // __TENCSEARCH__

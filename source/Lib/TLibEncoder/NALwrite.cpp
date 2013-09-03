@@ -31,15 +31,17 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vector>
-#include <algorithm>
-#include <ostream>
-
 #include "TLibCommon/NAL.h"
 #include "TLibCommon/TComBitStream.h"
 #include "NALwrite.h"
 
+#include <vector>
+#include <algorithm>
+#include <ostream>
+
 using namespace std;
+
+namespace x265 {
 
 //! \ingroup TLibEncoder
 //! \{
@@ -149,5 +151,5 @@ void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc)
     naluDest.m_temporalId  = naluSrc.m_temporalId;
     naluDest.m_Bitstream   = naluSrc.m_Bitstream;
 }
-
+}
 //! \}

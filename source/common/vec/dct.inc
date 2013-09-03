@@ -41,6 +41,8 @@
 #include <smmintrin.h>
 #endif
 
+using namespace x265;
+
 namespace {
 void dequant(const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoef)
 {

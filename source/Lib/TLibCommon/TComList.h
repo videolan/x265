@@ -38,12 +38,15 @@
 #ifndef _TCOMLIST_
 #define _TCOMLIST_
 
-#include <list>
-#include <assert.h>
 #include "CommonDef.h"
 
+#include <list>
+#include <assert.h>
 #include <cstdlib>
-using namespace std;
+
+namespace x265 {
+// private namespace
+
 
 //! \ingroup TLibCommon
 //! \{
@@ -108,7 +111,7 @@ public:
         return find(this->begin(), this->end(), rcT);
     }
 };
-
+}
 //! \}
 
 #endif // ifndef _TCOMLIST_

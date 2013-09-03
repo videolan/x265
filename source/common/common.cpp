@@ -39,6 +39,8 @@
 #endif
 #include <time.h>
 
+using namespace x265;
+
 #if HIGH_BIT_DEPTH
 const int x265_max_bit_depth = 8; // 12;
 #else
@@ -86,7 +88,7 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 {
     if (level > param->logLevel)
         return;
-    string log_level;
+    std::string log_level;
     switch (level)
     {
     case X265_LOG_ERROR:

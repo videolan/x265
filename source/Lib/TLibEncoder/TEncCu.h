@@ -52,6 +52,9 @@
 //! \ingroup TLibEncoder
 //! \{
 
+namespace x265 {
+// private namespace
+
 class TEncTop;
 class TEncSbac;
 class TEncCavlc;
@@ -170,7 +173,7 @@ protected:
 
     Void xFillPCMBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };
-
+}
 //! \}
 
 #endif // __TENCMB__

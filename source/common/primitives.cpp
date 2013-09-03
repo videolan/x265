@@ -91,8 +91,8 @@ extern "C"
 void x265_setup_primitives(x265_param_t *param, int cpuid)
 {
     // initialize global variables
-    initROM();
-    ContextModel::buildNextStateTable();
+    x265::initROM();
+    x265::ContextModel::buildNextStateTable();
 
     if (cpuid < 0)
     {

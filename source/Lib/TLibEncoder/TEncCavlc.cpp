@@ -39,6 +39,8 @@
 #include "TEncCavlc.h"
 #include "SEIwrite.h"
 
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 

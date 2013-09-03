@@ -51,6 +51,9 @@
 //! \ingroup TLibCommon
 //! \{
 
+namespace x265 {
+// private namespace
+
 class TComPic;
 class TComTrQuant;
 // ====================================================================================================================
@@ -1829,7 +1832,7 @@ protected:
     Int m_activeSPSId;
     Int m_activePPSId;
 };
-
+}
 //! \}
 
 #endif // __TCOMSLICE__

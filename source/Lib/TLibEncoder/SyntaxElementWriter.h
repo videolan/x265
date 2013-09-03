@@ -61,11 +61,14 @@
 
 #endif // if ENC_DEC_TRACE
 
+namespace x265 {
+// private namespace
+
 class SyntaxElementWriter
 {
 protected:
 
-    TComBitIf*    m_bitIf;
+    TComBitIf* m_bitIf;
 
     SyntaxElementWriter()
         : m_bitIf(NULL)
@@ -88,7 +91,7 @@ protected:
 
     UInt  xConvertToUInt(Int val) { return (val <= 0) ? -val << 1 : (val << 1) - 1; }
 };
-
+}
 //! \}
 
 #endif // !defined(__SYNTAXELEMENTWRITER__)

@@ -50,6 +50,9 @@
 // Class definition
 // ====================================================================================================================
 
+namespace x265 {
+// private namespace
+
 /// encoder analyzer class
 class TEncAnalyze
 {
@@ -157,7 +160,7 @@ public:
         fclose(pFile);
     }
 };
-
+}
 //! \}
 
 #endif // !defined(_TENCANALYZE_)

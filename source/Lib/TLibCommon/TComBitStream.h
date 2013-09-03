@@ -47,6 +47,9 @@
 //! \ingroup TLibCommon
 //! \{
 
+namespace x265 {
+// private namespace
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -158,7 +161,7 @@ public:
     //! returns the number of start code emulations contained in the current buffer
     Int countStartCodeEmulations();
 };
-
+}
 //! \}
 
 #endif // ifndef __COMBITSTREAM__

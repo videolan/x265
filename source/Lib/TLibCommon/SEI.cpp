@@ -38,6 +38,8 @@
 #include "CommonDef.h"
 #include "SEI.h"
 
+using namespace x265;
+
 SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType)
 {
     SEIMessages result;

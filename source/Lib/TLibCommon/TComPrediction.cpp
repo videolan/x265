@@ -160,7 +160,7 @@ Void TComPrediction::predIntraLumaAng(UInt dirMode, Pel* dst, UInt stride, Int s
 
     Pel *src = m_predBuf;
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
-    Int diff = min<Int>(abs((Int)dirMode - HOR_IDX), abs((Int)dirMode - VER_IDX));
+    Int diff = std::min<Int>(abs((Int)dirMode - HOR_IDX), abs((Int)dirMode - VER_IDX));
     UChar filterIdx = diff > intraFilterThreshold[log2BlkSize - 2] ? 1 : 0;
     if (dirMode == DC_IDX)
     {

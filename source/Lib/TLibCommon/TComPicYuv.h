@@ -44,6 +44,9 @@
 #include "x265.h"
 #include "reference.h"
 
+namespace x265 {
+// private namespace
+
 class TShortYUV;
 
 //! \ingroup TLibCommon
@@ -187,6 +190,7 @@ public:
 void calcChecksum(TComPicYuv & pic, UChar digest[3][16]);
 void calcCRC(TComPicYuv & pic, UChar digest[3][16]);
 void calcMD5(TComPicYuv & pic, UChar digest[3][16]);
+}
 //! \}
 
 #endif // __TCOMPICYUV__

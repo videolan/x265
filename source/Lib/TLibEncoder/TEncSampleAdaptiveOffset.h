@@ -53,6 +53,9 @@
 // Class definition
 // ====================================================================================================================
 
+namespace x265 {
+// private namespace
+
 class TEncSampleAdaptiveOffset : public TComSampleAdaptiveOffset
 {
 private:
@@ -116,7 +119,7 @@ public:
     Void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);
     Void rdoSaoUnitRow(SAOParam *saoParam, Int idxY);
 };
-
+}
 //! \}
 
 #endif // ifndef __TENCSAMPLEADAPTIVEOFFSET__

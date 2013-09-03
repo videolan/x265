@@ -37,6 +37,8 @@
 
 #include "TComCABACTables.h"
 
+using namespace x265;
+
 //! \ingroup TLibCommon
 //! \{
 

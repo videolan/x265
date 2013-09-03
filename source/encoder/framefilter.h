@@ -32,12 +32,11 @@
 #include "threading.h"
 #include "wavefront.h"
 
-class TEncTop;
-
 namespace x265 {
 // private x265 namespace
 
 class ThreadPool;
+class TEncTop;
 
 // Manages the wave-front processing of a single frame loopfilter
 class FrameFilter : public JobProvider

@@ -254,7 +254,7 @@ Void TComDataCU::initCU(TComPic* pic, UInt cuAddr)
     // CHECK_ME: why partStartIdx always negative
     Int partStartIdx = 0 - (cuAddr) * pic->getNumPartInCU();
 
-    Int numElements = min<Int>(partStartIdx, m_numPartitions);
+    Int numElements = std::min<Int>(partStartIdx, m_numPartitions);
     for (Int i = 0; i < numElements; i++)
     {
         TComDataCU* from = pic->getCU(getAddr());
@@ -285,7 +285,7 @@ Void TComDataCU::initCU(TComPic* pic, UInt cuAddr)
         m_iPCMFlags[i] = from->m_iPCMFlags[i];
     }
 
-    Int firstElement = max<Int>(partStartIdx, 0);
+    Int firstElement = std::max<Int>(partStartIdx, 0);
     numElements = m_numPartitions - firstElement;
 
     if (numElements > 0)

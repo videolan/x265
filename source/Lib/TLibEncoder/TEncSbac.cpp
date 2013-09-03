@@ -41,6 +41,8 @@
 #include <map>
 #include <algorithm>
 
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -994,7 +996,7 @@ Void TEncSbac::codeLastSignificantXY(UInt posx, UInt posy, Int width, Int height
     // swap
     if (uiScanIdx == SCAN_VER)
     {
-        swap(posx, posy);
+        std::swap(posx, posy);
     }
 
     UInt uiCtxLast;
@@ -1294,7 +1296,7 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UIn
                         xWriteCoefRemainExGolomb(absCoeff[idx] - baseLevel, uiGoRiceParam);
                         if (absCoeff[idx] > 3 * (1 << uiGoRiceParam))
                         {
-                            uiGoRiceParam = min<UInt>(uiGoRiceParam + 1, 4);
+                            uiGoRiceParam = std::min<UInt>(uiGoRiceParam + 1, 4);
                         }
                     }
                     if (absCoeff[idx] >= 2)

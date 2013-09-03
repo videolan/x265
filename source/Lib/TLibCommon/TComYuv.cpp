@@ -47,6 +47,8 @@
 #include <assert.h>
 #include <math.h>
 
+using namespace x265;
+
 //! \ingroup TLibCommon
 //! \{
 

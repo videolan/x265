@@ -43,6 +43,9 @@
 #include <stdio.h>
 #include <iostream>
 
+namespace x265 {
+// private namespace
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -72,7 +75,7 @@ Void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
 extern UInt g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern UInt g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-Void initZscanToRaster(Int maxDepth, Int depth, UInt startVal, UInt*& curIdx);
+Void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx);
 Void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
 
 // conversion of partition index to picture pel position
@@ -291,4 +294,6 @@ extern Int  g_eTTable[4];
 extern const Int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
 extern const Int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 extern const int x265_lambda2_tab[MAX_QP+1];
+}
+
 #endif  //__TCOMROM__

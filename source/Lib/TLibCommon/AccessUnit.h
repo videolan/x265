@@ -39,8 +39,11 @@
 #ifndef _ACCESS_UNIT_
 #define _ACCESS_UNIT_ 1
 
-#include <list>
 #include "NAL.h"
+#include <list>
+
+namespace x265 {
+// private namespace
 
 //! \ingroup TLibCommon
 //! \{
@@ -67,6 +70,7 @@ public: ~AccessUnit()
         }
     }
 };
+}
 
 //! \}
 

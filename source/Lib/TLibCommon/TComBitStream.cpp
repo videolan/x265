@@ -42,6 +42,7 @@
 #include <memory.h>
 
 using namespace std;
+using namespace x265;
 
 //! \ingroup TLibCommon
 //! \{

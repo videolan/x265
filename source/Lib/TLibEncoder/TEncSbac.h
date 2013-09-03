@@ -47,6 +47,9 @@
 #include "TEncBinCoderCABAC.h"
 #include "TEncBinCoderCABACCounter.h"
 
+namespace x265 {
+// private namespace
+
 class TEncTop;
 
 //! \ingroup TLibEncoder
@@ -210,7 +213,7 @@ private:
     ContextModel3DBuffer m_cTransformSkipSCModel;
     ContextModel3DBuffer m_CUTransquantBypassFlagSCModel;
 };
-
+}
 //! \}
 
 #endif // !defined(__TENCSBAC__)

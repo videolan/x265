@@ -34,7 +34,7 @@
 #include "TComPicYuv.h"
 #include "md5.h"
 
-using namespace x265;
+namespace x265 {
 
 //! \ingroup TLibCommon
 //! \{
@@ -221,5 +221,5 @@ void calcMD5(TComPicYuv& pic, UChar digest[3][16])
     md5_plane_func(md5V, pic.getCrAddr(), width, height, stride);
     md5V.finalize(digest[2]);
 }
-
+}
 //! \}

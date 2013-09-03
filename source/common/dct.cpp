@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <string.h>
 
+using namespace x265;
+
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
 #endif

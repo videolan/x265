@@ -31,10 +31,9 @@
 #include <smmintrin.h>
 #endif
 
-extern char g_convertToBit[];
-extern unsigned char IntraFilterType[][35];
-
 using namespace x265;
+
+extern unsigned char IntraFilterType[][35];
 
 #define PRED_INTRA_ANG4_START   \
     Vec8s row11, row12, row21, row22, row31, row32, row41, row42;   \

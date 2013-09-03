@@ -43,6 +43,9 @@
 #include "TComDataCU.h"
 #include "ContextTables.h"
 
+namespace x265 {
+// private namespace
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -221,7 +224,7 @@ private:
 
     Void xITransformSkip(Int* coeff, Short* residual, UInt stride, Int width, Int height);
 };
-
+}
 //! \}
 
 #endif // __TCOMTRQUANT__

@@ -43,6 +43,9 @@
 //! \ingroup TLibEncoder
 //! \{
 
+namespace x265 {
+// private namespace
+
 class TEncBinCABACCounter : public TEncBinCABAC
 {
 public:
@@ -57,10 +60,9 @@ public:
     Void  encodeBinEP(UInt binValue);
     Void  encodeBinsEP(UInt binValues, Int numBins);
     Void  encodeBinTrm(UInt binValue);
-
-private:
 };
 
+}
 //! \}
 
 #endif // ifndef __TENC_BIN_CODER_CABAC_COUNTER__

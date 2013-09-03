@@ -47,6 +47,9 @@
 //! \ingroup TLibEncoder
 //! \{
 
+namespace x265 {
+// private namespace
+
 class TEncTop;
 
 // ====================================================================================================================
@@ -152,7 +155,7 @@ public:
     Void codeDFFlag(UInt uiCode, const Char *pSymbolName);
     Void codeDFSvlc(Int iCode, const Char *pSymbolName);
 };
-
+}
 //! \}
 
 #endif // !defined(_TENCCAVLC_)

@@ -40,6 +40,9 @@
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/NAL.h"
 
+namespace x265 {
+// private namespace
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -81,6 +84,7 @@ inline NALUnitEBSP::NALUnitEBSP(OutputNALUnit& nalu)
 }
 
 void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc);
+}
 
 //! \}
 

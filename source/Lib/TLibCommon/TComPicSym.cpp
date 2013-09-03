@@ -38,6 +38,8 @@
 #include "TComPicSym.h"
 #include "TComSampleAdaptiveOffset.h"
 
+using namespace x265;
+
 //! \ingroup TLibCommon
 //! \{
 

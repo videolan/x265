@@ -24,6 +24,7 @@
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComYuv.h"
 #include "TShortYUV.h"
+#include "primitives.h"
 
 #include <stdlib.h>
 #include <memory.h>

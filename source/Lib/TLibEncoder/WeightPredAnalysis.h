@@ -40,6 +40,9 @@
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComSlice.h"
 
+namespace x265 {
+// private namespace
+
 class WeightPredAnalysis
 {
     Bool m_weighted_pred_flag;
@@ -69,5 +72,5 @@ public:
     Void  xRestoreWPparam(TComSlice *slice);
     Void  xCheckWPEnable(TComSlice *slice);
 };
-
+}
 #endif // __WEIGHTPREDANALYSIS__

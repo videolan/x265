@@ -37,6 +37,8 @@
 #include "TLibCommon/TComSlice.h"
 #include "SEIwrite.h"
 
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 

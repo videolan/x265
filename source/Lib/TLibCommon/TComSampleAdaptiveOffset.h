@@ -44,6 +44,9 @@
 //! \ingroup TLibCommon
 //! \{
 
+namespace x265 {
+// private namespace
+
 #define NUM_DOWN_PART 4
 
 enum SAOTypeLen
@@ -217,7 +220,7 @@ public:
 };
 Void PCMLFDisableProcess(TComPic* pic);
 Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
-
+}
 
 //! \}
 #endif // ifndef __TCOMSAMPLEADAPTIVEOFFSET__

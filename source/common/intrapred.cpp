@@ -27,6 +27,7 @@
 #include <cstring>
 #include <assert.h>
 
+namespace x265 {
 unsigned char IntraFilterType[][35] =
 {
     //  Index:    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34
@@ -36,6 +37,9 @@ unsigned char IntraFilterType[][35] =
     /* 32x32 */ { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1 },
     /* 64x64 */ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
+}
+
+using namespace x265;
 
 namespace {
 pixel predIntraGetPredValDC(pixel* above, pixel* left, intptr_t width)

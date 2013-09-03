@@ -41,6 +41,8 @@
 #include "TLibEncoder/TEncSbac.h"
 #include "threadpool.h"
 
+using namespace x265;
+
 //! \ingroup TLibCommon
 //! \{
 

@@ -526,7 +526,7 @@ void filterVerticalWeighted(short *src, intptr_t srcStride,
     __m128i sume, sumi, sump;
     __m128i exp1, exp2, exp3, exp4, exp5, exp6;
 
-    Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     wshift = wshift + shiftNum;
     wround = wshift ? (1 << (wshift - 1)) : 0;
 
@@ -1314,7 +1314,7 @@ void filterHorizontalWeighted(pixel *src, intptr_t srcStride,
     __m128i sumaL, sumbL, sumcL, tmp, exp1;
     __m128i tmp16a, tmp16b, tmp16c, tmp16f, tmpwlo, tmpwhi;
 
-    Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     wshift = wshift + shiftNum;
     wround = wshift ? (1 << (wshift - 1)) : 0;
 

@@ -42,12 +42,11 @@
 #include "framefilter.h"
 #include "cturow.h"
 
-class TEncTop;
-
 namespace x265 {
 // private x265 namespace
 
 class ThreadPool;
+class TEncTop;
 
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public x265::Thread

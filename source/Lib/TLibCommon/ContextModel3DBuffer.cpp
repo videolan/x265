@@ -37,6 +37,8 @@
 
 #include "ContextModel3DBuffer.h"
 
+using namespace x265;
+
 //! \ingroup TLibCommon
 //! \{
 

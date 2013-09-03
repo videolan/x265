@@ -38,6 +38,8 @@
 #include "TEncBinCoderCABAC.h"
 #include "TLibCommon/TComRom.h"
 
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 

@@ -44,6 +44,9 @@
 //! \ingroup TLibCommon
 //! \{
 
+namespace x265 {
+// private namespace
+
 class TComPattern;
 
 /// RD cost computation class
@@ -95,7 +98,7 @@ public:
 
     inline Double  getSADLambda() const                   { return m_lambda; }
 };
-
+}
 //! \}
 
 #endif // __TCOMRDCOST__
