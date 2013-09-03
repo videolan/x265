@@ -68,9 +68,9 @@ public:
     // WP analysis :
     Bool  xCalcACDCParamSlice(TComSlice *slice);
     Bool  xEstimateWPParamSlice(TComSlice *slice);
-    Void  xStoreWPparam(Bool weighted_pred_flag, Bool weighted_bipred_flag);
-    Void  xRestoreWPparam(TComSlice *slice);
-    Void  xCheckWPEnable(TComSlice *slice);
+    void  xStoreWPparam(Bool weighted_pred_flag, Bool weighted_bipred_flag);
+    void  xRestoreWPparam(TComSlice *slice);
+    void  xCheckWPEnable(TComSlice *slice);
 };
 }
 #endif // __WEIGHTPREDANALYSIS__

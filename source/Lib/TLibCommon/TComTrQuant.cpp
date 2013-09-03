@@ -108,7 +108,7 @@ TComTrQuant::~TComTrQuant()
  *
  * return void
  */
-Void TComTrQuant::setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset)
+void TComTrQuant::setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset)
 {
     Int qpScaled;
 
@@ -133,7 +133,7 @@ Void TComTrQuant::setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chr
 }
 
 // To minimize the distortion only. No rate is considered.
-Void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan, Int* deltaU, Int width, Int height)
+void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan, Int* deltaU, Int width, Int height)
 {
     Int lastCG = -1;
     Int absSum = 0;
@@ -332,7 +332,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
     return acSum;
 }
 
-Void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
+void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
 {
     if (width > (Int)m_maxTrSize)
     {
@@ -389,7 +389,7 @@ Void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height
     }
 }
 
-Void TComTrQuant::init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast)
+void TComTrQuant::init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast)
 {
     m_maxTrSize            = maxTrSize;
     m_useRDOQ              = useRDOQ;
@@ -447,7 +447,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int lastPos )
+void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip, int lastPos )
 {
     if (transQuantBypass)
     {
@@ -510,7 +510,7 @@ Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
  *  \param size transform size (size x size)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-Void TComTrQuant::xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int /*height*/)
+void TComTrQuant::xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int /*height*/)
 {
     // TODO: this may need larger data types for X265_DEPTH > 8
     const UInt log2BlockSize = g_convertToBit[width];
@@ -523,7 +523,7 @@ Void TComTrQuant::xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int w
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-Void TComTrQuant::xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
+void TComTrQuant::xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
@@ -556,7 +556,7 @@ Void TComTrQuant::xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int 
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-Void TComTrQuant::xITransformSkip(Int* coef, Short* residual, UInt stride, Int width, Int height)
+void TComTrQuant::xITransformSkip(Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
@@ -594,7 +594,7 @@ Void TComTrQuant::xITransformSkip(Int* coef, Short* residual, UInt stride, Int w
  * \param uiAbsSum reference to absolute sum of quantized transform coefficient
  * \param ttype plane type / luminance or chrominance
  * \param absPartIdx absolute partition index
- * \returns Void
+ * \returns void
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
@@ -1424,7 +1424,7 @@ UInt TComTrQuant::getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cgP
 /** set quantized matrix coefficient for encode
  * \param scalingList quantized matrix address
  */
-Void TComTrQuant::setScalingList(TComScalingList *scalingList)
+void TComTrQuant::setScalingList(TComScalingList *scalingList)
 {
     UInt size, list;
     UInt qp;
@@ -1446,7 +1446,7 @@ Void TComTrQuant::setScalingList(TComScalingList *scalingList)
 /** set quantized matrix coefficient for decode
  * \param scalingList quantized matrix address
  */
-Void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
+void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
 {
     UInt size, list;
     UInt qp;
@@ -1468,7 +1468,7 @@ Void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
  * \param uiSize Size
  * \param uiQP Quantization parameter
  */
-Void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
+void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
 {
     UInt log2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
     Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
@@ -1494,7 +1494,7 @@ Void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
  * \param sizeId size index
  * \param uiQP Quantization parameter
  */
-Void TComTrQuant::xSetScalingListEnc(TComScalingList *scalingList, UInt listId, UInt sizeId, UInt qp)
+void TComTrQuant::xSetScalingListEnc(TComScalingList *scalingList, UInt listId, UInt sizeId, UInt qp)
 {
     UInt width = g_scalingListSizeX[sizeId];
     UInt height = g_scalingListSizeX[sizeId];
@@ -1512,7 +1512,7 @@ Void TComTrQuant::xSetScalingListEnc(TComScalingList *scalingList, UInt listId, 
  * \param size size index
  * \param uiQP Quantization parameter
  */
-Void TComTrQuant::xSetScalingListDec(TComScalingList *scalingList, UInt listId, UInt sizeId, UInt qp)
+void TComTrQuant::xSetScalingListDec(TComScalingList *scalingList, UInt listId, UInt sizeId, UInt qp)
 {
     UInt width = g_scalingListSizeX[sizeId];
     UInt height = g_scalingListSizeX[sizeId];
@@ -1526,7 +1526,7 @@ Void TComTrQuant::xSetScalingListDec(TComScalingList *scalingList, UInt listId, 
 
 /** set flat matrix value to quantized coefficient
  */
-Void TComTrQuant::setFlatScalingList()
+void TComTrQuant::setFlatScalingList()
 {
     UInt size, list;
     UInt qp;
@@ -1549,7 +1549,7 @@ Void TComTrQuant::setFlatScalingList()
  * \param uiQP Quantization parameter
  * \param uiSize Size
  */
-Void TComTrQuant::xsetFlatScalingList(UInt list, UInt size, UInt qp)
+void TComTrQuant::xsetFlatScalingList(UInt list, UInt size, UInt qp)
 {
     UInt i, num = g_scalingListSize[size];
     Int *quantcoeff;
@@ -1577,7 +1577,7 @@ Void TComTrQuant::xsetFlatScalingList(UInt list, UInt size, UInt qp)
  * \param sizuNum matrix size
  * \param dc dc parameter
  */
-Void TComTrQuant::processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc)
+void TComTrQuant::processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc)
 {
     Int nsqth = (height < width) ? 4 : 1; //height ratio for NSQT
     Int nsqtw = (width < height) ? 4 : 1; //width ratio for NSQT
@@ -1606,7 +1606,7 @@ Void TComTrQuant::processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantSc
  * \param sizuNum matrix size
  * \param dc dc parameter
  */
-Void TComTrQuant::processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc)
+void TComTrQuant::processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc)
 {
     for (UInt j = 0; j < height; j++)
     {
@@ -1624,7 +1624,7 @@ Void TComTrQuant::processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQu
 
 /** initialization process of scaling list array
  */
-Void TComTrQuant::initScalingList()
+void TComTrQuant::initScalingList()
 {
     for (UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
@@ -1650,7 +1650,7 @@ Void TComTrQuant::initScalingList()
 
 /** destroy quantization matrix array
  */
-Void TComTrQuant::destroyScalingList()
+void TComTrQuant::destroyScalingList()
 {
     for (UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {

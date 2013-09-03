@@ -53,13 +53,13 @@ public:
     TEncBinCABACCounter();
     virtual ~TEncBinCABACCounter();
 
-    Void  finish();
+    void  finish();
     UInt  getNumWrittenBits();
 
-    Void  encodeBin(UInt binValue,  ContextModel& rcCtxModel);
-    Void  encodeBinEP(UInt binValue);
-    Void  encodeBinsEP(UInt binValues, Int numBins);
-    Void  encodeBinTrm(UInt binValue);
+    void  encodeBin(UInt binValue,  ContextModel& rcCtxModel);
+    void  encodeBinEP(UInt binValue);
+    void  encodeBinsEP(UInt binValues, Int numBins);
+    void  encodeBinTrm(UInt binValue);
 };
 
 }

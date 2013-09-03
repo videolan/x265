@@ -87,12 +87,12 @@ TComLoopFilter::~TComLoopFilter()
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
-Void TComLoopFilter::setCfg(Bool bLFCrossTileBoundary)
+void TComLoopFilter::setCfg(Bool bLFCrossTileBoundary)
 {
     m_bLFCrossTileBoundary = bLFCrossTileBoundary;
 }
 
-Void TComLoopFilter::create(UInt maxCuDepth)
+void TComLoopFilter::create(UInt maxCuDepth)
 {
     destroy();
     m_numPartitions = 1 << (maxCuDepth << 1);
@@ -103,7 +103,7 @@ Void TComLoopFilter::create(UInt maxCuDepth)
     }
 }
 
-Void TComLoopFilter::destroy()
+void TComLoopFilter::destroy()
 {
     for (UInt dir = 0; dir < 2; dir++)
     {
@@ -125,7 +125,7 @@ Void TComLoopFilter::destroy()
  .
  \param  pic   picture class (TComPic) pointer
  */
-Void TComLoopFilter::loopFilterPic(TComPic* pic)
+void TComLoopFilter::loopFilterPic(TComPic* pic)
 {
     // TODO: Min, thread parallelism later
     // Horizontal filtering
@@ -161,7 +161,7 @@ Void TComLoopFilter::loopFilterPic(TComPic* pic)
     }
 }
 
-Void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir)
+void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir)
 {
     ::memset(m_blockingStrength[dir], 0, sizeof(UChar) * m_numPartitions);
     ::memset(m_bEdgeFilter[dir], 0, sizeof(Bool) * m_numPartitions);
@@ -179,7 +179,7 @@ Void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir)
  .
  \param Edge          the direction of the edge in block boundary (horizonta/vertical), which is added newly
 */
-Void TComLoopFilter::xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int edge)
+void TComLoopFilter::xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int edge)
 {
     if (cu->getPic() == 0 || cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
     {
@@ -243,7 +243,7 @@ Void TComLoopFilter::xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, I
     }
 }
 
-Void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, UInt scanIdx, UInt depth, Int dir, Int edgeIdx, Bool bValue, UInt widthInBaseUnits, UInt heightInBaseUnits)
+void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, UInt scanIdx, UInt depth, Int dir, Int edgeIdx, Bool bValue, UInt widthInBaseUnits, UInt heightInBaseUnits)
 {
     if (widthInBaseUnits == 0)
     {
@@ -268,7 +268,7 @@ Void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, UInt scanIdx, UInt d
     }
 }
 
-Void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt absZOrderIdx, UInt depth)
+void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt absZOrderIdx, UInt depth)
 {
     if (cu->getTransformIdx(absZOrderIdx) + cu->getDepth(absZOrderIdx) > depth)
     {
@@ -293,7 +293,7 @@ Void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt ab
     xSetEdgefilterMultiple(cu, absTUPartIdx, depth, EDGE_HOR, 0, true, widthInBaseUnits, heightInBaseUnits);
 }
 
-Void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, UInt absZOrderIdx)
+void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, UInt absZOrderIdx)
 {
     const UInt depth = cu->getDepth(absZOrderIdx);
     const UInt widthInBaseUnits  = cu->getPic()->getNumPartInWidth() >> depth;
@@ -355,7 +355,7 @@ Void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, UInt absZOrderIdx)
     }
 }
 
-Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, UInt absZOrderIdx)
+void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, UInt absZOrderIdx)
 {
     UInt x = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
     UInt y = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
@@ -401,7 +401,7 @@ Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, UInt absZOrderIdx)
     }
 }
 
-Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, Int dir, UInt absPartIdx)
+void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, Int dir, UInt absPartIdx)
 {
     TComSlice* const slice = cu->getSlice();
 
@@ -528,7 +528,7 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, Int dir, UInt ab
     m_blockingStrength[dir][absPartIdx] = bs;
 }
 
-Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int dir, Int edge)
+void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int dir, Int edge)
 {
     TComPicYuv* reconYuv = cu->getPic()->getPicYuvRec();
     Pel* src = reconYuv->getLumaAddr(cu->getAddr(), absZOrderIdx);
@@ -640,7 +640,7 @@ Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt dep
     }
 }
 
-Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int dir, Int edge)
+void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int dir, Int edge)
 {
     TComPicYuv* reconYuv = cu->getPic()->getPicYuvRec();
     Int stride = reconYuv->getCStride();
@@ -765,7 +765,7 @@ Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt d
  \param bFilterSecondP  decision weak filter/no filter for partP
  \param bFilterSecondQ  decision weak filter/no filter for partQ
 */
-inline Void TComLoopFilter::xPelFilterLuma(Pel* src, Int offset, Int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, Int thrCut, Bool bFilterSecondP, Bool bFilterSecondQ)
+inline void TComLoopFilter::xPelFilterLuma(Pel* src, Int offset, Int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, Int thrCut, Bool bFilterSecondP, Bool bFilterSecondQ)
 {
     Int delta;
 
@@ -835,7 +835,7 @@ inline Void TComLoopFilter::xPelFilterLuma(Pel* src, Int offset, Int tc, Bool sw
  \param bPartPNoFilter  indicator to disable filtering on partP
  \param bPartQNoFilter  indicator to disable filtering on partQ
  */
-inline Void TComLoopFilter::xPelFilterChroma(Pel* src, Int offset, Int tc, Bool bPartPNoFilter, Bool bPartQNoFilter)
+inline void TComLoopFilter::xPelFilterChroma(Pel* src, Int offset, Int tc, Bool bPartPNoFilter, Bool bPartQNoFilter)
 {
     Int delta;
 

@@ -185,41 +185,41 @@ public:
     TComSampleAdaptiveOffset();
     virtual ~TComSampleAdaptiveOffset();
 
-    Void create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight);
-    Void destroy();
+    void create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight);
+    void destroy();
 
     Int  convertLevelRowCol2Idx(Int level, Int row, Int col) const;
 
-    Void initSAOParam(SAOParam* saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr) const;
-    Void allocSaoParam(SAOParam* saoParam) const;
-    Void resetSAOParam(SAOParam* saoParam);
-    static Void freeSaoParam(SAOParam* saoParam);
+    void initSAOParam(SAOParam* saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr) const;
+    void allocSaoParam(SAOParam* saoParam) const;
+    void resetSAOParam(SAOParam* saoParam);
+    static void freeSaoParam(SAOParam* saoParam);
 
-    Void SAOProcess(SAOParam* saoParam);
+    void SAOProcess(SAOParam* saoParam);
     Pel* getPicYuvAddr(TComPicYuv* picYuv, Int yCbCr, Int addr = 0);
 
-    Void processSaoCu(Int addr, Int partIdx, Int yCbCr); //!< LCU-basd SAO process without slice granularity
-    Void createPicSaoInfo(TComPic* pic);
-    Void destroyPicSaoInfo();
+    void processSaoCu(Int addr, Int partIdx, Int yCbCr); //!< LCU-basd SAO process without slice granularity
+    void createPicSaoInfo(TComPic* pic);
+    void destroyPicSaoInfo();
 
-    Void resetLcuPart(SaoLcuParam* saoLcuParam);
-    Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
-    Void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr);
-    Void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr);
-    Void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, Int yCbCr);
-    Void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
+    void resetLcuPart(SaoLcuParam* saoLcuParam);
+    void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
+    void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr);
+    void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr);
+    void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, Int yCbCr);
+    void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
 
     Bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
 
-    Void setSaoLcuBasedOptimization(int bVal)  { m_saoLcuBasedOptimization = bVal != 0; }
+    void setSaoLcuBasedOptimization(int bVal)  { m_saoLcuBasedOptimization = bVal != 0; }
 
     Bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 
-    Void resetSaoUnit(SaoLcuParam* saoUnit);
-    Void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
+    void resetSaoUnit(SaoLcuParam* saoUnit);
+    void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
 };
-Void PCMLFDisableProcess(TComPic* pic);
-Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
+void PCMLFDisableProcess(TComPic* pic);
+void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
 }
 
 //! \}

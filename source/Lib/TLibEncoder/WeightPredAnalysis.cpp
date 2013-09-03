@@ -68,7 +68,7 @@ WeightPredAnalysis::WeightPredAnalysis()
 
 /** calculate AC and DC values for current original image
  * \param TComSlice *slice
- * \returns Void
+ * \returns void
  */
 Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
 {
@@ -113,9 +113,9 @@ Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
 /** store weighted_pred_flag and weighted_bipred_idc values
  * \param weighted_pred_flag
  * \param weighted_bipred_idc
- * \returns Void
+ * \returns void
  */
-Void  WeightPredAnalysis::xStoreWPparam(Bool weighted_pred_flag, Bool weighted_bipred_flag)
+void  WeightPredAnalysis::xStoreWPparam(Bool weighted_pred_flag, Bool weighted_bipred_flag)
 {
     m_weighted_pred_flag = weighted_pred_flag;
     m_weighted_bipred_flag = weighted_bipred_flag;
@@ -123,9 +123,9 @@ Void  WeightPredAnalysis::xStoreWPparam(Bool weighted_pred_flag, Bool weighted_b
 
 /** restore weighted_pred_flag and weighted_bipred_idc values
  * \param TComSlice *slice
- * \returns Void
+ * \returns void
  */
-Void  WeightPredAnalysis::xRestoreWPparam(TComSlice *slice)
+void  WeightPredAnalysis::xRestoreWPparam(TComSlice *slice)
 {
     slice->getPPS()->setUseWP(m_weighted_pred_flag);
     slice->getPPS()->setWPBiPred(m_weighted_bipred_flag);
@@ -133,9 +133,9 @@ Void  WeightPredAnalysis::xRestoreWPparam(TComSlice *slice)
 
 /** check weighted pred or non-weighted pred
  * \param TComSlice *slice
- * \returns Void
+ * \returns void
  */
-Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
+void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
 {
     Int iPresentCnt = 0;
 

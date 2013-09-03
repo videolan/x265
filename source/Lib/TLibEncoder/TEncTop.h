@@ -95,13 +95,13 @@ public:
 
     virtual ~TEncTop();
 
-    Void create();
-    Void destroy();
-    Void init();
+    void create();
+    void destroy();
+    void init();
 
-    Void xInitSPS(TComSPS *sps);
-    Void xInitPPS(TComPPS *pps);
-    Void xInitRPS(TComSPS *sps);
+    void xInitSPS(TComSPS *sps);
+    void xInitPPS(TComPPS *pps);
+    void xInitRPS(TComSPS *sps);
 
     int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, AccessUnit& accessUnit);
 
@@ -115,7 +115,7 @@ public:
 
     Double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
 
-    Void computeLambdaForQp(TComSlice* slice);
+    void computeLambdaForQp(TComSlice* slice);
 };
 }
 //! \}

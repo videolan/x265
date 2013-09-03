@@ -77,7 +77,7 @@ SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType)
     return result;
 }
 
-Void deleteSEIs(SEIMessages &seiList)
+void deleteSEIs(SEIMessages &seiList)
 {
     for (SEIMessages::iterator it = seiList.begin(); it != seiList.end(); it++)
     {

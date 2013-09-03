@@ -83,7 +83,7 @@ TEncTop::~TEncTop()
 #endif
 }
 
-Void TEncTop::create()
+void TEncTop::create()
 {
     if (!x265::primitives.sad[0])
     {
@@ -106,7 +106,7 @@ Void TEncTop::create()
     m_rateControl = new x265::RateControl(&param);
 }
 
-Void TEncTop::destroy()
+void TEncTop::destroy()
 {
     if (m_frameEncoder)
     {
@@ -139,7 +139,7 @@ Void TEncTop::destroy()
         m_threadPool->release();
 }
 
-Void TEncTop::init()
+void TEncTop::init()
 {
     if (m_frameEncoder)
     {
@@ -619,7 +619,7 @@ Double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     return bits;
 }
 
-Void TEncTop::xInitSPS(TComSPS *pcSPS)
+void TEncTop::xInitSPS(TComSPS *pcSPS)
 {
     ProfileTierLevel& profileTierLevel = *pcSPS->getPTL()->getGeneralPTL();
 
@@ -761,7 +761,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     getVPS()->getTimingInfo()->setTimingInfoPresentFlag(false);
 }
 
-Void TEncTop::xInitPPS(TComPPS *pcPPS)
+void TEncTop::xInitPPS(TComPPS *pcPPS)
 {
     pcPPS->setConstrainedIntraPred(param.bEnableConstrainedIntra);
     Bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
@@ -840,7 +840,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
-Void TEncTop::computeLambdaForQp(TComSlice* slice)
+void TEncTop::computeLambdaForQp(TComSlice* slice)
 {
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
     Int qp = slice->getSliceQp();

@@ -88,7 +88,7 @@ public:
         return cT;
     }
 
-    Void pushBack(const C& rcT)
+    void pushBack(const C& rcT)
     {
         /*assert( sizeof(C) == 4);*/
         if (rcT != NULL)
@@ -97,7 +97,7 @@ public:
         }
     }
 
-    Void pushFront(const C& rcT)
+    void pushFront(const C& rcT)
     {
         /*assert( sizeof(C) == 4);*/
         if (rcT != NULL)

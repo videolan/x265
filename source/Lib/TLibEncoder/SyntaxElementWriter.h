@@ -76,17 +76,17 @@ protected:
 
     virtual ~SyntaxElementWriter() {}
 
-    Void  setBitstream(TComBitIf* p)  { m_bitIf = p;  }
+    void  setBitstream(TComBitIf* p)  { m_bitIf = p;  }
 
-    Void  xWriteCode(UInt code, UInt len);
-    Void  xWriteUvlc(UInt code);
-    Void  xWriteSvlc(Int code);
-    Void  xWriteFlag(UInt code);
+    void  xWriteCode(UInt code, UInt len);
+    void  xWriteUvlc(UInt code);
+    void  xWriteSvlc(Int code);
+    void  xWriteFlag(UInt code);
 #if ENC_DEC_TRACE
-    Void  xWriteCodeTr(UInt value, UInt  length, const Char *symbolName);
-    Void  xWriteUvlcTr(UInt value,               const Char *symbolName);
-    Void  xWriteSvlcTr(Int value,                const Char *symbolName);
-    Void  xWriteFlagTr(UInt value,               const Char *symbolName);
+    void  xWriteCodeTr(UInt value, UInt  length, const Char *symbolName);
+    void  xWriteUvlcTr(UInt value,               const Char *symbolName);
+    void  xWriteSvlcTr(Int value,                const Char *symbolName);
+    void  xWriteFlagTr(UInt value,               const Char *symbolName);
 #endif
 
     UInt  xConvertToUInt(Int val) { return (val <= 0) ? -val << 1 : (val << 1) - 1; }

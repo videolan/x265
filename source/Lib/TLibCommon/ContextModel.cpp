@@ -56,7 +56,7 @@ using namespace x265;
  \param  qp         input QP value
  \param  initValue  8 bit initialization value
  */
-Void ContextModel::init(Int qp, Int initValue)
+void ContextModel::init(Int qp, Int initValue)
 {
     qp = Clip3(0, 51, qp);
 
@@ -93,7 +93,7 @@ const UChar ContextModel::s_nextStateLPS[128] =
 
 UChar ContextModel::m_nextState[128][2];
 
-Void ContextModel::buildNextStateTable()
+void ContextModel::buildNextStateTable()
 {
     for (Int i = 0; i < 128; i++)
     {

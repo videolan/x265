@@ -40,7 +40,7 @@ extern int cntSkipCu[4],  cntTotalCu[4];
 extern FILE* fp1;
 #endif
 
-Void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  TShortYUV* outResiYuv, TComYuv* outReconYuv)
+void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  TShortYUV* outResiYuv, TComYuv* outReconYuv)
 {
     UInt64 puCost = 0;
     UInt puDistY = 0;
@@ -86,7 +86,7 @@ Void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     cu->m_totalCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 }
 
-Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
+void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
 {
     UInt depth = cu->getDepth(0);
 
@@ -250,7 +250,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
 }
 
 /** check RD costs for a CU block encoded with merge */
-Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartSize partSize, Bool bUseMRG)
+void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartSize partSize, Bool bUseMRG)
 {
     UChar depth = outTempCU->getDepth(0);
 
@@ -270,7 +270,7 @@ Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
                                                      outPredYuv->getLumaAddr(), outPredYuv->getStride());
 }
 
-Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex)
+void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex)
 {
 #if CU_STAT_LOGFILE
     cntTotalCu[depth]++;

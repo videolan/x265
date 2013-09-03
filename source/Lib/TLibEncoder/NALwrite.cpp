@@ -48,7 +48,7 @@ namespace x265 {
 
 static const Char emulation_prevention_three_byte[] = { 3 };
 
-Void writeNalUnitHeader(ostream& out, OutputNALUnit& nalu)       // nal_unit_header()
+void writeNalUnitHeader(ostream& out, OutputNALUnit& nalu)       // nal_unit_header()
 {
     TComOutputBitstream bsNALUHeader;
 

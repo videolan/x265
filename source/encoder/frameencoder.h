@@ -169,14 +169,14 @@ public:
     void initSlice(TComPic* pic, Bool bForceISlice, Int gopID);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
-    Void compressFrame(TComPic *pic);
+    void compressFrame(TComPic *pic);
 
     /* called by compressFrame to perform wave-front analysis */
     void compressCTURows(TComPic *pic);
 
-    Void encodeSlice(TComPic* pic, TComOutputBitstream* substreams);
+    void encodeSlice(TComPic* pic, TComOutputBitstream* substreams);
 
-    Void determineSliceBounds(TComPic* pic);
+    void determineSliceBounds(TComPic* pic);
 
     TComPic *getEncodedPicture(AccessUnit& accessUnit);
 

@@ -78,11 +78,11 @@ public:
     }
 
     /// set parameters from Pel buffer for accessing neighboring pixels
-    Void setPatternParamPel(Pel* piTexture, Int roiWidth, Int roiHeight, Int stride,
+    void setPatternParamPel(Pel* piTexture, Int roiWidth, Int roiHeight, Int stride,
                             Int offsetLeft, Int offsetAbove);
 
     /// set parameters of one color component from CU data for accessing neighboring pixels
-    Void setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
+    void setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
                            Int offsetLeft, Int offsetAbove, UInt absZOrderIdx);
 };
 
@@ -120,28 +120,28 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     /// set parameters from Pel buffers for accessing neighboring pixels
-    Void initPattern(Pel* y, Pel* cb, Pel* cr, Int roiWidth, Int roiHeight, Int stride,
+    void initPattern(Pel* y, Pel* cb, Pel* cr, Int roiWidth, Int roiHeight, Int stride,
                      Int offsetLeft, Int offsetAbove);
 
-    Void initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
+    void initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
                         Int strideOrig, Int heightOrig, Pel* refAbove, Pel* refLeft,
                         Pel* refAboveFlt, Pel* refLeftFlt);
 
     /// set parameters from CU data for accessing neighboring pixels
-    Void  initPattern(TComDataCU* cu, UInt partDepth, UInt absPartIdx);
+    void  initPattern(TComDataCU* cu, UInt partDepth, UInt absPartIdx);
 
     /// set luma parameters from CU data for accessing ADI data
-    Void  initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
+    void  initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
                          Int strideOrig, Int heightOrig);
 
     /// set chroma parameters from CU data for accessing ADI data
-    Void  initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth,
+    void  initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth,
                                Pel* adiBuf, Int strideOrig, Int heightOrig);
 
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    Void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor, Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, Int picStride);
+    void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor, Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, Int picStride);
 
     /// constrained intra prediction
     Bool  isAboveLeftAvailable(TComDataCU* cu, UInt partIdxLT);

@@ -147,7 +147,7 @@ TEncSearch::~TEncSearch()
     m_tmpYuvPred.destroy();
 }
 
-Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
+void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
 {
     m_cfg     = cfg;
     m_trQuant = trQuant;
@@ -216,7 +216,7 @@ Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE);
 }
 
-Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
+void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
 {
     m_rdCost->setLambda(lambdaLuma);
     m_trQuant->setLambda(lambdaLuma, lambdaChroma);
@@ -286,7 +286,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Pel *fenc, Int frac
     return bcost;
 }
 
-Void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma)
+void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma)
 {
     UInt  fullDepth  = cu->getDepth(0) + trDepth;
     UInt  trMode     = cu->getTransformIdx(absPartIdx);
@@ -347,7 +347,7 @@ Void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, 
     }
 }
 
-Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype)
+void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype)
 {
     UInt fullDepth  = cu->getDepth(0) + trDepth;
     UInt trMode     = cu->getTransformIdx(absPartIdx);
@@ -400,7 +400,7 @@ Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Text
     m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, width, height, fullDepth, ttype);
 }
 
-Void TEncSearch::xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma)
+void TEncSearch::xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma)
 {
     if (bLuma)
     {
@@ -496,7 +496,7 @@ UInt TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu, UInt trDepth, UInt absPar
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
-Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
+void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
                                      UInt        trDepth,
                                      UInt        absPartIdx,
                                      TComYuv*    fencYuv,
@@ -594,7 +594,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     outDist += primitives.sse_pp[part](fenc, stride, recon, stride);
 }
 
-Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
+void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
                                        UInt        trDepth,
                                        UInt        absPartIdx,
                                        TComYuv*    fencYuv,
@@ -740,7 +740,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     }
 }
 
-Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
+void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                                      UInt        trDepth,
                                      UInt        absPartIdx,
                                      Bool        bLumaOnly,
@@ -1066,7 +1066,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     rdCost   += singleCost;
 }
 
-Void TEncSearch::xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* reconYuv)
+void TEncSearch::xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* reconYuv)
 {
     UInt fullDepth = cu->getDepth(0) + trDepth;
     UInt trMode    = cu->getTransformIdx(absPartIdx);
@@ -1123,7 +1123,7 @@ Void TEncSearch::xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx
     }
 }
 
-Void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly)
+void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly)
 {
     UInt fullMode = cu->getDepth(0) + trDepth;
 
@@ -1170,7 +1170,7 @@ Void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartI
     }
 }
 
-Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly)
+void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly)
 {
     UInt fullDepth = cu->getDepth(0) + trDepth;
 
@@ -1241,7 +1241,7 @@ Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
     }
 }
 
-Void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2)
+void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2)
 {
     UInt fullDepth = cu->getDepth(0) + trDepth;
     UInt trMode    = cu->getTransformIdx(absPartIdx);
@@ -1290,7 +1290,7 @@ Void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt ab
     }
 }
 
-Void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2)
+void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2)
 {
     UInt fullDepth = cu->getDepth(0) + trDepth;
     UInt trMode    = cu->getTransformIdx(absPartIdx);
@@ -1359,7 +1359,7 @@ Void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt abs
     }
 }
 
-Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
+void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                                            UInt        trDepth,
                                            UInt        absPartIdx,
                                            TComYuv*    fencYuv,
@@ -1511,7 +1511,7 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
     }
 }
 
-Void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* reconYuv)
+void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* reconYuv)
 {
     UInt fullDepth = cu->getDepth(0) + trDepth;
     UInt trMode    = cu->getTransformIdx(absPartIdx);
@@ -1561,7 +1561,7 @@ Void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absP
     }
 }
 
-Void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
+void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
 {
     UInt width  = cu->getWidth(0) >> 1;
     UInt height = cu->getHeight(0) >> 1;
@@ -1607,7 +1607,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
     cu->setChromIntraDirSubParts(bestMode, 0, cu->getDepth(0));
 }
 
-Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, UInt& outDistC, Bool bLumaOnly)
+void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, UInt& outDistC, Bool bLumaOnly)
 {
     UInt depth        = cu->getDepth(0);
     UInt numPU        = cu->getNumPartInter();
@@ -1966,7 +1966,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     cu->m_totalDistortion = overallDistY + overallDistC;
 }
 
-Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
+void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
                                       TComYuv*    fencYuv,
                                       TComYuv*    predYuv,
                                       TShortYUV*  resiYuv,
@@ -2043,9 +2043,9 @@ Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
  * \param width block width
  * \param height block height
  * \param ttText texture component type
- * \returns Void
+ * \returns void
  */
-Void TEncSearch::xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, Pel* pred, Short* resi, Pel* recon, UInt stride, UInt width, UInt height, TextType eText)
+void TEncSearch::xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, Pel* pred, Short* resi, Pel* recon, UInt stride, UInt width, UInt height, TextType eText)
 {
     UInt x, y;
     UInt reconStride;
@@ -2120,9 +2120,9 @@ Void TEncSearch::xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, P
  * \param rpcPredYuv
  * \param rpcResiYuv
  * \param rpcRecoYuv
- * \returns Void
+ * \returns void
  */
-Void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv)
+void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv)
 {
     UInt depth      = cu->getDepth(0);
     UInt width      = cu->getWidth(0);
@@ -2204,9 +2204,9 @@ UInt TEncSearch::xGetInterPredictionError(TComDataCU* cu, Int partIdx)
  * \param outBits
  * \param puhNeighCands
  * \param bValid
- * \returns Void
+ * \returns void
  */
-Void TEncSearch::xMergeEstimation(TComDataCU* cu, Int puIdx, UInt& interDir, TComMvField* mvField, UInt& mergeIndex, UInt& outCost, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, Int& numValidMergeCand)
+void TEncSearch::xMergeEstimation(TComDataCU* cu, Int puIdx, UInt& interDir, TComMvField* mvField, UInt& mergeIndex, UInt& outCost, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, Int& numValidMergeCand)
 {
     UInt absPartIdx = 0;
     Int width = 0;
@@ -2265,9 +2265,9 @@ Void TEncSearch::xMergeEstimation(TComDataCU* cu, Int puIdx, UInt& interDir, TCo
  * \param mvFieldNeighbours
  * \param interDirNeighbours
  * \param numValidMergeCand
- * \returns Void
+ * \returns void
  */
-Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, Int numValidMergeCand)
+void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, Int numValidMergeCand)
 {
     if (cu->isBipredRestriction(puIdx))
     {
@@ -2289,9 +2289,9 @@ Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvFiel
  * \param rpcResiYuv
  * \param rpcRecoYuv
  * \param bUseRes
- * \returns Void
+ * \returns void
  */
-Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, Bool bUseMRG)
+void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, Bool bUseMRG)
 {
     m_predYuv[0].clear();
     m_predYuv[1].clear();
@@ -2766,7 +2766,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 }
 
 // AMVP
-Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIdx, MV& mvPred, UInt* distBiP)
+void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIdx, MV& mvPred, UInt* distBiP)
 {
     AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
 
@@ -2846,7 +2846,7 @@ UInt TEncSearch::xGetMvpIdxBits(Int idx, Int num)
     return length;
 }
 
-Void TEncSearch::xGetBlkBits(PartSize cuMode, Bool bPSlice, Int partIdx, UInt lastMode, UInt blockBit[3])
+void TEncSearch::xGetBlkBits(PartSize cuMode, Bool bPSlice, Int partIdx, UInt lastMode, UInt blockBit[3])
 {
     if (cuMode == SIZE_2Nx2N)
     {
@@ -2895,7 +2895,7 @@ Void TEncSearch::xGetBlkBits(PartSize cuMode, Bool bPSlice, Int partIdx, UInt la
     }
 }
 
-Void TEncSearch::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
+void TEncSearch::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 {
     dst->m_num = src->m_num;
     for (Int i = 0; i < src->m_num; i++)
@@ -2905,7 +2905,7 @@ Void TEncSearch::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 }
 
 /* Check if using an alternative MVP would result in a smaller MVD + signal bits */
-Void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mvPred, Int& outMvpIdx, UInt& outBits, UInt& outCost)
+void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mvPred, Int& outMvpIdx, UInt& outBits, UInt& outCost)
 {
     AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
 
@@ -2959,7 +2959,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templa
     return m_rdCost->calcRdSADCost(cost, m_mvpIdxCost[mvpIdx][mvpCandCount]);
 }
 
-Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, RefPicList picList, MV* mvp, Int refIdxPred,
+void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, RefPicList picList, MV* mvp, Int refIdxPred,
                                    MV& outmv, UInt& outBits, UInt& outCost)
 {
     /* This function only performs bidirectional search */
@@ -3006,7 +3006,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     outCost = ((outCost - m_rdCost->getCost(mvbits)) >> 1) + m_rdCost->getCost(outBits);
 }
 
-Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin, MV& mvmax)
+void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin, MV& mvmax)
 {
     cu->clipMv(mvp);
 
@@ -3021,7 +3021,7 @@ Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin,
     mvmax >>= 2;
 }
 
-Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
+void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
 {
     Int srchRngHorLeft   = mvmin->x;
     Int srchRngHorRight  = mvmax->x;
@@ -3090,9 +3090,9 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, I
  * \param rpcYuvResiBest
  * \param outReconYuv
  * \param bSkipRes
- * \returns Void
+ * \returns void
  */
-Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv,
+void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv,
                                            TShortYUV* outBestResiYuv, TComYuv* outReconYuv, Bool bSkipRes)
 {
     if (cu->isIntra(0))
@@ -3259,7 +3259,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 #pragma warning(disable: 4701) // potentially uninitialized local variable
 #endif
 
-Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
+void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                                      UInt        absPartIdx,
                                      UInt        absTUPartIdx,
                                      TShortYUV*  resiYuv,
@@ -3922,7 +3922,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
     }
 }
 
-Void TEncSearch::xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, const UInt depth, Bool bSubdivAndCbf, TextType ttype)
+void TEncSearch::xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, const UInt depth, Bool bSubdivAndCbf, TextType ttype)
 {
     assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
     const UInt curTrMode = depth - cu->getDepth(0);
@@ -4017,7 +4017,7 @@ Void TEncSearch::xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, const UInt d
     }
 }
 
-Void TEncSearch::xSetResidualQTData(TComDataCU* cu, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, Bool bSpatial)
+void TEncSearch::xSetResidualQTData(TComDataCU* cu, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, Bool bSpatial)
 {
     assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
     const UInt curTrMode = depth - cu->getDepth(0);
@@ -4202,7 +4202,7 @@ UInt  TEncSearch::estimateHeaderBits(TComDataCU* cu, UInt absPartIdx)
  * \param pattern Reference picture ROI
  * \param biPred    Flag indicating whether block is for biprediction
  */
-Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern)
+void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern)
 {
     assert(X265_DEPTH == 8);
 
@@ -4252,7 +4252,7 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern)
  * \param halfPelRef Half-pel mv
  * \param biPred     Flag indicating whether block is for biprediction
  */
-Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef)
+void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef)
 {
     assert(X265_DEPTH == 8);
 
@@ -4408,7 +4408,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef)
     primitives.ipfilter_sp[FILTER_V_S_P_8](intPtr, intStride, dstPtr, dstStride, width, height, g_lumaFilter[3]);
 }
 
-Void  TEncSearch::setWpScalingDistParam(TComDataCU*, Int, RefPicList)
+void  TEncSearch::setWpScalingDistParam(TComDataCU*, Int, RefPicList)
 {
 #if 0 // dead code
     if (refIdx < 0)

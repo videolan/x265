@@ -65,7 +65,7 @@ TComPicYuv::TComPicYuv()
 TComPicYuv::~TComPicYuv()
 {}
 
-Void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -119,7 +119,7 @@ Void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCU
     }
 }
 
-Void TComPicYuv::destroy()
+void TComPicYuv::destroy()
 {
     m_picOrgY = NULL;
     m_picOrgU = NULL;
@@ -142,7 +142,7 @@ Void TComPicYuv::destroy()
     }
 }
 
-Void  TComPicYuv::clearReferences()
+void  TComPicYuv::clearReferences()
 {
     while (m_refList)
     {
@@ -152,7 +152,7 @@ Void  TComPicYuv::clearReferences()
     }
 }
 
-Void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -190,7 +190,7 @@ Void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt m
     }
 }
 
-Void TComPicYuv::destroyLuma()
+void TComPicYuv::destroyLuma()
 {
     m_picOrgY = NULL;
 
@@ -200,7 +200,7 @@ Void TComPicYuv::destroyLuma()
     delete[] m_buOffsetY;
 }
 
-Void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
+void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
 {
     assert(m_picWidth  == destPicYuv->getWidth());
     assert(m_picHeight == destPicYuv->getHeight());
@@ -210,7 +210,7 @@ Void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-Void  TComPicYuv::copyToPicLuma(TComPicYuv* destPicYuv)
+void  TComPicYuv::copyToPicLuma(TComPicYuv* destPicYuv)
 {
     assert(m_picWidth  == destPicYuv->getWidth());
     assert(m_picHeight == destPicYuv->getHeight());
@@ -218,7 +218,7 @@ Void  TComPicYuv::copyToPicLuma(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
 }
 
-Void  TComPicYuv::copyToPicCb(TComPicYuv* destPicYuv)
+void  TComPicYuv::copyToPicCb(TComPicYuv* destPicYuv)
 {
     assert(m_picWidth  == destPicYuv->getWidth());
     assert(m_picHeight == destPicYuv->getHeight());
@@ -226,7 +226,7 @@ Void  TComPicYuv::copyToPicCb(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-Void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
+void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
 {
     assert(m_picWidth  == destPicYuv->getWidth());
     assert(m_picHeight == destPicYuv->getHeight());
@@ -256,7 +256,7 @@ x265::MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
     return mref;
 }
 
-Void TComPicYuv::xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)
+void TComPicYuv::xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)
 {
     Int x, y;
 
@@ -285,7 +285,7 @@ Void TComPicYuv::xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int hei
     }
 }
 
-Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
+void TComPicYuv::dump(Char* pFileName, Bool bAdd)
 {
     FILE* pFile;
 
@@ -354,7 +354,7 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
  * Upscale pixels from 8bits to 16 bits when required, but do not modify pixels.
  * This new routine is GPL
  */
-Void TComPicYuv::copyFromPicture(const x265_picture_t& pic)
+void TComPicYuv::copyFromPicture(const x265_picture_t& pic)
 {
     Pel *Y = getLumaAddr();
     Pel *U = getCbAddr();

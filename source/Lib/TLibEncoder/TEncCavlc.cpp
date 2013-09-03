@@ -46,17 +46,17 @@ using namespace x265;
 
 #if ENC_DEC_TRACE
 
-Void  xTraceSPSHeader(TComSPS *pSPS)
+void  xTraceSPSHeader(TComSPS *pSPS)
 {
     fprintf(g_hTrace, "=========== Sequence Parameter Set ID: %d ===========\n", pSPS->getSPSId());
 }
 
-Void  xTracePPSHeader(TComPPS *pPPS)
+void  xTracePPSHeader(TComPPS *pPPS)
 {
     fprintf(g_hTrace, "=========== Picture Parameter Set ID: %d ===========\n", pPPS->getPPSId());
 }
 
-Void  xTraceSliceHeader(TComSlice *)
+void  xTraceSliceHeader(TComSlice *)
 {
     fprintf(g_hTrace, "=========== Slice ===========\n");
 }
@@ -80,16 +80,16 @@ TEncCavlc::~TEncCavlc()
 // Public member functions
 // ====================================================================================================================
 
-Void TEncCavlc::resetEntropy()
+void TEncCavlc::resetEntropy()
 {}
 
-Void TEncCavlc::codeDFFlag(UInt code, const Char *symbolName)
+void TEncCavlc::codeDFFlag(UInt code, const Char *symbolName)
 {
     (void)symbolName;
     WRITE_FLAG(code, symbolName);
 }
 
-Void TEncCavlc::codeDFSvlc(Int code, const Char *symbolName)
+void TEncCavlc::codeDFSvlc(Int code, const Char *symbolName)
 {
     (void)symbolName;
     WRITE_SVLC(code, symbolName);
@@ -102,7 +102,7 @@ Void TEncCavlc::codeDFSvlc(Int code, const Char *symbolName)
                                                     // this should be done with encoder only decision
                                                     // but because of the absence of reference frame management, the related code was hard coded currently
 
-Void TEncCavlc::codeShortTermRefPicSet(TComReferencePictureSet* rps, Bool calledFromSliceHeader, Int idx)
+void TEncCavlc::codeShortTermRefPicSet(TComReferencePictureSet* rps, Bool calledFromSliceHeader, Int idx)
 {
 #if PRINT_RPS_INFO
     Int lastBits = getNumberOfWrittenBits();
@@ -159,7 +159,7 @@ Void TEncCavlc::codeShortTermRefPicSet(TComReferencePictureSet* rps, Bool called
 #endif
 }
 
-Void TEncCavlc::codePPS(TComPPS* pcPPS)
+void TEncCavlc::codePPS(TComPPS* pcPPS)
 {
 #if ENC_DEC_TRACE
     xTracePPSHeader(pcPPS);
@@ -219,7 +219,7 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
     WRITE_FLAG(0, "pps_extension_flag");
 }
 
-Void TEncCavlc::codeVUI(TComVUI *pcVUI, TComSPS* pcSPS)
+void TEncCavlc::codeVUI(TComVUI *pcVUI, TComSPS* pcSPS)
 {
 #if ENC_DEC_TRACE
     fprintf(g_hTrace, "----------- vui_parameters -----------\n");
@@ -304,7 +304,7 @@ Void TEncCavlc::codeVUI(TComVUI *pcVUI, TComSPS* pcSPS)
     }
 }
 
-Void TEncCavlc::codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1)
+void TEncCavlc::codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1)
 {
     if (commonInfPresentFlag)
     {
@@ -377,7 +377,7 @@ Void TEncCavlc::codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt 
     }
 }
 
-Void TEncCavlc::codeSPS(TComSPS* pcSPS)
+void TEncCavlc::codeSPS(TComSPS* pcSPS)
 {
 #if ENC_DEC_TRACE
     xTraceSPSHeader(pcSPS);
@@ -494,7 +494,7 @@ Void TEncCavlc::codeSPS(TComSPS* pcSPS)
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-Void TEncCavlc::codeVPS(TComVPS* pcVPS)
+void TEncCavlc::codeVPS(TComVPS* pcVPS)
 {
     WRITE_CODE(pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id");
     WRITE_CODE(3,                                    2,        "vps_reserved_three_2bits");
@@ -568,7 +568,7 @@ Void TEncCavlc::codeVPS(TComVPS* pcVPS)
     //future extensions here..
 }
 
-Void TEncCavlc::codeSliceHeader(TComSlice* slice)
+void TEncCavlc::codeSliceHeader(TComSlice* slice)
 {
 #if ENC_DEC_TRACE
     xTraceSliceHeader(slice);
@@ -899,7 +899,7 @@ Void TEncCavlc::codeSliceHeader(TComSlice* slice)
     }
 }
 
-Void TEncCavlc::codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1)
+void TEncCavlc::codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1)
 {
     if (profilePresentFlag)
     {
@@ -938,7 +938,7 @@ Void TEncCavlc::codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLa
     }
 }
 
-Void TEncCavlc::codeProfileTier(ProfileTierLevel* ptl)
+void TEncCavlc::codeProfileTier(ProfileTierLevel* ptl)
 {
     WRITE_CODE(ptl->getProfileSpace(), 2,     "XXX_profile_space[]");
     WRITE_FLAG(ptl->getTierFlag(),         "XXX_tier_flag[]");
@@ -963,7 +963,7 @@ Void TEncCavlc::codeProfileTier(ProfileTierLevel* ptl)
  .
  \param slice Where we find the substream size information.
  */
-Void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
+void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
 {
     if (!pSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
     {
@@ -1010,118 +1010,118 @@ Void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
     delete [] entryPointOffset;
 }
 
-Void TEncCavlc::codeTerminatingBit(UInt)
+void TEncCavlc::codeTerminatingBit(UInt)
 {}
 
-Void TEncCavlc::codeSliceFinish()
+void TEncCavlc::codeSliceFinish()
 {}
 
-Void TEncCavlc::codeMVPIdx(TComDataCU*, UInt, RefPicList)
+void TEncCavlc::codeMVPIdx(TComDataCU*, UInt, RefPicList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePartSize(TComDataCU*, UInt, UInt)
+void TEncCavlc::codePartSize(TComDataCU*, UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePredMode(TComDataCU*, UInt)
+void TEncCavlc::codePredMode(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeFlag(TComDataCU*, UInt)
+void TEncCavlc::codeMergeFlag(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeIndex(TComDataCU*, UInt)
+void TEncCavlc::codeMergeIndex(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterModeFlag(TComDataCU*, UInt, UInt, UInt)
+void TEncCavlc::codeInterModeFlag(TComDataCU*, UInt, UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU*, UInt)
+void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSkipFlag(TComDataCU*, UInt)
+void TEncCavlc::codeSkipFlag(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSplitFlag(TComDataCU*, UInt, UInt)
+void TEncCavlc::codeSplitFlag(TComDataCU*, UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeTransformSubdivFlag(UInt, UInt)
+void TEncCavlc::codeTransformSubdivFlag(UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbf(TComDataCU*, UInt, TextType, UInt)
+void TEncCavlc::codeQtCbf(TComDataCU*, UInt, TextType, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtRootCbf(TComDataCU*, UInt)
+void TEncCavlc::codeQtRootCbf(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbfZero(TComDataCU*, TextType, UInt)
+void TEncCavlc::codeQtCbfZero(TComDataCU*, TextType, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtRootCbfZero(TComDataCU*)
+void TEncCavlc::codeQtRootCbfZero(TComDataCU*)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeTransformSkipFlags(TComDataCU*, UInt, UInt, UInt, TextType)
+void TEncCavlc::codeTransformSkipFlags(TComDataCU*, UInt, UInt, UInt, TextType)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIPCMInfo(TComDataCU*, UInt)
+void TEncCavlc::codeIPCMInfo(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirLumaAng(TComDataCU*, UInt, Bool)
+void TEncCavlc::codeIntraDirLumaAng(TComDataCU*, UInt, Bool)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirChroma(TComDataCU*, UInt)
+void TEncCavlc::codeIntraDirChroma(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterDir(TComDataCU*, UInt)
+void TEncCavlc::codeInterDir(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeRefFrmIdx(TComDataCU*, UInt, RefPicList)
+void TEncCavlc::codeRefFrmIdx(TComDataCU*, UInt, RefPicList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMvd(TComDataCU*, UInt, RefPicList)
+void TEncCavlc::codeMvd(TComDataCU*, UInt, RefPicList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt absPartIdx)
+void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt absPartIdx)
 {
     Int iDQp  = cu->getQP(absPartIdx) - cu->getRefQP(absPartIdx);
 
@@ -1132,12 +1132,12 @@ Void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt absPartIdx)
     xWriteSvlc(iDQp);
 }
 
-Void TEncCavlc::codeCoeffNxN(TComDataCU*, TCoeff*, UInt, UInt, UInt, UInt, TextType)
+void TEncCavlc::codeCoeffNxN(TComDataCU*, TCoeff*, UInt, UInt, UInt, UInt, TextType)
 {
     assert(0);
 }
 
-Void TEncCavlc::estBit(estBitsSbacStruct*, Int, Int, TextType)
+void TEncCavlc::estBit(estBitsSbacStruct*, Int, Int, TextType)
 {
 }
 
@@ -1147,9 +1147,9 @@ Void TEncCavlc::estBit(estBitsSbacStruct*, Int, Int, TextType)
 
 /** code explicit wp tables
  * \param TComSlice* slice
- * \returns Void
+ * \returns void
  */
-Void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
+void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
 {
     wpScalingParam  *wp;
     Bool            bChroma     = true; // color always present in HEVC ?
@@ -1232,7 +1232,7 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
 /** code quantization matrix
  *  \param scalingList quantization matrix information
  */
-Void TEncCavlc::codeScalingList(TComScalingList* scalingList)
+void TEncCavlc::codeScalingList(TComScalingList* scalingList)
 {
     UInt listId, sizeId;
     Bool scalingListPredModeFlag;
@@ -1278,7 +1278,7 @@ Void TEncCavlc::codeScalingList(TComScalingList* scalingList)
  * \param sizeIdc size index
  * \param listIdc list index
  */
-Void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId)
+void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId)
 {
     Int coefNum = min(MAX_MATRIX_COEF_NUM, (Int)g_scalingListSize[sizeId]);
     UInt* scan  = (sizeId == 0) ? g_sigLastScan[SCAN_DIAG][1] :  g_sigLastScanCG32x32;

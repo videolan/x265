@@ -68,7 +68,7 @@ private:
 
 public:
 
-    Void setLambda(Double lambda)
+    void setLambda(Double lambda)
     {
         m_lambda2         = lambda;
         m_lambda          = sqrt(m_lambda2);
@@ -76,12 +76,12 @@ public:
         m_lambdaMotionSSE = (UInt64)floor(65536.0 * m_lambda2);
     }
 
-    Void setCbDistortionWeight(Double cbDistortionWeight)
+    void setCbDistortionWeight(Double cbDistortionWeight)
     {
         m_cbDistortionWeight = (UInt)floor(256.0 * cbDistortionWeight);
     }
 
-    Void setCrDistortionWeight(Double crDistortionWeight)
+    void setCrDistortionWeight(Double crDistortionWeight)
     {
         m_crDistortionWeight = (UInt)floor(256.0 * crDistortionWeight);
     }

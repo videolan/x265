@@ -89,35 +89,35 @@ public:
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
 
-    Void startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
-    Void endSaoEnc();
-    Void resetStats();
-    Void SAOProcess(SAOParam *saoParam);
+    void startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
+    void endSaoEnc();
+    void resetStats();
+    void SAOProcess(SAOParam *saoParam);
 
-    Void runQuadTreeDecision(SAOQTPart *psQTPart, Int partIdx, Double &costFinal, Int maxLevel, Double lambda, Int yCbCr);
-    Void rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double lambda, Int yCbCr);
+    void runQuadTreeDecision(SAOQTPart *psQTPart, Int partIdx, Double &costFinal, Int maxLevel, Double lambda, Int yCbCr);
+    void rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double lambda, Int yCbCr);
 
-    Void disablePartTree(SAOQTPart *psQTPart, Int partIdx);
-    Void getSaoStats(SAOQTPart *psQTPart, Int yCbCr);
-    Void calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr);
-    Void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
-    Void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int idxY);
-    Void destroyEncBuffer();
-    Void createEncBuffer();
-    Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag);
-    Void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, Int dir);
-    Void saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
-    Void sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);
+    void disablePartTree(SAOQTPart *psQTPart, Int partIdx);
+    void getSaoStats(SAOQTPart *psQTPart, Int yCbCr);
+    void calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr);
+    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
+    void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int idxY);
+    void destroyEncBuffer();
+    void createEncBuffer();
+    void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag);
+    void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, Int dir);
+    void saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
+    void sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);
     inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, Int shift);
     inline Int64 estIterOffset(Int typeIdx, Int classIdx, Double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, Int shift, Int bitIncrease, Int *currentDistortionTableBo, Double *currentRdCostTableBo, Int offsetTh);
     inline Int64 estSaoTypeDist(Int compIdx, Int typeIdx, Int shift, Double lambda, Int *currentDistortionTableBo, Double *currentRdCostTableBo);
-    Void setMaxNumOffsetsPerPic(Int val) { m_maxNumOffsetsPerPic = val; }
+    void setMaxNumOffsetsPerPic(Int val) { m_maxNumOffsetsPerPic = val; }
 
     Int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
 
-    Void rdoSaoUnitRowInit(SAOParam *saoParam);
-    Void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);
-    Void rdoSaoUnitRow(SAOParam *saoParam, Int idxY);
+    void rdoSaoUnitRowInit(SAOParam *saoParam);
+    void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);
+    void rdoSaoUnitRow(SAOParam *saoParam, Int idxY);
 };
 }
 //! \}

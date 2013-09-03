@@ -46,7 +46,7 @@ namespace x265 {
 //! \{
 
 // initialize ROM variables
-Void initROM()
+void initROM()
 {
     if (g_sigLastScan[0][0] == 0)
     {
@@ -76,7 +76,7 @@ Void initROM()
     }
 }
 
-Void destroyROM()
+void destroyROM()
 {
     if (g_sigLastScan[0][0])
     {
@@ -107,7 +107,7 @@ UInt g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 
 UInt g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
-Void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
+void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
 {
     Int stride = 1 << (maxDepth - 1);
 
@@ -126,7 +126,7 @@ Void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
     }
 }
 
-Void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
+void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
 {
     UInt  minWidth  = maxCUWidth  >> (maxDepth - 1);
     UInt  minHeight = maxCUHeight >> (maxDepth - 1);
@@ -140,7 +140,7 @@ Void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
     }
 }
 
-Void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
+void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
 {
     UInt i;
 
@@ -344,7 +344,7 @@ const UInt g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
 
 const UInt g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
 
-Void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int height)
+void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int height)
 {
     const UInt  numScanPos  = UInt(width * width);
     UInt        nextScanPos = 0;

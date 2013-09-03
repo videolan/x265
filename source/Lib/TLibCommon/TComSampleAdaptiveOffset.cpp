@@ -154,7 +154,7 @@ Int  TComSampleAdaptiveOffset::convertLevelRowCol2Idx(Int level, Int row, Int co
 /** create SampleAdaptiveOffset memory.
  * \param
  */
-Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight)
+void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight)
 {
     m_picWidth  = sourceWidth;
     m_picHeight = sourceHeight;
@@ -270,7 +270,7 @@ Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
 /** destroy SampleAdaptiveOffset memory.
  * \param
  */
-Void TComSampleAdaptiveOffset::destroy()
+void TComSampleAdaptiveOffset::destroy()
 {
     if (m_clipTableBase)
     {
@@ -355,7 +355,7 @@ Void TComSampleAdaptiveOffset::destroy()
 /** allocate memory for SAO parameters
  * \param    *saoParam
  */
-Void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *saoParam) const
+void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *saoParam) const
 {
     saoParam->maxSplitLevel = m_maxSplitLevel;
     saoParam->saoPart[0] = new SAOQTPart[m_numCulPartsLevel[saoParam->maxSplitLevel]];
@@ -374,7 +374,7 @@ Void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *saoParam) const
 /** initialize SAO parameters
  * \param    *saoParam,  iPartLevel,  iPartRow,  iPartCol,  iParentPartIdx,  StartCUX,  EndCUX,  StartCUY,  EndCUY,  yCbCr
  */
-Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr) const
+void TComSampleAdaptiveOffset::initSAOParam(SAOParam *saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr) const
 {
     Int j;
     Int partIdx = convertLevelRowCol2Idx(partLevel, partRow, partCol);
@@ -476,7 +476,7 @@ Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *saoParam, Int partLevel, I
 /** free memory of SAO parameters
  * \param   saoParam
  */
-Void TComSampleAdaptiveOffset::freeSaoParam(SAOParam *saoParam)
+void TComSampleAdaptiveOffset::freeSaoParam(SAOParam *saoParam)
 {
     delete [] saoParam->saoPart[0];
     delete [] saoParam->saoPart[1];
@@ -504,7 +504,7 @@ Void TComSampleAdaptiveOffset::freeSaoParam(SAOParam *saoParam)
 /** reset SAO parameters
  * \param   saoParam
  */
-Void TComSampleAdaptiveOffset::resetSAOParam(SAOParam *saoParam)
+void TComSampleAdaptiveOffset::resetSAOParam(SAOParam *saoParam)
 {
     Int numComponet = 3;
 
@@ -552,18 +552,18 @@ inline Int xSign(Int x)
 /** initialize variables for SAO process
  * \param  pic picture data pointer
  */
-Void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pic)
+void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pic)
 {
     m_pic = pic;
 }
 
-Void TComSampleAdaptiveOffset::destroyPicSaoInfo()
+void TComSampleAdaptiveOffset::destroyPicSaoInfo()
 {
 }
 /** sample adaptive offset process for one LCU crossing LCU boundary
  * \param   addr, iSaoType, yCbCr
  */
-Void TComSampleAdaptiveOffset::processSaoCu(Int addr, Int saoType, Int yCbCr)
+void TComSampleAdaptiveOffset::processSaoCu(Int addr, Int saoType, Int yCbCr)
 {
     Int x, y;
     TComDataCU *tmpCu = m_pic->getCU(addr);
@@ -809,7 +809,7 @@ Void TComSampleAdaptiveOffset::processSaoCu(Int addr, Int saoType, Int yCbCr)
 /** Sample adaptive offset process
  * \param pic, saoParam
  */
-Void TComSampleAdaptiveOffset::SAOProcess(SAOParam* saoParam)
+void TComSampleAdaptiveOffset::SAOProcess(SAOParam* saoParam)
 {
     {
         m_saoBitIncreaseY = max(X265_DEPTH - 10, 0);
@@ -857,7 +857,7 @@ Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, Int yCbCr, Int 
  * \param oneUnitFlag one unit flag
  * \param yCbCr color componet index
  */
-Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr)
+void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr)
 {
     Pel *rec;
     Int picWidthTmp;
@@ -1028,7 +1028,7 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
  * \param oneUnitFlag one unit flag
  * \param yCbCr color componet index
  */
-Void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, Int yCbCr)
+void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, Int yCbCr)
 {
     Pel *rec;
     Int picWidthTmp;
@@ -1185,7 +1185,7 @@ Void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     }
 }
 
-Void TComSampleAdaptiveOffset::resetLcuPart(SaoLcuParam* saoLcuParam)
+void TComSampleAdaptiveOffset::resetLcuPart(SaoLcuParam* saoLcuParam)
 {
     Int i, j;
 
@@ -1209,7 +1209,7 @@ Void TComSampleAdaptiveOffset::resetLcuPart(SaoLcuParam* saoLcuParam)
 * \param partIdx SAO part index
 * \param yCbCr color component index
  */
-Void TComSampleAdaptiveOffset::convertQT2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr)
+void TComSampleAdaptiveOffset::convertQT2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr)
 {
     SAOQTPart*  saoPart = &(saoParam->saoPart[yCbCr][partIdx]);
 
@@ -1233,7 +1233,7 @@ Void TComSampleAdaptiveOffset::convertQT2SaoUnit(SAOParam *saoParam, UInt partId
 * \param partIdx SAO part index
 * \param yCbCr color component index
  */
-Void TComSampleAdaptiveOffset::convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr)
+void TComSampleAdaptiveOffset::convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr)
 {
     Int j;
     Int idxX;
@@ -1272,7 +1272,7 @@ Void TComSampleAdaptiveOffset::convertOnePart2SaoUnit(SAOParam *saoParam, UInt p
     }
 }
 
-Void TComSampleAdaptiveOffset::resetSaoUnit(SaoLcuParam* saoUnit)
+void TComSampleAdaptiveOffset::resetSaoUnit(SaoLcuParam* saoUnit)
 {
     saoUnit->partIdx       = 0;
     saoUnit->partIdxTmp    = 0;
@@ -1288,7 +1288,7 @@ Void TComSampleAdaptiveOffset::resetSaoUnit(SaoLcuParam* saoUnit)
     }
 }
 
-Void TComSampleAdaptiveOffset::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc)
+void TComSampleAdaptiveOffset::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc)
 {
     saoUnitDst->mergeLeftFlag = saoUnitSrc->mergeLeftFlag;
     saoUnitDst->mergeUpFlag   = saoUnitSrc->mergeUpFlag;
@@ -1302,25 +1302,25 @@ Void TComSampleAdaptiveOffset::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam*
     }
 }
 
-static Void xPCMRestoration(TComPic* pic);
-static Void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText);
+static void xPCMRestoration(TComPic* pic);
+static void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText);
 
 /** PCM LF disable process.
  * \param pic picture (TComPic) pointer
- * \returns Void
+ * \returns void
  *
  * \note Replace filtered sample values of PCM mode blocks with the transmitted and reconstructed ones.
  */
-Void PCMLFDisableProcess(TComPic* pic)
+void PCMLFDisableProcess(TComPic* pic)
 {
     xPCMRestoration(pic);
 }
 
 /** Picture-level PCM restoration.
  * \param pic picture (TComPic) pointer
- * \returns Void
+ * \returns void
  */
-static Void xPCMRestoration(TComPic* pic)
+static void xPCMRestoration(TComPic* pic)
 {
     Bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
 
@@ -1339,9 +1339,9 @@ static Void xPCMRestoration(TComPic* pic)
  * \param cu pointer to current CU
  * \param absPartIdx part index
  * \param depth CU depth
- * \returns Void
+ * \returns void
  */
-Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth)
+void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth)
 {
     TComPic* pic     = cu->getPic();
     UInt curNumParts = pic->getNumPartInCU() >> (depth << 1);
@@ -1375,9 +1375,9 @@ Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth)
  * \param absPartIdx part index
  * \param depth CU depth
  * \param ttText texture component type
- * \returns Void
+ * \returns void
  */
-static Void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText)
+static void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
     Pel* src;

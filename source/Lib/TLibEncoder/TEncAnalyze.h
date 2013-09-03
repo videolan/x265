@@ -71,7 +71,7 @@ public:
 
     virtual ~TEncAnalyze()  {}
 
-    Void  addResult(Double psnrY, Double psnrU, Double psnrV, Double bits)
+    void  addResult(Double psnrY, Double psnrU, Double psnrV, Double bits)
     {
         m_dPSNRSumY += psnrY;
         m_dPSNRSumU += psnrU;
@@ -91,11 +91,11 @@ public:
 
     UInt    getNumPic() { return m_uiNumPic;   }
 
-    Void    setFrameRate(Double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
+    void    setFrameRate(Double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
 
-    Void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
+    void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
 
-    Void    printOut(Char cDelim)
+    void    printOut(Char cDelim)
     {
         Double dFps     = m_dFrmRate; //--CFG_KDY
         Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
@@ -114,7 +114,7 @@ public:
                 getPsnrV() / (Double)getNumPic());
     }
 
-    Void    printSummaryOut()
+    void    printSummaryOut()
     {
         FILE* pFile = fopen("summaryTotal.txt", "at");
         Double dFps     =   m_dFrmRate; //--CFG_KDY
@@ -127,7 +127,7 @@ public:
         fclose(pFile);
     }
 
-    Void    printSummary(Char ch)
+    void    printSummary(Char ch)
     {
         FILE* pFile = NULL;
 

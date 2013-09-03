@@ -170,7 +170,7 @@ void TShortYUV::copyPartToPartYuv(TComYuv* dstPicYuv, unsigned int partIdx, unsi
     copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
 }
 
-Void TShortYUV::copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
+void TShortYUV::copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
 {
     short* src = getLumaAddr(partIdx);
     short* dst = dstPicYuv->getLumaAddr(partIdx);
@@ -186,7 +186,7 @@ Void TShortYUV::copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int partIdx, u
     }
 }
 
-Void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
+void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
 {
     short* src = getLumaAddr(partIdx);
     Pel* dst = dstPicYuv->getLumaAddr(partIdx);
@@ -197,7 +197,7 @@ Void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, uns
     primitives.blockcpy_ps(width, height, dst, dstStride, src, srcStride);
 }
 
-Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
+void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
 {
     short* srcU = getCbAddr(partIdx);
     short* srcV = getCrAddr(partIdx);
@@ -218,7 +218,7 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx,
     }
 }
 
-Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
+void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
 {
     short* srcU = getCbAddr(partIdx);
     short* srcV = getCrAddr(partIdx);
@@ -232,7 +232,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
     primitives.blockcpy_ps(width, height, dstV, dstStride, srcV, srcStride);
 }
 
-Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId)
+void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId)
 {
     if (chromaId == 0)
     {
@@ -286,7 +286,7 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx,
     }
 }
 
-Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId)
+void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId)
 {
     if (chromaId == 0)
     {

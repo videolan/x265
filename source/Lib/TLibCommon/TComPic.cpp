@@ -65,7 +65,7 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes)
+void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes)
 {
     m_picSym = new TComPicSym;
     m_picSym->create(width, height, maxWidth, maxHeight, maxDepth);
@@ -89,7 +89,7 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
     m_complete_enc = new uint32_t[numRows]; // initial in FrameEncoder::encode()
 }
 
-Void TComPic::destroy()
+void TComPic::destroy()
 {
     if (m_picSym)
     {
@@ -120,7 +120,7 @@ Void TComPic::destroy()
     m_lowres.destroy();
 }
 
-Void TComPic::compressMotion()
+void TComPic::compressMotion()
 {
     TComPicSym* sym = getPicSym();
 
@@ -138,7 +138,7 @@ Void TComPic::compressMotion()
  * \param bNDBFilterCrossSliceBoundary cross-slice-boundary in-loop filtering; true for "cross".
  * \param numTiles number of tiles in picture
  */
-Void TComPic::createNonDBFilterInfo(Int lastSlicecuAddr, Int sliceGranularityDepth)
+void TComPic::createNonDBFilterInfo(Int lastSlicecuAddr, Int sliceGranularityDepth)
 {
     UInt maxNumSUInLCU = getNumPartInCU();
     UInt numLCUInPic   = getNumCUsInFrame();
@@ -235,7 +235,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSlicecuAddr, Int sliceGranularityDep
  * \param picWidth picture width
  * \param picHeight picture height
  */
-Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
+void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
 {
     UInt LCUX          = cu->getCUPelX();
     UInt LCUY          = cu->getCUPelY();
@@ -309,7 +309,7 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU
 
 /** destroy non-deblocked filter information for LCU
  */
-Void TComPic::destroyNonDBFilterInfo()
+void TComPic::destroyNonDBFilterInfo()
 {
     for (UInt cuAddr = 0; cuAddr < getNumCUsInFrame(); cuAddr++)
     {

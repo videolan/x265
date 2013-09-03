@@ -104,18 +104,18 @@ public:
     TComPicYuv();
     virtual ~TComPicYuv();
 
-    Void xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int marginX, Int marginY);
+    void xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int marginX, Int marginY);
     // ------------------------------------------------------------------------------------------------
     //  Memory management
     // ------------------------------------------------------------------------------------------------
 
-    Void  create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
-    Void  destroy();
+    void  create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
+    void  destroy();
 
-    Void  createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
-    Void  destroyLuma();
+    void  createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
+    void  destroyLuma();
 
-    Void  clearReferences();
+    void  clearReferences();
 
     // ------------------------------------------------------------------------------------------------
     //  Get information of picture
@@ -173,16 +173,16 @@ public:
     // ------------------------------------------------------------------------------------------------
 
     //  Copy function to picture
-    Void  copyToPic(TComPicYuv* destYuv);
-    Void  copyToPicLuma(TComPicYuv* destYuv);
-    Void  copyToPicCb(TComPicYuv* destYuv);
-    Void  copyToPicCr(TComPicYuv* destYuv);
-    Void  copyFromPicture(const x265_picture_t&);
+    void  copyToPic(TComPicYuv* destYuv);
+    void  copyToPicLuma(TComPicYuv* destYuv);
+    void  copyToPicCb(TComPicYuv* destYuv);
+    void  copyToPicCr(TComPicYuv* destYuv);
+    void  copyFromPicture(const x265_picture_t&);
 
     x265::MotionReference* generateMotionReference(wpScalingParam *w);
 
     //  Dump picture
-    Void  dump(Char* pFileName, Bool bAdd = false);
+    void  dump(Char* pFileName, Bool bAdd = false);
 
     friend class x265::MotionReference;
 }; // END CLASS DEFINITION TComPicYuv

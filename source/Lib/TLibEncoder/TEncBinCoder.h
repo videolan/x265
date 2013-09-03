@@ -53,25 +53,25 @@ class TEncBinIf
 {
 public:
 
-    virtual Void  init(TComBitIf* bitIf) = 0;
-    virtual Void  uninit() = 0;
+    virtual void  init(TComBitIf* bitIf) = 0;
+    virtual void  uninit() = 0;
 
-    virtual Void  start() = 0;
-    virtual Void  finish() = 0;
-    virtual Void  copyState(TEncBinIf* binIf) = 0;
-    virtual Void  flush() = 0;
+    virtual void  start() = 0;
+    virtual void  finish() = 0;
+    virtual void  copyState(TEncBinIf* binIf) = 0;
+    virtual void  flush() = 0;
 
-    virtual Void  resetBac() = 0;
-    virtual Void  encodePCMAlignBits() = 0;
-    virtual Void  xWritePCMCode(UInt code, UInt length) = 0;
+    virtual void  resetBac() = 0;
+    virtual void  encodePCMAlignBits() = 0;
+    virtual void  xWritePCMCode(UInt code, UInt length) = 0;
 
-    virtual Void  resetBits() = 0;
+    virtual void  resetBits() = 0;
     virtual UInt  getNumWrittenBits() = 0;
 
-    virtual Void  encodeBin(UInt bin,  ContextModel& ctx) = 0;
-    virtual Void  encodeBinEP(UInt bin) = 0;
-    virtual Void  encodeBinsEP(UInt bins, Int numBins) = 0;
-    virtual Void  encodeBinTrm(UInt bin) = 0;
+    virtual void  encodeBin(UInt bin,  ContextModel& ctx) = 0;
+    virtual void  encodeBinEP(UInt bin) = 0;
+    virtual void  encodeBinsEP(UInt bins, Int numBins) = 0;
+    virtual void  encodeBinTrm(UInt bin) = 0;
 
     virtual TEncBinCABAC*   getTEncBinCABAC()  { return 0; }
 

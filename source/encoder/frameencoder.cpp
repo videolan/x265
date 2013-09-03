@@ -362,7 +362,7 @@ void FrameEncoder::initSlice(TComPic* pic, Bool bForceISlice, Int gopID)
     slice->setSliceQpDeltaCr(0);
 }
 
-Void FrameEncoder::compressFrame(TComPic *pic)
+void FrameEncoder::compressFrame(TComPic *pic)
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
 
@@ -685,7 +685,7 @@ Void FrameEncoder::compressFrame(TComPic *pic)
     delete bitstreamRedirect;
 }
 
-Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
+void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 {
     PPAScopeEvent(FrameEncoder_encodeSlice);
 
@@ -864,7 +864,7 @@ Void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 /** Determines the starting and bounding LCU address of current slice / dependent slice
  * \returns Updates startCUAddr, boundingCUAddr with appropriate LCU address
  */
-Void FrameEncoder::determineSliceBounds(TComPic* pic)
+void FrameEncoder::determineSliceBounds(TComPic* pic)
 {
     UInt numberOfCUsInFrame = pic->getNumCUsInFrame();
     UInt boundingCUAddrSlice = numberOfCUsInFrame * pic->getNumPartInCU();
@@ -873,7 +873,7 @@ Void FrameEncoder::determineSliceBounds(TComPic* pic)
     pic->getSlice()->setSliceCurEndCUAddr(boundingCUAddrSlice);
 }
 
-Void FrameEncoder::compressCTURows(TComPic* pic)
+void FrameEncoder::compressCTURows(TComPic* pic)
 {
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);

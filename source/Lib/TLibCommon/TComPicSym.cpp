@@ -63,7 +63,7 @@ TComPicSym::TComPicSym()
     , m_cuData(NULL)
 {}
 
-Void TComPicSym::create(Int picWidth, Int picHeight, UInt maxWidth, UInt maxHeight, UInt maxDepth)
+void TComPicSym::create(Int picWidth, Int picHeight, UInt maxWidth, UInt maxHeight, UInt maxDepth)
 {
     UInt i;
 
@@ -95,7 +95,7 @@ Void TComPicSym::create(Int picWidth, Int picHeight, UInt maxWidth, UInt maxHeig
     m_saoParam = NULL;
 }
 
-Void TComPicSym::destroy()
+void TComPicSym::destroy()
 {
     if (m_slice)
     {
@@ -121,7 +121,7 @@ Void TComPicSym::destroy()
     }
 }
 
-Void TComPicSym::allocSaoParam(TComSampleAdaptiveOffset *sao)
+void TComPicSym::allocSaoParam(TComSampleAdaptiveOffset *sao)
 {
     m_saoParam = new SAOParam;
     sao->allocSaoParam(m_saoParam);

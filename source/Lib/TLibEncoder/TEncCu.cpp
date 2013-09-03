@@ -72,7 +72,7 @@ TEncCu::TEncCu()
  \param    uiMaxWidth    largest CU width
  \param    uiMaxHeight   largest CU height
  */
-Void TEncCu::create(UChar totalDepth, UInt maxWidth)
+void TEncCu::create(UChar totalDepth, UInt maxWidth)
 {
     m_totalDepth   = totalDepth + 1;
     m_interCU_2Nx2N  = new TComDataCU*[m_totalDepth - 1];
@@ -179,7 +179,7 @@ Void TEncCu::create(UChar totalDepth, UInt maxWidth)
     m_temporalSAD      = 0;
 }
 
-Void TEncCu::destroy()
+void TEncCu::destroy()
 {
     for (Int i = 0; i < m_totalDepth - 1; i++)
     {
@@ -422,7 +422,7 @@ Void TEncCu::destroy()
 
 /** \param    pcEncTop      pointer of encoder class
  */
-Void TEncCu::init(TEncTop* top)
+void TEncCu::init(TEncTop* top)
 {
     m_cfg         = top;
 }
@@ -442,7 +442,7 @@ extern FILE* fp1;
 bool mergeFlag = 0;
 #endif
 
-Void TEncCu::compressCU(TComDataCU* cu)
+void TEncCu::compressCU(TComDataCU* cu)
 {
     // initialize CU data
     m_bestCU[0]->initCU(cu->getPic(), cu->getAddr());
@@ -478,7 +478,7 @@ Void TEncCu::compressCU(TComDataCU* cu)
 
 /** \param  cu  pointer of CU data class
  */
-Void TEncCu::encodeCU(TComDataCU* cu)
+void TEncCu::encodeCU(TComDataCU* cu)
 {
     if (cu->getSlice()->getPPS()->getUseDQP())
     {
@@ -500,9 +500,9 @@ Void TEncCu::encodeCU(TComDataCU* cu)
  *\param   bTestAMP_Ver
  *\param   bTestMergeAMP_Hor
  *\param   bTestMergeAMP_Ver
- *\returns Void
+ *\returns void
 */
-Void TEncCu::deriveTestModeAMP(TComDataCU* outBestCU, PartSize parentSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver,
+void TEncCu::deriveTestModeAMP(TComDataCU* outBestCU, PartSize parentSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver,
                                Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver)
 {
     if (outBestCU->getPartitionSize(0) == SIZE_2NxN)
@@ -560,12 +560,12 @@ Void TEncCu::deriveTestModeAMP(TComDataCU* outBestCU, PartSize parentSize, Bool 
  *\param   outBestCU
  *\param   outTempCU
  *\param   depth
- *\returns Void
+ *\returns void
  *
  *- for loop of QP value to compress the current CU with all possible QP
 */
 
-Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth)
+void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth)
 {
     //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
 
@@ -776,7 +776,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UI
     assert(outBestCU->m_totalCost != MAX_DOUBLE);
 }
 
-Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth, PartSize parentSize)
+void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth, PartSize parentSize)
 {
     //PPAScopeEvent(TEncCu_xCompressCU + depth);
 
@@ -1234,9 +1234,9 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt de
  * \param cu
  * \param absPartIdx
  * \param depth
- * \returns Void
+ * \returns void
  */
-Void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
+void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
 {
     TComPic* pic = cu->getPic();
     TComSlice* slice = cu->getPic()->getSlice();
@@ -1324,9 +1324,9 @@ Int TEncCu::xComputeQP(TComDataCU* cu)
  * \param cu
  * \param absPartIdx
  * \param depth
- * \returns Void
+ * \returns void
  */
-Void TEncCu::xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
+void TEncCu::xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
 {
     TComPic* pic = cu->getPic();
 
@@ -1421,9 +1421,9 @@ Void TEncCu::xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
 /** check RD costs for a CU block encoded with merge
  * \param outBestCU
  * \param outTempCU
- * \returns Void
+ * \returns void
  */
-Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, Bool *earlyDetectionSkipMode, TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest)
+void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, Bool *earlyDetectionSkipMode, TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest)
 {
     assert(outTempCU->getSlice()->getSliceType() != I_SLICE);
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
@@ -1556,7 +1556,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     }
 }
 
-Void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, Bool bUseMRG)
+void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, Bool bUseMRG)
 {
     UChar depth = outTempCU->getDepth(0);
 
@@ -1577,7 +1577,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     xCheckBestMode(outBestCU, outTempCU, depth);
 }
 
-Void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize)
+void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize)
 {
     //PPAScopeEvent(TEncCU_xCheckRDCostIntra + depth);
     UInt depth = outTempCU->getDepth(0);
@@ -1620,7 +1620,7 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     xCheckBestMode(outBestCU, outTempCU, depth);
 }
 
-Void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize)
+void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize)
 {
     UInt depth = outTempCU->getDepth(0);
 
@@ -1681,11 +1681,11 @@ Void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
 /** Check R-D costs for a CU with PCM mode.
  * \param outBestCU pointer to best mode CU data structure
  * \param outTempCU pointer to testing mode CU data structure
- * \returns Void
+ * \returns void
  *
  * \note Current PCM implementation encodes sample values in a lossless way. The distortion of PCM mode CUs are zero. PCM mode is selected if the best mode yields bits greater than that of PCM mode.
  */
-Void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
+void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
 {
     //PPAScopeEvent(TEncCU_xCheckIntraPCM);
 
@@ -1726,9 +1726,9 @@ Void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
 /** check whether current try is the best with identifying the depth of current try
  * \param outBestCU
  * \param outTempCU
- * \returns Void
+ * \returns void
  */
-Void TEncCu::xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth)
+void TEncCu::xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth)
 {
     if (outTempCU->m_totalCost < outBestCU->m_totalCost)
     {
@@ -1752,7 +1752,7 @@ Void TEncCu::xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt
     }
 }
 
-Void TEncCu::xCheckDQP(TComDataCU* cu)
+void TEncCu::xCheckDQP(TComDataCU* cu)
 {
     UInt depth = cu->getDepth(0);
 
@@ -1762,7 +1762,7 @@ Void TEncCu::xCheckDQP(TComDataCU* cu)
     }
 }
 
-Void TEncCu::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
+void TEncCu::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 {
     // TODO: SJB - there are multiple implementations of this function, it should be an AMVPInfo method
     dst->m_num = src->m_num;
@@ -1772,7 +1772,7 @@ Void TEncCu::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
     }
 }
 
-Void TEncCu::xCopyYuv2Pic(TComPic* outPic, UInt cuAddr, UInt absPartIdx, UInt depth, UInt srcDepth, TComDataCU* cu, UInt lpelx, UInt tpely)
+void TEncCu::xCopyYuv2Pic(TComPic* outPic, UInt cuAddr, UInt absPartIdx, UInt depth, UInt srcDepth, TComDataCU* cu, UInt lpelx, UInt tpely)
 {
     UInt rpelx = lpelx + (g_maxCUWidth >> depth)  - 1;
     UInt bpely = tpely + (g_maxCUHeight >> depth) - 1;
@@ -1808,12 +1808,12 @@ Void TEncCu::xCopyYuv2Pic(TComPic* outPic, UInt cuAddr, UInt absPartIdx, UInt de
     }
 }
 
-Void TEncCu::xCopyYuv2Tmp(UInt partUnitIdx, UInt nextDepth)
+void TEncCu::xCopyYuv2Tmp(UInt partUnitIdx, UInt nextDepth)
 {
     m_bestRecoYuv[nextDepth]->copyToPartYuv(m_tmpRecoYuv[nextDepth - 1], partUnitIdx);
 }
 
-Void TEncCu::xCopyYuv2Best(UInt partUnitIdx, UInt nextDepth)
+void TEncCu::xCopyYuv2Best(UInt partUnitIdx, UInt nextDepth)
 {
     m_tmpRecoYuv[nextDepth]->copyToPartYuv(m_bestRecoYuv[nextDepth - 1], partUnitIdx);
 }
@@ -1821,9 +1821,9 @@ Void TEncCu::xCopyYuv2Best(UInt partUnitIdx, UInt nextDepth)
 /** Function for filling the PCM buffer of a CU using its original sample array
  * \param cu pointer to current CU
  * \param fencYuv pointer to original sample array
- * \returns Void
+ * \returns void
  */
-Void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
+void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
 {
     UInt width = cu->getWidth(0);
     UInt height = cu->getHeight(0);

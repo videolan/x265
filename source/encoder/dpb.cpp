@@ -299,7 +299,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
  * Note that the current picture is already placed in the reference list and its marking is not changed.
  * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
  */
-Void DPB::decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType)
+void DPB::decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType)
 {
     TComPic* outPic;
 
@@ -350,7 +350,7 @@ Void DPB::decodingRefreshMarking(Int pocCurr, NalUnitType nalUnitType)
 }
 
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet */
-Void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
+void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
 {
     TComPic* outPic;
     Int i, isReference;

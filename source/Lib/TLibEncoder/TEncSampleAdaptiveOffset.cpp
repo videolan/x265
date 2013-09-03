@@ -118,7 +118,7 @@ inline Double xRoundIbdi(Double x)
 /** process SAO for one partition
  * \param  *psQTPart, partIdx, lambda
  */
-Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double lambda, Int yCbCr)
+void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double lambda, Int yCbCr)
 {
     Int typeIdx;
     Int numTotalType = MAX_NUM_SAO_TYPE;
@@ -301,7 +301,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, D
 
 /** Run partition tree disable
  */
-Void TEncSampleAdaptiveOffset::disablePartTree(SAOQTPart *psQTPart, Int partIdx)
+void TEncSampleAdaptiveOffset::disablePartTree(SAOQTPart *psQTPart, Int partIdx)
 {
     SAOQTPart* pOnePart = &(psQTPart[partIdx]);
 
@@ -321,7 +321,7 @@ Void TEncSampleAdaptiveOffset::disablePartTree(SAOQTPart *psQTPart, Int partIdx)
 /** Run quadtree decision function
  * \param  partIdx, pcPicOrg, pcPicDec, pcPicRest, &costFinal
  */
-Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, Int partIdx, Double &costFinal, Int maxLevel, Double lambda, Int yCbCr)
+void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, Int partIdx, Double &costFinal, Int maxLevel, Double lambda, Int yCbCr)
 {
     SAOQTPart* onePart = &(qtPart[partIdx]);
 
@@ -387,7 +387,7 @@ Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, Int partId
 
 /** delete allocated memory of TEncSampleAdaptiveOffset class.
  */
-Void TEncSampleAdaptiveOffset::destroyEncBuffer()
+void TEncSampleAdaptiveOffset::destroyEncBuffer()
 {
     for (Int i = 0; i < m_numTotalParts; i++)
     {
@@ -511,7 +511,7 @@ Void TEncSampleAdaptiveOffset::destroyEncBuffer()
 /** create Encoder Buffer for SAO
  * \param
  */
-Void TEncSampleAdaptiveOffset::createEncBuffer()
+void TEncSampleAdaptiveOffset::createEncBuffer()
 {
     m_distOrg = new Int64[m_numTotalParts];
     m_costPartBest = new Double[m_numTotalParts];
@@ -572,7 +572,7 @@ Void TEncSampleAdaptiveOffset::createEncBuffer()
 /** Start SAO encoder
  * \param pic, entropyCoder, rdSbacCoder, rdGoOnSbacCoder
  */
-Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
+void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
 {
     m_pic = pic;
     m_entropyCoder = entropyCoder;
@@ -588,7 +588,7 @@ Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* entropyCod
 
 /** End SAO encoder
  */
-Void TEncSampleAdaptiveOffset::endSaoEnc()
+void TEncSampleAdaptiveOffset::endSaoEnc()
 {
     m_pic = NULL;
     m_entropyCoder = NULL;
@@ -609,7 +609,7 @@ inline Int xSign(Int x)
  * \param  height block height
  * \param  bBorderAvail availabilities of block border pixels
  */
-Void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr)
+void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, Int stride, Int64** stats, Int64** counts, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr)
 {
     Int64 *stat, *count;
     Int classIdx, posShift, startX, endX, startY, endY, signLeft, signRight, signDown, signDown1;
@@ -860,7 +860,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, I
 /** Calculate SAO statistics for current LCU without non-crossing slice
  * \param  addr,  partIdx,  yCbCr
  */
-Void TEncSampleAdaptiveOffset::calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr)
+void TEncSampleAdaptiveOffset::calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr)
 {
     Int x, y;
     TComDataCU *pTmpCu = m_pic->getCU(addr);
@@ -1132,7 +1132,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu(Int addr, Int partIdx, Int yCbCr)
     }
 }
 
-Void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int idxY)
+void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int idxY)
 {
     Int addr, yCbCr;
     Int x, y;
@@ -1438,7 +1438,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, Int i
 /** get SAO statistics
  * \param  *psQTPart,  yCbCr
  */
-Void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, Int yCbCr)
+void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, Int yCbCr)
 {
     Int iLevelIdx, partIdx, iTypeIdx, iClassIdx;
     Int i;
@@ -1508,7 +1508,7 @@ Void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, Int yCbCr)
 /** reset offset statistics
  * \param
  */
-Void TEncSampleAdaptiveOffset::resetStats()
+void TEncSampleAdaptiveOffset::resetStats()
 {
     for (Int i = 0; i < m_numTotalParts; i++)
     {
@@ -1535,7 +1535,7 @@ Void TEncSampleAdaptiveOffset::resetStats()
  * \param dLambdaLuma
  * \param lambdaChroma
  */
-Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam)
+void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam)
 {
     assert(m_saoLcuBasedOptimization == false);
     Double costFinal = 0;
@@ -1563,7 +1563,7 @@ Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam)
  * \param saoUnitCheck SAO unit tobe check
  * \param dir direction
  */
-Void TEncSampleAdaptiveOffset::checkMerge(SaoLcuParam * saoUnitCurr, SaoLcuParam * saoUnitCheck, Int dir)
+void TEncSampleAdaptiveOffset::checkMerge(SaoLcuParam * saoUnitCurr, SaoLcuParam * saoUnitCheck, Int dir)
 {
     Int i;
     Int countDiff = 0;
@@ -1622,7 +1622,7 @@ Void TEncSampleAdaptiveOffset::checkMerge(SaoLcuParam * saoUnitCurr, SaoLcuParam
  * \param oneUnitFlag SAO one unit flag
  * \param yCbCr color component Index
  */
-Void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag)
+void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag)
 {
     if (saoPart->bSplit == 0)
     {
@@ -1701,7 +1701,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRowInit(SAOParam *saoParam)
     }
 }
 
-Void TEncSampleAdaptiveOffset::rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus)
+void TEncSampleAdaptiveOffset::rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus)
 {
 
     if (!saoParam->bSaoFlag[0])
@@ -1722,7 +1722,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus)
     }
 }
 
-Void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, Int idxY)
+void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, Int idxY)
 {
     Int idxX;
     Int frameWidthInCU  = saoParam->numCuInWidth;
@@ -1971,7 +1971,7 @@ inline Int64 TEncSampleAdaptiveOffset::estIterOffset(Int typeIdx, Int classIdx, 
     return offsetOutput;
 }
 
-Void TEncSampleAdaptiveOffset::saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *compDistortion)
+void TEncSampleAdaptiveOffset::saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *compDistortion)
 {
     Int typeIdx;
 
@@ -2111,7 +2111,7 @@ Void TEncSampleAdaptiveOffset::saoComponentParamDist(Int allowMergeLeft, Int all
     }
 }
 
-Void TEncSampleAdaptiveOffset::sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion)
+void TEncSampleAdaptiveOffset::sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion)
 {
     Int typeIdx;
 

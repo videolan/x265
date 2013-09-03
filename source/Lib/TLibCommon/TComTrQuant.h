@@ -90,7 +90,7 @@ public:
 
 public:
 
-    Void setQpParam(Int qpScaled)
+    void setQpParam(Int qpScaled)
     {
         m_qp   = qpScaled;
         m_per  = qpScaled / 6;
@@ -98,7 +98,7 @@ public:
         m_bits = QP_BITS + m_per;
     }
 
-    Void clear()
+    void clear()
     {
         m_qp   = 0;
         m_per  = 0;
@@ -124,42 +124,42 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    Void init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast);
+    void init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast);
 
     // transform & inverse transform functions
     UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
                       TextType ttype, UInt absPartIdx, int* lastPos, Bool useTransformSkip = false);
 
-    Void invtransformNxN(Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip = false, int lastPos = MAX_INT);
+    void invtransformNxN(Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip = false, int lastPos = MAX_INT);
 
     // Misc functions
-    Void setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset);
+    void setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset);
 
-    Void setLambda(Double lambdaLuma, Double lambdaChroma) { m_lumaLambda = lambdaLuma; m_chromaLambda = lambdaChroma; }
+    void setLambda(Double lambdaLuma, Double lambdaChroma) { m_lumaLambda = lambdaLuma; m_chromaLambda = lambdaChroma; }
 
-    Void selectLambda(TextType ttype) { m_lambda = (ttype == TEXT_LUMA) ? m_lumaLambda : m_chromaLambda; }
+    void selectLambda(TextType ttype) { m_lambda = (ttype == TEXT_LUMA) ? m_lumaLambda : m_chromaLambda; }
 
-    Void initScalingList();
-    Void destroyScalingList();
-    Void setErrScaleCoeff(UInt list, UInt size, UInt qp);
+    void initScalingList();
+    void destroyScalingList();
+    void setErrScaleCoeff(UInt list, UInt size, UInt qp);
     Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
 
     Int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
 
     Int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
 
-    Void setUseScalingList(Bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
+    void setUseScalingList(Bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
 
     Bool getUseScalingList() { return m_scalingListEnabledFlag; }
 
-    Void setFlatScalingList();
-    Void xsetFlatScalingList(UInt list, UInt size, UInt qp);
-    Void xSetScalingListEnc(TComScalingList *scalingList, UInt list, UInt size, UInt qp);
-    Void xSetScalingListDec(TComScalingList *scalingList, UInt list, UInt size, UInt qp);
-    Void setScalingList(TComScalingList *scalingList);
-    Void setScalingListDec(TComScalingList *scalingList);
-    Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
-    Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
+    void setFlatScalingList();
+    void xsetFlatScalingList(UInt list, UInt size, UInt qp);
+    void xSetScalingListEnc(TComScalingList *scalingList, UInt list, UInt size, UInt qp);
+    void xSetScalingListDec(TComScalingList *scalingList, UInt list, UInt size, UInt qp);
+    void setScalingList(TComScalingList *scalingList);
+    void setScalingListDec(TComScalingList *scalingList);
+    void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
+    void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
 
     static Int  calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, Int width, Int height);
 
@@ -191,9 +191,9 @@ protected:
 
 private:
 
-    Void xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height);
+    void xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height);
 
-    Void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, Int* deltaU, Int width, Int height);
+    void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, Int* deltaU, Int width, Int height);
 
     UInt xQuant(TComDataCU* cu, Int* src, TCoeff* dst, Int width, Int height, TextType ttype, UInt absPartIdx, int *lastPos);
 
@@ -218,11 +218,11 @@ private:
 
     inline Double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
-    Void xDeQuant(const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);
+    void xDeQuant(const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);
 
-    Void xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height);
+    void xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height);
 
-    Void xITransformSkip(Int* coeff, Short* residual, UInt stride, Int width, Int height);
+    void xITransformSkip(Int* coeff, Short* residual, UInt stride, Int width, Int height);
 };
 }
 //! \}

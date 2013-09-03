@@ -53,7 +53,7 @@ using namespace x265;
 // Create / destroy
 // --------------------------------------------------------------------------------------------------------------------
 
-Void TComCUMvField::create(UInt numPartition)
+void TComCUMvField::create(UInt numPartition)
 {
     assert(m_mv     == NULL);
     assert(m_mvd    == NULL);
@@ -66,7 +66,7 @@ Void TComCUMvField::create(UInt numPartition)
     m_numPartitions = numPartition;
 }
 
-Void TComCUMvField::destroy()
+void TComCUMvField::destroy()
 {
     assert(m_mv     != NULL);
     assert(m_mvd    != NULL);
@@ -87,7 +87,7 @@ Void TComCUMvField::destroy()
 // Clear / copy
 // --------------------------------------------------------------------------------------------------------------------
 
-Void TComCUMvField::clearMvField()
+void TComCUMvField::clearMvField()
 {
     for (Int i = 0; i < m_numPartitions; i++)
     {
@@ -99,7 +99,7 @@ Void TComCUMvField::clearMvField()
     memset(m_refIdx, NOT_VALID, m_numPartitions * sizeof(*m_refIdx));
 }
 
-Void TComCUMvField::copyFrom(TComCUMvField const * cuMvFieldSrc, Int numPartSrc, Int partAddrDst)
+void TComCUMvField::copyFrom(TComCUMvField const * cuMvFieldSrc, Int numPartSrc, Int partAddrDst)
 {
     Int sizeInMv = sizeof(MV) * numPartSrc;
 
@@ -108,12 +108,12 @@ Void TComCUMvField::copyFrom(TComCUMvField const * cuMvFieldSrc, Int numPartSrc,
     memcpy(m_refIdx + partAddrDst, cuMvFieldSrc->m_refIdx, sizeof(*m_refIdx) * numPartSrc);
 }
 
-Void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, Int partAddrDst) const
+void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, Int partAddrDst) const
 {
     copyTo(cuMvFieldDst, partAddrDst, 0, m_numPartitions);
 }
 
-Void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, Int partAddrDst, UInt offset, UInt numPart) const
+void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, Int partAddrDst, UInt offset, UInt numPart) const
 {
     Int sizeInMv = sizeof(MV) * numPart;
     Int partOffset = offset + partAddrDst;
@@ -128,7 +128,7 @@ Void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, Int partAddrDst, UInt of
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T>
-Void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
+void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
 {
     Int i;
 
@@ -311,22 +311,22 @@ Void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, Int partAddr, U
     }
 }
 
-Void TComCUMvField::setAllMv(const MV& mv, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
+void TComCUMvField::setAllMv(const MV& mv, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
 {
     setAll(m_mv, mv, cuMode, partAddr, depth, partIdx);
 }
 
-Void TComCUMvField::setAllMvd(const MV& mvd, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
+void TComCUMvField::setAllMvd(const MV& mvd, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
 {
     setAll(m_mvd, mvd, cuMode, partAddr, depth, partIdx);
 }
 
-Void TComCUMvField::setAllRefIdx(Int refIdx, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
+void TComCUMvField::setAllRefIdx(Int refIdx, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
 {
     setAll(m_refIdx, static_cast<Char>(refIdx), cuMode, partAddr, depth, partIdx);
 }
 
-Void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
+void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, Int partAddr, UInt depth, Int partIdx)
 {
     setAllMv(mvField.mv, cuMode, partAddr, depth, partIdx);
     setAllRefIdx(mvField.refIdx, cuMode, partAddr, depth, partIdx);
@@ -336,7 +336,7 @@ Void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, I
  * \param predMode   Pointer to prediction modes
  * \param scale      Factor by which to subsample motion information
  */
-Void TComCUMvField::compress(Char* predMode, Int scale)
+void TComCUMvField::compress(Char* predMode, Int scale)
 {
     Int N = scale * scale;
 

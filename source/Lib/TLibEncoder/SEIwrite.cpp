@@ -43,12 +43,12 @@ using namespace x265;
 //! \{
 
 #if ENC_DEC_TRACE
-Void  xTraceSEIHeader()
+void  xTraceSEIHeader()
 {
     fprintf(g_hTrace, "=========== SEI message ===========\n");
 }
 
-Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
+void  xTraceSEIMessageType(SEI::PayloadType payloadType)
 {
     switch (payloadType)
     {
@@ -102,7 +102,7 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
 
 #endif // if ENC_DEC_TRACE
 
-Void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
+void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
 {
     switch (sei.payloadType())
     {
@@ -147,7 +147,7 @@ Void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
  * marshal a single SEI message sei, storing the marshalled representation
  * in bitstream bs.
  */
-Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
+void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
 {
     /*
      * calculate how large the payload data is
@@ -205,7 +205,7 @@ Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
  * marshal a user_data_unregistered SEI message sei, storing the marshalled
  * representation in bitstream bs.
  */
-Void SEIWriter::xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei)
+void SEIWriter::xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei)
 {
     for (UInt i = 0; i < 16; i++)
     {
@@ -222,7 +222,7 @@ Void SEIWriter::xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei
  * marshal a decoded picture hash SEI message, storing the marshalled
  * representation in bitstream bs.
  */
-Void SEIWriter::xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei)
+void SEIWriter::xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei)
 {
     UInt val;
 
@@ -250,7 +250,7 @@ Void SEIWriter::xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei)
     }
 }
 
-Void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
+void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
 {
     WRITE_CODE(sei.activeVPSId,     4, "active_vps_id");
     WRITE_FLAG(sei.m_fullRandomAccessFlag, "full_random_access_flag");
@@ -277,7 +277,7 @@ Void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
     }
 }
 
-Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps)
+void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps)
 {
     TComVUI *vui = sps->getVuiParameters();
 
@@ -294,7 +294,7 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
     xWriteByteAlign();
 }
 
-Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps)
+void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps)
 {
     Int i, nalOrVcl;
     TComVUI *vui = sps->getVuiParameters();
@@ -333,7 +333,7 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
     xWriteByteAlign();
 }
 
-Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps)
+void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps)
 {
     Int i;
     TComVUI *vui = sps->getVuiParameters();
@@ -375,7 +375,7 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps
     xWriteByteAlign();
 }
 
-Void SEIWriter::xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei)
+void SEIWriter::xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei)
 {
     WRITE_SVLC(sei.m_recoveryPocCnt,    "recovery_poc_cnt");
     WRITE_FLAG(sei.m_exactMatchingFlag, "exact_matching_flag");
@@ -383,7 +383,7 @@ Void SEIWriter::xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei)
     xWriteByteAlign();
 }
 
-Void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
+void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
 {
     WRITE_FLAG(sei.cancelFlag,           "display_orientation_cancel_flag");
     if (!sei.cancelFlag)
@@ -396,13 +396,13 @@ Void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
     xWriteByteAlign();
 }
 
-Void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei)
+void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei)
 {
     WRITE_FLAG(sei.m_gdrForegroundFlag, "gdr_foreground_flag");
     xWriteByteAlign();
 }
 
-Void SEIWriter::xWriteByteAlign()
+void SEIWriter::xWriteByteAlign()
 {
     if (m_bitIf->getNumberOfWrittenBits() % 8 != 0)
     {

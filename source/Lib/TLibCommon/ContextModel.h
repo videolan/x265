@@ -64,31 +64,31 @@ public:
 
     UChar getMps()   { return m_state  & 1; } ///< get curret MPS
 
-    Void  setStateAndMps(UChar ucState, UChar ucMPS) { m_state = (ucState << 1) + ucMPS; } ///< set state and MPS
+    void  setStateAndMps(UChar ucState, UChar ucMPS) { m_state = (ucState << 1) + ucMPS; } ///< set state and MPS
 
-    Void init(Int qp, Int initValue);   ///< initialize state with initial probability
+    void init(Int qp, Int initValue);   ///< initialize state with initial probability
 
-    Void updateLPS()
+    void updateLPS()
     {
         m_state = s_nextStateLPS[m_state];
     }
 
-    Void updateMPS()
+    void updateMPS()
     {
         m_state = s_nextStateMPS[m_state];
     }
 
     Int getEntropyBits(Short val) { return s_entropyBits[m_state ^ val]; }
 
-    Void update(Int binVal)
+    void update(Int binVal)
     {
         m_state = m_nextState[m_state][binVal];
     }
 
-    static Void buildNextStateTable();
+    static void buildNextStateTable();
     static Int getEntropyBitsTrm(Int val) { return s_entropyBits[126 ^ val]; }
 
-    Void setBinsCoded(UInt val)   { m_binsCoded = val;  }
+    void setBinsCoded(UInt val)   { m_binsCoded = val;  }
 
     UInt getBinsCoded()           { return m_binsCoded;   }
 

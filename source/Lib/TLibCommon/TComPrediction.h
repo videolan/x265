@@ -83,17 +83,17 @@ protected:
     Int       m_lumaRecStride; ///< stride of m_lumaRecBuffer
 
     // motion compensation functions
-    Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv);
-    Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv);
-    Void xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
-    Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);
-    Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
-    Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);
+    void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv);
+    void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv);
+    void xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
+    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);
+    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
+    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);
     
-    Void xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int height, TComYuv*& outPredYuv);
-    Void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partAddr, Int width, Int height, TComYuv*& outDstYuv);
+    void xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int height, TComYuv*& outPredYuv);
+    void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partAddr, Int width, Int height, TComYuv*& outDstYuv);
 
-    Void xGetLLSPrediction(TComPattern* pcPattern, Int* src0, Int srcstride, Pel* dst0, Int dststride, UInt width, UInt height, UInt ext0);
+    void xGetLLSPrediction(TComPattern* pcPattern, Int* src0, Int srcstride, Pel* dst0, Int dststride, UInt width, UInt height, UInt ext0);
 
     Bool xCheckIdenticalMotion(TComDataCU* cu, UInt PartAddr);
 
@@ -104,17 +104,17 @@ public:
     TComPrediction();
     virtual ~TComPrediction();
 
-    Void initTempBuff();
+    void initTempBuff();
 
     // inter
-    Void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, Int partIdx = -1);
+    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, Int partIdx = -1);
 
     // motion vector prediction
-    Void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, x265::MV& mvPred);
+    void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, x265::MV& mvPred);
 
     // Angular Intra
-    Void predIntraLumaAng(UInt dirMode, Pel* pred, UInt stride, Int width);
-    Void predIntraChromaAng(Pel* src, UInt dirMode, Pel* pred, UInt stride, Int width);
+    void predIntraLumaAng(UInt dirMode, Pel* pred, UInt stride, Int width);
+    void predIntraChromaAng(Pel* src, UInt dirMode, Pel* pred, UInt stride, Int width);
 
     Pel* getPredicBuf()             { return m_predBuf; }
 

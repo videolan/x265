@@ -45,7 +45,6 @@ namespace x265 {
 // Basic type redefinition
 // ====================================================================================================================
 
-typedef       void                Void;
 typedef       bool                Bool;
 
 typedef       char                Char;

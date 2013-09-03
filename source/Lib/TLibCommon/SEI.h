@@ -305,7 +305,7 @@ SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 
 /// delete list of SEI messages (freeing the referenced objects)
-Void deleteSEIs(SEIMessages &seiList);
+void deleteSEIs(SEIMessages &seiList);
 }
 //! \}
 

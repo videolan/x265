@@ -45,7 +45,7 @@ using namespace x265;
 
 #if ENC_DEC_TRACE
 
-Void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const Char *pSymbolName)
 {
     xWriteCode(value, length);
     if (g_HLSTraceEnable)
@@ -62,7 +62,7 @@ Void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const Char *pS
     }
 }
 
-Void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const Char *pSymbolName)
 {
     xWriteUvlc(value);
     if (g_HLSTraceEnable)
@@ -72,7 +72,7 @@ Void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const Char *pSymbolName)
     }
 }
 
-Void  SyntaxElementWriter::xWriteSvlcTr(Int value, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteSvlcTr(Int value, const Char *pSymbolName)
 {
     xWriteSvlc(value);
     if (g_HLSTraceEnable)
@@ -82,7 +82,7 @@ Void  SyntaxElementWriter::xWriteSvlcTr(Int value, const Char *pSymbolName)
     }
 }
 
-Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
+void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
 {
     xWriteFlag(value);
     if (g_HLSTraceEnable)
@@ -94,13 +94,13 @@ Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
 
 #endif // if ENC_DEC_TRACE
 
-Void SyntaxElementWriter::xWriteCode(UInt uiCode, UInt uiLength)
+void SyntaxElementWriter::xWriteCode(UInt uiCode, UInt uiLength)
 {
     assert(uiLength > 0);
     m_bitIf->write(uiCode, uiLength);
 }
 
-Void SyntaxElementWriter::xWriteUvlc(UInt uiCode)
+void SyntaxElementWriter::xWriteUvlc(UInt uiCode)
 {
     UInt uiLength = 1;
     UInt uiTemp = ++uiCode;
@@ -118,7 +118,7 @@ Void SyntaxElementWriter::xWriteUvlc(UInt uiCode)
     m_bitIf->write(uiCode, (uiLength + 1) >> 1);
 }
 
-Void SyntaxElementWriter::xWriteSvlc(Int iCode)
+void SyntaxElementWriter::xWriteSvlc(Int iCode)
 {
     UInt uiCode;
 
@@ -126,7 +126,7 @@ Void SyntaxElementWriter::xWriteSvlc(Int iCode)
     xWriteUvlc(uiCode);
 }
 
-Void SyntaxElementWriter::xWriteFlag(UInt uiCode)
+void SyntaxElementWriter::xWriteFlag(UInt uiCode)
 {
     m_bitIf->write(uiCode, 1);
 }

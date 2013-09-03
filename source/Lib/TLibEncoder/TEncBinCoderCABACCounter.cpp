@@ -49,7 +49,7 @@ TEncBinCABACCounter::TEncBinCABACCounter()
 TEncBinCABACCounter::~TEncBinCABACCounter()
 {}
 
-Void TEncBinCABACCounter::finish()
+void TEncBinCABACCounter::finish()
 {
     m_pcTComBitIf->write(0, UInt(m_fracBits >> 15));
     m_fracBits &= 32767;
@@ -66,7 +66,7 @@ UInt TEncBinCABACCounter::getNumWrittenBits()
  * \param binValue   bin value
  * \param rcCtxModel context model
  */
-Void TEncBinCABACCounter::encodeBin(UInt binValue, ContextModel &rcCtxModel)
+void TEncBinCABACCounter::encodeBin(UInt binValue, ContextModel &rcCtxModel)
 {
     m_uiBinsCoded += m_binCountIncrement;
 
@@ -79,7 +79,7 @@ Void TEncBinCABACCounter::encodeBin(UInt binValue, ContextModel &rcCtxModel)
  *
  * \param binValue bin value
  */
-Void TEncBinCABACCounter::encodeBinEP(UInt /*binValue*/)
+void TEncBinCABACCounter::encodeBinEP(UInt /*binValue*/)
 {
     m_uiBinsCoded += m_binCountIncrement;
     m_fracBits += 32768;
@@ -91,7 +91,7 @@ Void TEncBinCABACCounter::encodeBinEP(UInt /*binValue*/)
  * \param binValues bin values
  * \param numBins number of bins
  */
-Void TEncBinCABACCounter::encodeBinsEP(UInt /*binValues*/, Int numBins)
+void TEncBinCABACCounter::encodeBinsEP(UInt /*binValues*/, Int numBins)
 {
     m_uiBinsCoded += numBins & - m_binCountIncrement;
     m_fracBits += 32768 * numBins;
@@ -102,7 +102,7 @@ Void TEncBinCABACCounter::encodeBinsEP(UInt /*binValues*/, Int numBins)
  *
  * \param binValue bin value
  */
-Void TEncBinCABACCounter::encodeBinTrm(UInt binValue)
+void TEncBinCABACCounter::encodeBinTrm(UInt binValue)
 {
     m_uiBinsCoded += m_binCountIncrement;
     m_fracBits += ContextModel::getEntropyBitsTrm(binValue);

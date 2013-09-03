@@ -85,19 +85,19 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    Void          create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes);
+    void          create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes);
 
-    virtual Void  destroy();
+    virtual void  destroy();
 
     Bool          getUsedByCurr()           { return m_bUsedByCurr; }
 
-    Void          setUsedByCurr(Bool bUsed) { m_bUsedByCurr = bUsed; }
+    void          setUsedByCurr(Bool bUsed) { m_bUsedByCurr = bUsed; }
 
     Bool          getIsLongTerm()           { return m_bIsLongTerm; }
 
-    Void          setIsLongTerm(Bool lt)    { m_bIsLongTerm = lt; }
+    void          setIsLongTerm(Bool lt)    { m_bIsLongTerm = lt; }
 
-    Void          setCheckLTMSBPresent(Bool b) { m_bCheckLTMSB = b; }
+    void          setCheckLTMSBPresent(Bool b) { m_bCheckLTMSB = b; }
 
     Bool          getCheckLTMSBPresent()  { return m_bCheckLTMSB; }
 
@@ -137,15 +137,15 @@ public:
 
     Int           getCStride()            { return m_reconPicYuv->getCStride(); }
 
-    Void          compressMotion();
+    void          compressMotion();
 
     Window&       getConformanceWindow()  { return m_conformanceWindow; }
 
     Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
 
-    Void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth);
-    Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
-    Void          destroyNonDBFilterInfo();
+    void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth);
+    void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
+    void          destroyNonDBFilterInfo();
 }; // END CLASS DEFINITION TComPic
 }
 //! \}

@@ -207,7 +207,7 @@ public:
 
     Window &getConformanceWindow() { return m_conformanceWindow; }
 
-    Void setPad(Int* iPad) { for (Int i = 0; i < 2; i++) { m_pad[i] = iPad[i]; } }
+    void setPad(Int* iPad) { for (Int i = 0; i < 2; i++) { m_pad[i] = iPad[i]; } }
 
     Int getPad(Int i) { assert(i < 2); return m_pad[i]; }
 

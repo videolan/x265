@@ -67,7 +67,7 @@ const UChar TComPattern::m_intraFilter[5] =
  \param  offsetLeft   neighbor offset (left)
  \param  offsetAbove  neighbor offset (above)
  */
-Void TComPatternParam::setPatternParamPel(Pel* texture, Int roiWidth, Int roiHeight,
+void TComPatternParam::setPatternParamPel(Pel* texture, Int roiWidth, Int roiHeight,
                                           Int stride, Int offsetLeft, Int offsetAbove)
 {
     m_patternOrigin  = texture;
@@ -88,7 +88,7 @@ Void TComPatternParam::setPatternParamPel(Pel* texture, Int roiWidth, Int roiHei
  \param  offsetAbove  neighbor offset (above)
  \param  absPartIdx   part index
  */
-Void TComPatternParam::setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
+void TComPatternParam::setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
                                          Int offsetLeft, Int offsetAbove, UInt absPartIdx)
 {
     m_offsetLeft   = offsetLeft;
@@ -121,7 +121,7 @@ Void TComPatternParam::setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWi
 // Public member functions (TComPattern)
 // ====================================================================================================================
 
-Void TComPattern::initPattern(Pel* y, Pel* cb, Pel* cr, Int roiWidth, Int roiHeight, Int stride,
+void TComPattern::initPattern(Pel* y, Pel* cb, Pel* cr, Int roiWidth, Int roiHeight, Int stride,
                               Int offsetLeft, Int offsetAbove)
 {
     m_patternY.setPatternParamPel(y,  roiWidth,      roiHeight,      stride,      offsetLeft,      offsetAbove);
@@ -129,7 +129,7 @@ Void TComPattern::initPattern(Pel* y, Pel* cb, Pel* cr, Int roiWidth, Int roiHei
     m_patternCr.setPatternParamPel(cr, roiWidth >> 1, roiHeight >> 1, stride >> 1, offsetLeft >> 1, offsetAbove >> 1);
 }
 
-Void TComPattern::initPattern(TComDataCU* cu, UInt partDepth, UInt absPartIdx)
+void TComPattern::initPattern(TComDataCU* cu, UInt partDepth, UInt absPartIdx)
 {
     Int offsetLeft  = 0;
     Int offsetAbove = 0;
@@ -156,7 +156,7 @@ Void TComPattern::initPattern(TComDataCU* cu, UInt partDepth, UInt absPartIdx)
     m_patternCr.setPatternParamCU(cu, 2, width >> 1, height >> 1, offsetLeft, offsetAbove, absPartIdx);
 }
 
-Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
+void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
                                  Int strideOrig, Int heightOrig)
 {
     Pel* roiOrigin;
@@ -287,7 +287,7 @@ Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
 }
 
 // Overloaded initialization of ADI buffers to support buffered references for xpredIntraAngBufRef
-Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig,
+void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig,
                                  Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt)
 {
     initAdiPattern(cu, zOrderIdxInPart, partDepth, adiBuf, strideOrig, heightOrig);
@@ -312,7 +312,7 @@ Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
     }
 }
 
-Void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig)
+void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig)
 {
     Pel*  roiOrigin;
     Pel*  adiTemp;
@@ -370,7 +370,7 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UIn
                          cuWidth, cuHeight, width, height, picStride);
 }
 
-Void TComPattern::fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor, Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, Int picStride )
+void TComPattern::fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor, Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, Int picStride )
 {
     Pel* piRoiTemp;
     Int  i, j;

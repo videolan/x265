@@ -63,9 +63,9 @@ namespace x265 {
 // Initialize / destroy functions
 // ====================================================================================================================
 
-Void initROM();
-Void destroyROM();
-Void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int height);
+void initROM();
+void destroyROM();
+void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int height);
 
 // ====================================================================================================================
 // Data structure related table & variable
@@ -75,14 +75,14 @@ Void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
 extern UInt g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern UInt g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-Void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx);
-Void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
+void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx);
+void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
 
 // conversion of partition index to picture pel position
 extern UInt g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern UInt g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-Void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
+void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
 
 // global variable (LCU width/height, max. CU depth)
 extern UInt g_maxCUWidth;

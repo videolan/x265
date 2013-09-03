@@ -52,17 +52,17 @@ TEncBinCABAC::TEncBinCABAC()
 TEncBinCABAC::~TEncBinCABAC()
 {}
 
-Void TEncBinCABAC::init(TComBitIf* pcTComBitIf)
+void TEncBinCABAC::init(TComBitIf* pcTComBitIf)
 {
     m_pcTComBitIf = pcTComBitIf;
 }
 
-Void TEncBinCABAC::uninit()
+void TEncBinCABAC::uninit()
 {
     m_pcTComBitIf = 0;
 }
 
-Void TEncBinCABAC::start()
+void TEncBinCABAC::start()
 {
     m_uiLow            = 0;
     m_uiRange          = 510;
@@ -71,7 +71,7 @@ Void TEncBinCABAC::start()
     m_bufferedByte     = 0xff;
 }
 
-Void TEncBinCABAC::finish()
+void TEncBinCABAC::finish()
 {
     if (m_uiLow >> (32 - m_bitsLeft))
     {
@@ -101,7 +101,7 @@ Void TEncBinCABAC::finish()
     m_pcTComBitIf->write(m_uiLow >> 8, 24 - m_bitsLeft);
 }
 
-Void TEncBinCABAC::flush()
+void TEncBinCABAC::flush()
 {
     encodeBinTrm(1);
     finish();
@@ -112,17 +112,17 @@ Void TEncBinCABAC::flush()
 }
 
 /** Reset BAC register and counter values.
- * \returns Void
+ * \returns void
  */
-Void TEncBinCABAC::resetBac()
+void TEncBinCABAC::resetBac()
 {
     start();
 }
 
 /** Encode PCM alignment zero bits.
- * \returns Void
+ * \returns void
  */
-Void TEncBinCABAC::encodePCMAlignBits()
+void TEncBinCABAC::encodePCMAlignBits()
 {
     finish();
     m_pcTComBitIf->write(1, 1);
@@ -132,14 +132,14 @@ Void TEncBinCABAC::encodePCMAlignBits()
 /** Write a PCM code.
  * \param uiCode code value
  * \param uiLength code bit-depth
- * \returns Void
+ * \returns void
  */
-Void TEncBinCABAC::xWritePCMCode(UInt uiCode, UInt uiLength)
+void TEncBinCABAC::xWritePCMCode(UInt uiCode, UInt uiLength)
 {
     m_pcTComBitIf->write(uiCode, uiLength);
 }
 
-Void TEncBinCABAC::copyState(TEncBinIf* pcTEncBinIf)
+void TEncBinCABAC::copyState(TEncBinIf* pcTEncBinIf)
 {
     TEncBinCABAC* pcTEncBinCABAC = pcTEncBinIf->getTEncBinCABAC();
 
@@ -151,7 +151,7 @@ Void TEncBinCABAC::copyState(TEncBinIf* pcTEncBinIf)
     m_fracBits = pcTEncBinCABAC->m_fracBits;
 }
 
-Void TEncBinCABAC::resetBits()
+void TEncBinCABAC::resetBits()
 {
     m_uiLow            = 0;
     m_bitsLeft         = 23;
@@ -175,7 +175,7 @@ UInt TEncBinCABAC::getNumWrittenBits()
  * \param binValue   bin value
  * \param rcCtxModel context model
  */
-Void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &rcCtxModel)
+void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &rcCtxModel)
 {
     {
         DTRACE_CABAC_VL(g_nSymbolCounter++)
@@ -221,7 +221,7 @@ Void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &rcCtxModel)
  *
  * \param binValue bin value
  */
-Void TEncBinCABAC::encodeBinEP(UInt binValue)
+void TEncBinCABAC::encodeBinEP(UInt binValue)
 {
     {
         DTRACE_CABAC_VL(g_nSymbolCounter++)
@@ -246,7 +246,7 @@ Void TEncBinCABAC::encodeBinEP(UInt binValue)
  * \param binValues bin values
  * \param numBins number of bins
  */
-Void TEncBinCABAC::encodeBinsEP(UInt binValues, Int numBins)
+void TEncBinCABAC::encodeBinsEP(UInt binValues, Int numBins)
 {
     m_uiBinsCoded += numBins & - m_binCountIncrement;
 
@@ -282,7 +282,7 @@ Void TEncBinCABAC::encodeBinsEP(UInt binValues, Int numBins)
  *
  * \param binValue bin value
  */
-Void TEncBinCABAC::encodeBinTrm(UInt binValue)
+void TEncBinCABAC::encodeBinTrm(UInt binValue)
 {
     m_uiBinsCoded += m_binCountIncrement;
     m_uiRange -= 2;
@@ -307,7 +307,7 @@ Void TEncBinCABAC::encodeBinTrm(UInt binValue)
     testAndWriteOut();
 }
 
-Void TEncBinCABAC::testAndWriteOut()
+void TEncBinCABAC::testAndWriteOut()
 {
     if (m_bitsLeft < 12)
     {
@@ -318,7 +318,7 @@ Void TEncBinCABAC::testAndWriteOut()
 /**
  * \brief Move bits from register into bitstream
  */
-Void TEncBinCABAC::writeOut()
+void TEncBinCABAC::writeOut()
 {
     UInt leadByte = m_uiLow >> (24 - m_bitsLeft);
 
