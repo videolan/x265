@@ -163,11 +163,8 @@ public:
         // Initialize global singletons (these should eventually be per-slice)
         m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
     }
-
     int getStreamHeaders(AccessUnit& accessUnitOut);
-
-    void initSlice(TComPic* pic, bool bForceISlice, int gopID);
-
+    void initSlice(TComPic* pic, int gopID);
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame(TComPic *pic);
 

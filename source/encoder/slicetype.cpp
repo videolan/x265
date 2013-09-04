@@ -143,9 +143,9 @@ void Lookahead::slicetypeDecide()
         {
             iterPic++;
         }
-
         TComPic *pic = *iterPic;
-        pic->m_lowres.sliceType = cfg->getGOPEntry(i).m_sliceType;
+        bool forceIntra = cfg->param.keyframeMax == 1 || ( pic->getPOC() % cfg->param.keyframeMax == 0) || pic->getPOC() == 0;
+        pic->m_lowres.sliceType = forceIntra? X265_TYPE_I : (cfg->getGOPEntry(i).m_sliceType=='P')? X265_TYPE_P : X265_TYPE_B;
         pic->m_lowres.gopIdx = i;
         outputQueue.pushBack(pic);
         numDecided++;

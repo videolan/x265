@@ -78,14 +78,8 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
         m_lastIDR = pocCurr;
     }
     slice->setLastIDR(m_lastIDR);
-
-    if (slice->getSliceType() == B_SLICE && m_cfg->getGOPEntry(gopIdx).m_sliceType == 'P')
-    {
-        slice->setSliceType(P_SLICE);
-    }
     slice->setReferenced(slice->getSliceType() != B_SLICE);
     slice->setTemporalLayerNonReferenceFlag(!slice->isReferenced());
-
     // Set the nal unit type
     slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR));
 
