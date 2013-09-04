@@ -129,7 +129,6 @@ void TComSlice::initSlice()
 
     m_bFinalized = false;
 
-    m_tileByteLocation.clear();
     m_cabacInitFlag = false;
     m_numEntryPointOffsets = 0;
     m_enableTMVPFlag = true;
