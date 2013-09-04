@@ -109,7 +109,7 @@ protected:
     int       m_pad[2];
 
     //====== Coding Structure ========
-    int       m_gopSize;
+    int       gopsizeMin; //Minimum allowed GOP size. With P frames only, its 4 and with B frames, its 8.
     GOPEntry  m_gopList[MAX_GOP];
     int       m_extraRPSs;
     int       m_maxDecPicBuffering[MAX_TLAYER];
@@ -224,7 +224,7 @@ public:
 
     //==== Coding Structure ========
 
-    int getGOPSize() { return m_gopSize; }
+    int getGOPSize() { return gopsizeMin; }
 
     int getMaxDecPicBuffering(UInt tlayer) { return m_maxDecPicBuffering[tlayer]; }
 

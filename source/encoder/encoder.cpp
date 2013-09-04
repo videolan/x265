@@ -193,7 +193,7 @@ void x265_t::configure(x265_param_t *_param)
         _param->bEnableWavefront = 0;
     }
 
-    m_gopSize = 4;
+    gopsizeMin = 4;
 
     //====== Coding Tools ========
 

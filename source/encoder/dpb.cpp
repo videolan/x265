@@ -643,7 +643,7 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         SET5(5, m_refIdc, 1, 1, 1, 1, 0);
         SET5(6, m_refIdc, 1, 0, 1, 1, 1);
         SET5(7, m_refIdc, 1, 1, 1, 1, 0);
-        m_gopSize = 8;
+        gopsizeMin = 8;
         _param->bframes = 8; // this fixed GOP structure can use refs 8 frames away
     }
     else
@@ -679,14 +679,14 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
     }
     else if (_param->keyframeMax > 0)
     {
-        m_gopSize = X265_MIN(_param->keyframeMax, m_gopSize);
-        m_gopSize = X265_MAX(1, m_gopSize);
-        int remain = _param->keyframeMax % m_gopSize;
+        gopsizeMin = X265_MIN(_param->keyframeMax, gopsizeMin);
+        gopsizeMin = X265_MAX(1, gopsizeMin);
+        int remain = _param->keyframeMax % gopsizeMin;
         if (remain)
         {
-            _param->keyframeMax += m_gopSize - remain;
+            _param->keyframeMax += gopsizeMin - remain;
             x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
-                     m_gopSize, _param->keyframeMax);
+                     gopsizeMin, _param->keyframeMax);
         }
         if (_param->bframes && _param->keyframeMax < 16)
         {
@@ -698,20 +698,20 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
     {
         // default keyframe interval of 1 second
         _param->keyframeMax = _param->frameRate;
-        int remain = _param->keyframeMax % m_gopSize;
+        int remain = _param->keyframeMax % gopsizeMin;
         if (remain)
-            _param->keyframeMax += m_gopSize - remain;
+            _param->keyframeMax += gopsizeMin - remain;
     }
     _param->keyframeMin = _param->keyframeMax;
 
-    if (_param->lookaheadDepth < m_gopSize)
+    if (_param->lookaheadDepth < gopsizeMin)
     {
         // this check goes away when we have a real lookahead
         x265_log(_param, X265_LOG_WARNING, "Lookahead depth must be at least one GOP\n");
-        _param->lookaheadDepth = m_gopSize;
+        _param->lookaheadDepth = gopsizeMin;
     }
 
-    for (int i = 0; i < m_gopSize; i++)
+    for (int i = 0; i < gopsizeMin; i++)
     {
         CONFIRM(m_gopList[i].m_sliceType != 'B' && m_gopList[i].m_sliceType != 'P', "Slice type must be equal to B or P");
     }
@@ -722,14 +722,14 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
         m_maxDecPicBuffering[i] = 1;
     }
 
-    for (int i = 0; i < m_gopSize; i++)
+    for (int i = 0; i < gopsizeMin; i++)
     {
         if (m_gopList[i].m_numRefPics + 1 > m_maxDecPicBuffering[0])
         {
             m_maxDecPicBuffering[0] = m_gopList[i].m_numRefPics + 1;
         }
         int highestDecodingNumberWithLowerPOC = 0;
-        for (int j = 0; j < m_gopSize; j++)
+        for (int j = 0; j < gopsizeMin; j++)
         {
             if (m_gopList[j].m_POC <= m_gopList[i].m_POC)
             {
