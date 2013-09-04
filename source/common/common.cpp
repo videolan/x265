@@ -122,7 +122,7 @@ void x265_param_default(x265_param_t *param)
     param->frameNumThreads = 1;
     param->logLevel = X265_LOG_INFO;
     param->searchMethod = X265_STAR_SEARCH;
-    param->searchRange = 64;
+    param->searchRange = 60;
     param->bipredSearchRange = 4;
     param->internalBitDepth = 8;
     param->decodingRefreshType = 1;
