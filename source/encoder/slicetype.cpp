@@ -102,7 +102,6 @@ void Lookahead::slicetypeDecide()
     {
         TComPic *pic = inputQueue.popFront();
         pic->m_lowres.sliceType = X265_TYPE_I;
-        pic->m_lowres.gopIdx = 0;
         outputQueue.pushBack(pic);
         numDecided++;
         lastKeyframe = 0;
@@ -121,7 +120,6 @@ void Lookahead::slicetypeDecide()
     for (int i = 1; i <= dframes && i <= inputQueue.size(); i++)
     {
         pic = inputQueue.popFront();
-        pic->m_lowres.gopIdx = (pic->getPOC() - 1) % (cfg->getGOPSizeMin());
         outputQueue.pushBack(pic);
         if (pic->m_lowres.sliceType == X265_TYPE_I)
         {
@@ -130,34 +128,39 @@ void Lookahead::slicetypeDecide()
     }
 
 #else // if 0
-      // Fake lookahead using HM's fixed GOP structure
-    int batchSize = cfg->getGOPSizeMin();
-    for (int i = 0; i < batchSize; i++)
+    // Fake lookahead
+    if (cfg->param.keyframeMax == 1)
     {
-        int idx = cfg->getGOPEntry(i).m_POC - 1;
-        if ((size_t)idx >= inputQueue.size())
-            continue;
+        TComPic *pic = inputQueue.popFront();
 
-        TComList<TComPic*>::iterator iterPic = inputQueue.begin();
-        for (int j = 0; j < idx; j++)
-        {
-            iterPic++;
-        }
-        TComPic *pic = *iterPic;
-        bool forceIntra = cfg->param.keyframeMax == 1 || ( pic->getPOC() % cfg->param.keyframeMax == 0) || pic->getPOC() == 0;
-        pic->m_lowres.sliceType = forceIntra? X265_TYPE_I : (cfg->getGOPEntry(i).m_sliceType=='P')? X265_TYPE_P : X265_TYPE_B;
-        pic->m_lowres.gopIdx = i;
+        pic->m_lowres.sliceType = X265_TYPE_I;
         outputQueue.pushBack(pic);
         numDecided++;
     }
+    else if (cfg->param.bframes == 0 || inputQueue.size() == 1)
+    {
+        TComPic *pic = inputQueue.popFront();
 
-    if ((size_t)batchSize >= inputQueue.size())
-        inputQueue.clear();
+        bool forceIntra = (pic->getPOC() % cfg->param.keyframeMax) == 0;
+        pic->m_lowres.sliceType = forceIntra? X265_TYPE_I : X265_TYPE_P;
+        outputQueue.pushBack(pic);
+        numDecided++;
+    }
     else
-        for (int i = 0; i < batchSize; i++)
-        {
-            inputQueue.popFront();
-        }
+    {
+        TComPic *picB = inputQueue.popFront();
+        TComPic *picP = inputQueue.popFront();
+
+        bool forceIntra = (picP->getPOC() % cfg->param.keyframeMax) == 0;
+        picP->m_lowres.sliceType = forceIntra? X265_TYPE_I : X265_TYPE_P;
+        outputQueue.pushBack(picP);
+        numDecided++;
+
+        forceIntra = (picB->getPOC() % cfg->param.keyframeMax) == 0;
+        picB->m_lowres.sliceType = forceIntra? X265_TYPE_I : X265_TYPE_B;
+        outputQueue.pushBack(picB);
+        numDecided++;
+    }
 
 #endif // if 0
 }

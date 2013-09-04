@@ -246,9 +246,10 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // pop a single frame from decided list, prepare, then provide to frame encoder
         // curEncoder is guaranteed to be idle at this point
         TComPic *fenc = m_lookahead->outputQueue.popFront();
-        // Initialise slice in Frame Encoder
-        int gopIdx = fenc->m_lowres.gopIdx;
-        curEncoder->initSlice(fenc,gopIdx);
+
+        // Initialize slice in Frame Encoder
+        curEncoder->initSlice(fenc);
+
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
         if (m_rateControl->rateControlMode == X265_RC_ABR)

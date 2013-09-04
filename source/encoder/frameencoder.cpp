@@ -209,7 +209,7 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
     }
     return 0;
 }
-void FrameEncoder::initSlice(TComPic* pic, int gopID)
+void FrameEncoder::initSlice(TComPic* pic)
 {
     m_pic = pic;
     TComSlice* slice = pic->getSlice();
@@ -280,13 +280,6 @@ void FrameEncoder::initSlice(TComPic* pic, int gopID)
     double qpdouble;
     double lambda;
     qpdouble = m_cfg->param.rc.qp;
-    if (sliceType != I_SLICE)
-    {
-        if (!((qpdouble == -slice->getSPS()->getQpBDOffsetY()) && (slice->getSPS()->getUseLossless())))
-        {
-            qpdouble += m_cfg->getGOPEntry(gopID).m_QPOffset;
-        }
-    }
 
     // ------------------------------------------------------------------------------------------------------------------
     // Lambda computation
@@ -299,6 +292,7 @@ void FrameEncoder::initSlice(TComPic* pic, int gopID)
     }
     else
     {
+        qp += 2;
         lambda = X265_MAX(1,x265_lambda2_non_I[qp]);
     }
 

@@ -66,7 +66,6 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 {
     PPAScopeEvent(DPB_prepareEncode);
 
-    int gopIdx = pic->m_lowres.gopIdx;
     int pocCurr = pic->getSlice()->getPOC();
 
     m_picList.pushFront(pic);
@@ -149,6 +148,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
             }
         }
 
+#if 0
         if (closeRight > -1)
         {
             closeRight = closeRight + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
@@ -178,6 +178,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
         {
             colDir = 0;
         }
+#endif
         slice->setColFromL0Flag(1 - colDir);
 
         bool bLowDelay = true;

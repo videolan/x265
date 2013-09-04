@@ -63,7 +63,6 @@ struct Lowres : public ReferencePlanes
     int    scenecut;  // Set to zero if the frame cannot possibly be part of a real scenecut. 
 
     int    sliceType; // Slice type decided by lookahead
-    int    gopIdx;    // temp output for fixed-GOP pseudo-lookahead
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
