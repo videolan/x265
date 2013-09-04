@@ -220,7 +220,7 @@ void FrameEncoder::initSlice(TComPic* pic, int gopID)
     slice->initSlice();
     slice->setPicOutputFlag(true);
     int type = pic->m_lowres.sliceType;
-    SliceType sliceType = IS_X265_TYPE_B(type)? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE: I_SLICE );
+    SliceType sliceType = IS_X265_TYPE_B(type)? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE: I_SLICE);
     slice->setSliceType(sliceType);
     slice->setReferenced(true);
     slice->setScalingList(m_top->getScalingList());
