@@ -679,20 +679,24 @@ bool TEncCfg::initializeGOP(x265_param_t *_param)
     }
     else if (_param->keyframeMax > 0)
     {
-        gopsizeMin = X265_MIN(_param->keyframeMax, gopsizeMin);
-        gopsizeMin = X265_MAX(1, gopsizeMin);
+        /*TODO: The following check comes from the hard-coded encode structure previously used by HM. 
+        Once lookahead determines the encode structure on the fly, this can be taken away*/
+
+        /* For IPB config, minimum GOP size is 8. */
+        if (_param->bframes && _param->keyframeMax < gopsizeMin)
+        {
+            _param->keyframeMax = gopsizeMin;
+            x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be at least %d for B GOP structure\n", gopsizeMin);
+        }
+
+        /*Keyframe interval should be a multiple of min Gop size (IP config: 4, IPB config: 8)*/
         int remain = _param->keyframeMax % gopsizeMin;
         if (remain)
         {
             _param->keyframeMax += gopsizeMin - remain;
             x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
                      gopsizeMin, _param->keyframeMax);
-        }
-        if (_param->bframes && _param->keyframeMax < 16)
-        {
-            _param->keyframeMax = 16;
-            x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be at least 16 for B GOP structure\n");
-        }
+        }       
     }
     else if (_param->keyframeMax == 0)
     {
