@@ -166,14 +166,14 @@ public:
     int getStreamHeaders(AccessUnit& accessUnitOut);
     void initSlice(TComPic* pic, int gopID);
     /* analyze / compress frame, can be run in parallel within reference constraints */
-    void compressFrame(TComPic *pic);
+    void compressFrame();
 
     /* called by compressFrame to perform wave-front analysis */
-    void compressCTURows(TComPic *pic);
+    void compressCTURows();
 
-    void encodeSlice(TComPic* pic, TComOutputBitstream* substreams);
+    void encodeSlice(TComOutputBitstream* substreams);
 
-    void determineSliceBounds(TComPic* pic);
+    void determineSliceBounds();
 
     TComPic *getEncodedPicture(AccessUnit& accessUnit);
 
@@ -185,7 +185,7 @@ public:
             m_enable.wait();
             if (!m_threadActive)
                 break;
-            compressFrame(m_pic);
+            compressFrame();
             m_done.trigger();
         }
     }

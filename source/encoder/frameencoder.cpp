@@ -332,14 +332,14 @@ void FrameEncoder::initSlice(TComPic* pic, int gopID)
     slice->setSliceQpDeltaCr(0);
 }
 
-void FrameEncoder::compressFrame(TComPic *pic)
+void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
 
     TEncEntropy* entropyCoder = getEntropyCoder(0);
-    TComSlice*   slice        = pic->getSlice();
+    TComSlice*   slice        = m_pic->getSlice();
 
-    int numSubstreams = m_cfg->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
+    int numSubstreams = m_cfg->param.bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
     // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
     TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
@@ -363,7 +363,7 @@ void FrameEncoder::compressFrame(TComPic *pic)
     }
 
     slice->setSliceSegmentBits(0);
-    determineSliceBounds(pic);
+    determineSliceBounds();
     slice->setNextSlice(false);
 
     //------------------------------------------------------------------------------
@@ -430,13 +430,13 @@ void FrameEncoder::compressFrame(TComPic *pic)
 
     if (m_sps.getUseSAO())
     {
-        pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
+        m_pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
     }
 
     // Analyze CTU rows, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
     // wave-front behind the CU compression and reconstruction
-    compressCTURows(pic);
+    compressCTURows();
 
 #if CU_STAT_LOGFILE
     if (slice->getSliceType() != I_SLICE)
@@ -501,13 +501,13 @@ void FrameEncoder::compressFrame(TComPic *pic)
     /* use the main bitstream buffer for storing the marshaled picture */
     if (m_sps.getUseSAO())
     {
-        SAOParam* saoParam = pic->getPicSym()->getSaoParam();
+        SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
 
         if (!getSAO()->getSaoLcuBasedOptimization())
         {
             getSAO()->SAOProcess(saoParam);
             getSAO()->endSaoEnc();
-            PCMLFDisableProcess(pic);
+            PCMLFDisableProcess(m_pic);
         }
 
         slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
@@ -517,7 +517,7 @@ void FrameEncoder::compressFrame(TComPic *pic)
 
     // Reconstruction slice
     slice->setNextSlice(true);
-    determineSliceBounds(pic);
+    determineSliceBounds();
 
     slice->allocSubstreamSizes(numSubstreams);
     for (int i = 0; i < numSubstreams; i++)
@@ -578,7 +578,7 @@ void FrameEncoder::compressFrame(TComPic *pic)
     m_sbacCoder.load(getSbacCoder(0));
 
     slice->setTileOffstForMultES(0);
-    encodeSlice(pic, outStreams);
+    encodeSlice(outStreams);
 
     {
         // Construct the final bitstream by flushing and concatenating substreams.
@@ -635,9 +635,9 @@ void FrameEncoder::compressFrame(TComPic *pic)
     if (m_sps.getUseSAO())
     {
         m_frameFilter.end();
-        pic->destroyNonDBFilterInfo();
+        m_pic->destroyNonDBFilterInfo();
     }
-    pic->compressMotion();
+    m_pic->compressMotion();
 
     /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)
@@ -654,13 +654,13 @@ void FrameEncoder::compressFrame(TComPic *pic)
     delete bitstreamRedirect;
 }
 
-void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
+void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
 {
     PPAScopeEvent(FrameEncoder_encodeSlice);
 
     // choose entropy coder
     TEncEntropy *entropyCoder = getEntropyCoder(0);
-    TComSlice* slice = pic->getSlice();
+    TComSlice* slice = m_pic->getSlice();
 
     resetEncoder();
     getCuEncoder(0)->setBitCounter(NULL);
@@ -677,14 +677,14 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 #endif
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tPOC: ");
-    DTRACE_CABAC_V(pic->getPOC());
+    DTRACE_CABAC_V(m_pic->getPOC());
     DTRACE_CABAC_T("\n");
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
     const int  bWaveFrontsynchro = m_cfg->param.bEnableWavefront;
-    const UInt heightInLCUs = pic->getPicSym()->getFrameHeightInCU();
+    const UInt heightInLCUs = m_pic->getPicSym()->getFrameHeightInCU();
     const int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
     UInt bitsOriginallyInSubstreams = 0;
 
@@ -694,14 +694,14 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
         bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
     }
 
-    UInt widthInLCUs = pic->getPicSym()->getFrameWidthInCU();
+    UInt widthInLCUs = m_pic->getPicSym()->getFrameWidthInCU();
     UInt col = 0, lin = 0, subStrm = 0;
-    cuAddr = (startCUAddr / pic->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
+    cuAddr = (startCUAddr / m_pic->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
                                                        an encoding order index, so we need to convert the index (startCUAddr)
                                                        into the real raster scan address (cuAddr) via the CUOrderMap */
     UInt encCUOrder;
-    for (encCUOrder = startCUAddr / pic->getNumPartInCU();
-         encCUOrder < (boundingCUAddr + pic->getNumPartInCU() - 1) / pic->getNumPartInCU();
+    for (encCUOrder = startCUAddr / m_pic->getNumPartInCU();
+         encCUOrder < (boundingCUAddr + m_pic->getNumPartInCU() - 1) / m_pic->getNumPartInCU();
          cuAddr = ++encCUOrder)
     {
         col     = cuAddr % widthInLCUs;
@@ -714,14 +714,14 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
         if ((numSubstreams > 1) && (col == 0) && bWaveFrontsynchro)
         {
             // We'll sync if the TR is available.
-            TComDataCU *cuUp = pic->getCU(cuAddr)->getCUAbove();
-            UInt widthInCU = pic->getFrameWidthInCU();
+            TComDataCU *cuUp = m_pic->getCU(cuAddr)->getCUAbove();
+            UInt widthInCU = m_pic->getFrameWidthInCU();
             TComDataCU *cuTr = NULL;
 
             // CHECK_ME: here can be optimize a little, do it later
             if (cuUp && ((cuAddr % widthInCU + 1) < widthInCU))
             {
-                cuTr = pic->getCU(cuAddr - widthInCU + 1);
+                cuTr = m_pic->getCU(cuAddr - widthInCU + 1);
             }
             if ( /*bEnforceSliceRestriction &&*/ ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
             {
@@ -735,7 +735,7 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
         }
         m_sbacCoder.load(getSbacCoder(subStrm)); //this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
 
-        TComDataCU* cu = pic->getCU(cuAddr);
+        TComDataCU* cu = m_pic->getCU(cuAddr);
         if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
@@ -833,23 +833,23 @@ void FrameEncoder::encodeSlice(TComPic* pic, TComOutputBitstream* substreams)
 /** Determines the starting and bounding LCU address of current slice / dependent slice
  * \returns Updates startCUAddr, boundingCUAddr with appropriate LCU address
  */
-void FrameEncoder::determineSliceBounds(TComPic* pic)
+void FrameEncoder::determineSliceBounds()
 {
-    UInt numberOfCUsInFrame = pic->getNumCUsInFrame();
-    UInt boundingCUAddrSlice = numberOfCUsInFrame * pic->getNumPartInCU();
+    UInt numberOfCUsInFrame = m_pic->getNumCUsInFrame();
+    UInt boundingCUAddrSlice = numberOfCUsInFrame * m_pic->getNumPartInCU();
 
     // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-    pic->getSlice()->setSliceCurEndCUAddr(boundingCUAddrSlice);
+    m_pic->getSlice()->setSliceCurEndCUAddr(boundingCUAddrSlice);
 }
 
-void FrameEncoder::compressCTURows(TComPic* pic)
+void FrameEncoder::compressCTURows()
 {
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init();
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, pic->getSlice());
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         m_rows[i].m_entropyCoder.resetEntropy();
 
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
@@ -864,7 +864,7 @@ void FrameEncoder::compressCTURows(TComPic* pic)
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        m_frameFilter.start(pic);
+        m_frameFilter.start(m_pic);
 
         TComSlice* slice = m_pic->getSlice();
         int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
@@ -904,7 +904,7 @@ void FrameEncoder::compressCTURows(TComPic* pic)
             processRow(i);
         }
 
-        m_frameFilter.start(pic);
+        m_frameFilter.start(m_pic);
 
         if (m_cfg->param.bEnableLoopFilter)
         {
