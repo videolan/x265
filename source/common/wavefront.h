@@ -67,6 +67,8 @@ public:
 
     void enableRow(int row);
 
+    void clearEnabledRowMask();
+
     // Returns true if a row above curRow is available for processing.  The processRow()
     // method may call this function periodically and voluntarily exit
     bool checkHigherPriorityRow(int curRow);

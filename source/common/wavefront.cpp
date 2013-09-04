@@ -46,7 +46,7 @@ bool WaveFront::init(int numRows)
         if (m_enableBitmap)
             memset((void*)m_enableBitmap, 0, sizeof(uint64_t) * m_numWords);
 
-        return m_queuedBitmap != NULL;
+        return m_queuedBitmap && m_enableBitmap;
     }
 
     return false;
@@ -64,6 +64,11 @@ WaveFront::~WaveFront()
         delete[] m_enableBitmap;
         m_enableBitmap = NULL;
     }
+}
+
+void WaveFront::clearEnabledRowMask()
+{
+    memset((void*)m_enableBitmap, 0, sizeof(uint64_t) * m_numWords);
 }
 
 void WaveFront::enqueueRow(int row)
