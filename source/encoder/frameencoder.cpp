@@ -68,7 +68,6 @@ void FrameEncoder::destroy()
 {
     JobProvider::flush();  // ensure no worker threads are using this frame
 
-    // TODO: waitting thread exit
     m_threadActive = false;
     m_enable.trigger();
 
@@ -84,6 +83,7 @@ void FrameEncoder::destroy()
 
     m_frameFilter.destroy();
 
+    // wait for worker thread to exit
     stop();
 }
 
