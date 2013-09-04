@@ -294,43 +294,15 @@ void FrameEncoder::initSlice(TComPic* pic, bool bForceISlice, int gopID)
     // Lambda computation
     // ------------------------------------------------------------------------------------------------------------------
 
-    int qp;
-
-    // compute lambda value
-    int    NumberBFrames = (m_cfg->getGOPSizeMin() - 1);
-    int    SHIFT_QP = 12;
-    double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (double)NumberBFrames);
-#if FULL_NBIT
-    int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
-    double qp_temp_orig = (double)dQP - SHIFT_QP;
-#else
-    int    bitdepth_luma_qp_scale = 0;
-#endif
-    double qp_temp = (double)qpdouble + bitdepth_luma_qp_scale - SHIFT_QP;
-
-    // Case #1: I or P-slices (key-frame)
-    double qpFactor = m_cfg->getGOPEntry(gopID).m_QPFactor;
-    if (sliceType == I_SLICE)
-    {
-        qpFactor = 0.57 * lambda_scale;
-    }
-    lambda = qpFactor * pow(2.0, qp_temp / 3.0);
-
-    if (depth > 0)
-    {
-#if FULL_NBIT
-        lambda *= Clip3(2.00, 4.00, (qp_temp_orig / 6.0));
-#else
-        lambda *= Clip3(2.00, 4.00, (qp_temp / 6.0));
-#endif
-    }
-
-    qp = X265_MAX(-m_sps.getQpBDOffsetY(), X265_MIN(MAX_QP, (int)floor(qpdouble + 0.5)));
-
-    if (slice->getSliceType() != I_SLICE)
-    {
-        lambda *= m_cfg->getLambdaModifier(0); // temporal layer 0
-    }
+    int qp = X265_MAX(-m_sps.getQpBDOffsetY(), X265_MIN(MAX_QP, (int)floor(qpdouble + 0.5)));
+    if(slice->getSliceType() == I_SLICE)
+        {
+            lambda = X265_MAX(1,x265_lambda2_tab_I[qp]);
+        }
+    else
+        {
+            lambda = X265_MAX(1,x265_lambda2_non_I[qp]);
+        }
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,

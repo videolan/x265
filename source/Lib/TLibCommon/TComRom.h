@@ -293,8 +293,8 @@ extern int  g_eTTable[4];
 // Map Luma samples to chroma samples
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
 extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
-extern const int x265_lambda2_tab[MAX_QP+1];
-
+extern const double x265_lambda2_tab_I[MAX_QP + 1];
+extern const double x265_lambda2_non_I[MAX_QP + 1];
 // CABAC tables
 extern const UChar g_lpsTable[64][4];
 extern const UChar g_renormTable[32];
