@@ -580,7 +580,6 @@ void FrameEncoder::compressFrame(TComPic *pic)
     m_sbacCoder.load(getSbacCoder(0));
 
     slice->setTileOffstForMultES(0);
-    slice->setTileLocationCount(0);
     encodeSlice(pic, outStreams);
 
     {

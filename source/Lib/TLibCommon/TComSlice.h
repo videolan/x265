@@ -1425,7 +1425,6 @@ private:
 
     wpACDCParam     m_weightACDCParam[3];                 // [0:Y, 1:U, 2:V]
 
-    std::vector<UInt> m_tileByteLocation;
     UInt        m_tileOffstForMultES;
 
     UInt*       m_substreamSizes;
@@ -1673,20 +1672,6 @@ public:
 
     void  getWpAcDcParam(wpACDCParam *&wp);
     void  initWpAcDcParam();
-
-    void setTileLocationCount(UInt cnt)          { return m_tileByteLocation.resize(cnt); }
-
-    UInt getTileLocationCount()                  { return (UInt)m_tileByteLocation.size(); }
-
-    void setTileLocation(int idx, UInt location)
-    {
-        assert(idx < (int)m_tileByteLocation.size());
-        m_tileByteLocation[idx] = location;
-    }
-
-    void addTileLocation(UInt location)          { m_tileByteLocation.push_back(location); }
-
-    UInt getTileLocation(int idx)                { return m_tileByteLocation[idx]; }
 
     void setTileOffstForMultES(UInt offset)      { m_tileOffstForMultES = offset; }
 
