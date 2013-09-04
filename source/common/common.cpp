@@ -88,7 +88,7 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 {
     if (level > param->logLevel)
         return;
-    std::string log_level;
+    const char *log_level;
     switch (level)
     {
     case X265_LOG_ERROR:
@@ -108,7 +108,7 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
         break;
     }
 
-    fprintf(stderr, "x265 [%s]: ", log_level.c_str());
+    fprintf(stderr, "x265 [%s]: ", log_level);
     va_list arg;
     va_start(arg, fmt);
     vfprintf(stderr, fmt, arg);
