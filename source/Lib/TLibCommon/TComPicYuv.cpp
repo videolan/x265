@@ -234,7 +234,7 @@ void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-x265::MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
+MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
 {
     /* HPEL generation requires luma integer plane to already be extended */
     // NOTE: We extend border every CURow, so I remove code here
@@ -250,7 +250,7 @@ x265::MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
         else if (mref->isWeighted == false)
             return mref;
     }
-    mref = new x265::MotionReference(this, w);
+    mref = new MotionReference(this, w);
     mref->m_next = m_refList;
     m_refList = mref;
     return mref;

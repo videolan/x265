@@ -323,7 +323,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, int* coef, TCoeff* qCoef, int width, in
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
 
         int numCoeff = width * height;
-        acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
+        acSum += primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
 
         if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
             signBitHidingHDQ(qCoef, coef, scan, deltaU, width, height);
@@ -442,7 +442,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     {
         // TODO: this may need larger data types for X265_DEPTH > 8
         const UInt log2BlockSize = g_convertToBit[width];
-        x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
+        primitives.dct[DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
@@ -468,7 +468,7 @@ void TComTrQuant::invtransformNxN( bool transQuantBypass, UInt mode, short* resi
     bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_convertToBit[width] + 2;
     int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
-    x265::primitives.dequant(coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
+    primitives.dequant(coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 
     if (useTransformSkip == true)
     {
@@ -488,14 +488,14 @@ void TComTrQuant::invtransformNxN( bool transQuantBypass, UInt mode, short* resi
         if (lastPos == 0 && !((width == 4) && (mode != REG_DCT)))
         {
             int dc_val = (((m_tmpCoeff[0] * 64 + 64) >> 7) * 64 + 2048) >> 12;
-            x265::primitives.blockfil_s[log2BlockSize](residual, stride, dc_val);
+            primitives.blockfil_s[log2BlockSize](residual, stride, dc_val);
 
             return;
         }
 #endif
 
         // TODO: this may need larger data types for X265_DEPTH > 8
-        x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
+        primitives.idct[IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
     }
 }
 
@@ -514,7 +514,7 @@ void TComTrQuant::xIT(UInt mode, int* coeff, short* residual, UInt stride, int w
 {
     // TODO: this may need larger data types for X265_DEPTH > 8
     const UInt log2BlockSize = g_convertToBit[width];
-    x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coeff, residual, stride);
+    primitives.idct[IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coeff, residual, stride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping
@@ -532,7 +532,7 @@ void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, int* coeff, int 
     int  j, k;
     if (shift >= 0)
     {
-        x265::primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, width);
+        primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, width);
     }
     else
     {
@@ -568,7 +568,7 @@ void TComTrQuant::xITransformSkip(int* coef, short* residual, UInt stride, int w
         transformSkipShift = shift;
         for (j = 0; j < height; j++)
         {
-            x265::primitives.cvt32to16_shr(&residual[j * stride], &coef[j * width], shift, width);
+            primitives.cvt32to16_shr(&residual[j * stride], &coef[j * width], shift, width);
         }
     }
     else

@@ -35,22 +35,22 @@ protected:
     
     short *sbuf1, *sbuf2;
 
-    bool check_pixelcmp(x265::pixelcmp_t ref, x265::pixelcmp_t opt);
-    bool check_pixelcmp_sp(x265::pixelcmp_sp_t ref, x265::pixelcmp_sp_t opt);
-    bool check_pixelcmp_ss(x265::pixelcmp_ss_t ref, x265::pixelcmp_ss_t opt);
-    bool check_pixelcmp_x3(x265::pixelcmp_x3_t ref, x265::pixelcmp_x3_t opt);
-    bool check_pixelcmp_x4(x265::pixelcmp_x4_t ref, x265::pixelcmp_x4_t opt);
-    bool check_block_copy(x265::blockcpy_pp_t ref, x265::blockcpy_pp_t opt);
-    bool check_block_copy_s_p(x265::blockcpy_sp_t ref, x265::blockcpy_sp_t opt);
-    bool check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_ps_t opt);
-    bool check_block_copy_s_c(x265::blockcpy_sc_t ref, x265::blockcpy_sc_t opt);
-    bool check_calresidual(x265::calcresidual_t ref, x265::calcresidual_t opt);
-    bool check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt);
-    bool check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t opt);
-    bool check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_t opt);
-    bool check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_t opt);
-    bool check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_t opt);
-    bool check_downscale_t(x265::downscale_t ref, x265::downscale_t opt);
+    bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
+    bool check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt);
+    bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
+    bool check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt);
+    bool check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt);
+    bool check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt);
+    bool check_block_copy_s_p(blockcpy_sp_t ref, blockcpy_sp_t opt);
+    bool check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt);
+    bool check_block_copy_s_c(blockcpy_sc_t ref, blockcpy_sc_t opt);
+    bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
+    bool check_calcrecon(calcrecon_t ref, calcrecon_t opt);
+    bool check_weightpUni(weightpUni_t ref, weightpUni_t opt);
+    bool check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt);
+    bool check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt);
+    bool check_pixeladd_pp(pixeladd_pp_t ref, pixeladd_pp_t opt);
+    bool check_downscale_t(downscale_t ref, downscale_t opt);
 
 public:
 
@@ -60,9 +60,9 @@ public:
 
     const char *getName() const { return "pixel"; }
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    bool testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 };
 
 #endif // ifndef _PIXELHARNESS_H_1

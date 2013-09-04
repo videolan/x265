@@ -464,7 +464,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
  * \param height   Height of block
  * \param dstPic   Pointer to destination picture
  */
-void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *ref, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic)
+void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, MotionReference *ref, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic)
 {
     int dstStride = dstPic->getStride();
     Pel *dst      = dstPic->getLumaAddr(partAddr);

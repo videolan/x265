@@ -70,17 +70,17 @@ private:
     int                     m_pocLast;          ///< time index (POC)
     TComList<TComPic*>      m_freeList;
 
-    x265::ThreadPool*       m_threadPool;
-    x265::Lookahead*        m_lookahead;
-    x265::FrameEncoder*     m_frameEncoder;
-    x265::DPB*              m_dpb;
-    x265::RateControl*      m_rateControl;
+    ThreadPool*       m_threadPool;
+    Lookahead*        m_lookahead;
+    FrameEncoder*     m_frameEncoder;
+    DPB*              m_dpb;
+    RateControl*      m_rateControl;
 
     /* frame parallelism */
     int                     m_curEncoder;
 
     /* Collect statistics globally */
-    x265::Lock              m_statLock;
+    Lock              m_statLock;
     TEncAnalyze             m_analyzeAll;
     TEncAnalyze             m_analyzeI;
     TEncAnalyze             m_analyzeP;
@@ -111,7 +111,7 @@ public:
 
     TComScalingList* getScalingList()       { return &m_scalingList; }
 
-    void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
+    void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
     double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
 

@@ -175,7 +175,7 @@ bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy(x265::blockcpy_pp_t ref, x265::blockcpy_pp_t opt)
+bool PixelHarness::check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -198,7 +198,7 @@ bool PixelHarness::check_block_copy(x265::blockcpy_pp_t ref, x265::blockcpy_pp_t
     return true;
 }
 
-bool PixelHarness::check_block_copy_s_p(x265::blockcpy_sp_t ref, x265::blockcpy_sp_t opt)
+bool PixelHarness::check_block_copy_s_p(blockcpy_sp_t ref, blockcpy_sp_t opt)
 {
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
@@ -221,7 +221,7 @@ bool PixelHarness::check_block_copy_s_p(x265::blockcpy_sp_t ref, x265::blockcpy_
     return true;
 }
 
-bool PixelHarness::check_block_copy_s_c(x265::blockcpy_sc_t ref, x265::blockcpy_sc_t opt)
+bool PixelHarness::check_block_copy_s_c(blockcpy_sc_t ref, blockcpy_sc_t opt)
 {
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
@@ -244,7 +244,7 @@ bool PixelHarness::check_block_copy_s_c(x265::blockcpy_sc_t ref, x265::blockcpy_
     return true;
 }
 
-bool PixelHarness::check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_ps_t opt)
+bool PixelHarness::check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -267,7 +267,7 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_
     return true;
 }
 
-bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidual_t opt)
+bool PixelHarness::check_calresidual(calcresidual_t ref, calcresidual_t opt)
 {
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
@@ -289,7 +289,7 @@ bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidua
     return true;
 }
 
-bool PixelHarness::check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt)
+bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
 {
     ALIGN_VAR_16(short, ref_recq[64 * 64]);
     ALIGN_VAR_16(short, opt_recq[64 * 64]);
@@ -327,7 +327,7 @@ bool PixelHarness::check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt)
     return true;
 }
 
-bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t opt)
+bool PixelHarness::check_weightpUni(weightpUni_t ref, weightpUni_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -355,7 +355,7 @@ bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t o
     return true;
 }
 
-bool PixelHarness::check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_t opt)
+bool PixelHarness::check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt)
 {
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
@@ -378,7 +378,7 @@ bool PixelHarness::check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_
     return true;
 }
 
-bool PixelHarness::check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_t opt)
+bool PixelHarness::check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt)
 {
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
@@ -401,7 +401,7 @@ bool PixelHarness::check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_
     return true;
 }
 
-bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_t opt)
+bool PixelHarness::check_pixeladd_pp(pixeladd_pp_t ref, pixeladd_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -424,7 +424,7 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
     return true;
 }
 
-bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t opt)
+bool PixelHarness::check_downscale_t(downscale_t ref, downscale_t opt)
 {
     ALIGN_VAR_16(pixel, ref_destf[32 * 32]);
     ALIGN_VAR_16(pixel, opt_destf[32 * 32]);

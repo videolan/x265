@@ -188,7 +188,7 @@ protected:
 
     void          deriveRightBottomIdx(UInt partIdx, UInt& outPartIdxRB);
 
-    bool          xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, x265::MV& outMV, int& outRefIdx);
+    bool          xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx);
 
     /// compute scaling factor from POC difference
     int           xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC);
@@ -452,13 +452,13 @@ public:
     void          setMVPIdxSubParts(int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
     void          setMVPNumSubParts(int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
 
-    void          clipMv(x265::MV& outMV, int rowsAvailable = 0);
+    void          clipMv(MV& outMV, int rowsAvailable = 0);
 
-    void          getMvPredLeft(x265::MV& mvPred)       { mvPred = m_mvFieldA.mv; }
+    void          getMvPredLeft(MV& mvPred)       { mvPred = m_mvFieldA.mv; }
 
-    void          getMvPredAbove(x265::MV& mvPred)      { mvPred = m_mvFieldB.mv; }
+    void          getMvPredAbove(MV& mvPred)      { mvPred = m_mvFieldB.mv; }
 
-    void          getMvPredAboveRight(x265::MV& mvPred) { mvPred = m_mvFieldC.mv; }
+    void          getMvPredAboveRight(MV& mvPred) { mvPred = m_mvFieldC.mv; }
 
     void          compressMV();
 

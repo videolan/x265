@@ -85,7 +85,7 @@ TEncTop::~TEncTop()
 
 void TEncTop::create()
 {
-    if (!x265::primitives.sad[0])
+    if (!primitives.sad[0])
     {
         printf("Primitives must be initialized before encoder is created\n");
         // we call exit() here because this should be an impossible condition when
@@ -93,7 +93,7 @@ void TEncTop::create()
         exit(1);
     }
 
-    m_frameEncoder = new x265::FrameEncoder[param.frameNumThreads];
+    m_frameEncoder = new FrameEncoder[param.frameNumThreads];
     if (m_frameEncoder)
     {
         for (int i = 0; i < param.frameNumThreads; i++)
@@ -101,9 +101,9 @@ void TEncTop::create()
             m_frameEncoder[i].setThreadPool(m_threadPool);
         }
     }
-    m_lookahead = new x265::Lookahead(this);
-    m_dpb = new x265::DPB(this);
-    m_rateControl = new x265::RateControl(&param);
+    m_lookahead = new Lookahead(this);
+    m_dpb = new DPB(this);
+    m_rateControl = new RateControl(&param);
 }
 
 void TEncTop::destroy()
@@ -363,18 +363,18 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, int stride, int width, int height)
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
             {
-                ssd += x265::primitives.sse_pp[x265::PARTITION_64x64](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[PARTITION_64x64](fenc + x, stride, rec + x, stride);
             }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
             {
-                ssd += x265::primitives.sse_pp[x265::PARTITION_16x64](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[PARTITION_16x64](fenc + x, stride, rec + x, stride);
             }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_4x64](fenc + x, stride, rec + x, stride);
+            ssd += primitives.sse_pp[PARTITION_4x64](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 64;
@@ -389,18 +389,18 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, int stride, int width, int height)
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
             {
-                ssd += x265::primitives.sse_pp[x265::PARTITION_64x16](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[PARTITION_64x16](fenc + x, stride, rec + x, stride);
             }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
             {
-                ssd += x265::primitives.sse_pp[x265::PARTITION_16x16](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[PARTITION_16x16](fenc + x, stride, rec + x, stride);
             }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_4x16](fenc + x, stride, rec + x, stride);
+            ssd += primitives.sse_pp[PARTITION_4x16](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 16;
@@ -415,18 +415,18 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, int stride, int width, int height)
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
             {
-                ssd += x265::primitives.sse_pp[x265::PARTITION_64x4](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[PARTITION_64x4](fenc + x, stride, rec + x, stride);
             }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
             {
-                ssd += x265::primitives.sse_pp[x265::PARTITION_16x4](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[PARTITION_16x4](fenc + x, stride, rec + x, stride);
             }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_4x4](fenc + x, stride, rec + x, stride);
+            ssd += primitives.sse_pp[PARTITION_4x4](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 4;
@@ -544,7 +544,7 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     UInt bits = numRBSPBytes * 8;
 
     /* Acquire encoder global lock to accumulate statistics and print debug info to console */
-    x265::ScopedLock s(m_statLock);
+    ScopedLock s(m_statLock);
 
     //===== add PSNR =====
     m_analyzeAll.addResult(psnrY, psnrU, psnrV, (double)bits);

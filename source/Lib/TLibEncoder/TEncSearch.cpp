@@ -231,7 +231,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Pel *fenc, int frac
     int  stride = refPic->getStride();
     int  width = patternKey->getROIYWidth();
     int  height = patternKey->getROIYHeight();
-    x265::pixelcmp_t satd = x265::primitives.satd[x265::PartitionFromSizes(width, height)];
+    pixelcmp_t satd = primitives.satd[PartitionFromSizes(width, height)];
     Pel *fref = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
 
     /* temp buffer for intermediate outputs of horizontal interpolation */
@@ -258,13 +258,13 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Pel *fenc, int frac
             }
             else
             {
-                x265::primitives.ipfilter_pp[FILTER_H_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[xFrac]);
+                primitives.ipfilter_pp[FILTER_H_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[xFrac]);
                 cost += satd(fenc, FENC_STRIDE, qref, 64);
             }
         }
         else if (xFrac == 0)
         {
-            x265::primitives.ipfilter_pp[FILTER_V_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[yFrac]);
+            primitives.ipfilter_pp[FILTER_V_P_P_8](src, stride, qref, 64, width, height, g_lumaFilter[yFrac]);
             cost += satd(fenc, FENC_STRIDE, qref, 64);
         }
         else
@@ -583,7 +583,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     {
         short* resiTmp = residual;
         memset(coeff, 0, sizeof(TCoeff) * width * height);
-        x265::primitives.blockfil_s[size](resiTmp, stride, 0);
+        primitives.blockfil_s[size](resiTmp, stride, 0);
     }
 
     //===== reconstruction =====
@@ -716,7 +716,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         {
             short* resiTmp = residual;
             memset(coeff, 0, sizeof(TCoeff) * width * height);
-            x265::primitives.blockfil_s[size](resiTmp, stride, 0);
+            primitives.blockfil_s[size](resiTmp, stride, 0);
         }
     }
 
@@ -724,7 +724,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
 
     //===== update distortion =====
-    int part = x265::PartitionFromSizes(width, height);
+    int part = PartitionFromSizes(width, height);
     UInt dist = primitives.sse_pp[part](fenc, stride, recon, stride);
     if (ttype == TEXT_CHROMA_U)
     {
@@ -1043,7 +1043,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         UInt  srcstride = m_qtTempTComYuv[qtLayer].m_width;
         Pel*  dst       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
         UInt  dststride = cu->getPic()->getPicYuvRec()->getStride();
-        x265::primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
+        primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
 
         if (!bLumaOnly)
         {
@@ -1053,11 +1053,11 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             srcstride = m_qtTempTComYuv[qtLayer].m_cwidth;
             dst       = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
             dststride = cu->getPic()->getPicYuvRec()->getCStride();
-            x265::primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
+            primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
 
             src = m_qtTempTComYuv[qtLayer].getCrAddr(absPartIdx);
             dst = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
-            x265::primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
+            primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
         }
     }
 
@@ -1223,7 +1223,7 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
     UInt   reconQtStride    = m_qtTempTComYuv[qtlayer].m_width;
     UInt   width            = cu->getWidth(0) >> trDepth;
     UInt   height           = cu->getHeight(0) >> trDepth;
-    x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+    primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
 
     if (!bLumaOnly && !bSkipChroma)
     {
@@ -1233,11 +1233,11 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
         reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
         reconQt = m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx);
         reconQtStride = m_qtTempTComYuv[qtlayer].m_cwidth;
-        x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+        primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
 
         reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zOrder);
         reconQt    = m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx);
-        x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+        primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
     }
 }
 
@@ -1348,13 +1348,13 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt abs
         {
             Pel* reconIPred = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
             short* reconQt  = m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx);
-            x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+            primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
         }
         if (stateU0V1Both2 == 1 || stateU0V1Both2 == 2)
         {
             Pel* reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
             short* reconQt  = m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx);
-            x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+            primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
         }
     }
 }
@@ -1583,7 +1583,7 @@ void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
     UInt maxMode  = 4;
     UInt bestMode = MAX_UINT;
     UInt minSAD   = MAX_UINT;
-    x265::pixelcmp_t sa8d = x265::primitives.sa8d[(int)g_convertToBit[width]];
+    pixelcmp_t sa8d = primitives.sa8d[(int)g_convertToBit[width]];
     for (UInt mode = minMode; mode < maxMode; mode++)
     {
         //--- get prediction ---
@@ -1648,7 +1648,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         UInt rdModeList[FAST_UDI_MAX_RDMODE_NUM];
         int numModesForFullRD = g_intraModeNumFast[widthBit];
         int log2SizeMinus2 = g_convertToBit[width];
-        x265::pixelcmp_t sa8d = x265::primitives.sa8d[log2SizeMinus2];
+        pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
 
         bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)
@@ -1690,9 +1690,9 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
 
                 // Transpose NxN
-                x265::primitives.transpose[log2SizeMinus2](buf_trans, (pixel*)fenc, stride);
+                primitives.transpose[log2SizeMinus2](buf_trans, (pixel*)fenc, stride);
 
-                x265::primitives.intra_pred_allangs[log2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (width <= 16));
+                primitives.intra_pred_allangs[log2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (width <= 16));
 
                 // TODO: We need SATD_x4 here
                 for (UInt mode = 2; mode < numModesAvailable; mode++)
@@ -1709,8 +1709,8 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 // TODO: cli option to chose
 #if 1
                 ALIGN_VAR_32(Pel, buf_scale[32 * 32]);
-                x265::primitives.scale2D_64to32(buf_scale, fenc, stride);
-                x265::primitives.transpose[3](buf_trans, buf_scale, 32);
+                primitives.scale2D_64to32(buf_scale, fenc, stride);
+                primitives.transpose[3](buf_trans, buf_scale, 32);
 
                 // reserve space in case primitives need to store data in above
                 // or left buffers
@@ -1720,25 +1720,25 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 Pel *const left = _left + 2 * 32;
 
                 above[0] = left[0] = pAbove0[0];
-                x265::primitives.scale1D_128to64(above + 1, pAbove0 + 1, 0);
-                x265::primitives.scale1D_128to64(left + 1, pLeft0 + 1, 0);
+                primitives.scale1D_128to64(above + 1, pAbove0 + 1, 0);
+                primitives.scale1D_128to64(left + 1, pLeft0 + 1, 0);
 
                 // 1
                 primitives.intra_pred_dc(above + 1, left + 1, tmp, 32, 32, false);
-                modeCosts[DC_IDX] = 4 * x265::primitives.sa8d[3](buf_scale, 32, tmp, 32);
+                modeCosts[DC_IDX] = 4 * primitives.sa8d[3](buf_scale, 32, tmp, 32);
 
                 // 0
                 primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, tmp, 32, 32);
-                modeCosts[PLANAR_IDX] = 4 * x265::primitives.sa8d[3](buf_scale, 32, tmp, 32);
+                modeCosts[PLANAR_IDX] = 4 * primitives.sa8d[3](buf_scale, 32, tmp, 32);
 
-                x265::primitives.intra_pred_allangs[3](tmp, above, left, above, left, false);
+                primitives.intra_pred_allangs[3](tmp, above, left, above, left, false);
 
                 // TODO: I use 4 of SATD32x32 to replace real 64x64
                 for (UInt mode = 2; mode < numModesAvailable; mode++)
                 {
                     bool modeHor = (mode < 18);
                     Pel *cmp_buf = (modeHor ? buf_trans : buf_scale);
-                    modeCosts[mode] = 4 * x265::primitives.sa8d[3]((pixel*)cmp_buf, 32, (pixel*)&tmp[(mode - 2) * (32 * 32)], 32);
+                    modeCosts[mode] = 4 * primitives.sa8d[3]((pixel*)cmp_buf, 32, (pixel*)&tmp[(mode - 2) * (32 * 32)], 32);
                 }
 
 #else // if 1
@@ -1911,7 +1911,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             UInt dststride   = cu->getPic()->getPicYuvRec()->getStride();
             Pel* src         = reconYuv->getLumaAddr(partOffset);
             UInt srcstride   = reconYuv->getStride();
-            x265::primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+            primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
 
             if (!bLumaOnly && !bSkipChroma)
             {
@@ -1924,11 +1924,11 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 dststride   = cu->getPic()->getPicYuvRec()->getCStride();
                 src         = reconYuv->getCbAddr(partOffset);
                 srcstride   = reconYuv->getCStride();
-                x265::primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+                primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
 
                 dst         = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
                 src         = reconYuv->getCrAddr(partOffset);
-                x265::primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+                primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
             }
         }
 
@@ -2979,7 +2979,7 @@ void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, int partIdx
     TComPattern* patternKey = cu->getPattern();
     patternKey->initPattern(yuv->getLumaAddr(partAddr), yuv->getCbAddr(partAddr), yuv->getCrAddr(partAddr), width, height, yuv->getStride(), 0, 0);
     // copy smoothed pixels into aligned fenc buffer
-    x265::primitives.blockcpy_pp(width, height, fenc, 64, yuv->getLumaAddr(partAddr), yuv->getStride());
+    primitives.blockcpy_pp(width, height, fenc, 64, yuv->getLumaAddr(partAddr), yuv->getStride());
 
     MV mvmin, mvmax;
     xSetSearchRange(cu, outmv, merange, mvmin, mvmax);
@@ -3028,9 +3028,9 @@ void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, i
     int srchRngVerTop    = mvmin->y;
     int srchRngVerBottom = mvmax->y;
 
-    int part = x265::PartitionFromSizes(patternKey->getROIYWidth(), patternKey->getROIYHeight());
-    x265::pixelcmp_t sad = x265::primitives.sad[part];
-    x265::pixelcmp_x4_t sad_x4 = x265::primitives.sad_x4[part];
+    int part = PartitionFromSizes(patternKey->getROIYWidth(), patternKey->getROIYHeight());
+    pixelcmp_t sad = primitives.sad[part];
+    pixelcmp_x4_t sad_x4 = primitives.sad_x4[part];
     ALIGN_VAR_32(int, costs[16]);
 
     refY += srchRngVerTop * stride;
@@ -3457,13 +3457,13 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             const UInt stride = m_qtTempTComYuv[qtlayer].m_width;
 
             assert(trWidth == trHeight);
-            x265::primitives.blockfil_s[(int)g_convertToBit[trWidth]](ptr, stride, 0);
+            primitives.blockfil_s[(int)g_convertToBit[trWidth]](ptr, stride, 0);
         }
 
         UInt distU = 0;
         UInt distV = 0;
 
-        int partSizeC = x265::PartitionFromSizes(trWidthC, trHeightC);
+        int partSizeC = PartitionFromSizes(trWidthC, trHeightC);
         if (bCodeChroma)
         {
             distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth, m_tempPel, trWidthC));
@@ -3531,7 +3531,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 const UInt stride = m_qtTempTComYuv[qtlayer].m_cwidth;
 
                 assert(trWidthC == trHeightC);
-                x265::primitives.blockfil_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
+                primitives.blockfil_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
             }
 
             distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth, m_tempPel, trWidthC));
@@ -3597,7 +3597,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 const UInt stride = m_qtTempTComYuv[qtlayer].m_cwidth;
 
                 assert(trWidthC == trHeightC);
-                x265::primitives.blockfil_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
+                primitives.blockfil_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
             }
         }
         cu->setCbfSubParts(absSumY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);

@@ -41,11 +41,13 @@ LOWRES(xop)
 
 bool hasXOP(void); // instr_detect.cpp
 
+using namespace x265;
+
 namespace {
 // file private anonymous namespace
 
 /* template for building arbitrary partition sizes from full optimized primitives */
-template<int lx, int ly, int dx, int dy, x265::pixelcmp_t compare>
+template<int lx, int ly, int dx, int dy, pixelcmp_t compare>
 int cmp(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int sum = 0;

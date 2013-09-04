@@ -33,7 +33,7 @@
 
 /** \file     TComMotionInfo.h
     \brief    motion information handling classes (header)
-    \todo     TComMvField seems to be better to be inherited from x265::MV
+    \todo     TComMvField seems to be better to be inherited from MV
 */
 
 #ifndef __TCOMMOTIONINFO__
@@ -56,7 +56,7 @@ namespace x265 {
 /// parameters for AMVP
 typedef struct _AMVPInfo
 {
-    x265::MV m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
+    MV m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
     int      m_num;                             ///< number of motion vector predictor candidates
 } AMVPInfo;
 
@@ -69,12 +69,12 @@ class TComMvField
 {
 public:
 
-    x265::MV  mv;
+    MV  mv;
     int       refIdx;
 
     TComMvField() : refIdx(NOT_VALID) {}
 
-    void setMvField(const x265::MV & _mv, int _refIdx)
+    void setMvField(const MV & _mv, int _refIdx)
     {
         mv     = _mv;
         refIdx = _refIdx;
@@ -86,8 +86,8 @@ class TComCUMvField
 {
 private:
 
-    x265::MV* m_mv;
-    x265::MV* m_mvd;
+    MV* m_mv;
+    MV* m_mvd;
     char*     m_refIdx;
     UInt      m_numPartitions;
     AMVPInfo  m_cAMVPInfo;
@@ -122,9 +122,9 @@ public:
     // get
     // ------------------------------------------------------------------------------------------------------------------
 
-    const x265::MV & getMv(int idx) const { return m_mv[idx]; }
+    const MV & getMv(int idx) const { return m_mv[idx]; }
 
-    const x265::MV & getMvd(int idx) const { return m_mvd[idx]; }
+    const MV & getMvd(int idx) const { return m_mvd[idx]; }
 
     int getRefIdx(int idx) const { return m_refIdx[idx]; }
 
@@ -134,8 +134,8 @@ public:
     // set
     // ------------------------------------------------------------------------------------------------------------------
 
-    void    setAllMv(const x265::MV& mv,              PartSize cuMode, int partAddr, UInt depth, int partIdx = 0);
-    void    setAllMvd(const x265::MV& mvd,            PartSize cuMode, int partAddr, UInt depth, int partIdx = 0);
+    void    setAllMv(const MV& mv,              PartSize cuMode, int partAddr, UInt depth, int partIdx = 0);
+    void    setAllMvd(const MV& mvd,            PartSize cuMode, int partAddr, UInt depth, int partIdx = 0);
     void    setAllRefIdx(int refIdx,                  PartSize mbMode, int partAddr, UInt depth, int partIdx = 0);
     void    setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, UInt depth, int partIdx = 0);
 

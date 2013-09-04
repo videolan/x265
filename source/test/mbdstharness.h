@@ -40,10 +40,10 @@ protected:
     static const int mb_t_size = 6400;
     static const int mem_cmp_size = 32 * 32;
 
-    bool check_dequant_primitive(x265::dequant_t ref, x265::dequant_t opt);
-    bool check_quant_primitive(x265::quant_t ref, x265::quant_t opt);
-    bool check_dct_primitive(x265::dct_t ref, x265::dct_t opt, int width);
-    bool check_idct_primitive(x265::idct_t ref, x265::idct_t opt, int width);
+    bool check_dequant_primitive(dequant_t ref, dequant_t opt);
+    bool check_quant_primitive(quant_t ref, quant_t opt);
+    bool check_dct_primitive(dct_t ref, dct_t opt, int width);
+    bool check_idct_primitive(idct_t ref, idct_t opt, int width);
 
 public:
 
@@ -53,9 +53,9 @@ public:
 
     const char *getName() const { return "transforms"; }
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    bool testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 };
 
 #endif // ifndef _MBDSTHARNESS_H_1

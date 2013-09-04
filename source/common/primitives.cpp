@@ -84,6 +84,8 @@ static const char *CpuType[] =
     0
 };
 
+using namespace x265;
+
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid > 0 -  force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
@@ -91,12 +93,12 @@ extern "C"
 void x265_setup_primitives(x265_param_t *param, int cpuid)
 {
     // initialize global variables
-    x265::initROM();
-    x265::ContextModel::buildNextStateTable();
+    initROM();
+    ContextModel::buildNextStateTable();
 
     if (cpuid < 0)
     {
-        if (x265::primitives.sad[0])
+        if (primitives.sad[0])
             return;
         else
             cpuid = 0;
@@ -124,15 +126,15 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 
     x265_log(param, X265_LOG_INFO, "performance primitives:");
 
-    x265::Setup_C_Primitives(x265::primitives);
+    Setup_C_Primitives(primitives);
 
 #if ENABLE_VECTOR_PRIMITIVES
-    x265::Setup_Vector_Primitives(x265::primitives, cpuid);
+    Setup_Vector_Primitives(primitives, cpuid);
     if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " intrinsic");
 #endif
 
 #if ENABLE_ASM_PRIMITIVES
-    x265::Setup_Assembly_Primitives(x265::primitives, cpuid);
+    Setup_Assembly_Primitives(primitives, cpuid);
     if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " assembly");
 #endif
 

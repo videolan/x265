@@ -49,7 +49,7 @@ class ThreadPool;
 class TEncTop;
 
 // Manages the wave-front processing of a single encoding frame
-class FrameEncoder : public WaveFront, public x265::Thread
+class FrameEncoder : public WaveFront, public Thread
 {
 public:
 

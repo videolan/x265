@@ -85,10 +85,10 @@ protected:
     // motion compensation functions
     void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TComYuv* outPredYuv);
     void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TShortYUV* outPredYuv);
-    void xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *refPic, UInt partAddr, x265::MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, int width, int height, TShortYUV *dstPic);
-    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, int width, int height, TShortYUV *dstPic);
+    void xPredInterLumaBlk(TComDataCU *cu, MotionReference *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
+    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
+    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
+    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
     
     void xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int height, TComYuv*& outPredYuv);
     void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partAddr, int width, int height, TComYuv*& outDstYuv);
@@ -110,7 +110,7 @@ public:
     void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, int partIdx = -1);
 
     // motion vector prediction
-    void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, x265::MV& mvPred);
+    void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, MV& mvPred);
 
     // Angular Intra
     void predIntraLumaAng(UInt dirMode, Pel* pred, UInt stride, int width);

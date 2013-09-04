@@ -34,6 +34,8 @@
 #endif
 #define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
 
+using namespace x265;
+
 class TestHarness
 {
 public:
@@ -42,9 +44,9 @@ public:
 
     virtual ~TestHarness() {}
 
-    virtual bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
+    virtual bool testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt) = 0;
 
-    virtual void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
+    virtual void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt) = 0;
 
     virtual const char *getName() const = 0;
 

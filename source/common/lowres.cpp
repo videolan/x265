@@ -126,7 +126,7 @@ void Lowres::init(TComPicYuv *orig)
     }
 
     /* downscale and generate 4 HPEL planes for lookahead */
-    x265::primitives.frame_init_lowres_core(orig->getLumaAddr(),
+    primitives.frame_init_lowres_core(orig->getLumaAddr(),
         lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
         orig->getStride(), lumaStride, width, lines);
 

@@ -40,13 +40,13 @@ protected:
 
     int ipf_t_size;
 
-    bool check_IPFilter_primitive(x265::ipfilter_pp_t ref, x265::ipfilter_pp_t opt);
-    bool check_IPFilter_primitive(x265::ipfilter_ps_t ref, x265::ipfilter_ps_t opt);
-    bool check_IPFilter_primitive(x265::ipfilter_sp_t ref, x265::ipfilter_sp_t opt);
-    bool check_IPFilter_primitive(x265::ipfilter_p2s_t ref, x265::ipfilter_p2s_t opt);
-    bool check_IPFilter_primitive(x265::ipfilter_s2p_t ref, x265::ipfilter_s2p_t opt);
-    bool check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x265::filterHwghtd_t opt);
-    bool check_filterVMultiplaneWghtd(x265::filterVwghtd_t ref, x265::filterVwghtd_t opt);
+    bool check_IPFilter_primitive(ipfilter_pp_t ref, ipfilter_pp_t opt);
+    bool check_IPFilter_primitive(ipfilter_ps_t ref, ipfilter_ps_t opt);
+    bool check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t opt);
+    bool check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_t opt);
+    bool check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt);
+    bool check_filterHMultiplaneWghtd(filterHwghtd_t ref, filterHwghtd_t opt);
+    bool check_filterVMultiplaneWghtd(filterVwghtd_t ref, filterVwghtd_t opt);
 
 public:
 
@@ -56,9 +56,9 @@ public:
 
     const char *getName() const { return "interp"; }
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    bool testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 };
 
 #endif // ifndef _FILTERHARNESS_H_1

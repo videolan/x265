@@ -372,12 +372,12 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         pixel *above = (cuSize >= 8) ? pAbove1 : pAbove0;
         pixel *left  = (cuSize >= 8) ? pLeft1 : pLeft0;
         primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, predictions + predsize, cuSize, cuSize);
-        x265::primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cuSize <= 16));
+        primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cuSize <= 16));
 
         // calculate 35 satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
-        x265::primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
-        x265::pixelcmp_t satd = x265::primitives.satd[PartitionFromSizes(cuSize, cuSize)];
+        primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
+        pixelcmp_t satd = primitives.satd[PartitionFromSizes(cuSize, cuSize)];
         int icost = me.COST_MAX, cost;
         for (UInt mode = 0; mode < 35; mode++)
         {

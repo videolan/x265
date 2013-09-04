@@ -507,10 +507,10 @@ void NAME(Setup_Vec_BlockCopyPrimitives)(EncoderPrimitives &p)
 #if HIGH_BIT_DEPTH
     // At high bit depth, a pixel is a short
     p.blockcpy_pp = blockcopy_p_p;
-    p.blockcpy_ps = (x265::blockcpy_ps_t)blockcopy_p_p;
-    p.blockcpy_sp = (x265::blockcpy_sp_t)blockcopy_p_p;
-    p.blockcpy_sc = (x265::blockcpy_sc_t)blockcopy_s_p;
-    p.pixeladd_pp = (x265::pixeladd_pp_t)pixeladd_ss;
+    p.blockcpy_ps = (blockcpy_ps_t)blockcopy_p_p;
+    p.blockcpy_sp = (blockcpy_sp_t)blockcopy_p_p;
+    p.blockcpy_sc = (blockcpy_sc_t)blockcopy_s_p;
+    p.pixeladd_pp = (pixeladd_pp_t)pixeladd_ss;
     p.pixeladd_ss = pixeladd_ss;
 #else
     p.blockcpy_pp = blockcopy_p_p;

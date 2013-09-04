@@ -43,10 +43,10 @@ protected:
     static const int out_size = 64 * FENC_STRIDE;
     static const int out_size_33 = 33 * 64 * FENC_STRIDE;
 
-    bool check_dc_primitive(x265::intra_dc_t ref, x265::intra_dc_t opt);
-    bool check_planar_primitive(x265::intra_planar_t ref, x265::intra_planar_t opt);
-    bool check_angular_primitive(x265::intra_ang_t ref, x265::intra_ang_t opt);
-    bool check_allangs_primitive(const x265::intra_allangs_t ref[], const x265::intra_allangs_t opt[]);
+    bool check_dc_primitive(intra_dc_t ref, intra_dc_t opt);
+    bool check_planar_primitive(intra_planar_t ref, intra_planar_t opt);
+    bool check_angular_primitive(intra_ang_t ref, intra_ang_t opt);
+    bool check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[]);
 
 public:
 
@@ -56,9 +56,9 @@ public:
 
     const char *getName() const { return "intrapred"; }
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    bool testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 };
 
 #endif // ifndef _INTRAPREDHARNESS_H_1

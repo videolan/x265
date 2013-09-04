@@ -477,7 +477,7 @@ static inline int getLSB(int poc, int maxLSB)
 
 // Function will arrange the long-term pictures in the decreasing order of poc_lsb_lt,
 // and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
-void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice, x265::FrameEncoder *frameEncoder)
+void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice, FrameEncoder *frameEncoder)
 {
     TComReferencePictureSet *rps = slice->getRPS();
 

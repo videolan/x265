@@ -75,7 +75,7 @@ private:
 
     // Pre-interpolated reference pictures for each QPEL offset, may be more than
     // one if weighted references are in use
-    x265::MotionReference *m_refList;
+    MotionReference *m_refList;
 
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
@@ -179,12 +179,12 @@ public:
     void  copyToPicCr(TComPicYuv* destYuv);
     void  copyFromPicture(const x265_picture_t&);
 
-    x265::MotionReference* generateMotionReference(wpScalingParam *w);
+    MotionReference* generateMotionReference(wpScalingParam *w);
 
     //  Dump picture
     void  dump(char* pFileName, bool bAdd = false);
 
-    friend class x265::MotionReference;
+    friend class MotionReference;
 }; // END CLASS DEFINITION TComPicYuv
 
 void calcChecksum(TComPicYuv & pic, UChar digest[3][16]);

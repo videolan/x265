@@ -132,7 +132,7 @@ public:
 protected:
 
     /// motion vector refinement used in fractional-pel accuracy
-    UInt xPatternRefinement(TComPattern* patternKey, Pel *fenc, int fracBits, x265::MV& outFracMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr);
+    UInt xPatternRefinement(TComPattern* patternKey, Pel *fenc, int fracBits, MV& outFracMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr);
 
     UInt xGetInterPredictionError(TComDataCU* cu, int partIdx);
 
@@ -203,12 +203,12 @@ protected:
     // --------------------------------------------------------------------------------------------
 
     void xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, int refIdx,
-                             x265::MV& mvPred, UInt* distBiP = NULL);
+                             MV& mvPred, UInt* distBiP = NULL);
 
-    void xCheckBestMVP(TComDataCU* cu, RefPicList picList, x265::MV cMv, x265::MV& mvPred, int& mvpIdx,
+    void xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV cMv, MV& mvPred, int& mvpIdx,
                        UInt& outBits, UInt& outCost);
 
-    UInt xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templateCand, x265::MV mvCand, int mvpIdx,
+    UInt xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
                           int mvpCandCount, RefPicList picList, int refIdx, int sizex, int sizey);
 
     void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
@@ -226,16 +226,16 @@ protected:
     // motion estimation
     // -------------------------------------------------------------------------------------------------------------------
 
-    void xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, int partIdx, RefPicList picList, x265::MV* mvp,
-                           int refIdxPred, x265::MV& outmv, UInt& outBits, UInt& outCost);
+    void xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, int partIdx, RefPicList picList, MV* mvp,
+                           int refIdxPred, MV& outmv, UInt& outBits, UInt& outCost);
 
-    void xSetSearchRange(TComDataCU* cu, x265::MV mvp, int merange, x265::MV& mvmin, x265::MV& mvmax);
+    void xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
 
-    void xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, int stride, x265::MV* mvmin, x265::MV* mvmax,
-                        x265::MV& outmv, UInt& ruiSAD);
+    void xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, int stride, MV* mvmin, MV* mvmax,
+                        MV& outmv, UInt& ruiSAD);
 
     void xExtDIFUpSamplingH(TComPattern* pcPattern);
-    void xExtDIFUpSamplingQ(TComPattern* patternKey, x265::MV halfPelRef);
+    void xExtDIFUpSamplingQ(TComPattern* patternKey, MV halfPelRef);
 
     // -------------------------------------------------------------------------------------------------------------------
     // T & Q & Q-1 & T-1
