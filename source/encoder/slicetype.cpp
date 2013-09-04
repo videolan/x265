@@ -121,7 +121,7 @@ void Lookahead::slicetypeDecide()
     for (int i = 1; i <= dframes && i <= inputQueue.size(); i++)
     {
         pic = inputQueue.popFront();
-        pic->m_lowres.gopIdx = (pic->getPOC() - 1) % (cfg->getGOPSize());
+        pic->m_lowres.gopIdx = (pic->getPOC() - 1) % (cfg->getGOPSizeMin());
         outputQueue.pushBack(pic);
         if (pic->m_lowres.sliceType == X265_TYPE_I)
         {
@@ -131,7 +131,7 @@ void Lookahead::slicetypeDecide()
 
 #else // if 0
       // Fake lookahead using HM's fixed GOP structure
-    int batchSize = cfg->getGOPSize();
+    int batchSize = cfg->getGOPSizeMin();
     for (int i = 0; i < batchSize; i++)
     {
         int idx = cfg->getGOPEntry(i).m_POC - 1;

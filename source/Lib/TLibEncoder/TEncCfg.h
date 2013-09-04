@@ -224,7 +224,7 @@ public:
 
     //==== Coding Structure ========
 
-    int getGOPSize() { return gopsizeMin; }
+    int getGOPSizeMin() { return gopsizeMin; }
 
     int getMaxDecPicBuffering(UInt tlayer) { return m_maxDecPicBuffering[tlayer]; }
 

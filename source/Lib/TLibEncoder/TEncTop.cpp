@@ -810,7 +810,7 @@ void TEncTop::xInitPPS(TComPPS *pcPPS)
         histogram[i] = 0;
     }
 
-    for (int i = 0; i < getGOPSize(); i++)
+    for (int i = 0; i < getGOPSizeMin(); i++)
     {
         assert(getGOPEntry(i).m_numRefPicsActive >= 0 && getGOPEntry(i).m_numRefPicsActive <= MAX_NUM_REF);
         histogram[getGOPEntry(i).m_numRefPicsActive]++;

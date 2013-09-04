@@ -252,13 +252,13 @@ void FrameEncoder::initSlice(TComPic* pic, bool bForceISlice, int gopID)
 
     // depth computation based on GOP size
     int depth = 0;
-    int poc = slice->getPOC() % m_cfg->getGOPSize();
+    int poc = slice->getPOC() % m_cfg->getGOPSizeMin();
     if (poc)
     {
-        int step = m_cfg->getGOPSize();
+        int step = m_cfg->getGOPSizeMin();
         for (int i = step >> 1; i >= 1; i >>= 1)
         {
-            for (int j = i; j < m_cfg->getGOPSize(); j += step)
+            for (int j = i; j < m_cfg->getGOPSizeMin(); j += step)
             {
                 if (j == poc)
                 {
@@ -297,7 +297,7 @@ void FrameEncoder::initSlice(TComPic* pic, bool bForceISlice, int gopID)
     int qp;
 
     // compute lambda value
-    int    NumberBFrames = (m_cfg->getGOPSize() - 1);
+    int    NumberBFrames = (m_cfg->getGOPSizeMin() - 1);
     int    SHIFT_QP = 12;
     double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (double)NumberBFrames);
 #if FULL_NBIT

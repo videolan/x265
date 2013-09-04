@@ -164,17 +164,17 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
             closeLeft = closeLeft + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
             while (closeLeft < 0)
             {
-                closeLeft += m_cfg->getGOPSize();
+                closeLeft += m_cfg->getGOPSizeMin();
             }
         }
         int leftQP = 0, rightQP = 0;
-        for (int i = 0; i < m_cfg->getGOPSize(); i++)
+        for (int i = 0; i < m_cfg->getGOPSizeMin(); i++)
         {
-            if (m_cfg->getGOPEntry(i).m_POC == (closeLeft % m_cfg->getGOPSize()) + 1)
+            if (m_cfg->getGOPEntry(i).m_POC == (closeLeft % m_cfg->getGOPSizeMin()) + 1)
             {
                 leftQP = m_cfg->getGOPEntry(i).m_QPOffset;
             }
-            if (m_cfg->getGOPEntry(i).m_POC == (closeRight % m_cfg->getGOPSize()) + 1)
+            if (m_cfg->getGOPEntry(i).m_POC == (closeRight % m_cfg->getGOPSizeMin()) + 1)
             {
                 rightQP = m_cfg->getGOPEntry(i).m_QPOffset;
             }
