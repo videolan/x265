@@ -850,32 +850,30 @@ void FrameEncoder::compressCTURows()
 
         m_frameFilter.start(m_pic);
 
+        UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
+
         TComSlice* slice = m_pic->getSlice();
         int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
-        for (int row = 0; row < m_numRows; row++)
+        for (UInt row = 0; row < (UInt)m_numRows; row++)
         {
-            UInt min = m_numRows;
             for (int l = 0; l < numPredDir; l++)
             {
                 RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
                 for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
                     TComPic *refpic = slice->getRefPic(list, ref);
-                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < (UInt)row + 2))
+                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < row + refLagRows))
                     {
                         refpic->m_reconRowWait.wait();
                     }
-
-                    min = X265_MIN(min, refpic->m_reconRowCount);
                 }
             }
 
-            m_referenceRowsAvailable = min;
-
+            m_referenceRowsAvailable = row; // TODO: probably redundant
             WaveFront::enableRow(row);
+            if (row == 0)
+                WaveFront::enqueueRow(row);
         }
-
-        WaveFront::enqueueRow(0);
 
         m_completionEvent.wait();
 
