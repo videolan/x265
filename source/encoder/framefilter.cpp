@@ -213,7 +213,7 @@ void FrameFilter::processRow(int row)
             {
                 for (UInt col = 0; col < numCols; col++)
                 {
-                    const uint32_t cuAddr = lineStartCUAddr + col;
+                    const uint32_t cuAddr = lineStartCUAddr - numCols + col;
                     TComDataCU* cu = m_pic->getCU(cuAddr);
 
                     xPCMCURestoration(cu, 0, 0);
@@ -280,6 +280,19 @@ void FrameFilter::processRow(int row)
         {
             m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row, 1);
             m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
+        }
+
+        // TODO: this code is NOT VERIFY because TransformSkip and PCM mode have some bugs, they always not active!
+        bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+        if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+        {
+            for (UInt col = 0; col < numCols; col++)
+            {
+                const uint32_t cuAddr = lineStartCUAddr + col;
+                TComDataCU* cu = m_pic->getCU(cuAddr);
+
+                xPCMCURestoration(cu, 0, 0);
+            }
         }
 
         m_completionEvent.trigger();
