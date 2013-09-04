@@ -892,6 +892,7 @@ void FrameEncoder::compressCTURows(TComPic* pic)
 
     if (m_pool && m_cfg->param.bEnableWavefront)
     {
+        WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
         m_frameFilter.start(pic);
