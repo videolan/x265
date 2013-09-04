@@ -252,12 +252,9 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
-        if (m_rateControl->rateControlMode == X265_RC_ABR)
-        {
-            int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);
-            m_rateControl->rateControlStart(fenc, lookAheadCost);
-            computeLambdaForQp(fenc->getSlice());
-        }
+        int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);  
+        m_rateControl->rateControlStart(fenc, lookAheadCost);
+        computeLambdaForQp(fenc->getSlice());
 
         // main encode processing, TBD multi-threading
         curEncoder->m_enable.trigger();

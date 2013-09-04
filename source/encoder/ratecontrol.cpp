@@ -93,6 +93,13 @@ RateControl::RateControl(x265_param_t * param)
         lmax[i] = qp2qScale(MAX_QP + 18);  // maxQP val in x264 = 51+18
     }
 
+    if (rateControlMode == X265_RC_CQP)
+    {
+        qpConstant[P_SLICE] = baseQp;
+        qpConstant[I_SLICE] = Clip3(0, MAX_QP, (int)(baseQp - ipOffset + 0.5));
+        qpConstant[B_SLICE] = Clip3(0, MAX_QP, (int)(baseQp + pbOffset + 0.5));
+    }
+
     //qstep - value set as encoder specific.
     lstep = pow(2, param->rc.qpStep / 6.0);
     cbrDecay = 1.0;
@@ -117,9 +124,11 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
             rce->newQp = qp;
         accumPQpUpdate();
         break;
+
     case X265_RC_CQP:
-        q = baseQp;
+        q = qpConstant[frameType];
         break;
+
     case X265_RC_CRF:
     default:
         assert(!"unimplemented");
@@ -128,7 +137,8 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
 
     if (frameType != B_SLICE)
         lastNonBPictType = frameType;
-    /* set the final changed QP to slice structure*/
+
+    /* set the final QP to slice structure */
     curFrame->setSliceQp(qp);
 }
 
@@ -151,7 +161,7 @@ double RateControl::rateEstimateQscale()
 
     if (pictType == B_SLICE)
     {
-        /* B-frames don't have independent ratecontrol, but rather get the
+        /* B-frames don't have independent rate control, but rather get the
          * average QP of the two adjacent P-frames + an offset */
 
         int i0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice()->getSliceType() == I_SLICE;
