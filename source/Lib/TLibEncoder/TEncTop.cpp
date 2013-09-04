@@ -841,14 +841,14 @@ void TEncTop::computeLambdaForQp(TComSlice* slice)
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
     int qp = slice->getSliceQp();
     double lambda = 0;
-    if(slice->getSliceType() == I_SLICE)
-        {
-            lambda = X265_MAX(1,x265_lambda2_tab_I[qp]);
-        }
+    if (slice->getSliceType() == I_SLICE)
+    {
+        lambda = X265_MAX(1,x265_lambda2_tab_I[qp]);
+    }
     else
-        {
-            lambda = X265_MAX(1,x265_lambda2_non_I[qp]);
-        }
+    {
+        lambda = X265_MAX(1,x265_lambda2_non_I[qp]);
+    }
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
