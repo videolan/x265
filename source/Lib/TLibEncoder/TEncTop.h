@@ -114,8 +114,6 @@ public:
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
     double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
-
-    void computeLambdaForQp(TComSlice* slice);
 };
 }
 //! \}

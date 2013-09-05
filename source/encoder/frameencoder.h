@@ -167,6 +167,8 @@ public:
     int getStreamHeaders(AccessUnit& accessUnitOut);
 
     void initSlice(TComPic* pic);
+
+    void computeLambdaForQp();
     
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();

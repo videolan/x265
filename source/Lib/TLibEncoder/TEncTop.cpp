@@ -256,12 +256,10 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
-        int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);  
+        int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);
         m_rateControl->rateControlStart(fenc, lookAheadCost);
-        computeLambdaForQp(fenc->getSlice());
 
-        // main encode processing, TBD multi-threading
-        curEncoder->m_enable.trigger();
+        curEncoder->computeLambdaForQp();
     }
 
     return ret;
@@ -807,47 +805,6 @@ void TEncTop::xInitPPS(TComPPS *pps)
     pps->setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
     pps->setUseTransformSkip(param.bEnableTransformSkip);
     pps->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
-}
-
-void TEncTop::computeLambdaForQp(TComSlice* slice)
-{
-    FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
-    int qp = slice->getSliceQp();
-    double lambda = 0;
-    if (slice->getSliceType() == I_SLICE)
-    {
-        lambda = X265_MAX(1,x265_lambda2_tab_I[qp]);
-    }
-    else
-    {
-        lambda = X265_MAX(1,x265_lambda2_non_I[qp]);
-    }
-
-    // for RDO
-    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
-    // instead we weight the distortion of chroma.
-    double weight = 1.0;
-    int qpc;
-    int chromaQPOffset;
-
-    chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
-    curEncoder->setCbDistortionWeight(weight);
-    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
-    curEncoder->setCrDistortionWeight(weight);
-
-    // for RDOQ
-    curEncoder->setQPLambda(qp, lambda, lambda / weight, slice->getDepth());
-
-    // For SAO
-    slice->setLambda(lambda, lambda / weight);
-
-    slice->setSliceQpDelta(0);
-    slice->setSliceQpDeltaCb(0);
-    slice->setSliceQpDeltaCr(0);
 }
 
 //! \}
