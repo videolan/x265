@@ -133,6 +133,7 @@ private:
     bool*         m_skipFlag;         ///< array of skip flags
     char*         m_partSizes;       ///< array of partition sizes
     char*         m_predModes;       ///< array of prediction modes
+    char*         m_cmv_predModes;       ///< array of prediction modes
     bool*         m_cuTransquantBypass; ///< array of cu_transquant_bypass flags
     char*         m_qp;             ///< array of QP values
     UChar*        m_trIdx;         ///< array of transform indices
@@ -512,6 +513,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     bool          isIntra(UInt partIdx)  { return m_predModes[partIdx] == MODE_INTRA; }
+    bool          isIntra_cmv(UInt partIdx)  { return m_cmv_predModes[partIdx] == MODE_INTRA; }
 
     bool          isSkipped(UInt partIdx);                                                      ///< SKIP (no residual)
     bool          isBipredRestriction(UInt puIdx);

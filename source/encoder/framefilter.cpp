@@ -222,6 +222,18 @@ void FrameFilter::processRow(int row)
         }
     }
 
+    // CompressMV for reference
+    if (row > 0)
+    {
+        for (UInt col = 0; col < numCols; col++)
+        {
+            const uint32_t cuAddr = lineStartCUAddr - numCols + col;
+            TComDataCU* cu = m_pic->getCU(cuAddr);
+
+            cu->compressMV();
+        }
+    }
+
     // this row of CTUs has been encoded
 
     // TODO: extend margins for motion reference
@@ -295,7 +307,14 @@ void FrameFilter::processRow(int row)
             }
         }
 
-        m_completionEvent.trigger();
+        // CompressMV
+        for (UInt col = 0; col < numCols; col++)
+        {
+            const uint32_t cuAddr = lineStartCUAddr + col;
+            TComDataCU* cu = m_pic->getCU(cuAddr);
+
+            cu->compressMV();
+        }
 
         // TODO: Remove when we confirm below code is right
         //recon->xExtendPicCompBorder(recon->getLumaAddr(), recon->getStride(), recon->getWidth(), recon->getHeight(), recon->m_lumaMarginX, recon->m_lumaMarginY);
@@ -333,5 +352,7 @@ void FrameFilter::processRow(int row)
         {
             m_pic->m_reconRowWait.trigger();
         }
+
+        m_completionEvent.trigger();
     }
 }

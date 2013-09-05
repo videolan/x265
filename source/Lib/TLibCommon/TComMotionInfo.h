@@ -92,12 +92,15 @@ private:
     UInt      m_numPartitions;
     AMVPInfo  m_cAMVPInfo;
 
+    MV*       m_cmv_mv;
+    char*     m_cmv_refIdx;
+
     template<typename T>
     void setAll(T *p, T const & val, PartSize cuMode, int partAddr, UInt depth, int partIdx);
 
 public:
 
-    TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0) {}
+    TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0), m_cmv_mv(NULL), m_cmv_refIdx(NULL) {}
 
     ~TComCUMvField() {}
 
@@ -123,10 +126,12 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     const MV & getMv(int idx) const { return m_mv[idx]; }
+    const MV & getMv_cmv(int idx) const { return m_cmv_mv[idx]; }
 
     const MV & getMvd(int idx) const { return m_mvd[idx]; }
 
     int getRefIdx(int idx) const { return m_refIdx[idx]; }
+    int getRefIdx_cmv(int idx) const { return m_cmv_refIdx[idx]; }
 
     AMVPInfo* getAMVPInfo() { return &m_cAMVPInfo; }
 

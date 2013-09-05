@@ -66,6 +66,7 @@ TComDataCU::TComDataCU()
     m_skipFlag = NULL;
     m_partSizes = NULL;
     m_predModes = NULL;
+    m_cmv_predModes = NULL;
     m_cuTransquantBypass = NULL;
     m_width = NULL;
     m_height = NULL;
@@ -122,6 +123,7 @@ void TComDataCU::create(UInt numPartition, UInt width, UInt height, int unitSize
     m_partSizes = new char[numPartition];
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
     m_predModes = new char[numPartition];
+    m_cmv_predModes = new char[numPartition];
     m_cuTransquantBypass = new bool[numPartition];
 
     m_bMergeFlags     = (bool*)X265_MALLOC(bool,  numPartition);
@@ -175,6 +177,7 @@ void TComDataCU::destroy()
     if (m_skipFlag) { delete[] m_skipFlag; m_skipFlag = NULL; }
     if (m_partSizes) { delete[] m_partSizes; m_partSizes = NULL; }
     if (m_predModes) { delete[] m_predModes; m_predModes = NULL; }
+    if (m_cmv_predModes) { delete[] m_cmv_predModes; m_cmv_predModes = NULL; }
     if (m_cuTransquantBypass) { delete[] m_cuTransquantBypass; m_cuTransquantBypass = NULL; }
     if (m_cbf[0]) { X265_FREE(m_cbf[0]); m_cbf[0] = NULL; }
     if (m_cbf[1]) { X265_FREE(m_cbf[1]); m_cbf[1] = NULL; }
@@ -3022,18 +3025,18 @@ bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV&
     curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
     colPOC = colCU->getSlice()->getPOC();
 
-    if (colCU->isIntra(absPartAddr))
+    if (colCU->isIntra_cmv(absPartAddr))
     {
         return false;
     }
     colRefPicList = getSlice()->getCheckLDC() ? picList : RefPicList(getSlice()->getColFromL0Flag());
 
-    int colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx(absPartAddr);
+    int colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx_cmv(absPartAddr);
 
     if (colRefIdx < 0)
     {
         colRefPicList = RefPicList(1 - colRefPicList);
-        colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx(absPartAddr);
+        colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx_cmv(absPartAddr);
 
         if (colRefIdx < 0)
         {
@@ -3043,7 +3046,7 @@ bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV&
 
     // Scale the vector.
     colRefPOC = colCU->getSlice()->getRefPOC(colRefPicList, colRefIdx);
-    colmv = colCU->getCUMvField(colRefPicList)->getMv(absPartAddr);
+    colmv = colCU->getCUMvField(colRefPicList)->getMv_cmv(absPartAddr);
 
     curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
     bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, outRefIdx)->getIsLongTerm();
@@ -3118,8 +3121,9 @@ void TComDataCU::compressMV()
 
     if (scaleFactor > 0)
     {
-        m_cuMvField[0].compress(m_predModes, scaleFactor);
-        m_cuMvField[1].compress(m_predModes, scaleFactor);
+        memcpy(m_cmv_predModes, m_predModes, m_numPartitions * sizeof(m_predModes[0]));
+        m_cuMvField[0].compress(m_cmv_predModes, scaleFactor);
+        m_cuMvField[1].compress(m_cmv_predModes, scaleFactor);
     }
 }
 

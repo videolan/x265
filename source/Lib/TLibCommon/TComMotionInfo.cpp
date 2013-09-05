@@ -59,9 +59,15 @@ void TComCUMvField::create(UInt numPartition)
     assert(m_mvd    == NULL);
     assert(m_refIdx == NULL);
 
+    assert(m_cmv_mv == NULL);
+    assert(m_cmv_refIdx == NULL);
+
     m_mv     = new MV[numPartition];
     m_mvd    = new MV[numPartition];
     m_refIdx = new char[numPartition];
+
+    m_cmv_mv     = new MV[numPartition];
+    m_cmv_refIdx = new char[numPartition];
 
     m_numPartitions = numPartition;
 }
@@ -72,13 +78,22 @@ void TComCUMvField::destroy()
     assert(m_mvd    != NULL);
     assert(m_refIdx != NULL);
 
+    assert(m_cmv_mv     != NULL);
+    assert(m_cmv_refIdx != NULL);
+
     delete[] m_mv;
     delete[] m_mvd;
     delete[] m_refIdx;
 
+    delete[] m_cmv_mv;
+    delete[] m_cmv_refIdx;
+
     m_mv     = NULL;
     m_mvd    = NULL;
     m_refIdx = NULL;
+
+    m_cmv_mv     = NULL;
+    m_cmv_refIdx = NULL;
 
     m_numPartitions = 0;
 }
@@ -349,11 +364,10 @@ void TComCUMvField::compress(char* predMode, int scale)
         int refIdx = m_refIdx[partIdx];
         for (int i = 0; i < N; i++)
         {
-            m_mv[partIdx + i] = mv;
+            m_cmv_mv[partIdx + i] = mv;
             predMode[partIdx + i] = mode;
-            m_refIdx[partIdx + i] = refIdx;
+            m_cmv_refIdx[partIdx + i] = refIdx;
         }
     }
 }
-
 //! \}
