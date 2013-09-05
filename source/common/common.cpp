@@ -221,7 +221,7 @@ int x265_check_params(x265_param_t *param)
             "Search Range must be less than 32768");
     CONFIRM(param->bipredSearchRange < 0,
             "Search Range must be more than 0");
-    CONFIRM(param->keyframeMax < 0 && !param->bOpenGOP,
+    CONFIRM(param->keyframeMax < 0,
             "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
     CONFIRM(param->frameNumThreads <= 0,
             "frameNumThreads (--frame-threads) must be 1 or higher");
