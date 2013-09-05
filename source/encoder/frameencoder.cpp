@@ -314,9 +314,6 @@ void FrameEncoder::computeLambdaForQp()
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
-
-    // Allow compressFrame() to begin in worker thread
-    m_enable.trigger();
 }
 
 void FrameEncoder::compressFrame()

@@ -260,6 +260,9 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         m_rateControl->rateControlStart(fenc, lookAheadCost);
 
         curEncoder->computeLambdaForQp();
+
+        // Allow FrameEncoder::compressFrame() to start in a worker thread
+        curEncoder->m_enable.trigger();
     }
 
     return ret;
