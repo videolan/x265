@@ -208,6 +208,7 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
     }
     return 0;
 }
+
 void FrameEncoder::initSlice(TComPic* pic)
 {
     m_pic = pic;
