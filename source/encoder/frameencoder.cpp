@@ -184,8 +184,7 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
         sei.m_fullRandomAccessFlag = false;
         sei.m_noParamSetUpdateFlag = false;
         sei.numSpsIdsMinus1 = 0;
-        sei.activeSeqParamSetId.resize(sei.numSpsIdsMinus1 + 1);
-        sei.activeSeqParamSetId[0] = m_sps.getSPSId();
+        sei.activeSeqParamSetId = m_sps.getSPSId();
 
         entropyCoder->setBitstream(&nalu.m_Bitstream);
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei, &m_sps);

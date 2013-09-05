@@ -256,13 +256,7 @@ void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
     WRITE_FLAG(sei.m_fullRandomAccessFlag, "full_random_access_flag");
     WRITE_FLAG(sei.m_noParamSetUpdateFlag, "no_param_set_update_flag");
     WRITE_UVLC(sei.numSpsIdsMinus1,    "num_sps_ids_minus1");
-
-    assert(sei.activeSeqParamSetId.size() == (sei.numSpsIdsMinus1 + 1));
-
-    for (int i = 0; i < sei.activeSeqParamSetId.size(); i++)
-    {
-        WRITE_UVLC(sei.activeSeqParamSetId[i], "active_seq_param_set_id");
-    }
+    WRITE_UVLC(sei.activeSeqParamSetId, "active_seq_param_set_id");
 
     UInt bits = m_bitIf->getNumberOfWrittenBits();
     UInt alignedBits = (8 - (bits & 7)) % 8;

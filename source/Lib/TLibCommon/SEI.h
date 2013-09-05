@@ -146,7 +146,7 @@ public:
     bool m_fullRandomAccessFlag;
     bool m_noParamSetUpdateFlag;
     int numSpsIdsMinus1;
-    std::vector<int> activeSeqParamSetId;
+    int activeSeqParamSetId;
 };
 
 class SEIBufferingPeriod : public SEI
