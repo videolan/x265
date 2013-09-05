@@ -611,9 +611,9 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     return bits;
 }
 
-void TEncTop::xInitSPS(TComSPS *pcSPS)
+void TEncTop::xInitSPS(TComSPS *sps)
 {
-    ProfileTierLevel& profileTierLevel = *pcSPS->getPTL()->getGeneralPTL();
+    ProfileTierLevel& profileTierLevel = *sps->getPTL()->getGeneralPTL();
 
     profileTierLevel.setLevelIdc(m_level);
     profileTierLevel.setTierFlag(m_levelTier);
@@ -639,14 +639,14 @@ void TEncTop::xInitSPS(TComSPS *pcSPS)
     /* XXX: may be a good idea to refactor the above into a function
      * that chooses the actual compatibility based upon options */
 
-    pcSPS->setPicWidthInLumaSamples(param.sourceWidth);
-    pcSPS->setPicHeightInLumaSamples(param.sourceHeight);
-    pcSPS->setConformanceWindow(m_conformanceWindow);
-    pcSPS->setMaxCUWidth(g_maxCUWidth);
-    pcSPS->setMaxCUHeight(g_maxCUHeight);
-    pcSPS->setMaxCUDepth(g_maxCUDepth);
+    sps->setPicWidthInLumaSamples(param.sourceWidth);
+    sps->setPicHeightInLumaSamples(param.sourceHeight);
+    sps->setConformanceWindow(m_conformanceWindow);
+    sps->setMaxCUWidth(g_maxCUWidth);
+    sps->setMaxCUHeight(g_maxCUHeight);
+    sps->setMaxCUDepth(g_maxCUDepth);
 
-    int minCUSize = pcSPS->getMaxCUWidth() >> (pcSPS->getMaxCUDepth() - g_addCUDepth);
+    int minCUSize = sps->getMaxCUWidth() >> (sps->getMaxCUDepth() - g_addCUDepth);
     int log2MinCUSize = 0;
     while (minCUSize > 1)
     {
@@ -654,108 +654,108 @@ void TEncTop::xInitSPS(TComSPS *pcSPS)
         log2MinCUSize++;
     }
 
-    pcSPS->setLog2MinCodingBlockSize(log2MinCUSize);
-    pcSPS->setLog2DiffMaxMinCodingBlockSize(pcSPS->getMaxCUDepth() - g_addCUDepth);
+    sps->setLog2MinCodingBlockSize(log2MinCUSize);
+    sps->setLog2DiffMaxMinCodingBlockSize(sps->getMaxCUDepth() - g_addCUDepth);
 
-    pcSPS->setPCMLog2MinSize(m_pcmLog2MinSize);
-    pcSPS->setUsePCM(m_usePCM);
-    pcSPS->setPCMLog2MaxSize(m_pcmLog2MaxSize);
+    sps->setPCMLog2MinSize(m_pcmLog2MinSize);
+    sps->setUsePCM(m_usePCM);
+    sps->setPCMLog2MaxSize(m_pcmLog2MaxSize);
 
-    pcSPS->setQuadtreeTULog2MaxSize(m_quadtreeTULog2MaxSize);
-    pcSPS->setQuadtreeTULog2MinSize(m_quadtreeTULog2MinSize);
-    pcSPS->setQuadtreeTUMaxDepthInter(param.tuQTMaxInterDepth);
-    pcSPS->setQuadtreeTUMaxDepthIntra(param.tuQTMaxIntraDepth);
+    sps->setQuadtreeTULog2MaxSize(m_quadtreeTULog2MaxSize);
+    sps->setQuadtreeTULog2MinSize(m_quadtreeTULog2MinSize);
+    sps->setQuadtreeTUMaxDepthInter(param.tuQTMaxInterDepth);
+    sps->setQuadtreeTUMaxDepthIntra(param.tuQTMaxIntraDepth);
 
-    pcSPS->setTMVPFlagsPresent(false);
-    pcSPS->setUseLossless(m_useLossless);
+    sps->setTMVPFlagsPresent(false);
+    sps->setUseLossless(m_useLossless);
 
-    pcSPS->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
+    sps->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
 
     int i;
 
     for (i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
     {
-        pcSPS->setAMPAcc(i, param.bEnableAMP);
+        sps->setAMPAcc(i, param.bEnableAMP);
     }
 
-    pcSPS->setUseAMP(param.bEnableAMP);
+    sps->setUseAMP(param.bEnableAMP);
 
     for (i = g_maxCUDepth - g_addCUDepth; i < g_maxCUDepth; i++)
     {
-        pcSPS->setAMPAcc(i, 0);
+        sps->setAMPAcc(i, 0);
     }
 
-    pcSPS->setBitDepthY(X265_DEPTH);
-    pcSPS->setBitDepthC(X265_DEPTH);
+    sps->setBitDepthY(X265_DEPTH);
+    sps->setBitDepthC(X265_DEPTH);
 
-    pcSPS->setQpBDOffsetY(6 * (X265_DEPTH - 8));
-    pcSPS->setQpBDOffsetC(6 * (X265_DEPTH - 8));
+    sps->setQpBDOffsetY(6 * (X265_DEPTH - 8));
+    sps->setQpBDOffsetC(6 * (X265_DEPTH - 8));
 
-    pcSPS->setUseSAO(param.bEnableSAO);
+    sps->setUseSAO(param.bEnableSAO);
 
     // TODO: hard-code these values in SPS code
-    pcSPS->setMaxTLayers(1);
-    pcSPS->setTemporalIdNestingFlag(true);
-    for (i = 0; i < pcSPS->getMaxTLayers(); i++)
+    sps->setMaxTLayers(1);
+    sps->setTemporalIdNestingFlag(true);
+    for (i = 0; i < sps->getMaxTLayers(); i++)
     {
-        pcSPS->setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-        pcSPS->setNumReorderPics(m_numReorderPics[i], i);
+        sps->setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
+        sps->setNumReorderPics(m_numReorderPics[i], i);
     }
 
     // TODO: it is recommended for this to match the input bit depth
-    pcSPS->setPCMBitDepthLuma(X265_DEPTH);
-    pcSPS->setPCMBitDepthChroma(X265_DEPTH);
+    sps->setPCMBitDepthLuma(X265_DEPTH);
+    sps->setPCMBitDepthChroma(X265_DEPTH);
 
-    pcSPS->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
+    sps->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
 
-    pcSPS->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
+    sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
 
-    pcSPS->setUseStrongIntraSmoothing(param.bEnableStrongIntraSmoothing);
+    sps->setUseStrongIntraSmoothing(param.bEnableStrongIntraSmoothing);
 
-    pcSPS->setVuiParametersPresentFlag(getVuiParametersPresentFlag());
-    if (pcSPS->getVuiParametersPresentFlag())
+    sps->setVuiParametersPresentFlag(getVuiParametersPresentFlag());
+    if (sps->getVuiParametersPresentFlag())
     {
-        TComVUI* pcVUI = pcSPS->getVuiParameters();
-        pcVUI->setAspectRatioInfoPresentFlag(getAspectRatioIdc() != -1);
-        pcVUI->setAspectRatioIdc(getAspectRatioIdc());
-        pcVUI->setSarWidth(getSarWidth());
-        pcVUI->setSarHeight(getSarHeight());
-        pcVUI->setOverscanInfoPresentFlag(getOverscanInfoPresentFlag());
-        pcVUI->setOverscanAppropriateFlag(getOverscanAppropriateFlag());
-        pcVUI->setVideoSignalTypePresentFlag(getVideoSignalTypePresentFlag());
-        pcVUI->setVideoFormat(getVideoFormat());
-        pcVUI->setVideoFullRangeFlag(getVideoFullRangeFlag());
-        pcVUI->setColourDescriptionPresentFlag(getColourDescriptionPresentFlag());
-        pcVUI->setColourPrimaries(getColourPrimaries());
-        pcVUI->setTransferCharacteristics(getTransferCharacteristics());
-        pcVUI->setMatrixCoefficients(getMatrixCoefficients());
-        pcVUI->setChromaLocInfoPresentFlag(getChromaLocInfoPresentFlag());
-        pcVUI->setChromaSampleLocTypeTopField(getChromaSampleLocTypeTopField());
-        pcVUI->setChromaSampleLocTypeBottomField(getChromaSampleLocTypeBottomField());
-        pcVUI->setNeutralChromaIndicationFlag(getNeutralChromaIndicationFlag());
-        pcVUI->setDefaultDisplayWindow(getDefaultDisplayWindow());
-        pcVUI->setFrameFieldInfoPresentFlag(getFrameFieldInfoPresentFlag());
-        pcVUI->setFieldSeqFlag(false);
-        pcVUI->setHrdParametersPresentFlag(false);
-        pcVUI->getTimingInfo()->setPocProportionalToTimingFlag(getPocProportionalToTimingFlag());
-        pcVUI->getTimingInfo()->setNumTicksPocDiffOneMinus1(getNumTicksPocDiffOneMinus1());
-        pcVUI->setBitstreamRestrictionFlag(getBitstreamRestrictionFlag());
-        pcVUI->setMotionVectorsOverPicBoundariesFlag(getMotionVectorsOverPicBoundariesFlag());
-        pcVUI->setMinSpatialSegmentationIdc(getMinSpatialSegmentationIdc());
-        pcVUI->setMaxBytesPerPicDenom(getMaxBytesPerPicDenom());
-        pcVUI->setMaxBitsPerMinCuDenom(getMaxBitsPerMinCuDenom());
-        pcVUI->setLog2MaxMvLengthHorizontal(getLog2MaxMvLengthHorizontal());
-        pcVUI->setLog2MaxMvLengthVertical(getLog2MaxMvLengthVertical());
+        TComVUI* vui = sps->getVuiParameters();
+        vui->setAspectRatioInfoPresentFlag(getAspectRatioIdc() != -1);
+        vui->setAspectRatioIdc(getAspectRatioIdc());
+        vui->setSarWidth(getSarWidth());
+        vui->setSarHeight(getSarHeight());
+        vui->setOverscanInfoPresentFlag(getOverscanInfoPresentFlag());
+        vui->setOverscanAppropriateFlag(getOverscanAppropriateFlag());
+        vui->setVideoSignalTypePresentFlag(getVideoSignalTypePresentFlag());
+        vui->setVideoFormat(getVideoFormat());
+        vui->setVideoFullRangeFlag(getVideoFullRangeFlag());
+        vui->setColourDescriptionPresentFlag(getColourDescriptionPresentFlag());
+        vui->setColourPrimaries(getColourPrimaries());
+        vui->setTransferCharacteristics(getTransferCharacteristics());
+        vui->setMatrixCoefficients(getMatrixCoefficients());
+        vui->setChromaLocInfoPresentFlag(getChromaLocInfoPresentFlag());
+        vui->setChromaSampleLocTypeTopField(getChromaSampleLocTypeTopField());
+        vui->setChromaSampleLocTypeBottomField(getChromaSampleLocTypeBottomField());
+        vui->setNeutralChromaIndicationFlag(getNeutralChromaIndicationFlag());
+        vui->setDefaultDisplayWindow(getDefaultDisplayWindow());
+        vui->setFrameFieldInfoPresentFlag(getFrameFieldInfoPresentFlag());
+        vui->setFieldSeqFlag(false);
+        vui->setHrdParametersPresentFlag(false);
+        vui->getTimingInfo()->setPocProportionalToTimingFlag(getPocProportionalToTimingFlag());
+        vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(getNumTicksPocDiffOneMinus1());
+        vui->setBitstreamRestrictionFlag(getBitstreamRestrictionFlag());
+        vui->setMotionVectorsOverPicBoundariesFlag(getMotionVectorsOverPicBoundariesFlag());
+        vui->setMinSpatialSegmentationIdc(getMinSpatialSegmentationIdc());
+        vui->setMaxBytesPerPicDenom(getMaxBytesPerPicDenom());
+        vui->setMaxBitsPerMinCuDenom(getMaxBitsPerMinCuDenom());
+        vui->setLog2MaxMvLengthHorizontal(getLog2MaxMvLengthHorizontal());
+        vui->setLog2MaxMvLengthVertical(getLog2MaxMvLengthVertical());
     }
 
     /* set the VPS profile information */
-    *getVPS()->getPTL() = *pcSPS->getPTL();
+    *getVPS()->getPTL() = *sps->getPTL();
     getVPS()->getTimingInfo()->setTimingInfoPresentFlag(false);
 }
 
-void TEncTop::xInitPPS(TComPPS *pcPPS)
+void TEncTop::xInitPPS(TComPPS *pps)
 {
-    pcPPS->setConstrainedIntraPred(param.bEnableConstrainedIntra);
+    pps->setConstrainedIntraPred(param.bEnableConstrainedIntra);
     bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
 
     int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
@@ -774,30 +774,30 @@ void TEncTop::xInitPPS(TComPPS *pcPPS)
 
     if (bUseDQP)
     {
-        pcPPS->setUseDQP(true);
-        pcPPS->setMaxCuDQPDepth(m_maxCuDQPDepth);
-        pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
+        pps->setUseDQP(true);
+        pps->setMaxCuDQPDepth(m_maxCuDQPDepth);
+        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUWidth() >> (pps->getMaxCuDQPDepth()));
     }
     else
     {
-        pcPPS->setUseDQP(false);
-        pcPPS->setMaxCuDQPDepth(0);
-        pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
+        pps->setUseDQP(false);
+        pps->setMaxCuDQPDepth(0);
+        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUWidth() >> (pps->getMaxCuDQPDepth()));
     }
 
-    pcPPS->setChromaCbQpOffset(param.cbQpOffset);
-    pcPPS->setChromaCrQpOffset(param.crQpOffset);
+    pps->setChromaCbQpOffset(param.cbQpOffset);
+    pps->setChromaCrQpOffset(param.crQpOffset);
 
-    pcPPS->setEntropyCodingSyncEnabledFlag(param.bEnableWavefront);
-    pcPPS->setUseWP(param.bEnableWeightedPred);
-    pcPPS->setWPBiPred(param.bEnableWeightedBiPred);
-    pcPPS->setOutputFlagPresentFlag(false);
-    pcPPS->setSignHideFlag(param.bEnableSignHiding);
-    pcPPS->setDeblockingFilterControlPresentFlag(!param.bEnableLoopFilter);
-    pcPPS->setDeblockingFilterOverrideEnabledFlag(!m_loopFilterOffsetInPPS);
-    pcPPS->setPicDisableDeblockingFilterFlag(!param.bEnableLoopFilter);
-    pcPPS->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
-    pcPPS->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
+    pps->setEntropyCodingSyncEnabledFlag(param.bEnableWavefront);
+    pps->setUseWP(param.bEnableWeightedPred);
+    pps->setWPBiPred(param.bEnableWeightedBiPred);
+    pps->setOutputFlagPresentFlag(false);
+    pps->setSignHideFlag(param.bEnableSignHiding);
+    pps->setDeblockingFilterControlPresentFlag(!param.bEnableLoopFilter);
+    pps->setDeblockingFilterOverrideEnabledFlag(!m_loopFilterOffsetInPPS);
+    pps->setPicDisableDeblockingFilterFlag(!param.bEnableLoopFilter);
+    pps->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
+    pps->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
 
     /* TODO: this must be replaced with a user-parameter or hard-coded value */
     int histogram[MAX_NUM_REF + 1];
@@ -824,12 +824,12 @@ void TEncTop::xInitPPS(TComPPS *pcPPS)
     }
 
     assert(bestPos <= 15);
-    pcPPS->setNumRefIdxL0DefaultActive(bestPos);
-    pcPPS->setNumRefIdxL1DefaultActive(bestPos);
+    pps->setNumRefIdxL0DefaultActive(bestPos);
+    pps->setNumRefIdxL1DefaultActive(bestPos);
 
-    pcPPS->setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
-    pcPPS->setUseTransformSkip(param.bEnableTransformSkip);
-    pcPPS->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
+    pps->setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
+    pps->setUseTransformSkip(param.bEnableTransformSkip);
+    pps->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
 void TEncTop::computeLambdaForQp(TComSlice* slice)
