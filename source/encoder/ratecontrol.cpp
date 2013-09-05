@@ -126,7 +126,7 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
         break;
 
     case X265_RC_CQP:
-        q = qpConstant[frameType];
+        qp = qpConstant[frameType];
         break;
 
     case X265_RC_CRF:
