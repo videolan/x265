@@ -67,27 +67,27 @@ class TEncTop : public TEncCfg
 {
 private:
 
-    int                     m_pocLast;          ///< time index (POC)
-    TComList<TComPic*>      m_freeList;
+    int                m_pocLast;          ///< time index (POC)
+    TComList<TComPic*> m_freeList;
 
-    ThreadPool*       m_threadPool;
-    Lookahead*        m_lookahead;
-    FrameEncoder*     m_frameEncoder;
-    DPB*              m_dpb;
-    RateControl*      m_rateControl;
+    ThreadPool*        m_threadPool;
+    Lookahead*         m_lookahead;
+    FrameEncoder*      m_frameEncoder;
+    DPB*               m_dpb;
+    RateControl*       m_rateControl;
 
     /* frame parallelism */
-    int                     m_curEncoder;
+    int                m_curEncoder;
 
     /* Collect statistics globally */
-    Lock              m_statLock;
-    TEncAnalyze             m_analyzeAll;
-    TEncAnalyze             m_analyzeI;
-    TEncAnalyze             m_analyzeP;
-    TEncAnalyze             m_analyzeB;
+    Lock               m_statLock;
+    TEncAnalyze        m_analyzeAll;
+    TEncAnalyze        m_analyzeI;
+    TEncAnalyze        m_analyzeP;
+    TEncAnalyze        m_analyzeB;
 
     // quality control
-    TComScalingList         m_scalingList;      ///< quantization matrix information
+    TComScalingList    m_scalingList;      ///< quantization matrix information
 
 public:
 
