@@ -194,7 +194,7 @@ typedef struct x265_param_t
     int       decodingRefreshType;             ///< Intra refresh type (0:none, 1:CDR, 2:IDR) default: 1
     int       keyframeMin;                     ///< Minimum intra period in frames
     int       keyframeMax;                     ///< Maximum intra period in frames
-    int       bOpenGOP;                        ///< Only use I for first frame
+    int       bOpenGOP;                        ///< Enable Open GOP referencing
     int       bframes;                         ///< Max number of consecutive B-frames
     int       lookaheadDepth;                  ///< Number of frames to use for lookahead, determines encoder latency
     int       bFrameAdaptive;                  ///< 0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling
