@@ -80,7 +80,6 @@ private:
     int                m_curEncoder;
 
     /* Collect statistics globally */
-    Lock               m_statLock;
     TEncAnalyze        m_analyzeAll;
     TEncAnalyze        m_analyzeI;
     TEncAnalyze        m_analyzeP;

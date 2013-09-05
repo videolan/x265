@@ -542,9 +542,6 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
 
     UInt bits = numRBSPBytes * 8;
 
-    /* Acquire encoder global lock to accumulate statistics and print debug info to console */
-    ScopedLock s(m_statLock);
-
     //===== add PSNR =====
     m_analyzeAll.addResult(psnrY, psnrU, psnrV, (double)bits);
     TComSlice*  slice = pic->getSlice();
