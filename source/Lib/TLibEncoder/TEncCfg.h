@@ -134,7 +134,6 @@ protected:
 
     //====== Tool list ========
     bool      m_bUseASR;
-    int*      m_dqpTable;
     bool      m_usePCM;
     UInt      m_pcmLog2MaxSize;
     UInt      m_pcmLog2MinSize;
@@ -253,8 +252,6 @@ public:
     UInt getPCMLog2MaxSize() { return m_pcmLog2MaxSize; }
 
     UInt getPCMLog2MinSize() { return m_pcmLog2MinSize; }
-
-    int* getdQPs() { return m_dqpTable; }
 
     int   getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
 

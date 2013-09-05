@@ -235,7 +235,6 @@ void x265_t::configure(x265_param_t *_param)
     m_nonPackedConstraintFlag = false;
     m_frameOnlyConstraintFlag = false;
     m_bUseASR = false; // adapt search range based on temporal distances
-    m_dqpTable = NULL;
     m_recoveryPointSEIEnabled = 0;
     m_bufferingPeriodSEIEnabled = 0;
     m_pictureTimingSEIEnabled = 0;
