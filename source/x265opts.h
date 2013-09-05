@@ -62,7 +62,7 @@ OPT("constrained-intra", param->bEnableConstrainedIntra,    no_argument, 0, "Con
 HELP("Slice decision options:")
 OPT("refresh",         param->decodingRefreshType,    required_argument, 0, "Intra refresh type - 0:none, 1:CDR, 2:IDR (default: CDR)")
 OPT("keyint",          param->keyframeMax,            required_argument, 'i', "Max intra period in frames")
-OPT("open-gop",        param->bOpenGOP,                     no_argument, 0, "Only use intra for very first picture")
+//OPT("open-gop",        param->bOpenGOP,                     no_argument, 0, "Enable open GOP referencing")
 OPT("rc-lookahead",    param->lookaheadDepth,         required_argument, 0, "Number of frames for frame-type lookahead (determines encoder latency)")
 OPT("bframes",         param->bframes,                required_argument, 'b', "Maximum number of consecutive b-frames (now it only enables B GOP structure)")
 OPT("bframe-bias",     param->bFrameBias,             required_argument, 0, "Bias towards B frame decisions")
