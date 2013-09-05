@@ -338,12 +338,12 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
     AccessUnit au;
     if (encoder->getStreamHeaders(au) == 0)
     {
-        int memsize = 0;
+        long memsize = 0;
         int nalcount = 0;
         for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
         {
             const NALUnitEBSP& temp = **t;
-            memsize += (int)temp.m_nalUnitData.str().size();
+            memsize += (long)temp.m_nalUnitData.str().size() + 4;
             nalcount++;
         }
 
@@ -403,7 +403,7 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
         }
 
         *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = nalcount;
+        if (pi_nal) *pi_nal = (int)nalcount;
         return 0;
     }
     else
@@ -419,12 +419,12 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
 
     if (pp_nal && numEncoded)
     {
-        int memsize = 0;
+        long memsize = 0;
         int nalcount = 0;
         for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
         {
             const NALUnitEBSP& temp = **t;
-            memsize += (int)temp.m_nalUnitData.str().size();
+            memsize += (long)temp.m_nalUnitData.str().size() + 4;
             nalcount++;
         }
 
@@ -432,7 +432,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
             X265_FREE(encoder->m_nals);
 
         if (encoder->m_packetData)
-            X265_FREE(encoder->m_packetData);
+           X265_FREE(encoder->m_packetData);
 
         encoder->m_packetData = (char*)X265_MALLOC(char, memsize);
         encoder->m_nals = (x265_nal_t*)X265_MALLOC(x265_nal_t, nalcount);
@@ -484,7 +484,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         }
 
         *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = nalcount;
+        if (pi_nal) *pi_nal =(int) nalcount;
     }
     else if (pi_nal)
         *pi_nal = 0;
