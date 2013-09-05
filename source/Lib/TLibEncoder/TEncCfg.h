@@ -95,23 +95,21 @@ protected:
     Window    m_conformanceWindow;
     Window    m_defaultDisplayWindow;         ///< Represents the default display window parameters
     TComVPS   m_vps;
-    double    m_adLambdaModifier[MAX_TLAYER];
 
     /* profile & level */
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
 
-    bool m_progressiveSourceFlag;
-    bool m_interlacedSourceFlag;
-    bool m_nonPackedConstraintFlag;
-    bool m_frameOnlyConstraintFlag;
+    bool      m_progressiveSourceFlag;
+    bool      m_interlacedSourceFlag;
+    bool      m_nonPackedConstraintFlag;
+    bool      m_frameOnlyConstraintFlag;
     int       m_pad[2];
 
     //====== Coding Structure ========
     int       gopsizeMin; //Minimum allowed GOP size. With P frames only, its 4 and with B frames, its 8.
     GOPEntry  m_gopList[MAX_GOP];
-    int       m_extraRPSs;
     int       m_maxDecPicBuffering[MAX_TLAYER];
     int       m_numReorderPics[MAX_TLAYER];
     int       m_maxRefPicNum;                   ///< this is used to mimic the sliding mechanism used by the decoder
@@ -213,14 +211,9 @@ public:
 
     //====== Coding Structure ========
 
-    int getExtraRPSs() { return m_extraRPSs; }
-
     GOPEntry  getGOPEntry(int i) { return m_gopList[i]; }
 
     int getMaxRefPicNum() { return m_maxRefPicNum; }
-
-    //====== Sequence ========
-    double getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
     //==== Coding Structure ========
 

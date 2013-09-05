@@ -211,10 +211,6 @@ void x265_t::configure(x265_param_t *_param)
 
     //====== HM Settings not exposed for configuration ======
     initializeGOP(_param);
-    for (int i = 0; i < MAX_TLAYER; i++)
-    {
-        m_adLambdaModifier[i] = 1.0;
-    }
 
     TComVPS vps;
     vps.setMaxTLayers(1);
