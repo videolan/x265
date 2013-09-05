@@ -210,7 +210,7 @@ struct CLIOptions
     {
         if (i_level > cli_log_level)
             return;
-        std::string s_level;
+        const char *s_level;
         switch (i_level)
         {
         case X265_LOG_ERROR:
@@ -230,7 +230,7 @@ struct CLIOptions
             break;
         }
 
-        fprintf(stderr, "x265 [%s]: ", s_level.c_str());
+        fprintf(stderr, "x265 [%s]: ", s_level);
         va_list arg;
         va_start(arg, fmt);
         vfprintf(stderr, fmt, arg);
