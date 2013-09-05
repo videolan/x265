@@ -587,7 +587,7 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
                 fprintf(stderr, "]");
             }
         }
-        if (digestStr)
+        if (digestStr && param.logLevel >= 4)
         {
             if (getDecodedPictureHashSEIEnabled() == 1)
             {
