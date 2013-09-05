@@ -40,9 +40,10 @@ using namespace x265;
 struct x265_t : public TEncTop
 {
     x265_t();
-
-    std::vector<x265_nal_t> m_nals;
-    std::string             m_packetData;
+    ~x265_t();
+    
+    x265_nal_t *m_nals; 
+    char *m_packetData; 
 
     void configure(x265_param_t *param);
     void determineLevelAndProfile(x265_param_t *param);
@@ -50,8 +51,17 @@ struct x265_t : public TEncTop
 
 x265_t::x265_t()
 {
-    m_packetData.reserve(4096);
-    m_nals.reserve(4);
+    m_nals = NULL; 
+    m_packetData = NULL; 
+}
+
+x265_t::~x265_t()
+{
+    if(m_nals)
+        X265_FREE(m_nals);
+    
+    if(m_packetData)
+        X265_FREE(m_packetData);
 }
 
 void x265_t::determineLevelAndProfile(x265_param_t *_param)
@@ -332,9 +342,26 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
     AccessUnit au;
     if (encoder->getStreamHeaders(au) == 0)
     {
-        encoder->m_nals.clear();
-        encoder->m_packetData.clear();
-
+        int memsize = 0;
+        int nalcount = 0;       
+        for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
+        {
+            const NALUnitEBSP& temp = **t;
+            memsize += (int) temp.m_nalUnitData.str().size();
+            nalcount++;
+        }
+        
+        if(encoder->m_packetData)
+            X265_FREE(encoder->m_packetData);
+           
+        if(encoder->m_nals)
+            X265_FREE(encoder->m_nals);
+        
+        encoder->m_packetData = (char *) X265_MALLOC(char, memsize);
+        encoder->m_nals = (x265_nal_t *) X265_MALLOC(x265_nal_t, nalcount);
+        nalcount = 0;
+        memsize = 0;
+        
         /* Copy NAL output packets into x265_nal_t structures */
         for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
         {
@@ -352,35 +379,35 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
                     *    unit of an access unit in decoding order, as specified by subclause
                     *    7.4.1.2.3.
                     */
-                encoder->m_packetData.append(start_code_prefix, 4);
+                ::memcpy(encoder->m_packetData + memsize, start_code_prefix, 4);
                 size += 4;
             }
             else
             {
-                encoder->m_packetData.append(start_code_prefix + 1, 3);
+                ::memcpy(encoder->m_packetData + memsize, start_code_prefix + 1, 3);
                 size += 3;
             }
+            memsize += size;
             size_t nalSize = nalu.m_nalUnitData.str().size();
-            encoder->m_packetData.append(nalu.m_nalUnitData.str().c_str(), nalSize);
-            size += (int)nalSize;
+            ::memcpy(encoder->m_packetData + memsize, nalu.m_nalUnitData.str().c_str(), nalSize);
+            size += (int)nalSize; 
+            memsize += (int)nalSize;
 
-            x265_nal_t nal;
-            nal.i_type = nalu.m_nalUnitType;
-            nal.i_payload = size;
-            encoder->m_nals.push_back(nal);
+            encoder->m_nals[nalcount].i_type = nalu.m_nalUnitType;
+            encoder->m_nals[nalcount].i_payload = size;
+            nalcount++;
         }
 
         /* Setup payload pointers, now that we're done adding content to m_packetData */
         size_t offset = 0;
-        for (size_t i = 0; i < encoder->m_nals.size(); i++)
+        for (size_t i = 0; i < (size_t)nalcount; i++)
         {
-            x265_nal_t& nal = encoder->m_nals[i];
-            nal.p_payload = (uint8_t*)encoder->m_packetData.c_str() + offset;
-            offset += nal.i_payload;
+            encoder->m_nals[i].p_payload = (uint8_t*)encoder->m_packetData + offset;
+            offset += encoder->m_nals[i].i_payload;
         }
 
         *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = (int)encoder->m_nals.size();
+        if (pi_nal) *pi_nal = nalcount;
         return 0;
     }
     else
@@ -395,9 +422,26 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     int numEncoded = encoder->encode(!pic_in, pic_in, pic_out, au);
     if (pp_nal && numEncoded)
     {
-        encoder->m_nals.clear();
-        encoder->m_packetData.clear();
-
+        int memsize = 0;
+        int nalcount = 0;       
+        for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
+        {
+            const NALUnitEBSP& temp = **t;
+            memsize += (int) temp.m_nalUnitData.str().size();
+            nalcount++;
+        }
+        
+        if(encoder->m_nals)
+            X265_FREE(encoder->m_nals);
+         
+        if(encoder->m_packetData)
+            X265_FREE(encoder->m_packetData);
+        
+        encoder->m_packetData = (char *) X265_MALLOC(char, memsize);
+        encoder->m_nals = (x265_nal_t *) X265_MALLOC(x265_nal_t, nalcount);
+        nalcount = 0;
+        memsize = 0;
+         
         /* Copy NAL output packets into x265_nal_t structures */
         for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
         {
@@ -415,35 +459,35 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                     *    unit of an access unit in decoding order, as specified by subclause
                     *    7.4.1.2.3.
                     */
-                encoder->m_packetData.append(start_code_prefix, 4);
+                ::memcpy(encoder->m_packetData + memsize, start_code_prefix, 4);
                 size += 4;
             }
             else
             {
-                encoder->m_packetData.append(start_code_prefix + 1, 3);
+                ::memcpy(encoder->m_packetData + memsize, start_code_prefix + 1, 3);
                 size += 3;
             }
+            memsize += size;
             size_t nalSize = nalu.m_nalUnitData.str().size();
-            encoder->m_packetData.append(nalu.m_nalUnitData.str().c_str(), nalSize);
+            ::memcpy(encoder->m_packetData + memsize, nalu.m_nalUnitData.str().c_str(), nalSize);
             size += (int)nalSize;
+            memsize += (int)nalSize;
 
-            x265_nal_t nal;
-            nal.i_type = nalu.m_nalUnitType;
-            nal.i_payload = size;
-            encoder->m_nals.push_back(nal);
+            encoder->m_nals[nalcount].i_type = nalu.m_nalUnitType;
+            encoder->m_nals[nalcount].i_payload = size;
+            nalcount++;
         }
 
         /* Setup payload pointers, now that we're done adding content to m_packetData */
         size_t offset = 0;
-        for (size_t i = 0; i < encoder->m_nals.size(); i++)
+        for (size_t i = 0; i < (size_t) nalcount; i++)
         {
-            x265_nal_t& nal = encoder->m_nals[i];
-            nal.p_payload = (uint8_t*)encoder->m_packetData.c_str() + offset;
-            offset += nal.i_payload;
+            encoder->m_nals[i].p_payload = (uint8_t*)encoder->m_packetData + offset;
+            offset += encoder->m_nals[i].i_payload;
         }
 
         *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = (int)encoder->m_nals.size();
+        if (pi_nal) *pi_nal = nalcount;
     }
     else if (pi_nal)
         *pi_nal = 0;
