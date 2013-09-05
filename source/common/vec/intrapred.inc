@@ -4928,6 +4928,7 @@ ALIGN_VAR_32(static const char, tab_angle_1[][16]) =
 
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
 
+// See doc/intra/T4.TXT for algorithm details
 void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool filter)
 {
     // avoid warning
@@ -5279,6 +5280,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     _mm_store_si128((__m128i*)dstN[16], T30);
 }
 
+// See doc/intra/T8.TXT for algorithm details
 void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool filter)
 {
 #define N   (8)
@@ -6245,6 +6247,7 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 #undef N
 }
 
+// See doc/intra/T16.TXT for algorithm details
 void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool filter)
 {
 #define N   (16)
@@ -10334,6 +10337,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef N
 }
 
+// See doc/intra/T32.TXT for algorithm details
 void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool /*bLuma*/)
 {
 #define N   (32)
