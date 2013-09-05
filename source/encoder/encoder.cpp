@@ -193,7 +193,14 @@ void x265_t::configure(x265_param_t *_param)
         _param->bEnableWavefront = 0;
     }
 
-    gopsizeMin = 4;
+    if (_param->bOpenGOP)
+    {
+        _param->keyframeMax = MAX_INT;
+    }
+    if (_param->keyframeMin == 0)
+    {
+        _param->keyframeMin = _param->keyframeMax;
+    }
 
     //====== Coding Tools ========
 
@@ -210,14 +217,14 @@ void x265_t::configure(x265_param_t *_param)
     m_loopFilterAcrossTilesEnabledFlag = 1;
 
     //====== HM Settings not exposed for configuration ======
-    initializeGOP(_param);
-
     TComVPS vps;
     vps.setMaxTLayers(1);
     vps.setTemporalNestingFlag(true);
     vps.setMaxLayers(1);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
+        m_numReorderPics[i] = _param->bframes;
+        m_maxDecPicBuffering[i] = _param->bframes + 2;
         vps.setNumReorderPics(m_numReorderPics[i], i);
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     }

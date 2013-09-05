@@ -45,39 +45,6 @@
 namespace x265 {
 // private namespace
 
-struct GOPEntry
-{
-    int m_POC;
-    int m_QPOffset;
-    double m_QPFactor;
-    bool m_refPic;
-    int m_numRefPicsActive;
-    char m_sliceType;
-    int m_numRefPics;
-    int m_referencePics[MAX_NUM_REF_PICS];
-    int m_usedByCurrPic[MAX_NUM_REF_PICS];
-    int m_interRPSPrediction;
-    int m_deltaRPS;
-    int m_numRefIdc;
-    int m_refIdc[MAX_NUM_REF_PICS + 1];
-    GOPEntry()
-        : m_POC(-1)
-        , m_QPOffset(0)
-        , m_QPFactor(0)
-        , m_refPic(false)
-        , m_numRefPicsActive(0)
-        , m_sliceType('P')
-        , m_numRefPics(0)
-        , m_interRPSPrediction(false)
-        , m_deltaRPS(0)
-        , m_numRefIdc(0)
-    {
-        ::memset(m_referencePics, 0, sizeof(m_referencePics));
-        ::memset(m_usedByCurrPic, 0, sizeof(m_usedByCurrPic));
-        ::memset(m_refIdc,        0, sizeof(m_refIdc));
-    }
-};
-
 //! \ingroup TLibEncoder
 //! \{
 
@@ -108,13 +75,10 @@ protected:
     int       m_pad[2];
 
     //====== Coding Structure ========
-    int       gopsizeMin; //Minimum allowed GOP size. With P frames only, its 4 and with B frames, its 8.
-    GOPEntry  m_gopList[MAX_GOP];
     int       m_maxDecPicBuffering[MAX_TLAYER];
     int       m_numReorderPics[MAX_TLAYER];
     int       m_maxRefPicNum;                   ///< this is used to mimic the sliding mechanism used by the decoder
                                                 // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
-    bool initializeGOP(x265_param_t *_param);
 
     //======= Transform =============
     UInt      m_quadtreeTULog2MaxSize;
@@ -210,13 +174,9 @@ public:
 
     //====== Coding Structure ========
 
-    GOPEntry  getGOPEntry(int i) { return m_gopList[i]; }
-
     int getMaxRefPicNum() { return m_maxRefPicNum; }
 
     //==== Coding Structure ========
-
-    int getGOPSizeMin() { return gopsizeMin; }
 
     int getMaxDecPicBuffering(UInt tlayer) { return m_maxDecPicBuffering[tlayer]; }
 
