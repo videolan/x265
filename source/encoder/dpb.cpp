@@ -127,59 +127,8 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 
     if (slice->getSliceType() == B_SLICE)
     {
-        // TODO: figure out what this is doing, replace with something more accurate
-        //       what is setColFromL0Flag() for?
-
-        // select colDir
-        TComReferencePictureSet *rps = slice->getRPS();
-
-        UInt colDir = 1;
-        int closeLeft = 1, closeRight = -1;
-        for (int i = 0; i < rps->m_numberOfPictures; i++)
-        {
-            int ref = rps->m_deltaPOC[i];
-            if (ref > 0 && (ref < closeRight || closeRight == -1))
-            {
-                closeRight = ref;
-            }
-            else if (ref < 0 && (ref > closeLeft || closeLeft == 1))
-            {
-                closeLeft = ref;
-            }
-        }
-
-#if 0
-        if (closeRight > -1)
-        {
-            closeRight = closeRight + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
-        }
-        if (closeLeft < 1)
-        {
-            closeLeft = closeLeft + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
-            while (closeLeft < 0)
-            {
-                closeLeft += m_cfg->getGOPSizeMin();
-            }
-        }
-        int leftQP = 0, rightQP = 0;
-        for (int i = 0; i < m_cfg->getGOPSizeMin(); i++)
-        {
-            if (m_cfg->getGOPEntry(i).m_POC == (closeLeft % m_cfg->getGOPSizeMin()) + 1)
-            {
-                leftQP = m_cfg->getGOPEntry(i).m_QPOffset;
-            }
-            if (m_cfg->getGOPEntry(i).m_POC == (closeRight % m_cfg->getGOPSizeMin()) + 1)
-            {
-                rightQP = m_cfg->getGOPEntry(i).m_QPOffset;
-            }
-        }
-
-        if (closeRight > -1 && rightQP < leftQP)
-        {
-            colDir = 0;
-        }
-#endif
-        slice->setColFromL0Flag(1 - colDir);
+        // TODO: Can we estimate this from lookahead?
+        slice->setColFromL0Flag(0);
 
         bool bLowDelay = true;
         int curPOC = slice->getPOC();
