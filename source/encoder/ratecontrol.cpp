@@ -187,12 +187,16 @@ double RateControl::rateEstimateQscale()
             q += pbOffset / 2;
         else
             q += pbOffset;
+        
+        double qScale = qp2qScale(q);
 
-        return qp2qScale(q);
+        lastQScaleFor[P_SLICE] = lastQScale = qScale/pbFactor;
+
+        return qScale;
     }
     else
     {
-        double abrBuffer = 2 * rateTolerance * bitrate;
+        double abrBuffer = 0.9 * rateTolerance * bitrate;
 
         /* 1pass ABR */
 
@@ -300,12 +304,12 @@ int RateControl::rateControlEnd(int64_t bits)
     if (rateControlMode ==  X265_RC_ABR)
     {
         if (frameType != B_SLICE)
-            cplxrSum += bits * qp2qScale(qpaRc) / lastRceq;
+            cplxrSum +=  1.1 *bits * qp2qScale(qpaRc) / lastRceq;
         else
         {
             /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
              * Not perfectly accurate with B-refs, but good enough. */
-            cplxrSum += bits * qp2qScale(qpaRc) / (lastRceq * fabs(pbFactor));
+            cplxrSum += bits * qp2qScale(qpaRc) / (lastRceq * fabs(0.5 * pbFactor));
         }
         cplxrSum *= cbrDecay;
         wantedBitsWindow += frameDuration * bitrate;
