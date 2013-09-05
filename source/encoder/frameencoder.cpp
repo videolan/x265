@@ -248,15 +248,16 @@ void FrameEncoder::initSlice(TComPic* pic)
         slice->setDeblockingFilterTcOffsetDiv2(0);
     }
 
-    // depth computation based on GOP size
+    // depth computation based on regular cadence (hacky, needs to go away)
     int depth = 0;
-    int poc = slice->getPOC() % m_cfg->getGOPSizeMin();
+    const int depthCadence = m_cfg->param.bframes ? 8 : 4;
+    int poc = slice->getPOC() % depthCadence;
     if (poc)
     {
-        int step = m_cfg->getGOPSizeMin();
+        int step = depthCadence;
         for (int i = step >> 1; i >= 1; i >>= 1)
         {
-            for (int j = i; j < m_cfg->getGOPSizeMin(); j += step)
+            for (int j = i; j < depthCadence; j += step)
             {
                 if (j == poc)
                 {
