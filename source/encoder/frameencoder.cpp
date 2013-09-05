@@ -599,8 +599,6 @@ void FrameEncoder::compressFrame()
 
 void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
 {
-    PPAScopeEvent(FrameEncoder_encodeSlice);
-
     // choose entropy coder
     TEncEntropy *entropyCoder = getEntropyCoder(0);
     TComSlice* slice = m_pic->getSlice();
@@ -787,6 +785,7 @@ void FrameEncoder::determineSliceBounds()
 
 void FrameEncoder::compressCTURows()
 {
+    PPAScopeEvent(FrameEncoder_compressRows);
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);
     for (int i = 0; i < this->m_numRows; i++)
