@@ -62,24 +62,24 @@ class TEncEntropyIf
 {
 public:
 
-    virtual void  resetEntropy() = 0;
-    virtual void  determineCabacInitIdx() = 0;
-    virtual void  setBitstream(TComBitIf* p) = 0;
-    virtual void  setSlice(TComSlice* p) = 0;
-    virtual void  resetBits() = 0;
-    virtual void  resetCoeffCost() = 0;
-    virtual UInt  getNumberOfWrittenBits() = 0;
-    virtual UInt  getCoeffCost() = 0;
+    virtual void resetEntropy() = 0;
+    virtual void determineCabacInitIdx() = 0;
+    virtual void setBitstream(TComBitIf* p) = 0;
+    virtual void setSlice(TComSlice* p) = 0;
+    virtual void resetBits() = 0;
+    virtual void resetCoeffCost() = 0;
+    virtual UInt getNumberOfWrittenBits() = 0;
+    virtual UInt getCoeffCost() = 0;
 
-    virtual void  codeVPS(TComVPS* pcVPS) = 0;
-    virtual void  codeSPS(TComSPS* pcSPS) = 0;
-    virtual void  codePPS(TComPPS* pcPPS) = 0;
-    virtual void  codeSliceHeader(TComSlice* slice) = 0;
+    virtual void codeVPS(TComVPS* vps) = 0;
+    virtual void codeSPS(TComSPS* sps) = 0;
+    virtual void codePPS(TComPPS* pps) = 0;
+    virtual void codeSliceHeader(TComSlice* slice) = 0;
 
-    virtual void  codeTilesWPPEntryPoint(TComSlice* pSlice) = 0;
-    virtual void  codeTerminatingBit(UInt uilsLast) = 0;
-    virtual void  codeSliceFinish() = 0;
-    virtual void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
+    virtual void codeTilesWPPEntryPoint(TComSlice* slice) = 0;
+    virtual void codeTerminatingBit(UInt isLast) = 0;
+    virtual void codeSliceFinish() = 0;
+    virtual void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList list) = 0;
     virtual void codeScalingList(TComScalingList* scalingList) = 0;
 
 public:
@@ -95,7 +95,7 @@ public:
 
     virtual void codeIPCMInfo(TComDataCU* cu, UInt absPartIdx) = 0;
 
-    virtual void codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx) = 0;
+    virtual void codeTransformSubdivFlag(UInt symbol, UInt ctx) = 0;
     virtual void codeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth) = 0;
     virtual void codeQtRootCbf(TComDataCU* cu, UInt absPartIdx) = 0;
     virtual void codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth) = 0;
@@ -130,39 +130,39 @@ class TEncEntropy
 {
 private:
 
-    UInt    m_uiBakAbsPartIdx;
-    UInt    m_uiBakChromaOffset;
+    UInt    m_bakAbsPartIdx;
+    UInt    m_bakChromaOffset;
     UInt    m_bakAbsPartIdxCU;
 
 public:
 
     void    setEntropyCoder(TEncEntropyIf* e, TComSlice* slice);
-    void    setBitstream(TComBitIf* p) { m_pcEntropyCoderIf->setBitstream(p);  }
+    void    setBitstream(TComBitIf* p) { m_entropyCoderIf->setBitstream(p);  }
 
-    void    resetBits() { m_pcEntropyCoderIf->resetBits();      }
+    void    resetBits() { m_entropyCoderIf->resetBits();      }
 
-    void    resetCoeffCost() { m_pcEntropyCoderIf->resetCoeffCost(); }
+    void    resetCoeffCost() { m_entropyCoderIf->resetCoeffCost(); }
 
-    UInt    getNumberOfWrittenBits() { return m_pcEntropyCoderIf->getNumberOfWrittenBits(); }
+    UInt    getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
 
-    UInt    getCoeffCost() { return m_pcEntropyCoderIf->getCoeffCost(); }
+    UInt    getCoeffCost() { return m_entropyCoderIf->getCoeffCost(); }
 
-    void    resetEntropy() { m_pcEntropyCoderIf->resetEntropy();  }
+    void    resetEntropy() { m_entropyCoderIf->resetEntropy();  }
 
-    void    determineCabacInitIdx() { m_pcEntropyCoderIf->determineCabacInitIdx(); }
+    void    determineCabacInitIdx() { m_entropyCoderIf->determineCabacInitIdx(); }
 
     void    encodeSliceHeader(TComSlice* slice);
     void    encodeTilesWPPEntryPoint(TComSlice* pSlice);
     void    encodeTerminatingBit(UInt uiIsLast);
     void    encodeSliceFinish();
-    TEncEntropyIf*      m_pcEntropyCoderIf;
+    TEncEntropyIf*      m_entropyCoderIf;
 
 public:
 
-    void encodeVPS(TComVPS* pcVPS);
+    void encodeVPS(TComVPS* vps);
     // SPS
-    void encodeSPS(TComSPS* pcSPS);
-    void encodePPS(TComPPS* pcPPS);
+    void encodeSPS(TComSPS* sps);
+    void encodePPS(TComPPS* pps);
     void encodeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth, bool bRD = false);
     void encodeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
     void encodeSkipFlag(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
@@ -187,9 +187,9 @@ public:
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
     void encodeQP(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
+    void updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish)   { m_entropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
 
-    void updateContextTables(SliceType eSliceType, int iQp)                        { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
+    void updateContextTables(SliceType eSliceType, int iQp)                        { m_entropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
 
     void encodeScalingList(TComScalingList* scalingList);
 
@@ -201,11 +201,11 @@ public:
 
     void encodeCoeff(TComDataCU* cu, UInt absPartIdx, UInt depth, UInt width, UInt height, bool& bCodeDQP);
 
-    void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt depth, TextType ttype);
+    void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartIdx, UInt trWidth, UInt trHeight, UInt depth, TextType ttype);
 
-    void estimateBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType);
-    void    encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
-    void    encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+    void estimateBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType eTType);
+    void encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
+    void encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
     static int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
 }; // END CLASS DEFINITION TEncEntropy
 }

@@ -754,7 +754,7 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
                 int mergeUp = saoParam->saoLcuParam[0][addr].mergeUpFlag;
                 if (allowMergeLeft)
                 {
-                    entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeLeft);
+                    entropyCoder->m_entropyCoderIf->codeSaoMerge(mergeLeft);
                 }
                 else
                 {
@@ -764,7 +764,7 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
                 {
                     if (allowMergeUp)
                     {
-                        entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeUp);
+                        entropyCoder->m_entropyCoderIf->codeSaoMerge(mergeUp);
                     }
                     else
                     {
