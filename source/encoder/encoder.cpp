@@ -40,7 +40,7 @@ using namespace x265;
 struct x265_t : public TEncTop
 {
     x265_t();
-    ~x265_t();
+    virtual ~x265_t();
 
     x265_nal_t *m_nals;
     char *m_packetData;
