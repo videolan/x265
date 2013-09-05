@@ -21,6 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include "bitcost.h"
 #include "common.h"
@@ -31,7 +32,7 @@
 
 using namespace x265;
 
-void BitCost::setQP(unsigned int qp, double lambda)
+void BitCost::setQP(unsigned int qp)
 {
     if (!s_costs[qp])
     {
@@ -45,6 +46,7 @@ void BitCost::setQP(unsigned int qp, double lambda)
 
             CalculateLogs();
             s_costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
+            double lambda = sqrt(x265_lambda2_non_I[qp]);
 
             // estimate same cost for negative and positive MVD
             for (int i = 0; i < BC_MAX_MV; i++)

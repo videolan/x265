@@ -38,7 +38,7 @@ public:
 
     BitCost() : m_cost_mvx(0), m_cost_mvy(0), m_cost(0) {}
 
-    void setQP(unsigned int qp, double lambda);
+    void setQP(unsigned int qp);
 
     void setMVP(const MV& mvp)                      { m_mvp = mvp; m_cost_mvx = m_cost - mvp.x; m_cost_mvy = m_cost - mvp.y; }
 

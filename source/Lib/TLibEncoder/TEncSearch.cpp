@@ -220,7 +220,7 @@ void TEncSearch::setQPLambda(int QP, double lambdaLuma, double lambdaChroma)
 {
     m_rdCost->setLambda(lambdaLuma);
     m_trQuant->setLambda(lambdaLuma, lambdaChroma);
-    m_me.setQP(QP, m_rdCost->getSADLambda());
+    m_me.setQP(QP);
 }
 
 UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, Pel *fenc, int fracBits, MV& inOutMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr)

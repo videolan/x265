@@ -67,7 +67,7 @@ Lookahead::Lookahead(TEncCfg *_cfg)
     this->cfg = _cfg;
     numDecided = 0;
     predictions = (pixel*)X265_MALLOC(pixel, 35 * 8 * 8);
-    me.setQP(X265_LOOKAHEAD_QP, 1.0);
+    me.setQP(X265_LOOKAHEAD_QP);
     me.setSearchMethod(X265_HEX_SEARCH);
     merange = 16;
     widthInCU = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
