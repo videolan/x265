@@ -151,15 +151,27 @@ void Lookahead::slicetypeDecide()
         TComPic *picB = inputQueue.popFront();
         TComPic *picP = inputQueue.popFront();
 
-        bool forceIntra = (picP->getPOC() % cfg->param.keyframeMax) == 0;
-        picP->m_lowres.sliceType = forceIntra? X265_TYPE_I : X265_TYPE_P;
-        outputQueue.pushBack(picP);
-        numDecided++;
+        bool forceIntra = (picP->getPOC() % cfg->param.keyframeMax) == 0 || (picB->getPOC() % cfg->param.keyframeMax) == 0;
+        if (forceIntra)
+        {
+            picB->m_lowres.sliceType = (picB->getPOC() % cfg->param.keyframeMax) ? X265_TYPE_P : X265_TYPE_I;
+            outputQueue.pushBack(picB);
+            numDecided++;
 
-        forceIntra = (picB->getPOC() % cfg->param.keyframeMax) == 0;
-        picB->m_lowres.sliceType = forceIntra? X265_TYPE_I : X265_TYPE_B;
-        outputQueue.pushBack(picB);
-        numDecided++;
+            picP->m_lowres.sliceType = (picP->getPOC() % cfg->param.keyframeMax) ? X265_TYPE_P : X265_TYPE_I;
+            outputQueue.pushBack(picP);
+            numDecided++;
+        }
+        else
+        {
+            picP->m_lowres.sliceType = X265_TYPE_P;
+            outputQueue.pushBack(picP);
+            numDecided++;
+
+            picB->m_lowres.sliceType = X265_TYPE_B;
+            outputQueue.pushBack(picB);
+            numDecided++;
+        }
     }
 
 #endif // if 0
