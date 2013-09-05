@@ -150,7 +150,7 @@ void x265_param_default(x265_param_t *param)
     param->keyframeMin = 0;
     param->keyframeMax = 250;
 
-    param->rc.bitrate = 500;
+    param->rc.bitrate = 0;
     param->rc.rateTolerance = 0.1;
     param->rc.qCompress = 0.6;
     param->rc.ipFactor = 1.4f;

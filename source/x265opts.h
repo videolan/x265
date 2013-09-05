@@ -75,8 +75,7 @@ OPT("bframe-bias",     param->bFrameBias,             required_argument, 0, "Bia
 //OPT("weightbp",        param->bEnableWeightedBiPred,        no_argument, 0, "Enable weighted (bidirectional) prediction in B slices")
 
 HELP("QP, rate control and rate distortion options:")
-OPT("rc-mode",         param->rc.rateControlMode,     required_argument, 0, "Rate Control mode - 0: ABR, 1: ConstQP (default:1)")
-OPT("bitrate",         param->rc.bitrate,             required_argument, 0, "Bitrate for ABR mode (kbps)")
+OPT("bitrate",         param->rc.bitrate,             required_argument, 0, "Target bitrate (kbps), implies ABR")
 OPT("qp",              param->rc.qp,                  required_argument, 'q', "Base QP for CQP mode")
 OPT("cbqpoffs",        param->cbQpOffset,             required_argument, 0, "Chroma Cb QP Offset")
 OPT("crqpoffs",        param->crQpOffset,             required_argument, 0, "Chroma Cr QP Offset")

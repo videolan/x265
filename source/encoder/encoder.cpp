@@ -201,6 +201,11 @@ void x265_t::configure(x265_param_t *_param)
     {
         _param->keyframeMin = _param->keyframeMax;
     }
+    // if a bitrate is specified, chose ABR.  Else default to CQP
+    if (_param->rc.bitrate)
+    {
+        _param->rc.rateControlMode = X265_RC_ABR;
+    }
 
     //====== Coding Tools ========
 
