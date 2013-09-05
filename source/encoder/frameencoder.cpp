@@ -874,6 +874,8 @@ void FrameEncoder::compressCTURows()
             WaveFront::enableRow(row);
             if (row == 0)
                 WaveFront::enqueueRow(row);
+            else
+                m_pool->pokeIdleThread();
         }
 
         m_completionEvent.wait();
