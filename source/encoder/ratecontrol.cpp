@@ -140,6 +140,7 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
 
     /* set the final QP to slice structure */
     curFrame->setSliceQp(qp);
+    curFrame->setSliceQpBase(qp);
 }
 
 void RateControl::accumPQpUpdate()

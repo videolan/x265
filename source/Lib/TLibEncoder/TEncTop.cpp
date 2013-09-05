@@ -841,7 +841,6 @@ void TEncTop::computeLambdaForQp(TComSlice* slice)
     // For SAO
     slice->setLambda(lambda, lambda / weight);
 
-    slice->setSliceQpBase(qp);
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);

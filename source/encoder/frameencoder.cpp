@@ -273,58 +273,6 @@ void FrameEncoder::initSlice(TComPic* pic)
 
     slice->setDepth(depth);
     slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
-
-    // ------------------------------------------------------------------------------------------------------------------
-    // QP setting
-    // ------------------------------------------------------------------------------------------------------------------
-
-    double qpdouble;
-    double lambda;
-    qpdouble = m_cfg->param.rc.qp;
-
-    // ------------------------------------------------------------------------------------------------------------------
-    // Lambda computation
-    // ------------------------------------------------------------------------------------------------------------------
-
-    int qp = X265_MAX(-m_sps.getQpBDOffsetY(), X265_MIN(MAX_QP, (int)floor(qpdouble + 0.5)));
-    if (slice->getSliceType() == I_SLICE)
-    {
-        lambda = X265_MAX(1,x265_lambda2_tab_I[qp]);
-    }
-    else
-    {
-        qp += 2;
-        lambda = X265_MAX(1,x265_lambda2_non_I[qp]);
-    }
-
-    // for RDO
-    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
-    // instead we weight the distortion of chroma.
-    double weight = 1.0;
-    int qpc;
-    int chromaQPOffset;
-
-    chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    setCbDistortionWeight(weight);
-
-    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    setCrDistortionWeight(weight);
-
-    // for RDOQ
-    setQPLambda(qp, lambda, lambda / weight, slice->getDepth());
-
-    // For SAO
-    slice->setLambda(lambda, lambda / weight);
-
-    slice->setSliceQp(qp);
-    slice->setSliceQpBase(qp);
-    slice->setSliceQpDelta(0);
-    slice->setSliceQpDeltaCb(0);
-    slice->setSliceQpDeltaCr(0);
 }
 
 void FrameEncoder::compressFrame()
