@@ -800,33 +800,8 @@ void TEncTop::xInitPPS(TComPPS *pps)
     pps->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     pps->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
 
-    /* TODO: this must be replaced with a user-parameter or hard-coded value */
-    int histogram[MAX_NUM_REF + 1];
-    for (int i = 0; i <= MAX_NUM_REF; i++)
-    {
-        histogram[i] = 0;
-    }
-
-    for (int i = 0; i < getGOPSizeMin(); i++)
-    {
-        assert(getGOPEntry(i).m_numRefPicsActive >= 0 && getGOPEntry(i).m_numRefPicsActive <= MAX_NUM_REF);
-        histogram[getGOPEntry(i).m_numRefPicsActive]++;
-    }
-
-    int maxHist = -1;
-    int bestPos = 0;
-    for (int i = 0; i <= MAX_NUM_REF; i++)
-    {
-        if (histogram[i] > maxHist)
-        {
-            maxHist = histogram[i];
-            bestPos = i;
-        }
-    }
-
-    assert(bestPos <= 15);
-    pps->setNumRefIdxL0DefaultActive(bestPos);
-    pps->setNumRefIdxL1DefaultActive(bestPos);
+    pps->setNumRefIdxL0DefaultActive(1);
+    pps->setNumRefIdxL1DefaultActive(1);
 
     pps->setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
     pps->setUseTransformSkip(param.bEnableTransformSkip);
