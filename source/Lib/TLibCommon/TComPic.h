@@ -137,8 +137,6 @@ public:
 
     int           getCStride()            { return m_reconPicYuv->getCStride(); }
 
-    void          compressMotion();
-
     Window&       getConformanceWindow()  { return m_conformanceWindow; }
 
     Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }

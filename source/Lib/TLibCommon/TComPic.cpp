@@ -120,17 +120,6 @@ void TComPic::destroy()
     m_lowres.destroy();
 }
 
-void TComPic::compressMotion()
-{
-    TComPicSym* sym = getPicSym();
-
-    for (UInt cuAddr = 0; cuAddr < sym->getFrameHeightInCU() * sym->getFrameWidthInCU(); cuAddr++)
-    {
-        TComDataCU* cu = sym->getCU(cuAddr);
-        cu->compressMV();
-    }
-}
-
 /** Create non-deblocked filter information
  * \param pSliceStartAddress array for storing slice start addresses
  * \param numSlices number of slices in picture

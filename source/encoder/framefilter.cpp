@@ -222,18 +222,6 @@ void FrameFilter::processRow(int row)
         }
     }
 
-    // CompressMV for reference
-    if (row > 0)
-    {
-        for (UInt col = 0; col < numCols; col++)
-        {
-            const uint32_t cuAddr = lineStartCUAddr - numCols + col;
-            TComDataCU* cu = m_pic->getCU(cuAddr);
-
-            cu->compressMV();
-        }
-    }
-
     // this row of CTUs has been encoded
 
     // TODO: extend margins for motion reference
@@ -305,15 +293,6 @@ void FrameFilter::processRow(int row)
 
                 xPCMCURestoration(cu, 0, 0);
             }
-        }
-
-        // CompressMV
-        for (UInt col = 0; col < numCols; col++)
-        {
-            const uint32_t cuAddr = lineStartCUAddr + col;
-            TComDataCU* cu = m_pic->getCU(cuAddr);
-
-            cu->compressMV();
         }
 
         // TODO: Remove when we confirm below code is right

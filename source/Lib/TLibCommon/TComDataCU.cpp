@@ -66,7 +66,6 @@ TComDataCU::TComDataCU()
     m_skipFlag = NULL;
     m_partSizes = NULL;
     m_predModes = NULL;
-    m_cmv_predModes = NULL;
     m_cuTransquantBypass = NULL;
     m_width = NULL;
     m_height = NULL;
@@ -113,6 +112,12 @@ void TComDataCU::create(UInt numPartition, UInt width, UInt height, int unitSize
     m_numPartitions = numPartition;
     m_unitSize = unitSize;
 
+    UInt tmp = 4 * AMVP_DECIMATION_FACTOR / unitSize;
+    tmp = tmp * tmp;
+    assert(tmp == (1 << (g_convertToBit[tmp] + 2)));
+    tmp = g_convertToBit[tmp] + 2;
+    m_unitMask = ~((1 << tmp) - 1);
+
     m_qp     = (char*)X265_MALLOC(char,   numPartition);
     m_depth  = (UChar*)X265_MALLOC(UChar, numPartition);
     m_width  = (UChar*)X265_MALLOC(UChar, numPartition);
@@ -123,7 +128,6 @@ void TComDataCU::create(UInt numPartition, UInt width, UInt height, int unitSize
     m_partSizes = new char[numPartition];
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
     m_predModes = new char[numPartition];
-    m_cmv_predModes = new char[numPartition];
     m_cuTransquantBypass = new bool[numPartition];
 
     m_bMergeFlags     = (bool*)X265_MALLOC(bool,  numPartition);
@@ -177,7 +181,6 @@ void TComDataCU::destroy()
     if (m_skipFlag) { delete[] m_skipFlag; m_skipFlag = NULL; }
     if (m_partSizes) { delete[] m_partSizes; m_partSizes = NULL; }
     if (m_predModes) { delete[] m_predModes; m_predModes = NULL; }
-    if (m_cmv_predModes) { delete[] m_cmv_predModes; m_cmv_predModes = NULL; }
     if (m_cuTransquantBypass) { delete[] m_cuTransquantBypass; m_cuTransquantBypass = NULL; }
     if (m_cbf[0]) { X265_FREE(m_cbf[0]); m_cbf[0] = NULL; }
     if (m_cbf[1]) { X265_FREE(m_cbf[1]); m_cbf[1] = NULL; }
@@ -3007,7 +3010,7 @@ bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, int refIdx
  */
 bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx)
 {
-    UInt absPartAddr = partUnitIdx;
+    UInt absPartAddr = partUnitIdx & m_unitMask;
 
     RefPicList colRefPicList;
     int colPOC, colRefPOC, curPOC, curRefPOC, scale;
@@ -3025,18 +3028,18 @@ bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV&
     curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
     colPOC = colCU->getSlice()->getPOC();
 
-    if (colCU->isIntra_cmv(absPartAddr))
+    if (colCU->isIntra(absPartAddr))
     {
         return false;
     }
     colRefPicList = getSlice()->getCheckLDC() ? picList : RefPicList(getSlice()->getColFromL0Flag());
 
-    int colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx_cmv(absPartAddr);
+    int colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx(absPartAddr);
 
     if (colRefIdx < 0)
     {
         colRefPicList = RefPicList(1 - colRefPicList);
-        colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx_cmv(absPartAddr);
+        colRefIdx = colCU->getCUMvField(RefPicList(colRefPicList))->getRefIdx(absPartAddr);
 
         if (colRefIdx < 0)
         {
@@ -3046,7 +3049,7 @@ bool TComDataCU::xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV&
 
     // Scale the vector.
     colRefPOC = colCU->getSlice()->getRefPOC(colRefPicList, colRefIdx);
-    colmv = colCU->getCUMvField(colRefPicList)->getMv_cmv(absPartAddr);
+    colmv = colCU->getCUMvField(colRefPicList)->getMv(absPartAddr);
 
     curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
     bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, outRefIdx)->getIsLongTerm();
@@ -3113,18 +3116,6 @@ void TComDataCU::xDeriveCenterIdx(UInt partIdx, UInt& outPartIdxCenter)
     outPartIdxCenter = g_rasterToZscan[g_zscanToRaster[outPartIdxCenter]
                                        + (partHeight / m_pic->getMinCUHeight()) / 2 * m_pic->getNumPartInWidth()
                                        + (partWidth / m_pic->getMinCUWidth()) / 2];
-}
-
-void TComDataCU::compressMV()
-{
-    int scaleFactor = 4 * AMVP_DECIMATION_FACTOR / m_unitSize;
-
-    if (scaleFactor > 0)
-    {
-        memcpy(m_cmv_predModes, m_predModes, m_numPartitions * sizeof(m_predModes[0]));
-        m_cuMvField[0].compress(m_cmv_predModes, scaleFactor);
-        m_cuMvField[1].compress(m_cmv_predModes, scaleFactor);
-    }
 }
 
 UInt TComDataCU::getCoefScanIdx(UInt absPartIdx, UInt width, bool bIsLuma, bool bIsIntra)
