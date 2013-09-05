@@ -186,6 +186,8 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         /* Copy input picture into a TComPic, send to lookahead */
         pic->getSlice()->setPOC(++m_pocLast);
         pic->getPicYuvOrg()->copyFromPicture(*pic_in);
+        // TEncTop holds a reference count until collecting stats
+        ATOMIC_INC(&pic->m_countRefEncoders);
         m_lookahead->addPicture(pic);
     }
 
@@ -233,6 +235,8 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         }
 
         double bits = calculateHashAndPSNR(out, accessUnitOut);
+        // Allow this frame to be recycled if no frame encoders are using it for reference
+        ATOMIC_DEC(&out->m_countRefEncoders);
 
         m_rateControl->rateControlEnd(bits);
 
