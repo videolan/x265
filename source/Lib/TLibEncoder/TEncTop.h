@@ -108,9 +108,11 @@ public:
 
     double printSummary();
 
-    TComScalingList* getScalingList()       { return &m_scalingList; }
+    TComScalingList* getScalingList() { return &m_scalingList; }
 
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }
+
+protected:
 
     double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
 };
