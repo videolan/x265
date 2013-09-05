@@ -106,7 +106,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 
     computeRPS(pocCurr, slice->isIRAP(), slice->getLocalRPS(), slice->getSPS()->getMaxDecPicBuffering(0));
     slice->setRPS(slice->getLocalRPS());
-    slice->setRPSidx(-1);              //   To force using RPS from slice, rather than from SPS
+    slice->setRPSidx(-1); // Force use of RPS from slice, rather than from SPS
 
     applyReferencePictureSet(slice->getRPS(), pocCurr); // Mark pictures in m_piclist as unreferenced if they are not included in RPS
 
@@ -114,7 +114,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
     refPicListModification->setRefPicListModificationFlagL0(false);
     refPicListModification->setRefPicListModificationFlagL1(false);
-    slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->getNumberOfNegativePictures()));   // Ensuring L0 contains just the -ve POC
+    slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->getNumberOfNegativePictures())); // Ensuring L0 contains just the -ve POC
     slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->getNumberOfPositivePictures()));
 
     slice->setRefPicList(m_picList);
