@@ -669,366 +669,302 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                         const short *coeff)
 {
     int offset;
-    int shift = IF_FILTER_PREC;
+    const int shift = IF_FILTER_PREC;
 
     src -= (N / 2 - 1) * srcStride;
     offset = 1 << (shift - 1);
 
-    __m128i coeffTemp = _mm_loadu_si128((__m128i const*)coeff);
-
-    __m128i vm0 = _mm_setr_epi8(0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1);
-    __m128i vm1 = _mm_setr_epi8(2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3);
-    __m128i vm2 = _mm_setr_epi8(4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5);
-    __m128i vm3 = _mm_setr_epi8(6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7);
-    __m128i vm4 = _mm_setr_epi8(8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9);
-    __m128i vm5 = _mm_setr_epi8(10, 11, 10, 11, 10, 11, 10, 11, 10, 11, 10, 11, 10, 11, 10, 11);
-    __m128i vm6 = _mm_setr_epi8(12, 13, 12, 13, 12, 13, 12, 13, 12, 13, 12, 13, 12, 13, 12, 13);
-    __m128i vm7 = _mm_setr_epi8(14, 15, 14, 15, 14, 15, 14, 15, 14, 15, 14, 15, 14, 15, 14, 15);
-
-    __m128i coeff0 = _mm_shuffle_epi8(coeffTemp, vm0);
-    __m128i coeff1 = _mm_shuffle_epi8(coeffTemp, vm1);
-    __m128i coeff2 = _mm_shuffle_epi8(coeffTemp, vm2);
-    __m128i coeff3 = _mm_shuffle_epi8(coeffTemp, vm3);
-    __m128i coeff4 = _mm_shuffle_epi8(coeffTemp, vm4);
-    __m128i coeff5 = _mm_shuffle_epi8(coeffTemp, vm5);
-    __m128i coeff6 = _mm_shuffle_epi8(coeffTemp, vm6);
-    __m128i coeff7 = _mm_shuffle_epi8(coeffTemp, vm7);
-
-    __m128i mask7 = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    const __m128i coeffTemp = _mm_loadu_si128((__m128i const*)coeff);
+    const __m128i sumOffset = _mm_set1_epi16(offset);
 
     int row, col;
 
-    for (row = 0; row < height; row++)
+    assert(height % 2 == 0);
+
+    uint32_t leftCols = (8 - (width & 7)) * 8;
+    uint32_t mask_shift = ((uint32_t)~0 >> leftCols);
+    uint32_t mask0 = (width & 7) <= 4 ? mask_shift : ~0;
+    uint32_t mask1 = (width & 7) <= 4 ? 0 : mask_shift;
+    __m128i leftmask = _mm_setr_epi32(mask0, mask1, 0, 0);
+
+    if (N == 8)
     {
-        for (col = 0; col < (width - 15); col += 16)
+        __m128i vm01 = _mm_shuffle_epi32(coeffTemp, 0x00);
+        __m128i vm23 = _mm_shuffle_epi32(coeffTemp, 0x55);
+        __m128i vm45 = _mm_shuffle_epi32(coeffTemp, 0xAA);
+        __m128i vm67 = _mm_shuffle_epi32(coeffTemp, 0xFF);
+        vm01 = _mm_packs_epi16(vm01, vm01);
+        vm23 = _mm_packs_epi16(vm23, vm23);
+        vm45 = _mm_packs_epi16(vm45, vm45);
+        vm67 = _mm_packs_epi16(vm67, vm67);
+
+        __m128i T00, T01, T02, T03, T04, T05, T06, T07/*, T08*/;
+        __m128i T10, T11, T12, T13;
+        for (row = 0; row < height; row += 1)
         {
-            __m128i srcCoeff = _mm_loadu_si128((__m128i*)&src[col]);
-            __m128i srcCoeffTemp1 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T00 = _mm_mullo_epi16(srcCoeffTemp1, coeff0);
-            srcCoeff = _mm_srli_si128(srcCoeff, 8);
-            srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T01 = _mm_mullo_epi16(srcCoeff, coeff0);
-
-            srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + srcStride]));
-            __m128i srcCoeffTemp2 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T10 = _mm_mullo_epi16(srcCoeffTemp2, coeff1);
-            srcCoeff = _mm_srli_si128(srcCoeff, 8);
-            srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T11 = _mm_mullo_epi16(srcCoeff, coeff1);
-
-            srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 2 * srcStride]));
-            __m128i srcCoeffTemp3 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T20 = _mm_mullo_epi16(srcCoeffTemp3, coeff2);
-            srcCoeff = _mm_srli_si128(srcCoeff, 8);
-            srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T21 = _mm_mullo_epi16(srcCoeff, coeff2);
-
-            srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 3 * srcStride]));
-            __m128i srcCoeffTemp4 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T30 = _mm_mullo_epi16(srcCoeffTemp4, coeff3);
-            srcCoeff = _mm_srli_si128(srcCoeff, 8);
-            srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T31 = _mm_mullo_epi16(srcCoeff, coeff3);
-
-            __m128i sum0 = _mm_add_epi16(T00, T10);
-            __m128i sum1 = _mm_add_epi16(T20, T30);
-            __m128i sumlo = _mm_add_epi16(sum0, sum1);
-
-            __m128i sum2 = _mm_add_epi16(T01, T11);
-            __m128i sum3 = _mm_add_epi16(T21, T31);
-            __m128i sumhi = _mm_add_epi16(sum2, sum3);
-
-            if (N == 8)
+            for (col = 0; col < (width & ~7); col += 8)
             {
-                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 4 * srcStride]));
-                srcCoeffTemp1 = _mm_cvtepu8_epi16(srcCoeff);
-                T00 = _mm_mullo_epi16(srcCoeffTemp1, coeff4);
-                srcCoeff = _mm_srli_si128(srcCoeff, 8);
-                srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-                T01 = _mm_mullo_epi16(srcCoeff, coeff4);
+                T00 = _mm_loadl_epi64((__m128i*)&src[(0) * srcStride + col]);
+                T01 = _mm_loadl_epi64((__m128i*)&src[(1) * srcStride + col]);
+                T02 = _mm_loadl_epi64((__m128i*)&src[(2) * srcStride + col]);
+                T03 = _mm_loadl_epi64((__m128i*)&src[(3) * srcStride + col]);
+                T04 = _mm_loadl_epi64((__m128i*)&src[(4) * srcStride + col]);
+                T05 = _mm_loadl_epi64((__m128i*)&src[(5) * srcStride + col]);
+                T06 = _mm_loadl_epi64((__m128i*)&src[(6) * srcStride + col]);
+                T07 = _mm_loadl_epi64((__m128i*)&src[(7) * srcStride + col]);
 
-                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 5 * srcStride]));
-                srcCoeffTemp2 = _mm_cvtepu8_epi16(srcCoeff);
-                T10 = _mm_mullo_epi16(srcCoeffTemp2, coeff5);
-                srcCoeff = _mm_srli_si128(srcCoeff, 8);
-                srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-                T11 = _mm_mullo_epi16(srcCoeff, coeff5);
+                T10 = _mm_unpacklo_epi8(T00, T01);
+                T11 = _mm_unpacklo_epi8(T02, T03);
+                T12 = _mm_unpacklo_epi8(T04, T05);
+                T13 = _mm_unpacklo_epi8(T06, T07);
 
-                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 6 * srcStride]));
-                srcCoeffTemp3 = _mm_cvtepu8_epi16(srcCoeff);
-                T20 = _mm_mullo_epi16(srcCoeffTemp3, coeff6);
-                srcCoeff = _mm_srli_si128(srcCoeff, 8);
-                srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-                T21 = _mm_mullo_epi16(srcCoeff, coeff6);
-
-                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 7 * srcStride]));
-                srcCoeffTemp4 = _mm_cvtepu8_epi16(srcCoeff);
-                T30 = _mm_mullo_epi16(srcCoeffTemp4, coeff7);
-                srcCoeff = _mm_srli_si128(srcCoeff, 8);
-                srcCoeff = _mm_cvtepu8_epi16(srcCoeff);
-                T31 = _mm_mullo_epi16(srcCoeff, coeff7);
-
-                sum0 = _mm_add_epi16(T00, T10);
-                sum1 = _mm_add_epi16(T20, T30);
-                sumlo = _mm_add_epi16(sumlo, _mm_add_epi16(sum0, sum1));
-
-                sum2 = _mm_add_epi16(T01, T11);
-                sum3 = _mm_add_epi16(T21, T31);
-                sumhi = _mm_add_epi16(sumhi, _mm_add_epi16(sum2, sum3));
+                T10 = _mm_maddubs_epi16(T10, vm01);
+                T11 = _mm_maddubs_epi16(T11, vm23);
+                T12 = _mm_maddubs_epi16(T12, vm45);
+                T13 = _mm_maddubs_epi16(T13, vm67);
+                T10 = _mm_add_epi16(T10, T11);
+                T11 = _mm_add_epi16(T12, T13);
+                T10 = _mm_add_epi16(T10, T11);
+                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_packus_epi16(T10, T10);
+                _mm_storel_epi64((__m128i*)&dst[0 * dstStride + col], T10);
             }
 
-            __m128i sumOffset = _mm_set1_epi16(offset);
+            assert((width - col) < 8);
+            if (col != width)
+            {
+                T00 = _mm_loadl_epi64((__m128i*)&src[(0) * srcStride + col]);
+                T01 = _mm_loadl_epi64((__m128i*)&src[(1) * srcStride + col]);
+                T02 = _mm_loadl_epi64((__m128i*)&src[(2) * srcStride + col]);
+                T03 = _mm_loadl_epi64((__m128i*)&src[(3) * srcStride + col]);
+                T04 = _mm_loadl_epi64((__m128i*)&src[(4) * srcStride + col]);
+                T05 = _mm_loadl_epi64((__m128i*)&src[(5) * srcStride + col]);
+                T06 = _mm_loadl_epi64((__m128i*)&src[(6) * srcStride + col]);
+                T07 = _mm_loadl_epi64((__m128i*)&src[(7) * srcStride + col]);
 
-            __m128i val1 = _mm_add_epi16(sumlo, sumOffset);
-            val1 = _mm_srai_epi16(val1, shift);
+                T10 = _mm_unpacklo_epi8(T00, T01);
+                T11 = _mm_unpacklo_epi8(T02, T03);
+                T12 = _mm_unpacklo_epi8(T04, T05);
+                T13 = _mm_unpacklo_epi8(T06, T07);
 
-            __m128i val2 = _mm_add_epi16(sumhi, sumOffset);
-            val2 = _mm_srai_epi16(val2, shift);
+                T10 = _mm_maddubs_epi16(T10, vm01);
+                T11 = _mm_maddubs_epi16(T11, vm23);
+                T12 = _mm_maddubs_epi16(T12, vm45);
+                T13 = _mm_maddubs_epi16(T13, vm67);
+                T10 = _mm_add_epi16(T10, T11);
+                T11 = _mm_add_epi16(T12, T13);
+                T10 = _mm_add_epi16(T10, T11);
+                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_packus_epi16(T10, T10);
+                _mm_maskmoveu_si128(T10, leftmask, (char*)&dst[(0) * dstStride + col]);
+            }
 
-            __m128i res = _mm_packus_epi16(val1, val2);
-            _mm_storeu_si128((__m128i*)&dst[col], res);
-        }
+            src += 1 * srcStride;
+            dst += 1 * dstStride;
+        }   // end of row loop
+    } // end of N==8
 
-        for (; col < (width - 7); col += 8)
+    if (N == 4)
+    {
+        __m128i vm01 = _mm_shuffle_epi32(coeffTemp, 0x00);
+        __m128i vm23 = _mm_shuffle_epi32(coeffTemp, 0x55);
+        vm01 = _mm_packs_epi16(vm01, vm01);
+        vm23 = _mm_packs_epi16(vm23, vm23);
+
+        __m128i T00, T01, T02, T03, T04;
+        __m128i T10, T11;
+        __m128i T20, T21;
+        for (row = 0; row < height; row += 2)
         {
-            __m128i srcCoeff = _mm_loadl_epi64((__m128i*)&src[col]);
-            __m128i srcCoeffTemp1 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T00 = _mm_mullo_epi16(srcCoeffTemp1, coeff0);
-
-            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + srcStride]));
-            __m128i srcCoeffTemp2 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T10 = _mm_mullo_epi16(srcCoeffTemp2, coeff1);
-
-            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 2 * srcStride]));
-            __m128i srcCoeffTemp3 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T20 = _mm_mullo_epi16(srcCoeffTemp3, coeff2);
-
-            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 3 * srcStride]));
-            __m128i srcCoeffTemp4 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T30 = _mm_mullo_epi16(srcCoeffTemp4, coeff3);
-
-            __m128i sum0 = _mm_add_epi16(T00, T10);
-            __m128i sum1 = _mm_add_epi16(T20, T30);
-            __m128i sumlo = _mm_add_epi16(sum0, sum1);
-
-            if (N == 8)
+            for (col = 0; col < (width & ~7); col += 8)
             {
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 4 * srcStride]));
-                srcCoeffTemp1 = _mm_cvtepu8_epi16(srcCoeff);
-                T00 = _mm_mullo_epi16(srcCoeffTemp1, coeff4);
+                T00 = _mm_loadl_epi64((__m128i*)&src[(0) * srcStride + col]);
+                T01 = _mm_loadl_epi64((__m128i*)&src[(1) * srcStride + col]);
+                T02 = _mm_loadl_epi64((__m128i*)&src[(2) * srcStride + col]);
+                T03 = _mm_loadl_epi64((__m128i*)&src[(3) * srcStride + col]);
+                T04 = _mm_loadl_epi64((__m128i*)&src[(4) * srcStride + col]);
 
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 5 * srcStride]));
-                srcCoeffTemp2 = _mm_cvtepu8_epi16(srcCoeff);
-                T10 = _mm_mullo_epi16(srcCoeffTemp2, coeff5);
+                T10 = _mm_unpacklo_epi8(T00, T01);
+                T11 = _mm_unpacklo_epi8(T02, T03);
 
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 6 * srcStride]));
-                srcCoeffTemp3 = _mm_cvtepu8_epi16(srcCoeff);
-                T20 = _mm_mullo_epi16(srcCoeffTemp3, coeff6);
+                T10 = _mm_maddubs_epi16(T10, vm01);
+                T11 = _mm_maddubs_epi16(T11, vm23);
+                T10 = _mm_add_epi16(T10, T11);
+                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_packus_epi16(T10, T10);
+                _mm_storel_epi64((__m128i*)&dst[0 * dstStride + col], T10);
 
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 7 * srcStride]));
-                srcCoeffTemp4 = _mm_cvtepu8_epi16(srcCoeff);
-                T30 = _mm_mullo_epi16(srcCoeffTemp4, coeff7);
+                T20 = _mm_unpacklo_epi8(T01, T02);
+                T21 = _mm_unpacklo_epi8(T03, T04);
 
-                sum0 = _mm_add_epi16(T00, T10);
-                sum1 = _mm_add_epi16(T20, T30);
-                sumlo = _mm_add_epi16(sumlo, _mm_add_epi16(sum0, sum1));
+                T20 = _mm_maddubs_epi16(T20, vm01);
+                T21 = _mm_maddubs_epi16(T21, vm23);
+                T20 = _mm_add_epi16(T20, T21);
+                T20 = _mm_srai_epi16(_mm_add_epi16(T20, sumOffset), shift);
+                T20 = _mm_packus_epi16(T20, T20);
+                _mm_storel_epi64((__m128i*)&dst[1 * dstStride + col], T20);
             }
-            __m128i zero = _mm_set1_epi16(0);
-            __m128i sumOffset = _mm_set1_epi16(offset);
 
-            __m128i val1 = _mm_add_epi16(sumlo, sumOffset);
-            val1 = _mm_srai_epi16(val1, shift);
-
-            __m128i res = _mm_packus_epi16(val1, zero);
-            _mm_storel_epi64((__m128i*)&dst[col], res);
-        }
-
-        for (; col < width; col += 8)
-        {
-            __m128i srcCoeff = _mm_loadl_epi64((__m128i*)&src[col]);
-            __m128i srcCoeffTemp1 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T00 = _mm_mullo_epi16(srcCoeffTemp1, coeff0);
-
-            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + srcStride]));
-            __m128i srcCoeffTemp2 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T10 = _mm_mullo_epi16(srcCoeffTemp2, coeff1);
-
-            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 2 * srcStride]));
-            __m128i srcCoeffTemp3 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T20 = _mm_mullo_epi16(srcCoeffTemp3, coeff2);
-
-            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 3 * srcStride]));
-            __m128i srcCoeffTemp4 = _mm_cvtepu8_epi16(srcCoeff);
-            __m128i T30 = _mm_mullo_epi16(srcCoeffTemp4, coeff3);
-
-            __m128i sum0 = _mm_add_epi16(T00, T10);
-            __m128i sum1 = _mm_add_epi16(T20, T30);
-            __m128i sumlo = _mm_add_epi16(sum0, sum1);
-
-            if (N == 8)
+            assert((width - col) < 8);
+            if (col != width)
             {
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 4 * srcStride]));
-                srcCoeffTemp1 = _mm_cvtepu8_epi16(srcCoeff);
-                T00 = _mm_mullo_epi16(srcCoeffTemp1, coeff4);
+                T00 = _mm_loadl_epi64((__m128i*)&src[(0) * srcStride + col]);
+                T01 = _mm_loadl_epi64((__m128i*)&src[(1) * srcStride + col]);
+                T02 = _mm_loadl_epi64((__m128i*)&src[(2) * srcStride + col]);
+                T03 = _mm_loadl_epi64((__m128i*)&src[(3) * srcStride + col]);
+                T04 = _mm_loadl_epi64((__m128i*)&src[(4) * srcStride + col]);
 
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 5 * srcStride]));
-                srcCoeffTemp2 = _mm_cvtepu8_epi16(srcCoeff);
-                T10 = _mm_mullo_epi16(srcCoeffTemp2, coeff5);
+                T10 = _mm_unpacklo_epi8(T00, T01);
+                T11 = _mm_unpacklo_epi8(T02, T03);
 
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 6 * srcStride]));
-                srcCoeffTemp3 = _mm_cvtepu8_epi16(srcCoeff);
-                T20 = _mm_mullo_epi16(srcCoeffTemp3, coeff6);
+                T10 = _mm_maddubs_epi16(T10, vm01);
+                T11 = _mm_maddubs_epi16(T11, vm23);
+                T10 = _mm_add_epi16(T10, T11);
+                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_packus_epi16(T10, T10);
+                _mm_maskmoveu_si128(T10, leftmask, (char*)&dst[(0) * dstStride + col]);
 
-                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 7 * srcStride]));
-                srcCoeffTemp4 = _mm_cvtepu8_epi16(srcCoeff);
-                T30 = _mm_mullo_epi16(srcCoeffTemp4, coeff7);
+                T20 = _mm_unpacklo_epi8(T01, T02);
+                T21 = _mm_unpacklo_epi8(T03, T04);
 
-                sum0 = _mm_add_epi16(T00, T10);
-                sum1 = _mm_add_epi16(T20, T30);
-                sumlo = _mm_add_epi16(sumlo, _mm_add_epi16(sum0, sum1));
+                T20 = _mm_maddubs_epi16(T20, vm01);
+                T21 = _mm_maddubs_epi16(T21, vm23);
+                T20 = _mm_add_epi16(T20, T21);
+                T20 = _mm_srai_epi16(_mm_add_epi16(T20, sumOffset), shift);
+                T20 = _mm_packus_epi16(T20, T20);
+                _mm_maskmoveu_si128(T20, leftmask, (char*)&dst[(1) * dstStride + col]);
             }
-            __m128i zero = _mm_set1_epi16(0);
-            __m128i sumOffset = _mm_set1_epi16(offset);
 
-            __m128i val1 = _mm_add_epi16(sumlo, sumOffset);
-            val1 = _mm_srai_epi16(val1, shift);
-
-            __m128i res = _mm_packus_epi16(val1, zero);
-
-            int n = width - col;
-            __m128i mask1, mask2, mask3, mask4, mask5, mask6;
-
-            switch (n) // store either 1, 2, 3, 4, 5, 6, or 7 8-bit results in dst
-            {
-            case 1: mask1 = _mm_srli_si128(mask7, 6);
-                _mm_maskmoveu_si128(res, mask1, (char*)&dst[col]);
-                break;
-
-            case 2: mask2 = _mm_srli_si128(mask7, 5);
-                _mm_maskmoveu_si128(res, mask2, (char*)&dst[col]);
-                break;
-
-            case 3: mask3 = _mm_srli_si128(mask7, 4);
-                _mm_maskmoveu_si128(res, mask3, (char*)&dst[col]);
-                break;
-
-            case 4: mask4 = _mm_srli_si128(mask7, 3);
-                _mm_maskmoveu_si128(res, mask4, (char*)&dst[col]);
-                break;
-
-            case 5: mask5 = _mm_srli_si128(mask7, 2);
-                _mm_maskmoveu_si128(res, mask5, (char*)&dst[col]);
-                break;
-
-            case 6: mask6 = _mm_srli_si128(mask7, 1);
-                _mm_maskmoveu_si128(res, mask6, (char*)&dst[col]);
-                break;
-
-            case 7: _mm_maskmoveu_si128(res, mask7, (char*)&dst[col]);
-                break;
-            }
-        }
-
-        src += srcStride;
-        dst += dstStride;
-    }
+            src += 2 * srcStride;
+            dst += 2 * dstStride;
+        }   // end of row loop
+    } // end of N==4
 }
 
 #endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
 
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
+ALIGN_VAR_32(const uint8_t, Tm[][16]) =
+{
+    // TODO: merge row0-3 into ipfilterH_0[0-3]
+    {0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8},
+    {2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 10},
+    {4, 5, 6, 7, 8, 9, 10, 11, 5, 6, 7, 8, 9, 10, 11, 12},
+    {6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14},
+    {0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6},
+    {4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10}
+};
+
 template<int N>
 void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     int row, col;
-    int offset;
+    uint32_t offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    const int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
 
     offset =  (1 << (headRoom - 1));
     maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1);
 
     __m128i a = _mm_loadu_si128((__m128i*)coeff);
-    __m128i T10 = _mm_packs_epi16(a, a);
+    __m128i coef2 = _mm_packs_epi16(a, a);
+    __m128i sumOffset = _mm_shuffle_epi32(_mm_cvtsi32_si128(offset), 0);
+    sumOffset = _mm_packs_epi16(sumOffset, sumOffset);
 
-    __m128i S1 = _mm_slli_si128(T10, 12);
-    __m128i S2 = _mm_srli_si128(S1, 4);
-    __m128i S3 = _mm_srli_si128(S2, 4);
-    __m128i S4 = _mm_srli_si128(S3, 4);
-    __m128i S = _mm_add_epi8(S1, _mm_add_epi8(S2, S3));
-    S =  _mm_add_epi8(S, S4);
+    const __m128i S = _mm_shuffle_epi32(coef2, 0);
 
-    __m128i Tm1 = _mm_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8);
-    __m128i Tm2 = _mm_setr_epi8(2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 10);
-    __m128i Tm3 = _mm_setr_epi8(4, 5, 6, 7, 8, 9, 10, 11, 5, 6, 7, 8, 9, 10, 11, 12);
-    __m128i Tm4 = _mm_setr_epi8(6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14);
-    __m128i Tm5 = _mm_setr_epi8(0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6);
-    __m128i Tm6 = _mm_setr_epi8(4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10);
+    uint32_t leftCols = (8 - (width & 7)) * 8;
+    uint32_t mask_shift = ((uint32_t)~0 >> leftCols);
+    uint32_t mask0 = (width & 7) <= 4 ? mask_shift : ~0;
+    uint32_t mask1 = (width & 7) <= 4 ? 0 : mask_shift;
+    __m128i leftmask = _mm_setr_epi32(mask0, mask1, 0, 0);
 
+    // TODO: unroll
     for (row = 0; row < height; row++)
     {
-        col = 0;
-        for (; col < (width - 7); col += 8)
+        for (col = 0; col < (width & ~7); col += 8)
         {
-            __m128i srcCoeff = _mm_loadu_si128((__m128i*)(src + col));
             __m128i sum;
+            __m128i srcCoeff = _mm_loadu_si128((__m128i*)(src + col));
 
             if (N == 4)
             {
-                __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm5);
+                __m128i T00 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[4]));
                 __m128i T20 = _mm_maddubs_epi16(T00, S);
 
-                __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm6);
+                __m128i T30 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[5]));
                 __m128i T40 = _mm_maddubs_epi16(T30, S);
 
                 sum = _mm_hadd_epi16(T20, T40);
             }
-
             else // (N == 8)
             {
-                __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm1);
-                __m128i T20 = _mm_maddubs_epi16(T00, T10);
+                __m128i T00 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[0]));
+                __m128i T20 = _mm_maddubs_epi16(T00, coef2);
 
-                __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm2);
-                __m128i T40 = _mm_maddubs_epi16(T30, T10);
+                __m128i T30 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[1]));
+                __m128i T40 = _mm_maddubs_epi16(T30, coef2);
 
-                __m128i T50 = _mm_shuffle_epi8(srcCoeff, Tm3);
-                __m128i T60 = _mm_maddubs_epi16(T50, T10);
+                __m128i T50 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[2]));
+                __m128i T60 = _mm_maddubs_epi16(T50, coef2);
 
-                __m128i T70 = _mm_shuffle_epi8(srcCoeff, Tm4);
-                __m128i T80 = _mm_maddubs_epi16(T70, T10);
+                __m128i T70 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[3]));
+                __m128i T80 = _mm_maddubs_epi16(T70, coef2);
 
                 __m128i s1 = _mm_hadd_epi16(T20, T40);
                 __m128i s2 = _mm_hadd_epi16(T60, T80);
                 sum = _mm_hadd_epi16(s1, s2);
             }
 
-            __m128i sumOffset = _mm_set1_epi16(offset);
-            __m128i zero = _mm_set1_epi16(0);
             __m128i val = _mm_add_epi16(sum, sumOffset);
-
             val = _mm_srai_epi16(val, headRoom);
-            val = _mm_packus_epi16(val, zero);
+            val = _mm_packus_epi16(val, val);
             _mm_storel_epi64((__m128i*)&dst[col], val);
         }
 
-        for (; col < width; col++)                        // Remaining iterations
-        {
-            __m128i NewSrc = _mm_loadl_epi64((__m128i*)(src + col));
-            __m128i T00 = _mm_maddubs_epi16(NewSrc, T10);
-            __m128i add = _mm_hadd_epi16(T00, T00);
-            short sum = _mm_extract_epi16(add, 0);
+        assert((width - col) < 8);
 
-            if (N == 8)
+        if (col != width)
+        {
+            __m128i sum;
+            __m128i srcCoeff = _mm_loadu_si128((__m128i*)(src + col));
+
+            if (N == 4)
             {
-                add = _mm_hadd_epi16(add, add);
-                sum = _mm_extract_epi16(add, 0);
+                __m128i T00 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[4]));
+                __m128i T20 = _mm_maddubs_epi16(T00, S);
+
+                __m128i T30 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[5]));
+                __m128i T40 = _mm_maddubs_epi16(T30, S);
+
+                sum = _mm_hadd_epi16(T20, T40);
             }
-            short val = (short)(sum + offset) >> headRoom;
-            val = (val < 0) ? 0 : val;
-            val = (val > maxVal) ? maxVal : val;
-            dst[col] = (pixel)val;
+            else // (N == 8)
+            {
+                __m128i T00 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[0]));
+                __m128i T20 = _mm_maddubs_epi16(T00, coef2);
+
+                __m128i T30 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[1]));
+                __m128i T40 = _mm_maddubs_epi16(T30, coef2);
+
+                __m128i T50 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[2]));
+                __m128i T60 = _mm_maddubs_epi16(T50, coef2);
+
+                __m128i T70 = _mm_shuffle_epi8(srcCoeff, _mm_load_si128((__m128i*)Tm[3]));
+                __m128i T80 = _mm_maddubs_epi16(T70, coef2);
+
+                __m128i s1 = _mm_hadd_epi16(T20, T40);
+                __m128i s2 = _mm_hadd_epi16(T60, T80);
+                sum = _mm_hadd_epi16(s1, s2);
+            }
+
+            __m128i val = _mm_add_epi16(sum, sumOffset);
+            val = _mm_srai_epi16(val, headRoom);
+            val = _mm_packus_epi16(val, val);
+
+            // TODO: optimize me: in here the really encode's size always be equal to 4
+            _mm_maskmoveu_si128(val, leftmask, (char*)&dst[col]);
         }
 
         src += srcStride;

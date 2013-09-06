@@ -78,7 +78,10 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_pp_t ref, ipfilter_pp_t 
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
+    int rand_val, rand_srcStride, rand_dstStride;
+
+    if (rand_height % 2)
+        rand_height++;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -88,6 +91,12 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_pp_t ref, ipfilter_pp_t 
         rand_val = rand() % 4;                     // Random offset in the filter
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
+
+        if (rand_srcStride < rand_width)
+            rand_srcStride = rand_width;
+
+        if (rand_dstStride < rand_width)
+            rand_dstStride = rand_width;
 
         opt(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
