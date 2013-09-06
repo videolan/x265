@@ -109,6 +109,7 @@ void Lowres::destroy()
 // (re) initialize lowres state
 void Lowres::init(TComPicYuv *orig)
 {
+    scenecut = 1;
     bIntraCalculated = false;
     memset(costEst, -1, sizeof(costEst));
     sliceType = X265_TYPE_AUTO;

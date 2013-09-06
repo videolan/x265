@@ -105,6 +105,7 @@ void Lookahead::slicetypeDecide()
         outputQueue.pushBack(pic);
         numDecided++;
         lastKeyframe = 0;
+        frames[0] = &(pic->m_lowres);
         return;
     }
 
@@ -116,16 +117,18 @@ void Lookahead::slicetypeDecide()
     for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
     {}
 
-    TComPic *pic;
+    TComPic *pic = NULL;
     for (int i = 1; i <= dframes && i <= inputQueue.size(); i++)
     {
         pic = inputQueue.popFront();
         outputQueue.pushBack(pic);
-        if (pic->m_lowres.sliceType == X265_TYPE_I)
+        if ((pic->m_lowres.sliceType == X265_TYPE_I) && !(pic->getPOC() % cfg->param.keyframeMax))
         {
             lastKeyframe = pic->getPOC();
         }
     }
+    if (pic)
+        frames[0] = &(pic->m_lowres); // last nonb
 
 #else // if 0
     // Fake lookahead
@@ -443,6 +446,10 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     {
         frames[framecnt + 1] = &((*iterPic++)->m_lowres);
         frames[framecnt + 1]->sliceType = X265_TYPE_AUTO;
+    }
+    for (int i = framecnt; (i < maxSearch); i++)
+    {
+        frames[i+1] = NULL;
     }
 
     keyint_limit = cfg->param.keyframeMax - frames[1]->frameNum + lastKeyframe;
