@@ -522,6 +522,8 @@ int main(int argc, char **argv)
     uint32_t outFrameCount = 0;
     while (pic_in && !b_ctrl_c)
     {
+        pic_orig.poc = inFrameCount;
+
         // read input YUV file
         if (inFrameCount < cliopt.framesToBeEncoded && cliopt.input->readPicture(pic_orig))
             inFrameCount++;
