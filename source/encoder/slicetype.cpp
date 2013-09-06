@@ -129,18 +129,20 @@ void Lookahead::slicetypeDecide()
             lastKeyframe = pic->getPOC();
         }
     }
+
     picsAnalysed[0] = pic;  //Move the P-frame following B-frames to the beginning
 
     //Push pictures in encode order
-    for (int i = 0; i < dframes ; i++)
+    for (int i = 0; i < dframes; i++)
     {
         outputQueue.pushBack(picsAnalysed[i]);
     }
+
     if (pic)
         frames[0] = &(pic->m_lowres); // last nonb
 
 #else // if 0
-    // Fake lookahead
+      // Fake lookahead
     if (cfg->param.keyframeMax == 1)
     {
         TComPic *pic = inputQueue.popFront();
@@ -154,7 +156,7 @@ void Lookahead::slicetypeDecide()
         TComPic *pic = inputQueue.popFront();
 
         bool forceIntra = (pic->getPOC() % cfg->param.keyframeMax) == 0;
-        pic->m_lowres.sliceType = forceIntra? X265_TYPE_I : X265_TYPE_P;
+        pic->m_lowres.sliceType = forceIntra ? X265_TYPE_I : X265_TYPE_P;
         outputQueue.pushBack(pic);
         numDecided++;
     }
@@ -456,7 +458,8 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
         frames[framecnt + 1] = &((*iterPic++)->m_lowres);
         frames[framecnt + 1]->sliceType = X265_TYPE_AUTO;
     }
-    frames[framecnt+1] = NULL;
+
+    frames[framecnt + 1] = NULL;
 
     keyint_limit = cfg->param.keyframeMax - frames[1]->frameNum + lastKeyframe;
     origNumFrames = num_frames = X265_MIN(framecnt, keyint_limit);
