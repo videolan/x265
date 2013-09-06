@@ -226,6 +226,18 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             TComPicYuv *recpic = out->getPicYuvRec();
             pic_out->poc = out->getSlice()->getPOC();
             pic_out->bitDepth = sizeof(Pel) * 8;
+            switch (out->getSlice()->getSliceType())
+            {
+            case I_SLICE:
+                pic_out->sliceType = X265_TYPE_I;
+                break;
+            case P_SLICE:
+                pic_out->sliceType = X265_TYPE_P;
+                break;
+            case B_SLICE:
+                pic_out->sliceType = X265_TYPE_B;
+                break;
+            }
             pic_out->planes[0] = recpic->getLumaAddr();
             pic_out->stride[0] = recpic->getStride();
             pic_out->planes[1] = recpic->getCbAddr();

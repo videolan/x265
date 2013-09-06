@@ -134,6 +134,7 @@ typedef struct x265_picture_t
     int   stride[3];
     int   bitDepth;
     int   poc;
+    int   sliceType;
 }
 x265_picture_t;
 
