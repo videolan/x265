@@ -217,8 +217,6 @@ public:
 
     bool  getLFCrossTileBoundaryFlag() { return m_loopFilterAcrossTilesEnabledFlag; }
 
-    int   getDecodedPictureHashSEIEnabled() { return param.decodedPictureHashSEI; }
-
     int   getBufferingPeriodSEIEnabled() { return m_bufferingPeriodSEIEnabled; }
 
     int   getPictureTimingSEIEnabled() { return m_pictureTimingSEIEnabled; }

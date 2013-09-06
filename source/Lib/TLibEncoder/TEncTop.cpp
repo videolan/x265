@@ -504,23 +504,23 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
     const char* digestStr = NULL;
-    if (getDecodedPictureHashSEIEnabled())
+    if (param.decodedPictureHashSEI)
     {
         SEIDecodedPictureHash sei_recon_picture_digest;
-        if (getDecodedPictureHashSEIEnabled() == 1)
+        if (param.decodedPictureHashSEI == 1)
         {
             /* calculate MD5sum for entire reconstructed picture */
             sei_recon_picture_digest.method = SEIDecodedPictureHash::MD5;
             calcMD5(*recon, sei_recon_picture_digest.digest);
             digestStr = digestToString(sei_recon_picture_digest.digest, 16);
         }
-        else if (getDecodedPictureHashSEIEnabled() == 2)
+        else if (param.decodedPictureHashSEI == 2)
         {
             sei_recon_picture_digest.method = SEIDecodedPictureHash::CRC;
             calcCRC(*recon, sei_recon_picture_digest.digest);
             digestStr = digestToString(sei_recon_picture_digest.digest, 2);
         }
-        else if (getDecodedPictureHashSEIEnabled() == 3)
+        else if (param.decodedPictureHashSEI == 3)
         {
             sei_recon_picture_digest.method = SEIDecodedPictureHash::CHECKSUM;
             calcChecksum(*recon, sei_recon_picture_digest.digest);
@@ -603,15 +603,15 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
         }
         if (digestStr && param.logLevel >= 4)
         {
-            if (getDecodedPictureHashSEIEnabled() == 1)
+            if (param.decodedPictureHashSEI == 1)
             {
                 fprintf(stderr, " [MD5:%s]", digestStr);
             }
-            else if (getDecodedPictureHashSEIEnabled() == 2)
+            else if (param.decodedPictureHashSEI == 2)
             {
                 fprintf(stderr, " [CRC:%s]", digestStr);
             }
-            else if (getDecodedPictureHashSEIEnabled() == 3)
+            else if (param.decodedPictureHashSEI == 3)
             {
                 fprintf(stderr, " [Checksum:%s]", digestStr);
             }
