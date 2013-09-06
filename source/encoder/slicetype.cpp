@@ -118,18 +118,29 @@ void Lookahead::slicetypeDecide()
     int idx = 1;
 
     for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
-    {}
+    {
+        if ((frames[dframes + 1]->sliceType == X265_TYPE_I))
+        {
+            frames[dframes + 1]->keyframe = 1;
+            lastKeyframe = frames[dframes]->frameNum;
+            if (cfg->param.decodingRefreshType == 2 && dframes > 0) //If an IDR frame following a B
+            {
+                frames[dframes]->sliceType = X265_TYPE_P;
+                dframes--;
+            }
+        }
+        if (!IS_X265_TYPE_B(frames[dframes + 1]->sliceType))
+        {
+            dframes++;
+            break;
+        }
+    }
 
     TComPic *pic = NULL;
     for (int i = 1; i <= dframes && !inputQueue.empty(); i++)
     {
         pic = inputQueue.popFront();
         picsAnalysed[idx++] = pic;
-        if ((pic->m_lowres.sliceType == X265_TYPE_I))
-        {
-            pic->m_lowres.keyframe = 1;
-            lastKeyframe = pic->getPOC();
-        }
     }
 
     picsAnalysed[0] = pic;  //Move the P-frame following B-frames to the beginning
@@ -459,10 +470,16 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     int vbv_lookahead = 0;
 
     TComList<TComPic*>::iterator iterPic = inputQueue.begin();
-    for (framecnt = 0; (framecnt < maxSearch) && (framecnt < (int)inputQueue.size()); framecnt++)
+    for (framecnt = 0; (framecnt < maxSearch) && (framecnt < (int)inputQueue.size()) && (*iterPic)->m_lowres.sliceType == X265_TYPE_AUTO; framecnt++)
     {
         frames[framecnt + 1] = &((*iterPic++)->m_lowres);
-        frames[framecnt + 1]->sliceType = X265_TYPE_AUTO;
+    }
+
+    if (!framecnt)
+    {
+        frames[1] = &((*iterPic)->m_lowres);
+        frames[2] = NULL;
+        return;
     }
 
     frames[framecnt + 1] = NULL;
