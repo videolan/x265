@@ -333,7 +333,7 @@ struct CLIOptions
                 }
                 if (long_options_index < 0)
                 {
-                    log(X265_LOG_WARNING, "short option '%x' unrecognized\n", c);
+                    log(X265_LOG_WARNING, "short option '%c' unrecognized\n", c);
                     return true;
                 }
 #define HELP(message)
