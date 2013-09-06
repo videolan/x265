@@ -13,6 +13,7 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
     set(X64 1)
     add_definitions(-DX86_64=1)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
 
 # Enforce coding standards.  Full warnings and warnings as errors
