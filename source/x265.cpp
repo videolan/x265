@@ -308,9 +308,12 @@ struct CLIOptions
             {
             case 'h':
                 do_help(param);
+                break;
+
             case 'V':
                 print_version(param);
                 exit(0);
+
             default:
                 if (long_options_index < 0 && c > 0)
                 {
@@ -322,7 +325,6 @@ struct CLIOptions
                             break;
                         }
                     }
-
                     if (long_options_index < 0)
                     {
                         /* getopt_long might have already printed an error message */
