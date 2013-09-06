@@ -112,20 +112,29 @@ void Lookahead::slicetypeDecide()
 #if 0
     slicetypeAnalyse(false);
 
-    // This will work only in all-P config
     int dframes;
+    TComPic* picsAnalysed[X265_LOOKAHEAD_MAX];  //Used for sorting the pics in encode order
+    int idx = 1;
+
     for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
     {}
 
     TComPic *pic = NULL;
-    for (int i = 1; i <= dframes && i <= inputQueue.size(); i++)
+    for (int i = 1; i <= dframes && !inputQueue.empty(); i++)
     {
         pic = inputQueue.popFront();
-        outputQueue.pushBack(pic);
+        picsAnalysed[idx++] = pic;
         if ((pic->m_lowres.sliceType == X265_TYPE_I) && !(pic->getPOC() % cfg->param.keyframeMax))
         {
             lastKeyframe = pic->getPOC();
         }
+    }
+    picsAnalysed[0] = pic;  //Move the P-frame following B-frames to the beginning
+
+    //Push pictures in encode order
+    for (int i = 0; i < dframes ; i++)
+    {
+        outputQueue.pushBack(picsAnalysed[i]);
     }
     if (pic)
         frames[0] = &(pic->m_lowres); // last nonb
