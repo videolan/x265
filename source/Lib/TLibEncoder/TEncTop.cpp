@@ -268,8 +268,8 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         // determine references, set QP, etc
         m_dpb->prepareEncode(fenc, curEncoder);
-        int lookAheadCost = m_lookahead->getEstimatedPictureCost(fenc);
-        m_rateControl->rateControlStart(fenc, lookAheadCost);
+        int satd = m_lookahead->getEstimatedPictureCost(fenc);
+        m_rateControl->rateControlStart(fenc, satd);
 
         curEncoder->computeLambdaForQp();
 
