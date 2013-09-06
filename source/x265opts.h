@@ -97,4 +97,4 @@ OPT("sao-lcu-bounds",  param->saoLcuBoundary,         required_argument, 0, "0: 
 OPT("sao-lcu-opt",     param->saoLcuBasedOptimization,required_argument, 0, "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
 
 HELP("SEI options:")
-OPT("hash",            param->bEnableDecodedPictureHashSEI, required_argument, 0, "Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum ")
+OPT("hash",            param->decodedPictureHashSEI,  required_argument, 0, "Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum ")
