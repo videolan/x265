@@ -325,7 +325,9 @@ struct CLIOptions
 
                     if (long_options_index < 0)
                     {
-                        /* getopt_long already printed an error message */
+                        /* getopt_long might have already printed an error message */
+                        if (c != 63)
+                            log(X265_LOG_WARNING, "internal error: short option '%c' has no long option\n", c);
                         return true;
                     }
                 }
