@@ -265,7 +265,6 @@ struct CLIOptions
         printf("\nSyntax: x265 [options] infile [-o] outfile\n");
         printf("    infile can be YUV or Y4M\n");
         printf("    outfile is raw HEVC bitstream\n");
-        printf("Options:\n");
 
 #define HELP(message) printf("\n%s\n", message);
 #define OPT(longname, var, argreq, flag, helptext) \
