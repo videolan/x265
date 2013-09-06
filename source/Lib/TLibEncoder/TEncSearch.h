@@ -71,7 +71,6 @@ class TEncSearch : public TComPrediction
 public:
 
     MotionEstimate  m_me;
-    int             m_referenceRowsAvailable;
 
 protected:
 
@@ -101,6 +100,7 @@ protected:
     // ME parameters
     int             m_searchRange;
     int             m_bipredSearchRange; // Search range for bi-prediction
+    int             m_refLagPixels;
     int             m_searchMethod;
     int             m_adaptiveRange[2][33];
     MV              m_mvPredictors[3];

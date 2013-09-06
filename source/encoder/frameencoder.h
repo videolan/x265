@@ -218,7 +218,6 @@ protected:
     /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;
     AccessUnit               m_accessUnit;
-    volatile int             m_referenceRowsAvailable;
 
     int                      m_numRows;
     int                      row_delay;

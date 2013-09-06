@@ -158,6 +158,10 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_bipredSearchRange = cfg->param.bipredSearchRange;
     m_me.setSearchMethod(m_searchMethod);
 
+    /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
+     * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
+    m_refLagPixels = cfg->param.frameNumThreads > 1 ? m_searchRange : cfg->param.sourceHeight;
+
     // default to no adaptive range
     for (int dir = 0; dir < 2; dir++)
     {
@@ -3014,11 +3018,14 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
     mvmin = mvp - dist;
     mvmax = mvp + dist;
 
-    cu->clipMv(mvmin, m_referenceRowsAvailable);
-    cu->clipMv(mvmax, m_referenceRowsAvailable);
+    cu->clipMv(mvmin);
+    cu->clipMv(mvmax);
 
     mvmin >>= 2;
     mvmax >>= 2;
+
+    /* conditional clipping for frame parallelism */
+    mvmax.y = X265_MIN(mvmax.y, m_refLagPixels);
 }
 
 void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)

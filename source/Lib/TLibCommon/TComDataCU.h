@@ -453,7 +453,7 @@ public:
     void          setMVPIdxSubParts(int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
     void          setMVPNumSubParts(int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
 
-    void          clipMv(MV& outMV, int rowsAvailable = 0);
+    void          clipMv(MV& outMV);
 
     void          getMvPredLeft(MV& mvPred)       { mvPred = m_mvFieldA.mv; }
 

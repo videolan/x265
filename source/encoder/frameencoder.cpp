@@ -842,8 +842,6 @@ void FrameEncoder::compressCTURows()
         m_pic->m_complete_enc[i] = 0;
     }
 
-    m_referenceRowsAvailable = 0;
-
     if (m_pool && m_cfg->param.bEnableWavefront)
     {
         WaveFront::clearEnabledRowMask();
@@ -870,7 +868,6 @@ void FrameEncoder::compressCTURows()
                 }
             }
 
-            m_referenceRowsAvailable = row; // TODO: probably redundant
             WaveFront::enableRow(row);
             if (row == 0)
                 WaveFront::enqueueRow(row);
@@ -920,7 +917,6 @@ void FrameEncoder::processRow(int row)
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
 
-        codeRow.m_search.m_referenceRowsAvailable = m_referenceRowsAvailable;
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
