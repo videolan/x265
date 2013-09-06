@@ -447,10 +447,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
         frames[framecnt + 1] = &((*iterPic++)->m_lowres);
         frames[framecnt + 1]->sliceType = X265_TYPE_AUTO;
     }
-    for (int i = framecnt; i < maxSearch; i++)
-    {
-        frames[i+1] = NULL;
-    }
+    frames[framecnt+1] = NULL;
 
     keyint_limit = cfg->param.keyframeMax - frames[1]->frameNum + lastKeyframe;
     origNumFrames = num_frames = X265_MIN(framecnt, keyint_limit);
