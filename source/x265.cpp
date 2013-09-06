@@ -164,15 +164,13 @@ struct CLIOptions
 
     void writeNALs(const x265_nal_t* nal, int nalcount)
     {
-        PPAStartCpuEventFunc(bitstream_write);
+        PPAScopeEvent(bitstream_write);
         for (int i = 0; i < nalcount; i++)
         {
             bitstreamFile.write((const char*)nal->p_payload, nal->i_payload);
             rateStatsAccum((NalUnitType)nal->i_type, nal->i_payload);
             nal++;
         }
-
-        PPAStopCpuEventFunc(bitstream_write);
     }
 
     /* in microseconds */
