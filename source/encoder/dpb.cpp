@@ -71,8 +71,8 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     m_picList.pushFront(pic);
 
     TComSlice* slice = pic->getSlice();
-    if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
-        getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
+    if (getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
+        getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
     {
         m_lastIDR = pocCurr;
     }
@@ -80,7 +80,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
     slice->setReferenced(slice->getSliceType() != B_SLICE);
     slice->setTemporalLayerNonReferenceFlag(!slice->isReferenced());
     // Set the nal unit type
-    slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR));
+    slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR, pic));
 
     // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
     if (slice->getTemporalLayerNonReferenceFlag())
@@ -368,13 +368,13 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
  * \returns the nal unit type of the picture
  * This function checks the configuration and returns the appropriate nal_unit_type for the picture.
  */
-NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR)
+NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, TComPic* pic)
 {
     if (curPOC == 0)
     {
         return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
     }
-    if (curPOC % m_cfg->param.keyframeMax == 0)
+    if (pic->m_lowres.keyframe)
     {
         if (m_cfg->param.decodingRefreshType == 1)
         {

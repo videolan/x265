@@ -71,7 +71,7 @@ protected:
 
     void arrangeLongtermPicturesInRPS(TComSlice *, FrameEncoder *frameEncoder);
 
-    NalUnitType getNalUnitType(int curPoc, int lastIdr);
+    NalUnitType getNalUnitType(int curPoc, int lastIdr, TComPic* pic);
 };
 }
 
