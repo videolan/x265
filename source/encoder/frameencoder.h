@@ -160,7 +160,7 @@ public:
 
     void resetEncoder()
     {
-        // Initialize global singletons (these should eventually be per-slice)
+        // Initialize slice singletons
         m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
     }
     
@@ -171,7 +171,7 @@ public:
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();
 
-    /* called by compressFrame to perform wave-front analysis */
+    /* called by compressFrame to perform wave-front compression analysis */
     void compressCTURows();
 
     void encodeSlice(TComOutputBitstream* substreams);
@@ -180,17 +180,19 @@ public:
 
     TComPic *getEncodedPicture(AccessUnit& accessUnit);
 
-    // Frame parallelism
-    void threadMain(void)
+    // worker thread
+    void threadMain()
     {
-        while (m_threadActive)
+        do
         {
-            m_enable.wait();
-            if (!m_threadActive)
-                break;
-            compressFrame();
-            m_done.trigger();
+            m_enable.wait();  // TEncTop::encode() triggers this event
+            if (m_threadActive)
+            {
+                compressFrame();
+                m_done.trigger();
+            }
         }
+        while (m_threadActive);
     }
 
     Event                    m_enable;
@@ -218,7 +220,7 @@ protected:
     AccessUnit               m_accessUnit;
 
     int                      m_numRows;
-    int                      row_delay;
+    int                      m_filterRowDelay;
     CTURow*                  m_rows;
     Event                    m_completionEvent;
 };
