@@ -109,20 +109,21 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
 {
     curFrame = pic->getSlice();
     frameType = curFrame->getSliceType();
-    rce = new RateControlEntry();
-    lastSatd = lookAheadCost;
-    double q = 0;
 
     switch (rateControlMode)
     {
     case X265_RC_ABR:
-        q = qScale2qp(rateEstimateQscale());
-        qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
-        qpaRc = qpm = q;    
-        if (rce)
-            rce->newQp = qp;
-        accumPQpUpdate();
-        break;
+        {
+            rce = new RateControlEntry();
+            lastSatd = lookAheadCost;
+            double q = qScale2qp(rateEstimateQscale());
+            qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
+            qpaRc = qpm = q;    
+            if (rce)
+                rce->newQp = qp;
+            accumPQpUpdate();
+            break;
+        }
 
     case X265_RC_CQP:
         qp = qpConstant[frameType];
@@ -300,7 +301,7 @@ double RateControl::getQScale(double rateFactor)
 /* After encoding one frame, save stats and update ratecontrol state */
 int RateControl::rateControlEnd(int64_t bits)
 {
-    if (rateControlMode ==  X265_RC_ABR)
+    if (rateControlMode == X265_RC_ABR)
     {
         if (frameType != B_SLICE)
             cplxrSum +=  1.1 *bits * qp2qScale(qpaRc) / lastRceq;
@@ -313,12 +314,12 @@ int RateControl::rateControlEnd(int64_t bits)
         cplxrSum *= cbrDecay;
         wantedBitsWindow += frameDuration * bitrate;
         wantedBitsWindow *= cbrDecay;
+        if (rce)
+        {
+            delete rce;
+            rce = NULL;
+        }
     }
     totalBits += bits;
-    if (rce)
-    {
-        delete rce;
-        rce = NULL;
-    }
     return 0;
 }
