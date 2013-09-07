@@ -139,15 +139,7 @@ public:
     TEncCu*      getCuEncoder(int row)         { return &this->m_rows[row].m_cuCoder; }
 
     /* Frame singletons, last the life of the encoder */
-    TEncSbac*               getSingletonSbac() { return &m_sbacCoder; }
-
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
-
-    TEncCavlc*              getCavlcCoder()    { return &m_cavlcCoder; }
-
-    TEncBinCABAC*           getBinCABAC()      { return &m_binCoderCABAC; }
-
-    TComBitCounter*         getBitCounter()    { return &m_bitCounter; }
 
     void resetEntropy(TComSlice *slice)
     {
