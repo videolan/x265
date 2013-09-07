@@ -115,7 +115,7 @@ void FrameFilter::start(TComPic *pic)
         m_sao.rdoSaoUnitRowInit(saoParam);
     }
 
-    if (m_cfg->param.bEnableLoopFilter && m_pool && m_cfg->param.bEnableWavefront)
+    if (m_pool && m_cfg->param.bEnableLoopFilter && m_cfg->param.bEnableWavefront)
     {
         JobProvider::enqueue();
     }

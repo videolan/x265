@@ -852,6 +852,10 @@ void FrameEncoder::compressCTURows()
         m_pic->m_complete_enc[i] = 0;
     }
 
+    UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
+    TComSlice* slice = m_pic->getSlice();
+    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+
     if (m_pool && m_cfg->param.bEnableWavefront)
     {
         WaveFront::clearEnabledRowMask();
@@ -859,10 +863,6 @@ void FrameEncoder::compressCTURows()
 
         m_frameFilter.start(m_pic);
 
-        UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
-
-        TComSlice* slice = m_pic->getSlice();
-        int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
         for (UInt row = 0; row < (UInt)m_numRows; row++)
         {
             for (int l = 0; l < numPredDir; l++)
@@ -891,18 +891,34 @@ void FrameEncoder::compressCTURows()
     }
     else
     {
-        for (int i = 0; i < this->m_numRows; i++)
-        {
-            processRow(i);
-        }
-
         m_frameFilter.start(m_pic);
 
-        if (m_cfg->param.bEnableLoopFilter)
+        for (int i = 0; i < this->m_numRows + m_filterRowDelay; i++)
         {
-            for (int i = 0; i < this->m_numRows; i++)
+            if (i < m_numRows)
             {
-                m_frameFilter.processRow(i);
+                for (int l = 0; l < numPredDir; l++)
+                {
+                    RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+                    for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                    {
+                        TComPic *refpic = slice->getRefPic(list, ref);
+                        while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
+                        {
+                            refpic->m_reconRowWait.wait();
+                        }
+                    }
+                }
+
+                processRow(i);
+            }
+
+            if (i >= m_filterRowDelay)
+            {
+                if (m_cfg->param.bEnableLoopFilter)
+                {
+                    m_frameFilter.processRow(i - m_filterRowDelay);
+                }
             }
         }
     }

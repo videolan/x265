@@ -197,6 +197,11 @@ void x265_t::configure(x265_param_t *_param)
         x265_log(_param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled (%d streams)\n",
                  actual, (_param->sourceHeight + _param->maxCUSize - 1) / _param->maxCUSize);
     }
+    else if (_param->frameNumThreads > 1)
+    {
+        x265_log(_param, X265_LOG_INFO, "Frame Parallelism thread mode\n");
+        _param->bEnableWavefront = 0;
+    }
     else
     {
         x265_log(_param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
