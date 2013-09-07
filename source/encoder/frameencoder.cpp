@@ -275,9 +275,13 @@ void FrameEncoder::initSlice(TComPic* pic)
     slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
 }
 
-void FrameEncoder::computeLambdaForQp()
+void FrameEncoder::compressFrame()
 {
-    TComSlice *slice = m_pic->getSlice();
+    PPAScopeEvent(FrameEncoder_compressFrame);
+
+    TEncEntropy* entropyCoder = getEntropyCoder(0);
+    TComSlice*   slice        = m_pic->getSlice();
+
     int qp = slice->getSliceQp();
     double lambda = 0;
     if (slice->getSliceType() == I_SLICE)
@@ -314,14 +318,6 @@ void FrameEncoder::computeLambdaForQp()
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
-}
-
-void FrameEncoder::compressFrame()
-{
-    PPAScopeEvent(FrameEncoder_compressFrame);
-
-    TEncEntropy* entropyCoder = getEntropyCoder(0);
-    TComSlice*   slice        = m_pic->getSlice();
 
     int numSubstreams = m_cfg->param.bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
     // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
