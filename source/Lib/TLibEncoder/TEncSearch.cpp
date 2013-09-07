@@ -222,7 +222,6 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
 
 void TEncSearch::setQPLambda(int QP, double lambdaLuma, double lambdaChroma)
 {
-    m_rdCost->setLambda(lambdaLuma);
     m_trQuant->setLambda(lambdaLuma, lambdaChroma);
     m_me.setQP(QP);
 }

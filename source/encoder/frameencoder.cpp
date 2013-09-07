@@ -302,24 +302,28 @@ void FrameEncoder::compressFrame()
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
-    double weight = 1.0;
     int qpc;
-    int chromaQPOffset;
-
-    chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
+    int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
-    setCbDistortionWeight(weight);
+    double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, 57, qp + chromaQPOffset);
-    weight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
-    setCrDistortionWeight(weight);
+    double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
+    double chromaLambda = lambda / crWeight;
 
-    // for RDOQ
-    setQPLambda(qp, lambda, lambda / weight, slice->getDepth());
+    for (int i = 0; i < m_numRows; i++)
+    {
+        m_rows[i].m_search.setQPLambda(qp, lambda, chromaLambda);
+        m_rows[i].m_rdCost.setLambda(lambda);
+        m_rows[i].m_rdCost.setCbDistortionWeight(cbWeight);
+        m_rows[i].m_rdCost.setCrDistortionWeight(crWeight);
+    }
 
-    // For SAO
-    slice->setLambda(lambda, lambda / weight);
+    // For SAO (TODO: are these redundant?)
+    m_frameFilter.m_sao.lumaLambda = lambda;
+    m_frameFilter.m_sao.chromaLambd = chromaLambda;
+    m_frameFilter.m_sao.depth = slice->getDepth();
+    slice->setLambda(lambda, chromaLambda);
 
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
@@ -343,7 +347,10 @@ void FrameEncoder::compressFrame()
             {
                 int refPOC = slice->getRefPic(e, refIdx)->getPOC();
                 int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
-                setAdaptiveSearchRange(dir, refIdx, newSR);
+                for (int i = 0; i < m_numRows; i++)
+                {
+                    m_rows[i].m_search.setAdaptiveSearchRange(dir, refIdx, newSR);
+                }
             }
         }
     }

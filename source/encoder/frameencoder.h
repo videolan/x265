@@ -65,43 +65,6 @@ public:
 
     void processRow(int row);
 
-    /* Config broadcast methods */
-    void setAdaptiveSearchRange(int dir, int refIdx, int newSR)
-    {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_search.setAdaptiveSearchRange(dir, refIdx, newSR);
-        }
-    }
-
-    void setQPLambda(int QP, double lumaLambda, double chromaLambda, int depth)
-    {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_search.setQPLambda(QP, lumaLambda, chromaLambda);
-        }
-
-        m_frameFilter.m_sao.lumaLambda = lumaLambda;
-        m_frameFilter.m_sao.chromaLambd = chromaLambda;
-        m_frameFilter.m_sao.depth = depth;
-    }
-
-    void setCbDistortionWeight(double weight)
-    {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_rdCost.setCbDistortionWeight(weight);
-        }
-    }
-
-    void setCrDistortionWeight(double weight)
-    {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_rdCost.setCrDistortionWeight(weight);
-        }
-    }
-
     TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
 
     TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
