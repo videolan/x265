@@ -47,7 +47,7 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(TEncTop *top, int numRows, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
+    void init(TEncTop *top, int numRows, TEncSbac* rdGoOnSbacCoder);
 
     void destroy();
 
@@ -71,9 +71,14 @@ public:
 
     TComLoopFilter              m_loopFilter;
     TEncSampleAdaptiveOffset    m_sao;
-    TEncEntropy*                m_entropyCoder;
-    TEncSbac*                   m_rdGoOnSbacCoder;
     int                         m_numRows;
+
+    // SAO
+    TEncEntropy                 m_entropyCoder;
+    TEncSbac                    m_rdGoOnSbacCoder;
+    TEncBinCABACCounter         m_rdGoOnBinCodersCABAC;
+    TComBitCounter              m_bitCounter;
+    TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
 
     // TODO: if you want thread priority logic, add col here
     volatile int                row_ready;

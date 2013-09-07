@@ -88,6 +88,7 @@ protected:
     void testAndWriteOut();
     void writeOut();
 
+public:
     TComBitIf*          m_pcTComBitIf;
     UInt                m_uiLow;
     UInt                m_uiRange;

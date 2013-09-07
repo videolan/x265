@@ -106,7 +106,7 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         m_pool = NULL;
     }
 
-    m_frameFilter.init(top, numRows, getEntropyCoder(0), getRDGoOnSbacCoder(0));
+    m_frameFilter.init(top, numRows, getRDGoOnSbacCoder(0));
 
     // initialize SPS
     top->xInitSPS(&m_sps);

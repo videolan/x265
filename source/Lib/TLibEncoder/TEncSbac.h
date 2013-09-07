@@ -121,7 +121,7 @@ private:
 
     void codeDFSvlc(int /*iCode*/, const char* /*pSymbolName*/)         { printf("Not supported in codeDFSvlc()\n"); assert(0); exit(1); }
 
-protected:
+public:
 
     TComBitIf*    m_pcBitIf;
     TComSlice*    m_pcSlice;

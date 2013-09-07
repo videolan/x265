@@ -37,8 +37,6 @@ FrameFilter::FrameFilter(ThreadPool* pool)
     , m_cfg(NULL)
     , m_pic(NULL)
     , active_lft(0)
-    , m_entropyCoder(NULL)
-    , m_rdGoOnSbacCoder(NULL)
 {}
 
 void FrameFilter::destroy()
@@ -75,14 +73,13 @@ bool FrameFilter::findJob()
     return false;
 }
 
-void FrameFilter::init(TEncTop *top, int numRows, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
+void FrameFilter::init(TEncTop *top, int numRows, TEncSbac* rdGoOnSbacCoder)
 {
     m_cfg = top;
     m_numRows = numRows;
 
-    // NOTE: for sao only, DON'T use before first row finished
-    m_entropyCoder = entropyCoder;
-    m_rdGoOnSbacCoder = rdGoOnSbacCoder;
+    // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
+    m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
 
     if (top->param.bEnableLoopFilter)
     {
@@ -103,6 +100,11 @@ void FrameFilter::start(TComPic *pic)
     row_ready = -1;
     row_done = -1;
     active_lft = 0;
+
+    m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
+    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
+    m_entropyCoder.setBitstream(&m_bitCounter);
+
     if (m_cfg->param.bEnableLoopFilter)
     {
         m_sao.resetStats();
@@ -148,11 +150,12 @@ void FrameFilter::processRow(int row)
 
     // Called by worker threads
 
-    // NOTE: We are here only active both of loopfilter and sao, and row 0 always finished, so we can safe to reuse row[0]'s data
+    // NOTE: We are here only active both of loopfilter and sao, the row 0 always finished, so we can safe to copy row[0]'s data
     if (row == 0)
     {
-        // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
-        m_sao.startSaoEnc(m_pic, m_entropyCoder, m_rdGoOnSbacCoder);
+        // NOTE: not need, seems HM's bug, I want to keep output exact matched.
+        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABACCounter*)((TEncSbac*)m_rdGoOnSbacCoderRow0->m_pcBinIf))->m_fracBits;
+        m_sao.startSaoEnc(m_pic, &m_entropyCoder, &m_rdGoOnSbacCoder);
     }
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
