@@ -176,8 +176,7 @@ public:
 
     void encodeSlice(TComOutputBitstream* substreams);
 
-    void determineSliceBounds();
-
+    /* blocks until worker thread is done, returns encoded picture and bitstream */
     TComPic *getEncodedPicture(AccessUnit& accessUnit);
 
     // worker thread
@@ -204,6 +203,8 @@ public:
     TComPPS                  m_pps;
 
 protected:
+
+    void determineSliceBounds();
 
     TEncTop*                 m_top;
     TEncCfg*                 m_cfg;
