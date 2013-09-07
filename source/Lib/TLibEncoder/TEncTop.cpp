@@ -266,10 +266,11 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // Initialize slice in Frame Encoder
         curEncoder->initSlice(fenc);
 
-        // determine references, set QP, etc
+        // determine references, setup RPS, etc
         m_dpb->prepareEncode(fenc, curEncoder);
-        int satd = m_lookahead->getEstimatedPictureCost(fenc);
-        m_rateControl->rateControlStart(fenc, satd);
+
+        // set slice QP
+        m_rateControl->rateControlStart(fenc, m_lookahead);
 
         curEncoder->computeLambdaForQp();
 

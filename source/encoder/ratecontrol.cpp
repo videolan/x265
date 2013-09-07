@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComPic.h"
-#include "lowres.h"
+#include "slicetype.h"
 #include "ratecontrol.h"
 #include <math.h>
 
@@ -105,7 +105,7 @@ RateControl::RateControl(x265_param_t * param)
     cbrDecay = 1.0;
 }
 
-void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
+void RateControl::rateControlStart(TComPic* pic, Lookahead *l)
 {
     curFrame = pic->getSlice();
     frameType = curFrame->getSliceType();
@@ -115,7 +115,7 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
     case X265_RC_ABR:
         {
             rce = new RateControlEntry();
-            lastSatd = lookAheadCost;
+            lastSatd = l->getEstimatedPictureCost(pic);
             double q = qScale2qp(rateEstimateQscale());
             qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
             qpaRc = qpm = q;    

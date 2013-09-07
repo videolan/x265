@@ -29,7 +29,7 @@
 
 namespace x265 {
 
-struct Lowres;
+struct Lookahead;
 class TComPic;
 
 struct RateControlEntry
@@ -84,12 +84,16 @@ struct RateControl
     RcMethod rateControlMode;
     int64_t totalBits;   /* totalbits used for already encoded frames */
 
-    RateControl(x265_param_t * param);    // constructor for initializing values for ratecontrol vars
-    void rateControlStart(TComPic* pic, int lookAheadCost);  // to be called for each frame to process RateCOntrol and set QP
+    RateControl(x265_param_t * param);
+
+    void rateControlStart(TComPic* pic, Lookahead *);  // to be called for each frame to process RateCOntrol and set QP
+
     int rateControlEnd(int64_t bits);
+
+protected:
+    double getQScale(double rateFactor);
     double rateEstimateQscale(); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
-    double getQScale(double rateFactor);
 };
 }
 
