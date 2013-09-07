@@ -117,8 +117,7 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
     {
     case X265_RC_ABR:
         q = qScale2qp(rateEstimateQscale());
-        q = Clip3((double)MIN_QP, (double)(MAX_QP), q);
-        qp = Clip3(0, MAX_QP, (int)(q + 0.5f));
+        qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
         qpaRc = qpm = q;    
         if (rce)
             rce->newQp = qp;
