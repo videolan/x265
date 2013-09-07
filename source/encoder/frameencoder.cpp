@@ -642,7 +642,8 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
     TEncEntropy *entropyCoder = getEntropyCoder(0);
     TComSlice* slice = m_pic->getSlice();
 
-    resetEncoder();
+    // Initialize slice singletons
+    m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
     getCuEncoder(0)->setBitCounter(NULL);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
 

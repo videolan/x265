@@ -158,12 +158,6 @@ public:
         }
     }
 
-    void resetEncoder()
-    {
-        // Initialize slice singletons
-        m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
-    }
-    
     int getStreamHeaders(AccessUnit& accessUnitOut);
 
     void initSlice(TComPic* pic);
