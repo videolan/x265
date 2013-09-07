@@ -79,7 +79,7 @@ RateControl::RateControl(x265_param_t * param)
 #define ABR_INIT_QP (24  + QP_BD_OFFSET)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP)*accumPNorm;
-        /* estimated ratio that produces a reasonable QP for the first I-frame  - needs to be tweaked for x265*/
+        /* estimated ratio that produces a reasonable QP for the first I-frame  */
         cplxrSum = .01 * pow(7.0e5, qCompress) * pow(2 *ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
@@ -90,7 +90,7 @@ RateControl::RateControl(x265_param_t * param)
     {
         lastQScaleFor[i] = qp2qScale(ABR_INIT_QP);
         lmin[i] = qp2qScale(MIN_QP);
-        lmax[i] = qp2qScale(MAX_QP + 18);  // maxQP val in x264 = 51+18
+        lmax[i] = qp2qScale(MAX_QP);  
     }
 
     if (rateControlMode == X265_RC_CQP)
@@ -117,9 +117,9 @@ void RateControl::rateControlStart(TComPic* pic, int lookAheadCost)
     {
     case X265_RC_ABR:
         q = qScale2qp(rateEstimateQscale());
-        q = Clip3((double)MIN_QP, (double)(MAX_QP + 18), q);
-        qp = Clip3(0, (MAX_QP + 18), (int)(q + 0.5f));
-        qpaRc = qpm = q;    // qpaRc is set in the rate_control_mb call in x264. we are updating here itself.
+        q = Clip3((double)MIN_QP, (double)(MAX_QP), q);
+        qp = Clip3(0, MAX_QP, (int)(q + 0.5f));
+        qpaRc = qpm = q;    
         if (rce)
             rce->newQp = qp;
         accumPQpUpdate();
