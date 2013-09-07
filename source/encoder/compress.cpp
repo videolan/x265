@@ -417,12 +417,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
         /* Compute  Merge Cost */
         bool earlyDetectionSkip = false;
-
-#if 0   //Turn ON to test the optimized merge.
         xComputeCostMerge2Nx2N(m_bestMergeCU[depth], m_mergeCU[depth], &earlyDetectionSkip, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
-#else
-        xCheckRDCostMerge2Nx2N(m_bestMergeCU[depth], m_mergeCU[depth], &earlyDetectionSkip, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
-#endif
 
         if (!earlyDetectionSkip)
         {
