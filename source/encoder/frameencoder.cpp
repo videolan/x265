@@ -132,17 +132,23 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     // set default slice level flag to the same as SPS level flag
     if (m_cfg->getUseScalingListId() == SCALING_LIST_OFF)
     {
-        setFlatScalingList();
-        setUseScalingList(false);
+        for (int i = 0; i < m_numRows; i++)
+        {
+            m_rows[i].m_trQuant.setFlatScalingList();
+            m_rows[i].m_trQuant.setUseScalingList(false);
+        }
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
     }
     else if (m_cfg->getUseScalingListId() == SCALING_LIST_DEFAULT)
     {
+        for (int i = 0; i < m_numRows; i++)
+        {
+            m_rows[i].m_trQuant.setScalingList(m_top->getScalingList());
+            m_rows[i].m_trQuant.setUseScalingList(true);
+        }
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
-        setScalingList(m_top->getScalingList());
-        setUseScalingList(true);
     }
     else
     {

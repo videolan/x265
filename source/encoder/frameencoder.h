@@ -102,37 +102,11 @@ public:
         }
     }
 
-    void setFlatScalingList()
-    {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_trQuant.setFlatScalingList();
-        }
-    }
-
-    void setUseScalingList(bool flag)
-    {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_trQuant.setUseScalingList(flag);
-        }
-    }
-
-    void setScalingList(TComScalingList *list)
-    {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            this->m_rows[i].m_trQuant.setScalingList(list);
-        }
-    }
-
     TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
 
     TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
 
     TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_rdGoOnSbacCoder; }
-
-    TEncSbac***  getRDSbacCoders(int row)      { return this->m_rows[row].m_rdSbacCoders; }
 
     TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
 
