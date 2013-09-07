@@ -58,7 +58,7 @@ public:
 
     ~DPB();
 
-    void prepareEncode(TComPic*, FrameEncoder*);
+    void prepareEncode(TComPic*);
 
     void recycleUnreferenced(TComList<TComPic*>& freeList);
 
@@ -69,7 +69,7 @@ protected:
     void applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc);
     void decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType);
 
-    void arrangeLongtermPicturesInRPS(TComSlice *, FrameEncoder *frameEncoder);
+    void arrangeLongtermPicturesInRPS(TComSlice *);
 
     NalUnitType getNalUnitType(int curPoc, int lastIdr, TComPic* pic);
 };

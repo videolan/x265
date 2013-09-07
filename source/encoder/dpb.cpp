@@ -62,7 +62,7 @@ void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
     }
 }
 
-void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
+void DPB::prepareEncode(TComPic *pic)
 {
     PPAScopeEvent(DPB_prepareEncode);
 
@@ -110,7 +110,7 @@ void DPB::prepareEncode(TComPic *pic, FrameEncoder *frameEncoder)
 
     applyReferencePictureSet(slice->getRPS(), pocCurr); // Mark pictures in m_piclist as unreferenced if they are not included in RPS
 
-    arrangeLongtermPicturesInRPS(slice, frameEncoder);
+    arrangeLongtermPicturesInRPS(slice);
     TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
     refPicListModification->setRefPicListModificationFlagL0(false);
     refPicListModification->setRefPicListModificationFlagL1(false);
@@ -421,7 +421,7 @@ static inline int getLSB(int poc, int maxLSB)
 
 // Function will arrange the long-term pictures in the decreasing order of poc_lsb_lt,
 // and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
-void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice, FrameEncoder *frameEncoder)
+void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice)
 {
     TComReferencePictureSet *rps = slice->getRPS();
 
@@ -444,7 +444,7 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice, FrameEncoder *frameEnco
     // Get the long-term reference pictures
     int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
     int i, ctr = 0;
-    int maxPicOrderCntLSB = 1 << frameEncoder->m_sps.getBitsForPOC();
+    int maxPicOrderCntLSB = 1 << slice->getSPS()->getBitsForPOC();
     for (i = rps->getNumberOfPictures() - 1; i >= offset; i--, ctr++)
     {
         longtermPicsPoc[ctr] = rps->getPOC(i);                                  // LTRP POC
