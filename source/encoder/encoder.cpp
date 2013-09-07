@@ -194,12 +194,12 @@ void x265_t::configure(x265_param_t *_param)
     int actual = ThreadPool::getThreadPool()->getThreadCount();
     if (actual > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled (%d streams)\n",
-                 actual, (_param->sourceHeight + _param->maxCUSize - 1) / _param->maxCUSize);
+        x265_log(_param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled (%d streams), frame threads: %d\n",
+                 actual, (_param->sourceHeight + _param->maxCUSize - 1) / _param->maxCUSize, _param->frameNumThreads);
     }
     else if (_param->frameNumThreads > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "Frame Parallelism thread mode\n");
+        x265_log(_param, X265_LOG_INFO, "Concurrently encoded frames  : %d\n", _param->frameNumThreads);
         _param->bEnableWavefront = 0;
     }
     else
