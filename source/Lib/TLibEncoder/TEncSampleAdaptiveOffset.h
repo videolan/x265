@@ -82,7 +82,7 @@ private:
 
 public:
     double  lumaLambda;
-    double  chromaLambd;
+    double  chromaLambda;
     int     depth;
     int     numNoSao[2];
 

@@ -63,7 +63,7 @@ TEncSampleAdaptiveOffset::TEncSampleAdaptiveOffset()
     , m_distOrg(NULL)
     , m_typePartBest(NULL)
     , lumaLambda(0.)
-    , chromaLambd(0.)
+    , chromaLambda(0.)
     , depth(0)
 {
     m_depthSaoRate[0][0] = 0;
@@ -1798,7 +1798,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             }
 
             saoComponentParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, 0,  lumaLambda, &mergeSaoParam[0][0], &compDistortion[0]);
-            sao2ChromaParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, chromaLambd, &mergeSaoParam[1][0], &mergeSaoParam[2][0], &compDistortion[0]);
+            sao2ChromaParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, chromaLambda, &mergeSaoParam[1][0], &mergeSaoParam[2][0], &compDistortion[0]);
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
                 // Cost of new SAO_params
