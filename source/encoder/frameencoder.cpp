@@ -295,10 +295,8 @@ void FrameEncoder::compressFrame()
         m_rows[i].m_rdCost.setCrDistortionWeight(crWeight);
     }
 
-    // For SAO (TODO: are these redundant?)
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
-    slice->setLambda(lambda, chromaLambda);
 
     switch (slice->getSliceType())
     {

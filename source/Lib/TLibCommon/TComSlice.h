@@ -1411,9 +1411,6 @@ private:
     UInt        m_colRefIdx;
     UInt        m_maxNumMergeCand;
 
-    double      m_lumaLambda;
-    double      m_chromaLambda;
-
     bool        m_bEqualRef[2][MAX_NUM_REF][MAX_NUM_REF];
 
     UInt        m_sliceCurEndCUAddr;
@@ -1600,12 +1597,6 @@ public:
     bool      isInterB()                    { return m_sliceType == B_SLICE; }
 
     bool      isInterP()                    { return m_sliceType == P_SLICE; }
-
-    void      setLambda(double d, double e) { m_lumaLambda = d; m_chromaLambda = e; }
-
-    double    getLambdaLuma()               { return m_lumaLambda; }
-
-    double    getLambdaChroma()             { return m_chromaLambda; }
 
     void      initEqualRef();
 

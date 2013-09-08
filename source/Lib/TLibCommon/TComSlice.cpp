@@ -69,8 +69,6 @@ TComSlice::TComSlice()
     , m_pic(NULL)
     , m_colFromL0Flag(1)
     , m_colRefIdx(0)
-    , m_lumaLambda(0.0)
-    , m_chromaLambda(0.0)
     , m_sliceCurEndCUAddr(0)
     , m_nextSlice(false)
     , m_sliceBits(0)
@@ -581,8 +579,6 @@ void TComSlice::copySliceInfo(TComSlice *src)
 
     m_colFromL0Flag = src->m_colFromL0Flag;
     m_colRefIdx = src->m_colRefIdx;
-    m_lumaLambda = src->m_lumaLambda;
-    m_chromaLambda = src->m_chromaLambda;
     for (i = 0; i < 2; i++)
     {
         for (j = 0; j < MAX_NUM_REF; j++)
