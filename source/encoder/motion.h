@@ -49,6 +49,7 @@ protected:
     intptr_t blockOffset;
     int partEnum;
     int searchMethod;
+    int subpelRefine;
 
     /* subpel generation buffers */
     pixel *subpelbuf;
@@ -69,6 +70,8 @@ public:
     virtual ~MotionEstimate();
 
     void setSearchMethod(int i) { searchMethod = i; }
+
+    void setSubpelRefine(int i) { subpelRefine = i; }
 
     /* Methods called at slice setup */
 

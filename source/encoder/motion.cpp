@@ -37,6 +37,31 @@
 
 using namespace x265;
 
+namespace {
+
+struct SubpelWorkload
+{
+    int hpel_iters;
+    int hpel_dirs;
+    int qpel_iters;
+    int qpel_dirs;
+    bool hpel_satd;
+};
+
+SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL+1] = {
+    { 1, 4, 0, 4, false }, // 4 SAD HPEL only
+    { 1, 4, 1, 4, false }, // 4 SAD HPEL + 4 SATD QPEL
+    { 1, 4, 1, 4, true },  // 4 SATD HPEL + 4 SATD QPEL
+    { 2, 4, 1, 4, true },  // 2x4 SATD HPEL + 4 SATD QPEL
+    { 2, 4, 2, 4, true },  // 2x4 SATD HPEL + 2x4 SATD QPEL
+    { 1, 8, 1, 8, true },  // 8 SATD HPEL + 8 SATD QPEL (default)
+    { 2, 8, 1, 8, true },  // 2x8 SATD HPEL + 8 SATD QPEL
+    { 2, 8, 2, 8, true },  // 2x8 SATD HPEL + 2x8 SATD QPEL
+};
+const MV subpel_offs[8] = { MV(0, -1), MV(0, 1), MV(-1, 0), MV(1, 0), MV(-1, -1), MV(-1, 1), MV(1, -1), MV(1, 1) };
+
+}
+
 static int size_scale[NUM_PARTITIONS];
 #define SAD_THRESH(v) (bcost < (((v >> 4) * size_scale[partEnum])))
 
@@ -57,6 +82,7 @@ static void init_scales(void)
 
 MotionEstimate::MotionEstimate()
     : searchMethod(3)
+    , subpelRefine(5)
 {
     if (size_scale[0] == 0)
         init_scales();
@@ -750,32 +776,51 @@ me_hex2:
     }
 
     if (bprecost < bcost)
+    {
         bmv = bestpre;
+        bcost = bprecost;
+    }
     else
         bmv = bmv.toQPel(); // promote search bmv to qpel
 
-    /* HPEL square refinement, dir 0 has no offset - remeasures bmv with SATD */
-    int bdir = 0, cost;
-    bcost = COST_MAX;
-    for (int i = 0; i < 9; i++)
+    SubpelWorkload& wl = workload[this->subpelRefine];
+    pixelcmp_t hpelcomp;
+
+    if (wl.hpel_satd)
     {
-        MV qmv = bmv + square1[i] * 2;
-        cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
-        COPY2_IF_LT(bcost, cost, bdir, i);
+        bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
+        hpelcomp = satd;
     }
+    else
+        hpelcomp = sad;
 
-    bmv += square1[bdir] * 2;
-
-    /* QPEL square refinement, do not remeasure 0 offset */
-    bdir = 0;
-    for (int i = 1; i < 9; i++)
+    for (int iter = 0; iter < wl.hpel_iters; iter++)
     {
-        MV qmv = bmv + square1[i];
-        cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
-        COPY2_IF_LT(bcost, cost, bdir, i);
-    }
+        int bdir = 0, cost;
+        for (int i = 0; i < wl.hpel_dirs; i++)
+        {
+            MV qmv = bmv + subpel_offs[i] * 2;
+            cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
+            COPY2_IF_LT(bcost, cost, bdir, i);
+        }
 
-    bmv += square1[bdir];
+        bmv += subpel_offs[bdir] * 2;
+    }
+    /* if HPEL search used SAD, remeasure with SATD before QPEL */
+    if (!wl.hpel_satd)
+        bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
+
+    for (int iter = 0; iter < wl.qpel_iters; iter++)
+    {
+        int bdir = 0, cost;
+        for (int i = 0; i < wl.qpel_dirs; i++)
+        {
+            MV qmv = bmv + subpel_offs[i];
+            cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
+            COPY2_IF_LT(bcost, cost, bdir, i);
+        }
+        bmv += subpel_offs[bdir];
+    }
 
     x265_emms();
     outQMv = bmv;

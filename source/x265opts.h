@@ -34,6 +34,7 @@ OPT("tu-inter-depth",  param->tuQTMaxInterDepth,  required_argument, 0, "Max TU 
 
 HELP("Temporal / motion search options:")
 OPT("me",              param->searchMethod,           required_argument, 0, "Motion search method 0:dia 1:hex 2:umh 3:star 4:full")
+OPT("subme",           param->subpelRefine,           required_argument, 'm', "Amount of subpel refinement to perform (0:least .. 7:most)")
 OPT("merange",         param->searchRange,            required_argument, 0, "Motion search range")
 OPT("bpredrange",      param->bipredSearchRange,      required_argument, 0, "Motion search range for bipred refinement")
 OPT("no-rect",         param->bEnableRectInter,             no_argument, 0, "Disable rectangular motion partitions Nx2N and 2NxN")

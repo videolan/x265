@@ -151,6 +151,8 @@ X265_ME_METHODS;
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
 
+#define X265_MAX_SUBPEL_LEVEL   7
+
 /* Log level */
 #define X265_LOG_NONE          (-1)
 #define X265_LOG_ERROR          0
@@ -219,6 +221,7 @@ typedef struct x265_param_t
 
     // Inter coding tools
     int       searchMethod;                    ///< ME search method (DIA, HEX, UMH, STAR, FULL)
+    int       subpelRefine;                    ///< amount of subpel work to perform (0 .. X265_MAX_SUBPEL_LEVEL)
     int       searchRange;                     ///< ME search range
     int       bipredSearchRange;               ///< ME search range for bipred refinement
     uint32_t  maxNumMergeCand;                 ///< Max number of merge candidates
