@@ -1440,27 +1440,27 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
  */
 void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, int yCbCr)
 {
-    int iLevelIdx, partIdx, iTypeIdx, iClassIdx;
+    int levelIdx, partIdx, typeIdx, classIdx;
     int i;
-    int iNumTotalType = MAX_NUM_SAO_TYPE;
+    int numTotalType = MAX_NUM_SAO_TYPE;
     int LcuIdxX;
     int LcuIdxY;
     int addr;
-    int iFrameWidthInCU = m_pic->getFrameWidthInCU();
-    int iDownPartIdx;
-    int iPartStart;
-    int iPartEnd;
-    SAOQTPart*  pOnePart;
+    int frameWidthInCU = m_pic->getFrameWidthInCU();
+    int downPartIdx;
+    int partStart;
+    int partEnd;
+    SAOQTPart* onePart;
 
     if (m_maxSplitLevel == 0)
     {
         partIdx = 0;
-        pOnePart = &(psQTPart[partIdx]);
-        for (LcuIdxY = pOnePart->startCUY; LcuIdxY <= pOnePart->endCUY; LcuIdxY++)
+        onePart = &(psQTPart[partIdx]);
+        for (LcuIdxY = onePart->startCUY; LcuIdxY <= onePart->endCUY; LcuIdxY++)
         {
-            for (LcuIdxX = pOnePart->startCUX; LcuIdxX <= pOnePart->endCUX; LcuIdxX++)
+            for (LcuIdxX = onePart->startCUX; LcuIdxX <= onePart->endCUX; LcuIdxX++)
             {
-                addr = LcuIdxY * iFrameWidthInCU + LcuIdxX;
+                addr = LcuIdxY * frameWidthInCU + LcuIdxX;
                 calcSaoStatsCu(addr, partIdx, yCbCr);
             }
         }
@@ -1469,34 +1469,34 @@ void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, int yCbCr)
     {
         for (partIdx = m_numCulPartsLevel[m_maxSplitLevel - 1]; partIdx < m_numCulPartsLevel[m_maxSplitLevel]; partIdx++)
         {
-            pOnePart = &(psQTPart[partIdx]);
-            for (LcuIdxY = pOnePart->startCUY; LcuIdxY <= pOnePart->endCUY; LcuIdxY++)
+            onePart = &(psQTPart[partIdx]);
+            for (LcuIdxY = onePart->startCUY; LcuIdxY <= onePart->endCUY; LcuIdxY++)
             {
-                for (LcuIdxX = pOnePart->startCUX; LcuIdxX <= pOnePart->endCUX; LcuIdxX++)
+                for (LcuIdxX = onePart->startCUX; LcuIdxX <= onePart->endCUX; LcuIdxX++)
                 {
-                    addr = LcuIdxY * iFrameWidthInCU + LcuIdxX;
+                    addr = LcuIdxY * frameWidthInCU + LcuIdxX;
                     calcSaoStatsCu(addr, partIdx, yCbCr);
                 }
             }
         }
 
-        for (iLevelIdx = m_maxSplitLevel - 1; iLevelIdx >= 0; iLevelIdx--)
+        for (levelIdx = m_maxSplitLevel - 1; levelIdx >= 0; levelIdx--)
         {
-            iPartStart = (iLevelIdx > 0) ? m_numCulPartsLevel[iLevelIdx - 1] : 0;
-            iPartEnd   = m_numCulPartsLevel[iLevelIdx];
+            partStart = (levelIdx > 0) ? m_numCulPartsLevel[levelIdx - 1] : 0;
+            partEnd   = m_numCulPartsLevel[levelIdx];
 
-            for (partIdx = iPartStart; partIdx < iPartEnd; partIdx++)
+            for (partIdx = partStart; partIdx < partEnd; partIdx++)
             {
-                pOnePart = &(psQTPart[partIdx]);
+                onePart = &(psQTPart[partIdx]);
                 for (i = 0; i < NUM_DOWN_PART; i++)
                 {
-                    iDownPartIdx = pOnePart->downPartsIdx[i];
-                    for (iTypeIdx = 0; iTypeIdx < iNumTotalType; iTypeIdx++)
+                    downPartIdx = onePart->downPartsIdx[i];
+                    for (typeIdx = 0; typeIdx < numTotalType; typeIdx++)
                     {
-                        for (iClassIdx = 0; iClassIdx < (iTypeIdx < SAO_BO ? m_numClass[iTypeIdx] : SAO_MAX_BO_CLASSES) + 1; iClassIdx++)
+                        for (classIdx = 0; classIdx < (typeIdx < SAO_BO ? m_numClass[typeIdx] : SAO_MAX_BO_CLASSES) + 1; classIdx++)
                         {
-                            m_offsetOrg[partIdx][iTypeIdx][iClassIdx] += m_offsetOrg[iDownPartIdx][iTypeIdx][iClassIdx];
-                            m_count[partIdx][iTypeIdx][iClassIdx]    += m_count[iDownPartIdx][iTypeIdx][iClassIdx];
+                            m_offsetOrg[partIdx][typeIdx][classIdx] += m_offsetOrg[downPartIdx][typeIdx][classIdx];
+                            m_count[partIdx][typeIdx][classIdx]    += m_count[downPartIdx][typeIdx][classIdx];
                         }
                     }
                 }
