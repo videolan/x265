@@ -126,7 +126,10 @@ void TEncTop::destroy()
     }
 
     if (m_lookahead)
+    {
+        m_lookahead->destroy();
         delete m_lookahead;
+    }
 
     if (m_dpb)
         delete m_dpb;

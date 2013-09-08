@@ -58,6 +58,7 @@ struct Lookahead
 
     void addPicture(TComPic*);
     void flush();
+    void destroy();
     void slicetypeDecide();
     int getEstimatedPictureCost(TComPic *pic);
 

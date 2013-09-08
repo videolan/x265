@@ -76,7 +76,26 @@ Lookahead::Lookahead(TEncCfg *_cfg)
 
 Lookahead::~Lookahead()
 {
-    if (predictions) X265_FREE(predictions);
+}
+
+void Lookahead::destroy()
+{
+    if (predictions)
+        X265_FREE(predictions);
+
+    // these two queues will be empty, unless the encode was aborted
+    while (!inputQueue.empty())
+    {
+        TComPic* pic = inputQueue.popFront();
+        pic->destroy();
+        delete pic;
+    }
+    while (!outputQueue.empty())
+    {
+        TComPic* pic = outputQueue.popFront();
+        pic->destroy();
+        delete pic;
+    }
 }
 
 void Lookahead::addPicture(TComPic *pic)
