@@ -60,6 +60,7 @@ public:
     bool findJob();
 
     void processRow(int row);
+    void processRowPost(int row);
 
 protected:
 
