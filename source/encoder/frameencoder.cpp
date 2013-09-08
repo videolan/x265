@@ -904,6 +904,10 @@ void FrameEncoder::compressCTURows()
                 {
                     m_frameFilter.processRow(i - m_filterRowDelay);
                 }
+                else
+                {
+                    m_frameFilter.processRowPost(i - m_filterRowDelay);
+                }
             }
         }
     }
