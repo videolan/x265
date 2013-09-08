@@ -142,6 +142,10 @@ void FrameFilter::enqueueRow(int row)
     // NOTE: not need atom here since we have only one writer and reader
     row_ready = row;
     m_pool->pokeIdleThread();
+
+    // NOTE: Active post process when LFT disable since there not thread for it
+    if (!m_cfg->param.bEnableLoopFilter)
+        processRowPost(row);
 }
 
 void FrameFilter::processRow(int row)
