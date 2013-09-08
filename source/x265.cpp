@@ -518,6 +518,7 @@ int main(int argc, char **argv)
     }
 
     // main encoder loop
+    pic_orig.sliceType = X265_TYPE_AUTO;
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     while (pic_in && !b_ctrl_c)
