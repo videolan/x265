@@ -254,30 +254,6 @@ void FrameEncoder::initSlice(TComPic* pic)
         slice->setDeblockingFilterTcOffsetDiv2(0);
     }
 
-    // depth computation based on regular cadence (hacky, needs to go away)
-    int depth = 0;
-    const int depthCadence = m_cfg->param.bframes ? 8 : 4;
-    int poc = slice->getPOC() % depthCadence;
-    if (poc)
-    {
-        int step = depthCadence;
-        for (int i = step >> 1; i >= 1; i >>= 1)
-        {
-            for (int j = i; j < depthCadence; j += step)
-            {
-                if (j == poc)
-                {
-                    i = 0;
-                    break;
-                }
-            }
-
-            step >>= 1;
-            depth++;
-        }
-    }
-
-    slice->setDepth(depth);
     slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
 }
 
@@ -322,7 +298,7 @@ void FrameEncoder::compressFrame()
     // For SAO (TODO: are these redundant?)
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambd = chromaLambda;
-    m_frameFilter.m_sao.depth = slice->getDepth();
+    m_frameFilter.m_sao.depth = slice->getSliceType() == B_SLICE;
     slice->setLambda(lambda, chromaLambda);
 
     slice->setSliceQpDelta(0);

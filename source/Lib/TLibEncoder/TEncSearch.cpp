@@ -3106,7 +3106,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         return;
     }
 
-    bool bHighPass = cu->getSlice()->getDepth() ? true : false;
+    bool bHighPass = cu->getSlice()->getSliceType() == B_SLICE;
     UInt bits = 0, bestBits = 0;
     UInt distortion = 0, bdist = 0;
 
@@ -3197,11 +3197,11 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         bits       = 0;
         distortion = zeroDistortion;
 
-        const UInt uiQPartNum = cu->getPic()->getNumPartInCU() >> (cu->getDepth(0) << 1);
-        ::memset(cu->getTransformIdx(), 0, uiQPartNum * sizeof(UChar));
-        ::memset(cu->getCbf(TEXT_LUMA), 0, uiQPartNum * sizeof(UChar));
-        ::memset(cu->getCbf(TEXT_CHROMA_U), 0, uiQPartNum * sizeof(UChar));
-        ::memset(cu->getCbf(TEXT_CHROMA_V), 0, uiQPartNum * sizeof(UChar));
+        const UInt qpartnum = cu->getPic()->getNumPartInCU() >> (cu->getDepth(0) << 1);
+        ::memset(cu->getTransformIdx(), 0, qpartnum * sizeof(UChar));
+        ::memset(cu->getCbf(TEXT_LUMA), 0, qpartnum * sizeof(UChar));
+        ::memset(cu->getCbf(TEXT_CHROMA_U), 0, qpartnum * sizeof(UChar));
+        ::memset(cu->getCbf(TEXT_CHROMA_V), 0, qpartnum * sizeof(UChar));
         ::memset(cu->getCoeffY(), 0, width * height * sizeof(TCoeff));
         ::memset(cu->getCoeffCb(), 0, width * height * sizeof(TCoeff) >> 2);
         ::memset(cu->getCoeffCr(), 0, width * height * sizeof(TCoeff) >> 2);
@@ -3230,10 +3230,10 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
             xSetResidualQTData(cu, 0, 0, outBestResiYuv, cu->getDepth(0), true);
         }
 
-        bestBits       = bits;
-        bdist = distortion;
-        bcost          = cost;
-        qpBest         = qp;
+        bestBits = bits;
+        bdist    = distortion;
+        bcost    = cost;
+        qpBest   = qp;
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
     }
 

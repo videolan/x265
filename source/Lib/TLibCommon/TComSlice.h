@@ -1397,7 +1397,6 @@ private:
     TComPic*    m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
     bool        m_bIsUsedAsLongTerm[2][MAX_NUM_REF + 1];
-    int         m_depth;
 
     // referenced slice?
     bool        m_bReferenced;
@@ -1524,8 +1523,6 @@ public:
 
     int       getRefPOC(RefPicList e, int refIdx) { return m_refPOCList[e][refIdx]; }
 
-    int       getDepth()                          { return m_depth; }
-
     UInt      getColFromL0Flag()                  { return m_colFromL0Flag; }
 
     UInt      getColRefIdx()                      { return m_colRefIdx; }
@@ -1585,8 +1582,6 @@ public:
     void      setNumRefIdx(RefPicList e, int i)   { m_numRefIdx[e] = i; }
 
     void      setPic(TComPic* p)                  { m_pic = p; }
-
-    void      setDepth(int depth)                 { m_depth = depth; }
 
     void      setRefPicList(TComList<TComPic*>& picList, bool checkNumPocTotalCurr = false);
 

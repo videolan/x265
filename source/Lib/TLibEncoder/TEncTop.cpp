@@ -576,12 +576,11 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
 
-        fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d Depth %d) %10d bits",
+        fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d) %10d bits",
                 slice->getPOC(),
                 c,
                 slice->getSliceQpBase(),
                 slice->getSliceQp(),
-                slice->getDepth(),
                 bits);
 
         fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);

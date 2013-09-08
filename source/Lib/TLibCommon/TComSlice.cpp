@@ -63,7 +63,6 @@ TComSlice::TComSlice()
     , m_sliceQpDelta(0)
     , m_sliceQpDeltaCb(0)
     , m_sliceQpDeltaCr(0)
-    , m_depth(0)
     , m_bReferenced(false)
     , m_sps(NULL)
     , m_pps(NULL)
@@ -568,8 +567,6 @@ void TComSlice::copySliceInfo(TComSlice *src)
             m_bIsUsedAsLongTerm[i][j] = src->m_bIsUsedAsLongTerm[i][j];
         }
     }
-
-    m_depth = src->m_depth;
 
     // referenced slice
     m_bReferenced = src->m_bReferenced;
