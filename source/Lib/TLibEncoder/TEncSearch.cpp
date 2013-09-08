@@ -154,9 +154,8 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_rdCost  = rdCost;
 
     m_searchRange       = cfg->param.searchRange;
-    m_searchMethod      = cfg->param.searchMethod;
     m_bipredSearchRange = cfg->param.bipredSearchRange;
-    m_me.setSearchMethod(m_searchMethod);
+    m_me.setSearchMethod(cfg->param.searchMethod);
     m_me.setSubpelRefine(cfg->param.subpelRefine);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
