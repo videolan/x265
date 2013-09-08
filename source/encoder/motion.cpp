@@ -58,7 +58,6 @@ SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL+1] = {
     { 2, 8, 1, 8, true },  // 2x8 SATD HPEL + 8 SATD QPEL
     { 2, 8, 2, 8, true },  // 2x8 SATD HPEL + 2x8 SATD QPEL
 };
-const MV subpel_offs[8] = { MV(0, -1), MV(0, 1), MV(-1, 0), MV(1, 0), MV(-1, -1), MV(-1, 1), MV(1, -1), MV(1, 1) };
 
 }
 
@@ -797,14 +796,14 @@ me_hex2:
     for (int iter = 0; iter < wl.hpel_iters; iter++)
     {
         int bdir = 0, cost;
-        for (int i = 0; i < wl.hpel_dirs; i++)
+        for (int i = 1; i <= wl.hpel_dirs; i++)
         {
-            MV qmv = bmv + subpel_offs[i] * 2;
+            MV qmv = bmv + square1[i] * 2;
             cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
 
-        bmv += subpel_offs[bdir] * 2;
+        bmv += square1[bdir] * 2;
     }
     /* if HPEL search used SAD, remeasure with SATD before QPEL */
     if (!wl.hpel_satd)
@@ -813,13 +812,13 @@ me_hex2:
     for (int iter = 0; iter < wl.qpel_iters; iter++)
     {
         int bdir = 0, cost;
-        for (int i = 0; i < wl.qpel_dirs; i++)
+        for (int i = 1; i <= wl.qpel_dirs; i++)
         {
-            MV qmv = bmv + subpel_offs[i];
+            MV qmv = bmv + square1[i];
             cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
-        bmv += subpel_offs[bdir];
+        bmv += square1[bdir];
     }
 
     x265_emms();
