@@ -192,6 +192,8 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         /* Copy input picture into a TComPic, send to lookahead */
         pic->getSlice()->setPOC(++m_pocLast);
         pic->getPicYuvOrg()->copyFromPicture(*pic_in);
+        pic->m_userData = pic_in->userData;
+
         // TEncTop holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
         m_lookahead->addPicture(pic);
@@ -232,6 +234,7 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             TComPicYuv *recpic = out->getPicYuvRec();
             pic_out->poc = out->getSlice()->getPOC();
             pic_out->bitDepth = sizeof(Pel) * 8;
+            pic_out->userData = out->m_userData;
             switch (out->getSlice()->getSliceType())
             {
             case I_SLICE:

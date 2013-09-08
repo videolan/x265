@@ -77,6 +77,7 @@ public:
     volatile uint32_t     m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
     volatile uint32_t     m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
     Event                 m_reconRowWait;       // event triggered m_countRefEncoders times each time a recon row is completed
+    void*                 m_userData;           // user provided pointer passed in with this picture
 
     Lowres                m_lowres;
 
