@@ -112,6 +112,9 @@ void TEncTop::destroy()
     {
         for (int i = 0; i < param.frameNumThreads; i++)
         {
+            // Ensure frame encoder is idle before destroying it
+            AccessUnit tmp;
+            m_frameEncoder[i].getEncodedPicture(tmp);
             m_frameEncoder[i].destroy();
         }
 
