@@ -998,7 +998,7 @@ TComPic *FrameEncoder::getEncodedPicture(AccessUnit& accessUnit)
 {
     if (m_pic)
     {
-        /* TODO: frame parallelism - block here until worker thread completes */
+        /* block here until worker thread completes */
         m_done.wait();
 
         TComPic *ret = m_pic;
