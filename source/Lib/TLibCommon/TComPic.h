@@ -73,14 +73,12 @@ private:
 
 public:
 
-    volatile uint32_t*    m_complete_enc;       // Array of Col number that was finished stage encode
-
     //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
     volatile uint32_t     m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
     volatile uint32_t     m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
-    Event           m_reconRowWait;       // event triggered m_countRefEncoders time each time a recon row is completed
+    Event                 m_reconRowWait;       // event triggered m_countRefEncoders times each time a recon row is completed
 
-    Lowres          m_lowres;
+    Lowres                m_lowres;
 
     TComPic();
     virtual ~TComPic();

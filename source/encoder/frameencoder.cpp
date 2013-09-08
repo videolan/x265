@@ -834,8 +834,7 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_entropyCoder.resetEntropy();
 
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
-
-        m_pic->m_complete_enc[i] = 0;
+        m_rows[i].m_completed = 0;
     }
 
     UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
@@ -920,7 +919,7 @@ void FrameEncoder::processRow(int row)
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    for (UInt col = m_pic->m_complete_enc[row]; col < numCols; col++)
+    for (UInt col = m_rows[row].m_completed; col < numCols; col++)
     {
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_pic->getCU(cuAddr);
@@ -938,13 +937,13 @@ void FrameEncoder::processRow(int row)
         // cu->m_totalDistortion;
 
         // Completed CU processing
-        m_pic->m_complete_enc[row]++;
+        m_rows[row].m_completed++;
 
-        if (m_pic->m_complete_enc[row] >= 2 && row < m_numRows - 1)
+        if (m_rows[row].m_completed >= 2 && row < m_numRows - 1)
         {
             ScopedLock below(m_rows[row + 1].m_lock);
             if (m_rows[row + 1].m_active == false &&
-                m_pic->m_complete_enc[row + 1] + 2 <= m_pic->m_complete_enc[row])
+                m_rows[row + 1].m_completed + 2 <= m_rows[row].m_completed)
             {
                 m_rows[row + 1].m_active = true;
                 WaveFront::enqueueRow(row + 1);
@@ -952,7 +951,7 @@ void FrameEncoder::processRow(int row)
         }
 
         ScopedLock self(curRow.m_lock);
-        if (row > 0 && m_pic->m_complete_enc[row] < numCols - 1 && m_pic->m_complete_enc[row - 1] < m_pic->m_complete_enc[row] + 2)
+        if (row > 0 && m_rows[row].m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2)
         {
             curRow.m_active = false;
             return;

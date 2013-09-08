@@ -55,7 +55,6 @@ TComPic::TComPic()
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
-    , m_complete_enc(NULL)
 {
     m_reconRowCount = 0;
     m_countRefEncoders = 0;
@@ -84,9 +83,6 @@ void TComPic::create(int width, int height, UInt maxWidth, UInt maxHeight, UInt 
 
     /* configure lowres dimensions */
     m_lowres.create(this, bframes);
-
-    int numRows = (height + maxHeight - 1) / maxHeight;
-    m_complete_enc = new uint32_t[numRows]; // initial in FrameEncoder::encode()
 }
 
 void TComPic::destroy()
@@ -110,11 +106,6 @@ void TComPic::destroy()
         m_reconPicYuv->destroy();
         delete m_reconPicYuv;
         m_reconPicYuv = NULL;
-    }
-
-    if (m_complete_enc)
-    {
-        delete[] m_complete_enc;
     }
 
     m_lowres.destroy();

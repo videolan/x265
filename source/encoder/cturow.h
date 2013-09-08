@@ -73,6 +73,7 @@ public:
     /* Threading */
     Lock                m_lock;
     volatile bool       m_active;
+    volatile uint32_t   m_completed;
 };
 
 }
