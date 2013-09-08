@@ -153,21 +153,20 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_trQuant = trQuant;
     m_rdCost  = rdCost;
 
-    m_searchRange       = cfg->param.searchRange;
     m_bipredSearchRange = cfg->param.bipredSearchRange;
     m_me.setSearchMethod(cfg->param.searchMethod);
     m_me.setSubpelRefine(cfg->param.subpelRefine);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
-    m_refLagPixels = cfg->param.frameNumThreads > 1 ? m_searchRange : cfg->param.sourceHeight;
+    m_refLagPixels = cfg->param.frameNumThreads > 1 ? cfg->param.searchRange : cfg->param.sourceHeight;
 
     // default to no adaptive range
     for (int dir = 0; dir < 2; dir++)
     {
         for (int ref = 0; ref < 33; ref++)
         {
-            m_adaptiveRange[dir][ref] = m_searchRange;
+            m_adaptiveRange[dir][ref] = cfg->param.searchRange;
         }
     }
 

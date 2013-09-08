@@ -98,7 +98,6 @@ protected:
     TEncEntropy*    m_entropyCoder;
 
     // ME parameters
-    int             m_searchRange;
     int             m_bipredSearchRange; // Search range for bi-prediction
     int             m_refLagPixels;
     int             m_adaptiveRange[2][33];
