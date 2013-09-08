@@ -298,8 +298,20 @@ void FrameEncoder::compressFrame()
     // For SAO (TODO: are these redundant?)
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
-    m_frameFilter.m_sao.depth = slice->getSliceType() == B_SLICE;
     slice->setLambda(lambda, chromaLambda);
+
+    switch (slice->getSliceType())
+    {
+    case I_SLICE:
+        m_frameFilter.m_sao.depth = 0;
+        break;
+    case P_SLICE:
+        m_frameFilter.m_sao.depth = 1;
+        break;
+    case B_SLICE:
+        m_frameFilter.m_sao.depth = 2 + !slice->isReferenced();
+        break;
+    }
 
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
