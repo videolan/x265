@@ -38,7 +38,7 @@
 #include <memory.h>
 #include "TComMotionInfo.h"
 #include "assert.h"
-#include <stdlib.h>
+#include <cstdlib>
 
 using namespace x265;
 

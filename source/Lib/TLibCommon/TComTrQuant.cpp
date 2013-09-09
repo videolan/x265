@@ -40,7 +40,7 @@
 #include "ContextTables.h"
 #include "primitives.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <math.h>
 #include <memory.h>
 

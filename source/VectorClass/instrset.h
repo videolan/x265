@@ -134,7 +134,7 @@ typedef int32_t intptr_t;
 #endif
 #endif // if defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 
-#include <stdlib.h>                              // define abs(int)
+#include <cstdlib>                              // define abs(int)
 
 #ifdef _MSC_VER                                  // Microsoft compiler or compatible Intel compiler
 #include <intrin.h>                              // define _BitScanReverse(int), __cpuid(int[4],int), _xgetbv(int)

@@ -39,7 +39,7 @@
 #define __COMMONDEF__
 
 #include <algorithm>
-#include <stdlib.h>
+#include <cstdlib>
 #include "TypeDef.h"
 
 //! \ingroup TLibCommon

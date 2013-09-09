@@ -26,7 +26,7 @@
 #include "TShortYUV.h"
 #include "primitives.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <memory.h>
 #include <assert.h>
 #include <math.h>

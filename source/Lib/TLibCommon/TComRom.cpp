@@ -37,7 +37,7 @@
 
 #include "TComRom.h"
 #include <memory.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <stdio.h>
 
 namespace x265 {

@@ -24,7 +24,7 @@
 #ifndef __COMMON__
 #define __COMMON__
 
-#include <stdlib.h>
+#include <cstdlib>
 #include "x265.h"
 
 #define CU_STAT_LOGFILE 0

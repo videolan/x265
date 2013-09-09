@@ -28,7 +28,7 @@
 #include "primitives.h"
 
 #include <algorithm>
-#include <stdlib.h> // abs()
+#include <cstdlib> // abs()
 
 using namespace x265;
 
