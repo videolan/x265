@@ -860,11 +860,9 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
 {
     int row, col;
     uint32_t offset;
-    short maxVal;
     const int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
 
     offset =  (1 << (headRoom - 1));
-    maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1);
 
     __m128i a = _mm_loadu_si128((__m128i*)coeff);
