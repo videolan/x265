@@ -66,7 +66,7 @@ public:
 
     bool isEof() const                            { return ifs.eof(); }
 
-    bool isFail() const                           { return !ifs.is_open(); }
+    bool isFail()                                 { return !ifs.is_open(); }
 
     void release()                                { delete this; }
 

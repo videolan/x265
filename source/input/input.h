@@ -59,7 +59,7 @@ public:
 
     virtual bool isEof() const = 0;
 
-    virtual bool isFail() const = 0;
+    virtual bool isFail() = 0;
 
     virtual int  guessFrameCount() = 0;
 

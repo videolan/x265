@@ -41,6 +41,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 #include <string>
 #include <time.h>
 #include <list>
