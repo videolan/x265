@@ -147,6 +147,7 @@ void x265_param_default(x265_param_t *param)
 
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->lookaheadDepth = 10;
+    param->bframes = 3;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
     param->keyframeMin = 0;
     param->keyframeMax = 250;
