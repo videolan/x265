@@ -86,7 +86,7 @@ struct RateControl
 
     RateControl(x265_param_t * param);
 
-    void rateControlStart(TComPic* pic, Lookahead *);  // to be called for each frame to process RateCOntrol and set QP
+    void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* m_rce);  // to be called for each frame to process RateCOntrol and set QP
 
     int rateControlEnd(int64_t bits);
 
