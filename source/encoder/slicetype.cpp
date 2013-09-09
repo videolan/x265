@@ -129,7 +129,7 @@ void Lookahead::slicetypeDecide()
         frames[0] = &(pic->m_lowres);
         return;
     }
-    else if (cfg->param.bFrameAdaptive && cfg->param.lookaheadDepth)
+    else if (cfg->param.bFrameAdaptive && cfg->param.lookaheadDepth && cfg->param.bframes)
     {
         slicetypeAnalyse(false);
 
