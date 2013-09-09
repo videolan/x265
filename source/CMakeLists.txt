@@ -149,8 +149,10 @@ endif(ENABLE_TESTS)
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
-    add_subdirectory(input)
-    add_subdirectory(output)
+    file(GLOB InputFiles input/*.cpp input/*.h)
+    file(GLOB OutputFiles output/*.cpp output/*.h)
+    source_group(input FILES ${InputFiles})
+    source_group(output FILES ${OutputFiles})
     if (MSVC)
         set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "/wd4100")
     elseif(GCC)
@@ -159,8 +161,8 @@ if(ENABLE_CLI)
 
     include(version) # determine X265_VERSION
     set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
-    add_executable(x265 ${EXTRAS} ../COPYING
+    add_executable(x265 ${EXTRAS} ../COPYING ${InputFiles} ${OutputFiles}
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
-    target_link_libraries(x265 InputFiles OutputFiles encoder common ${PLATFORM_LIBS})
+    target_link_libraries(x265 encoder common ${PLATFORM_LIBS})
 endif(ENABLE_CLI)
