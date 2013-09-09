@@ -264,9 +264,8 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
             "Rate control mode is out of range");
 
-    // TODO: To avoid fuzzy POC generation, number of frame threads is always less than lookahead depth
-    CONFIRM(param->frameNumThreads > param->lookaheadDepth,
-            "Frame Parallelism Threads must be less or equal to Lookahead depth");
+    CONFIRM(param->bframes < param->lookaheadDepth,
+            "Lookahead depth must be greater than the max consecutive bframe count");
 
     // max CU size should be power of 2
     uint32_t ui = param->maxCUSize;
