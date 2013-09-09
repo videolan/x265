@@ -105,7 +105,7 @@ void Lookahead::addPicture(TComPic *pic)
     pic->m_lowres.frameNum = pic->getSlice()->getPOC();
 
     inputQueue.pushBack(pic);
-    if (inputQueue.size() == (size_t)cfg->param.lookaheadDepth)
+    if (inputQueue.size() >= (size_t)cfg->param.lookaheadDepth)
         slicetypeDecide();
 }
 
@@ -117,9 +117,9 @@ void Lookahead::flush()
 
 void Lookahead::slicetypeDecide()
 {
-    // Special case for POC 0, send directly to output queue as I slice
     if (numDecided == 0)
     {
+        // Special case for POC 0, send directly to output queue as I slice
         TComPic *pic = inputQueue.popFront();
         pic->m_lowres.sliceType = X265_TYPE_I;
         outputQueue.pushBack(pic);
@@ -129,53 +129,54 @@ void Lookahead::slicetypeDecide()
         frames[0] = &(pic->m_lowres);
         return;
     }
-
-#if 0
-    slicetypeAnalyse(false);
-
-    int dframes;
-    TComPic* picsAnalysed[X265_LOOKAHEAD_MAX];  //Used for sorting the pics in encode order
-    int idx = 1;
-
-    for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
+    else if (cfg->param.bFrameAdaptive && cfg->param.lookaheadDepth)
     {
-        if ((frames[dframes + 1]->sliceType == X265_TYPE_I))
+        slicetypeAnalyse(false);
+
+        int dframes;
+        TComPic* picsAnalysed[X265_LOOKAHEAD_MAX];  //Used for sorting the pics into encode order
+        int idx = 1;
+
+        for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
         {
-            frames[dframes + 1]->keyframe = 1;
-            lastKeyframe = frames[dframes]->frameNum;
-            if (cfg->param.decodingRefreshType == 2 && dframes > 0) //If an IDR frame following a B
+            if ((frames[dframes + 1]->sliceType == X265_TYPE_I))
             {
-                frames[dframes]->sliceType = X265_TYPE_P;
-                dframes--;
+                frames[dframes + 1]->keyframe = 1;
+                lastKeyframe = frames[dframes]->frameNum;
+                if (cfg->param.decodingRefreshType == 2 && dframes > 0) //If an IDR frame following a B
+                {
+                    frames[dframes]->sliceType = X265_TYPE_P;
+                    dframes--;
+                }
+            }
+            if (!IS_X265_TYPE_B(frames[dframes + 1]->sliceType))
+            {
+                dframes++;
+                break;
             }
         }
-        if (!IS_X265_TYPE_B(frames[dframes + 1]->sliceType))
+
+        TComPic *pic = NULL;
+        for (int i = 1; i <= dframes && !inputQueue.empty(); i++)
         {
-            dframes++;
-            break;
+            pic = inputQueue.popFront();
+            picsAnalysed[idx++] = pic;
         }
+
+        picsAnalysed[0] = pic;  //Move the P-frame following B-frames to the beginning
+
+        //Push pictures in encode order
+        for (int i = 0; i < dframes; i++)
+        {
+            outputQueue.pushBack(picsAnalysed[i]);
+        }
+
+        if (pic)
+            frames[0] = &(pic->m_lowres); // last nonb
+        return;
     }
 
-    TComPic *pic = NULL;
-    for (int i = 1; i <= dframes && !inputQueue.empty(); i++)
-    {
-        pic = inputQueue.popFront();
-        picsAnalysed[idx++] = pic;
-    }
-
-    picsAnalysed[0] = pic;  //Move the P-frame following B-frames to the beginning
-
-    //Push pictures in encode order
-    for (int i = 0; i < dframes; i++)
-    {
-        outputQueue.pushBack(picsAnalysed[i]);
-    }
-
-    if (pic)
-        frames[0] = &(pic->m_lowres); // last nonb
-
-#else // if 0
-      // Fake lookahead
+    // Fixed GOP structures for when B-Adapt and/or lookahead are disabled
     if (cfg->param.keyframeMax == 1)
     {
         TComPic *pic = inputQueue.popFront();
@@ -224,8 +225,6 @@ void Lookahead::slicetypeDecide()
             numDecided++;
         }
     }
-
-#endif // if 0
 }
 
 // Called by RateControl to get the estimated SATD cost for a given picture.
