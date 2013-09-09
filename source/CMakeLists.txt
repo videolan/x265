@@ -95,6 +95,14 @@ if(UNIX)
     endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif(UNIX)
 
+option(ENABLE_STLPORT "Enable use of STLPort STL replacement library" OFF)
+if(ENABLE_STLPORT)
+    set(STLPORT_LOCATION "${STLPORT_INCLUDE_DIR}" CACHE PATH "Location of STLPort sources")
+    # STLPort headers must be included before system headers
+    include_directories(BEFORE ${STLPORT_LOCATION}/stlport)
+    link_directories(${STLPORT_LOCATION}/lib)
+endif(ENABLE_STLPORT)
+
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
