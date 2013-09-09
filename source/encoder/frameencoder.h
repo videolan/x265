@@ -41,6 +41,7 @@
 #include "wavefront.h"
 #include "framefilter.h"
 #include "cturow.h"
+#include "ratecontrol.h"
 
 namespace x265 {
 // private x265 namespace
@@ -124,6 +125,7 @@ public:
     SEIWriter                m_seiWriter;
     TComSPS                  m_sps;
     TComPPS                  m_pps;
+    RateControlEntry         m_rce;
 
 protected:
 
