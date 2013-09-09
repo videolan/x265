@@ -264,7 +264,7 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
             "Rate control mode is out of range");
 
-    CONFIRM(param->bframes < param->lookaheadDepth,
+    CONFIRM(param->bframes > param->lookaheadDepth,
             "Lookahead depth must be greater than the max consecutive bframe count");
 
     // max CU size should be power of 2
