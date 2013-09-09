@@ -51,7 +51,6 @@ static inline double qp2qScale(double qp)
 
 RateControl::RateControl(x265_param_t * param)
 {
-    rce = NULL;
     keyFrameInterval = param->keyframeMax;
     frameThreads = param->frameNumThreads;
     framerate = param->frameRate;
@@ -105,7 +104,7 @@ RateControl::RateControl(x265_param_t * param)
     cbrDecay = 1.0;
 }
 
-void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry* m_rce)
+void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry* rce)
 {
     curFrame = pic->getSlice();
     frameType = curFrame->getSliceType();
@@ -114,9 +113,8 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     {
     case X265_RC_ABR:
         {
-            rce = m_rce;
             lastSatd = l->getEstimatedPictureCost(pic);
-            double q = qScale2qp(rateEstimateQscale());
+            double q = qScale2qp(rateEstimateQscale(rce));
             qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
             rce->qpaRc = qpm = q;    
             rce->newQp = qp;
@@ -153,7 +151,7 @@ void RateControl::accumPQpUpdate()
         accumPQp += qpm;
 }
 
-double RateControl::rateEstimateQscale()
+double RateControl::rateEstimateQscale(RateControlEntry *rce)
 {
     double q;
     // ratecontrol_entry_t rce = UNINIT(rce);
@@ -221,7 +219,7 @@ double RateControl::rateEstimateQscale()
         rce->mvBits = 0;
         rce->pictType = pictType;
         //need to checked where it is initialized
-        q = getQScale(wantedBitsWindow / cplxrSum);
+        q = getQScale(rce, wantedBitsWindow / cplxrSum);
 
         /* ABR code can potentially be counterproductive in CBR, so just don't bother.
          * Don't run it if the frame complexity is zero either. */
@@ -279,7 +277,7 @@ double RateControl::rateEstimateQscale()
 /**
  * modify the bitrate curve from pass1 for one frame
  */
-double RateControl::getQScale(double rateFactor)
+double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 {
     double q;
 
@@ -298,11 +296,10 @@ double RateControl::getQScale(double rateFactor)
 }
 
 /* After encoding one frame, save stats and update ratecontrol state */
-int RateControl::rateControlEnd(int64_t bits, RateControlEntry* m_rce)
+int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
 {
     if (rateControlMode == X265_RC_ABR)
     {
-        rce = m_rce;
         if (frameType != B_SLICE)
             cplxrSum +=  1.1 *bits * qp2qScale(rce->qpaRc) / rce->lastRceq;
         else

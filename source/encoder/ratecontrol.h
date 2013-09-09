@@ -46,7 +46,6 @@ struct RateControlEntry
 
 struct RateControl
 {
-    RateControlEntry *rce;
     TComSlice *curFrame;        /* all info abt the current frame */
     SliceType frameType;        /* Current frame type */
     int ncu;                    /* number of CUs in a frame */
@@ -87,13 +86,14 @@ struct RateControl
 
     RateControl(x265_param_t * param);
 
-    void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* m_rce);  // to be called for each frame to process RateCOntrol and set QP
+    // to be called for each frame to process RateCOntrol and set QP
+    void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce);
 
-    int rateControlEnd(int64_t bits, RateControlEntry* m_rce);
+    int rateControlEnd(int64_t bits, RateControlEntry* rce);
 
 protected:
-    double getQScale(double rateFactor);
-    double rateEstimateQscale(); // main logic for calculating QP based on ABR
+    double getQScale(RateControlEntry *rce, double rateFactor);
+    double rateEstimateQscale(RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
 };
 }
