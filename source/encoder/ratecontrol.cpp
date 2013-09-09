@@ -118,9 +118,8 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
             lastSatd = l->getEstimatedPictureCost(pic);
             double q = qScale2qp(rateEstimateQscale());
             qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
-            qpaRc = qpm = q;    
-            if (rce)
-                rce->newQp = qp;
+            rce->qpaRc = qpm = q;    
+            rce->newQp = qp;
             accumPQpUpdate();
             break;
         }
@@ -291,7 +290,7 @@ double RateControl::getQScale(double rateFactor)
         q = lastQScaleFor[rce->pictType];
     else
     {
-        lastRceq = q;
+        rce->lastRceq = q;
         q /= rateFactor;
         lastQScale = q;
     }
@@ -299,21 +298,23 @@ double RateControl::getQScale(double rateFactor)
 }
 
 /* After encoding one frame, save stats and update ratecontrol state */
-int RateControl::rateControlEnd(int64_t bits)
+int RateControl::rateControlEnd(int64_t bits, RateControlEntry* m_rce)
 {
     if (rateControlMode == X265_RC_ABR)
     {
+        rce = m_rce;
         if (frameType != B_SLICE)
-            cplxrSum +=  1.1 *bits * qp2qScale(qpaRc) / lastRceq;
+            cplxrSum +=  1.1 *bits * qp2qScale(rce->qpaRc) / rce->lastRceq;
         else
         {
             /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
              * Not perfectly accurate with B-refs, but good enough. */
-            cplxrSum += bits * qp2qScale(qpaRc) / (lastRceq * fabs(0.5 * pbFactor));
+            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->lastRceq * fabs(0.5 * pbFactor));
         }
         cplxrSum *= cbrDecay;
         wantedBitsWindow += frameDuration * bitrate;
-        wantedBitsWindow *= cbrDecay;        
+        wantedBitsWindow *= cbrDecay;       
+        rce = NULL;
     }
     totalBits += bits;
     return 0;

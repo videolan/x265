@@ -259,7 +259,7 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         // Allow this frame to be recycled if no frame encoders are using it for reference
         ATOMIC_DEC(&out->m_countRefEncoders);
 
-        m_rateControl->rateControlEnd(bits);
+        m_rateControl->rateControlEnd(bits, &(curEncoder->m_rce));
 
         m_dpb->recycleUnreferenced(m_freeList);
 

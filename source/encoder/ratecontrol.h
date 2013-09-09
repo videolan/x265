@@ -40,6 +40,8 @@ struct RateControlEntry
     int texBits;
     int mvBits;
     double blurredComplexity;
+    double qpaRc;                /* average of macroblocks' qp before aq */
+    double lastRceq;
 };
 
 struct RateControl
@@ -55,7 +57,7 @@ struct RateControl
     int baseQp;                 /* CQP base QP */
     double frameDuration;        /* current frame duration in seconds */
     double qpm;                  /* qp for current macroblock: precise double for AQ */
-    double qpaRc;                /* average of macroblocks' qp before aq */
+    
     double bitrate;
     double rateTolerance;
     double qCompress;
@@ -75,7 +77,6 @@ struct RateControl
     double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
     double lstep;
     double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
-    double lastRceq;
     double cbrDecay;
     double lmin[3];             /* min qscale by frame type */
     double lmax[3];
@@ -88,7 +89,7 @@ struct RateControl
 
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* m_rce);  // to be called for each frame to process RateCOntrol and set QP
 
-    int rateControlEnd(int64_t bits);
+    int rateControlEnd(int64_t bits, RateControlEntry* m_rce);
 
 protected:
     double getQScale(double rateFactor);
