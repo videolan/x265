@@ -136,8 +136,8 @@ add_subdirectory(encoder)
 option(ENABLE_STATICLIB "Enable statically linked encoder library x265enc" OFF)
 if(ENABLE_STATICLIB)
     include(mergestaticlibs)
-    merge_static_libs(x265enc encoder common)
-    target_link_libraries(x265enc ${PLATFORM_LIBS})
+    merge_static_libs(x265 encoder common)
+    target_link_libraries(x265 ${PLATFORM_LIBS})
 endif()
 
 # Test applications
@@ -159,8 +159,9 @@ if(ENABLE_CLI)
 
     include(version) # determine X265_VERSION
     set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
-    add_executable(x265 ${EXTRAS} ../COPYING
+    add_executable(cli ${EXTRAS} ../COPYING
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
-    target_link_libraries(x265 InputFiles OutputFiles encoder common ${PLATFORM_LIBS})
+    target_link_libraries(cli InputFiles OutputFiles encoder common ${PLATFORM_LIBS})
+    SET_TARGET_PROPERTIES(cli PROPERTIES OUTPUT_NAME x265)
 endif(ENABLE_CLI)
