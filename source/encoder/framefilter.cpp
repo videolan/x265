@@ -32,17 +32,14 @@ using namespace x265;
 // **************************************************************************
 // * LoopFilter
 // **************************************************************************
-FrameFilter::FrameFilter(ThreadPool* pool)
-    : JobProvider(pool)
-    , m_cfg(NULL)
+FrameFilter::FrameFilter()
+    : m_cfg(NULL)
     , m_pic(NULL)
-    , active_lft(0)
-{}
+{
+}
 
 void FrameFilter::destroy()
 {
-    JobProvider::flush();  // ensure no worker threads are using this frame
-
     if (m_cfg->param.bEnableLoopFilter)
     {
         assert(m_cfg->param.bEnableSAO);
@@ -52,25 +49,6 @@ void FrameFilter::destroy()
         m_sao.destroy();
         m_sao.destroyEncBuffer();
     }
-}
-
-bool FrameFilter::findJob()
-{
-    // Check the lock
-    if (ATOMIC_CAS32(&active_lft, 0, 1) == 1)
-        return false;
-
-    // NOTE: only one thread can be here
-    if (row_done < row_ready)
-    {
-        // NOTE: not need atom operator here because we lock before
-        row_done++;
-        processRow(row_done);
-        active_lft = 0;
-        return true;
-    }
-    active_lft = 0;
-    return false;
 }
 
 void FrameFilter::init(TEncTop *top, int numRows, TEncSbac* rdGoOnSbacCoder)
@@ -97,10 +75,6 @@ void FrameFilter::start(TComPic *pic)
     m_pic = pic;
 
     m_loopFilter.setCfg(pic->getSlice()->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
-    row_ready = -1;
-    row_done = -1;
-    active_lft = 0;
-
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
     m_entropyCoder.setBitstream(&m_bitCounter);
@@ -114,18 +88,6 @@ void FrameFilter::start(TComPic *pic)
         m_sao.resetSAOParam(saoParam);
         m_sao.rdoSaoUnitRowInit(saoParam);
     }
-
-    if (m_pool && m_cfg->param.bEnableLoopFilter && m_cfg->param.bEnableWavefront)
-    {
-        JobProvider::enqueue();
-    }
-}
-
-void FrameFilter::wait()
-{
-    // Block until worker threads complete the frame
-    m_completionEvent.wait();
-    JobProvider::dequeue();
 }
 
 void FrameFilter::end()
@@ -136,23 +98,18 @@ void FrameFilter::end()
     }
 }
 
-void FrameFilter::enqueueRow(int row)
-{
-    assert(row < m_numRows);
-    // NOTE: not need atom here since we have only one writer and reader
-    row_ready = row;
-    m_pool->pokeIdleThread();
-
-    // NOTE: Active post process when LFT disable since there not thread for it
-    if (!m_cfg->param.bEnableLoopFilter)
-        processRowPost(row);
-}
-
 void FrameFilter::processRow(int row)
 {
     PPAScopeEvent(Thread_filterCU);
 
-    // Called by worker threads
+    if (!m_cfg->param.bEnableLoopFilter)
+    {
+        if (row > 0)
+            processRowPost(row - 1);
+        if (row == m_numRows - 1)
+            processRowPost(row);
+        return;
+    }
 
     // NOTE: We are here only active both of loopfilter and sao, the row 0 always finished, so we can safe to copy row[0]'s data
     if (row == 0)
@@ -267,8 +224,6 @@ void FrameFilter::processRow(int row)
         }
 
         processRowPost(row);
-
-        m_completionEvent.trigger();
     }
 }
 

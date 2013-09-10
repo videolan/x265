@@ -29,21 +29,17 @@
 #include "TLibCommon/TComLoopFilter.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
-#include "threading.h"
-#include "wavefront.h"
-
 namespace x265 {
 // private x265 namespace
 
-class ThreadPool;
 class TEncTop;
 
-// Manages the wave-front processing of a single frame loopfilter
-class FrameFilter : public JobProvider
+// Manages the processing of a single frame loopfilter
+class FrameFilter
 {
 public:
 
-    FrameFilter(ThreadPool *);
+    FrameFilter();
 
     virtual ~FrameFilter() {}
 
@@ -54,19 +50,13 @@ public:
     void start(TComPic *pic);
     void end();
 
-    void wait();
-
-    void enqueueRow(int row);
-    bool findJob();
-
     void processRow(int row);
     void processRowPost(int row);
 
 protected:
 
-    TEncCfg*            m_cfg;
-    TComPic*            m_pic;
-    volatile int        active_lft;
+    TEncCfg*                    m_cfg;
+    TComPic*                    m_pic;
 
 public:
 
@@ -80,12 +70,6 @@ public:
     TEncBinCABACCounter         m_rdGoOnBinCodersCABAC;
     TComBitCounter              m_bitCounter;
     TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
-
-    // TODO: if you want thread priority logic, add col here
-    volatile int                row_ready;
-    volatile int                row_done;
-
-    Event                       m_completionEvent;
 };
 }
 

@@ -53,7 +53,6 @@ FrameEncoder::FrameEncoder()
     , m_threadActive(true)
     , m_top(NULL)
     , m_cfg(NULL)
-    , m_frameFilter(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
 {}
@@ -61,7 +60,6 @@ FrameEncoder::FrameEncoder()
 void FrameEncoder::setThreadPool(ThreadPool *p)
 {
     m_pool = p;
-    m_frameFilter.setThreadPool(p);
 }
 
 void FrameEncoder::destroy()
@@ -435,13 +433,6 @@ void FrameEncoder::compressFrame()
         fprintf(fp, "8x8   : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[3] * 100) / cntTotalCu[3], (double)(cntSkipCu[3] * 100) / cntTotalCu[3]);
     }
 #endif // if LOGGING
-
-    // wait for loop filter completion
-    if (m_cfg->param.bEnableLoopFilter)
-    {
-        m_frameFilter.wait();
-        m_frameFilter.dequeue();
-    }
 
     if (m_cfg->param.bEnableWavefront)
     {
@@ -841,15 +832,16 @@ void FrameEncoder::compressCTURows()
     TComSlice* slice = m_pic->getSlice();
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
+    m_frameFilter.start(m_pic);
+
     if (m_pool && m_cfg->param.bEnableWavefront)
     {
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        m_frameFilter.start(m_pic);
-
         for (UInt row = 0; row < (UInt)m_numRows; row++)
         {
+            // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
             {
                 RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -876,39 +868,23 @@ void FrameEncoder::compressCTURows()
     }
     else
     {
-        m_frameFilter.start(m_pic);
-
-        for (int i = 0; i < this->m_numRows + m_filterRowDelay; i++)
+        for (int i = 0; i < this->m_numRows; i++)
         {
-            if (i < m_numRows)
+            // block until all reference frames have reconstructed the rows we need
+            for (int l = 0; l < numPredDir; l++)
             {
-                for (int l = 0; l < numPredDir; l++)
+                RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
-                    RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-                    for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                    TComPic *refpic = slice->getRefPic(list, ref);
+                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
                     {
-                        TComPic *refpic = slice->getRefPic(list, ref);
-                        while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
-                        {
-                            refpic->m_reconRowWait.wait();
-                        }
+                        refpic->m_reconRowWait.wait();
                     }
                 }
-
-                processRow(i);
             }
 
-            if (i >= m_filterRowDelay)
-            {
-                if (m_cfg->param.bEnableLoopFilter)
-                {
-                    m_frameFilter.processRow(i - m_filterRowDelay);
-                }
-                else
-                {
-                    m_frameFilter.processRowPost(i - m_filterRowDelay);
-                }
-            }
+            processRow(i);
         }
     }
 }
@@ -960,25 +936,21 @@ void FrameEncoder::processRow(int row)
             curRow.m_active = false;
             return;
         }
-        if (m_cfg->param.bEnableWavefront && checkHigherPriorityRow(row))
-        {
-            curRow.m_active = false;
-            return;
-        }
     }
 
     // Active Loopfilter
     if (row >= m_filterRowDelay)
     {
-        // NOTE: my version, it need check active flag
-        m_frameFilter.enqueueRow(row - m_filterRowDelay);
+        m_frameFilter.processRow(row - m_filterRowDelay);
     }
 
     // this row of CTUs has been encoded
     if (row == m_numRows - 1)
     {
-        // NOTE: I ignore (row-1) because enqueueRow is replace operator
-        m_frameFilter.enqueueRow(row);
+        int lag = m_filterRowDelay;
+        while (--lag)
+            m_frameFilter.processRow(row - lag);
+        m_frameFilter.processRow(row);
         m_completionEvent.trigger();
     }
 }
