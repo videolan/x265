@@ -161,7 +161,7 @@ if(ENABLE_CLI)
 
     include(version) # determine X265_VERSION
     set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
-    add_executable(cli ${EXTRAS} ../COPYING
+    add_executable(cli ${EXTRAS} ../COPYING ${InputFiles} ${OutputFiles}
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
     target_link_libraries(cli encoder common ${PLATFORM_LIBS})
