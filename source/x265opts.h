@@ -43,6 +43,7 @@ OPT("no-amp",          param->bEnableAMP,                   no_argument, 0, "Dis
 OPT("amp",             param->bEnableAMP,                   no_argument, 0, "Enable asymmetric motion partitions, requires --rect")
 OPT("no-rdo",          param->bEnableRDO,                   no_argument, 0, "Enable mode decision without rate distortion optimization")
 OPT("rdo",             param->bEnableRDO,                   no_argument, 0, "Enable rate distortion-based mode decision")
+OPT("fast-no-rdo",     param->bFastNoRDO,                   no_argument, 0, "Fast Mode Decision in No-RDO mode")
 OPT("max-merge",       param->maxNumMergeCand,        required_argument, 0, "Maximum number of merge candidates")
 OPT("no-early-skip",   param->bEnableEarlySkip,             no_argument, 0, "Disable early SKIP detection")
 OPT("early-skip",      param->bEnableEarlySkip,             no_argument, 0, "Enable early SKIP detection")
@@ -59,7 +60,6 @@ OPT("no-strong-intra-smoothing", param->bEnableStrongIntraSmoothing, no_argument
 OPT("strong-intra-smoothing", param->bEnableStrongIntraSmoothing,  no_argument, 0, "Enable strong intra smoothing for 32x32 blocks")
 OPT("no-constrained-intra", param->bEnableConstrainedIntra, no_argument, 0, "Disable constrained intra prediction (use only intra coded reference pixels)")
 OPT("constrained-intra", param->bEnableConstrainedIntra,    no_argument, 0, "Constrained intra prediction (use only intra coded reference pixels)")
-OPT("fast-no-rdo", param->bFastNoRDO,    no_argument, 0, "Fast Mode Decision in No-RDO mode")
 
 HELP("Slice decision options:")
 OPT("refresh",         param->decodingRefreshType,    required_argument, 0, "Intra refresh type - 0:none, 1:CDR, 2:IDR (default: CDR)")
