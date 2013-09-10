@@ -144,6 +144,7 @@ void x265_param_default(x265_param_t *param)
     param->bEnableRDOQTS = 1;
     param->bEnableTransformSkip = 1;
     param->bEnableTSkipFast = 1;
+    param->bFastNoRDO = 0;
 
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->lookaheadDepth = 10;
@@ -372,6 +373,7 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
+    TOOLOPT(param->bFastNoRDO, "fast-no-rdo");
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
     if (param->bEnableRDO)
