@@ -599,7 +599,13 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     }
                 }
 
-                if (outBestCU->m_totalCost < LAMBDA_PARTITION_SELECT * nxnCost)
+                float lambda = 1.0f;
+                if(outBestCU->getSlice()->getSliceType() == P_SLICE)
+                    lambda = 0.9f;
+                else if(outBestCU->getSlice()->getSliceType() == B_SLICE)
+                    lambda = 1.1f;
+
+                if (outBestCU->m_totalCost < lambda * nxnCost)
                 {
                     m_entropyCoder->resetBits();
                     m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
