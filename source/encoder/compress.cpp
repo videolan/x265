@@ -491,24 +491,28 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_bestMergeRecoYuv[depth] = tempYuv;
             }
 
-            /*compute intra cost */
-            if (outBestCU->getCbf(0, TEXT_LUMA) != 0 ||
-                outBestCU->getCbf(0, TEXT_CHROMA_U) != 0 ||
-                outBestCU->getCbf(0, TEXT_CHROMA_V) != 0)
+            /* Check for Intra in inter frames only if its a P-slice*/
+            if(outBestCU->getSlice()->getSliceType() == P_SLICE)
             {
-                xComputeCostIntraInInter(m_intraInInterCU[depth], SIZE_2Nx2N);
-                xEncodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
-
-                if (m_intraInInterCU[depth]->m_totalCost < outBestCU->m_totalCost)
+                /*compute intra cost */
+                if (outBestCU->getCbf(0, TEXT_LUMA) != 0 ||
+                    outBestCU->getCbf(0, TEXT_CHROMA_U) != 0 ||
+                    outBestCU->getCbf(0, TEXT_CHROMA_V) != 0)
                 {
-                    outBestCU = m_intraInInterCU[depth];
-                    tempYuv = m_modePredYuv[5][depth];
-                    m_modePredYuv[5][depth] = m_bestPredYuv[depth];
-                    m_bestPredYuv[depth] = tempYuv;
+                    xComputeCostIntraInInter(m_intraInInterCU[depth], SIZE_2Nx2N);
+                    xEncodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
 
-                    TComYuv* tmpPic = m_bestRecoYuv[depth];
-                    m_bestRecoYuv[depth] = m_tmpRecoYuv[depth];
-                    m_tmpRecoYuv[depth] = tmpPic;
+                    if (m_intraInInterCU[depth]->m_totalCost < outBestCU->m_totalCost)
+                    {
+                        outBestCU = m_intraInInterCU[depth];
+                        tempYuv = m_modePredYuv[5][depth];
+                        m_modePredYuv[5][depth] = m_bestPredYuv[depth];
+                        m_bestPredYuv[depth] = tempYuv;
+
+                        TComYuv* tmpPic = m_bestRecoYuv[depth];
+                        m_bestRecoYuv[depth] = m_tmpRecoYuv[depth];
+                        m_tmpRecoYuv[depth] = tmpPic;
+                    }
                 }
             }
         }
