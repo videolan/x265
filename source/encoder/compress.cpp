@@ -569,7 +569,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 /*Best CU initialised to NULL; */
                 subBestPartCU = NULL;
                 /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
-                subTempPartCU;
                 nxnCost = 0;
                 for (UInt partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
                 {
