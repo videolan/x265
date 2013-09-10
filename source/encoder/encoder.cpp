@@ -343,12 +343,12 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
     AccessUnit au;
     if (encoder->getStreamHeaders(au) == 0)
     {
-        long memsize = 0;
+        UInt memsize = 0;
         int nalcount = 0;
         for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
         {
             const NALUnitEBSP& temp = **t;
-            memsize += (long)temp.m_nalUnitData.str().size() + 4;
+            memsize += (UInt)temp.m_nalUnitData.str().size() + 4;
             nalcount++;
         }
 
@@ -424,12 +424,12 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
 
     if (pp_nal && numEncoded)
     {
-        long memsize = 0;
+        UInt memsize = 0;
         int nalcount = 0;
         for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
         {
             const NALUnitEBSP& temp = **t;
-            memsize += (long)temp.m_nalUnitData.str().size() + 4;
+            memsize += (UInt)temp.m_nalUnitData.str().size() + 4;
             nalcount++;
         }
 

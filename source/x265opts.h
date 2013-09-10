@@ -59,6 +59,7 @@ OPT("no-strong-intra-smoothing", param->bEnableStrongIntraSmoothing, no_argument
 OPT("strong-intra-smoothing", param->bEnableStrongIntraSmoothing,  no_argument, 0, "Enable strong intra smoothing for 32x32 blocks")
 OPT("no-constrained-intra", param->bEnableConstrainedIntra, no_argument, 0, "Disable constrained intra prediction (use only intra coded reference pixels)")
 OPT("constrained-intra", param->bEnableConstrainedIntra,    no_argument, 0, "Constrained intra prediction (use only intra coded reference pixels)")
+OPT("fast-no-rdo", param->bFastNoRDO,    no_argument, 0, "Fast Mode Decision in No-RDO mode")
 
 HELP("Slice decision options:")
 OPT("refresh",         param->decodingRefreshType,    required_argument, 0, "Intra refresh type - 0:none, 1:CDR, 2:IDR (default: CDR)")
