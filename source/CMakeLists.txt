@@ -133,12 +133,8 @@ include_directories(. Lib common encoder)
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-option(ENABLE_STATICLIB "Enable statically linked encoder library x265enc" OFF)
-if(ENABLE_STATICLIB)
-    include(mergestaticlibs)
-    merge_static_libs(x265 encoder common)
-    target_link_libraries(x265 ${PLATFORM_LIBS})
-endif()
+include(mergestaticlibs)
+merge_static_libs(x265 encoder common)
 
 # Test applications
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
