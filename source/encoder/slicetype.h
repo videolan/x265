@@ -44,6 +44,7 @@ struct Lookahead
     TEncCfg         *cfg;
     pixel           *predictions;   // buffer for 35 intra predictions
     Lowres          *frames[X265_LOOKAHEAD_MAX];
+    Lowres          *lastNonB;
     int              merange;
     int              numDecided;
     int              lastKeyframe;

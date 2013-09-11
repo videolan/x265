@@ -44,14 +44,16 @@ struct Lowres : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
     pixel *buffer[4];
-    int    width;    // width of lowres frame in pixels
-    int    lines;    // height of lowres frame in pixel lines
+    int    width;     // width of lowres frame in pixels
+    int    lines;     // height of lowres frame in pixel lines
     int    frameNum;  // Presentation frame number
     int    sliceType; // Slice type decided by lookahead
+    int    leadingBframes; // number of leading B frames for P or I
 
     bool   bIntraCalculated;
     bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut.
     bool   bKeyframe;
+    bool   bLastMiniGopBFrame;
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
