@@ -60,7 +60,6 @@ struct RateControl
     double bitrate;
     double rateTolerance;
     double qCompress;
-    int    bframes;
     int    lastSatd;
     int    qpConstant[3];
     double cplxrSum;           /* sum of bits*qscale/rceq */

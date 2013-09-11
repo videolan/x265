@@ -54,7 +54,6 @@ RateControl::RateControl(x265_param_t * param)
     keyFrameInterval = param->keyframeMax;
     frameThreads = param->frameNumThreads;
     framerate = param->frameRate;
-    bframes = param->bframes;
     rateTolerance = param->rc.rateTolerance;
     bitrate = param->rc.bitrate * 1000;
     frameDuration = 1.0 / param->frameRate;
