@@ -32,6 +32,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <cstdlib>
+#include <stdio.h>
+#include <errno.h>
 #endif
 #include <stdint.h>
 
@@ -139,28 +141,38 @@ public:
 
     Event()
     {
-        sem_init(&this->semaphore, 0, 0);
+        do {
+            snprintf(name, sizeof(name), "/x265_%d", s_incr++);
+            this->semaphore = sem_open(name, O_CREAT | O_EXCL, 0777, 0);
+        } while (this->semaphore == SEM_FAILED);
     }
 
     ~Event()
     {
-        sem_destroy(&this->semaphore);
+        sem_close(this->semaphore);
+        sem_unlink(name);
     }
 
     void wait()
     {
-        sem_wait(&this->semaphore);
+        // keep waiting even if interrupted
+        while (sem_wait(this->semaphore) < 0)
+            if (errno != EINTR)
+                break;
     }
 
     void trigger()
     {
-        sem_post(&this->semaphore);
+        sem_post(this->semaphore);
     }
 
 protected:
+    
+    static int s_incr;
+    char name[64];
 
     /* the POSIX version uses a counting semaphore */
-    sem_t semaphore;
+    sem_t *semaphore;
 };
 
 #endif // ifdef _WIN32
