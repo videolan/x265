@@ -104,10 +104,7 @@ void FrameFilter::processRow(int row)
 
     if (!m_cfg->param.bEnableLoopFilter)
     {
-        if (row > 0)
-            processRowPost(row - 1);
-        if (row == m_numRows - 1)
-            processRowPost(row);
+        processRowPost(row);
         return;
     }
 

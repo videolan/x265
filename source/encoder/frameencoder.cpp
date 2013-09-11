@@ -947,10 +947,8 @@ void FrameEncoder::processRow(int row)
     // this row of CTUs has been encoded
     if (row == m_numRows - 1)
     {
-        int lag = m_filterRowDelay;
-        while (--lag)
-            m_frameFilter.processRow(row - lag);
-        m_frameFilter.processRow(row);
+        for(int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
+            m_frameFilter.processRow(i);
         m_completionEvent.trigger();
     }
 }
