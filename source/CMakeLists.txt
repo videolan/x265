@@ -18,6 +18,9 @@ endif()
 if (CMAKE_GENERATOR STREQUAL "Xcode")
   set(XCODE 1)
 endif()
+if (APPLE)
+  add_definitions(-DMACOS)
+endif()
 
 # Enforce coding standards.  Full warnings and warnings as errors
 if("$ENV{CXX}" STREQUAL "icl")
