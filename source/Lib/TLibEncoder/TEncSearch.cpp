@@ -3023,6 +3023,7 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
     mvmax >>= 2;
 
     /* conditional clipping for frame parallelism */
+    mvmin.y = X265_MIN(mvmin.y, m_refLagPixels);
     mvmax.y = X265_MIN(mvmax.y, m_refLagPixels);
 }
 
