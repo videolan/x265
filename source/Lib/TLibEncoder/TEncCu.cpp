@@ -277,9 +277,12 @@ void TEncCu::destroy()
         }
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            m_modePredYuv[j][i]->destroy();
-            delete m_modePredYuv[j][i];
-            m_modePredYuv[j][i] = NULL;
+            if (m_modePredYuv[j][i])
+            {
+                m_modePredYuv[j][i]->destroy();
+                delete m_modePredYuv[j][i];
+                m_modePredYuv[j][i] = NULL;
+            }
         }
 
         if (m_tmpResiYuv[i])
