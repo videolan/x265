@@ -139,7 +139,7 @@ void Lookahead::slicetypeDecide()
 
         for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
         {
-            if ((frames[dframes + 1]->sliceType == X265_TYPE_I))
+            if (frames[dframes + 1]->sliceType == X265_TYPE_I)
             {
                 frames[dframes + 1]->keyframe = 1;
                 lastKeyframe = frames[dframes]->frameNum;
