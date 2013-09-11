@@ -424,13 +424,6 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dst
     }
 }
 
-void filterVertical_short_pel_multiplane(short *src, intptr_t srcStride, pixel *dstE, pixel *dstI, pixel *dstP, intptr_t dstStride, int block_width, int block_height)
-{
-    filterVertical_s_p<8>(src, srcStride, dstI, dstStride, block_width, block_height, g_lumaFilter[2]);
-    filterVertical_s_p<8>(src, srcStride, dstE, dstStride, block_width, block_height, g_lumaFilter[1]);
-    filterVertical_s_p<8>(src, srcStride, dstP, dstStride, block_width, block_height, g_lumaFilter[3]);
-}
-
 void extendPicCompBorder(pixel* txt, intptr_t stride, int width, int height, int marginX, int marginY)
 {
     int   x, y;
@@ -476,23 +469,6 @@ void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, in
 
         txt += stride;
     }
-}
-
-void filterHorizontalExtendCol(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height, int marginX)
-{
-    filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
-    filterHorizontal_p_s<8>(src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
-    filterHorizontal_p_s<8>(src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
-    filterHorizontal_p_s<8>(src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
-    
-    filterConvertShortToPel(midA, midStride, dstA, dstStride, block_width, block_height);
-    filterConvertShortToPel(midB, midStride, dstB, dstStride, block_width, block_height);
-    filterConvertShortToPel(midC, midStride, dstC, dstStride, block_width, block_height);
-    
-    extendCURowColBorder(dstA, dstStride, block_width, block_height, marginX);
-    extendCURowColBorder(dstB, dstStride, block_width, block_height, marginX);
-    extendCURowColBorder(dstC, dstStride, block_width, block_height, marginX);
-
 }
 
 void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int scale, int round, int shift, int offset)
