@@ -15,6 +15,10 @@ if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
     add_definitions(-DX86_64=1)
 endif()
 
+if (CMAKE_GENERATOR STREQUAL "Xcode")
+  set(XCODE 1)
+endif()
+
 # Enforce coding standards.  Full warnings and warnings as errors
 if("$ENV{CXX}" STREQUAL "icl")
     set(MSVC 1)
@@ -145,8 +149,10 @@ if(ENABLE_PRIMITIVES_ASM)
     set(LIBS ${LIBS} PrimitivesASM)
 endif(ENABLE_PRIMITIVES_ASM)
 
-include(mergestaticlibs)
-merge_static_libs(x265 ${LIBS})
+if(NOT XCODE)
+    include(mergestaticlibs)
+    merge_static_libs(x265 ${LIBS})
+endif()
 
 # Test applications
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
@@ -172,6 +178,10 @@ if(ENABLE_CLI)
     add_executable(cli ${EXTRAS} ../COPYING ${InputFiles} ${OutputFiles}
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
+if(XCODE)
+    target_link_libraries(cli ${LIBS} ${PLATFORM_LIBS})
+else()
     target_link_libraries(cli x265 ${PLATFORM_LIBS})
+endif()
     SET_TARGET_PROPERTIES(cli PROPERTIES OUTPUT_NAME x265)
 endif(ENABLE_CLI)
