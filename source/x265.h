@@ -186,8 +186,8 @@ X265_RC_METHODS;
 /*Level of Rate Distortion Optimization Allowed */
 typedef enum RDOLevel
 {   
-    X265_NO_RDO_NO_RDOQ, /* Minimal RDO during mode decision, no RDO in quantization*/ 
-    X265_NO_RDO,         /* Minimal RDO during mode decision, quantization RDO enabled */
+    X265_NO_RDO_NO_RDOQ, /* Partial RDO during mode decision (only at each depth/mode), no RDO in quantization*/ 
+    X265_NO_RDO,         /* Partial RDO during mode decision (only at each depth/mode), quantization RDO enabled */
     X265_FULL_RDO        /* Full RD-based mode decision */
 }
 X265_RDO_LEVEL;
