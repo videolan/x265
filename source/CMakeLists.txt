@@ -101,6 +101,9 @@ if(ENABLE_STLPORT)
     # STLPort headers must be included before system headers
     include_directories(BEFORE ${STLPORT_LOCATION}/stlport)
     link_directories(${STLPORT_LOCATION}/lib)
+    if("$ENV{CXX}" STREQUAL "icl")
+        add_definitions(/Qwd1879)
+    endif()
 endif(ENABLE_STLPORT)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
