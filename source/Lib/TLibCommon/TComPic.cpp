@@ -85,7 +85,7 @@ void TComPic::create(int width, int height, UInt maxWidth, UInt maxHeight, UInt 
     m_lowres.create(this, bframes);
 }
 
-void TComPic::destroy()
+void TComPic::destroy(int bframes)
 {
     if (m_picSym)
     {
@@ -108,7 +108,7 @@ void TComPic::destroy()
         m_reconPicYuv = NULL;
     }
 
-    m_lowres.destroy();
+    m_lowres.destroy(bframes);
 }
 
 /** Create non-deblocked filter information

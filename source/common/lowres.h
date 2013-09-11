@@ -46,7 +46,6 @@ struct Lowres : public ReferencePlanes
     pixel *buffer[4];
     int    width;    // width of lowres frame in pixels
     int    lines;    // height of lowres frame in pixel lines
-    int    bframes;
     bool   bIntraCalculated;
     int    frameNum;  // Presentation frame number 
     int    scenecut;  // Set to zero if the frame cannot possibly be part of a real scenecut. 
@@ -64,8 +63,8 @@ struct Lowres : public ReferencePlanes
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
 
     void create(TComPic *pic, int bframes);
-    void destroy();
-    void init(TComPicYuv *orig);
+    void destroy(int bframes);
+    void init(TComPicYuv *orig, int bframes);
 };
 }
 

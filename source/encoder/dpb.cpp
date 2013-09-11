@@ -36,7 +36,7 @@ DPB::~DPB()
     while (!m_picList.empty())
     {
         TComPic* pic = m_picList.popFront();
-        pic->destroy();
+        pic->destroy(m_cfg->param.bframes);
         delete pic;
     }
 }

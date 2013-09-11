@@ -86,7 +86,7 @@ public:
 
     void          create(int width, int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, int bframes);
 
-    virtual void  destroy();
+    virtual void  destroy(int bframes);
 
     bool          getUsedByCurr()           { return m_bUsedByCurr; }
 

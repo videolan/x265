@@ -88,20 +88,20 @@ void Lookahead::destroy()
     while (!inputQueue.empty())
     {
         TComPic* pic = inputQueue.popFront();
-        pic->destroy();
+        pic->destroy(cfg->param.bframes);
         delete pic;
     }
     while (!outputQueue.empty())
     {
         TComPic* pic = outputQueue.popFront();
-        pic->destroy();
+        pic->destroy(cfg->param.bframes);
         delete pic;
     }
 }
 
 void Lookahead::addPicture(TComPic *pic)
 {
-    pic->m_lowres.init(pic->getPicYuvOrg());
+    pic->m_lowres.init(pic->getPicYuvOrg(), cfg->param.bframes);
     pic->m_lowres.frameNum = pic->getSlice()->getPOC();
 
     inputQueue.pushBack(pic);

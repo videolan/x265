@@ -124,7 +124,7 @@ void TEncTop::destroy()
     while (!m_freeList.empty())
     {
         TComPic* pic = m_freeList.popFront();
-        pic->destroy();
+        pic->destroy(param.bframes);
         delete pic;
     }
 
