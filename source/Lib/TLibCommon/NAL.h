@@ -105,7 +105,8 @@ struct OutputNALUnit;
  */
 struct NALUnitEBSP : public NALUnit
 {
-    std::ostringstream m_nalUnitData;
+    UInt m_packetSize;
+    uint8_t *m_nalUnitData;
 
     /**
      * convert the OutputNALUnit #nalu# into EBSP format by writing out

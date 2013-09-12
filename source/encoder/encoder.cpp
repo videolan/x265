@@ -362,7 +362,7 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
         for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
         {
             const NALUnitEBSP& temp = **t;
-            memsize += (UInt)temp.m_nalUnitData.str().size() + 4;
+            memsize += temp.m_packetSize + 4;
             nalcount++;
         }
 
@@ -403,14 +403,15 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
                 size += 3;
             }
             memsize += size;
-            size_t nalSize = nalu.m_nalUnitData.str().size();
-            ::memcpy(encoder->m_packetData + memsize, nalu.m_nalUnitData.str().c_str(), nalSize);
+            size_t nalSize = nalu.m_packetSize;
+            ::memcpy(encoder->m_packetData + memsize, nalu.m_nalUnitData, nalSize);
             size += (int)nalSize;
             memsize += (int)nalSize;
 
             encoder->m_nals[nalcount].i_type = nalu.m_nalUnitType;
             encoder->m_nals[nalcount].i_payload = size;
             nalcount++;
+            free(nalu.m_nalUnitData);
         }
 
         /* Setup payload pointers, now that we're done adding content to m_packetData */
@@ -443,7 +444,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
         {
             const NALUnitEBSP& temp = **t;
-            memsize += (UInt)temp.m_nalUnitData.str().size() + 4;
+            memsize += temp.m_packetSize + 4;
             nalcount++;
         }
 
@@ -484,14 +485,15 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                 size += 3;
             }
             memsize += size;
-            size_t nalSize = nalu.m_nalUnitData.str().size();
-            ::memcpy(encoder->m_packetData + memsize, nalu.m_nalUnitData.str().c_str(), nalSize);
+            size_t nalSize = nalu.m_packetSize;
+            ::memcpy(encoder->m_packetData + memsize, nalu.m_nalUnitData, nalSize);
             size += (int)nalSize;
             memsize += (int)nalSize;
 
             encoder->m_nals[nalcount].i_type = nalu.m_nalUnitType;
             encoder->m_nals[nalcount].i_payload = size;
             nalcount++;
+            free(nalu.m_nalUnitData);
         }
 
         /* Setup payload pointers, now that we're done adding content to m_packetData */

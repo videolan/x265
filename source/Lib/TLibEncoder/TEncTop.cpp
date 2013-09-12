@@ -550,7 +550,7 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     UInt numRBSPBytes = 0;
     for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
     {
-        UInt numRBSPBytes_nal = UInt((*it)->m_nalUnitData.str().size());
+        UInt numRBSPBytes_nal = (*it)->m_packetSize;
 #if VERBOSE_RATE
         printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString((*it)->m_nalUnitType), numRBSPBytes_nal);
 #endif

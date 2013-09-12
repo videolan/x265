@@ -48,26 +48,24 @@ namespace x265 {
 
 static const char emulation_prevention_three_byte[] = { 3 };
 
-void writeNalUnitHeader(ostream& out, OutputNALUnit& nalu)       // nal_unit_header()
-{
-    TComOutputBitstream bsNALUHeader;
-
-    bsNALUHeader.write(0, 1);                 // forbidden_zero_bit
-    bsNALUHeader.write(nalu.m_nalUnitType, 6); // nal_unit_type
-    bsNALUHeader.write(nalu.m_reservedZero6Bits, 6);                 // nuh_reserved_zero_6bits
-    bsNALUHeader.write(nalu.m_temporalId + 1, 3); // nuh_temporal_id_plus1
-
-    out.write(bsNALUHeader.getByteStream(), bsNALUHeader.getByteStreamLength());
-}
-
 /**
  * write nalu to bytestream out, performing RBSP anti startcode
  * emulation as required.  nalu.m_RBSPayload must be byte aligned.
  */
-void write(ostream& out, OutputNALUnit& nalu)
+void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
 {
-    writeNalUnitHeader(out, nalu);
+    packetSize = 0;
 
+    TComOutputBitstream bsNALUHeader;
+    bsNALUHeader.write(0, 1);                 // forbidden_zero_bit
+    bsNALUHeader.write(nalu.m_nalUnitType, 6); // nal_unit_type
+    bsNALUHeader.write(nalu.m_reservedZero6Bits, 6);                 // nuh_reserved_zero_6bits
+    bsNALUHeader.write(nalu.m_temporalId + 1, 3); // nuh_temporal_id_plus1
+    
+    packetSize += bsNALUHeader.getByteStreamLength();
+    out = (uint8_t *) malloc(packetSize);
+    ::memcpy(out, bsNALUHeader.getByteStream(), packetSize);
+    
     /* write out rsbp_byte's, inserting any required
      * emulation_prevention_three_byte's */
 
@@ -118,8 +116,10 @@ void write(ostream& out, OutputNALUnit& nalu)
             it = rbsp.insert(found, emulation_prevention_three_byte[0]);
         }
     }
-
-    out.write((char*)&(*rbsp.begin()), rbsp.end() - rbsp.begin());
+    UInt i = packetSize;
+    out = (uint8_t *) realloc (out, (rbsp.end() - rbsp.begin()) + 4 );
+    memcpy(out + packetSize, &(*rbsp.begin()), rbsp.end() - rbsp.begin());
+    packetSize += rbsp.end() - rbsp.begin();
 
     /* 7.4.1.1
      * ... when the last byte of the RBSP data is equal to 0x00 (which can
@@ -128,7 +128,8 @@ void write(ostream& out, OutputNALUnit& nalu)
      */
     if (rbsp.back() == 0x00)
     {
-        out.write(emulation_prevention_three_byte, 1);
+        out[i] = 3;
+        packetSize += 1;
     }
 }
 
