@@ -37,7 +37,7 @@ if(MSVC)
     endif()
 endif(MSVC)
 
-add_library(common ../../COPYING
+add_library(common STATIC ../../COPYING
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
