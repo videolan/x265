@@ -241,9 +241,9 @@ typedef struct x265_param_t
     int       bEnableRectInter;                ///< enable rectangular inter modes 2NxN, Nx2N
     int       bEnableCbfFastMode;              ///< enable use of Cbf flags for fast mode decision
     int       bEnableEarlySkip;                ///< enable early skip (merge) detection
-    int       bFastNoRDO;
-    int       bEnableRDO;                      ///< enable full rate distortion optimization
-    int       bEnableRDOQ;                     ///< enable RD optimized quantization
+    int       bRDLevel;                     ///< enable RD optimized quantization
+    int       bEnableRDO;
+    int       bEnableRDOQ;
     int       bEnableSignHiding;               ///< enable hiding one sign bit per TU via implicit signaling
     int       bEnableTransformSkip;            ///< enable intra transform skipping
     int       bEnableTSkipFast;                ///< enable fast intra transform skipping

@@ -132,7 +132,7 @@ void x265_param_default(x265_param_t *param)
     param->tuQTMaxIntraDepth = 3;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
-    param->bEnableRDO = 1;
+    
     param->bEnableLoopFilter = 1;
     param->bEnableSAO = 1;
     param->bEnableWavefront = 1;
@@ -140,11 +140,12 @@ void x265_param_default(x265_param_t *param)
     param->maxNumMergeCand = 5u;
     param->bEnableSignHiding = 1;
     param->bEnableStrongIntraSmoothing = 1;
-    param->bEnableRDOQ = 1;
+    
     param->bEnableRDOQTS = 1;
     param->bEnableTransformSkip = 1;
     param->bEnableTSkipFast = 1;
-    param->bFastNoRDO = 0;
+    
+    param->bRDLevel = X265_FULL_RDO;
 
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->lookaheadDepth = 10;
@@ -264,7 +265,8 @@ int x265_check_params(x265_param_t *param)
             "Picture height must be an integer multiple of the specified chroma subsampling");
     CONFIRM(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
             "Rate control mode is out of range");
-
+    CONFIRM(param->bRDLevel < X265_NO_RDO_NO_RDOQ || param->bRDLevel> X265_FULL_RDO,
+            "RD Level is out of range");
     CONFIRM(param->bframes > param->lookaheadDepth,
             "Lookahead depth must be greater than the max consecutive bframe count");
 
@@ -373,14 +375,20 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
-    TOOLOPT(param->bFastNoRDO, "fast-no-rdo");
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
-    if (param->bEnableRDO)
-        fprintf(stderr, "rdo ");
-    else
-        fprintf(stderr, "no-rdo ");
-    TOOLOPT(param->bEnableRDOQ, "rdoq");
+    switch (param->bRDLevel)
+    {
+    case X265_NO_RDO_NO_RDOQ: 
+        fprintf(stderr, "%s ", "no-rdo no-rdoq "); break;
+    case X265_NO_RDO:
+        fprintf(stderr, "%s", "no-rdo rdoq "); break;
+    case X265_FULL_RDO:
+        fprintf(stderr, "%s", "rdo rdoq "); break;
+    default: 
+        fprintf(stderr, "%s", "Unknown RD Level");
+    }
+
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
     {

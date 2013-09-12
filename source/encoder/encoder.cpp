@@ -218,6 +218,20 @@ void x265_t::configure(x265_param_t *_param)
         _param->rc.rateControlMode = X265_RC_ABR;
     }
 
+    /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
+    switch(_param->bRDLevel)
+    {
+    case X265_NO_RDO_NO_RDOQ:
+        _param->bEnableRDO = _param->bEnableRDOQ = 0; 
+        break;
+    case X265_NO_RDO:
+        _param->bEnableRDO = 0;
+        _param->bEnableRDOQ = 1;
+        break;
+    case X265_FULL_RDO:
+        _param->bEnableRDO = _param->bEnableRDOQ = 1;
+        break;
+    }
     //====== Coding Tools ========
 
     uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
