@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <errno.h>
+#include <fcntl.h>
 #endif
 #include <stdint.h>
 
