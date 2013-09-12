@@ -136,8 +136,17 @@ include_directories(. Lib common encoder)
 add_subdirectory(common)
 add_subdirectory(encoder)
 
+set(LIBS common encoder)
+if(ENABLE_PRIMITIVES_VEC)
+    set(LIBS ${LIBS} PrimitivesVec)
+endif(ENABLE_PRIMITIVES_VEC)
+
+if(ENABLE_PRIMITIVES_ASM)
+    set(LIBS ${LIBS} PrimitivesASM)
+endif(ENABLE_PRIMITIVES_ASM)
+
 include(mergestaticlibs)
-merge_static_libs(x265 encoder common)
+merge_static_libs(x265 ${LIBS})
 
 # Test applications
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
@@ -163,6 +172,6 @@ if(ENABLE_CLI)
     add_executable(cli ${EXTRAS} ../COPYING ${InputFiles} ${OutputFiles}
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
-    target_link_libraries(cli encoder common ${PLATFORM_LIBS})
+    target_link_libraries(cli x265 ${PLATFORM_LIBS})
     SET_TARGET_PROPERTIES(cli PROPERTIES OUTPUT_NAME x265)
 endif(ENABLE_CLI)
