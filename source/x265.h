@@ -186,8 +186,8 @@ X265_RC_METHODS;
 /*Level of Rate Distortion Optimization Allowed */
 typedef enum RDOLevel
 {   
-    X265_NO_RDO_NO_RDOQ, /* Minimal RDO during mode decision, no RDO in quantization*/ 
-    X265_NO_RDO,         /* Minimal RDO during mode decision, quantization RDO enabled */
+    X265_NO_RDO_NO_RDOQ, /* Partial RDO during mode decision (only at each depth/mode), no RDO in quantization*/ 
+    X265_NO_RDO,         /* Partial RDO during mode decision (only at each depth/mode), quantization RDO enabled */
     X265_FULL_RDO        /* Full RD-based mode decision */
 }
 X265_RDO_LEVEL;
@@ -241,9 +241,9 @@ typedef struct x265_param_t
     int       bEnableRectInter;                ///< enable rectangular inter modes 2NxN, Nx2N
     int       bEnableCbfFastMode;              ///< enable use of Cbf flags for fast mode decision
     int       bEnableEarlySkip;                ///< enable early skip (merge) detection
-    int       bFastNoRDO;
-    int       bEnableRDO;                      ///< enable full rate distortion optimization
-    int       bEnableRDOQ;                     ///< enable RD optimized quantization
+    int       bRDLevel;                     ///< enable RD optimized quantization
+    int       bEnableRDO;
+    int       bEnableRDOQ;
     int       bEnableSignHiding;               ///< enable hiding one sign bit per TU via implicit signaling
     int       bEnableTransformSkip;            ///< enable intra transform skipping
     int       bEnableTSkipFast;                ///< enable fast intra transform skipping
