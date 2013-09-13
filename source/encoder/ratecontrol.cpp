@@ -72,11 +72,12 @@ RateControl::RateControl(x265_param_t * param)
     shortTermCplxCount = 0;
     if (rateControlMode == X265_RC_ABR)
     {
-        //TODO : confirm this value. obtained it from x264 when crf is disabled , abr enabled.
-        //h->param.rc.i_rc_method == X264_RC_CRF ? h->param.rc.f_rf_constant : 24  -- can be tweaked for x265.
-#define ABR_INIT_QP (24  + QP_BD_OFFSET)
+        
+        // Adjust the first frame in order to stabilize the quality level compared to the rest.
+#define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
+#define ABR_INIT_QP_MAX (38 + QP_BD_OFFSET)
         accumPNorm = .01;
-        accumPQp = (ABR_INIT_QP)*accumPNorm;
+        accumPQp = (ABR_INIT_QP_MIN) * accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame  */
         cplxrSum = .01 * pow(7.0e5, qCompress) * pow(2 *ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
@@ -86,7 +87,7 @@ RateControl::RateControl(x265_param_t * param)
     pbOffset = 6.0 * (float)(X265_LOG2(param->rc.pbFactor));
     for (int i = 0; i < 3; i++)
     {
-        lastQScaleFor[i] = qp2qScale(ABR_INIT_QP);
+        lastQScaleFor[i] = qp2qScale(ABR_INIT_QP_MIN);
         lmin[i] = qp2qScale(MIN_QP);
         lmax[i] = qp2qScale(MAX_QP);  
     }
@@ -160,16 +161,19 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
     {
         /* B-frames don't have independent rate control, but rather get the
          * average QP of the two adjacent P-frames + an offset */
+        TComSlice* prevRefSlice = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice();
+        TComSlice* nextRefSlice = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getSlice();
+        bool i0 = prevRefSlice->getSliceType() == I_SLICE;
+        bool i1 = nextRefSlice->getSliceType() == I_SLICE;
+        int dt0 = abs(curFrame->getPOC() - prevRefSlice->getPOC());
+        int dt1 = abs(curFrame->getPOC() - nextRefSlice->getPOC());
+        double q0 = prevRefSlice->getSliceQp();
+        double q1 = nextRefSlice->getSliceQp();
 
-        int i0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice()->getSliceType() == I_SLICE;
-        int i1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getSlice()->getSliceType() == I_SLICE;
-        int dt0 = abs(curFrame->getPOC() - curFrame->getRefPic(REF_PIC_LIST_0, 0)->getPOC());
-        int dt1 = abs(curFrame->getPOC() - curFrame->getRefPic(REF_PIC_LIST_1, 0)->getPOC());
-
-        //TODO:need to figure out this
-        double q0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice()->getSliceQp();
-        double q1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getSlice()->getSliceQp();
-
+        if (prevRefSlice->getSliceType() == B_SLICE && prevRefSlice->isReferenced())
+            q0 -= pbOffset / 2;
+        if (nextRefSlice->getSliceType() == B_SLICE && nextRefSlice->isReferenced())
+            q1 -= pbOffset / 2;
         if (i0 && i1)
             q = (q0 + q1) / 2 + ipOffset;
         else if (i0)
@@ -183,12 +187,8 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
             q += pbOffset / 2;
         else
             q += pbOffset;
-        
-        double qScale = qp2qScale(q);
 
-        lastQScaleFor[P_SLICE] = lastQScale = qScale/pbFactor;
-
-        return qScale;
+        return qp2qScale(q);
     }
     else
     {
@@ -242,21 +242,32 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
             q = qp2qScale(accumPQp / accumPNorm);
             q /= fabs(ipFactor);
         }
-        else if (curFrame->getPOC() > 0)
+        if (rateControlMode != X265_RC_CRF)
         {
-            if (rateControlMode != X265_RC_CRF)
-            {
-                /* Asymmetric clipping, because symmetric would prevent
-                 * overflow control in areas of rapidly oscillating complexity */
-                double lqmin = lastQScaleFor[pictType] / lstep;
-                double lqmax = lastQScaleFor[pictType] * lstep;
-                if (overflow > 1.1 && curFrame->getPOC() > 3)
-                    lqmax *= lstep;
-                else if (overflow < 0.9)
-                    lqmin /= lstep;
+            double lqmin = 0, lqmax = 0;
 
-                q = Clip3(lqmin, lqmax, q);
+            /* Clip the qp of 1st frame to ensure it doesnt detoriate the quality */
+            if (curFrame->getPOC() == 0)
+            {
+                lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
+                lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
+                double l1 = qScale2qp(lqmin);
+                double l2 = qScale2qp(lqmax);
+                    l1=l2;
             }
+            /* Asymmetric clipping, because symmetric would prevent
+             * overflow control in areas of rapidly oscillating complexity */
+            else if (curFrame->getPOC() > 0)
+            {
+                lqmin = lastQScaleFor[pictType] / lstep;
+                lqmax = lastQScaleFor[pictType] * lstep;
+            }
+            if (overflow > 1.1 && curFrame->getPOC() > 3)
+                lqmax *= lstep;
+            else if (overflow < 0.9)
+                lqmin /= lstep;
+
+            q = Clip3(lqmin, lqmax, q);
         }
 
         //FIXME use get_diff_limited_q() ?
@@ -300,12 +311,14 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
     if (rateControlMode == X265_RC_ABR)
     {
         if (frameType != B_SLICE)
-            cplxrSum +=  1.1 *bits * qp2qScale(rce->qpaRc) / rce->lastRceq;
+            /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
+             * to improve short term compensation for next frame. */
+            cplxrSum += 1.5 *bits * qp2qScale(rce->qpaRc) / rce->lastRceq;
         else
         {
             /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
              * Not perfectly accurate with B-refs, but good enough. */
-            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->lastRceq * fabs(0.5 * pbFactor));
+            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->lastRceq * fabs(pbFactor));
         }
         cplxrSum *= cbrDecay;
         wantedBitsWindow += frameDuration * bitrate;
