@@ -38,6 +38,7 @@
 #include <vector>
 #include <algorithm>
 #include <ostream>
+#include <cstring>
 
 using namespace std;
 
