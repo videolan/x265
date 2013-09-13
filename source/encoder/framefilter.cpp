@@ -226,8 +226,6 @@ void FrameFilter::processRow(int row)
 
 void FrameFilter::processRowPost(int row)
 {
-    PPAScopeEvent(Thread_filterCU);
-
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
     TComPicYuv *recon = m_pic->getPicYuvRec();
