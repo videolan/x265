@@ -170,7 +170,7 @@ void FrameFilter::processRow(int row)
                 m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row - 1, 2);
             }
 
-            // TODO: this code is NOT VERIFY because TransformSkip and PCM mode have some bugs, they always not active!
+            // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
             bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
             if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
             {
@@ -186,8 +186,6 @@ void FrameFilter::processRow(int row)
     }
 
     // this row of CTUs has been encoded
-
-    // TODO: extend margins for motion reference
 
     if (row > 0)
     {
@@ -209,7 +207,7 @@ void FrameFilter::processRow(int row)
             m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
         }
 
-        // TODO: this code is NOT VERIFY because TransformSkip and PCM mode have some bugs, they always not active!
+        // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
         bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
         if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
         {
@@ -236,10 +234,6 @@ void FrameFilter::processRowPost(int row)
     const int lastH = ((recon->getHeight() % g_maxCUHeight) ? (recon->getHeight() % g_maxCUHeight) : g_maxCUHeight);
     const int realH = (row != m_numRows - 1) ? g_maxCUHeight : lastH;
 
-    // TODO: Remove when we confirm below code is right
-    //recon->xExtendPicCompBorder(recon->getLumaAddr(), recon->getStride(), recon->getWidth(), recon->getHeight(), recon->m_lumaMarginX, recon->m_lumaMarginY);
-    //recon->xExtendPicCompBorder(recon->getCbAddr(), recon->getCStride(), recon->getWidth() >> 1, recon->getHeight() >> 1, recon->m_chromaMarginX, recon->m_chromaMarginY);
-    //recon->xExtendPicCompBorder(recon->getCrAddr(), recon->getCStride(), recon->getWidth() >> 1, recon->getHeight() >> 1, recon->m_chromaMarginX, recon->m_chromaMarginY);
     // Border extend Left and Right
     primitives.extendRowBorder(recon->getLumaAddr(lineStartCUAddr), recon->getStride(), recon->getWidth(), realH, recon->getLumaMarginX());
     primitives.extendRowBorder(recon->getCbAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> 1, realH >> 1, recon->getChromaMarginX());
@@ -250,9 +244,9 @@ void FrameFilter::processRowPost(int row)
     {
         const intptr_t stride = recon->getStride();
         const intptr_t strideC = recon->getCStride();
-        Pel *pixY = recon->getLumaAddr(lineStartCUAddr) - recon->getLumaMarginX();
-        Pel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX();
-        Pel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX();
+        pixel *pixY = recon->getLumaAddr(lineStartCUAddr) - recon->getLumaMarginX();
+        pixel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX();
+        pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX();
 
         for (int y = 0; y < recon->getLumaMarginY(); y++)
         {
@@ -271,9 +265,9 @@ void FrameFilter::processRowPost(int row)
     {
         const intptr_t stride = recon->getStride();
         const intptr_t strideC = recon->getCStride();
-        Pel *pixY = recon->getLumaAddr(lineStartCUAddr) - recon->getLumaMarginX() + (realH - 1) * stride;
-        Pel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
-        Pel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
+        pixel *pixY = recon->getLumaAddr(lineStartCUAddr) - recon->getLumaMarginX() + (realH - 1) * stride;
+        pixel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
+        pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
 
         for (int y = 0; y < recon->getLumaMarginY(); y++)
         {

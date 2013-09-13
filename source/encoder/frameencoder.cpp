@@ -937,14 +937,13 @@ void FrameEncoder::processRow(int row)
             return;
         }
     }
+    // this row of CTUs has been encoded
 
-    // Active Loopfilter
+    // Run row-wise loop filters
     if (row >= m_filterRowDelay)
     {
         m_frameFilter.processRow(row - m_filterRowDelay);
     }
-
-    // this row of CTUs has been encoded
     if (row == m_numRows - 1)
     {
         for(int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
