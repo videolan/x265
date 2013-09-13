@@ -47,7 +47,7 @@ struct x265_t : public TEncTop
 
     void configure(x265_param_t *param);
     void determineLevelAndProfile(x265_param_t *param);
-    void x265_extract_naldata(AccessUnit &au, size_t &nalcount);
+    void extract_naldata(AccessUnit &au, size_t &nalcount);
 };
 
 x265_t::x265_t()
@@ -359,7 +359,7 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
     if (encoder->getStreamHeaders(au) == 0)
     {
         size_t nalcount;
-        encoder->x265_extract_naldata( au, nalcount);
+        encoder->extract_naldata( au, nalcount);
 
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal = (int)nalcount;
@@ -379,7 +379,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     if (pp_nal && numEncoded)
     {
         size_t nalcount;
-        encoder->x265_extract_naldata( au, nalcount);
+        encoder->extract_naldata( au, nalcount);
 
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal =(int) nalcount;
@@ -412,7 +412,7 @@ void x265_cleanup(void)
     BitCost::destroy();
 }
 
-void x265_t::x265_extract_naldata( AccessUnit &au, size_t &nalcount)
+void x265_t::extract_naldata( AccessUnit &au, size_t &nalcount)
 {
         UInt memsize = 0;
         nalcount = 0;
