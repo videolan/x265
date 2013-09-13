@@ -109,11 +109,9 @@ EXECUTE_PROCESS(COMMAND ls .
 				DEPENDS ${lib})
 		endif()
 		list(APPEND extrafiles "${objlistfile}")
-		# relative path is needed by ar under MSYS
-		file(RELATIVE_PATH objlistfilerpath ${objdir} ${objlistfile})
 		add_custom_command(TARGET ${outlib} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E echo "Running: ${CMAKE_AR} ru ${outfile} @${objlistfilerpath}"
-			COMMAND ${CMAKE_AR} ru "${outfile}" @"${objlistfilerpath}"
+			COMMAND ${CMAKE_COMMAND} -E echo "Running: ${CMAKE_AR} ru ${outfile} \\$$\\(cat ${objlistfile}\\)"
+			COMMAND ${CMAKE_AR} ru "${outfile}" $$\(cat "${objlistfile}"\)
 			WORKING_DIRECTORY ${objdir})		
 	endforeach()
 	add_custom_command(TARGET ${outlib} POST_BUILD
