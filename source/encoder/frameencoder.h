@@ -104,19 +104,7 @@ public:
     TComPic *getEncodedPicture(AccessUnit& accessUnit);
 
     // worker thread
-    void threadMain()
-    {
-        do
-        {
-            m_enable.wait();  // TEncTop::encode() triggers this event
-            if (m_threadActive)
-            {
-                compressFrame();
-                m_done.trigger();
-            }
-        }
-        while (m_threadActive);
-    }
+    void threadMain();
 
     Event                    m_enable;
     Event                    m_done;

@@ -255,6 +255,21 @@ void FrameEncoder::initSlice(TComPic* pic)
     slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
 }
 
+void FrameEncoder::threadMain()
+{
+    // worker thread routine for FrameEncoder
+    do
+    {
+        m_enable.wait(); // TEncTop::encode() triggers this event
+        if (m_threadActive)
+        {
+            compressFrame();
+            m_done.trigger(); // FrameEncoder::getEncodedPicture() blocks for this event
+        }
+    }
+    while (m_threadActive);
+}
+
 void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
