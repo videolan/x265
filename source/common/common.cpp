@@ -115,6 +115,7 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
     va_end(arg);
 }
 
+extern "C"
 void x265_param_default(x265_param_t *param)
 {
     memset(param, 0, sizeof(x265_param_t));
