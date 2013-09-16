@@ -70,8 +70,6 @@ public:
     TEncBinCABACCounter         m_rdGoOnBinCodersCABAC;
     TComBitCounter              m_bitCounter;
     TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
-
-    Lock                        m_filterLock;
 };
 }
 

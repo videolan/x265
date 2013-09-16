@@ -64,7 +64,54 @@ public:
 
     void destroy();
 
-    void processRow(int row);
+    void processRowEncoder(int row);
+
+    void processRowFilter(int row)
+    {
+        m_frameFilter.processRow(row);
+    }
+
+    void enqueueRowEncoder(int row)
+    {
+        WaveFront::enqueueRow(row * 2 + 0);
+    }
+
+    void enqueueRowFilter(int row)
+    {
+        WaveFront::enqueueRow(row * 2 + 1);
+    }
+
+    void enableRowEncoder(int row)
+    {
+        WaveFront::enableRow(row * 2 + 0);
+    }
+
+    void enableRowFilter(int row)
+    {
+        WaveFront::enableRow(row * 2 + 1);
+    }
+
+    void processRow(int row)
+    {
+        const int realRow = row >> 1;
+        const int typeNum = row & 1;
+
+        // TODO: use switch when more type
+        if (typeNum == 0)
+        {
+            processRowEncoder(realRow);
+        }
+        else
+        {
+            processRowFilter(realRow);
+
+            // NOTE: Active next row
+            if (realRow != m_numRows - 1)
+                enableRowFilter(realRow + 1);
+            else
+                m_completionEvent.trigger();
+        }
+    }
 
     TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
 

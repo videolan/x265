@@ -98,7 +98,8 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         m_rows[i].create(top);
     }
 
-    if (!WaveFront::init(m_numRows))
+    // NOTE: 2 times of numRows because both Encoder and Filter in same queue
+    if (!WaveFront::init(m_numRows * 2))
     {
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
@@ -870,9 +871,9 @@ void FrameEncoder::compressCTURows()
                 }
             }
 
-            WaveFront::enableRow(row);
+            enableRowEncoder(row);
             if (row == 0)
-                WaveFront::enqueueRow(row);
+                enqueueRowEncoder(0);
             else
                 m_pool->pokeIdleThread();
         }
@@ -883,28 +884,38 @@ void FrameEncoder::compressCTURows()
     }
     else
     {
-        for (int i = 0; i < this->m_numRows; i++)
+        for (int i = 0; i < this->m_numRows + m_filterRowDelay; i++)
         {
-            // block until all reference frames have reconstructed the rows we need
-            for (int l = 0; l < numPredDir; l++)
+            // Encoder
+            if (i < m_numRows)
             {
-                RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                // block until all reference frames have reconstructed the rows we need
+                for (int l = 0; l < numPredDir; l++)
                 {
-                    TComPic *refpic = slice->getRefPic(list, ref);
-                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
+                    RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+                    for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
-                        refpic->m_reconRowWait.wait();
+                        TComPic *refpic = slice->getRefPic(list, ref);
+                        while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
+                        {
+                            refpic->m_reconRowWait.wait();
+                        }
                     }
                 }
+
+                processRow(i * 2 + 0);
             }
 
-            processRow(i);
+            // Filter
+            if (i >= m_filterRowDelay)
+            {
+                processRow((i - m_filterRowDelay) * 2 + 1);
+            }
         }
     }
 }
 
-void FrameEncoder::processRow(int row)
+void FrameEncoder::processRowEncoder(int row)
 {
     PPAScopeEvent(Thread_ProcessRow);
 

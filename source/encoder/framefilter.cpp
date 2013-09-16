@@ -102,8 +102,6 @@ void FrameFilter::processRow(int row)
 {
     PPAScopeEvent(Thread_filterCU);
 
-    ScopedLock s(m_filterLock); // Only allow one row to be filtered at a time
-
     if (!m_cfg->param.bEnableLoopFilter)
     {
         processRowPost(row);
