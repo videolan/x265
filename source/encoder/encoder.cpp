@@ -219,6 +219,11 @@ void x265_t::configure(x265_param_t *_param)
         _param->rc.rateControlMode = X265_RC_ABR;
     }
 
+    if(!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
+    {
+        _param->bEnableRDOQTS = 0;
+    }
+
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
     switch(_param->bRDLevel)
     {

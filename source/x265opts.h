@@ -80,8 +80,6 @@ OPT("qp",              param->rc.qp,                  required_argument, 'q', "B
 OPT("cbqpoffs",        param->cbQpOffset,             required_argument, 0, "Chroma Cb QP Offset")
 OPT("crqpoffs",        param->crQpOffset,             required_argument, 0, "Chroma Cr QP Offset")
 OPT("rd",              param->bRDLevel,               required_argument, 0, "Level of RD in mode decision 0:least....2:full RDO")
-OPT("no-rdoqts",       param->bEnableRDOQTS,                no_argument, 0, "Disable RDO quantization with transform skip")
-OPT("rdoqts",          param->bEnableRDOQTS,                no_argument, 0, "Enable RDO quantization with transform skip")
 OPT("no-signhide",     param->bEnableSignHiding,            no_argument, 0, "Disable hide sign bit of one coeff per TU (rdo)")
 OPT("signhide",        param->bEnableSignHiding,            no_argument, 0, "Hide sign bit of one coeff per TU (rdo)")
 
