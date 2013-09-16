@@ -35,12 +35,10 @@ class TComPic;
 struct RateControlEntry
 {
     int pictType;
-    int pCount;
-    int newQp;
     int texBits;
     int mvBits;
     double blurredComplexity;
-    double qpaRc;                /* average of macroblocks' qp before aq */
+    double qpaRc;
     double lastRceq;
 };
 
@@ -54,9 +52,7 @@ struct RateControl
     int keyFrameInterval;       /* TODO: need to initialize in init */
     int qp;                     /* updated qp for current frame */
     int baseQp;                 /* CQP base QP */
-    double frameDuration;        /* current frame duration in seconds */
-    double qpm;                  /* qp for current macroblock: precise double for AQ */
-    
+    double frameDuration;        /* current frame duration in seconds */ 
     double bitrate;
     double rateTolerance;
     double qCompress;
@@ -71,12 +67,9 @@ struct RateControl
     int lastNonBPictType;
     double accumPQp;          /* for determining I-frame quant */
     double accumPNorm;
-    double lastQScale;
     double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
     double lstep;
-    double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
-    double cbrDecay;
-    double lmin[3];             /* min qscale by frame type */
+    double lmin[3];           /* min qscale by frame type */
     double lmax[3];
     double shortTermCplxSum;
     double shortTermCplxCount;
