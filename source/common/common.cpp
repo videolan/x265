@@ -115,45 +115,58 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
     va_end(arg);
 }
 
-extern "C"
 void x265_param_default(x265_param_t *param)
 {
     memset(param, 0, sizeof(x265_param_t));
-    param->frameNumThreads = 1;
+
+    /* Applying non-zero default values to all elements in the param structure */
     param->logLevel = X265_LOG_INFO;
+    param->bEnableWavefront = 1;
+    param->frameNumThreads = 1;
+    
+    param->internalBitDepth = 8;
+
+    /* CU definitions */
+    param->maxCUSize = 64;
+    param->tuQTMaxInterDepth = 3;
+    param->tuQTMaxIntraDepth = 3;
+
+    /* Coding Structure */
+    param->decodingRefreshType = 1;
+    param->keyframeMin = 0;
+    param->keyframeMax = 250;
+    param->bframes = 3;
+    param->lookaheadDepth = 10;
+    param->bFrameAdaptive = X265_B_ADAPT_FAST;
+    param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
+
+    /* Intra Coding Tools */
+    param->bEnableStrongIntraSmoothing = 1;
+
+    /* Inter Coding tools */
     param->searchMethod = X265_STAR_SEARCH;
     param->subpelRefine = 5;
     param->searchRange = 60;
     param->bipredSearchRange = 4;
-    param->internalBitDepth = 8;
-    param->decodingRefreshType = 1;
-    param->maxCUSize = 64;
-    param->tuQTMaxInterDepth = 3;
-    param->tuQTMaxIntraDepth = 3;
+    param->maxNumMergeCand = 5u;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
-    
-    param->bEnableLoopFilter = 1;
-    param->bEnableSAO = 1;
-    param->bEnableWavefront = 1;
-    param->saoLcuBasedOptimization = 1;
-    param->maxNumMergeCand = 5u;
-    param->bEnableSignHiding = 1;
-    param->bEnableStrongIntraSmoothing = 1;
-    
+    param->bRDLevel = X265_FULL_RDO;
+    param->bEnableRDO = 1;
+    param->bEnableRDOQ = 1;
     param->bEnableRDOQTS = 1;
+    param->bEnableSignHiding = 1;
     param->bEnableTransformSkip = 1;
     param->bEnableTSkipFast = 1;
+
+    /* Loop Filter */
+    param->bEnableLoopFilter = 1;
     
-    param->bRDLevel = X265_FULL_RDO;
-
-    param->bFrameAdaptive = X265_B_ADAPT_FAST;
-    param->lookaheadDepth = 10;
-    param->bframes = 3;
-    param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
-    param->keyframeMin = 0;
-    param->keyframeMax = 250;
-
+    /*SAO Loop Filter */
+    param->bEnableSAO = 1;
+    param->saoLcuBasedOptimization = 1;
+    
+    /* Rate control options */
     param->rc.bitrate = 0;
     param->rc.rateTolerance = 0.1;
     param->rc.qCompress = 0.6;
