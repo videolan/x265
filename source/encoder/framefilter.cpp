@@ -248,13 +248,13 @@ void FrameFilter::processRowPost(int row)
 
         for (int y = 0; y < recon->getLumaMarginY(); y++)
         {
-            memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(Pel));
+            memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(pixel));
         }
 
         for (int y = 0; y < recon->getChromaMarginY(); y++)
         {
-            memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(Pel));
-            memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(Pel));
+            memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(pixel));
+            memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(pixel));
         }
     }
 
@@ -269,13 +269,13 @@ void FrameFilter::processRowPost(int row)
 
         for (int y = 0; y < recon->getLumaMarginY(); y++)
         {
-            memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(Pel));
+            memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
         }
 
         for (int y = 0; y < recon->getChromaMarginY(); y++)
         {
-            memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(Pel));
-            memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(Pel));
+            memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(pixel));
+            memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(pixel));
         }
     }
 
