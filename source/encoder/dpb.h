@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __DPB_H__
-#define __DPB_H__
+#ifndef X265_DPB_H
+#define X265_DPB_H
 
 #include "TLibCommon/TComList.h"
 
@@ -75,4 +75,4 @@ protected:
 };
 }
 
-#endif // __DPB_H__
+#endif // X265_DPB_H

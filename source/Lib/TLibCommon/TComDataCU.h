@@ -36,8 +36,8 @@
     \todo     not all entities are documented
 */
 
-#ifndef _TCOMDATACU_
-#define _TCOMDATACU_
+#ifndef X265_TCOMDATACU_H
+#define X265_TCOMDATACU_H
 
 #include <assert.h>
 
@@ -628,4 +628,4 @@ static inline bool lessThanRow(int addr, int val, int numUnitsPerRow)
 }
 //! \}
 
-#endif // ifndef _TCOMDATACU_
+#endif // ifndef X265_TCOMDATACU_H

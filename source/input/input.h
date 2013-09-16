@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _INPUT_H_
-#define _INPUT_H_
+#ifndef X265_INPUT_H
+#define X265_INPUT_H
 
 #include "x265.h"
 
@@ -67,4 +67,4 @@ public:
 };
 }
 
-#endif // _INPUT_H_
+#endif // ifndef X265_INPUT_H

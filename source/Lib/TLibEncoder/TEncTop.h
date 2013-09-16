@@ -35,8 +35,8 @@
     \brief    encoder class (header)
 */
 
-#ifndef __TENCTOP__
-#define __TENCTOP__
+#ifndef X265_TENCTOP_H
+#define X265_TENCTOP_H
 
 #include "x265.h"
 
@@ -118,4 +118,4 @@ protected:
 }
 //! \}
 
-#endif // __TENCTOP__
+#endif // ifndef X265_TENCTOP_H

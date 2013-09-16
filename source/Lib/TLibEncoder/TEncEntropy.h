@@ -35,8 +35,8 @@
     \brief    entropy encoder class (header)
 */
 
-#ifndef __TENCENTROPY__
-#define __TENCENTROPY__
+#ifndef X265_TENCENTROPY_H
+#define X265_TENCENTROPY_H
 
 #include "TLibCommon/TComSlice.h"
 #include "TLibCommon/TComDataCU.h"
@@ -211,4 +211,4 @@ public:
 }
 //! \}
 
-#endif // __TENCENTROPY__
+#endif // ifndef X265_TENCENTROPY_H

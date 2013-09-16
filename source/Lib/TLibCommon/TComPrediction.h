@@ -35,8 +35,8 @@
     \brief    prediction class (header)
 */
 
-#ifndef __TCOMPREDICTION__
-#define __TCOMPREDICTION__
+#ifndef X265_TCOMPREDICTION_H
+#define X265_TCOMPREDICTION_H
 
 // Include files
 #include "TComPic.h"
@@ -125,4 +125,4 @@ public:
 }
 //! \}
 
-#endif // __TCOMPREDICTION__
+#endif // ifndef X265_TCOMPREDICTION_H

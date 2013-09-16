@@ -35,8 +35,8 @@
     \brief    picture symbol class (header)
 */
 
-#ifndef __TCOMPICSYM__
-#define __TCOMPICSYM__
+#ifndef X265_TCOMPICSYM_H
+#define X265_TCOMPICSYM_H
 
 // Include files
 #include "CommonDef.h"
@@ -115,4 +115,4 @@ public:
 }
 //! \}
 
-#endif // __TCOMPICSYM__
+#endif // ifndef X265_TCOMPICSYM_H

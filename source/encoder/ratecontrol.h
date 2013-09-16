@@ -22,8 +22,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __RATECONTROL__
-#define __RATECONTROL__
+#ifndef X265_RATECONTROL_H
+#define X265_RATECONTROL_H
 
 #include "TLibCommon/CommonDef.h"
 
@@ -97,4 +97,4 @@ protected:
 };
 }
 
-#endif // ifndef __RATECONTROL__
+#endif // ifndef X265_RATECONTROL_H

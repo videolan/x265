@@ -36,8 +36,8 @@
  \brief    estimation part of sample adaptive offset class (header)
  */
 
-#ifndef __TENCSAMPLEADAPTIVEOFFSET__
-#define __TENCSAMPLEADAPTIVEOFFSET__
+#ifndef X265_TENCSAMPLEADAPTIVEOFFSET_H
+#define X265_TENCSAMPLEADAPTIVEOFFSET_H
 
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 #include "TLibCommon/TComPic.h"
@@ -122,4 +122,4 @@ public:
 }
 //! \}
 
-#endif // ifndef __TENCSAMPLEADAPTIVEOFFSET__
+#endif // ifndef X265_TENCSAMPLEADAPTIVEOFFSET_H

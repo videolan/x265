@@ -36,8 +36,8 @@
     \todo     number of context models is not matched to actual use, should be fixed
 */
 
-#ifndef __CONTEXTTABLES__
-#define __CONTEXTTABLES__
+#ifndef X265_CONTEXTTABLES_H
+#define X265_CONTEXTTABLES_H
 
 //! \ingroup TLibCommon
 //! \{
@@ -320,4 +320,4 @@ static const UChar
 }
 //! \}
 
-#endif // ifndef __CONTEXTTABLES__
+#endif // ifndef X265_CONTEXTTABLES_H

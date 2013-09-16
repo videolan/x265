@@ -31,8 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SEI_
-#define _SEI_ 1
+#ifndef X265_SEI_H
+#define X265_SEI_H
 
 #include <list>
 #include <vector>
@@ -309,4 +309,4 @@ void deleteSEIs(SEIMessages &seiList);
 }
 //! \}
 
-#endif // ifndef _SEI_
+#endif // ifndef X265_SEI_H

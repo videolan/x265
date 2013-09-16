@@ -31,8 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SEI_WRITE_
-#define _SEI_WRITE_
+#ifndef X265_SEIWRITE_H
+#define X265_SEIWRITE_H
 
 #include "SyntaxElementWriter.h"
 #include "TLibCommon/SEI.h"
@@ -71,4 +71,4 @@ protected:
 }
 //! \}
 
-#endif // ifndef _SEI_WRITE_
+#endif // ifndef X265_SEIWRITE_H

@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-#ifndef _WAVEFRONT_H_
-#define _WAVEFRONT_H_
+#ifndef X265_WAVEFRONT_H
+#define X265_WAVEFRONT_H
 
 #include "threadpool.h"
 #include <stdint.h>
@@ -79,4 +79,4 @@ public:
 };
 } // end namespace x265
 
-#endif // ifndef _WAVEFRONT_H_
+#endif // ifndef X265_WAVEFRONT_H

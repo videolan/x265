@@ -35,8 +35,8 @@
     \brief    binary entropy encoder interface
 */
 
-#ifndef __TENC_BIN_CODER__
-#define __TENC_BIN_CODER__
+#ifndef X265_TENCBINCODER_H
+#define X265_TENCBINCODER_H
 
 #include "TLibCommon/ContextModel.h"
 #include "TLibCommon/TComBitStream.h"
@@ -80,4 +80,4 @@ public:
 }
 //! \}
 
-#endif // ifndef __TENC_BIN_CODER__
+#endif // ifndef X265_TENCBINCODER_H

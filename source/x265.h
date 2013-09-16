@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _X265_H_
-#define _X265_H_
+#ifndef X265_X265_H
+#define X265_X265_H
 
 #include <stdint.h>
 
@@ -348,4 +348,4 @@ void x265_cleanup(void);
 }
 #endif
 
-#endif // _X265_H_
+#endif // X265_X265_H

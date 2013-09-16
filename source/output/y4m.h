@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _Y4M_H_
-#define _Y4M_H_
+#ifndef X265_Y4M_H
+#define X265_Y4M_H
 
 #include "output.h"
 #include <fstream>
@@ -60,4 +60,4 @@ public:
 };
 }
 
-#endif // _Y4M_H_
+#endif // ifndef X265_Y4M_H

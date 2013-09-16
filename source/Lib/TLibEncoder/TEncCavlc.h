@@ -35,8 +35,8 @@
     \brief    CAVLC encoder class (header)
 */
 
-#ifndef __TENCCAVLC__
-#define __TENCCAVLC__
+#ifndef X265_TENCCAVLC_H
+#define X265_TENCCAVLC_H
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComBitStream.h"
@@ -158,4 +158,4 @@ public:
 }
 //! \}
 
-#endif // !defined(_TENCCAVLC_)
+#endif // ifndef X265_TENCCAVLC_H

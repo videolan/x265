@@ -31,8 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NAL_
-#define _NAL_ 1
+#ifndef X265_NAL_H
+#define X265_NAL_H
 
 #include "CommonDef.h"
 #include "x265.h"
@@ -118,4 +118,4 @@ struct NALUnitEBSP : public NALUnit
 }
 //! \}
 
-#endif // ifndef _NAL_
+#endif // ifndef X265_NAL_H

@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __MOTIONESTIMATE__
-#define __MOTIONESTIMATE__
+#ifndef X265_MOTIONESTIMATE_H
+#define X265_MOTIONESTIMATE_H
 
 #include "primitives.h"
 #include "reference.h"
@@ -110,4 +110,4 @@ protected:
 };
 }
 
-#endif // ifndef __MOTIONESTIMATE__
+#endif // ifndef X265_MOTIONESTIMATE_H

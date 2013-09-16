@@ -23,8 +23,8 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-#ifndef _THREADING_H_
-#define _THREADING_H_
+#ifndef X265_THREADING_H
+#define X265_THREADING_H
 
 #ifdef _WIN32
 #include <windows.h>
@@ -315,4 +315,4 @@ FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
 
 #endif // ifdef __GNUC__
 
-#endif // ifndef _THREADING_H_
+#endif // ifndef X265_THREADING_H

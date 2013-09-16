@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _LOOKAHEAD_H
-#define _LOOKAHEAD_H 1
+#ifndef X265_LOWRES_H
+#define X265_LOWRES_H 
 
 #include "TLibCommon/TComPicYuv.h"
 #include "common.h"
@@ -68,4 +68,4 @@ struct Lowres : public ReferencePlanes
 };
 }
 
-#endif // _LOOKAHEAD_H
+#endif // ifndef X265_LOWRES_H

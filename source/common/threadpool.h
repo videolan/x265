@@ -23,8 +23,8 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-#ifndef _THREADPOOL_H_
-#define _THREADPOOL_H_
+#ifndef X265_THREADPOOL_H
+#define X265_THREADPOOL_H
 
 #include <stdint.h>
 
@@ -106,4 +106,4 @@ public:
 };
 } // end namespace x265
 
-#endif // ifndef _THREADPOOL_H_
+#endif // ifndef X265_THREADPOOL_H

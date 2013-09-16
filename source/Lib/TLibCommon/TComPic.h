@@ -35,8 +35,8 @@
     \brief    picture class (header)
 */
 
-#ifndef __TCOMPIC__
-#define __TCOMPIC__
+#ifndef X265_TCOMPIC_H
+#define X265_TCOMPIC_H
 
 // Include files
 #include "CommonDef.h"
@@ -147,4 +147,4 @@ public:
 }
 //! \}
 
-#endif // __TCOMPIC__
+#endif // ifndef X265_TCOMPIC_H

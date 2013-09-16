@@ -35,8 +35,8 @@
     \brief    context model 3D buffer class (header)
 */
 
-#ifndef _HM_CONTEXT_MODEL_3DBUFFER_H_
-#define _HM_CONTEXT_MODEL_3DBUFFER_H_
+#ifndef X265_CONTEXTMODEL3DBUFFER_H
+#define X265_CONTEXTMODEL3DBUFFER_H
 
 #include <stdio.h>
 #include <assert.h>
@@ -106,4 +106,4 @@ public:
 }
 //! \}
 
-#endif // _HM_CONTEXT_MODEL_3DBUFFER_H_
+#endif // ifndef X265_CONTEXTMODEL3DBUFFER_H

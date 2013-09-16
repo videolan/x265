@@ -35,8 +35,8 @@
     \brief    encoder analyzer class (header)
 */
 
-#ifndef __TENCANALYZE__
-#define __TENCANALYZE__
+#ifndef X265_TENCANALYZE_H
+#define X265_TENCANALYZE_H
 
 #include "TLibCommon/CommonDef.h"
 
@@ -153,4 +153,4 @@ public:
 };
 }
 
-#endif
+#endif // ifndef X265_TENCANALYZE_H

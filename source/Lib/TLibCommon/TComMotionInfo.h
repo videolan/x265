@@ -36,8 +36,8 @@
     \todo     TComMvField seems to be better to be inherited from MV
 */
 
-#ifndef __TCOMMOTIONINFO__
-#define __TCOMMOTIONINFO__
+#ifndef X265_TCOMMOTIONINFO_H
+#define X265_TCOMMOTIONINFO_H
 
 #include <memory.h>
 #include "CommonDef.h"
@@ -157,4 +157,4 @@ public:
 
 //! \}
 
-#endif // __TCOMMOTIONINFO__
+#endif // ifndef X265_TCOMMOTIONINFO_H

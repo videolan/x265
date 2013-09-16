@@ -23,8 +23,8 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-#ifndef __TSHORTYUV__
-#define __TSHORTYUV__
+#ifndef X265_TSHORTYUV_H
+#define X265_TSHORTYUV_H
 
 #include "TLibCommon/TComRom.h"
 
@@ -111,4 +111,4 @@ public:
 };
 }
 
-#endif //end __TSHORTYUV__
+#endif // ifndef X265_TSHORTYUV_H

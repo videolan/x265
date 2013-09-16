@@ -22,8 +22,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __FRAMEENCODER__
-#define __FRAMEENCODER__
+#ifndef X265_FRAMEENCODER_H
+#define X265_FRAMEENCODER_H
 
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
@@ -140,4 +140,4 @@ protected:
 };
 }
 
-#endif // ifndef __FRAMEENCODER__
+#endif // ifndef X265_FRAMEENCODER_H

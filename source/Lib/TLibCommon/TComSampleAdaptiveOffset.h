@@ -35,8 +35,8 @@
     \brief    sample adaptive offset class (header)
 */
 
-#ifndef __TCOMSAMPLEADAPTIVEOFFSET__
-#define __TCOMSAMPLEADAPTIVEOFFSET__
+#ifndef X265_TCOMSAMPLEADAPTIVEOFFSET_H
+#define X265_TCOMSAMPLEADAPTIVEOFFSET_H
 
 #include "CommonDef.h"
 #include "TComPic.h"
@@ -223,4 +223,4 @@ void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
 }
 
 //! \}
-#endif // ifndef __TCOMSAMPLEADAPTIVEOFFSET__
+#endif // ifndef X265_TCOMSAMPLEADAPTIVEOFFSET_H

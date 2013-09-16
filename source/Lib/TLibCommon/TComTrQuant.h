@@ -35,8 +35,8 @@
     \brief    transform and quantization class (header)
 */
 
-#ifndef __TCOMTRQUANT__
-#define __TCOMTRQUANT__
+#ifndef X265_TCOMTRQUANT_H
+#define X265_TCOMTRQUANT_H
 
 #include "CommonDef.h"
 #include "TComYuv.h"
@@ -227,4 +227,4 @@ private:
 }
 //! \}
 
-#endif // __TCOMTRQUANT__
+#endif // ifndef X265_TCOMTRQUANT_H

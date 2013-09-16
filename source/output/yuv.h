@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _YUV_H_
-#define _YUV_H_
+#ifndef X265_YUV_H
+#define X265_YUV_H
 
 #include "output.h"
 #include <fstream>
@@ -59,4 +59,4 @@ public:
 };
 }
 
-#endif // _YUV_H_
+#endif // ifndef X265_YUV_H

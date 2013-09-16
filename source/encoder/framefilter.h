@@ -22,8 +22,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __FRAMEFILTER__
-#define __FRAMEFILTER__
+#ifndef X265_FRAMEFILTER_H
+#define X265_FRAMEFILTER_H
 
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComLoopFilter.h"
@@ -75,4 +75,4 @@ public:
 };
 }
 
-#endif // ifndef __FRAMEFILTER__
+#endif // ifndef X265_FRAMEFILTER_H

@@ -35,8 +35,8 @@
     \brief    Context-adaptive entropy encoder class (header)
 */
 
-#ifndef __TENCSBAC__
-#define __TENCSBAC__
+#ifndef X265_TENCSBAC_H
+#define X265_TENCSBAC_H
 
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/ContextTables.h"
@@ -216,4 +216,4 @@ private:
 }
 //! \}
 
-#endif // !defined(__TENCSBAC__)
+#endif // ifndef X265_TENCSBAC_H

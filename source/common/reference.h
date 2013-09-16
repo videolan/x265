@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __REFERENCE__
-#define __REFERENCE__
+#ifndef X265_REFERENCE_H
+#define X265_REFERENCE_H
 
 #include "primitives.h"
 
@@ -71,4 +71,4 @@ protected:
 };
 }
 
-#endif // ifndef __REFERENCE__
+#endif // ifndef X265_REFERENCE_H

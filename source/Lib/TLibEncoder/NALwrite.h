@@ -31,8 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NAL_WRITE_
-#define _NAL_WRITE_ 1
+#ifndef X265_NALWRITE_H
+#define X265_NALWRITE_H
 
 #include <ostream>
 
@@ -88,4 +88,4 @@ void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc);
 
 //! \}
 
-#endif // ifndef _NAL_WRITE_
+#endif // ifndef X265_NALWRITE_H

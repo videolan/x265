@@ -35,8 +35,8 @@
     \brief    encoder configuration class (header)
 */
 
-#ifndef __TENCCFG__
-#define __TENCCFG__
+#ifndef X265_TENCCFG_H
+#define X265_TENCCFG_H
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComSlice.h"
@@ -308,4 +308,4 @@ public:
 }
 //! \}
 
-#endif // __TENCCFG__
+#endif // ifndef X265_TENCCFG_H

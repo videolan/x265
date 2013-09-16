@@ -35,8 +35,8 @@
     \brief    deblocking filter (header)
 */
 
-#ifndef __TCOMLOOPFILTER__
-#define __TCOMLOOPFILTER__
+#ifndef X265_TCOMLOOPFILTER_H
+#define X265_TCOMLOOPFILTER_H
 
 #include "CommonDef.h"
 #include "TComPic.h"
@@ -141,4 +141,4 @@ public:
 }
 //! \}
 
-#endif // ifndef __TCOMLOOPFILTER__
+#endif // ifndef X265_TCOMLOOPFILTER_H

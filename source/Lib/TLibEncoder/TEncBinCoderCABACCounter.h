@@ -35,8 +35,8 @@
     \brief    binary entropy encoder of CABAC
 */
 
-#ifndef __TENC_BIN_CODER_CABAC_COUNTER__
-#define __TENC_BIN_CODER_CABAC_COUNTER__
+#ifndef X265_TENCBINCODERCABACCOUNTER_H
+#define X265_TENCBINCODERCABACCOUNTER_H
 
 #include "TEncBinCoderCABAC.h"
 
@@ -65,4 +65,4 @@ public:
 }
 //! \}
 
-#endif // ifndef __TENC_BIN_CODER_CABAC_COUNTER__
+#endif // ifndef X265_TENCBINCODERCABACCOUNTER_H

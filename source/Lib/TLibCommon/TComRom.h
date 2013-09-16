@@ -35,8 +35,8 @@
     \brief    global variables & functions (header)
 */
 
-#ifndef __TCOMROM__
-#define __TCOMROM__
+#ifndef X265_TCOMROM_H
+#define X265_TCOMROM_H
 
 #include "CommonDef.h"
 
@@ -300,4 +300,4 @@ extern const UChar g_lpsTable[64][4];
 extern const UChar g_renormTable[32];
 }
 
-#endif  //__TCOMROM__
+#endif  //ifndef X265_TCOMROM_H

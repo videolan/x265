@@ -35,8 +35,8 @@
     \brief    Define basic types, new types and enumerations
 */
 
-#ifndef _TYPEDEF__
-#define _TYPEDEF__
+#ifndef X265_TYPEDEF_H
+#define X265_TYPEDEF_H
 
 namespace x265 {
 // private namespace
@@ -205,4 +205,4 @@ enum Name
 }
 //! \}
 
-#endif // ifndef _TYPEDEF__
+#endif // ifndef X265_TYPEDEF_H
