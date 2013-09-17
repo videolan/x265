@@ -952,7 +952,7 @@ void FrameEncoder::processRowEncoder(int row)
                 m_rows[row + 1].m_completed + 2 <= m_rows[row].m_completed)
             {
                 m_rows[row + 1].m_active = true;
-                WaveFront::enqueueRow(row + 1);
+                enqueueRowEncoder(row + 1);
             }
         }
 
@@ -968,13 +968,16 @@ void FrameEncoder::processRowEncoder(int row)
     // Run row-wise loop filters
     if (row >= m_filterRowDelay)
     {
-        m_frameFilter.processRow(row - m_filterRowDelay);
+        enableRowFilter(row - m_filterRowDelay);
+
+        // NOTE: Active Filter to first row (row 0)
+        if (row == m_filterRowDelay)
+            enqueueRowFilter(0);
     }
     if (row == m_numRows - 1)
     {
         for(int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
-            m_frameFilter.processRow(i);
-        m_completionEvent.trigger();
+            enableRowFilter(i);
     }
 }
 

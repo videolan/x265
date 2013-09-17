@@ -107,7 +107,7 @@ public:
 
             // NOTE: Active next row
             if (realRow != m_numRows - 1)
-                enableRowFilter(realRow + 1);
+                enqueueRowFilter(realRow + 1);
             else
                 m_completionEvent.trigger();
         }

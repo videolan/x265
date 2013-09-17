@@ -118,16 +118,11 @@ bool WaveFront::findJob()
         while (m_queuedBitmap[w])
         {
             uint64_t oldval = m_queuedBitmap[w];
-            if (oldval == 0) // race condition
+            uint64_t mask = m_queuedBitmap[w] & m_enableBitmap[w];
+            if (mask == 0) // race condition
                 break;
 
-            CTZ64(id, oldval);
-
-            // NOTE: if the lowest row is unavailable, so we don't check higher row
-            if (!(m_enableBitmap[w] & (1LL << id)))
-            {
-                return false;
-            }
+            CTZ64(id, mask);
 
             uint64_t newval = oldval & ~(1LL << id);
             if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
