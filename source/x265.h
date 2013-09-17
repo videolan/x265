@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#if __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -344,7 +344,7 @@ void    x265_encoder_close(x265_t *, double *globalPsnr);
  */
 void x265_cleanup(void);
 
-#if __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
