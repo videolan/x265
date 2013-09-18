@@ -37,6 +37,7 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPic.h"
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include "common.h"
 
@@ -47,7 +48,8 @@
 #include "frameencoder.h"
 #include "ratecontrol.h"
 #include "dpb.h"
-#include "TLibCommon/TComRom.h"
+
+#include <cstdlib>
 #include <math.h> // log10
 
 using namespace x265;
@@ -87,10 +89,9 @@ void TEncTop::create()
 {
     if (!primitives.sad[0])
     {
-        printf("Primitives must be initialized before encoder is created\n");
-        // we call exit() here because this should be an impossible condition when
-        // using our public API, and indicates a serious bug.
-        exit(1);
+        // this should be an impossible condition when using our public API, and indicates a serious bug.
+        x265_log(&param, X265_LOG_ERROR, "Primitives must be initialized before encoder is created\n");
+        abort();
     }
 
     m_frameEncoder = new FrameEncoder[param.frameNumThreads];
