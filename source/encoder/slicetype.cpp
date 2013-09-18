@@ -363,8 +363,11 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     for (int i = 0; i < 1 + bBidir; i++)
     {
         if (!bDoSearch[i])
+        {
+            /* Use previously calculated cost */
+            COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
             continue;
-
+        }
         int numc = 0;
         MV mvc[4], mvp;
         MV *fenc_mv = fenc_mvs[i];
