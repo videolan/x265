@@ -77,12 +77,9 @@ FILE * fp1 = NULL;
 #endif
 
 /* Ctrl-C handler */
-static volatile int b_ctrl_c = 0;
-static int          b_exit_on_ctrl_c = 0;
+static volatile sig_atomic_t b_ctrl_c /* = 0 */;
 static void sigint_handler(int)
 {
-    if (b_exit_on_ctrl_c)
-        exit(0);
     b_ctrl_c = 1;
 }
 
