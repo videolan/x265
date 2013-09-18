@@ -334,7 +334,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     Lowres *fref1 = frames[p1];
     Lowres *fenc  = frames[b];
 
-    const bool bBidir = (b < p1);
+    const int bBidir = (b < p1);
     const int cuXY = cux + cuy * widthInCU;
     const int cuSize = X265_LOWRES_CU_SIZE;
     const int pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
