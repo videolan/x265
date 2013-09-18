@@ -37,6 +37,8 @@
 #include "PPA/ppa.h"
 
 #include <signal.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -502,7 +504,8 @@ int main(int argc, char **argv)
     }
 
     /* Control-C handler */
-    signal(SIGINT, sigint_handler);
+    if (signal(SIGINT, sigint_handler) == SIG_ERR)
+        cliopt.log(X265_LOG_ERROR, "Unable to register CTRL+C handler, error %d\n", errno);
 
     x265_picture_t pic_orig, pic_out;
     x265_picture_t *pic_in = &pic_orig;
