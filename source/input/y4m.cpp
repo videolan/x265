@@ -42,7 +42,7 @@ Y4MInput::Y4MInput(const char *filename)
 Y4MInput::~Y4MInput()
 {
     ifs.close();
-    if (buf) delete[] buf;
+    delete[] buf;
 }
 
 void Y4MInput::parseHeader()

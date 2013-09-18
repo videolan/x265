@@ -54,16 +54,8 @@ bool WaveFront::init(int numRows)
 
 WaveFront::~WaveFront()
 {
-    if (m_queuedBitmap)
-    {
-        delete[] m_queuedBitmap;
-        m_queuedBitmap = NULL;
-    }
-    if (m_enableBitmap)
-    {
-        delete[] m_enableBitmap;
-        m_enableBitmap = NULL;
-    }
+    delete[] m_queuedBitmap;
+    delete[] m_enableBitmap;
 }
 
 void WaveFront::clearEnabledRowMask()

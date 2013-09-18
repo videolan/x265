@@ -81,11 +81,8 @@ public:
         // this object's vtable to be destroyed
         JobProvider::flush();
 
-        if (this->cu)
-            delete[] this->cu;
-
-        if (this->row)
-            delete[] this->row;
+        delete[] this->cu;
+        delete[] this->row;
     }
 
     void initialize(int cols, int rows);

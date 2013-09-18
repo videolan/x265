@@ -40,7 +40,7 @@ YUVInput::YUVInput(const char *filename)
 YUVInput::~YUVInput()
 {
     ifs.close();
-    if (buf) delete[] buf;
+    delete[] buf;
 }
 
 int YUVInput::guessFrameCount()

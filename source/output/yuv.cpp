@@ -40,7 +40,7 @@ YUVOutput::YUVOutput(const char *filename, int w, int h, int d)
 YUVOutput::~YUVOutput()
 {
     ofs.close();
-    if (buf) delete [] buf;
+    delete [] buf;
 }
 
 bool YUVOutput::writePicture(const x265_picture_t& pic)

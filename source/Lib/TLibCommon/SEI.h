@@ -198,14 +198,8 @@ public:
 
     virtual ~SEIPictureTiming()
     {
-        if (m_numNalusInDuMinus1 != NULL)
-        {
-            delete m_numNalusInDuMinus1;
-        }
-        if (m_duCpbRemovalDelayMinus1  != NULL)
-        {
-            delete m_duCpbRemovalDelayMinus1;
-        }
+        delete m_numNalusInDuMinus1;
+        delete m_duCpbRemovalDelayMinus1;
     }
 
     UInt  m_picStruct;

@@ -111,11 +111,7 @@ TEncSearch::TEncSearch()
 
 TEncSearch::~TEncSearch()
 {
-    if (m_tempPel)
-    {
-        delete [] m_tempPel;
-        m_tempPel = NULL;
-    }
+    delete [] m_tempPel;
 
     if (m_cfg)
     {

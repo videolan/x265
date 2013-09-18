@@ -96,10 +96,6 @@ void BitCost::destroy()
         }
     }
 
-    if (s_bitsizes)
-    {
-        delete [] s_bitsizes;
-
-        s_bitsizes = 0;
-    }
+    delete [] s_bitsizes;
+    s_bitsizes = 0;
 }

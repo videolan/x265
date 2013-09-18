@@ -97,10 +97,7 @@ void TComPicSym::create(int picWidth, int picHeight, UInt maxWidth, UInt maxHeig
 
 void TComPicSym::destroy()
 {
-    if (m_slice)
-    {
-        delete m_slice;
-    }
+    delete m_slice;
     m_slice = NULL;
 
     for (int i = 0; i < m_numCUsInFrame; i++)

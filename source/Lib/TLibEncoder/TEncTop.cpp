@@ -134,11 +134,8 @@ void TEncTop::destroy()
         delete m_lookahead;
     }
 
-    if (m_dpb)
-        delete m_dpb;
-
-    if (m_rateControl)
-        delete m_rateControl;
+    delete m_dpb;
+    delete m_rateControl;
 
     // thread pool release should always happen last
     if (m_threadPool)
