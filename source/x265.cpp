@@ -494,12 +494,17 @@ int main(int argc, char **argv)
     CLIOptions   cliopt;
 
     if (cliopt.parse(argc, argv, &param))
+    {
+        cliopt.destroy();
         exit(1);
+    }
 
     x265_t *encoder = x265_encoder_open(&param);
     if (!encoder)
     {
         cliopt.log(X265_LOG_ERROR, "failed to open encoder\n");
+        cliopt.destroy();
+        x265_cleanup();
         exit(1);
     }
 
