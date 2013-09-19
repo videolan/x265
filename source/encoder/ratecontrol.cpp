@@ -221,7 +221,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
             /* use framesDone instead of POC as poc count is not serial with bframes enabled */
             double timeDone = (double)(framesDone - frameThreads + 1) / framerate;
             wantedBits = timeDone * bitrate;
-            if (wantedBits > 0)
+            if (wantedBits > 0 && totalBits > 0)
             {
                 abrBuffer *= X265_MAX(1, sqrt(timeDone));
                 overflow = Clip3(.5, 2.0, 1.0 + (totalBits - wantedBits) / abrBuffer);
@@ -239,24 +239,30 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         {
             double lqmin = 0, lqmax = 0;
 
-            /* Clip the qp of 1st frame to ensure it doesnt detoriate the quality */
-            if (curFrame->getPOC() == 0)
+            /* Clip the qp of 1st 'N' frames running parallely to ensure it doesnt detoriate the quality  */
+            if (totalBits == 0)
             {
                 lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
                 lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
             }
             /* Asymmetric clipping, because symmetric would prevent
              * overflow control in areas of rapidly oscillating complexity */
-            else if (curFrame->getPOC() > 0)
+            else
             {
                 lqmin = lastQScaleFor[pictType] / lstep;
                 lqmax = lastQScaleFor[pictType] * lstep;
             }
-            if (overflow > 1.1 && curFrame->getPOC() > 3)
+            /* Rate control needs to be more aggressive based on actual costs obtained for  previous encoded frame */
+            if (overflow > 1.1 && framesDone > 3)
+            {
                 lqmax *= lstep;
+                lqmin*= pow(lstep,1/frameThreads);
+            }
             else if (overflow < 0.9)
+            {
                 lqmin /= lstep;
-
+                lqmax /= pow(lstep,1/frameThreads);
+            }
             q = Clip3(lqmin, lqmax, q);
         }
 
