@@ -52,6 +52,7 @@ public:
 
     void processRow(int row);
     void processRowPost(int row);
+    void processSao(int row);
 
 protected:
 
@@ -63,6 +64,7 @@ public:
     TComLoopFilter              m_loopFilter;
     TEncSampleAdaptiveOffset    m_sao;
     int                         m_numRows;
+    int                         m_saoRowDelay;
 
     // SAO
     TEncEntropy                 m_entropyCoder;

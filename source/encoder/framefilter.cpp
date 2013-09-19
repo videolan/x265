@@ -42,9 +42,11 @@ void FrameFilter::destroy()
 {
     if (m_cfg->param.bEnableLoopFilter)
     {
-        assert(m_cfg->param.bEnableSAO);
         m_loopFilter.destroy();
+    }
 
+    if (m_cfg->param.bEnableSAO)
+    {
         // NOTE: I don't check sao flag since loopfilter and sao have same control status
         m_sao.destroy();
         m_sao.destroyEncBuffer();
@@ -62,6 +64,10 @@ void FrameFilter::init(TEncTop *top, int numRows, TEncSbac* rdGoOnSbacCoder)
     if (top->param.bEnableLoopFilter)
     {
         m_loopFilter.create(g_maxCUDepth);
+    }
+
+    if (top->param.bEnableSAO)
+    {
         m_sao.setSaoLcuBoundary(top->param.saoLcuBoundary);
         m_sao.setSaoLcuBasedOptimization(top->param.saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
@@ -74,6 +80,7 @@ void FrameFilter::start(TComPic *pic)
 {
     m_pic = pic;
 
+    m_saoRowDelay = m_cfg->param.bEnableLoopFilter ? 1 : 0;
     m_loopFilter.setCfg(pic->getSlice()->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
@@ -83,7 +90,10 @@ void FrameFilter::start(TComPic *pic)
     {
         m_sao.resetStats();
         m_sao.createPicSaoInfo(pic);
+    }
 
+    if (m_cfg->param.bEnableSAO)
+    {
         SAOParam* saoParam = pic->getPicSym()->getSaoParam();
         m_sao.resetSAOParam(saoParam);
         m_sao.rdoSaoUnitRowInit(saoParam);
@@ -92,7 +102,7 @@ void FrameFilter::start(TComPic *pic)
 
 void FrameFilter::end()
 {
-    if (m_cfg->param.bEnableLoopFilter)
+    if (m_cfg->param.bEnableSAO)
     {
         m_sao.destroyPicSaoInfo();
     }
@@ -102,14 +112,14 @@ void FrameFilter::processRow(int row)
 {
     PPAScopeEvent(Thread_filterCU);
 
-    if (!m_cfg->param.bEnableLoopFilter)
+    if (!m_cfg->param.bEnableLoopFilter && !m_cfg->param.bEnableSAO)
     {
         processRowPost(row);
         return;
     }
 
     // NOTE: We are here only active both of loopfilter and sao, the row 0 always finished, so we can safe to copy row[0]'s data
-    if (row == 0)
+    if (row == 0 && m_cfg->param.bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
         m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABACCounter*)((TEncSbac*)m_rdGoOnSbacCoderRow0->m_pcBinIf))->m_fracBits;
@@ -120,66 +130,43 @@ void FrameFilter::processRow(int row)
     const uint32_t lineStartCUAddr = row * numCols;
 
     // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-    if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
+    if (m_cfg->param.bEnableSAO && m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
     {
         m_sao.calcSaoStatsRowCus_BeforeDblk(m_pic, row);
     }
 
-    for (UInt col = 0; col < numCols; col++)
+    if (m_cfg->param.bEnableLoopFilter)
     {
-        const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* cu = m_pic->getCU(cuAddr);
-
-        m_loopFilter.loopFilterCU(cu, EDGE_VER);
-
-        if (col > 0)
+        for (UInt col = 0; col < numCols; col++)
         {
-            TComDataCU* cu_prev = m_pic->getCU(cuAddr - 1);
+            const uint32_t cuAddr = lineStartCUAddr + col;
+            TComDataCU* cu = m_pic->getCU(cuAddr);
+
+            m_loopFilter.loopFilterCU(cu, EDGE_VER);
+
+            if (col > 0)
+            {
+                TComDataCU* cu_prev = m_pic->getCU(cuAddr - 1);
+                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
+            }
+        }
+
+        {
+            TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
             m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
         }
     }
 
-    {
-        TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
-        m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
-    }
-
     // SAO
     SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
-    if (m_sao.getSaoLcuBasedOptimization())
+    if (m_cfg->param.bEnableSAO && m_sao.getSaoLcuBasedOptimization())
     {
         m_sao.rdoSaoUnitRow(saoParam, row);
 
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
-        if (row > 0)
+        if (row >= m_saoRowDelay)
         {
-            // NOTE: these flag is not use in this mode
-            assert(saoParam->oneUnitFlag[0] == false);
-            assert(saoParam->oneUnitFlag[1] == false);
-            assert(saoParam->oneUnitFlag[2] == false);
-
-            if (saoParam->bSaoFlag[0])
-            {
-                m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row - 1, 0);
-            }
-            if (saoParam->bSaoFlag[1])
-            {
-                m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row - 1, 1);
-                m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row - 1, 2);
-            }
-
-            // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
-            bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
-            if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-            {
-                for (UInt col = 0; col < numCols; col++)
-                {
-                    const uint32_t cuAddr = lineStartCUAddr - numCols + col;
-                    TComDataCU* cu = m_pic->getCU(cuAddr);
-
-                    xPCMCURestoration(cu, 0, 0);
-                }
-            }
+            processSao(row - m_saoRowDelay);
         }
     }
 
@@ -192,29 +179,13 @@ void FrameFilter::processRow(int row)
 
     if (row == m_numRows - 1)
     {
-        m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());
+        if (m_cfg->param.bEnableSAO)
+        {
+            m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());
 
-        // Process Last row of SAO
-        if (saoParam->bSaoFlag[0])
-        {
-            m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row, 0);
-        }
-        if (saoParam->bSaoFlag[1])
-        {
-            m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row, 1);
-            m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
-        }
-
-        // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
-        bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
-        if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-        {
-            for (UInt col = 0; col < numCols; col++)
+            for(int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
             {
-                const uint32_t cuAddr = lineStartCUAddr + col;
-                TComDataCU* cu = m_pic->getCU(cuAddr);
-
-                xPCMCURestoration(cu, 0, 0);
+                processSao(i);
             }
         }
 
@@ -282,5 +253,40 @@ void FrameFilter::processRowPost(int row)
     for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
     {
         m_pic->m_reconRowWait.trigger();
+    }
+}
+
+void FrameFilter::processSao(int row)
+{
+    const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
+    const uint32_t lineStartCUAddr = row * numCols;
+    SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
+
+    // NOTE: these flag is not use in this mode
+    assert(saoParam->oneUnitFlag[0] == false);
+    assert(saoParam->oneUnitFlag[1] == false);
+    assert(saoParam->oneUnitFlag[2] == false);
+
+    if (saoParam->bSaoFlag[0])
+    {
+        m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row, 0);
+    }
+    if (saoParam->bSaoFlag[1])
+    {
+        m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row, 1);
+        m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
+    }
+
+    // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
+    bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+    if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    {
+        for (UInt col = 0; col < numCols; col++)
+        {
+            const uint32_t cuAddr = lineStartCUAddr + col;
+            TComDataCU* cu = m_pic->getCU(cuAddr);
+
+            xPCMCURestoration(cu, 0, 0);
+        }
     }
 }
