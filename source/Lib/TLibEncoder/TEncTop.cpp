@@ -116,6 +116,12 @@ void TEncTop::destroy()
             // Ensure frame encoder is idle before destroying it
             AccessUnit tmp;
             m_frameEncoder[i].getEncodedPicture(tmp);
+            for (AccessUnit::const_iterator it = tmp.begin(); it != tmp.end(); it++)
+            {
+                const NALUnitEBSP& nalu = **it;
+                free(nalu.m_nalUnitData);
+            }
+
             m_frameEncoder[i].destroy();
         }
 
