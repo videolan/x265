@@ -680,7 +680,7 @@ int Lookahead::scenecut(int p0, int p1, bool bRealScenecut, int num_frames, int 
                 /* Any frame in between p0 and cur_p1 cannot be a real scenecut. */
                 for (int i = curp1; i > p0; i--)
                 {
-                    frames[i]->scenecut = 0;
+                    frames[i]->bScenecut = false;
                 }
         }
 
@@ -693,12 +693,12 @@ int Lookahead::scenecut(int p0, int p1, bool bRealScenecut, int num_frames, int 
         {
             if (origmaxp1 > maxSearch || (curp0 < maxp1 && scenecutInternal(curp0, maxp1, 0)))
                 /* If cur_p0 is the p0 of a scenecut, it cannot be the p1 of a scenecut. */
-                frames[curp0]->scenecut = 0;
+                frames[curp0]->bScenecut = false;
         }
     }
 
     /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts. */
-    if (!frames[p1]->scenecut)
+    if (!frames[p1]->bScenecut)
         return 0;
     return scenecutInternal(p0, p1, bRealScenecut);
 }
