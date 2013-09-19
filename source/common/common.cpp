@@ -163,7 +163,7 @@ void x265_param_default(x265_param_t *param)
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
     
-    /*SAO Loop Filter */
+    /* SAO Loop Filter */
     param->bEnableSAO = 1;
     param->saoLcuBasedOptimization = 1;
     

@@ -164,7 +164,7 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_B_ADAPT_FAST       1
 #define X265_B_ADAPT_TRELLIS    2
 
-#define X265_TYPE_AUTO          0x0000  /* Let x264 choose the right type */
+#define X265_TYPE_AUTO          0x0000  /* Let x265 choose the right type */
 #define X265_TYPE_IDR           0x0001
 #define X265_TYPE_I             0x0002
 #define X265_TYPE_P             0x0003
