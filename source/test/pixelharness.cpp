@@ -53,13 +53,13 @@ PixelHarness::PixelHarness()
     int bufsize = STRIDE * (maxheight + padrows) + INCR * ITERS;
 
     /* 64 pixels wide, 2k deep */
-    pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
-    pbuf2 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
-    pbuf3 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
-    pbuf4 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
+    pbuf1 = (pixel*)X265_MALLOC(pixel, bufsize);
+    pbuf2 = (pixel*)X265_MALLOC(pixel, bufsize);
+    pbuf3 = (pixel*)X265_MALLOC(pixel, bufsize);
+    pbuf4 = (pixel*)X265_MALLOC(pixel, bufsize);
 
-    sbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), bufsize, 32);
-    sbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), bufsize, 32);
+    sbuf1 = (short*)X265_MALLOC(short, bufsize);
+    sbuf2 = (short*)X265_MALLOC(short, bufsize);
 
     if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2)
     {
@@ -81,12 +81,12 @@ PixelHarness::PixelHarness()
 
 PixelHarness::~PixelHarness()
 {
-    TestHarness::alignedFree(pbuf1);
-    TestHarness::alignedFree(pbuf2);
-    TestHarness::alignedFree(pbuf3);
-    TestHarness::alignedFree(pbuf4);
-    TestHarness::alignedFree(sbuf1);
-    TestHarness::alignedFree(sbuf2);
+    X265_FREE(pbuf1);
+    X265_FREE(pbuf2);
+    X265_FREE(pbuf3);
+    X265_FREE(pbuf4);
+    X265_FREE(sbuf1);
+    X265_FREE(sbuf2);
 }
 
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)

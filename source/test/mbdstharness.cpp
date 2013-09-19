@@ -57,22 +57,22 @@ const DctConf_t IDctConf_infos[] =
 
 MBDstHarness::MBDstHarness()
 {
-    mbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
-    mbufdct = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
-    mbufidct = (int*)TestHarness::alignedMalloc(sizeof(int),   mb_t_size, 32);
+    mbuf1 = (short*)X265_MALLOC(short, mb_t_size);
+    mbufdct = (short*)X265_MALLOC(short, mb_t_size);
+    mbufidct = (int*)X265_MALLOC(int,   mb_t_size);
 
-    mbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
-    mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
-    mbuf4 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
+    mbuf2 = (short*)X265_MALLOC(short, mem_cmp_size);
+    mbuf3 = (short*)X265_MALLOC(short, mem_cmp_size);
+    mbuf4 = (short*)X265_MALLOC(short, mem_cmp_size);
 
-    mintbuf1 = (int*)TestHarness::alignedMalloc(sizeof(int), mb_t_size, 32);
-    mintbuf2 = (int*)TestHarness::alignedMalloc(sizeof(int), mb_t_size, 32);
-    mintbuf3 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
-    mintbuf4 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
-    mintbuf5 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
-    mintbuf6 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
-    mintbuf7 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
-    mintbuf8 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
+    mintbuf1 = (int*)X265_MALLOC(int, mb_t_size);
+    mintbuf2 = (int*)X265_MALLOC(int, mb_t_size);
+    mintbuf3 = (int*)X265_MALLOC(int, mem_cmp_size);
+    mintbuf4 = (int*)X265_MALLOC(int, mem_cmp_size);
+    mintbuf5 = (int*)X265_MALLOC(int, mem_cmp_size);
+    mintbuf6 = (int*)X265_MALLOC(int, mem_cmp_size);
+    mintbuf7 = (int*)X265_MALLOC(int, mem_cmp_size);
+    mintbuf8 = (int*)X265_MALLOC(int, mem_cmp_size);
 
     if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct)
     {
@@ -117,21 +117,21 @@ MBDstHarness::MBDstHarness()
 
 MBDstHarness::~MBDstHarness()
 {
-    TestHarness::alignedFree(mbuf1);
-    TestHarness::alignedFree(mbuf2);
-    TestHarness::alignedFree(mbuf3);
-    TestHarness::alignedFree(mbuf4);
-    TestHarness::alignedFree(mbufdct);
-    TestHarness::alignedFree(mbufidct);
+    X265_FREE(mbuf1);
+    X265_FREE(mbuf2);
+    X265_FREE(mbuf3);
+    X265_FREE(mbuf4);
+    X265_FREE(mbufdct);
+    X265_FREE(mbufidct);
 
-    TestHarness::alignedFree(mintbuf1);
-    TestHarness::alignedFree(mintbuf2);
-    TestHarness::alignedFree(mintbuf3);
-    TestHarness::alignedFree(mintbuf4);
-    TestHarness::alignedFree(mintbuf5);
-    TestHarness::alignedFree(mintbuf6);
-    TestHarness::alignedFree(mintbuf7);
-    TestHarness::alignedFree(mintbuf8);
+    X265_FREE(mintbuf1);
+    X265_FREE(mintbuf2);
+    X265_FREE(mintbuf3);
+    X265_FREE(mintbuf4);
+    X265_FREE(mintbuf5);
+    X265_FREE(mintbuf6);
+    X265_FREE(mintbuf7);
+    X265_FREE(mintbuf8);
 }
 
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
