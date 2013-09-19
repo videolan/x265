@@ -360,44 +360,46 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     mvmax.x = (uint16_t)((widthInCU - cux - 1) * cuSize + 8);
     mvmax.y = (uint16_t)((heightInCU - cuy - 1) * cuSize + 8);
 
-    for (int i = 0; i < 1 + bBidir; i++)
+    if (p0 != p1)
     {
-        if (!bDoSearch[i])
+        for (int i = 0; i < 1 + bBidir; i++)
         {
-            /* Use previously calculated cost */
-            COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
-            continue;
-        }
-        int numc = 0;
-        MV mvc[4], mvp;
-        MV *fenc_mv = fenc_mvs[i];
+            if (!bDoSearch[i])
+            {
+                /* Use previously calculated cost */
+                COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
+                continue;
+            }
+            int numc = 0;
+            MV mvc[4], mvp;
+            MV *fenc_mv = fenc_mvs[i];
 
-        /* Reverse-order MV prediction. */
-        mvc[0] = 0;
-        mvc[2] = 0;
+            /* Reverse-order MV prediction. */
+            mvc[0] = 0;
+            mvc[2] = 0;
 #define MVC(mv) mvc[numc++] = mv;
-        if (cux < widthInCU - 1)
-            MVC(fenc_mv[1]);
-        if (cuy < heightInCU - 1)
-        {
-            MVC(fenc_mv[widthInCU]);
-            if (cux > 0)
-                MVC(fenc_mv[widthInCU - 1]);
             if (cux < widthInCU - 1)
-                MVC(fenc_mv[widthInCU + 1]);
-        }
+                MVC(fenc_mv[1]);
+            if (cuy < heightInCU - 1)
+            {
+                MVC(fenc_mv[widthInCU]);
+                if (cux > 0)
+                    MVC(fenc_mv[widthInCU - 1]);
+                if (cux < widthInCU - 1)
+                    MVC(fenc_mv[widthInCU + 1]);
+            }
 #undef MVC
-        if (numc <= 1)
-            mvp = mvc[0];
-        else
-        {
-            x265_median_mv(mvp, mvc[0], mvc[1], mvc[2]);
+            if (numc <= 1)
+                mvp = mvc[0];
+            else
+            {
+                x265_median_mv(mvp, mvc[0], mvc[1], mvc[2]);
+            }
+
+            *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
+            COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
         }
-
-        *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
-        COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
     }
-
     if (!fenc->bIntraCalculated)
     {
         int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
