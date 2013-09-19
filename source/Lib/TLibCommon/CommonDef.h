@@ -35,8 +35,8 @@
     \brief    Defines constants, macros and tool parameters
 */
 
-#ifndef __COMMONDEF__
-#define __COMMONDEF__
+#ifndef X265_COMMONDEF_H
+#define X265_COMMONDEF_H
 
 #include <algorithm>
 #include <cstdlib>
@@ -172,4 +172,4 @@ extern void *x265_malloc(size_t size);
 
 //! \}
 
-#endif // end of #ifndef  __COMMONDEF__
+#endif // ifndef X265_COMMONDEF_H

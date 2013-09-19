@@ -31,8 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SEI_
-#define _SEI_ 1
+#ifndef X265_SEI_H
+#define X265_SEI_H
 
 #include <list>
 #include <vector>
@@ -198,14 +198,8 @@ public:
 
     virtual ~SEIPictureTiming()
     {
-        if (m_numNalusInDuMinus1 != NULL)
-        {
-            delete m_numNalusInDuMinus1;
-        }
-        if (m_duCpbRemovalDelayMinus1  != NULL)
-        {
-            delete m_duCpbRemovalDelayMinus1;
-        }
+        delete m_numNalusInDuMinus1;
+        delete m_duCpbRemovalDelayMinus1;
     }
 
     UInt  m_picStruct;
@@ -295,18 +289,7 @@ public:
 
     bool m_gdrForegroundFlag;
 };
-
-typedef std::list<SEI*> SEIMessages;
-
-/// output a selection of SEI messages by payload type. Ownership stays in original message list.
-SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
-
-/// remove a selection of SEI messages by payload type from the original list and return them in a new list.
-SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
-
-/// delete list of SEI messages (freeing the referenced objects)
-void deleteSEIs(SEIMessages &seiList);
 }
 //! \}
 
-#endif // ifndef _SEI_
+#endif // ifndef X265_SEI_H

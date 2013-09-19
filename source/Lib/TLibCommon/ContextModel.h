@@ -35,8 +35,8 @@
     \brief    context model class (header)
 */
 
-#ifndef __CONTEXT_MODEL__
-#define __CONTEXT_MODEL__
+#ifndef X265_CONTEXTMODEL_H
+#define X265_CONTEXTMODEL_H
 
 #include "CommonDef.h"
 
@@ -104,4 +104,4 @@ private:
 }
 //! \}
 
-#endif // ifndef __CONTEXT_MODEL__
+#endif // ifndef X265_CONTEXTMODEL_H

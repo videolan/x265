@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _SLICETYPE_H_
-#define _SLICETYPE_H_ 1
+#ifndef X265_SLICETYPE_H
+#define X265_SLICETYPE_H
 
 #include "TLibCommon/TComList.h"
 #include "motion.h"
@@ -56,7 +56,7 @@ struct Lookahead
     Lookahead(TEncCfg *);
     ~Lookahead();
 
-    void addPicture(TComPic*);
+    void addPicture(TComPic*, int sliceType);
     void flush();
     void destroy();
     void slicetypeDecide();
@@ -73,4 +73,4 @@ struct Lookahead
 };
 }
 
-#endif // ifndef _SLICETYPE_H_
+#endif // ifndef X265_SLICETYPE_H

@@ -37,8 +37,8 @@
               check usage of removeHighFreq function
 */
 
-#ifndef __TCOMYUV__
-#define __TCOMYUV__
+#ifndef X265_TCOMYUV_H
+#define X265_TCOMYUV_H
 
 #include "CommonDef.h"
 #include "TComRom.h"
@@ -207,4 +207,4 @@ public:
 }
 //! \}
 
-#endif // __TCOMYUV__
+#endif // ifndef X265_TCOMYUV_H

@@ -35,8 +35,8 @@
     \brief    RD cost computation classes (header)
 */
 
-#ifndef __TCOMRDCOST__
-#define __TCOMRDCOST__
+#ifndef X265_TCOMRDCOST_H
+#define X265_TCOMRDCOST_H
 
 #include "CommonDef.h"
 #include <math.h>
@@ -101,4 +101,4 @@ public:
 }
 //! \}
 
-#endif // __TCOMRDCOST__
+#endif // ifndef X265_TCOMRDCOST_H

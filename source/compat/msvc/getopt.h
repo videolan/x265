@@ -16,7 +16,8 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1307, USA.  */
 
-#ifndef _GETOPT_H
+#ifndef X265_GETOPT_H
+#define X265_GETOPT_H
 
 #ifndef __need_getopt
 # define _GETOPT_H 1
@@ -178,4 +179,4 @@ extern int _getopt_internal();
 /* Make sure we later can get all the definitions and declarations.  */
 #undef __need_getopt
 
-#endif /* getopt.h */
+#endif // ifndef X265_GETOPT_H

@@ -33,14 +33,16 @@ Y4MInput::Y4MInput(const char *filename)
 {
     ifs.open(filename, ios::binary | ios::in);
     if (!ifs.fail())
+    {
         parseHeader();
-    buf = new char[3 * width * height / 2];
+        buf = new char[3 * width * height / 2];
+    }
 }
 
 Y4MInput::~Y4MInput()
 {
     ifs.close();
-    if (buf) delete[] buf;
+    delete[] buf;
 }
 
 void Y4MInput::parseHeader()

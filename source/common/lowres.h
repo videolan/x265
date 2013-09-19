@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _LOOKAHEAD_H
-#define _LOOKAHEAD_H 1
+#ifndef X265_LOWRES_H
+#define X265_LOWRES_H 
 
 #include "TLibCommon/TComPicYuv.h"
 #include "common.h"
@@ -46,13 +46,12 @@ struct Lowres : public ReferencePlanes
     pixel *buffer[4];
     int    width;    // width of lowres frame in pixels
     int    lines;    // height of lowres frame in pixel lines
-    int    bframes;
-    bool   bIntraCalculated;
-    int    frameNum;  // Presentation frame number 
-    int    scenecut;  // Set to zero if the frame cannot possibly be part of a real scenecut. 
-
+    int    frameNum;  // Presentation frame number
     int    sliceType; // Slice type decided by lookahead
-    int    keyframe;
+
+    bool   bIntraCalculated;
+    bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut.
+    bool   bKeyframe;
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
@@ -64,9 +63,9 @@ struct Lowres : public ReferencePlanes
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
 
     void create(TComPic *pic, int bframes);
-    void destroy();
-    void init(TComPicYuv *orig);
+    void destroy(int bframes);
+    void init(TComPicYuv *orig, int poc, int sliceType, int bframes);
 };
 }
 
-#endif // _LOOKAHEAD_H
+#endif // ifndef X265_LOWRES_H

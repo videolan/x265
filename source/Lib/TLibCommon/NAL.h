@@ -31,8 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NAL_
-#define _NAL_ 1
+#ifndef X265_NAL_H
+#define X265_NAL_H
 
 #include "CommonDef.h"
 #include "x265.h"
@@ -105,7 +105,8 @@ struct OutputNALUnit;
  */
 struct NALUnitEBSP : public NALUnit
 {
-    std::ostringstream m_nalUnitData;
+    UInt m_packetSize;
+    uint8_t *m_nalUnitData;
 
     /**
      * convert the OutputNALUnit #nalu# into EBSP format by writing out
@@ -117,4 +118,4 @@ struct NALUnitEBSP : public NALUnit
 }
 //! \}
 
-#endif // ifndef _NAL_
+#endif // ifndef X265_NAL_H

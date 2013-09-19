@@ -23,8 +23,6 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "TLibCommon/CommonDef.h"
-
 #include "primitives.h"
 #include "pixelharness.h"
 #include "mbdstharness.h"
@@ -37,16 +35,6 @@
 #include <time.h>
 
 using namespace x265;
-
-void *TestHarness::alignedMalloc(size_t size, int count, int)
-{
-    return x265_malloc(size * count);
-}
-
-void TestHarness::alignedFree(void *ptr)
-{
-    x265_free(ptr);
-}
 
 static const char *CpuType[] =
 {

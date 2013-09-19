@@ -277,9 +277,12 @@ void TEncCu::destroy()
         }
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            m_modePredYuv[j][i]->destroy();
-            delete m_modePredYuv[j][i];
-            m_modePredYuv[j][i] = NULL;
+            if (m_modePredYuv[j][i])
+            {
+                m_modePredYuv[j][i]->destroy();
+                delete m_modePredYuv[j][i];
+                m_modePredYuv[j][i] = NULL;
+            }
         }
 
         if (m_tmpResiYuv[i])
@@ -309,121 +312,66 @@ void TEncCu::destroy()
         }
     }
 
-    if (m_interCU_2Nx2N)
-    {
-        delete [] m_interCU_2Nx2N;
-        m_interCU_2Nx2N = NULL;
-    }
-    if (m_interCU_2NxN)
-    {
-        delete [] m_interCU_2NxN;
-        m_interCU_2NxN = NULL;
-    }
-    if (m_interCU_Nx2N)
-    {
-        delete [] m_interCU_Nx2N;
-        m_interCU_Nx2N = NULL;
-    }
-    if (m_intraInInterCU)
-    {
-        delete [] m_intraInInterCU;
-        m_intraInInterCU = NULL;
-    }
-    if (m_mergeCU)
-    {
-        delete [] m_mergeCU;
-        m_mergeCU = NULL;
-    }
-    if (m_bestMergeCU)
-    {
-        delete [] m_bestMergeCU;
-        m_bestMergeCU = NULL;
-    }
-    if (m_bestCU)
-    {
-        delete [] m_bestCU;
-        m_bestCU = NULL;
-    }
-    if (m_tempCU)
-    {
-        delete [] m_tempCU;
-        m_tempCU = NULL;
-    }
+    delete [] m_interCU_2Nx2N;
+    m_interCU_2Nx2N = NULL;
+    delete [] m_interCU_2NxN;
+    m_interCU_2NxN = NULL;
+    delete [] m_interCU_Nx2N;
+    m_interCU_Nx2N = NULL;
+    delete [] m_intraInInterCU;
+    m_intraInInterCU = NULL;
+    delete [] m_mergeCU;
+    m_mergeCU = NULL;
+    delete [] m_bestMergeCU;
+    m_bestMergeCU = NULL;
+    delete [] m_bestCU;
+    m_bestCU = NULL;
+    delete [] m_tempCU;
+    m_tempCU = NULL;
 
     for (int j = 0; j < 4; j++)
     {
-        if (m_interCU_NxN[j])
-        {
-            delete [] m_interCU_NxN[j];
-            m_interCU_NxN[j] = NULL;
-        }
+        delete [] m_interCU_NxN[j];
+        m_interCU_NxN[j] = NULL;
     }
 
-    if (m_bestPredYuv)
-    {
-        delete [] m_bestPredYuv;
-        m_bestPredYuv = NULL;
-    }
-    if (m_bestResiYuv)
-    {
-        delete [] m_bestResiYuv;
-        m_bestResiYuv = NULL;
-    }
-    if (m_bestRecoYuv)
-    {
-        delete [] m_bestRecoYuv;
-        m_bestRecoYuv = NULL;
-    }
+    delete [] m_bestPredYuv;
+    m_bestPredYuv = NULL;
+    delete [] m_bestResiYuv;
+    m_bestResiYuv = NULL;
+    delete [] m_bestRecoYuv;
+    m_bestRecoYuv = NULL;
+
     for (int j = 0; j < 4; j++)
     {
-        if (m_bestPredYuvNxN[j])
-        {
-            delete [] m_bestPredYuvNxN[j];
-            m_bestPredYuvNxN[j] = NULL;
-        }
+        delete [] m_bestPredYuvNxN[j];
+        m_bestPredYuvNxN[j] = NULL;
     }
 
-    if (m_bestMergeRecoYuv)
-    {
-        delete [] m_bestMergeRecoYuv;
-        m_bestMergeRecoYuv = NULL;
-    }
-    if (m_tmpPredYuv)
-    {
-        delete [] m_tmpPredYuv;
-        m_tmpPredYuv = NULL;
-    }
+    delete [] m_bestMergeRecoYuv;
+    m_bestMergeRecoYuv = NULL;
+    delete [] m_tmpPredYuv;
+    m_tmpPredYuv = NULL;
+
     for (int i = 0; i < MAX_PRED_TYPES; i++)
     {
-        if (m_modePredYuv[i])
-        {
-            delete [] m_modePredYuv[i];
-            m_modePredYuv[i] = NULL;
-        }
+        delete [] m_modePredYuv[i];
+        m_modePredYuv[i] = NULL;
     }
 
-    if (m_tmpResiYuv)
-    {
-        delete [] m_tmpResiYuv;
-        m_tmpResiYuv = NULL;
-    }
-    if (m_tmpRecoYuv)
-    {
-        delete [] m_tmpRecoYuv;
-        m_tmpRecoYuv = NULL;
-    }
-    if (m_origYuv)
-    {
-        delete [] m_origYuv;
-        m_origYuv = NULL;
-    }
+    delete [] m_tmpResiYuv;
+    m_tmpResiYuv = NULL;
+    delete [] m_tmpRecoYuv;
+    m_tmpRecoYuv = NULL;
+    delete [] m_origYuv;
+    m_origYuv = NULL;
 }
 
 /** \param    pcEncTop      pointer of encoder class
  */
 void TEncCu::init(TEncTop* top)
 {
-    m_cfg         = top;
+    m_cfg = top;
 }
 
 // ====================================================================================================================

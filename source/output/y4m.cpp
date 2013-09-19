@@ -44,7 +44,7 @@ Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate)
 Y4MOutput::~Y4MOutput()
 {
     ofs.close();
-    if (buf) delete [] buf;
+    delete [] buf;
 }
 
 bool Y4MOutput::writePicture(const x265_picture_t& pic)

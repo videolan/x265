@@ -35,8 +35,8 @@
     \brief    picture class (header)
 */
 
-#ifndef __TCOMPIC__
-#define __TCOMPIC__
+#ifndef X265_TCOMPIC_H
+#define X265_TCOMPIC_H
 
 // Include files
 #include "CommonDef.h"
@@ -86,7 +86,7 @@ public:
 
     void          create(int width, int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, int bframes);
 
-    virtual void  destroy();
+    virtual void  destroy(int bframes);
 
     bool          getUsedByCurr()           { return m_bUsedByCurr; }
 
@@ -147,4 +147,4 @@ public:
 }
 //! \}
 
-#endif // __TCOMPIC__
+#endif // ifndef X265_TCOMPIC_H

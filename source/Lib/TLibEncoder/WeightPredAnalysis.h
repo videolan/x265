@@ -34,8 +34,8 @@
 /** \file     WeightPredAnalysis.h
     \brief    weighted prediction encoder class
 */
-#ifndef __WEIGHTPREDANALYSIS__
-#define __WEIGHTPREDANALYSIS__
+#ifndef X265_WEIGHTPREDANALYSIS_H
+#define X265_WEIGHTPREDANALYSIS_H
 
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComSlice.h"
@@ -73,4 +73,4 @@ public:
     void  xCheckWPEnable(TComSlice *slice);
 };
 }
-#endif // __WEIGHTPREDANALYSIS__
+#endif // ifndef X265_WEIGHTPREDANALYSIS_H

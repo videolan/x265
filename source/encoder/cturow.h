@@ -22,8 +22,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __CTUROW__
-#define __CTUROW__
+#ifndef X265_CTUROW_H
+#define X265_CTUROW_H
 
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
@@ -78,4 +78,4 @@ public:
 
 }
 
-#endif // ifndef __CTUROW__
+#endif // ifndef X265_CTUROW_H

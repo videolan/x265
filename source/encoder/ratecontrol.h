@@ -22,26 +22,23 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __RATECONTROL__
-#define __RATECONTROL__
+#ifndef X265_RATECONTROL_H
+#define X265_RATECONTROL_H
 
 #include "TLibCommon/CommonDef.h"
 
 namespace x265 {
-
 struct Lookahead;
 class TComPic;
 
 struct RateControlEntry
 {
     int pictType;
-    int pCount;
-    int newQp;
     int texBits;
     int mvBits;
     double blurredComplexity;
-    double qpaRc;                /* average of macroblocks' qp before aq */
-    double lastRceq;
+    double qpaRc;
+    double qRceq;
 };
 
 struct RateControl
@@ -55,12 +52,9 @@ struct RateControl
     int qp;                     /* updated qp for current frame */
     int baseQp;                 /* CQP base QP */
     double frameDuration;        /* current frame duration in seconds */
-    double qpm;                  /* qp for current macroblock: precise double for AQ */
-    
     double bitrate;
     double rateTolerance;
     double qCompress;
-    int    bframes;
     int    lastSatd;
     int    qpConstant[3];
     double cplxrSum;           /* sum of bits*qscale/rceq */
@@ -72,18 +66,16 @@ struct RateControl
     int lastNonBPictType;
     double accumPQp;          /* for determining I-frame quant */
     double accumPNorm;
-    double lastQScale;
     double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
     double lstep;
-    double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
-    double cbrDecay;
-    double lmin[3];             /* min qscale by frame type */
+    double lmin[3];           /* min qscale by frame type */
     double lmax[3];
     double shortTermCplxSum;
     double shortTermCplxCount;
     RcMethod rateControlMode;
     int64_t totalBits;   /* totalbits used for already encoded frames */
-
+    double lastRceq;
+    int framesDone;   /* framesDone keeps track of # of frames passed through RateCotrol already */
     RateControl(x265_param_t * param);
 
     // to be called for each frame to process RateCOntrol and set QP
@@ -92,10 +84,11 @@ struct RateControl
     int rateControlEnd(int64_t bits, RateControlEntry* rce);
 
 protected:
+
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
 };
 }
 
-#endif // ifndef __RATECONTROL__
+#endif // ifndef X265_RATECONTROL_H

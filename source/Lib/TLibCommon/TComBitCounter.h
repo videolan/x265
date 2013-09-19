@@ -35,8 +35,8 @@
     \brief    Class for counting bits (header)
 */
 
-#ifndef __COMBITCOUNTER__
-#define __COMBITCOUNTER__
+#ifndef X265_COMBITCOUNTER_H
+#define X265_COMBITCOUNTER_H
 
 #include "TComBitStream.h"
 
@@ -72,4 +72,4 @@ public:
 }
 //! \}
 
-#endif // ifndef __COMBITCOUNTER__
+#endif // ifndef X265_COMBITCOUNTER_H

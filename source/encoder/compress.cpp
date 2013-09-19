@@ -24,9 +24,6 @@
 #include "TLibEncoder/TEncCu.h"
 #include <math.h>
 
-/* Temporary macro for development only. Will be removed once the early exit is fully tested and profiled */
-#define EARLY_EXIT_NO_RDO 0
-
 /* Lambda Partition Select adjusts the threshold value for Early Exit in No-RDO flow */
 #define LAMBDA_PARTITION_SELECT     0.9
 
@@ -377,9 +374,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     UInt bpely = tpely + outTempCU->getHeight(0) - 1;
     TComDataCU* subTempPartCU, * subBestPartCU;
     int qp = outTempCU->getQP(0);
-#if EARLY_EXIT_NO_RDO
-    UInt64 nxnCost = 0;
-#endif
+    
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
     bool bSliceEnd = slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() &&
@@ -491,24 +486,28 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_bestMergeRecoYuv[depth] = tempYuv;
             }
 
-            /*compute intra cost */
-            if (outBestCU->getCbf(0, TEXT_LUMA) != 0 ||
-                outBestCU->getCbf(0, TEXT_CHROMA_U) != 0 ||
-                outBestCU->getCbf(0, TEXT_CHROMA_V) != 0)
+            /* Check for Intra in inter frames only if its a P-slice*/
+            if(outBestCU->getSlice()->getSliceType() == P_SLICE)
             {
-                xComputeCostIntraInInter(m_intraInInterCU[depth], SIZE_2Nx2N);
-                xEncodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
-
-                if (m_intraInInterCU[depth]->m_totalCost < outBestCU->m_totalCost)
+                /*compute intra cost */
+                if (outBestCU->getCbf(0, TEXT_LUMA) != 0 ||
+                    outBestCU->getCbf(0, TEXT_CHROMA_U) != 0 ||
+                    outBestCU->getCbf(0, TEXT_CHROMA_V) != 0)
                 {
-                    outBestCU = m_intraInInterCU[depth];
-                    tempYuv = m_modePredYuv[5][depth];
-                    m_modePredYuv[5][depth] = m_bestPredYuv[depth];
-                    m_bestPredYuv[depth] = tempYuv;
+                    xComputeCostIntraInInter(m_intraInInterCU[depth], SIZE_2Nx2N);
+                    xEncodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
 
-                    TComYuv* tmpPic = m_bestRecoYuv[depth];
-                    m_bestRecoYuv[depth] = m_tmpRecoYuv[depth];
-                    m_tmpRecoYuv[depth] = tmpPic;
+                    if (m_intraInInterCU[depth]->m_totalCost < outBestCU->m_totalCost)
+                    {
+                        outBestCU = m_intraInInterCU[depth];
+                        tempYuv = m_modePredYuv[5][depth];
+                        m_modePredYuv[5][depth] = m_bestPredYuv[depth];
+                        m_bestPredYuv[depth] = tempYuv;
+
+                        TComYuv* tmpPic = m_bestRecoYuv[depth];
+                        m_bestRecoYuv[depth] = m_tmpRecoYuv[depth];
+                        m_tmpRecoYuv[depth] = tmpPic;
+                    }
                 }
             }
         }
@@ -560,7 +559,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     // further split
     if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
     {
-#if EARLY_EXIT_NO_RDO
+        UInt64 nxnCost = 0;
         if (outBestCU != 0 && depth > 0)
         {
             outTempCU->initEstData(depth, qp);
@@ -568,7 +567,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             /*Best CU initialised to NULL; */
             subBestPartCU = NULL;
             /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
-            subTempPartCU;
             nxnCost = 0;
             for (UInt partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
             {
@@ -598,7 +596,13 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 }
             }
 
-            if (outBestCU->m_totalCost < LAMBDA_PARTITION_SELECT * nxnCost)
+            float lambda = 1.0f;
+            if(outBestCU->getSlice()->getSliceType() == P_SLICE)
+                lambda = 0.9f;
+            else if(outBestCU->getSlice()->getSliceType() == B_SLICE)
+                lambda = 1.1f;
+
+            if (outBestCU->m_totalCost < lambda * nxnCost)
             {
                 m_entropyCoder->resetBits();
                 m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
@@ -613,7 +617,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 return;
             }
         }
-#endif          // if EARLY_EXIT_NO_RDO
         outTempCU->initEstData(depth, qp);
         UChar nextDepth = (UChar)(depth + 1);
         subTempPartCU = m_tempCU[nextDepth];

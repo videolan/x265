@@ -393,100 +393,43 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
     {
         for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
         {
-            if (m_count[i][j])
-            {
-                delete [] m_count[i][j];
-            }
-            if (m_offset[i][j])
-            {
-                delete [] m_offset[i][j];
-            }
-            if (m_offsetOrg[i][j])
-            {
-                delete [] m_offsetOrg[i][j];
-            }
+            delete [] m_count[i][j];
+            delete [] m_offset[i][j];
+            delete [] m_offsetOrg[i][j];
         }
 
-        if (m_rate[i])
-        {
-            delete [] m_rate[i];
-        }
-        if (m_dist[i])
-        {
-            delete [] m_dist[i];
-        }
-        if (m_cost[i])
-        {
-            delete [] m_cost[i];
-        }
-        if (m_count[i])
-        {
-            delete [] m_count[i];
-        }
-        if (m_offset[i])
-        {
-            delete [] m_offset[i];
-        }
-        if (m_offsetOrg[i])
-        {
-            delete [] m_offsetOrg[i];
-        }
+        delete [] m_rate[i];
+        delete [] m_dist[i];
+        delete [] m_cost[i];
+        delete [] m_count[i];
+        delete [] m_offset[i];
+        delete [] m_offsetOrg[i];
     }
 
-    if (m_distOrg)
-    {
-        delete [] m_distOrg;
-        m_distOrg = NULL;
-    }
-    if (m_costPartBest)
-    {
-        delete [] m_costPartBest;
-        m_costPartBest = NULL;
-    }
-    if (m_typePartBest)
-    {
-        delete [] m_typePartBest;
-        m_typePartBest = NULL;
-    }
-    if (m_rate)
-    {
-        delete [] m_rate;
-        m_rate = NULL;
-    }
-    if (m_dist)
-    {
-        delete [] m_dist;
-        m_dist = NULL;
-    }
-    if (m_cost)
-    {
-        delete [] m_cost;
-        m_cost = NULL;
-    }
-    if (m_count)
-    {
-        delete [] m_count;
-        m_count = NULL;
-    }
-    if (m_offset)
-    {
-        delete [] m_offset;
-        m_offset = NULL;
-    }
-    if (m_offsetOrg)
-    {
-        delete [] m_offsetOrg;
-        m_offsetOrg = NULL;
-    }
+    delete [] m_distOrg;
+    m_distOrg = NULL;
+    delete [] m_costPartBest;
+    m_costPartBest = NULL;
+    delete [] m_typePartBest;
+    m_typePartBest = NULL;
+    delete [] m_rate;
+    m_rate = NULL;
+    delete [] m_dist;
+    m_dist = NULL;
+    delete [] m_cost;
+    m_cost = NULL;
+    delete [] m_count;
+    m_count = NULL;
+    delete [] m_offset;
+    m_offset = NULL;
+    delete [] m_offsetOrg;
+    m_offsetOrg = NULL;
 
-    if (m_countPreDblk)
-    {
-        delete[] m_countPreDblk;
-        m_countPreDblk = NULL;
+    delete[] m_countPreDblk;
+    m_countPreDblk = NULL;
 
-        delete[] m_offsetOrgPreDblk;
-        m_offsetOrgPreDblk = NULL;
-    }
+    delete[] m_offsetOrgPreDblk;
+    m_offsetOrgPreDblk = NULL;
 
     int maxDepth = 4;
     for (int d = 0; d < maxDepth + 1; d++)

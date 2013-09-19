@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __COMMON__
-#define __COMMON__
+#ifndef X265_COMMON_H
+#define X265_COMMON_H
 
 #include <cstdlib>
 #include "x265.h"
@@ -131,4 +131,4 @@ int64_t x265_mdate(void);
 /* defined in primitives.cpp */
 void x265_setup_primitives(x265_param_t *param, int cpuid = 0);
 
-#endif // ifndef __COMMON__
+#endif // ifndef X265_COMMON_H

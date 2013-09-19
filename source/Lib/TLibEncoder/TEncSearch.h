@@ -35,8 +35,8 @@
     \brief    encoder search class (header)
 */
 
-#ifndef __TENCSEARCH__
-#define __TENCSEARCH__
+#ifndef X265_TENCSEARCH_H
+#define X265_TENCSEARCH_H
 
 // Include files
 #include "TLibCommon/TComYuv.h"
@@ -255,4 +255,4 @@ protected:
 }
 //! \}
 
-#endif // __TENCSEARCH__
+#endif // ifndef X265_TENCSEARCH_H

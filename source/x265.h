@@ -21,12 +21,12 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _X265_H_
-#define _X265_H_
+#ifndef X265_X265_H
+#define X265_X265_H
 
 #include <stdint.h>
 
-#if __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -164,7 +164,7 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_B_ADAPT_FAST       1
 #define X265_B_ADAPT_TRELLIS    2
 
-#define X265_TYPE_AUTO          0x0000  /* Let x264 choose the right type */
+#define X265_TYPE_AUTO          0x0000  /* Let x265 choose the right type */
 #define X265_TYPE_IDR           0x0001
 #define X265_TYPE_I             0x0002
 #define X265_TYPE_P             0x0003
@@ -182,6 +182,15 @@ typedef enum RcMethod
     X265_RC_CRF
 }
 X265_RC_METHODS;
+
+/*Level of Rate Distortion Optimization Allowed */
+typedef enum RDOLevel
+{   
+    X265_NO_RDO_NO_RDOQ, /* Partial RDO during mode decision (only at each depth/mode), no RDO in quantization*/ 
+    X265_NO_RDO,         /* Partial RDO during mode decision (only at each depth/mode), quantization RDO enabled */
+    X265_FULL_RDO        /* Full RD-based mode decision */
+}
+X265_RDO_LEVEL;
 
 
 typedef struct x265_param_t
@@ -232,8 +241,9 @@ typedef struct x265_param_t
     int       bEnableRectInter;                ///< enable rectangular inter modes 2NxN, Nx2N
     int       bEnableCbfFastMode;              ///< enable use of Cbf flags for fast mode decision
     int       bEnableEarlySkip;                ///< enable early skip (merge) detection
-    int       bEnableRDO;                      ///< enable full rate distortion optimization
-    int       bEnableRDOQ;                     ///< enable RD optimized quantization
+    int       bRDLevel;                     ///< enable RD optimized quantization
+    int       bEnableRDO;
+    int       bEnableRDOQ;
     int       bEnableSignHiding;               ///< enable hiding one sign bit per TU via implicit signaling
     int       bEnableTransformSkip;            ///< enable intra transform skipping
     int       bEnableTSkipFast;                ///< enable fast intra transform skipping
@@ -290,6 +300,11 @@ void x265_setup_primitives(x265_param_t *param, int cpulevel);
  */
 void x265_param_default(x265_param_t *param);
 
+/***
+ * Initialize an x265_picture_t structure to default values
+ */
+void x265_picture_init(x265_param_t *param, x265_picture_t *pic);
+
 /* x265_param_apply_profile:
  *      Applies the restrictions of the given profile. (one of below) */
 static const char * const x265_profile_names[] = { "main", "main10", "mainstillpicture", 0 };
@@ -334,8 +349,8 @@ void    x265_encoder_close(x265_t *, double *globalPsnr);
  */
 void x265_cleanup(void);
 
-#if __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif // _X265_H_
+#endif // X265_X265_H

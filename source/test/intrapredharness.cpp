@@ -47,8 +47,8 @@ IntraPredHarness::IntraPredHarness()
 
     pixel_out_c   = (pixel*)malloc(out_size * sizeof(pixel));
     pixel_out_vec = (pixel*)malloc(out_size * sizeof(pixel));
-    pixel_out_33_c   = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), out_size_33, 32);
-    pixel_out_33_vec = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), out_size_33, 32);
+    pixel_out_33_c   = (pixel*)X265_MALLOC(pixel, out_size_33);
+    pixel_out_33_vec = (pixel*)X265_MALLOC(pixel, out_size_33);
 
     if (!pixel_out_c || !pixel_out_vec)
     {
@@ -64,8 +64,8 @@ IntraPredHarness::~IntraPredHarness()
     free(pixel_buff);
     free(pixel_out_c);
     free(pixel_out_vec);
-    TestHarness::alignedFree(pixel_out_33_c);
-    TestHarness::alignedFree(pixel_out_33_vec);
+    X265_FREE(pixel_out_33_c);
+    X265_FREE(pixel_out_33_vec);
 }
 
 bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt)

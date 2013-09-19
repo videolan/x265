@@ -31,8 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NAL_WRITE_
-#define _NAL_WRITE_ 1
+#ifndef X265_NALWRITE_H
+#define X265_NALWRITE_H
 
 #include <ostream>
 
@@ -74,13 +74,13 @@ struct OutputNALUnit : public NALUnit
     TComOutputBitstream m_Bitstream;
 };
 
-void write(std::ostream& out, OutputNALUnit& nalu);
+void write(uint8_t*& out, OutputNALUnit& nalu, UInt& packetSize);
 void writeRBSPTrailingBits(TComOutputBitstream& bs);
 
 inline NALUnitEBSP::NALUnitEBSP(OutputNALUnit& nalu)
     : NALUnit(nalu)
 {
-    write(m_nalUnitData, nalu);
+    write(m_nalUnitData, nalu, m_packetSize);
 }
 
 void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc);
@@ -88,4 +88,4 @@ void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc);
 
 //! \}
 
-#endif // ifndef _NAL_WRITE_
+#endif // ifndef X265_NALWRITE_H

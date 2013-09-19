@@ -35,8 +35,8 @@
     \brief    general list class (header)
 */
 
-#ifndef _TCOMLIST_
-#define _TCOMLIST_
+#ifndef X265_TCOMLIST_H
+#define X265_TCOMLIST_H
 
 #include "CommonDef.h"
 
@@ -114,4 +114,4 @@ public:
 }
 //! \}
 
-#endif // ifndef _TCOMLIST_
+#endif // ifndef X265_TCOMLIST_H

@@ -35,8 +35,8 @@
     \brief    slice header and SPS class (header)
 */
 
-#ifndef __TCOMSLICE__
-#define __TCOMSLICE__
+#ifndef X265_TCOMSLICE_H
+#define X265_TCOMSLICE_H
 
 #include "CommonDef.h"
 #include "TComRom.h"
@@ -1806,4 +1806,4 @@ protected:
 }
 //! \}
 
-#endif // __TCOMSLICE__
+#endif // ifndef X265_TCOMSLICE_H

@@ -87,14 +87,10 @@ TComTrQuant::~TComTrQuant()
     if (m_tmpCoeff)
     {
         X265_FREE(m_tmpCoeff);
-        m_tmpCoeff = NULL;
     }
 
     // delete bit estimation class
-    if (m_estBitsSbac)
-    {
-        delete m_estBitsSbac;
-    }
+    delete m_estBitsSbac;
     destroyScalingList();
 }
 
@@ -1658,9 +1654,9 @@ void TComTrQuant::destroyScalingList()
         {
             for (UInt qp = 0; qp < SCALING_LIST_REM_NUM; qp++)
             {
-                if (m_quantCoef[sizeId][listId][qp]) delete [] m_quantCoef[sizeId][listId][qp];
-                if (m_dequantCoef[sizeId][listId][qp]) delete [] m_dequantCoef[sizeId][listId][qp];
-                if (m_errScale[sizeId][listId][qp]) delete [] m_errScale[sizeId][listId][qp];
+                delete [] m_quantCoef[sizeId][listId][qp];
+                delete [] m_dequantCoef[sizeId][listId][qp];
+                delete [] m_errScale[sizeId][listId][qp];
             }
         }
     }

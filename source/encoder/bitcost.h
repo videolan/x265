@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __BITCOST__
-#define __BITCOST__
+#ifndef X265_BITCOST_H
+#define X265_BITCOST_H
 
 #include "threading.h"
 #include "mv.h"
@@ -82,4 +82,4 @@ private:
 };
 }
 
-#endif // ifndef __BITCOST__
+#endif // ifndef X265_BITCOST_H

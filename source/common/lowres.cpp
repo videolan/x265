@@ -27,12 +27,11 @@
 
 using namespace x265;
 
-void Lowres::create(TComPic *pic, int _bframes)
+void Lowres::create(TComPic *pic, int bframes)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
 
     isLowres = true;
-    bframes = _bframes;
     width = orig->getWidth() / 2;
     lines = orig->getHeight() / 2;
     lumaStride = width + 2 * orig->getLumaMarginX();
@@ -78,7 +77,7 @@ void Lowres::create(TComPic *pic, int _bframes)
         intraMbs[i] = 0;
 }
 
-void Lowres::destroy()
+void Lowres::destroy(int bframes)
 {
     for (int i = 0; i < 4; i++)
     {
@@ -107,13 +106,14 @@ void Lowres::destroy()
 }
 
 // (re) initialize lowres state
-void Lowres::init(TComPicYuv *orig)
+void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
 {
-    scenecut = 1;
+    bScenecut = true;
     bIntraCalculated = false;
+    bKeyframe = false; // Not a keyframe unless identified by lookahead
+    sliceType = type;
+    frameNum = poc;
     memset(costEst, -1, sizeof(costEst));
-    sliceType = X265_TYPE_AUTO;
-    keyframe = 0; //Not a keyframe unless identified by lookahead
     for (int y = 0; y < bframes + 2; y++)
     {
         for (int x = 0; x < bframes + 2; x++)

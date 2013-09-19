@@ -35,8 +35,8 @@
     \brief    weighting prediction class (header)
 */
 
-#ifndef __TCOMWEIGHTPREDICTION__
-#define __TCOMWEIGHTPREDICTION__
+#ifndef X265_TCOMWEIGHTPREDICTION_H
+#define X265_TCOMWEIGHTPREDICTION_H
 
 // Include files
 #include "TComPic.h"
@@ -72,4 +72,4 @@ public:
 };
 }
 
-#endif // ifndef __TCOMWEIGHTPREDICTION__
+#endif // ifndef X265_TCOMWEIGHTPREDICTION_H

@@ -35,8 +35,8 @@
     \brief    picture YUV buffer class (header)
 */
 
-#ifndef __TCOMPICYUV__
-#define __TCOMPICYUV__
+#ifndef X265_TCOMPICYUV_H
+#define X265_TCOMPICYUV_H
 
 #include "CommonDef.h"
 #include "TComRom.h"
@@ -193,4 +193,4 @@ void calcMD5(TComPicYuv & pic, UChar digest[3][16]);
 }
 //! \}
 
-#endif // __TCOMPICYUV__
+#endif // ifndef X265_TCOMPICYUV_H

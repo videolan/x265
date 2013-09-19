@@ -88,21 +88,20 @@ void Lookahead::destroy()
     while (!inputQueue.empty())
     {
         TComPic* pic = inputQueue.popFront();
-        pic->destroy();
+        pic->destroy(cfg->param.bframes);
         delete pic;
     }
     while (!outputQueue.empty())
     {
         TComPic* pic = outputQueue.popFront();
-        pic->destroy();
+        pic->destroy(cfg->param.bframes);
         delete pic;
     }
 }
 
-void Lookahead::addPicture(TComPic *pic)
+void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
-    pic->m_lowres.init(pic->getPicYuvOrg());
-    pic->m_lowres.frameNum = pic->getSlice()->getPOC();
+    pic->m_lowres.init(pic->getPicYuvOrg(), pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
 
     inputQueue.pushBack(pic);
     if (inputQueue.size() >= (size_t)cfg->param.lookaheadDepth)
@@ -125,7 +124,7 @@ void Lookahead::slicetypeDecide()
         outputQueue.pushBack(pic);
         numDecided++;
         lastKeyframe = 0;
-        pic->m_lowres.keyframe = 1;
+        pic->m_lowres.bKeyframe = true;
         frames[0] = &(pic->m_lowres);
         return;
     }
@@ -139,9 +138,9 @@ void Lookahead::slicetypeDecide()
 
         for (dframes = 0; (frames[dframes + 1] != NULL) && (frames[dframes + 1]->sliceType != X265_TYPE_AUTO); dframes++)
         {
-            if ((frames[dframes + 1]->sliceType == X265_TYPE_I))
+            if (frames[dframes + 1]->sliceType == X265_TYPE_I)
             {
-                frames[dframes + 1]->keyframe = 1;
+                frames[dframes + 1]->bKeyframe = true;
                 lastKeyframe = frames[dframes]->frameNum;
                 if (cfg->param.decodingRefreshType == 2 && dframes > 0) //If an IDR frame following a B
                 {
@@ -182,7 +181,7 @@ void Lookahead::slicetypeDecide()
         TComPic *pic = inputQueue.popFront();
 
         pic->m_lowres.sliceType = X265_TYPE_I;
-        pic->m_lowres.keyframe = 1;
+        pic->m_lowres.bKeyframe = true;
         outputQueue.pushBack(pic);
         numDecided++;
     }
@@ -192,7 +191,7 @@ void Lookahead::slicetypeDecide()
 
         bool forceIntra = (pic->getPOC() % cfg->param.keyframeMax) == 0;
         pic->m_lowres.sliceType = forceIntra ? X265_TYPE_I : X265_TYPE_P;
-        pic->m_lowres.keyframe = forceIntra ? 1 : 0;
+        pic->m_lowres.bKeyframe = forceIntra;
         outputQueue.pushBack(pic);
         numDecided++;
     }
@@ -205,12 +204,12 @@ void Lookahead::slicetypeDecide()
         if (forceIntra)
         {
             picB->m_lowres.sliceType = (picB->getPOC() % cfg->param.keyframeMax) ? X265_TYPE_P : X265_TYPE_I;
-            picB->m_lowres.keyframe = (picB->getPOC() % cfg->param.keyframeMax) ? 0 : 1;
+            picB->m_lowres.bKeyframe = !(picB->getPOC() % cfg->param.keyframeMax);
             outputQueue.pushBack(picB);
             numDecided++;
 
             picP->m_lowres.sliceType = (picP->getPOC() % cfg->param.keyframeMax) ? X265_TYPE_P : X265_TYPE_I;
-            picP->m_lowres.keyframe = (picP->getPOC() % cfg->param.keyframeMax) ? 0 : 1;
+            picP->m_lowres.bKeyframe = !(picP->getPOC() % cfg->param.keyframeMax);
             outputQueue.pushBack(picP);
             numDecided++;
         }
@@ -313,7 +312,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         score = fenc->costEst[b - p0][p1 - b];
 
         if (b != p1)
-            score = (uint64_t)score * 100 / (120 + cfg->param.bFrameBias);
+            score = (uint64_t)score * 100 / (130 + cfg->param.bFrameBias);
 
         fenc->costEst[b - p0][p1 - b] = score;
     }
@@ -334,7 +333,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     Lowres *fref1 = frames[p1];
     Lowres *fenc  = frames[b];
 
-    const bool bBidir = (b < p1);
+    const int bBidir = (b < p1);
     const int cuXY = cux + cuy * widthInCU;
     const int cuSize = X265_LOWRES_CU_SIZE;
     const int pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
@@ -360,41 +359,46 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     mvmax.x = (uint16_t)((widthInCU - cux - 1) * cuSize + 8);
     mvmax.y = (uint16_t)((heightInCU - cuy - 1) * cuSize + 8);
 
-    for (int i = 0; i < 1 + bBidir; i++)
+    if (p0 != p1)
     {
-        if (!bDoSearch[i])
-            continue;
+        for (int i = 0; i < 1 + bBidir; i++)
+        {
+            if (!bDoSearch[i])
+            {
+                /* Use previously calculated cost */
+                COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
+                continue;
+            }
+            int numc = 0;
+            MV mvc[4], mvp;
+            MV *fenc_mv = fenc_mvs[i];
 
-        int numc = 0;
-        MV mvc[4], mvp;
-        MV *fenc_mv = fenc_mvs[i];
-
-        /* Reverse-order MV prediction. */
-        mvc[0] = 0;
-        mvc[2] = 0;
+            /* Reverse-order MV prediction. */
+            mvc[0] = 0;
+            mvc[2] = 0;
 #define MVC(mv) mvc[numc++] = mv;
-        if (cux < widthInCU - 1)
-            MVC(fenc_mv[1]);
-        if (cuy < heightInCU - 1)
-        {
-            MVC(fenc_mv[widthInCU]);
-            if (cux > 0)
-                MVC(fenc_mv[widthInCU - 1]);
             if (cux < widthInCU - 1)
-                MVC(fenc_mv[widthInCU + 1]);
-        }
+                MVC(fenc_mv[1]);
+            if (cuy < heightInCU - 1)
+            {
+                MVC(fenc_mv[widthInCU]);
+                if (cux > 0)
+                    MVC(fenc_mv[widthInCU - 1]);
+                if (cux < widthInCU - 1)
+                    MVC(fenc_mv[widthInCU + 1]);
+            }
 #undef MVC
-        if (numc <= 1)
-            mvp = mvc[0];
-        else
-        {
-            x265_median_mv(mvp, mvc[0], mvc[1], mvc[2]);
+            if (numc <= 1)
+                mvp = mvc[0];
+            else
+            {
+                x265_median_mv(mvp, mvc[0], mvc[1], mvc[2]);
+            }
+
+            *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
+            COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
         }
-
-        *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
-        COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
     }
-
     if (!fenc->bIntraCalculated)
     {
         int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
@@ -424,7 +428,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         pAbove1[cuSize - 1] = pAbove0[cuSize - 1];
         pLeft1[0] = pLeft0[0];
         pLeft1[cuSize - 1] = pLeft0[cuSize - 1];
-        for (int i = 1; i < cuSize - 1; i++)
+        for (int i = 1; i < 2 * cuSize - 1; i++)
         {
             pAbove1[i] = (pAbove0[i - 1] + 2 * pAbove0[i] + pAbove0[i + 1] + 2) >> 2;
             pLeft1[i] = (pLeft0[i - 1] + 2 * pLeft0[i] + pLeft0[i + 1] + 2) >> 2;
@@ -633,7 +637,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
             frames[j]->sliceType = X265_TYPE_P;
         }
 
-        reset_start = !bKeyframe + 1;
+        reset_start = bKeyframe ? 1 : 2;
         num_bframes = 0;
     }
 
@@ -675,7 +679,7 @@ int Lookahead::scenecut(int p0, int p1, bool bRealScenecut, int num_frames, int 
                 /* Any frame in between p0 and cur_p1 cannot be a real scenecut. */
                 for (int i = curp1; i > p0; i--)
                 {
-                    frames[i]->scenecut = 0;
+                    frames[i]->bScenecut = false;
                 }
         }
 
@@ -688,12 +692,12 @@ int Lookahead::scenecut(int p0, int p1, bool bRealScenecut, int num_frames, int 
         {
             if (origmaxp1 > maxSearch || (curp0 < maxp1 && scenecutInternal(curp0, maxp1, 0)))
                 /* If cur_p0 is the p0 of a scenecut, it cannot be the p1 of a scenecut. */
-                frames[curp0]->scenecut = 0;
+                frames[curp0]->bScenecut = false;
         }
     }
 
     /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts. */
-    if (!frames[p1]->scenecut)
+    if (!frames[p1]->bScenecut)
         return 0;
     return scenecutInternal(p0, p1, bRealScenecut);
 }

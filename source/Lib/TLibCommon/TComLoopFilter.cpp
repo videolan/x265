@@ -107,16 +107,10 @@ void TComLoopFilter::destroy()
 {
     for (UInt dir = 0; dir < 2; dir++)
     {
-        if (m_blockingStrength)
-        {
-            delete [] m_blockingStrength[dir];
-            m_blockingStrength[dir] = NULL;
-        }
-        if (m_bEdgeFilter[dir])
-        {
-            delete [] m_bEdgeFilter[dir];
-            m_bEdgeFilter[dir] = NULL;
-        }
+        delete [] m_blockingStrength[dir];
+        m_blockingStrength[dir] = NULL;
+        delete [] m_bEdgeFilter[dir];
+        m_bEdgeFilter[dir] = NULL;
     }
 }
 

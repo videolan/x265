@@ -37,6 +37,8 @@
 #include "PPA/ppa.h"
 
 #include <signal.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -77,12 +79,9 @@ FILE * fp1 = NULL;
 #endif
 
 /* Ctrl-C handler */
-static volatile int b_ctrl_c = 0;
-static int          b_exit_on_ctrl_c = 0;
+static volatile sig_atomic_t b_ctrl_c /* = 0 */;
 static void sigint_handler(int)
 {
-    if (b_exit_on_ctrl_c)
-        exit(0);
     b_ctrl_c = 1;
 }
 
@@ -401,11 +400,6 @@ struct CLIOptions
             this->input->setDimensions(param->sourceWidth, param->sourceHeight);
             this->input->setBitDepth(inputBitDepth);
         }
-        if (param->bEnableLoopFilter ^ param->bEnableSAO)
-        {
-            log(X265_LOG_ERROR, "Loopfilter and SAO must be same value\n");
-            return true;
-        }
 
         /* rules for input, output and internal bitdepths as per help text */
         if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
@@ -495,17 +489,23 @@ int main(int argc, char **argv)
     CLIOptions   cliopt;
 
     if (cliopt.parse(argc, argv, &param))
+    {
+        cliopt.destroy();
         exit(1);
+    }
 
     x265_t *encoder = x265_encoder_open(&param);
     if (!encoder)
     {
         cliopt.log(X265_LOG_ERROR, "failed to open encoder\n");
+        cliopt.destroy();
+        x265_cleanup();
         exit(1);
     }
 
     /* Control-C handler */
-    signal(SIGINT, sigint_handler);
+    if (signal(SIGINT, sigint_handler) == SIG_ERR)
+        cliopt.log(X265_LOG_ERROR, "Unable to register CTRL+C handler: %s\n", strerror(errno));
 
     x265_picture_t pic_orig, pic_out;
     x265_picture_t *pic_in = &pic_orig;
@@ -518,8 +518,7 @@ int main(int argc, char **argv)
         cliopt.writeNALs(p_nal, nal);
     }
 
-    pic_orig.sliceType = X265_TYPE_AUTO;
-    pic_orig.userData = NULL;
+    x265_picture_init(&param, pic_in);
 
     // main encoder loop
     uint32_t inFrameCount = 0;

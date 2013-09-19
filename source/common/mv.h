@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __MV__
-#define __MV__
+#ifndef X265_MV_H
+#define X265_MV_H
 
 #include <stdint.h>
 
@@ -100,4 +100,4 @@ public:
 };
 }
 
-#endif // ifndef __MV__
+#endif // ifndef X265_MV_H

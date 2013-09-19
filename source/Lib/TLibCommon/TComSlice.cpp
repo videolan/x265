@@ -107,7 +107,6 @@ TComSlice::TComSlice()
 TComSlice::~TComSlice()
 {
     delete[] m_substreamSizes;
-    m_substreamSizes = NULL;
 }
 
 void TComSlice::initSlice()
@@ -957,9 +956,9 @@ TComVPS::TComVPS()
 
 TComVPS::~TComVPS()
 {
-    if (m_hrdParameters    != NULL) delete[] m_hrdParameters;
-    if (m_hrdOpSetIdx      != NULL) delete[] m_hrdOpSetIdx;
-    if (m_cprmsPresentFlag != NULL) delete[] m_cprmsPresentFlag;
+    delete[] m_hrdParameters;
+    delete[] m_hrdOpSetIdx;
+    delete[] m_cprmsPresentFlag;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1337,10 +1336,7 @@ void TComRPSList::create(int numberOfReferencePictureSets)
 
 void TComRPSList::destroy()
 {
-    if (m_referencePictureSets)
-    {
-        delete [] m_referencePictureSets;
-    }
+    delete [] m_referencePictureSets;
     m_numberOfReferencePictureSets = 0;
     m_referencePictureSets = NULL;
 }

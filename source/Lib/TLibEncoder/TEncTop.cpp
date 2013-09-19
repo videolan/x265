@@ -37,6 +37,7 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPic.h"
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include "common.h"
 
@@ -47,7 +48,8 @@
 #include "frameencoder.h"
 #include "ratecontrol.h"
 #include "dpb.h"
-#include "TLibCommon/TComRom.h"
+
+#include <cstdlib>
 #include <math.h> // log10
 
 using namespace x265;
@@ -87,10 +89,9 @@ void TEncTop::create()
 {
     if (!primitives.sad[0])
     {
-        printf("Primitives must be initialized before encoder is created\n");
-        // we call exit() here because this should be an impossible condition when
-        // using our public API, and indicates a serious bug.
-        exit(1);
+        // this should be an impossible condition when using our public API, and indicates a serious bug.
+        x265_log(&param, X265_LOG_ERROR, "Primitives must be initialized before encoder is created\n");
+        abort();
     }
 
     m_frameEncoder = new FrameEncoder[param.frameNumThreads];
@@ -115,6 +116,12 @@ void TEncTop::destroy()
             // Ensure frame encoder is idle before destroying it
             AccessUnit tmp;
             m_frameEncoder[i].getEncodedPicture(tmp);
+            for (AccessUnit::const_iterator it = tmp.begin(); it != tmp.end(); it++)
+            {
+                const NALUnitEBSP& nalu = **it;
+                free(nalu.m_nalUnitData);
+            }
+
             m_frameEncoder[i].destroy();
         }
 
@@ -124,7 +131,7 @@ void TEncTop::destroy()
     while (!m_freeList.empty())
     {
         TComPic* pic = m_freeList.popFront();
-        pic->destroy();
+        pic->destroy(param.bframes);
         delete pic;
     }
 
@@ -134,11 +141,8 @@ void TEncTop::destroy()
         delete m_lookahead;
     }
 
-    if (m_dpb)
-        delete m_dpb;
-
-    if (m_rateControl)
-        delete m_rateControl;
+    delete m_dpb;
+    delete m_rateControl;
 
     // thread pool release should always happen last
     if (m_threadPool)
@@ -196,7 +200,7 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         // TEncTop holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
-        m_lookahead->addPicture(pic);
+        m_lookahead->addPicture(pic, pic_in->sliceType);
     }
 
     if (flush)
@@ -550,7 +554,7 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
     UInt numRBSPBytes = 0;
     for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
     {
-        UInt numRBSPBytes_nal = UInt((*it)->m_nalUnitData.str().size());
+        UInt numRBSPBytes_nal = (*it)->m_packetSize;
 #if VERBOSE_RATE
         printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString((*it)->m_nalUnitType), numRBSPBytes_nal);
 #endif

@@ -22,8 +22,8 @@
  * For more information, contact us at chenm003@163.com.
  *****************************************************************************/
 
-#ifndef __MD5_H__
-#define __MD5_H__
+#ifndef X265_MD5_H
+#define X265_MD5_H
 
 #include "stdint.h"
 
@@ -76,4 +76,4 @@ private:
 };
 }
 
-#endif /* __MD5_H__ */
+#endif // ifndef X265_MD5_H

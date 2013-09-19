@@ -35,8 +35,8 @@
     \brief    CAVLC encoder class (header)
 */
 
-#ifndef __SYNTAXELEMENTWRITER__
-#define __SYNTAXELEMENTWRITER__
+#ifndef X265_SYNTAXELEMENTWRITER_H
+#define X265_SYNTAXELEMENTWRITER_H
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComBitStream.h"
@@ -94,4 +94,4 @@ protected:
 }
 //! \}
 
-#endif // !defined(__SYNTAXELEMENTWRITER__)
+#endif // ifndef X265_SYNTAXELEMENTWRITER_H

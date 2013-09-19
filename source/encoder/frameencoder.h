@@ -22,8 +22,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __FRAMEENCODER__
-#define __FRAMEENCODER__
+#ifndef X265_FRAMEENCODER_H
+#define X265_FRAMEENCODER_H
 
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
@@ -64,7 +64,54 @@ public:
 
     void destroy();
 
-    void processRow(int row);
+    void processRowEncoder(int row);
+
+    void processRowFilter(int row)
+    {
+        m_frameFilter.processRow(row);
+    }
+
+    void enqueueRowEncoder(int row)
+    {
+        WaveFront::enqueueRow(row * 2 + 0);
+    }
+
+    void enqueueRowFilter(int row)
+    {
+        WaveFront::enqueueRow(row * 2 + 1);
+    }
+
+    void enableRowEncoder(int row)
+    {
+        WaveFront::enableRow(row * 2 + 0);
+    }
+
+    void enableRowFilter(int row)
+    {
+        WaveFront::enableRow(row * 2 + 1);
+    }
+
+    void processRow(int row)
+    {
+        const int realRow = row >> 1;
+        const int typeNum = row & 1;
+
+        // TODO: use switch when more type
+        if (typeNum == 0)
+        {
+            processRowEncoder(realRow);
+        }
+        else
+        {
+            processRowFilter(realRow);
+
+            // NOTE: Active next row
+            if (realRow != m_numRows - 1)
+                enqueueRowFilter(realRow + 1);
+            else
+                m_completionEvent.trigger();
+        }
+    }
 
     TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
 
@@ -104,19 +151,7 @@ public:
     TComPic *getEncodedPicture(AccessUnit& accessUnit);
 
     // worker thread
-    void threadMain()
-    {
-        do
-        {
-            m_enable.wait();  // TEncTop::encode() triggers this event
-            if (m_threadActive)
-            {
-                compressFrame();
-                m_done.trigger();
-            }
-        }
-        while (m_threadActive);
-    }
+    void threadMain();
 
     Event                    m_enable;
     Event                    m_done;
@@ -152,4 +187,4 @@ protected:
 };
 }
 
-#endif // ifndef __FRAMEENCODER__
+#endif // ifndef X265_FRAMEENCODER_H

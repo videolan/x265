@@ -24,6 +24,7 @@
 #ifndef _TESTHARNESS_H_
 #define _TESTHARNESS_H_ 1
 
+#include "TLibCommon/CommonDef.h"
 #include "primitives.h"
 #include <stddef.h>
 
@@ -48,11 +49,7 @@ public:
 
     virtual void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt) = 0;
 
-    virtual const char *getName() const = 0;
-
-    static void *alignedMalloc(size_t size, int count, int alignment);
-
-    static void alignedFree(void *ptr);
+    virtual const char *getName() const = 0;    
 };
 
 #ifdef _MSC_VER

@@ -35,8 +35,8 @@
     \brief    Context-adaptive entropy encoder class (header)
 */
 
-#ifndef __TENCSBAC__
-#define __TENCSBAC__
+#ifndef X265_TENCSBAC_H
+#define X265_TENCSBAC_H
 
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/ContextTables.h"
@@ -117,9 +117,8 @@ private:
     void  xCopyFrom(TEncSbac* src);
     void  xCopyContextsFrom(TEncSbac* src);
 
-    void codeDFFlag(UInt /*uiCode*/, const char* /*pSymbolName*/)       { printf("Not supported in codeDFFlag()\n"); assert(0); exit(1); }
-
-    void codeDFSvlc(int /*iCode*/, const char* /*pSymbolName*/)         { printf("Not supported in codeDFSvlc()\n"); assert(0); exit(1); }
+    void codeDFFlag(UInt /*uiCode*/, const char* /*pSymbolName*/) { printf("Not supported in codeDFFlag()\n"); assert(0); }
+    void codeDFSvlc(int /*iCode*/, const char* /*pSymbolName*/)   { printf("Not supported in codeDFSvlc()\n"); assert(0); }
 
 public:
 
@@ -216,4 +215,4 @@ private:
 }
 //! \}
 
-#endif // !defined(__TENCSBAC__)
+#endif // ifndef X265_TENCSBAC_H

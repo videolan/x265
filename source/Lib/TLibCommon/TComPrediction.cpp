@@ -81,10 +81,7 @@ TComPrediction::~TComPrediction()
 
     m_predTempYuv.destroy();
 
-    if (m_lumaRecBuffer)
-    {
-        delete [] m_lumaRecBuffer;
-    }
+    delete [] m_lumaRecBuffer;
 
     if (m_immedVals)
         X265_FREE(m_immedVals);

@@ -50,10 +50,7 @@ SAOParam::~SAOParam()
 {
     for (int i = 0; i < 3; i++)
     {
-        if (saoPart[i])
-        {
-            delete [] saoPart[i];
-        }
+        delete [] saoPart[i];
     }
 }
 
@@ -272,37 +269,18 @@ void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
  */
 void TComSampleAdaptiveOffset::destroy()
 {
-    if (m_clipTableBase)
-    {
-        delete [] m_clipTableBase;
-        m_clipTableBase = NULL;
-    }
-    if (m_offsetBo)
-    {
-        delete [] m_offsetBo;
-        m_offsetBo = NULL;
-    }
-    if (m_lumaTableBo)
-    {
-        delete[] m_lumaTableBo;
-        m_lumaTableBo = NULL;
-    }
-
-    if (m_chromaClipTableBase)
-    {
-        delete [] m_chromaClipTableBase;
-        m_chromaClipTableBase = NULL;
-    }
-    if (m_chromaOffsetBo)
-    {
-        delete [] m_chromaOffsetBo;
-        m_chromaOffsetBo = NULL;
-    }
-    if (m_chromaTableBo)
-    {
-        delete[] m_chromaTableBo;
-        m_chromaTableBo = NULL;
-    }
+    delete [] m_clipTableBase;
+    m_clipTableBase = NULL;
+    delete [] m_offsetBo;
+    m_offsetBo = NULL;
+    delete[] m_lumaTableBo;
+    m_lumaTableBo = NULL;
+    delete [] m_chromaClipTableBase;
+    m_chromaClipTableBase = NULL;
+    delete [] m_chromaOffsetBo;
+    m_chromaOffsetBo = NULL;
+    delete[] m_chromaTableBo;
+    m_chromaTableBo = NULL;
 
     if (m_upBuff1)
     {
@@ -322,34 +300,22 @@ void TComSampleAdaptiveOffset::destroy()
         delete [] m_upBufft;
         m_upBufft = NULL;
     }
-    if (m_tmpL1)
-    {
-        delete [] m_tmpL1;
-        m_tmpL1 = NULL;
-    }
-    if (m_tmpL2)
-    {
-        delete [] m_tmpL2;
-        m_tmpL2 = NULL;
-    }
-    if (m_tmpU1[0])
-    {
-        delete [] m_tmpU1[0];
-        delete [] m_tmpU1[1];
-        delete [] m_tmpU1[2];
-        m_tmpU1[0] = NULL;
-        m_tmpU1[1] = NULL;
-        m_tmpU1[2] = NULL;
-    }
-    if (m_tmpU2[0])
-    {
-        delete [] m_tmpU2[0];
-        delete [] m_tmpU2[1];
-        delete [] m_tmpU2[2];
-        m_tmpU2[0] = NULL;
-        m_tmpU2[1] = NULL;
-        m_tmpU2[2] = NULL;
-    }
+    delete [] m_tmpL1;
+    m_tmpL1 = NULL;
+    delete [] m_tmpL2;
+    m_tmpL2 = NULL;
+    delete [] m_tmpU1[0];
+    delete [] m_tmpU1[1];
+    delete [] m_tmpU1[2];
+    m_tmpU1[0] = NULL;
+    m_tmpU1[1] = NULL;
+    m_tmpU1[2] = NULL;
+    delete [] m_tmpU2[0];
+    delete [] m_tmpU2[1];
+    delete [] m_tmpU2[2];
+    m_tmpU2[0] = NULL;
+    m_tmpU2[1] = NULL;
+    m_tmpU2[2] = NULL;
 }
 
 /** allocate memory for SAO parameters
@@ -484,21 +450,12 @@ void TComSampleAdaptiveOffset::freeSaoParam(SAOParam *saoParam)
     saoParam->saoPart[0] = 0;
     saoParam->saoPart[1] = 0;
     saoParam->saoPart[2] = 0;
-    if (saoParam->saoLcuParam[0])
-    {
-        delete [] saoParam->saoLcuParam[0];
-        saoParam->saoLcuParam[0] = NULL;
-    }
-    if (saoParam->saoLcuParam[1])
-    {
-        delete [] saoParam->saoLcuParam[1];
-        saoParam->saoLcuParam[1] = NULL;
-    }
-    if (saoParam->saoLcuParam[2])
-    {
-        delete [] saoParam->saoLcuParam[2];
-        saoParam->saoLcuParam[2] = NULL;
-    }
+    delete [] saoParam->saoLcuParam[0];
+    saoParam->saoLcuParam[0] = NULL;
+    delete [] saoParam->saoLcuParam[1];
+    saoParam->saoLcuParam[1] = NULL;
+    delete [] saoParam->saoLcuParam[2];
+    saoParam->saoLcuParam[2] = NULL;
 }
 
 /** reset SAO parameters

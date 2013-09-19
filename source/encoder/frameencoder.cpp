@@ -53,7 +53,6 @@ FrameEncoder::FrameEncoder()
     , m_threadActive(true)
     , m_top(NULL)
     , m_cfg(NULL)
-    , m_frameFilter(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
 {}
@@ -61,7 +60,6 @@ FrameEncoder::FrameEncoder()
 void FrameEncoder::setThreadPool(ThreadPool *p)
 {
     m_pool = p;
-    m_frameFilter.setThreadPool(p);
 }
 
 void FrameEncoder::destroy()
@@ -92,7 +90,8 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_top = top;
     m_cfg = top;
     m_numRows = numRows;
-    m_filterRowDelay = (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary) ? 2 : 1;
+    m_filterRowDelay = (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary) ?
+                        2 : (m_cfg->param.bEnableSAO || m_cfg->param.bEnableLoopFilter ? 1 : 0);
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
@@ -100,7 +99,8 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         m_rows[i].create(top);
     }
 
-    if (!WaveFront::init(m_numRows))
+    // NOTE: 2 times of numRows because both Encoder and Filter in same queue
+    if (!WaveFront::init(m_numRows * 2))
     {
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
@@ -255,6 +255,21 @@ void FrameEncoder::initSlice(TComPic* pic)
     }
 
     slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
+}
+
+void FrameEncoder::threadMain()
+{
+    // worker thread routine for FrameEncoder
+    do
+    {
+        m_enable.wait(); // TEncTop::encode() triggers this event
+        if (m_threadActive)
+        {
+            compressFrame();
+            m_done.trigger(); // FrameEncoder::getEncodedPicture() blocks for this event
+        }
+    }
+    while (m_threadActive);
 }
 
 void FrameEncoder::compressFrame()
@@ -435,13 +450,6 @@ void FrameEncoder::compressFrame()
         fprintf(fp, "8x8   : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[3] * 100) / cntTotalCu[3], (double)(cntSkipCu[3] * 100) / cntTotalCu[3]);
     }
 #endif // if LOGGING
-
-    // wait for loop filter completion
-    if (m_cfg->param.bEnableLoopFilter)
-    {
-        m_frameFilter.wait();
-        m_frameFilter.dequeue();
-    }
 
     if (m_cfg->param.bEnableWavefront)
     {
@@ -841,15 +849,16 @@ void FrameEncoder::compressCTURows()
     TComSlice* slice = m_pic->getSlice();
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
+    m_frameFilter.start(m_pic);
+
     if (m_pool && m_cfg->param.bEnableWavefront)
     {
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        m_frameFilter.start(m_pic);
-
         for (UInt row = 0; row < (UInt)m_numRows; row++)
         {
+            // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
             {
                 RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -863,9 +872,9 @@ void FrameEncoder::compressCTURows()
                 }
             }
 
-            WaveFront::enableRow(row);
+            enableRowEncoder(row);
             if (row == 0)
-                WaveFront::enqueueRow(row);
+                enqueueRowEncoder(0);
             else
                 m_pool->pokeIdleThread();
         }
@@ -876,12 +885,12 @@ void FrameEncoder::compressCTURows()
     }
     else
     {
-        m_frameFilter.start(m_pic);
-
         for (int i = 0; i < this->m_numRows + m_filterRowDelay; i++)
         {
+            // Encoder
             if (i < m_numRows)
             {
+                // block until all reference frames have reconstructed the rows we need
                 for (int l = 0; l < numPredDir; l++)
                 {
                     RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -895,25 +904,19 @@ void FrameEncoder::compressCTURows()
                     }
                 }
 
-                processRow(i);
+                processRow(i * 2 + 0);
             }
 
+            // Filter
             if (i >= m_filterRowDelay)
             {
-                if (m_cfg->param.bEnableLoopFilter)
-                {
-                    m_frameFilter.processRow(i - m_filterRowDelay);
-                }
-                else
-                {
-                    m_frameFilter.processRowPost(i - m_filterRowDelay);
-                }
+                processRow((i - m_filterRowDelay) * 2 + 1);
             }
         }
     }
 }
 
-void FrameEncoder::processRow(int row)
+void FrameEncoder::processRowEncoder(int row)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
@@ -950,7 +953,7 @@ void FrameEncoder::processRow(int row)
                 m_rows[row + 1].m_completed + 2 <= m_rows[row].m_completed)
             {
                 m_rows[row + 1].m_active = true;
-                WaveFront::enqueueRow(row + 1);
+                enqueueRowEncoder(row + 1);
             }
         }
 
@@ -960,26 +963,22 @@ void FrameEncoder::processRow(int row)
             curRow.m_active = false;
             return;
         }
-        if (m_cfg->param.bEnableWavefront && checkHigherPriorityRow(row))
-        {
-            curRow.m_active = false;
-            return;
-        }
     }
+    // this row of CTUs has been encoded
 
-    // Active Loopfilter
+    // Run row-wise loop filters
     if (row >= m_filterRowDelay)
     {
-        // NOTE: my version, it need check active flag
-        m_frameFilter.enqueueRow(row - m_filterRowDelay);
-    }
+        enableRowFilter(row - m_filterRowDelay);
 
-    // this row of CTUs has been encoded
+        // NOTE: Active Filter to first row (row 0)
+        if (row == m_filterRowDelay)
+            enqueueRowFilter(0);
+    }
     if (row == m_numRows - 1)
     {
-        // NOTE: I ignore (row-1) because enqueueRow is replace operator
-        m_frameFilter.enqueueRow(row);
-        m_completionEvent.trigger();
+        for(int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
+            enableRowFilter(i);
     }
 }
 

@@ -119,39 +119,55 @@ extern "C"
 void x265_param_default(x265_param_t *param)
 {
     memset(param, 0, sizeof(x265_param_t));
-    param->frameNumThreads = 1;
+
+    /* Applying non-zero default values to all elements in the param structure */
     param->logLevel = X265_LOG_INFO;
+    param->bEnableWavefront = 1;
+    param->frameNumThreads = 1;
+    
+    param->internalBitDepth = 8;
+
+    /* CU definitions */
+    param->maxCUSize = 64;
+    param->tuQTMaxInterDepth = 3;
+    param->tuQTMaxIntraDepth = 3;
+
+    /* Coding Structure */
+    param->decodingRefreshType = 1;
+    param->keyframeMin = 0;
+    param->keyframeMax = 250;
+    param->bframes = 3;
+    param->lookaheadDepth = 10;
+    param->bFrameAdaptive = X265_B_ADAPT_FAST;
+    param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
+
+    /* Intra Coding Tools */
+    param->bEnableStrongIntraSmoothing = 1;
+
+    /* Inter Coding tools */
     param->searchMethod = X265_STAR_SEARCH;
     param->subpelRefine = 5;
     param->searchRange = 60;
     param->bipredSearchRange = 4;
-    param->internalBitDepth = 8;
-    param->decodingRefreshType = 1;
-    param->maxCUSize = 64;
-    param->tuQTMaxInterDepth = 3;
-    param->tuQTMaxIntraDepth = 3;
+    param->maxNumMergeCand = 5u;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
+    param->bRDLevel = X265_FULL_RDO;
     param->bEnableRDO = 1;
-    param->bEnableLoopFilter = 1;
-    param->bEnableSAO = 1;
-    param->bEnableWavefront = 1;
-    param->saoLcuBasedOptimization = 1;
-    param->maxNumMergeCand = 5u;
-    param->bEnableSignHiding = 1;
-    param->bEnableStrongIntraSmoothing = 1;
     param->bEnableRDOQ = 1;
     param->bEnableRDOQTS = 1;
+    param->bEnableSignHiding = 1;
     param->bEnableTransformSkip = 1;
     param->bEnableTSkipFast = 1;
 
-    param->bFrameAdaptive = X265_B_ADAPT_FAST;
-    param->lookaheadDepth = 10;
-    param->bframes = 3;
-    param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
-    param->keyframeMin = 0;
-    param->keyframeMax = 250;
-
+    /* Loop Filter */
+    param->bEnableLoopFilter = 1;
+    
+    /* SAO Loop Filter */
+    param->bEnableSAO = 1;
+    param->saoLcuBasedOptimization = 1;
+    
+    /* Rate control options */
     param->rc.bitrate = 0;
     param->rc.rateTolerance = 0.1;
     param->rc.qCompress = 0.6;
@@ -160,6 +176,13 @@ void x265_param_default(x265_param_t *param)
     param->rc.qpStep = 4;
     param->rc.rateControlMode = X265_RC_CQP;
     param->rc.qp = 32;
+}
+
+extern "C"
+void x265_picture_init(x265_param_t *param, x265_picture_t *pic)
+{
+    memset(pic, 0, sizeof(x265_picture_t));
+    pic->bitDepth = param->internalBitDepth;
 }
 
 extern "C"
@@ -227,6 +250,8 @@ int x265_check_params(x265_param_t *param)
             "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
     CONFIRM(param->frameNumThreads <= 0,
             "frameNumThreads (--frame-threads) must be 1 or higher");
+    CONFIRM(!param->saoLcuBasedOptimization && param->frameNumThreads > 1,
+            "picture-based SAO is not compatible with frame parallelism");
     CONFIRM(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CONFIRM(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
     CONFIRM(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
@@ -263,7 +288,8 @@ int x265_check_params(x265_param_t *param)
             "Picture height must be an integer multiple of the specified chroma subsampling");
     CONFIRM(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
             "Rate control mode is out of range");
-
+    CONFIRM(param->bRDLevel < X265_NO_RDO_NO_RDOQ || param->bRDLevel> X265_FULL_RDO,
+            "RD Level is out of range");
     CONFIRM(param->bframes > param->lookaheadDepth,
             "Lookahead depth must be greater than the max consecutive bframe count");
 
@@ -374,11 +400,18 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
-    if (param->bEnableRDO)
-        fprintf(stderr, "rdo ");
-    else
-        fprintf(stderr, "no-rdo ");
-    TOOLOPT(param->bEnableRDOQ, "rdoq");
+    switch (param->bRDLevel)
+    {
+    case X265_NO_RDO_NO_RDOQ: 
+        fprintf(stderr, "%s ", "no-rdo no-rdoq "); break;
+    case X265_NO_RDO:
+        fprintf(stderr, "%s", "no-rdo rdoq "); break;
+    case X265_FULL_RDO:
+        fprintf(stderr, "%s", "rdo rdoq "); break;
+    default: 
+        fprintf(stderr, "%s", "Unknown RD Level");
+    }
+
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
     {

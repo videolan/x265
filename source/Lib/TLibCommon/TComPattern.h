@@ -35,8 +35,8 @@
     \brief    neighboring pixel access classes (header)
 */
 
-#ifndef __TCOMPATTERN__
-#define __TCOMPATTERN__
+#ifndef X265_TCOMPATTERN_H
+#define X265_TCOMPATTERN_H
 
 #include "CommonDef.h"
 #include <stdio.h>
@@ -153,4 +153,4 @@ private:
 }
 //! \}
 
-#endif // __TCOMPATTERN__
+#endif // ifndef X265_TCOMPATTERN_H

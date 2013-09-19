@@ -53,10 +53,7 @@ add_library(common STATIC ../../COPYING
     
 if(ENABLE_PRIMITIVES_VEC)
     add_subdirectory(vec)
-    target_link_libraries(common PrimitivesVec)
 endif(ENABLE_PRIMITIVES_VEC)
-
 if(ENABLE_PRIMITIVES_ASM)
     add_subdirectory(x86)
-    target_link_libraries(common PrimitivesASM)
 endif(ENABLE_PRIMITIVES_ASM)

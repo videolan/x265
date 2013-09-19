@@ -36,8 +36,8 @@
  \brief    Access Unit class (header)
  */
 
-#ifndef _ACCESS_UNIT_
-#define _ACCESS_UNIT_ 1
+#ifndef X265_ACCESSUNIT_H
+#define X265_ACCESSUNIT_H
 
 #include "NAL.h"
 #include <list>
@@ -74,4 +74,4 @@ public: ~AccessUnit()
 
 //! \}
 
-#endif // ifndef _ACCESS_UNIT_
+#endif // ifndef X265_ACCESSUNIT_H

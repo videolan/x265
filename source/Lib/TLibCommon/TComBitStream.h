@@ -35,8 +35,8 @@
     \brief    class for handling bitstream (header)
 */
 
-#ifndef __COMBITSTREAM__
-#define __COMBITSTREAM__
+#ifndef X265_COMBITSTREAM_H
+#define X265_COMBITSTREAM_H
 
 #include <stdint.h>
 #include <vector>
@@ -164,4 +164,4 @@ public:
 }
 //! \}
 
-#endif // ifndef __COMBITSTREAM__
+#endif // ifndef X265_COMBITSTREAM_H

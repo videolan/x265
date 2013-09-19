@@ -35,8 +35,8 @@
     \brief    Coding Unit (CU) encoder class (header)
 */
 
-#ifndef __TENCCU__
-#define __TENCCU__
+#ifndef X265_TENCCU_H
+#define X265_TENCCU_H
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComYuv.h"
@@ -177,4 +177,4 @@ protected:
 }
 //! \}
 
-#endif // __TENCMB__
+#endif // ifndef X265_TENCCU_H

@@ -178,10 +178,6 @@ void TComDataCU::destroy()
     if (m_depth) { X265_FREE(m_depth); m_depth = NULL; }
     if (m_width) { X265_FREE(m_width); m_width = NULL; }
     if (m_height) { X265_FREE(m_height); m_height = NULL; }
-    if (m_skipFlag) { delete[] m_skipFlag; m_skipFlag = NULL; }
-    if (m_partSizes) { delete[] m_partSizes; m_partSizes = NULL; }
-    if (m_predModes) { delete[] m_predModes; m_predModes = NULL; }
-    if (m_cuTransquantBypass) { delete[] m_cuTransquantBypass; m_cuTransquantBypass = NULL; }
     if (m_cbf[0]) { X265_FREE(m_cbf[0]); m_cbf[0] = NULL; }
     if (m_cbf[1]) { X265_FREE(m_cbf[1]); m_cbf[1] = NULL; }
     if (m_cbf[2]) { X265_FREE(m_cbf[2]); m_cbf[2] = NULL; }
@@ -201,10 +197,14 @@ void TComDataCU::destroy()
     if (m_iPCMSampleY) { X265_FREE(m_iPCMSampleY); m_iPCMSampleY = NULL; }
     if (m_iPCMSampleCb) { X265_FREE(m_iPCMSampleCb); m_iPCMSampleCb = NULL; }
     if (m_iPCMSampleCr) { X265_FREE(m_iPCMSampleCr); m_iPCMSampleCr = NULL; }
-    if (m_mvpIdx[0]) { delete[] m_mvpIdx[0]; m_mvpIdx[0] = NULL; }
-    if (m_mvpIdx[1]) { delete[] m_mvpIdx[1]; m_mvpIdx[1] = NULL; }
-    if (m_mvpNum[0]) { delete[] m_mvpNum[0]; m_mvpNum[0] = NULL; }
-    if (m_mvpNum[1]) { delete[] m_mvpNum[1]; m_mvpNum[1] = NULL; }
+    delete[] m_cuTransquantBypass; m_cuTransquantBypass = NULL;
+    delete[] m_mvpIdx[0]; m_mvpIdx[0] = NULL;
+    delete[] m_mvpIdx[1]; m_mvpIdx[1] = NULL;
+    delete[] m_mvpNum[0]; m_mvpNum[0] = NULL;
+    delete[] m_mvpNum[1]; m_mvpNum[1] = NULL;
+    delete[] m_skipFlag; m_skipFlag = NULL;
+    delete[] m_partSizes; m_partSizes = NULL;
+    delete[] m_predModes; m_predModes = NULL;
 
     m_cuMvField[0].destroy();
     m_cuMvField[1].destroy();
