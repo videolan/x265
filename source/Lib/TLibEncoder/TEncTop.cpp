@@ -194,7 +194,7 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         // TEncTop holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
-        m_lookahead->addPicture(pic);
+        m_lookahead->addPicture(pic, pic_in->sliceType);
     }
 
     if (flush)

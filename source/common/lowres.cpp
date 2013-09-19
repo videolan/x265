@@ -106,12 +106,13 @@ void Lowres::destroy(int bframes)
 }
 
 // (re) initialize lowres state
-void Lowres::init(TComPicYuv *orig, int bframes)
+void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
 {
     bScenecut = true;
     bIntraCalculated = false;
     bKeyframe = false; // Not a keyframe unless identified by lookahead
-    sliceType = X265_TYPE_AUTO;
+    sliceType = type;
+    frameNum = poc;
     memset(costEst, -1, sizeof(costEst));
     for (int y = 0; y < bframes + 2; y++)
     {

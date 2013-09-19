@@ -64,7 +64,7 @@ struct Lowres : public ReferencePlanes
 
     void create(TComPic *pic, int bframes);
     void destroy(int bframes);
-    void init(TComPicYuv *orig, int bframes);
+    void init(TComPicYuv *orig, int poc, int sliceType, int bframes);
 };
 }
 

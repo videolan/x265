@@ -99,10 +99,9 @@ void Lookahead::destroy()
     }
 }
 
-void Lookahead::addPicture(TComPic *pic)
+void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
-    pic->m_lowres.init(pic->getPicYuvOrg(), cfg->param.bframes);
-    pic->m_lowres.frameNum = pic->getSlice()->getPOC();
+    pic->m_lowres.init(pic->getPicYuvOrg(), pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
 
     inputQueue.pushBack(pic);
     if (inputQueue.size() >= (size_t)cfg->param.lookaheadDepth)

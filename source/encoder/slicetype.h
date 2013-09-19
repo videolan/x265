@@ -56,7 +56,7 @@ struct Lookahead
     Lookahead(TEncCfg *);
     ~Lookahead();
 
-    void addPicture(TComPic*);
+    void addPicture(TComPic*, int sliceType);
     void flush();
     void destroy();
     void slicetypeDecide();
