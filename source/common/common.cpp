@@ -179,6 +179,13 @@ void x265_param_default(x265_param_t *param)
 }
 
 extern "C"
+void x265_picture_init(x265_param_t *param, x265_picture_t *pic)
+{
+    memset(pic, 0, sizeof(x265_picture_t));
+    pic->bitDepth = param->internalBitDepth;
+}
+
+extern "C"
 int x265_param_apply_profile(x265_param_t *param, const char *profile)
 {
     if (!profile)

@@ -518,8 +518,7 @@ int main(int argc, char **argv)
         cliopt.writeNALs(p_nal, nal);
     }
 
-    pic_orig.sliceType = X265_TYPE_AUTO;
-    pic_orig.userData = NULL;
+    x265_picture_init(&param, pic_in);
 
     // main encoder loop
     uint32_t inFrameCount = 0;

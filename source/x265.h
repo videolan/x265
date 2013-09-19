@@ -300,6 +300,11 @@ void x265_setup_primitives(x265_param_t *param, int cpulevel);
  */
 void x265_param_default(x265_param_t *param);
 
+/***
+ * Initialize an x265_picture_t structure to default values
+ */
+void x265_picture_init(x265_param_t *param, x265_picture_t *pic);
+
 /* x265_param_apply_profile:
  *      Applies the restrictions of the given profile. (one of below) */
 static const char * const x265_profile_names[] = { "main", "main10", "mainstillpicture", 0 };
