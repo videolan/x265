@@ -289,17 +289,6 @@ public:
 
     bool m_gdrForegroundFlag;
 };
-
-typedef std::list<SEI*> SEIMessages;
-
-/// output a selection of SEI messages by payload type. Ownership stays in original message list.
-SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
-
-/// remove a selection of SEI messages by payload type from the original list and return them in a new list.
-SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
-
-/// delete list of SEI messages (freeing the referenced objects)
-void deleteSEIs(SEIMessages &seiList);
 }
 //! \}
 
