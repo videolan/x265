@@ -125,7 +125,7 @@ void Lookahead::slicetypeDecide()
         outputQueue.pushBack(pic);
         numDecided++;
         lastKeyframe = 0;
-        pic->m_lowres.keyframe = 1;
+        pic->m_lowres.bKeyframe = true;
         frames[0] = &(pic->m_lowres);
         return;
     }
@@ -141,7 +141,7 @@ void Lookahead::slicetypeDecide()
         {
             if (frames[dframes + 1]->sliceType == X265_TYPE_I)
             {
-                frames[dframes + 1]->keyframe = 1;
+                frames[dframes + 1]->bKeyframe = true;
                 lastKeyframe = frames[dframes]->frameNum;
                 if (cfg->param.decodingRefreshType == 2 && dframes > 0) //If an IDR frame following a B
                 {
@@ -182,7 +182,7 @@ void Lookahead::slicetypeDecide()
         TComPic *pic = inputQueue.popFront();
 
         pic->m_lowres.sliceType = X265_TYPE_I;
-        pic->m_lowres.keyframe = 1;
+        pic->m_lowres.bKeyframe = true;
         outputQueue.pushBack(pic);
         numDecided++;
     }
@@ -192,7 +192,7 @@ void Lookahead::slicetypeDecide()
 
         bool forceIntra = (pic->getPOC() % cfg->param.keyframeMax) == 0;
         pic->m_lowres.sliceType = forceIntra ? X265_TYPE_I : X265_TYPE_P;
-        pic->m_lowres.keyframe = forceIntra ? 1 : 0;
+        pic->m_lowres.bKeyframe = forceIntra;
         outputQueue.pushBack(pic);
         numDecided++;
     }
@@ -205,12 +205,12 @@ void Lookahead::slicetypeDecide()
         if (forceIntra)
         {
             picB->m_lowres.sliceType = (picB->getPOC() % cfg->param.keyframeMax) ? X265_TYPE_P : X265_TYPE_I;
-            picB->m_lowres.keyframe = (picB->getPOC() % cfg->param.keyframeMax) ? 0 : 1;
+            picB->m_lowres.bKeyframe = !(picB->getPOC() % cfg->param.keyframeMax);
             outputQueue.pushBack(picB);
             numDecided++;
 
             picP->m_lowres.sliceType = (picP->getPOC() % cfg->param.keyframeMax) ? X265_TYPE_P : X265_TYPE_I;
-            picP->m_lowres.keyframe = (picP->getPOC() % cfg->param.keyframeMax) ? 0 : 1;
+            picP->m_lowres.bKeyframe = !(picP->getPOC() % cfg->param.keyframeMax);
             outputQueue.pushBack(picP);
             numDecided++;
         }
@@ -638,7 +638,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
             frames[j]->sliceType = X265_TYPE_P;
         }
 
-        reset_start = !bKeyframe + 1;
+        reset_start = bKeyframe ? 1 : 2;
         num_bframes = 0;
     }
 

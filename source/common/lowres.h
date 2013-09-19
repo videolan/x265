@@ -51,7 +51,7 @@ struct Lowres : public ReferencePlanes
     bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut. 
 
     int    sliceType; // Slice type decided by lookahead
-    int    keyframe;
+    bool   bKeyframe;
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];

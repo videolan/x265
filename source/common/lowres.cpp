@@ -110,9 +110,9 @@ void Lowres::init(TComPicYuv *orig, int bframes)
 {
     bScenecut = true;
     bIntraCalculated = false;
-    memset(costEst, -1, sizeof(costEst));
+    bKeyframe = false; // Not a keyframe unless identified by lookahead
     sliceType = X265_TYPE_AUTO;
-    keyframe = 0; //Not a keyframe unless identified by lookahead
+    memset(costEst, -1, sizeof(costEst));
     for (int y = 0; y < bframes + 2; y++)
     {
         for (int x = 0; x < bframes + 2; x++)

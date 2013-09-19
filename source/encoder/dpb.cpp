@@ -374,7 +374,7 @@ NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, TComPic* pic)
     {
         return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
     }
-    if (pic->m_lowres.keyframe)
+    if (pic->m_lowres.bKeyframe)
     {
         if (m_cfg->param.decodingRefreshType == 1)
         {
