@@ -70,11 +70,12 @@ RateControl::RateControl(x265_param_t * param)
     totalBits = 0;
     shortTermCplxSum = 0;
     shortTermCplxCount = 0;
+    framesDone = 0;
     if (rateControlMode == X265_RC_ABR)
     {
         // Adjust the first frame in order to stabilize the quality level compared to the rest.
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
-#define ABR_INIT_QP_MAX (38 + QP_BD_OFFSET)
+#define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP_MIN) * accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame  */
@@ -131,7 +132,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
 
     if (frameType != B_SLICE)
         lastNonBPictType = frameType;
-
+    framesDone++;
     /* set the final QP to slice structure */
     curFrame->setSliceQp(qp);
     curFrame->setSliceQpBase(qp);
@@ -217,8 +218,8 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
          * Don't run it if the frame complexity is zero either. */
         if (lastSatd)
         {
-            double iFrameDone = curFrame->getPOC() + 1 - frameThreads;
-            double timeDone = iFrameDone / framerate;
+            /* use framesDone instead of POC as poc count is not serial with bframes enabled */
+            double timeDone = (double)(framesDone - frameThreads + 1) / framerate;
             wantedBits = timeDone * bitrate;
             if (wantedBits > 0)
             {
@@ -285,7 +286,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
         q = lastQScaleFor[rce->pictType];
     else
     {
-        rce->lastRceq = q;
+        lastRceq = q;
         q /= rateFactor;
     }
     return q;
@@ -299,12 +300,12 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
         if (frameType != B_SLICE)
             /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
              * to improve short term compensation for next frame. */
-            cplxrSum += 1.5 *bits * qp2qScale(rce->qpaRc) / rce->lastRceq;
+            cplxrSum += 1.5 * bits * qp2qScale(rce->qpaRc) / rce->qRceq;
         else
         {
             /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
              * Not perfectly accurate with B-refs, but good enough. */
-            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->lastRceq * fabs(pbFactor));
+            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(pbFactor));
         }
         wantedBitsWindow += frameDuration * bitrate;
         rce = NULL;
