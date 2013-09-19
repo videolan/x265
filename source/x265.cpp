@@ -505,7 +505,7 @@ int main(int argc, char **argv)
 
     /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
-        cliopt.log(X265_LOG_ERROR, "Unable to register CTRL+C handler, error %d\n", errno);
+        cliopt.log(X265_LOG_ERROR, "Unable to register CTRL+C handler: %s\n", strerror(errno));
 
     x265_picture_t pic_orig, pic_out;
     x265_picture_t *pic_in = &pic_orig;
