@@ -46,11 +46,11 @@ struct Lowres : public ReferencePlanes
     pixel *buffer[4];
     int    width;    // width of lowres frame in pixels
     int    lines;    // height of lowres frame in pixel lines
-    bool   bIntraCalculated;
-    int    frameNum;  // Presentation frame number 
-    bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut. 
-
+    int    frameNum;  // Presentation frame number
     int    sliceType; // Slice type decided by lookahead
+
+    bool   bIntraCalculated;
+    bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut.
     bool   bKeyframe;
 
     /* lookahead output data */
