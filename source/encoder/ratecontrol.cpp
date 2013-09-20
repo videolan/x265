@@ -116,6 +116,8 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
             double q = qScale2qp(rateEstimateQscale(rce));
             qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
             rce->qpaRc = q;
+            /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
+            rce->qRceq = lastRceq;
             accumPQpUpdate();
             break;
         }
