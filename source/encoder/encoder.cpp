@@ -421,7 +421,9 @@ void x265_cleanup(void)
 
 int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
 {
-    UInt memsize = 0;
+    uint32_t memsize = 0;
+    uint32_t offset = 0;
+
     nalcount = 0;
     for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
     {
@@ -442,7 +444,7 @@ int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
     for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
     {
         const NALUnitEBSP& nalu = **it;
-        int size = 0; /* size of annexB unit in bytes */
+        uint32_t size = 0; /* size of annexB unit in bytes */
 
         static const char start_code_prefix[] = { 0, 0, 0, 1 };
         if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
@@ -464,10 +466,10 @@ int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
             size += 3;
         }
         memsize += size;
-        size_t nalSize = nalu.m_packetSize;
+        uint32_t nalSize = nalu.m_packetSize;
         ::memcpy(m_packetData + memsize, nalu.m_nalUnitData, nalSize);
-        size += (int)nalSize;
-        memsize += (int)nalSize;
+        size += nalSize;
+        memsize += nalSize;
 
         m_nals[nalcount].i_type = nalu.m_nalUnitType;
         m_nals[nalcount].i_payload = size;
@@ -476,8 +478,7 @@ int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
     }
 
     /* Setup payload pointers, now that we're done adding content to m_packetData */
-    size_t offset = 0;
-    for (size_t i = 0; i < (size_t)nalcount; i++)
+    for (uint32_t i = 0; i < nalcount; i++)
     {
         m_nals[i].p_payload = (uint8_t*)m_packetData + offset;
         offset += m_nals[i].i_payload;
