@@ -434,6 +434,7 @@ int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
     X265_FREE(m_nals);
     CHECKED_MALLOC(m_packetData, char, memsize);
     CHECKED_MALLOC(m_nals, x265_nal_t, nalcount);
+
     nalcount = 0;
     memsize = 0;
 
@@ -473,7 +474,7 @@ int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
         nalcount++;
         free(nalu.m_nalUnitData);
     }
-         
+
     /* Setup payload pointers, now that we're done adding content to m_packetData */
     size_t offset = 0;
     for (size_t i = 0; i < (size_t)nalcount; i++)
