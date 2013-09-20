@@ -14,10 +14,55 @@ endif(ENABLE_PRIMITIVES_ASM)
 
 include_directories(../VectorClass)
 
-file(GLOB LIBCOMMON_HDR ../Lib/TLibCommon/*.h)
-file(GLOB LIBCOMMON_SRC ../Lib/TLibCommon/*.cpp)
+set(LIBCOMMON_HDR
+    ../Lib/TLibCommon/AccessUnit.h
+    ../Lib/TLibCommon/CommonDef.h
+    ../Lib/TLibCommon/ContextModel.h
+    ../Lib/TLibCommon/ContextModel3DBuffer.h
+    ../Lib/TLibCommon/ContextTables.h
+    ../Lib/TLibCommon/NAL.h
+    ../Lib/TLibCommon/SEI.h
+    ../Lib/TLibCommon/TComBitCounter.h
+    ../Lib/TLibCommon/TComBitStream.h
+    ../Lib/TLibCommon/TComDataCU.h
+    ../Lib/TLibCommon/TComList.h
+    ../Lib/TLibCommon/TComLoopFilter.h
+    ../Lib/TLibCommon/TComMotionInfo.h
+    ../Lib/TLibCommon/TComPattern.h
+    ../Lib/TLibCommon/TComPic.h
+    ../Lib/TLibCommon/TComPicSym.h
+    ../Lib/TLibCommon/TComPicYuv.h
+    ../Lib/TLibCommon/TComPrediction.h
+    ../Lib/TLibCommon/TComRdCost.h
+    ../Lib/TLibCommon/TComRom.h
+    ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
+    ../Lib/TLibCommon/TComSlice.h
+    ../Lib/TLibCommon/TComTrQuant.h
+    ../Lib/TLibCommon/TComWeightPrediction.h
+    ../Lib/TLibCommon/TComYuv.h
+    ../Lib/TLibCommon/TypeDef.h)
+set(LIBCOMMON_SRC
+    ../Lib/TLibCommon/ContextModel.cpp
+    ../Lib/TLibCommon/ContextModel3DBuffer.cpp
+    ../Lib/TLibCommon/TComBitStream.cpp
+    ../Lib/TLibCommon/TComDataCU.cpp
+    ../Lib/TLibCommon/TComLoopFilter.cpp
+    ../Lib/TLibCommon/TComMotionInfo.cpp
+    ../Lib/TLibCommon/TComPattern.cpp
+    ../Lib/TLibCommon/TComPic.cpp
+    ../Lib/TLibCommon/TComPicSym.cpp
+    ../Lib/TLibCommon/TComPicYuv.cpp
+    ../Lib/TLibCommon/TComPicYuvMD5.cpp
+    ../Lib/TLibCommon/TComPrediction.cpp
+    ../Lib/TLibCommon/TComRom.cpp
+    ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
+    ../Lib/TLibCommon/TComSlice.cpp
+    ../Lib/TLibCommon/TComTrQuant.cpp
+    ../Lib/TLibCommon/TComWeightPrediction.cpp
+    ../Lib/TLibCommon/TComYuv.cpp)
 source_group(TLibCommon FILES ${LIBCOMMON_SRC})
 source_group(TLibCommonH FILES ${LIBCOMMON_HDR})
+
 if(GCC)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-sign-compare")
