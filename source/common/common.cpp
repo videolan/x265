@@ -403,7 +403,7 @@ void x265_print_params(x265_param_t *param)
     switch (param->bRDLevel)
     {
     case X265_NO_RDO_NO_RDOQ: 
-        fprintf(stderr, "%s ", "no-rdo no-rdoq "); break;
+        fprintf(stderr, "%s", "no-rdo no-rdoq "); break;
     case X265_NO_RDO:
         fprintf(stderr, "%s", "no-rdo rdoq "); break;
     case X265_FULL_RDO:
