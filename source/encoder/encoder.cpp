@@ -47,7 +47,7 @@ struct x265_t : public TEncTop
 
     void configure(x265_param_t *param);
     void determineLevelAndProfile(x265_param_t *param);
-    void extract_naldata(AccessUnit &au, size_t &nalcount);
+    int extract_naldata(AccessUnit &au, size_t &nalcount);
 };
 
 x265_t::x265_t()
@@ -361,14 +361,16 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
         return 0;
 
     AccessUnit au;
-    if (encoder->getStreamHeaders(au) == 0)
+    if (!encoder->getStreamHeaders(au))
     {
         size_t nalcount;
-        encoder->extract_naldata( au, nalcount);
-
-        *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = (int)nalcount;
-        return 0;
+        if (!encoder->extract_naldata(au, nalcount))
+        {
+            *pp_nal = &encoder->m_nals[0];
+            if (pi_nal) *pi_nal = (int)nalcount;
+            return 0;
+        }
+        return -1;
     }
     else
         return -1;
@@ -384,7 +386,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     if (pp_nal && numEncoded)
     {
         size_t nalcount;
-        encoder->extract_naldata( au, nalcount);
+        encoder->extract_naldata(au, nalcount);
 
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal =(int) nalcount;
@@ -417,7 +419,7 @@ void x265_cleanup(void)
     BitCost::destroy();
 }
 
-void x265_t::extract_naldata( AccessUnit &au, size_t &nalcount)
+int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
 {
         UInt memsize = 0;
         nalcount = 0;
@@ -434,8 +436,8 @@ void x265_t::extract_naldata( AccessUnit &au, size_t &nalcount)
         if (m_nals)
             X265_FREE(m_nals);
 
-        m_packetData = (char*)X265_MALLOC(char, memsize);
-        m_nals = (x265_nal_t*)X265_MALLOC(x265_nal_t, nalcount);
+        CHECKED_MALLOC(m_packetData, char, memsize);
+        CHECKED_MALLOC(m_nals, x265_nal_t, nalcount);
         nalcount = 0;
         memsize = 0;
 
@@ -483,4 +485,8 @@ void x265_t::extract_naldata( AccessUnit &au, size_t &nalcount)
             m_nals[i].p_payload = (uint8_t*)m_packetData + offset;
             offset += m_nals[i].i_payload;
         }
+
+        return 0;
+fail:
+        return -1;
 }
