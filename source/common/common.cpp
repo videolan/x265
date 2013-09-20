@@ -86,7 +86,7 @@ void x265_free(void *ptr)
 
 void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 {
-    if (level > param->logLevel)
+    if (param && level > param->logLevel)
         return;
     const char *log_level;
     switch (level)
