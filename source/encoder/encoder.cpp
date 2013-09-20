@@ -421,72 +421,72 @@ void x265_cleanup(void)
 
 int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
 {
-        UInt memsize = 0;
-        nalcount = 0;
-        for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
+    UInt memsize = 0;
+    nalcount = 0;
+    for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
+    {
+        const NALUnitEBSP& temp = **t;
+        memsize += temp.m_packetSize + 4;
+        nalcount++;
+    }
+
+    if (m_packetData)
+        X265_FREE(m_packetData);
+
+    if (m_nals)
+        X265_FREE(m_nals);
+
+    CHECKED_MALLOC(m_packetData, char, memsize);
+    CHECKED_MALLOC(m_nals, x265_nal_t, nalcount);
+    nalcount = 0;
+    memsize = 0;
+
+    /* Copy NAL output packets into x265_nal_t structures */
+    for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
+    {
+        const NALUnitEBSP& nalu = **it;
+        int size = 0; /* size of annexB unit in bytes */
+
+        static const char start_code_prefix[] = { 0, 0, 0, 1 };
+        if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
         {
-            const NALUnitEBSP& temp = **t;
-            memsize += temp.m_packetSize + 4;
-            nalcount++;
+            /* From AVC, When any of the following conditions are fulfilled, the
+                * zero_byte syntax element shall be present:
+                *  - the nal_unit_type within the nal_unit() is equal to 7 (sequence
+                *    parameter set) or 8 (picture parameter set),
+                *  - the byte stream NAL unit syntax structure contains the first NAL
+                *    unit of an access unit in decoding order, as specified by subclause
+                *    7.4.1.2.3.
+                */
+            ::memcpy(m_packetData + memsize, start_code_prefix, 4);
+            size += 4;
         }
-
-        if (m_packetData)
-            X265_FREE(m_packetData);
-
-        if (m_nals)
-            X265_FREE(m_nals);
-
-        CHECKED_MALLOC(m_packetData, char, memsize);
-        CHECKED_MALLOC(m_nals, x265_nal_t, nalcount);
-        nalcount = 0;
-        memsize = 0;
-
-        /* Copy NAL output packets into x265_nal_t structures */
-        for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
+        else
         {
-            const NALUnitEBSP& nalu = **it;
-            int size = 0; /* size of annexB unit in bytes */
-
-            static const char start_code_prefix[] = { 0, 0, 0, 1 };
-            if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
-            {
-                /* From AVC, When any of the following conditions are fulfilled, the
-                    * zero_byte syntax element shall be present:
-                    *  - the nal_unit_type within the nal_unit() is equal to 7 (sequence
-                    *    parameter set) or 8 (picture parameter set),
-                    *  - the byte stream NAL unit syntax structure contains the first NAL
-                    *    unit of an access unit in decoding order, as specified by subclause
-                    *    7.4.1.2.3.
-                    */
-                ::memcpy(m_packetData + memsize, start_code_prefix, 4);
-                size += 4;
-            }
-            else
-            {
-                ::memcpy(m_packetData + memsize, start_code_prefix + 1, 3);
-                size += 3;
-            }
-            memsize += size;
-            size_t nalSize = nalu.m_packetSize;
-            ::memcpy(m_packetData + memsize, nalu.m_nalUnitData, nalSize);
-            size += (int)nalSize;
-            memsize += (int)nalSize;
-
-            m_nals[nalcount].i_type = nalu.m_nalUnitType;
-            m_nals[nalcount].i_payload = size;
-            nalcount++;
-            free(nalu.m_nalUnitData);
+            ::memcpy(m_packetData + memsize, start_code_prefix + 1, 3);
+            size += 3;
         }
+        memsize += size;
+        size_t nalSize = nalu.m_packetSize;
+        ::memcpy(m_packetData + memsize, nalu.m_nalUnitData, nalSize);
+        size += (int)nalSize;
+        memsize += (int)nalSize;
+
+        m_nals[nalcount].i_type = nalu.m_nalUnitType;
+        m_nals[nalcount].i_payload = size;
+        nalcount++;
+        free(nalu.m_nalUnitData);
+    }
          
-        /* Setup payload pointers, now that we're done adding content to m_packetData */
-        size_t offset = 0;
-        for (size_t i = 0; i < (size_t)nalcount; i++)
-        {
-            m_nals[i].p_payload = (uint8_t*)m_packetData + offset;
-            offset += m_nals[i].i_payload;
-        }
+    /* Setup payload pointers, now that we're done adding content to m_packetData */
+    size_t offset = 0;
+    for (size_t i = 0; i < (size_t)nalcount; i++)
+    {
+        m_nals[i].p_payload = (uint8_t*)m_packetData + offset;
+        offset += m_nals[i].i_payload;
+    }
 
-        return 0;
+    return 0;
 fail:
-        return -1;
+    return -1;
 }
