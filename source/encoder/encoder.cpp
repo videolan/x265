@@ -372,6 +372,11 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
         {
             *pp_nal = &encoder->m_nals[0];
             if (pi_nal) *pi_nal = (int)nalcount;
+            for (AccessUnit::const_iterator t = au.begin(); t != au.end(); t++)
+            {
+                X265_FREE(*t);
+            }
+            au.clear();
             return 0;
         }
         return -1;
@@ -487,8 +492,8 @@ int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
         m_nals[i].p_payload = (uint8_t*)m_packetData + offset;
         offset += m_nals[i].i_payload;
     }
-
     return 0;
+
 fail:
     return -1;
 }

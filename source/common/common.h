@@ -95,6 +95,7 @@
 #define X265_MIN4(a, b, c, d) X265_MIN((a), X265_MIN3((b), (c), (d)))
 #define X265_MAX4(a, b, c, d) X265_MAX((a), X265_MAX3((b), (c), (d)))
 #define QP_BD_OFFSET (6*(X265_DEPTH-8))
+#define MAX_NAL_UNITS 5
 
 #define CHECKED_MALLOC(var, type, count )\
 {\
