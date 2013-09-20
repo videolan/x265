@@ -188,7 +188,7 @@ void x265_t::determineLevelAndProfile(x265_param_t *_param)
 void x265_t::configure(x265_param_t *_param)
 {
     // Trim the thread pool if WPP is disabled
-    if (_param->bEnableWavefront == 0)
+    if (!_param->bEnableWavefront)
         _param->poolNumThreads = 1;
 
     setThreadPool(ThreadPool::allocThreadPool(_param->poolNumThreads));
@@ -209,7 +209,7 @@ void x265_t::configure(x265_param_t *_param)
         _param->bEnableWavefront = 0;
     }
         
-    if (_param->keyframeMin == 0)
+    if (!_param->keyframeMin)
     {
         _param->keyframeMin = _param->keyframeMax;
     }
