@@ -430,12 +430,8 @@ int x265_t::extract_naldata(AccessUnit &au, size_t &nalcount)
         nalcount++;
     }
 
-    if (m_packetData)
-        X265_FREE(m_packetData);
-
-    if (m_nals)
-        X265_FREE(m_nals);
-
+    X265_FREE(m_packetData);
+    X265_FREE(m_nals);
     CHECKED_MALLOC(m_packetData, char, memsize);
     CHECKED_MALLOC(m_nals, x265_nal_t, nalcount);
     nalcount = 0;
