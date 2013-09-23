@@ -27,6 +27,11 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+ALIGN_VAR_32(const uint16_t, c_512[16]) =
+{
+    512, 512, 512, 512, 512, 512, 512, 512
+};
+
 #if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int N>
 void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
@@ -668,14 +673,9 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                         int width, int height,
                         const short *coeff)
 {
-    int offset;
-    const int shift = IF_FILTER_PREC;
-
     src -= (N / 2 - 1) * srcStride;
-    offset = 1 << (shift - 1);
 
     const __m128i coeffTemp = _mm_loadu_si128((__m128i const*)coeff);
-    const __m128i sumOffset = _mm_set1_epi16(offset);
 
     int row, col;
 
@@ -725,7 +725,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                 T10 = _mm_add_epi16(T10, T11);
                 T11 = _mm_add_epi16(T12, T13);
                 T10 = _mm_add_epi16(T10, T11);
-                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_mulhrs_epi16(T10, _mm_load_si128((__m128i*)c_512));
                 T10 = _mm_packus_epi16(T10, T10);
                 _mm_storel_epi64((__m128i*)&dst[0 * dstStride + col], T10);
             }
@@ -754,7 +754,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                 T10 = _mm_add_epi16(T10, T11);
                 T11 = _mm_add_epi16(T12, T13);
                 T10 = _mm_add_epi16(T10, T11);
-                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_mulhrs_epi16(T10, _mm_load_si128((__m128i*)c_512));
                 T10 = _mm_packus_epi16(T10, T10);
                 _mm_maskmoveu_si128(T10, leftmask, (char*)&dst[(0) * dstStride + col]);
             }
@@ -790,7 +790,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                 T10 = _mm_maddubs_epi16(T10, vm01);
                 T11 = _mm_maddubs_epi16(T11, vm23);
                 T10 = _mm_add_epi16(T10, T11);
-                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_mulhrs_epi16(T10, _mm_load_si128((__m128i*)c_512));
                 T10 = _mm_packus_epi16(T10, T10);
                 _mm_storel_epi64((__m128i*)&dst[0 * dstStride + col], T10);
 
@@ -800,7 +800,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                 T20 = _mm_maddubs_epi16(T20, vm01);
                 T21 = _mm_maddubs_epi16(T21, vm23);
                 T20 = _mm_add_epi16(T20, T21);
-                T20 = _mm_srai_epi16(_mm_add_epi16(T20, sumOffset), shift);
+                T20 = _mm_mulhrs_epi16(T20, _mm_load_si128((__m128i*)c_512));
                 T20 = _mm_packus_epi16(T20, T20);
                 _mm_storel_epi64((__m128i*)&dst[1 * dstStride + col], T20);
             }
@@ -820,7 +820,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                 T10 = _mm_maddubs_epi16(T10, vm01);
                 T11 = _mm_maddubs_epi16(T11, vm23);
                 T10 = _mm_add_epi16(T10, T11);
-                T10 = _mm_srai_epi16(_mm_add_epi16(T10, sumOffset), shift);
+                T10 = _mm_mulhrs_epi16(T10, _mm_load_si128((__m128i*)c_512));
                 T10 = _mm_packus_epi16(T10, T10);
                 _mm_maskmoveu_si128(T10, leftmask, (char*)&dst[(0) * dstStride + col]);
 
@@ -830,7 +830,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
                 T20 = _mm_maddubs_epi16(T20, vm01);
                 T21 = _mm_maddubs_epi16(T21, vm23);
                 T20 = _mm_add_epi16(T20, T21);
-                T20 = _mm_srai_epi16(_mm_add_epi16(T20, sumOffset), shift);
+                T20 = _mm_mulhrs_epi16(T20, _mm_load_si128((__m128i*)c_512));
                 T20 = _mm_packus_epi16(T20, T20);
                 _mm_maskmoveu_si128(T20, leftmask, (char*)&dst[(1) * dstStride + col]);
             }
@@ -854,29 +854,27 @@ ALIGN_VAR_32(const uint8_t, Tm[][16]) =
     {0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6},
     {4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10}
 };
+ALIGN_VAR_32(const int8_t, tab_leftmask[16]) =
+{
+    -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
 template<int N>
 void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
-    int row, col;
-    uint32_t offset;
-    const int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    assert(X265_DEPTH == 8);
 
-    offset =  (1 << (headRoom - 1));
+    int row, col;
+    __m128i val;
+
     src -= (N / 2 - 1);
 
     __m128i a = _mm_loadu_si128((__m128i*)coeff);
     __m128i coef2 = _mm_packs_epi16(a, a);
-    __m128i sumOffset = _mm_shuffle_epi32(_mm_cvtsi32_si128(offset), 0);
-    sumOffset = _mm_packs_epi16(sumOffset, sumOffset);
 
     const __m128i S = _mm_shuffle_epi32(coef2, 0);
 
-    uint32_t leftCols = (8 - (width & 7)) * 8;
-    uint32_t mask_shift = ((uint32_t)~0 >> leftCols);
-    uint32_t mask0 = (width & 7) <= 4 ? mask_shift : ~0;
-    uint32_t mask1 = (width & 7) <= 4 ? 0 : mask_shift;
-    __m128i leftmask = _mm_setr_epi32(mask0, mask1, 0, 0);
+    __m128i leftmask = _mm_loadl_epi64((__m128i*)&tab_leftmask[7 - (width & 7)]);
 
     // TODO: unroll
     for (row = 0; row < height; row++)
@@ -915,8 +913,7 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
                 sum = _mm_hadd_epi16(s1, s2);
             }
 
-            __m128i val = _mm_add_epi16(sum, sumOffset);
-            val = _mm_srai_epi16(val, headRoom);
+            val = _mm_mulhrs_epi16(sum, _mm_load_si128((__m128i*)c_512));
             val = _mm_packus_epi16(val, val);
             _mm_storel_epi64((__m128i*)&dst[col], val);
         }
@@ -957,8 +954,7 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
                 sum = _mm_hadd_epi16(s1, s2);
             }
 
-            __m128i val = _mm_add_epi16(sum, sumOffset);
-            val = _mm_srai_epi16(val, headRoom);
+            val = _mm_mulhrs_epi16(sum, _mm_load_si128((__m128i*)c_512));
             val = _mm_packus_epi16(val, val);
 
             // TODO: optimize me: in here the really encode's size always be equal to 4
