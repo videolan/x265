@@ -25,6 +25,7 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComSlice.h"
 #include "x265.h"
+#include "threading.h"
 #include "common.h"
 
 #include <stdio.h>
@@ -314,7 +315,7 @@ int x265_set_globals(x265_param_t *param)
 
     static int once /* = 0 */;
 
-    if (once)
+    if (ATOMIC_CAS(&once, 0, 1) == 1)
     {
         if (param->maxCUSize != g_maxCUWidth)
         {
@@ -329,8 +330,6 @@ int x265_set_globals(x265_param_t *param)
     }
     else
     {
-        once = 1;
-
         // set max CU width & height
         g_maxCUWidth  = param->maxCUSize;
         g_maxCUHeight = param->maxCUSize;
