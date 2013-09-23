@@ -958,7 +958,8 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
             val = _mm_packus_epi16(val, val);
 
             // TODO: optimize me: in here the really encode's size always be equal to 4
-            _mm_maskmoveu_si128(val, leftmask, (char*)&dst[col]);
+            __m128i oldval = _mm_loadl_epi64((__m128i*)&dst[col]);
+            _mm_storel_epi64((__m128i*)&dst[col], _mm_blendv_epi8(oldval, val, leftmask));
         }
 
         src += srcStride;
