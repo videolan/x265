@@ -96,6 +96,16 @@
 #define X265_MAX4(a, b, c, d) X265_MAX((a), X265_MAX3((b), (c), (d)))
 #define QP_BD_OFFSET (6*(X265_DEPTH-8))
 
+#define CHECKED_MALLOC(var, type, count )\
+{\
+    var = (type *)X265_MALLOC(type, sizeof(type) * (count));\
+    if (!var)\
+    {\
+        x265_log(NULL, X265_LOG_ERROR, "malloc of size %d failed\n", sizeof(type) * (count));\
+        goto fail;\
+    }\
+}
+
 #define ENABLE_CYCLE_COUNTERS 0
 #if ENABLE_CYCLE_COUNTERS
 #include <intrin.h>

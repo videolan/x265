@@ -86,7 +86,7 @@ void x265_free(void *ptr)
 
 void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 {
-    if (level > param->logLevel)
+    if (param && level > param->logLevel)
         return;
     const char *log_level;
     switch (level)
@@ -392,7 +392,7 @@ void x265_print_params(x265_param_t *param)
     {
         x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
-    x265_log(param, X265_LOG_INFO, "Lookahead len / -b / bAdapt  : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
+    x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
     x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
@@ -403,7 +403,7 @@ void x265_print_params(x265_param_t *param)
     switch (param->bRDLevel)
     {
     case X265_NO_RDO_NO_RDOQ: 
-        fprintf(stderr, "%s ", "no-rdo no-rdoq "); break;
+        fprintf(stderr, "%s", "no-rdo no-rdoq "); break;
     case X265_NO_RDO:
         fprintf(stderr, "%s", "no-rdo rdoq "); break;
     case X265_FULL_RDO:

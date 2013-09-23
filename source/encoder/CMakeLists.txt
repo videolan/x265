@@ -10,10 +10,40 @@ if(GCC)
     endif()
 endif(GCC)
 
-file(GLOB LIBENCODER_HDR  ../Lib/TLibEncoder/*.h)
-file(GLOB LIBENCODER_SRC  ../Lib/TLibEncoder/*.cpp)
+set(LIBENCODER_HDR
+    ../Lib/TLibEncoder/NALwrite.h
+    ../Lib/TLibEncoder/SEIwrite.h
+    ../Lib/TLibEncoder/SyntaxElementWriter.h
+    ../Lib/TLibEncoder/TEncAnalyze.h
+    ../Lib/TLibEncoder/TEncBinCoder.h
+    ../Lib/TLibEncoder/TEncBinCoderCABAC.h
+    ../Lib/TLibEncoder/TEncBinCoderCABACCounter.h
+    ../Lib/TLibEncoder/TEncCavlc.h
+    ../Lib/TLibEncoder/TEncCfg.h
+    ../Lib/TLibEncoder/TEncCu.h
+    ../Lib/TLibEncoder/TEncEntropy.h
+    ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.h
+    ../Lib/TLibEncoder/TEncSbac.h
+    ../Lib/TLibEncoder/TEncSearch.h
+    ../Lib/TLibEncoder/TEncTop.h
+    ../Lib/TLibEncoder/WeightPredAnalysis.h)
+set(LIBENCODER_SRC
+    ../Lib/TLibEncoder/NALwrite.cpp
+    ../Lib/TLibEncoder/SEIwrite.cpp
+    ../Lib/TLibEncoder/SyntaxElementWriter.cpp
+    ../Lib/TLibEncoder/TEncBinCoderCABAC.cpp
+    ../Lib/TLibEncoder/TEncBinCoderCABACCounter.cpp
+    ../Lib/TLibEncoder/TEncCavlc.cpp
+    ../Lib/TLibEncoder/TEncCu.cpp
+    ../Lib/TLibEncoder/TEncEntropy.cpp
+    ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.cpp
+    ../Lib/TLibEncoder/TEncSbac.cpp
+    ../Lib/TLibEncoder/TEncSearch.cpp
+    ../Lib/TLibEncoder/TEncTop.cpp
+    ../Lib/TLibEncoder/WeightPredAnalysis.cpp)
 source_group(TLibEncoder FILES ${LIBENCODER_SRC})
 source_group(TLibEncoderH FILES ${LIBENCODER_HDR})
+
 if(GCC)
     set_source_files_properties(compress.cpp ${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-sign-compare")
