@@ -127,7 +127,7 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
         lowresMvs[0][i][0].x = 0x7FFF;
         lowresMvs[1][i][0].x = 0x7FFF;
     }
-    for(int i = 0; i < X265_BFRAME_MAX + 2; i++)
+    for (int i = 0; i < bframes + 2; i++)
         intraMbs[i] = 0;
 
     int y, extWidth = (orig->getWidth() + X265_LOWRES_CU_SIZE - 1);
@@ -137,18 +137,18 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     Pel *src;
     src = orig->getLumaAddr();
     
-    /* extending right margin*/
-    if( 2 * width > orig->getWidth())
+    /* extending right margin */
+    if (2 * width > srcWidth)
     {
         for (y = 0; y < srcHeight; y++)
         {
-            ::memset(src+srcWidth, src[srcWidth-1], sizeof(Pel) * (X265_LOWRES_CU_SIZE - 1));
+            ::memset(src + srcWidth, src[srcWidth - 1], sizeof(Pel) * (X265_LOWRES_CU_SIZE - 1));
             src += srcStride;
         }
     }
 
     /* extending bottom margin */
-    src = orig->getLumaAddr() + (srcHeight - 1 ) * srcStride;
+    src = orig->getLumaAddr() + (srcHeight - 1) * srcStride;
 
     for (y = 1; y <= 2 * lines - srcHeight; y++)
     {
