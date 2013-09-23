@@ -73,8 +73,6 @@ void Lowres::create(TComPic *pic, int bframes)
         lowresMvCosts[1][i] = (int*)X265_MALLOC(int, cuCount);
     }
     
-    for(int i = 0; i < X265_BFRAME_MAX + 2; i++)
-        intraMbs[i] = 0;
 }
 
 void Lowres::destroy(int bframes)
@@ -126,6 +124,8 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
         lowresMvs[0][i][0].x = 0x7FFF;
         lowresMvs[1][i][0].x = 0x7FFF;
     }
+    for(int i = 0; i < X265_BFRAME_MAX + 2; i++)
+        intraMbs[i] = 0;
 
     /* downscale and generate 4 HPEL planes for lookahead */
     primitives.frame_init_lowres_core(orig->getLumaAddr(),
