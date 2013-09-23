@@ -37,6 +37,13 @@ void Lowres::create(TComPic *pic, int bframes)
     lumaStride = width + 2 * orig->getLumaMarginX();
     if (lumaStride & 31)
         lumaStride += 32 - (lumaStride & 31);
+    int cuWidth = (width + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    int cuHeight = (lines + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    int cuCount = cuWidth * cuHeight;
+
+    /* rounding the width to multiple of lowres CU size */
+    width = cuWidth * X265_LOWRES_CU_SIZE;
+    lines = cuHeight * X265_LOWRES_CU_SIZE;
 
     /* allocate lowres buffers */
     for (int i = 0; i < 4; i++)
@@ -49,10 +56,6 @@ void Lowres::create(TComPic *pic, int bframes)
     lowresPlane[1] = buffer[1] + padoffset;
     lowresPlane[2] = buffer[2] + padoffset;
     lowresPlane[3] = buffer[3] + padoffset;
-
-    int cuWidth = (width + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    int cuHeight = (lines + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    int cuCount = cuWidth * cuHeight;
 
     intraCost = (int*)X265_MALLOC(int, cuCount);
 
@@ -125,6 +128,31 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     {
         lowresMvs[0][i][0].x = 0x7FFF;
         lowresMvs[1][i][0].x = 0x7FFF;
+    }
+
+    int y, extWidth = (orig->getWidth() + X265_LOWRES_CU_SIZE - 1);
+    int srcStride = orig->getStride();
+    int srcHeight = orig->getHeight();
+    int srcWidth  = orig->getWidth();
+    Pel *src;
+    src = orig->getLumaAddr();
+    
+    /* extending right margin*/
+    if( 2 * width > orig->getWidth())
+    {
+        for (y = 0; y < srcHeight; y++)
+        {
+            ::memset(src+srcWidth, src[srcWidth-1], sizeof(Pel) * (X265_LOWRES_CU_SIZE - 1));
+            src += srcStride;
+        }
+    }
+
+    /* extending bottom margin */
+    src = orig->getLumaAddr() + (srcHeight - 1 ) * srcStride;
+
+    for (y = 1; y <= 2 * lines - srcHeight; y++)
+    {
+        ::memcpy(src + y * srcStride, src, sizeof(Pel) * (extWidth));
     }
 
     /* downscale and generate 4 HPEL planes for lookahead */
