@@ -82,27 +82,26 @@ void Lowres::destroy(int bframes)
 {
     for (int i = 0; i < 4; i++)
     {
-        if (buffer[i])
-            X265_FREE(buffer[i]);
+        X265_FREE(buffer[i]);
     }
 
-    if (intraCost) X265_FREE(intraCost);
+    X265_FREE(intraCost);
 
     for (int i = 0; i < bframes + 2; i++)
     {
         for (int j = 0; j < bframes + 2; j++)
         {   
-            if (rowSatds[i][j]) X265_FREE(rowSatds[i][j]);
-            if (lowresCosts[i][j]) X265_FREE(lowresCosts[i][j]);
+            X265_FREE(rowSatds[i][j]);
+            X265_FREE(lowresCosts[i][j]);
         }
     }
 
     for (int i = 0; i < bframes + 1; i++)
     {
-        if (lowresMvs[0][i]) X265_FREE(lowresMvs[0][i]);
-        if (lowresMvs[1][i]) X265_FREE(lowresMvs[1][i]);
-        if (lowresMvCosts[0][i]) X265_FREE(lowresMvCosts[0][i]);
-        if (lowresMvCosts[1][i]) X265_FREE(lowresMvCosts[1][i]);
+        X265_FREE(lowresMvs[0][i]);
+        X265_FREE(lowresMvs[1][i]);
+        X265_FREE(lowresMvCosts[0][i]);
+        X265_FREE(lowresMvCosts[1][i]);
     }
 }
 
