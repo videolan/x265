@@ -153,13 +153,6 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     {
         ::memcpy(src + y * srcStride, src, sizeof(Pel) * (extWidth));
     }
-
-    int y, extWidth = (orig->getWidth() + X265_LOWRES_CU_SIZE - 1);
-    int srcStride = orig->getStride();
-    int srcHeight = orig->getHeight();
-    int srcWidth  = orig->getWidth();
-    Pel *src;
-    src = orig->getLumaAddr();
     
     /* extending right margin*/
     if( 2 * width > orig->getWidth())
