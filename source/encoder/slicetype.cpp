@@ -226,7 +226,7 @@ void Lookahead::slicetypeDecide()
         numDecided++;
         for (int i = 0; i < j - 1; i++)
         {
-            TComPic *pic = list[i];
+            pic = list[i];
             if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
                 pic->m_lowres.sliceType = X265_TYPE_B;
             outputQueue.pushBack(pic);

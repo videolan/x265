@@ -4,7 +4,7 @@
 ::  project's coding style to the file.  This will likely overwrite the
 ::  original file, so use with care
 
-%~dp0\uncrustify.exe -f "%1" -c %~dp0\codingstyle.cfg -o indentoutput.tmp
+uncrustify.exe -f "%1" -c %~dp0\codingstyle.cfg -o indentoutput.tmp
 move /Y indentoutput.tmp "%1"
 
 pause

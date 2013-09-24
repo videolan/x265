@@ -114,6 +114,7 @@ struct NALUnitEBSP : public NALUnit
      * emulation_prevention_three_byte symbols.
      */
     NALUnitEBSP(OutputNALUnit& nalu);
+    void init(OutputNALUnit& nalu);
 };
 }
 //! \}
