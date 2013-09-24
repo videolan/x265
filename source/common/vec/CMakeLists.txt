@@ -42,6 +42,9 @@ if (MSVC)
     endif()
 endif()
 if(GCC)
+    if ("$ENV{CXX}" STREQUAL "icpc")
+        add_definitions(-wd13200)  # function using MMX does not call EMMS
+    endif()
     if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.3)
         set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp
             blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp
