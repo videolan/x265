@@ -142,8 +142,6 @@ public:
      */
     UInt getNumberOfWrittenBits() const { return UInt(m_fifo->size()) * 8 + m_num_held_bits; }
 
-    void insertAt(const TComOutputBitstream& src, UInt pos);
-
     /**
      * Return a reference to the internal fifo
      */
@@ -151,7 +149,6 @@ public:
 
     UChar getHeldBits()          { return m_held_bits; }
 
-    TComOutputBitstream& operator =(const TComOutputBitstream& src);
     /** Return a reference to the internal fifo */
     std::vector<uint8_t>& getFIFO() const { return *m_fifo; }
 

@@ -208,27 +208,4 @@ int TComOutputBitstream::countStartCodeEmulations()
     return cnt;
 }
 
-/**
- * insert the contents of the bytealigned (and flushed) bitstream src
- * into this at byte position pos.
- */
-void TComOutputBitstream::insertAt(const TComOutputBitstream& src, UInt pos)
-{
-    assert(0 == src.getNumberOfWrittenBits() % 8);
-
-    vector<uint8_t>::iterator at = this->m_fifo->begin() + pos;
-    this->m_fifo->insert(at, src.m_fifo->begin(), src.m_fifo->end());
-}
-
-TComOutputBitstream& TComOutputBitstream::operator =(const TComOutputBitstream& src)
-{
-    vector<uint8_t>::iterator at = this->m_fifo->begin();
-    this->m_fifo->insert(at, src.m_fifo->begin(), src.m_fifo->end());
-
-    this->m_num_held_bits             = src.m_num_held_bits;
-    this->m_held_bits                 = src.m_held_bits;
-
-    return *this;
-}
-
 //! \}
