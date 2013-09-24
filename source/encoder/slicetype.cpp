@@ -412,10 +412,10 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     {
         int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
 
-        pixel _above0[32 * 4 + 1], *const pAbove0 = _above0 + 2 * 32;
-        pixel _above1[32 * 4 + 1], *const pAbove1 = _above1 + 2 * 32;
-        pixel _left0[32 * 4 + 1], *const pLeft0 = _left0 + 2 * 32;
-        pixel _left1[32 * 4 + 1], *const pLeft1 = _left1 + 2 * 32;
+        pixel _above0[X265_LOWRES_CU_SIZE * 4 + 1], *const pAbove0 = _above0 + 2 * X265_LOWRES_CU_SIZE;
+        pixel _above1[X265_LOWRES_CU_SIZE * 4 + 1], *const pAbove1 = _above1 + 2 * X265_LOWRES_CU_SIZE;
+        pixel _left0[X265_LOWRES_CU_SIZE * 4 + 1], *const pLeft0 = _left0 + 2 * X265_LOWRES_CU_SIZE;
+        pixel _left1[X265_LOWRES_CU_SIZE * 4 + 1], *const pLeft1 = _left1 + 2 * X265_LOWRES_CU_SIZE;
 
         pixel *pix_cur = fenc->lowresPlane[0] + pelOffset;
 
@@ -434,9 +434,9 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         // filtering with [1 2 1]
         // assume getUseStrongIntraSmoothing() is disabled
         pAbove1[0] = pAbove0[0];
-        pAbove1[cuSize - 1] = pAbove0[cuSize - 1];
+        pAbove1[2 * cuSize - 1] = pAbove0[2 * cuSize - 1];
         pLeft1[0] = pLeft0[0];
-        pLeft1[cuSize - 1] = pLeft0[cuSize - 1];
+        pLeft1[2 * cuSize - 1] = pLeft0[2 * cuSize - 1];
         for (int i = 1; i < 2 * cuSize - 1; i++)
         {
             pAbove1[i] = (pAbove0[i - 1] + 2 * pAbove0[i] + pAbove0[i + 1] + 2) >> 2;
