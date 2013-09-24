@@ -305,7 +305,10 @@ double TEncTop::printSummary()
     m_analyzeB.printSummary('B', fps);
 #endif
 
-    return (m_analyzeAll.getPsnrY() * 6 + m_analyzeAll.getPsnrU() + m_analyzeAll.getPsnrV()) / (8 * m_analyzeAll.getNumPic());
+    if (m_analyzeAll.getNumPic())
+        return (m_analyzeAll.getPsnrY() * 6 + m_analyzeAll.getPsnrU() + m_analyzeAll.getPsnrV()) / (8 * m_analyzeAll.getNumPic());
+    else
+        return 100.0;
 }
 
 #define VERBOSE_RATE 0
