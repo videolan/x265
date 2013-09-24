@@ -443,20 +443,20 @@ int x265_t::extract_naldata(NALUnitEBSP **nalunits)
 {
     uint32_t memsize = 0;
     uint32_t offset = 0;
-
     int nalcount = 0;
-    for (; nalunits[nalcount] != NULL; nalcount++)
+
+    int num = 0;
+    for (; nalunits[num] != NULL; num++)
     {
-        const NALUnitEBSP& temp = *nalunits[nalcount];
+        const NALUnitEBSP& temp = *nalunits[num];
         memsize += temp.m_packetSize + 4;
     }
     
     X265_FREE(m_packetData);
     X265_FREE(m_nals);
     CHECKED_MALLOC(m_packetData, char, memsize);
-    CHECKED_MALLOC(m_nals, x265_nal_t, nalcount);
+    CHECKED_MALLOC(m_nals, x265_nal_t, num);
 
-    nalcount = 0;
     memsize = 0;
 
     /* Copy NAL output packets into x265_nal_t structures */
@@ -492,9 +492,6 @@ int x265_t::extract_naldata(NALUnitEBSP **nalunits)
 
         m_nals[nalcount].i_type = nalu.m_nalUnitType;
         m_nals[nalcount].i_payload = size;
-        free(nalu.m_nalUnitData);
-        X265_FREE(nalunits[nalcount]);
-        nalunits[nalcount] = NULL;
     }
 
     /* Setup payload pointers, now that we're done adding content to m_packetData */
