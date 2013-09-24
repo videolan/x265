@@ -85,6 +85,7 @@ void FrameFilter::start(TComPic *pic)
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
     m_entropyCoder.setBitstream(&m_bitCounter);
+    m_rdGoOnBinCodersCABAC.m_fracBits = 0;
 
     if (m_cfg->param.bEnableLoopFilter)
     {

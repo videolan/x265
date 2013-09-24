@@ -862,6 +862,7 @@ void FrameEncoder::compressCTURows()
 
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
         m_rows[i].m_completed = 0;
+        m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
     }
 
     UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
