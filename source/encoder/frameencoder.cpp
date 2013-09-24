@@ -482,7 +482,6 @@ void FrameEncoder::compressFrame()
     }
 
     m_wp.xRestoreWPparam(slice);
-    OutputNALUnit nalu(slice->getNalUnitType(), 0);
     if ((m_cfg->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
     {
         if (m_cfg->getGradualDecodingRefreshInfoEnabled() && !slice->getRapPicFlag())
@@ -495,9 +494,12 @@ void FrameEncoder::compressFrame()
 
             m_seiWriter.writeSEImessage(nalu.m_Bitstream, seiGradualDecodingRefreshInfo, slice->getSPS());
             writeRBSPTrailingBits(nalu.m_Bitstream);
-            CHECKED_MALLOC(m_nalList[m_nalCount], NALUnitEBSP, 1);
-            m_nalList[m_nalCount]->init(nalu);
-            m_nalCount++;
+            m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+            if (m_nalList[m_nalCount])
+            {
+                m_nalList[m_nalCount]->init(nalu);
+                m_nalCount++;
+            }
         }
         // Recovery point SEI
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
@@ -509,9 +511,12 @@ void FrameEncoder::compressFrame()
 
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recovery_point, slice->getSPS());
         writeRBSPTrailingBits(nalu.m_Bitstream);
-        CHECKED_MALLOC(m_nalList[m_nalCount], NALUnitEBSP, 1);
-        m_nalList[m_nalCount]->init(nalu);
-        m_nalCount++;
+        m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+        if (m_nalList[m_nalCount])
+        {
+            m_nalList[m_nalCount]->init(nalu);
+            m_nalCount++;
+        }
     }
 
     /* use the main bitstream buffer for storing the marshaled picture */
@@ -546,6 +551,7 @@ void FrameEncoder::compressFrame()
 
     /* start slice NALunit */
     bool sliceSegment = !slice->isNextSlice();
+    OutputNALUnit nalu(slice->getNalUnitType(), 0);
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     entropyCoder->encodeSliceHeader(slice);
 
@@ -644,9 +650,12 @@ void FrameEncoder::compressFrame()
     }
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     bitstreamRedirect->clear();
-    CHECKED_MALLOC(m_nalList[m_nalCount], NALUnitEBSP, 1);
-    m_nalList[m_nalCount]->init(nalu);
-    m_nalCount++;
+    m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+    if (m_nalList[m_nalCount])
+    {
+        m_nalList[m_nalCount]->init(nalu);
+        m_nalCount++;
+    }
 
     if (m_sps.getUseSAO())
     {
@@ -668,8 +677,6 @@ void FrameEncoder::compressFrame()
         }
     }
 
-fail:
-    
     delete[] outStreams;
     delete bitstreamRedirect;
 }
