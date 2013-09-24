@@ -135,7 +135,7 @@ public:
         }
     }
 
-    int getStreamHeaders(AccessUnit& accessUnitOut);
+    int getStreamHeaders(NALUnitEBSP **nalunits);
 
     void initSlice(TComPic* pic);
 
@@ -148,7 +148,7 @@ public:
     void encodeSlice(TComOutputBitstream* substreams);
 
     /* blocks until worker thread is done, returns encoded picture and bitstream */
-    TComPic *getEncodedPicture(AccessUnit& accessUnit);
+    TComPic *getEncodedPicture(NALUnitEBSP **nalunits);
 
     // worker thread
     void threadMain();
@@ -178,7 +178,8 @@ protected:
 
     /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;
-    AccessUnit               m_accessUnit;
+    NALUnitEBSP*             m_nalList[MAX_NAL_UNITS];
+    int                      m_nalCount;
 
     int                      m_numRows;
     int                      m_filterRowDelay;

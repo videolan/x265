@@ -114,14 +114,7 @@ void TEncTop::destroy()
         for (int i = 0; i < param.frameNumThreads; i++)
         {
             // Ensure frame encoder is idle before destroying it
-            AccessUnit tmp;
-            m_frameEncoder[i].getEncodedPicture(tmp);
-            for (AccessUnit::const_iterator it = tmp.begin(); it != tmp.end(); it++)
-            {
-                const NALUnitEBSP& nalu = **it;
-                free(nalu.m_nalUnitData);
-            }
-
+            m_frameEncoder[i].getEncodedPicture(NULL);
             m_frameEncoder[i].destroy();
         }
 
@@ -161,19 +154,19 @@ void TEncTop::init()
     }
 }
 
-int TEncTop::getStreamHeaders(AccessUnit& accessUnit)
+int TEncTop::getStreamHeaders(NALUnitEBSP **nalunits)
 {
-    return m_frameEncoder->getStreamHeaders(accessUnit);
+    return m_frameEncoder->getStreamHeaders(nalunits);
 }
 
 /**
  \param   flush               force encoder to encode a frame
  \param   pic_in              input original YUV picture or NULL
  \param   pic_out             pointer to reconstructed picture struct
- \param   accessUnitsOut      output bitstream
+ \param   nalunits            output NAL packets
  \retval                      number of encoded pictures
  */
-int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pic_out, AccessUnit& accessUnitOut)
+int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pic_out, NALUnitEBSP **nalunits)
 {
     if (pic_in)
     {
@@ -213,7 +206,7 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     // getEncodedPicture() should block until the FrameEncoder has completed
     // encoding the frame.  This is how back-pressure through the API is
     // accomplished when the encoder is full.
-    TComPic *out = curEncoder->getEncodedPicture(accessUnitOut);
+    TComPic *out = curEncoder->getEncodedPicture(nalunits);
 
     if (!out && flush)
     {
@@ -227,7 +220,7 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         {
             curEncoder = &m_frameEncoder[m_curEncoder];
             m_curEncoder = (m_curEncoder + 1) % param.frameNumThreads;
-            out = curEncoder->getEncodedPicture(accessUnitOut);
+            out = curEncoder->getEncodedPicture(nalunits);
         }
         while (!out && flushed != m_curEncoder);
     }
@@ -259,7 +252,7 @@ int TEncTop::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             pic_out->stride[2] = recpic->getCStride();
         }
 
-        double bits = calculateHashAndPSNR(out, accessUnitOut);
+        double bits = calculateHashAndPSNR(out, nalunits);
         // Allow this frame to be recycled if no frame encoders are using it for reference
         ATOMIC_DEC(&out->m_countRefEncoders);
 
@@ -487,7 +480,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
 
 /* Returns Number of bits in current encoded pic */
 
-double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
+double TEncTop::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
 {
     TComPicYuv* recon = pic->getPicYuvRec();
     TComPicYuv* orig  = pic->getPicYuvOrg();
@@ -544,7 +537,14 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
         m_frameEncoder->m_seiWriter.writeSEImessage(onalu.m_Bitstream, sei_recon_picture_digest, pic->getSlice()->getSPS());
         writeRBSPTrailingBits(onalu.m_Bitstream);
 
-        accessUnit.insert(accessUnit.end(), new NALUnitEBSP(onalu));
+        int count = 0;
+        while(nalunits[count] != NULL)
+            count++;
+        nalunits[count] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+        if (nalunits[count])
+            nalunits[count]->init(onalu);
+        else
+            digestStr = NULL;
     }
 
     /* calculate the size of the access unit, excluding:
@@ -552,13 +552,13 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, AccessUnit& accessUnit)
      *  - SEI NAL units
      */
     UInt numRBSPBytes = 0;
-    for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
+    for (int count = 0; nalunits[count] != NULL; count++)
     {
-        UInt numRBSPBytes_nal = (*it)->m_packetSize;
+        UInt numRBSPBytes_nal = nalunits[count]->m_packetSize;
 #if VERBOSE_RATE
         printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString((*it)->m_nalUnitType), numRBSPBytes_nal);
 #endif
-        if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
+        if (nalunits[count]->m_nalUnitType != NAL_UNIT_PREFIX_SEI && nalunits[count]->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
         {
             numRBSPBytes += numRBSPBytes_nal;
         }

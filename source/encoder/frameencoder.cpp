@@ -55,7 +55,11 @@ FrameEncoder::FrameEncoder()
     , m_cfg(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
-{}
+{
+    for (int i = 0; i < MAX_NAL_UNITS; i++)
+        m_nalList[i] = NULL;
+    m_nalCount = 0;
+}
 
 void FrameEncoder::setThreadPool(ThreadPool *p)
 {
@@ -68,6 +72,14 @@ void FrameEncoder::destroy()
 
     m_threadActive = false;
     m_enable.trigger();
+
+    // flush condition, release queued NALs
+    for (int i = 0; i < m_nalCount; i++)
+    {
+        NALUnitEBSP *nalu = m_nalList[i];
+        free(nalu->m_nalUnitData);
+        X265_FREE(nalu);
+    }
 
     if (m_rows)
     {
@@ -158,12 +170,11 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     start();
 }
 
-int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
+int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
 {
     TEncEntropy* entropyCoder = getEntropyCoder(0);
 
     entropyCoder->setEntropyCoder(&m_cavlcCoder, NULL);
-    NALUnitEBSP *tmp[MAX_NAL_UNITS] = {0, 0, 0, 0, 0};
     int count = 0;
 
     /* headers for start of bitstream */
@@ -171,27 +182,24 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     entropyCoder->encodeVPS(m_cfg->getVPS());
     writeRBSPTrailingBits(nalu.m_Bitstream);
-    CHECKED_MALLOC(tmp[count], NALUnitEBSP, 1);
-    tmp[count]->init(nalu);
-    accessUnit.push_back(tmp[count]);
+    CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
+    nalunits[count]->init(nalu);
     count++;
 
     nalu = NALUnit(NAL_UNIT_SPS);
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     entropyCoder->encodeSPS(&m_sps);
     writeRBSPTrailingBits(nalu.m_Bitstream);
-    CHECKED_MALLOC(tmp[count], NALUnitEBSP, 1);
-    tmp[count]->init(nalu);
-    accessUnit.push_back(tmp[count]);
+    CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
+    nalunits[count]->init(nalu);
     count++;
 
     nalu = NALUnit(NAL_UNIT_PPS);
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     entropyCoder->encodePPS(&m_pps);
     writeRBSPTrailingBits(nalu.m_Bitstream);
-    CHECKED_MALLOC(tmp[count], NALUnitEBSP, 1);
-    tmp[count]->init(nalu);
-    accessUnit.push_back(tmp[count]);
+    CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
+    nalunits[count]->init(nalu);
     count++;
 
     if (m_cfg->getActiveParameterSetsSEIEnabled())
@@ -206,9 +214,8 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
         entropyCoder->setBitstream(&nalu.m_Bitstream);
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_Bitstream);
-        CHECKED_MALLOC(tmp[count], NALUnitEBSP, 1);
-        tmp[count]->init(nalu);
-        accessUnit.push_back(tmp[count]);
+        CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
+        nalunits[count]->init(nalu);
         count++;
     }
 
@@ -224,9 +231,8 @@ int FrameEncoder::getStreamHeaders(AccessUnit& accessUnit)
         entropyCoder->setBitstream(&nalu.m_Bitstream);
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_Bitstream);
-        CHECKED_MALLOC(tmp[count], NALUnitEBSP, 1);
-        tmp[count]->init(nalu);
-        accessUnit.push_back(tmp[count]);
+        CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
+        nalunits[count]->init(nalu);
     }
     return 0;
     
@@ -294,9 +300,9 @@ void FrameEncoder::threadMain()
 void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
-
     TEncEntropy* entropyCoder = getEntropyCoder(0);
     TComSlice*   slice        = m_pic->getSlice();
+    m_nalCount = 0;
 
     int qp = slice->getSliceQp();
     double lambda = 0;
@@ -476,7 +482,7 @@ void FrameEncoder::compressFrame()
     }
 
     m_wp.xRestoreWPparam(slice);
-
+    OutputNALUnit nalu(slice->getNalUnitType(), 0);
     if ((m_cfg->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
     {
         if (m_cfg->getGradualDecodingRefreshInfoEnabled() && !slice->getRapPicFlag())
@@ -489,7 +495,9 @@ void FrameEncoder::compressFrame()
 
             m_seiWriter.writeSEImessage(nalu.m_Bitstream, seiGradualDecodingRefreshInfo, slice->getSPS());
             writeRBSPTrailingBits(nalu.m_Bitstream);
-            m_accessUnit.push_back(new NALUnitEBSP(nalu));
+            CHECKED_MALLOC(m_nalList[m_nalCount], NALUnitEBSP, 1);
+            m_nalList[m_nalCount]->init(nalu);
+            m_nalCount++;
         }
         // Recovery point SEI
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
@@ -501,7 +509,9 @@ void FrameEncoder::compressFrame()
 
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recovery_point, slice->getSPS());
         writeRBSPTrailingBits(nalu.m_Bitstream);
-        m_accessUnit.push_back(new NALUnitEBSP(nalu));
+        CHECKED_MALLOC(m_nalList[m_nalCount], NALUnitEBSP, 1);
+        m_nalList[m_nalCount]->init(nalu);
+        m_nalCount++;
     }
 
     /* use the main bitstream buffer for storing the marshaled picture */
@@ -535,7 +545,6 @@ void FrameEncoder::compressFrame()
     entropyCoder->resetEntropy();
 
     /* start slice NALunit */
-    OutputNALUnit nalu(slice->getNalUnitType(), 0);
     bool sliceSegment = !slice->isNextSlice();
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     entropyCoder->encodeSliceHeader(slice);
@@ -635,8 +644,9 @@ void FrameEncoder::compressFrame()
     }
     entropyCoder->setBitstream(&nalu.m_Bitstream);
     bitstreamRedirect->clear();
-
-    m_accessUnit.push_back(new NALUnitEBSP(nalu));
+    CHECKED_MALLOC(m_nalList[m_nalCount], NALUnitEBSP, 1);
+    m_nalList[m_nalCount]->init(nalu);
+    m_nalCount++;
 
     if (m_sps.getUseSAO())
     {
@@ -658,6 +668,8 @@ void FrameEncoder::compressFrame()
         }
     }
 
+fail:
+    
     delete[] outStreams;
     delete bitstreamRedirect;
 }
@@ -1002,7 +1014,7 @@ void FrameEncoder::processRowEncoder(int row)
     }
 }
 
-TComPic *FrameEncoder::getEncodedPicture(AccessUnit& accessUnit)
+TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)
 {
     if (m_pic)
     {
@@ -1012,8 +1024,13 @@ TComPic *FrameEncoder::getEncodedPicture(AccessUnit& accessUnit)
         TComPic *ret = m_pic;
         m_pic = NULL;
 
-        // move NALs from member variable list to end of user's container
-        accessUnit.splice(accessUnit.end(), m_accessUnit);
+        if (nalunits)
+        {
+            // move NALs from member variable to user's container
+            assert(m_nalCount <= MAX_NAL_UNITS);
+            ::memcpy(nalunits, m_nalList, sizeof(NALUnitEBSP*) * m_nalCount);
+            m_nalCount = 0;
+        }
         return ret;
     }
 

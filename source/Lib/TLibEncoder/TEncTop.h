@@ -101,9 +101,9 @@ public:
     void xInitSPS(TComSPS *sps);
     void xInitPPS(TComPPS *pps);
 
-    int encode(bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, AccessUnit& accessUnit);
+    int encode(bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, NALUnitEBSP **nalunits);
 
-    int getStreamHeaders(AccessUnit& accessUnit);
+    int getStreamHeaders(NALUnitEBSP **nalunits);
 
     double printSummary();
 
@@ -113,7 +113,7 @@ public:
 
 protected:
 
-    double calculateHashAndPSNR(TComPic* pic, AccessUnit&); // Returns total number of bits for encoded pic
+    double calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits); // Returns total number of bits for encoded pic
 };
 }
 //! \}
