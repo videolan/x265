@@ -62,7 +62,7 @@ RateControl::RateControl(x265_param_t * param)
     lastNonBPictType = -1;
     baseQp = param->rc.qp;
     qp = baseQp;
-
+    lastRceq = 1; // handles the cmplxrsum when the previous frame cost is zero
     // heuristics- encoder specific
     qCompress = param->rc.qCompress; // tweak and test for x265.
     ipFactor = param->rc.ipFactor;
@@ -78,7 +78,7 @@ RateControl::RateControl(x265_param_t * param)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP_MIN) * accumPNorm;
-        /* estimated ratio that produces a reasonable QP for the first I-frame  */
+        /* estimated ratio that produces a reasonable QP for the first I-frame */
         cplxrSum = .01 * pow(7.0e5, qCompress) * pow(2 *ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
@@ -241,7 +241,8 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         {
             double lqmin = 0, lqmax = 0;
 
-            /* Clip the qp of 1st 'N' frames running parallely to ensure it doesnt detoriate the quality  */
+            /* Clip the qp of 1st 'N' frames running parallely to ensure it doesnt detoriate
+             * the quality */
             if (totalBits == 0)
             {
                 lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
@@ -254,16 +255,22 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
                 lqmin = lastQScaleFor[pictType] / lstep;
                 lqmax = lastQScaleFor[pictType] * lstep;
             }
-            /* Rate control needs to be more aggressive based on actual costs obtained for  previous encoded frame */
+            /* Rate control needs to be more aggressive based on actual costs obtained for
+             * previous encoded frame */
+            int rfAdapt = 1;
             if (overflow > 1.1 && framesDone > 3)
             {
-                lqmax *= lstep;
-                lqmin*= pow(lstep,1/frameThreads);
+                /* Control propagation of excessive overflow / underfow */
+                if (overflow > 1.5)
+                    rfAdapt = 2;
+                lqmax *= pow(lstep, rfAdapt);
             }
             else if (overflow < 0.9)
             {
-                lqmin /= lstep;
-                lqmax /= pow(lstep,1/frameThreads);
+                if (overflow < 0.6)
+                    rfAdapt = 2;
+                lqmin /= pow(lstep, rfAdapt);
+                lqmax /= pow(lstep, rfAdapt / frameThreads);
             }
             q = Clip3(lqmin, lqmax, q);
         }
