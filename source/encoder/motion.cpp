@@ -87,8 +87,8 @@ MotionEstimate::MotionEstimate()
         init_scales();
 
     fenc = (pixel*)X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
-    subpelbuf = (pixel*)X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
-    immedVal = (short*)X265_MALLOC(short, MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA - 1));
+    subpelbuf = (pixel*)X265_MALLOC(pixel, (MAX_CU_SIZE + 1) * (MAX_CU_SIZE + 1));
+    immedVal = (short*)X265_MALLOC(short, (MAX_CU_SIZE + 1) * (MAX_CU_SIZE + 1 + NTAPS_LUMA - 1));
 }
 
 MotionEstimate::~MotionEstimate()
@@ -122,6 +122,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 static const MV hex2[8] = { MV(-1, -2), MV(-2, 0), MV(-1, 2), MV(1, 2), MV(2, 0), MV(1, -2), MV(-1, -2), MV(-2, 0) };
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
 static const MV square1[9] = { MV(0, 0), MV(0, -1), MV(0, 1), MV(-1, 0), MV(1, 0), MV(-1, -1), MV(-1, 1), MV(1, -1), MV(1, 1) };
+static const int square1_dir[9] = { 0, 1, 1, 2, 2, 1, 1, 1, 1 };
 static const MV hex4[16] =
 {
     MV(0, -4),  MV(0, 4),  MV(-2, -3), MV(2, -3),
@@ -793,17 +794,55 @@ me_hex2:
     else
         hpelcomp = sad;
 
-    for (int iter = 0; iter < wl.hpel_iters; iter++)
+    if (ref->isLowres)
     {
-        int bdir = 0, cost;
-        for (int i = 1; i <= wl.hpel_dirs; i++)
+        for (int iter = 0; iter < wl.hpel_iters; iter++)
         {
-            MV qmv = bmv + square1[i] * 2;
-            cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
-            COPY2_IF_LT(bcost, cost, bdir, i);
+            int bdir = 0, cost;
+            for (int i = 1; i <= wl.hpel_dirs; i++)
+            {
+                MV qmv = bmv + square1[i] * 2;
+                cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
+                COPY2_IF_LT(bcost, cost, bdir, i+0);
+            }
+            bmv += square1[bdir] * 2;
         }
+    }
+    else
+    {
+        for (int iter = 0; iter < wl.hpel_iters; iter++)
+        {
+            int bdir = 0, cost0, cost1;
+            for (int i = 1; i <= wl.hpel_dirs; i += 2)
+            {
+                MV qmv0 = bmv + square1[i  ] * 2;
+                MV qmv1 = bmv + square1[i+1] * 2;
+                int mvcost0 = mvcost(qmv0);
+                int mvcost1 = mvcost(qmv1);
+                int dir = square1_dir[i];
 
-        bmv += square1[bdir] * 2;
+                pixel *fref = ref->fpelPlane + blockOffset + (qmv0.x >> 2) + (qmv0.y >> 2) * ref->lumaStride;
+                int xFrac = qmv0.x & 0x3;
+                int yFrac = qmv0.y & 0x3;
+
+                // TODO: sad_x2
+                if (xFrac == 0 && yFrac == 0)
+                {
+                    intptr_t offset = (dir == 2) + (dir == 1 ? ref->lumaStride : 0);
+                    cost0 = hpelcomp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost0;
+                    cost1 = hpelcomp(fenc, FENC_STRIDE, fref + offset, ref->lumaStride) + mvcost1;
+                }
+                else
+                {
+                    subpelInterpolate(fref, ref->lumaStride, xFrac, yFrac, dir);
+                    cost0 = hpelcomp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE + (dir == 2)) + mvcost0;
+                    cost1 = hpelcomp(fenc, FENC_STRIDE, subpelbuf + (dir == 2) + (dir == 1 ? FENC_STRIDE : 0), FENC_STRIDE + (dir == 2)) + mvcost1;
+                }
+                COPY2_IF_LT(bcost, cost0, bdir, i+0);
+                COPY2_IF_LT(bcost, cost1, bdir, i+1);
+            }
+            bmv += square1[bdir] * 2;
+        }
     }
     /* if HPEL search used SAD, remeasure with SATD before QPEL */
     if (!wl.hpel_satd)
@@ -1123,5 +1162,30 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
         }
 
         return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
+    }
+}
+
+void MotionEstimate::subpelInterpolate(pixel *fref, intptr_t lumaStride, int xFrac, int yFrac, int dir)
+{
+    assert(yFrac | xFrac);
+
+    int realWidth = blockwidth + (dir == 2);
+    int realHeight = blockheight + (dir == 1);
+    intptr_t realStride = FENC_STRIDE + (dir == 2);
+
+    if (yFrac == 0)
+    {
+        primitives.ipfilter_pp[FILTER_H_P_P_8](fref, lumaStride, subpelbuf, realStride, realWidth, realHeight, g_lumaFilter[xFrac]);
+    }
+    else if (xFrac == 0)
+    {
+        primitives.ipfilter_pp[FILTER_V_P_P_8](fref, lumaStride, subpelbuf, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
+    }
+    else
+    {
+        int filterSize = NTAPS_LUMA;
+        int halfFilterSize = (filterSize >> 1);
+        primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * lumaStride, lumaStride, immedVal, realWidth, realWidth, realHeight + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * realWidth, realWidth, subpelbuf, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
     }
 }

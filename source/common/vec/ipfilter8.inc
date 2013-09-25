@@ -679,7 +679,8 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
 
     int row, col;
 
-    assert(height % 2 == 0);
+    if (N == 4)
+        assert(height % 2 == 0);
 
     uint32_t leftCols = (8 - (width & 7)) * 8;
     uint32_t mask_shift = ((uint32_t)~0 >> leftCols);

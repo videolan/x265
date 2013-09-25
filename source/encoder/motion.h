@@ -96,6 +96,8 @@ public:
 
     int subpelCompare(ReferencePlanes *ref, const MV & qmv, pixelcmp_t);
 
+    void subpelInterpolate(pixel *fref, intptr_t lumaStride, int xFrac, int yFrac, int dir);
+
 protected:
 
     inline void StarPatternSearch(ReferencePlanes *ref,
