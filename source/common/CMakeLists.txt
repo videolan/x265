@@ -15,7 +15,6 @@ endif(ENABLE_PRIMITIVES_ASM)
 include_directories(../VectorClass)
 
 set(LIBCOMMON_HDR
-    ../Lib/TLibCommon/AccessUnit.h
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/ContextModel.h
     ../Lib/TLibCommon/ContextModel3DBuffer.h

@@ -41,7 +41,7 @@
 #include "x265.h"
 
 // Include files
-#include "TLibCommon/AccessUnit.h"
+#include "TLibCommon/NAL.h"
 #include "TEncCfg.h"
 #include "TEncAnalyze.h"
 #include "threading.h"

@@ -27,7 +27,7 @@
 
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
-#include "TLibCommon/AccessUnit.h"
+#include "TLibCommon/NAL.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
