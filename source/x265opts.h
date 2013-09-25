@@ -66,6 +66,7 @@ OPT("rc-lookahead",    param->lookaheadDepth,         required_argument, 0, "Num
 OPT("bframes",         param->bframes,                required_argument, 'b', "Maximum number of consecutive b-frames (now it only enables B GOP structure)")
 OPT("bframe-bias",     param->bFrameBias,             required_argument, 0, "Bias towards B frame decisions")
 OPT("b-adapt",         param->bFrameAdaptive,         required_argument, 0, "0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling")
+OPT("ref",             param->maxNumReferences,       required_argument, 0, "max number of L0 references to be allowed  (1 .. 16)")
 // Disabled because weighted uni-prediction was busted by not using
 // pre-generated planes in motion compensation
 //OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")

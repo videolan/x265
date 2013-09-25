@@ -52,7 +52,7 @@ public:
         m_lastIDR = 0;
         m_pocCRA = 0;
         m_bRefreshPending = false;
-        m_maxRefL0 = 1;             //TODO: This values should later be fetched from input params
+        m_maxRefL0 = cfg->param.maxNumReferences;
         m_maxRefL1 = 1;
     }
 

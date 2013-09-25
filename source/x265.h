@@ -248,6 +248,7 @@ typedef struct x265_param_t
     int       bEnableTransformSkip;            ///< enable intra transform skipping
     int       bEnableTSkipFast;                ///< enable fast intra transform skipping
     int       bEnableRDOQTS;                   ///< enable RD optimized quantization when transform skip is selected
+    int       maxNumReferences;                ///< maximum number of references a frame can have in L0
 
     // loop filter
     int       bEnableLoopFilter;               ///< enable Loop Filter

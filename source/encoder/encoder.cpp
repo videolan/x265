@@ -273,8 +273,8 @@ void x265_t::configure(x265_param_t *_param)
     vps.setMaxLayers(1);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
-        m_numReorderPics[i] = _param->bframes;
-        m_maxDecPicBuffering[i] = _param->bframes + 2;
+        m_numReorderPics[i] = 1; 
+        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + 1);
         vps.setNumReorderPics(m_numReorderPics[i], i);
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     }

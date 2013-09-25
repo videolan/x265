@@ -160,6 +160,7 @@ void x265_param_default(x265_param_t *param)
     param->bEnableSignHiding = 1;
     param->bEnableTransformSkip = 1;
     param->bEnableTSkipFast = 1;
+    param->maxNumReferences = 1;
 
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
@@ -279,6 +280,9 @@ int x265_check_params(x265_param_t *param)
 
     CHECK(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
     CHECK(param->maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
+
+    CHECK(param->maxNumReferences < 1, "maxNumReferences must be 1 or greater.");
+    CHECK(param->maxNumReferences > MAX_NUM_REF, "maxNumReferences must be 16 or smaller.");
 
     // TODO: ChromaFmt assumes 4:2:0 below
     CHECK(param->sourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0,
