@@ -172,6 +172,10 @@ void FrameFilter::processRow(int row)
 
     // this row of CTUs has been encoded
 
+    // NOTE: in --sao-lcu-opt=0 mode, we do it later
+    if (m_cfg->param.bEnableSAO && !m_sao.getSaoLcuBasedOptimization())
+        return;
+
     if (row > 0)
     {
         processRowPost(row - 1);
@@ -179,7 +183,7 @@ void FrameFilter::processRow(int row)
 
     if (row == m_numRows - 1)
     {
-        if (m_cfg->param.bEnableSAO)
+        if (m_cfg->param.bEnableSAO && m_sao.getSaoLcuBasedOptimization())
         {
             m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());
 
