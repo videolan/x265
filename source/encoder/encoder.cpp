@@ -446,7 +446,7 @@ int x265_t::extract_naldata(NALUnitEBSP **nalunits)
     int nalcount = 0;
 
     int num = 0;
-    for (; nalunits[num] != NULL; num++)
+    for (; num < MAX_NAL_UNITS && nalunits[num] != NULL; num++)
     {
         const NALUnitEBSP& temp = *nalunits[num];
         memsize += temp.m_packetSize + 4;
@@ -460,7 +460,7 @@ int x265_t::extract_naldata(NALUnitEBSP **nalunits)
     memsize = 0;
 
     /* Copy NAL output packets into x265_nal_t structures */
-    for (; nalunits[nalcount] != NULL; nalcount++)
+    for (; nalcount < num; nalcount++)
     {
         const NALUnitEBSP& nalu = *nalunits[nalcount];
         uint32_t size = 0; /* size of annexB unit in bytes */
