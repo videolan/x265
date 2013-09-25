@@ -113,7 +113,6 @@ struct NALUnitEBSP : public NALUnit
      * the NALUnit header, then the rbsp_bytes including any
      * emulation_prevention_three_byte symbols.
      */
-    NALUnitEBSP(OutputNALUnit& nalu);
     void init(OutputNALUnit& nalu);
 };
 }
