@@ -213,6 +213,12 @@ void x265_t::configure(x265_param_t *_param)
     {
         _param->keyframeMin = _param->keyframeMax;
     }
+    if (_param->keyframeMin == 1)
+    {
+        // disable lookahead for all-intra encodes
+        _param->bFrameAdaptive = 0;
+        _param->bframes = 0;
+    }
     // if a bitrate is specified, chose ABR.  Else default to CQP
     if (_param->rc.bitrate)
     {
