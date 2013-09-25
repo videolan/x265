@@ -208,10 +208,20 @@ void x265_t::configure(x265_param_t *_param)
         x265_log(_param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
         _param->bEnableWavefront = 0;
     }
+    if (!_param->saoLcuBasedOptimization && _param->frameNumThreads > 1)
+    {
+        x265_log(_param, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
+    }
         
     if (!_param->keyframeMin)
     {
         _param->keyframeMin = _param->keyframeMax;
+    }
+    if (_param->keyframeMin == 1)
+    {
+        // disable lookahead for all-intra encodes
+        _param->bFrameAdaptive = 0;
+        _param->bframes = 0;
     }
     if (!_param->bEnableRectInter)
     {

@@ -529,6 +529,12 @@ void FrameEncoder::compressFrame()
             getSAO()->SAOProcess(saoParam);
             getSAO()->endSaoEnc();
             PCMLFDisableProcess(m_pic);
+
+            // Extend border after whole-frame SAO is finished
+            for(int row = 0; row < m_numRows; row++)
+            {
+                m_frameFilter.processRowPost(row);
+            }
         }
 
         slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
