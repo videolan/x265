@@ -387,7 +387,9 @@ void blockfil_s_32(short *dst, intptr_t dstride, short val)
 #endif // !HIGH_BIT_DEPTH
 }  // end anonymous namespace
 
-#include "utils.h"
+#define PASTER(name, val) name ## _ ## val
+#define EVALUATOR(x, y)   PASTER(x, y)
+#define NAME(func)        EVALUATOR(func, ARCH)
 
 namespace x265 {
 // private x265 namespace

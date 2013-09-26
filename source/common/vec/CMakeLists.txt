@@ -68,7 +68,7 @@ endif(GCC)
 file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)
 source_group(VectorClass FILES ${VECTORCLASS})
 
-add_library(PrimitivesVec STATIC vec-primitives.cpp utils.h ${PRIMITIVES} ${VECTORCLASS}
+add_library(PrimitivesVec STATIC vec-primitives.cpp ${PRIMITIVES} ${VECTORCLASS}
             # *.inc files listed here show up in Visual Studio, but are not built
             # it is simply a convenience to make them easy to edit
             pixel.inc pixel8.inc pixel16.inc sse.inc)
