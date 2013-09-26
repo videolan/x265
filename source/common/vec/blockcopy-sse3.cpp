@@ -23,7 +23,7 @@
 
 #include "TLibCommon/TComRom.h"
 
-#define INSTRSET 4
+#define INSTRSET 3
 #include "vectorclass.h"
 
 #include "primitives.h"
