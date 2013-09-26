@@ -821,7 +821,7 @@ me_hex2:
                 int mvcost1 = mvcost(qmv1);
                 int dir = square1_dir[i];
 
-                pixel *fref = ref->fpelPlane + blockOffset + (qmv0.x >> 2) + (qmv0.y >> 2) * ref->lumaStride;
+                pixel *fqref = ref->fpelPlane + blockOffset + (qmv0.x >> 2) + (qmv0.y >> 2) * ref->lumaStride;
                 int xFrac = qmv0.x & 0x3;
                 int yFrac = qmv0.y & 0x3;
 
@@ -829,12 +829,12 @@ me_hex2:
                 if (xFrac == 0 && yFrac == 0)
                 {
                     intptr_t offset = (dir == 2) + (dir == 1 ? ref->lumaStride : 0);
-                    cost0 = hpelcomp(fenc, FENC_STRIDE, fref, ref->lumaStride) + mvcost0;
-                    cost1 = hpelcomp(fenc, FENC_STRIDE, fref + offset, ref->lumaStride) + mvcost1;
+                    cost0 = hpelcomp(fenc, FENC_STRIDE, fqref, ref->lumaStride) + mvcost0;
+                    cost1 = hpelcomp(fenc, FENC_STRIDE, fqref + offset, ref->lumaStride) + mvcost1;
                 }
                 else
                 {
-                    subpelInterpolate(fref, ref->lumaStride, xFrac, yFrac, dir);
+                    subpelInterpolate(fqref, ref->lumaStride, xFrac, yFrac, dir);
                     cost0 = hpelcomp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE + (dir == 2)) + mvcost0;
                     cost1 = hpelcomp(fenc, FENC_STRIDE, subpelbuf + (dir == 2) + (dir == 1 ? FENC_STRIDE : 0), FENC_STRIDE + (dir == 2)) + mvcost1;
                 }
