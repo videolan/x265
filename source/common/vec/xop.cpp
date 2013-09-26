@@ -26,7 +26,6 @@
 namespace x265 {
 
 void Setup_Vec_PixelPrimitives_xop(EncoderPrimitives&);
-void Setup_Vec_IPredPrimitives_xop(EncoderPrimitives&);
 void Setup_Vec_IPFilterPrimitives_xop(EncoderPrimitives&);
 
 /* initialize function table with functions compiled for this vector
@@ -34,7 +33,6 @@ void Setup_Vec_IPFilterPrimitives_xop(EncoderPrimitives&);
 void Setup_Vec_Primitives_xop(EncoderPrimitives &p)
 {
     Setup_Vec_PixelPrimitives_xop(p);
-    Setup_Vec_IPredPrimitives_xop(p);
     Setup_Vec_IPFilterPrimitives_xop(p);
 }
 }
