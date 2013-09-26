@@ -85,7 +85,9 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
 namespace x265 {
 void Setup_Vec_BlockCopyPrimitives_avx2(EncoderPrimitives &p)
 {
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+    p.blockcpy_pp = p.blockcpy_pp;
+#else
     p.blockcpy_pp = blockcopy_p_p;
 #endif
 }

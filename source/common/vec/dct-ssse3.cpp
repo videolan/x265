@@ -1346,7 +1346,9 @@ void dct32(short *src, int *dst, intptr_t stride)
 namespace x265 {
 void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives &p)
 {
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+    p.dct[DST_4x4] = p.dct[DST_4x4]; // avoid unreferenced parameter warnings
+#else
     p.dct[DST_4x4] = dst4;
     p.dct[DCT_8x8] = dct8;
     p.dct[DCT_16x16] = dct16;
