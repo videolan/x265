@@ -221,10 +221,14 @@ void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_
 namespace x265 {
 void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives& p)
 {
+#if HIGH_BIT_DEPTH
+    p.ipfilter_p2s = p.ipfilter_p2s;
+#else
     p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_p_s<4>;
     p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
 
     p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;
+#endif
 }
 }
