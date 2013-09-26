@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
-        Setup_Vector_Primitives(vecprim, i);
+        Setup_Vector_Primitives(vecprim, 1 << i);
         printf("Testing intrinsic primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
 #if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(optprim, cpuid);
+    Setup_Vector_Primitives(optprim, (1 << (cpuid + 1)) - 1);
 #endif
 #if ENABLE_ASM_PRIMITIVES
     Setup_Assembly_Primitives(optprim, cpuid);

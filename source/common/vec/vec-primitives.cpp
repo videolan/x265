@@ -71,10 +71,10 @@ void Setup_Vec_PixelPrimitives_xop(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
 
 /* Use primitives for the best available vector architecture */
-void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
+void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #ifdef HAVE_SSE3
-    if (cpuid > 2)
+    if (cpuMask & (1 << X265_CPU_LEVEL_SSE3))
     {
         Setup_Vec_PixelPrimitives_sse3(p);
         Setup_Vec_DCTPrimitives_sse3(p);
@@ -83,14 +83,14 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     }
 #endif
 #ifdef HAVE_SSSE3
-    if (cpuid > 3)
+    if (cpuMask & (1 << X265_CPU_LEVEL_SSSE3))
     {
         Setup_Vec_IPFilterPrimitives_ssse3(p);
         Setup_Vec_DCTPrimitives_ssse3(p);
     }
 #endif
 #ifdef HAVE_SSE4
-    if (cpuid > 4)
+    if (cpuMask & (1 << X265_CPU_LEVEL_SSE41))
     {
         Setup_Vec_PixelPrimitives_sse41(p);
         Setup_Vec_IPredPrimitives_sse41(p);
@@ -99,7 +99,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     }
 #endif
 #ifdef HAVE_AVX2
-    if (cpuid > 7)
+    if (cpuMask & (1 << X265_CPU_LEVEL_AVX2))
     {
         Setup_Vec_PixelPrimitives_avx2(p);
         Setup_Vec_BlockCopyPrimitives_avx2(p);

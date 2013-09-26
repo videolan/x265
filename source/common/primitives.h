@@ -304,7 +304,7 @@ struct EncoderPrimitives
 extern EncoderPrimitives primitives;
 
 void Setup_C_Primitives(EncoderPrimitives &p);
-void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid);
+void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask);
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid);
 }
 

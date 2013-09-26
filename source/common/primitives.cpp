@@ -129,7 +129,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
     Setup_C_Primitives(primitives);
 
 #if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(primitives, cpuid);
+    Setup_Vector_Primitives(primitives, (1 << (cpuid + 1)) - 1);
     if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " intrinsic");
 #endif
 
