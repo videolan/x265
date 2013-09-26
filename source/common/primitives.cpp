@@ -128,13 +128,20 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 
     Setup_C_Primitives(primitives);
 
+    for (int i = 2; i < cpuid; i++)
+    {
 #if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(primitives, (1 << (cpuid + 1)) - 1);
+        Setup_Vector_Primitives(primitives, 1 << i);
+#endif
+#if ENABLE_ASM_PRIMITIVES
+        Setup_Assembly_Primitives(primitives, 1 << i);
+#endif
+    }
+
+#if ENABLE_VECTOR_PRIMITIVES
     if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " intrinsic");
 #endif
-
 #if ENABLE_ASM_PRIMITIVES
-    Setup_Assembly_Primitives(primitives, (1 << (cpuid + 1)) - 1);
     if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " assembly");
 #endif
 

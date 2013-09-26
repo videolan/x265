@@ -145,12 +145,15 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
+    for (int i = 2; i < cpuid; i++)
+    {
 #if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(optprim, (1 << (cpuid + 1)) - 1);
+        Setup_Vector_Primitives(optprim, 1 << i);
 #endif
 #if ENABLE_ASM_PRIMITIVES
-    Setup_Assembly_Primitives(optprim, (1 << (cpuid + 1)) - 1);
+        Setup_Assembly_Primitives(optprim, 1 << i);
 #endif
+    }
 
     printf("\nTest performance improvement with full optimizations\n");
 
