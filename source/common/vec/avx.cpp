@@ -28,7 +28,6 @@ namespace x265 {
 void Setup_Vec_PixelPrimitives_avx(EncoderPrimitives&);
 void Setup_Vec_IPredPrimitives_avx(EncoderPrimitives&);
 void Setup_Vec_IPFilterPrimitives_avx(EncoderPrimitives&);
-void Setup_Vec_DCTPrimitives_avx(EncoderPrimitives&);
 
 /* initialize function table with functions compiled for this vector
  * architecture.  This is the only symbol exported from each file. */
@@ -37,6 +36,5 @@ void Setup_Vec_Primitives_avx(EncoderPrimitives &p)
     Setup_Vec_PixelPrimitives_avx(p);
     Setup_Vec_IPredPrimitives_avx(p);
     Setup_Vec_IPFilterPrimitives_avx(p);
-    Setup_Vec_DCTPrimitives_avx(p);
 }
 }

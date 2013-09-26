@@ -29,13 +29,11 @@ if (MSVC)
         set(PRIMITIVES ${PRIMITIVES} avx.cpp avx2.cpp xop.cpp
             blockcopy-avx2.cpp
             pixel-avx.cpp pixel-avx2.cpp pixel-xop.cpp
-            dct-avx.cpp dct-avx2.cpp dct-xop.cpp
             ipfilter-avx.cpp ipfilter-avx2.cpp ipfilter-xop.cpp
             intra-avx.cpp intra-avx2.cpp intra-xop.cpp)
         set_source_files_properties(avx.cpp avx2.cpp xop.cpp
             blockcopy-avx2.cpp
             pixel-avx.cpp pixel-avx2.cpp pixel-xop.cpp
-            dct-avx.cpp dct-avx2.cpp dct-xop.cpp
             ipfilter-avx.cpp ipfilter-avx2.cpp ipfilter-xop.cpp
             intra-avx.cpp intra-avx2.cpp intra-xop.cpp
             PROPERTIES COMPILE_FLAGS /arch:AVX)
@@ -63,17 +61,17 @@ if(GCC)
             PROPERTIES COMPILE_FLAGS "-msse4.1")
         if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.6)
             set(PRIMITIVES ${PRIMITIVES}
-                pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp)
+                pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp avx.cpp)
             set_source_files_properties(
-                pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp
+                pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp avx.cpp
                 PROPERTIES COMPILE_FLAGS "-mavx")
         endif()
     endif()
     if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.7)
         set(PRIMITIVES ${PRIMITIVES}
-            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp avx2.cpp)
+            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp avx2.cpp)
         set_source_files_properties(
-            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp avx2.cpp
+            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp avx2.cpp
             PROPERTIES COMPILE_FLAGS "-march=core-avx2")
     endif()
 endif(GCC)
@@ -84,8 +82,6 @@ source_group(VectorClass FILES ${VECTORCLASS})
 add_library(PrimitivesVec STATIC vec-primitives.cpp utils.h ${PRIMITIVES} ${VECTORCLASS}
             # *.inc files listed here show up in Visual Studio, but are not built
             # it is simply a convenience to make them easy to edit
-            vecprimitives.inc
-            dct.inc
             intrapred.inc
             pixel.inc pixel8.inc pixel16.inc sse.inc
             ipfilter.inc ipfilter8.inc ipfilter16.inc)

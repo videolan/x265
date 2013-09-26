@@ -29,7 +29,6 @@ namespace x265 {
 void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
 void Setup_Vec_IPredPrimitives_avx2(EncoderPrimitives&);
 void Setup_Vec_IPFilterPrimitives_avx2(EncoderPrimitives&);
-void Setup_Vec_DCTPrimitives_avx2(EncoderPrimitives&);
 void Setup_Vec_BlockCopyPrimitives_avx2(EncoderPrimitives&);
 
 /* initialize function table with functions compiled for this vector
@@ -39,7 +38,6 @@ void Setup_Vec_Primitives_avx2(EncoderPrimitives &p)
     Setup_Vec_PixelPrimitives_avx2(p);
     Setup_Vec_IPredPrimitives_avx2(p);
     Setup_Vec_IPFilterPrimitives_avx2(p);
-    Setup_Vec_DCTPrimitives_avx2(p);
     Setup_Vec_BlockCopyPrimitives_avx2(p);
 }
 }
