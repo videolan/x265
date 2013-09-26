@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 #if ENABLE_ASM_PRIMITIVES
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
-        Setup_Assembly_Primitives(asmprim, i);
+        Setup_Assembly_Primitives(asmprim, 1 << i);
         printf("Testing assembly primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
     Setup_Vector_Primitives(optprim, (1 << (cpuid + 1)) - 1);
 #endif
 #if ENABLE_ASM_PRIMITIVES
-    Setup_Assembly_Primitives(optprim, cpuid);
+    Setup_Assembly_Primitives(optprim, (1 << (cpuid + 1)) - 1);
 #endif
 
     printf("\nTest performance improvement with full optimizations\n");

@@ -134,7 +134,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 #endif
 
 #if ENABLE_ASM_PRIMITIVES
-    Setup_Assembly_Primitives(primitives, cpuid);
+    Setup_Assembly_Primitives(primitives, (1 << (cpuid + 1)) - 1);
     if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " assembly");
 #endif
 
