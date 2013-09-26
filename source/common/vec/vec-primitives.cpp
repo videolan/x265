@@ -50,6 +50,7 @@ void Setup_Vec_Primitives_sse3(EncoderPrimitives &p)
 {
     Setup_Vec_PixelPrimitives_sse3(p);
     Setup_Vec_DCTPrimitives_sse3(p);
+    Setup_Vec_IPredPrimitives_sse3(p);
     Setup_Vec_BlockCopyPrimitives_sse3(p);
 }
 void Setup_Vec_Primitives_ssse3(EncoderPrimitives &p)
