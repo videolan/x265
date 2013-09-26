@@ -27,8 +27,6 @@ namespace x265 {
 // private x265 namespace
 
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives&);
-void Setup_Vec_IPredPrimitives_sse3(EncoderPrimitives&);
-void Setup_Vec_IPFilterPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives&);
 
@@ -37,8 +35,6 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_Primitives_sse3(EncoderPrimitives &p)
 {
     Setup_Vec_PixelPrimitives_sse3(p);
-    Setup_Vec_IPredPrimitives_sse3(p);
-    Setup_Vec_IPFilterPrimitives_sse3(p);
     Setup_Vec_DCTPrimitives_sse3(p);
     Setup_Vec_BlockCopyPrimitives_sse3(p);
 }

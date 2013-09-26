@@ -13,7 +13,7 @@ if (MSVC)
         blockcopy-sse3.cpp
         pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
         dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
-        ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp
+        ipfilter-ssse3.cpp ipfilter-sse41.cpp
         intra-sse3.cpp intra-sse41.cpp)
     if (NOT X64)
         # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
@@ -21,19 +21,17 @@ if (MSVC)
             blockcopy-sse3.cpp
             pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
             dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
-            ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp
+            ipfilter-ssse3.cpp ipfilter-sse41.cpp
             intra-sse3.cpp intra-sse41.cpp
             PROPERTIES COMPILE_FLAGS /arch:SSE2)
     endif()
     if (MSVC_VERSION EQUAL 1700 OR "$ENV{CXX}" STREQUAL "icl")
         set(PRIMITIVES ${PRIMITIVES} avx.cpp avx2.cpp xop.cpp
             blockcopy-avx2.cpp
-            pixel-avx.cpp pixel-avx2.cpp pixel-xop.cpp
-            ipfilter-avx.cpp ipfilter-avx2.cpp ipfilter-xop.cpp)
+            pixel-avx.cpp pixel-avx2.cpp pixel-xop.cpp)
         set_source_files_properties(avx.cpp avx2.cpp xop.cpp
             blockcopy-avx2.cpp
             pixel-avx.cpp pixel-avx2.cpp pixel-xop.cpp
-            ipfilter-avx.cpp ipfilter-avx2.cpp ipfilter-xop.cpp
             PROPERTIES COMPILE_FLAGS /arch:AVX)
     endif()
 endif()
@@ -45,11 +43,11 @@ if(GCC)
         set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp
             blockcopy-sse3.cpp
             pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
-            ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp
+            ipfilter-ssse3.cpp ipfilter-sse41.cpp
             dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
             intra-sse3.cpp intra-sse41.cpp)
         set_source_files_properties(
-            sse3.cpp blockcopy-sse3.cpp pixel-sse3.cpp ipfilter-sse3.cpp dct-sse3.cpp intra-sse3.cpp
+            sse3.cpp blockcopy-sse3.cpp pixel-sse3.cpp dct-sse3.cpp intra-sse3.cpp
             PROPERTIES COMPILE_FLAGS "-msse3")
         set_source_files_properties(
             ssse3.cpp pixel-ssse3.cpp ipfilter-ssse3.cpp dct-ssse3.cpp
@@ -59,17 +57,17 @@ if(GCC)
             PROPERTIES COMPILE_FLAGS "-msse4.1")
         if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.6)
             set(PRIMITIVES ${PRIMITIVES}
-                pixel-avx.cpp ipfilter-avx.cpp avx.cpp)
+                pixel-avx.cpp avx.cpp)
             set_source_files_properties(
-                pixel-avx.cpp ipfilter-avx.cpp avx.cpp
+                pixel-avx.cpp avx.cpp
                 PROPERTIES COMPILE_FLAGS "-mavx")
         endif()
     endif()
     if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.7)
         set(PRIMITIVES ${PRIMITIVES}
-            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp avx2.cpp)
+            blockcopy-avx2.cpp pixel-avx2.cpp avx2.cpp)
         set_source_files_properties(
-            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp avx2.cpp
+            blockcopy-avx2.cpp pixel-avx2.cpp avx2.cpp
             PROPERTIES COMPILE_FLAGS "-march=core-avx2")
     endif()
 endif(GCC)
@@ -80,5 +78,4 @@ source_group(VectorClass FILES ${VECTORCLASS})
 add_library(PrimitivesVec STATIC vec-primitives.cpp utils.h ${PRIMITIVES} ${VECTORCLASS}
             # *.inc files listed here show up in Visual Studio, but are not built
             # it is simply a convenience to make them easy to edit
-            pixel.inc pixel8.inc pixel16.inc sse.inc
-            ipfilter.inc ipfilter8.inc ipfilter16.inc)
+            pixel.inc pixel8.inc pixel16.inc sse.inc)
