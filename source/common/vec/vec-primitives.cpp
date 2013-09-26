@@ -31,7 +31,6 @@ namespace x265 {
 extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_xop(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
 
@@ -46,7 +45,6 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
 
-    if (cpuid > 6) Setup_Vec_Primitives_avx(p);
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
 
 #elif defined(__GNUC__)
@@ -54,9 +52,6 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
-#endif
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-    if (cpuid > 6) Setup_Vec_Primitives_avx(p);
 #endif
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
@@ -68,7 +63,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
 
 #if _MSC_VER >= 1700 // VC11
-    if (cpuid > 6) hasXOP() ? Setup_Vec_Primitives_xop(p) : Setup_Vec_Primitives_avx(p);
+    if (cpuid > 6 && hasXOP()) Setup_Vec_Primitives_xop(p);
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
 #endif
 

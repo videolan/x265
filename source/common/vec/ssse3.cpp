@@ -26,7 +26,6 @@
 namespace x265 {
 // private x265 namespace
 
-void Setup_Vec_PixelPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
 
@@ -34,7 +33,6 @@ void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
  * architecture.  This is the only symbol exported from each file. */
 void Setup_Vec_Primitives_ssse3(EncoderPrimitives &p)
 {
-    Setup_Vec_PixelPrimitives_ssse3(p);
     Setup_Vec_IPFilterPrimitives_ssse3(p);
     Setup_Vec_DCTPrimitives_ssse3(p);
 }
