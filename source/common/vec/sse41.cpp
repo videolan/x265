@@ -21,10 +21,22 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* this file instantiates SSE4.1 versions of the vectorized primitives */
+#include "primitives.h"
 
-#define INSTRSET 5
-#include "vectorclass.h"
+namespace x265 {
 
-#define ARCH sse41
-#include "vecprimitives.inc"
+void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives&);
+void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives&);
+void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives&);
+void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
+
+/* initialize function table with functions compiled for this vector
+ * architecture.  This is the only symbol exported from each file. */
+void Setup_Vec_Primitives_sse41(EncoderPrimitives &p)
+{
+    Setup_Vec_PixelPrimitives_sse41(p);
+    Setup_Vec_IPredPrimitives_sse41(p);
+    Setup_Vec_IPFilterPrimitives_sse41(p);
+    Setup_Vec_DCTPrimitives_sse41(p);
+}
+}

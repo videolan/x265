@@ -21,11 +21,22 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* this file instantiates XOP versions of the vectorized primitives */
+#include "primitives.h"
 
-#define INSTRSET 7
-#define __XOP__ 1
-#include "vectorclass.h"
+namespace x265 {
 
-#define ARCH xop
-#include "vecprimitives.inc"
+void Setup_Vec_PixelPrimitives_xop(EncoderPrimitives&);
+void Setup_Vec_IPredPrimitives_xop(EncoderPrimitives&);
+void Setup_Vec_IPFilterPrimitives_xop(EncoderPrimitives&);
+void Setup_Vec_DCTPrimitives_xop(EncoderPrimitives&);
+
+/* initialize function table with functions compiled for this vector
+ * architecture.  This is the only symbol exported from each file. */
+void Setup_Vec_Primitives_xop(EncoderPrimitives &p)
+{
+    Setup_Vec_PixelPrimitives_xop(p);
+    Setup_Vec_IPredPrimitives_xop(p);
+    Setup_Vec_IPFilterPrimitives_xop(p);
+    Setup_Vec_DCTPrimitives_xop(p);
+}
+}

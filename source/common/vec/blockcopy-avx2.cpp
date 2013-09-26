@@ -21,10 +21,72 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* this file instantiates AVX2 versions of the vectorized primitives */
+#include "TLibCommon/TComRom.h"
 
 #define INSTRSET 8
 #include "vectorclass.h"
 
-#define ARCH avx2
-#include "blockcopy.inc"
+#include "primitives.h"
+#include <string.h>
+
+namespace {
+
+#if !HIGH_BIT_DEPTH
+void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
+{
+    size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+
+    if (!(aligncheck & 31))
+    {
+        // fast path, multiples of 32 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 32)
+            {
+                Vec32c word;
+                word.load_a(src + x);
+                word.store_a(dst + x);
+            }
+
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else if (!(aligncheck & 15))
+    {
+        // fast path, multiples of 16 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec16c word;
+                word.load_a(src + x);
+                word.store_a(dst + x);
+            }
+
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            memcpy(dst, src, bx * sizeof(pixel));
+            src += sstride;
+            dst += dstride;
+        }
+    }
+}
+#endif
+}
+
+namespace x265 {
+void Setup_Vec_BlockCopyPrimitives_avx2(EncoderPrimitives &p)
+{
+#if !HIGH_BIT_DEPTH
+    p.blockcpy_pp = blockcopy_p_p;
+#endif
+}
+}

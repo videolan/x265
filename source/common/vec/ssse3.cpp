@@ -21,10 +21,23 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* this file instantiates SSSE3 versions of the vectorized primitives */
+#include "primitives.h"
 
-#define INSTRSET 4
-#include "vectorclass.h"
+namespace x265 {
+// private x265 namespace
 
-#define ARCH ssse3
-#include "vecprimitives.inc"
+void Setup_Vec_PixelPrimitives_ssse3(EncoderPrimitives&);
+void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives&);
+void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives&);
+void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
+
+/* initialize function table with functions compiled for this vector
+ * architecture.  This is the only symbol exported from each file. */
+void Setup_Vec_Primitives_ssse3(EncoderPrimitives &p)
+{
+    Setup_Vec_PixelPrimitives_ssse3(p);
+    Setup_Vec_IPredPrimitives_ssse3(p);
+    Setup_Vec_IPFilterPrimitives_ssse3(p);
+    Setup_Vec_DCTPrimitives_ssse3(p);
+}
+}

@@ -21,10 +21,25 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* this file instantiates AVX2 versions of the vectorized primitives */
+#include "primitives.h"
 
-#define INSTRSET 8
-#include "vectorclass.h"
+namespace x265 {
+// private x265 namespace
 
-#define ARCH avx2
-#include "vecprimitives.inc"
+void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
+void Setup_Vec_IPredPrimitives_avx2(EncoderPrimitives&);
+void Setup_Vec_IPFilterPrimitives_avx2(EncoderPrimitives&);
+void Setup_Vec_DCTPrimitives_avx2(EncoderPrimitives&);
+void Setup_Vec_BlockCopyPrimitives_avx2(EncoderPrimitives&);
+
+/* initialize function table with functions compiled for this vector
+ * architecture.  This is the only symbol exported from each file. */
+void Setup_Vec_Primitives_avx2(EncoderPrimitives &p)
+{
+    Setup_Vec_PixelPrimitives_avx2(p);
+    Setup_Vec_IPredPrimitives_avx2(p);
+    Setup_Vec_IPFilterPrimitives_avx2(p);
+    Setup_Vec_DCTPrimitives_avx2(p);
+    Setup_Vec_BlockCopyPrimitives_avx2(p);
+}
+}
