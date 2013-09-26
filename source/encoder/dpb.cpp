@@ -202,7 +202,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
     unsigned int poci = 0, numNeg = 0, numPos = 0;
 
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    while ((iterPic != m_picList.end()) && (poci < maxDecPicBuffer))
+    while ((iterPic != m_picList.end()) && (poci < maxDecPicBuffer - 1))
     {
         refPic = *(iterPic);
         if ((refPic->getPOC() != curPoc) && (refPic->getSlice()->isReferenced()))
