@@ -28,11 +28,47 @@ bool hasXOP(void); // instr_detect.cpp
 namespace x265 {
 // private x265 namespace
 
-extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_xop(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
+void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives&);
+void Setup_Vec_BlockCopyPrimitives_avx2(EncoderPrimitives&);
+
+void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives&);
+void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
+void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
+
+void Setup_Vec_IPredPrimitives_sse3(EncoderPrimitives&);
+void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives&);
+
+void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives&);
+void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives&);
+
+void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives&);
+void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives&);
+void Setup_Vec_PixelPrimitives_xop(EncoderPrimitives&);
+void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
+
+void Setup_Vec_Primitives_sse3(EncoderPrimitives &p)
+{
+    Setup_Vec_PixelPrimitives_sse3(p);
+    Setup_Vec_DCTPrimitives_sse3(p);
+    Setup_Vec_BlockCopyPrimitives_sse3(p);
+}
+void Setup_Vec_Primitives_ssse3(EncoderPrimitives &p)
+{
+    Setup_Vec_IPFilterPrimitives_ssse3(p);
+    Setup_Vec_DCTPrimitives_ssse3(p);
+}
+void Setup_Vec_Primitives_sse41(EncoderPrimitives &p)
+{
+    Setup_Vec_PixelPrimitives_sse41(p);
+    Setup_Vec_IPredPrimitives_sse41(p);
+    Setup_Vec_IPFilterPrimitives_sse41(p);
+    Setup_Vec_DCTPrimitives_sse41(p);
+}
+void Setup_Vec_Primitives_avx2(EncoderPrimitives &p)
+{
+    Setup_Vec_PixelPrimitives_avx2(p);
+    Setup_Vec_BlockCopyPrimitives_avx2(p);
+}
 
 /* Use primitives for the best available vector architecture */
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
@@ -44,7 +80,6 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
-
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
 
 #elif defined(__GNUC__)
@@ -63,7 +98,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
 
 #if _MSC_VER >= 1700 // VC11
-    if (cpuid > 6 && hasXOP()) Setup_Vec_Primitives_xop(p);
+    if (cpuid > 6 && hasXOP()) Setup_Vec_PixelPrimitives_xop(p);
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
 #endif
 
