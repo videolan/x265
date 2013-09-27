@@ -3866,12 +3866,8 @@ void xPredIntraAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel
     }
 }
 
-#endif /* if HIGH_BIT_DEPTH */
-
 void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
-#if HIGH_BIT_DEPTH
-#else
     switch (width)
     {
     case 4:
@@ -3887,119 +3883,8 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
         xPredIntraAng32x32(dst, dstStride, width, dirMode, refLeft, refAbove);
         return;
     }
-
-#endif /* if HIGH_BIT_DEPTH */
-
-    int k, l;
-    int blkSize        = width;
-
-    // Map the mode index to main prediction direction and angle
-    assert(dirMode > 1); //no planar and dc
-    bool modeHor       = (dirMode < 18);
-    bool modeVer       = !modeHor;
-    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
-    int absAng         = abs(intraPredAngle);
-    int signAng        = intraPredAngle < 0 ? -1 : 1;
-
-    // Set bitshifts and scale the angle parameter to block size
-    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
-    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
-    int invAngle       = invAngTable[absAng];
-    absAng             = angTable[absAng];
-    intraPredAngle     = signAng * absAng;
-
-    // Do angular predictions
-    {
-        pixel* refMain;
-        pixel* refSide;
-
-        // Initialise the Main and Left reference array.
-        if (intraPredAngle < 0)
-        {
-            refMain = (modeVer ? refAbove : refLeft); // + (blkSize - 1);
-            refSide = (modeVer ? refLeft : refAbove); // + (blkSize - 1);
-
-            // Extend the Main reference to the left.
-            int invAngleSum    = 128; // rounding for (shift by 8)
-            for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
-            {
-                invAngleSum += invAngle;
-                refMain[k] = refSide[invAngleSum >> 8];
-            }
-        }
-        else
-        {
-            refMain = modeVer ? refAbove : refLeft;
-            refSide = modeVer ? refLeft  : refAbove;
-        }
-
-        if (intraPredAngle == 0)
-        {
-            for (k = 0; k < blkSize; k++)
-            {
-                for (l = 0; l < blkSize; l++)
-                {
-                    dst[k * dstStride + l] = refMain[l + 1];
-                }
-            }
-
-            if (bFilter)
-            {
-                for (k = 0; k < blkSize; k++)
-                {
-                    dst[k * dstStride] = (pixel)Clip3(0, (1 << X265_DEPTH) - 1, static_cast<short>(dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
-                }
-            }
-        }
-        else
-        {
-            int deltaPos = 0;
-            int deltaInt;
-            int deltaFract;
-            int refMainIndex;
-
-            for (k = 0; k < blkSize; k++)
-            {
-                deltaPos += intraPredAngle;
-                deltaInt   = deltaPos >> 5;
-                deltaFract = deltaPos & (32 - 1);
-
-                if (deltaFract)
-                {
-                    // Do linear filtering
-                    for (l = 0; l < blkSize; l++)
-                    {
-                        refMainIndex        = l + deltaInt + 1;
-                        dst[k * dstStride + l] = (pixel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
-                    }
-                }
-                else
-                {
-                    // Just copy the integer samples
-                    for (l = 0; l < blkSize; l++)
-                    {
-                        dst[k * dstStride + l] = refMain[l + deltaInt + 1];
-                    }
-                }
-            }
-        }
-
-        // Flip the block if this is the horizontal mode
-        if (modeHor)
-        {
-            pixel  tmp;
-            for (k = 0; k < blkSize - 1; k++)
-            {
-                for (l = k + 1; l < blkSize; l++)
-                {
-                    tmp                    = dst[k * dstStride + l];
-                    dst[k * dstStride + l] = dst[l * dstStride + k];
-                    dst[l * dstStride + k] = tmp;
-                }
-            }
-        }
-    }
 }
+#endif /* if HIGH_BIT_DEPTH */
 
 ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
 {
@@ -12084,10 +11969,9 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
 {
     initFileStaticVars();
 
-    p.intra_pred_ang = intra_pred_ang;
-
 #if !HIGH_BIT_DEPTH
     p.intra_pred_planar = intra_pred_planar;
+    p.intra_pred_ang = intra_pred_ang;
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
     p.intra_pred_allangs[0] = predIntraAngs4;
