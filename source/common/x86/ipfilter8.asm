@@ -96,8 +96,6 @@ cglobal filterHorizontal_p_p_4, 0, 7, 8
 
 _loop_row:
     xor         col,        col
-    cmp         width,      0
-    je _end_col
  
 _loop_col:
     FILTER_H4   x0, x1, x3
