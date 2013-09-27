@@ -37,6 +37,8 @@ LOWRES(sse2)
 LOWRES(ssse3)
 LOWRES(avx)
 LOWRES(xop)
+
+void x265_filterHorizontal_p_p_4_sse4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff);
 }
 
 bool hasXOP(void); // instr_detect.cpp
@@ -370,6 +372,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.satd[PARTITION_12x32] = cmp<12, 32, 4, 16, x265_pixel_satd_4x16_sse4>;
         p.satd[PARTITION_12x48] = cmp<12, 48, 4, 16, x265_pixel_satd_4x16_sse4>;
         p.satd[PARTITION_12x64] = cmp<12, 64, 4, 16, x265_pixel_satd_4x16_sse4>;
+
+#if !defined(X86_64)
+        p.ipfilter_pp[FILTER_H_P_P_4] = x265_filterHorizontal_p_p_4_sse4;
+#endif
     }
     if (cpuMask & (1 << 7))
     {
