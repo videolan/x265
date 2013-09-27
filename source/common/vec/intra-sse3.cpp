@@ -24,6 +24,10 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#if defined(_MSC_VER)
+#define ALWAYSINLINE  __forceinline
+#endif
+
 #define INSTRSET 3
 #include "vectorclass.h"
 
