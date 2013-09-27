@@ -25,6 +25,30 @@
 
 bool hasXOP(void); // instr_detect.cpp
 
+/* The #if logic here must match the file lists in CMakeLists.txt */
+#if defined(__INTEL_COMPILER)
+#define HAVE_SSE3
+#define HAVE_SSSE3
+#define HAVE_SSE4
+#define HAVE_AVX2
+#elif defined(__GNUC__)
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+#define HAVE_SSE3
+#define HAVE_SSSE3
+#define HAVE_SSE4
+#endif
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
+#define HAVE_AVX2
+#endif
+#elif defined(_MSC_VER)
+#define HAVE_SSE3
+#define HAVE_SSSE3
+#define HAVE_SSE4
+#if _MSC_VER >= 1700 // VC11
+#define HAVE_AVX2
+#endif
+#endif
+
 namespace x265 {
 // private x265 namespace
 
@@ -46,63 +70,40 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_xop(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
 
-void Setup_Vec_Primitives_sse3(EncoderPrimitives &p)
-{
-    Setup_Vec_PixelPrimitives_sse3(p);
-    Setup_Vec_DCTPrimitives_sse3(p);
-    Setup_Vec_IPredPrimitives_sse3(p);
-    Setup_Vec_BlockCopyPrimitives_sse3(p);
-}
-void Setup_Vec_Primitives_ssse3(EncoderPrimitives &p)
-{
-    Setup_Vec_IPFilterPrimitives_ssse3(p);
-    Setup_Vec_DCTPrimitives_ssse3(p);
-}
-void Setup_Vec_Primitives_sse41(EncoderPrimitives &p)
-{
-    Setup_Vec_PixelPrimitives_sse41(p);
-    Setup_Vec_IPredPrimitives_sse41(p);
-    Setup_Vec_IPFilterPrimitives_sse41(p);
-    Setup_Vec_DCTPrimitives_sse41(p);
-}
-void Setup_Vec_Primitives_avx2(EncoderPrimitives &p)
-{
-    Setup_Vec_PixelPrimitives_avx2(p);
-    Setup_Vec_BlockCopyPrimitives_avx2(p);
-}
-
 /* Use primitives for the best available vector architecture */
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
 {
-    /* These functions are defined by C++ files in this folder. Depending on your
-     * compiler, some of them may be undefined.  The #if logic here must match the
-     * file lists in CMakeLists.txt */
-#if defined(__INTEL_COMPILER)
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
-
-#elif defined(__GNUC__)
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
+#ifdef HAVE_SSE3
+    if (cpuid > 2)
+    {
+        Setup_Vec_PixelPrimitives_sse3(p);
+        Setup_Vec_DCTPrimitives_sse3(p);
+        Setup_Vec_IPredPrimitives_sse3(p);
+        Setup_Vec_BlockCopyPrimitives_sse3(p);
+    }
 #endif
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
+#ifdef HAVE_SSSE3
+    if (cpuid > 3)
+    {
+        Setup_Vec_IPFilterPrimitives_ssse3(p);
+        Setup_Vec_DCTPrimitives_ssse3(p);
+    }
 #endif
-
-#elif defined(_MSC_VER)
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
-
-#if _MSC_VER >= 1700 // VC11
-    if (cpuid > 6 && hasXOP()) Setup_Vec_PixelPrimitives_xop(p);
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
+#ifdef HAVE_SSE4
+    if (cpuid > 4)
+    {
+        Setup_Vec_PixelPrimitives_sse41(p);
+        Setup_Vec_IPredPrimitives_sse41(p);
+        Setup_Vec_IPFilterPrimitives_sse41(p);
+        Setup_Vec_DCTPrimitives_sse41(p);
+    }
 #endif
-
+#ifdef HAVE_AVX2
+    if (cpuid > 7)
+    {
+        Setup_Vec_PixelPrimitives_avx2(p);
+        Setup_Vec_BlockCopyPrimitives_avx2(p);
+    }
 #endif
 }
 }
