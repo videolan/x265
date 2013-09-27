@@ -474,9 +474,6 @@ void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dst
 #undef COMP_PRED_PLANAR4_ROW
 }
 
-#endif /* if HIGH_BIT_DEPTH */
-
-#if !HIGH_BIT_DEPTH
 void intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -527,9 +524,6 @@ void intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dst
 #undef COMP_PRED_PLANAR_ROW
 }
 
-#endif /* if HIGH_BIT_DEPTH */
-
-#if !HIGH_BIT_DEPTH
 void intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -778,10 +772,8 @@ void intra_pred_planar64_sse4(pixel* above, pixel* left, pixel* dst, intptr_t ds
 
 #undef COMP_PRED_PLANAR_ROW
 }
-#endif /* if HIGH_BIT_DEPTH */
 
 typedef void intra_pred_planar_t (pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
-#if !HIGH_BIT_DEPTH
 intra_pred_planar_t *intraPlanarN[] =
 {
     intra_pred_planar4_sse4,
@@ -2372,11 +2364,7 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
         v_refSide.store(refMain - 15);
         refMain[0] = refMain0;
 
-        Vec16uc tmp;
         __m128i itmp;
-//        tmp.load(refMain);        //-1,0,1,2
-//        tmp.store(dst);
-
         itmp = _mm_loadu_si128((__m128i const*)refMain);
         _mm_storeu_si128((__m128i*)dst, itmp);
 
@@ -2425,33 +2413,15 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
         itmp = _mm_loadu_si128((__m128i const*)--refMain);
         dst += dstStride;
         _mm_storeu_si128((__m128i*)dst, itmp);
-
-/*
-        tmp.load(--refMain);
-        dst += dstStride;
-        tmp.store(dst);
-        ... 14 times more
-*/
         return;
     }
     else if (intraPredAngle == 32)
     {
-        Vec8s tmp;
         __m128i itmp;
         refMain += 2;
-
-//        tmp.load(refMain++);
-//        tmp.store(dst);
-
         itmp = _mm_loadu_si128((__m128i const*)refMain++);
         _mm_storeu_si128((__m128i*)dst, itmp);
 
-/*
-        tmp.load(refMain++);
-        dst += dstStride;
-        tmp.store(dst);
-        ... 14 times more
-*/
         itmp = _mm_loadu_si128((__m128i const*)refMain++);
         dst += dstStride;
         _mm_storeu_si128((__m128i*)dst, itmp);
@@ -2497,7 +2467,6 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
         itmp = _mm_loadu_si128((__m128i const*)refMain++);
         dst += dstStride;
         _mm_storeu_si128((__m128i*)dst, itmp);
-
         return;
     }
     else
@@ -2566,8 +2535,7 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
 #endif /* if HIGH_BIT_DEPTH */
 
 //32x32
-#if HIGH_BIT_DEPTH
-#else
+#if !HIGH_BIT_DEPTH
 #define PREDANG_CALCROW_VER(X) { \
         v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle); \
         v_deltaFract = _mm_and_si128(v_deltaPos, thirty1); \
