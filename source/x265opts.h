@@ -94,5 +94,11 @@ OPT("sao",             param->bEnableSAO,                   no_argument, 0, "Ena
 OPT("sao-lcu-bounds",  param->saoLcuBoundary,         required_argument, 0, "0: right/bottom boundary areas skipped  1: non-deblocked pixels are used")
 OPT("sao-lcu-opt",     param->saoLcuBasedOptimization,required_argument, 0, "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
 
+HELP("Quality reporting metrics: ")
+OPT("no-ssim",         param->bEnableSsim,                  no_argument, 0, "Disable reporting SSIM metric scores")
+OPT("ssim",            param->bEnableSsim,                  no_argument, 0, "Enable reporting SSIM metric scores")
+OPT("no-psnr",         param->bEnablePsnr,                  no_argument, 0, "Disable reporting PSNR metric scores")
+OPT("psnr",            param->bEnablePsnr,                  no_argument, 0, "Enable reporting PSNR metric scores")
+
 HELP("SEI options:")
 OPT("hash",            param->decodedPictureHashSEI,  required_argument, 0, "Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum ")

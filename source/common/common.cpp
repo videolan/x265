@@ -178,6 +178,10 @@ void x265_param_default(x265_param_t *param)
     param->rc.qpStep = 4;
     param->rc.rateControlMode = X265_RC_CQP;
     param->rc.qp = 32;
+
+    /* Quality Measurement Metrics */
+    param->bEnablePsnr = 1;
+    param->bEnableSsim = 0;
 }
 
 extern "C"
