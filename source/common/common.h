@@ -99,7 +99,7 @@
 
 #define CHECKED_MALLOC(var, type, count )\
 {\
-    var = (type *)X265_MALLOC(type, sizeof(type) * (count));\
+    var = (type *)x265_malloc(sizeof(type) * (count));\
     if (!var)\
     {\
         x265_log(NULL, X265_LOG_ERROR, "malloc of size %d failed\n", sizeof(type) * (count));\
