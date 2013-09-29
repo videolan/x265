@@ -97,7 +97,7 @@
 #define QP_BD_OFFSET (6*(X265_DEPTH-8))
 #define MAX_NAL_UNITS 5
 
-#define CHECKED_MALLOC(var, type, count )\
+#define CHECKED_MALLOC(var, type, count)\
 {\
     var = (type *)x265_malloc(sizeof(type) * (count));\
     if (!var)\
