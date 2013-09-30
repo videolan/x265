@@ -98,6 +98,14 @@ void FrameFilter::start(TComPic *pic)
         SAOParam* saoParam = pic->getPicSym()->getSaoParam();
         m_sao.resetSAOParam(saoParam);
         m_sao.rdoSaoUnitRowInit(saoParam);
+
+        // NOTE: Disable SAO automatic turn-off when frame parallelism is
+        // enabled for output exact independent of frame thread count
+        if (m_cfg->param.frameNumThreads > 1)
+        {
+            saoParam->bSaoFlag[0] = true;
+            saoParam->bSaoFlag[1] = true;
+        }
     }
 }
 

@@ -877,12 +877,14 @@ void FrameEncoder::determineSliceBounds()
 void FrameEncoder::compressCTURows()
 {
     PPAScopeEvent(FrameEncoder_compressRows);
+    TComSlice* slice = m_pic->getSlice();
+
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);
     for (int i = 0; i < this->m_numRows; i++)
     {
-        m_rows[i].init();
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
+        m_rows[i].init(slice);
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, slice);
         m_rows[i].m_entropyCoder.resetEntropy();
 
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
@@ -891,7 +893,6 @@ void FrameEncoder::compressCTURows()
     }
 
     UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
-    TComSlice* slice = m_pic->getSlice();
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_frameFilter.start(m_pic);

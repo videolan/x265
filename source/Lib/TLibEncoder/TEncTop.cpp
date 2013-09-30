@@ -823,7 +823,7 @@ void TEncTop::xInitPPS(TComPPS *pps)
     pps->setDeblockingFilterOverrideEnabledFlag(!m_loopFilterOffsetInPPS);
     pps->setPicDisableDeblockingFilterFlag(!param.bEnableLoopFilter);
     pps->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
-    pps->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
+    pps->setCabacInitPresentFlag(param.frameNumThreads > 1 ? 0 : CABAC_INIT_PRESENT_FLAG);
 
     pps->setNumRefIdxL0DefaultActive(1);
     pps->setNumRefIdxL1DefaultActive(1);

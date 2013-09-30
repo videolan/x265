@@ -63,9 +63,22 @@ public:
 
     void destroy();
 
-    void init()
+    void init(TComSlice *slice)
     {
         m_active = 0;
+
+        // Note: Reset status to avoid frame parallelism output mistake on different thread number
+        for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
+        {
+            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+            {
+                m_rdSbacCoders[depth][ciIdx]->setSlice(slice);
+                m_rdSbacCoders[depth][ciIdx]->resetEntropy();
+                m_binCodersCABAC[depth][ciIdx]->m_fracBits = 0;
+            }
+        }
+        m_rdGoOnSbacCoder.setSlice(slice);
+        m_rdGoOnSbacCoder.resetEntropy();
     }
 
     void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
