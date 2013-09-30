@@ -104,7 +104,7 @@ namespace x265 {
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #if !HIGH_BIT_DEPTH
-    if (cpuMask & (1 << 2))
+    if (cpuMask & (1 << X265_CPU_LEVEL_SSE2))
     {
         INIT8_NAME( sse_pp, ssd, _mmx );
         INIT8( sad, _mmx2 );
@@ -314,7 +314,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_pp[PARTITION_64x48] = cmp<64, 48, 32, 48, x265_pixel_ssd_32x48_sse2>;
         p.sse_pp[PARTITION_64x64] = cmp<64, 64, 32, 64, x265_pixel_ssd_32x64_sse2>;
     }
-    if (cpuMask & (1 << 4))
+    if (cpuMask & (1 << X265_CPU_LEVEL_SSSE3))
     {
         p.frame_init_lowres_core = x265_frame_init_lowres_core_ssse3;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_ssse3;
@@ -357,7 +357,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_pp[PARTITION_64x48] = cmp<64, 48, 32, 48, x265_pixel_ssd_32x48_ssse3>;
         p.sse_pp[PARTITION_64x64] = cmp<64, 64, 32, 64, x265_pixel_ssd_32x64_ssse3>;
     }
-    if (cpuMask & (1 << 5))
+    if (cpuMask & (1 << X265_CPU_LEVEL_SSE41))
     {
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_sse4;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse4;
@@ -377,7 +377,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.ipfilter_pp[FILTER_H_P_P_4] = x265_filterHorizontal_p_p_4_sse4;
 #endif
     }
-    if (cpuMask & (1 << 7))
+    if (cpuMask & (1 << X265_CPU_LEVEL_AVX))
     {
         p.frame_init_lowres_core = x265_frame_init_lowres_core_avx;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_avx;
@@ -467,7 +467,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.satd[PARTITION_12x48] = cmp<12, 48, 4, 16, x265_pixel_satd_4x16_avx>;
         p.satd[PARTITION_12x64] = cmp<12, 64, 4, 16, x265_pixel_satd_4x16_avx>;
     }
-    if ((cpuMask & (1 << 7)) && hasXOP())
+    if ((cpuMask & (1 << X265_CPU_LEVEL_AVX)) && hasXOP())
     {
         p.frame_init_lowres_core = x265_frame_init_lowres_core_xop;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_xop;
@@ -580,7 +580,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_xop>;
         p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_xop>;
     }
-    if (cpuMask & (1 << 8))
+    if (cpuMask & (1 << X265_CPU_LEVEL_AVX2))
     {
         //INIT2( sad_x3, _avx2 );
         INIT2( sad_x4, _avx2 );
