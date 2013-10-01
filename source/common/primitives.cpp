@@ -108,8 +108,8 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
         cpuid = instrset_detect(); // Detect supported instruction set
         if (param->logLevel >= X265_LOG_INFO)
         {
-            x265_log(param, X265_LOG_INFO, "detected SIMD architectures");
-            for (int i = 1; i <= cpuid; i++)
+            x265_log(param, X265_LOG_INFO, "detected SIMD: ");
+            for (int i = 2; i <= cpuid; i++)
             {
                 fprintf(stderr, "%s ", CpuType[i]);
             }
