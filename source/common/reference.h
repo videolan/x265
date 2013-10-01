@@ -60,9 +60,11 @@ public:
     MotionReference();
     ~MotionReference();
     int  init(TComPicYuv*, wpScalingParam* w = NULL);
+    void applyWeight(TComPic* src, int rows, int numRows);
 
     MotionReference *m_next;
     TComPicYuv      *m_reconPic;
+    int              m_numWeightedRows;
 
 protected:
 

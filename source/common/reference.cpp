@@ -62,6 +62,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
     m_startPad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
     m_next = NULL;
     isWeighted = false;
+    m_numWeightedRows = 0;
 
     if (w)
     {
@@ -69,7 +70,6 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
         int height = pic->getHeight();
         size_t padwidth = width + pic->m_lumaMarginX * 2;
         size_t padheight = height + pic->m_lumaMarginY * 2;
-
         setWeight(*w);
         fpelPlane = (pixel*)X265_MALLOC(pixel,  padwidth * padheight);
         if (fpelPlane) fpelPlane += m_startPad;
@@ -87,4 +87,47 @@ MotionReference::~MotionReference()
 {
     if (isWeighted && fpelPlane)
         X265_FREE(fpelPlane - m_startPad);
+}
+
+void MotionReference::applyWeight(TComPic* ref, int rows, int numRows)
+{
+    TComPicYuv* pic = ref->getPicYuvRec();
+    int marginX = pic->m_lumaMarginX;
+    int marginY = pic->m_lumaMarginY;
+    pixel* src = (pixel*) pic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
+    int width = pic->getWidth();
+    int height = ((rows - m_numWeightedRows) * g_maxCUHeight);
+    if (rows == numRows - 1)
+        height = ((pic->getHeight() % g_maxCUHeight) ? (pic->getHeight() % g_maxCUHeight) : g_maxCUHeight);
+    size_t dstStride = lumaStride;
+
+    // Computing weighted CU rows
+    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+    shift = shift + shiftNum;
+    round = shift ? (1 << (shift - 1)) : 0;
+    primitives.weightpUniPixel(src, fpelPlane, lumaStride, dstStride, width, height, weight, round, shift, offset);
+
+    // Extending Left & Right
+    primitives.extendRowBorder(fpelPlane, dstStride, width, height, marginX);
+
+    // Extending Above
+    if (m_numWeightedRows == 0)
+    {
+        pixel *pixY = fpelPlane - marginX;
+        for (int y = 0; y < marginY; y++)
+        {
+            memcpy(pixY - (y + 1) * dstStride, pixY, dstStride * sizeof(pixel));
+        }
+    }
+
+    // Extending Bottom
+    if (rows == (numRows - 1))
+    {
+        pixel *pixY = fpelPlane - marginX + (pic->getHeight() - 1) * dstStride;
+        for (int y = 0; y < marginY; y++)
+        {
+            memcpy(pixY + (y + 1) * dstStride, pixY, dstStride * sizeof(pixel));
+        }
+    }
+    m_numWeightedRows = rows;
 }
