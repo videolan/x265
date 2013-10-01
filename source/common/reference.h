@@ -30,6 +30,7 @@ namespace x265 {
 // private x265 namespace
 
 class TComPicYuv;
+class TComPic;
 struct WpScalingParam;
 typedef WpScalingParam wpScalingParam;
 
@@ -56,9 +57,9 @@ class MotionReference : public ReferencePlanes
 {
 public:
 
-    MotionReference(TComPicYuv*, wpScalingParam* w = NULL);
-
+    MotionReference();
     ~MotionReference();
+    int  init(TComPicYuv*, wpScalingParam* w = NULL);
 
     MotionReference *m_next;
     TComPicYuv      *m_reconPic;

@@ -250,7 +250,8 @@ MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
         else if (mref->isWeighted == false)
             return mref;
     }
-    mref = new MotionReference(this, w);
+    mref = new MotionReference();
+    mref->init(this, w);
     mref->m_next = m_refList;
     m_refList = mref;
     return mref;

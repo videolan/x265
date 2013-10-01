@@ -24,6 +24,7 @@
 
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComPicYuv.h"
+#include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComSlice.h"
 #include "primitives.h"
 #include "reference.h"
@@ -51,12 +52,16 @@ bool ReferencePlanes::matchesWeight(const wpScalingParam& w)
     return false;
 }
 
-MotionReference::MotionReference(TComPicYuv* pic, wpScalingParam *w)
+MotionReference::MotionReference()
+{}
+
+int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
 {
     m_reconPic = pic;
     lumaStride = pic->getStride();
     m_startPad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
     m_next = NULL;
+    isWeighted = false;
 
     if (w)
     {
@@ -66,17 +71,20 @@ MotionReference::MotionReference(TComPicYuv* pic, wpScalingParam *w)
         size_t padheight = height + pic->m_lumaMarginY * 2;
 
         setWeight(*w);
-        fpelPlane = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
+        fpelPlane = (pixel*)X265_MALLOC(pixel,  padwidth * padheight);
+        if (fpelPlane) fpelPlane += m_startPad;
+        else return -1;
     }
     else
     {
         /* directly reference the pre-extended integer pel plane */
         fpelPlane = pic->m_picBufY + m_startPad;
     }
+    return 0;
 }
 
 MotionReference::~MotionReference()
 {
-    if (isWeighted)
-        X265_FREE(fpelPlane);
+    if (isWeighted && fpelPlane)
+        X265_FREE(fpelPlane - m_startPad);
 }
