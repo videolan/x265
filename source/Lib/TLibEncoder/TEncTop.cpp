@@ -312,6 +312,25 @@ double TEncTop::printSummary()
         return 100.0;
 }
 
+void TEncTop::fetchStats(x265_stats_t *stats)
+{
+    stats->globalPsnrY = m_analyzeAll.getPsnrY();
+    stats->globalPsnrU = m_analyzeAll.getPsnrU();
+    stats->globalPsnrV = m_analyzeAll.getPsnrV();
+    stats->totalNumPics = m_analyzeAll.getNumPic();
+    stats->accBits = m_analyzeAll.getBits();
+    if (stats->totalNumPics > 0)
+    {
+        stats->globalSsim = m_globalSsim / stats->totalNumPics;
+        stats->globalPsnr = (stats->globalPsnrY * 6 + stats->globalPsnrU + stats->globalPsnrV) / (8 * stats->totalNumPics);
+    }
+    else
+    {
+        stats->globalSsim = 0;
+        stats->globalPsnr = 0;
+    }
+}
+
 #define VERBOSE_RATE 0
 #if VERBOSE_RATE
 static const char* nalUnitTypeToString(NalUnitType type)

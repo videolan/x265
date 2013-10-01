@@ -511,6 +511,7 @@ int main(int argc, char **argv)
     x265_picture_t *pic_in = &pic_orig;
     x265_picture_t *pic_recon = cliopt.recon ? &pic_out : NULL;
     x265_nal_t *p_nal;
+    x265_stats_t stats;
     int nal;
 
     if (!x265_encoder_headers(encoder, &p_nal, &nal))
@@ -570,8 +571,8 @@ int main(int argc, char **argv)
     if (cliopt.bProgress)
         fprintf(stderr, "                                                                               \r");
 
-    double PSNR = 0.0;
-    x265_encoder_close(encoder, &PSNR);
+    x265_encoder_get_stats(encoder, &stats);
+    x265_encoder_close(encoder, NULL);
     cliopt.bitstreamFile.close();
 
     if (b_ctrl_c)
@@ -580,8 +581,14 @@ int main(int argc, char **argv)
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)inFrameCount / param.frameRate;
     double bitrate = (0.008f * cliopt.totalBytes) / vidtime;
-    printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, Global PSNR: %.3f\n",
-           outFrameCount, elapsed, outFrameCount / elapsed, bitrate, PSNR);
+    printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ",
+           outFrameCount, elapsed, outFrameCount / elapsed, bitrate);
+
+    if (param.bEnablePsnr)
+        printf("Global PSNR: %.3f\n", stats.globalPsnr);
+
+    if (param.bEnableSsim)
+        printf("Global SSIM: %.3f\n", stats.globalSsim);
 
     x265_cleanup(); /* Free library singletons */
 
@@ -601,7 +608,7 @@ int main(int argc, char **argv)
         char buffer[128];
         strftime(buffer, 128, "%c", timeinfo);
         fprintf(cliopt.csvfp, ", %s, %.2f, %.2f, %.2f, %.2f, %s\n",
-            buffer, elapsed, outFrameCount / elapsed, bitrate, PSNR, XSTR(X265_VERSION));
+            buffer, elapsed, outFrameCount / elapsed, bitrate, stats.globalPsnr, XSTR(X265_VERSION));
     }
 
     cliopt.destroy();

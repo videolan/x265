@@ -106,6 +106,8 @@ public:
 
     int getStreamHeaders(NALUnitEBSP **nalunits);
 
+    void fetchStats(x265_stats_t* stats);
+
     double printSummary();
 
     TComScalingList* getScalingList() { return &m_scalingList; }

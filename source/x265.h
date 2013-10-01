@@ -192,7 +192,20 @@ typedef enum RDOLevel
 }
 X265_RDO_LEVEL;
 
+/* Output statistics from encoder */
+typedef struct x265_stats_t
+{
+    double    globalPsnrY;
+    double    globalPsnrU;
+    double    globalPsnrV;
+    double    globalPsnr;
+    double    globalSsim;
+    double    accBits;
+    uint32_t  totalNumPics;
+}
+x265_stats_t;
 
+/* Input parameters to the encoder */
 typedef struct x265_param_t
 {
     int       logLevel;
@@ -343,6 +356,10 @@ int     x265_encoder_headers(x265_t *, x265_nal_t **pp_nal, int *pi_nal);
  *      returns negative on error, zero if no NAL units returned.
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
 int     x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out);
+
+/* x265_encoder_stats:
+*       returns output stats from the encoder */
+void    x265_encoder_get_stats(x265_t *encoder, x265_stats_t *);
 
 /* x265_encoder_close:
  *      close an encoder handler.  Optionally return the global PSNR value (6 * psnrY + psnrU + psnrV) / 8 */
