@@ -405,30 +405,27 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
-    switch (param->bRDLevel)
-    {
-    case X265_NO_RDO_NO_RDOQ: 
-        fprintf(stderr, "%s", "no-rdo no-rdoq "); break;
-    case X265_NO_RDO:
-        fprintf(stderr, "%s", "no-rdo rdoq "); break;
-    case X265_FULL_RDO:
-        fprintf(stderr, "%s", "rdo rdoq "); break;
-    default: 
-        fprintf(stderr, "%s", "Unknown RD Level");
-    }
+    fprintf(stderr, "rd=%d ", param->bRDLevel);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
     {
-        TOOLOPT(param->bEnableSAO, "sao");
-        TOOLOPT(param->saoLcuBasedOptimization, "sao-lcu");
+        if (param->saoLcuBasedOptimization)
+            fprintf(stderr, "sao-lcu ");
+        else
+            fprintf(stderr, "sao-frame ");
     }
     TOOLOPT(param->bEnableSignHiding, "sign-hide");
     if (param->bEnableTransformSkip)
     {
-        TOOLOPT(param->bEnableTransformSkip, "tskip");
-        TOOLOPT(param->bEnableTSkipFast, "tskip-fast");
-        TOOLOPT(param->bEnableRDOQTS, "rdoqts");
+        if (param->bEnableTSkipFast && param->bEnableRDOQTS)
+            fprintf(stderr, "tskip(fast+rdo) ");
+        else if (param->bEnableTSkipFast)
+            fprintf(stderr, "tskip(fast) ");
+        else if (param->bEnableRDOQTS)
+            fprintf(stderr, "tskip(rdo) ");
+        else
+            fprintf(stderr, "tskip ");
     }
     TOOLOPT(param->bEnableWeightedPred, "weightp");
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
