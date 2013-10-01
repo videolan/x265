@@ -173,7 +173,7 @@ void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, i
 
 void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, uint8_t *src1, intptr_t sstride0, intptr_t sstride1)
 {
-    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | dstride;
+    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
 
     if (!(aligncheck & 15))
     {
@@ -216,7 +216,7 @@ void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, ui
 
 void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, short *src1, intptr_t sstride0, intptr_t sstride1)
 {
-    size_t aligncheck = (size_t)dst | (size_t)src0 | sstride0 | dstride;
+    size_t aligncheck = (size_t)dst | (size_t)src0 | sstride0 | sstride1 | dstride;
 
     if ( !(aligncheck & 15) && !(bx & 7))
     {
@@ -290,7 +290,7 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
 #if !HIGH_BIT_DEPTH
 void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1)
 {
-    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | dstride;
+    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
 
     if (!(aligncheck & 15))
     {
