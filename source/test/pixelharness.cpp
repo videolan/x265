@@ -230,8 +230,8 @@ bool PixelHarness::check_block_copy_s_c(blockcpy_sc_t ref, blockcpy_sc_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, 64, (uint8_t*)pbuf2 + j, 128);
-        ref(bx, by, ref_dest, 64, (uint8_t*)pbuf2 + j, 128);
+        opt(bx, by, opt_dest, 64, (uint8_t*)pbuf2 + j, STRIDE);
+        ref(bx, by, ref_dest, 64, (uint8_t*)pbuf2 + j, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
@@ -364,8 +364,8 @@ bool PixelHarness::check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
-        ref(bx, by, ref_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
+        opt(bx, by, opt_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
+        ref(bx, by, ref_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
