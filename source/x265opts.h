@@ -69,8 +69,8 @@ OPT("b-adapt",         param->bFrameAdaptive,         required_argument, 0, "0 -
 OPT("ref",             param->maxNumReferences,       required_argument, 0, "max number of L0 references to be allowed  (1 .. 16)")
 // Disabled because weighted uni-prediction was busted by not using
 // pre-generated planes in motion compensation
-//OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")
-//OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")
+OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")
+OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")
 // Disabled because weighted bi prediction is busted
 //OPT("no-weightbp",     param->bEnableWeightedBiPred,        no_argument, 0, "Disable weighted (bidirectional) prediction in B slices")
 //OPT("weightbp",        param->bEnableWeightedBiPred,        no_argument, 0, "Enable weighted (bidirectional) prediction in B slices")
