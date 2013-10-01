@@ -70,6 +70,7 @@ TEncTop::TEncTop()
     m_frameEncoder = NULL;
     m_rateControl = NULL;
     m_dpb = NULL;
+    m_globalSsim = 0;
 
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");

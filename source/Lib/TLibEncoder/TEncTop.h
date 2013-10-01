@@ -87,6 +87,7 @@ private:
 
     // quality control
     TComScalingList    m_scalingList;      ///< quantization matrix information
+    double             m_globalSsim;
 
 public:
 

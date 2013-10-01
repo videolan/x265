@@ -128,6 +128,8 @@ void TComSlice::initSlice()
     m_cabacInitFlag = false;
     m_numEntryPointOffsets = 0;
     m_enableTMVPFlag = true;
+    m_ssim = 0;
+    m_ssimCnt = 0;
 }
 
 bool TComSlice::getRapPicFlag()
