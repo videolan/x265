@@ -8573,7 +8573,8 @@ void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* 
     }
 }
 
-void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+template <typename T>
+void weightUnidir(T *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
     Vec8s tmp;

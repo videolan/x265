@@ -229,7 +229,8 @@ typedef void (*filterRowV_N_t)(short *midA, intptr_t midStride, pixel *dstA, pix
 typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
 
 
-typedef void (*weightpUni_t)(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*weightpUniPixel_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*weightpUni_t)(uint16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
@@ -287,6 +288,7 @@ struct EncoderPrimitives
     transpose_t     transpose[NUM_SQUARE_BLOCKS];
 
     weightpUni_t    weightpUni;
+    weightpUniPixel_t weightpUniPixel;
     pixelsub_sp_t   pixelsub_sp;
     pixeladd_ss_t   pixeladd_ss;
     pixeladd_pp_t   pixeladd_pp;

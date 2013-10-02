@@ -431,7 +431,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
         srcStride = srcYuv0->m_width;
         dstStride  = outDstYuv->getStride();
 
-        primitives.weightpUni(srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
+        primitives.weightpUni((uint16_t *)srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
     }
 
     // Chroma U : --------------------------------------------
@@ -447,7 +447,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     width  >>= 1;
     height >>= 1;
 
-    primitives.weightpUni(srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset);
+    primitives.weightpUni((uint16_t *)srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset);
 
     // Chroma V : --------------------------------------------
     w0      = wp0[2].w;
@@ -455,7 +455,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     shift   = wp0[2].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
-    primitives.weightpUni(srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset);
+    primitives.weightpUni((uint16_t *)srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset);
 }
 
 //=======================================================

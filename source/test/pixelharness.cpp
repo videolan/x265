@@ -343,8 +343,36 @@ bool PixelHarness::check_weightpUni(weightpUni_t ref, weightpUni_t opt)
     int offset = (rand() % 256) - 128;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
-        ref(sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
+        opt((uint16_t*)sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
+        ref((uint16_t*)sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_weightpUni(weightpUniPixel_t ref, weightpUniPixel_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0, 64 * 64 * sizeof(pixel));
+    memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
+    int j = 0;
+    int width = (2 * rand()) % 64;
+    int height = 8;
+    int w0 = rand() % 256;
+    int shift = rand() % 12;
+    int round = shift ? (1 << (shift - 1)) : 0;
+    int offset = (rand() % 256) - 128;
+    for (int i = 0; i < ITERS; i++)
+    {
+        opt((pixel *)sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
+        ref((pixel *)sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -604,6 +632,24 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.weightpUniPixel)
+    {
+        if (!check_weightpUni(ref.weightpUniPixel, opt.weightpUniPixel))
+        {
+            printf("Weighted Prediction for Unidir failed!\n");
+            return false;
+        }
+    }
+
+    if (opt.weightpUniPixel)
+    {
+        if (!check_weightpUni(ref.weightpUniPixel, opt.weightpUniPixel))
+        {
+            printf("Weighted Prediction for Unidir failed!\n");
+            return false;
+        }
+    }
+
     if (opt.weightpUni)
     {
         if (!check_weightpUni(ref.weightpUni, opt.weightpUni))
@@ -751,10 +797,16 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.blockcpy_sc, ref.blockcpy_sc, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
     }
 
+    if (opt.weightpUniPixel)
+    {
+        printf("WeightpUni");
+        REPORT_SPEEDUP(opt.weightpUniPixel, ref.weightpUniPixel, pbuf1, pbuf2, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
+    }
+
     if (opt.weightpUni)
     {
         printf("WeightpUni");
-        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
+        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, (uint16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
     if (opt.pixelsub_sp)

@@ -46,6 +46,7 @@ protected:
     bool check_block_copy_s_c(blockcpy_sc_t ref, blockcpy_sc_t opt);
     bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
     bool check_calcrecon(calcrecon_t ref, calcrecon_t opt);
+    bool check_weightpUni(weightpUniPixel_t ref, weightpUniPixel_t opt);
     bool check_weightpUni(weightpUni_t ref, weightpUni_t opt);
     bool check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt);
     bool check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt);

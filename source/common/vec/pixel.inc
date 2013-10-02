@@ -469,7 +469,9 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.transpose[2] = transpose16;
     p.transpose[3] = transpose32;
     p.transpose[4] = transpose<64>;
-    p.weightpUni = weightUnidir;
+    p.weightpUniPixel = weightUnidir<pixel>;
+    p.weightpUni = weightUnidir<uint16_t>;
+
 #endif
 
 #if !HIGH_BIT_DEPTH
