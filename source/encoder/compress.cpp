@@ -559,6 +559,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     // further split
     if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
     {
+#if 0 // turn ON this to enable early exit
         UInt64 nxnCost = 0;
         if (outBestCU != 0 && depth > 0)
         {
@@ -617,6 +618,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 return;
             }
         }
+#endif // early exit
         outTempCU->initEstData(depth, qp);
         UChar nextDepth = (UChar)(depth + 1);
         subTempPartCU = m_tempCU[nextDepth];
