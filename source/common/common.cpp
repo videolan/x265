@@ -117,7 +117,7 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 }
 
 extern "C"
-void x265_param_default(x265_param_t *param)
+X265_EXPORT void x265_param_default(x265_param_t *param)
 {
     memset(param, 0, sizeof(x265_param_t));
 
@@ -184,14 +184,14 @@ void x265_param_default(x265_param_t *param)
 }
 
 extern "C"
-void x265_picture_init(x265_param_t *param, x265_picture_t *pic)
+X265_EXPORT void x265_picture_init(x265_param_t *param, x265_picture_t *pic)
 {
     memset(pic, 0, sizeof(x265_picture_t));
     pic->bitDepth = param->internalBitDepth;
 }
 
 extern "C"
-int x265_param_apply_profile(x265_param_t *param, const char *profile)
+X265_EXPORT int x265_param_apply_profile(x265_param_t *param, const char *profile)
 {
     if (!profile)
         return 0;

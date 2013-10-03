@@ -30,6 +30,12 @@
 extern "C" {
 #endif
 
+#if defined(WIN32) && defined(x265_EXPORTS)
+#define X265_EXPORT __declspec(dllexport)
+#else
+#define X265_EXPORT
+#endif
+
 /* x265_t:
  *      opaque handler for encoder */
 typedef struct x265_t x265_t;
@@ -309,17 +315,17 @@ x265_param_t;
 /*** 
  * If not called, first encoder allocated will auto-detect the CPU and
  * initialize performance primitives, which are process global */
-void x265_setup_primitives(x265_param_t *param, int cpulevel);
+X265_EXPORT void x265_setup_primitives(x265_param_t *param, int cpulevel);
 
 /***
  * Initialize an x265_param_t structure to default values
  */
-void x265_param_default(x265_param_t *param);
+X265_EXPORT void x265_param_default(x265_param_t *param);
 
 /***
  * Initialize an x265_picture_t structure to default values
  */
-void x265_picture_init(x265_param_t *param, x265_picture_t *pic);
+X265_EXPORT void x265_picture_init(x265_param_t *param, x265_picture_t *pic);
 
 /* x265_param_apply_profile:
  *      Applies the restrictions of the given profile. (one of below) */
@@ -327,7 +333,7 @@ static const char * const x265_profile_names[] = { "main", "main10", "mainstillp
 
 /*      (can be NULL, in which case the function will do nothing)
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
-int x265_param_apply_profile(x265_param_t *, const char *profile);
+X265_EXPORT int x265_param_apply_profile(x265_param_t *, const char *profile);
 
 /* x265_max_bit_depth:
  *      Specifies the maximum number of bits per pixel that x265 can input. This
@@ -336,38 +342,38 @@ int x265_param_apply_profile(x265_param_t *, const char *profile);
  *      x265_max_bit_depth is 12, the internal and input bit depths can be
  *      either 8, 10, or 12. Note that the internal bit depth must be the same
  *      for all encoders allocated in the same process. */
-extern const int x265_max_bit_depth;
+X265_EXPORT extern const int x265_max_bit_depth;
 
 /* x265_encoder_open:
  *      create a new encoder handler, all parameters from x265_param_t are copied */
-x265_t *x265_encoder_open(x265_param_t *);
+X265_EXPORT x265_t* x265_encoder_open(x265_param_t *);
 
 /* x265_encoder_headers:
  *      return the SPS and PPS that will be used for the whole stream.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
  *      returns negative on error.
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
-int     x265_encoder_headers(x265_t *, x265_nal_t **pp_nal, int *pi_nal);
+X265_EXPORT int x265_encoder_headers(x265_t *, x265_nal_t **pp_nal, int *pi_nal);
 
 /* x265_encoder_encode:
  *      encode one picture.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
  *      returns negative on error, zero if no NAL units returned.
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
-int     x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out);
+X265_EXPORT int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out);
 
 /* x265_encoder_stats:
 *       returns output stats from the encoder */
-void    x265_encoder_get_stats(x265_t *encoder, x265_stats_t *);
+X265_EXPORT void x265_encoder_get_stats(x265_t *encoder, x265_stats_t *);
 
 /* x265_encoder_close:
  *      close an encoder handler.  Optionally return the global PSNR value (6 * psnrY + psnrU + psnrV) / 8 */
-void    x265_encoder_close(x265_t *, double *globalPsnr);
+X265_EXPORT void x265_encoder_close(x265_t *, double *globalPsnr);
 
 /***
  * Release library static allocations
  */
-void x265_cleanup(void);
+X265_EXPORT void x265_cleanup(void);
 
 #ifdef __cplusplus
 }

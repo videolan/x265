@@ -140,11 +140,15 @@ if (WIN32)
     endif(WINXP_SUPPORT)
 endif()
 
+option(ENABLE_SHARED "Build shared x265 library (.dll/.so)" OFF)
+if(ENABLE_SHARED)
+    add_definitions(-Dx265_EXPORTS)
+endif()
+
 include_directories(. Lib common encoder)
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-set(LIBS common encoder)
 if(ENABLE_PRIMITIVES_VEC)
     set(LIBS ${LIBS} PrimitivesVec)
 endif(ENABLE_PRIMITIVES_VEC)
@@ -152,8 +156,12 @@ endif(ENABLE_PRIMITIVES_VEC)
 if(ENABLE_PRIMITIVES_ASM)
     set(LIBS ${LIBS} PrimitivesASM)
 endif(ENABLE_PRIMITIVES_ASM)
+set(LIBS ${LIBS} encoder common)
 
-if(NOT XCODE)
+if(ENABLE_SHARED)
+    add_library(x265 SHARED dllmain.cpp)
+    target_link_libraries(x265 ${LIBS})
+elseif(NOT XCODE)
     include(mergestaticlibs)
     merge_static_libs(x265 ${LIBS})
 endif()
@@ -179,13 +187,14 @@ if(ENABLE_CLI)
 
     include(version) # determine X265_VERSION
     set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
-    add_executable(cli ${EXTRAS} ../COPYING ${InputFiles} ${OutputFiles}
+    add_executable(cli ../COPYING ${InputFiles} ${OutputFiles}
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
 if(XCODE OR MSVC)
-    target_link_libraries(cli ${LIBS} ${PLATFORM_LIBS})
+    target_link_libraries(cli ${LIBS})
 else()
-    target_link_libraries(cli x265 ${PLATFORM_LIBS})
+    target_link_libraries(cli x265)
 endif()
+    target_link_libraries(cli ${PLATFORM_LIBS})
     SET_TARGET_PROPERTIES(cli PROPERTIES OUTPUT_NAME x265)
 endif(ENABLE_CLI)
