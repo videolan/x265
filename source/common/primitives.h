@@ -196,6 +196,7 @@ typedef void (*blockcpy_sc_t)(int bx, int by, short *dst, intptr_t dstride, uint
 typedef void (*pixelsub_sp_t)(int bx, int by, short *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixeladd_ss_t)(int bx, int by, short *dst, intptr_t dstride, short *src0, short *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixeladd_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
+typedef void (*pixelavg_pp_t)(pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*blockfil_s_t)(short *dst, intptr_t dstride, short val);
 
 typedef void (*intra_dc_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int bFilter);
@@ -292,6 +293,7 @@ struct EncoderPrimitives
     pixelsub_sp_t   pixelsub_sp;
     pixeladd_ss_t   pixeladd_ss;
     pixeladd_pp_t   pixeladd_pp;
+    pixelavg_pp_t   pixelavg_pp[NUM_PARTITIONS];
 
     filterVwghtd_t  filterVwghtd;
     filterHwghtd_t  filterHwghtd;

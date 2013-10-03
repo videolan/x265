@@ -579,6 +579,22 @@ void pixeladd_pp_c(int bx, int by, pixel *a, intptr_t dstride, pixel *b0, pixel 
     }
 }
 
+template<int lx, int ly>
+void pixelavg_pp(pixel* dst, intptr_t dstride, pixel* src0, pixel* src1, intptr_t sstride0, intptr_t sstride1)
+{
+    for (int y = 0; y < ly; y++)
+    {
+        for (int x = 0; x < lx; x++)
+        {
+            dst[x] = (src0[x] + src1[x] + 1) >> 1;
+        }
+
+        src0 += sstride0;
+        src1 += sstride1;
+        dst += dstride;
+    }
+}
+
 void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
 {
     int x;
@@ -648,6 +664,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE_C2(sad)
     SET_FUNC_PRIMITIVE_TABLE_C2(sad_x3)
     SET_FUNC_PRIMITIVE_TABLE_C2(sad_x4)
+    SET_FUNC_PRIMITIVE_TABLE_C2(pixelavg_pp)
 
     // satd
     p.satd[PARTITION_4x4]   = satd_4x4;
