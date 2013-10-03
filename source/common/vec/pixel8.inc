@@ -1904,52 +1904,456 @@ int sad_24(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride)
 
 #endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
-template<int size>
-ALWAYSINLINE void unrollFunc_32(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec8us& sad)
-{
-    unrollFunc_32<1>(fenc, fencstride, fref, frefstride, sad);
-    unrollFunc_32<size - 1>(fenc + fencstride, fencstride, fref + frefstride, frefstride, sad);
-}
-
-template<>
-ALWAYSINLINE void unrollFunc_32<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec8us& sad)
-{
-    Vec16uc m1, n1;
-
-    m1.load_a(fenc);
-    n1.load(fref);
-    sad.addSumAbsDiff(m1, n1);
-
-    m1.load_a(fenc + 16);
-    n1.load(fref + 16);
-    sad.addSumAbsDiff(m1, n1);
-}
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 
 template<int ly>
 int sad_32(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
-    Vec4i sum(0);
-    Vec8us sad;
-    int max_iterators = (ly >> 2) << 2;
-    int row;
+    assert((ly % 4) == 0);
+
+    __m128i sum0 = _mm_setzero_si128();
+    __m128i sum1 = _mm_setzero_si128();
+
     if (ly == 4)
     {
-        sad = 0;
-        unrollFunc_32<4>(fenc, fencstride, fref, frefstride, sad);
-        sum += extend_low(sad) + extend_high(sad);
-        return horizontal_add(sum);
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21, T22, T23;
+
+        T00 = _mm_load_si128((__m128i*)(fenc));
+        T01 = _mm_load_si128((__m128i*)(fenc + fencstride));
+        T02 = _mm_load_si128((__m128i*)(fenc + (2) * fencstride));
+        T03 = _mm_load_si128((__m128i*)(fenc + (3) * fencstride));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref));
+        T11 = _mm_loadu_si128((__m128i*)(fref + frefstride));
+        T12 = _mm_loadu_si128((__m128i*)(fref + (2) * frefstride));
+        T13 = _mm_loadu_si128((__m128i*)(fref + (3) * frefstride));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        T20 = _mm_add_epi16(T20, T21);
+        T22 = _mm_add_epi16(T22, T23);
+        sum0 = _mm_add_epi16(T20, T22); 
+
+        T00 = _mm_load_si128((__m128i*)(fenc + 16));
+        T01 = _mm_load_si128((__m128i*)(fenc + fencstride + 16));
+        T02 = _mm_load_si128((__m128i*)(fenc + ((2) * fencstride) + 16));
+        T03 = _mm_load_si128((__m128i*)(fenc + ((3) * fencstride) + 16));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + 16));
+        T11 = _mm_loadu_si128((__m128i*)(fref + frefstride + 16));
+        T12 = _mm_loadu_si128((__m128i*)(fref + ((2) * frefstride) + 16));
+        T13 = _mm_loadu_si128((__m128i*)(fref + ((3) * frefstride) + 16));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
     }
-    for (row = 0; row < max_iterators; row += 4)
+    else if (ly == 8)
     {
-        sad = 0;
-        unrollFunc_32<4>(fenc, fencstride, fref, frefstride, sad);
-        sum += extend_low(sad) + extend_high(sad);
-        fenc += fencstride * 4;
-        fref += frefstride * 4;
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21, T22, T23;
+
+        T00 = _mm_load_si128((__m128i*)(fenc));
+        T01 = _mm_load_si128((__m128i*)(fenc + fencstride));
+        T02 = _mm_load_si128((__m128i*)(fenc + (2) * fencstride));
+        T03 = _mm_load_si128((__m128i*)(fenc + (3) * fencstride));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref));
+        T11 = _mm_loadu_si128((__m128i*)(fref + frefstride));
+        T12 = _mm_loadu_si128((__m128i*)(fref + (2) * frefstride));
+        T13 = _mm_loadu_si128((__m128i*)(fref + (3) * frefstride));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        T20 = _mm_add_epi16(T20, T21);
+        T22 = _mm_add_epi16(T22, T23);
+        sum0 = _mm_add_epi16(T20, T22); 
+
+        T00 = _mm_load_si128((__m128i*)(fenc + 16));
+        T01 = _mm_load_si128((__m128i*)(fenc + fencstride + 16));
+        T02 = _mm_load_si128((__m128i*)(fenc + ((2) * fencstride) + 16));
+        T03 = _mm_load_si128((__m128i*)(fenc + ((3) * fencstride) + 16));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + 16));
+        T11 = _mm_loadu_si128((__m128i*)(fref + frefstride + 16));
+        T12 = _mm_loadu_si128((__m128i*)(fref + ((2) * frefstride) + 16));
+        T13 = _mm_loadu_si128((__m128i*)(fref + ((3) * frefstride) + 16));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+
+        T00 = _mm_load_si128((__m128i*)(fenc + (4) * fencstride));
+        T01 = _mm_load_si128((__m128i*)(fenc + (5) * fencstride));
+        T02 = _mm_load_si128((__m128i*)(fenc + (6) * fencstride));
+        T03 = _mm_load_si128((__m128i*)(fenc + (7) * fencstride));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + (4) * frefstride));
+        T11 = _mm_loadu_si128((__m128i*)(fref + (5) * frefstride));
+        T12 = _mm_loadu_si128((__m128i*)(fref + (6) * frefstride));
+        T13 = _mm_loadu_si128((__m128i*)(fref + (7) * frefstride));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+
+        T00 = _mm_load_si128((__m128i*)(fenc + ((4) * fencstride) + 16));
+        T01 = _mm_load_si128((__m128i*)(fenc + ((5) * fencstride) + 16));
+        T02 = _mm_load_si128((__m128i*)(fenc + ((6) * fencstride) + 16));
+        T03 = _mm_load_si128((__m128i*)(fenc + ((7) * fencstride) + 16));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + ((4) * frefstride) + 16));
+        T11 = _mm_loadu_si128((__m128i*)(fref + ((5) * frefstride) + 16));
+        T12 = _mm_loadu_si128((__m128i*)(fref + ((6) * frefstride) + 16));
+        T13 = _mm_loadu_si128((__m128i*)(fref + ((7) * frefstride) + 16));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+    }
+    else if (ly == 16)
+    {
+        __m128i T00, T01, T02, T03;
+        __m128i T10, T11, T12, T13;
+        __m128i T20, T21, T22, T23;
+
+        T00 = _mm_load_si128((__m128i*)(fenc));
+        T01 = _mm_load_si128((__m128i*)(fenc + fencstride));
+        T02 = _mm_load_si128((__m128i*)(fenc + (2) * fencstride));
+        T03 = _mm_load_si128((__m128i*)(fenc + (3) * fencstride));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref));
+        T11 = _mm_loadu_si128((__m128i*)(fref + frefstride));
+        T12 = _mm_loadu_si128((__m128i*)(fref + (2) * frefstride));
+        T13 = _mm_loadu_si128((__m128i*)(fref + (3) * frefstride));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        T20 = _mm_add_epi16(T20, T21);
+        T22 = _mm_add_epi16(T22, T23);
+        sum0 = _mm_add_epi16(T20, T22); 
+
+        T00 = _mm_load_si128((__m128i*)(fenc + 16));
+        T01 = _mm_load_si128((__m128i*)(fenc + fencstride + 16));
+        T02 = _mm_load_si128((__m128i*)(fenc + ((2) * fencstride) + 16));
+        T03 = _mm_load_si128((__m128i*)(fenc + ((3) * fencstride) + 16));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + 16));
+        T11 = _mm_loadu_si128((__m128i*)(fref + frefstride + 16));
+        T12 = _mm_loadu_si128((__m128i*)(fref + ((2) * frefstride) + 16));
+        T13 = _mm_loadu_si128((__m128i*)(fref + ((3) * frefstride) + 16));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+
+        T00 = _mm_load_si128((__m128i*)(fenc + (4) * fencstride));
+        T01 = _mm_load_si128((__m128i*)(fenc + (5) * fencstride));
+        T02 = _mm_load_si128((__m128i*)(fenc + (6) * fencstride));
+        T03 = _mm_load_si128((__m128i*)(fenc + (7) * fencstride));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + (4) * frefstride));
+        T11 = _mm_loadu_si128((__m128i*)(fref + (5) * frefstride));
+        T12 = _mm_loadu_si128((__m128i*)(fref + (6) * frefstride));
+        T13 = _mm_loadu_si128((__m128i*)(fref + (7) * frefstride));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+
+        T00 = _mm_load_si128((__m128i*)(fenc + ((4) * fencstride) + 16));
+        T01 = _mm_load_si128((__m128i*)(fenc + ((5) * fencstride) + 16));
+        T02 = _mm_load_si128((__m128i*)(fenc + ((6) * fencstride) + 16));
+        T03 = _mm_load_si128((__m128i*)(fenc + ((7) * fencstride) + 16));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + ((4) * frefstride) + 16));
+        T11 = _mm_loadu_si128((__m128i*)(fref + ((5) * frefstride) + 16));
+        T12 = _mm_loadu_si128((__m128i*)(fref + ((6) * frefstride) + 16));
+        T13 = _mm_loadu_si128((__m128i*)(fref + ((7) * frefstride) + 16));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+
+        T00 = _mm_load_si128((__m128i*)(fenc + (8) * fencstride));
+        T01 = _mm_load_si128((__m128i*)(fenc + (9) * fencstride));
+        T02 = _mm_load_si128((__m128i*)(fenc + (10) * fencstride));
+        T03 = _mm_load_si128((__m128i*)(fenc + (11) * fencstride));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + (8) * frefstride));
+        T11 = _mm_loadu_si128((__m128i*)(fref + (9) * frefstride));
+        T12 = _mm_loadu_si128((__m128i*)(fref + (10) * frefstride));
+        T13 = _mm_loadu_si128((__m128i*)(fref + (11) * frefstride));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+
+        T00 = _mm_load_si128((__m128i*)(fenc + ((8) * fencstride) + 16));
+        T01 = _mm_load_si128((__m128i*)(fenc + ((9) * fencstride) + 16));
+        T02 = _mm_load_si128((__m128i*)(fenc + ((10) * fencstride) + 16));
+        T03 = _mm_load_si128((__m128i*)(fenc + ((11) * fencstride) + 16));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + ((8) * frefstride) + 16));
+        T11 = _mm_loadu_si128((__m128i*)(fref + ((9) * frefstride) + 16));
+        T12 = _mm_loadu_si128((__m128i*)(fref + ((10) * frefstride) + 16));
+        T13 = _mm_loadu_si128((__m128i*)(fref + ((11) * frefstride) + 16));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi16(sum0, T20);
+        sum0 = _mm_add_epi16(sum0, T21);
+        sum0 = _mm_add_epi16(sum0, T22);
+        sum0 = _mm_add_epi16(sum0, T23);
+        T00 = _mm_load_si128((__m128i*)(fenc + (12) * fencstride));
+        T01 = _mm_load_si128((__m128i*)(fenc + (13) * fencstride));
+        T02 = _mm_load_si128((__m128i*)(fenc + (14) * fencstride));
+        T03 = _mm_load_si128((__m128i*)(fenc + (15) * fencstride));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + (12) * frefstride));
+        T11 = _mm_loadu_si128((__m128i*)(fref + (13) * frefstride));
+        T12 = _mm_loadu_si128((__m128i*)(fref + (14) * frefstride));
+        T13 = _mm_loadu_si128((__m128i*)(fref + (15) * frefstride));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+
+        T00 = _mm_load_si128((__m128i*)(fenc + ((12) * fencstride) + 16));
+        T01 = _mm_load_si128((__m128i*)(fenc + ((13) * fencstride) + 16));
+        T02 = _mm_load_si128((__m128i*)(fenc + ((14) * fencstride) + 16));
+        T03 = _mm_load_si128((__m128i*)(fenc + ((15) * fencstride) + 16));
+
+        T10 = _mm_loadu_si128((__m128i*)(fref + ((12) * frefstride) + 16));
+        T11 = _mm_loadu_si128((__m128i*)(fref + ((13) * frefstride) + 16));
+        T12 = _mm_loadu_si128((__m128i*)(fref + ((14) * frefstride) + 16));
+        T13 = _mm_loadu_si128((__m128i*)(fref + ((15) * frefstride) + 16));
+
+        T20 = _mm_sad_epu8(T00, T10);
+        T21 = _mm_sad_epu8(T01, T11);
+        T22 = _mm_sad_epu8(T02, T12);
+        T23 = _mm_sad_epu8(T03, T13);
+
+        sum0 = _mm_add_epi32(sum0, T20);
+        sum0 = _mm_add_epi32(sum0, T21);
+        sum0 = _mm_add_epi32(sum0, T22);
+        sum0 = _mm_add_epi32(sum0, T23);
+    }
+    else if ((ly % 8) == 0)
+    {
+        for (int i = 0; i < ly; i += 8)
+        {
+            __m128i T00, T01, T02, T03;
+            __m128i T10, T11, T12, T13;
+            __m128i T20, T21, T22, T23;
+
+            T00 = _mm_load_si128((__m128i*)(fenc + (i) * fencstride));
+            T01 = _mm_load_si128((__m128i*)(fenc + (i + 1) * fencstride));
+            T02 = _mm_load_si128((__m128i*)(fenc + (i + 2) * fencstride));
+            T03 = _mm_load_si128((__m128i*)(fenc + (i + 3) * fencstride));
+
+            T10 = _mm_loadu_si128((__m128i*)(fref + (i) * frefstride));
+            T11 = _mm_loadu_si128((__m128i*)(fref + (i + 1) * frefstride));
+            T12 = _mm_loadu_si128((__m128i*)(fref + (i + 2) * frefstride));
+            T13 = _mm_loadu_si128((__m128i*)(fref + (i + 3) * frefstride));
+
+            T20 = _mm_sad_epu8(T00, T10);
+            T21 = _mm_sad_epu8(T01, T11);
+            T22 = _mm_sad_epu8(T02, T12);
+            T23 = _mm_sad_epu8(T03, T13);
+
+            sum0 = _mm_add_epi32(sum0, T20);
+            sum0 = _mm_add_epi32(sum0, T21);
+            sum0 = _mm_add_epi32(sum0, T22);
+            sum0 = _mm_add_epi32(sum0, T23);
+
+            T00 = _mm_load_si128((__m128i*)(fenc + ((i) * fencstride) + 16));
+            T01 = _mm_load_si128((__m128i*)(fenc + ((i + 1) * fencstride) + 16));
+            T02 = _mm_load_si128((__m128i*)(fenc + ((i + 2) * fencstride) + 16));
+            T03 = _mm_load_si128((__m128i*)(fenc + ((i + 3) * fencstride) + 16));
+
+            T10 = _mm_loadu_si128((__m128i*)(fref + ((i) * frefstride) + 16));
+            T11 = _mm_loadu_si128((__m128i*)(fref + ((i + 1) * frefstride) + 16));
+            T12 = _mm_loadu_si128((__m128i*)(fref + ((i + 2) * frefstride) + 16));
+            T13 = _mm_loadu_si128((__m128i*)(fref + ((i + 3) * frefstride) + 16));
+
+            T20 = _mm_sad_epu8(T00, T10);
+            T21 = _mm_sad_epu8(T01, T11);
+            T22 = _mm_sad_epu8(T02, T12);
+            T23 = _mm_sad_epu8(T03, T13);
+
+            sum0 = _mm_add_epi32(sum0, T20);
+            sum0 = _mm_add_epi32(sum0, T21);
+            sum0 = _mm_add_epi32(sum0, T22);
+            sum0 = _mm_add_epi32(sum0, T23);
+
+            T00 = _mm_load_si128((__m128i*)(fenc + (i + 4) * fencstride));
+            T01 = _mm_load_si128((__m128i*)(fenc + (i + 5) * fencstride));
+            T02 = _mm_load_si128((__m128i*)(fenc + (i + 6) * fencstride));
+            T03 = _mm_load_si128((__m128i*)(fenc + (i + 7) * fencstride));
+
+            T10 = _mm_loadu_si128((__m128i*)(fref + (i + 4) * frefstride));
+            T11 = _mm_loadu_si128((__m128i*)(fref + (i + 5) * frefstride));
+            T12 = _mm_loadu_si128((__m128i*)(fref + (i + 6) * frefstride));
+            T13 = _mm_loadu_si128((__m128i*)(fref + (i + 7) * frefstride));
+
+            T20 = _mm_sad_epu8(T00, T10);
+            T21 = _mm_sad_epu8(T01, T11);
+            T22 = _mm_sad_epu8(T02, T12);
+            T23 = _mm_sad_epu8(T03, T13);
+
+            sum0 = _mm_add_epi32(sum0, T20);
+            sum0 = _mm_add_epi32(sum0, T21);
+            sum0 = _mm_add_epi32(sum0, T22);
+            sum0 = _mm_add_epi32(sum0, T23);
+
+            T00 = _mm_load_si128((__m128i*)(fenc + ((i + 4) * fencstride) + 16));
+            T01 = _mm_load_si128((__m128i*)(fenc + ((i + 5) * fencstride) + 16));
+            T02 = _mm_load_si128((__m128i*)(fenc + ((i + 6) * fencstride) + 16));
+            T03 = _mm_load_si128((__m128i*)(fenc + ((i + 7) * fencstride) + 16));
+
+            T10 = _mm_loadu_si128((__m128i*)(fref + ((i + 4) * frefstride) + 16));
+            T11 = _mm_loadu_si128((__m128i*)(fref + ((i + 5) * frefstride) + 16));
+            T12 = _mm_loadu_si128((__m128i*)(fref + ((i + 6) * frefstride) + 16));
+            T13 = _mm_loadu_si128((__m128i*)(fref + ((i + 7) * frefstride) + 16));
+
+            T20 = _mm_sad_epu8(T00, T10);
+            T21 = _mm_sad_epu8(T01, T11);
+            T22 = _mm_sad_epu8(T02, T12);
+            T23 = _mm_sad_epu8(T03, T13);
+
+            sum0 = _mm_add_epi32(sum0, T20);
+            sum0 = _mm_add_epi32(sum0, T21);
+            sum0 = _mm_add_epi32(sum0, T22);
+            sum0 = _mm_add_epi32(sum0, T23);
+        }
+    }
+    else if ((ly % 4) == 0)
+    {
+        for (int i = 0; i < ly; i += 4)
+        {
+            __m128i T00, T01, T02, T03;
+            __m128i T10, T11, T12, T13;
+            __m128i T20, T21, T22, T23;
+
+            T00 = _mm_load_si128((__m128i*)(fenc + (i) * fencstride));
+            T01 = _mm_load_si128((__m128i*)(fenc + (i + 1) * fencstride));
+            T02 = _mm_load_si128((__m128i*)(fenc + (i + 2) * fencstride));
+            T03 = _mm_load_si128((__m128i*)(fenc + (i + 3) * fencstride));
+
+            T10 = _mm_loadu_si128((__m128i*)(fref + (i) * frefstride));
+            T11 = _mm_loadu_si128((__m128i*)(fref + (i + 1) * frefstride));
+            T12 = _mm_loadu_si128((__m128i*)(fref + (i + 2) * frefstride));
+            T13 = _mm_loadu_si128((__m128i*)(fref + (i + 3) * frefstride));
+
+            T20 = _mm_sad_epu8(T00, T10);
+            T21 = _mm_sad_epu8(T01, T11);
+            T22 = _mm_sad_epu8(T02, T12);
+            T23 = _mm_sad_epu8(T03, T13);
+
+            sum0 = _mm_add_epi32(sum0, T20);
+            sum0 = _mm_add_epi32(sum0, T21);
+            sum0 = _mm_add_epi32(sum0, T22);
+            sum0 = _mm_add_epi32(sum0, T23);
+
+            T00 = _mm_load_si128((__m128i*)(fenc + ((i) * fencstride) + 16));
+            T01 = _mm_load_si128((__m128i*)(fenc + ((i + 1) * fencstride) + 16));
+            T02 = _mm_load_si128((__m128i*)(fenc + ((i + 2) * fencstride) + 16));
+            T03 = _mm_load_si128((__m128i*)(fenc + ((i + 3) * fencstride) + 16));
+
+            T10 = _mm_loadu_si128((__m128i*)(fref + ((i + 0) * frefstride) + 16));
+            T11 = _mm_loadu_si128((__m128i*)(fref + ((i + 1) * frefstride) + 16));
+            T12 = _mm_loadu_si128((__m128i*)(fref + ((i + 2) * frefstride) + 16));
+            T13 = _mm_loadu_si128((__m128i*)(fref + ((i + 3) * frefstride) + 16));
+
+            T20 = _mm_sad_epu8(T00, T10);
+            T21 = _mm_sad_epu8(T01, T11);
+            T22 = _mm_sad_epu8(T02, T12);
+            T23 = _mm_sad_epu8(T03, T13);
+
+            sum0 = _mm_add_epi32(sum0, T20);
+            sum0 = _mm_add_epi32(sum0, T21);
+            sum0 = _mm_add_epi32(sum0, T22);
+            sum0 = _mm_add_epi32(sum0, T23);
+        }
     }
 
-    return horizontal_add(sum);
+    sum1 = _mm_shuffle_epi32(sum0, 2);
+    sum0 = _mm_add_epi32(sum0, sum1);
+
+    return _mm_cvtsi128_si32(sum0);
 }
+
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 template<int size>
 ALWAYSINLINE void unrollFunc_48(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec8us *sad)
