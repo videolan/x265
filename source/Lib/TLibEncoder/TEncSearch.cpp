@@ -2289,7 +2289,7 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvFiel
  * \param bUseRes
  * \returns void
  */
-void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, bool bUseMRG)
+void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 {
     m_predYuv[0].clear();
     m_predYuv[1].clear();
@@ -2317,7 +2317,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 
     UInt partAddr;
     int  roiWidth, roiHeight;
-    int refStart, refEnd;
 
     PartSize partSize = cu->getPartitionSize(0);
     int bestBiPRefIdxL1 = 0;
@@ -2483,8 +2482,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
             //  Bi-directional prediction
             if ((cu->getSlice()->isInterB()) && (cu->isBipredRestriction(partIdx) == false))
             {
-                UInt motBits[2];
-
                 mvBidir[0] = mv[0];
                 mvBidir[1] = mv[1];
                 refIdxBidir[0] = refIdx[0];
@@ -2493,111 +2490,22 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                 ::memcpy(mvPredBi, mvPred, sizeof(mvPred));
                 ::memcpy(mvpIdxBi, mvpIdx, sizeof(mvpIdx));
 
-                if (cu->getSlice()->getMvdL1ZeroFlag())
-                {
-                    xCopyAMVPInfo(&amvpInfo[1][bestBiPRefIdxL1], cu->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo());
-                    cu->setMVPIdxSubParts(bestBiPMvpL1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
-                    mvpIdxBi[1][bestBiPRefIdxL1] = bestBiPMvpL1;
-                    mvPredBi[1][bestBiPRefIdxL1] = cu->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo()->m_mvCand[bestBiPMvpL1];
+                pixel *ref0, *ref1;
 
-                    mvBidir[1] = mvPredBi[1][bestBiPRefIdxL1];
-                    refIdxBidir[1] = bestBiPRefIdxL1;
-                    cu->getCUMvField(REF_PIC_LIST_1)->setAllMv(mvBidir[1], partSize, partAddr, 0, partIdx);
-                    cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(refIdxBidir[1], partSize, partAddr, 0, partIdx);
-                    motionCompensation(cu, &m_predYuv[1], REF_PIC_LIST_1, partIdx);
+                //Generate reference subpels
+                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[0][refIdx[0]], partAddr, &mv[0], roiWidth, roiHeight, &m_predYuv[0]);
+                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[1][refIdx[1]], partAddr, &mv[1], roiWidth, roiHeight, &m_predYuv[1]);
 
-                    motBits[0] = bits[0] - mbBits[0];
-                    motBits[1] = mbBits[1];
+                ref0 = m_predYuv[0].getLumaAddr(partAddr);
+                ref1 = m_predYuv[1].getLumaAddr(partAddr);
 
-                    if (cu->getSlice()->getNumRefIdx(REF_PIC_LIST_1) > 1)
-                    {
-                        motBits[1] += bestBiPRefIdxL1 + 1;
-                        if (bestBiPRefIdxL1 == cu->getSlice()->getNumRefIdx(REF_PIC_LIST_1) - 1) motBits[1]--;
-                    }
+                pixel avg[MAX_CU_SIZE * MAX_CU_SIZE];
 
-                    motBits[1] += m_mvpIdxCost[mvpIdxBi[1][bestBiPRefIdxL1]][AMVP_MAX_NUM_CANDS];
+                int partEnum = PartitionFromSizes(roiWidth, roiHeight);
+                primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, ref1, m_predYuv[0].getStride(), m_predYuv[1].getStride());
 
-                    bits[2] = mbBits[2] + motBits[0] + motBits[1];
-
-                    mvTemp[1][bestBiPRefIdxL1] = mvBidir[1];
-                }
-                else
-                {
-                    motBits[0] = bits[0] - mbBits[0];
-                    motBits[1] = bits[1] - mbBits[1];
-                    bits[2] = mbBits[2] + motBits[0] + motBits[1];
-                }
-
-                int refList = 0;
-                if (listCost[0] <= listCost[1])
-                {
-                    refList = 1;
-                }
-                else
-                {
-                    refList = 0;
-                }
-                if (!cu->getSlice()->getMvdL1ZeroFlag())
-                {
-                    cu->getCUMvField(RefPicList(1 - refList))->setAllMv(mv[1 - refList], partSize, partAddr, 0, partIdx);
-                    cu->getCUMvField(RefPicList(1 - refList))->setAllRefIdx(refIdx[1 - refList], partSize, partAddr, 0, partIdx);
-                    motionCompensation(cu, &m_predYuv[1 - refList], RefPicList(1 - refList), partIdx);
-                }
-                RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-
-                if (cu->getSlice()->getMvdL1ZeroFlag())
-                {
-                    refList = 0;
-                    picList = REF_PIC_LIST_0;
-                }
-
-                bool bChanged = false;
-
-                refStart = 0;
-                refEnd   = cu->getSlice()->getNumRefIdx(picList) - 1;
-
-                for (int refIdxTmp = refStart; refIdxTmp <= refEnd; refIdxTmp++)
-                {
-                    bitsTemp = mbBits[2] + motBits[1 - refList];
-                    if (cu->getSlice()->getNumRefIdx(picList) > 1)
-                    {
-                        bitsTemp += refIdxTmp + 1;
-                        if (refIdxTmp == cu->getSlice()->getNumRefIdx(picList) - 1) bitsTemp--;
-                    }
-                    bitsTemp += m_mvpIdxCost[mvpIdxBi[refList][refIdxTmp]][AMVP_MAX_NUM_CANDS];
-                    // call bidir ME
-                    xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPredBi[refList][refIdxTmp], refIdxTmp, mvTemp[refList][refIdxTmp],
-                                      bitsTemp, costTemp);
-                    xCopyAMVPInfo(&amvpInfo[refList][refIdxTmp], cu->getCUMvField(picList)->getAMVPInfo());
-                    xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPredBi[refList][refIdxTmp], mvpIdxBi[refList][refIdxTmp],
-                                  bitsTemp, costTemp);
-
-                    if (costTemp < costbi)
-                    {
-                        bChanged = true;
-
-                        mvBidir[refList]     = mvTemp[refList][refIdxTmp];
-                        refIdxBidir[refList] = refIdxTmp;
-
-                        costbi           = costTemp;
-                        motBits[refList] = bitsTemp - mbBits[2] - motBits[1 - refList];
-                        bits[2]          = bitsTemp;
-                    }
-                } // for loop-refIdxTmp
-
-                if (!bChanged)
-                {
-                    if (costbi <= listCost[0] && costbi <= listCost[1])
-                    {
-                        xCopyAMVPInfo(&amvpInfo[0][refIdxBidir[0]], cu->getCUMvField(REF_PIC_LIST_0)->getAMVPInfo());
-                        xCheckBestMVP(cu, REF_PIC_LIST_0, mvBidir[0], mvPredBi[0][refIdxBidir[0]], mvpIdxBi[0][refIdxBidir[0]], bits[2], costbi);
-                        if (!cu->getSlice()->getMvdL1ZeroFlag())
-                        {
-                            xCopyAMVPInfo(&amvpInfo[1][refIdxBidir[1]], cu->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo());
-                            xCheckBestMVP(cu, REF_PIC_LIST_1, mvBidir[1], mvPredBi[1][refIdxBidir[1]], mvpIdxBi[1][refIdxBidir[1]], bits[2], costbi);
-                        }
-                    }
-                }
+                int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
+                costbi =  satdCost + m_rdCost->getCost(bits[0]) + m_rdCost->getCost(bits[1]);
             } // if (B_SLICE)
         } //end if bTestNormalMC
 

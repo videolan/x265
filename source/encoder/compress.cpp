@@ -261,7 +261,7 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     m_tmpRecoYuv[depth]->clear();
     m_tmpResiYuv[depth]->clear();
 
-    m_search->predInterSearch(outTempCU, m_origYuv[depth], outPredYuv, bUseMRG);
+    m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG);
     int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
     outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                      outPredYuv->getLumaAddr(), outPredYuv->getStride());
