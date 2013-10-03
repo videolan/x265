@@ -2506,6 +2506,36 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
                 costbi =  satdCost + m_rdCost->getCost(bits[0]) + m_rdCost->getCost(bits[1]);
+
+                if (mv[0].notZero() || mv[1].notZero())
+                {
+                    ref0 = cu->getSlice()->m_mref[0][refIdx[0]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref0
+                    ref1 = cu->getSlice()->m_mref[1][refIdx[1]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref1
+                    intptr_t refStride = cu->getSlice()->m_mref[0][refIdx[0]]->lumaStride;
+
+                    partEnum = PartitionFromSizes(roiWidth, roiHeight);
+                    primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, ref1, refStride, refStride);
+
+                    satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
+
+                    unsigned int bitsZero0, bitsZero1;
+                    m_me.setMVP(mvPredBi[0][refIdxBidir[0]]);
+                    bitsZero0 = bits[0] - m_me.bitcost(mv[0]) + m_me.bitcost(mvzero);
+
+                    m_me.setMVP(mvPredBi[1][refIdxBidir[1]]);
+                    bitsZero1 = bits[1] - m_me.bitcost(mv[1]) + m_me.bitcost(mvzero);
+
+                    xCheckBestMVP(cu, REF_PIC_LIST_0, mvzero, mvPredBi[0][refIdxBidir[0]], mvpIdxBi[0][refIdxBidir[0]], bitsZero0, costTemp);
+                    xCheckBestMVP(cu, REF_PIC_LIST_1, mvzero, mvPredBi[1][refIdxBidir[1]], mvpIdxBi[1][refIdxBidir[1]], bitsZero1, costTemp);
+
+                    int costZero =  satdCost + m_rdCost->getCost(bitsZero0) + m_rdCost->getCost(bitsZero1);
+                    if (costZero < costbi)
+                    {
+                        costbi = costZero;
+                        mvBidir[0].x = mvBidir[0].y = 0;
+                        mvBidir[1].x = mvBidir[1].y = 0;
+                    }
+                }
             } // if (B_SLICE)
         } //end if bTestNormalMC
 
