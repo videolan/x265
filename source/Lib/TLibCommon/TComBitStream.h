@@ -82,7 +82,9 @@ class TComOutputBitstream : public TComBitIf
      *  - &fifo.front() to get a pointer to the data array.
      *    NB, this pointer is only valid until the next push_back()/clear()
      */
-    std::vector<uint8_t> *m_fifo;
+    uint8_t *m_fifo;
+    UInt m_fsize;
+    UInt buffsize;
 
     UInt m_num_held_bits; /// number of bits not flushed to bytestream.
     UChar m_held_bits; /// the bits held and not flushed to bytestream.
@@ -140,23 +142,24 @@ public:
     /**
      * Return the number of bits that have been written since the last clear()
      */
-    UInt getNumberOfWrittenBits() const { return UInt(m_fifo->size()) * 8 + m_num_held_bits; }
+    UInt getNumberOfWrittenBits() const { return m_fsize * 8 + m_num_held_bits; }
 
     /**
      * Return a reference to the internal fifo
      */
-    std::vector<uint8_t>& getFIFO() { return *m_fifo; }
+    uint8_t* getFIFO() { return m_fifo; }
 
     UChar getHeldBits()          { return m_held_bits; }
 
     /** Return a reference to the internal fifo */
-    std::vector<uint8_t>& getFIFO() const { return *m_fifo; }
+    uint8_t* getFIFO() const { return m_fifo; }
 
     void          addSubstream(TComOutputBitstream* pcSubstream);
     void writeByteAlignment();
 
     //! returns the number of start code emulations contained in the current buffer
     int countStartCodeEmulations();
+    void push_back(uint8_t val);
 };
 }
 //! \}

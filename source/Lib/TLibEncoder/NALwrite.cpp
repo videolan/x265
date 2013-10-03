@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <ostream>
 #include <cstring>
+#include "common.h"
 
 using namespace std;
 
@@ -56,7 +57,6 @@ static const char emulation_prevention_three_byte[] = { 3 };
 void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
 {
     packetSize = 0;
-
     TComOutputBitstream bsNALUHeader;
     bsNALUHeader.write(0, 1);                 // forbidden_zero_bit
     bsNALUHeader.write(nalu.m_nalUnitType, 6); // nal_unit_type
@@ -88,49 +88,47 @@ void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
      *  - 0x00000302
      *  - 0x00000303
      */
-    vector<uint8_t>& rbsp   = nalu.m_Bitstream.getFIFO();
-
-    for (vector<uint8_t>::iterator it = rbsp.begin(); it != rbsp.end(); )
+    UInt fsize = nalu.m_Bitstream.getByteStreamLength();
+    uint8_t* fifo = nalu.m_Bitstream.getFIFO();
+    uint8_t* emulation = (uint8_t *)X265_MALLOC(uint8_t, fsize + EMULATION_SIZE);
+    UInt nalsize = 0;
+    
+    if (emulation)
     {
-        /* 1) find the next emulated 00 00 {00,01,02,03}
-         * 2a) if not found, write all remaining bytes out, stop.
-         * 2b) otherwise, write all non-emulated bytes out
-         * 3) insert emulation_prevention_three_byte
-         */
-        vector<uint8_t>::iterator found = it;
-        do
+        for (int count = 0; count < fsize; count++)
         {
-            /* NB, end()-1, prevents finding a trailing two byte sequence */
-            found = search_n(found, rbsp.end() - 1, 2, 0);
-            found++;
-            /* if not found, found == end, otherwise found = second zero byte */
-            if (found == rbsp.end())
-                break;
-            if (*(++found) <= 3)
-                break;
+            uint8_t val = fifo[count];
+            if (count > 3 && (emulation[nalsize - 1] == 0x00 || emulation[nalsize - 1] == 0x01|| emulation[nalsize - 1] == 0x02 || emulation[nalsize - 1] == 0x03)
+                && emulation[nalsize - 2] == 0x00 && emulation[nalsize - 3] == 0x00)
+            {
+                uint8_t tmp = emulation[nalsize - 1];
+                emulation[nalsize - 1] = emulation_prevention_three_byte[0];
+                emulation[nalsize] = tmp;
+                emulation[nalsize + 1] = val;
+                nalsize++;
+            }
+            else
+            {
+                emulation[nalsize] = val;
+            }
+            nalsize++;
         }
-        while (true);
-
-        it = found;
-        if (found != rbsp.end())
+        UInt i = packetSize;
+        out = (uint8_t *) realloc (out, nalsize + 4 );
+        memcpy(out + packetSize, emulation, nalsize);
+        packetSize += nalsize;
+        
+        /* 7.4.1.1
+        * ... when the last byte of the RBSP data is equal to 0x00 (which can
+        * only occur when the RBSP ends in a cabac_zero_word), a final byte equal
+        * to 0x03 is appended to the end of the data.
+        */
+        if (out[packetSize - 1] == 0x00)
         {
-            it = rbsp.insert(found, emulation_prevention_three_byte[0]);
+            out[i] = 3;
+            packetSize += 1;
         }
-    }
-    UInt i = packetSize;
-    out = (uint8_t *) realloc (out, (rbsp.end() - rbsp.begin()) + 4 );
-    memcpy(out + packetSize, &(*rbsp.begin()), rbsp.end() - rbsp.begin());
-    packetSize += rbsp.end() - rbsp.begin();
-
-    /* 7.4.1.1
-     * ... when the last byte of the RBSP data is equal to 0x00 (which can
-     * only occur when the RBSP ends in a cabac_zero_word), a final byte equal
-     * to 0x03 is appended to the end of the data.
-     */
-    if (rbsp.back() == 0x00)
-    {
-        out[i] = 3;
-        packetSize += 1;
+        X265_FREE(emulation);
     }
 }
 
