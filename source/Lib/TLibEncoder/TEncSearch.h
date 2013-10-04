@@ -128,9 +128,6 @@ public:
 
 protected:
 
-    /// motion vector refinement used in fractional-pel accuracy
-    UInt xPatternRefinement(TComPattern* patternKey, Pel *fenc, int fracBits, MV& outFracMv, TComPicYuv* refPic, TComDataCU* cu, UInt partAddr);
-
     UInt xGetInterPredictionError(TComDataCU* cu, int partIdx);
 
 public:
@@ -224,12 +221,6 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     void xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
-
-    void xPatternSearch(TComPattern* patternKey, Pel *fenc, Pel* refY, int stride, MV* mvmin, MV* mvmax,
-                        MV& outmv, UInt& ruiSAD);
-
-    void xExtDIFUpSamplingH(TComPattern* pcPattern);
-    void xExtDIFUpSamplingQ(TComPattern* patternKey, MV halfPelRef);
 
     // -------------------------------------------------------------------------------------------------------------------
     // T & Q & Q-1 & T-1
