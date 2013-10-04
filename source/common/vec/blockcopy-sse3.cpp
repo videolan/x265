@@ -148,10 +148,11 @@ void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, i
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec16uc word;
-                word.load_a(src + x);
-                extend_low(word).store_a(dst + x);
-                extend_high(word).store_a(dst + x + 8);
+                __m128i word0 = _mm_load_si128((__m128i const*)(src + x));        // load block of 16 byte from src
+                __m128i word1 = _mm_unpacklo_epi8(word0, _mm_setzero_si128());    // interleave with zero extensions
+                _mm_store_si128((__m128i*)&dst[x], word1);                        // store block into dst
+                __m128i word2 = _mm_unpackhi_epi8(word0, _mm_setzero_si128());    // interleave with zero extensions
+                _mm_store_si128((__m128i*)&dst[x + 8], word2);                    // store block into dst
             }
 
             src += sstride;
