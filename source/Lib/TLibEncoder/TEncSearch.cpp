@@ -2437,7 +2437,8 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, ref1, m_predYuv[0].getStride(), m_predYuv[1].getStride());
 
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
-                costbi =  satdCost + m_rdCost->getCost(bits[0]) + m_rdCost->getCost(bits[1]);
+                bits[2] = bits[0] + bits[1] - mbBits[0] - mbBits[1] + mbBits[2];
+                costbi =  satdCost + m_rdCost->getCost(bits[2]);
 
                 if (mv[0].notZero() || mv[1].notZero())
                 {
@@ -2466,6 +2467,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                         costbi = costZero;
                         mvBidir[0].x = mvBidir[0].y = 0;
                         mvBidir[1].x = mvBidir[1].y = 0;
+                        bits[2] = bitsZero0 + bitsZero1 - mbBits[0] - mbBits[1] + mbBits[2];
                     }
                 }
             } // if (B_SLICE)
