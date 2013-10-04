@@ -148,9 +148,6 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_ss, pixelcmp_t)
     SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_ss, pixelcmp_sp_t)
     SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss_t)
-    p.satd[PARTITION_4x4] = satd_4x4;
-    p.satd[PARTITION_4x8] = satd<4, 8>;
-    p.satd[PARTITION_16x4] = satd<16, 4>;
 
 #else
 
