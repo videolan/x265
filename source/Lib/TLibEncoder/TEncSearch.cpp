@@ -2279,7 +2279,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
         UInt costbi = MAX_UINT;
         UInt costTemp = 0;
         UInt bitsTemp;
-        UInt bestBiPDist = MAX_INT;
         MV   mvValidList1;
         int  refIdxValidList1 = 0;
         UInt bitsValidList1 = MAX_UINT;
@@ -2325,11 +2324,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     xEstimateMvPredAMVP(cu, partIdx, picList, refIdxTmp, mvPred[refList][refIdxTmp], &biPDistTemp);
                     mvpIdx[refList][refIdxTmp] = cu->getMVPIdx(picList, partAddr);
                     mvpNum[refList][refIdxTmp] = cu->getMVPNum(picList, partAddr);
-
-                    if (cu->getSlice()->getMvdL1ZeroFlag() && refList == 1 && biPDistTemp < bestBiPDist)
-                    {
-                        bestBiPDist = biPDistTemp;
-                    }
 
                     bitsTemp += m_mvpIdxCost[mvpIdx[refList][refIdxTmp]][AMVP_MAX_NUM_CANDS];
 
