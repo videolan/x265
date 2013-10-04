@@ -186,14 +186,20 @@ void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, ui
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec16uc word0, word1;
-                Vec8s word3, word4;
-                word0.load_a(src0 + x);
-                word1.load_a(src1 + x);
-                word3 = extend_low(word0) - extend_low(word1);
-                word4 = extend_high(word0) - extend_high(word1);
-                word3.store_a(dst + x);
-                word4.store_a(dst + x + 8);
+                __m128i word0, word1;
+                __m128i word3, word4;
+                __m128i mask = _mm_setzero_si128();
+
+                word0 = _mm_load_si128((__m128i const*)(src0 + x));    // load 16 bytes from src1
+                word1 = _mm_load_si128((__m128i const*)(src1 + x));    // load 16 bytes from src2
+
+                word3 = _mm_unpacklo_epi8(word0, mask);    // interleave with zero extensions
+                word4 = _mm_unpacklo_epi8(word1, mask);
+                _mm_store_si128((__m128i*)&dst[x], _mm_subs_epi16(word3, word4));    // store block into dst
+
+                word3 = _mm_unpackhi_epi8(word0, mask);    // interleave with zero extensions
+                word4 = _mm_unpackhi_epi8(word1, mask);
+                _mm_store_si128((__m128i*)&dst[x + 8], _mm_subs_epi16(word3, word4));    // store block into dst
             }
 
             src0 += sstride0;
