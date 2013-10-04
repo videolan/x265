@@ -168,8 +168,8 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.blockfil_s[BLOCK_32x32] = blockfil_s_32;
 #endif
 
-    p.weightpUniPixel = weightUnidir<pixel>;
-    p.weightpUni = weightUnidir<int16_t>;
+    p.weightpUniPixel = weightUnidirPixel;
+    p.weightpUni = weightUnidir;
 
     p.calcresidual[BLOCK_4x4] = getResidual4;
     p.calcresidual[BLOCK_8x8] = getResidual8;

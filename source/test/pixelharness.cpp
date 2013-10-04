@@ -371,8 +371,8 @@ bool PixelHarness::check_weightpUni(weightpUniPixel_t ref, weightpUniPixel_t opt
     int offset = (rand() % 256) - 128;
     for (int i = 0; i < ITERS; i++)
     {
-        opt((pixel *)sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
-        ref((pixel *)sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
+        opt(pbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
+        ref(pbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -636,16 +636,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (!check_weightpUni(ref.weightpUniPixel, opt.weightpUniPixel))
         {
-            printf("Weighted Prediction for Unidir failed!\n");
-            return false;
-        }
-    }
-
-    if (opt.weightpUniPixel)
-    {
-        if (!check_weightpUni(ref.weightpUniPixel, opt.weightpUniPixel))
-        {
-            printf("Weighted Prediction for Unidir failed!\n");
+            printf("Weighted Prediction for Unidir (Pixel) failed!\n");
             return false;
         }
     }
@@ -654,7 +645,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (!check_weightpUni(ref.weightpUni, opt.weightpUni))
         {
-            printf("Weighted Prediction for Unidir failed!\n");
+            printf("Weighted Prediction for Unidir (int16_t) failed!\n");
             return false;
         }
     }

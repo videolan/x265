@@ -246,8 +246,7 @@ void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* 
     }
 }
 
-template <typename T>
-void weightUnidir(T *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
     Vec8s tmp;
@@ -267,6 +266,35 @@ void weightUnidir(T *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, in
         {
             tmp  = load_partial(const_int(4), src + x);
             vsrc = extend_low(tmp);
+            vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
+            compress_unsafe(compress_saturated(vdst, vdst), 0).store_partial(2, dst + x);
+        }
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
+void weightUnidirPixel(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+{
+    int x, y;
+    Vec16uc tmp;
+
+    Vec4i vw0(w0), vsrc, iofs(IF_INTERNAL_OFFS), ofs(offset), vround(round), vdst;
+    for (y = height - 1; y >= 0; y--)
+    {
+        for (x = 0; x <= width - 4; x += 4)
+        {
+            tmp = load_partial(const_int(4), src + x);
+            // The intermediate results would outgrow 16 bits because internal offset is too high
+            vsrc = extend_low(extend_low(tmp));
+            vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
+            store_partial(const_int(4), dst + x, compress_unsafe(compress_saturated(vdst, vdst), 0));
+        }
+
+        if (width > x)
+        {
+            tmp  = load_partial(const_int(4), src + x);
+            vsrc = extend_low(extend_low(tmp));
             vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
             compress_unsafe(compress_saturated(vdst, vdst), 0).store_partial(2, dst + x);
         }
