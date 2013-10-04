@@ -76,9 +76,8 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec16c word;
-                word.load_a(src + x);
-                word.store_a(dst + x);
+                __m128i word0 = _mm_load_si128((__m128i const*)(src + x)); // load block of 16 byte from src
+                _mm_store_si128((__m128i*)&dst[x], word0); // store block into dst
             }
 
             src += sstride;
