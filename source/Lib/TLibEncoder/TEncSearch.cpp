@@ -2249,14 +2249,12 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 
     UInt mbBits[3] = { 1, 1, 0 };
     int refIdx[2] = { 0, 0 }; // If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
-    int refIdxBidir[2];
+    int refIdxBidir[2] = { 0, 0 };
 
     UInt partAddr;
     int  roiWidth, roiHeight;
 
     PartSize partSize = cu->getPartitionSize(0);
-    int bestBiPRefIdxL1 = 0;
-    int bestBiPMvpL1 = 0;
     UInt lastMode = 0;
     int numPart = cu->getNumPartInter();
     int numPredDir = cu->getSlice()->isInterP() ? 1 : 2;
@@ -2331,8 +2329,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     if (cu->getSlice()->getMvdL1ZeroFlag() && refList == 1 && biPDistTemp < bestBiPDist)
                     {
                         bestBiPDist = biPDistTemp;
-                        bestBiPMvpL1 = mvpIdx[refList][refIdxTmp];
-                        bestBiPRefIdxL1 = refIdxTmp;
                     }
 
                     bitsTemp += m_mvpIdxCost[mvpIdx[refList][refIdxTmp]][AMVP_MAX_NUM_CANDS];
