@@ -93,12 +93,9 @@ MotionEstimate::MotionEstimate()
 
 MotionEstimate::~MotionEstimate()
 {
-    if (fenc)
-        X265_FREE(fenc);
-    if (subpelbuf)
-        X265_FREE(subpelbuf);
-    if (immedVal)
-        X265_FREE(immedVal);
+    X265_FREE(fenc);
+    X265_FREE(subpelbuf);
+    X265_FREE(immedVal);
 }
 
 void MotionEstimate::setSourcePU(int offset, int width, int height)
