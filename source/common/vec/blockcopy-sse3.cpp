@@ -106,10 +106,14 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec8us word0, word1;
-                word0.load_a(src + x);
-                word1.load_a(src + x + 8);
-                compress(word0, word1).store_a(dst + x);
+                __m128i word0 = _mm_load_si128((__m128i const*)(src + x));       // load block of 16 byte from src
+                __m128i word1 = _mm_load_si128((__m128i const*)(src + x + 8));
+
+                __m128i mask = _mm_set1_epi32(0x00FF00FF);                  // mask for low bytes
+                __m128i low_mask = _mm_and_si128(word0, mask);              // bytes of low
+                __m128i high_mask = _mm_and_si128(word1, mask);             // bytes of high
+                __m128i word01 = _mm_packus_epi16(low_mask, high_mask);     // unsigned pack
+                _mm_store_si128((__m128i*)&dst[x], word01);                 // store block into dst
             }
 
             src += sstride;
