@@ -59,60 +59,6 @@ void convert16to32(short *org, int *dst, int num)
     }
 }
 
-void convert16to32_shl(int *dst, short *org, intptr_t stride, int shift, int size)
-{
-    int i, j;
-
-    for (i = 0; i < size; i++)
-    {
-        for (j = 0; j < size; j += 4)
-        {
-            __m128i im16;
-            __m128i im32;
-
-            im16 = _mm_loadl_epi64((__m128i*)&org[i * stride + j]);
-            im32 = _mm_srai_epi32(_mm_unpacklo_epi16(im16, im16), 16);
-            im32 = _mm_slli_epi32(im32, shift);
-            _mm_storeu_si128((__m128i*)dst, im32);
-
-            dst += 4;
-        }
-    }
-}
-
-void convert16to16_shl(short *dst, short *org, int width, int height, intptr_t stride, int shift)
-{
-    int i, j;
-
-    if (width == 4)
-    {
-        for (i = 0; i < height; i += 2)
-        {
-            __m128i T00, T01;
-
-            T00 = _mm_loadl_epi64((__m128i*)&org[(i) * stride]);
-            T01 = _mm_loadl_epi64((__m128i*)&org[(i + 1) * stride]);
-            T00 = _mm_unpacklo_epi64(T00, T01);
-            T00 = _mm_slli_epi16(T00, shift);
-            _mm_storeu_si128((__m128i*)&dst[i * 4], T00);
-        }
-    }
-    else
-    {
-        for (i = 0; i < height; i++)
-        {
-            for (j = 0; j < width; j += 8)
-            {
-                __m128i T00;
-
-                T00 = _mm_loadu_si128((__m128i*)&org[i * stride + j]);
-                T00 = _mm_slli_epi16(T00, shift);
-                _mm_storeu_si128((__m128i*)&dst[i * width + j], T00);
-            }
-        }
-    }
-}
-
 void convert32to16(int *org, short *dst, int num)
 {
     int i;
@@ -189,10 +135,13 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 #endif
 
     p.cvt16to32     = convert16to32;
-    p.cvt16to32_shl = convert16to32_shl;
-    p.cvt16to16_shl = convert16to16_shl;
     p.cvt32to16     = convert32to16;
     p.cvt32to16_shr = convert32to16_shr;
+
+#if INSTRSET == X265_CPU_LEVEL_SSE3
+    p.cvt16to32_shl = convert16to32_shl;
+    p.cvt16to16_shl = convert16to16_shl;
+#endif
 
 #if HIGH_BIT_DEPTH
 
@@ -211,16 +160,19 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp_t)
     SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss_t)
 
+#if INSTRSET == X265_CPU_LEVEL_SSE3
     p.transpose[0] = transpose4;
     p.transpose[1] = transpose8;
     p.transpose[2] = transpose16;
     p.transpose[3] = transpose32;
-    p.weightpUniPixel = weightUnidir<pixel>;
-    p.weightpUni = weightUnidir<uint16_t>;
     p.blockfil_s[BLOCK_4x4]   = blockfil_s_4;
     p.blockfil_s[BLOCK_8x8]   = blockfil_s_8;
     p.blockfil_s[BLOCK_16x16] = blockfil_s_16;
     p.blockfil_s[BLOCK_32x32] = blockfil_s_32;
+#endif
+
+    p.weightpUniPixel = weightUnidir<pixel>;
+    p.weightpUni = weightUnidir<uint16_t>;
 
     p.calcresidual[BLOCK_4x4] = getResidual4;
     p.calcresidual[BLOCK_8x8] = getResidual8;
