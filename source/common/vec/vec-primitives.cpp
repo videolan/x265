@@ -67,7 +67,6 @@ void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives&);
 
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives&);
-void Setup_Vec_PixelPrimitives_xop(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
 
 /* Use primitives for the best available vector architecture */

@@ -24,8 +24,8 @@ if (MSVC)
             PROPERTIES COMPILE_FLAGS /arch:SSE2)
     endif()
     if (MSVC_VERSION EQUAL 1700 OR "$ENV{CXX}" STREQUAL "icl")
-        set(PRIMITIVES ${PRIMITIVES} blockcopy-avx2.cpp pixel-avx2.cpp pixel-xop.cpp)
-        set_source_files_properties( blockcopy-avx2.cpp pixel-avx2.cpp pixel-xop.cpp
+        set(PRIMITIVES ${PRIMITIVES} blockcopy-avx2.cpp pixel-avx2.cpp)
+        set_source_files_properties( blockcopy-avx2.cpp pixel-avx2.cpp
             PROPERTIES COMPILE_FLAGS /arch:AVX)
     endif()
 endif()
