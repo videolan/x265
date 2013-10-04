@@ -53,7 +53,7 @@ elseif(MSVC)
             COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${ASM} -o ${ASM}.obj
             DEPENDS ${ASM})
     endforeach()
-    add_library(PrimitivesASM STATIC asm-primitives.cpp pixel.h ${OBJS})
+    add_library(PrimitivesASM STATIC asm-primitives.cpp pixel.h ${ASMS} ${OBJS})
 else()
     enable_language(ASM_YASM)
     add_library(PrimitivesASM STATIC asm-primitives.cpp pixel.h ${ASMS})
