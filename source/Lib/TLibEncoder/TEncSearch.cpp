@@ -149,7 +149,6 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_trQuant = trQuant;
     m_rdCost  = rdCost;
 
-    m_bipredSearchRange = cfg->param.bipredSearchRange;
     m_me.setSearchMethod(cfg->param.searchMethod);
     m_me.setSubpelRefine(cfg->param.subpelRefine);
 
@@ -2893,53 +2892,6 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templa
     UInt cost = m_me.bufSAD(templateCand->getLumaAddr(partAddr), templateCand->getStride());
     x265_emms();
     return m_rdCost->calcRdSADCost(cost, m_mvpIdxCost[mvpIdx][mvpCandCount]);
-}
-
-void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, int partIdx, RefPicList picList, MV* mvp, int refIdxPred,
-                                   MV& outmv, UInt& outBits, UInt& outCost)
-{
-    /* This function only performs bidirectional search */
-    ALIGN_VAR_32(pixel, fenc[64 * 64]);
-    int merange = m_bipredSearchRange;
-    UInt partAddr;
-    int width, height;
-    cu->getPartIndexAndSize(partIdx, partAddr, width, height);
-
-    TComYuv* yuv = fencYuv;
-    TComYuv* yuvOther = &m_predYuv[1 - (int)picList];
-    yuv = &m_predTempYuv;
-    fencYuv->copyPartToPartYuv(yuv, partAddr, width, height);
-    yuv->removeHighFreq(yuvOther, partAddr, width, height);
-
-    // Search key pattern initialization
-    TComPattern* patternKey = cu->getPattern();
-    patternKey->initPattern(yuv->getLumaAddr(partAddr), yuv->getCbAddr(partAddr), yuv->getCrAddr(partAddr), width, height, yuv->getStride(), 0, 0);
-    // copy smoothed pixels into aligned fenc buffer
-    primitives.blockcpy_pp(width, height, fenc, 64, yuv->getLumaAddr(partAddr), yuv->getStride());
-
-    MV mvmin, mvmax;
-    xSetSearchRange(cu, outmv, merange, mvmin, mvmax);
-    //setWpScalingDistParam(cu, refIdxPred, picList);
-
-    TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec();
-    Pel* fref = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
-    int  stride = refPic->getStride();
-
-    // Configure the MV bit cost calculator
-    m_me.setMVP(*mvp);
-
-    // Do integer search
-    xPatternSearch(patternKey, fenc, fref, stride, &mvmin, &mvmax, outmv, outCost);
-
-    outmv <<= 1; // now HPEL
-    xPatternRefinement(patternKey, fenc, 2, outmv, refPic, cu, partAddr);
-
-    outmv <<= 1; // now QPEL
-    outCost = xPatternRefinement(patternKey, fenc, 1, outmv, refPic, cu, partAddr);
-
-    UInt mvbits = m_me.bitcost(outmv);
-    outBits += mvbits;
-    outCost = ((outCost - m_rdCost->getCost(mvbits)) >> 1) + m_rdCost->getCost(outBits);
 }
 
 void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax)

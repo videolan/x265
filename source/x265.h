@@ -245,7 +245,6 @@ typedef struct x265_param_t
     int       searchMethod;                    ///< ME search method (DIA, HEX, UMH, STAR, FULL)
     int       subpelRefine;                    ///< amount of subpel work to perform (0 .. X265_MAX_SUBPEL_LEVEL)
     int       searchRange;                     ///< ME search range
-    int       bipredSearchRange;               ///< ME search range for bipred refinement
     uint32_t  maxNumMergeCand;                 ///< Max number of merge candidates
     int       bEnableWeightedPred;             ///< enable weighted prediction in P slices
     int       bEnableWeightedBiPred;           ///< enable bi-directional weighted prediction in B slices

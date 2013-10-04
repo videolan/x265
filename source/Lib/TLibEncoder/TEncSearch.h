@@ -98,7 +98,6 @@ protected:
     TEncEntropy*    m_entropyCoder;
 
     // ME parameters
-    int             m_bipredSearchRange; // Search range for bi-prediction
     int             m_refLagPixels;
     int             m_adaptiveRange[2][33];
     MV              m_mvPredictors[3];
@@ -223,9 +222,6 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
     // motion estimation
     // -------------------------------------------------------------------------------------------------------------------
-
-    void xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, int partIdx, RefPicList picList, MV* mvp,
-                           int refIdxPred, MV& outmv, UInt& outBits, UInt& outCost);
 
     void xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
 

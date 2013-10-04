@@ -149,7 +149,6 @@ void x265_param_default(x265_param_t *param)
     param->searchMethod = X265_STAR_SEARCH;
     param->subpelRefine = 5;
     param->searchRange = 60;
-    param->bipredSearchRange = 4;
     param->maxNumMergeCand = 5u;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
@@ -250,8 +249,6 @@ int x265_check_params(x265_param_t *param)
           "Search Range must be more than 0");
     CHECK(param->searchRange >= 32768,
           "Search Range must be less than 32768");
-    CHECK(param->bipredSearchRange < 0,
-          "Search Range must be more than 0");
     CHECK(param->keyframeMax < 0,
           "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
     CHECK(param->frameNumThreads <= 0,
