@@ -10,14 +10,14 @@ if (MSVC)
         add_definitions(/Qwd13200)  # function using MMX does not call EMMS
     endif()
     set(PRIMITIVES blockcopy-sse3.cpp
-        pixel-sse3.cpp pixel-sse41.cpp
+        pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
         dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
         ipfilter-ssse3.cpp ipfilter-sse41.cpp
         intra-sse3.cpp intra-sse41.cpp)
     if (NOT X64)
         # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
         set_source_files_properties(blockcopy-sse3.cpp
-            pixel-sse3.cpp pixel-sse41.cpp
+            pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
             dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
             ipfilter-ssse3.cpp ipfilter-sse41.cpp
             intra-sse3.cpp intra-sse41.cpp
@@ -35,7 +35,7 @@ if(GCC)
     endif()
     if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.3)
         set(PRIMITIVES blockcopy-sse3.cpp
-            pixel-sse3.cpp pixel-sse41.cpp
+            pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp
             ipfilter-ssse3.cpp ipfilter-sse41.cpp
             dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp
             intra-sse3.cpp intra-sse41.cpp)
@@ -43,7 +43,7 @@ if(GCC)
             blockcopy-sse3.cpp pixel-sse3.cpp dct-sse3.cpp intra-sse3.cpp
             PROPERTIES COMPILE_FLAGS "-msse3")
         set_source_files_properties(
-            ipfilter-ssse3.cpp dct-ssse3.cpp
+            ipfilter-ssse3.cpp pixel-ssse3.cpp dct-ssse3.cpp
             PROPERTIES COMPILE_FLAGS "-mssse3")
         set_source_files_properties(
             pixel-sse41.cpp ipfilter-sse41.cpp dct-sse41.cpp intra-sse41.cpp

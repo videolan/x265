@@ -222,11 +222,6 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.blockfil_s[BLOCK_16x16] = blockfil_s_16;
     p.blockfil_s[BLOCK_32x32] = blockfil_s_32;
 
-#if INSTRSET >= X265_CPU_LEVEL_SSSE3
-    p.scale1D_128to64 = scale1D_128to64;
-    p.scale2D_64to32 = scale2D_64to32;
-#endif
-
     p.calcresidual[BLOCK_4x4] = getResidual4;
     p.calcresidual[BLOCK_8x8] = getResidual8;
     p.calcresidual[BLOCK_16x16] = getResidual16;
