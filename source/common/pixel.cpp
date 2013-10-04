@@ -861,7 +861,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.transpose[4] = transpose<64>;
 
     p.weightpUniPixel = weightUnidir<pixel>;
-    p.weightpUni = weightUnidir<uint16_t>;
+    p.weightpUni = weightUnidir<int16_t>;
 
     p.pixelsub_sp = pixelsub_sp_c;
     p.pixeladd_pp = pixeladd_pp_c;

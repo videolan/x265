@@ -343,8 +343,8 @@ bool PixelHarness::check_weightpUni(weightpUni_t ref, weightpUni_t opt)
     int offset = (rand() % 256) - 128;
     for (int i = 0; i < ITERS; i++)
     {
-        opt((uint16_t*)sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
-        ref((uint16_t*)sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
+        opt((int16_t*)sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
+        ref((int16_t*)sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -806,7 +806,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.weightpUni)
     {
         printf("WeightpUni");
-        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, (uint16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
+        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
     if (opt.pixelsub_sp)
