@@ -38,6 +38,19 @@ LOWRES(ssse3)
 LOWRES(avx)
 LOWRES(xop)
 
+#define DECL_SUF( func, args )\
+    void func##_mmx2 args;\
+    void func##_sse2 args;\
+    void func##_ssse3 args;
+DECL_SUF( x265_pixel_avg_16x16, ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+DECL_SUF( x265_pixel_avg_16x8,  ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+DECL_SUF( x265_pixel_avg_8x16,  ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+DECL_SUF( x265_pixel_avg_8x8,   ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+DECL_SUF( x265_pixel_avg_8x4,   ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+DECL_SUF( x265_pixel_avg_4x16,  ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+DECL_SUF( x265_pixel_avg_4x8,   ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+DECL_SUF( x265_pixel_avg_4x4,   ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
+
 void x265_filterHorizontal_p_p_4_sse4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff);
 }
 
@@ -101,6 +114,13 @@ namespace x265 {
     p.sse_##type[PARTITION_##width##x8] = (pixelcmp_t) x265_pixel_ssd_##width##x8_##suffix; \
     p.sse_##type[PARTITION_##width##x4] = (pixelcmp_t) x265_pixel_ssd_##width##x4_##suffix; \
 
+#define PIXEL_AVE(cpu) \
+    p.pixelavg_pp[PARTITION_16x16] = x265_pixel_avg_16x16_##cpu; \
+    p.pixelavg_pp[PARTITION_16x8]  = x265_pixel_avg_16x8_##cpu; \
+    p.pixelavg_pp[PARTITION_8x16]  = x265_pixel_avg_8x16_##cpu; \
+    p.pixelavg_pp[PARTITION_8x8]   = x265_pixel_avg_8x8_##cpu; \
+    p.pixelavg_pp[PARTITION_8x4]   = x265_pixel_avg_8x4_##cpu;
+
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #if !HIGH_BIT_DEPTH
@@ -113,6 +133,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT8( satd, _mmx2 );
 
         p.frame_init_lowres_core = x265_frame_init_lowres_core_mmx2;
+        p.pixelavg_pp[PARTITION_4x16] = x265_pixel_avg_4x16_mmx2;
+        p.pixelavg_pp[PARTITION_4x8]  = x265_pixel_avg_4x8_mmx2;
+        p.pixelavg_pp[PARTITION_4x4]  = x265_pixel_avg_4x4_mmx2;
 
         p.sa8d[BLOCK_4x4] = x265_pixel_satd_4x4_mmx2;
 
@@ -184,6 +207,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT2( sad_x3, _sse2 );
         INIT2( sad_x4, _sse2 );
         INIT6( satd, _sse2 );
+        PIXEL_AVE(sse2);
 
         p.frame_init_lowres_core = x265_frame_init_lowres_core_sse2;
 
@@ -329,6 +353,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         ASSGN_SSE(pp, 8, ssse3)
         ASSGN_SSE(pp, 16, ssse3)
         ASSGN_SSE(pp, 32, ssse3)
+        PIXEL_AVE(ssse3);
 
         p.sse_pp[PARTITION_24x4] = cmp<24, 4, 8, 4, x265_pixel_ssd_8x4_ssse3>;
         p.sse_pp[PARTITION_24x8] = cmp<24, 8, 8, 8, x265_pixel_ssd_8x8_ssse3>;

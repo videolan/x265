@@ -1119,7 +1119,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             pixel *frefB = ref->lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * ref->lumaStride;
 
             // average nearest two HPEL pixels to generate H.264 style QPEL pixels
-            primitives.pixelavg_pp[PARTITION_8x8](subpelbuf, FENC_STRIDE, frefA, frefB, ref->lumaStride, ref->lumaStride);
+            primitives.pixelavg_pp[PARTITION_8x8](subpelbuf, FENC_STRIDE, frefA, ref->lumaStride, frefB, ref->lumaStride, 32);
             return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
         }
         else

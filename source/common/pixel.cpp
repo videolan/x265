@@ -580,7 +580,7 @@ void pixeladd_pp_c(int bx, int by, pixel *a, intptr_t dstride, pixel *b0, pixel 
 }
 
 template<int lx, int ly>
-void pixelavg_pp(pixel* dst, intptr_t dstride, pixel* src0, pixel* src1, intptr_t sstride0, intptr_t sstride1)
+void pixelavg_pp(pixel* dst, intptr_t dstride, pixel* src0, intptr_t sstride0, pixel* src1, intptr_t sstride1, int)
 {
     for (int y = 0; y < ly; y++)
     {

@@ -2428,7 +2428,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                 pixel avg[MAX_CU_SIZE * MAX_CU_SIZE];
 
                 int partEnum = PartitionFromSizes(roiWidth, roiHeight);
-                primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, ref1, m_predYuv[0].getStride(), m_predYuv[1].getStride());
+                primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, m_predYuv[0].getStride(), ref1, m_predYuv[1].getStride(), 32);
 
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
                 bits[2] = bits[0] + bits[1] - mbBits[0] - mbBits[1] + mbBits[2];
@@ -2441,7 +2441,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     intptr_t refStride = cu->getSlice()->m_mref[0][refIdx[0]]->lumaStride;
 
                     partEnum = PartitionFromSizes(roiWidth, roiHeight);
-                    primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, ref1, refStride, refStride);
+                    primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, refStride, ref1, refStride, 32);
 
                     satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
 
