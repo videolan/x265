@@ -24,12 +24,10 @@
 /* this file instantiates SSE3 versions of the vectorized primitives */
 
 #include "primitives.h"
-
-#define INSTRSET 3
-#include "vectorclass.h"
 #include <assert.h>
+#include <xmmintrin.h> // SSE
+#include <pmmintrin.h> // SSE3
 
-#define ARCH sse3
 using namespace x265;
 
 void convert16to32_shl(int *dst, short *org, intptr_t stride, int shift, int size)
@@ -141,7 +139,7 @@ void transpose8(pixel* dst, pixel* src, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[6 * 8], T03);
 }
 
-ALWAYSINLINE void transpose16_dummy(pixel* dst, intptr_t dststride, pixel* src, intptr_t srcstride)
+inline void transpose16_dummy(pixel* dst, intptr_t dststride, pixel* src, intptr_t srcstride)
 {
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
 
@@ -307,4 +305,7 @@ void blockfil_s_32(short *dst, intptr_t dstride, short val)
 }
 #endif
 
+#define INSTRSET 3
+#include "vectorclass.h"
+#define ARCH sse3
 #include "pixel.inc"
