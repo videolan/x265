@@ -191,7 +191,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
     }
     else
     {
-        double abrBuffer = 0.9 * rateTolerance * bitrate;
+        double abrBuffer = 1.5 * rateTolerance * bitrate ;
 
         /* 1pass ABR */
 
@@ -264,6 +264,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
                 if (overflow > 1.5)
                     rfAdapt = 2;
                 lqmax *= pow(lstep, rfAdapt);
+                lqmin /= pow(lstep, rfAdapt / frameThreads);
             }
             else if (overflow < 0.9)
             {
