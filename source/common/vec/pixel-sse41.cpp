@@ -21,7 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* this file instantiates SSE4.1 versions of the vectorized primitives */
+/* this file instantiates SSE4.1 versions of the pixel primitives */
 
 #include "primitives.h"
 #include <assert.h>

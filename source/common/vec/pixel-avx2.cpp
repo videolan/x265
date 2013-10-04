@@ -21,7 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* this file instantiates AVX2 versions of the vectorized primitives */
+/* this file instantiates AVX2 versions of the pixel primitives */
 
 #include "primitives.h"
 
