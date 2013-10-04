@@ -230,21 +230,24 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
 
     if ( !(aligncheck & 15) && !(bx & 7))
     {
-        Vec8s zero(0), maxval((1 << X265_DEPTH) - 1);
+        __m128i maxval = _mm_set1_epi16((1 << X265_DEPTH) - 1);
+        __m128i zero = _mm_setzero_si128();
+
         // fast path, multiples of 8 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 8)
             {
-                Vec8s vecsrc0, vecsrc1, vecsum;
-                vecsrc0.load_a(src0 + x);
-                vecsrc1.load_a(src1 + x);
+                __m128i word0, word1, sum;
 
-                vecsum = add_saturated(vecsrc0, vecsrc1);
-                vecsum = max(vecsum, zero);
-                vecsum = min(vecsum, maxval);
+                word0 = _mm_load_si128((__m128i*)(src0 + x));    // load 16 bytes from src1
+                word1 = _mm_load_si128((__m128i*)(src1 + x));    // load 16 bytes from src2
 
-                vecsum.store(dst + x);
+                sum = _mm_adds_epi16(word0, word1);
+                sum = _mm_max_epi16(sum, zero);
+                sum = _mm_min_epi16(sum, maxval);
+
+                _mm_store_si128((__m128i*)&dst[x], sum);    // store block into dst
             }
 
             src0 += sstride0;
@@ -254,20 +257,23 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
     }
     else if (!(bx & 7))
     {
-        Vec8s zero(0), maxval((1 << X265_DEPTH) - 1);
+        __m128i maxval = _mm_set1_epi16((1 << X265_DEPTH) - 1);
+        __m128i zero = _mm_setzero_si128();
+
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 8)
             {
-                Vec8s vecsrc0, vecsrc1, vecsum;
-                vecsrc0.load(src0 + x);
-                vecsrc1.load(src1 + x);
+                __m128i word0, word1, sum;
 
-                vecsum = add_saturated(vecsrc0, vecsrc1);
-                vecsum = max(vecsum, zero);
-                vecsum = min(vecsum, maxval);
+                word0 = _mm_load_si128((__m128i*)(src0 + x));    // load 16 bytes from src1
+                word1 = _mm_load_si128((__m128i*)(src1 + x));    // load 16 bytes from src2
 
-                vecsum.store(dst + x);
+                sum = _mm_adds_epi16(word0, word1);
+                sum = _mm_max_epi16(sum, zero);
+                sum = _mm_min_epi16(sum, maxval);
+
+                _mm_store_si128((__m128i*)&dst[x], sum);    // store block into dst
             }
 
             src0 += sstride0;
