@@ -62,8 +62,10 @@ public:
     const char *getName() const { return "pixel"; }
 
     bool testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
+    bool testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 
     void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt);
+    void measurePartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt);
 };
 
 #endif // ifndef _PIXELHARNESS_H_1
