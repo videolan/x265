@@ -87,14 +87,11 @@ void FrameFilter::start(TComPic *pic)
     m_entropyCoder.setBitstream(&m_bitCounter);
     m_rdGoOnBinCodersCABAC.m_fracBits = 0;
 
-    if (m_cfg->param.bEnableLoopFilter)
+    if (m_cfg->param.bEnableSAO)
     {
         m_sao.resetStats();
         m_sao.createPicSaoInfo(pic);
-    }
 
-    if (m_cfg->param.bEnableSAO)
-    {
         SAOParam* saoParam = pic->getPicSym()->getSaoParam();
         m_sao.resetSAOParam(saoParam);
         m_sao.rdoSaoUnitRowInit(saoParam);
