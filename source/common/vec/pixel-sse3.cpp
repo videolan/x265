@@ -307,5 +307,27 @@ void blockfil_s_32(short *dst, intptr_t dstride, short val)
 
 #define INSTRSET 3
 #include "vectorclass.h"
-#define ARCH sse3
 #include "pixel.inc"
+
+namespace x265 {
+void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
+{
+    p.cvt16to32     = convert16to32;
+    p.cvt32to16     = convert32to16;
+    p.cvt32to16_shr = convert32to16_shr;
+
+    p.cvt16to32_shl = convert16to32_shl;
+    p.cvt16to16_shl = convert16to16_shl;
+
+#if !HIGH_BIT_DEPTH
+    p.transpose[0] = transpose4;
+    p.transpose[1] = transpose8;
+    p.transpose[2] = transpose16;
+    p.transpose[3] = transpose32;
+    p.blockfil_s[BLOCK_4x4]   = blockfil_s_4;
+    p.blockfil_s[BLOCK_8x8]   = blockfil_s_8;
+    p.blockfil_s[BLOCK_16x16] = blockfil_s_16;
+    p.blockfil_s[BLOCK_32x32] = blockfil_s_32;
+#endif /* if HIGH_BIT_DEPTH */
+}
+}

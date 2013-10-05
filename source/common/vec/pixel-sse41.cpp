@@ -25582,6 +25582,80 @@ int sse_pp64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 
 #define INSTRSET 5
 #include "vectorclass.h"
-#define ARCH sse41
-
 #include "pixel.inc"
+
+namespace x265 {
+
+#if HIGH_BIT_DEPTH
+#define SETUP_PARTITION(W, H) \
+    p.sad[PARTITION_##W##x##H] = sad_##W<H>; \
+    p.sad_x3[PARTITION_##W##x##H] = sad_x3_##W<H>; \
+    p.sad_x4[PARTITION_##W##x##H] = sad_x4_##W<H>; \
+    p.sse_pp[PARTITION_##W##x##H] = sse_ss##W<H>; \
+    p.sse_sp[PARTITION_##W##x##H] = sse_ss##W<H>; \
+    p.sse_ss[PARTITION_##W##x##H] = sse_ss##W<H>
+#else
+#define SETUP_PARTITION(W, H) \
+    p.sad[PARTITION_##W##x##H] = sad_##W<H>; \
+    p.sad_x3[PARTITION_##W##x##H] = sad_x3_##W<H>; \
+    p.sad_x4[PARTITION_##W##x##H] = sad_x4_##W<H>; \
+    p.sse_pp[PARTITION_##W##x##H] = sse_pp##W<H>; \
+    p.sse_sp[PARTITION_##W##x##H] = sse_sp##W<H>; \
+    p.sse_ss[PARTITION_##W##x##H] = sse_ss##W<H>
+#endif
+
+void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
+{
+    /* 2Nx2N, 2NxN, Nx2N, 4Ax3A, 4AxA, 3Ax4A, Ax4A */
+    SETUP_PARTITION(64, 64);
+    SETUP_PARTITION(64, 32);
+    SETUP_PARTITION(32, 64);
+    SETUP_PARTITION(64, 16);
+    SETUP_PARTITION(64, 48);
+    SETUP_PARTITION(16, 64);
+    SETUP_PARTITION(48, 64);
+
+    SETUP_PARTITION(32, 32);
+    SETUP_PARTITION(32, 16);
+    SETUP_PARTITION(16, 32);
+    SETUP_PARTITION(32, 8);
+    SETUP_PARTITION(32, 24);
+    SETUP_PARTITION(8, 32);
+    SETUP_PARTITION(24, 32);
+
+    SETUP_PARTITION(16, 16);
+    SETUP_PARTITION(16, 8);
+    SETUP_PARTITION(8, 16);
+    SETUP_PARTITION(16, 4);
+    SETUP_PARTITION(16, 12);
+    SETUP_PARTITION(4, 16);
+    SETUP_PARTITION(12, 16);
+
+    SETUP_PARTITION(8, 8);
+    SETUP_PARTITION(8, 4);
+    SETUP_PARTITION(4, 8);
+    /* 8x8 is too small for AMP partitions */
+
+    SETUP_PARTITION(4, 4);
+    /* 4x4 is too small for any sub partitions */
+
+    p.cvt16to32     = convert16to32;
+    p.cvt32to16     = convert32to16;
+    p.cvt32to16_shr = convert32to16_shr;
+
+#if !HIGH_BIT_DEPTH
+    p.weightpUniPixel = weightUnidirPixel;
+    p.weightpUni = weightUnidir;
+    p.calcresidual[BLOCK_4x4] = getResidual4;
+    p.calcresidual[BLOCK_8x8] = getResidual8;
+    p.calcresidual[BLOCK_16x16] = getResidual16;
+    p.calcresidual[BLOCK_32x32] = getResidual32;
+    p.calcresidual[BLOCK_64x64] = getResidual64;
+    p.calcrecon[BLOCK_4x4] = calcRecons4;
+    p.calcrecon[BLOCK_8x8] = calcRecons8;
+    p.calcrecon[BLOCK_16x16] = calcRecons<16>;
+    p.calcrecon[BLOCK_32x32] = calcRecons<32>;
+    p.calcrecon[BLOCK_64x64] = calcRecons<64>;
+#endif /* !HIGH_BIT_DEPTH */
+}
+}

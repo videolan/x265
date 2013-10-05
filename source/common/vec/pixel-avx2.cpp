@@ -28,7 +28,6 @@
 #define INSTRSET 8
 #include "vectorclass.h"
 
-#define ARCH avx2
 using namespace x265;
 
 namespace {
@@ -445,28 +444,26 @@ void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel
 #endif
 }
 
-#define SET_FUNC_PRIMITIVE_TABLE_WIDTH(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x4] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<4>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x8] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<8>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<12>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<16>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<24>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<32>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<48>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH<64>;
-
 namespace x265 {
 void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives &p)
 {
     p.sad[0] = p.sad[0];
+#define SET_SADS(W, H) \
+    p.sad[PARTITION_##W##x##H] = sad_avx2_##W<H>; \
+    p.sad_x3[PARTITION_##W##x##H] = sad_avx2_x3_##W<H>; \
+    p.sad_x4[PARTITION_##W##x##H] = sad_avx2_x4_##W<H>; \
+
 #if !HIGH_BIT_DEPTH 
 #if (defined(__GNUC__) || defined(__INTEL_COMPILER))
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(32, sad, sad_avx2_, pixelcmp_t)
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(64, sad, sad_avx2_, pixelcmp_t)
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(32, sad_x3, sad_avx2_x3_, pixelcmp_x3_t)
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(64, sad_x3, sad_avx2_x3_, pixelcmp_x3_t)
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(32, sad_x4, sad_avx2_x4_, pixelcmp_x4_t)
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(64, sad_x4, sad_avx2_x4_, pixelcmp_x4_t)
+    SET_SADS(32, 8);
+    SET_SADS(32, 16);
+    SET_SADS(32, 24);
+    SET_SADS(32, 32);
+    SET_SADS(32, 64);
+    SET_SADS(64, 16);
+    SET_SADS(64, 32);
+    SET_SADS(64, 48);
+    SET_SADS(64, 64);
 #endif
 #endif
 }
