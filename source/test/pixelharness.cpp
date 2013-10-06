@@ -740,6 +740,18 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.sad[part], ref.sad[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
+    if (opt.sad_x3[part])
+    {
+        printf("sad_x3[%s]", FuncNames[part]);
+        REPORT_SPEEDUP(opt.sad_x3[part], ref.sad_x3[part], pbuf1, fref, fref + 1, fref - 1, FENC_STRIDE + 5, &cres[0]);
+    }
+
+    if (opt.sad_x4[part])
+    {
+        printf("sad_x4[%s]", FuncNames[part]);
+        REPORT_SPEEDUP(opt.sad_x4[part], ref.sad_x4[part], pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
+    }
+
     if (opt.sse_pp[part])
     {
         printf("sse_pp[%s]", FuncNames[part]);
@@ -756,18 +768,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         printf("sse_ss[%s]", FuncNames[part]);
         REPORT_SPEEDUP(opt.sse_ss[part], ref.sse_ss[part], (short*)pbuf1, STRIDE, (short*)fref, STRIDE);
-    }
-
-    if (opt.sad_x3[part])
-    {
-        printf("sad_x3[%s]", FuncNames[part]);
-        REPORT_SPEEDUP(opt.sad_x3[part], ref.sad_x3[part], pbuf1, fref, fref + 1, fref - 1, FENC_STRIDE + 5, &cres[0]);
-    }
-
-    if (opt.sad_x4[part])
-    {
-        printf("sad_x4[%s]", FuncNames[part]);
-        REPORT_SPEEDUP(opt.sad_x4[part], ref.sad_x4[part], pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
     }
 }
 
