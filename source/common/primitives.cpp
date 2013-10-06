@@ -149,7 +149,8 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
     primitives.sa8d_inter[PARTITION_4x16]  = primitives.satd[PARTITION_4x16];
     primitives.sa8d_inter[PARTITION_8x4]   = primitives.satd[PARTITION_8x4];
     primitives.sa8d_inter[PARTITION_16x4]  = primitives.satd[PARTITION_16x4];
-    primitives.sa8d_inter[PARTITION_32x12] = primitives.satd[PARTITION_32x12];
+    primitives.sa8d_inter[PARTITION_16x12] = primitives.satd[PARTITION_16x12];
+    primitives.sa8d_inter[PARTITION_12x16] = primitives.satd[PARTITION_12x16];
 
 #if ENABLE_VECTOR_PRIMITIVES
     if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " intrinsic");
