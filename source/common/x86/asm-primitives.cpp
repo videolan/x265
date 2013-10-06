@@ -346,15 +346,5 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d_inter[PARTITION_8x8] = x265_pixel_sa8d_8x8_avx2;
     }
 #endif
-    if (cpuMask > 2)
-    {
-        // SA8D devolves to SATD for blocks not even multiples of 8x8
-        p.sa8d_inter[PARTITION_4x4]   = p.satd[PARTITION_4x4];
-        p.sa8d_inter[PARTITION_4x8]   = p.satd[PARTITION_4x8];
-        p.sa8d_inter[PARTITION_4x16]  = p.satd[PARTITION_4x16];
-        p.sa8d_inter[PARTITION_8x4]   = p.satd[PARTITION_8x4];
-        p.sa8d_inter[PARTITION_16x4]  = p.satd[PARTITION_16x4];
-        p.sa8d_inter[PARTITION_32x12] = p.satd[PARTITION_32x12];
-    }
 }
 }
