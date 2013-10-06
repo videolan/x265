@@ -253,9 +253,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
         p.sa8d[BLOCK_64x64] = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
 
-        p.sa8d_inter[PARTITION_8x8]   = x265_pixel_sa8d_8x8_avx;
-
-        p.sa8d_inter[PARTITION_16x16] = x265_pixel_sa8d_16x16_avx;
         p.sa8d_inter[PARTITION_16x8]  = cmp<16, 8, 8, 8, x265_pixel_sa8d_8x8_avx>;
         p.sa8d_inter[PARTITION_8x16]  = cmp<8, 16, 8, 8, x265_pixel_sa8d_8x8_avx>;
 

@@ -138,6 +138,11 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 #endif
     }
 
+    primitives.sa8d_inter[PARTITION_8x8] = primitives.sa8d[BLOCK_8x8];
+    primitives.sa8d_inter[PARTITION_16x16] = primitives.sa8d[BLOCK_16x16];
+    primitives.sa8d_inter[PARTITION_32x32] = primitives.sa8d[BLOCK_32x32];
+    primitives.sa8d_inter[PARTITION_64x64] = primitives.sa8d[BLOCK_64x64];
+
     // SA8D devolves to SATD for blocks not even multiples of 8x8
     primitives.sa8d_inter[PARTITION_4x4]   = primitives.satd[PARTITION_4x4];
     primitives.sa8d_inter[PARTITION_4x8]   = primitives.satd[PARTITION_4x8];
