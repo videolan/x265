@@ -73,7 +73,7 @@ if (GCC)
         add_definitions(-Werror)
     endif(WARNINGS_AS_ERRORS)
     if(X64 AND NOT WIN32)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+        add_definitions(-fPIC)
     endif(X64 AND NOT WIN32)
 endif(GCC)
 
