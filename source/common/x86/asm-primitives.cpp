@@ -108,6 +108,7 @@ namespace x265 {
     p.sse_pp[PARTITION_8x8]   = x265_pixel_ssd_8x8_##cpu; \
     p.sse_pp[PARTITION_8x4]   = x265_pixel_ssd_8x4_##cpu; \
     p.sse_pp[PARTITION_16x16] = x265_pixel_ssd_16x16_##cpu; \
+    p.sse_pp[PARTITION_16x4]  = x265_pixel_ssd_16x4_##cpu; \
     p.sse_pp[PARTITION_16x8]  = x265_pixel_ssd_16x8_##cpu; \
     p.sse_pp[PARTITION_8x16]  = x265_pixel_ssd_8x16_##cpu; \
     p.sse_pp[PARTITION_16x12] = x265_pixel_ssd_16x12_##cpu; \
@@ -116,14 +117,8 @@ namespace x265 {
     p.sse_pp[PARTITION_16x32] = x265_pixel_ssd_16x32_##cpu; \
     p.sse_pp[PARTITION_8x32]  = x265_pixel_ssd_8x32_##cpu; \
     p.sse_pp[PARTITION_32x8]  = x265_pixel_ssd_32x8_##cpu; \
-    p.sse_pp[PARTITION_24x32] = cmp<24, 32, 8, 32, x265_pixel_ssd_8x32_##cpu>; \
     p.sse_pp[PARTITION_32x24] = x265_pixel_ssd_32x24_##cpu; \
-    p.sse_pp[PARTITION_64x64] = cmp<64, 64, 32, 64, x265_pixel_ssd_32x64_##cpu>; \
-    p.sse_pp[PARTITION_64x32] = cmp<64, 32, 32, 32, x265_pixel_ssd_32x32_##cpu>; \
     p.sse_pp[PARTITION_32x64] = x265_pixel_ssd_32x64_##cpu; \
-    p.sse_pp[PARTITION_64x48] = cmp<64, 48, 32, 48, x265_pixel_ssd_32x48_##cpu>; \
-    p.sse_pp[PARTITION_48x64] = cmp<48, 64, 16, 64, x265_pixel_ssd_16x64_##cpu>; \
-    p.sse_pp[PARTITION_64x16] = cmp<64, 16, 32, 16, x265_pixel_ssd_32x16_##cpu>; \
     p.sse_pp[PARTITION_16x64] = x265_pixel_ssd_16x64_##cpu
 
 #define SA8D_INTER_FROM_BLOCK8(cpu) \
@@ -232,6 +227,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_ssse3;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_ssse3;
         SA8D_INTER_FROM_BLOCK(ssse3);
+        p.sse_pp[PARTITION_4x4] = x265_pixel_ssd_4x4_ssse3;
         ASSGN_SSE(ssse3);
         PIXEL_AVE(ssse3);
 
