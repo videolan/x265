@@ -7416,14 +7416,45 @@ void sad_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fre
     res[3] = _mm_cvtsi128_si32(sum3);     /* Extracting sad value for reference frame 4 */
 }
 
-template<int ly>
-int sse_pp24(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_pp_12x16(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
-    int rows = ly;
     __m128i sum = _mm_setzero_si128();
     __m128i zero = _mm_setzero_si128();
 
-    for (; rows != 0; rows--)
+    for (int rows = 16; rows != 0; rows--)
+    {
+        __m128i m1 = _mm_loadu_si128((__m128i const*)(fenc));
+        __m128i n1 = _mm_loadu_si128((__m128i const*)(fref));
+
+        __m128i m1lo = _mm_cvtepu8_epi16(m1);
+        __m128i m1hi = _mm_unpackhi_epi8(m1, zero);
+
+        __m128i n1lo = _mm_cvtepu8_epi16(n1);
+        __m128i n1hi = _mm_unpackhi_epi8(n1, zero);
+
+        __m128i difflo = _mm_sub_epi16(m1lo, n1lo);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(difflo, difflo));
+
+        __m128i diffhi = _mm_sub_epi16(m1hi, n1hi);
+        __m128i sum_temp = _mm_madd_epi16(diffhi, diffhi);
+
+        sum = _mm_add_epi32(sum, _mm_srli_si128(_mm_slli_si128(sum_temp, 8), 8));
+
+        fenc += strideFenc;
+        fref += strideFref;
+    }
+
+    sum = _mm_hadd_epi32(sum, sum);
+    sum = _mm_hadd_epi32(sum, sum);
+    return _mm_cvtsi128_si32(sum);
+}
+
+int sse_pp_24x32(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+{
+    __m128i sum = _mm_setzero_si128();
+    __m128i zero = _mm_setzero_si128();
+
+    for (int rows = 32; rows != 0; rows--)
     {
         __m128i m1 = _mm_loadu_si128((__m128i const*)(fenc));
         __m128i n1 = _mm_loadu_si128((__m128i const*)(fref));
@@ -7457,14 +7488,12 @@ int sse_pp24(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     return _mm_cvtsi128_si32(sum);
 }
 
-template<int ly>
-int sse_pp48(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_pp_48x64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
-    int rows = ly;
     __m128i sum = _mm_setzero_si128();
     __m128i zero = _mm_setzero_si128();
 
-    for (; rows != 0; rows--)
+    for (int rows = 64; rows != 0; rows--)
     {
         __m128i m1 = _mm_loadu_si128((__m128i const*)(fenc));
         __m128i n1 = _mm_loadu_si128((__m128i const*)(fref));
@@ -7521,7 +7550,7 @@ int sse_pp48(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_pp64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_pp_64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum = _mm_setzero_si128();
@@ -7672,12 +7701,13 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
 
 #if !HIGH_BIT_DEPTH
     // These are the only SSE primitives uncovered by assembly
-    p.sse_pp[PARTITION_24x32] = sse_pp24<32>;
-    p.sse_pp[PARTITION_64x64] = sse_pp64<64>;
-    p.sse_pp[PARTITION_64x32] = sse_pp64<32>;
-    p.sse_pp[PARTITION_64x48] = sse_pp64<48>;
-    p.sse_pp[PARTITION_48x64] = sse_pp48<64>;
-    p.sse_pp[PARTITION_64x16] = sse_pp64<16>;
+    p.sse_pp[PARTITION_12x16] = sse_pp_12x16;
+    p.sse_pp[PARTITION_24x32] = sse_pp_24x32;
+    p.sse_pp[PARTITION_48x64] = sse_pp_48x64;
+    p.sse_pp[PARTITION_64x64] = sse_pp_64<64>;
+    p.sse_pp[PARTITION_64x32] = sse_pp_64<32>;
+    p.sse_pp[PARTITION_64x48] = sse_pp_64<48>;
+    p.sse_pp[PARTITION_64x16] = sse_pp_64<16>;
 
     p.weightpUniPixel = weightUnidirPixel;
     p.weightpUni = weightUnidir;
