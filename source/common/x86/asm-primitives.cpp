@@ -152,7 +152,9 @@ namespace x265 {
 
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+    if (cpuMask & (1 << X265_CPU_LEVEL_SSE2)) p.sa8d[0] = p.sa8d[0];
+#else
     if (cpuMask & (1 << X265_CPU_LEVEL_SSE2))
     {
         INIT8_NAME( sse_pp, ssd, _mmx );

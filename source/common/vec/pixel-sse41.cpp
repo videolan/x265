@@ -7640,11 +7640,10 @@ namespace x265 {
     p.sad[PARTITION_##W##x##H] = sad_##W<H>; \
     p.sad_x3[PARTITION_##W##x##H] = sad_x3_##W<H>; \
     p.sad_x4[PARTITION_##W##x##H] = sad_x4_##W<H>; \
-    p.sse_pp[PARTITION_##W##x##H] = sse_ss##W<H>; \
-    p.sse_sp[PARTITION_##W##x##H] = sse_ss##W<H>; \
+    p.sse_sp[PARTITION_##W##x##H] = (pixelcmp_sp_t)sse_ss##W<H>; \
     p.sse_ss[PARTITION_##W##x##H] = sse_ss##W<H>
-#define SETUP_SETUP_NONSAD(W, H) \
-    p.sse_sp[PARTITION_##W##x##H] = sse_ss##W<H>; \
+#define SETUP_NONSAD(W, H) \
+    p.sse_sp[PARTITION_##W##x##H] = (pixelcmp_sp_t)sse_ss##W<H>; \
     p.sse_ss[PARTITION_##W##x##H] = sse_ss##W<H>
 #else
 #define SETUP_PARTITION(W, H) \
@@ -7683,8 +7682,6 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     SETUP_PARTITION(16, 4);
     SETUP_PARTITION(16, 12);
     SETUP_NONSAD(4, 16); // 4x16 SAD covered by assembly
-    p.sad_x3[PARTITION_4x16] = sad_x3_4x16;
-    p.sad_x4[PARTITION_4x16] = sad_x4_4x16;
     SETUP_PARTITION(12, 16);
 
     SETUP_NONSAD(8, 8); // 8x8 SAD covered by assembly
@@ -7701,6 +7698,8 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
 
 #if !HIGH_BIT_DEPTH
     // These are the only SSE primitives uncovered by assembly
+    p.sad_x3[PARTITION_4x16] = sad_x3_4x16;
+    p.sad_x4[PARTITION_4x16] = sad_x4_4x16;
     p.sse_pp[PARTITION_12x16] = sse_pp_12x16;
     p.sse_pp[PARTITION_24x32] = sse_pp_24x32;
     p.sse_pp[PARTITION_48x64] = sse_pp_48x64;
