@@ -128,7 +128,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 
     Setup_C_Primitives(primitives);
 
-    for (int i = 2; i < cpuid; i++)
+    for (int i = 2; i <= cpuid; i++)
     {
 #if ENABLE_VECTOR_PRIMITIVES
         Setup_Vector_Primitives(primitives, 1 << i);
