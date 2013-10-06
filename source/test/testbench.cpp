@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
-    for (int i = 2; i < cpuid; i++)
+    for (int i = 2; i <= cpuid; i++)
     {
 #if ENABLE_VECTOR_PRIMITIVES
         Setup_Vector_Primitives(optprim, 1 << i);
