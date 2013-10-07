@@ -231,7 +231,7 @@ void transpose32(pixel* dst, pixel* src, intptr_t srcstride)
     transpose16_dummy(dst + 16,           32, src + 16 * srcstride,      srcstride);
 }
 
-void blockfil_s_4(short *dst, intptr_t dstride, short val)
+void blockfill_s_4(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
 
@@ -244,7 +244,7 @@ void blockfil_s_4(short *dst, intptr_t dstride, short val)
     _mm_storel_epi64((__m128i*)&dst[3 * dstride], T00);
 }
 
-void blockfil_s_8(short *dst, intptr_t dstride, short val)
+void blockfill_s_8(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
 
@@ -262,7 +262,7 @@ void blockfil_s_8(short *dst, intptr_t dstride, short val)
     _mm_storeu_si128((__m128i*)&dst[7 * dstride], T00);
 }
 
-void blockfil_s_16(short *dst, intptr_t dstride, short val)
+void blockfill_s_16(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
 
@@ -283,7 +283,7 @@ void blockfil_s_16(short *dst, intptr_t dstride, short val)
     }
 }
 
-void blockfil_s_32(short *dst, intptr_t dstride, short val)
+void blockfill_s_32(short *dst, intptr_t dstride, short val)
 {
     __m128i T00;
 
@@ -418,10 +418,12 @@ void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
     p.transpose[1] = transpose8;
     p.transpose[2] = transpose16;
     p.transpose[3] = transpose32;
-    p.blockfill_s[BLOCK_4x4]   = blockfil_s_4;
-    p.blockfill_s[BLOCK_8x8]   = blockfil_s_8;
-    p.blockfill_s[BLOCK_16x16] = blockfil_s_16;
-    p.blockfill_s[BLOCK_32x32] = blockfil_s_32;
+    p.calcresidual[BLOCK_4x4] = getResidual4;
+    p.calcresidual[BLOCK_8x8] = getResidual8;
+    p.blockfill_s[BLOCK_4x4]   = blockfill_s_4;
+    p.blockfill_s[BLOCK_8x8]   = blockfill_s_8;
+    p.blockfill_s[BLOCK_16x16] = blockfill_s_16;
+    p.blockfill_s[BLOCK_32x32] = blockfill_s_32;
 #endif /* if HIGH_BIT_DEPTH */
 }
 }
