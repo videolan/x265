@@ -447,11 +447,6 @@ void FrameEncoder::compressFrame()
     cntIntraNxN = 0;
 #endif // if CU_STAT_LOGFILE
 
-    if (m_sps.getUseSAO())
-    {
-        m_pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
-    }
-
     // Analyze CTU rows, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
     // wave-front behind the CU compression and reconstruction
@@ -666,7 +661,6 @@ void FrameEncoder::compressFrame()
     if (m_sps.getUseSAO())
     {
         m_frameFilter.end();
-        m_pic->destroyNonDBFilterInfo();
     }
 
     // TODO: merge into compress loop, need some time to verify, remove later

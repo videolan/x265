@@ -76,26 +76,6 @@ enum NDBFBlockBorderTag
     NUM_SGU_BORDER
 };
 
-/// Non-deblocking filter processing block information
-struct NDBFBlockInfo
-{
-    int   sliceID; //!< slice ID
-    UInt  startSU; //!< starting SU z-scan address in LCU
-    UInt  endSU;  //!< ending SU z-scan address in LCU
-    UInt  widthSU; //!< number of SUs in width
-    UInt  heightSU; //!< number of SUs in height
-    UInt  posX;   //!< top-left X coordinate in picture
-    UInt  posY;   //!< top-left Y coordinate in picture
-    UInt  width;  //!< number of pixels in width
-    UInt  height; //!< number of pixels in height
-    bool  isBorderAvailable[NUM_SGU_BORDER]; //!< the border availabilities
-    bool  allBordersAvailable;
-
-    NDBFBlockInfo() : sliceID(0), startSU(0), endSU(0) {} //!< constructor
-
-    const NDBFBlockInfo& operator =(const NDBFBlockInfo& src); //!< "=" operator
-};
-
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -147,8 +127,6 @@ private:
     Pel*          m_iPCMSampleY;    ///< PCM sample buffer (Y)
     Pel*          m_iPCMSampleCb;   ///< PCM sample buffer (Cb)
     Pel*          m_iPCMSampleCr;   ///< PCM sample buffer (Cr)
-
-    std::vector<NDBFBlockInfo> m_vNDFBlock;
 
     // -------------------------------------------------------------------------------------------------------------------
     // neighbor access variables
@@ -416,11 +394,6 @@ public:
 
     void          setIPCMFlagSubParts(bool bIpcmFlag, UInt absPartIdx, UInt depth);
 
-    std::vector<NDBFBlockInfo>* getNDBFilterBlocks()      { return &m_vNDFBlock; }
-
-    void setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt numLCUInPicHeight, UInt numSUInLCUWidth, UInt numSUInLCUHeight, UInt picWidth, UInt picHeight
-                                             , bool bTopTileBoundary, bool bDownTileBoundary, bool bLeftTileBoundary, bool bRightTileBoundary
-                                             , bool bIndependentTileBoundaryEnabled);
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for accessing partition information
     // -------------------------------------------------------------------------------------------------------------------

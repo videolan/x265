@@ -140,9 +140,6 @@ public:
 
     Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
 
-    void          createNonDBFilterInfo(int lastSliceCUAddr, int sliceGranularityDepth);
-    void          createNonDBFilterInfoLCU(int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, int sliceGranularyDepth, UInt picWidth, UInt picHeight);
-    void          destroyNonDBFilterInfo();
 }; // END CLASS DEFINITION TComPic
 }
 //! \}
