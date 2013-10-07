@@ -166,12 +166,6 @@ elseif(NOT XCODE)
     merge_static_libs(x265 ${LIBS})
 endif()
 
-# Test applications
-option(ENABLE_TESTS "Enable Unit Tests" OFF)
-if(ENABLE_TESTS)
-    add_subdirectory(test)
-endif(ENABLE_TESTS)
-
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
@@ -198,3 +192,15 @@ endif()
     target_link_libraries(cli ${PLATFORM_LIBS})
     SET_TARGET_PROPERTIES(cli PROPERTIES OUTPUT_NAME x265)
 endif(ENABLE_CLI)
+
+# Test applications
+option(ENABLE_TESTS "Enable Unit Tests" OFF)
+if(ENABLE_TESTS)
+    if(ENABLE_PRIMITIVES_VEC)
+        add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
+    endif(ENABLE_PRIMITIVES_VEC)
+    if(ENABLE_PRIMITIVES_ASM)
+        add_definitions(-DENABLE_ASM_PRIMITIVES=1)
+    endif(ENABLE_PRIMITIVES_ASM)
+    add_subdirectory(test)
+endif(ENABLE_TESTS)
