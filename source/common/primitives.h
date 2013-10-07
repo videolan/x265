@@ -219,17 +219,12 @@ typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef,
 typedef void (*dequant_t)(const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
                           unsigned int trSizeLog2, int *dequantCoef);
 
-typedef void (*filterRowH_t)(pixel *src, intptr_t srcStride, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
-typedef void (*filterRowV_0_t)(pixel *src, intptr_t srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
-typedef void (*filterRowV_N_t)(short *midA, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow);
-typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
-
-
 typedef void (*weightpUniPixel_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightpUni_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
+typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -263,9 +258,6 @@ struct EncoderPrimitives
     ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
     ipfilter_p2s_t  ipfilter_p2s;
     ipfilter_s2p_t  ipfilter_s2p;
-    filterRowH_t    filterRowH;
-    filterRowV_0_t  filterRowV_0;
-    filterRowV_N_t  filterRowV_N;
     extendCURowBorder_t extendRowBorder;
 
     intra_dc_t      intra_pred_dc;
