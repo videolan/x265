@@ -30,6 +30,7 @@
 
 using namespace x265;
 
+namespace {
 void convert16to32_shl(int *dst, short *org, intptr_t stride, int shift, int size)
 {
     int i, j;
@@ -398,6 +399,7 @@ void getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
     _mm_storeu_si128((__m128i*)(resi + (7) * stride), T02);
 }
 #endif
+}
 
 #define INSTRSET 3
 #include "vectorclass.h"
