@@ -45,8 +45,6 @@ protected:
     bool check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t opt);
     bool check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_t opt);
     bool check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt);
-    bool check_filterHMultiplaneWghtd(filterHwghtd_t ref, filterHwghtd_t opt);
-    bool check_filterVMultiplaneWghtd(filterVwghtd_t ref, filterVwghtd_t opt);
 
 public:
 

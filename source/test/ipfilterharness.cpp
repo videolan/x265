@@ -262,134 +262,6 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_
     return true;
 }
 
-bool IPFilterHarness::check_filterHMultiplaneWghtd(filterHwghtd_t ref, filterHwghtd_t opt)
-{
-    short rand_height;
-    short rand_width;
-    int rand_srcStride, rand_dstStride;
-    int marginX, marginY;
-    int w = rand() % 256;
-    int shift = rand() % 12;
-    int round = shift ? (1 << (shift - 1)) : 0;
-    int offset = (rand() % 256) - 128;
-
-    short *sbuf = new short[100 * 100 * 8];
-    short *intFvec = sbuf;
-    short *intAvec = intFvec + 10000;
-    short *intBvec = intAvec + 10000;
-    short *intCvec = intBvec + 10000;
-    short *intAref = intCvec + 10000;
-    short *intBref = intAref + 10000;
-    short *intCref = intBref + 10000;
-    short *intFref = intCref + 10000;
-
-    pixel *pbuf = new pixel[200 * 200 * 8];
-    pixel *dstAvec = pbuf;
-    pixel *dstAref = dstAvec + 40000;
-    pixel *dstBvec = dstAref + 40000;
-    pixel *dstBref = dstBvec + 40000;
-    pixel *dstCvec = dstBref + 40000;
-    pixel *dstCref = dstCvec + 40000;
-    pixel *dstFref = dstCref + 40000;
-    pixel *dstFvec = dstFref + 40000;
-
-    memset(sbuf, 0, 10000 * sizeof(short) * 8);
-    memset(pbuf, 0, 40000 * sizeof(pixel) * 8);
-
-    for (int i = 0; i <= 100; i++)
-    {
-        rand_height = (rand() % 32) + 1;
-        rand_width = (rand() % 32) + 8;
-        marginX = (rand() % 16) + 16;
-        marginY = (rand() % 16) + 16;
-        rand_srcStride = rand_width;               // Can be randomly generated
-        rand_dstStride = rand_width + 2 * marginX;
-        opt(pixel_buff + 8 * rand_srcStride, rand_srcStride,
-            intFvec, intAvec, intBvec, intCvec, rand_dstStride,
-            dstFvec + marginY * rand_dstStride + marginX,
-            dstAvec + marginY * rand_dstStride + marginX,
-            dstBvec + marginY * rand_dstStride + marginX,
-            dstCvec + marginY * rand_dstStride + marginX, rand_dstStride,
-            rand_width, rand_height, marginX, marginY, w, round, shift, offset);
-        ref(pixel_buff + 8 * rand_srcStride, rand_srcStride,
-            intFref, intAref, intBref, intCref, rand_dstStride,
-            dstFref + marginY * rand_dstStride + marginX,
-            dstAref + marginY * rand_dstStride + marginX,
-            dstBref + marginY * rand_dstStride + marginX,
-            dstCref + marginY * rand_dstStride + marginX, rand_dstStride,
-            rand_width, rand_height, marginX, marginY, w, round, shift, offset);
-
-        if (memcmp(intFvec, intFref, 100 * 100 * sizeof(short)) || memcmp(intAvec, intAref, 100 * 100 * sizeof(short)) ||
-            memcmp(intBvec, intBref, 100 * 100 * sizeof(short)) || memcmp(intCvec, intCref, 100 * 100 * sizeof(short)) ||
-            memcmp(dstFvec, dstFref, 200 * 200 * sizeof(pixel)) || memcmp(dstAvec, dstAref, 200 * 200 * sizeof(pixel)) ||
-            memcmp(dstBvec, dstBref, 200 * 200 * sizeof(pixel)) || memcmp(dstCvec, dstCref, 200 * 200 * sizeof(pixel))
-            )
-        {
-            return false;
-        }
-    }
-
-    delete [] sbuf;
-    delete [] pbuf;
-
-    return true;
-}
-
-bool IPFilterHarness::check_filterVMultiplaneWghtd(filterVwghtd_t ref, filterVwghtd_t opt)
-{
-    short rand_height = 32;                 // Can be randomly generated Height
-    short rand_width = 32;                  // Can be randomly generated Width
-    int marginX = 64;
-    int marginY = 64;
-    short rand_srcStride, rand_dstStride;
-
-    int w = rand() % 256;
-    int shift = rand() % 12;
-    int round   = shift ? (1 << (shift - 1)) : 0;
-    int offset = (rand() % 256) - 128;
-
-    pixel dstEvec[200 * 200];
-    pixel dstIvec[200 * 200];
-    pixel dstPvec[200 * 200];
-
-    pixel dstEref[200 * 200];
-    pixel dstIref[200 * 200];
-    pixel dstPref[200 * 200];
-
-    memset(dstEref, 0, 40000 * sizeof(pixel));
-    memset(dstIref, 0, 40000 * sizeof(pixel));
-    memset(dstPref, 0, 40000 * sizeof(pixel));
-
-    memset(dstEvec, 0, 40000 * sizeof(pixel));
-    memset(dstIvec, 0, 40000 * sizeof(pixel));
-    memset(dstPvec, 0, 40000 * sizeof(pixel));
-    for (int i = 0; i <= 100; i++)
-    {
-        rand_srcStride = 200;               // Can be randomly generated
-        rand_dstStride = 200;
-
-        opt(short_buff + 8 * rand_srcStride, rand_srcStride,
-            dstEvec + marginY * rand_dstStride + marginX,
-            dstIvec + marginY * rand_dstStride + marginX,
-            dstPvec + marginY * rand_dstStride + marginX, rand_dstStride,
-            rand_width, rand_height, marginX, marginY, w, round, shift, offset);
-        ref(short_buff + 8 * rand_srcStride, rand_srcStride,
-            dstEref + marginY * rand_dstStride + marginX,
-            dstIref + marginY * rand_dstStride + marginX,
-            dstPref + marginY * rand_dstStride + marginX, rand_dstStride,
-            rand_width, rand_height, marginX, marginY, w, round, shift, offset);
-
-        if (memcmp(dstEvec, dstEref, 200 * 200 * sizeof(pixel)) ||
-            memcmp(dstIvec, dstIref, 200 * 200 * sizeof(pixel)) ||
-            memcmp(dstPvec, dstPref, 200 * 200 * sizeof(pixel)))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -446,24 +318,6 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
-    if (opt.filterHwghtd)
-    {
-        if (!check_filterHMultiplaneWghtd(ref.filterHwghtd, opt.filterHwghtd))
-        {
-            printf("Filter-H-multiplane-weighted failed\n");
-            return false;
-        }
-    }
-
-    if (opt.filterVwghtd)
-    {
-        if (!check_filterVMultiplaneWghtd(ref.filterVwghtd, opt.filterVwghtd))
-        {
-            printf("Filter-V-multiplane-weighted failed\n");
-            return false;
-        }
-    }
-    
     return true;
 }
 
@@ -517,29 +371,5 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         printf("ipfilter_s2p\t");
         REPORT_SPEEDUP(opt.ipfilter_s2p, ref.ipfilter_s2p,
                        short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
-    }
-
-    if (opt.filterHwghtd)
-    {
-        int w = rand() % 256;
-        int shift = rand() % 12;
-        int round   = shift ? (1 << (shift - 1)) : 0;
-        int offset = (rand() % 256) - 128;
-        printf("Filter-H-multiplaneWeighted");
-        REPORT_SPEEDUP(opt.filterHwghtd, ref.filterHwghtd,
-                       pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s,
-                       IPF_C_output_s, dstStride, IPF_vec_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64,
-                       IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64, w, round, shift, offset);
-    }
-
-    if (opt.filterVwghtd)
-    {
-        int w = rand() % 256;
-        int shift = rand() % 12;
-        int round   = shift ? (1 << (shift - 1)) : 0;
-        int offset = (rand() % 256) - 128;
-        printf("Filter-V-multiplaneWeighted");
-        REPORT_SPEEDUP(opt.filterVwghtd, ref.filterVwghtd,
-                       short_buff + 8 * srcStride, srcStride, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64, w, round, shift, offset);
     }
 }
