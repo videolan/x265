@@ -517,7 +517,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     {
         short* resiTmp = residual;
         memset(coeff, 0, sizeof(TCoeff) * width * height);
-        primitives.blockfil_s[size](resiTmp, stride, 0);
+        primitives.blockfill_s[size](resiTmp, stride, 0);
     }
 
     //===== reconstruction =====
@@ -650,7 +650,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         {
             short* resiTmp = residual;
             memset(coeff, 0, sizeof(TCoeff) * width * height);
-            primitives.blockfil_s[size](resiTmp, stride, 0);
+            primitives.blockfill_s[size](resiTmp, stride, 0);
         }
     }
 
@@ -3217,7 +3217,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             const UInt stride = m_qtTempTComYuv[qtlayer].m_width;
 
             assert(trWidth == trHeight);
-            primitives.blockfil_s[(int)g_convertToBit[trWidth]](ptr, stride, 0);
+            primitives.blockfill_s[(int)g_convertToBit[trWidth]](ptr, stride, 0);
         }
 
         UInt distU = 0;
@@ -3291,7 +3291,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 const UInt stride = m_qtTempTComYuv[qtlayer].m_cwidth;
 
                 assert(trWidthC == trHeightC);
-                primitives.blockfil_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
+                primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
             }
 
             distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth, m_tempPel, trWidthC));
@@ -3357,7 +3357,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 const UInt stride = m_qtTempTComYuv[qtlayer].m_cwidth;
 
                 assert(trWidthC == trHeightC);
-                primitives.blockfil_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
+                primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
             }
         }
         cu->setCbfSubParts(absSumY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);

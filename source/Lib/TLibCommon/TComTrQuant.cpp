@@ -484,7 +484,7 @@ void TComTrQuant::invtransformNxN( bool transQuantBypass, UInt mode, short* resi
         if (lastPos == 0 && !((width == 4) && (mode != REG_DCT)))
         {
             int dc_val = (((m_tmpCoeff[0] * 64 + 64) >> 7) * 64 + 2048) >> 12;
-            primitives.blockfil_s[log2BlockSize](residual, stride, dc_val);
+            primitives.blockfill_s[log2BlockSize](residual, stride, dc_val);
 
             return;
         }

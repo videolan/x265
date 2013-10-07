@@ -324,10 +324,10 @@ void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
     p.transpose[1] = transpose8;
     p.transpose[2] = transpose16;
     p.transpose[3] = transpose32;
-    p.blockfil_s[BLOCK_4x4]   = blockfil_s_4;
-    p.blockfil_s[BLOCK_8x8]   = blockfil_s_8;
-    p.blockfil_s[BLOCK_16x16] = blockfil_s_16;
-    p.blockfil_s[BLOCK_32x32] = blockfil_s_32;
+    p.blockfill_s[BLOCK_4x4]   = blockfil_s_4;
+    p.blockfill_s[BLOCK_8x8]   = blockfil_s_8;
+    p.blockfill_s[BLOCK_16x16] = blockfil_s_16;
+    p.blockfill_s[BLOCK_32x32] = blockfil_s_32;
 #endif /* if HIGH_BIT_DEPTH */
 }
 }

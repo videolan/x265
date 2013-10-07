@@ -754,11 +754,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.blockcpy_sp = blockcopy_s_p;
     p.blockcpy_sc = blockcopy_s_c;
 
-    p.blockfil_s[BLOCK_4x4]   = blockfil_s_c<4>;
-    p.blockfil_s[BLOCK_8x8]   = blockfil_s_c<8>;
-    p.blockfil_s[BLOCK_16x16] = blockfil_s_c<16>;
-    p.blockfil_s[BLOCK_32x32] = blockfil_s_c<32>;
-    p.blockfil_s[BLOCK_64x64] = blockfil_s_c<64>;
+    p.blockfill_s[BLOCK_4x4]   = blockfil_s_c<4>;
+    p.blockfill_s[BLOCK_8x8]   = blockfil_s_c<8>;
+    p.blockfill_s[BLOCK_16x16] = blockfil_s_c<16>;
+    p.blockfill_s[BLOCK_32x32] = blockfil_s_c<32>;
+    p.blockfill_s[BLOCK_64x64] = blockfil_s_c<64>;
 
     p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;
