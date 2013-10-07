@@ -48,7 +48,7 @@ const int x265_max_bit_depth = 8; // 12;
 const int x265_max_bit_depth = 8;
 #endif
 
-#define ALIGNBYTES 32
+#define X265_ALIGNBYTES 32
 
 #if _WIN32
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
@@ -59,7 +59,7 @@ const int x265_max_bit_depth = 8;
 
 void *x265_malloc(size_t size)
 {
-    return _aligned_malloc(size, ALIGNBYTES);
+    return _aligned_malloc(size, X265_ALIGNBYTES);
 }
 
 void x265_free(void *ptr)
@@ -72,7 +72,7 @@ void *x265_malloc(size_t size)
 {
     void *ptr;
 
-    if (posix_memalign((void**)&ptr, ALIGNBYTES, size) == 0)
+    if (posix_memalign((void**)&ptr, X265_ALIGNBYTES, size) == 0)
         return ptr;
     else
         return NULL;
