@@ -219,11 +219,6 @@ typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef,
 typedef void (*dequant_t)(const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
                           unsigned int trSizeLog2, int *dequantCoef);
 
-typedef void (*filterVwghtd_t)(short *src, intptr_t srcStride, pixel *dstE, pixel *dstI, pixel *dstP, intptr_t dstStride, int block_width,
-                               int block_height, int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
-typedef void (*filterHwghtd_t)(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride,
-                               pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height,
-                               int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
 typedef void (*filterRowH_t)(pixel *src, intptr_t srcStride, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
 typedef void (*filterRowV_0_t)(pixel *src, intptr_t srcStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow);
 typedef void (*filterRowV_N_t)(short *midA, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int width, int height, int marginX, int marginY, int row, int isLastRow);
@@ -273,7 +268,6 @@ struct EncoderPrimitives
     filterRowV_N_t  filterRowV_N;
     extendCURowBorder_t extendRowBorder;
 
-
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;
     intra_ang_t     intra_pred_ang;
@@ -294,9 +288,6 @@ struct EncoderPrimitives
     pixeladd_ss_t   pixeladd_ss;
     pixeladd_pp_t   pixeladd_pp;
     pixelavg_pp_t   pixelavg_pp[NUM_PARTITIONS];
-
-    filterVwghtd_t  filterVwghtd;
-    filterHwghtd_t  filterHwghtd;
 
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;

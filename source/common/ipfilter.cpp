@@ -493,56 +493,6 @@ void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride
         dst  += dstStride;
     }
 }
-
-// filterHorizontal, Multiplane, Weighted
-void filterHorizontalWeighted(pixel *src, intptr_t srcStride, short *midF, short* midA, short* midB, short* midC, intptr_t midStride,
-                              pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, intptr_t dstStride, int block_width, int block_height,
-                              int marginX, int marginY, int scale, int round, int shift, int offset)
-{
-    filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
-    filterHorizontal_p_s<8>(src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
-    filterHorizontal_p_s<8>(src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
-    filterHorizontal_p_s<8>(src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
-
-    weightUnidir(midF, dstF, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
-    weightUnidir(midA, dstA, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
-    weightUnidir(midB, dstB, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
-    weightUnidir(midC, dstC, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
-
-    extendPicCompBorder(dstF, dstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(dstA, dstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(dstB, dstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(dstC, dstStride, block_width, block_height, marginX, marginY);
-}
-
-// filterVertical, Multiplane, Weighted
-void filterVerticalWeighted(short *src, intptr_t srcStride, pixel *dstE, pixel *dstI, pixel *dstP,
-                            intptr_t dstStride, int block_width, int block_height, int marginX, int marginY,
-                            int scale, int round, int shift, int offset)
-{
-    short* intI, *intE, *intP;    
-    int intStride = block_width;
-
-    intI = (short*)X265_MALLOC(short, block_height * block_width);
-    intE = (short*)X265_MALLOC(short, block_height * block_width);
-    intP = (short*)X265_MALLOC(short, block_height * block_width);
-
-    filterVertical_s_s<8>(src, srcStride, intI, intStride, block_width, block_height, g_lumaFilter[2]);
-    filterVertical_s_s<8>(src, srcStride, intE, intStride, block_width, block_height, g_lumaFilter[1]);
-    filterVertical_s_s<8>(src, srcStride, intP, intStride, block_width, block_height, g_lumaFilter[3]);
-
-    weightUnidir(intI, dstI, intStride, dstStride,block_width, block_height, scale, round, shift, offset);
-    weightUnidir(intE, dstE, intStride, dstStride,block_width, block_height, scale, round, shift, offset);
-    weightUnidir(intP, dstP, intStride, dstStride,block_width, block_height, scale, round, shift, offset);
-
-    extendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
-
-    X265_FREE(intI);
-    X265_FREE(intE);
-    X265_FREE(intP);
-}
 }
 
 void filterRowH(pixel *src, intptr_t srcStride, short* midA, short* midB, short* midC, intptr_t midStride, pixel *dstA, pixel *dstB, pixel *dstC, int width, int height, int marginX, int marginY, int row, int isLastRow)
@@ -754,9 +704,6 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.filterRowV_0 = filterRowV_0;
     p.filterRowV_N = filterRowV_N;
 
-    p.filterVwghtd = filterVerticalWeighted;         
-    p.filterHwghtd = filterHorizontalWeighted;
-    
     p.extendRowBorder = extendCURowColBorder;
 }
 }
