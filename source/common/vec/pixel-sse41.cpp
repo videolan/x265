@@ -4963,8 +4963,6 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
 
     p.weightpUniPixel = weightUnidirPixel;
     p.weightpUni = weightUnidir;
-    p.calcresidual[BLOCK_4x4] = getResidual4;
-    p.calcresidual[BLOCK_8x8] = getResidual8;
     p.calcresidual[BLOCK_16x16] = getResidual16;
     p.calcresidual[BLOCK_32x32] = getResidual32;
     p.calcresidual[BLOCK_64x64] = getResidual64;
