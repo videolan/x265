@@ -448,92 +448,48 @@ int sad_32(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
+    __m128i T00, T01, T02, T03;
+    __m128i T10, T11, T12, T13;
+    __m128i T20, T21, T22, T23;
+
+#define PROCESS_32x4(BASE) \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 0) * fencstride)); \
+    T01 = _mm_load_si128((__m128i*)(fenc + (BASE + 1) * fencstride)); \
+    T02 = _mm_load_si128((__m128i*)(fenc + (BASE + 2) * fencstride)); \
+    T03 = _mm_load_si128((__m128i*)(fenc + (BASE + 3) * fencstride)); \
+    T10 = _mm_loadu_si128((__m128i*)(fref + (BASE + 0) * frefstride)); \
+    T11 = _mm_loadu_si128((__m128i*)(fref + (BASE + 1) * frefstride)); \
+    T12 = _mm_loadu_si128((__m128i*)(fref + (BASE + 2) * frefstride)); \
+    T13 = _mm_loadu_si128((__m128i*)(fref + (BASE + 3) * frefstride)); \
+    T20 = _mm_sad_epu8(T00, T10); \
+    T21 = _mm_sad_epu8(T01, T11); \
+    T22 = _mm_sad_epu8(T02, T12); \
+    T23 = _mm_sad_epu8(T03, T13); \
+    sum0 = _mm_add_epi32(sum0, T20); \
+    sum0 = _mm_add_epi32(sum0, T21); \
+    sum0 = _mm_add_epi32(sum0, T22); \
+    sum0 = _mm_add_epi32(sum0, T23); \
+    T00 = _mm_load_si128((__m128i*)(fenc + 16 + (BASE + 0) * fencstride)); \
+    T01 = _mm_load_si128((__m128i*)(fenc + 16 + (BASE + 1) * fencstride)); \
+    T02 = _mm_load_si128((__m128i*)(fenc + 16 + (BASE + 2) * fencstride)); \
+    T03 = _mm_load_si128((__m128i*)(fenc + 16 + (BASE + 3) * fencstride)); \
+    T10 = _mm_loadu_si128((__m128i*)(fref + 16 + (BASE + 0) * frefstride)); \
+    T11 = _mm_loadu_si128((__m128i*)(fref + 16 + (BASE + 1) * frefstride)); \
+    T12 = _mm_loadu_si128((__m128i*)(fref + 16 + (BASE + 2) * frefstride)); \
+    T13 = _mm_loadu_si128((__m128i*)(fref + 16 + (BASE + 3) * frefstride)); \
+    T20 = _mm_sad_epu8(T00, T10); \
+    T21 = _mm_sad_epu8(T01, T11); \
+    T22 = _mm_sad_epu8(T02, T12); \
+    T23 = _mm_sad_epu8(T03, T13); \
+    sum0 = _mm_add_epi32(sum0, T20); \
+    sum0 = _mm_add_epi32(sum0, T21); \
+    sum0 = _mm_add_epi32(sum0, T22); \
+    sum0 = _mm_add_epi32(sum0, T23);
 
     for (int i = 0; i < ly; i += 8)
     {
-        __m128i T00, T01, T02, T03;
-        __m128i T10, T11, T12, T13;
-        __m128i T20, T21, T22, T23;
-
-        T00 = _mm_load_si128((__m128i*)(fenc + (i) * fencstride));
-        T01 = _mm_load_si128((__m128i*)(fenc + (i + 1) * fencstride));
-        T02 = _mm_load_si128((__m128i*)(fenc + (i + 2) * fencstride));
-        T03 = _mm_load_si128((__m128i*)(fenc + (i + 3) * fencstride));
-
-        T10 = _mm_loadu_si128((__m128i*)(fref + (i) * frefstride));
-        T11 = _mm_loadu_si128((__m128i*)(fref + (i + 1) * frefstride));
-        T12 = _mm_loadu_si128((__m128i*)(fref + (i + 2) * frefstride));
-        T13 = _mm_loadu_si128((__m128i*)(fref + (i + 3) * frefstride));
-
-        T20 = _mm_sad_epu8(T00, T10);
-        T21 = _mm_sad_epu8(T01, T11);
-        T22 = _mm_sad_epu8(T02, T12);
-        T23 = _mm_sad_epu8(T03, T13);
-
-        sum0 = _mm_add_epi32(sum0, T20);
-        sum0 = _mm_add_epi32(sum0, T21);
-        sum0 = _mm_add_epi32(sum0, T22);
-        sum0 = _mm_add_epi32(sum0, T23);
-
-        T00 = _mm_load_si128((__m128i*)(fenc + ((i) * fencstride) + 16));
-        T01 = _mm_load_si128((__m128i*)(fenc + ((i + 1) * fencstride) + 16));
-        T02 = _mm_load_si128((__m128i*)(fenc + ((i + 2) * fencstride) + 16));
-        T03 = _mm_load_si128((__m128i*)(fenc + ((i + 3) * fencstride) + 16));
-
-        T10 = _mm_loadu_si128((__m128i*)(fref + ((i) * frefstride) + 16));
-        T11 = _mm_loadu_si128((__m128i*)(fref + ((i + 1) * frefstride) + 16));
-        T12 = _mm_loadu_si128((__m128i*)(fref + ((i + 2) * frefstride) + 16));
-        T13 = _mm_loadu_si128((__m128i*)(fref + ((i + 3) * frefstride) + 16));
-
-        T20 = _mm_sad_epu8(T00, T10);
-        T21 = _mm_sad_epu8(T01, T11);
-        T22 = _mm_sad_epu8(T02, T12);
-        T23 = _mm_sad_epu8(T03, T13);
-
-        sum0 = _mm_add_epi32(sum0, T20);
-        sum0 = _mm_add_epi32(sum0, T21);
-        sum0 = _mm_add_epi32(sum0, T22);
-        sum0 = _mm_add_epi32(sum0, T23);
-
-        T00 = _mm_load_si128((__m128i*)(fenc + (i + 4) * fencstride));
-        T01 = _mm_load_si128((__m128i*)(fenc + (i + 5) * fencstride));
-        T02 = _mm_load_si128((__m128i*)(fenc + (i + 6) * fencstride));
-        T03 = _mm_load_si128((__m128i*)(fenc + (i + 7) * fencstride));
-
-        T10 = _mm_loadu_si128((__m128i*)(fref + (i + 4) * frefstride));
-        T11 = _mm_loadu_si128((__m128i*)(fref + (i + 5) * frefstride));
-        T12 = _mm_loadu_si128((__m128i*)(fref + (i + 6) * frefstride));
-        T13 = _mm_loadu_si128((__m128i*)(fref + (i + 7) * frefstride));
-
-        T20 = _mm_sad_epu8(T00, T10);
-        T21 = _mm_sad_epu8(T01, T11);
-        T22 = _mm_sad_epu8(T02, T12);
-        T23 = _mm_sad_epu8(T03, T13);
-
-        sum0 = _mm_add_epi32(sum0, T20);
-        sum0 = _mm_add_epi32(sum0, T21);
-        sum0 = _mm_add_epi32(sum0, T22);
-        sum0 = _mm_add_epi32(sum0, T23);
-
-        T00 = _mm_load_si128((__m128i*)(fenc + ((i + 4) * fencstride) + 16));
-        T01 = _mm_load_si128((__m128i*)(fenc + ((i + 5) * fencstride) + 16));
-        T02 = _mm_load_si128((__m128i*)(fenc + ((i + 6) * fencstride) + 16));
-        T03 = _mm_load_si128((__m128i*)(fenc + ((i + 7) * fencstride) + 16));
-
-        T10 = _mm_loadu_si128((__m128i*)(fref + ((i + 4) * frefstride) + 16));
-        T11 = _mm_loadu_si128((__m128i*)(fref + ((i + 5) * frefstride) + 16));
-        T12 = _mm_loadu_si128((__m128i*)(fref + ((i + 6) * frefstride) + 16));
-        T13 = _mm_loadu_si128((__m128i*)(fref + ((i + 7) * frefstride) + 16));
-
-        T20 = _mm_sad_epu8(T00, T10);
-        T21 = _mm_sad_epu8(T01, T11);
-        T22 = _mm_sad_epu8(T02, T12);
-        T23 = _mm_sad_epu8(T03, T13);
-
-        sum0 = _mm_add_epi32(sum0, T20);
-        sum0 = _mm_add_epi32(sum0, T21);
-        sum0 = _mm_add_epi32(sum0, T22);
-        sum0 = _mm_add_epi32(sum0, T23);
+        PROCESS_32x4(i);
+        PROCESS_32x4(i + 4);
     }
 
     sum1 = _mm_shuffle_epi32(sum0, 2);
