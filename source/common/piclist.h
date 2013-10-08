@@ -48,10 +48,10 @@ public:
     }
 
     /** Push picture to end of the list */
-    void pushBack(TComPic *pic);
+    void pushBack(TComPic& pic);
 
     /** Push picture to beginning of the list */
-    void pushFront(TComPic *pic);
+    void pushFront(TComPic& pic);
 
     /** Pop picture from end of the list */
     TComPic* popBack();
@@ -60,7 +60,7 @@ public:
     TComPic* popFront();
 
     /** Remove picture from list */
-    void remove(TComPic*);
+    void remove(TComPic& pic);
 
     TComPic* first()      { return m_start;   }
     TComPic* last()       { return m_end;     }

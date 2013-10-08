@@ -26,44 +26,38 @@
 
 using namespace x265;
 
-void PicList::pushFront(TComPic *pic)
+void PicList::pushFront(TComPic& pic)
 {
-    if (pic)
-    {
-        pic->m_next = m_start;
-        pic->m_prev = NULL;
+    pic.m_next = m_start;
+    pic.m_prev = NULL;
 
-        if (m_count)
-        {
-            m_start->m_prev = pic;
-            m_start = pic;
-        }
-        else
-        {
-            m_start = m_end = pic;
-        }
-        m_count++;
+    if (m_count)
+    {
+        m_start->m_prev = &pic;
+        m_start = &pic;
     }
+    else
+    {
+        m_start = m_end = &pic;
+    }
+    m_count++;
 }
 
-void PicList::pushBack(TComPic *pic)
+void PicList::pushBack(TComPic& pic)
 {
-    if (pic)
-    {
-        pic->m_next = NULL;
-        pic->m_prev = m_end;
+    pic.m_next = NULL;
+    pic.m_prev = m_end;
 
-        if (m_count)
-        {
-            m_end->m_next = pic;
-            m_end = pic;
-        }
-        else
-        {
-            m_start = m_end = pic;
-        }
-        m_count++;
+    if (m_count)
+    {
+        m_end->m_next = &pic;
+        m_end = &pic;
     }
+    else
+    {
+        m_start = m_end = &pic;
+    }
+    m_count++;
 }
 
 TComPic *PicList::popFront()
@@ -112,32 +106,32 @@ TComPic *PicList::popBack()
         return NULL;
 }
 
-void PicList::remove(TComPic* pic)
+void PicList::remove(TComPic& pic)
 {
 #if _DEBUG
     TComPic *tmp = m_start;
-    while (tmp && tmp != pic)
+    while (tmp && tmp != &pic)
         tmp = tmp->m_next;
-    assert(tmp == pic); // verify pic is in this list
+    assert(tmp == &pic); // verify pic is in this list
 #endif
 
     m_count--;
     if (m_count)
     {
-        if (m_start == pic)
-            m_start = pic->m_next;
-        if (m_end == pic)
-            m_end = pic->m_prev;
+        if (m_start == &pic)
+            m_start = pic.m_next;
+        if (m_end == &pic)
+            m_end = pic.m_prev;
 
-        if (pic->m_next)
-            pic->m_next->m_prev = pic->m_prev;
-        if (pic->m_prev)
-            pic->m_prev->m_next = pic->m_next;
+        if (pic.m_next)
+            pic.m_next->m_prev = pic.m_prev;
+        if (pic.m_prev)
+            pic.m_prev->m_next = pic.m_next;
     }
     else
     {
         m_start = m_end = NULL;
     }
 
-    pic->m_next = pic->m_prev = NULL;
+    pic.m_next = pic.m_prev = NULL;
 }
