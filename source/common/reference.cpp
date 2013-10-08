@@ -95,6 +95,7 @@ void MotionReference::applyWeight(TComPic* ref, int rows, int numRows)
     int marginX = pic->m_lumaMarginX;
     int marginY = pic->m_lumaMarginY;
     pixel* src = (pixel*) pic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
+    pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUHeight) * lumaStride);
     int width = pic->getWidth();
     int height = ((rows - m_numWeightedRows) * g_maxCUHeight);
     if (rows == numRows - 1)
@@ -105,10 +106,10 @@ void MotionReference::applyWeight(TComPic* ref, int rows, int numRows)
     int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     shift = shift + shiftNum;
     round = shift ? (1 << (shift - 1)) : 0;
-    primitives.weightpUniPixel(src, fpelPlane, lumaStride, dstStride, width, height, weight, round, shift, offset);
+    primitives.weightpUniPixel(src, dst, lumaStride, dstStride, width, height, weight, round, shift, offset);
 
     // Extending Left & Right
-    primitives.extendRowBorder(fpelPlane, dstStride, width, height, marginX);
+    primitives.extendRowBorder(dst, dstStride, width, height, marginX);
 
     // Extending Above
     if (m_numWeightedRows == 0)
