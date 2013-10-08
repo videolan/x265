@@ -187,7 +187,7 @@ int TComOutputBitstream::countStartCodeEmulations()
             && rbsp[count + 1] == 0x00 && rbsp[count] == 0x00)
         {
             cnt++;
-            count = count + 3;
+            count = count + 1;
         }
     }
     return cnt;
