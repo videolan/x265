@@ -91,6 +91,10 @@ MotionReference::~MotionReference()
 
 void MotionReference::applyWeight(TComPic* ref, int rows, int numRows)
 {
+    rows = X265_MIN(rows, numRows-1);
+    if (m_numWeightedRows >= rows)
+        return;
+
     TComPicYuv* pic = ref->getPicYuvRec();
     int marginX = pic->m_lumaMarginX;
     int marginY = pic->m_lumaMarginY;
