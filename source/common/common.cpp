@@ -32,14 +32,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#if _WIN32
-#include <sys/types.h>
-#include <sys/timeb.h>
-#else
-#include <sys/time.h>
-#endif
-#include <time.h>
-
 using namespace x265;
 
 #if HIGH_BIT_DEPTH
@@ -117,7 +109,7 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 }
 
 extern "C"
-X265_EXPORT void x265_param_default(x265_param_t *param)
+void x265_param_default(x265_param_t *param)
 {
     memset(param, 0, sizeof(x265_param_t));
 
@@ -184,14 +176,14 @@ X265_EXPORT void x265_param_default(x265_param_t *param)
 }
 
 extern "C"
-X265_EXPORT void x265_picture_init(x265_param_t *param, x265_picture_t *pic)
+void x265_picture_init(x265_param_t *param, x265_picture_t *pic)
 {
     memset(pic, 0, sizeof(x265_picture_t));
     pic->bitDepth = param->internalBitDepth;
 }
 
 extern "C"
-X265_EXPORT int x265_param_apply_profile(x265_param_t *param, const char *profile)
+int x265_param_apply_profile(x265_param_t *param, const char *profile)
 {
     if (!profile)
         return 0;
@@ -428,17 +420,4 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
     fprintf(stderr, "\n");
     fflush(stderr);
-}
-
-int64_t x265_mdate(void)
-{
-#if _WIN32
-    struct timeb tb;
-    ftime(&tb);
-    return ((int64_t)tb.time * 1000 + (int64_t)tb.millitm) * 1000;
-#else
-    struct timeval tv_date;
-    gettimeofday(&tv_date, NULL);
-    return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
-#endif
 }

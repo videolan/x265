@@ -340,7 +340,7 @@ void x265_t::configure(x265_param_t *_param)
 }
 
 extern "C"
-X265_EXPORT x265_t *x265_encoder_open(x265_param_t *param)
+x265_t *x265_encoder_open(x265_param_t *param)
 {
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
 
@@ -369,7 +369,7 @@ X265_EXPORT x265_t *x265_encoder_open(x265_param_t *param)
 }
 
 extern "C"
-X265_EXPORT int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
+int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
 {
     if (!pp_nal)
         return 0;
@@ -401,7 +401,7 @@ X265_EXPORT int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *
 }
 
 extern "C"
-X265_EXPORT int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out)
+int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out)
 {
     NALUnitEBSP *nalunits[MAX_NAL_UNITS] = {0, 0, 0, 0, 0};
     int numEncoded = encoder->encode(!pic_in, pic_in, pic_out, nalunits);
@@ -429,13 +429,13 @@ X265_EXPORT int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *p
 EXTERN_CYCLE_COUNTER(ME);
 
 extern "C"
-X265_EXPORT void x265_encoder_get_stats(x265_t *encoder, x265_stats_t *outputStats)
+void x265_encoder_get_stats(x265_t *encoder, x265_stats_t *outputStats)
 {
     encoder->fetchStats(outputStats);
 }
 
 extern "C"
-X265_EXPORT void x265_encoder_close(x265_t *encoder, double *outPsnr)
+void x265_encoder_close(x265_t *encoder, double *outPsnr)
 {
     double globalPsnr = encoder->printSummary();
 

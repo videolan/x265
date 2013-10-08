@@ -60,7 +60,7 @@ if(MSVC)
         "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 
-add_library(encoder STATIC ../../COPYING ../x265.h
+add_library(encoder OBJECT ../x265.h
     ${LIBENCODER_SRC} ${LIBENCODER_HDR}
     bitcost.cpp bitcost.h
     motion.cpp motion.h

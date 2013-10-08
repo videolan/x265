@@ -6,7 +6,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 project (x265)
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 2.8)
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
@@ -140,30 +140,20 @@ if (WIN32)
     endif(WINXP_SUPPORT)
 endif()
 
-option(ENABLE_SHARED "Build shared x265 library (.dll/.so)" OFF)
-if(ENABLE_SHARED)
-    add_definitions(-Dx265_EXPORTS)
-endif()
-
 include_directories(. Lib common encoder)
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-if(ENABLE_PRIMITIVES_VEC)
-    set(LIBS ${LIBS} PrimitivesVec)
-endif(ENABLE_PRIMITIVES_VEC)
-
-if(ENABLE_PRIMITIVES_ASM)
-    set(LIBS ${LIBS} PrimitivesASM)
-endif(ENABLE_PRIMITIVES_ASM)
-set(LIBS ${LIBS} encoder common)
-
-if(ENABLE_SHARED)
-    add_library(x265 SHARED dllmain.cpp)
-    target_link_libraries(x265 ${LIBS})
-elseif(NOT XCODE)
-    include(mergestaticlibs)
-    merge_static_libs(x265 ${LIBS})
+add_library(x265-shared SHARED dllmain.cpp x265.def $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+if(MSVC OR XCODE)
+    target_link_libraries(x265-shared assembly)
+    target_link_libraries(x265-static assembly)
+endif()
+set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
+set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
+if(GCC)
+	set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
 endif()
 
 # Main CLI application
@@ -184,13 +174,8 @@ if(ENABLE_CLI)
     add_executable(cli ../COPYING ${InputFiles} ${OutputFiles}
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
-    if(XCODE OR MSVC)
-        target_link_libraries(cli ${LIBS})
-    else()
-        target_link_libraries(cli x265)
-    endif()
-    target_link_libraries(cli ${PLATFORM_LIBS})
-    SET_TARGET_PROPERTIES(cli PROPERTIES OUTPUT_NAME x265)
+    target_link_libraries(cli x265-static ${PLATFORM_LIBS})
+    set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 endif(ENABLE_CLI)
 
 # Test applications

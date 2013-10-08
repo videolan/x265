@@ -90,7 +90,7 @@ using namespace x265;
  * cpuid > 0 -  force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
 extern "C"
-X265_EXPORT void x265_setup_primitives(x265_param_t *param, int cpuid)
+void x265_setup_primitives(x265_param_t *param, int cpuid)
 {
     // initialize global variables
     initROM();
