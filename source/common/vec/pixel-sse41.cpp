@@ -4963,14 +4963,6 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
 
     p.weightpUniPixel = weightUnidirPixel;
     p.weightpUni = weightUnidir;
-    p.calcresidual[BLOCK_16x16] = getResidual16;
-    p.calcresidual[BLOCK_32x32] = getResidual32;
-    p.calcresidual[BLOCK_64x64] = getResidual64;
-    p.calcrecon[BLOCK_4x4] = calcRecons4;
-    p.calcrecon[BLOCK_8x8] = calcRecons8;
-    p.calcrecon[BLOCK_16x16] = calcRecons<16>;
-    p.calcrecon[BLOCK_32x32] = calcRecons<32>;
-    p.calcrecon[BLOCK_64x64] = calcRecons<64>;
 #endif /* !HIGH_BIT_DEPTH */
 }
 }

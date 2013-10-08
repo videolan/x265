@@ -398,6 +398,217 @@ void getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
     T02 = _mm_sub_epi16(T00, T01);
     _mm_storeu_si128((__m128i*)(resi + (7) * stride), T02);
 }
+
+void getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
+{
+    __m128i T00, T01, T02, T03, T04;
+
+#define RESIDUAL_16x4(BASE) \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 0) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 0) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 0) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 0) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 1) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 1) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 1) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 1) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 2) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 2) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 2) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 2) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 3) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 3) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 3) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 3) * stride), T04)
+
+    RESIDUAL_16x4(0);
+    RESIDUAL_16x4(4);
+    RESIDUAL_16x4(8);
+    RESIDUAL_16x4(12);
+}
+
+void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
+{
+    __m128i T00, T01, T02, T03, T04;
+
+#define RESIDUAL_2x16(BASE, OFFSET) \
+    T00 = _mm_load_si128((__m128i*)(fenc + OFFSET + (BASE + 0) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + OFFSET + (BASE + 0) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + OFFSET + (BASE + 0) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + OFFSET + (BASE + 0) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + OFFSET + (BASE + 1) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + OFFSET + (BASE + 1) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + OFFSET + (BASE + 1) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + OFFSET + (BASE + 1) * stride), T04)
+
+    for (int i = 0; i < 32; i += 2)
+    {
+        RESIDUAL_2x16(i, 0);
+        RESIDUAL_2x16(i, 16);
+    }
+}
+
+void getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
+{
+    __m128i T00, T01, T02, T03, T04;
+
+    for (int i = 0; i < 64; i += 2)
+    {
+        RESIDUAL_2x16(i, 0);
+        RESIDUAL_2x16(i, 16);
+        RESIDUAL_2x16(i, 32);
+        RESIDUAL_2x16(i, 48);
+    }
+}
+
+void calcRecons4(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+{
+    for (int y = 0; y < 4; y++)
+    {
+        __m128i resi, pred, sum;
+        __m128i temp;
+
+        temp = _mm_cvtsi32_si128(*(uint32_t*)pPred);
+        pred = _mm_unpacklo_epi8(temp, _mm_setzero_si128());        // interleave with 0
+
+        resi = _mm_loadl_epi64((__m128i*)pResi);
+        sum = _mm_add_epi16(pred, resi);
+
+        __m128i maxval = _mm_set1_epi16(0xff);                      // broadcast value 255(32-bit integer) to all elements of maxval
+        __m128i minval = _mm_set1_epi16(0x00);                      // broadcast value 0(32-bit integer) to all elements of minval
+        sum = _mm_min_epi16(maxval, _mm_max_epi16(sum, minval));
+        _mm_storel_epi64((__m128i*)pRecQt, sum);
+
+        __m128i mask = _mm_set1_epi32(0x00FF00FF);                  // mask for low bytes
+        __m128i low_mask  = _mm_and_si128(sum, mask);               // bytes of low
+        __m128i high_mask = _mm_and_si128(sum, mask);               // bytes of high
+        temp = _mm_packus_epi16(low_mask, high_mask);               // unsigned pack
+
+        *(uint32_t*)pReco = _mm_cvtsi128_si32(temp);
+        *(uint32_t*)pRecIPred = _mm_cvtsi128_si32(temp);
+
+        pPred     += stride;
+        pResi     += stride;
+        pReco     += stride;
+        pRecQt    += recstride;
+        pRecIPred += ipredstride;
+    }
+}
+
+void calcRecons8(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+{
+    for (int y = 0; y < 8; y++)
+    {
+        __m128i resi, pred, sum;
+        __m128i temp;
+
+        temp = _mm_loadu_si128((__m128i const*)pPred);
+        pred = _mm_unpacklo_epi8(temp, _mm_setzero_si128());        // interleave with zero extensions
+
+        resi = _mm_loadu_si128((__m128i const*)pResi);
+        sum = _mm_add_epi16(pred, resi);
+
+        __m128i maxval = _mm_set1_epi16(0xff);                      // broadcast value 255(32-bit integer) to all elements of maxval
+        __m128i minval = _mm_set1_epi16(0x00);                      // broadcast value 0(32-bit integer) to all elements of minval
+        sum = _mm_min_epi16(maxval, _mm_max_epi16(sum, minval));
+        _mm_storeu_si128((__m128i*)pRecQt, sum);
+
+        __m128i mask = _mm_set1_epi32(0x00FF00FF);                  // mask for low bytes
+        __m128i low_mask  = _mm_and_si128(sum, mask);               // bytes of low
+        __m128i high_mask = _mm_and_si128(sum, mask);               // bytes of high
+        temp = _mm_packus_epi16(low_mask, high_mask);               // unsigned pack
+
+        _mm_storel_epi64((__m128i*)pReco, temp);
+        _mm_storel_epi64((__m128i*)pRecIPred, temp);
+
+        pPred     += stride;
+        pResi     += stride;
+        pReco     += stride;
+        pRecQt    += recstride;
+        pRecIPred += ipredstride;
+    }
+}
+
+template<int blockSize>
+void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+{
+    for (int y = 0; y < blockSize; y++)
+    {
+        for (int x = 0; x < blockSize; x += 16)
+        {
+            __m128i resi, pred, sum1, sum2;
+            __m128i temp;
+
+            temp = _mm_loadu_si128((__m128i const*)(pPred + x));
+            pred = _mm_unpacklo_epi8(temp, _mm_setzero_si128());         // interleave with zero extensions
+
+            resi = _mm_loadu_si128((__m128i const*)(pResi + x));
+            sum1 = _mm_add_epi16(pred, resi);
+
+            __m128i maxval = _mm_set1_epi16(0xff);                       // broadcast value 255(32-bit integer) to all elements of maxval
+            __m128i minval = _mm_set1_epi16(0x00);                       // broadcast value 0(32-bit integer) to all elements of minval
+            sum1 = _mm_min_epi16(maxval, _mm_max_epi16(sum1, minval));
+            _mm_storeu_si128((__m128i*)(pRecQt + x), sum1);
+
+            pred = _mm_unpackhi_epi8(temp, _mm_setzero_si128());         // interleave with zero extensions
+            resi = _mm_loadu_si128((__m128i const*)(pResi + x + 8));
+            sum2 = _mm_add_epi16(pred, resi);
+
+            sum2 = _mm_min_epi16(maxval, _mm_max_epi16(sum2, minval));
+            _mm_storeu_si128((__m128i*)(pRecQt + x + 8), sum2);
+
+            __m128i mask = _mm_set1_epi32(0x00FF00FF);                   // mask for low bytes
+            __m128i low_mask  = _mm_and_si128(sum1, mask);               // bytes of low
+            __m128i high_mask = _mm_and_si128(sum2, mask);               // bytes of high
+            temp = _mm_packus_epi16(low_mask, high_mask);                // unsigned pack
+
+            _mm_storeu_si128((__m128i*)(pReco + x), temp);
+            _mm_storeu_si128((__m128i*)(pRecIPred + x), temp);
+        }
+
+        pPred     += stride;
+        pResi     += stride;
+        pReco     += stride;
+        pRecQt    += recstride;
+        pRecIPred += ipredstride;
+    }
+}
 #endif
 }
 
@@ -422,6 +633,14 @@ void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
     p.transpose[3] = transpose32;
     p.calcresidual[BLOCK_4x4] = getResidual4;
     p.calcresidual[BLOCK_8x8] = getResidual8;
+    p.calcresidual[BLOCK_16x16] = getResidual16;
+    p.calcresidual[BLOCK_32x32] = getResidual32;
+    p.calcresidual[BLOCK_64x64] = getResidual64;
+    p.calcrecon[BLOCK_4x4] = calcRecons4;
+    p.calcrecon[BLOCK_8x8] = calcRecons8;
+    p.calcrecon[BLOCK_16x16] = calcRecons<16>;
+    p.calcrecon[BLOCK_32x32] = calcRecons<32>;
+    p.calcrecon[BLOCK_64x64] = calcRecons<64>;
     p.blockfill_s[BLOCK_4x4]   = blockfill_s_4;
     p.blockfill_s[BLOCK_8x8]   = blockfill_s_8;
     p.blockfill_s[BLOCK_16x16] = blockfill_s_16;
