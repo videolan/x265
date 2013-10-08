@@ -145,6 +145,9 @@ public:
     /* called by compressFrame to perform wave-front compression analysis */
     void compressCTURows();
 
+    /* called by compressFrame to calculate SSIM for each row */
+    float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int *cnt);
+
     void encodeSlice(TComOutputBitstream* substreams);
 
     /* blocks until worker thread is done, returns encoded picture and bitstream */
@@ -185,6 +188,9 @@ protected:
     int                      m_filterRowDelay;
     CTURow*                  m_rows;
     Event                    m_completionEvent;
+
+    /* Temp storage for ssim computation that doesn't need repeated malloc */
+    void*                    m_ssimBuf;
 };
 }
 

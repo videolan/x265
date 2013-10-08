@@ -55,6 +55,7 @@ FrameEncoder::FrameEncoder()
     , m_cfg(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
+    , m_ssimBuf(NULL)
 {
     for (int i = 0; i < MAX_NAL_UNITS; i++)
         m_nalList[i] = NULL;
@@ -92,7 +93,7 @@ void FrameEncoder::destroy()
     }
 
     m_frameFilter.destroy();
-
+    X265_FREE(m_ssimBuf);
     // wait for worker thread to exit
     stop();
 }
@@ -117,6 +118,9 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
     }
+
+    if (m_cfg->param.bEnableSsim)
+        m_ssimBuf = (ssim_t*)x265_malloc(sizeof(ssim_t) * 8 * (m_cfg->param.sourceWidth / 4 + 3));
 
     m_frameFilter.init(top, numRows, getRDGoOnSbacCoder(0));
 
@@ -167,6 +171,7 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         printf("error : ScalingList == %d not supported\n", m_top->getUseScalingListId());
         assert(0);
     }
+
     start();
 }
 
@@ -535,6 +540,31 @@ void FrameEncoder::compressFrame()
         slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
     }
 
+    /* Compute SSIM if enabled */
+    if (m_cfg->param.bEnableSsim && m_ssimBuf)
+    {
+        pixel *rec = (pixel*)m_pic->getPicYuvRec()->getLumaAddr();
+        pixel *org = (pixel*)m_pic->getPicYuvOrg()->getLumaAddr();
+        int stride1 = m_pic->getPicYuvOrg()->getStride();
+        int stride2 = m_pic->getPicYuvRec()->getStride();
+        for (int row = 0; row < m_numRows; row++)
+        {
+            int bEnd = ((row + 1) == (this->m_numRows - 1));
+            int bStart = (row == 0);
+            int minPixY = row * 64 - 4 * !bStart;
+            int maxPixY = (row + 1) * 64 - 4 * !bEnd;
+            int ssim_cnt;
+            x265_emms();
+
+            /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
+             * to avoid alignment of ssim blocks with DCT blocks. */
+            minPixY += bStart ? 2 : -6;
+            slice->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2, 
+                                           m_cfg->param.sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
+            slice->m_ssimCnt += ssim_cnt;
+        }
+    }
+
     entropyCoder->setBitstream(NULL);
 
     // Reconstruction slice
@@ -680,6 +710,39 @@ void FrameEncoder::compressFrame()
     delete[] outStreams;
     delete bitstreamRedirect;
 }
+
+/* Function to calculate SSIM for each row */
+float FrameEncoder::calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int *cnt)
+{
+    int z = 0;
+    float ssim = 0.0;
+    ssim_t(*sum0)[4] = (ssim_t(*)[4])buf;
+    ssim_t(*sum1)[4] = sum0 + (width >> 2) + 3;
+    width >>= 2;
+    height >>= 2;
+
+    for (int y = 1; y < height; y++)
+    {
+        for (; z <= y; z++)
+        {
+            void* swap = sum0;
+            sum0 = sum1;
+            sum1 = (ssim_t(*)[4])swap;
+            for (int x = 0; x < width; x += 2)
+            {
+                primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
+            }
+        }
+
+        for (int x = 0; x < width - 1; x += 4)
+        {
+            ssim += primitives.ssim_end_4(sum0 + x, sum1 + x, X265_MIN(4, width - x - 1));
+        }
+    }
+
+    *cnt = (height - 1) * (width - 1);
+    return ssim; 
+} 
 
 void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
 {

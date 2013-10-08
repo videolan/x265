@@ -604,7 +604,14 @@ double TEncTop::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
     {
         m_analyzeB.addResult(psnrY, psnrU, psnrV, (double)bits);
     }
-
+    if (param.bEnableSsim)
+    {
+        if (pic->getSlice()->m_ssimCnt > 0)
+        {
+            double ssim = pic->getSlice()->m_ssim / pic->getSlice()->m_ssimCnt;
+            m_globalSsim += ssim;
+        }
+    }
     if (param.logLevel >= X265_LOG_DEBUG)
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
