@@ -1615,8 +1615,6 @@ public:
         m_bEqualRef[e][refIdx1][refIdx2] = m_bEqualRef[e][refIdx2][refIdx1] = b;
     }
 
-    static void sortPicList(TComList<TComPic*>& picList);
-
     void setList1IdxToList0Idx();
 
     void setTLayerInfo(UInt tlayer);

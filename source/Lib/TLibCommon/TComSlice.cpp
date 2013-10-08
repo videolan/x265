@@ -153,45 +153,6 @@ void  TComSlice::allocSubstreamSizes(UInt numSubstreams)
     m_substreamSizes = new UInt[numSubstreams > 0 ? numSubstreams - 1 : 0];
 }
 
-void  TComSlice::sortPicList(TComList<TComPic*>& picList)
-{
-    TComPic* picExtract;
-    TComPic* picInsert;
-
-    TComList<TComPic*>::iterator iterPicExtract;
-    TComList<TComPic*>::iterator iterPicExtract_1;
-    TComList<TComPic*>::iterator iterPicInsert;
-
-    for (int i = 1; i < (int)(picList.size()); i++)
-    {
-        iterPicExtract = picList.begin();
-        for (int j = 0; j < i; j++)
-        {
-            iterPicExtract++;
-        }
-
-        picExtract = *(iterPicExtract);
-        iterPicInsert = picList.begin();
-        while (iterPicInsert != iterPicExtract)
-        {
-            picInsert = *(iterPicInsert);
-            if (picInsert->getPOC() >= picExtract->getPOC())
-            {
-                break;
-            }
-
-            iterPicInsert++;
-        }
-
-        iterPicExtract_1 = iterPicExtract;
-        iterPicExtract_1++;
-
-        //  swap iterPicExtract and iterPicInsert, iterPicExtract = curr. / iterPicInsert = insertion position
-        picList.insert(iterPicInsert, iterPicExtract, iterPicExtract_1);
-        picList.erase(iterPicExtract);
-    }
-}
-
 TComPic* TComSlice::xGetRefPic(TComList<TComPic*>& picList, int poc)
 {
     TComList<TComPic*>::iterator iterPic = picList.begin();
