@@ -265,7 +265,7 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
                 MV mv = cu->getCUMvField(picList)->getMv(partAddr);
                 cu->clipMv(mv);
 
-                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refId], partAddr, &mv, width, height, predYuv);
+                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
                 xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
 
                 xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv);
@@ -305,7 +305,7 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
                 MV mv = cu->getCUMvField(picList)->getMv(partAddr);
                 cu->clipMv(mv);
 
-                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refId], partAddr, &mv, width, height, predYuv);
+                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
                 xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
 
                 xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv);
@@ -422,7 +422,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
             MV mv = cu->getCUMvField(picList)->getMv(partAddr);
             cu->clipMv(mv);
 
-            xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refId], partAddr, &mv, width, height, outPredYuv);
+            xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
             xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
 
             xWeightedPredictionUni(cu, &m_predShortYuv[0], partAddr, width, height, REF_PIC_LIST_0, outPredYuv);
