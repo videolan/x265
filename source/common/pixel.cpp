@@ -653,6 +653,58 @@ void frame_init_lowres_core(pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, 
     }
 }
 
+/* structural similarity metric */
+void ssim_4x4x2_core(const pixel *pix1, intptr_t stride1, const pixel *pix2, intptr_t stride2, ssim_t sums[2][4])
+{
+    for (int z = 0; z < 2; z++)
+    {
+        ssim_t s1 = 0, s2 = 0, ss = 0, s12 = 0;
+        for (int y = 0; y < 4; y++)
+        {
+            for (int x = 0; x < 4; x++)
+            {
+                ssim_t a = pix1[x + y * stride1];
+                ssim_t b = pix2[x + y * stride2];
+                s1 += a;
+                s2 += b;
+                ss += a * a;
+                ss += b * b;
+                s12 += a * b;
+            }
+        }
+        sums[z][0] = s1;
+        sums[z][1] = s2;
+        sums[z][2] = ss;
+        sums[z][3] = s12;
+        pix1 += 4;
+        pix2 += 4;
+    }
+}
+
+float ssim_end_1(ssim_t s1, ssim_t s2, ssim_t ss, ssim_t s12)
+{
+    static const uint32_t pixelMax = (1 << X265_DEPTH) - 1;
+    static const ssim_t ssim_c1 = (ssim_t)(.01 * .01 * pixelMax * pixelMax * 64 + .5);
+    static const ssim_t ssim_c2 = (ssim_t)(.03 * .03 * pixelMax * pixelMax * 64 * 63 + .5);
+    ssim_t vars = ss * 64 - s1 * s1 - s2 * s2;
+    ssim_t covar = s12 * 64 - s1 * s2;
+    return (float)(2 * s1 * s2 + ssim_c1) * (float)(2 * covar + ssim_c2)
+           / ((float)(s1 * s1 + s2 * s2 + ssim_c1) * (float)(vars + ssim_c2));
+}
+
+float ssim_end_4(ssim_t sum0[5][4], ssim_t sum1[5][4], int width)
+{
+    float ssim = 0.0;
+
+    for (int i = 0; i < width; i++)
+    {
+        ssim += ssim_end_1(sum0[i][0] + sum0[i + 1][0] + sum1[i][0] + sum1[i + 1][0],
+                           sum0[i][1] + sum0[i + 1][1] + sum1[i][1] + sum1[i + 1][1],
+                           sum0[i][2] + sum0[i + 1][2] + sum1[i][2] + sum1[i + 1][2],
+                           sum0[i][3] + sum0[i + 1][3] + sum1[i][3] + sum1[i + 1][3]);
+    }
+    return ssim;
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -870,5 +922,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.scale1D_128to64 = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;
     p.frame_init_lowres_core = frame_init_lowres_core;
+    p.ssim_4x4x2_core = ssim_4x4x2_core;
+    p.ssim_end_4 = ssim_end_4;
 }
 }

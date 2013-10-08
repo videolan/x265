@@ -64,11 +64,13 @@ typedef uint16_t pixel;
 typedef uint32_t sum_t;
 typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
+typedef int64_t ssim_t;
 #else
 typedef uint8_t pixel;
 typedef uint16_t sum_t;
 typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
+typedef int32_t ssim_t;
 #endif // if HIGH_BIT_DEPTH
 
 namespace x265 {
@@ -200,6 +202,8 @@ typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
 typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
+typedef void (*ssim_4x4x2_core_t)(const pixel *pix1, intptr_t stride1, const pixel *pix2, intptr_t stride2, ssim_t sums[2][4]);
+typedef float (*ssim_end4_t)(ssim_t sum0[5][4], ssim_t sum1[5][4], int width);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -259,6 +263,8 @@ struct EncoderPrimitives
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
     downscale_t     frame_init_lowres_core;
+    ssim_4x4x2_core_t ssim_4x4x2_core;
+    ssim_end4_t       ssim_end_4;
 };
 
 /* This copy of the table is what gets used by the encoder.
