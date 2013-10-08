@@ -1622,7 +1622,6 @@ public:
     void setTLayerInfo(UInt tlayer);
     void decodingMarking(TComList<TComPic*>& picList, int gopSize, int& maxRefPicNum);
     int  checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, bool printErrors, int pocRandomAccess = 0);
-    void createExplicitReferencePictureSetFromReference(TComList<TComPic*>& picList, TComReferencePictureSet *rps, bool isRAP);
 
     void setMaxNumMergeCand(UInt val)          { m_maxNumMergeCand = val; }
 
