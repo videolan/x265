@@ -81,28 +81,34 @@ void getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
 
 void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
 {
-    Vec16uc f, p;
-    Vec8s r;
+    __m128i T00, T01, T02, T03, T04;
 
-    for (int y = 0; y < 32; y++)
+#define RESIDUAL_2x16(BASE, OFFSET) \
+    T00 = _mm_load_si128((__m128i*)(fenc + OFFSET + (BASE + 0) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + OFFSET + (BASE + 0) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + OFFSET + (BASE + 0) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + OFFSET + (BASE + 0) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + OFFSET + (BASE + 1) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + OFFSET + (BASE + 1) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + OFFSET + (BASE + 1) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + OFFSET + (BASE + 1) * stride), T04)
+
+    for (int i = 0; i < 32; i += 2)
     {
-        f.load_a(fenc);
-        p.load_a(pred);
-        r = extend_low(f) - extend_low(p);
-        r.store(resi);
-        r = extend_high(f) - extend_high(p);
-        r.store(resi + 8);
-
-        f.load_a(fenc + 16);
-        p.load_a(pred + 16);
-        r = extend_low(f) - extend_low(p);
-        r.store(resi + 16);
-        r = extend_high(f) - extend_high(p);
-        r.store(resi + 24);
-
-        fenc += stride;
-        pred += stride;
-        resi += stride;
+        RESIDUAL_2x16(i, 0);
+        RESIDUAL_2x16(i, 16);
     }
 }
 
