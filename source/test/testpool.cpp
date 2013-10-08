@@ -111,6 +111,10 @@ void MD5Frame::encode()
 
     this->WaveFront::enqueueRow(0);
 
+    // NOTE: When EnableRow after enqueueRow at first row, we'd better call pokeIdleThread, it will release a thread to do job
+    this->WaveFront::enableRow(0);
+    this->m_pool->pokeIdleThread();
+
     this->complete.wait();
 
     this->JobProvider::dequeue();
@@ -175,6 +179,7 @@ void MD5Frame::processRow(int rownum)
                 // row stays marked active until blocked or done
                 this->row[rownum + 1].active = true;
                 this->WaveFront::enqueueRow(rownum + 1);
+                this->WaveFront::enableRow(rownum + 1);
             }
         }
 
@@ -230,4 +235,6 @@ int main(int, char **)
         frame.encode();
     }
     pool->release();
+
+    printf("All test passed!\n");
 }
