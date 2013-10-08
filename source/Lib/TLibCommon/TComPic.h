@@ -81,6 +81,9 @@ public:
 
     Lowres                m_lowres;
 
+    TComPic*              m_next;
+    TComPic*              m_prev;
+
     TComPic();
     virtual ~TComPic();
 

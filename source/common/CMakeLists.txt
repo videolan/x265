@@ -93,7 +93,8 @@ add_library(common STATIC ../../COPYING
     TShortYUV.cpp TShortYUV.h mv.h
     reference.cpp reference.h
     common.cpp common.h
-    lowres.cpp lowres.h)
+    lowres.cpp lowres.h
+    piclist.cpp piclist.h)
     
 if(ENABLE_PRIMITIVES_VEC)
     add_subdirectory(vec)

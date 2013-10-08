@@ -59,6 +59,8 @@ TComPic::TComPic()
     m_reconRowCount = 0;
     m_countRefEncoders = 0;
     memset(&m_lowres, 0, sizeof(m_lowres));
+    m_next = NULL;
+    m_prev = NULL;
 }
 
 TComPic::~TComPic()
