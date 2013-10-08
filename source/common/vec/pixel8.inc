@@ -119,23 +119,27 @@ void calcRecons4(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel*
 {
     for (int y = 0; y < 4; y++)
     {
-        Vec8s vresi, vpred, vres, vsum;
-        Vec16uc tmp;
+        __m128i resi, pred, sum;
+        __m128i temp;
 
-        tmp = load_partial(const_int(4), pPred);
-        vpred = extend_low(tmp);
+        temp = _mm_cvtsi32_si128(*(uint32_t*)pPred);
+        pred = _mm_unpacklo_epi8(temp, _mm_setzero_si128());        // interleave with 0
 
-        vresi = load_partial(const_int(8), pResi);
-        vsum = vpred + vresi;
+        resi = _mm_loadl_epi64((__m128i*)pResi);
+        sum = _mm_add_epi16(pred, resi);
 
-        vsum = min(255, max(vsum, 0));
+        __m128i maxval = _mm_set1_epi16(0xff);                      // broadcast value 255(32-bit integer) to all elements of maxval
+        __m128i minval = _mm_set1_epi16(0x00);                      // broadcast value 0(32-bit integer) to all elements of minval
+        sum = _mm_min_epi16(maxval, _mm_max_epi16(sum, minval));
+        _mm_storel_epi64((__m128i*)pRecQt, sum);
 
-        store_partial(const_int(8), pRecQt, vsum);
+        __m128i mask = _mm_set1_epi32(0x00FF00FF);                  // mask for low bytes
+        __m128i low_mask  = _mm_and_si128(sum, mask);               // bytes of low
+        __m128i high_mask = _mm_and_si128(sum, mask);               // bytes of high
+        temp = _mm_packus_epi16(low_mask, high_mask);               // unsigned pack
 
-        tmp = compress(vsum, vsum);
-
-        store_partial(const_int(4), pReco, tmp);
-        store_partial(const_int(4), pRecIPred, tmp);
+        *(uint32_t*)pReco = _mm_cvtsi128_si32(temp);
+        *(uint32_t*)pRecIPred = _mm_cvtsi128_si32(temp);
 
         pPred     += stride;
         pResi     += stride;
