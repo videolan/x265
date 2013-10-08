@@ -114,44 +114,17 @@ void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
 
 void getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
 {
-    Vec16uc f, p;
-    Vec8s r;
+    __m128i T00, T01, T02, T03, T04;
 
-    for (int y = 0; y < 64; y++)
+    for (int i = 0; i < 64; i += 2)
     {
-        f.load_a(fenc);
-        p.load_a(pred);
-        r = extend_low(f) - extend_low(p);
-        r.store(resi);
-        r = extend_high(f) - extend_high(p);
-        r.store(resi + 8);
-
-        f.load_a(fenc + 16);
-        p.load_a(pred + 16);
-        r = extend_low(f) - extend_low(p);
-        r.store(resi + 16);
-        r = extend_high(f) - extend_high(p);
-        r.store(resi + 24);
-
-        f.load_a(fenc + 32);
-        p.load_a(pred + 32);
-        r = extend_low(f) - extend_low(p);
-        r.store(resi + 32);
-        r = extend_high(f) - extend_high(p);
-        r.store(resi + 40);
-
-        f.load_a(fenc + 48);
-        p.load_a(pred + 48);
-        r = extend_low(f) - extend_low(p);
-        r.store(resi + 48);
-        r = extend_high(f) - extend_high(p);
-        r.store(resi + 56);
-
-        fenc += stride;
-        pred += stride;
-        resi += stride;
+        RESIDUAL_2x16(i, 0);
+        RESIDUAL_2x16(i, 16);
+        RESIDUAL_2x16(i, 32);
+        RESIDUAL_2x16(i, 48);
     }
 }
+
 
 void calcRecons4(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
 {
