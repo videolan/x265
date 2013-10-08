@@ -190,26 +190,34 @@ void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* 
     {
         for (int x = 0; x < blockSize; x += 16)
         {
-            Vec8s vresi, vpred, vres, vsum1, vsum2;
-            Vec16uc tmp;
+            __m128i resi, pred, sum1, sum2;
+            __m128i temp;
 
-            tmp.load(pPred + x);
+            temp = _mm_loadu_si128((__m128i const*)(pPred + x));
+            pred = _mm_unpacklo_epi8(temp, _mm_setzero_si128());         // interleave with zero extensions
 
-            vpred = extend_low(tmp);
-            vresi.load(pResi + x);
-            vsum1 = vpred + vresi;
-            vsum1 = min(255, max(vsum1, 0));
-            vsum1.store(pRecQt + x);
+            resi = _mm_loadu_si128((__m128i const*)(pResi + x));
+            sum1 = _mm_add_epi16(pred, resi);
 
-            vpred = extend_high(tmp);
-            vresi.load(pResi + x + 8);
-            vsum2 = vpred + vresi;
-            vsum2 = min(255, max(vsum2, 0));
-            vsum2.store(pRecQt + x + 8);
+            __m128i maxval = _mm_set1_epi16(0xff);                       // broadcast value 255(32-bit integer) to all elements of maxval
+            __m128i minval = _mm_set1_epi16(0x00);                       // broadcast value 0(32-bit integer) to all elements of minval
+            sum1 = _mm_min_epi16(maxval, _mm_max_epi16(sum1, minval));
+            _mm_storeu_si128((__m128i*)(pRecQt + x), sum1);
 
-            tmp = compress(vsum1, vsum2);
-            tmp.store(pReco + x);
-            tmp.store(pRecIPred + x);
+            pred = _mm_unpackhi_epi8(temp, _mm_setzero_si128());         // interleave with zero extensions
+            resi = _mm_loadu_si128((__m128i const*)(pResi + x + 8));
+            sum2 = _mm_add_epi16(pred, resi);
+
+            sum2 = _mm_min_epi16(maxval, _mm_max_epi16(sum2, minval));
+            _mm_storeu_si128((__m128i*)(pRecQt + x + 8), sum2);
+
+            __m128i mask = _mm_set1_epi32(0x00FF00FF);                   // mask for low bytes
+            __m128i low_mask  = _mm_and_si128(sum1, mask);               // bytes of low
+            __m128i high_mask = _mm_and_si128(sum2, mask);               // bytes of high
+            temp = _mm_packus_epi16(low_mask, high_mask);                // unsigned pack
+
+            _mm_storeu_si128((__m128i*)(pReco + x), temp);
+            _mm_storeu_si128((__m128i*)(pRecIPred + x), temp);
         }
 
         pPred     += stride;
