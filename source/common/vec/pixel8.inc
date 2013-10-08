@@ -29,22 +29,54 @@
 
 void getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
 {
-    Vec16uc f, p;
-    Vec8s r;
+    __m128i T00, T01, T02, T03, T04;
 
-    for (int y = 0; y < 16; y++)
-    {
-        f.load_a(fenc);
-        p.load_a(pred);
-        r = extend_low(f) - extend_low(p);
-        r.store(resi);
-        r = extend_high(f) - extend_high(p);
-        r.store(resi + 8);
+#define RESIDUAL_16x4(BASE) \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 0) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 0) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 0) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 0) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 1) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 1) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 1) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 1) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 2) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 2) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 2) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 2) * stride), T04); \
+    T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 3) * stride)); \
+    T01 = _mm_load_si128((__m128i*)(pred + (BASE + 3) * stride)); \
+    T02 = _mm_unpacklo_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpacklo_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + (BASE + 3) * stride), T04); \
+    T02 = _mm_unpackhi_epi8(T00, _mm_setzero_si128()); \
+    T03 = _mm_unpackhi_epi8(T01, _mm_setzero_si128()); \
+    T04 = _mm_sub_epi16(T02, T03); \
+    _mm_store_si128((__m128i*)(resi + 8 + (BASE + 3) * stride), T04)
 
-        fenc += stride;
-        pred += stride;
-        resi += stride;
-    }
+    RESIDUAL_16x4(0);
+    RESIDUAL_16x4(4);
+    RESIDUAL_16x4(8);
+    RESIDUAL_16x4(12);
 }
 
 void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
