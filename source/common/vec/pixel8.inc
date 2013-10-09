@@ -27,33 +27,45 @@
 
 /* intrinsics for when pixel type is uint8_t */
 
-void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
+    __m128i w00, roundoff, ofs, fs, tmpsrc, tmpdst, tmp;
     int x, y;
-    Vec8s tmp;
 
-    Vec4i vw0(w0), vsrc, iofs(IF_INTERNAL_OFFS), ofs(offset), vround(round), vdst;
+    w00 = _mm_set1_epi32(w0);
+    ofs = _mm_set1_epi32(IF_INTERNAL_OFFS);
+    fs = _mm_set1_epi32(offset);
+    roundoff = _mm_set1_epi32(round);
     for (y = height - 1; y >= 0; y--)
     {
         for (x = 0; x <= width - 4; x += 4)
         {
-            tmp  = load_partial(const_int(8), src + x);
-            vsrc = extend_low(tmp);
-            vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
-            store_partial(const_int(4), dst + x, compress_unsafe(compress_saturated(vdst, vdst), 0));
+            tmpsrc = _mm_loadl_epi64((__m128i*)(src + x));
+            tmpsrc = _mm_unpacklo_epi16(tmpsrc, _mm_setzero_si128());
+            tmpdst = _mm_add_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(w00, _mm_add_epi32(tmpsrc, ofs)), roundoff), shift), fs);
+            *(uint32_t*)(dst + x) = _mm_cvtsi128_si32(_mm_packus_epi16(_mm_packs_epi32(tmpdst, tmpdst), _mm_setzero_si128()));
         }
 
         if (width > x)
         {
-            tmp  = load_partial(const_int(4), src + x);
-            vsrc = extend_low(tmp);
-            vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
-            compress_unsafe(compress_saturated(vdst, vdst), 0).store_partial(2, dst + x);
+            tmpsrc = _mm_loadl_epi64((__m128i*)(src + x));
+            tmpsrc = _mm_unpacklo_epi16(tmpsrc, _mm_setzero_si128());
+            tmpdst = _mm_add_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(w00, _mm_add_epi32(tmpsrc, ofs)), roundoff), shift), fs);
+            tmp = _mm_packus_epi16(_mm_packs_epi32(tmpdst, tmpdst), _mm_setzero_si128());
+            union
+            {
+                int8_t  c[16];
+                int16_t s[8];
+            } u;
+
+            _mm_storeu_si128((__m128i*)u.c, tmp);
+            ((int16_t*)(dst + x))[0] = u.s[0];    //to store only first 16-bit from 128-bit to memory
         }
         src += srcStride;
         dst += dstStride;
     }
 }
+
 
 void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr_t destStride, int width, int height, int w0, int arg_round, int shift, int offset)
  {
