@@ -39,8 +39,6 @@
 #include <algorithm>
 #include <cstring>
 
-using namespace std;
-
 namespace x265 {
 
 //! \ingroup TLibEncoder
