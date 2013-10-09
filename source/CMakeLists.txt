@@ -150,11 +150,14 @@ if(MSVC OR XCODE)
     target_link_libraries(x265-shared assembly)
     target_link_libraries(x265-static assembly)
 endif()
-set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
 set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
-if(GCC)
-	set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
+if(WIN32)
+    set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
+    set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
 endif()
+# WIN32 builds static: x265-static.lib  shared: x265.dll + x265.lib (shim loader)
+# MINGW builds static: libx265.a        shared: libx265.so + libx265.so.a
+# *NIX  builds static: libx265.a        shared: libx265.so
 
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
