@@ -595,6 +595,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         nxnCost += subTempPartCU->m_totalCost;
                     }
                 }
+                subTempPartCU->copyToPic((UChar)nextDepth);
             }
 
             float lambda = 1.0f;
