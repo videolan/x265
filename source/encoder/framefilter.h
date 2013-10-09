@@ -32,7 +32,7 @@
 namespace x265 {
 // private x265 namespace
 
-class TEncTop;
+class Encoder;
 
 // Manages the processing of a single frame loopfilter
 class FrameFilter
@@ -43,7 +43,7 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(TEncTop *top, int numRows, TEncSbac* rdGoOnSbacCoder);
+    void init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder);
 
     void destroy();
 

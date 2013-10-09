@@ -22,7 +22,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "TLibEncoder/TEncTop.h"
+#include "encoder.h"
 #include "PPA/ppa.h"
 #include "framefilter.h"
 #include "wavefront.h"
@@ -53,7 +53,7 @@ void FrameFilter::destroy()
     }
 }
 
-void FrameFilter::init(TEncTop *top, int numRows, TEncSbac* rdGoOnSbacCoder)
+void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
 {
     m_cfg = top;
     m_numRows = numRows;

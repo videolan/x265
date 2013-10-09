@@ -55,7 +55,7 @@
 namespace x265 {
 // private namespace
 
-class TEncTop;
+class Encoder;
 class TEncSbac;
 class TEncCavlc;
 
@@ -115,7 +115,7 @@ public:
 
     TEncCu();
 
-    void init(TEncTop* top);
+    void init(Encoder* top);
     void create(UChar totalDepth, UInt maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);

@@ -36,7 +36,7 @@
 namespace x265 {
 // private x265 namespace
 
-class TEncTop;
+class Encoder;
 
 /* manages the state of encoding one row of CTU blocks.  When
  * WPP is active, several rows will be simultaneously encoded.
@@ -59,7 +59,7 @@ public:
     TEncSbac            ***m_rdSbacCoders;
     TEncBinCABACCounter ***m_binCodersCABAC;
 
-    void create(TEncTop* top);
+    void create(Encoder* top);
 
     void destroy();
 

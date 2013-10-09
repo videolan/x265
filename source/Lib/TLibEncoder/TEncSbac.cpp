@@ -35,7 +35,6 @@
     \brief    SBAC encoder class
 */
 
-#include "TEncTop.h"
 #include "TEncSbac.h"
 
 #include <map>

@@ -36,17 +36,18 @@
 */
 
 #include <stdio.h>
-#include "TEncTop.h"
 #include "TEncCu.h"
 #include "PPA/ppa.h"
 #include "primitives.h"
+#include "encoder.h"
 #include "common.h"
 
 #include <cmath>
 #include <algorithm>
-using namespace std;
 
 using namespace x265;
+
+using namespace std;
 
 //! \ingroup TLibEncoder
 //! \{
@@ -369,7 +370,7 @@ void TEncCu::destroy()
 
 /** \param    pcEncTop      pointer of encoder class
  */
-void TEncCu::init(TEncTop* top)
+void TEncCu::init(Encoder* top)
 {
     m_cfg = top;
 }

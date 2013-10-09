@@ -47,7 +47,7 @@ namespace x265 {
 // private x265 namespace
 
 class ThreadPool;
-class TEncTop;
+class Encoder;
 
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public Thread
@@ -60,7 +60,7 @@ public:
 
     void setThreadPool(ThreadPool *p);
 
-    void init(TEncTop *top, int numRows);
+    void init(Encoder *top, int numRows);
 
     void destroy();
 
@@ -169,7 +169,7 @@ protected:
 
     void determineSliceBounds();
 
-    TEncTop*                 m_top;
+    Encoder*                 m_top;
     TEncCfg*                 m_cfg;
 
     WeightPredAnalysis       m_wp;

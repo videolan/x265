@@ -23,13 +23,13 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "TLibEncoder/TEncTop.h"
+#include "encoder.h"
 #include "PPA/ppa.h"
 #include "cturow.h"
 
 using namespace x265;
 
-void CTURow::create(TEncTop* top)
+void CTURow::create(Encoder* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);

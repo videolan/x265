@@ -25,7 +25,6 @@ set(LIBENCODER_HDR
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.h
     ../Lib/TLibEncoder/TEncSbac.h
     ../Lib/TLibEncoder/TEncSearch.h
-    ../Lib/TLibEncoder/TEncTop.h
     ../Lib/TLibEncoder/WeightPredAnalysis.h)
 set(LIBENCODER_SRC
     ../Lib/TLibEncoder/NALwrite.cpp
@@ -39,7 +38,6 @@ set(LIBENCODER_SRC
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.cpp
     ../Lib/TLibEncoder/TEncSbac.cpp
     ../Lib/TLibEncoder/TEncSearch.cpp
-    ../Lib/TLibEncoder/TEncTop.cpp
     ../Lib/TLibEncoder/WeightPredAnalysis.cpp)
 source_group(TLibEncoder FILES ${LIBENCODER_SRC})
 source_group(TLibEncoderH FILES ${LIBENCODER_HDR})
@@ -70,4 +68,5 @@ add_library(encoder OBJECT ../x265.h
     cturow.cpp cturow.h
     dpb.cpp dpb.h
     ratecontrol.cpp ratecontrol.h
-    compress.cpp encoder.cpp)
+    compress.cpp
+    encoder.cpp encoder.h)

@@ -26,8 +26,8 @@
 #include "PPA/ppa.h"
 #include "wavefront.h"
 
-#include "TLibEncoder/TEncTop.h"
 #include "TLibEncoder/NALwrite.h"
+#include "encoder.h"
 #include "frameencoder.h"
 #include "cturow.h"
 
@@ -98,7 +98,7 @@ void FrameEncoder::destroy()
     stop();
 }
 
-void FrameEncoder::init(TEncTop *top, int numRows)
+void FrameEncoder::init(Encoder *top, int numRows)
 {
     m_top = top;
     m_cfg = top;
@@ -125,12 +125,12 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_frameFilter.init(top, numRows, getRDGoOnSbacCoder(0));
 
     // initialize SPS
-    top->xInitSPS(&m_sps);
+    top->initSPS(&m_sps);
 
     // initialize PPS
     m_pps.setSPS(&m_sps);
 
-    top->xInitPPS(&m_pps);
+    top->initPPS(&m_pps);
 
     m_sps.setNumLongTermRefPicSPS(0);
     if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
@@ -292,7 +292,7 @@ void FrameEncoder::threadMain()
     // worker thread routine for FrameEncoder
     do
     {
-        m_enable.wait(); // TEncTop::encode() triggers this event
+        m_enable.wait(); // Encoder::encode() triggers this event
         if (m_threadActive)
         {
             compressFrame();
