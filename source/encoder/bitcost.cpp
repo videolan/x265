@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <stdint.h>
-#include <algorithm>
 #include <math.h>
 
 using namespace x265;

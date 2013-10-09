@@ -28,16 +28,14 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "primitives.h"
+#include "TLibCommon/TComRom.h"
+
 #define INSTRSET 4
 #include "vectorclass.h"
 
-#include "primitives.h"
-#include "TLibCommon/TypeDef.h"    // TCoeff, int, UInt
-#include "TLibCommon/TComRom.h"
-
 #include <assert.h>
 #include <string.h>
-#include <algorithm>
 
 using namespace x265;
 
