@@ -42,22 +42,23 @@ DPB::~DPB()
 }
 
 // move unreferenced pictures from picList to freeList for recycle
-void DPB::recycleUnreferenced(TComList<TComPic*>& freeList)
+void DPB::recycleUnreferenced(PicList& freeList)
 {
-    TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    while (iterPic != m_picList.end())
+    TComPic *iterPic = m_picList.first();
+    while (iterPic)
     {
-        TComPic *pic = *(iterPic++);
+        TComPic *pic = iterPic;
+        iterPic = iterPic->m_next;
         if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
         {
             pic->getPicYuvRec()->clearReferences();
             pic->m_reconRowCount = 0;
 
             // iterator is invalidated by remove, restart scan
-            m_picList.remove(pic);
-            iterPic = m_picList.begin();
+            m_picList.remove(*pic);
+            iterPic = m_picList.first();
 
-            freeList.pushBack(pic);
+            freeList.pushBack(*pic);
         }
     }
 }
@@ -68,7 +69,7 @@ void DPB::prepareEncode(TComPic *pic)
 
     int pocCurr = pic->getSlice()->getPOC();
 
-    m_picList.pushFront(pic);
+    m_picList.pushFront(*pic);
 
     TComSlice* slice = pic->getSlice();
     if (getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
@@ -198,22 +199,20 @@ void DPB::prepareEncode(TComPic *pic)
 
 void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer)
 {
-    TComPic * refPic;
     unsigned int poci = 0, numNeg = 0, numPos = 0;
 
-    TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    while ((iterPic != m_picList.end()) && (poci < maxDecPicBuffer - 1))
+    TComPic* iterPic = m_picList.first();
+    while (iterPic && (poci < maxDecPicBuffer - 1))
     {
-        refPic = *(iterPic);
-        if ((refPic->getPOC() != curPoc) && (refPic->getSlice()->isReferenced()))
+        if ((iterPic->getPOC() != curPoc) && (iterPic->getSlice()->isReferenced()))
         {
-            rps->m_POC[poci] = refPic->getPOC();
+            rps->m_POC[poci] = iterPic->getPOC();
             rps->m_deltaPOC[poci] = rps->m_POC[poci] - curPoc;
             (rps->m_deltaPOC[poci] < 0) ? numNeg++ : numPos++;
             rps->m_used[poci] = !isRAP;
             poci++;
         }
-        iterPic++;
+        iterPic = iterPic->m_next;
     }
 
     rps->m_numberOfPictures = poci;
@@ -245,7 +244,6 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
  */
 void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 {
-    TComPic* outPic;
 
     if (nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
         || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
@@ -254,13 +252,12 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
         || nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR or BLA picture
     {
         // mark all pictures as not used for reference
-        TComList<TComPic*>::iterator iterPic = m_picList.begin();
-        while (iterPic != m_picList.end())
+        TComPic* iterPic = m_picList.first();
+        while (iterPic)
         {
-            outPic = *(iterPic);
-            if (outPic->getPOC() != pocCurr)
-                outPic->getSlice()->setReferenced(false);
-            iterPic++;
+            if (iterPic->getPOC() != pocCurr)
+                iterPic->getSlice()->setReferenced(false);
+            iterPic = iterPic->m_next;
         }
 
         if (nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -274,13 +271,12 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
     {
         if (m_bRefreshPending == true && pocCurr > m_pocCRA) // CRA reference marking pending
         {
-            TComList<TComPic*>::iterator iterPic = m_picList.begin();
-            while (iterPic != m_picList.end())
+            TComPic* iterPic = m_picList.first();
+            while (iterPic)
             {
-                outPic = *(iterPic);
-                if (outPic->getPOC() != pocCurr && outPic->getPOC() != m_pocCRA)
-                    outPic->getSlice()->setReferenced(false);
-                iterPic++;
+                if (iterPic->getPOC() != pocCurr && iterPic->getPOC() != m_pocCRA)
+                    iterPic->getSlice()->setReferenced(false);
+                iterPic = iterPic->m_next;
             }
 
             m_bRefreshPending = false;
@@ -300,10 +296,11 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
     int i, isReference;
 
     // loop through all pictures in the reference picture buffer
-    TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    while (iterPic != m_picList.end())
+    TComPic* iterPic = m_picList.first();
+    while (iterPic)
     {
-        outPic = *(iterPic++);
+        outPic = iterPic;
+        iterPic = iterPic->m_next;
 
         if (!outPic->getSlice()->isReferenced())
         {
@@ -475,19 +472,17 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice)
     {
         // Check if MSB present flag should be enabled.
         // Check if the buffer contains any pictures that have the same LSB.
-        TComList<TComPic*>::iterator iterPic = m_picList.begin();
-        TComPic* pic;
-        while (iterPic != m_picList.end())
+        TComPic* iterPic = m_picList.first();
+        while (iterPic)
         {
-            pic = *iterPic;
-            if ((getLSB(pic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
-                (pic->getSlice()->isReferenced()) &&                                  // Reference picture
-                (pic->getPOC() != longtermPicsPoc[i]))                                // Not the LTRP itself
+            if ((getLSB(iterPic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
+                (iterPic->getSlice()->isReferenced()) &&                                  // Reference picture
+                (iterPic->getPOC() != longtermPicsPoc[i]))                                // Not the LTRP itself
             {
                 mSBPresentFlag[i] = true;
                 break;
             }
-            iterPic++;
+            iterPic = iterPic->m_next;
         }
     }
 

@@ -153,28 +153,28 @@ void  TComSlice::allocSubstreamSizes(UInt numSubstreams)
     m_substreamSizes = new UInt[numSubstreams > 0 ? numSubstreams - 1 : 0];
 }
 
-TComPic* TComSlice::xGetRefPic(TComList<TComPic*>& picList, int poc)
+TComPic* TComSlice::xGetRefPic(PicList& picList, int poc)
 {
-    TComList<TComPic*>::iterator iterPic = picList.begin();
+    TComPic *iterPic = picList.first();
     TComPic* pic = NULL;
 
-    while (iterPic != picList.end())
+    while (iterPic)
     {
-        pic = *iterPic;
+        pic = iterPic;
         if (pic->getPOC() == poc)
         {
             break;
         }
-        iterPic++;
+        iterPic = iterPic->m_next;
     }
 
     return pic;
 }
 
-TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, int poc, bool pocHasMsb)
+TComPic* TComSlice::xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb)
 {
-    TComList<TComPic*>::iterator  iterPic = picList.begin();
-    TComPic* pic = *(iterPic);
+    TComPic* iterPic = picList.first();
+    TComPic* pic = iterPic;
     TComPic* stPic = pic;
 
     int pocCycle = 1 << getSPS()->getBitsForPOC();
@@ -183,9 +183,9 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, int poc, boo
         poc = poc % pocCycle;
     }
 
-    while (iterPic != picList.end())
+    while (iterPic)
     {
-        pic = *(iterPic);
+        pic = iterPic;
         if (pic && pic->getPOC() != this->getPOC() && pic->getSlice()->isReferenced())
         {
             int picPoc = pic->getPOC();
@@ -208,7 +208,7 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& picList, int poc, boo
             }
         }
 
-        iterPic++;
+        iterPic = iterPic->m_next;
     }
 
     return stPic;
@@ -243,7 +243,7 @@ void TComSlice::setList1IdxToList0Idx()
     }
 }
 
-void TComSlice::setRefPicList(TComList<TComPic*>& picList, bool checkNumPocTotalCurr)
+void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
 {
     if (!checkNumPocTotalCurr)
     {

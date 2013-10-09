@@ -29,6 +29,8 @@
 #include "TLibEncoder/TEncCfg.h"
 #include "TLibEncoder/TEncAnalyze.h"
 
+#include "piclist.h"
+
 struct x265_t {};
 
 namespace x265 {
@@ -46,7 +48,7 @@ class Encoder : public TEncCfg, public x265_t
 private:
 
     int                m_pocLast;          ///< time index (POC)
-    TComList<TComPic*> m_freeList;
+    PicList            m_freeList;
 
     ThreadPool*        m_threadPool;
     Lookahead*         m_lookahead;

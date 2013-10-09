@@ -24,7 +24,7 @@
 #ifndef X265_DPB_H
 #define X265_DPB_H
 
-#include "TLibCommon/TComList.h"
+#include "piclist.h"
 
 namespace x265 {
 // private namespace for x265
@@ -42,7 +42,7 @@ public:
     int                m_pocCRA;
     bool               m_bRefreshPending;
     TEncCfg*           m_cfg;
-    TComList<TComPic*> m_picList;
+    PicList            m_picList;
     int                m_maxRefL0;
     int                m_maxRefL1;
 
@@ -60,7 +60,7 @@ public:
 
     void prepareEncode(TComPic*);
 
-    void recycleUnreferenced(TComList<TComPic*>& freeList);
+    void recycleUnreferenced(PicList& freeList);
 
 protected:
 

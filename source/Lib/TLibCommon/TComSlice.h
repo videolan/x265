@@ -43,6 +43,7 @@
 #include "TComList.h"
 #include "x265.h"  // NAL type enums
 #include "reference.h"
+#include "piclist.h"
 
 #include <cstring>
 #include <map>
@@ -1584,7 +1585,7 @@ public:
 
     void      setPic(TComPic* p)                  { m_pic = p; }
 
-    void      setRefPicList(TComList<TComPic*>& picList, bool checkNumPocTotalCurr = false);
+    void      setRefPicList(PicList& picList, bool checkNumPocTotalCurr = false);
 
     void      setRefPOCList();
 
@@ -1690,9 +1691,9 @@ public:
 
 protected:
 
-    TComPic*  xGetRefPic(TComList<TComPic*>& picList, int poc);
+    TComPic*  xGetRefPic(PicList& picList, int poc);
 
-    TComPic*  xGetLongTermRefPic(TComList<TComPic*>& picList, int poc, bool pocHasMsb);
+    TComPic*  xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb);
 }; // END CLASS DEFINITION TComSlice
 
 template<class T>
