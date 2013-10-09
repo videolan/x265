@@ -261,27 +261,28 @@ int sse_ss64(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 template<int ly>
 int sse_sp4(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
-    int rows = ly;
-    Vec8s m1;
-    Vec16uc n1;
+    __m128i sum = _mm_setzero_si128();
 
-    Vec4i diff_low(0);
-    Vec4i sum_low(0);
-    for (; rows != 0; rows--)
+    for(int i = 0; i < ly; i++)
     {
-        m1.load(fenc);
-        n1.fromUint32(*(uint32_t*)fref);
-        diff_low = extend_low(m1) - extend_low(extend_low(n1));
-        diff_low = diff_low * diff_low;
-        sum_low += diff_low;
+        __m128i T00, T01, T02, T03;
+        T00 = _mm_loadu_si128((__m128i*)(fenc));
+        T01 = _mm_cvtsi32_si128(*(uint32_t*)(fref));
+        T00 = _mm_unpacklo_epi16(T00, _mm_setzero_si128());
+        T01 = _mm_unpacklo_epi8(T01, _mm_setzero_si128());
+        T01 = _mm_unpacklo_epi16(T01, _mm_setzero_si128());
+        T02 = _mm_sub_epi32(T00, T01);
+        T03 = _mm_mullo_epi32(T02, T02);
+        sum = _mm_add_epi32(sum, T03);
 
         fenc += strideFenc;
         fref += strideFref;
     }
+    sum = _mm_hadd_epi32(sum, _mm_setzero_si128());
+    sum = _mm_hadd_epi32(sum, _mm_setzero_si128());
 
-    return horizontal_add(sum_low);
+    return _mm_cvtsi128_si32(sum);
 }
-
 template<int ly>
 int sse_sp8(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
