@@ -45,6 +45,7 @@
 #include "piclist.h"
 
 #include <assert.h>
+#include <cstring>
 
 //! \ingroup TLibCommon
 //! \{
