@@ -40,14 +40,12 @@
 
 #include "CommonDef.h"
 #include "TComRom.h"
-#include "TComList.h"
 #include "x265.h"  // NAL type enums
 #include "reference.h"
 #include "piclist.h"
 
-#include <cstring>
+#include <assert.h>
 #include <map>
-#include <vector>
 
 //! \ingroup TLibCommon
 //! \{
@@ -1619,7 +1617,6 @@ public:
     void setList1IdxToList0Idx();
 
     void setTLayerInfo(UInt tlayer);
-    void decodingMarking(TComList<TComPic*>& picList, int gopSize, int& maxRefPicNum);
 
     void setMaxNumMergeCand(UInt val)          { m_maxNumMergeCand = val; }
 

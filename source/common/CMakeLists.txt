@@ -24,7 +24,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComBitCounter.h
     ../Lib/TLibCommon/TComBitStream.h
     ../Lib/TLibCommon/TComDataCU.h
-    ../Lib/TLibCommon/TComList.h
     ../Lib/TLibCommon/TComLoopFilter.h
     ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComPattern.h

@@ -23,7 +23,6 @@
 
 #include "TLibCommon/NAL.h"
 #include "TLibCommon/CommonDef.h"
-#include "TLibCommon/TComList.h"
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComPicYuv.h"
 #include "TLibCommon/TComRom.h"
