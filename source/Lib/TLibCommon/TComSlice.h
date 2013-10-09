@@ -45,7 +45,6 @@
 #include "piclist.h"
 
 #include <assert.h>
-#include <map>
 
 //! \ingroup TLibCommon
 //! \{
@@ -1692,115 +1691,6 @@ protected:
 
     TComPic*  xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb);
 }; // END CLASS DEFINITION TComSlice
-
-template<class T>
-class ParameterSetMap
-{
-public:
-
-    ParameterSetMap(int maxId)
-        : m_maxId(maxId)
-    {}
-
-    ~ParameterSetMap()
-    {
-        for (typename std::map<int, T *>::iterator i = m_paramsetMap.begin(); i != m_paramsetMap.end(); i++)
-        {
-            delete (*i).second;
-        }
-    }
-
-    void storePS(int psId, T *ps)
-    {
-        assert(psId < m_maxId);
-        if (m_paramsetMap.find(psId) != m_paramsetMap.end())
-        {
-            delete m_paramsetMap[psId];
-        }
-        m_paramsetMap[psId] = ps;
-    }
-
-    void mergePSList(ParameterSetMap<T> &rPsList)
-    {
-        for (typename std::map<int, T *>::iterator i = rPsList.m_paramsetMap.begin(); i != rPsList.m_paramsetMap.end(); i++)
-        {
-            storePS(i->first, i->second);
-        }
-
-        rPsList.m_paramsetMap.clear();
-    }
-
-    T* getPS(int psId)
-    {
-        return (m_paramsetMap.find(psId) == m_paramsetMap.end()) ? NULL : m_paramsetMap[psId];
-    }
-
-    T* getFirstPS()
-    {
-        return (m_paramsetMap.begin() == m_paramsetMap.end()) ? NULL : m_paramsetMap.begin()->second;
-    }
-
-private:
-
-    std::map<int, T *> m_paramsetMap;
-    int               m_maxId;
-};
-
-class ParameterSetManager
-{
-public:
-
-    ParameterSetManager();
-    virtual ~ParameterSetManager();
-
-    //! store sequence parameter set and take ownership of it
-    void storeVPS(TComVPS *vps) { m_vpsMap.storePS(vps->getVPSId(), vps); }
-
-    //! get pointer to existing video parameter set
-    TComVPS* getVPS(int vpsId)  { return m_vpsMap.getPS(vpsId); }
-
-    TComVPS* getFirstVPS()      { return m_vpsMap.getFirstPS(); }
-
-    //! store sequence parameter set and take ownership of it
-    void storeSPS(TComSPS *sps) { m_spsMap.storePS(sps->getSPSId(), sps); }
-
-    //! get pointer to existing sequence parameter set
-    TComSPS* getSPS(int spsId)  { return m_spsMap.getPS(spsId); }
-
-    TComSPS* getFirstSPS()      { return m_spsMap.getFirstPS(); }
-
-    //! store picture parameter set and take ownership of it
-    void storePPS(TComPPS *pps) { m_ppsMap.storePS(pps->getPPSId(), pps); }
-
-    //! get pointer to existing picture parameter set
-    TComPPS* getPPS(int ppsId)  { return m_ppsMap.getPS(ppsId); }
-
-    TComPPS* getFirstPPS()      { return m_ppsMap.getFirstPS(); }
-
-    //! activate a SPS from a active parameter sets SEI message
-    //! \returns true, if activation is successful
-    bool activateSPSWithSEI(int SPSId);
-
-    //! activate a PPS and depending on isIDR parameter also SPS and VPS
-    //! \returns true, if activation is successful
-    bool activatePPS(int ppsId, bool isIRAP);
-
-    TComVPS* getActiveVPS() { return m_vpsMap.getPS(m_activeVPSId); }
-
-    TComSPS* getActiveSPS() { return m_spsMap.getPS(m_activeSPSId); }
-
-    TComPPS* getActivePPS() { return m_ppsMap.getPS(m_activePPSId); }
-
-protected:
-
-    ParameterSetMap<TComVPS> m_vpsMap;
-    ParameterSetMap<TComSPS> m_spsMap;
-    ParameterSetMap<TComPPS> m_ppsMap;
-
-    int m_activeVPSId;
-    int m_activeSPSId;
-    int m_activePPSId;
-};
 }
 //! \}
 
