@@ -531,37 +531,37 @@ void calcRecons4(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* rec
     }
 }
 
-void calcRecons8(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+void calcRecons8(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recIPred, int stride, int recstride, int predstride)
 {
     for (int y = 0; y < 8; y++)
     {
-        __m128i resi, pred, sum;
+        __m128i resi1, pred1, sum;
         __m128i temp;
 
-        temp = _mm_loadu_si128((__m128i const*)pPred);
-        pred = _mm_unpacklo_epi8(temp, _mm_setzero_si128());        // interleave with zero extensions
+        temp = _mm_loadu_si128((__m128i const*)pred);
+        pred1 = _mm_unpacklo_epi8(temp, _mm_setzero_si128());       // interleave with zero extensions
 
-        resi = _mm_loadu_si128((__m128i const*)pResi);
-        sum = _mm_add_epi16(pred, resi);
+        resi1 = _mm_loadu_si128((__m128i const*)resi);
+        sum = _mm_add_epi16(pred1, resi1);
 
         __m128i maxval = _mm_set1_epi16(0xff);                      // broadcast value 255(32-bit integer) to all elements of maxval
         __m128i minval = _mm_set1_epi16(0x00);                      // broadcast value 0(32-bit integer) to all elements of minval
         sum = _mm_min_epi16(maxval, _mm_max_epi16(sum, minval));
-        _mm_storeu_si128((__m128i*)pRecQt, sum);
+        _mm_storeu_si128((__m128i*)recQt, sum);
 
         __m128i mask = _mm_set1_epi32(0x00FF00FF);                  // mask for low bytes
         __m128i low_mask  = _mm_and_si128(sum, mask);               // bytes of low
         __m128i high_mask = _mm_and_si128(sum, mask);               // bytes of high
         temp = _mm_packus_epi16(low_mask, high_mask);               // unsigned pack
 
-        _mm_storel_epi64((__m128i*)pReco, temp);
-        _mm_storel_epi64((__m128i*)pRecIPred, temp);
+        _mm_storel_epi64((__m128i*)reco, temp);
+        _mm_storel_epi64((__m128i*)recIPred, temp);
 
-        pPred     += stride;
-        pResi     += stride;
-        pReco     += stride;
-        pRecQt    += recstride;
-        pRecIPred += ipredstride;
+        pred     += stride;
+        resi     += stride;
+        reco     += stride;
+        recQt    += recstride;
+        recIPred += predstride;
     }
 }
 
