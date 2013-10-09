@@ -35,14 +35,13 @@
     \brief    class for handling bitstream
 */
 
-#include <stdint.h>
-#include <vector>
 #include "TComBitStream.h"
-#include <string.h>
-#include <memory.h>
 #include "common.h"
 
-using namespace std;
+#include <stdint.h>
+#include <string.h>
+#include <memory.h>
+
 using namespace x265;
 
 //! \ingroup TLibCommon

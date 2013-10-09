@@ -36,7 +36,6 @@
 
 #include "CommonDef.h"
 #include "x265.h"
-#include <vector>
 #include <sstream>
 
 namespace x265 {

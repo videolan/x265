@@ -34,8 +34,6 @@
 #ifndef X265_SEI_H
 #define X265_SEI_H
 
-#include <list>
-#include <vector>
 #include <cstring>
 
 namespace x265 {

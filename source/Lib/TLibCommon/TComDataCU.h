@@ -39,17 +39,14 @@
 #ifndef X265_TCOMDATACU_H
 #define X265_TCOMDATACU_H
 
-#include <assert.h>
-
-// Include files
 #include "CommonDef.h"
 #include "TComMotionInfo.h"
 #include "TComSlice.h"
 #include "TComRdCost.h"
 #include "TComPattern.h"
 
+#include <assert.h>
 #include <algorithm>
-#include <vector>
 
 namespace x265 {
 // private namespace

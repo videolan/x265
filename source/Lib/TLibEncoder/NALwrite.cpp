@@ -34,12 +34,10 @@
 #include "TLibCommon/NAL.h"
 #include "TLibCommon/TComBitStream.h"
 #include "NALwrite.h"
-
-#include <vector>
-#include <algorithm>
-#include <ostream>
-#include <cstring>
 #include "common.h"
+
+#include <algorithm>
+#include <cstring>
 
 using namespace std;
 
