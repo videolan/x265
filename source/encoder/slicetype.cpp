@@ -103,8 +103,8 @@ void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
     pic->m_lowres.init(pic->getPicYuvOrg(), pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
 
-    inputQueue.pushBack(pic);
-    if (inputQueue.size() >= (size_t)cfg->param.lookaheadDepth)
+    inputQueue.pushBack(*pic);
+    if (inputQueue.size() >= cfg->param.lookaheadDepth)
         slicetypeDecide();
 }
 
@@ -123,7 +123,7 @@ void Lookahead::slicetypeDecide()
         pic->m_lowres.sliceType = X265_TYPE_I;
         pic->m_lowres.bKeyframe = true;
         lastKeyframe = 0;
-        outputQueue.pushBack(pic);
+        outputQueue.pushBack(*pic);
         numDecided++;
         frames[0] = &(pic->m_lowres);
         return;
@@ -167,7 +167,7 @@ void Lookahead::slicetypeDecide()
         //Push pictures in encode order
         for (int i = 0; i < dframes; i++)
         {
-            outputQueue.pushBack(picsAnalysed[i]);
+            outputQueue.pushBack(*picsAnalysed[i]);
         }
 
         if (pic)
@@ -183,7 +183,7 @@ void Lookahead::slicetypeDecide()
         pic->m_lowres.sliceType = X265_TYPE_I;
         pic->m_lowres.bKeyframe = true;
         lastKeyframe = pic->m_lowres.frameNum;
-        outputQueue.pushBack(pic);
+        outputQueue.pushBack(*pic);
         numDecided++;
     }
     else if (cfg->param.bframes == 0 || inputQueue.size() == 1)
@@ -197,7 +197,7 @@ void Lookahead::slicetypeDecide()
             pic->m_lowres.bKeyframe = true;
             lastKeyframe = pic->m_lowres.frameNum;
         }
-        outputQueue.pushBack(pic);
+        outputQueue.pushBack(*pic);
         numDecided++;
     }
     else
@@ -222,14 +222,14 @@ void Lookahead::slicetypeDecide()
         TComPic *pic = list[j - 1];
         if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
             pic->m_lowres.sliceType = X265_TYPE_P;
-        outputQueue.pushBack(pic);
+        outputQueue.pushBack(*pic);
         numDecided++;
         for (int i = 0; i < j - 1; i++)
         {
             pic = list[i];
             if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
                 pic->m_lowres.sliceType = X265_TYPE_B;
-            outputQueue.pushBack(pic);
+            outputQueue.pushBack(*pic);
             numDecided++;
         }
     }
@@ -561,15 +561,16 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     int reset_start;
     int vbv_lookahead = 0;
 
-    TComList<TComPic*>::iterator iterPic = inputQueue.begin();
-    for (framecnt = 0; (framecnt < maxSearch) && (framecnt < (int)inputQueue.size()) && (*iterPic)->m_lowres.sliceType == X265_TYPE_AUTO; framecnt++)
+    TComPic* pic = inputQueue.first();
+    for (framecnt = 0; (framecnt < maxSearch) && (framecnt < (int)inputQueue.size()) && pic->m_lowres.sliceType == X265_TYPE_AUTO; framecnt++)
     {
-        frames[framecnt + 1] = &((*iterPic++)->m_lowres);
+        frames[framecnt + 1] = &pic->m_lowres;
+        pic = pic->m_next;
     }
 
     if (!framecnt)
     {
-        frames[1] = &((*iterPic)->m_lowres);
+        frames[1] = &pic->m_lowres;
         frames[2] = NULL;
         return;
     }

@@ -24,8 +24,8 @@
 #ifndef X265_SLICETYPE_H
 #define X265_SLICETYPE_H
 
-#include "TLibCommon/TComList.h"
 #include "motion.h"
+#include "piclist.h"
 
 // arbitrary, but low because SATD scores are 1/4 normal
 #define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
@@ -50,8 +50,8 @@ struct Lookahead
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
 
-    TComList<TComPic*> inputQueue;  // input pictures in order received
-    TComList<TComPic*> outputQueue; // pictures to be encoded, in encode order
+    PicList inputQueue;  // input pictures in order received
+    PicList outputQueue; // pictures to be encoded, in encode order
 
     Lookahead(TEncCfg *);
     ~Lookahead();
