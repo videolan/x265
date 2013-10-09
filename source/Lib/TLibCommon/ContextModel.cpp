@@ -37,10 +37,8 @@
 
 #include "ContextModel.h"
 #include "TComRom.h"
+#include "common.h"
 
-#include <algorithm>
-
-using namespace std;
 using namespace x265;
 
 //! \ingroup TLibCommon
@@ -62,7 +60,7 @@ void ContextModel::init(int qp, int initValue)
 
     int  slope      = (initValue >> 4) * 5 - 45;
     int  offset     = ((initValue & 15) << 3) - 16;
-    int  initState  =  min(max(1, (((slope * qp) >> 4) + offset)), 126);
+    int  initState  =  X265_MIN(X265_MAX(1, (((slope * qp) >> 4) + offset)), 126);
     UInt mpState    = (initState >= 64);
     m_state       = ((mpState ? (initState - 64) : (63 - initState)) << 1) + mpState;
 }
