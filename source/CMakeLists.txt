@@ -146,17 +146,17 @@ add_subdirectory(encoder)
 
 add_library(x265-shared SHARED dllmain.cpp x265.def $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
-if(MSVC OR XCODE)
+if(ENABLE_PRIMITIVES_VEC AND (MSVC OR XCODE))
     target_link_libraries(x265-shared assembly)
     target_link_libraries(x265-static assembly)
 endif()
 set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
-if(WIN32)
+if(NOT WIN32)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
     set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
 endif()
 # WIN32 builds static: x265-static.lib  shared: x265.dll + x265.lib (shim loader)
-# MINGW builds static: libx265.a        shared: libx265.so + libx265.so.a
+# MINGW builds static: libx265-static.a shared: libx265.dll + libx265.dll.a
 # *NIX  builds static: libx265.a        shared: libx265.so
 
 # Main CLI application
