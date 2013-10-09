@@ -566,47 +566,47 @@ void calcRecons8(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* rec
 }
 
 template<int blockSize>
-void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+void calcRecons(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recIPred, int stride, int recstride, int predstride)
 {
     for (int y = 0; y < blockSize; y++)
     {
         for (int x = 0; x < blockSize; x += 16)
         {
-            __m128i resi, pred, sum1, sum2;
+            __m128i resi1, pred1, sum1, sum2;
             __m128i temp;
 
-            temp = _mm_loadu_si128((__m128i const*)(pPred + x));
-            pred = _mm_unpacklo_epi8(temp, _mm_setzero_si128());         // interleave with zero extensions
+            temp = _mm_loadu_si128((__m128i const*)(pred + x));
+            pred1 = _mm_unpacklo_epi8(temp, _mm_setzero_si128());        // interleave with zero extensions
 
-            resi = _mm_loadu_si128((__m128i const*)(pResi + x));
-            sum1 = _mm_add_epi16(pred, resi);
+            resi1 = _mm_loadu_si128((__m128i const*)(resi + x));
+            sum1 = _mm_add_epi16(pred1, resi1);
 
             __m128i maxval = _mm_set1_epi16(0xff);                       // broadcast value 255(32-bit integer) to all elements of maxval
             __m128i minval = _mm_set1_epi16(0x00);                       // broadcast value 0(32-bit integer) to all elements of minval
             sum1 = _mm_min_epi16(maxval, _mm_max_epi16(sum1, minval));
-            _mm_storeu_si128((__m128i*)(pRecQt + x), sum1);
+            _mm_storeu_si128((__m128i*)(recQt + x), sum1);
 
-            pred = _mm_unpackhi_epi8(temp, _mm_setzero_si128());         // interleave with zero extensions
-            resi = _mm_loadu_si128((__m128i const*)(pResi + x + 8));
-            sum2 = _mm_add_epi16(pred, resi);
+            pred1 = _mm_unpackhi_epi8(temp, _mm_setzero_si128());        // interleave with zero extensions
+            resi1 = _mm_loadu_si128((__m128i const*)(resi + x + 8));
+            sum2 = _mm_add_epi16(pred1, resi1);
 
             sum2 = _mm_min_epi16(maxval, _mm_max_epi16(sum2, minval));
-            _mm_storeu_si128((__m128i*)(pRecQt + x + 8), sum2);
+            _mm_storeu_si128((__m128i*)(recQt + x + 8), sum2);
 
             __m128i mask = _mm_set1_epi32(0x00FF00FF);                   // mask for low bytes
             __m128i low_mask  = _mm_and_si128(sum1, mask);               // bytes of low
             __m128i high_mask = _mm_and_si128(sum2, mask);               // bytes of high
             temp = _mm_packus_epi16(low_mask, high_mask);                // unsigned pack
 
-            _mm_storeu_si128((__m128i*)(pReco + x), temp);
-            _mm_storeu_si128((__m128i*)(pRecIPred + x), temp);
+            _mm_storeu_si128((__m128i*)(reco + x), temp);
+            _mm_storeu_si128((__m128i*)(recIPred + x), temp);
         }
 
-        pPred     += stride;
-        pResi     += stride;
-        pReco     += stride;
-        pRecQt    += recstride;
-        pRecIPred += ipredstride;
+        pred     += stride;
+        resi     += stride;
+        reco     += stride;
+        recQt    += recstride;
+        recIPred += predstride;
     }
 }
 #endif
