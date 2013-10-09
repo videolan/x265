@@ -63,22 +63,19 @@ template<int ly>
 int sse_ss4(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
+    __m128i diff;
+    __m128i sum  = _mm_setzero_si128();
+    __m128i m1, n1, sign1, sign2, tmp1, tmp2;
 
-    Vec4i diff(0);
-    Vec8s m1, n1;
-    Vec4i sum(0);
     for (; rows != 0; rows--)
     {
-        m1.load(fenc);
-        n1.load(fref);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
+        PROCESS_SSE_SS4x1(0);
+
         fenc += strideFenc;
         fref += strideFref;
     }
-
-    return horizontal_add(sum);
+    __m128i sum1  = _mm_hadd_epi32(sum, sum);         // horizontally add 4 elements
+    return _mm_cvtsi128_si32(_mm_hadd_epi32(sum1, sum1));
 }
 
 template<int ly>
