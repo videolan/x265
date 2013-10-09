@@ -614,7 +614,67 @@ void calcRecons(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recI
 
 #define INSTRSET 3
 #include "vectorclass.h"
-#include "pixel.inc"
+
+namespace {
+void convert16to32(short *org, int *dst, int num)
+{
+    int i;
+
+    for (i = 0; i < num; i += 8)
+    {
+        Vec8s im16;
+        Vec4i im32L, im32H;
+
+        im16.load(org);
+        im32L = extend_low(im16);
+        im32H = extend_high(im16);
+        im32L.store(dst);
+        im32H.store(dst + 4);
+
+        org += 8;
+        dst += 8;
+    }
+}
+
+void convert32to16(int *org, short *dst, int num)
+{
+    int i;
+
+    for (i = 0; i < num; i += 8)
+    {
+        Vec4i im32L, im32H;
+        Vec8s im16;
+
+        im32L.load(org);
+        im32H.load(org + 4);
+        im16 = compress_saturated(im32L, im32H);
+        im16.store(dst);
+
+        org += 8;
+        dst += 8;
+    }
+}
+
+void convert32to16_shr(short *dst, int *org, int shift, int num)
+{
+    int i;
+    Vec4i round = _mm_set1_epi32(1 << (shift - 1));
+
+    for (i = 0; i < num; i += 4)
+    {
+        Vec4i im32;
+        Vec8s im16;
+
+        im32.load(org);
+        im32 = (im32 + round) >> shift;
+        im16 = compress_saturated(im32, im32);
+        store_partial(const_int(8), dst, im16);
+
+        org += 4;
+        dst += 4;
+    }
+}
+}
 
 namespace x265 {
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
