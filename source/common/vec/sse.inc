@@ -26,6 +26,17 @@
 
 // Vector class versions of pixel comparison performance primitives
 
+#define PROCESS_SSE_SS4x1(BASE)\
+    m1 = _mm_loadu_si128((__m128i const*)(fenc + BASE)); \
+    n1 = _mm_loadu_si128((__m128i const*)(fref + BASE)); \
+    sign1 = _mm_srai_epi16(m1, 15); \
+    tmp1 = _mm_unpacklo_epi16(m1, sign1); \
+    sign2 = _mm_srai_epi16(n1, 15); \
+    tmp2 = _mm_unpacklo_epi16(n1, sign2); \
+    diff = _mm_sub_epi32(tmp1, tmp2); \
+    diff = _mm_mullo_epi32(diff, diff); \
+    sum = _mm_add_epi32(sum, diff)
+
 template<int ly>
 int sse_pp4(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
