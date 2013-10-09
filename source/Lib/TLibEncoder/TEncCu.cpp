@@ -35,19 +35,18 @@
     \brief    Coding Unit (CU) encoder class
 */
 
-#include <stdio.h>
 #include "TEncCu.h"
-#include "PPA/ppa.h"
+
 #include "primitives.h"
 #include "encoder.h"
 #include "common.h"
 
+#include "PPA/ppa.h"
+
 #include <cmath>
-#include <algorithm>
+#include <stdio.h>
 
 using namespace x265;
-
-using namespace std;
 
 //! \ingroup TLibEncoder
 //! \{
@@ -1250,7 +1249,7 @@ void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
     int granularityEnd = ((cu->getSCUAddr() + absPartIdx) / granularitySize) * granularitySize;
     if (granularityEnd <= 0)
     {
-        granularityEnd += max(granularitySize, (cu->getPic()->getNumPartInCU() >> (depth << 1)));
+        granularityEnd += X265_MAX(granularitySize, (cu->getPic()->getNumPartInCU() >> (depth << 1)));
     }
     if (granularityBoundary)
     {
