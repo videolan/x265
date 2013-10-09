@@ -236,89 +236,26 @@ template<int ly>
 int sse_ss64(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
+    __m128i sum  = _mm_setzero_si128();
+    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
 
-    Vec4i diff(0);
-    Vec8s m1, n1;
-    Vec4i sum(0);
     for (; rows != 0; rows--)
     {
-        m1.load(fenc);
-        n1.load(fref);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
+        for(int i = 0; i < 64; i += 8)
+        {
+            PROCESS_SSE_SS4x1(i);
 
-        m1.load(fenc + 8);
-        n1.load(fref + 8);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
-
-        m1.load(fenc + 16);
-        n1.load(fref + 16);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
-
-        m1.load(fenc + 24);
-        n1.load(fref + 24);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
-
-        m1.load(fenc + 32);
-        n1.load(fref + 32);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
-
-        m1.load(fenc + 40);
-        n1.load(fref + 40);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
-
-        m1.load(fenc + 48);
-        n1.load(fref + 48);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
-
-        m1.load(fenc + 56);
-        n1.load(fref + 56);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += diff;
-        diff = extend_high(m1) - extend_high(n1);
-        diff = diff * diff;
-        sum += diff;
-
+            m1 = _mm_unpackhi_epi16(m1, sign1);
+            n1 = _mm_unpackhi_epi16(n1, sign2);
+            diff = _mm_sub_epi32(m1, n1);
+            diff = _mm_mullo_epi32(diff, diff);
+            sum = _mm_add_epi32(sum, diff);
+        }
         fenc += strideFenc;
         fref += strideFref;
     }
-
-    return horizontal_add(sum);
+    __m128i sum1  = _mm_hadd_epi32(sum, sum);
+    return _mm_cvtsi128_si32(_mm_hadd_epi32(sum1, sum1));
 }
 
 template<int ly>
