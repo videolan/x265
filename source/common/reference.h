@@ -43,6 +43,7 @@ struct ReferencePlanes
 
     pixel* fpelPlane;
     pixel* lowresPlane[4];
+    pixel* unweightedFPelPlane;
 
     bool isWeighted;
     bool isLowres;
@@ -60,7 +61,7 @@ public:
     MotionReference();
     ~MotionReference();
     int  init(TComPicYuv*, wpScalingParam* w = NULL);
-    void applyWeight(TComPic* src, int rows, int numRows);
+    void applyWeight(int rows, int numRows);
 
     MotionReference *m_next;
     TComPicYuv      *m_reconPic;

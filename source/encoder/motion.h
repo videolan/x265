@@ -54,6 +54,7 @@ protected:
     /* subpel generation buffers */
     pixel *subpelbuf;
     short *immedVal;
+    int16_t *immedVal2;
     int blockwidth;
     int blockheight;
 
@@ -96,7 +97,7 @@ public:
 
     int subpelCompare(ReferencePlanes *ref, const MV & qmv, pixelcmp_t);
 
-    void subpelInterpolate(pixel *fref, intptr_t lumaStride, int xFrac, int yFrac, int dir);
+    inline void subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir);
 
 protected:
 

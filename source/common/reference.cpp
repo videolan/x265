@@ -58,6 +58,7 @@ MotionReference::MotionReference()
 int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
 {
     m_reconPic = pic;
+    unweightedFPelPlane = pic->getLumaAddr();
     lumaStride = pic->getStride();
     m_startPad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
     m_next = NULL;
@@ -89,21 +90,19 @@ MotionReference::~MotionReference()
         X265_FREE(fpelPlane - m_startPad);
 }
 
-void MotionReference::applyWeight(TComPic* ref, int rows, int numRows)
+void MotionReference::applyWeight(int rows, int numRows)
 {
     rows = X265_MIN(rows, numRows-1);
     if (m_numWeightedRows >= rows)
         return;
-
-    TComPicYuv* pic = ref->getPicYuvRec();
-    int marginX = pic->m_lumaMarginX;
-    int marginY = pic->m_lumaMarginY;
-    pixel* src = (pixel*) pic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
+    int marginX = m_reconPic->m_lumaMarginX;
+    int marginY = m_reconPic->m_lumaMarginY;
+    pixel* src = (pixel*) m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
     pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUHeight) * lumaStride);
-    int width = pic->getWidth();
+    int width = m_reconPic->getWidth();
     int height = ((rows - m_numWeightedRows) * g_maxCUHeight);
     if (rows == numRows - 1)
-        height = ((pic->getHeight() % g_maxCUHeight) ? (pic->getHeight() % g_maxCUHeight) : g_maxCUHeight);
+        height = ((m_reconPic->getHeight() % g_maxCUHeight) ? (m_reconPic->getHeight() % g_maxCUHeight) : g_maxCUHeight);
     size_t dstStride = lumaStride;
 
     // Computing weighted CU rows
@@ -128,7 +127,7 @@ void MotionReference::applyWeight(TComPic* ref, int rows, int numRows)
     // Extending Bottom
     if (rows == (numRows - 1))
     {
-        pixel *pixY = fpelPlane - marginX + (pic->getHeight() - 1) * dstStride;
+        pixel *pixY = fpelPlane - marginX + (m_reconPic->getHeight() - 1) * dstStride;
         for (int y = 0; y < marginY; y++)
         {
             memcpy(pixY + (y + 1) * dstStride, pixY, dstStride * sizeof(pixel));

@@ -972,6 +972,10 @@ void FrameEncoder::compressCTURows()
                     {
                         refpic->m_reconRowWait.wait();
                     }
+                    if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
+                    {
+                        slice->m_mref[list][ref]->applyWeight(row + refLagRows, m_numRows);
+                    }
                 }
             }
 
@@ -1003,6 +1007,10 @@ void FrameEncoder::compressCTURows()
                         while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
                         {
                             refpic->m_reconRowWait.wait();
+                        }
+                        if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
+                        {
+                            slice->m_mref[list][ref]->applyWeight(i + refLagRows, m_numRows);
                         }
                     }
                 }
