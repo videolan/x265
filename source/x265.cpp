@@ -78,7 +78,6 @@ static int64_t x265_mdate(void)
 }
 
 using namespace x265;
-using namespace std;
 
 static const char short_options[] = "o:f:F:r:i:b:s:q:m:hV";
 static struct option long_options[] =
@@ -109,7 +108,7 @@ struct CLIOptions
 {
     Input*  input;
     Output* recon;
-    fstream bitstreamFile;
+    std::fstream bitstreamFile;
     FILE *csvfp;
     int bProgress;
     int cli_log_level;
@@ -432,7 +431,7 @@ struct CLIOptions
             this->input->skipFrames(this->frameSkip);
         }
 
-        this->framesToBeEncoded = this->framesToBeEncoded ? min(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
+        this->framesToBeEncoded = this->framesToBeEncoded ? X265_MIN(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
         if (this->cli_log_level >= X265_LOG_INFO)
         {
@@ -460,7 +459,7 @@ struct CLIOptions
         }
 #endif
 
-        this->bitstreamFile.open(bitstreamfn, fstream::binary | fstream::out);
+        this->bitstreamFile.open(bitstreamfn, std::fstream::binary | std::fstream::out);
         if (!this->bitstreamFile)
         {
             log(X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
