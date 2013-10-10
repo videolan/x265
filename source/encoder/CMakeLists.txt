@@ -39,8 +39,7 @@ set(LIBENCODER_SRC
     ../Lib/TLibEncoder/TEncSbac.cpp
     ../Lib/TLibEncoder/TEncSearch.cpp
     ../Lib/TLibEncoder/WeightPredAnalysis.cpp)
-source_group(TLibEncoder FILES ${LIBENCODER_SRC})
-source_group(TLibEncoderH FILES ${LIBENCODER_HDR})
+source_group(TLibEncoder FILES ${LIBENCODER_HDR} ${LIBENCODER_SRC})
 
 if(GCC)
     set_source_files_properties(compress.cpp ${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS 
