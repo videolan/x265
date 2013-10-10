@@ -99,6 +99,78 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
         }
     }
 }
+
+void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1)
+{
+    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
+    int i = 1;
+    if (!(aligncheck & 15))
+    {
+        __m128i maxval = _mm_set1_epi8((i << X265_DEPTH) - 1);
+        __m128i zero = _mm_setzero_si128();
+
+        // fast path, multiples of 16 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                __m128i word0, word1, sum;
+                word0 = _mm_load_si128((__m128i const*)(src0 + x));
+                word1 = _mm_load_si128((__m128i const*)(src1 + x));
+                sum = _mm_adds_epu8(word0, word1);
+                sum = _mm_max_epu8(sum, zero);
+                sum = _mm_min_epu8(sum, maxval);
+                _mm_storeu_si128((__m128i*)&dst[x], sum);
+            }
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else if (!(bx & 15))
+    {
+        __m128i maxval = _mm_set1_epi8((i << X265_DEPTH) - 1);
+        __m128i zero = _mm_setzero_si128();
+
+        // fast path, multiples of 16 pixel wide blocks but pointers/strides require unaligned accesses
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                __m128i word0, word1, sum;
+                word0 = _mm_load_si128((__m128i const*)(src0 + x));
+                word1 = _mm_load_si128((__m128i const*)(src1 + x));
+                sum = _mm_adds_epu8(word0, word1);
+                sum = _mm_max_epu8(sum, zero);
+                sum = _mm_min_epu8(sum, maxval);
+                _mm_storeu_si128((__m128i*)&dst[x], sum);
+            }
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        int tmp;
+        int max = (1 << X265_DEPTH) - 1;
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x++)
+            {
+                tmp = src0[x] + src1[x];
+                tmp = tmp < 0 ? 0 : tmp;
+                tmp = tmp > max ? max : tmp;
+                dst[x] = (pixel)tmp;
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+}
 #endif /* if HIGH_BIT_DEPTH */
 
 void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
@@ -297,78 +369,6 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
             }
 
             src += sstride;
-            dst += dstride;
-        }
-    }
-}
-#else
-void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1)
-{
-    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
-    int i = 1;
-    if (!(aligncheck & 15))
-    {
-        __m128i maxval = _mm_set1_epi8((i << X265_DEPTH) - 1);
-        __m128i zero = _mm_setzero_si128();
-
-        // fast path, multiples of 16 pixel wide blocks
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x += 16)
-            {
-                __m128i word0, word1, sum;
-                word0 = _mm_load_si128((__m128i const*)(src0 + x));
-                word1 = _mm_load_si128((__m128i const*)(src1 + x));
-                sum = _mm_adds_epu8(word0, word1);
-                sum = _mm_max_epu8(sum, zero);
-                sum = _mm_min_epu8(sum, maxval);
-                _mm_storeu_si128((__m128i*)&dst[x], sum);
-            }
-            src0 += sstride0;
-            src1 += sstride1;
-            dst += dstride;
-        }
-    }
-    else if (!(bx & 15))
-    {
-        __m128i maxval = _mm_set1_epi8((i << X265_DEPTH) - 1);
-        __m128i zero = _mm_setzero_si128();
-
-        // fast path, multiples of 16 pixel wide blocks but pointers/strides require unaligned accesses
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x += 16)
-            {
-                __m128i word0, word1, sum;
-                word0 = _mm_load_si128((__m128i const*)(src0 + x));
-                word1 = _mm_load_si128((__m128i const*)(src1 + x));
-                sum = _mm_adds_epu8(word0, word1);
-                sum = _mm_max_epu8(sum, zero);
-                sum = _mm_min_epu8(sum, maxval);
-                _mm_storeu_si128((__m128i*)&dst[x], sum);
-            }
-            src0 += sstride0;
-            src1 += sstride1;
-            dst += dstride;
-        }
-    }
-    else
-    {
-        int tmp;
-        int max = (1 << X265_DEPTH) - 1;
-        // slow path, irregular memory alignments or sizes
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x++)
-            {
-                tmp = src0[x] + src1[x];
-                tmp = tmp < 0 ? 0 : tmp;
-                tmp = tmp > max ? max : tmp;
-                dst[x] = (pixel)tmp;
-            }
-
-            src0 += sstride0;
-            src1 += sstride1;
             dst += dstride;
         }
     }
