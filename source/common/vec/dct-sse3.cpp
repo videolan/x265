@@ -246,47 +246,48 @@ inline void partialButterfly8(short *src, short *dst, int shift, int line)
     int j;
     int add = 1 << (shift - 1);
 
-    Vec4i zero_row(64, 64, 0, 0);
-    Vec4i four_row(64, -64, 0, 0);
-    Vec4i two_row(83, 36, 0, 0);
-    Vec4i six_row(36, -83, 0, 0);
+    __m128i zero_row = _mm_setr_epi32(64, 64, 0, 0);
+    __m128i four_row = _mm_setr_epi32(64, -64, 0, 0);
+    __m128i two_row = _mm_setr_epi32(83, 36, 0, 0);
+    __m128i six_row = _mm_setr_epi32(36, -83, 0, 0);
 
-    Vec4i one_row(89, 75, 50, 18);
-    Vec4i three_row(75, -18, -89, -50);
-    Vec4i five_row(50, -89, 18, 75);
-    Vec4i seven_row(18, -50, 75, -89);
+    __m128i one_row = _mm_setr_epi32(89, 75, 50, 18);
+    __m128i three_row = _mm_setr_epi32(75, -18, -89, -50);
+    __m128i five_row = _mm_setr_epi32(50, -89, 18, 75);
+    __m128i seven_row = _mm_setr_epi32(18, -50, 75, -89);
 
     for (j = 0; j < line; j++)
     {
-        Vec8s srcTmp;
-        srcTmp.load(src);
+        __m128i srcTmp;
+        srcTmp = _mm_loadu_si128((__m128i*)(src));
 
-        Vec4i E_first_half = extend_low(srcTmp);
-        Vec4i E_second_half = extend_high(srcTmp);
-        E_second_half = permute4i<3, 2, 1, 0>(E_second_half);
+        __m128i sign = _mm_srai_epi16(srcTmp, 15);
+        __m128i E_first_half = _mm_unpacklo_epi16(srcTmp, sign);
+        __m128i E_second_half = _mm_unpackhi_epi16(srcTmp, sign);
+        E_second_half = _mm_shuffle_epi32(E_second_half, 27);
 
-        Vec4i E = E_first_half + E_second_half;
-        Vec4i O = E_first_half - E_second_half;
+        __m128i E = _mm_add_epi32(E_first_half, E_second_half);
+        __m128i O = _mm_sub_epi32(E_first_half, E_second_half);
 
-        Vec4i EE_first_half = permute4i<0, 1, -1, -1>(E);
-        Vec4i EE_second_half = permute4i<3, 2, -1, -1>(E);
-        Vec4i EE = EE_first_half + EE_second_half;
-        Vec4i EO = EE_first_half - EE_second_half;
+        __m128i EE_first_half = _mm_shuffle_epi32(E, 4);
+        __m128i EE_second_half = _mm_shuffle_epi32(E, 11);
+        __m128i EE = _mm_add_epi32(EE_first_half, EE_second_half);
+        __m128i EO = _mm_sub_epi32(EE_first_half, EE_second_half);
 
-        int dst0 = ((horizontal_add(zero_row * EE)) + add) >> shift;
-        int dst4 = ((horizontal_add(four_row * EE)) + add) >> shift;
-        int dst2 = ((horizontal_add(two_row * EO)) + add) >> shift;
-        int dst6 = ((horizontal_add(six_row * EO)) + add) >> shift;
+        int dst0 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(zero_row, EE), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst4 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(four_row, EE), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst2 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(two_row, EO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst6 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(six_row, EO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
 
         dst[0] = dst0;
         dst[4 * line] = dst4;
         dst[2 * line] = dst2;
         dst[6 * line] = dst6;
 
-        int dst1 = ((horizontal_add(one_row * O)) + add) >> shift;
-        int dst3 = ((horizontal_add(three_row * O)) + add) >> shift;
-        int dst5 = ((horizontal_add(five_row * O)) + add) >> shift;
-        int dst7 = ((horizontal_add(seven_row * O)) + add) >> shift;
+        int dst1 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(one_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst3 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(three_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst5 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(five_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst7 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(seven_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
 
         dst[line] = dst1;
         dst[3 * line] = dst3;
