@@ -140,12 +140,6 @@ typedef int32_t intptr_t;
 #include <intrin.h>                              // define _BitScanReverse(int), __cpuid(int[4],int), _xgetbv(int)
 #endif // _MSC_VER
 
-// functions in instrset_detect.cpp
-int  instrset_detect(void);                      // tells which instruction sets are supported
-bool hasFMA3(void);                              // true if FMA3 instructions supported
-bool hasFMA4(void);                              // true if FMA4 instructions supported
-bool hasXOP(void);                               // true if XOP  instructions supported
-
 // GCC version
 #if defined(__GNUC__) && !defined(GCC_VERSION)
 #define GCC_VERSION  ((__GNUC__) * 10000 + (__GNUC_MINOR__) * 100 + (__GNUC_PATCHLEVEL__))

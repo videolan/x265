@@ -30,24 +30,9 @@
 
 #include <stdint.h>
 #include "x265.h"
+#include "cpu.h"
 
 #define FENC_STRIDE 64
-
-// from cpu-a.asm, if ASM primitives are compiled, else primitives.cpp
-extern "C" void x265_cpu_emms(void);
-
-#if _MSC_VER && _WIN64
-#define x265_emms() x265_cpu_emms()
-#elif _MSC_VER
-#include <mmintrin.h>
-#define x265_emms() _mm_empty()
-#elif __GNUC__
-// Cannot use _mm_empty() directly without compiling all the source with
-// a fixed CPU arch, which we would like to avoid at the moment
-#define x265_emms() x265_cpu_emms()
-#else
-#define x265_emms() x265_cpu_emms()
-#endif
 
 #if defined(__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))

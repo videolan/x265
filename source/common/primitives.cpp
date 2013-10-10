@@ -24,7 +24,6 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/ContextModel.h"
 #include "primitives.h"
-#include "instrset.h"
 #include "common.h"
 
 #include <assert.h>
@@ -70,20 +69,6 @@ void Setup_C_Primitives(EncoderPrimitives &p)
 }
 }
 
-static const char *CpuType[] =
-{
-    "",
-    "",
-    "SSE2",
-    "SSE3",
-    "SSSE3",
-    "SSE4.1",
-    "SSE4.2",
-    "AVX",
-    "AVX2",
-    0
-};
-
 using namespace x265;
 
 /* cpuid == 0 - auto-detect CPU type, else
@@ -105,22 +90,29 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
     }
     if (cpuid == 0)
     {
-        cpuid = instrset_detect(); // Detect supported instruction set
+        cpuid = x265::cpu_detect();
         if (param->logLevel >= X265_LOG_INFO)
         {
-            x265_log(param, X265_LOG_INFO, "detected SIMD: ");
-            for (int i = 2; i <= cpuid; i++)
+            char buf[1000];
+            char *p = buf + sprintf( buf, "using cpu capabilities:" );
+            for (int i = 0; x265::cpu_names[i].flags; i++)
             {
-                fprintf(stderr, "%s ", CpuType[i]);
+                if (!strcmp(x265::cpu_names[i].name, "SSE2")
+                    && cpuid & (X265_CPU_SSE2_IS_FAST|X265_CPU_SSE2_IS_SLOW))
+                    continue;
+                if (!strcmp(x265::cpu_names[i].name, "SSE3")
+                    && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
+                    continue;
+                if (!strcmp(x265::cpu_names[i].name, "SSE4.1")
+                    && (cpuid & X265_CPU_SSE42))
+                    continue;
+                if ((cpuid & x265::cpu_names[i].flags) == x265::cpu_names[i].flags
+                    && (!i || x265::cpu_names[i].flags != x265::cpu_names[i-1].flags))
+                    p += sprintf( p, " %s", x265::cpu_names[i].name );
             }
-
-            if (cpuid >= 7)
-            {
-                if (hasXOP()) fprintf(stderr, "XOP ");
-                if (hasFMA3()) fprintf(stderr, "FMA3 ");
-                if (hasFMA4()) fprintf(stderr, "FMA4 ");
-            }
-            fprintf(stderr, "\n");
+            if( !cpuid )
+                p += sprintf( p, " none!" );
+            x265_log(param, X265_LOG_INFO, "%s\n", buf);
         }
     }
 
@@ -128,15 +120,12 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 
     Setup_C_Primitives(primitives);
 
-    for (int i = 2; i <= cpuid; i++)
-    {
 #if ENABLE_VECTOR_PRIMITIVES
-        Setup_Vector_Primitives(primitives, 1 << i);
+    Setup_Vector_Primitives(primitives, cpuid);
 #endif
 #if ENABLE_ASM_PRIMITIVES
-        Setup_Assembly_Primitives(primitives, 1 << i);
+    Setup_Assembly_Primitives(primitives, cpuid);
 #endif
-    }
 
     primitives.sa8d_inter[PARTITION_8x8] = primitives.sa8d[BLOCK_8x8];
     primitives.sa8d_inter[PARTITION_16x16] = primitives.sa8d[BLOCK_16x16];

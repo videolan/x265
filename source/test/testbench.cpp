@@ -28,6 +28,7 @@
 #include "mbdstharness.h"
 #include "ipfilterharness.h"
 #include "intrapredharness.h"
+#include "cpu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,25 +37,9 @@
 
 using namespace x265;
 
-static const char *CpuType[] =
-{
-    "",
-    "",
-    "SSE2",
-    "SSE3",
-    "SSSE3",
-    "SSE4.1",
-    "SSE4.2",
-    "AVX",
-    "AVX2",
-    0
-};
-
-extern int instrset_detect();
-
 int main(int argc, char *argv[])
 {
-    int cpuid = instrset_detect(); // Detect supported instruction set
+    int cpuid = x265::cpu_detect();
     const char *testname = 0;
     int cpuid_user = -1;
 
@@ -94,20 +79,32 @@ int main(int argc, char *argv[])
     memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
 
-    int cpuid_low = 2;
-    int cpuid_high = cpuid;
+    struct test_arch_t
+    {
+        char name[12];
+        int flag;
+    } test_arch[] = {
+        { "SSE2", X265_CPU_SSE2 },
+        { "SSE3", X265_CPU_SSE3 },
+        { "SSSE3", X265_CPU_SSSE3 },
+        { "SSE4", X265_CPU_SSE4 },
+        { "AVX", X265_CPU_AVX },
+        { "XOP", X265_CPU_XOP },
+        { "AVX2", X265_CPU_AVX2 },
+        { "", 0 },
+    };
 
-    if (cpuid_user >= 0)
+    for (int i = 0; test_arch[i].flag; i++)
     {
-        cpuid_low = cpuid_high = cpuid_user;
-    }
-    for (int i = cpuid_low; i <= cpuid_high; i++)
-    {
+        if (test_arch[i].flag & cpuid)
+            printf("Testing primitives: %s\n", test_arch[i].name);
+        else
+            continue;
+
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
-        Setup_Vector_Primitives(vecprim, 1 << i);
-        printf("Testing intrinsic primitives: %s (%d)\n", CpuType[i], i);
+        Setup_Vector_Primitives(vecprim, test_arch[i].flag);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -124,8 +121,7 @@ int main(int argc, char *argv[])
 #if ENABLE_ASM_PRIMITIVES
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
-        Setup_Assembly_Primitives(asmprim, 1 << i);
-        printf("Testing assembly primitives: %s (%d)\n", CpuType[i], i);
+        Setup_Assembly_Primitives(asmprim, test_arch[i].flag);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -137,7 +133,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-
 #endif // if ENABLE_ASM_PRIMITIVES
     }
 
@@ -145,15 +140,12 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
-    for (int i = 2; i <= cpuid; i++)
-    {
 #if ENABLE_VECTOR_PRIMITIVES
-        Setup_Vector_Primitives(optprim, 1 << i);
+    Setup_Vector_Primitives(optprim, cpuid);
 #endif
 #if ENABLE_ASM_PRIMITIVES
-        Setup_Assembly_Primitives(optprim, 1 << i);
+    Setup_Assembly_Primitives(optprim, cpuid);
 #endif
-    }
 
     printf("\nTest performance improvement with full optimizations\n");
 

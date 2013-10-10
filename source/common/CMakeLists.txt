@@ -6,8 +6,6 @@ if(ENABLE_PRIMITIVES_ASM)
     add_definitions(-DENABLE_ASM_PRIMITIVES=1)
 endif(ENABLE_PRIMITIVES_ASM)
 
-include_directories(../VectorClass)
-
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/ContextModel.h
@@ -75,6 +73,7 @@ if(MSVC)
 endif(MSVC)
 
 if(ENABLE_PRIMITIVES_VEC)
+    include_directories(../VectorClass)
     if (MSVC)
         add_definitions(/wd4127) # conditional expression is constant
         add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
@@ -225,7 +224,7 @@ add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
-    ../VectorClass/instrset_detect.cpp
+    cpu.cpp cpu.h
     threading.cpp threading.h
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp

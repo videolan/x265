@@ -26,7 +26,47 @@
 extern "C" {
 #include "pixel.h"
 
+#ifdef __INTEL_COMPILER
+/* Agner's patch to Intel's CPU dispatcher from pages 131-132 of
+ * http://agner.org/optimize/optimizing_cpp.pdf (2011-01-30)
+ * adapted to x265's cpu schema. */
+
+// Global variable indicating cpu
+int __intel_cpu_indicator = 0;
+// CPU dispatcher function
+void x265_intel_cpu_indicator_init(void)
+{
+    unsigned int cpu = cpu_detect();
+    if (cpu&X265_CPU_AVX)
+        __intel_cpu_indicator = 0x20000;
+    else if (cpu&X265_CPU_SSE42)
+        __intel_cpu_indicator = 0x8000;
+    else if (cpu&X265_CPU_SSE4)
+        __intel_cpu_indicator = 0x2000;
+    else if (cpu&X265_CPU_SSSE3)
+        __intel_cpu_indicator = 0x1000;
+    else if (cpu&X265_CPU_SSE3)
+        __intel_cpu_indicator = 0x800;
+    else if (cpu&X265_CPU_SSE2 && !(cpu&X265_CPU_SSE2_IS_SLOW))
+        __intel_cpu_indicator = 0x200;
+    else if (cpu&X265_CPU_SSE)
+        __intel_cpu_indicator = 0x80;
+    else if (cpu&X265_CPU_MMX2)
+        __intel_cpu_indicator = 8;
+    else
+        __intel_cpu_indicator = 1;
+}
+
+/* __intel_cpu_indicator_init appears to have a non-standard calling convention that
+ * assumes certain registers aren't preserved, so we'll route it through a function
+ * that backs up all the registers. */
+void __intel_cpu_indicator_init( void )
+{
+    x265_safe_intel_cpu_indicator_init();
+}
+#else
 void x265_intel_cpu_indicator_init( void ) {}
+#endif
 
 #define LOWRES(cpu)\
     void x265_frame_init_lowres_core_##cpu( pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,\
@@ -53,8 +93,6 @@ DECL_SUF( x265_pixel_avg_4x4,   ( pixel *, intptr_t, pixel *, intptr_t, pixel *,
 
 void x265_filterHorizontal_p_p_4_sse4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff);
 }
-
-bool hasXOP(void); // instr_detect.cpp
 
 using namespace x265;
 
@@ -175,9 +213,9 @@ namespace x265 {
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #if HIGH_BIT_DEPTH
-    if (cpuMask & (1 << X265_CPU_LEVEL_SSE2)) p.sa8d[0] = p.sa8d[0];
+    if (cpuMask & X265_CPU_SSE2) p.sa8d[0] = p.sa8d[0];
 #else
-    if (cpuMask & (1 << X265_CPU_LEVEL_SSE2))
+    if (cpuMask & X265_CPU_SSE2)
     {
         INIT8_NAME( sse_pp, ssd, _mmx );
         INIT8( sad, _mmx2 );
@@ -214,7 +252,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse2;
         SA8D_INTER_FROM_BLOCK(sse2);
     }
-    if (cpuMask & (1 << X265_CPU_LEVEL_SSSE3))
+    if (cpuMask & X265_CPU_SSSE3)
     {
         p.frame_init_lowres_core = x265_frame_init_lowres_core_ssse3;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_ssse3;
@@ -228,7 +266,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[PARTITION_8x8] = x265_pixel_sad_x4_8x8_ssse3;
         p.sad_x4[PARTITION_8x16] = x265_pixel_sad_x4_8x16_ssse3;
     }
-    if (cpuMask & (1 << X265_CPU_LEVEL_SSE41))
+    if (cpuMask & X265_CPU_SSE4)
     {
         p.satd[PARTITION_4x16] = x265_pixel_satd_4x16_sse4;
         p.satd[PARTITION_12x16] = cmp<12, 16, 4, 16, x265_pixel_satd_4x16_sse4>;
@@ -240,7 +278,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.ipfilter_pp[FILTER_H_P_P_4] = x265_filterHorizontal_p_p_4_sse4;
 #endif
     }
-    if (cpuMask & (1 << X265_CPU_LEVEL_AVX))
+    if (cpuMask & X265_CPU_AVX)
     {
         p.frame_init_lowres_core = x265_frame_init_lowres_core_avx;
         p.satd[PARTITION_4x16] = x265_pixel_satd_4x16_avx;
@@ -250,7 +288,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(avx);
         ASSGN_SSE(avx);
     }
-    if ((cpuMask & (1 << X265_CPU_LEVEL_AVX)) && hasXOP())
+    if (cpuMask & X265_CPU_XOP)
     {
         p.frame_init_lowres_core = x265_frame_init_lowres_core_xop;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_xop;
@@ -260,7 +298,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT5_NAME( sse_pp, ssd, _xop );
         HEVC_SATD(xop);
     }
-    if (cpuMask & (1 << X265_CPU_LEVEL_AVX2))
+    if (cpuMask & X265_CPU_AVX2)
     {
         INIT2( sad_x4, _avx2 );
         INIT4( satd, _avx2 );

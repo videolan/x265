@@ -23,7 +23,30 @@
 
 #include "primitives.h"
 
-bool hasXOP(void); // instr_detect.cpp
+#if !ENABLE_ASM_PRIMITIVES
+#include <intrin.h>
+extern "C" {
+int x265_cpu_cpuid_test(void)
+{
+    return 0;
+}
+void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
+{
+    int output[4];
+    __cpuidex(output, op, 0);
+    *eax = output[0];
+    *ebx = output[1];
+    *ecx = output[2];
+    *edx = output[3];
+}
+void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
+{
+    uint64_t out = _xgetbv(op);
+    *eax = (uint32_t)out;
+    *edx = (uint32_t)(out >> 32);
+}
+}
+#endif
 
 /* The #if logic here must match the file lists in CMakeLists.txt */
 #if defined(__INTEL_COMPILER)
@@ -74,7 +97,7 @@ void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #ifdef HAVE_SSE3
-    if (cpuMask & (1 << X265_CPU_LEVEL_SSE3))
+    if (cpuMask & X265_CPU_SSE3)
     {
         Setup_Vec_PixelPrimitives_sse3(p);
         Setup_Vec_DCTPrimitives_sse3(p);
@@ -83,7 +106,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
     }
 #endif
 #ifdef HAVE_SSSE3
-    if (cpuMask & (1 << X265_CPU_LEVEL_SSSE3))
+    if (cpuMask & X265_CPU_SSSE3)
     {
         Setup_Vec_PixelPrimitives_ssse3(p);
         Setup_Vec_IPFilterPrimitives_ssse3(p);
@@ -91,7 +114,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
     }
 #endif
 #ifdef HAVE_SSE4
-    if (cpuMask & (1 << X265_CPU_LEVEL_SSE41))
+    if (cpuMask & X265_CPU_SSE4)
     {
         Setup_Vec_PixelPrimitives_sse41(p);
         Setup_Vec_IPredPrimitives_sse41(p);
@@ -100,7 +123,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
     }
 #endif
 #ifdef HAVE_AVX2
-    if (cpuMask & (1 << X265_CPU_LEVEL_AVX2))
+    if (cpuMask & X265_CPU_AVX2)
     {
         Setup_Vec_PixelPrimitives_avx2(p);
         Setup_Vec_BlockCopyPrimitives_avx2(p);
