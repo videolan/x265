@@ -2228,28 +2228,6 @@ void PredIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 }
 }
 
-void PredIntraAng8_m_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
-{
-    Vec16uc tmp;
-
-    tmp = load_partial(const_int(8), refMain);        //-1,0,1,2
-    store_partial(const_int(8), dst, tmp);
-    tmp = load_partial(const_int(8), refMain - 1);     //-2,-1,0,1
-    store_partial(const_int(8), dst + dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain - 2);
-    store_partial(const_int(8), dst + 2 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain - 3);
-    store_partial(const_int(8), dst + 3 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain - 4);
-    store_partial(const_int(8), dst + 4 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain - 5);
-    store_partial(const_int(8), dst + 5 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain - 6);
-    store_partial(const_int(8), dst + 6 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain - 7);
-    store_partial(const_int(8), dst + 7 * dstStride, tmp);
-}
-
 typedef void (*PredIntraAng8x8_table)(pixel* dst, int dstStride, pixel *refMain, int dirMode);
 PredIntraAng8x8_table PredIntraAng8[] =
 {
