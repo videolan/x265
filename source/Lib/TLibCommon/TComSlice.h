@@ -307,7 +307,6 @@ private:
     UInt m_initialCpbRemovalDelayLengthMinus1;
     UInt m_cpbRemovalDelayLengthMinus1;
     UInt m_dpbOutputDelayLengthMinus1;
-    UInt m_numDU;
     HrdSubLayerInfo m_HRD[MAX_TLAYER];
 
 public:
