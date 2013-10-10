@@ -46,7 +46,6 @@
 #include "TComPattern.h"
 
 #include <assert.h>
-#include <algorithm>
 
 namespace x265 {
 // private namespace

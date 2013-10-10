@@ -38,7 +38,6 @@
 #ifndef X265_COMMONDEF_H
 #define X265_COMMONDEF_H
 
-#include <algorithm>
 #include <cstdlib>
 #include "TypeDef.h"
 

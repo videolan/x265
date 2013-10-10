@@ -27,7 +27,6 @@
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
 
-#include <algorithm>
 #include <cstdlib> // abs()
 
 using namespace x265;

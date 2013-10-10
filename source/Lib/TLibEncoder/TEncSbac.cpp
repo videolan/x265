@@ -36,7 +36,6 @@
 */
 
 #include "TEncSbac.h"
-#include <algorithm>
 
 using namespace x265;
 

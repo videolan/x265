@@ -53,7 +53,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <string>
-#include <list>
 #include <ostream>
 #include <fstream>
 

@@ -29,7 +29,6 @@
 
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
-#include <algorithm>
 #include <string.h>
 
 using namespace x265;

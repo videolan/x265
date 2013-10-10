@@ -37,7 +37,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <algorithm>
 #include <smmintrin.h>
 
 using namespace x265;
