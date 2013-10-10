@@ -1898,6 +1898,8 @@ void dct16(short *src, int *dst, intptr_t stride)
 
     partialButterfly16(block, coef, shift_1st, 16);
     partialButterfly16(coef, block, shift_2nd, 16);
+
+    /* TODO: inline cvt16to32 once it is intrinsic based */
 #define N (16)
     for (int i = 0; i < N; i++)
     {
@@ -2203,6 +2205,7 @@ void dct32(short *src, int *dst, intptr_t stride)
     partialButterfly32(block, coef, shift_1st, 32);
     partialButterfly32(coef, block, shift_2nd, 32);
 
+    /* TODO: inline cvt16to32 once it is intrinsic based */
 #define N (32)
     for (int i = 0; i < N; i++)
     {
