@@ -488,49 +488,56 @@ int sse_sp32(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 template<int ly>
 int sse_sp48(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
-    int rows = ly;
-    Vec8s m1;
-    Vec16uc n1;
+    __m128i sum0 = _mm_setzero_si128();
+    __m128i sum1 = _mm_setzero_si128();
 
-    Vec8us diff_low(0), diff_high(0);
-    Vec4i sum_low(0), sum_high(0);
-    for (; rows != 0; rows--)
+    for(int i = 0; i < ly; i++)
     {
-        n1.load(fref);
-        m1.load(fenc);
-        diff_low = m1 - extend_low(n1);
-        m1.load_a(fenc + 8);
-        diff_high = m1 - extend_high(n1);
-        diff_low = diff_low * diff_low;
-        diff_high = diff_high * diff_high;
-        sum_low += (extend_low(diff_low) + extend_low(diff_high));
-        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+        __m128i T00, T01, T02;
+        __m128i T10, T11, T12, T13;
 
-        n1.load(fref + 16);
-        m1.load(fenc + 16);
-        diff_low = m1 - extend_low(n1);
-        m1.load(fenc + 24);
-        diff_high = m1 - extend_high(n1);
-        diff_low = diff_low * diff_low;
-        diff_high = diff_high * diff_high;
-        sum_low += (extend_low(diff_low) + extend_low(diff_high));
-        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+        T00 = _mm_loadu_si128((__m128i*)(fenc));
+        T01 = _mm_loadu_si128((__m128i*)(fref));
+        T02 = _mm_unpacklo_epi8(T01, _mm_setzero_si128());
 
-        n1.load(fref + 32);
-        m1.load(fenc + 32);
-        diff_low = m1 - extend_low(n1);
-        m1.load(fenc + 40);
-        diff_high = m1 - extend_high(n1);
-        diff_low = diff_low * diff_low;
-        diff_high = diff_high * diff_high;
-        sum_low += (extend_low(diff_low) + extend_low(diff_high));
-        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+        SSE_SP8x1;
+
+        T00 = _mm_loadu_si128((__m128i*)(fenc + 8));
+        T02 = _mm_unpackhi_epi8(T01, _mm_setzero_si128());
+
+        SSE_SP8x1;
+
+        T00 = _mm_loadu_si128((__m128i*)(fenc + 16));
+        T01 = _mm_loadu_si128((__m128i*)(fref + 16));
+        T02 = _mm_unpacklo_epi8(T01, _mm_setzero_si128());
+
+        SSE_SP8x1;
+
+        T00 = _mm_loadu_si128((__m128i*)(fenc + 24));
+        T02 = _mm_unpackhi_epi8(T01, _mm_setzero_si128());
+
+        SSE_SP8x1;
+
+        T00 = _mm_loadu_si128((__m128i*)(fenc + 32));
+        T01 = _mm_loadu_si128((__m128i*)(fref + 32));
+        T02 = _mm_unpacklo_epi8(T01, _mm_setzero_si128());
+
+        SSE_SP8x1;
+
+        T00 = _mm_loadu_si128((__m128i*)(fenc + 40));
+        T02 = _mm_unpackhi_epi8(T01, _mm_setzero_si128());
+
+        SSE_SP8x1;
 
         fenc += strideFenc;
         fref += strideFref;
     }
+    sum0 = _mm_add_epi32(sum0, sum1);
 
-    return horizontal_add(sum_low) + horizontal_add(sum_high);
+    sum0 = _mm_hadd_epi32(sum0, _mm_setzero_si128());
+    sum0 = _mm_hadd_epi32(sum0, _mm_setzero_si128());
+
+    return _mm_cvtsi128_si32(sum0);
 }
 
 template<int ly>
