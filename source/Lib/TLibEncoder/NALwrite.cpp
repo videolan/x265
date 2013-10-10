@@ -36,6 +36,8 @@
 #include "NALwrite.h"
 #include "common.h"
 
+#include <cstring>
+
 namespace x265 {
 
 //! \ingroup TLibEncoder
