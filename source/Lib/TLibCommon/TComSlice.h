@@ -155,7 +155,6 @@ public:
 
     TComReferencePictureSet* getReferencePictureSet(int referencePictureSetNum);
     int getNumberOfReferencePictureSets() const;
-    void setNumberOfReferencePictureSets(int numberOfReferencePictureSets);
 };
 
 /// SCALING_LIST class
@@ -221,8 +220,6 @@ public:
 
     int getProfileSpace() const { return m_profileSpace; }
 
-    void setProfileSpace(int x) { m_profileSpace = x; }
-
     bool getTierFlag() const    { return m_tierFlag; }
 
     void setTierFlag(bool x)    { m_tierFlag = x; }
@@ -271,8 +268,6 @@ public:
     void setSubLayerProfilePresentFlag(int i, bool x) { m_subLayerProfilePresentFlag[i] = x; }
 
     bool getSubLayerLevelPresentFlag(int i) const { return m_subLayerLevelPresentFlag[i]; }
-
-    void setSubLayerLevelPresentFlag(int i, bool x) { m_subLayerLevelPresentFlag[i] = x; }
 
     ProfileTierLevel* getGeneralPTL() { return &m_generalPTL; }
 
@@ -425,10 +420,6 @@ public:
     void setCbrFlag(int layer, int cpbcnt, int nalOrVcl, bool value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value; }
 
     bool getCbrFlag(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl]; }
-
-    void setNumDU(UInt value) { m_numDU = value; }
-
-    UInt getNumDU()           { return m_numDU; }
 
     bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
 };

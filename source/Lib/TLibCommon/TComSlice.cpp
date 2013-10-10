@@ -1059,11 +1059,6 @@ int TComRPSList::getNumberOfReferencePictureSets() const
     return m_numberOfReferencePictureSets;
 }
 
-void TComRPSList::setNumberOfReferencePictureSets(int numberOfReferencePictureSets)
-{
-    m_numberOfReferencePictureSets = numberOfReferencePictureSets;
-}
-
 TComRefPicListModification::TComRefPicListModification()
     : m_bRefPicListModificationFlagL0(false)
     , m_bRefPicListModificationFlagL1(false)
