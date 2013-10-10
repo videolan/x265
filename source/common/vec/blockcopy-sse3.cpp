@@ -305,25 +305,25 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
 void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1)
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
-
+    int i = 1;
     if (!(aligncheck & 15))
     {
-        Vec16uc zero(0), maxval((1 << X265_DEPTH) - 1); 
+        __m128i maxval = _mm_set1_epi8((i << X265_DEPTH) - 1);
+        __m128i zero = _mm_setzero_si128();
+
         // fast path, multiples of 16 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec16uc vecsrc0, vecsrc1, vecsum;
-                vecsrc0.load_a(src0 + x);
-                vecsrc1.load_a(src1 + x);
-                vecsum = add_saturated(vecsrc0, vecsrc1);
-                vecsum = max(vecsum, zero);
-                vecsum = min(vecsum, maxval);
-
-                vecsum.store(dst + x);
+                __m128i word0, word1, sum;
+                word0 = _mm_load_si128((__m128i const*)(src0 + x));
+                word1 = _mm_load_si128((__m128i const*)(src1 + x));
+                sum = _mm_adds_epu8(word0, word1);
+                sum = _mm_max_epu8(sum, zero);
+                sum = _mm_min_epu8(sum, maxval);
+                _mm_storeu_si128((__m128i*)&dst[x], sum);
             }
-
             src0 += sstride0;
             src1 += sstride1;
             dst += dstride;
@@ -331,22 +331,22 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
     }
     else if (!(bx & 15))
     {
-        Vec16uc zero(0), maxval((1 << X265_DEPTH) - 1); 
+        __m128i maxval = _mm_set1_epi8((i << X265_DEPTH) - 1);
+        __m128i zero = _mm_setzero_si128();
+
         // fast path, multiples of 16 pixel wide blocks but pointers/strides require unaligned accesses
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec16uc vecsrc0, vecsrc1, vecsum;
-                vecsrc0.load(src0 + x);
-                vecsrc1.load(src1 + x);
-                vecsum = add_saturated(vecsrc0, vecsrc1);
-                vecsum = max(vecsum, zero);
-                vecsum = min(vecsum, maxval);
-
-                vecsum.store(dst + x);
+                __m128i word0, word1, sum;
+                word0 = _mm_load_si128((__m128i const*)(src0 + x));
+                word1 = _mm_load_si128((__m128i const*)(src1 + x));
+                sum = _mm_adds_epu8(word0, word1);
+                sum = _mm_max_epu8(sum, zero);
+                sum = _mm_min_epu8(sum, maxval);
+                _mm_storeu_si128((__m128i*)&dst[x], sum);
             }
-
             src0 += sstride0;
             src1 += sstride1;
             dst += dstride;
