@@ -30,6 +30,8 @@
 extern "C" {
 #endif
 
+#define X265_BUILD 1
+
 /* x265_t:
  *      opaque handler for encoder */
 typedef struct x265_t x265_t;
@@ -337,6 +339,13 @@ int x265_param_apply_profile(x265_param_t *, const char *profile);
  *      either 8, 10, or 12. Note that the internal bit depth must be the same
  *      for all encoders allocated in the same process. */
 extern const int x265_max_bit_depth;
+
+/* Force a link error in the case of linking against an incompatible API version.
+ * Glue #defines exist to force correct macro expansion; the final output of the macro
+ * is x265_encoder_open_##X264_BUILD (for purposes of dlopen). */
+#define x265_encoder_glue1(x,y) x##y
+#define x265_encoder_glue2(x,y) x265_encoder_glue1(x,y)
+#define x265_encoder_open x265_encoder_glue2(x265_encoder_open_,X265_BUILD)
 
 /* x265_encoder_open:
  *      create a new encoder handler, all parameters from x265_param_t are copied */
