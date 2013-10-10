@@ -129,42 +129,72 @@ void filterHorizontal_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t d
     }
 }
 
-void filterConvertPelToShort(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height)
+void filterConvertPelToShort(pixel *source, intptr_t sourceStride, short *dest, intptr_t destStride, int width, int height)
 {
-    pixel* srcOrg = src;
-    short* dstOrg = dst;
+    pixel* src = source;
+    short* dst = dest;
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int row, col;
-    Vec16uc src_v;
-    Vec8s dst_v, val_v;
+
+    __m128i val1, val2, val3;
 
     for (row = 0; row < height; row++)
     {
         for (col = 0; col < width - 7; col += 8)
         {
-            src_v.load(src + col);
-            val_v = extend_low(src_v) << shift;
-            dst_v = val_v - IF_INTERNAL_OFFS;
-            dst_v.store(dst + col);
+            val1 = _mm_loadu_si128((__m128i const*)(source + col));
+            val2 = _mm_sll_epi16(_mm_unpacklo_epi8(val1, _mm_setzero_si128()), _mm_cvtsi32_si128(shift));
+            val3 = _mm_sub_epi16(val2, _mm_set1_epi16(IF_INTERNAL_OFFS));
+            _mm_storeu_si128((__m128i*)(dest + col), val3);
         }
-
-        src += srcStride;
-        dst += dstStride;
+        source += sourceStride;
+        dest += destStride;
     }
-
     if (width % 8 != 0)
     {
-        src = srcOrg;
-        dst = dstOrg;
+        source = src;
+        dest = dst;
         col = width - (width % 8);
         for (row = 0; row < height; row++)
         {
-            src_v.load(src + col);
-            val_v = extend_low(src_v) << shift;
-            dst_v = val_v - IF_INTERNAL_OFFS;
-            dst_v.store_partial(width - col, dst + col);
-            src += srcStride;
-            dst += dstStride;
+            val1 = _mm_loadu_si128((__m128i const*)(source + col));
+            val2 = _mm_sll_epi16(_mm_unpacklo_epi8(val1, _mm_setzero_si128()), _mm_cvtsi32_si128(shift));
+            val3 = _mm_sub_epi16(val2, _mm_set1_epi16(IF_INTERNAL_OFFS));
+
+            int n = width - col;
+            if (n >= 8) 
+            {
+                _mm_storeu_si128((__m128i*)(dest + col), val3);
+            }
+            else if (n <= 0) ;    // do nothing if value of is n less than 0
+            else
+            {
+                union
+                {
+                    int8_t  c[16];
+                    int16_t s[8];
+                    int32_t i[4];
+                    int64_t q[2];
+                } u;
+                _mm_storeu_si128((__m128i*)u.c, val3);
+                int j = 0;
+                if (n & 4)    // n == (4,5,6,7)
+                {
+                    *(int64_t*)(dest + col) = u.q[0];
+                    j += 8;
+                }
+                if (n & 2)    // n == (2,3,6,7)
+                {
+                    ((int32_t*)(dest + col))[j/4] = u.i[j/4];
+                    j += 4;
+                }
+                if (n & 1)    // n == (1,3,5,7)
+                {
+                    ((int16_t*)(dest + col))[j/2] = u.s[j/2];
+                }
+            }
+            source += sourceStride;
+            dest += destStride;
         }
     }
 }
