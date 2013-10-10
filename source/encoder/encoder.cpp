@@ -656,6 +656,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
 
 #if defined(_MSC_VER)
 #pragma warning(disable: 4800) // forcing int to bool
+#pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
 void Encoder::initSPS(TComSPS *sps)
