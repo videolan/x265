@@ -923,11 +923,6 @@ void TComReferencePictureSet::setDeltaPOC(int bufferNum, int deltaPOC)
     m_deltaPOC[bufferNum] = deltaPOC;
 }
 
-void TComReferencePictureSet::setNumberOfPictures(int numberOfPictures)
-{
-    m_numberOfPictures = numberOfPictures;
-}
-
 int TComReferencePictureSet::getUsed(int bufferNum) const
 {
     return m_used[bufferNum];
@@ -961,16 +956,6 @@ bool TComReferencePictureSet::getCheckLTMSBPresent(int bufferNum)
 void TComReferencePictureSet::setCheckLTMSBPresent(int bufferNum, bool b)
 {
     m_bCheckLTMSB[bufferNum] = b;
-}
-
-/** set the reference idc value at uiBufferNum entry to the value of iRefIdc
- * \param uiBufferNum
- * \param iRefIdc
- * \returns void
- */
-void TComReferencePictureSet::setRefIdc(int bufferNum, int refIdc)
-{
-    m_refIdc[bufferNum] = refIdc;
 }
 
 /** get the reference idc value at uiBufferNum

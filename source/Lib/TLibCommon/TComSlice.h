@@ -45,7 +45,6 @@
 #include "piclist.h"
 
 #include <assert.h>
-#include <cstring>
 
 //! \ingroup TLibCommon
 //! \{
@@ -110,7 +109,6 @@ public:
     void setUsed(int bufferNum, bool used);
     void setDeltaPOC(int bufferNum, int deltaPOC);
     void setPOC(int bufferNum, int deltaPOC);
-    void setNumberOfPictures(int numberOfPictures);
     void setCheckLTMSBPresent(int bufferNum, bool b);
     bool getCheckLTMSBPresent(int bufferNum);
 
@@ -119,35 +117,20 @@ public:
     int  getPOC(int bufferNum) const;
     int  getNumberOfPictures() const;
 
-    void setNumberOfNegativePictures(int number)  { m_numberOfNegativePictures = number; }
-
     int  getNumberOfNegativePictures() const      { return m_numberOfNegativePictures; }
-
-    void setNumberOfPositivePictures(int number)  { m_numberOfPositivePictures = number; }
 
     int  getNumberOfPositivePictures() const      { return m_numberOfPositivePictures; }
 
-    void setNumberOfLongtermPictures(int number)  { m_numberOfLongtermPictures = number; }
-
     int  getNumberOfLongtermPictures() const      { return m_numberOfLongtermPictures; }
-
-    void setInterRPSPrediction(bool flag)         { m_interRPSPrediction = flag; }
 
     bool getInterRPSPrediction() const            { return m_interRPSPrediction; }
 
-    void setDeltaRIdxMinus1(int x)                { m_deltaRIdxMinus1 = x; }
-
     int  getDeltaRIdxMinus1() const               { return m_deltaRIdxMinus1; }
-
-    void setDeltaRPS(int x)                       { m_deltaRPS = x; }
 
     int  getDeltaRPS() const                      { return m_deltaRPS; }
 
-    void setNumRefIdc(int x)                      { m_numRefIdc = x; }
-
     int  getNumRefIdc() const                     { return m_numRefIdc; }
 
-    void setRefIdc(int bufferNum, int refIdc);
     int  getRefIdc(int bufferNum) const;
 
     void sortDeltaPOC();
