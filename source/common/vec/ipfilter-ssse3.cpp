@@ -169,50 +169,102 @@ void filterConvertPelToShort(pixel *src, intptr_t srcStride, short *dst, intptr_
     }
 }
 
-void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
+void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, intptr_t destStride, int width, int height)
 {
-    short* srcOrg = src;
-    pixel* dstOrg = dst;
+    short* src = source;
+    pixel* dst = dest;
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     short offset = IF_INTERNAL_OFFS;
-
     offset += shift ? (1 << (shift - 1)) : 0;
-    short maxVal = (1 << X265_DEPTH) - 1;
-    Vec8s minVal(0);
+    short maxval = (1 << X265_DEPTH) - 1;
     int row, col;
-    Vec8s src_c, val_c, val_zero(0);
-    Vec16uc val_uc;
+
+    __m128i minval  = _mm_setzero_si128();
+    __m128i zeroval = _mm_setzero_si128();
+    __m128i val1, val2, val3;
+
     for (row = 0; row < height; row++)
     {
         for (col = 0; col < width - 7; col += 8)
         {
-            src_c.load(src + col);
-            val_c = add_saturated(src_c, offset) >> shift;
-            val_c = max(val_c, minVal);
-            val_c = min(val_c, maxVal);
-            val_uc = compress(val_c, val_zero);
-            val_uc.store_partial(8, dst + col);
-        }
+            val1 = _mm_loadu_si128((__m128i const*)(source + col));
+            val2 = _mm_sra_epi16(_mm_adds_epi16(val1, _mm_set1_epi16(offset)), _mm_cvtsi32_si128(shift));
+            val2 = _mm_max_epi16(val2, minval);
+            val2 = _mm_min_epi16(val2, _mm_set1_epi16(maxval));
 
-        src += srcStride;
-        dst += dstStride;
+            __m128i mask  = _mm_set1_epi32(0x00FF00FF);           // mask for low bytes
+            __m128i lowm  = _mm_and_si128(val2, mask);            // bytes of low
+            __m128i highm = _mm_and_si128(zeroval, mask);         // bytes of high
+            val3 = _mm_packus_epi16(lowm, highm);                 // unsigned pack
+
+            union
+            {
+                int8_t  c[16];
+                int64_t q[2];
+            } u;
+            _mm_storeu_si128((__m128i*)u.c, val3);
+            *(int64_t*)(dest + col) = u.q[0];
+        }
+        source += sourceStride;
+        dest += destStride;
     }
 
     if (width % 8 != 0)
     {
-        src = srcOrg;
-        dst = dstOrg;
+        source = src;
+        dest = dst;
         col = width - (width % 8);
         for (row = 0; row < height; row++)
         {
-            src_c.load(src + col);
-            val_c = add_saturated(src_c, offset) >> shift;
-            val_c = max(val_c, minVal);
-            val_c = min(val_c, maxVal);
-            val_uc = compress(val_c, val_zero);
-            val_uc.store_partial(width - col, dst + col);
-            src += srcStride;
-            dst += dstStride;
+            val1 = _mm_loadu_si128((__m128i const*)(source + col));
+            val2 = _mm_sra_epi16(_mm_adds_epi16(val1, _mm_set1_epi16(offset)), _mm_cvtsi32_si128(shift));
+            val2 = _mm_max_epi16(val2, minval);
+            val2 = _mm_min_epi16(val2, _mm_set1_epi16(maxval));
+
+            __m128i mask  = _mm_set1_epi32(0x00FF00FF);           // mask for low bytes
+            __m128i lowm  = _mm_and_si128(val2, mask);            // bytes of low
+            __m128i highm = _mm_and_si128(zeroval, mask);         // bytes of high
+            val3 = _mm_packus_epi16(lowm, highm);                 // unsigned pack
+
+            int n = width - col;
+            if (n >= 16) 
+            {
+                _mm_storeu_si128((__m128i*)(dest + col), val3);
+            }
+            else if (n <= 0) ;    // do nothing if value of is n less than 0
+            else
+            {
+                union
+                {
+                    int8_t  c[16];
+                    int16_t s[8];
+                    int32_t i[4];
+                    int64_t q[2];
+                } u;
+                _mm_storeu_si128((__m128i*)u.c, val3);
+                int j = 0;
+                if (n & 8)    // n == (8,9,10,11,12,13,14,15)
+                {
+                    *(int64_t*)(dest + col) = u.q[0];
+                    j += 8;
+                }
+                if (n & 4)    // n == (4,5,6,7,12,13,14,15)
+                {
+                    ((int32_t*)(dest + col))[j/4] = u.i[j/4];
+                    j += 4;
+                }
+                if (n & 2)    // n == (2,3,6,7,10,11,14,15)
+                {
+                    ((int16_t*)(dest + col))[j/2] = u.s[j/2];
+                    j += 2;
+                }
+                if (n & 1)    // n == (1,3,5,7,9,11,13,15)
+                {
+                    ((int8_t*)(dest + col))[j] = u.c[j];
+                }
+            }
+            source += sourceStride;
+            dest += destStride;
         }
     }
 }
