@@ -62,68 +62,68 @@ void dequant(const int* quantCoef, int* coef, int width, int height, int per, in
         if (shift > per)
         {
             valueToAdd = 1 << (shift - per - 1);
-            Vec4i IAdd(valueToAdd);
+            __m128i IAdd = _mm_set1_epi32(valueToAdd);
 
             for (int n = 0; n < width * height; n = n + 8)
             {
-                Vec4i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2;
+                __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
 
-                quantCoef1.load(quantCoef + n);
-                quantCoef2.load(quantCoef + n + 4);
+                quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+                quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
 
-                deQuantCoef1.load(deQuantCoef + n);
-                deQuantCoef2.load(deQuantCoef + n + 4);
+                deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
+                deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
 
-                Vec8s quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
 
-                quantCoef1 = extend_low(quantCoef12);
-                quantCoef2 = extend_high(quantCoef12);
+                quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, deQuantCoef1), IAdd), _mm_cvtsi32_si128(shift - per));
+                quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, deQuantCoef2), IAdd), _mm_cvtsi32_si128(shift - per));
 
-                quantCoef1 =  (quantCoef1 *  deQuantCoef1 + IAdd) >> (shift - per);
-                quantCoef2 =  (quantCoef2 *  deQuantCoef2 + IAdd) >> (shift - per);
-
-                quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
-
-                quantCoef1 = extend_low(quantCoef12);
-                quantCoef1.store(coef + n);
-                quantCoef2 = extend_high(quantCoef12);
-                quantCoef2.store(coef + n + 4);
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
             }
         }
         else
         {
             for (int n = 0; n < width * height; n = n + 8)
             {
-                Vec4i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2;
+                __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
 
-                quantCoef1.load(quantCoef + n);
-                quantCoef2.load(quantCoef + n + 4);
+                quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+                quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
 
-                deQuantCoef1.load(deQuantCoef + n);
-                deQuantCoef2.load(deQuantCoef + n + 4);
+                deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
+                deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
 
-                Vec8s quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
 
-                quantCoef1 = extend_low(quantCoef12);
-                quantCoef2 = extend_high(quantCoef12);
+                quantCoef1 = _mm_mullo_epi32(quantCoef1, deQuantCoef1);
+                quantCoef2 = _mm_mullo_epi32(quantCoef2, deQuantCoef2);
 
-                quantCoef1 = quantCoef1 * deQuantCoef1;
-                quantCoef2 = quantCoef2 * deQuantCoef2;
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
 
-                quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
+                quantCoef1 = _mm_sll_epi32(quantCoef1, _mm_cvtsi32_si128(per - shift));
+                quantCoef2 = _mm_sll_epi32(quantCoef2, _mm_cvtsi32_si128(per - shift));
 
-                quantCoef1 = extend_low(quantCoef12);
-                quantCoef2 = extend_high(quantCoef12);
-
-                quantCoef1 = quantCoef1 << (per - shift);
-                quantCoef2 = quantCoef2 << (per - shift);
-
-                quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
-
-                quantCoef1 = extend_low(quantCoef12);
-                quantCoef1.store(coef + n);
-                quantCoef2 = extend_high(quantCoef12);
-                quantCoef2.store(coef + n + 4);
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
             }
         }
     }
@@ -132,29 +132,30 @@ void dequant(const int* quantCoef, int* coef, int width, int height, int per, in
         valueToAdd = 1 << (shift - 1);
         int scale = invQuantScales[rem] << per;
 
-        Vec4i vScale(scale);
-        Vec4i vAdd(valueToAdd);
+        __m128i vScale = _mm_set1_epi32(scale);
+        __m128i vAdd = _mm_set1_epi32(valueToAdd);
 
         for (int n = 0; n < width * height; n = n + 8)
         {
-            Vec4i quantCoef1, quantCoef2;
-            quantCoef1.load(quantCoef + n);
-            quantCoef2.load(quantCoef + n + 4);
+            __m128i quantCoef1, quantCoef2, quantCoef12, sign;
 
-            Vec8s quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
+            quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+            quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
 
-            quantCoef1 = extend_low(quantCoef12);
-            quantCoef2 = extend_high(quantCoef12);
+            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+            sign = _mm_srai_epi16(quantCoef12, 15);
+            quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+            quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
 
-            quantCoef1 = (quantCoef1 * vScale + vAdd) >> shift;
-            quantCoef2 = (quantCoef2 * vScale + vAdd) >> shift;
+            quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, vScale), vAdd), _mm_cvtsi32_si128(shift));
+            quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, vScale), vAdd), _mm_cvtsi32_si128(shift));
 
-            quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
-
-            quantCoef1 = extend_low(quantCoef12);
-            quantCoef1.store(coef + n);
-            quantCoef2 = extend_high(quantCoef12);
-            quantCoef2.store(coef + n + 4);
+            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+            sign = _mm_srai_epi16(quantCoef12, 15);
+            quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+            _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+            quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+            _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
         }
     }
 }
