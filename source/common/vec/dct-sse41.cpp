@@ -42,6 +42,125 @@
 using namespace x265;
 
 namespace {
+void dequant(const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoef)
+{
+    int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
+
+    if (width > 32)
+    {
+        width  = 32;
+        height = 32;
+    }
+
+    int valueToAdd;
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
+
+    if (useScalingList)
+    {
+        shift += 4;
+
+        if (shift > per)
+        {
+            valueToAdd = 1 << (shift - per - 1);
+            __m128i IAdd = _mm_set1_epi32(valueToAdd);
+
+            for (int n = 0; n < width * height; n = n + 8)
+            {
+                __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
+
+                quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+                quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+
+                deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
+                deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
+
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+
+                quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, deQuantCoef1), IAdd), _mm_cvtsi32_si128(shift - per));
+                quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, deQuantCoef2), IAdd), _mm_cvtsi32_si128(shift - per));
+
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
+            }
+        }
+        else
+        {
+            for (int n = 0; n < width * height; n = n + 8)
+            {
+                __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
+
+                quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+                quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+
+                deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
+                deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
+
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+
+                quantCoef1 = _mm_mullo_epi32(quantCoef1, deQuantCoef1);
+                quantCoef2 = _mm_mullo_epi32(quantCoef2, deQuantCoef2);
+
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+
+                quantCoef1 = _mm_sll_epi32(quantCoef1, _mm_cvtsi32_si128(per - shift));
+                quantCoef2 = _mm_sll_epi32(quantCoef2, _mm_cvtsi32_si128(per - shift));
+
+                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+                sign = _mm_srai_epi16(quantCoef12, 15);
+                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+                _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
+            }
+        }
+    }
+    else
+    {
+        valueToAdd = 1 << (shift - 1);
+        int scale = invQuantScales[rem] << per;
+
+        __m128i vScale = _mm_set1_epi32(scale);
+        __m128i vAdd = _mm_set1_epi32(valueToAdd);
+
+        for (int n = 0; n < width * height; n = n + 8)
+        {
+            __m128i quantCoef1, quantCoef2, quantCoef12, sign;
+
+            quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+            quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+
+            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+            sign = _mm_srai_epi16(quantCoef12, 15);
+            quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+            quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+
+            quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, vScale), vAdd), _mm_cvtsi32_si128(shift));
+            quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, vScale), vAdd), _mm_cvtsi32_si128(shift));
+
+            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+            sign = _mm_srai_epi16(quantCoef12, 15);
+            quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+            _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+            quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+            _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
+        }
+    }
+}
+
 ALIGN_VAR_32(static const short, tab_idst_4x4[8][8]) =
 {
     {   29, +84, 29,  +84,  29, +84,  29, +84 },
@@ -226,12 +345,99 @@ uint32_t quant(int* coef,
 
     return acSum;
 }
+
+inline void partialButterfly8(short *src, short *dst, int shift, int line)
+{
+    int j;
+    int add = 1 << (shift - 1);
+
+    __m128i zero_row = _mm_setr_epi32(64, 64, 0, 0);
+    __m128i four_row = _mm_setr_epi32(64, -64, 0, 0);
+    __m128i two_row = _mm_setr_epi32(83, 36, 0, 0);
+    __m128i six_row = _mm_setr_epi32(36, -83, 0, 0);
+
+    __m128i one_row = _mm_setr_epi32(89, 75, 50, 18);
+    __m128i three_row = _mm_setr_epi32(75, -18, -89, -50);
+    __m128i five_row = _mm_setr_epi32(50, -89, 18, 75);
+    __m128i seven_row = _mm_setr_epi32(18, -50, 75, -89);
+
+    for (j = 0; j < line; j++)
+    {
+        __m128i srcTmp;
+        srcTmp = _mm_loadu_si128((__m128i*)(src));
+
+        __m128i sign = _mm_srai_epi16(srcTmp, 15);
+        __m128i E_first_half = _mm_unpacklo_epi16(srcTmp, sign);
+        __m128i E_second_half = _mm_unpackhi_epi16(srcTmp, sign);
+        E_second_half = _mm_shuffle_epi32(E_second_half, 27);
+
+        __m128i E = _mm_add_epi32(E_first_half, E_second_half);
+        __m128i O = _mm_sub_epi32(E_first_half, E_second_half);
+
+        __m128i EE_first_half = _mm_shuffle_epi32(E, 4);
+        __m128i EE_second_half = _mm_shuffle_epi32(E, 11);
+        __m128i EE = _mm_add_epi32(EE_first_half, EE_second_half);
+        __m128i EO = _mm_sub_epi32(EE_first_half, EE_second_half);
+
+        int dst0 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(zero_row, EE), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst4 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(four_row, EE), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst2 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(two_row, EO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst6 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(six_row, EO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        dst[0] = dst0;
+        dst[4 * line] = dst4;
+        dst[2 * line] = dst2;
+        dst[6 * line] = dst6;
+
+        int dst1 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(one_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst3 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(three_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst5 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(five_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst7 = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(seven_row, O), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        dst[line] = dst1;
+        dst[3 * line] = dst3;
+        dst[5 * line] = dst5;
+        dst[7 * line] = dst7;
+
+        src += 8;
+        dst++;
+    }
+}
+
+void dct8(short *src, int *dst, intptr_t stride)
+{
+    const int shift_1st = 2;
+    const int shift_2nd = 9;
+
+    ALIGN_VAR_32(short, coef[8 * 8]);
+    ALIGN_VAR_32(short, block[8 * 8]);
+
+    for (int i = 0; i < 8; i++)
+    {
+        memcpy(&block[i * 8], &src[i * stride], 8 * sizeof(short));
+    }
+
+    partialButterfly8(block, coef, shift_1st, 8);
+    partialButterfly8(coef, block, shift_2nd, 8);
+#define N (8)
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            dst[i * N + j] = block[i * N + j];
+        }
+    }
+
+#undef N
+}
 }
 
 namespace x265 {
 void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives &p)
 {
     p.quant = quant;
+    p.dequant = dequant;
+    p.dct[DCT_8x8] = dct8;
     p.idct[IDST_4x4] = idst4;
 }
 }
