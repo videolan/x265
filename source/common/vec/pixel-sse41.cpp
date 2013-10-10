@@ -5534,7 +5534,27 @@ namespace {
 #if HIGH_BIT_DEPTH
 #include "pixel16.inc"
 #endif
-#include "sse.inc"
+template<int ly>
+int sse_pp4(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+{
+    int rows = ly;
+    Vec16uc m1, n1;
+
+    Vec8us diff(0);
+    Vec4i sum(0);
+    for (; rows != 0; rows--)
+    {
+        m1.fromUint32(*(uint32_t*)fenc);
+        n1.fromUint32(*(uint32_t*)fref);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += extend_low(diff);
+        fenc += strideFenc;
+        fref += strideFref;
+    }
+
+    return horizontal_add(sum);
+}
 }
 
 namespace x265 {
