@@ -32,12 +32,12 @@ bool hasXOP(void); // instr_detect.cpp
 #define HAVE_SSE4
 #define HAVE_AVX2
 #elif defined(__GNUC__)
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+#if __clang__ || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 #define HAVE_SSE3
 #define HAVE_SSSE3
 #define HAVE_SSE4
 #endif
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
+#if __clang__ || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 7)
 #define HAVE_AVX2
 #endif
 #elif defined(_MSC_VER)

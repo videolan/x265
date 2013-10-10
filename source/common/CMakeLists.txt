@@ -113,10 +113,16 @@ if(ENABLE_PRIMITIVES_VEC)
         endif()
     endif()
     if(GCC)
-        if ("$ENV{CXX}" STREQUAL "icpc")
+        if("$ENV{CXX}" STREQUAL "icpc")
             add_definitions(-wd13200)  # function using MMX does not call EMMS
         endif()
-        if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.3)
+        if(CLANG)
+            # llvm intrinsic headers trigger this warning
+            add_definitions(-Wno-shadow)
+            # llvm reports these warnings for the vector class headers
+            add_definitions(-Wno-shift-overflow -Wno-uninitialized)
+        endif()
+        if("$ENV{CXX}" STREQUAL "icpc" OR CLANG OR NOT GCC_VERSION VERSION_LESS 4.3)
             set(PRIMITIVES vec/blockcopy-sse3.cpp
                 vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
                 vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
@@ -132,7 +138,7 @@ if(ENABLE_PRIMITIVES_VEC)
                 vec/pixel-sse41.cpp vec/ipfilter-sse41.cpp vec/dct-sse41.cpp vec/intra-sse41.cpp
                 PROPERTIES COMPILE_FLAGS "-msse4.1")
         endif()
-        if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.7)
+        if("$ENV{CXX}" STREQUAL "icpc" OR CLANG OR NOT GCC_VERSION VERSION_LESS 4.7)
             set(PRIMITIVES ${PRIMITIVES}
                 vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp)
             set_source_files_properties(
