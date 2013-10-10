@@ -2425,7 +2425,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                 ref0 = m_predYuv[0].getLumaAddr(partAddr);
                 ref1 = m_predYuv[1].getLumaAddr(partAddr);
 
-                pixel avg[MAX_CU_SIZE * MAX_CU_SIZE];
+                ALIGN_VAR_32(pixel, avg[MAX_CU_SIZE * MAX_CU_SIZE]);
 
                 int partEnum = PartitionFromSizes(roiWidth, roiHeight);
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, m_predYuv[0].getStride(), ref1, m_predYuv[1].getStride(), 32);
