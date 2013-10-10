@@ -1207,10 +1207,12 @@ static ALWAYSINLINE Vec8s & operator >>= (Vec8s & a, int b) {
     return a;
 }
 
+#ifndef __clang__
 // vector operator == : returns true for elements for which a == b
 static ALWAYSINLINE Vec8s operator == (Vec8s const & a, Vec8s const & b) {
     return _mm_cmpeq_epi16(a, b);
 }
+#endif
 
 // vector operator != : returns true for elements for which a != b
 static ALWAYSINLINE Vec8s operator != (Vec8s const & a, Vec8s const & b) {
@@ -2684,10 +2686,12 @@ static ALWAYSINLINE Vec2q operator ~ (Vec2q const & a) {
     return Vec2q( ~ Vec128b(a));
 }
 
+#ifndef __clang__
 // vector operator ! : logical not, returns true for elements == 0
 static ALWAYSINLINE Vec2q operator ! (Vec2q const & a) {
     return a == _mm_setzero_si128();
 }
+#endif
 
 // Functions for this class
 

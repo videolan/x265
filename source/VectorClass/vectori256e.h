@@ -2191,10 +2191,12 @@ static inline Vec4q operator ~ (Vec4q const & a) {
     return Vec4q(~a.get_low(), ~a.get_high());
 }
 
+#ifndef __clang__
 // vector operator ! : logical not, returns true for elements == 0
 static inline Vec4q operator ! (Vec4q const & a) {
     return Vec4q(!a.get_low(), !a.get_high());
 }
+#endif
 
 // Functions for this class
 

@@ -1094,10 +1094,12 @@ static inline Vec16s & operator >>= (Vec16s & a, int b) {
     return a;
 }
 
+#ifndef __clang__
 // vector operator == : returns true for elements for which a == b
 static inline Vec16s operator == (Vec16s const & a, Vec16s const & b) {
     return _mm256_cmpeq_epi16(a, b);
 }
+#endif
 
 // vector operator != : returns true for elements for which a != b
 static inline Vec16s operator != (Vec16s const & a, Vec16s const & b) {
@@ -2398,10 +2400,12 @@ static inline Vec4q operator ~ (Vec4q const & a) {
     return Vec4q( ~ Vec256b(a));
 }
 
+#ifndef __clang__
 // vector operator ! : logical not, returns true for elements == 0
 static inline Vec4q operator ! (Vec4q const & a) {
     return a == _mm256_setzero_si256();
 }
+#endif
 
 // Functions for this class
 
@@ -4042,6 +4046,7 @@ static inline Vec4q lookup4(Vec4q const & index, Vec4q const & table) {
     return Vec4q(lookup8(Vec8i(index * 0x200000002ll + 0x100000000ll), Vec8i(table)));
 }
 
+#ifndef __clang__
 template <int n>
 static inline Vec4q lookup(Vec4q const & index, void const * table) {
     if (n <= 0) return 0;
@@ -4064,6 +4069,7 @@ static inline Vec4q lookup(Vec4q const & index, void const * table) {
     return _mm256_i64gather_epi64((const int64_t *)table, index1, 8);
 #endif
 }
+#endif
 
 
 /*****************************************************************************
