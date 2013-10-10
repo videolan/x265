@@ -28,16 +28,14 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#define INSTRSET 5
-#include "vectorclass.h"
-
 #include "primitives.h"
 #include "TLibCommon/TypeDef.h"    // TCoeff, int, UInt
 #include "TLibCommon/TComRom.h"
+#include <xmmintrin.h> // SSE
+#include <smmintrin.h> // SSE4.1
 
 #include <assert.h>
 #include <string.h>
-#include <smmintrin.h>
 
 using namespace x265;
 
