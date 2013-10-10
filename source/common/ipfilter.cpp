@@ -424,34 +424,6 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dst
     }
 }
 
-void extendPicCompBorder(pixel* txt, intptr_t stride, int width, int height, int marginX, int marginY)
-{
-    int   x, y;
-
-    for (y = 0; y < height; y++)
-    {
-        for (x = 0; x < marginX; x++)
-        {
-            txt[-marginX + x] = txt[0];
-            txt[width + x] = txt[width - 1];
-        }
-
-        txt += stride;
-    }
-
-    txt -= (stride + marginX);
-    for (y = 0; y < marginY; y++)
-    {
-        ::memcpy(txt + (y + 1) * stride, txt, sizeof(pixel) * (width + (marginX << 1)));
-    }
-
-    txt -= ((height - 1) * stride);
-    for (y = 0; y < marginY; y++)
-    {
-        ::memcpy(txt - (y + 1) * stride, txt, sizeof(pixel) * (width + (marginX << 1)));
-    }
-}
-
 void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, int marginX)
 {
     for (int y = 0; y < height; y++)
@@ -468,29 +440,6 @@ void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, in
 #endif
 
         txt += stride;
-    }
-}
-
-void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int scale, int round, int shift, int offset)
-{
-    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    shift = shift + shiftNum;
-    round = shift ? (1 << (shift - 1)) : 0;
-
-    int x, y;
-    for (y = height - 1; y >= 0; y--)
-    {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: luma min width is 4
-            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((scale * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
-            x--;
-            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((scale * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
-            x--;
-        }
-
-        src += srcStride;
-        dst  += dstStride;
     }
 }
 }
