@@ -30,6 +30,7 @@
 extern "C" {
 #endif
 
+/* Until we have a permanent solution, the x265.def file must be updated each time this is changed */
 #define X265_BUILD 1
 
 /* x265_t:

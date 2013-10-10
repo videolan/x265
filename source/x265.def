@@ -1,10 +1,10 @@
 EXPORTS
+x265_encoder_open_1
 x265_setup_primitives
 x265_param_default
 x265_picture_init
 x265_param_apply_profile
 x265_max_bit_depth
-x265_encoder_open
 x265_encoder_headers
 x265_encoder_encode
 x265_encoder_get_stats
