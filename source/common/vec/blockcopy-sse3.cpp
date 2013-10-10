@@ -22,49 +22,13 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
-
-#define INSTRSET 3
-#include "vectorclass.h"
-
 #include "primitives.h"
-#include <string.h>
+#include <xmmintrin.h> // SSE
+#include <pmmintrin.h> // SSE3
+#include <cstring>
 
 namespace {
-
-#if HIGH_BIT_DEPTH
-
-void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
-{
-    if ((bx & 7) || (((size_t)dst | (size_t)src | sstride | dstride) & 15))
-    {
-        // slow path, irregular memory alignments or sizes
-        for (int y = 0; y < by; y++)
-        {
-            memcpy(dst, src, bx * sizeof(pixel));
-            src += sstride;
-            dst += dstride;
-        }
-    }
-    else
-    {
-        // fast path, multiples of 8 pixel wide blocks
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x += 8)
-            {
-                Vec8s word;
-                word.load_a(src + x);
-                word.store_a(dst + x);
-            }
-
-            src += sstride;
-            dst += dstride;
-        }
-    }
-}
-
-#else /* if HIGH_BIT_DEPTH */
-
+#if !HIGH_BIT_DEPTH
 void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
@@ -135,7 +99,6 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
         }
     }
 }
-
 #endif /* if HIGH_BIT_DEPTH */
 
 void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
@@ -302,8 +265,43 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
         }
     }
 }
+}
 
-#if !HIGH_BIT_DEPTH
+#define INSTRSET 3
+#include "vectorclass.h"
+
+namespace {
+#if HIGH_BIT_DEPTH
+void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
+{
+    if ((bx & 7) || (((size_t)dst | (size_t)src | sstride | dstride) & 15))
+    {
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            memcpy(dst, src, bx * sizeof(pixel));
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // fast path, multiples of 8 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 8)
+            {
+                Vec8s word;
+                word.load_a(src + x);
+                word.store_a(dst + x);
+            }
+
+            src += sstride;
+            dst += dstride;
+        }
+    }
+}
+#else
 void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1)
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
@@ -382,10 +380,15 @@ namespace x265 {
 void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
 {
 #if HIGH_BIT_DEPTH
-    // At high bit depth, a pixel is a short
     p.blockcpy_pp = blockcopy_p_p;
     p.blockcpy_ps = (blockcpy_ps_t)blockcopy_p_p;
     p.blockcpy_sp = (blockcpy_sp_t)blockcopy_p_p;
+#else
+    p.pixeladd_pp = pixeladd_pp;
+#endif
+
+#if HIGH_BIT_DEPTH
+    // At high bit depth, a pixel is a short
     p.blockcpy_sc = (blockcpy_sc_t)blockcopy_s_p;
     p.pixeladd_pp = (pixeladd_pp_t)pixeladd_ss;
     p.pixeladd_ss = pixeladd_ss;
@@ -396,7 +399,6 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
     p.blockcpy_sc = blockcopy_s_p;
     p.pixelsub_sp = pixelsub_sp;
     p.pixeladd_ss = pixeladd_ss;
-    p.pixeladd_pp = pixeladd_pp;
 #endif
 }
 }
