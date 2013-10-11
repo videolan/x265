@@ -202,6 +202,8 @@ typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, 
 typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
 typedef void (*ssim_4x4x2_core_t)(const pixel *pix1, intptr_t stride1, const pixel *pix2, intptr_t stride2, ssim_t sums[2][4]);
 typedef float (*ssim_end4_t)(ssim_t sum0[5][4], ssim_t sum1[5][4], int width);
+typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
+typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -261,6 +263,8 @@ struct EncoderPrimitives
     downscale_t     frame_init_lowres_core;
     ssim_4x4x2_core_t ssim_4x4x2_core;
     ssim_end4_t       ssim_end_4;
+    var_t             var[NUM_PARTITIONS];
+    plane_copy_deinterleave_t plane_copy_deinterleave_c;
 };
 
 /* This copy of the table is what gets used by the encoder.

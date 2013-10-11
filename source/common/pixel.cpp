@@ -688,6 +688,33 @@ float ssim_end_4(ssim_t sum0[5][4], ssim_t sum1[5][4], int width)
     }
     return ssim;
 }
+
+template<int w, int h>
+uint64_t pixel_var(pixel *pix, intptr_t i_stride)
+{
+    uint32_t sum = 0, sqr = 0;
+    for (int y = 0; y < h; y++)
+    {
+        for (int x = 0; x < w; x++)
+        {
+            sum += pix[x];
+            sqr += pix[x] * pix[x];
+        }
+        pix += i_stride;
+    }
+    return sum + ((uint64_t)sqr << 32);
+}
+
+void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride,
+                                    pixel *src,  intptr_t srcStride, int w, int h)
+{
+    for (int y = 0; y < h; y++, dstu += dstuStride, dstv += dstvStride, src += srcStride)
+        for (int x = 0; x < w; x++)
+        {
+            dstu[x] = src[2 * x];
+            dstv[x] = src[2 * x + 1];
+        }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -905,5 +932,9 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.frame_init_lowres_core = frame_init_lowres_core;
     p.ssim_4x4x2_core = ssim_4x4x2_core;
     p.ssim_end_4 = ssim_end_4;
+
+    p.var[PARTITION_16x16] = pixel_var<16,16>;
+    p.var[PARTITION_8x8] = pixel_var<8,8>;
+    p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }
 }
