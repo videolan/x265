@@ -295,6 +295,8 @@ typedef struct x265_param_t
         int       rateControlMode;             ///<Values corresponding to RcMethod 
         int       qp;                          ///< Constant QP base value
         int       rateFactor;                  ///< Constant rate factor (CRF)
+        int       aqMode;                      ///< Adaptive QP (AQ)
+        double    aqStrength;
     } rc;
 }
 x265_param_t;
