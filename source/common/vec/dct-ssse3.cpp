@@ -30,9 +30,9 @@
 
 #include "primitives.h"
 #include "TLibCommon/TComRom.h"
-
-#define INSTRSET 4
-#include "vectorclass.h"
+#include <xmmintrin.h> // SSE
+#include <pmmintrin.h> // SSE3
+#include <tmmintrin.h> // SSSE3
 
 #include <assert.h>
 #include <string.h>
