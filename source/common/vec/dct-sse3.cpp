@@ -40,6 +40,7 @@
 using namespace x265;
 
 namespace {
+#if !HIGH_BIT_DEPTH
 ALIGN_VAR_32(static const short, tab_dct_4[][8]) =
 {
     { 64, 64, 64, 64, 64, 64, 64, 64 },
@@ -120,6 +121,7 @@ void dct4(short *src, int *dst, intptr_t stride)
     _mm_storeu_si128((__m128i*)&dst[2 * 4], T72);
     _mm_storeu_si128((__m128i*)&dst[3 * 4], T73);
 }
+#endif
 
 ALIGN_VAR_32(static const short, tab_idct_4x4[4][8]) =
 {
