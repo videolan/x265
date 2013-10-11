@@ -93,7 +93,7 @@ void Encoder::create()
     }
     m_lookahead = new Lookahead(this);
     m_dpb = new DPB(this);
-    m_rateControl = new RateControl(&param);
+    m_rateControl = new RateControl(this);
 }
 
 void Encoder::destroy()
