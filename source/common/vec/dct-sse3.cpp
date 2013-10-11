@@ -2282,9 +2282,11 @@ void idst4(int *src, short *dst, intptr_t stride)
 namespace x265 {
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
 {
+#if !HIGH_BIT_DEPTH
     p.dct[DCT_4x4] = dct4;
     p.dct[DCT_16x16] = dct16;
     p.dct[DCT_32x32] = dct32;
+#endif
 
     p.idct[IDST_4x4] = idst4;
     p.idct[IDCT_4x4] = idct4;
