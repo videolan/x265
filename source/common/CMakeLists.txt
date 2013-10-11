@@ -75,7 +75,7 @@ if(MSVC)
     # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
-    if ("$ENV{CXX}" STREQUAL "icl")
+    if (INTEL_CXX)
         add_definitions(/Qwd2557) # signed/unsigned mismatch
     endif()
 endif(MSVC)
@@ -84,7 +84,7 @@ if(ENABLE_PRIMITIVES_VEC)
     if (MSVC)
         add_definitions(/wd4127) # conditional expression is constant
         add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
-        if ("$ENV{CXX}" STREQUAL "icl")
+        if (INTEL_CXX)
             add_definitions(/Qwd111)    # statement is unreachable
             add_definitions(/Qwd128)    # loop is unreachable
             add_definitions(/Qwd177)    # declared function is unused
@@ -106,14 +106,14 @@ if(ENABLE_PRIMITIVES_VEC)
                 vec/intra-sse3.cpp vec/intra-sse41.cpp
                 PROPERTIES COMPILE_FLAGS /arch:SSE2)
         endif()
-        if (MSVC_VERSION EQUAL 1700 OR "$ENV{CXX}" STREQUAL "icl")
+        if (MSVC_VERSION EQUAL 1700 OR INTEL_CXX)
             set(PRIMITIVES ${PRIMITIVES} vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp)
             set_source_files_properties(vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp
                 PROPERTIES COMPILE_FLAGS /arch:AVX)
         endif()
     endif()
     if(GCC)
-        if("$ENV{CXX}" STREQUAL "icpc")
+        if(INTEL_CXX)
             add_definitions(-wd13200)  # function using MMX does not call EMMS
         endif()
         if(CLANG)
@@ -122,7 +122,7 @@ if(ENABLE_PRIMITIVES_VEC)
             # llvm reports these warnings for the vector class headers
             add_definitions(-Wno-shift-overflow -Wno-uninitialized)
         endif()
-        if(("$ENV{CXX}" STREQUAL "icpc") OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.3))
+        if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.3))
             set(PRIMITIVES vec/blockcopy-sse3.cpp
                 vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
                 vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
@@ -138,7 +138,7 @@ if(ENABLE_PRIMITIVES_VEC)
                 vec/pixel-sse41.cpp vec/ipfilter-sse41.cpp vec/dct-sse41.cpp vec/intra-sse41.cpp
                 PROPERTIES COMPILE_FLAGS "-msse4.1")
         endif()
-        if(("$ENV{CXX}" STREQUAL "icpc") OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.7))
+        if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.7))
             set(PRIMITIVES ${PRIMITIVES}
                 vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp)
             set_source_files_properties(
