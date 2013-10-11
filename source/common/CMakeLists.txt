@@ -182,7 +182,7 @@ if(ENABLE_PRIMITIVES_ASM)
                 DEPENDS ${ASM})
         endforeach()
         add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h ${OBJS})
-    elseif(MSVC)
+    elseif(MSVC_IDE)
         # this is horrible. ugly, and hacky, and it reproduces logic found
         # in the yasm CMake modules, but this is required because of this cmake bug
         # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170

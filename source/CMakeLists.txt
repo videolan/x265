@@ -149,7 +149,7 @@ add_subdirectory(encoder)
 
 add_library(x265-shared SHARED dllmain.cpp x265.def $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
-if(ENABLE_PRIMITIVES_ASM AND (MSVC OR XCODE))
+if(ENABLE_PRIMITIVES_ASM AND (MSVC_IDE OR XCODE))
     SET(EXTRA_LIBS ${EXTRA_LIBS} assembly)
 endif()
 target_link_libraries(x265-shared ${EXTRA_LIBS})
