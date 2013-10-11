@@ -454,7 +454,7 @@ void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives &p)
     p.sad_x4[PARTITION_##W##x##H] = sad_avx2_x4_##W<H>; \
 
 #if !HIGH_BIT_DEPTH 
-#if (defined(__GNUC__) || defined(__INTEL_COMPILER))
+#if (defined(__GNUC__) || defined(__INTEL_COMPILER)) || defined(__clang__)
     SET_SADS(32, 8);
     SET_SADS(32, 16);
     SET_SADS(32, 24);
