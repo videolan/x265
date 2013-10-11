@@ -619,17 +619,17 @@ namespace {
 void convert32to16_shr(short *dst, int *org, int shift, int num)
 {
     int i;
-    Vec4i round = _mm_set1_epi32(1 << (shift - 1));
+    __m128i round = _mm_set1_epi32(1 << (shift - 1));
 
     for (i = 0; i < num; i += 4)
     {
-        Vec4i im32;
-        Vec8s im16;
+        __m128i im32;
+        __m128i im16;
 
-        im32.load(org);
-        im32 = (im32 + round) >> shift;
-        im16 = compress_saturated(im32, im32);
-        store_partial(const_int(8), dst, im16);
+        im32 = _mm_loadu_si128((__m128i const*)org);
+        im32 = _mm_sra_epi32(_mm_add_epi32(im32, round), _mm_cvtsi32_si128(shift));
+        im16 = _mm_packs_epi32(im32, im32);
+        _mm_storeu_si128((__m128i*)dst, im16);
 
         org += 4;
         dst += 4;
