@@ -428,14 +428,6 @@ void blockfil_s_c(short *dst, intptr_t dstride, short val)
     }
 }
 
-void convert16to32(short *src, int *dst, int num)
-{
-    for (int i = 0; i < num; i++)
-    {
-        dst[i] = (int)src[i];
-    }
-}
-
 void convert16to32_shl(int *dst, short *src, intptr_t stride, int shift, int size)
 {
     for (int i = 0; i < size; i++)
@@ -444,14 +436,6 @@ void convert16to32_shl(int *dst, short *src, intptr_t stride, int shift, int siz
         {
             dst[i * size + j] = ((int)src[i * stride + j]) << shift;
         }
-    }
-}
-
-void convert32to16(int *src, short *dst, int num)
-{
-    for (int i = 0; i < num; i++)
-    {
-        dst[i] = (short)src[i];
     }
 }
 
@@ -811,9 +795,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.blockfill_s[BLOCK_32x32] = blockfil_s_c<32>;
     p.blockfill_s[BLOCK_64x64] = blockfil_s_c<64>;
 
-    p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;
-    p.cvt32to16     = convert32to16;
     p.cvt32to16_shr = convert32to16_shr;
 
     p.sa8d[BLOCK_4x4]   = satd_4x4;

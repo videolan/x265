@@ -616,45 +616,6 @@ void calcRecons(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recI
 #include "vectorclass.h"
 
 namespace {
-void convert16to32(short *org, int *dst, int num)
-{
-    int i;
-
-    for (i = 0; i < num; i += 8)
-    {
-        Vec8s im16;
-        Vec4i im32L, im32H;
-
-        im16.load(org);
-        im32L = extend_low(im16);
-        im32H = extend_high(im16);
-        im32L.store(dst);
-        im32H.store(dst + 4);
-
-        org += 8;
-        dst += 8;
-    }
-}
-
-void convert32to16(int *org, short *dst, int num)
-{
-    int i;
-
-    for (i = 0; i < num; i += 8)
-    {
-        Vec4i im32L, im32H;
-        Vec8s im16;
-
-        im32L.load(org);
-        im32H.load(org + 4);
-        im16 = compress_saturated(im32L, im32H);
-        im16.store(dst);
-
-        org += 8;
-        dst += 8;
-    }
-}
-
 void convert32to16_shr(short *dst, int *org, int shift, int num)
 {
     int i;
@@ -679,10 +640,7 @@ void convert32to16_shr(short *dst, int *org, int shift, int num)
 namespace x265 {
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
 {
-    p.cvt16to32     = convert16to32;
-    p.cvt32to16     = convert32to16;
     p.cvt32to16_shr = convert32to16_shr;
-
     p.cvt16to32_shl = convert16to32_shl;
     p.cvt16to16_shl = convert16to16_shl;
 
