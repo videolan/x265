@@ -1740,143 +1740,146 @@ inline void partialButterfly16(short *src, short *dst, int shift, int line)
     int j;
     int add = 1 << (shift - 1);
 
-    Vec4i zero_row(64, 64, 0, 0);
-    Vec4i four_row(83, 36, 0, 0);
-    Vec4i eight_row(64, -64, 0, 0);
-    Vec4i twelve_row(36, -83, 0, 0);
+    __m128i zero_row = _mm_setr_epi32(64, 64, 0, 0);
+    __m128i four_row = _mm_setr_epi32(83, 36, 0, 0);
+    __m128i eight_row = _mm_setr_epi32(64, -64, 0, 0);
+    __m128i twelve_row = _mm_setr_epi32(36, -83, 0, 0);
 
-    Vec4i two_row(89, 75, 50, 18);
-    Vec4i six_row(75, -18, -89, -50);
-    Vec4i ten_row(50, -89, 18, 75);
-    Vec4i fourteen_row(18, -50, 75, -89);
+    __m128i two_row = _mm_setr_epi32(89, 75, 50, 18);
+    __m128i six_row = _mm_setr_epi32(75, -18, -89, -50);
+    __m128i ten_row = _mm_setr_epi32(50, -89, 18, 75);
+    __m128i fourteen_row = _mm_setr_epi32(18, -50, 75, -89);
 
-    Vec4i one_row_first_half(90, 87, 80, 70);
-    Vec4i one_row_second_half(57, 43, 25,  9);
-    Vec4i three_row_first_half(87, 57,  9, -43);
-    Vec4i three_row_second_half(-80, -90, -70, -25);
-    Vec4i five_row_first_half(80,  9, -70, -87);
-    Vec4i five_row_second_half(-25, 57, 90, 43);
-    Vec4i seven_row_first_half(70, -43, -87,  9);
-    Vec4i seven_row_second_half(90, 25, -80, -57);
-    Vec4i nine_row_first_half(57, -80, -25, 90);
-    Vec4i nine_row_second_half(-9, -87, 43, 70);
-    Vec4i eleven_row_first_half(43, -90, 57, 25);
-    Vec4i eleven_row_second_half(-87, 70,  9, -80);
-    Vec4i thirteen_row_first_half(25, -70, 90, -80);
-    Vec4i thirteen_row_second_half(43,  9, -57, 87);
-    Vec4i fifteen_row_first_half(9, -25, 43, -57);
-    Vec4i fifteen_row_second_half(70, -80, 87, -90);
+    __m128i one_row_first_half = _mm_setr_epi32(90, 87, 80, 70);
+    __m128i one_row_second_half = _mm_setr_epi32(57, 43, 25,  9);
+    __m128i three_row_first_half = _mm_setr_epi32(87, 57,  9, -43);
+    __m128i three_row_second_half = _mm_setr_epi32(-80, -90, -70, -25);
+    __m128i five_row_first_half = _mm_setr_epi32(80,  9, -70, -87);
+    __m128i five_row_second_half = _mm_setr_epi32(-25, 57, 90, 43);
+    __m128i seven_row_first_half = _mm_setr_epi32(70, -43, -87,  9);
+    __m128i seven_row_second_half = _mm_setr_epi32(90, 25, -80, -57);
+    __m128i nine_row_first_half = _mm_setr_epi32(57, -80, -25, 90);
+    __m128i nine_row_second_half = _mm_setr_epi32(-9, -87, 43, 70);
+    __m128i eleven_row_first_half = _mm_setr_epi32(43, -90, 57, 25);
+    __m128i eleven_row_second_half = _mm_setr_epi32(-87, 70,  9, -80);
+    __m128i thirteen_row_first_half = _mm_setr_epi32(25, -70, 90, -80);
+    __m128i thirteen_row_second_half = _mm_setr_epi32(43,  9, -57, 87);
+    __m128i fifteen_row_first_half = _mm_setr_epi32(9, -25, 43, -57);
+    __m128i fifteen_row_second_half = _mm_setr_epi32(70, -80, 87, -90);
 
     for (j = 0; j < line; j++)
     {
-        Vec8s tmp1, tmp2;
-        tmp1.load(src);
-        Vec4i tmp1_first_half = extend_low(tmp1);
-        Vec4i tmp1_second_half = extend_high(tmp1);
+        __m128i tmp1, tmp2;
+        tmp1 = _mm_loadu_si128((__m128i*)(src));
 
-        tmp2.load(src + 8);
-        Vec4i tmp2_first_half_tmp = extend_low(tmp2);
-        Vec4i tmp2_second_half_tmp = extend_high(tmp2);
-        Vec4i tmp2_first_half = permute4i<3, 2, 1, 0>(tmp2_second_half_tmp);
-        Vec4i tmp2_second_half = permute4i<3, 2, 1, 0>(tmp2_first_half_tmp);
+        __m128i sign = _mm_srai_epi16(tmp1, 15);
+        __m128i tmp1_first_half = _mm_unpacklo_epi16(tmp1, sign);
+        __m128i tmp1_second_half = _mm_unpackhi_epi16(tmp1, sign);
 
-        Vec4i E_first_half = tmp1_first_half + tmp2_first_half;
-        Vec4i E_second_half_tmp = tmp1_second_half + tmp2_second_half;
-        Vec4i O_first_half = tmp1_first_half - tmp2_first_half;
-        Vec4i O_second_half = tmp1_second_half - tmp2_second_half;
+        tmp2 = _mm_loadu_si128((__m128i*)(src + 8));
+        sign = _mm_srai_epi16(tmp2, 15);
+        __m128i tmp2_first_half_tmp = _mm_unpacklo_epi16(tmp2, sign);
+        __m128i tmp2_second_half_tmp = _mm_unpackhi_epi16(tmp2, sign);
+        __m128i tmp2_first_half = _mm_shuffle_epi32(tmp2_second_half_tmp, 27);
+        __m128i tmp2_second_half = _mm_shuffle_epi32(tmp2_first_half_tmp, 27);
 
-        Vec4i E_second_half = permute4i<3, 2, 1, 0>(E_second_half_tmp);
+        __m128i E_first_half = _mm_add_epi32(tmp1_first_half, tmp2_first_half);
+        __m128i E_second_half_tmp = _mm_add_epi32(tmp1_second_half, tmp2_second_half);
+        __m128i O_first_half = _mm_sub_epi32(tmp1_first_half, tmp2_first_half);
+        __m128i O_second_half = _mm_sub_epi32(tmp1_second_half, tmp2_second_half);
 
-        Vec4i EE = E_first_half + E_second_half;
-        Vec4i EO = E_first_half - E_second_half;
+        __m128i E_second_half = _mm_shuffle_epi32(E_second_half_tmp, 27);
 
-        Vec4i EE_first_half = permute4i<0, 1, -1, -1>(EE);
-        Vec4i EE_second_half = permute4i<3, 2, -1, -1>(EE);
+        __m128i EE = _mm_add_epi32(E_first_half, E_second_half);
+        __m128i EO = _mm_sub_epi32(E_first_half, E_second_half);
 
-        Vec4i EEE = EE_first_half + EE_second_half;
-        Vec4i EEO = EE_first_half - EE_second_half;
+        __m128i EE_first_half = _mm_shuffle_epi32(EE, 4);
+        __m128i EE_second_half = _mm_shuffle_epi32(EE, 11);
 
-        Vec4i dst_tmp0 = zero_row * EEE;
-        Vec4i dst_tmp4 = four_row * EEO;
-        Vec4i dst_tmp8 = eight_row * EEE;
-        Vec4i dst_tmp12 = twelve_row * EEO;
+        __m128i EEE = _mm_add_epi32(EE_first_half, EE_second_half);
+        __m128i EEO = _mm_sub_epi32(EE_first_half, EE_second_half);
 
-        int dst_zero = horizontal_add(dst_tmp0);
-        int dst_four = horizontal_add(dst_tmp4);
-        int dst_eight = horizontal_add(dst_tmp8);
-        int dst_twelve = horizontal_add(dst_tmp12);
+        __m128i dst_tmp0 = _mm_mullo_epi32(zero_row, EEE);
+        __m128i dst_tmp4 = _mm_mullo_epi32(four_row, EEO);
+        __m128i dst_tmp8 = _mm_mullo_epi32(eight_row, EEE);
+        __m128i dst_tmp12 = _mm_mullo_epi32(twelve_row, EEO);
 
-        Vec4i dst_0_8_4_12(dst_zero, dst_eight, dst_four, dst_twelve);
+        int dst_zero = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp0, _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_four = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp4, _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_eight = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp8, _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_twelve = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp12, _mm_setzero_si128()), _mm_setzero_si128()));
 
-        Vec4i dst_result = dst_0_8_4_12 + add;
-        Vec4i dst_shift_result = dst_result >> shift;
+        __m128i dst_0_8_4_12 = _mm_setr_epi32(dst_zero, dst_eight, dst_four, dst_twelve);
 
-        dst[0] = dst_shift_result[0];
-        dst[8 * line] = dst_shift_result[1];
-        dst[4 * line] = dst_shift_result[2];
-        dst[12 * line] = dst_shift_result[3];
+        __m128i dst_result = _mm_add_epi32(dst_0_8_4_12, _mm_set1_epi32(add));
+        __m128i dst_shift_result = _mm_srai_epi32(dst_result, shift);
 
-        Vec4i dst_tmp2 = two_row * EO;
-        Vec4i dst_tmp6 = six_row * EO;
-        Vec4i dst_tmp10 = ten_row * EO;
-        Vec4i dst_tmp14 = fourteen_row * EO;
+        dst[0] = _mm_cvtsi128_si32(dst_shift_result);
+        dst[8 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_shift_result, 1));
+        dst[4 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_shift_result, 2));
+        dst[12 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_shift_result, 3));
 
-        int dst_two = horizontal_add(dst_tmp2);
-        int dst_six = horizontal_add(dst_tmp6);
-        int dst_ten = horizontal_add(dst_tmp10);
-        int dst_fourteen = horizontal_add(dst_tmp14);
+        __m128i dst_tmp2 = _mm_mullo_epi32(two_row, EO);
+        __m128i dst_tmp6 = _mm_mullo_epi32(six_row, EO);
+        __m128i dst_tmp10 = _mm_mullo_epi32(ten_row, EO);
+        __m128i dst_tmp14 = _mm_mullo_epi32(fourteen_row, EO);
 
-        Vec4i dst_2_6_10_14(dst_two, dst_six, dst_ten, dst_fourteen);
-        dst_2_6_10_14 = dst_2_6_10_14 + add;
-        dst_2_6_10_14 = dst_2_6_10_14 >> shift;
+        int dst_two = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp2, _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_six = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp6, _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_ten = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp10, _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_fourteen = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst_tmp14, _mm_setzero_si128()), _mm_setzero_si128()));
 
-        dst[2 * line] = dst_2_6_10_14[0];
-        dst[6 * line] = dst_2_6_10_14[1];
-        dst[10 * line] = dst_2_6_10_14[2];
-        dst[14 * line] = dst_2_6_10_14[3];
+        __m128i dst_2_6_10_14 = _mm_setr_epi32(dst_two, dst_six, dst_ten, dst_fourteen);
+        dst_2_6_10_14 = _mm_add_epi32(dst_2_6_10_14, _mm_set1_epi32(add));
+        dst_2_6_10_14 = _mm_srai_epi32(dst_2_6_10_14, shift);
 
-        Vec4i dst_tmp1_first_half = one_row_first_half * O_first_half;
-        Vec4i dst_tmp1_second_half = one_row_second_half * O_second_half;
-        Vec4i dst_tmp3_first_half = three_row_first_half * O_first_half;
-        Vec4i dst_tmp3_second_half = three_row_second_half * O_second_half;
-        Vec4i dst_tmp5_first_half = five_row_first_half * O_first_half;
-        Vec4i dst_tmp5_second_half = five_row_second_half * O_second_half;
-        Vec4i dst_tmp7_first_half = seven_row_first_half * O_first_half;
-        Vec4i dst_tmp7_second_half = seven_row_second_half * O_second_half;
-        Vec4i dst_tmp9_first_half = nine_row_first_half * O_first_half;
-        Vec4i dst_tmp9_second_half = nine_row_second_half * O_second_half;
-        Vec4i dst_tmp11_first_half = eleven_row_first_half * O_first_half;
-        Vec4i dst_tmp11_second_half = eleven_row_second_half * O_second_half;
-        Vec4i dst_tmp13_first_half = thirteen_row_first_half * O_first_half;
-        Vec4i dst_tmp13_second_half = thirteen_row_second_half * O_second_half;
-        Vec4i dst_tmp15_first_half = fifteen_row_first_half * O_first_half;
-        Vec4i dst_tmp15_second_half = fifteen_row_second_half * O_second_half;
+        dst[2 * line] = _mm_cvtsi128_si32(dst_2_6_10_14);
+        dst[6 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_2_6_10_14, 1));
+        dst[10 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_2_6_10_14, 2));
+        dst[14 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_2_6_10_14, 3));
 
-        int dst_one = horizontal_add(dst_tmp1_first_half) + horizontal_add(dst_tmp1_second_half);
-        int dst_three = horizontal_add(dst_tmp3_first_half) + horizontal_add(dst_tmp3_second_half);
-        int dst_five = horizontal_add(dst_tmp5_first_half) + horizontal_add(dst_tmp5_second_half);
-        int dst_seven = horizontal_add(dst_tmp7_first_half) + horizontal_add(dst_tmp7_second_half);
-        int dst_nine = horizontal_add(dst_tmp9_first_half) + horizontal_add(dst_tmp9_second_half);
-        int dst_eleven = horizontal_add(dst_tmp11_first_half) + horizontal_add(dst_tmp11_second_half);
-        int dst_thirteen = horizontal_add(dst_tmp13_first_half) + horizontal_add(dst_tmp13_second_half);
-        int dst_fifteen = horizontal_add(dst_tmp15_first_half) + horizontal_add(dst_tmp15_second_half);
+        __m128i dst_tmp1_first_half = _mm_mullo_epi32(one_row_first_half, O_first_half);
+        __m128i dst_tmp1_second_half = _mm_mullo_epi32(one_row_second_half, O_second_half);
+        __m128i dst_tmp3_first_half = _mm_mullo_epi32(three_row_first_half, O_first_half);
+        __m128i dst_tmp3_second_half = _mm_mullo_epi32(three_row_second_half, O_second_half);
+        __m128i dst_tmp5_first_half = _mm_mullo_epi32(five_row_first_half, O_first_half);
+        __m128i dst_tmp5_second_half = _mm_mullo_epi32(five_row_second_half, O_second_half);
+        __m128i dst_tmp7_first_half = _mm_mullo_epi32(seven_row_first_half, O_first_half);
+        __m128i dst_tmp7_second_half = _mm_mullo_epi32(seven_row_second_half, O_second_half);
+        __m128i dst_tmp9_first_half = _mm_mullo_epi32(nine_row_first_half, O_first_half);
+        __m128i dst_tmp9_second_half = _mm_mullo_epi32(nine_row_second_half, O_second_half);
+        __m128i dst_tmp11_first_half = _mm_mullo_epi32(eleven_row_first_half, O_first_half);
+        __m128i dst_tmp11_second_half = _mm_mullo_epi32(eleven_row_second_half, O_second_half);
+        __m128i dst_tmp13_first_half = _mm_mullo_epi32(thirteen_row_first_half, O_first_half);
+        __m128i dst_tmp13_second_half = _mm_mullo_epi32(thirteen_row_second_half, O_second_half);
+        __m128i dst_tmp15_first_half = _mm_mullo_epi32(fifteen_row_first_half, O_first_half);
+        __m128i dst_tmp15_second_half = _mm_mullo_epi32(fifteen_row_second_half, O_second_half);
 
-        Vec4i dst_1_3_5_7(dst_one, dst_three, dst_five, dst_seven);
-        dst_1_3_5_7 = dst_1_3_5_7 + add;
-        dst_1_3_5_7 = dst_1_3_5_7 >> shift;
+        int dst_one = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp1_first_half, dst_tmp1_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_three = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp3_first_half, dst_tmp3_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_five = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp5_first_half, dst_tmp5_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_seven = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp7_first_half, dst_tmp7_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_nine = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp9_first_half, dst_tmp9_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_eleven = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp11_first_half, dst_tmp11_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_thirteen = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp13_first_half, dst_tmp13_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
+        int dst_fifteen = _mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_add_epi32(dst_tmp15_first_half, dst_tmp15_second_half), _mm_setzero_si128()), _mm_setzero_si128()));
 
-        Vec4i dst_9_11_13_15(dst_nine, dst_eleven, dst_thirteen, dst_fifteen);
-        dst_9_11_13_15 = dst_9_11_13_15 + add;
-        dst_9_11_13_15 = dst_9_11_13_15 >> shift;
+        __m128i dst_1_3_5_7 = _mm_setr_epi32(dst_one, dst_three, dst_five, dst_seven);
+        dst_1_3_5_7 = _mm_add_epi32(dst_1_3_5_7, _mm_set1_epi32(add));
+        dst_1_3_5_7 = _mm_srai_epi32(dst_1_3_5_7, shift);
 
-        dst[1 * line] = dst_1_3_5_7[0];
-        dst[3 * line] = dst_1_3_5_7[1];
-        dst[5 * line] = dst_1_3_5_7[2];
-        dst[7 * line] = dst_1_3_5_7[3];
-        dst[9 * line] = dst_9_11_13_15[0];
-        dst[11 * line] = dst_9_11_13_15[1];
-        dst[13 * line] = dst_9_11_13_15[2];
-        dst[15 * line] = dst_9_11_13_15[3];
+        __m128i dst_9_11_13_15 = _mm_setr_epi32(dst_nine, dst_eleven, dst_thirteen, dst_fifteen);
+        dst_9_11_13_15 = _mm_add_epi32(dst_9_11_13_15, _mm_set1_epi32(add));
+        dst_9_11_13_15 = _mm_srai_epi32(dst_9_11_13_15, shift);
+
+        dst[1 * line] = _mm_cvtsi128_si32(dst_1_3_5_7);
+        dst[3 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_1_3_5_7, 1));
+        dst[5 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_1_3_5_7, 2));
+        dst[7 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_1_3_5_7, 3));
+        dst[9 * line] = _mm_cvtsi128_si32(dst_9_11_13_15);
+        dst[11 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_9_11_13_15, 1));
+        dst[13 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_9_11_13_15, 2));
+        dst[15 * line] = _mm_cvtsi128_si32(_mm_shuffle_epi32(dst_9_11_13_15, 3));
 
         src += 16;
         dst++;
@@ -1899,15 +1902,9 @@ void dct16(short *src, int *dst, intptr_t stride)
     partialButterfly16(block, coef, shift_1st, 16);
     partialButterfly16(coef, block, shift_2nd, 16);
 
-    /* TODO: inline cvt16to32 once it is intrinsic based */
 #define N (16)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            dst[i * N + j] = block[i * N + j];
-        }
-    }
+
+    convert16to32(block, dst, N*N);
 
 #undef N
 }
