@@ -1,10 +1,3 @@
-if(GCC)
-    if (NOT X64)
-        # force gcc to generate code for sync primitives
-        set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
-    endif()
-endif(GCC)
-
 if(ENABLE_PRIMITIVES_VEC)
     add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
 endif(ENABLE_PRIMITIVES_VEC)
@@ -216,6 +209,13 @@ if(ENABLE_PRIMITIVES_ASM)
         set(ASM_PRIMITIVES x86/asm-primitives.cpp x86/pixel.h ${FULLPATHASM})
     endif()
 endif(ENABLE_PRIMITIVES_ASM)
+
+if(GCC)
+    if (NOT X64)
+        # force gcc to generate code for sync primitives
+        set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
+    endif()
+endif(GCC)
 
 enable_language(ASM_YASM)
 add_library(common OBJECT

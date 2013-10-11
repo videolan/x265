@@ -32,7 +32,7 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(GCC 1)
 endif()
 
-if("$ENV{CXX}" STREQUAL "icl")
+if(INTEL_CXX AND WIN32)
     # treat icl roughly like MSVC
     set(MSVC 1)
 endif()
@@ -52,7 +52,7 @@ if(MSVC)
     include_directories(compat/msvc)
 endif(MSVC)
 
-if("$ENV{CXX}" STREQUAL "icpc")
+if(INTEL_CXX AND UNIX)
     # treat icpc roughly like gcc
     set(GCC 1)
     add_definitions(-Wall -Wextra -Wshadow -no-vec)
