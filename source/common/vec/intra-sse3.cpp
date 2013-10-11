@@ -1900,16 +1900,16 @@ void PredIntraAng4_m_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
 void PredIntraAng4_m_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
-    Vec16uc tmp16_1, tmp16_2;
+    __m128i tmp16_1;
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);    //-1,0,1,2
-    store_partial(const_int(4), dst, tmp16_1);
-    tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 1); //-2,-1,0,1
-    store_partial(const_int(4), dst + dstStride, tmp16_2);
-    tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 2);
-    store_partial(const_int(4), dst + 2 * dstStride, tmp16_2);
-    tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 3);
-    store_partial(const_int(4), dst + 3 * dstStride, tmp16_2);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain));
+    *(uint32_t*)(dst) = _mm_cvtsi128_si32(tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 1));
+    *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 2));
+    *(uint32_t*)(dst + 2 * dstStride) = _mm_cvtsi128_si32(tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 3));
+    *(uint32_t*)(dst + 3 * dstStride) = _mm_cvtsi128_si32(tmp16_1);
 }
 
 typedef void (*PredIntraAng4x4_table)(pixel* dst, int dstStride, pixel *refMain, int dirMode);
