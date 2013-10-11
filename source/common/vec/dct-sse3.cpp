@@ -1740,209 +1740,212 @@ void partialButterfly32(short *src, short *dst, int shift, int line)
     int j;
     int add = 1 << (shift - 1);
 
-    Vec4i zero_row_first_two(64, 64, 0, 0);
-    Vec4i eight_row_first_two(83, 36, 0, 0);
-    Vec4i sixten_row_first_two(64, -64, 0, 0);
-    Vec4i twentyfour_row_first_two(36, -83, 0, 0);
+    __m128i zero_row_first_two = _mm_setr_epi32(64, 64, 0, 0);
+    __m128i eight_row_first_two = _mm_setr_epi32(83, 36, 0, 0);
+    __m128i sixten_row_first_two = _mm_setr_epi32(64, -64, 0, 0);
+    __m128i twentyfour_row_first_two = _mm_setr_epi32(36, -83, 0, 0);
 
-    Vec4i four_row_first_four(89, 75, 50, 18);
-    Vec4i twelve_row_first_four(75, -18, -89, -50);
-    Vec4i twenty_row_first_four(50, -89, 18, 75);
-    Vec4i twentyeight_row_first_four(18, -50, 75, -89);
+    __m128i four_row_first_four = _mm_setr_epi32(89, 75, 50, 18);
+    __m128i twelve_row_first_four = _mm_setr_epi32(75, -18, -89, -50);
+    __m128i twenty_row_first_four = _mm_setr_epi32(50, -89, 18, 75);
+    __m128i twentyeight_row_first_four = _mm_setr_epi32(18, -50, 75, -89);
 
-    Vec4i two_row_first_four(90, 87, 80, 70);
-    Vec4i two_row_second_four(57, 43, 25,  9);
-    Vec4i six_row_first_four(87, 57,  9, -43);
-    Vec4i six_row_second_four(-80, -90, -70, -25);
-    Vec4i ten_row_first_four(80,  9, -70, -87);
-    Vec4i ten_row_second_four(-25, 57, 90, 43);
-    Vec4i fourteen_row_first_four(70, -43, -87,  9);
-    Vec4i fourteen_row_second_four(90, 25, -80, -57);
-    Vec4i eighteen_row_first_four(57, -80, -25, 90);
-    Vec4i eighteen_row_second_four(-9, -87, 43, 70);
-    Vec4i twentytwo_row_first_four(43, -90, 57, 25);
-    Vec4i twentytwo_row_second_four(-87, 70,  9, -80);
-    Vec4i twentysix_row_first_four(25, -70, 90, -80);
-    Vec4i twentysix_row_second_four(43,  9, -57, 87);
-    Vec4i thirty_row_first_four(9, -25, 43, -57);
-    Vec4i thirty_row_second_four(70, -80, 87, -90);
+    __m128i two_row_first_four = _mm_setr_epi32(90, 87, 80, 70);
+    __m128i two_row_second_four = _mm_setr_epi32(57, 43, 25,  9);
+    __m128i six_row_first_four = _mm_setr_epi32(87, 57,  9, -43);
+    __m128i six_row_second_four = _mm_setr_epi32(-80, -90, -70, -25);
+    __m128i ten_row_first_four = _mm_setr_epi32(80,  9, -70, -87);
+    __m128i ten_row_second_four = _mm_setr_epi32(-25, 57, 90, 43);
+    __m128i fourteen_row_first_four = _mm_setr_epi32(70, -43, -87,  9);
+    __m128i fourteen_row_second_four = _mm_setr_epi32(90, 25, -80, -57);
+    __m128i eighteen_row_first_four = _mm_setr_epi32(57, -80, -25, 90);
+    __m128i eighteen_row_second_four = _mm_setr_epi32(-9, -87, 43, 70);
+    __m128i twentytwo_row_first_four = _mm_setr_epi32(43, -90, 57, 25);
+    __m128i twentytwo_row_second_four = _mm_setr_epi32(-87, 70,  9, -80);
+    __m128i twentysix_row_first_four = _mm_setr_epi32(25, -70, 90, -80);
+    __m128i twentysix_row_second_four = _mm_setr_epi32(43,  9, -57, 87);
+    __m128i thirty_row_first_four = _mm_setr_epi32(9, -25, 43, -57);
+    __m128i thirty_row_second_four = _mm_setr_epi32(70, -80, 87, -90);
 
-    Vec4i one_row_first_four(90, 90, 88, 85);
-    Vec4i one_row_second_four(82, 78, 73, 67);
-    Vec4i one_row_third_four(61, 54, 46, 38);
-    Vec4i one_row_fourth_four(31, 22, 13,  4);
+    __m128i one_row_first_four = _mm_setr_epi32(90, 90, 88, 85);
+    __m128i one_row_second_four = _mm_setr_epi32(82, 78, 73, 67);
+    __m128i one_row_third_four = _mm_setr_epi32(61, 54, 46, 38);
+    __m128i one_row_fourth_four = _mm_setr_epi32(31, 22, 13,  4);
 
-    Vec4i three_row_first_four(90, 82, 67, 46);
-    Vec4i three_row_second_four(22, -4, -31, -54);
-    Vec4i three_row_third_four(-73, -85, -90, -88);
-    Vec4i three_row_fourth_four(-78, -61, -38, -13);
+    __m128i three_row_first_four = _mm_setr_epi32(90, 82, 67, 46);
+    __m128i three_row_second_four = _mm_setr_epi32(22, -4, -31, -54);
+    __m128i three_row_third_four = _mm_setr_epi32(-73, -85, -90, -88);
+    __m128i three_row_fourth_four = _mm_setr_epi32(-78, -61, -38, -13);
 
-    Vec4i five_row_first_four(88, 67, 31, -13);
-    Vec4i five_row_second_four(-54, -82, -90, -78);
-    Vec4i five_row_third_four(-46, -4, 38, 73);
-    Vec4i five_row_fourth_four(90, 85, 61, 22);
+    __m128i five_row_first_four = _mm_setr_epi32(88, 67, 31, -13);
+    __m128i five_row_second_four = _mm_setr_epi32(-54, -82, -90, -78);
+    __m128i five_row_third_four = _mm_setr_epi32(-46, -4, 38, 73);
+    __m128i five_row_fourth_four = _mm_setr_epi32(90, 85, 61, 22);
 
-    Vec4i seven_row_first_four(85, 46, -13, -67);
-    Vec4i seven_row_second_four(-90, -73, -22, 38);
-    Vec4i seven_row_third_four(82, 88, 54, -4);
-    Vec4i seven_row_fourth_four(-61, -90, -78, -31);
+    __m128i seven_row_first_four = _mm_setr_epi32(85, 46, -13, -67);
+    __m128i seven_row_second_four = _mm_setr_epi32(-90, -73, -22, 38);
+    __m128i seven_row_third_four = _mm_setr_epi32(82, 88, 54, -4);
+    __m128i seven_row_fourth_four = _mm_setr_epi32(-61, -90, -78, -31);
 
-    Vec4i nine_row_first_four(82, 22, -54, -90);
-    Vec4i nine_row_second_four(-61, 13, 78, 85);
-    Vec4i nine_row_third_four(31, -46, -90, -67);
-    Vec4i nine_row_fourth_four(4, 73, 88, 38);
+    __m128i nine_row_first_four = _mm_setr_epi32(82, 22, -54, -90);
+    __m128i nine_row_second_four = _mm_setr_epi32(-61, 13, 78, 85);
+    __m128i nine_row_third_four = _mm_setr_epi32(31, -46, -90, -67);
+    __m128i nine_row_fourth_four = _mm_setr_epi32(4, 73, 88, 38);
 
-    Vec4i eleven_row_first_four(78, -4, -82, -73);
-    Vec4i eleven_row_second_four(13, 85, 67, -22);
-    Vec4i eleven_row_third_four(-88, -61, 31, 90);
-    Vec4i eleven_row_fourth_four(54, -38, -90, -46);
+    __m128i eleven_row_first_four = _mm_setr_epi32(78, -4, -82, -73);
+    __m128i eleven_row_second_four = _mm_setr_epi32(13, 85, 67, -22);
+    __m128i eleven_row_third_four = _mm_setr_epi32(-88, -61, 31, 90);
+    __m128i eleven_row_fourth_four = _mm_setr_epi32(54, -38, -90, -46);
 
-    Vec4i thirteen_row_first_four(73, -31, -90, -22);
-    Vec4i thirteen_row_second_four(78, 67, -38, -90);
-    Vec4i thirteen_row_third_four(-13, 82, 61, -46);
-    Vec4i thirteen_row_fourth_four(-88, -4, 85, 54);
+    __m128i thirteen_row_first_four = _mm_setr_epi32(73, -31, -90, -22);
+    __m128i thirteen_row_second_four = _mm_setr_epi32(78, 67, -38, -90);
+    __m128i thirteen_row_third_four = _mm_setr_epi32(-13, 82, 61, -46);
+    __m128i thirteen_row_fourth_four = _mm_setr_epi32(-88, -4, 85, 54);
 
-    Vec4i fifteen_row_first_four(67, -54, -78, 38);
-    Vec4i fifteen_row_second_four(85, -22, -90,  4);
-    Vec4i fifteen_row_third_four(90, 13, -88, -31);
-    Vec4i fifteen_row_fourth_four(82, 46, -73, -61);
+    __m128i fifteen_row_first_four = _mm_setr_epi32(67, -54, -78, 38);
+    __m128i fifteen_row_second_four = _mm_setr_epi32(85, -22, -90,  4);
+    __m128i fifteen_row_third_four = _mm_setr_epi32(90, 13, -88, -31);
+    __m128i fifteen_row_fourth_four = _mm_setr_epi32(82, 46, -73, -61);
 
-    Vec4i seventeen_row_first_four(61, -73, -46, 82);
-    Vec4i seventeen_row_second_four(31, -88, -13, 90);
-    Vec4i seventeen_row_third_four(-4, -90, 22, 85);
-    Vec4i seventeen_row_fourth_four(-38, -78, 54, 67);
+    __m128i seventeen_row_first_four = _mm_setr_epi32(61, -73, -46, 82);
+    __m128i seventeen_row_second_four = _mm_setr_epi32(31, -88, -13, 90);
+    __m128i seventeen_row_third_four = _mm_setr_epi32(-4, -90, 22, 85);
+    __m128i seventeen_row_fourth_four = _mm_setr_epi32(-38, -78, 54, 67);
 
-    Vec4i nineteen_row_first_four(54, -85, -4, 88);
-    Vec4i nineteen_row_second_four(-46, -61, 82, 13);
-    Vec4i nineteen_row_third_four(-90, 38, 67, -78);
-    Vec4i nineteen_row_fourth_four(-22, 90, -31, -73);
+    __m128i nineteen_row_first_four = _mm_setr_epi32(54, -85, -4, 88);
+    __m128i nineteen_row_second_four = _mm_setr_epi32(-46, -61, 82, 13);
+    __m128i nineteen_row_third_four = _mm_setr_epi32(-90, 38, 67, -78);
+    __m128i nineteen_row_fourth_four = _mm_setr_epi32(-22, 90, -31, -73);
 
-    Vec4i twentyone_row_first_four(46, -90, 38, 54);
-    Vec4i twentyone_row_second_four(-90, 31, 61, -88);
-    Vec4i twentyone_row_third_four(22, 67, -85, 13);
-    Vec4i twentyone_row_fourth_four(73, -82,  4, 78);
+    __m128i twentyone_row_first_four = _mm_setr_epi32(46, -90, 38, 54);
+    __m128i twentyone_row_second_four = _mm_setr_epi32(-90, 31, 61, -88);
+    __m128i twentyone_row_third_four = _mm_setr_epi32(22, 67, -85, 13);
+    __m128i twentyone_row_fourth_four = _mm_setr_epi32(73, -82,  4, 78);
 
-    Vec4i twentythree_row_first_four(38, -88, 73, -4);
-    Vec4i twentythree_row_second_four(-67, 90, -46, -31);
-    Vec4i twentythree_row_third_four(85, -78, 13, 61);
-    Vec4i twentythree_row_fourth_four(-90, 54, 22, -82);
+    __m128i twentythree_row_first_four = _mm_setr_epi32(38, -88, 73, -4);
+    __m128i twentythree_row_second_four = _mm_setr_epi32(-67, 90, -46, -31);
+    __m128i twentythree_row_third_four = _mm_setr_epi32(85, -78, 13, 61);
+    __m128i twentythree_row_fourth_four = _mm_setr_epi32(-90, 54, 22, -82);
 
-    Vec4i twentyfive_row_first_four(31, -78, 90, -61);
-    Vec4i twentyfive_row_second_four(4, 54, -88, 82);
-    Vec4i twentyfive_row_third_four(-38, -22, 73, -90);
-    Vec4i twentyfive_row_fourth_four(67, -13, -46, 85);
+    __m128i twentyfive_row_first_four = _mm_setr_epi32(31, -78, 90, -61);
+    __m128i twentyfive_row_second_four = _mm_setr_epi32(4, 54, -88, 82);
+    __m128i twentyfive_row_third_four = _mm_setr_epi32(-38, -22, 73, -90);
+    __m128i twentyfive_row_fourth_four = _mm_setr_epi32(67, -13, -46, 85);
 
-    Vec4i twentyseven_row_first_four(22, -61, 85, -90);
-    Vec4i twentyseven_row_second_four(73, -38, -4, 46);
-    Vec4i twentyseven_row_third_four(-78, 90, -82, 54);
-    Vec4i twentyseven_row_fourth_four(-13, -31, 67, -88);
+    __m128i twentyseven_row_first_four = _mm_setr_epi32(22, -61, 85, -90);
+    __m128i twentyseven_row_second_four = _mm_setr_epi32(73, -38, -4, 46);
+    __m128i twentyseven_row_third_four = _mm_setr_epi32(-78, 90, -82, 54);
+    __m128i twentyseven_row_fourth_four = _mm_setr_epi32(-13, -31, 67, -88);
 
-    Vec4i twentynine_row_first_four(13, -38, 61, -78);
-    Vec4i twentynine_row_second_four(88, -90, 85, -73);
-    Vec4i twentynine_row_third_four(54, -31,  4, 22);
-    Vec4i twentynine_row_fourth_four(-46, 67, -82, 90);
+    __m128i twentynine_row_first_four = _mm_setr_epi32(13, -38, 61, -78);
+    __m128i twentynine_row_second_four = _mm_setr_epi32(88, -90, 85, -73);
+    __m128i twentynine_row_third_four = _mm_setr_epi32(54, -31,  4, 22);
+    __m128i twentynine_row_fourth_four = _mm_setr_epi32(-46, 67, -82, 90);
 
-    Vec4i thirtyone_row_first_four(4, -13, 22, -31);
-    Vec4i thirtyone_row_second_four(38, -46, 54, -61);
-    Vec4i thirtyone_row_third_four(67, -73, 78, -82);
-    Vec4i thirtyone_row_fourth_four(85, -88, 90, -90);
+    __m128i thirtyone_row_first_four = _mm_setr_epi32(4, -13, 22, -31);
+    __m128i thirtyone_row_second_four = _mm_setr_epi32(38, -46, 54, -61);
+    __m128i thirtyone_row_third_four = _mm_setr_epi32(67, -73, 78, -82);
+    __m128i thirtyone_row_fourth_four = _mm_setr_epi32(85, -88, 90, -90);
 
     for (j = 0; j < line; j++)
     {
-        Vec8s tmp1, tmp2, tmp3, tmp4;
+        __m128i tmp1, tmp2, tmp3, tmp4;
 
-        tmp1.load(src);
-        Vec4i tmp1_first_half = extend_low(tmp1);
-        Vec4i tmp1_second_half = extend_high(tmp1);
+        tmp1 = _mm_loadu_si128((__m128i*)(src));
 
-        tmp2.load(src + 8);
-        Vec4i tmp2_first_half = extend_low(tmp2);
-        Vec4i tmp2_second_half = extend_high(tmp2);
+        __m128i sign = _mm_srai_epi16(tmp1, 15);
+        __m128i tmp1_first_half = _mm_unpacklo_epi16(tmp1, sign);
+        __m128i tmp1_second_half = _mm_unpackhi_epi16(tmp1, sign);
 
-        tmp3.load(src + 16);
-        Vec4i tmp3_first_half_tmp = extend_low(tmp3);
-        Vec4i tmp3_second_half_tmp = extend_high(tmp3);
-        Vec4i tmp3_first_half = permute4i<3, 2, 1, 0>(tmp3_first_half_tmp);
-        Vec4i tmp3_second_half = permute4i<3, 2, 1, 0>(tmp3_second_half_tmp);
+        tmp2 = _mm_loadu_si128((__m128i*)(src + 8));
+        sign = _mm_srai_epi16(tmp2, 15);
+        __m128i tmp2_first_half = _mm_unpacklo_epi16(tmp2, sign);
+        __m128i tmp2_second_half = _mm_unpackhi_epi16(tmp2, sign);
 
-        tmp4.load(src + 24);
-        Vec4i tmp4_first_half_tmp = extend_low(tmp4);
-        Vec4i tmp4_second_half_tmp = extend_high(tmp4);
-        Vec4i tmp4_first_half = permute4i<3, 2, 1, 0>(tmp4_first_half_tmp);
-        Vec4i tmp4_second_half = permute4i<3, 2, 1, 0>(tmp4_second_half_tmp);
+        tmp3 = _mm_loadu_si128((__m128i*)(src + 16));
+        sign = _mm_srai_epi16(tmp3, 15);
+        __m128i tmp3_first_half_tmp = _mm_unpacklo_epi16(tmp3, sign);
+        __m128i tmp3_second_half_tmp = _mm_unpackhi_epi16(tmp3, sign);
+        __m128i tmp3_first_half = _mm_shuffle_epi32(tmp3_first_half_tmp, 27);
+        __m128i tmp3_second_half = _mm_shuffle_epi32(tmp3_second_half_tmp, 27);
 
-        Vec4i E_first_four =  tmp1_first_half + tmp4_second_half;
-        Vec4i E_second_four = tmp1_second_half + tmp4_first_half;
-        Vec4i E_third_four = tmp2_first_half + tmp3_second_half;
-        Vec4i E_last_four = tmp2_second_half + tmp3_first_half;
+        tmp4 = _mm_loadu_si128((__m128i*)(src + 24));
+        sign = _mm_srai_epi16(tmp4, 15);
+        __m128i tmp4_first_half_tmp = _mm_unpacklo_epi16(tmp4, sign);
+        __m128i tmp4_second_half_tmp = _mm_unpackhi_epi16(tmp4, sign);
+        __m128i tmp4_first_half = _mm_shuffle_epi32(tmp4_first_half_tmp, 27);
+        __m128i tmp4_second_half = _mm_shuffle_epi32(tmp4_second_half_tmp, 27);
 
-        Vec4i O_first_four =  tmp1_first_half - tmp4_second_half;
-        Vec4i O_second_four = tmp1_second_half - tmp4_first_half;
-        Vec4i O_third_four = tmp2_first_half - tmp3_second_half;
-        Vec4i O_last_four = tmp2_second_half - tmp3_first_half;
+        __m128i E_first_four = _mm_add_epi32(tmp1_first_half, tmp4_second_half);
+        __m128i E_second_four = _mm_add_epi32(tmp1_second_half, tmp4_first_half);
+        __m128i E_third_four = _mm_add_epi32(tmp2_first_half, tmp3_second_half);
+        __m128i E_last_four = _mm_add_epi32(tmp2_second_half, tmp3_first_half);
 
-        Vec4i E_last_four_rev = permute4i<3, 2, 1, 0>(E_last_four);
-        Vec4i E_third_four_rev = permute4i<3, 2, 1, 0>(E_third_four);
+        __m128i O_first_four = _mm_sub_epi32(tmp1_first_half, tmp4_second_half);
+        __m128i O_second_four = _mm_sub_epi32(tmp1_second_half, tmp4_first_half);
+        __m128i O_third_four = _mm_sub_epi32(tmp2_first_half, tmp3_second_half);
+        __m128i O_last_four = _mm_sub_epi32(tmp2_second_half, tmp3_first_half);
 
-        Vec4i EE_first_four = E_first_four + E_last_four_rev;
-        Vec4i EE_last_four = E_second_four + E_third_four_rev;
-        Vec4i EO_first_four = E_first_four - E_last_four_rev;
-        Vec4i EO_last_four = E_second_four - E_third_four_rev;
+        __m128i E_last_four_rev = _mm_shuffle_epi32(E_last_four, 27);
+        __m128i E_third_four_rev = _mm_shuffle_epi32(E_third_four, 27);
 
-        Vec4i EE_last_four_rev = permute4i<3, 2, 1, 0>(EE_last_four);
+        __m128i EE_first_four = _mm_add_epi32(E_first_four, E_last_four_rev);
+        __m128i EE_last_four = _mm_add_epi32(E_second_four, E_third_four_rev);
+        __m128i EO_first_four = _mm_sub_epi32(E_first_four, E_last_four_rev);
+        __m128i EO_last_four = _mm_sub_epi32(E_second_four, E_third_four_rev);
 
-        Vec4i EEE = EE_first_four + EE_last_four_rev;
-        Vec4i EEO = EE_first_four - EE_last_four_rev;
+        __m128i EE_last_four_rev = _mm_shuffle_epi32(EE_last_four, 27);
 
-        Vec4i EEEE_first_half = permute4i<0, 1, -1, -1>(EEE);
-        Vec4i EEEE_second_half = permute4i<3, 2, -1, -1>(EEE);
-        Vec4i EEEE = EEEE_first_half + EEEE_second_half;
-        Vec4i EEEO = EEEE_first_half - EEEE_second_half;
+        __m128i EEE = _mm_add_epi32(EE_first_four, EE_last_four_rev);
+        __m128i EEO = _mm_sub_epi32(EE_first_four, EE_last_four_rev);
 
-        int dst0_hresult = (horizontal_add(zero_row_first_two * EEEE) + add) >> shift;
-        int dst8_hresult = (horizontal_add(eight_row_first_two * EEEO) + add) >> shift;
-        int dst16_hresult = (horizontal_add(sixten_row_first_two * EEEE) + add) >> shift;
-        int dst24_hresult = (horizontal_add(twentyfour_row_first_two * EEEO) + add) >> shift;
+        __m128i EEEE_first_half = _mm_shuffle_epi32(EEE, 4);
+        __m128i EEEE_second_half = _mm_shuffle_epi32(EEE, 11);
+        __m128i EEEE = _mm_add_epi32(EEEE_first_half, EEEE_second_half);
+        __m128i EEEO = _mm_sub_epi32(EEEE_first_half, EEEE_second_half);
+
+        int dst0_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(zero_row_first_two, EEEE), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst8_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(eight_row_first_two, EEEO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst16_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(sixten_row_first_two, EEEE), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst24_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(twentyfour_row_first_two, EEEO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
 
         dst[0] = dst0_hresult;
         dst[8 * line] = dst8_hresult;
         dst[16 * line] = dst16_hresult;
         dst[24 * line] = dst24_hresult;
 
-        int dst4_hresult = (horizontal_add(four_row_first_four * EEO) + add) >> shift;
-        int dst12_hresult = (horizontal_add(twelve_row_first_four * EEO) + add) >> shift;
-        int dst20_hresult = (horizontal_add(twenty_row_first_four * EEO) + add) >> shift;
-        int dst28_hresult = (horizontal_add(twentyeight_row_first_four * EEO) + add) >> shift;
+        int dst4_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(four_row_first_four, EEO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst12_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(twelve_row_first_four, EEO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst20_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(twenty_row_first_four, EEO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        int dst28_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(_mm_mullo_epi32(twentyeight_row_first_four, EEO), _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
 
         dst[4 * line] = dst4_hresult;
         dst[12 * line] = dst12_hresult;
         dst[20 * line] = dst20_hresult;
         dst[28 * line] = dst28_hresult;
+        __m128i tmp = _mm_add_epi32(_mm_mullo_epi32(two_row_first_four, EO_first_four), _mm_mullo_epi32(two_row_second_four, EO_last_four));
+        int dst2_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
 
-        int dst2_hresult =
-            (horizontal_add((two_row_first_four *
-                             EO_first_four) + (two_row_second_four * EO_last_four)) + add) >> shift;
-        int dst6_hresult =
-            (horizontal_add((six_row_first_four *
-                             EO_first_four) + (six_row_second_four * EO_last_four)) + add) >> shift;
-        int dst10_hresult =
-            (horizontal_add((ten_row_first_four *
-                             EO_first_four) + (ten_row_second_four * EO_last_four)) + add) >> shift;
-        int dst14_hresult =
-            (horizontal_add((fourteen_row_first_four *
-                             EO_first_four) + (fourteen_row_second_four * EO_last_four)) + add) >> shift;
-        int dst18_hresult =
-            (horizontal_add((eighteen_row_first_four *
-                             EO_first_four) + (eighteen_row_second_four * EO_last_four)) + add) >> shift;
-        int dst22_hresult =
-            (horizontal_add((twentytwo_row_first_four *
-                             EO_first_four) + (twentytwo_row_second_four * EO_last_four)) + add) >> shift;
-        int dst26_hresult =
-            (horizontal_add((twentysix_row_first_four *
-                             EO_first_four) + (twentysix_row_second_four * EO_last_four)) + add) >> shift;
-        int dst30_hresult =
-            (horizontal_add((thirty_row_first_four *
-                             EO_first_four) + (thirty_row_second_four * EO_last_four)) + add) >> shift;
+        tmp = _mm_add_epi32(_mm_mullo_epi32(six_row_first_four, EO_first_four), _mm_mullo_epi32(six_row_second_four, EO_last_four));
+        int dst6_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        tmp = _mm_add_epi32(_mm_mullo_epi32(ten_row_first_four, EO_first_four), _mm_mullo_epi32(ten_row_second_four, EO_last_four));
+        int dst10_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        tmp = _mm_add_epi32(_mm_mullo_epi32(fourteen_row_first_four, EO_first_four), _mm_mullo_epi32(fourteen_row_second_four, EO_last_four));
+        int dst14_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        tmp = _mm_add_epi32(_mm_mullo_epi32(eighteen_row_first_four, EO_first_four), _mm_mullo_epi32(eighteen_row_second_four, EO_last_four));
+        int dst18_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        tmp = _mm_add_epi32(_mm_mullo_epi32(twentytwo_row_first_four, EO_first_four), _mm_mullo_epi32(twentytwo_row_second_four, EO_last_four));
+        int dst22_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        tmp = _mm_add_epi32(_mm_mullo_epi32(twentysix_row_first_four, EO_first_four), _mm_mullo_epi32(twentysix_row_second_four, EO_last_four));
+        int dst26_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+
+        tmp = _mm_add_epi32(_mm_mullo_epi32(thirty_row_first_four, EO_first_four), _mm_mullo_epi32(thirty_row_second_four, EO_last_four));
+        int dst30_hresult = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(tmp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
 
         dst[2 * line] = dst2_hresult;
         dst[6 * line] = dst6_hresult;
@@ -1953,59 +1956,86 @@ void partialButterfly32(short *src, short *dst, int shift, int line)
         dst[26 * line] = dst26_hresult;
         dst[30 * line] = dst30_hresult;
 
-        Vec4i dst1_temp = (one_row_first_four * O_first_four) + (one_row_second_four * O_second_four) +
-            (one_row_third_four * O_third_four) + (one_row_fourth_four * O_last_four);
-        Vec4i dst3_temp = (three_row_first_four * O_first_four) + (three_row_second_four * O_second_four) +
-            (three_row_third_four * O_third_four) + (three_row_fourth_four * O_last_four);
-        Vec4i dst5_temp = (five_row_first_four * O_first_four) + (five_row_second_four * O_second_four) +
-            (five_row_third_four * O_third_four) + (five_row_fourth_four * O_last_four);
-        Vec4i dst7_temp = (seven_row_first_four * O_first_four) + (seven_row_second_four * O_second_four) +
-            (seven_row_third_four * O_third_four) + (seven_row_fourth_four * O_last_four);
-        Vec4i dst9_temp = (nine_row_first_four * O_first_four) + (nine_row_second_four * O_second_four) +
-            (nine_row_third_four * O_third_four) + (nine_row_fourth_four * O_last_four);
-        Vec4i dst11_temp = (eleven_row_first_four * O_first_four) + (eleven_row_second_four * O_second_four) +
-            (eleven_row_third_four * O_third_four) + (eleven_row_fourth_four * O_last_four);
-        Vec4i dst13_temp = (thirteen_row_first_four * O_first_four) + (thirteen_row_second_four * O_second_four) +
-            (thirteen_row_third_four * O_third_four) + (thirteen_row_fourth_four * O_last_four);
-        Vec4i dst15_temp = (fifteen_row_first_four * O_first_four) + (fifteen_row_second_four * O_second_four) +
-            (fifteen_row_third_four * O_third_four) + (fifteen_row_fourth_four * O_last_four);
-        Vec4i dst17_temp = (seventeen_row_first_four * O_first_four) + (seventeen_row_second_four * O_second_four) +
-            (seventeen_row_third_four * O_third_four) + (seventeen_row_fourth_four * O_last_four);
-        Vec4i dst19_temp = (nineteen_row_first_four * O_first_four) + (nineteen_row_second_four * O_second_four) +
-            (nineteen_row_third_four * O_third_four) + (nineteen_row_fourth_four * O_last_four);
-        Vec4i dst21_temp = (twentyone_row_first_four * O_first_four) + (twentyone_row_second_four * O_second_four) +
-            (twentyone_row_third_four * O_third_four) + (twentyone_row_fourth_four * O_last_four);
-        Vec4i dst23_temp =
-            (twentythree_row_first_four * O_first_four) + (twentythree_row_second_four * O_second_four) +
-            (twentythree_row_third_four * O_third_four) + (twentythree_row_fourth_four * O_last_four);
-        Vec4i dst25_temp =
-            (twentyfive_row_first_four * O_first_four) + (twentyfive_row_second_four * O_second_four) +
-            (twentyfive_row_third_four * O_third_four) + (twentyfive_row_fourth_four * O_last_four);
-        Vec4i dst27_temp =
-            (twentyseven_row_first_four * O_first_four) + (twentyseven_row_second_four * O_second_four) +
-            (twentyseven_row_third_four * O_third_four) + (twentyseven_row_fourth_four * O_last_four);
-        Vec4i dst29_temp =
-            (twentynine_row_first_four * O_first_four) + (twentynine_row_second_four * O_second_four) +
-            (twentynine_row_third_four * O_third_four) + (twentynine_row_fourth_four * O_last_four);
-        Vec4i dst31_temp = (thirtyone_row_first_four * O_first_four) + (thirtyone_row_second_four * O_second_four) +
-            (thirtyone_row_third_four * O_third_four) + (thirtyone_row_fourth_four * O_last_four);
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(one_row_first_four, O_first_four), _mm_mullo_epi32(one_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(one_row_third_four, O_third_four), _mm_mullo_epi32(one_row_fourth_four, O_last_four));
+        __m128i dst1_temp = _mm_add_epi32(tmp1, tmp2);
 
-        dst[1 * line] = (horizontal_add(dst1_temp) + add) >> shift;
-        dst[3 * line] = (horizontal_add(dst3_temp) + add) >> shift;
-        dst[5 * line] = (horizontal_add(dst5_temp) + add) >> shift;
-        dst[7 * line] = (horizontal_add(dst7_temp) + add) >> shift;
-        dst[9 * line] = (horizontal_add(dst9_temp) + add) >> shift;
-        dst[11 * line] = (horizontal_add(dst11_temp) + add) >> shift;
-        dst[13 * line] = (horizontal_add(dst13_temp) + add) >> shift;
-        dst[15 * line] = (horizontal_add(dst15_temp) + add) >> shift;
-        dst[17 * line] = (horizontal_add(dst17_temp) + add) >> shift;
-        dst[19 * line] = (horizontal_add(dst19_temp) + add) >> shift;
-        dst[21 * line] = (horizontal_add(dst21_temp) + add) >> shift;
-        dst[23 * line] = (horizontal_add(dst23_temp) + add) >> shift;
-        dst[25 * line] = (horizontal_add(dst25_temp) + add) >> shift;
-        dst[27 * line] = (horizontal_add(dst27_temp) + add) >> shift;
-        dst[29 * line] = (horizontal_add(dst29_temp) + add) >> shift;
-        dst[31 * line] = (horizontal_add(dst31_temp) + add) >> shift;
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(three_row_first_four, O_first_four), _mm_mullo_epi32(three_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(three_row_third_four, O_third_four), _mm_mullo_epi32(three_row_fourth_four, O_last_four));
+        __m128i dst3_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(five_row_first_four, O_first_four), _mm_mullo_epi32(five_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(five_row_third_four, O_third_four), _mm_mullo_epi32(five_row_fourth_four, O_last_four));
+        __m128i dst5_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(seven_row_first_four, O_first_four), _mm_mullo_epi32(seven_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(seven_row_third_four, O_third_four), _mm_mullo_epi32(seven_row_fourth_four, O_last_four));
+        __m128i dst7_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(nine_row_first_four, O_first_four), _mm_mullo_epi32(nine_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(nine_row_third_four, O_third_four), _mm_mullo_epi32(nine_row_fourth_four, O_last_four));
+        __m128i dst9_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(eleven_row_first_four, O_first_four), _mm_mullo_epi32(eleven_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(eleven_row_third_four, O_third_four), _mm_mullo_epi32(eleven_row_fourth_four, O_last_four));
+        __m128i dst11_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(thirteen_row_first_four, O_first_four), _mm_mullo_epi32(thirteen_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(thirteen_row_third_four, O_third_four), _mm_mullo_epi32(thirteen_row_fourth_four, O_last_four));
+        __m128i dst13_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(fifteen_row_first_four, O_first_four), _mm_mullo_epi32(fifteen_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(fifteen_row_third_four, O_third_four), _mm_mullo_epi32(fifteen_row_fourth_four, O_last_four));
+        __m128i dst15_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(seventeen_row_first_four, O_first_four), _mm_mullo_epi32(seventeen_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(seventeen_row_third_four, O_third_four), _mm_mullo_epi32(seventeen_row_fourth_four, O_last_four));
+        __m128i dst17_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(nineteen_row_first_four, O_first_four), _mm_mullo_epi32(nineteen_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(nineteen_row_third_four, O_third_four), _mm_mullo_epi32(nineteen_row_fourth_four, O_last_four));
+        __m128i dst19_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(twentyone_row_first_four, O_first_four), _mm_mullo_epi32(twentyone_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(twentyone_row_third_four, O_third_four), _mm_mullo_epi32(twentyone_row_fourth_four, O_last_four));
+        __m128i dst21_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(twentythree_row_first_four, O_first_four), _mm_mullo_epi32(twentythree_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(twentythree_row_third_four, O_third_four), _mm_mullo_epi32(twentythree_row_fourth_four, O_last_four));
+        __m128i dst23_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(twentyfive_row_first_four, O_first_four), _mm_mullo_epi32(twentyfive_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(twentyfive_row_third_four, O_third_four), _mm_mullo_epi32(twentyfive_row_fourth_four, O_last_four));
+        __m128i dst25_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(twentyseven_row_first_four, O_first_four), _mm_mullo_epi32(twentyseven_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(twentyseven_row_third_four, O_third_four), _mm_mullo_epi32(twentyseven_row_fourth_four, O_last_four));
+        __m128i dst27_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(twentynine_row_first_four, O_first_four), _mm_mullo_epi32(twentynine_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(twentynine_row_third_four, O_third_four), _mm_mullo_epi32(twentynine_row_fourth_four, O_last_four));
+        __m128i dst29_temp = _mm_add_epi32(tmp1, tmp2);
+
+        tmp1 = _mm_add_epi32(_mm_mullo_epi32(thirtyone_row_first_four, O_first_four), _mm_mullo_epi32(thirtyone_row_second_four, O_second_four));
+        tmp2 = _mm_add_epi32(_mm_mullo_epi32(thirtyone_row_third_four, O_third_four), _mm_mullo_epi32(thirtyone_row_fourth_four, O_last_four));
+        __m128i dst31_temp = _mm_add_epi32(tmp1, tmp2);
+
+        dst[1 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst1_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[3 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst3_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[5 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst5_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[7 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst7_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[9 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst9_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[11 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst11_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[13 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst13_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[15 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst15_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[17 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst17_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[19 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst19_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[21 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst21_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[23 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst23_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[25 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst25_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[27 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst27_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[29 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst29_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
+        dst[31 * line] = (_mm_cvtsi128_si32(_mm_hadd_epi32(_mm_hadd_epi32(dst31_temp, _mm_setzero_si128()), _mm_setzero_si128())) + add) >> shift;
 
         src += 32;
         dst++;
@@ -2028,15 +2058,9 @@ void dct32(short *src, int *dst, intptr_t stride)
     partialButterfly32(block, coef, shift_1st, 32);
     partialButterfly32(coef, block, shift_2nd, 32);
 
-    /* TODO: inline cvt16to32 once it is intrinsic based */
 #define N (32)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            dst[i * N + j] = block[i * N + j];
-        }
-    }
+
+    convert16to32(block, dst, N*N);
 
 #undef N
 }
