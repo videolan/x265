@@ -31,22 +31,22 @@
 SECTION_RODATA 32
 tab_leftmask:   db -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-tab_Tm:     db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
-            db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
+tab_Tm:     db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
 
 tab_c_512:  times 8 dw 512
 
 SECTION .text
 
-%macro FILTER_H4 3
+%macro FILTER_H4 2
     movu        %1, [src + col - 1]
-    pshufb      %2, %1, Tm4
-    pmaddubsw   %2, coef2
-    pshufb      %1, %1, Tm5
+    pshufb      %1, Tm4
     pmaddubsw   %1, coef2
-    phaddw      %2, %1
-    pmulhrsw    %2, %3
-    packuswb    %2, %2
+    movu        %2, [src + col + 1]
+    pshufb      %2, Tm4
+    pmaddubsw   %2, coef3
+    paddw       %1, %2
+    pmulhrsw    %1, c512
+    packuswb    %1, %1
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -62,9 +62,9 @@ cglobal filterHorizontal_p_p_4, 0, 7, 8
 %define widthleft   r5
 %define mask_offset r6
 %define coef2       m7
-%define x3          m6
-%define Tm5         m5
-%define Tm4         m4
+%define coef3       m6
+%define Tm4         m5
+%define c512        m4
 %define x2          m3
 %define x1          m2
 %define x0          m1
@@ -73,11 +73,12 @@ cglobal filterHorizontal_p_p_4, 0, 7, 8
 %define tmp1        r1
  
     mov         tmp,        r6m
-    movu        coef2,      [tmp]
+    movd        coef2,      [tmp    ]
+    movd        coef3,      [tmp + 4]
+    pshufd      coef2,      coef2,  0
+    pshufd      coef3,      coef3,  0
     packsswb    coef2,      coef2
-    pshufd      coef2,      coef2,      0
-
-    mova        x3,         [tab_c_512]
+    packsswb    coef3,      coef3
 
     mov         width,      r4m
     mov         widthleft,  width
@@ -88,7 +89,7 @@ cglobal filterHorizontal_p_p_4, 0, 7, 8
 
     movq        leftmask,   [tab_leftmask + (7 + mask_offset)]
     mova        Tm4,        [tab_Tm]
-    mova        Tm5,        [tab_Tm + 16]
+    mova        c512,       [tab_c_512]
 
     mov         src,        r0m
     mov         dst,        r2m
@@ -101,8 +102,8 @@ _loop_col:
     cmp         col,        width
     jge         _end_col
 
-    FILTER_H4   x0, x1, x3
-    movh        [dst + col], x1
+    FILTER_H4   x0, x1
+    movh        [dst + col], x0
 
     add         col,         8
     jmp         _loop_col
@@ -112,8 +113,8 @@ _end_col:
     jz          _next_row
 
     movq        x2, [dst + col]
-    FILTER_H4   x0, x1, x3
-    pblendvb    x2, x2, x1, leftmask
+    FILTER_H4   x0, x1
+    pblendvb    x2, x2, x0, leftmask
     movh        [dst + col], x2
 
 _next_row:
