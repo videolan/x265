@@ -1159,18 +1159,20 @@ void MotionEstimate::subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir)
     int realHeight = blockheight + (dir == 1);
     intptr_t realStride = FENC_STRIDE + (dir == 2);
     pixel *fref = ref->unweightedFPelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-
+    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+    int local_shift = ref->shift + shiftNum;
+    int local_round = local_shift ? (1 << (local_shift - 1)) : 0;
     if (ref->isWeighted)
     {
         if (yFrac == 0)
         {
             primitives.ipfilter_ps[FILTER_H_P_S_8](fref, ref->lumaStride, immedVal, realStride, realWidth, realHeight, g_lumaFilter[xFrac]);
-            primitives.weightpUni(immedVal, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, ref->round, ref->shift, ref->offset);
+            primitives.weightpUni(immedVal, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
         }
         else if (xFrac == 0)
         {
             primitives.ipfilter_ps[FILTER_V_P_S_8](fref, ref->lumaStride, immedVal, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
-            primitives.weightpUni(immedVal, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, ref->round, ref->shift, ref->offset);
+            primitives.weightpUni(immedVal, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
         }
         else
         {
@@ -1178,7 +1180,7 @@ void MotionEstimate::subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir)
             int halfFilterSize = (filterSize >> 1);
             primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, realWidth, realWidth, realHeight + filterSize - 1, g_lumaFilter[xFrac]);
             primitives.ipfilter_ss[FILTER_V_S_S_8](immedVal + (halfFilterSize - 1) * realWidth, realWidth, immedVal2, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
-            primitives.weightpUni(immedVal2, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, ref->round, ref->shift, ref->offset);
+            primitives.weightpUni(immedVal2, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
         }
     }
     else
