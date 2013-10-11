@@ -1791,34 +1791,37 @@ void PredIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
 void PredIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG4_START
+    PRED_INTRA_ANGLE_4_START
 
-        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 2));
+    row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
-    row41 = extend_low(tmp16_1);    //offsets(-3,-2,-1,0)
-    tmp2uq = reinterpret_i(tmp16_1);
-    tmp2uq = tmp2uq >> 8;
-    tmp16_2 = reinterpret_i(tmp2uq);
-    row42 = extend_low(tmp16_2);    //offsets(-2,-1,0,1)
+    tmp2 = tmp16_1;
+    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
 
-    row31 = row42;                  //offsets(-2,-1,0,1)
-    tmp2uq = reinterpret_i(tmp16_1);
-    tmp2uq = tmp2uq >> 16;
-    tmp16_2 = reinterpret_i(tmp2uq);
-    row32 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+    tmp16_2 = tmp2;
+    row42 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
-    row21 = row31;                  //offsets(-2,-1,0,1)
+    row31 = row42;
+    tmp2 = tmp16_1;
+    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(16));
+
+    tmp16_2 = tmp2;
+    row32 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
+
+    row21 = row31;
     row22 = row32;
-
     row11 = row32;
-    tmp2uq = reinterpret_i(tmp16_1);
-    tmp2uq = tmp2uq >> 24;
-    tmp16_2 = reinterpret_i(tmp2uq);
-    row12 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
 
-    v_deltaPos = v_ipAngle = -17;
+    tmp2 = tmp16_1;
+    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(24));
 
-    PRED_INTRA_ANG4_END
+    tmp16_2 = tmp2;
+    row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
+
+    deltaPos = ipAngle = _mm_set1_epi16(-17);
+
+    PRED_INTRA_ANGLE_4_END
 }
 
 void PredIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
