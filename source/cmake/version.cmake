@@ -73,4 +73,8 @@ else()
     set(X265_VERSION "unknown")
 endif()
 
+if("${X265_VERSION}" STREQUAL "")
+    set(X265_VERSION "unknown"  CACHE STRING "x265 version string.")
+endif()
+
 message(STATUS "x265 version ${X265_VERSION}")
