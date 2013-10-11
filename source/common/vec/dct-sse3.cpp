@@ -1730,80 +1730,6 @@ void idct32(int *src, short *dst, intptr_t stride)
 }
 }
 
-
-/* Vector class primitives */
-#define INSTRSET 3
-#include "vectorclass.h"
-namespace {
-inline void inversedst(short *tmp, short *block, int shift)  // input tmp, output block
-{
-    int rnd_factor = 1 << (shift - 1);
-
-    __m128i tmp0, tmp1;
-
-    tmp0 = _mm_load_si128((__m128i*)tmp);
-    __m128i sign = _mm_srai_epi16(tmp0, 15);
-    __m128i c0 = _mm_unpacklo_epi16(tmp0, sign);
-    __m128i c1 = _mm_unpackhi_epi16(tmp0, sign);
-    tmp1 = _mm_load_si128((__m128i*)(tmp + 8));
-    sign = _mm_srai_epi16(tmp1, 15);
-    __m128i c2 = _mm_unpacklo_epi16(tmp1, sign);
-    __m128i c3 = _mm_unpackhi_epi16(tmp1, sign);
-
-    __m128i c0_total = _mm_add_epi32(c0, c2);
-    __m128i c1_total = _mm_add_epi32(c2, c3);
-    __m128i c2_total = _mm_sub_epi32(c0, c3);
-    __m128i c3_total = _mm_mullo_epi32(_mm_set1_epi32(74), c1);
-
-    __m128i c4 = _mm_add_epi32(_mm_sub_epi32(c0, c2), c3);
-
-    __m128i c0_final = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(_mm_add_epi32(_mm_mullo_epi32(_mm_set1_epi32(29), c0_total), _mm_mullo_epi32(_mm_set1_epi32(55), c1_total)), c3_total), _mm_set1_epi32(rnd_factor)), shift);
-    __m128i c1_final = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(_mm_sub_epi32(_mm_mullo_epi32(_mm_set1_epi32(55), c2_total), _mm_mullo_epi32(_mm_set1_epi32(29), c1_total)), c3_total), _mm_set1_epi32(rnd_factor)), shift);
-    __m128i c2_final = _mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(_mm_set1_epi32(74), c4), _mm_set1_epi32(rnd_factor)), shift);
-    __m128i c3_final = _mm_srai_epi32(_mm_add_epi32(_mm_sub_epi32(_mm_add_epi32(_mm_mullo_epi32(_mm_set1_epi32(55), c0_total), _mm_mullo_epi32(_mm_set1_epi32(29), c2_total)), c3_total), _mm_set1_epi32(rnd_factor)), shift);
-
-    __m128i half0 = _mm_packs_epi32(c0_final, c1_final);
-    __m128i half1 = _mm_packs_epi32(c2_final, c3_final);
-
-    tmp0 = _mm_unpacklo_epi64(half0, _mm_setzero_si128());
-    tmp1 = _mm_unpackhi_epi64(half0, _mm_setzero_si128());
-    half0 = _mm_unpacklo_epi16(tmp0, tmp1);
-
-    tmp0 = _mm_unpacklo_epi64(half1, _mm_setzero_si128());
-    tmp1 = _mm_unpackhi_epi64(half1, _mm_setzero_si128());
-    half1 = _mm_unpacklo_epi16(tmp0, tmp1);
-
-    _mm_store_si128((__m128i*)(block), _mm_unpacklo_epi32(half0, half1));
-    _mm_store_si128((__m128i*)(block + 8), _mm_unpackhi_epi32(half0, half1));
-}
-
-void idst4(int *src, short *dst, intptr_t stride)
-{
-    const int shift_1st = 7;
-    const int shift_2nd = 12;
-
-    ALIGN_VAR_32(short, coef[4 * 4]);
-    ALIGN_VAR_32(short, block[4 * 4]);
-#define N (4)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            block[i * N + j] = (short)src[i * N + j];
-        }
-    }
-
-#undef N
-
-    inversedst(block, coef, shift_1st);
-    inversedst(coef, block, shift_2nd);
-    for (int i = 0; i < 4; i++)
-    {
-        memcpy(&dst[i * stride], &block[i * 4], 4 * sizeof(short));
-    }
-}
-}
-
 namespace x265 {
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
 {
@@ -1811,7 +1737,6 @@ void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
     p.dct[DCT_4x4] = dct4;
 #endif
 
-    p.idct[IDST_4x4] = idst4;
     p.idct[IDCT_4x4] = idct4;
     p.idct[IDCT_8x8] = idct8;
     p.idct[IDCT_16x16] = idct16;
