@@ -1739,32 +1739,42 @@ inline void inversedst(short *tmp, short *block, int shift)  // input tmp, outpu
 {
     int rnd_factor = 1 << (shift - 1);
 
-    Vec8s tmp0, tmp1;
+    __m128i tmp0, tmp1;
 
-    tmp0.load_a(tmp);
-    tmp1.load_a(tmp + 8);
+    tmp0 = _mm_load_si128((__m128i*)tmp);
+    __m128i sign = _mm_srai_epi16(tmp0, 15);
+    __m128i c0 = _mm_unpacklo_epi16(tmp0, sign);
+    __m128i c1 = _mm_unpackhi_epi16(tmp0, sign);
+    tmp1 = _mm_load_si128((__m128i*)(tmp + 8));
+    sign = _mm_srai_epi16(tmp1, 15);
+    __m128i c2 = _mm_unpacklo_epi16(tmp1, sign);
+    __m128i c3 = _mm_unpackhi_epi16(tmp1, sign);
 
-    Vec4i c0 = extend_low(tmp0);
-    Vec4i c1 = extend_high(tmp0);
-    Vec4i c2 = extend_low(tmp1);
-    Vec4i c3 = extend_high(tmp1);
+    __m128i c0_total = _mm_add_epi32(c0, c2);
+    __m128i c1_total = _mm_add_epi32(c2, c3);
+    __m128i c2_total = _mm_sub_epi32(c0, c3);
+    __m128i c3_total = _mm_mullo_epi32(_mm_set1_epi32(74), c1);
 
-    Vec4i c0_total = c0 + c2;
-    Vec4i c1_total = c2 + c3;
-    Vec4i c2_total = c0 - c3;
-    Vec4i c3_total = 74 * c1;
+    __m128i c4 = _mm_add_epi32(_mm_sub_epi32(c0, c2), c3);
 
-    Vec4i c4 = (c0 - c2 + c3);
+    __m128i c0_final = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(_mm_add_epi32(_mm_mullo_epi32(_mm_set1_epi32(29), c0_total), _mm_mullo_epi32(_mm_set1_epi32(55), c1_total)), c3_total), _mm_set1_epi32(rnd_factor)), shift);
+    __m128i c1_final = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(_mm_sub_epi32(_mm_mullo_epi32(_mm_set1_epi32(55), c2_total), _mm_mullo_epi32(_mm_set1_epi32(29), c1_total)), c3_total), _mm_set1_epi32(rnd_factor)), shift);
+    __m128i c2_final = _mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(_mm_set1_epi32(74), c4), _mm_set1_epi32(rnd_factor)), shift);
+    __m128i c3_final = _mm_srai_epi32(_mm_add_epi32(_mm_sub_epi32(_mm_add_epi32(_mm_mullo_epi32(_mm_set1_epi32(55), c0_total), _mm_mullo_epi32(_mm_set1_epi32(29), c2_total)), c3_total), _mm_set1_epi32(rnd_factor)), shift);
 
-    Vec4i c0_final = (29 * c0_total + 55 * c1_total + c3_total + rnd_factor) >> shift;
-    Vec4i c1_final = (55 * c2_total - 29 * c1_total + c3_total + rnd_factor) >> shift;
-    Vec4i c2_final = (74 * c4 + rnd_factor) >> shift;
-    Vec4i c3_final = (55 * c0_total + 29 * c2_total - c3_total + rnd_factor) >> shift;
+    __m128i half0 = _mm_packs_epi32(c0_final, c1_final);
+    __m128i half1 = _mm_packs_epi32(c2_final, c3_final);
 
-    Vec8s half0 = compress_saturated(c0_final, c1_final);
-    Vec8s half1 = compress_saturated(c2_final, c3_final);
-    blend8s<0, 4, 8, 12, 1, 5, 9, 13>(half0, half1).store_a(block);
-    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store_a(block + 8);
+    tmp0 = _mm_unpacklo_epi64(half0, _mm_setzero_si128());
+    tmp1 = _mm_unpackhi_epi64(half0, _mm_setzero_si128());
+    half0 = _mm_unpacklo_epi16(tmp0, tmp1);
+
+    tmp0 = _mm_unpacklo_epi64(half1, _mm_setzero_si128());
+    tmp1 = _mm_unpackhi_epi64(half1, _mm_setzero_si128());
+    half1 = _mm_unpacklo_epi16(tmp0, tmp1);
+
+    _mm_store_si128((__m128i*)(block), _mm_unpacklo_epi32(half0, half1));
+    _mm_store_si128((__m128i*)(block + 8), _mm_unpackhi_epi32(half0, half1));
 }
 
 void idst4(int *src, short *dst, intptr_t stride)
