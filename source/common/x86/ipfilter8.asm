@@ -98,13 +98,14 @@ _loop_row:
     xor         col,        col
  
 _loop_col:
+    cmp         col,        width
+    jge         _end_col
+
     FILTER_H4   x0, x1, x3
     movh        [dst + col], x1
 
     add         col,         8
- 
-    cmp         col,        width
-    jl         _loop_col
+    jmp         _loop_col
 
 _end_col:
     test        widthleft,  widthleft
