@@ -1,3 +1,4 @@
+# vim: syntax=cmake
 if(ENABLE_PRIMITIVES_VEC)
     add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
 endif(ENABLE_PRIMITIVES_VEC)

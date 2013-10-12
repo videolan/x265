@@ -1,3 +1,4 @@
+# vim: syntax=cmake
 if(GCC)
     # encoder.cpp must include HM headers which are not careful about named parameters
     set_source_files_properties(encoder.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
