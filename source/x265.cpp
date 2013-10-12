@@ -255,19 +255,8 @@ struct CLIOptions
 
     void print_version(x265_param_t *param)
     {
-#define XSTR(x) STR(x)
-#define STR(x) #x
-        fprintf(stderr, "x265 [info]: HEVC encoder version %s\n", XSTR(X265_VERSION));
-        fprintf(stderr, "x265 [info]: build info ");
-        fprintf(stderr, NVM_ONOS);
-        fprintf(stderr, NVM_COMPILEDBY);
-        fprintf(stderr, NVM_BITS);
-#if HIGH_BIT_DEPTH
-        fprintf(stderr, "16bpp");
-#else
-        fprintf(stderr, "8bpp");
-#endif
-        fprintf(stderr, "\n");
+        fprintf(stderr, "x265 [info]: HEVC encoder version %s\n", x265_version_str);
+        fprintf(stderr, "x265 [info]: build info %s\n", x265_build_info_str);
         x265_setup_primitives(param, 0);
     }
 
@@ -626,7 +615,7 @@ int main(int argc, char **argv)
         char buffer[128];
         strftime(buffer, 128, "%c", timeinfo);
         fprintf(cliopt.csvfp, ", %s, %.2f, %.2f, %.2f, %.2f, %s\n",
-            buffer, elapsed, outFrameCount / elapsed, bitrate, stats.globalPsnr, XSTR(X265_VERSION));
+            buffer, elapsed, outFrameCount / elapsed, bitrate, stats.globalPsnr, x265_version_str);
     }
 
     cliopt.destroy();

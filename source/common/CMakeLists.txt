@@ -217,6 +217,7 @@ if(GCC)
         set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
 endif(GCC)
+set_source_files_properties(common.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 enable_language(ASM_YASM)
 add_library(common OBJECT
@@ -234,4 +235,3 @@ add_library(common OBJECT
     common.cpp common.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h)
-

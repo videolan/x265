@@ -5,6 +5,8 @@ x265_param_default
 x265_picture_init
 x265_param_apply_profile
 x265_max_bit_depth
+x265_version_str
+x265_build_info_str
 x265_encoder_headers
 x265_encoder_encode
 x265_encoder_get_stats

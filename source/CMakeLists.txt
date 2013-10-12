@@ -151,6 +151,7 @@ configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
                "${PROJECT_BINARY_DIR}/x265_config.h")
 
+include(version) # determine X265_VERSION and X265_LATEST_TAG
 include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(common)
 add_subdirectory(encoder)
@@ -174,7 +175,6 @@ endif()
 # MINGW builds static: libx265-static.a shared: libx265.dll + libx265.dll.a
 # *NIX  builds static: libx265.a        shared: libx265.so
 
-include(version) # determine X265_VERSION and X265_LATEST_TAG
 if(X265_LATEST_TAG)
     # shared library is not installed if a tag is not found
     set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG} SOVERSION ${X265_BUILD})
@@ -210,10 +210,9 @@ if(ENABLE_CLI)
         set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
     endif()
 
-    set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
     add_executable(cli ../COPYING ${InputFiles} ${OutputFiles}
-        x265.cpp x265opts.h x265.h
-        compat/msvc/getopt.c compat/msvc/getopt.h)
+                   x265.cpp x265opts.h x265.h
+                   compat/msvc/getopt.c compat/msvc/getopt.h)
     target_link_libraries(cli x265-static ${PLATFORM_LIBS})
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 

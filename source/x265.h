@@ -341,6 +341,14 @@ int x265_param_apply_profile(x265_param_t *, const char *profile);
  *      for all encoders allocated in the same process. */
 extern const int x265_max_bit_depth;
 
+/* x265_version_str:
+ *      A static string containing the version of this compiled x265 library */
+extern const char *x265_version_str;
+
+/* x265_build_info:
+ *      A static string describing the compiler and target architecture */
+extern const char *x265_build_info_str;
+
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro
  * is x265_encoder_open_##X264_BUILD (for purposes of dlopen). */
