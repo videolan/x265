@@ -29,7 +29,7 @@
 
 namespace {
 #if !HIGH_BIT_DEPTH
-void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
+void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
 
@@ -344,7 +344,7 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
 
 namespace {
 #if HIGH_BIT_DEPTH
-void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
+void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
     if ((bx & 7) || (((size_t)dst | (size_t)src | sstride | dstride) & 15))
     {
@@ -380,9 +380,9 @@ namespace x265 {
 void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
 {
 #if HIGH_BIT_DEPTH
-    p.blockcpy_pp = blockcopy_p_p;
-    p.blockcpy_ps = (blockcpy_ps_t)blockcopy_p_p;
-    p.blockcpy_sp = (blockcpy_sp_t)blockcopy_p_p;
+    p.blockcpy_pp = blockcopy_pp;
+    p.blockcpy_ps = (blockcpy_ps_t)blockcopy_pp;
+    p.blockcpy_sp = (blockcpy_sp_t)blockcopy_pp;
 #else
     p.pixeladd_pp = pixeladd_pp;
 #endif
@@ -393,7 +393,7 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
     p.pixeladd_pp = (pixeladd_pp_t)pixeladd_ss;
     p.pixeladd_ss = pixeladd_ss;
 #else
-    p.blockcpy_pp = blockcopy_p_p;
+    p.blockcpy_pp = blockcopy_pp;
     p.blockcpy_ps = blockcopy_p_s;
     p.blockcpy_sp = blockcopy_s_p;
     p.blockcpy_sc = blockcopy_s_p;
