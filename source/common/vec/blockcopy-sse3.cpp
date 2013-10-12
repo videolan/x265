@@ -28,7 +28,36 @@
 #include <cstring>
 
 namespace {
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
+{
+    if ((bx & 7) || (((size_t)dst | (size_t)src | sstride | dstride) & 15))
+    {
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            memcpy(dst, src, bx * sizeof(pixel));
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // fast path, multiples of 8 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 8)
+            {
+                __m128i word = _mm_load_si128((__m128i const*)(src + x));
+                _mm_store_si128((__m128i*)&dst[x], word);
+            }
+
+            src += sstride;
+            dst += dstride;
+        }
+    }
+}
+#else
 void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
@@ -337,43 +366,6 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
         }
     }
 }
-}
-
-#define INSTRSET 3
-#include "vectorclass.h"
-
-namespace {
-#if HIGH_BIT_DEPTH
-void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
-{
-    if ((bx & 7) || (((size_t)dst | (size_t)src | sstride | dstride) & 15))
-    {
-        // slow path, irregular memory alignments or sizes
-        for (int y = 0; y < by; y++)
-        {
-            memcpy(dst, src, bx * sizeof(pixel));
-            src += sstride;
-            dst += dstride;
-        }
-    }
-    else
-    {
-        // fast path, multiples of 8 pixel wide blocks
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x += 8)
-            {
-                Vec8s word;
-                word.load_a(src + x);
-                word.store_a(dst + x);
-            }
-
-            src += sstride;
-            dst += dstride;
-        }
-    }
-}
-#endif
 }
 
 namespace x265 {
