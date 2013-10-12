@@ -64,7 +64,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     shortTermCplxSum = 0;
     shortTermCplxCount = 0;
     framesDone = 0;
-    if (rateControlMode == X265_RC_ABR)
+    if (cfg->param.rc.rateControlMode == X265_RC_ABR)
     {
         // Adjust the first frame in order to stabilize the quality level compared to the rest.
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
@@ -85,7 +85,7 @@ RateControl::RateControl(TEncCfg * _cfg)
         lmax[i] = qp2qScale(MAX_QP);  
     }
 
-    if (rateControlMode == X265_RC_CQP)
+    if (cfg->param.rc.rateControlMode == X265_RC_CQP)
     {
         qpConstant[P_SLICE] = baseQp;
         qpConstant[I_SLICE] = Clip3(0, MAX_QP, (int)(baseQp - ipOffset + 0.5));
@@ -101,7 +101,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     curFrame = pic->getSlice();
     frameType = curFrame->getSliceType();
 
-    switch (rateControlMode)
+    switch (cfg->param.rc.rateControlMode)
     {
     case X265_RC_ABR:
         {
@@ -230,7 +230,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
             q = qp2qScale(accumPQp / accumPNorm);
             q /= fabs(ipFactor);
         }
-        if (rateControlMode != X265_RC_CRF)
+        if (cfg->param.rc.rateControlMode != X265_RC_CRF)
         {
             double lqmin = 0, lqmax = 0;
 
@@ -304,7 +304,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 /* After encoding one frame,  update ratecontrol state */
 int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
 {
-    if (rateControlMode == X265_RC_ABR)
+    if (cfg->param.rc.rateControlMode == X265_RC_ABR)
     {
         if (frameType != B_SLICE)
             /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low

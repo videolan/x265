@@ -73,7 +73,6 @@ struct RateControl
     double lmax[3];
     double shortTermCplxSum;
     double shortTermCplxCount;
-    RcMethod rateControlMode;
     int64_t totalBits;   /* totalbits used for already encoded frames */
     double lastRceq;
     int framesDone;   /* framesDone keeps track of # of frames passed through RateCotrol already */
