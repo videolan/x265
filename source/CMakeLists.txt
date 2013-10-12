@@ -143,12 +143,20 @@ if (WIN32)
     endif(WINXP_SUPPORT)
 endif()
 
-include_directories(. Lib common encoder)
+# X265_BUILD must be incremented each time the public API is changed
+set(X265_BUILD 1)
+configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
+               "${PROJECT_BINARY_DIR}/x265.def")
+configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
+               "${PROJECT_BINARY_DIR}/x265_config.h")
+
+include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-add_library(x265-shared SHARED dllmain.cpp x265.def $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def"
+                               $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
 if(ENABLE_PRIMITIVES_ASM AND (MSVC_IDE OR XCODE))
     SET(EXTRA_LIBS ${EXTRA_LIBS} assembly)
 endif()
@@ -165,6 +173,21 @@ endif()
 # MINGW builds static: libx265-static.a shared: libx265.dll + libx265.dll.a
 # *NIX  builds static: libx265.a        shared: libx265.so
 
+include(version) # determine X265_VERSION and X265_LATEST_TAG
+if(X265_LATEST_TAG)
+    # shared library is not installed if a tag is not found
+    set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG} SOVERSION ${X265_BUILD})
+    install(TARGETS x265-shared
+            RUNTIME DESTINATION bin
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib/x265)
+endif()
+install(TARGETS x265-static
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/x265)
+install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
+
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
@@ -178,13 +201,14 @@ if(ENABLE_CLI)
         set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
     endif()
 
-    include(version) # determine X265_VERSION
     set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
     add_executable(cli ../COPYING ${InputFiles} ${OutputFiles}
         x265.cpp x265opts.h x265.h
         compat/msvc/getopt.c compat/msvc/getopt.h)
     target_link_libraries(cli x265-static ${PLATFORM_LIBS})
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
+
+    install(TARGETS cli DESTINATION bin)
 endif(ENABLE_CLI)
 
 # Test applications
