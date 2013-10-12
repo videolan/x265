@@ -74,8 +74,8 @@ PixelHarness::PixelHarness()
         pbuf3[i] = rand() & PIXEL_MAX;
         pbuf4[i] = rand() & PIXEL_MAX;
 
-        sbuf1[i] = rand() & PIXEL_MAX;
-        sbuf2[i] = rand() & PIXEL_MAX;
+        sbuf1[i] = (rand() & (2*SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
+        sbuf2[i] = (rand() & (2*SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
     }
 }
 

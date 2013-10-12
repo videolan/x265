@@ -25,8 +25,10 @@
 #define _TESTHARNESS_H_ 1
 
 #include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "primitives.h"
 #include <stddef.h>
+#include <algorithm>
 
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
@@ -34,6 +36,8 @@
 #define BIT_DEPTH 8
 #endif
 #define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
+#define SHORT_MAX  32767
+#define SHORT_MIN -32767
 
 using namespace x265;
 
