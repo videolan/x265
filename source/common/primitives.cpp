@@ -91,29 +91,29 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
     if (cpuid == 0)
     {
         cpuid = x265::cpu_detect();
-        if (param->logLevel >= X265_LOG_INFO)
+    }
+    if (param->logLevel >= X265_LOG_INFO)
+    {
+        char buf[1000];
+        char *p = buf + sprintf( buf, "using cpu capabilities:" );
+        for (int i = 0; x265::cpu_names[i].flags; i++)
         {
-            char buf[1000];
-            char *p = buf + sprintf( buf, "using cpu capabilities:" );
-            for (int i = 0; x265::cpu_names[i].flags; i++)
-            {
-                if (!strcmp(x265::cpu_names[i].name, "SSE2")
-                    && cpuid & (X265_CPU_SSE2_IS_FAST|X265_CPU_SSE2_IS_SLOW))
-                    continue;
-                if (!strcmp(x265::cpu_names[i].name, "SSE3")
-                    && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
-                    continue;
-                if (!strcmp(x265::cpu_names[i].name, "SSE4.1")
-                    && (cpuid & X265_CPU_SSE42))
-                    continue;
-                if ((cpuid & x265::cpu_names[i].flags) == x265::cpu_names[i].flags
-                    && (!i || x265::cpu_names[i].flags != x265::cpu_names[i-1].flags))
-                    p += sprintf( p, " %s", x265::cpu_names[i].name );
-            }
-            if( !cpuid )
-                p += sprintf( p, " none!" );
-            x265_log(param, X265_LOG_INFO, "%s\n", buf);
+            if (!strcmp(x265::cpu_names[i].name, "SSE2")
+                && cpuid & (X265_CPU_SSE2_IS_FAST|X265_CPU_SSE2_IS_SLOW))
+                continue;
+            if (!strcmp(x265::cpu_names[i].name, "SSE3")
+                && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
+                continue;
+            if (!strcmp(x265::cpu_names[i].name, "SSE4.1")
+                && (cpuid & X265_CPU_SSE42))
+                continue;
+            if ((cpuid & x265::cpu_names[i].flags) == x265::cpu_names[i].flags
+                && (!i || x265::cpu_names[i].flags != x265::cpu_names[i-1].flags))
+                p += sprintf( p, " %s", x265::cpu_names[i].name );
         }
+        if( !cpuid )
+            p += sprintf( p, " none!" );
+        x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
 
     x265_log(param, X265_LOG_INFO, "performance primitives:");
