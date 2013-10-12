@@ -89,7 +89,7 @@ void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intp
     }
 }
 
-void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
+void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
     if (!(aligncheck & 15))
@@ -202,7 +202,7 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
 }
 #endif /* if HIGH_BIT_DEPTH */
 
-void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
+void blockcopy_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
     if (!(aligncheck & 15))
@@ -381,14 +381,14 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
 
 #if HIGH_BIT_DEPTH
     // At high bit depth, a pixel is a short
-    p.blockcpy_sc = (blockcpy_sc_t)blockcopy_s_p;
+    p.blockcpy_sc = (blockcpy_sc_t)blockcopy_sp;
     p.pixeladd_pp = (pixeladd_pp_t)pixeladd_ss;
     p.pixeladd_ss = pixeladd_ss;
 #else
     p.blockcpy_pp = blockcopy_pp;
-    p.blockcpy_ps = blockcopy_p_s;
-    p.blockcpy_sp = blockcopy_s_p;
-    p.blockcpy_sc = blockcopy_s_p;
+    p.blockcpy_ps = blockcopy_ps;
+    p.blockcpy_sp = blockcopy_sp;
+    p.blockcpy_sc = blockcopy_sp;
     p.pixelsub_sp = pixelsub_sp;
     p.pixeladd_ss = pixeladd_ss;
 #endif
