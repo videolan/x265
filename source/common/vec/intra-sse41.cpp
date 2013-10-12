@@ -24,11 +24,10 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#define INSTRSET 5
-#include "vectorclass.h"
-
 #include "primitives.h"
 #include "TLibCommon/TComRom.h"
+#include <xmmintrin.h> // SSE
+#include <smmintrin.h> // SSE4.1
 #include <assert.h>
 #include <smmintrin.h>
 
