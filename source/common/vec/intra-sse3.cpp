@@ -74,30 +74,30 @@ extern unsigned char IntraFilterType[][35];
          \
         if (modeHor) \
         { \
-            __m128i tmp1, tmp2, tmp3, tmp4; \
+            __m128i _tmp1, _tmp2, _tmp3, _tmp4; \
              \
-            tmp1 =   _mm_unpacklo_epi16(row11, row31); \
-            tmp2 =   _mm_unpacklo_epi16(row21, row41); \
-            tmp3 =   _mm_unpacklo_epi16(tmp1, tmp2); \
-            tmp4 =   _mm_unpackhi_epi16(tmp1, tmp2); \
+            _tmp1 = _mm_unpacklo_epi16(row11, row31); \
+            _tmp2 = _mm_unpacklo_epi16(row21, row41); \
+            _tmp3 = _mm_unpacklo_epi16(_tmp1, _tmp2); \
+            _tmp4 = _mm_unpackhi_epi16(_tmp1, _tmp2); \
              \
-            tmp16_1 = _mm_packus_epi16(tmp3, tmp3); \
+            tmp16_1 = _mm_packus_epi16(_tmp3, _tmp3); \
             *(uint32_t*)(dst) = _mm_cvtsi128_si32(tmp16_1); \
-            tmp2 = tmp16_1; \
-            tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(32)); \
-            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(tmp2); \
-            tmp16_1 = _mm_packus_epi16(tmp4, tmp4); \
+            _tmp2 = tmp16_1; \
+            _tmp2 = _mm_srl_epi64(_tmp2, _mm_cvtsi32_si128(32)); \
+            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(_tmp2); \
+            tmp16_1 = _mm_packus_epi16(_tmp4, _tmp4); \
             *(uint32_t*)(dst + (2 * dstStride)) = _mm_cvtsi128_si32(tmp16_1); \
-            tmp2 = tmp16_1; \
-            tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(32)); \
-            *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(tmp2); \
+            _tmp2 = tmp16_1; \
+            _tmp2 = _mm_srl_epi64(_tmp2, _mm_cvtsi32_si128(32)); \
+            *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_tmp2); \
         } \
         else \
         { \
-            *(uint32_t*)(dst) = _mm_cvtsi128_si32(_mm_packus_epi16(row11,row11)); \
-            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(_mm_packus_epi16(row21,row21)); \
-            *(uint32_t*)(dst + (2 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row31,row31)); \
-            *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row41,row41)); \
+            *(uint32_t*)(dst) = _mm_cvtsi128_si32(_mm_packus_epi16(row11, row11)); \
+            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(_mm_packus_epi16(row21, row21)); \
+            *(uint32_t*)(dst + (2 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row31, row31)); \
+            *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row41, row41)); \
         }
 
 #define PRED_INTRA_ANG4_START   \
