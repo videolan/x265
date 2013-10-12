@@ -100,6 +100,8 @@ int main(int argc, char *argv[])
             printf("Testing primitives: %s\n", test_arch[i].name);
         else
             continue;
+        if (cpuid_user == i)
+            break;
 
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
