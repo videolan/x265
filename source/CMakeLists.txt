@@ -189,6 +189,14 @@ install(TARGETS x265-static
         ARCHIVE DESTINATION lib/x265)
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
 
+if(NOT WIN32)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+                   "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake"
+                   IMMEDIATE @ONLY)
+    add_custom_target(uninstall
+                      "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake")
+endif()
+
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
