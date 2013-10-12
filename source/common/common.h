@@ -33,7 +33,16 @@
 // Platform information
 // ====================================================================================================================
 
-#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
+#if defined(__clang__)
+#define NVM_COMPILEDBY  "[clang %d.%d.%d]", __clang_major__, __clang_minor__, __clang_patchlevel__
+#ifdef __IA64__
+#define NVM_ONARCH    "[on 64-bit] "
+#else
+#define NVM_ONARCH    "[on 32-bit] "
+#endif
+#endif
+
+#if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__clang__)
 #define NVM_COMPILEDBY  "[GCC %d.%d.%d]", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__
 #ifdef __IA64__
 #define NVM_ONARCH    "[on 64-bit] "
