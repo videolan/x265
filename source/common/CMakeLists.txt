@@ -215,6 +215,7 @@ if(GCC)
         # force gcc to generate code for sync primitives
         set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
+    set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
 endif(GCC)
 set_source_files_properties(common.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
