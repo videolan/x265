@@ -50,7 +50,7 @@ class TEncBinCABAC : public TEncBinIf
 {
 public:
 
-    TEncBinCABAC();
+    TEncBinCABAC(bool isCounter = false);
     virtual ~TEncBinCABAC();
 
     void  init(TComBitIf* pcTComBitIf);
@@ -98,6 +98,7 @@ public:
     UInt                m_uiBinsCoded;
     int                 m_binCountIncrement;
     UInt64              m_fracBits;
+    bool                bIsCounter;
 };
 }
 //! \}

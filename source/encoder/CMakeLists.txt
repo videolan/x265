@@ -18,7 +18,6 @@ set(LIBENCODER_HDR
     ../Lib/TLibEncoder/TEncAnalyze.h
     ../Lib/TLibEncoder/TEncBinCoder.h
     ../Lib/TLibEncoder/TEncBinCoderCABAC.h
-    ../Lib/TLibEncoder/TEncBinCoderCABACCounter.h
     ../Lib/TLibEncoder/TEncCavlc.h
     ../Lib/TLibEncoder/TEncCfg.h
     ../Lib/TLibEncoder/TEncCu.h
@@ -32,7 +31,6 @@ set(LIBENCODER_SRC
     ../Lib/TLibEncoder/SEIwrite.cpp
     ../Lib/TLibEncoder/SyntaxElementWriter.cpp
     ../Lib/TLibEncoder/TEncBinCoderCABAC.cpp
-    ../Lib/TLibEncoder/TEncBinCoderCABACCounter.cpp
     ../Lib/TLibEncoder/TEncCavlc.cpp
     ../Lib/TLibEncoder/TEncCu.cpp
     ../Lib/TLibEncoder/TEncEntropy.cpp

@@ -43,10 +43,11 @@ using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
 
-TEncBinCABAC::TEncBinCABAC()
+TEncBinCABAC::TEncBinCABAC(bool isCounter)
     : m_pcTComBitIf(0)
     , m_binCountIncrement(0)
     , m_fracBits(0)
+    , bIsCounter(isCounter)
 {}
 
 TEncBinCABAC::~TEncBinCABAC()
@@ -73,6 +74,14 @@ void TEncBinCABAC::start()
 
 void TEncBinCABAC::finish()
 {
+    if (bIsCounter)
+    {
+        // TODO: why write 0 bits?
+        m_pcTComBitIf->write(0, UInt(m_fracBits >> 15));
+        m_fracBits &= 32767;
+        assert(0);
+    }
+
     if (m_uiLow >> (32 - m_bitsLeft))
     {
         //assert( m_numBufferedBytes > 0 );
@@ -166,7 +175,10 @@ void TEncBinCABAC::resetBits()
 
 UInt TEncBinCABAC::getNumWrittenBits()
 {
-    return m_pcTComBitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
+    if (bIsCounter)
+        return m_pcTComBitIf->getNumberOfWrittenBits() + UInt(m_fracBits >> 15);
+    else
+        return m_pcTComBitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
 }
 
 /**
@@ -186,6 +198,12 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &rcCtxModel)
         DTRACE_CABAC_T("\n")
     }
     m_uiBinsCoded += m_binCountIncrement;
+    if (bIsCounter)
+    {
+        m_fracBits += rcCtxModel.getEntropyBits(binValue);
+        rcCtxModel.update(binValue);
+        return;
+    }
     rcCtxModel.setBinsCoded(1);
 
     UInt  uiLPS   = g_lpsTable[rcCtxModel.getState()][(m_uiRange >> 6) & 3];
@@ -230,6 +248,11 @@ void TEncBinCABAC::encodeBinEP(UInt binValue)
         DTRACE_CABAC_T("\n")
     }
     m_uiBinsCoded += m_binCountIncrement;
+    if (bIsCounter)
+    {
+        m_fracBits += 32768;
+        return;
+    }
     m_uiLow <<= 1;
     if (binValue)
     {
@@ -249,6 +272,11 @@ void TEncBinCABAC::encodeBinEP(UInt binValue)
 void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
 {
     m_uiBinsCoded += numBins & - m_binCountIncrement;
+    if (bIsCounter)
+    {
+        m_fracBits += 32768 * numBins;
+        return;
+    }
 
     for (int i = 0; i < numBins; i++)
     {
@@ -285,6 +313,12 @@ void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
 void TEncBinCABAC::encodeBinTrm(UInt binValue)
 {
     m_uiBinsCoded += m_binCountIncrement;
+    if (bIsCounter)
+    {
+        m_fracBits += ContextModel::getEntropyBitsTrm(binValue);
+        return;
+    }
+
     m_uiRange -= 2;
     if (binValue)
     {

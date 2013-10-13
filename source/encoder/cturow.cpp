@@ -36,17 +36,17 @@ void CTURow::create(Encoder* top)
     m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->param.bEnableRDOQ, top->param.bEnableRDOQTS, top->param.bEnableTSkipFast);
 
     m_rdSbacCoders = new TEncSbac **[g_maxCUDepth + 1];
-    m_binCodersCABAC = new TEncBinCABACCounter **[g_maxCUDepth + 1];
+    m_binCodersCABAC = new TEncBinCABAC **[g_maxCUDepth + 1];
 
     for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
         m_rdSbacCoders[depth]  = new TEncSbac*[CI_NUM];
-        m_binCodersCABAC[depth] = new TEncBinCABACCounter*[CI_NUM];
+        m_binCodersCABAC[depth] = new TEncBinCABAC*[CI_NUM];
 
         for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
         {
             m_rdSbacCoders[depth][ciIdx] = new TEncSbac;
-            m_binCodersCABAC[depth][ciIdx] = new TEncBinCABACCounter;
+            m_binCodersCABAC[depth][ciIdx] = new TEncBinCABAC(true);
             m_rdSbacCoders[depth][ciIdx]->init(m_binCodersCABAC[depth][ciIdx]);
         }
     }

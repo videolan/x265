@@ -45,7 +45,6 @@
 #include "TEncEntropy.h"
 #include "TEncBinCoder.h"
 #include "TEncBinCoderCABAC.h"
-#include "TEncBinCoderCABACCounter.h"
 
 namespace x265 {
 // private namespace

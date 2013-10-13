@@ -69,7 +69,7 @@ public:
     // SAO
     TEncEntropy                 m_entropyCoder;
     TEncSbac                    m_rdGoOnSbacCoder;
-    TEncBinCABACCounter         m_rdGoOnBinCodersCABAC;
+    TEncBinCABAC                m_rdGoOnBinCodersCABAC;
     TComBitCounter              m_bitCounter;
     TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
 };

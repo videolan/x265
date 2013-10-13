@@ -44,12 +44,13 @@ class Encoder;
 class CTURow
 {
 public:
+    CTURow() : m_rdGoOnBinCodersCABAC(true) {}
 
     TEncSbac               m_sbacCoder;
     TEncSbac               m_rdGoOnSbacCoder;
     TEncSbac               m_bufferSbacCoder;
     TEncBinCABAC           m_binCoderCABAC;
-    TEncBinCABACCounter    m_rdGoOnBinCodersCABAC;
+    TEncBinCABAC           m_rdGoOnBinCodersCABAC;
     TComBitCounter         m_bitCounter;
     TComRdCost             m_rdCost;
     TEncEntropy            m_entropyCoder;
@@ -57,7 +58,7 @@ public:
     TEncCu                 m_cuCoder;
     TComTrQuant            m_trQuant;
     TEncSbac            ***m_rdSbacCoders;
-    TEncBinCABACCounter ***m_binCodersCABAC;
+    TEncBinCABAC        ***m_binCodersCABAC;
 
     void create(Encoder* top);
 
