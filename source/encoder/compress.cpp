@@ -79,7 +79,6 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
-    cu->m_totalBins = ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_entropyCoderIf)->getEncBinIf())->getBinsCoded();
     cu->m_totalCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 }
 
@@ -539,7 +538,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         m_entropyCoder->resetBits();
         m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
         outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
-        outBestCU->m_totalBins += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_entropyCoderIf)->getEncBinIf())->getBinsCoded();
         outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
     }
     else if (!(bSliceEnd && bInsidePicture))
@@ -609,7 +607,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_entropyCoder->resetBits();
                 m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
                 outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits();        // split bits
-                outBestCU->m_totalBins += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_entropyCoderIf)->getEncBinIf())->getBinsCoded();
                 outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
                 /* Copy Best data to Picture for next partition prediction. */
                 outBestCU->copyToPic((UChar)depth);
@@ -659,7 +656,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth, true);
 
             outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
-            outTempCU->m_totalBins += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_entropyCoderIf)->getEncBinIf())->getBinsCoded();
         }
 
         outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);

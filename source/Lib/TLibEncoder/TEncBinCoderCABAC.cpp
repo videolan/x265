@@ -45,7 +45,6 @@ using namespace x265;
 
 TEncBinCABAC::TEncBinCABAC(bool isCounter)
     : m_pcTComBitIf(0)
-    , m_binCountIncrement(0)
     , m_fracBits(0)
     , bIsCounter(isCounter)
 {}
@@ -150,7 +149,7 @@ void TEncBinCABAC::xWritePCMCode(UInt uiCode, UInt uiLength)
 
 void TEncBinCABAC::copyState(TEncBinIf* pcTEncBinIf)
 {
-    TEncBinCABAC* pcTEncBinCABAC = pcTEncBinIf->getTEncBinCABAC();
+    TEncBinCABAC* pcTEncBinCABAC = (TEncBinCABAC*)pcTEncBinIf;
 
     m_uiLow           = pcTEncBinCABAC->m_uiLow;
     m_uiRange         = pcTEncBinCABAC->m_uiRange;
@@ -166,11 +165,7 @@ void TEncBinCABAC::resetBits()
     m_bitsLeft         = 23;
     m_numBufferedBytes = 0;
     m_bufferedByte     = 0xff;
-    if (m_binCountIncrement)
-    {
-        m_uiBinsCoded = 0;
-    }
-    m_fracBits &= 32767;
+    m_fracBits        &= 32767;
 }
 
 UInt TEncBinCABAC::getNumWrittenBits()
@@ -197,7 +192,6 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &rcCtxModel)
         DTRACE_CABAC_V(binValue)
         DTRACE_CABAC_T("\n")
     }
-    m_uiBinsCoded += m_binCountIncrement;
     if (bIsCounter)
     {
         m_fracBits += rcCtxModel.getEntropyBits(binValue);
@@ -247,7 +241,6 @@ void TEncBinCABAC::encodeBinEP(UInt binValue)
         DTRACE_CABAC_V(binValue)
         DTRACE_CABAC_T("\n")
     }
-    m_uiBinsCoded += m_binCountIncrement;
     if (bIsCounter)
     {
         m_fracBits += 32768;
@@ -271,7 +264,6 @@ void TEncBinCABAC::encodeBinEP(UInt binValue)
  */
 void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
 {
-    m_uiBinsCoded += numBins & - m_binCountIncrement;
     if (bIsCounter)
     {
         m_fracBits += 32768 * numBins;
@@ -312,7 +304,6 @@ void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
  */
 void TEncBinCABAC::encodeBinTrm(UInt binValue)
 {
-    m_uiBinsCoded += m_binCountIncrement;
     if (bIsCounter)
     {
         m_fracBits += ContextModel::getEntropyBitsTrm(binValue);

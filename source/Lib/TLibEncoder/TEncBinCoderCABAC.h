@@ -73,16 +73,6 @@ public:
     void  encodeBinsEP(UInt binValues, int numBins);
     void  encodeBinTrm(UInt binValue);
 
-    TEncBinCABAC* getTEncBinCABAC() { return this; }
-
-    void  setBinsCoded(UInt val) { m_uiBinsCoded = val; }
-
-    UInt  getBinsCoded() { return m_uiBinsCoded; }
-
-    void  setBinCountingEnableFlag(bool bFlag) { m_binCountIncrement = bFlag ? 1 : 0; }
-
-    bool  getBinCountingEnableFlag() { return m_binCountIncrement != 0; }
-
 protected:
 
     void testAndWriteOut();
@@ -95,8 +85,6 @@ public:
     UInt                m_bufferedByte;
     int                 m_numBufferedBytes;
     int                 m_bitsLeft;
-    UInt                m_uiBinsCoded;
-    int                 m_binCountIncrement;
     UInt64              m_fracBits;
     bool                bIsCounter;
 };

@@ -73,8 +73,6 @@ public:
     virtual void  encodeBinsEP(UInt bins, int numBins) = 0;
     virtual void  encodeBinTrm(UInt bin) = 0;
 
-    virtual TEncBinCABAC*   getTEncBinCABAC()  { return 0; }
-
     virtual ~TEncBinIf() {}
 };
 }

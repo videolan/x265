@@ -68,11 +68,6 @@ void CTURow::create(Encoder* top)
 
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
 {
-    TEncBinCABAC* rdSbacCoder = (TEncBinCABAC*)m_rdSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
-
-    rdSbacCoder->setBinCountingEnableFlag(false);
-    rdSbacCoder->setBinsCoded(0);
-
     if (bufferSbac)
     {
         // Load SBAC coder context from previous row.
@@ -81,7 +76,6 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
 
     m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, slice);
     m_entropyCoder.setBitstream(&m_bitCounter);
-    ((TEncBinCABAC*)m_rdGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
     m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 
     m_cuCoder.compressCU(cu); // Does all the CU analysis
@@ -90,13 +84,9 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
     m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST], slice);
     m_entropyCoder.setBitstream(&m_bitCounter);
     m_cuCoder.setBitCounter(&m_bitCounter);
-    rdSbacCoder->setBinCountingEnableFlag(true);
     m_bitCounter.resetBits();
-    rdSbacCoder->setBinsCoded(0);
 
     m_cuCoder.encodeCU(cu);  // Count bits
-
-    rdSbacCoder->setBinCountingEnableFlag(false);
 
     if (bSaveSBac)
     {

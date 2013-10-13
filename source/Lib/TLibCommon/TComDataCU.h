@@ -178,7 +178,6 @@ public:
     UInt64        m_totalCost;       ///< sum of partition RD costs
     UInt          m_totalDistortion; ///< sum of partition distortion
     UInt          m_totalBits;       ///< sum of partition signal bits
-    UInt          m_totalBins;       ///< sum of partition bins
     
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy

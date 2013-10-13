@@ -237,7 +237,6 @@ void TComDataCU::initCU(TComPic* pic, UInt cuAddr)
     m_totalCost        = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
-    m_totalBins        = 0;
     m_numPartitions    = pic->getNumPartInCU();
 
     // CHECK_ME: why partStartIdx always negative
@@ -392,7 +391,6 @@ void TComDataCU::initEstData(UInt depth, int qp)
     m_totalCost        = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
-    m_totalBins        = 0;
 
     UChar width  = g_maxCUWidth  >> depth;
     UChar height = g_maxCUHeight >> depth;
@@ -462,7 +460,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, int qp)
     m_totalCost        = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
-    m_totalBins        = 0;
     m_numPartitions    = cu->getTotalNumPart() >> 2;
 
     int iSizeInUchar = sizeof(UChar) * m_numPartitions;
@@ -724,7 +721,6 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, bool
     memcpy(m_trCoeffCr + uiTmp2, cu->getCoeffCr(), sizeof(TCoeff) * uiTmp);
     memcpy(m_iPCMSampleCb + uiTmp2, cu->getPCMSampleCb(), sizeof(Pel) * uiTmp);
     memcpy(m_iPCMSampleCr + uiTmp2, cu->getPCMSampleCr(), sizeof(Pel) * uiTmp);
-    m_totalBins += cu->m_totalBins;
 }
 
 // Copy current predicted part to a CU in picture.
@@ -788,7 +784,6 @@ void TComDataCU::copyToPic(UChar uhDepth)
     memcpy(rpcCU->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
     memcpy(rpcCU->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
     memcpy(rpcCU->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
-    rpcCU->m_totalBins = m_totalBins;
 }
 
 void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
@@ -850,7 +845,6 @@ void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
     memcpy(cu->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
     memcpy(cu->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
     memcpy(cu->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
-    cu->m_totalBins = m_totalBins;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
