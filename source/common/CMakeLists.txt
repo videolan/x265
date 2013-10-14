@@ -217,7 +217,7 @@ if(GCC)
     endif()
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
 endif(GCC)
-set_source_files_properties(common.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
+add_definitions(-DX265_VERSION=${X265_VERSION})
 
 enable_language(ASM_YASM)
 add_library(common OBJECT
