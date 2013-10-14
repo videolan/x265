@@ -181,12 +181,12 @@ if(X265_LATEST_TAG)
     install(TARGETS x265-shared
             RUNTIME DESTINATION bin
             LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib/x265)
+            ARCHIVE DESTINATION lib)
 endif()
 install(TARGETS x265-static
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib/x265)
+        ARCHIVE DESTINATION lib)
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
 
 if(NOT WIN32)
