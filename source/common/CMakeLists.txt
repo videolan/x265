@@ -217,7 +217,7 @@ if(GCC)
     endif()
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
 endif(GCC)
-add_definitions(-DX265_VERSION=${X265_VERSION})
+set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 enable_language(ASM_YASM)
 add_library(common OBJECT
@@ -225,7 +225,7 @@ add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
-    cpu.cpp cpu.h
+    cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
