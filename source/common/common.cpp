@@ -289,6 +289,10 @@ int x265_check_params(x265_param_t *param)
           "RD Level is out of range");
     CHECK(param->bframes > param->lookaheadDepth,
           "Lookahead depth must be greater than the max consecutive bframe count");
+    CHECK(param->bframes > X265_BFRAME_MAX,
+        "max consecutive bframe count must be 16 or smaller");
+    CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
+        "Lookahead depth must be less than 256");
 
     // max CU size should be power of 2
     uint32_t i = param->maxCUSize;

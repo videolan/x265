@@ -33,13 +33,6 @@ namespace x265 {
 
 class TComPic;
 
-// Use the same size blocks as x264.  Using larger blocks seems to give artificially
-// high cost estimates (intra and inter both suffer)
-#define X265_LOWRES_CU_SIZE   8
-#define X265_LOWRES_CU_BITS   3
-
-#define X265_BFRAME_MAX      16
-
 struct Lowres : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
