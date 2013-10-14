@@ -9,6 +9,13 @@ endif()
 project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
 
+# X265_BUILD must be incremented each time the public API is changed
+set(X265_BUILD 1)
+configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
+               "${PROJECT_BINARY_DIR}/x265.def")
+configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
+               "${PROJECT_BINARY_DIR}/x265_config.h")
+
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
 if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
@@ -143,13 +150,6 @@ if (WIN32)
         add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WINXP)
     endif(WINXP_SUPPORT)
 endif()
-
-# X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 1)
-configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
-               "${PROJECT_BINARY_DIR}/x265.def")
-configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
-               "${PROJECT_BINARY_DIR}/x265_config.h")
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG
 include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
