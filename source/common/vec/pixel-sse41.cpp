@@ -4883,7 +4883,7 @@ int sse_pp_64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref
 
 void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
-    __m128i w00, roundoff, ofs, fs, tmpsrc, tmpdst, tmp;
+    __m128i w00, roundoff, ofs, fs, tmpsrc, tmpdst, tmp, sign;
     int x, y;
 
     w00 = _mm_set1_epi32(w0);
@@ -4895,7 +4895,8 @@ void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride
         for (x = 0; x <= width - 4; x += 4)
         {
             tmpsrc = _mm_loadl_epi64((__m128i*)(src + x));
-            tmpsrc = _mm_unpacklo_epi16(tmpsrc, _mm_setzero_si128());
+            sign = _mm_srai_epi16(tmpsrc, 15);
+            tmpsrc = _mm_unpacklo_epi16(tmpsrc, sign);
             tmpdst = _mm_add_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(w00, _mm_add_epi32(tmpsrc, ofs)), roundoff), shift), fs);
             *(uint32_t*)(dst + x) = _mm_cvtsi128_si32(_mm_packus_epi16(_mm_packs_epi32(tmpdst, tmpdst), _mm_setzero_si128()));
         }
@@ -4903,7 +4904,8 @@ void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride
         if (width > x)
         {
             tmpsrc = _mm_loadl_epi64((__m128i*)(src + x));
-            tmpsrc = _mm_unpacklo_epi16(tmpsrc, _mm_setzero_si128());
+            sign = _mm_srai_epi16(tmpsrc, 15);
+            tmpsrc = _mm_unpacklo_epi16(tmpsrc, sign);
             tmpdst = _mm_add_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(w00, _mm_add_epi32(tmpsrc, ofs)), roundoff), shift), fs);
             tmp = _mm_packus_epi16(_mm_packs_epi32(tmpdst, tmpdst), _mm_setzero_si128());
             union
