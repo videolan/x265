@@ -265,6 +265,144 @@ void FrameFilter::processRowPost(int row)
     {
         m_pic->m_reconRowWait.trigger();
     }
+
+    if (m_cfg->param.bEnablePsnr)
+    {
+        calculatePSNR(lineStartCUAddr, row);
+    }
+}
+
+static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height)
+{
+    UInt64 ssd = 0;
+
+    if ((width | height) & 3)
+    {
+        /* Slow Path */
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int diff = (int)(fenc[x] - rec[x]);
+                ssd += diff * diff;
+            }
+
+            fenc += stride;
+            rec += stride;
+        }
+
+        return ssd;
+    }
+
+    int y = 0;
+    /* Consume Y in chunks of 64 */
+    for (; y + 64 <= height; y += 64)
+    {
+        int x = 0;
+
+        if (!(stride & 31))
+            for (; x + 64 <= width; x += 64)
+            {
+                ssd += primitives.sse_pp[PARTITION_64x64](fenc + x, stride, rec + x, stride);
+            }
+
+        if (!(stride & 15))
+            for (; x + 16 <= width; x += 16)
+            {
+                ssd += primitives.sse_pp[PARTITION_16x64](fenc + x, stride, rec + x, stride);
+            }
+
+        for (; x + 4 <= width; x += 4)
+        {
+            ssd += primitives.sse_pp[PARTITION_4x64](fenc + x, stride, rec + x, stride);
+        }
+
+        fenc += stride * 64;
+        rec += stride * 64;
+    }
+
+    /* Consume Y in chunks of 16 */
+    for (; y + 16 <= height; y += 16)
+    {
+        int x = 0;
+
+        if (!(stride & 31))
+            for (; x + 64 <= width; x += 64)
+            {
+                ssd += primitives.sse_pp[PARTITION_64x16](fenc + x, stride, rec + x, stride);
+            }
+
+        if (!(stride & 15))
+            for (; x + 16 <= width; x += 16)
+            {
+                ssd += primitives.sse_pp[PARTITION_16x16](fenc + x, stride, rec + x, stride);
+            }
+
+        for (; x + 4 <= width; x += 4)
+        {
+            ssd += primitives.sse_pp[PARTITION_4x16](fenc + x, stride, rec + x, stride);
+        }
+
+        fenc += stride * 16;
+        rec += stride * 16;
+    }
+
+    /* Consume Y in chunks of 4 */
+    for (; y + 4 <= height; y += 4)
+    {
+        int x = 0;
+
+        if (!(stride & 31))
+            for (; x + 64 <= width; x += 64)
+            {
+                ssd += primitives.sse_pp[PARTITION_64x4](fenc + x, stride, rec + x, stride);
+            }
+
+        if (!(stride & 15))
+            for (; x + 16 <= width; x += 16)
+            {
+                ssd += primitives.sse_pp[PARTITION_16x4](fenc + x, stride, rec + x, stride);
+            }
+
+        for (; x + 4 <= width; x += 4)
+        {
+            ssd += primitives.sse_pp[PARTITION_4x4](fenc + x, stride, rec + x, stride);
+        }
+
+        fenc += stride * 4;
+        rec += stride * 4;
+    }
+
+    return ssd;
+}
+
+void FrameFilter::calculatePSNR(uint32_t cuAddr, int row)
+{
+    TComPicYuv* recon = m_pic->getPicYuvRec();
+    TComPicYuv* orig  = m_pic->getPicYuvOrg();
+
+    //===== calculate PSNR =====
+    int stride = recon->getStride();
+
+    int width  = recon->getWidth() - m_cfg->getPad(0);
+    int height;
+    if (row == m_numRows - 1)
+        height = ((recon->getHeight() % g_maxCUHeight) ? (recon->getHeight() % g_maxCUHeight) : g_maxCUHeight);
+    else
+        height = g_maxCUHeight;
+
+    UInt64 ssdY = computeSSD(orig->getLumaAddr(cuAddr), recon->getLumaAddr(cuAddr), stride, width, height);
+
+    height >>= 1;
+    width  >>= 1;
+    stride = recon->getCStride();
+
+    UInt64 ssdU = computeSSD(orig->getCbAddr(cuAddr), recon->getCbAddr(cuAddr), stride, width, height);
+    UInt64 ssdV = computeSSD(orig->getCrAddr(cuAddr), recon->getCrAddr(cuAddr), stride, width, height);
+
+    m_pic->m_SSDY += ssdY;
+    m_pic->m_SSDU += ssdU;
+    m_pic->m_SSDV += ssdV;
 }
 
 void FrameFilter::processSao(int row)

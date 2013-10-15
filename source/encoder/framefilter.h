@@ -53,6 +53,7 @@ public:
     void processRow(int row);
     void processRowPost(int row);
     void processSao(int row);
+    void calculatePSNR(uint32_t cu, int row);
 
 protected:
 

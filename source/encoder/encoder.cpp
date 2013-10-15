@@ -362,109 +362,6 @@ static const char* nalUnitTypeToString(NalUnitType type)
 //       (we do not yet have a switch to disable PSNR reporting)
 //   2 - it would be better to accumulate SSD of each CTU at the end of processCTU() while it is cache-hot
 //       in fact, we almost certainly are already measuring the CTU distortion and not accumulating it
-static UInt64 computeSSD(Pel *fenc, Pel *rec, int stride, int width, int height)
-{
-    UInt64 ssd = 0;
-
-    if ((width | height) & 3)
-    {
-        /* Slow Path */
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                int diff = (int)(fenc[x] - rec[x]);
-                ssd += diff * diff;
-            }
-
-            fenc += stride;
-            rec += stride;
-        }
-
-        return ssd;
-    }
-
-    int y = 0;
-    /* Consume Y in chunks of 64 */
-    for (; y + 64 <= height; y += 64)
-    {
-        int x = 0;
-
-        if (!(stride & 31))
-            for (; x + 64 <= width; x += 64)
-            {
-                ssd += primitives.sse_pp[PARTITION_64x64](fenc + x, stride, rec + x, stride);
-            }
-
-        if (!(stride & 15))
-            for (; x + 16 <= width; x += 16)
-            {
-                ssd += primitives.sse_pp[PARTITION_16x64](fenc + x, stride, rec + x, stride);
-            }
-
-        for (; x + 4 <= width; x += 4)
-        {
-            ssd += primitives.sse_pp[PARTITION_4x64](fenc + x, stride, rec + x, stride);
-        }
-
-        fenc += stride * 64;
-        rec += stride * 64;
-    }
-
-    /* Consume Y in chunks of 16 */
-    for (; y + 16 <= height; y += 16)
-    {
-        int x = 0;
-
-        if (!(stride & 31))
-            for (; x + 64 <= width; x += 64)
-            {
-                ssd += primitives.sse_pp[PARTITION_64x16](fenc + x, stride, rec + x, stride);
-            }
-
-        if (!(stride & 15))
-            for (; x + 16 <= width; x += 16)
-            {
-                ssd += primitives.sse_pp[PARTITION_16x16](fenc + x, stride, rec + x, stride);
-            }
-
-        for (; x + 4 <= width; x += 4)
-        {
-            ssd += primitives.sse_pp[PARTITION_4x16](fenc + x, stride, rec + x, stride);
-        }
-
-        fenc += stride * 16;
-        rec += stride * 16;
-    }
-
-    /* Consume Y in chunks of 4 */
-    for (; y + 4 <= height; y += 4)
-    {
-        int x = 0;
-
-        if (!(stride & 31))
-            for (; x + 64 <= width; x += 64)
-            {
-                ssd += primitives.sse_pp[PARTITION_64x4](fenc + x, stride, rec + x, stride);
-            }
-
-        if (!(stride & 15))
-            for (; x + 16 <= width; x += 16)
-            {
-                ssd += primitives.sse_pp[PARTITION_16x4](fenc + x, stride, rec + x, stride);
-            }
-
-        for (; x + 4 <= width; x += 4)
-        {
-            ssd += primitives.sse_pp[PARTITION_4x4](fenc + x, stride, rec + x, stride);
-        }
-
-        fenc += stride * 4;
-        rec += stride * 4;
-    }
-
-    return ssd;
-}
 
 /**
  * Produce an ascii(hex) representation of picture digest.
@@ -496,27 +393,21 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
 uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
 {
     TComPicYuv* recon = pic->getPicYuvRec();
-    TComPicYuv* orig  = pic->getPicYuvOrg();
 
     //===== calculate PSNR =====
-    int stride = recon->getStride();
     int width  = recon->getWidth() - getPad(0);
     int height = recon->getHeight() - getPad(1);
     int size = width * height;
 
-    UInt64 ssdY = computeSSD(orig->getLumaAddr(), recon->getLumaAddr(), stride, width, height);
-
-    height >>= 1;
-    width  >>= 1;
-    stride = recon->getCStride();
-
-    UInt64 ssdU = computeSSD(orig->getCbAddr(), recon->getCbAddr(), stride, width, height);
-    UInt64 ssdV = computeSSD(orig->getCrAddr(), recon->getCrAddr(), stride, width, height);
 
     int maxvalY = 255 << (X265_DEPTH - 8);
     int maxvalC = 255 << (X265_DEPTH - 8);
     double refValueY = (double)maxvalY * maxvalY * size;
     double refValueC = (double)maxvalC * maxvalC * size / 4.0;
+    UInt64 ssdY, ssdU, ssdV;
+    ssdY = pic->m_SSDY;
+    ssdU = pic->m_SSDU;
+    ssdV = pic->m_SSDV;
     double psnrY = (ssdY ? 10.0 * log10(refValueY / (double)ssdY) : 99.99);
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);

@@ -951,6 +951,10 @@ void FrameEncoder::compressCTURows()
     UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
+    m_pic->m_SSDY = 0;
+    m_pic->m_SSDU = 0;
+    m_pic->m_SSDV = 0;
+
     m_frameFilter.start(m_pic);
 
     if (m_pool && m_cfg->param.bEnableWavefront)
