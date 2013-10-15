@@ -64,6 +64,7 @@ public:
     virtual ~TComBitCounter()   {}
 
     void        write(UInt /*uiBits*/, UInt uiNumberOfBits)  { m_uiBitCounter += uiNumberOfBits; }
+    void        writeByte(UInt /*val*/)                      { m_uiBitCounter += 8; }
 
     void        resetBits()                                  { m_uiBitCounter = 0; }
 

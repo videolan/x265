@@ -64,6 +64,7 @@ public:
     virtual void        writeAlignZero() {}
 
     virtual void        write(UInt uiBits, UInt uiNumberOfBits)  = 0;
+    virtual void        writeByte(UInt val)                      = 0;
     virtual void        resetBits()                              = 0;
     virtual UInt getNumberOfWrittenBits() const = 0;
     virtual ~TComBitIf() {}
@@ -103,6 +104,7 @@ public:
      * the current bitstream
      */
     void        write(UInt uiBits, UInt uiNumberOfBits);
+    void        writeByte(UInt val);
 
     /** insert one bits until the bitstream is byte-aligned */
     void        writeAlignOne();

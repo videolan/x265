@@ -128,6 +128,14 @@ void TComOutputBitstream::write(UInt uiBits, UInt uiNumberOfBits)
     m_num_held_bits = next_num_held_bits;
 }
 
+void TComOutputBitstream::writeByte(UInt val)
+{
+    // NOTE: we are here only in Cabac
+    assert(m_num_held_bits == 0);
+
+    push_back(val);
+}
+
 void TComOutputBitstream::writeAlignOne()
 {
     UInt num_bits = getNumBitsUntilByteAligned();

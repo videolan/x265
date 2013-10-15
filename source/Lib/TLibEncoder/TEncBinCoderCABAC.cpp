@@ -85,10 +85,10 @@ void TEncBinCABAC::finish()
     {
         //assert( m_numBufferedBytes > 0 );
         //assert( m_bufferedByte != 0xff );
-        m_pcTComBitIf->write(m_bufferedByte + 1, 8);
+        m_pcTComBitIf->writeByte(m_bufferedByte + 1);
         while (m_numBufferedBytes > 1)
         {
-            m_pcTComBitIf->write(0x00, 8);
+            m_pcTComBitIf->writeByte(0x00);
             m_numBufferedBytes--;
         }
 
@@ -98,11 +98,11 @@ void TEncBinCABAC::finish()
     {
         if (m_numBufferedBytes > 0)
         {
-            m_pcTComBitIf->write(m_bufferedByte, 8);
+            m_pcTComBitIf->writeByte(m_bufferedByte);
         }
         while (m_numBufferedBytes > 1)
         {
-            m_pcTComBitIf->write(0xff, 8);
+            m_pcTComBitIf->writeByte(0xff);
             m_numBufferedBytes--;
         }
     }
@@ -361,12 +361,12 @@ void TEncBinCABAC::writeOut()
             UInt carry = leadByte >> 8;
             UInt byte = m_bufferedByte + carry;
             m_bufferedByte = leadByte & 0xff;
-            m_pcTComBitIf->write(byte, 8);
+            m_pcTComBitIf->writeByte(byte);
 
             byte = (0xff + carry) & 0xff;
             while (m_numBufferedBytes > 1)
             {
-                m_pcTComBitIf->write(byte, 8);
+                m_pcTComBitIf->writeByte(byte);
                 m_numBufferedBytes--;
             }
         }
