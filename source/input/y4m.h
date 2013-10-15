@@ -27,10 +27,19 @@
 #include "input.h"
 #include <fstream>
 
+#if defined(ENABLE_THREAD)
+#define QUEUE_SIZE 5
+#include "threading.h"
+#endif
+
 namespace x265 {
 // x265 private namespace
 
+#if defined(ENABLE_THREAD)
+class Y4MInput : public Input, public Thread
+#else
 class Y4MInput : public Input
+#endif
 {
 protected:
 
@@ -42,11 +51,26 @@ protected:
 
     int height;
 
-    char* buf;
+    bool threadActive;
 
+#if defined(ENABLE_THREAD)
+    volatile int head;
+
+    volatile int tail;
+
+    bool frameStat[QUEUE_SIZE];
+
+    char* buf[QUEUE_SIZE];
+
+    Event notFull;
+
+    Event notEmpty;
+#else
+    char *buf;
+#endif
     std::ifstream ifs;
 
-    void parseHeader();
+    bool parseHeader();
 
 public:
 
@@ -66,15 +90,23 @@ public:
 
     bool isEof() const                            { return ifs.eof(); }
 
-    bool isFail()                                 { return !ifs.is_open(); }
+    bool isFail()                                 { return !(ifs.is_open() && threadActive); }
 
-    void release()                                { delete this; }
+    void release();
 
     int  guessFrameCount();
 
     void skipFrames(int numFrames);
 
     bool readPicture(x265_picture_t&);
+
+#if defined(ENABLE_THREAD)
+
+    void threadMain();
+
+    bool populateFrameQueue();
+
+#endif
 
     const char *getName() const                   { return "y4m"; }
 };

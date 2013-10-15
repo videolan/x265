@@ -24,6 +24,14 @@
 #ifndef X265_INPUT_H
 #define X265_INPUT_H
 
+#define ENABLE_THREAD
+#define MIN_FRAME_WIDTH 64
+#define MAX_FRAME_WIDTH 8192
+#define MIN_FRAME_HEIGHT 64
+#define MAX_FRAME_HEIGHT 4320
+#define MIN_FRAME_RATE 1
+#define MAX_FRAME_RATE 300
+
 #include "x265.h"
 
 namespace x265 {
