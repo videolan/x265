@@ -212,7 +212,7 @@ void TComOutputBitstream::push_back(uint8_t val)
     }
     else
     {
-        buffsize += MIN_FIFO_SIZE;
+        buffsize *= 2;
         /**  FIFO size is Reached into MIN_FIFO_SIZE then Reallocate the FIFO and Copy the fifo to new memory
         location and continue to push encoded bit streams */
         uint8_t *temp = (uint8_t *)X265_MALLOC(uint8_t, buffsize);
