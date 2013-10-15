@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <string.h>
 
+#if !HIGH_BIT_DEPTH
 namespace {
 ALIGN_VAR_32(const uint16_t, c_512[16]) =
 {
@@ -670,7 +671,8 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
 }
 }
 
-#if HIGH_BIT_DEPTH
+#else
+
 #define INSTRSET 5
 #include "vectorclass.h"
 namespace {
