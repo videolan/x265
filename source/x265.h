@@ -131,12 +131,13 @@ x265_nal_t;
 
 typedef struct x265_picture_t
 {
-    void *planes[3];
-    int   stride[3];
-    int   bitDepth;
-    int   poc;
-    int   sliceType;
-    void *userData;
+    void*   planes[3];
+    int     stride[3];
+    int     bitDepth;
+    int     sliceType;
+    int     poc;
+    int64_t pts;
+    void*   userData;
 }
 x265_picture_t;
 

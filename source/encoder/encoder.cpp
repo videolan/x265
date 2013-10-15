@@ -182,6 +182,7 @@ int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         pic->getSlice()->setPOC(++m_pocLast);
         pic->getPicYuvOrg()->copyFromPicture(*pic_in);
         pic->m_userData = pic_in->userData;
+        pic->m_pts = pic_in->pts;
 
         // Encoder holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
@@ -224,6 +225,7 @@ int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
             pic_out->poc = out->getSlice()->getPOC();
             pic_out->bitDepth = sizeof(Pel) * 8;
             pic_out->userData = out->m_userData;
+            pic_out->pts = out->m_pts;
             switch (out->getSlice()->getSliceType())
             {
             case I_SLICE:
