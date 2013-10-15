@@ -5331,10 +5331,8 @@ int sse_sp64(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 #define PROCESS_SSE_SS4x1(BASE)\
     m1 = _mm_loadu_si128((__m128i const*)(fenc + BASE)); \
     n1 = _mm_loadu_si128((__m128i const*)(fref + BASE)); \
-    sign1 = _mm_srai_epi16(m1, 15); \
-    tmp1 = _mm_unpacklo_epi16(m1, sign1); \
-    sign2 = _mm_srai_epi16(n1, 15); \
-    tmp2 = _mm_unpacklo_epi16(n1, sign2); \
+    tmp1= _mm_cvtepi16_epi32(m1); \
+    tmp2= _mm_cvtepi16_epi32(n1); \
     diff = _mm_sub_epi32(tmp1, tmp2); \
     diff = _mm_mullo_epi32(diff, diff); \
     sum = _mm_add_epi32(sum, diff)
@@ -5345,7 +5343,7 @@ int sse_ss4(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
     int rows = ly;
     __m128i diff;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
@@ -5363,14 +5361,16 @@ int sse_ss8(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, diff, sign, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
         PROCESS_SSE_SS4x1(0);
 
-        m1 = _mm_unpackhi_epi16(m1, sign1);
-        n1 = _mm_unpackhi_epi16(n1, sign2);
+        sign = _mm_srai_epi16(m1, 15);
+        m1 = _mm_unpackhi_epi16(m1, sign);
+        sign = _mm_srai_epi16(n1, 15);
+        n1 = _mm_unpackhi_epi16(n1, sign);
         diff = _mm_sub_epi32(m1, n1);
         diff = _mm_mullo_epi32(diff, diff);
         sum = _mm_add_epi32(sum, diff);
@@ -5387,14 +5387,16 @@ int sse_ss12(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, diff, sign, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
         PROCESS_SSE_SS4x1(0);
 
-        m1 = _mm_unpackhi_epi16(m1, sign1);
-        n1 = _mm_unpackhi_epi16(n1, sign2);
+        sign = _mm_srai_epi16(m1, 15);
+        m1 = _mm_unpackhi_epi16(m1, sign);
+        sign = _mm_srai_epi16(n1, 15);
+        n1 = _mm_unpackhi_epi16(n1, sign);
         diff = _mm_sub_epi32(m1, n1);
         diff = _mm_mullo_epi32(diff, diff);
         sum = _mm_add_epi32(sum, diff);
@@ -5413,7 +5415,7 @@ int sse_ss16(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, diff, sign, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
@@ -5421,8 +5423,10 @@ int sse_ss16(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
         {
             PROCESS_SSE_SS4x1(i);
 
-            m1 = _mm_unpackhi_epi16(m1, sign1);
-            n1 = _mm_unpackhi_epi16(n1, sign2);
+            sign = _mm_srai_epi16(m1, 15);
+            m1 = _mm_unpackhi_epi16(m1, sign);
+            sign = _mm_srai_epi16(n1, 15);
+            n1 = _mm_unpackhi_epi16(n1, sign);
             diff = _mm_sub_epi32(m1, n1);
             diff = _mm_mullo_epi32(diff, diff);
             sum = _mm_add_epi32(sum, diff);
@@ -5439,7 +5443,7 @@ int sse_ss24(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, diff, sign, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
@@ -5447,8 +5451,10 @@ int sse_ss24(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
         {
             PROCESS_SSE_SS4x1(i);
 
-            m1 = _mm_unpackhi_epi16(m1, sign1);
-            n1 = _mm_unpackhi_epi16(n1, sign2);
+            sign = _mm_srai_epi16(m1, 15);
+            m1 = _mm_unpackhi_epi16(m1, sign);
+            sign = _mm_srai_epi16(n1, 15);
+            n1 = _mm_unpackhi_epi16(n1, sign);
             diff = _mm_sub_epi32(m1, n1);
             diff = _mm_mullo_epi32(diff, diff);
             sum = _mm_add_epi32(sum, diff);
@@ -5465,7 +5471,7 @@ int sse_ss32(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, diff, sign, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
@@ -5473,8 +5479,10 @@ int sse_ss32(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
         {
             PROCESS_SSE_SS4x1(i);
 
-            m1 = _mm_unpackhi_epi16(m1, sign1);
-            n1 = _mm_unpackhi_epi16(n1, sign2);
+            sign = _mm_srai_epi16(m1, 15);
+            m1 = _mm_unpackhi_epi16(m1, sign);
+            sign = _mm_srai_epi16(n1, 15);
+            n1 = _mm_unpackhi_epi16(n1, sign);
             diff = _mm_sub_epi32(m1, n1);
             diff = _mm_mullo_epi32(diff, diff);
             sum = _mm_add_epi32(sum, diff);
@@ -5491,7 +5499,7 @@ int sse_ss48(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, diff, sign, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
@@ -5499,8 +5507,10 @@ int sse_ss48(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
         {
             PROCESS_SSE_SS4x1(i);
 
-            m1 = _mm_unpackhi_epi16(m1, sign1);
-            n1 = _mm_unpackhi_epi16(n1, sign2);
+            sign = _mm_srai_epi16(m1, 15);
+            m1 = _mm_unpackhi_epi16(m1, sign);
+            sign = _mm_srai_epi16(n1, 15);
+            n1 = _mm_unpackhi_epi16(n1, sign);
             diff = _mm_sub_epi32(m1, n1);
             diff = _mm_mullo_epi32(diff, diff);
             sum = _mm_add_epi32(sum, diff);
@@ -5517,7 +5527,7 @@ int sse_ss64(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
-    __m128i m1, n1, diff, sign1, sign2, tmp1, tmp2;
+    __m128i m1, n1, diff, sign, tmp1, tmp2;
 
     for (; rows != 0; rows--)
     {
@@ -5525,8 +5535,10 @@ int sse_ss64(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
         {
             PROCESS_SSE_SS4x1(i);
 
-            m1 = _mm_unpackhi_epi16(m1, sign1);
-            n1 = _mm_unpackhi_epi16(n1, sign2);
+            sign = _mm_srai_epi16(m1, 15);
+            m1 = _mm_unpackhi_epi16(m1, sign);
+            sign = _mm_srai_epi16(n1, 15);
+            n1 = _mm_unpackhi_epi16(n1, sign);
             diff = _mm_sub_epi32(m1, n1);
             diff = _mm_mullo_epi32(diff, diff);
             sum = _mm_add_epi32(sum, diff);
