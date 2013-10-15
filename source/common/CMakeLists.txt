@@ -89,14 +89,14 @@ if(ENABLE_PRIMITIVES_VEC)
             vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
             vec/dct-sse3.cpp vec/dct-ssse3.cpp vec/dct-sse41.cpp
             vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
-            vec/intra-sse3.cpp vec/intra-sse41.cpp)
+            vec/pixel16-sse41.cpp vec/intra-sse3.cpp vec/intra-sse41.cpp)
         if (NOT X64)
             # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
             set_source_files_properties(vec/blockcopy-sse3.cpp
                 vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
                 vec/dct-sse3.cpp vec/dct-ssse3.cpp vec/dct-sse41.cpp
                 vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
-                vec/intra-sse3.cpp vec/intra-sse41.cpp
+                vec/intra-sse3.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp
                 PROPERTIES COMPILE_FLAGS /arch:SSE2)
         endif()
         if (MSVC_VERSION EQUAL 1700 OR INTEL_CXX)
@@ -129,6 +129,7 @@ if(ENABLE_PRIMITIVES_VEC)
                 PROPERTIES COMPILE_FLAGS "-mssse3")
             set_source_files_properties(
                 vec/pixel-sse41.cpp vec/ipfilter-sse41.cpp vec/dct-sse41.cpp vec/intra-sse41.cpp
+                vec/pixel16-sse41.cpp
                 PROPERTIES COMPILE_FLAGS "-msse4.1")
         endif()
         if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.7))

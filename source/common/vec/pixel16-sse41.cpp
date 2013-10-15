@@ -23,10 +23,21 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-// Vector class versions of pixel comparison performance primitives
+#include "TLibCommon/TComRom.h"
+#include "primitives.h"
+#include <assert.h>
+#include <xmmintrin.h> // SSE
+#include <smmintrin.h> // SSE4.1
+
+using namespace x265;
 
 /* intrinsics for when pixel type is short */
+#if HIGH_BIT_DEPTH
 
+#define INSTRSET 5
+#include "vectorclass.h"
+
+namespace {
 template<int ly>
 int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
@@ -1802,4 +1813,54 @@ void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
     res[1] = horizontal_add(sum2);
     res[2] = horizontal_add(sum3);
     res[3] = horizontal_add(sum4);
+}
+}
+#endif
+
+namespace x265 {
+void Setup_Vec_Pixel16Primitives_sse41(EncoderPrimitives &p)
+{
+#if HIGH_BIT_DEPTH
+#define SETUP_PARTITION(W, H) \
+    p.sad[PARTITION_##W##x##H] = sad_##W<H>; \
+    p.sad_x3[PARTITION_##W##x##H] = sad_x3_##W<H>; \
+    p.sad_x4[PARTITION_##W##x##H] = sad_x4_##W<H>;
+
+    /* 2Nx2N, 2NxN, Nx2N, 4Ax3A, 4AxA, 3Ax4A, Ax4A */
+    SETUP_PARTITION(64, 64);
+    SETUP_PARTITION(64, 32);
+    SETUP_PARTITION(32, 64);
+    SETUP_PARTITION(64, 16);
+    SETUP_PARTITION(64, 48);
+    SETUP_PARTITION(16, 64);
+    SETUP_PARTITION(48, 64);
+
+    SETUP_PARTITION(32, 32);
+    SETUP_PARTITION(32, 16);
+    SETUP_PARTITION(16, 32);
+    SETUP_PARTITION(32, 8);
+    SETUP_PARTITION(32, 24);
+    SETUP_PARTITION(8, 32);
+    SETUP_PARTITION(24, 32);
+
+    SETUP_PARTITION(16, 16);
+    SETUP_PARTITION(16, 8);
+    SETUP_PARTITION(8, 16);
+    SETUP_PARTITION(16, 4);
+    SETUP_PARTITION(16, 12);
+    SETUP_PARTITION(4, 16);
+    SETUP_PARTITION(12, 16);
+
+    SETUP_PARTITION(8, 8);
+    SETUP_PARTITION(8, 4);
+    SETUP_PARTITION(4, 8);
+    /* 8x8 is too small for AMP partitions */
+
+    SETUP_PARTITION(4, 4);
+    /* 4x4 is too small for any sub partitions */
+
+#else
+    p.sad[0] = p.sad[0];
+#endif
+}
 }

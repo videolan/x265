@@ -5527,15 +5527,9 @@ int sse_ss64(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 }
 
-#if HIGH_BIT_DEPTH
-#define INSTRSET 5
-#include "vectorclass.h"
-namespace {
-#include "pixel16.inc"
-}
-#endif
-
 namespace x265 {
+
+extern void Setup_Vec_Pixel16Primitives_sse41(EncoderPrimitives &p);
 
 #if HIGH_BIT_DEPTH
 #define SETUP_PARTITION(W, H) \
@@ -5594,7 +5588,9 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     SETUP_NONSAD(4, 4); // 4x4 SAD covered by assembly
     /* 4x4 is too small for any sub partitions */
 
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+    Setup_Vec_Pixel16Primitives_sse41(p);
+#else
     // These are the only SSE primitives uncovered by assembly
     p.sad_x3[PARTITION_4x16] = sad_x3_4x16;
     p.sad_x4[PARTITION_4x16] = sad_x4_4x16;
