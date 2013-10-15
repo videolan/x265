@@ -53,22 +53,22 @@ public:
     TEncBinCABAC(bool isCounter = false);
     virtual ~TEncBinCABAC();
 
-    void  init(TComBitIf* pcTComBitIf);
+    void  init(TComBitIf* bitIf);
     void  uninit();
 
     void  start();
     void  finish();
-    void  copyState(TEncBinIf* pcTEncBinIf);
+    void  copyState(TEncBinIf* binIf);
     void  flush();
 
     void  resetBac();
     void  encodePCMAlignBits();
-    void  xWritePCMCode(UInt uiCode, UInt uiLength);
+    void  xWritePCMCode(UInt code, UInt length);
 
     void  resetBits();
     UInt  getNumWrittenBits();
 
-    void  encodeBin(UInt binValue, ContextModel& rcCtxModel);
+    void  encodeBin(UInt binValue, ContextModel& ctxModel);
     void  encodeBinEP(UInt binValue);
     void  encodeBinsEP(UInt binValues, int numBins);
     void  encodeBinTrm(UInt binValue);
@@ -79,9 +79,9 @@ protected:
     void writeOut();
 
 public:
-    TComBitIf*          m_pcTComBitIf;
-    UInt                m_uiLow;
-    UInt                m_uiRange;
+    TComBitIf*          m_bitIf;
+    UInt                m_low;
+    UInt                m_range;
     UInt                m_bufferedByte;
     int                 m_numBufferedBytes;
     int                 m_bitsLeft;
