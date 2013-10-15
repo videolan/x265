@@ -4997,12 +4997,13 @@ int sse_sp4(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 #define SSE_SP8x1 \
-    T10 = _mm_unpacklo_epi16(T00, _mm_setzero_si128()); \
+    sign = _mm_srai_epi16(T00, 15); \
+    T10 = _mm_unpacklo_epi16(T00, sign); \
     T11 = _mm_unpacklo_epi16(T02, _mm_setzero_si128()); \
     T12 = _mm_sub_epi32(T10, T11); \
     T13 = _mm_mullo_epi32(T12, T12); \
     sum0 = _mm_add_epi32(sum0, T13); \
-    T10 = _mm_unpackhi_epi16(T00, _mm_setzero_si128()); \
+    T10 = _mm_unpackhi_epi16(T00, sign); \
     T11 = _mm_unpackhi_epi16(T02, _mm_setzero_si128()); \
     T12 = _mm_sub_epi32(T10, T11); \
     T13 = _mm_mullo_epi32(T12, T12); \
@@ -5018,6 +5019,7 @@ int sse_sp8(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     {
         __m128i T00, T01, T02;
         __m128i T10, T11, T12, T13;
+        __m128i sign;
 
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_loadu_si128((__m128i*)(fref));
@@ -5045,18 +5047,20 @@ int sse_sp12(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     {
         __m128i T00, T01;
         __m128i T10, T11, T12, T13;
+        __m128i sign;
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_loadu_si128((__m128i*)(fref));
         T01 = _mm_srli_si128(_mm_slli_si128(T01, 4), 4);    //masking last 4 8-bit integers
 
-        T10 = _mm_unpacklo_epi16(T00, _mm_setzero_si128());
+        sign = _mm_srai_epi16(T00, 15);
+        T10 = _mm_unpacklo_epi16(T00, sign);
         T11 = _mm_unpacklo_epi8(T01, _mm_setzero_si128());
         T11 = _mm_unpacklo_epi16(T11, _mm_setzero_si128());
         T12 = _mm_sub_epi32(T10, T11);
         T13 = _mm_mullo_epi32(T12, T12);
         sum0 = _mm_add_epi32(sum0, T13);
 
-        T10 = _mm_unpackhi_epi16(T00, _mm_setzero_si128());
+        T10 = _mm_unpackhi_epi16(T00, sign);
         T11 = _mm_unpacklo_epi8(T01, _mm_setzero_si128());
         T11 = _mm_unpackhi_epi16(T11, _mm_setzero_si128());
         T12 = _mm_sub_epi32(T10, T11);
@@ -5065,7 +5069,7 @@ int sse_sp12(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 
         T00 = _mm_loadu_si128((__m128i*)(fenc + 8));
 
-        T10 = _mm_unpacklo_epi16(T00, _mm_setzero_si128());
+        T10 = _mm_unpacklo_epi16(T00, sign);
         T11 = _mm_unpackhi_epi8(T01, _mm_setzero_si128());
         T11 = _mm_unpacklo_epi16(T11, _mm_setzero_si128());
         T12 = _mm_sub_epi32(T10, T11);
@@ -5091,6 +5095,7 @@ int sse_sp16(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     {
         __m128i T00, T01, T02;
         __m128i T10, T11, T12, T13;
+        __m128i sign;
 
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_loadu_si128((__m128i*)(fref));
@@ -5124,6 +5129,7 @@ int sse_sp24(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     {
         __m128i T00, T01, T02;
         __m128i T10, T11, T12, T13;
+        __m128i sign;
 
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_loadu_si128((__m128i*)(fref));
@@ -5163,6 +5169,7 @@ int sse_sp32(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     {
         __m128i T00, T01, T02;
         __m128i T10, T11, T12, T13;
+        __m128i sign;
 
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_loadu_si128((__m128i*)(fref));
@@ -5207,6 +5214,7 @@ int sse_sp48(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     {
         __m128i T00, T01, T02;
         __m128i T10, T11, T12, T13;
+        __m128i sign;
 
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_loadu_si128((__m128i*)(fref));
@@ -5262,6 +5270,7 @@ int sse_sp64(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     {
         __m128i T00, T01, T02;
         __m128i T10, T11, T12, T13;
+        __m128i sign;
 
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_loadu_si128((__m128i*)(fref));
