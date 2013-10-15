@@ -732,8 +732,9 @@ me_hex2:
                 break;
             }
         }
+        break;
     }
-    break;
+
     case X265_FULL_SEARCH:
     {
         // dead slow exhaustive search, but at least it uses sad_x4()
@@ -767,6 +768,7 @@ me_hex2:
                     COST_MV(tmv.x, tmv.y);
             }
         }
+        break;
     }
 
     default:
