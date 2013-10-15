@@ -137,6 +137,19 @@ enum IPFilterConf_S_S
     NUM_IPFILTER_S_S
 };
 
+enum ChromaPartitionWidths
+{
+    CHROMA_PARTITION_W2,
+    CHROMA_PARTITION_W4,
+    CHROMA_PARTITION_W6,
+    CHROMA_PARTITION_W8,
+    CHROMA_PARTITION_W12,
+    CHROMA_PARTITION_W16,
+    CHROMA_PARTITION_W24,
+    CHROMA_PARTITION_W32,
+    NUM_CHROMA_PARTITION_WIDTHS
+};
+
 // Returns a Partitions enum for the given size, always expected to return a valid enum
 int PartitionFromSizes(int width, int height);
 
@@ -190,6 +203,8 @@ typedef float (*ssim_end4_t)(ssim_t sum0[5][4], ssim_t sum1[5][4], int width);
 typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
 typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
 
+typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int height, int coeffIdx); 
+
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
  * a vectorized primitive, or a C function. */
@@ -221,6 +236,7 @@ struct EncoderPrimitives
     ipfilter_p2s_t  ipfilter_p2s;
     ipfilter_s2p_t  ipfilter_s2p;
     extendCURowBorder_t extendRowBorder;
+    filter_pp_t     chroma_hpp[NUM_CHROMA_PARTITION_WIDTHS];
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;
@@ -246,9 +262,9 @@ struct EncoderPrimitives
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
     downscale_t     frame_init_lowres_core;
+    ssim_end4_t     ssim_end_4;
+    var_t           var[NUM_PARTITIONS];
     ssim_4x4x2_core_t ssim_4x4x2_core;
-    ssim_end4_t       ssim_end_4;
-    var_t             var[NUM_PARTITIONS];
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
 };
 
