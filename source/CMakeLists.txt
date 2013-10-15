@@ -64,19 +64,19 @@ if(INTEL_CXX AND UNIX)
     # treat icpc roughly like gcc
     set(GCC 1)
     add_definitions(-Wall -Wextra -Wshadow -no-vec)
-elseif(CMAKE_COMPILER_IS_GNUCXX)
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+elseif(CLANG)
+    # treat clang roughly like gcc
+    set(GCC 1)
     add_definitions(-Wall -Wextra -Wshadow -mstackrealign -ffast-math)
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+    add_definitions(-Wall -Wextra -Wshadow -mstackrealign -ffast-math)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
     if(NOT GCC_VERSION VERSION_LESS 4.7)
         # this is necessary to avoid name conflicts in vector class
         # library.  if vector classes are removed/replaced this can
         # likely be removed as well.
         add_definitions(-fabi-version=6)
     endif()
-elseif(CLANG)
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-    set(GCC 1)
-    add_definitions(-Wall -Wextra -Wshadow -ffast-math -mstackrealign)
 endif()
 if (GCC)
     option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
