@@ -4977,7 +4977,8 @@ int sse_sp4(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
         __m128i T00, T01, T02, T03;
         T00 = _mm_loadu_si128((__m128i*)(fenc));
         T01 = _mm_cvtsi32_si128(*(uint32_t*)(fref));
-        T00 = _mm_unpacklo_epi16(T00, _mm_setzero_si128());
+        __m128i sign = _mm_srai_epi16(T00, 15);
+        T00 = _mm_unpacklo_epi16(T00, sign);
         T01 = _mm_unpacklo_epi8(T01, _mm_setzero_si128());
         T01 = _mm_unpacklo_epi16(T01, _mm_setzero_si128());
         T02 = _mm_sub_epi32(T00, T01);
