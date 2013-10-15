@@ -120,7 +120,7 @@ if(ENABLE_PRIMITIVES_VEC)
                 vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
                 vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
                 vec/dct-sse3.cpp vec/dct-ssse3.cpp vec/dct-sse41.cpp
-                vec/intra-sse3.cpp vec/intra-sse41.cpp)
+                vec/pixel16-sse41.cpp vec/intra-sse3.cpp vec/intra-sse41.cpp)
             set_source_files_properties(
                 vec/blockcopy-sse3.cpp vec/pixel-sse3.cpp vec/dct-sse3.cpp vec/intra-sse3.cpp
                 PROPERTIES COMPILE_FLAGS "-msse3")
