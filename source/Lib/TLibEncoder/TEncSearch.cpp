@@ -2218,11 +2218,8 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvFiel
 
 /** search of the best candidate for inter prediction
  * \param cu
- * \param fencYuv
- * \param rpcPredYuv
- * \param rpcResiYuv
- * \param rpcRecoYuv
- * \param bUseRes
+ * \param predYuv
+ * \param bUseMRG
  * \returns void
  */
 void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
