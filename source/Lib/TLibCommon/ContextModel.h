@@ -56,15 +56,13 @@ class ContextModel
 {
 public:
 
-    ContextModel()   { m_state = 0; m_binsCoded = 0; }
+    ContextModel()   { m_state = 0; bBinsCoded = 0; }
 
     ~ContextModel()  {}
 
     UChar getState() { return m_state >> 1; } ///< get current state
 
     UChar getMps()   { return m_state  & 1; } ///< get curret MPS
-
-    void  setStateAndMps(UChar ucState, UChar ucMPS) { m_state = (ucState << 1) + ucMPS; } ///< set state and MPS
 
     void init(int qp, int initValue);   ///< initialize state with initial probability
 
@@ -78,7 +76,7 @@ public:
         m_state = s_nextStateMPS[m_state];
     }
 
-    int getEntropyBits(short val) { return s_entropyBits[m_state ^ val]; }
+    int getEntropyBits(UInt val) { return s_entropyBits[m_state ^ val]; }
 
     void update(int binVal)
     {
@@ -88,18 +86,18 @@ public:
     static void buildNextStateTable();
     static int getEntropyBitsTrm(int val) { return s_entropyBits[126 ^ val]; }
 
-    void setBinsCoded(UInt val)   { m_binsCoded = val;  }
+    void setBinsCoded(UInt val)   { bBinsCoded = (UChar)val;  }
 
-    UInt getBinsCoded()           { return m_binsCoded;   }
+    UInt getBinsCoded()           { return bBinsCoded;   }
 
 private:
 
     UChar         m_state;  ///< internal state variable
+    UChar         bBinsCoded;
     static const UChar s_nextStateMPS[128];
     static const UChar s_nextStateLPS[128];
     static const int   s_entropyBits[128];
     static UChar  m_nextState[128][2];
-    UInt          m_binsCoded;
 };
 }
 //! \}

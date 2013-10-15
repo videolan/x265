@@ -46,10 +46,8 @@ using namespace x265;
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
-ContextModel3DBuffer::ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, int &count)
-    : m_sizeX(uiSizeX)
-    , m_sizeXY(uiSizeX * uiSizeY)
-    , m_sizeXYZ(uiSizeX * uiSizeY * uiSizeZ)
+ContextModel3DBuffer::ContextModel3DBuffer(UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, int &count)
+    : m_sizeXYZ(uiSizeX * uiSizeY)
 {
     // allocate 3D buffer
     m_contextModel = basePtr;

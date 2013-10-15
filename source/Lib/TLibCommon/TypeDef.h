@@ -126,7 +126,6 @@ enum TextType
     TEXT_CHROMA_U,      ///< chroma U
     TEXT_CHROMA_V,      ///< chroma V
     TEXT_ALL,           ///< Y+U+V
-    TEXT_NONE = 15
 };
 
 /// reference list index

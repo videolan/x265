@@ -62,31 +62,19 @@ class ContextModel3DBuffer
 protected:
 
     ContextModel* m_contextModel; ///< array of context models
-    const UInt    m_sizeX;      ///< X size of 3D buffer
-    const UInt    m_sizeXY;     ///< X times Y size of 3D buffer
     const UInt    m_sizeXYZ;    ///< total size of 3D buffer
 
     ContextModel3DBuffer& operator =(const ContextModel3DBuffer&);
 
 public:
 
-    ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, int &count);
+    ContextModel3DBuffer(UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, int &count);
     ~ContextModel3DBuffer() {}
 
     // access functions
-    ContextModel& get(UInt uiZ, UInt uiY, UInt uiX)
+    ContextModel& get(UInt uiX)
     {
-        return m_contextModel[uiZ * m_sizeXY + uiY * m_sizeX + uiX];
-    }
-
-    ContextModel* get(UInt uiZ, UInt uiY)
-    {
-        return &m_contextModel[uiZ * m_sizeXY + uiY * m_sizeX];
-    }
-
-    ContextModel* get(UInt uiZ)
-    {
-        return &m_contextModel[uiZ * m_sizeXY];
+        return m_contextModel[uiX];
     }
 
     // initialization & copy functions
