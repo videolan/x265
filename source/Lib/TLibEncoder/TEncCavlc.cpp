@@ -859,14 +859,14 @@ void TEncCavlc::codeSliceHeader(TComSlice* slice)
         {
             WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
         }
-        int iCode = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
-        WRITE_SVLC(iCode, "slice_qp_delta");
+        int code = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
+        WRITE_SVLC(code, "slice_qp_delta");
         if (slice->getPPS()->getSliceChromaQpFlag())
         {
-            iCode = slice->getSliceQpDeltaCb();
-            WRITE_SVLC(iCode, "slice_qp_delta_cb");
-            iCode = slice->getSliceQpDeltaCr();
-            WRITE_SVLC(iCode, "slice_qp_delta_cr");
+            code = slice->getSliceQpDeltaCb();
+            WRITE_SVLC(code, "slice_qp_delta_cb");
+            code = slice->getSliceQpDeltaCr();
+            WRITE_SVLC(code, "slice_qp_delta_cr");
         }
         if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
         {

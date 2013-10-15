@@ -97,7 +97,7 @@ TComTrQuant::~TComTrQuant()
 /** Set qP for Quantization.
  * \param qpy QPy
  * \param bLowpass
- * \param eSliceType
+ * \param sliceType
  * \param ttype
  * \param qpBdOffset
  * \param chromaQPOffset

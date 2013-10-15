@@ -107,20 +107,20 @@ public:
     virtual void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
     virtual void codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
     virtual void codeDeltaQP(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType) = 0;
-    virtual void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType eTType) = 0;
+    virtual void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType ttype) = 0;
+    virtual void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType ttype) = 0;
     virtual void codeSAOSign(UInt code) = 0;
     virtual void codeSaoMaxUvlc(UInt code, UInt maxSymbol) = 0;
-    virtual void codeSaoMerge(UInt uiCode) = 0;
-    virtual void codeSaoTypeIdx(UInt uiCode) = 0;
-    virtual void codeSaoUflc(UInt uiLength, UInt   uiCode) = 0;
-    virtual void estBit(estBitsSbacStruct* pcEstBitsSbac, int width, int height, TextType eTType) = 0;
+    virtual void codeSaoMerge(UInt code) = 0;
+    virtual void codeSaoTypeIdx(UInt code) = 0;
+    virtual void codeSaoUflc(UInt length, UInt code) = 0;
+    virtual void estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype) = 0;
 
-    virtual void updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish)   = 0;
-    virtual void updateContextTables(SliceType eSliceType, int iQp)   = 0;
+    virtual void updateContextTables(SliceType sliceType, int qp, bool bExecuteFinish)   = 0;
+    virtual void updateContextTables(SliceType sliceType, int qp)   = 0;
 
-    virtual void codeDFFlag(UInt uiCode, const char *pSymbolName) = 0;
-    virtual void codeDFSvlc(int iCode, const char *pSymbolName)   = 0;
+    virtual void codeDFFlag(UInt code, const char *symbolName) = 0;
+    virtual void codeDFSvlc(int code, const char *symbolName)   = 0;
 
     virtual ~TEncEntropyIf() {}
 };
@@ -181,15 +181,15 @@ public:
 
     void encodeIntraDirModeChroma(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
 
-    void encodeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx);
+    void encodeTransformSubdivFlag(UInt symbol, UInt ctx);
     void encodeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth);
     void encodeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth);
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
     void encodeQP(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void updateContextTables(SliceType eSliceType, int iQp, bool bExecuteFinish)   { m_entropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
+    void updateContextTables(SliceType sliceType, int qp, bool bExecuteFinish)   { m_entropyCoderIf->updateContextTables(sliceType, qp, bExecuteFinish);     }
 
-    void updateContextTables(SliceType eSliceType, int iQp)                        { m_entropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
+    void updateContextTables(SliceType sliceType, int qp)                        { m_entropyCoderIf->updateContextTables(sliceType, qp, true);               }
 
     void encodeScalingList(TComScalingList* scalingList);
 
@@ -203,7 +203,7 @@ public:
 
     void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartIdx, UInt trWidth, UInt trHeight, UInt depth, TextType ttype);
 
-    void estimateBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType eTType);
+    void estimateBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
     void encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
     void encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
     static int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);

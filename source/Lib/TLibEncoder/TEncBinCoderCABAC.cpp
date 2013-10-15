@@ -138,13 +138,13 @@ void TEncBinCABAC::encodePCMAlignBits()
 }
 
 /** Write a PCM code.
- * \param uiCode code value
- * \param uiLength code bit-depth
+ * \param code code value
+ * \param length code bit-depth
  * \returns void
  */
-void TEncBinCABAC::xWritePCMCode(UInt uiCode, UInt uiLength)
+void TEncBinCABAC::xWritePCMCode(UInt code, UInt length)
 {
-    m_bitIf->write(uiCode, uiLength);
+    m_bitIf->write(code, length);
 }
 
 void TEncBinCABAC::copyState(TEncBinIf* binIf)

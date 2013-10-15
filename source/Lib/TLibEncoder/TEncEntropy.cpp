@@ -602,11 +602,11 @@ void TEncEntropy::encodeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx,
     m_entropyCoderIf->codeCoeffNxN(cu, coeff, absPartIdx, trWidth, trHeight, depth, ttype);
 }
 
-void TEncEntropy::estimateBit(estBitsSbacStruct* estBitsSBac, int width, int height, TextType eTType)
+void TEncEntropy::estimateBit(estBitsSbacStruct* estBitsSBac, int width, int height, TextType ttype)
 {
-    eTType = eTType == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
+    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
 
-    m_entropyCoderIf->estBit(estBitsSBac, width, height, eTType);
+    m_entropyCoderIf->estBit(estBitsSBac, width, height, ttype);
 }
 
 /** Encode SAO Offset
