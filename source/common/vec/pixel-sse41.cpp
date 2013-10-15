@@ -5545,9 +5545,6 @@ extern void Setup_Vec_Pixel16Primitives_sse41(EncoderPrimitives &p);
 
 #if HIGH_BIT_DEPTH
 #define SETUP_PARTITION(W, H) \
-    p.sad[PARTITION_##W##x##H] = sad_##W<H>; \
-    p.sad_x3[PARTITION_##W##x##H] = sad_x3_##W<H>; \
-    p.sad_x4[PARTITION_##W##x##H] = sad_x4_##W<H>; \
     p.sse_sp[PARTITION_##W##x##H] = (pixelcmp_sp_t)sse_ss##W<H>; \
     p.sse_ss[PARTITION_##W##x##H] = sse_ss##W<H>
 #define SETUP_NONSAD(W, H) \
