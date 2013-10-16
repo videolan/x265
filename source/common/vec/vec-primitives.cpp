@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "primitives.h"
+#include "x265.h"
 
 #if !ENABLE_ASM_PRIMITIVES
 #include <intrin.h>

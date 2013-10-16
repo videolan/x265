@@ -30,7 +30,6 @@
 #define X265_PRIMITIVES_H
 
 #include <stdint.h>
-#include "x265.h"
 #include "cpu.h"
 
 #define FENC_STRIDE 64
