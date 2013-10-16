@@ -2229,10 +2229,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
     m_predTempYuv.clear();
     predYuv->clear();
 
-    MV mvmin;
-    MV mvmax;
     MV mvzero(0, 0);
-    MV mvtmp;
     MV mv[2];
     MV mvBidir[2];
     MV mvTemp[2][33];
@@ -2247,9 +2244,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
     UInt mbBits[3] = { 1, 1, 0 };
     int refIdx[2] = { 0, 0 }; // If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
     int refIdxBidir[2] = { 0, 0 };
-
-    UInt partAddr;
-    int  roiWidth, roiHeight;
 
     PartSize partSize = cu->getPartitionSize(0);
     UInt lastMode = 0;
@@ -2286,6 +2280,8 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
             costTempL0[ref] = MAX_UINT;
         }
 
+        UInt partAddr;
+        int  roiWidth, roiHeight;
         xGetBlkBits(partSize, cu->getSlice()->isInterP(), partIdx, lastMode, mbBits);
         cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
@@ -2344,6 +2340,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                         else
                         {
                             CYCLE_COUNTER_START(ME);
+                            MV mvmin, mvmax;
                             int merange = m_adaptiveRange[picList][refIdxTmp];
                             MV& mvp = mvPred[refList][refIdxTmp];
                             MV& outmv = mvTemp[refList][refIdxTmp];
@@ -2360,6 +2357,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     else
                     {
                         CYCLE_COUNTER_START(ME);
+                        MV mvmin, mvmax;
                         int merange = m_adaptiveRange[picList][refIdxTmp];
                         MV& mvp = mvPred[refList][refIdxTmp];
                         MV& outmv = mvTemp[refList][refIdxTmp];
@@ -2494,11 +2492,11 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(refIdxBidir[1], partSize, partAddr, 0, partIdx);
                 }
                 {
-                    mvtmp = mvBidir[0] - mvPredBi[0][refIdxBidir[0]];
+                    MV mvtmp = mvBidir[0] - mvPredBi[0][refIdxBidir[0]];
                     cu->getCUMvField(REF_PIC_LIST_0)->setAllMvd(mvtmp, partSize, partAddr, 0, partIdx);
                 }
                 {
-                    mvtmp = mvBidir[1] - mvPredBi[1][refIdxBidir[1]];
+                    MV mvtmp = mvBidir[1] - mvPredBi[1][refIdxBidir[1]];
                     cu->getCUMvField(REF_PIC_LIST_1)->setAllMvd(mvtmp, partSize, partAddr, 0, partIdx);
                 }
 
@@ -2517,7 +2515,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                 cu->getCUMvField(REF_PIC_LIST_0)->setAllMv(mv[0], partSize, partAddr, 0, partIdx);
                 cu->getCUMvField(REF_PIC_LIST_0)->setAllRefIdx(refIdx[0], partSize, partAddr, 0, partIdx);
                 {
-                    mvtmp = mv[0] - mvPred[0][refIdx[0]];
+                    MV mvtmp = mv[0] - mvPred[0][refIdx[0]];
                     cu->getCUMvField(REF_PIC_LIST_0)->setAllMvd(mvtmp, partSize, partAddr, 0, partIdx);
                 }
                 cu->setInterDirSubParts(1, partAddr, partIdx, cu->getDepth(0));
@@ -2533,7 +2531,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                 cu->getCUMvField(REF_PIC_LIST_1)->setAllMv(mv[1], partSize, partAddr, 0, partIdx);
                 cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(refIdx[1], partSize, partAddr, 0, partIdx);
                 {
-                    mvtmp = mv[1] - mvPred[1][refIdx[1]];
+                    MV mvtmp = mv[1] - mvPred[1][refIdx[1]];
                     cu->getCUMvField(REF_PIC_LIST_1)->setAllMvd(mvtmp, partSize, partAddr, 0, partIdx);
                 }
                 cu->setInterDirSubParts(2, partAddr, partIdx, cu->getDepth(0));
