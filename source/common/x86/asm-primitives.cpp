@@ -91,7 +91,32 @@ DECL_SUF( x265_pixel_avg_4x16,  ( pixel *, intptr_t, pixel *, intptr_t, pixel *,
 DECL_SUF( x265_pixel_avg_4x8,   ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
 DECL_SUF( x265_pixel_avg_4x4,   ( pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int ))
 
-void x265_filterHorizontal_p_p_4_sse4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff);
+#define SETUP_CHROMA_FUNC_DEF(W, H) \
+    void x265_interp_4tap_horiz_pp_ ##W ##x ##H ##_sse4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+SETUP_CHROMA_FUNC_DEF(2, 4);
+SETUP_CHROMA_FUNC_DEF(2, 8);
+SETUP_CHROMA_FUNC_DEF(4, 2);
+SETUP_CHROMA_FUNC_DEF(4, 4);
+SETUP_CHROMA_FUNC_DEF(4, 8);
+SETUP_CHROMA_FUNC_DEF(4, 16);
+SETUP_CHROMA_FUNC_DEF(6, 8);
+SETUP_CHROMA_FUNC_DEF(8, 2);
+SETUP_CHROMA_FUNC_DEF(8, 4);
+SETUP_CHROMA_FUNC_DEF(8, 6);
+SETUP_CHROMA_FUNC_DEF(8, 8);
+SETUP_CHROMA_FUNC_DEF(8, 16);
+SETUP_CHROMA_FUNC_DEF(8, 32);
+SETUP_CHROMA_FUNC_DEF(12, 16);
+SETUP_CHROMA_FUNC_DEF(16, 4);
+SETUP_CHROMA_FUNC_DEF(16, 8);
+SETUP_CHROMA_FUNC_DEF(16, 12);
+SETUP_CHROMA_FUNC_DEF(16, 16);
+SETUP_CHROMA_FUNC_DEF(16, 32);
+SETUP_CHROMA_FUNC_DEF(32, 8);
+SETUP_CHROMA_FUNC_DEF(32, 16);
+SETUP_CHROMA_FUNC_DEF(32, 24);
+SETUP_CHROMA_FUNC_DEF(32, 32);
+
 }
 
 using namespace x265;
@@ -210,6 +235,33 @@ namespace x265 {
     p.pixelavg_pp[PARTITION_8x8]   = x265_pixel_avg_8x8_##cpu; \
     p.pixelavg_pp[PARTITION_8x4]   = x265_pixel_avg_8x4_##cpu;
 
+#define SETUP_CHROMA_PARTITION(W, H, cpu) \
+    p.chroma_hpp[CHROMA_PARTITION_ ##W ##x ##H] = x265_interp_4tap_horiz_pp_ ##W ##x ##H ##cpu;
+#define CHROMA_IPFILTERS(cpu) \
+    SETUP_CHROMA_PARTITION(2,  4,  cpu); \
+    SETUP_CHROMA_PARTITION(2,  8,  cpu); \
+    SETUP_CHROMA_PARTITION(4,  2,  cpu); \
+    SETUP_CHROMA_PARTITION(4,  4,  cpu); \
+    SETUP_CHROMA_PARTITION(4,  8,  cpu); \
+    SETUP_CHROMA_PARTITION(4,  16, cpu); \
+    SETUP_CHROMA_PARTITION(6,  8,  cpu); \
+    SETUP_CHROMA_PARTITION(8,  2,  cpu); \
+    SETUP_CHROMA_PARTITION(8,  4,  cpu); \
+    SETUP_CHROMA_PARTITION(8,  6,  cpu); \
+    SETUP_CHROMA_PARTITION(8,  8,  cpu); \
+    SETUP_CHROMA_PARTITION(8,  16, cpu); \
+    SETUP_CHROMA_PARTITION(8,  32, cpu); \
+    SETUP_CHROMA_PARTITION(12, 16, cpu); \
+    SETUP_CHROMA_PARTITION(16, 4,  cpu); \
+    SETUP_CHROMA_PARTITION(16, 8,  cpu); \
+    SETUP_CHROMA_PARTITION(16, 12, cpu); \
+    SETUP_CHROMA_PARTITION(16, 16, cpu); \
+    SETUP_CHROMA_PARTITION(16, 32, cpu); \
+    SETUP_CHROMA_PARTITION(32, 8,  cpu); \
+    SETUP_CHROMA_PARTITION(32, 16, cpu); \
+    SETUP_CHROMA_PARTITION(32, 24, cpu); \
+    SETUP_CHROMA_PARTITION(32, 32, cpu);
+
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #if HIGH_BIT_DEPTH
@@ -274,9 +326,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse4;
         SA8D_INTER_FROM_BLOCK(sse4);
 
-#if !defined(X86_64)
-        p.ipfilter_pp[FILTER_H_P_P_4] = x265_filterHorizontal_p_p_4_sse4;
-#endif
+        CHROMA_IPFILTERS(_sse4);
     }
     if (cpuMask & X265_CPU_AVX)
     {
