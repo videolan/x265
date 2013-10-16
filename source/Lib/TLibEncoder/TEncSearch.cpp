@@ -2343,7 +2343,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                 }
             }
 
-            //  Bi-directional prediction
+            // Bi-directional prediction
             if ((cu->getSlice()->isInterB()) && (cu->isBipredRestriction(partIdx) == false))
             {
                 mvBidir[0] = mv[0];
@@ -2354,14 +2354,12 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                 ::memcpy(mvPredBi, mvPred, sizeof(mvPred));
                 ::memcpy(mvpIdxBi, mvpIdx, sizeof(mvpIdx));
 
-                pixel *ref0, *ref1;
-
-                //Generate reference subpels
+                // Generate reference subpels
                 xPredInterLumaBlk(cu, cu->getSlice()->m_mref[0][refIdx[0]], partAddr, &mv[0], roiWidth, roiHeight, &m_predYuv[0]);
                 xPredInterLumaBlk(cu, cu->getSlice()->m_mref[1][refIdx[1]], partAddr, &mv[1], roiWidth, roiHeight, &m_predYuv[1]);
 
-                ref0 = m_predYuv[0].getLumaAddr(partAddr);
-                ref1 = m_predYuv[1].getLumaAddr(partAddr);
+                pixel *ref0 = m_predYuv[0].getLumaAddr(partAddr);
+                pixel *ref1 = m_predYuv[1].getLumaAddr(partAddr);
 
                 ALIGN_VAR_32(pixel, avg[MAX_CU_SIZE * MAX_CU_SIZE]);
 
@@ -2393,7 +2391,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     xCheckBestMVP(cu, REF_PIC_LIST_0, mvzero, mvPredBi[0][refIdxBidir[0]], mvpIdxBi[0][refIdxBidir[0]], bitsZero0, costTemp);
                     xCheckBestMVP(cu, REF_PIC_LIST_1, mvzero, mvPredBi[1][refIdxBidir[1]], mvpIdxBi[1][refIdxBidir[1]], bitsZero1, costTemp);
 
-                    int costZero =  satdCost + m_rdCost->getCost(bitsZero0) + m_rdCost->getCost(bitsZero1);
+                    int costZero = satdCost + m_rdCost->getCost(bitsZero0) + m_rdCost->getCost(bitsZero1);
                     if (costZero < costbi)
                     {
                         costbi = costZero;
