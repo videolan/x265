@@ -2256,7 +2256,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
-        UInt bitsTempL0[MAX_NUM_REF];
         UInt listCost[2] = { MAX_UINT, MAX_UINT };
         UInt bits[3];
         UInt costbi = MAX_UINT;
@@ -2266,11 +2265,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
         int  refIdxValidList1 = 0;
         UInt bitsValidList1 = MAX_UINT;
         UInt costValidList1 = MAX_UINT;
-        UInt costTempL0[MAX_NUM_REF];
-        for (int ref = 0; ref < MAX_NUM_REF; ref++)
-        {
-            costTempL0[ref] = MAX_UINT;
-        }
 
         UInt partAddr;
         int  roiWidth, roiHeight;
@@ -2327,11 +2321,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     xCopyAMVPInfo(cu->getCUMvField(picList)->getAMVPInfo(), &amvpInfo[list][idx]); // must always be done ( also when AMVP_MODE = AM_NONE )
                     xCheckBestMVP(cu, picList, mvTemp[list][idx], mvPred[list][idx], mvpIdx[list][idx], bitsTemp, costTemp);
 
-                    if (list == 0)
-                    {
-                        costTempL0[idx] = costTemp;
-                        bitsTempL0[idx] = bitsTemp;
-                    }
                     if (costTemp < listCost[list])
                     {
                         listCost[list] = costTemp;
