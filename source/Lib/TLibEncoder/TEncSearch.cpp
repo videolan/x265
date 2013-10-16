@@ -2294,64 +2294,62 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
         if (bTestNormalMC)
         {
             // Uni-directional prediction
-            for (int refList = 0; refList < numPredDir; refList++)
+            for (int list = 0; list < numPredDir; list++)
             {
-                RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+                RefPicList picList = (list ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
 
-                for (int refIdxTmp = 0; refIdxTmp < cu->getSlice()->getNumRefIdx(picList); refIdxTmp++)
+                for (int idx = 0; idx < cu->getSlice()->getNumRefIdx(picList); idx++)
                 {
-                    bitsTemp = mbBits[refList];
+                    bitsTemp = mbBits[list];
                     if (cu->getSlice()->getNumRefIdx(picList) > 1)
                     {
-                        bitsTemp += refIdxTmp + 1;
-                        if (refIdxTmp == cu->getSlice()->getNumRefIdx(picList) - 1) bitsTemp--;
+                        bitsTemp += idx + 1;
+                        if (idx == cu->getSlice()->getNumRefIdx(picList) - 1) bitsTemp--;
                     }
-                    xEstimateMvPredAMVP(cu, partIdx, picList, refIdxTmp, mvPred[refList][refIdxTmp], &biPDistTemp);
-                    mvpIdx[refList][refIdxTmp] = cu->getMVPIdx(picList, partAddr);
-                    mvpNum[refList][refIdxTmp] = cu->getMVPNum(picList, partAddr);
+                    xEstimateMvPredAMVP(cu, partIdx, picList, idx, mvPred[list][idx], &biPDistTemp);
+                    mvpIdx[list][idx] = cu->getMVPIdx(picList, partAddr);
+                    mvpNum[list][idx] = cu->getMVPNum(picList, partAddr);
 
-                    bitsTemp += m_mvpIdxCost[mvpIdx[refList][refIdxTmp]][AMVP_MAX_NUM_CANDS];
+                    bitsTemp += m_mvpIdxCost[mvpIdx[list][idx]][AMVP_MAX_NUM_CANDS];
+                    int merange = m_adaptiveRange[picList][idx];
+                    MV& mvp = mvPred[list][idx];
+                    MV& outmv = mvTemp[list][idx];
 
-                    CYCLE_COUNTER_START(ME);
                     MV mvmin, mvmax;
-                    int merange = m_adaptiveRange[picList][refIdxTmp];
-                    MV& mvp = mvPred[refList][refIdxTmp];
-                    MV& outmv = mvTemp[refList][refIdxTmp];
                     xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                    int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
+                    int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][idx],
                                                        mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
                     /* Get total cost of partition, but only include MV bit cost once */
                     bitsTemp += m_me.bitcost(outmv);
                     costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
-                    CYCLE_COUNTER_STOP(ME);
 
-                    xCopyAMVPInfo(cu->getCUMvField(picList)->getAMVPInfo(), &amvpInfo[refList][refIdxTmp]); // must always be done ( also when AMVP_MODE = AM_NONE )
-                    xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPred[refList][refIdxTmp], mvpIdx[refList][refIdxTmp], bitsTemp, costTemp);
+                    xCopyAMVPInfo(cu->getCUMvField(picList)->getAMVPInfo(), &amvpInfo[list][idx]); // must always be done ( also when AMVP_MODE = AM_NONE )
+                    xCheckBestMVP(cu, picList, mvTemp[list][idx], mvPred[list][idx], mvpIdx[list][idx], bitsTemp, costTemp);
 
-                    if (refList == 0)
+                    if (list == 0)
                     {
-                        costTempL0[refIdxTmp] = costTemp;
-                        bitsTempL0[refIdxTmp] = bitsTemp;
+                        costTempL0[idx] = costTemp;
+                        bitsTempL0[idx] = bitsTemp;
                     }
-                    if (costTemp < listCost[refList])
+                    if (costTemp < listCost[list])
                     {
-                        listCost[refList] = costTemp;
-                        bits[refList] = bitsTemp; // storing for bi-prediction
+                        listCost[list] = costTemp;
+                        bits[list] = bitsTemp; // storing for bi-prediction
 
                         // set motion
-                        mv[refList] = mvTemp[refList][refIdxTmp];
-                        refIdx[refList] = refIdxTmp;
+                        mv[list] = mvTemp[list][idx];
+                        refIdx[list] = idx;
                     }
 
-                    if (refList == 1 && costTemp < costValidList1 && cu->getSlice()->getList1IdxToList0Idx(refIdxTmp) < 0)
+                    if (list == 1 && costTemp < costValidList1 && cu->getSlice()->getList1IdxToList0Idx(idx) < 0)
                     {
                         costValidList1 = costTemp;
                         bitsValidList1 = bitsTemp;
 
                         // set motion
-                        mvValidList1     = mvTemp[refList][refIdxTmp];
-                        refIdxValidList1 = refIdxTmp;
+                        mvValidList1     = mvTemp[list][idx];
+                        refIdxValidList1 = idx;
                     }
                 }
             }
