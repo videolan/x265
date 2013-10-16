@@ -198,43 +198,6 @@ void TEncSbac::determineCabacInitIdx()
     }
 }
 
-/** The function does the followng: Write out terminate bit. Flush CABAC. Intialize CABAC states. Start CABAC.
- */
-void TEncSbac::updateContextTables(SliceType sliceType, int qp, bool bExecuteFinish)
-{
-    m_binIf->encodeBinTrm(1);
-    if (bExecuteFinish) m_binIf->finish();
-    m_cuSplitFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SPLIT_FLAG);
-
-    m_cuSkipFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SKIP_FLAG);
-    m_cuMergeFlagExtSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT);
-    m_cuMergeIdxExtSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MERGE_IDX_EXT);
-    m_cuPartSizeSCModel.initBuffer(sliceType, qp, (UChar*)INIT_PART_SIZE);
-    m_cuAMPSCModel.initBuffer(sliceType, qp, (UChar*)INIT_CU_AMP_POS);
-    m_cuPredModeSCModel.initBuffer(sliceType, qp, (UChar*)INIT_PRED_MODE);
-    m_cuIntraPredSCModel.initBuffer(sliceType, qp, (UChar*)INIT_INTRA_PRED_MODE);
-    m_cuChromaPredSCModel.initBuffer(sliceType, qp, (UChar*)INIT_CHROMA_PRED_MODE);
-    m_cuInterDirSCModel.initBuffer(sliceType, qp, (UChar*)INIT_INTER_DIR);
-    m_cuMvdSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MVD);
-    m_cuRefPicSCModel.initBuffer(sliceType, qp, (UChar*)INIT_REF_PIC);
-    m_cuDeltaQpSCModel.initBuffer(sliceType, qp, (UChar*)INIT_DQP);
-    m_cuQtCbfSCModel.initBuffer(sliceType, qp, (UChar*)INIT_QT_CBF);
-    m_cuQtRootCbfSCModel.initBuffer(sliceType, qp, (UChar*)INIT_QT_ROOT_CBF);
-    m_cuSigCoeffGroupSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SIG_CG_FLAG);
-    m_cuSigSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SIG_FLAG);
-    m_cuCtxLastX.initBuffer(sliceType, qp, (UChar*)INIT_LAST);
-    m_cuCtxLastY.initBuffer(sliceType, qp, (UChar*)INIT_LAST);
-    m_cuOneSCModel.initBuffer(sliceType, qp, (UChar*)INIT_ONE_FLAG);
-    m_cuAbsSCModel.initBuffer(sliceType, qp, (UChar*)INIT_ABS_FLAG);
-    m_mvpIdxSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MVP_IDX);
-    m_cuTransSubdivFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG);
-    m_saoMergeSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SAO_MERGE_FLAG);
-    m_saoTypeIdxSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SAO_TYPE_IDX);
-    m_transformSkipSCModel.initBuffer(sliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG);
-    m_cuTransquantBypassFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG);
-    m_binIf->start();
-}
-
 void TEncSbac::codeVPS(TComVPS*)
 {
     assert(0);

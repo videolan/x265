@@ -167,9 +167,6 @@ public:
     void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
     void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
 
-    void updateContextTables(SliceType sliceType, int qp, bool bExecuteFinish = true);
-    void updateContextTables(SliceType sliceType, int qp) { this->updateContextTables(sliceType, qp, true); }
-
     TEncBinIf* getEncBinIf()  { return m_binIf; }
 
 private:

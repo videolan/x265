@@ -116,9 +116,6 @@ public:
     virtual void codeSaoUflc(UInt length, UInt code) = 0;
     virtual void estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype) = 0;
 
-    virtual void updateContextTables(SliceType sliceType, int qp, bool bExecuteFinish)   = 0;
-    virtual void updateContextTables(SliceType sliceType, int qp)   = 0;
-
     virtual void codeDFFlag(UInt code, const char *symbolName) = 0;
     virtual void codeDFSvlc(int code, const char *symbolName)   = 0;
 
@@ -187,9 +184,6 @@ public:
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
     void encodeQP(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void updateContextTables(SliceType sliceType, int qp, bool bExecuteFinish)   { m_entropyCoderIf->updateContextTables(sliceType, qp, bExecuteFinish);     }
-
-    void updateContextTables(SliceType sliceType, int qp)                        { m_entropyCoderIf->updateContextTables(sliceType, qp, true);               }
 
     void encodeScalingList(TComScalingList* scalingList);
 

@@ -111,10 +111,6 @@ public:
 
     void codeSaoUflc(UInt, UInt) { printf("Not supported\n"); assert(0); }
 
-    void updateContextTables(SliceType, int, bool) {}
-
-    void updateContextTables(SliceType, int) {}
-
     void codeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx);
     void codeSkipFlag(TComDataCU* cu, UInt absPartIdx);
     void codeMergeFlag(TComDataCU* cu, UInt absPartIdx);
