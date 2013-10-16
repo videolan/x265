@@ -2312,56 +2312,20 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 
                     bitsTemp += m_mvpIdxCost[mvpIdx[refList][refIdxTmp]][AMVP_MAX_NUM_CANDS];
 
-                    if (refList == 1) // list 1
-                    {
-                        if (cu->getSlice()->getList1IdxToList0Idx(refIdxTmp) >= 0)
-                        {
-                            mvTemp[1][refIdxTmp] = mvTemp[0][cu->getSlice()->getList1IdxToList0Idx(refIdxTmp)];
-                            costTemp = costTempL0[cu->getSlice()->getList1IdxToList0Idx(refIdxTmp)];
+                    CYCLE_COUNTER_START(ME);
+                    MV mvmin, mvmax;
+                    int merange = m_adaptiveRange[picList][refIdxTmp];
+                    MV& mvp = mvPred[refList][refIdxTmp];
+                    MV& outmv = mvTemp[refList][refIdxTmp];
+                    xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
+                    int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
+                                                       mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
-                            /* first subtract the bit-rate part of the cost of the other list */
-                            costTemp -= m_rdCost->getCost(bitsTempL0[cu->getSlice()->getList1IdxToList0Idx(refIdxTmp)]);
+                    /* Get total cost of partition, but only include MV bit cost once */
+                    bitsTemp += m_me.bitcost(outmv);
+                    costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
+                    CYCLE_COUNTER_STOP(ME);
 
-                            /* correct the bit-rate part of the current ref */
-                            m_me.setMVP(mvPred[refList][refIdxTmp]);
-                            bitsTemp += m_me.bitcost(mvTemp[1][refIdxTmp]);
-
-                            /* calculate the correct cost */
-                            costTemp += m_rdCost->getCost(bitsTemp);
-                        }
-                        else
-                        {
-                            CYCLE_COUNTER_START(ME);
-                            MV mvmin, mvmax;
-                            int merange = m_adaptiveRange[picList][refIdxTmp];
-                            MV& mvp = mvPred[refList][refIdxTmp];
-                            MV& outmv = mvTemp[refList][refIdxTmp];
-                            xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                            int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
-                                                               mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
-
-                            /* Get total cost of partition, but only include MV bit cost once */
-                            bitsTemp += m_me.bitcost(outmv);
-                            costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
-                            CYCLE_COUNTER_STOP(ME);
-                        }
-                    }
-                    else
-                    {
-                        CYCLE_COUNTER_START(ME);
-                        MV mvmin, mvmax;
-                        int merange = m_adaptiveRange[picList][refIdxTmp];
-                        MV& mvp = mvPred[refList][refIdxTmp];
-                        MV& outmv = mvTemp[refList][refIdxTmp];
-                        xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                        int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
-                                                            mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
-
-                        /* Get total cost of partition, but only include MV bit cost once */
-                        bitsTemp += m_me.bitcost(outmv);
-                        costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
-                        CYCLE_COUNTER_STOP(ME);
-                    }
                     xCopyAMVPInfo(cu->getCUMvField(picList)->getAMVPInfo(), &amvpInfo[refList][refIdxTmp]); // must always be done ( also when AMVP_MODE = AM_NONE )
                     xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPred[refList][refIdxTmp], mvpIdx[refList][refIdxTmp], bitsTemp, costTemp);
 
