@@ -211,7 +211,7 @@ if(ENABLE_CLI)
     endif()
 
     add_executable(cli ../COPYING ${InputFiles} ${OutputFiles}
-                   x265.cpp x265opts.h x265.h
+                   x265.cpp x265.h
                    compat/msvc/getopt.c compat/msvc/getopt.h)
     target_link_libraries(cli x265-static ${PLATFORM_LIBS})
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
