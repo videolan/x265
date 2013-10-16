@@ -479,6 +479,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param_t* param)
 else if (!strcmp(long_options[long_options_index].name, longname))
 
         if (0);
+            OPT("cpuid") cpuid = atoi(optarg);
             OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
             OPT("no-progress") this->bProgress = false;
             OPT("frame-skip") this->frameSkip = (uint32_t)atoi(optarg);
