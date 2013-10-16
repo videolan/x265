@@ -1611,14 +1611,6 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
-    if (!m_cfg->param.bEnableRDO)
-    {
-        UInt partEnum = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-        UInt SATD = primitives.satd[partEnum](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                              m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
-        x265_emms();
-        outTempCU->m_totalDistortion = SATD;
-    }
     outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
     xCheckDQP(outTempCU);

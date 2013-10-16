@@ -2225,9 +2225,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
     UChar interDirNeighbours[MRG_MAX_NUM_CANDS];
     int numValidMergeCand = 0;
 
-    if (!m_cfg->param.bEnableRDO)
-        cu->m_totalCost = 0;
-
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
         UInt listCost[2] = { MAX_UINT, MAX_UINT };
@@ -2509,8 +2506,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 #if CU_STAT_LOGFILE
                 meCost += mrgCost;
 #endif
-                if (!m_cfg->param.bEnableRDO)
-                    cu->m_totalCost += mrgCost;
             }
             else
             {
@@ -2524,14 +2519,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 #if CU_STAT_LOGFILE
                 meCost += meCost;
 #endif
-                if (!m_cfg->param.bEnableRDO)
-                    cu->m_totalCost += meCost;
             }
-        }
-        else
-        {
-            if (!m_cfg->param.bEnableRDO)
-                cu->m_totalCost += costTemp;
         }
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx);
     }
