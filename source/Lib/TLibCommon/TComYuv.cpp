@@ -234,16 +234,20 @@ void TComYuv::copyPartToChroma(TComYuv* dstPicYuv, UInt partIdx)
     primitives.blockcpy_pp(uiCWidth, uiCHeight, dstV, dststride, srcV, srcstride);
 }
 
-void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height)
+void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma, bool bChroma)
 {
-    copyPartToPartLuma(dstPicYuv, partIdx, width, height);
-    copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
+    if(bLuma)
+        copyPartToPartLuma(dstPicYuv, partIdx, width, height);
+    if(bChroma)
+        copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
 }
 
-void TComYuv::copyPartToPartYuv(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height)
+void TComYuv::copyPartToPartYuv(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma, bool bChroma)
 {
-    copyPartToPartLuma(dstPicYuv, partIdx, width, height);
-    copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
+    if(bLuma)
+        copyPartToPartLuma(dstPicYuv, partIdx, width, height);
+    if(bChroma)
+        copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
 }
 
 void TComYuv::copyPartToPartLuma(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height)
@@ -529,9 +533,11 @@ void TComYuv::subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx,
     }
 }
 
-void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height)
+void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, bool bLuma, bool bChroma)
 {
     int x, y;
+    UInt src0Stride, src1Stride, dststride;
+    int shiftNum, offset;
 
     Pel* srcY0 = srcYuv0->getLumaAddr(partUnitIdx);
     Pel* srcU0 = srcYuv0->getCbAddr(partUnitIdx);
@@ -545,62 +551,69 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt 
     Pel* dstU  = getCbAddr(partUnitIdx);
     Pel* dstV  = getCrAddr(partUnitIdx);
 
-    UInt src0Stride = srcYuv0->getStride();
-    UInt src1Stride = srcYuv1->getStride();
-    UInt dststride  = getStride();
-    int shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
-    int offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
-
-    for (y = 0; y < height; y++)
+    if(bLuma)
     {
-        for (x = 0; x < width; x += 4)
-        {
-            dstY[x + 0] = ClipY((srcY0[x + 0] + srcY1[x + 0] + offset) >> shiftNum);
-            dstY[x + 1] = ClipY((srcY0[x + 1] + srcY1[x + 1] + offset) >> shiftNum);
-            dstY[x + 2] = ClipY((srcY0[x + 2] + srcY1[x + 2] + offset) >> shiftNum);
-            dstY[x + 3] = ClipY((srcY0[x + 3] + srcY1[x + 3] + offset) >> shiftNum);
-        }
+        src0Stride = srcYuv0->getStride();
+        src1Stride = srcYuv1->getStride();
+        dststride  = getStride();
+        shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
+        offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
-        srcY0 += src0Stride;
-        srcY1 += src1Stride;
-        dstY  += dststride;
+        for (y = 0; y < height; y++)
+        {
+            for (x = 0; x < width; x += 4)
+            {
+                dstY[x + 0] = ClipY((srcY0[x + 0] + srcY1[x + 0] + offset) >> shiftNum);
+                dstY[x + 1] = ClipY((srcY0[x + 1] + srcY1[x + 1] + offset) >> shiftNum);
+                dstY[x + 2] = ClipY((srcY0[x + 2] + srcY1[x + 2] + offset) >> shiftNum);
+                dstY[x + 3] = ClipY((srcY0[x + 3] + srcY1[x + 3] + offset) >> shiftNum);
+            }
+
+            srcY0 += src0Stride;
+            srcY1 += src1Stride;
+            dstY  += dststride;
+        }
     }
-
-    shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
-    offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
-
-    src0Stride = srcYuv0->getCStride();
-    src1Stride = srcYuv1->getCStride();
-    dststride  = getCStride();
-
-    width  >>= 1;
-    height >>= 1;
-
-    for (y = height - 1; y >= 0; y--)
+    if(bChroma)
     {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: chroma min width is 2
-            dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-            dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
-            x--;
-            dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-            dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
-            x--;
-        }
+        shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
+        offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
-        srcU0 += src0Stride;
-        srcU1 += src1Stride;
-        srcV0 += src0Stride;
-        srcV1 += src1Stride;
-        dstU  += dststride;
-        dstV  += dststride;
+        src0Stride = srcYuv0->getCStride();
+        src1Stride = srcYuv1->getCStride();
+        dststride  = getCStride();
+
+        width  >>= 1;
+        height >>= 1;
+
+        for (y = height - 1; y >= 0; y--)
+        {
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
+                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
+                x--;
+                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
+                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
+                x--;
+            }
+
+            srcU0 += src0Stride;
+            srcU1 += src1Stride;
+            srcV0 += src0Stride;
+            srcV1 += src1Stride;
+            dstU  += dststride;
+            dstV  += dststride;
+        }
     }
 }
 
-void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height)
+void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, bool bLuma, bool bChroma)
 {
     int x, y;
+    UInt src0Stride, src1Stride, dststride;
+    int shiftNum, offset;
 
     short* srcY0 = srcYuv0->getLumaAddr(partUnitIdx);
     short* srcU0 = srcYuv0->getCbAddr(partUnitIdx);
@@ -614,56 +627,61 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, U
     Pel* dstU = getCbAddr(partUnitIdx);
     Pel* dstV = getCrAddr(partUnitIdx);
 
-    UInt src0Stride = srcYuv0->m_width;
-    UInt src1Stride = srcYuv1->m_width;
-    UInt dststride  = getStride();
-    int shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
-    int offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
-
-    for (y = 0; y < height; y++)
+    if(bLuma)
     {
-        for (x = 0; x < width; x += 4)
-        {
-            dstY[x + 0] = ClipY((srcY0[x + 0] + srcY1[x + 0] + offset) >> shiftNum);
-            dstY[x + 1] = ClipY((srcY0[x + 1] + srcY1[x + 1] + offset) >> shiftNum);
-            dstY[x + 2] = ClipY((srcY0[x + 2] + srcY1[x + 2] + offset) >> shiftNum);
-            dstY[x + 3] = ClipY((srcY0[x + 3] + srcY1[x + 3] + offset) >> shiftNum);
-        }
+        src0Stride = srcYuv0->m_width;
+        src1Stride = srcYuv1->m_width;
+        dststride  = getStride();
+        shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
+        offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
-        srcY0 += src0Stride;
-        srcY1 += src1Stride;
-        dstY  += dststride;
+        for (y = 0; y < height; y++)
+        {
+            for (x = 0; x < width; x += 4)
+            {
+                dstY[x + 0] = ClipY((srcY0[x + 0] + srcY1[x + 0] + offset) >> shiftNum);
+                dstY[x + 1] = ClipY((srcY0[x + 1] + srcY1[x + 1] + offset) >> shiftNum);
+                dstY[x + 2] = ClipY((srcY0[x + 2] + srcY1[x + 2] + offset) >> shiftNum);
+                dstY[x + 3] = ClipY((srcY0[x + 3] + srcY1[x + 3] + offset) >> shiftNum);
+            }
+
+            srcY0 += src0Stride;
+            srcY1 += src1Stride;
+            dstY  += dststride;
+        }
     }
-
-    shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
-    offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
-
-    src0Stride = srcYuv0->m_cwidth;
-    src1Stride = srcYuv1->m_cwidth;
-    dststride  = getCStride();
-
-    width  >>= 1;
-    height >>= 1;
-
-    for (y = height - 1; y >= 0; y--)
+    if(bChroma)
     {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: chroma min width is 2
-            dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-            dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
-            x--;
-            dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-            dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
-            x--;
-        }
+        shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
+        offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
-        srcU0 += src0Stride;
-        srcU1 += src1Stride;
-        srcV0 += src0Stride;
-        srcV1 += src1Stride;
-        dstU  += dststride;
-        dstV  += dststride;
+        src0Stride = srcYuv0->m_cwidth;
+        src1Stride = srcYuv1->m_cwidth;
+        dststride  = getCStride();
+
+        width  >>= 1;
+        height >>= 1;
+
+        for (y = height - 1; y >= 0; y--)
+        {
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
+                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
+                x--;
+                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
+                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
+                x--;
+            }
+
+            srcU0 += src0Stride;
+            srcU1 += src1Stride;
+            srcV0 += src0Stride;
+            srcV1 += src1Stride;
+            dstU  += dststride;
+            dstV  += dststride;
+        }
     }
 }
 

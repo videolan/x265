@@ -83,15 +83,15 @@ protected:
     int       m_lumaRecStride; ///< stride of m_lumaRecBuffer
 
     // motion compensation functions
-    void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TComYuv* outPredYuv);
-    void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TShortYUV* outPredYuv);
+    void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TComYuv* outPredYuv, bool bLuma = true, bool bChroma = true);
+    void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TShortYUV* outPredYuv, bool bLuma = true, bool bChroma = true);
     void xPredInterLumaBlk(TComDataCU *cu, MotionReference *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
     void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
     
-    void xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int height, TComYuv*& outPredYuv);
-    void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partAddr, int width, int height, TComYuv*& outDstYuv);
+    void xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int height, TComYuv*& outPredYuv, bool bLuma = true, bool bChroma = true);
+    void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partAddr, int width, int height, TComYuv*& outDstYuv, bool bLuma = true, bool bChroma = true);
 
     void xGetLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, Pel* dst0, int dststride, UInt width, UInt height, UInt ext0);
 
@@ -107,7 +107,7 @@ public:
     void initTempBuff();
 
     // inter
-    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, int partIdx = -1);
+    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, int partIdx = -1, bool bLuma = true, bool bChroma = true);
 
     // motion vector prediction
     void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, MV& mvPred);

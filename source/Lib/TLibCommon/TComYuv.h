@@ -132,8 +132,8 @@ public:
     void    copyPartToChroma(TComYuv* dstPicYuv, UInt uiSrcPartIdx);
 
     //  Copy YUV partition buffer to other YUV partition buffer
-    void    copyPartToPartYuv(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height);
-    void    copyPartToPartYuv(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height);
+    void    copyPartToPartYuv(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
+    void    copyPartToPartYuv(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
     void    copyPartToPartLuma(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height);
     void    copyPartToPartLuma(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height);
     void    copyPartToPartChroma(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height);
@@ -160,8 +160,8 @@ public:
     void    subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
 
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
-    void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height);
-    void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height);
+    void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
+    void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
 
     //   Remove High frequency
     void    removeHighFreq(TComYuv* srcYuv, UInt partIdx, UInt width, UInt height);

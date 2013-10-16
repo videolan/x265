@@ -142,7 +142,7 @@ public:
                               TComYuv* reconYuv, UInt precalcDistC);
 
     /// encoder estimation - inter prediction (non-skip)
-    void predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG = false);
+    void predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG = false, bool bLuma = true, bool bChroma = true);
 
     /// encode residual and compute rd-cost for inter mode
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TShortYUV* bestResiYuv,

@@ -60,15 +60,15 @@ public:
 
     void  getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, wpScalingParam *&wp0, wpScalingParam *&wp1);
 
-    void  addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound = true);
-    void  addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound = true);
-    void  addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv);
-    void  addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool justChroma = false);
+    void  addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound = true, bool bLuma = true, bool bChroma = true);
+    void  addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound = true, bool bLuma = true, bool bChroma = true);
+    void  addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma = true, bool bChroma = true);
+    void  addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma = true, bool bChroma = true);
 
-    void  xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx = -1);
-    void  xWeightedPredictionUni(TComDataCU* cu, TShortYUV* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx = -1);
-    void  xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv);
-    void  xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv);
+    void  xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx = -1, bool bLuma = true, bool bChroma = true);
+    void  xWeightedPredictionUni(TComDataCU* cu, TShortYUV* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx = -1, bool bLuma = true, bool bChroma = true);
+    void  xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma = true, bool bChroma = true);
+    void  xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma = true, bool bChroma = true);
 };
 }
 

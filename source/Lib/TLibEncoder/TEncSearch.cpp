@@ -2196,7 +2196,7 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvFiel
  * \param bUseMRG
  * \returns void
  */
-void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
+void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG, bool bLuma, bool bChroma)
 {
     MV mvzero(0, 0);
     MV mv[2];
@@ -2534,7 +2534,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 #endif
             }
         }
-        motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx);
+        motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, bLuma, bChroma);
     }
 
     setWpScalingDistParam(cu, -1, REF_PIC_LIST_X);

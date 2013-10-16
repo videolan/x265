@@ -80,7 +80,7 @@ TComWeightPrediction::TComWeightPrediction()
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound)
+void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
 {
     int x, y;
 
@@ -96,90 +96,96 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt 
     Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
     Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
-    // Luma : --------------------------------------------
-    int w0      = wp0[0].w;
-    int offset  = wp0[0].offset;
-    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift   = wp0[0].shift + shiftNum;
-    int round   = shift ? (1 << (shift - 1)) * bRound : 0;
-    int w1      = wp1[0].w;
-
-    UInt  src0Stride = srcYuv0->getStride();
-    UInt  src1Stride = srcYuv1->getStride();
-    UInt  dststride  = outDstYuv->getStride();
-
-    for (y = height - 1; y >= 0; y--)
+    if (bLuma)
     {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: luma min width is 4
-            pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-            pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-            pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-            pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-        }
+        // Luma : --------------------------------------------
+        int w0      = wp0[0].w;
+        int offset  = wp0[0].offset;
+        int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        int shift   = wp0[0].shift + shiftNum;
+        int round   = shift ? (1 << (shift - 1)) * bRound : 0;
+        int w1      = wp1[0].w;
 
-        srcY0 += src0Stride;
-        srcY1 += src1Stride;
-        pDstY  += dststride;
+        UInt  src0Stride = srcYuv0->getStride();
+        UInt  src1Stride = srcYuv1->getStride();
+        UInt  dststride  = outDstYuv->getStride();
+
+        for (y = height - 1; y >= 0; y--)
+        {
+            for (x = width - 1; x >= 0; )
+            {
+                // note: luma min width is 4
+                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+            }
+
+            srcY0 += src0Stride;
+            srcY1 += src1Stride;
+            pDstY  += dststride;
+        }
     }
 
-    // Chroma U : --------------------------------------------
-    w0      = wp0[1].w;
-    offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    shift   = wp0[1].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
-    w1      = wp1[1].w;
-
-    src0Stride = srcYuv0->getCStride();
-    src1Stride = srcYuv1->getCStride();
-    dststride  = outDstYuv->getCStride();
-
-    width  >>= 1;
-    height >>= 1;
-
-    for (y = height - 1; y >= 0; y--)
+    if (bChroma)
     {
-        for (x = width - 1; x >= 0; )
+        // Chroma U : --------------------------------------------
+        int w0      = wp0[1].w;
+        int offset  = wp0[1].offset;
+        int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        int shift   = wp0[1].shift + shiftNum;
+        int round   = shift ? (1 << (shift - 1)) : 0;
+        int w1      = wp1[1].w;
+
+        UInt src0Stride = srcYuv0->getCStride();
+        UInt src1Stride = srcYuv1->getCStride();
+        UInt dststride  = outDstYuv->getCStride();
+
+        width  >>= 1;
+        height >>= 1;
+
+        for (y = height - 1; y >= 0; y--)
         {
-            // note: chroma min width is 2
-            dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
-            x--;
-            dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
-            x--;
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                x--;
+                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                x--;
+            }
+
+            srcU0 += src0Stride;
+            srcU1 += src1Stride;
+            dstU  += dststride;
         }
 
-        srcU0 += src0Stride;
-        srcU1 += src1Stride;
-        dstU  += dststride;
-    }
+        // Chroma V : --------------------------------------------
+        w0      = wp0[2].w;
+        offset  = wp0[2].offset;
+        shift   = wp0[2].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
+        w1      = wp1[2].w;
 
-    // Chroma V : --------------------------------------------
-    w0      = wp0[2].w;
-    offset  = wp0[2].offset;
-    shift   = wp0[2].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
-    w1      = wp1[2].w;
-
-    for (y = height - 1; y >= 0; y--)
-    {
-        for (x = width - 1; x >= 0; )
+        for (y = height - 1; y >= 0; y--)
         {
-            // note: chroma min width is 2
-            dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
-            x--;
-            dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
-            x--;
-        }
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                x--;
+                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                x--;
+            }
 
-        srcV0 += src0Stride;
-        srcV1 += src1Stride;
-        dstV  += dststride;
+            srcV0 += src0Stride;
+            srcV1 += src1Stride;
+            dstV  += dststride;
+        }
     }
 }
 
@@ -194,9 +200,12 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt 
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound)
+void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
 {
     int x, y;
+
+    int w0,w1,  offset, shiftNum, shift, round;
+    UInt src0Stride, src1Stride, dststride;
 
     short* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     short* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
@@ -210,90 +219,96 @@ void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, U
     Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
     Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
-    // Luma : --------------------------------------------
-    int w0      = wp0[0].w;
-    int offset  = wp0[0].offset;
-    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift   = wp0[0].shift + shiftNum;
-    int round   = shift ? (1 << (shift - 1)) * bRound : 0;
-    int w1      = wp1[0].w;
-
-    UInt  src0Stride = srcYuv0->m_width;
-    UInt  src1Stride = srcYuv1->m_width;
-    UInt  dststride  = outDstYuv->getStride();
-
-    for (y = height - 1; y >= 0; y--)
+    if (bLuma)
     {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: luma min width is 4
-            dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-            dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-            dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-            dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
-            x--;
-        }
+        // Luma : --------------------------------------------
+        w0      = wp0[0].w;
+        offset  = wp0[0].offset;
+        shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        shift   = wp0[0].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) * bRound : 0;
+        w1      = wp1[0].w;
 
-        srcY0 += src0Stride;
-        srcY1 += src1Stride;
-        dstY  += dststride;
+        src0Stride = srcYuv0->m_width;
+        src1Stride = srcYuv1->m_width;
+        dststride  = outDstYuv->getStride();
+
+        for (y = height - 1; y >= 0; y--)
+        {
+            for (x = width - 1; x >= 0; )
+            {
+                // note: luma min width is 4
+                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                x--;
+            }
+
+            srcY0 += src0Stride;
+            srcY1 += src1Stride;
+            dstY  += dststride;
+        }
     }
 
-    // Chroma U : --------------------------------------------
-    w0      = wp0[1].w;
-    offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    shift   = wp0[1].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
-    w1      = wp1[1].w;
-
-    src0Stride = srcYuv0->m_cwidth;
-    src1Stride = srcYuv1->m_cwidth;
-    dststride  = outDstYuv->getCStride();
-
-    width  >>= 1;
-    height >>= 1;
-
-    for (y = height - 1; y >= 0; y--)
+    if (bChroma)
     {
-        for (x = width - 1; x >= 0; )
+        // Chroma U : --------------------------------------------
+        w0      = wp0[1].w;
+        offset  = wp0[1].offset;
+        shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        shift   = wp0[1].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
+        w1      = wp1[1].w;
+
+        src0Stride = srcYuv0->m_cwidth;
+        src1Stride = srcYuv1->m_cwidth;
+        dststride  = outDstYuv->getCStride();
+
+        width  >>= 1;
+        height >>= 1;
+
+        for (y = height - 1; y >= 0; y--)
         {
-            // note: chroma min width is 2
-            dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
-            x--;
-            dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
-            x--;
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                x--;
+                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                x--;
+            }
+
+            srcU0 += src0Stride;
+            srcU1 += src1Stride;
+            dstU  += dststride;
         }
 
-        srcU0 += src0Stride;
-        srcU1 += src1Stride;
-        dstU  += dststride;
-    }
+        // Chroma V : --------------------------------------------
+        w0      = wp0[2].w;
+        offset  = wp0[2].offset;
+        shift   = wp0[2].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
+        w1      = wp1[2].w;
 
-    // Chroma V : --------------------------------------------
-    w0      = wp0[2].w;
-    offset  = wp0[2].offset;
-    shift   = wp0[2].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
-    w1      = wp1[2].w;
-
-    for (y = height - 1; y >= 0; y--)
-    {
-        for (x = width - 1; x >= 0; )
+        for (y = height - 1; y >= 0; y--)
         {
-            // note: chroma min width is 2
-            dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
-            x--;
-            dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
-            x--;
-        }
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                x--;
+                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                x--;
+            }
 
-        srcV0 += src0Stride;
-        srcV1 += src1Stride;
-        dstV  += dststride;
+            srcV0 += src0Stride;
+            srcV1 += src1Stride;
+            dstV  += dststride;
+        }
     }
 }
 
@@ -306,9 +321,12 @@ void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, U
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv)
+void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     int x, y;
+
+    int w0, offset, shiftNum, shift, round;
+    UInt src0Stride, dststride;
 
     Pel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     Pel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
@@ -318,81 +336,87 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt
     Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
     Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
-    // Luma : --------------------------------------------
-    int w0      = wp0[0].w;
-    int offset  = wp0[0].offset;
-    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift   = wp0[0].shift + shiftNum;
-    int round   = shift ? (1 << (shift - 1)) : 0;
-    UInt src0Stride = srcYuv0->getStride();
-    UInt dststride  = outDstYuv->getStride();
-
-    for (y = height - 1; y >= 0; y--)
+    if (bLuma)
     {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: luma min width is 4
-            dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
-            x--;
-            dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
-            x--;
-            dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
-            x--;
-            dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
-            x--;
-        }
+        // Luma : --------------------------------------------
+        w0      = wp0[0].w;
+        offset  = wp0[0].offset;
+        shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        shift   = wp0[0].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
+        src0Stride = srcYuv0->getStride();
+        dststride  = outDstYuv->getStride();
 
-        srcY0 += src0Stride;
-        dstY  += dststride;
+        for (y = height - 1; y >= 0; y--)
+        {
+            for (x = width - 1; x >= 0; )
+            {
+                // note: luma min width is 4
+                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                x--;
+                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                x--;
+                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                x--;
+                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                x--;
+            }
+
+            srcY0 += src0Stride;
+            dstY  += dststride;
+        }
     }
 
-    // Chroma U : --------------------------------------------
-    w0      = wp0[1].w;
-    offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    shift   = wp0[1].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
-
-    src0Stride = srcYuv0->getCStride();
-    dststride  = outDstYuv->getCStride();
-
-    width  >>= 1;
-    height >>= 1;
-
-    for (y = height - 1; y >= 0; y--)
+    if (bChroma)
     {
-        for (x = width - 1; x >= 0; )
+        // Chroma U : --------------------------------------------
+        w0      = wp0[1].w;
+        offset  = wp0[1].offset;
+        shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        shift   = wp0[1].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
+
+        src0Stride = srcYuv0->getCStride();
+        dststride  = outDstYuv->getCStride();
+
+        width  >>= 1;
+        height >>= 1;
+
+        for (y = height - 1; y >= 0; y--)
         {
-            // note: chroma min width is 2
-            dstU[x] = weightUnidirC(w0, srcU0[x], round, shift, offset);
-            x--;
-            dstU[x] = weightUnidirC(w0, srcU0[x], round, shift, offset);
-            x--;
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstU[x] = weightUnidirC(w0, srcU0[x], round, shift, offset);
+                x--;
+                dstU[x] = weightUnidirC(w0, srcU0[x], round, shift, offset);
+                x--;
+            }
+
+            srcU0 += src0Stride;
+            dstU  += dststride;
         }
 
-        srcU0 += src0Stride;
-        dstU  += dststride;
-    }
+        // Chroma V : --------------------------------------------
+        w0      = wp0[2].w;
+        offset  = wp0[2].offset;
+        shift   = wp0[2].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
 
-    // Chroma V : --------------------------------------------
-    w0      = wp0[2].w;
-    offset  = wp0[2].offset;
-    shift   = wp0[2].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
-
-    for (y = height - 1; y >= 0; y--)
-    {
-        for (x = width - 1; x >= 0; )
+        for (y = height - 1; y >= 0; y--)
         {
-            // note: chroma min width is 2
-            dstV[x] = weightUnidirC(w0, srcV0[x], round, shift, offset);
-            x--;
-            dstV[x] = weightUnidirC(w0, srcV0[x], round, shift, offset);
-            x--;
-        }
+            for (x = width - 1; x >= 0; )
+            {
+                // note: chroma min width is 2
+                dstV[x] = weightUnidirC(w0, srcV0[x], round, shift, offset);
+                x--;
+                dstV[x] = weightUnidirC(w0, srcV0[x], round, shift, offset);
+                x--;
+            }
 
-        srcV0 += src0Stride;
-        dstV  += dststride;
+            srcV0 += src0Stride;
+            dstV  += dststride;
+        }
     }
 }
 
@@ -406,7 +430,7 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt
  * \returns void
  */
 
-void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool justChroma)
+void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     short* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     short* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
@@ -420,7 +444,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     int w0, offset, shiftNum, shift, round;
     UInt srcStride, dstStride;
 
-    if(!justChroma)
+    if (bLuma)
     {
         // Luma : --------------------------------------------
         w0      = wp0[0].w;
@@ -434,28 +458,31 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
         primitives.weightpUni((int16_t *)srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
     }
 
-    // Chroma U : --------------------------------------------
-    w0      = wp0[1].w;
-    offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    shift   = wp0[1].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
+    if (bChroma)
+    {
+        // Chroma U : --------------------------------------------
+        w0      = wp0[1].w;
+        offset  = wp0[1].offset;
+        shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        shift   = wp0[1].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
 
-    srcStride = srcYuv0->m_cwidth;
-    dstStride  = outDstYuv->getCStride();
+        srcStride = srcYuv0->m_cwidth;
+        dstStride  = outDstYuv->getCStride();
 
-    width  >>= 1;
-    height >>= 1;
+        width  >>= 1;
+        height >>= 1;
 
-    primitives.weightpUni((int16_t *)srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset);
+        primitives.weightpUni((int16_t *)srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset);
 
-    // Chroma V : --------------------------------------------
-    w0      = wp0[2].w;
-    offset  = wp0[2].offset;
-    shift   = wp0[2].shift + shiftNum;
-    round   = shift ? (1 << (shift - 1)) : 0;
+        // Chroma V : --------------------------------------------
+        w0      = wp0[2].w;
+        offset  = wp0[2].offset;
+        shift   = wp0[2].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
 
-    primitives.weightpUni((int16_t *)srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset);
+        primitives.weightpUni((int16_t *)srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset);
+    }
 }
 
 //=======================================================
@@ -546,7 +573,7 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv)
+void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp0, *pwp1;
 
@@ -554,15 +581,15 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
 
     if (refIdx0 >= 0 && refIdx1 >= 0)
     {
-        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv);
+        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv, bLuma, bChroma);
     }
     else if (refIdx0 >= 0 && refIdx1 <  0)
     {
-        addWeightUni(srcYuv0, partIdx, width, height, pwp0, outDstYuv);
+        addWeightUni(srcYuv0, partIdx, width, height, pwp0, outDstYuv, bLuma, bChroma);
     }
     else if (refIdx0 <  0 && refIdx1 >= 0)
     {
-        addWeightUni(srcYuv1, partIdx, width, height, pwp1, outDstYuv);
+        addWeightUni(srcYuv1, partIdx, width, height, pwp1, outDstYuv, bLuma, bChroma);
     }
     else
     {
@@ -582,7 +609,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv)
+void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp0, *pwp1;
 
@@ -590,15 +617,15 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcY
 
     if (refIdx0 >= 0 && refIdx1 >= 0)
     {
-        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv);
+        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv, bLuma, bChroma);
     }
     else if (refIdx0 >= 0 && refIdx1 <  0)
     {
-        addWeightUni(srcYuv0, partIdx, width, height, pwp0, outDstYuv);
+        addWeightUni(srcYuv0, partIdx, width, height, pwp0, outDstYuv, bLuma, bChroma);
     }
     else if (refIdx0 <  0 && refIdx1 >= 0)
     {
-        addWeightUni(srcYuv1, partIdx, width, height, pwp1, outDstYuv);
+        addWeightUni(srcYuv1, partIdx, width, height, pwp1, outDstYuv, bLuma, bChroma);
     }
     else
     {
@@ -618,7 +645,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcY
  * \param refIdx
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx)
+void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
@@ -636,7 +663,7 @@ void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYu
     {
         getWpScaling(cu, -1, refIdx, pwpTmp, pwp);
     }
-    addWeightUni(srcYuv, partAddr, width, height, pwp, outPredYuv);
+    addWeightUni(srcYuv, partAddr, width, height, pwp, outPredYuv, bLuma, bChroma);
 }
 
 /** weighted prediction for uni-pred
@@ -651,7 +678,7 @@ void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYu
  * \param refIdx
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx)
+void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* srcYuv, UInt partAddr, int width, int height, RefPicList picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
@@ -669,5 +696,5 @@ void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* src
     {
         getWpScaling(cu, -1, refIdx, pwpTmp, pwp);
     }
-    addWeightUni(srcYuv, partAddr, width, height, pwp, outPredYuv);
+    addWeightUni(srcYuv, partAddr, width, height, pwp, outPredYuv, bLuma, bChroma);
 }
