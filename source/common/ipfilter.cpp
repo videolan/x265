@@ -442,13 +442,86 @@ void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, in
         txt += stride;
     }
 }
+
+template<int N, int width, int height>
+void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+{
+    int16_t const * coeff = g_chromaFilter[coeffIdx];
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    int offset =  (1 << (headRoom - 1));
+    int16_t maxVal = (1 << X265_DEPTH) - 1;
+    int cStride = 1;
+    src -= (N / 2 - 1) * cStride;
+
+    int row, col;
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int sum;
+
+            sum  = src[col + 0 * cStride] * coeff[0];
+            sum += src[col + 1 * cStride] * coeff[1];
+            if (N >= 4)
+            {
+                sum += src[col + 2 * cStride] * coeff[2];
+                sum += src[col + 3 * cStride] * coeff[3];
+            }
+            if (N >= 6)
+            {
+                sum += src[col + 4 * cStride] * coeff[4];
+                sum += src[col + 5 * cStride] * coeff[5];
+            }
+            if (N == 8)
+            {
+                sum += src[col + 6 * cStride] * coeff[6];
+                sum += src[col + 7 * cStride] * coeff[7];
+            }
+            int16_t val = (int16_t)(sum + offset) >> headRoom;
+
+            if (val < 0) val = 0;
+            if (val > maxVal) val = maxVal;
+            dst[col] = (pixel)val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
 }
 
 namespace x265 {
 // x265 private namespace
 
+#define SETUP_PARTITION(W, H) \
+    p.chroma_hpp[CHROMA_PARTITION_ ##W ##x ##H] = interp_horiz_pp_c##<4, W, H>;
+
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 {
+    SETUP_PARTITION(2, 4);
+    SETUP_PARTITION(2, 8);
+    SETUP_PARTITION(4, 2);
+    SETUP_PARTITION(4, 4);
+    SETUP_PARTITION(4, 8);
+    SETUP_PARTITION(4, 16);
+    SETUP_PARTITION(6, 8);
+    SETUP_PARTITION(8, 2);
+    SETUP_PARTITION(8, 4);
+    SETUP_PARTITION(8, 6);
+    SETUP_PARTITION(8, 8);
+    SETUP_PARTITION(8, 16);
+    SETUP_PARTITION(8, 32);
+    SETUP_PARTITION(12, 16);
+    SETUP_PARTITION(16, 4);
+    SETUP_PARTITION(16, 8);
+    SETUP_PARTITION(16, 12);
+    SETUP_PARTITION(16, 16);
+    SETUP_PARTITION(16, 32);
+    SETUP_PARTITION(32, 8);
+    SETUP_PARTITION(32, 16);
+    SETUP_PARTITION(32, 24);
+    SETUP_PARTITION(32, 32);
+
     p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_p_p<8>;
     p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
     p.ipfilter_ps[FILTER_V_P_S_8] = filterVertical_p_s<8>;

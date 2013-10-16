@@ -39,6 +39,12 @@ const char* IPFilterPPNames[] =
     "ipfilterV_pp<4>"
 };
 
+const char* ChromaFilterPPNames[] =
+{
+   "2x4", "2x8", "4x2", "4x4", "4x8", "4x16", "6x8", "8x2", "8x4", "8x6", "8x8", "8x16", "8x32",
+   "12x16", "16x4", "16x8", "16x12", "16x16", "16x32", "24x32", "32x8", "32x16", "32x24", "32x32"
+};
+
 IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
@@ -262,6 +268,41 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_
     return true;
 }
 
+bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt)
+{
+    for (int i = 0; i <= 100; i++)
+    {
+        int rand_coeffIdx = rand() % 8;     // Random coeffIdex in the filter
+        int rand_srcStride = rand() % 100;  // Randomly generated srcStride
+        int rand_dstStride = rand() % 100;  // Randomly generated dstStride
+
+        if (rand_srcStride < 32)
+            rand_srcStride = 32;
+
+        if (rand_dstStride < 32)
+            rand_dstStride = 32;
+
+        opt(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_vec_output_p,
+            rand_dstStride,
+            rand_coeffIdx
+            );
+        ref(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_C_output_p,
+            rand_dstStride,
+            rand_coeffIdx
+            );
+
+        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
+            return false;
+    }
+
+    return true;
+}
+
+
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -318,6 +359,18 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
+    for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
+    {
+        if (opt.chroma_hpp[value])
+        {
+            if (!check_IPFilterChroma_primitive(ref.chroma_hpp[value], opt.chroma_hpp[value]))
+            {
+                 printf("interp_4tap_horiz_pp[%s]", ChromaFilterPPNames[value]);
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -371,5 +424,15 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         printf("ipfilter_s2p\t");
         REPORT_SPEEDUP(opt.ipfilter_s2p, ref.ipfilter_s2p,
                        short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
+    }
+
+    for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
+    {
+        if (opt.chroma_hpp[value])
+        {
+            printf("interp_4tap_horiz_pp[%s]", ChromaFilterPPNames[value]);
+            REPORT_SPEEDUP(opt.chroma_hpp[value], ref.chroma_hpp[value],
+                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+        }
     }
 }
