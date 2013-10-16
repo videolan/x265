@@ -79,16 +79,81 @@ static int64_t x265_mdate(void)
 using namespace x265;
 
 static const char short_options[] = "o:f:F:r:i:b:s:q:m:hV";
-static struct option long_options[] =
+static const struct option long_options[] =
 {
-#define HELP(message)
-#define OPT(longname, var, argreq, flag, helptext) { longname, argreq, NULL, flag },
-#define STROPT OPT
-#include "x265opts.h"
-    { 0, 0, 0, 0 }
-#undef OPT
-#undef STROPT
-#undef HELP
+#if HIGH_BIT_DEPTH
+    {"depth",          required_argument, NULL, 0},
+#endif                 
+    {"help",                 no_argument, NULL, 'h'},
+    {"cpuid",          required_argument, NULL, 0},
+    {"threads",        required_argument, NULL, 0},
+    {"frame-threads",  required_argument, NULL, 'F'},
+    {"log",            required_argument, NULL, 0},
+    {"csv",            required_argument, NULL, 0},
+    {"no-progress",          no_argument, NULL, 0},
+    {"output",         required_argument, NULL, 'o'},
+    {"input",          required_argument, NULL, 0},
+    {"input-depth",    required_argument, NULL, 0},
+    {"input-res",      required_argument, NULL, 0},
+    {"fps",            required_argument, NULL, 0},
+    {"frame-skip",     required_argument, NULL, 0},
+    {"frames",         required_argument, NULL, 'f'},
+    {"recon",          required_argument, NULL, 'r'},
+    {"recon-depth",    required_argument, NULL, 0},
+    {"no-wpp",               no_argument, NULL, 0},
+    {"wpp",                  no_argument, NULL, 0},
+    {"ctu",            required_argument, NULL,'s'},
+    {"tu-intra-depth", required_argument, NULL, 0},
+    {"tu-inter-depth", required_argument, NULL, 0},
+    {"me",             required_argument, NULL, 0},
+    {"subme",          required_argument, NULL,'m'},
+    {"merange",        required_argument, NULL, 0},
+    {"max-merge",      required_argument, NULL, 0},
+    {"rdpenalty",      required_argument, NULL, 0},
+    {"no-rect",              no_argument, NULL, 0},
+    {"rect",                 no_argument, NULL, 0},
+    {"no-amp",               no_argument, NULL, 0},
+    {"amp",                  no_argument, NULL, 0},
+    {"no-early-skip",        no_argument, NULL, 0},
+    {"early-skip",           no_argument, NULL, 0},
+    {"no-fast-cbf",          no_argument, NULL, 0},
+    {"fast-cbf",             no_argument, NULL, 0},
+    {"no-tskip",             no_argument, NULL, 0},
+    {"tskip",                no_argument, NULL, 0},
+    {"no-tskip-fast",        no_argument, NULL, 0},
+    {"tskip-fast",           no_argument, NULL, 0},
+    {"no-constrained-intra", no_argument, NULL, 0},
+    {"constrained-intra",    no_argument, NULL, 0},
+    {"refresh",        required_argument, NULL, 0},
+    {"keyint",         required_argument, NULL, 'i'},
+    {"rc-lookahead",   required_argument, NULL, 0},
+    {"bframes",        required_argument, NULL, 'b'},
+    {"bframe-bias",    required_argument, NULL, 0},
+    {"b-adapt",        required_argument, NULL, 0},
+    {"ref",            required_argument, NULL, 0},
+    {"no-weightp",           no_argument, NULL, 0},
+    {"weightp",              no_argument, NULL, 'w'},
+    {"bitrate",        required_argument, NULL, 0},
+    {"qp",             required_argument, NULL, 'q'},
+    {"cbqpoffs",       required_argument, NULL, 0},
+    {"crqpoffs",       required_argument, NULL, 0},
+    {"rd",             required_argument, NULL, 0},
+    {"no-signhide",          no_argument, NULL, 0},
+    {"signhide",             no_argument, NULL, 0},
+    {"no-lft",               no_argument, NULL, 0},
+    {"lft",                  no_argument, NULL, 0},
+    {"no-sao",               no_argument, NULL, 0},
+    {"sao",                  no_argument, NULL, 0},
+    {"sao-lcu-bounds", required_argument, NULL, 0},
+    {"sao-lcu-opt",    required_argument, NULL, 0},
+    {"no-ssim",              no_argument, NULL, 0},
+    {"ssim",                 no_argument, NULL, 0},
+    {"no-psnr",              no_argument, NULL, 0},
+    {"psnr",                 no_argument, NULL, 0},
+    {"hash",           required_argument, NULL, 0},
+    {"no-strong-intra-smoothing", no_argument, NULL, 0},
+    {"strong-intra-smoothing",    no_argument, NULL, 0},
+    { 0, 0, 0, 0}
 };
 
 #if CU_STAT_LOGFILE
