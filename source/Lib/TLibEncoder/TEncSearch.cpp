@@ -2224,11 +2224,6 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvFiel
  */
 void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
 {
-    m_predYuv[0].clear();
-    m_predYuv[1].clear();
-    m_predTempYuv.clear();
-    predYuv->clear();
-
     MV mvzero(0, 0);
     MV mv[2];
     MV mvBidir[2];
