@@ -2359,15 +2359,28 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                     m_me.setMVP(mvPredBi[1][refIdxBidir[1]]);
                     bitsZero1 = bits[1] - m_me.bitcost(mv[1]) + m_me.bitcost(mvzero);
 
-                    xCheckBestMVP(cu, REF_PIC_LIST_0, mvzero, mvPredBi[0][refIdxBidir[0]], mvpIdxBi[0][refIdxBidir[0]], bitsZero0, costTemp);
-                    xCheckBestMVP(cu, REF_PIC_LIST_1, mvzero, mvPredBi[1][refIdxBidir[1]], mvpIdxBi[1][refIdxBidir[1]], bitsZero1, costTemp);
+                    UInt costZero = satdCost + m_rdCost->getCost(bitsZero0) + m_rdCost->getCost(bitsZero1);
 
-                    int costZero = satdCost + m_rdCost->getCost(bitsZero0) + m_rdCost->getCost(bitsZero1);
+                    MV mvpZero[2];
+                    int mvpidxZero[2];
+                    mvpZero[0] = mvPredBi[0][refIdxBidir[0]];
+                    mvpidxZero[0] = mvpIdxBi[0][refIdxBidir[0]];
+                    xCopyAMVPInfo(&amvpInfo[0][refIdxBidir[0]], cu->getCUMvField(REF_PIC_LIST_0)->getAMVPInfo());
+                    xCheckBestMVP(cu, REF_PIC_LIST_0, mvzero, mvpZero[0], mvpidxZero[0], bitsZero0, costZero);
+                    mvpZero[1] = mvPredBi[1][refIdxBidir[1]];
+                    mvpidxZero[1] = mvpIdxBi[1][refIdxBidir[1]];
+                    xCopyAMVPInfo(&amvpInfo[1][refIdxBidir[1]], cu->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo());
+                    xCheckBestMVP(cu, REF_PIC_LIST_1, mvzero, mvpZero[1], mvpidxZero[1], bitsZero1, costZero);
+
                     if (costZero < costbi)
                     {
                         costbi = costZero;
                         mvBidir[0].x = mvBidir[0].y = 0;
                         mvBidir[1].x = mvBidir[1].y = 0;
+                        mvPredBi[0][refIdxBidir[0]] = mvpZero[0];
+                        mvPredBi[1][refIdxBidir[1]] = mvpZero[1];
+                        mvpIdxBi[0][refIdxBidir[0]] = mvpidxZero[0];
+                        mvpIdxBi[1][refIdxBidir[1]] = mvpidxZero[1];
                         bits[2] = bitsZero0 + bitsZero1 - mbBits[0] - mbBits[1] + mbBits[2];
                     }
                 }
