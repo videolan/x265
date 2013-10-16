@@ -2251,10 +2251,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
     int numPredDir = cu->getSlice()->isInterP() ? 1 : 2;
     UInt biPDistTemp = MAX_INT;
 
-    /* TODO: this could be as high as FrameEncoder::prepareEncode() */
     TComPicYuv *fenc = cu->getSlice()->getPic()->getPicYuvOrg();
-    m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar interDirNeighbours[MRG_MAX_NUM_CANDS];
     int numValidMergeCand = 0;

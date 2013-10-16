@@ -331,9 +331,11 @@ void FrameEncoder::compressFrame()
     double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
 
+    TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
     for (int i = 0; i < m_numRows; i++)
     {
         m_rows[i].m_search.setQPLambda(qp, lambda, chromaLambda);
+        m_rows[i].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
         m_rows[i].m_rdCost.setLambda(lambda);
         m_rows[i].m_rdCost.setCbDistortionWeight(cbWeight);
         m_rows[i].m_rdCost.setCrDistortionWeight(crWeight);
