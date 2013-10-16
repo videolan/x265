@@ -36,6 +36,7 @@ FrameFilter::FrameFilter()
     : m_cfg(NULL)
     , m_pic(NULL)
     , m_rdGoOnBinCodersCABAC(true)
+    , m_ssimBuf(NULL)
 {
 }
 
@@ -52,6 +53,7 @@ void FrameFilter::destroy()
         m_sao.destroy();
         m_sao.destroyEncBuffer();
     }
+    X265_FREE(m_ssimBuf);
 }
 
 void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
@@ -75,6 +77,9 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
         m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
         m_sao.createEncBuffer();
     }
+
+    if (m_cfg->param.bEnableSsim)
+        m_ssimBuf = (ssim_t*)x265_malloc(sizeof(ssim_t) * 8 * (m_cfg->param.sourceWidth / 4 + 3));
 }
 
 void FrameFilter::start(TComPic *pic)
@@ -270,6 +275,25 @@ void FrameFilter::processRowPost(int row)
     {
         calculatePSNR(lineStartCUAddr, row);
     }
+    if (m_cfg->param.bEnableSsim && m_ssimBuf)
+    {
+        pixel *rec = (pixel*)m_pic->getPicYuvRec()->getLumaAddr();
+        pixel *org = (pixel*)m_pic->getPicYuvOrg()->getLumaAddr();
+        int stride1 = m_pic->getPicYuvOrg()->getStride();
+        int stride2 = m_pic->getPicYuvRec()->getStride();
+        int bEnd = ((row + 1) == (this->m_numRows - 1));
+        int bStart = (row == 0);
+        int minPixY = row * 64 - 4 * !bStart;
+        int maxPixY = (row + 1) * 64 - 4 * !bEnd;
+        int ssim_cnt;
+        x265_emms();
+        /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
+        * to avoid alignment of ssim blocks with DCT blocks. */
+        minPixY += bStart ? 2 : -6;
+        m_pic->getSlice()->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2, 
+                                                   m_cfg->param.sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
+        m_pic->getSlice()->m_ssimCnt += ssim_cnt;
+    }
 }
 
 static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height)
@@ -404,6 +428,39 @@ void FrameFilter::calculatePSNR(uint32_t cuAddr, int row)
     m_pic->m_SSDU += ssdU;
     m_pic->m_SSDV += ssdV;
 }
+
+/* Function to calculate SSIM for each row */
+float FrameFilter::calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int *cnt)
+{
+    int z = 0;
+    float ssim = 0.0;
+    ssim_t(*sum0)[4] = (ssim_t(*)[4])buf;
+    ssim_t(*sum1)[4] = sum0 + (width >> 2) + 3;
+    width >>= 2;
+    height >>= 2;
+
+    for (int y = 1; y < height; y++)
+    {
+        for (; z <= y; z++)
+        {
+            void* swap = sum0;
+            sum0 = sum1;
+            sum1 = (ssim_t(*)[4])swap;
+            for (int x = 0; x < width; x += 2)
+            {
+                primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
+            }
+        }
+
+        for (int x = 0; x < width - 1; x += 4)
+        {
+            ssim += primitives.ssim_end_4(sum0 + x, sum1 + x, X265_MIN(4, width - x - 1));
+        }
+    }
+
+    *cnt = (height - 1) * (width - 1);
+    return ssim; 
+} 
 
 void FrameFilter::processSao(int row)
 {

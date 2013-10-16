@@ -54,6 +54,7 @@ public:
     void processRowPost(int row);
     void processSao(int row);
     void calculatePSNR(uint32_t cu, int row);
+    float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int *cnt);
 
 protected:
 
@@ -73,6 +74,8 @@ public:
     TEncBinCABAC                m_rdGoOnBinCodersCABAC;
     TComBitCounter              m_bitCounter;
     TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
+    /* Temp storage for ssim computation that doesn't need repeated malloc */
+    void*                       m_ssimBuf;
 };
 }
 
