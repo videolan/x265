@@ -231,7 +231,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.pixelavg_pp[PARTITION_4x8]  = x265_pixel_avg_4x8_mmx2;
         p.pixelavg_pp[PARTITION_4x4]  = x265_pixel_avg_4x4_mmx2;
 
-        PIXEL_AVE(sse2);
+        //PIXEL_AVE(sse2);
         ASSGN_SSE(sse2);
         INIT2( sad, _sse2 );
         INIT2( sad_x3, _sse2 );
@@ -260,7 +260,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(ssse3);
         p.sse_pp[PARTITION_4x4] = x265_pixel_ssd_4x4_ssse3;
         ASSGN_SSE(ssse3);
-        PIXEL_AVE(ssse3);
+        //PIXEL_AVE(ssse3);
 
         p.sad_x4[PARTITION_8x4] = x265_pixel_sad_x4_8x4_ssse3;
         p.sad_x4[PARTITION_8x8] = x265_pixel_sad_x4_8x8_ssse3;
