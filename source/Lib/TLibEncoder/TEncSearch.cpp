@@ -56,32 +56,6 @@ DECLARE_CYCLE_COUNTER(ME);
 //! \ingroup TLibEncoder
 //! \{
 
-static const MV s_mvRefineHpel[9] =
-{
-    MV(0,  0),  // 0
-    MV(0, -1),  // 1
-    MV(0,  1),  // 2
-    MV(-1,  0), // 3
-    MV(1,  0),  // 4
-    MV(-1, -1), // 5
-    MV(1, -1),  // 6
-    MV(-1,  1), // 7
-    MV(1,  1)   // 8
-};
-
-static const MV s_mvRefineQPel[9] =
-{
-    MV(0,  0),  // 0
-    MV(0, -1),  // 1
-    MV(0,  1),  // 2
-    MV(-1, -1), // 5
-    MV(1, -1),  // 6
-    MV(-1,  0), // 3
-    MV(1,  0),  // 4
-    MV(-1,  1), // 7
-    MV(1,  1)   // 8
-};
-
 TEncSearch::TEncSearch()
 {
     m_qtTempCoeffY  = NULL;
