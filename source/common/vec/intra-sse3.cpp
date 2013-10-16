@@ -100,55 +100,6 @@ extern unsigned char IntraFilterType[][35];
             *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row41, row41)); \
         }
 
-#define PRED_INTRA_ANG4_START   \
-    Vec8s row11, row12, row21, row22, row31, row32, row41, row42;   \
-    Vec16uc tmp16_1, tmp16_2;   \
-    Vec2uq tmp2uq;  \
-    Vec8s v_deltaFract, v_deltaPos(0), thirty2(32), thirty1(31), v_ipAngle(0);  \
-    bool modeHor = (dirMode < 18);
-
-#define PRED_INTRA_ANG4_END \
-    v_deltaFract = v_deltaPos & thirty1;    \
-    row11 = ((thirty2 - v_deltaFract) * row11 + (v_deltaFract * row12) + 16) >> 5;  \
-    /*row2*/    \
-    v_deltaPos += v_ipAngle;    \
-    v_deltaFract = v_deltaPos & thirty1;    \
-    row21 = ((thirty2 - v_deltaFract) * row21 + (v_deltaFract * row22) + 16) >> 5;  \
-    /*row3*/    \
-    v_deltaPos += v_ipAngle;    \
-    v_deltaFract = v_deltaPos & thirty1;    \
-    row31 = ((thirty2 - v_deltaFract) * row31 + (v_deltaFract * row32) + 16) >> 5;  \
-    /*row4*/    \
-    v_deltaPos += v_ipAngle;    \
-    v_deltaFract = v_deltaPos & thirty1;    \
-    row41 = ((thirty2 - v_deltaFract) * row41 + (v_deltaFract * row42) + 16) >> 5;  \
-    /* Flip the block */    \
-    if (modeHor)    \
-    {   \
-        Vec8s tmp1, tmp2, tmp3, tmp4;   \
-        tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(row11, row31); \
-        tmp2 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(row21, row41); \
-        tmp3 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(tmp1, tmp2);   \
-        tmp4 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(tmp1, tmp2); \
-        tmp16_1 = compress_unsafe(tmp3, tmp3);  \
-        store_partial(const_int(4), dst, tmp16_1); \
-        tmp2uq = reinterpret_i(tmp16_1);    \
-        tmp2uq >>= 32;  \
-        store_partial(const_int(4), dst + dstStride, tmp2uq);  \
-        tmp16_1 = compress_unsafe(tmp4, tmp4);  \
-        store_partial(const_int(4), dst + (2 * dstStride), tmp16_1);   \
-        tmp2uq = reinterpret_i(tmp16_1);    \
-        tmp2uq >>= 32;  \
-        store_partial(const_int(4), dst + (3 * dstStride), tmp2uq);    \
-    }   \
-    else    \
-    {   \
-        store_partial(const_int(4), dst, compress_unsafe(row11, row11));   \
-        store_partial(const_int(4), dst + (dstStride), compress_unsafe(row21, row21)); \
-        store_partial(const_int(4), dst + (2 * dstStride), compress_unsafe(row31, row31)); \
-        store_partial(const_int(4), dst + (3 * dstStride), compress_unsafe(row41, row41)); \
-    }
-
 #define PRED_INTRA_ANG8_START   \
     /* Map the mode index to main prediction direction and angle*/    \
     bool modeHor       = (dirMode < 18);    \
