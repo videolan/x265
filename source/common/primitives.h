@@ -6,6 +6,7 @@
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -137,17 +138,15 @@ enum IPFilterConf_S_S
     NUM_IPFILTER_S_S
 };
 
-enum ChromaPartitionWidths
+enum ChromaPartions
 {
-    CHROMA_PARTITION_W2,
-    CHROMA_PARTITION_W4,
-    CHROMA_PARTITION_W6,
-    CHROMA_PARTITION_W8,
-    CHROMA_PARTITION_W12,
-    CHROMA_PARTITION_W16,
-    CHROMA_PARTITION_W24,
-    CHROMA_PARTITION_W32,
-    NUM_CHROMA_PARTITION_WIDTHS
+    CHROMA_PARTITION_2x4, CHROMA_PARTITION_2x8, CHROMA_PARTITION_4x2, CHROMA_PARTITION_4x4,
+    CHROMA_PARTITION_4x8, CHROMA_PARTITION_4x16, CHROMA_PARTITION_6x8, CHROMA_PARTITION_8x2,
+    CHROMA_PARTITION_8x4, CHROMA_PARTITION_8x6, CHROMA_PARTITION_8x8, CHROMA_PARTITION_8x16,
+    CHROMA_PARTITION_8x32, CHROMA_PARTITION_12x16, CHROMA_PARTITION_16x4, CHROMA_PARTITION_16x8,
+    CHROMA_PARTITION_16x12, CHROMA_PARTITION_16x16, CHROMA_PARTITION_16x32, CHROMA_PARTITION_24x32,
+    CHROMA_PARTITION_32x8, CHROMA_PARTITION_32x16, CHROMA_PARTITION_32x24, CHROMA_PARTITION_32x32,
+    NUM_CHROMA_PARTITIONS
 };
 
 // Returns a Partitions enum for the given size, always expected to return a valid enum
@@ -203,7 +202,7 @@ typedef float (*ssim_end4_t)(ssim_t sum0[5][4], ssim_t sum1[5][4], int width);
 typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
 typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
 
-typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int height, int coeffIdx); 
+typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -236,7 +235,7 @@ struct EncoderPrimitives
     ipfilter_p2s_t  ipfilter_p2s;
     ipfilter_s2p_t  ipfilter_s2p;
     extendCURowBorder_t extendRowBorder;
-    filter_pp_t     chroma_hpp[NUM_CHROMA_PARTITION_WIDTHS];
+    filter_pp_t     chroma_hpp[NUM_CHROMA_PARTITIONS];
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;
