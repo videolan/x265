@@ -273,8 +273,8 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
     for (int i = 0; i <= 100; i++)
     {
         int rand_coeffIdx = rand() % 8;     // Random coeffIdex in the filter
-        int srcStride = 64;
-        int dstStride = 64;
+        int srcStride = 2;
+        int dstStride = 2;
 
         opt(pixel_buff + 3 * srcStride,
             srcStride,
