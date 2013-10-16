@@ -23,6 +23,7 @@
 
 #include "yuv.h"
 #include "PPA/ppa.h"
+#include "common.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -34,13 +35,28 @@ YUVInput::YUVInput(const char *filename)
     ifs.open(filename, ios::binary | ios::in);
     width = height = 0;
     depth = 8;
-    buf = NULL;
+    threadActive = false;
+    if (!ifs.fail())
+        threadActive = true;
+    else
+        ifs.close();
+#if defined ENABLE_THREAD
+    head = 0;
+    tail = 0;
+#endif
 }
 
 YUVInput::~YUVInput()
 {
     ifs.close();
+#if defined ENABLE_THREAD
+    for (int i = 0; i < QUEUE_SIZE; i++)
+    {
+        delete[] buf[i];
+    }
+#else
     delete[] buf;
+#endif
 }
 
 int YUVInput::guessFrameCount()
@@ -50,33 +66,110 @@ int YUVInput::guessFrameCount()
     ifs.seekg(0, ios::end);
     ifstream::pos_type size = ifs.tellg();
     ifs.seekg(cur, ios::beg);
-    int pixelbytes = depth > 8 ? 2 : 1;
 
     return (int)((size - cur) / (width * height * pixelbytes * 3 / 2));
 }
 
 void YUVInput::skipFrames(int numFrames)
 {
-    int pixelbytes = depth > 8 ? 2 : 1;
-
-    int framesize = (width * height * 3 / 2) * pixelbytes;
-
     ifs.seekg(framesize * numFrames, ios::cur);
 }
+
+void YUVInput::setDimensions(int w, int h)
+{
+    width = w;
+    height = h;
+    pixelbytes = depth > 8 ? 2 : 1;
+    framesize = (width * height * 3 / 2) * pixelbytes;
+    if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
+        height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT)
+    {
+        threadActive = false;
+        ifs.close();
+    }
+    else
+    {
+#if defined ENABLE_THREAD
+        for (int i = 0; i < QUEUE_SIZE; i++)
+        {
+            buf[i] = new char[framesize];
+            if (buf[i] == NULL)
+            {
+                x265_log(NULL, X265_LOG_ERROR, "yuv: buffer allocation failure, aborting");
+                threadActive = false;
+            }
+        }
+        start();
+#else
+        buf = new char[framesize];
+#endif
+    }
+}
+
+#if defined ENABLE_THREAD
+void YUVInput::threadMain()
+{
+    do
+    {
+        if (!populateFrameQueue())
+            break;
+    }
+    while (threadActive);
+}
+
+bool YUVInput::populateFrameQueue()
+{
+    while ((tail + 1) % QUEUE_SIZE == head)
+    {
+        notFull.wait();
+        if (!threadActive)
+            break;
+    }
+    ifs.read(buf[tail], framesize);
+    frameStat[tail] = ifs.good();
+    if (!frameStat[tail])
+        return false;
+    tail = (tail + 1) % QUEUE_SIZE;
+    notEmpty.trigger();
+    return true;
+}
+
+bool YUVInput::readPicture(x265_picture_t& pic)
+{
+    PPAStartCpuEventFunc(read_yuv);
+    if (!threadActive)
+        return false;
+    while (head == tail)
+    {
+        notEmpty.wait();
+    }
+    if (!frameStat[head])
+        return false;
+    pic.planes[0] = buf[head];
+
+    pic.planes[1] = (char*)(pic.planes[0]) + width * height * pixelbytes;
+
+    pic.planes[2] = (char*)(pic.planes[1]) + ((width * height * pixelbytes) >> 2);
+
+    pic.bitDepth = depth;
+
+    pic.stride[0] = width * pixelbytes;
+
+    pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
+
+    head = (head + 1) % QUEUE_SIZE;
+    notFull.trigger();
+
+    PPAStopCpuEventFunc(read_yuv);
+
+    return true;
+}
+#else
 
 // TODO: only supports 4:2:0 chroma sampling
 bool YUVInput::readPicture(x265_picture_t& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
-
-    int pixelbytes = depth > 8 ? 2 : 1;
-
-    int bufsize = (width * height * 3 / 2) * pixelbytes;
-
-    if (!buf)
-    {
-        buf = new char[bufsize];
-    }
 
     pic.planes[0] = buf;
 
@@ -90,8 +183,19 @@ bool YUVInput::readPicture(x265_picture_t& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    ifs.read(buf, bufsize);
+    ifs.read(buf, framesize);
     PPAStopCpuEventFunc(read_yuv);
 
     return ifs.good();
+}
+#endif
+
+void YUVInput::release()
+{
+#if defined(ENABLE_THREAD)
+    threadActive = false;
+    notFull.trigger();
+    stop();
+#endif
+    delete this;
 }

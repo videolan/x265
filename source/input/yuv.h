@@ -27,10 +27,19 @@
 #include "input.h"
 #include <fstream>
 
+#if defined(ENABLE_THREAD)
+#define QUEUE_SIZE 5
+#include "threading.h"
+#endif
+
 namespace x265 {
 // private x265 namespace
 
+#if defined(ENABLE_THREAD)
+class YUVInput : public Input, public Thread
+#else
 class YUVInput : public Input
+#endif
 {
 protected:
 
@@ -40,7 +49,27 @@ protected:
 
     int depth;
 
+    int pixelbytes;
+
+    int framesize;
+
+    bool threadActive;
+
+#if defined(ENABLE_THREAD)
+    volatile int head;
+
+    volatile int tail;
+
+    bool frameStat[QUEUE_SIZE];
+
+    char* buf[QUEUE_SIZE];
+
+    Event notFull;
+
+    Event notEmpty;
+#else
     char* buf;
+#endif
 
     std::ifstream ifs;
 
@@ -50,7 +79,7 @@ public:
 
     virtual ~YUVInput();
 
-    void setDimensions(int w, int h)              { width = w; height = h; }
+    void setDimensions(int w, int h);
 
     void setBitDepth(int bitDepth)                { depth = bitDepth; }
 
@@ -62,15 +91,23 @@ public:
 
     bool isEof() const                            { return ifs.eof(); }
 
-    bool isFail()                                 { return !ifs.is_open(); }
+    bool isFail()                                 { return !(ifs.is_open() && threadActive);}
 
-    void release()                                { delete this; }
+    void release();
 
     int  guessFrameCount();
 
     void skipFrames(int numFrames);
 
     bool readPicture(x265_picture_t&);
+
+#if defined(ENABLE_THREAD)
+
+    void threadMain();
+
+    bool populateFrameQueue();
+
+#endif
 
     const char *getName() const                   { return "yuv"; }
 };
