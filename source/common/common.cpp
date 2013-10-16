@@ -420,3 +420,124 @@ void x265_print_params(x265_param_t *param)
     fprintf(stderr, "\n");
     fflush(stderr);
 }
+
+extern "C"
+int x265_param_parse(x265_param_t *p, const char *name, const char *value)
+{
+    int berror = 0;
+    int valuewasnull;
+
+    /* Enable or Disable - default is Enable */
+    int bvalue = 1;
+
+    if (!name)
+        return X265_PARAM_BAD_NAME;
+
+    if (!value)
+        value = "1";
+
+    if (!strncmp(name, "no-", 3))
+    {
+        bvalue = 0; 
+        name += 3;
+    }
+    else
+        bvalue = 1;
+
+    valuewasnull = !value;
+
+#define OPT(STR) else if (!strcmp( name, STR))
+    if (0);
+    OPT("fps")
+        p->frameRate = atoi(value);
+    OPT("threads")
+        p->poolNumThreads = atoi(value);
+    OPT("frame-threads")
+        p->frameNumThreads = atoi(value);
+    OPT("log")
+        p->logLevel = atoi(value);
+    OPT("wpp")
+        p->bEnableWavefront = bvalue;
+    OPT("ctu")
+        p->maxCUSize =(uint32_t) atoi(value);
+    OPT("tu-intra-depth")
+        p->tuQTMaxIntraDepth = (uint32_t) atoi(value);
+    OPT("tu-inter-depth")
+        p->tuQTMaxInterDepth =(uint32_t) atoi(value);
+    OPT("me")
+        p->searchMethod = atoi(value);
+    OPT("subme")
+        p->subpelRefine = atoi(value);
+    OPT("merange") 
+        p->searchRange = atoi(value);
+    OPT("rect")
+        p->bEnableRectInter = bvalue;
+    OPT("amp")
+        p->bEnableAMP = bvalue;
+    OPT("max-merge")
+        p->maxNumMergeCand = (uint32_t)atoi(value);
+    OPT("early-skip")
+        p->bEnableEarlySkip = bvalue;
+    OPT("fast-cbf")
+        p->bEnableCbfFastMode = bvalue;
+    OPT("rdpenalty")
+        p->rdPenalty = atoi(value);
+    OPT("tskip")
+        p->bEnableTransformSkip = bvalue;
+    OPT("no-tskip-fast")
+        p->bEnableTSkipFast = bvalue;
+    OPT("tskip-fast")
+        p->bEnableTSkipFast = bvalue;
+    OPT("strong-intra-smoothing")
+        p->bEnableStrongIntraSmoothing = bvalue;
+    OPT("constrained-intra")
+        p->bEnableConstrainedIntra = bvalue;
+    OPT("refresh")
+        p->decodingRefreshType = atoi(value);
+    OPT("keyint")
+        p->keyframeMax = atoi(value);
+    OPT("rc-lookahead")
+        p->lookaheadDepth = atoi(value);
+    OPT("bframes")
+        p->bframes = atoi(value);
+    OPT("bframe-bias")
+        p->bFrameBias = atoi(value);
+    OPT("b-adapt")
+        p->bFrameAdaptive = atoi(value);
+    OPT("ref")
+        p->maxNumReferences = atoi(value);
+    OPT("weightp")
+        p->bEnableWeightedPred = bvalue;
+    OPT("bitrate")
+        p->rc.bitrate = atoi(value);
+    OPT("qp")
+        p->rc.qp = atoi(value);
+    OPT("cbqpoffs")
+        p->cbQpOffset = atoi(value);
+    OPT("crqpoffs")
+        p->crQpOffset = atoi(value);
+    OPT("rd")
+        p->bRDLevel = atoi(value);
+    OPT("signhide")
+        p->bEnableSignHiding = bvalue;
+    OPT("lft")
+        p->bEnableLoopFilter = bvalue;
+    OPT("sao")
+        p->bEnableSAO = bvalue;
+    OPT("sao-lcu-bounds")
+        p->saoLcuBoundary = atoi(value);
+    OPT("sao-lcu-opt")
+        p->saoLcuBasedOptimization = atoi(value);
+    OPT("ssim")
+        p->bEnableSsim = bvalue;
+    OPT("psnr")
+        p->bEnablePsnr = bvalue;
+    OPT("hash")
+        p->decodedPictureHashSEI = atoi(value);
+    else
+        return X265_PARAM_BAD_NAME;
+#undef OPT
+
+    berror |= valuewasnull;
+    return berror ? X265_PARAM_BAD_VALUE : 0;
+}

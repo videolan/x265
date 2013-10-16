@@ -290,6 +290,7 @@ struct CLIOptions
 
     bool parse(int argc, char **argv, x265_param_t* param)
     {
+        int berror = 0;
         int help = 0;
         int cpuid = 0;
         uint32_t inputBitDepth = 8;
@@ -345,16 +346,30 @@ struct CLIOptions
                     log(X265_LOG_WARNING, "short option '%c' unrecognized\n", c);
                     return true;
                 }
-#define HELP(message)
-#define STROPT(longname, var, argreq, flag, helptext) \
-    else if (!strcmp(long_options[long_options_index].name, longname)) \
-        (var) = optarg;
-#define OPT(longname, var, argreq, flag, helptext) \
-    else if (!strcmp(long_options[long_options_index].name, longname)) \
-        (var) = (argreq == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
-#include "x265opts.h"
+#define OPT(longname) \
+    else if (!strcmp(long_options[long_options_index].name, longname))
+
+            if (0);
+                OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
+                OPT("no-progress") this->bProgress = false;
+                OPT("frame-skip") this->frameSkip = (uint32_t)atoi(optarg);
+                OPT("csv") csvfn = optarg;
+                OPT("output") bitstreamfn = optarg;
+                OPT("input") inputfn = optarg;
+                OPT("recon") reconfn = optarg;
+                OPT("input-depth") inputBitDepth = (uint32_t)atoi(optarg);
+                OPT("recon-depth") outputBitDepth = (uint32_t)atoi(optarg);
+                OPT("input-res") inputRes = optarg;
+            else
+                berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
+
+            if (berror)
+            {
+                const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind-2];
+                log(X265_LOG_ERROR, "invalid argument: %s = %s\n", name, optarg);
+                return true;
+            }
 #undef OPT
-#undef STROPT
             }
         }
 

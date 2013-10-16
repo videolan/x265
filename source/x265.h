@@ -347,6 +347,17 @@ void x265_setup_primitives(x265_param_t *param, int cpu);
  */
 void x265_param_default(x265_param_t *param);
 
+/* x265_param_parse:
+ *  set one parameter by name.
+ *  returns 0 on success, or returns one of the following errors.
+ *  note: BAD_VALUE occurs only if it can't even parse the value,
+ *  numerical range is not checked until x265_encoder_open() or
+ *  x265_encoder_reconfig().
+ *  value=NULL means "true" for boolean options, but is a BAD_VALUE for non-booleans. */
+#define X265_PARAM_BAD_NAME  (-1)
+#define X265_PARAM_BAD_VALUE (-2)
+int x265_param_parse(x265_param_t *p, const char *name, const char *value);
+
 /***
  * Initialize an x265_picture_t structure to default values
  */

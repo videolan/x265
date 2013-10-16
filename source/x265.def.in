@@ -2,6 +2,7 @@ EXPORTS
 x265_encoder_open_${X265_BUILD}
 x265_setup_primitives
 x265_param_default
+x265_param_parse
 x265_picture_init
 x265_param_apply_profile
 x265_max_bit_depth
