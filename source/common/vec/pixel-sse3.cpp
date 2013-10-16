@@ -635,7 +635,7 @@ void calcRecons(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recI
 namespace x265 {
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
 {
-    p.cvt32to16_shr = convert32to16_shr;
+    //p.cvt32to16_shr = convert32to16_shr;
     p.cvt16to32_shl = convert16to32_shl;
     p.cvt16to16_shl = convert16to16_shl;
 
