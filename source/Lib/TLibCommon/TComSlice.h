@@ -1358,7 +1358,6 @@ private:
     bool        m_deblockingFilterOverrideFlag;    //< offsets for deblocking filter inherit from PPS
     int         m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
     int         m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
-    int         m_list1IdxToList0Idx[MAX_NUM_REF];
     int         m_numRefIdx[2];     //  for multiple reference of current slice
 
     bool        m_bCheckLDC;
@@ -1509,8 +1508,6 @@ public:
 
     int       getNumRpsCurrTempList();
 
-    int       getList1IdxToList0Idx(int list1Idx) { return m_list1IdxToList0Idx[list1Idx]; }
-
     void      setReferenced(bool b)            { m_bReferenced = b; }
 
     bool      isReferenced()                   { return m_bReferenced; }
@@ -1587,8 +1584,6 @@ public:
     {
         m_bEqualRef[e][refIdx1][refIdx2] = m_bEqualRef[e][refIdx2][refIdx1] = b;
     }
-
-    void setList1IdxToList0Idx();
 
     void setTLayerInfo(UInt tlayer);
 

@@ -2331,7 +2331,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG)
                         refIdx[list] = idx;
                     }
 
-                    if (list == 1 && costTemp < costValidList1 && cu->getSlice()->getList1IdxToList0Idx(idx) < 0)
+                    if (list == 1 && costTemp < costValidList1)
                     {
                         costValidList1 = costTemp;
                         bitsValidList1 = bitsTemp;

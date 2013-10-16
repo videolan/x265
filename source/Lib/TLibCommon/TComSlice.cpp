@@ -86,11 +86,6 @@ TComSlice::TComSlice()
 
     initEqualRef();
 
-    for (int idx = 0; idx < MAX_NUM_REF; idx++)
-    {
-        m_list1IdxToList0Idx[idx] = -1;
-    }
-
     for (int numCount = 0; numCount < MAX_NUM_REF; numCount++)
     {
         m_refPicList[0][numCount] = NULL;
@@ -221,24 +216,6 @@ void TComSlice::setRefPOCList()
         for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
         {
             m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
-        }
-    }
-}
-
-void TComSlice::setList1IdxToList0Idx()
-{
-    int idxL0, idxL1;
-
-    for (idxL1 = 0; idxL1 < getNumRefIdx(REF_PIC_LIST_1); idxL1++)
-    {
-        m_list1IdxToList0Idx[idxL1] = -1;
-        for (idxL0 = 0; idxL0 < getNumRefIdx(REF_PIC_LIST_0); idxL0++)
-        {
-            if (m_refPicList[REF_PIC_LIST_0][idxL0]->getPOC() == m_refPicList[REF_PIC_LIST_1][idxL1]->getPOC())
-            {
-                m_list1IdxToList0Idx[idxL1] = idxL0;
-                break;
-            }
         }
     }
 }
@@ -500,11 +477,6 @@ void TComSlice::copySliceInfo(TComSlice *src)
     for (i = 0; i < 2; i++)
     {
         m_numRefIdx[i] = src->m_numRefIdx[i];
-    }
-
-    for (i = 0; i < MAX_NUM_REF; i++)
-    {
-        m_list1IdxToList0Idx[i] = src->m_list1IdxToList0Idx[i];
     }
 
     m_bCheckLDC           = src->m_bCheckLDC;

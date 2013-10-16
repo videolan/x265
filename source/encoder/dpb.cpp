@@ -159,7 +159,6 @@ void DPB::prepareEncode(TComPic *pic)
     }
 
     slice->setRefPOCList();
-    slice->setList1IdxToList0Idx();
     slice->setEnableTMVPFlag(1);
 
     bool bGPBcheck = false;
