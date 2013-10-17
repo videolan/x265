@@ -41,42 +41,38 @@ namespace {
 template<int ly>
 int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
-    Vec8s m1, n1;
+    __m128i sum1 = _mm_setzero_si128();
+    __m128i T00, T01, T02, T03;
+    __m128i T10, T11, T12, T13;
+    __m128i T20, T21;
 
-    Vec4i sum(0);
-    Vec8us sad(0);
-    int max_iterators = (ly >> 4) << 4;
-    int row;
-
-    for (row = 0; row < max_iterators; row += 16)
+    for (int i = 0; i < ly; i += 4)
     {
-        for (int i = 0; i < 16; i++)
-        {
-            m1.load_a(fenc);
-            n1.load(fref);
-            sad += abs(m1 - n1);
+        T00 = _mm_loadl_epi64((__m128i*)(fenc + (i + 0) * fencstride));
+        T01 = _mm_loadl_epi64((__m128i*)(fenc + (i + 1) * fencstride));
+        T01 = _mm_unpacklo_epi64(T00, T01);
+        T02 = _mm_loadl_epi64((__m128i*)(fenc + (i + 2) * fencstride));
+        T03 = _mm_loadl_epi64((__m128i*)(fenc + (i + 3) * fencstride));
+        T03 = _mm_unpacklo_epi64(T02, T03);
 
-            fenc += fencstride;
-            fref += frefstride;
-        }
-
-        sum += extend_low(sad);
-        sad = 0;
+        T10 = _mm_loadl_epi64((__m128i*)(fref + (i + 0) * frefstride));
+        T11 = _mm_loadl_epi64((__m128i*)(fref + (i + 1) * frefstride));
+        T11 = _mm_unpacklo_epi64(T10, T11);
+        T12 = _mm_loadl_epi64((__m128i*)(fref + (i + 2) * frefstride));
+        T13 = _mm_loadl_epi64((__m128i*)(fref + (i + 3) * frefstride));
+        T13 = _mm_unpacklo_epi64(T12, T13);
+        T20 = _mm_sub_epi16(T01, T11);
+        T20 = _mm_abs_epi16(T20);
+        T21 = _mm_sub_epi16(T03, T13);
+        T21 = _mm_abs_epi16(T21);
+        T21 = _mm_add_epi16(T20, T21);
+        sum1 = _mm_add_epi16(sum1, T21);
     }
+    sum1 = _mm_hadd_epi16(sum1, sum1);
+    sum1 = _mm_unpacklo_epi16(sum1, _mm_setzero_si128());
+    sum1 = _mm_hadd_epi32(_mm_hadd_epi32(sum1, sum1), sum1);
 
-    while (row++ < ly)
-    {
-        m1.load_a(fenc);
-        n1.load(fref);
-        sad += abs(m1 - n1);
-
-        fenc += fencstride;
-        fref += frefstride;
-    }
-
-    sum += extend_low(sad);
-
-    return horizontal_add(sum);
+    return _mm_cvtsi128_si32(sum1);
 }
 
 template<int ly>
