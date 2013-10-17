@@ -3,6 +3,7 @@
  *
  * Authors: Deepthi Devaki <deepthidevaki@multicorewareinc.com>,
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -495,34 +496,39 @@ void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 namespace x265 {
 // x265 private namespace
 
-#define SETUP_PARTITION(W, H) \
-    p.chroma_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>;
+#define CHROMA(W, H) \
+    p.chroma_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>
+
+#define LUMA(W, H) \
+    p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 {
-    SETUP_PARTITION(2, 4);
-    SETUP_PARTITION(2, 8);
-    SETUP_PARTITION(4, 2);
-    SETUP_PARTITION(4, 4);
-    SETUP_PARTITION(4, 8);
-    SETUP_PARTITION(4, 16);
-    SETUP_PARTITION(6, 8);
-    SETUP_PARTITION(8, 2);
-    SETUP_PARTITION(8, 4);
-    SETUP_PARTITION(8, 6);
-    SETUP_PARTITION(8, 8);
-    SETUP_PARTITION(8, 16);
-    SETUP_PARTITION(8, 32);
-    SETUP_PARTITION(12, 16);
-    SETUP_PARTITION(16, 4);
-    SETUP_PARTITION(16, 8);
-    SETUP_PARTITION(16, 12);
-    SETUP_PARTITION(16, 16);
-    SETUP_PARTITION(16, 32);
-    SETUP_PARTITION(32, 8);
-    SETUP_PARTITION(32, 16);
-    SETUP_PARTITION(32, 24);
-    SETUP_PARTITION(32, 32);
+    LUMA(4, 4);
+    LUMA(8, 8);   CHROMA(4, 4);
+    LUMA(4, 8);   CHROMA(2, 4);
+    LUMA(8, 4);   CHROMA(4, 2);
+    LUMA(16, 16); CHROMA(8, 8);
+    LUMA(16,  8); CHROMA(8, 4);
+    LUMA( 8, 16); CHROMA(4, 8);
+    LUMA(16, 12); CHROMA(8, 6);
+    LUMA(12, 16); CHROMA(6, 8);
+    LUMA(16,  4); CHROMA(8, 2);
+    LUMA( 4, 16); CHROMA(2, 8);
+    LUMA(32, 32); CHROMA(16, 16);
+    LUMA(32, 16); CHROMA(16, 8);
+    LUMA(16, 32); CHROMA(8, 16);
+    LUMA(32, 24); CHROMA(16, 12);
+    LUMA(24, 32); CHROMA(12, 16);
+    LUMA(32,  8); CHROMA(16, 4);
+    LUMA( 8, 32); CHROMA(4, 16);
+    LUMA(64, 64); CHROMA(32, 32);
+    LUMA(64, 32); CHROMA(32, 16);
+    LUMA(32, 64); CHROMA(16, 32);
+    LUMA(64, 48); CHROMA(32, 24);
+    LUMA(48, 64); CHROMA(24, 32);
+    LUMA(64, 16); CHROMA(32, 8);
+    LUMA(16, 64); CHROMA(8, 32);
 
     p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_p_p<8>;
     p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
