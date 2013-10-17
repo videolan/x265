@@ -464,7 +464,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("interp_4tap_horiz_pp[%s]", chromaPartStr[value]);
             REPORT_SPEEDUP(opt.chroma_hpp[value], ref.chroma_hpp[value],
-                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+                           pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
     }
 
