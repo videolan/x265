@@ -466,7 +466,7 @@ ALIGN 16
     HADDD   m0, m1
     movd   eax, m0
 %endif
-%if (cpuflags == cpuflags_mmx)
+%if (mmsize == 8)
     emms
 %endif
     RET
