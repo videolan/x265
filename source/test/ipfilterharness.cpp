@@ -3,6 +3,7 @@
  *
  * Authors: Deepthi Devaki <deepthidevaki@multicorewareinc.com>,
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -293,6 +294,35 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
     return true;
 }
 
+bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t opt)
+{
+    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        rand_coeffIdx = rand() % 3;                // Random coeffIdex in the filter
+
+        rand_srcStride = rand() % 100;             // Randomly generated srcStride
+        rand_dstStride = rand() % 100;             // Randomly generated dstStride
+
+        opt(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_vec_output_p,
+            rand_dstStride,
+            rand_coeffIdx);
+        ref(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_C_output_p,
+            rand_dstStride,
+            rand_coeffIdx);
+
+        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
+            return false;
+    }
+
+    return true;
+}
+
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -361,6 +391,18 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
+    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
+    {
+        if (opt.luma_hpp[value])
+        {
+            if (!check_IPFilterChroma_primitive(ref.luma_hpp[value], opt.luma_hpp[value]))
+            {
+                printf("interp_8tap_horiz_pp[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -423,6 +465,16 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             printf("interp_4tap_horiz_pp[%s]", chromaPartStr[value]);
             REPORT_SPEEDUP(opt.chroma_hpp[value], ref.chroma_hpp[value],
                            pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+        }
+    }
+
+    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
+    {
+        if (opt.luma_hpp[value])
+        {
+            printf("interp_8tap_horiz_pp[%s]", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.luma_hpp[value], ref.luma_hpp[value],
+                           pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
     }
 }

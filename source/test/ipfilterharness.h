@@ -3,6 +3,7 @@
  *
  * Authors: Deepthi Devaki <deepthidevaki@multicorewareinc.com>,
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +47,7 @@ protected:
     bool check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_t opt);
     bool check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt);
     bool check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt);
+    bool check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t opt);
 
 public:
 
