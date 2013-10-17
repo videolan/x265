@@ -50,6 +50,85 @@ static inline double qp2qScale(double qp)
     return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
 }
 
+/* Compute variance to derive AC energy of each block */
+static inline uint32_t acEnergyVar(uint64_t sum_ssd, int shift)
+{
+    uint32_t sum = (uint32_t)sum_ssd;
+    uint32_t ssd = (uint32_t)(sum_ssd >> 32);
+
+    return ssd - ((uint64_t)sum * sum >> shift);
+}
+
+/* Find the energy of each block in Y/Cb/Cr plane */
+static inline uint32_t acEnergyPlane(pixel* src, int srcStride, int bChroma)
+{
+    int blockStride = FENC_STRIDE >> 3;
+
+    if (bChroma)
+    {
+        ALIGN_VAR_8(pixel, pix[8 * 8]);
+        primitives.blockcpy_pp(8, 8, pix, blockStride, src, srcStride);
+        return acEnergyVar(primitives.var[PARTITION_8x8](pix, blockStride), 6);
+    }
+    else
+        return acEnergyVar(primitives.var[PARTITION_16x16](src, srcStride), 8);
+}
+
+/* Find the total AC energy of each CU in all planes */
+double RateControl::acEnergyCu(TComPic* pic, uint32_t cuAddr)
+{
+    uint32_t var = 0;
+    double avgQp = 0;
+    pixel* srcLuma = pic->getPicYuvOrg()->getLumaAddr(cuAddr);
+    pixel* srcCb = pic->getPicYuvOrg()->getCbAddr(cuAddr);
+    pixel* srcCr = pic->getPicYuvOrg()->getCrAddr(cuAddr);
+    UInt blockWidth = g_maxCUWidth >> 2;
+    UInt blockHeight = g_maxCUHeight >> 2;
+    UInt frameStride = pic->getPicYuvOrg()->getStride();
+    UInt cStride = pic->getPicYuvOrg()->getCStride();
+
+    // Calculate Qp offset for each 16x16 block in the CU and average them over entire CU
+    for (UInt h = 0, cnt = 0; h < g_maxCUHeight; h += blockHeight)
+    {
+        for (UInt w = 0; w < g_maxCUWidth; w += blockWidth, cnt++)
+        {
+            UInt blockOffsetLuma = w + (h * frameStride);
+            UInt blockOffsetChroma = (w >> 1) + ((h >> 1) * cStride);
+            var = acEnergyPlane(srcLuma + blockOffsetLuma, frameStride, 0);
+            var += acEnergyPlane(srcCb + blockOffsetChroma, cStride, 1);
+            var += acEnergyPlane(srcCr + blockOffsetChroma, cStride, 1);
+            avgQp += cfg->param.rc.aqStrength * (X265_LOG2(X265_MAX(var, 1)) - (14.427f));
+        }
+    }
+
+    avgQp /= 16;
+    x265_emms();
+    return avgQp;
+}
+
+void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
+{
+    double strength;
+
+    /* Actual adaptive quantization */
+    if (cfg->param.rc.aqMode)
+    {
+        strength = cfg->param.rc.aqStrength * 1.0397f;
+        int maxRows = pic->getPicSym()->getFrameHeightInCU();
+        int maxCols = pic->getPicSym()->getFrameWidthInCU();
+        for (int cu_y = 0; cu_y < maxRows; cu_y++)
+        {
+            for (int cu_x = 0; cu_x < maxCols; cu_x++)
+            {
+                double qp_adj;
+                int cu_xy = maxCols * cu_y + cu_x;
+                qp_adj = acEnergyCu(pic, cu_xy);
+                pic->m_qpAqOffset[cu_xy] = qp_adj;
+            }
+        }
+    }
+}
+
 RateControl::RateControl(TEncCfg * _cfg)
 {
     this->cfg = _cfg;

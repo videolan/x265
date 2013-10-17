@@ -80,7 +80,7 @@ struct RateControl
 
     // to be called for each frame to process RateCOntrol and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce);
-
+    void calcAdaptiveQuantFrame(TComPic *pic);
     int rateControlEnd(int64_t bits, RateControlEntry* rce);
 
 protected:
@@ -88,6 +88,7 @@ protected:
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
+    double acEnergyCu(TComPic* pic, uint32_t cuAddr);
 };
 }
 

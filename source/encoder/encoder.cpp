@@ -185,6 +185,8 @@ int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         // Encoder holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
+        if (param.rc.aqMode)
+            m_rateControl->calcAdaptiveQuantFrame(pic);
         m_lookahead->addPicture(pic, pic_in->sliceType);
     }
 
