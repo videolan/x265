@@ -114,5 +114,6 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...);
 int  x265_check_params(x265_param_t *param);
 void x265_print_params(x265_param_t *param);
 int x265_set_globals(x265_param_t *param);
+char *x265_param2string(x265_param_t *p);
 
 #endif // ifndef X265_COMMON_H

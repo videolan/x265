@@ -543,3 +543,56 @@ int x265_param_parse(x265_param_t *p, const char *name, const char *value)
     berror |= valuewasnull;
     return berror ? X265_PARAM_BAD_VALUE : 0;
 }
+
+char *x265_param2string( x265_param_t *p)
+{
+    char *buf, *s;
+    buf = s = (char *)X265_MALLOC(char, 2000);
+    if (!buf)
+        return NULL;
+
+#define BOOL(param, cliopt) \
+    s += sprintf(s, " %s", (param) ? cliopt : "no-"cliopt);
+
+    BOOL(p->bEnableWavefront, "wpp");
+    s += sprintf(s, " fps=%d", p->frameRate);
+    s += sprintf(s, " threads=%d", p->poolNumThreads);
+    s += sprintf(s, " frame-threads=%d", p->frameNumThreads);
+    s += sprintf(s, " ctu=%d", p->maxCUSize);
+    s += sprintf(s, " tu-intra-depth=%d", p->tuQTMaxIntraDepth);
+    s += sprintf(s, " tu-inter-depth=%d", p->tuQTMaxInterDepth);
+    s += sprintf(s, " me=%d", p->searchMethod);
+    s += sprintf(s, " subme=%d", p->subpelRefine);
+    s += sprintf(s, " merange=%d", p->searchRange);
+    BOOL(p->bEnableRectInter, "rect");
+    BOOL(p->bEnableAMP, "amp");
+    s += sprintf(s, " max-merge=%d", p->maxNumMergeCand);
+    BOOL(p->bEnableEarlySkip, "early-skip");
+    BOOL(p->bEnableCbfFastMode, "fast-cbf");
+    s += sprintf(s, " rdpenalty=%d", p->rdPenalty);
+    BOOL(p->bEnableTransformSkip, "tskip");
+    BOOL(p->bEnableTSkipFast, "tskip-fast");
+    BOOL(p->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
+    BOOL(p->bEnableConstrainedIntra, "constrained-intra");
+    s += sprintf(s, " refresh=%d", p->decodingRefreshType);
+    s += sprintf(s, " keyint=%d", p->keyframeMax);
+    s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
+    s += sprintf(s, " bframes=%d", p->bframes);
+    s += sprintf(s, " bframe-bias=%d", p->bFrameBias);
+    s += sprintf(s, " b-adapt=%d", p->bFrameAdaptive);
+    s += sprintf(s, " ref=%d", p->maxNumReferences);
+    BOOL(p->bEnableWeightedPred, "weightp");
+    s += sprintf(s, " bitrate=%d", p->rc.bitrate);
+    s += sprintf(s, " qp=%d", p->rc.qp);
+    s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
+    s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
+    s += sprintf(s, " rd=%d", p->bRDLevel);
+    BOOL(p->bEnableSignHiding, "signhide");
+    BOOL(p->bEnableLoopFilter, "lft");
+    BOOL(p->bEnableSAO, "sao");
+    s += sprintf(s, " sao-lcu-bounds=%d", p->saoLcuBoundary);
+    s += sprintf(s, " sao-lcu-opt=%d", p->saoLcuBasedOptimization);
+#undef BOOL
+
+    return buf;
+}
