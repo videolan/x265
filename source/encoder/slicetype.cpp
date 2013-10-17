@@ -543,6 +543,10 @@ void Lookahead::slicetypeDecide()
             p1 = b = bframes + 1;
 
             frames[0] = lastNonB;
+            for (int i = 0; i <= bframes; i++)
+            {
+                frames[i + 1] = &list[i]->m_lowres;
+            }
             if (IS_X265_TYPE_I(frames[bframes + 1]->sliceType))
                 p0 = bframes + 1;
             else // P
