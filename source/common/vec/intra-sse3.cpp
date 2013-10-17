@@ -1228,7 +1228,7 @@ void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *
     pixel* refMain;
     pixel* refSide;
 
-    // Initialise the Main and Left reference array.
+    // Initialize the Main and Left reference array.
     if (intraPredAngle < 0)
     {
         refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
@@ -1249,7 +1249,7 @@ void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *
     }
 
     // bfilter will always be true for blocksize 4
-    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    if (intraPredAngle == 0)  // Exactly horizontal/vertical angles
     {
         if (modeHor)
         {
@@ -1716,7 +1716,7 @@ void PredIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
-        tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 1));
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 1));
 
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
@@ -1869,7 +1869,8 @@ void PredIntraAng4_m_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode
 typedef void (*PredIntraAng4x4_table)(pixel* dst, int dstStride, pixel *refMain, int dirMode);
 PredIntraAng4x4_table PredIntraAng4[] =
 {
-    /* PredIntraAng4_0 is replaced with PredIntraAng4_2. For PredIntraAng4_0 we are going through default path in the xPredIntraAng4x4 because we cannot afford to pass large number arguments for this function. */
+    /* PredIntraAng4_0 is replaced with PredIntraAng4_2. For PredIntraAng4_0 we are going through default path in the
+     * xPredIntraAng4x4 because we cannot afford to pass large number arguments for this function. */
     PredIntraAng4_32,
     PredIntraAng4_26,
     PredIntraAng4_21,
@@ -1878,7 +1879,7 @@ PredIntraAng4x4_table PredIntraAng4[] =
     PredIntraAng4_9,
     PredIntraAng4_5,
     PredIntraAng4_2,
-    PredIntraAng4_2,    //Intentionally wrong! It should be "PredIntraAng4_0" here.
+    PredIntraAng4_2,    // Intentionally wrong! It should be "PredIntraAng4_0" here.
     PredIntraAng4_m_2,
     PredIntraAng4_m_5,
     PredIntraAng4_m_9,
@@ -1894,7 +1895,7 @@ PredIntraAng4x4_table PredIntraAng4[] =
     PredIntraAng4_m_9,
     PredIntraAng4_m_5,
     PredIntraAng4_m_2,
-    PredIntraAng4_2,    //Intentionally wrong! It should be "PredIntraAng4_0" here.
+    PredIntraAng4_2,    // Intentionally wrong! It should be "PredIntraAng4_0" here.
     PredIntraAng4_2,
     PredIntraAng4_5,
     PredIntraAng4_9,
@@ -1904,6 +1905,7 @@ PredIntraAng4x4_table PredIntraAng4[] =
     PredIntraAng4_26,
     PredIntraAng4_32
 };
+
 void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     assert(dirMode > 1); //no planar and dc
@@ -1919,7 +1921,7 @@ void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *
     pixel* refMain;
     pixel* refSide;
 
-    // Initialise the Main and Left reference array.
+    // Initialize the Main and Left reference array.
     if (intraPredAngle < 0)
     {
         int blkSize = width;
@@ -1941,7 +1943,7 @@ void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *
     }
 
     // bfilter will always be true for exactly vertical/horizontal modes
-    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    if (intraPredAngle == 0)  // Exactly horizontal/vertical angles
     {
         if (modeHor)
         {
@@ -2335,7 +2337,7 @@ void xPredIntraAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *
     pixel* refMain;
     pixel* refSide;
 
-    // Initialise the Main and Left reference array.
+    // Initialize the Main and Left reference array.
     if (intraPredAngle < 0)
     {
         refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
@@ -2356,7 +2358,7 @@ void xPredIntraAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *
     }
 
     // bfilter will always be true for blocksize 8
-    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    if (intraPredAngle == 0)  // Exactly horizontal/vertical angles
     {
         if (modeHor)
         {
@@ -2613,7 +2615,7 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
     pixel* refMain;
     pixel* refSide;
 
-    // Initialise the Main and Left reference array.
+    // Initialize the Main and Left reference array.
     if (intraPredAngle < 0)
     {
         refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
@@ -2635,7 +2637,7 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
     }
 
     // bfilter will always be true for blocksize 8
-    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    if (intraPredAngle == 0)  // Exactly horizontal/vertical angles
     {
         if (modeHor)
         {
@@ -3241,7 +3243,7 @@ void xPredIntraAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel
     pixel* refMain;
     pixel* refSide;
 
-    // Initialise the Main and Left reference array.
+    // Initialize the Main and Left reference array.
     if (intraPredAngle < 0)
     {
         refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
@@ -3263,7 +3265,7 @@ void xPredIntraAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel
     }
 
     // bfilter will always be true for blocksize 8
-    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    if (intraPredAngle == 0)  // Exactly horizontal/vertical angles
     {
         if (modeHor)
         {
@@ -4363,7 +4365,7 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
         pixel* refMain;
         pixel* refSide;
 
-        // Initialise the Main and Left reference array.
+        // Initialize the Main and Left reference array.
         if (intraPredAngle < 0)
         {
             refMain = (modeVer ? refAbove : refLeft); // + (blkSize - 1);
@@ -4450,102 +4452,6 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
         }
     }
 }
-
-ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
-{
-    { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 },         //  0
-    { 15, 0, 0, 1, 2, 3, 4, 5, 7, 0, 0, 9, 10, 11, 12, 13 },    //  1
-    { 12, 0, 0, 1, 2, 3, 4, 5, 3, 0, 0, 9, 10, 11, 12, 13 },    //  2
-    { 15, 11, 12, 0, 0, 1, 2, 3, 7, 3, 4, 0, 0, 9, 10, 11 },    //  3
-    { 13, 12, 11, 8, 8, 1, 2, 3, 5, 4, 3, 0, 0, 9, 10, 11 },    //  4
-    { 9, 0, 0, 1, 2, 3, 4, 5, 1, 0, 0, 9, 10, 11, 12, 13 },     //  5
-    { 11, 10, 9, 0, 0, 1, 2, 3, 4, 2, 1, 0, 0, 9, 10, 11 },     //  6
-    { 15, 12, 11, 10, 9, 0, 0, 1, 7, 4, 3, 2, 1, 0, 0, 9 },     //  7
-    { 0, 10, 11, 13, 1, 0, 10, 11, 3, 2, 0, 10, 5, 4, 2, 0 },    //  8
-
-    { 1, 2, 2, 3, 3, 4, 4,  5,  5,  6,  6,  7,  7,  8,  8,  9 },    //  9
-    { 2, 3, 3, 4, 4, 5, 5,  6,  6,  7,  7,  8,  8,  9,  9, 10 },    // 10
-    { 3, 4, 4, 5, 5, 6, 6,  7,  7,  8,  8,  9,  9, 10, 10, 11 },    // 11
-    { 4, 5, 5, 6, 6, 7, 7,  8,  8,  9,  9, 10, 10, 11, 11, 12 },    // 12
-    { 5, 6, 6, 7, 7, 8, 8,  9,  9, 10, 10, 11, 11, 12, 12, 13 },    // 13
-    { 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 14
-    { 9, 0, 0, 1, 1, 2, 2,  3,  3,  4,  4,  5,  5,  6,  6,  7 },    // 15
-    { 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 16
-    { 11, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7 },            // 17
-    { 4, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 18
-    { 14, 11, 11, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },           // 19
-    { 7, 4, 4, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 20
-    { 13, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7 },            // 21
-    { 6, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 22
-    { 12, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },            // 23
-    { 5, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 24
-    { 14, 12, 12, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5 },          // 25
-    { 7, 5, 5, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12 },        // 26
-    { 11, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },            // 27
-    { 4, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 28
-    { 13, 11, 11, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5 },          // 29
-    { 6, 4, 4, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12 },        // 30
-    { 15, 13, 13, 11, 11, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4 },        // 31
-    { 10, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },            // 32
-    { 3, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 33
-    { 12, 10, 10, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5 },          // 34
-    { 5, 3, 3, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12 },        // 35
-    { 13, 12, 12, 10, 10, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4 },        // 36
-    { 6, 5, 5, 3, 3, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11 },          // 37
-    { 15, 13, 13, 12, 12, 10, 10, 9, 9, 0, 0, 1, 1, 2, 2, 3 },      // 38
-    { 0, 7, 6, 5, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },             // 39
-    { 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 },       // 40
-
-    { 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 },       // 41
-};
-
-// TODO: Remove unused table and merge here
-ALIGN_VAR_32(static const unsigned char, tab_angle_2[][16]) =
-{
-    { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },       //  0
-};
-
-ALIGN_VAR_32(static const char, tab_angle_1[][16]) =
-{
-#define MAKE_COEF8(a) \
-    { 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a) \
-    },
-
-    MAKE_COEF8(0)
-    MAKE_COEF8(1)
-    MAKE_COEF8(2)
-    MAKE_COEF8(3)
-    MAKE_COEF8(4)
-    MAKE_COEF8(5)
-    MAKE_COEF8(6)
-    MAKE_COEF8(7)
-    MAKE_COEF8(8)
-    MAKE_COEF8(9)
-    MAKE_COEF8(10)
-    MAKE_COEF8(11)
-    MAKE_COEF8(12)
-    MAKE_COEF8(13)
-    MAKE_COEF8(14)
-    MAKE_COEF8(15)
-    MAKE_COEF8(16)
-    MAKE_COEF8(17)
-    MAKE_COEF8(18)
-    MAKE_COEF8(19)
-    MAKE_COEF8(20)
-    MAKE_COEF8(21)
-    MAKE_COEF8(22)
-    MAKE_COEF8(23)
-    MAKE_COEF8(24)
-    MAKE_COEF8(25)
-    MAKE_COEF8(26)
-    MAKE_COEF8(27)
-    MAKE_COEF8(28)
-    MAKE_COEF8(29)
-    MAKE_COEF8(30)
-    MAKE_COEF8(31)
-
-#undef MAKE_COEF8
-};
 }
 
 namespace x265 {
