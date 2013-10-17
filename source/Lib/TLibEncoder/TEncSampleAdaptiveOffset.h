@@ -68,8 +68,8 @@ private:
     Int64  ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  ***m_offset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  ***m_offsetOrg; //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
-    Int64  (*m_countPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];    //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    Int64  (*m_offsetOrgPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]; //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    Int64(*m_countPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];    //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    Int64(*m_offsetOrgPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]; //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  **m_rate;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     Int64  **m_dist;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     double **m_cost;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
@@ -81,6 +81,7 @@ private:
     double  m_depthSaoRate[2][4];
 
 public:
+
     double  lumaLambda;
     double  chromaLambda;
     int     depth;

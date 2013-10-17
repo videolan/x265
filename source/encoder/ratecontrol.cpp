@@ -70,9 +70,9 @@ RateControl::RateControl(TEncCfg * _cfg)
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
         accumPNorm = .01;
-        accumPQp = (ABR_INIT_QP_MIN) * accumPNorm;
+        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(2 *ncu, 0.5);
+        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(2 * ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
     }
@@ -82,7 +82,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     {
         lastQScaleFor[i] = qp2qScale(ABR_INIT_QP_MIN);
         lmin[i] = qp2qScale(MIN_QP);
-        lmax[i] = qp2qScale(MAX_QP);  
+        lmax[i] = qp2qScale(MAX_QP);
     }
 
     if (cfg->param.rc.rateControlMode == X265_RC_CQP)
@@ -104,16 +104,16 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     switch (cfg->param.rc.rateControlMode)
     {
     case X265_RC_ABR:
-        {
-            lastSatd = l->getEstimatedPictureCost(pic);
-            double q = qScale2qp(rateEstimateQscale(rce));
-            qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
-            rce->qpaRc = q;
-            /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
-            rce->qRceq = lastRceq;
-            accumPQpUpdate();
-            break;
-        }
+    {
+        lastSatd = l->getEstimatedPictureCost(pic);
+        double q = qScale2qp(rateEstimateQscale(rce));
+        qp = Clip3(MIN_QP, MAX_QP, (int)(q + 0.5));
+        rce->qpaRc = q;
+        /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
+        rce->qRceq = lastRceq;
+        accumPQpUpdate();
+        break;
+    }
 
     case X265_RC_CQP:
         qp = qpConstant[frameType];
@@ -184,7 +184,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
     }
     else
     {
-        double abrBuffer = 1.5 * rateTolerance * bitrate ;
+        double abrBuffer = 1.5 * rateTolerance * bitrate;
 
         /* 1pass ABR */
 
@@ -241,6 +241,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
                 lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
                 lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
             }
+
             /* Asymmetric clipping, because symmetric would prevent
              * overflow control in areas of rapidly oscillating complexity */
             else
@@ -248,6 +249,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
                 lqmin = lastQScaleFor[pictType] / lstep;
                 lqmax = lastQScaleFor[pictType] * lstep;
             }
+
             /* Rate control needs to be more aggressive based on actual costs obtained for
              * previous encoded frame */
             int rfAdapt = 1;

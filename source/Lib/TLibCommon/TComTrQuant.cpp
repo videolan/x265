@@ -386,7 +386,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-void TComTrQuant::invtransformNxN( bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip, int lastPos )
+void TComTrQuant::invtransformNxN(bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip, int lastPos)
 {
     if (transQuantBypass)
     {
@@ -421,7 +421,7 @@ void TComTrQuant::invtransformNxN( bool transQuantBypass, UInt mode, short* resi
         const UInt log2BlockSize = g_convertToBit[width];
 
 #if HIGH_BIT_DEPTH
-	lastPos = !lastPos; // prevent warning
+        lastPos = !lastPos; // prevent warning
 #else
         // DC only
         if (lastPos == 0 && !((width == 4) && (mode != REG_DCT)))
@@ -1119,19 +1119,19 @@ int TComTrQuant::getSigCtxInc(int      patternSigCtx,
  * This method calculates the best quantized transform level for a given scan position.
  */
 inline UInt TComTrQuant::xGetCodedLevel(double& codedCost,
-                                          double& codedCost0,
-                                          double& codedCostSig,
-                                          int     levelDouble,
-                                          UInt    maxAbsLevel,
-                                          UShort  ctxNumSig,
-                                          UShort  ctxNumOne,
-                                          UShort  ctxNumAbs,
-                                          UShort  absGoRice,
-                                          UInt    c1Idx,
-                                          UInt    c2Idx,
-                                          int     qbits,
-                                          double  scaleFactor,
-                                          bool    last) const
+                                        double& codedCost0,
+                                        double& codedCostSig,
+                                        int     levelDouble,
+                                        UInt    maxAbsLevel,
+                                        UShort  ctxNumSig,
+                                        UShort  ctxNumOne,
+                                        UShort  ctxNumAbs,
+                                        UShort  absGoRice,
+                                        UInt    c1Idx,
+                                        UInt    c2Idx,
+                                        int     qbits,
+                                        double  scaleFactor,
+                                        bool    last) const
 {
     double curCostSig   = 0;
     UInt   bestAbsLevel = 0;
@@ -1181,11 +1181,11 @@ inline UInt TComTrQuant::xGetCodedLevel(double& codedCost,
  * \returns cost of given absolute transform level
  */
 inline double TComTrQuant::xGetICRateCost(UInt   absLevel,
-                                            UShort ctxNumOne,
-                                            UShort ctxNumAbs,
-                                            UShort absGoRice,
-                                            UInt   c1Idx,
-                                            UInt   c2Idx) const
+                                          UShort ctxNumOne,
+                                          UShort ctxNumAbs,
+                                          UShort absGoRice,
+                                          UInt   c1Idx,
+                                          UInt   c2Idx) const
 {
     double rate = xGetIEPRate();
     UInt baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
@@ -1237,11 +1237,11 @@ inline double TComTrQuant::xGetICRateCost(UInt   absLevel,
 }
 
 inline int TComTrQuant::xGetICRate(UInt   absLevel,
-                                     UShort ctxNumOne,
-                                     UShort ctxNumAbs,
-                                     UShort absGoRice,
-                                     UInt   c1Idx,
-                                     UInt   c2Idx) const
+                                   UShort ctxNumOne,
+                                   UShort ctxNumAbs,
+                                   UShort absGoRice,
+                                   UInt   c1Idx,
+                                   UInt   c2Idx) const
 {
     int rate = 0;
     UInt baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;

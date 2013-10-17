@@ -89,7 +89,7 @@ protected:
     void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
-    
+
     void xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int height, TComYuv*& outPredYuv, bool bLuma = true, bool bChroma = true);
     void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partAddr, int width, int height, TComYuv*& outDstYuv, bool bLuma = true, bool bChroma = true);
 

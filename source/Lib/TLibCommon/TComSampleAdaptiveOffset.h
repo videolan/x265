@@ -218,6 +218,7 @@ public:
     void resetSaoUnit(SaoLcuParam* saoUnit);
     void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
 };
+
 void PCMLFDisableProcess(TComPic* pic);
 void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
 }

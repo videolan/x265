@@ -205,7 +205,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
 
     // generate filtered intra prediction samples
     // left and left above border + above and above right border + top left corner = length of 3. filter buffer
-    int bufSize = cuHeight2 + cuWidth2 + 1; 
+    int bufSize = cuHeight2 + cuWidth2 + 1;
     UInt wh = ADI_BUF_STRIDE * height;         // number of elements in one buffer
 
     Pel* filteredBuf1 = adiBuf + wh;         // 1. filter buffer
@@ -370,7 +370,7 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UIn
                          cuWidth, cuHeight, width, height, picStride);
 }
 
-void TComPattern::fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, int picStride )
+void TComPattern::fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, int picStride)
 {
     Pel* piRoiTemp;
     int  i, j;

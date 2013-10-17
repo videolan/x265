@@ -28,6 +28,7 @@
 void dummy()
 {
     x265_param_t param;
+
     x265_param_default(&param);
     x265_t *enc = x265_encoder_open(&param);
     x265_encoder_close(enc, 0);

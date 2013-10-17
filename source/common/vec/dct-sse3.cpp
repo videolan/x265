@@ -121,7 +121,8 @@ void dct4(short *src, int *dst, intptr_t stride)
     _mm_storeu_si128((__m128i*)&dst[2 * 4], T72);
     _mm_storeu_si128((__m128i*)&dst[3 * 4], T73);
 }
-#endif
+
+#endif // if !HIGH_BIT_DEPTH
 
 ALIGN_VAR_32(static const short, tab_idct_4x4[4][8]) =
 {

@@ -92,7 +92,6 @@ public:
     bool m_interRPSPrediction;
     int  m_numberOfLongtermPictures;          // Zero when disabled
 
-
     TComReferencePictureSet();
     virtual ~TComReferencePictureSet();
     int   getPocLSBLT(int i)                       { return m_pocLSBLT[i]; }
@@ -1519,8 +1518,11 @@ public:
     NalUnitType getNalUnitType() const         { return m_nalUnitType; }
 
     bool      getRapPicFlag();
-    bool      getIdrPicFlag()                  { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
-                                                        getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
+    bool      getIdrPicFlag()
+    {
+        return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
+               getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP;
+    }
 
     bool      isIRAP() const                   { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }
 

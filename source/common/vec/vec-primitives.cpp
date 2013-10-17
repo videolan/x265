@@ -31,23 +31,27 @@ int x265_cpu_cpuid_test(void)
 {
     return 0;
 }
+
 void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
 {
     int output[4];
+
     __cpuidex(output, op, 0);
     *eax = output[0];
     *ebx = output[1];
     *ecx = output[2];
     *edx = output[3];
 }
+
 void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
 {
     uint64_t out = _xgetbv(op);
+
     *eax = (uint32_t)out;
     *edx = (uint32_t)(out >> 32);
 }
 }
-#endif
+#endif // if !ENABLE_ASM_PRIMITIVES
 
 /* The #if logic here must match the file lists in CMakeLists.txt */
 #if defined(__INTEL_COMPILER)
@@ -71,7 +75,7 @@ void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
 #if _MSC_VER >= 1700 // VC11
 #define HAVE_AVX2
 #endif
-#endif
+#endif // if defined(__INTEL_COMPILER)
 
 namespace x265 {
 // private x265 namespace

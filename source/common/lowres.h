@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #ifndef X265_LOWRES_H
-#define X265_LOWRES_H 
+#define X265_LOWRES_H
 
 #include "TLibCommon/TComPicYuv.h"
 #include "common.h"
@@ -30,7 +30,6 @@
 #include "mv.h"
 
 namespace x265 {
-
 class TComPic;
 
 struct Lowres : public ReferencePlanes

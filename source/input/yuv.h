@@ -67,9 +67,9 @@ protected:
     Event notFull;
 
     Event notEmpty;
-#else
+#else // if defined(ENABLE_THREAD)
     char* buf;
-#endif
+#endif // if defined(ENABLE_THREAD)
 
     std::ifstream ifs;
 
@@ -91,7 +91,7 @@ public:
 
     bool isEof() const                            { return ifs.eof(); }
 
-    bool isFail()                                 { return !(ifs.is_open() && threadActive);}
+    bool isFail()                                 { return !(ifs.is_open() && threadActive); }
 
     void release();
 

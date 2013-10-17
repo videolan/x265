@@ -113,7 +113,10 @@ void PicList::remove(TComPic& pic)
 #if _DEBUG
     TComPic *tmp = m_start;
     while (tmp && tmp != &pic)
+    {
         tmp = tmp->m_next;
+    }
+
     assert(tmp == &pic); // verify pic is in this list
 #endif
 

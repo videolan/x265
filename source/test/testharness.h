@@ -53,7 +53,7 @@ public:
 
     virtual void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt) = 0;
 
-    virtual const char *getName() const = 0;    
+    virtual const char *getName() const = 0;
 };
 
 #ifdef _MSC_VER

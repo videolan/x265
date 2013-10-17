@@ -84,7 +84,6 @@ void inline NALUnitEBSP::init(OutputNALUnit& nalu)
     m_reservedZero6Bits = nalu.m_reservedZero6Bits;
     write(m_nalUnitData, nalu, m_packetSize);
 }
-
 }
 
 //! \}

@@ -101,6 +101,7 @@ inline double xRoundIbdi2(double x)
 {
     return ((x) > 0) ? (int)(((int)(x) + (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))) : ((int)(((int)(x) - (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))));
 }
+
 #endif
 
 /** rounding with IBDI
@@ -111,7 +112,7 @@ inline double xRoundIbdi(double x)
 #if HIGH_BIT_DEPTH
     return X265_DEPTH > 8 ? xRoundIbdi2(x) : ((x) >= 0 ? ((int)((x) + 0.5)) : ((int)((x) - 0.5)));
 #else
-    return ((x) >= 0 ? ((int)((x) + 0.5)) : ((int)((x) - 0.5)));
+    return (x) >= 0 ? ((int)((x) + 0.5)) : ((int)((x) - 0.5));
 #endif
 }
 
@@ -1646,7 +1647,6 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRowInit(SAOParam *saoParam)
 
 void TEncSampleAdaptiveOffset::rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus)
 {
-
     if (!saoParam->bSaoFlag[0])
     {
         m_depthSaoRate[0][depth] = 1.0;

@@ -65,9 +65,9 @@ protected:
     Event notFull;
 
     Event notEmpty;
-#else
+#else // if defined(ENABLE_THREAD)
     char *buf;
-#endif
+#endif // if defined(ENABLE_THREAD)
     std::ifstream ifs;
 
     bool parseHeader();

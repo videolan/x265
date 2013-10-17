@@ -83,7 +83,8 @@ int main(int argc, char *argv[])
     {
         char name[12];
         int flag;
-    } test_arch[] = {
+    } test_arch[] =
+    {
         { "SSE2", X265_CPU_SSE2 },
         { "SSE3", X265_CPU_SSE3 },
         { "SSSE3", X265_CPU_SSSE3 },
@@ -135,6 +136,7 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
+
 #endif // if ENABLE_ASM_PRIMITIVES
     }
 

@@ -373,7 +373,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     UInt bpely = tpely + outTempCU->getHeight(0) - 1;
     TComDataCU* subTempPartCU, * subBestPartCU;
     int qp = outTempCU->getQP(0);
-    
+
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
     bool bSliceEnd = slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() &&
@@ -486,7 +486,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
 
             /* Check for Intra in inter frames only if its a P-slice*/
-            if(outBestCU->getSlice()->getSliceType() == P_SLICE)
+            if (outBestCU->getSlice()->getSliceType() == P_SLICE)
             {
                 /*compute intra cost */
                 if (outBestCU->getCbf(0, TEXT_LUMA) != 0 ||
@@ -597,9 +597,9 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
 
             float lambda = 1.0f;
-            if(outBestCU->getSlice()->getSliceType() == P_SLICE)
+            if (outBestCU->getSlice()->getSliceType() == P_SLICE)
                 lambda = 0.9f;
-            else if(outBestCU->getSlice()->getSliceType() == B_SLICE)
+            else if (outBestCU->getSlice()->getSliceType() == B_SLICE)
                 lambda = 1.1f;
 
             if (outBestCU->m_totalCost < lambda * nxnCost)

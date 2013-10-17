@@ -3867,7 +3867,6 @@ UInt  TEncSearch::estimateHeaderBits(TComDataCU* cu, UInt absPartIdx)
     return bits;
 }
 
-
 void  TEncSearch::setWpScalingDistParam(TComDataCU*, int, RefPicList)
 {
 #if 0 // dead code
@@ -3901,7 +3900,7 @@ void  TEncSearch::setWpScalingDistParam(TComDataCU*, int, RefPicList)
     {
         m_distParam.wpCur = wp1;
     }
-#endif
+#endif // if 0
 }
 
 //! \}

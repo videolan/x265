@@ -122,6 +122,7 @@ bool IntraPredHarness::check_planar_primitive(intra_planar_t ref, intra_planar_t
             {
                 left[k] = pixel_buff[j - 1 + k * ADI_BUF_STRIDE];
             }
+
 #if _DEBUG
             memset(pixel_out_vec, 0xCD, out_size);
             memset(pixel_out_c, 0xCD, out_size);

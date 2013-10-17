@@ -121,6 +121,7 @@ void SyntaxElementWriter::xWriteUvlc(UInt code)
 void SyntaxElementWriter::xWriteSvlc(int code)
 {
     UInt ucode = xConvertToUInt(code);
+
     xWriteUvlc(ucode);
 }
 

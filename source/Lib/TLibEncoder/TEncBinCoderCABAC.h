@@ -79,6 +79,7 @@ protected:
     void writeOut();
 
 public:
+
     TComBitIf*          m_bitIf;
     UInt                m_low;
     UInt                m_range;

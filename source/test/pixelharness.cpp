@@ -74,8 +74,8 @@ PixelHarness::PixelHarness()
         pbuf3[i] = rand() & PIXEL_MAX;
         pbuf4[i] = rand() & PIXEL_MAX;
 
-        sbuf1[i] = (rand() & (2*SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
-        sbuf2[i] = (rand() & (2*SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
+        sbuf1[i] = (rand() & (2 * SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
+        sbuf2[i] = (rand() & (2 * SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
     }
 }
 
@@ -92,6 +92,7 @@ PixelHarness::~PixelHarness()
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
 {
     int j = 0;
+
     for (int i = 0; i < ITERS; i++)
     {
         int vres = opt(pbuf1, STRIDE, pbuf2 + j, STRIDE);
@@ -108,6 +109,7 @@ bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
 bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
 {
     int j = 0;
+
     for (int i = 0; i < ITERS; i++)
     {
         int vres = opt(sbuf1, STRIDE, pbuf2 + j, STRIDE);
@@ -124,6 +126,7 @@ bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
 bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
 {
     int j = 0;
+
     for (int i = 0; i < ITERS; i++)
     {
         int vres = opt(sbuf1, STRIDE, sbuf2 + j, STRIDE);
@@ -163,8 +166,8 @@ bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, pbuf2 + j +3, FENC_STRIDE - 5, &vres[0]);
-        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, pbuf2 + j +3, FENC_STRIDE - 5, &cres[0]);
+        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, pbuf2 + j + 3, FENC_STRIDE - 5, &vres[0]);
+        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, pbuf2 + j + 3, FENC_STRIDE - 5, &cres[0]);
 
         if ((vres[0] != cres[0]) || ((vres[1] != cres[1])) || ((vres[2] != cres[2])) || ((vres[3] != cres[3])))
             return false;

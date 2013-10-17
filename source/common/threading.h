@@ -142,10 +142,12 @@ public:
 
     Event()
     {
-        do {
+        do
+        {
             snprintf(name, sizeof(name), "/x265_%d", s_incr++);
             this->semaphore = sem_open(name, O_CREAT | O_EXCL, 0777, 0);
-        } while (this->semaphore == SEM_FAILED);
+        }
+        while (this->semaphore == SEM_FAILED);
     }
 
     ~Event()
@@ -158,8 +160,10 @@ public:
     {
         // keep waiting even if interrupted
         while (sem_wait(this->semaphore) < 0)
+        {
             if (errno != EINTR)
                 break;
+        }
     }
 
     void trigger()
@@ -168,7 +172,7 @@ public:
     }
 
 protected:
-    
+
     static int s_incr;
     char name[64];
 
@@ -222,7 +226,6 @@ public:
     void stop();
 };
 } // end namespace x265
-
 
 #if MACOS
 #include <sys/param.h>
@@ -280,6 +283,7 @@ inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
     else
         return *id = 0;
 }
+
 #endif // if !_WIN64
 
 #if _WIN32_WINNT <= _WIN32_WINNT_WINXP

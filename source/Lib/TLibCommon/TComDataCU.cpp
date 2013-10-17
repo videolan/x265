@@ -197,14 +197,22 @@ void TComDataCU::destroy()
     if (m_iPCMSampleY) { X265_FREE(m_iPCMSampleY); m_iPCMSampleY = NULL; }
     if (m_iPCMSampleCb) { X265_FREE(m_iPCMSampleCb); m_iPCMSampleCb = NULL; }
     if (m_iPCMSampleCr) { X265_FREE(m_iPCMSampleCr); m_iPCMSampleCr = NULL; }
-    delete[] m_cuTransquantBypass; m_cuTransquantBypass = NULL;
-    delete[] m_mvpIdx[0]; m_mvpIdx[0] = NULL;
-    delete[] m_mvpIdx[1]; m_mvpIdx[1] = NULL;
-    delete[] m_mvpNum[0]; m_mvpNum[0] = NULL;
-    delete[] m_mvpNum[1]; m_mvpNum[1] = NULL;
-    delete[] m_skipFlag; m_skipFlag = NULL;
-    delete[] m_partSizes; m_partSizes = NULL;
-    delete[] m_predModes; m_predModes = NULL;
+    delete[] m_cuTransquantBypass;
+    m_cuTransquantBypass = NULL;
+    delete[] m_mvpIdx[0];
+    m_mvpIdx[0] = NULL;
+    delete[] m_mvpIdx[1];
+    m_mvpIdx[1] = NULL;
+    delete[] m_mvpNum[0];
+    m_mvpNum[0] = NULL;
+    delete[] m_mvpNum[1];
+    m_mvpNum[1] = NULL;
+    delete[] m_skipFlag;
+    m_skipFlag = NULL;
+    delete[] m_partSizes;
+    m_partSizes = NULL;
+    delete[] m_predModes;
+    m_predModes = NULL;
 
     m_cuMvField[0].destroy();
     m_cuMvField[1].destroy();
@@ -1116,7 +1124,7 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& arPartUnitIdx, UInt curPartUnit
     UInt numPartInCUWidth = m_pic->getNumPartInWidth();
 
     if ((m_pic->getCU(m_cuAddr)->getCUPelX() + g_rasterToPelX[absPartIdxRT] + (m_pic->getPicSym()->getMinCUHeight() * partUnitOffset)) >=
-         m_slice->getSPS()->getPicWidthInLumaSamples())
+        m_slice->getSPS()->getPicWidthInLumaSamples())
     {
         arPartUnitIdx = MAX_UINT;
         return NULL;
@@ -1174,7 +1182,7 @@ TComDataCU* TComDataCU::getQpMinCuLeft(UInt& lPartUnitIdx, UInt curAbsIdxInLCU)
 {
     UInt numPartInCUWidth = m_pic->getNumPartInWidth();
     UInt absZorderQpMinCUIdx = (curAbsIdxInLCU >> ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) <<
-                                ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
+        ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
     UInt absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for left LCU boundary
@@ -1199,7 +1207,7 @@ TComDataCU* TComDataCU::getQpMinCuAbove(UInt& aPartUnitIdx, UInt curAbsIdxInLCU)
 {
     UInt numPartInCUWidth = m_pic->getNumPartInWidth();
     UInt absZorderQpMinCUIdx = (curAbsIdxInLCU >> ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) <<
-                                ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
+        ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
     UInt absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for top LCU boundary
@@ -1257,7 +1265,7 @@ char TComDataCU::getLastCodedQP(UInt absPartIdx)
             return getPic()->getCU(getAddr())->getLastCodedQP(getZorderIdxInCU());
         }
         else if (getAddr() > 0 && !(getSlice()->getPPS()->getEntropyCodingSyncEnabledFlag() &&
-                 getAddr() % getPic()->getFrameWidthInCU() == 0))
+                                    getAddr() % getPic()->getFrameWidthInCU() == 0))
         {
             return getPic()->getCU(getAddr() - 1)->getLastCodedQP(getPic()->getNumPartInCU());
         }
@@ -2006,7 +2014,7 @@ void TComDataCU::deriveLeftBottomIdx(UInt partIdx, UInt& outPartIdxLB)
 void TComDataCU::deriveRightBottomIdx(UInt partIdx, UInt& outPartIdxRB)
 {
     outPartIdxRB = g_rasterToZscan[g_zscanToRaster[m_absIdxInLCU] + (((m_height[0] / m_pic->getMinCUHeight()) >> 1) - 1) *
-                   m_pic->getNumPartInWidth() +  m_width[0] / m_pic->getMinCUWidth() - 1];
+                                   m_pic->getNumPartInWidth() +  m_width[0] / m_pic->getMinCUWidth() - 1];
 
     switch (m_partSizes[0])
     {

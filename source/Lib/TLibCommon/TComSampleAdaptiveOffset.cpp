@@ -42,7 +42,6 @@
 #include <math.h>
 
 namespace x265 {
-
 //! \ingroup TLibCommon
 //! \{
 

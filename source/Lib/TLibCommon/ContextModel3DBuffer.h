@@ -55,7 +55,6 @@
 namespace x265 {
 // private namespace
 
-
 /// context model 3D buffer class
 class ContextModel3DBuffer
 {

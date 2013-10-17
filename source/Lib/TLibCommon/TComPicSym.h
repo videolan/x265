@@ -110,7 +110,6 @@ public:
     void allocSaoParam(TComSampleAdaptiveOffset *sao);
 
     SAOParam *getSaoParam()               { return m_saoParam; }
-
 }; // END CLASS DEFINITION TComPicSym
 }
 //! \}

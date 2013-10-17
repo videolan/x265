@@ -481,6 +481,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, MotionReference *ref, UIn
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
+
     if ((yFrac | xFrac) == 0)
     {
         primitives.blockcpy_pp(width, height, dst, dstStride, src, srcStride);

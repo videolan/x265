@@ -95,11 +95,11 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
     if (param->logLevel >= X265_LOG_INFO)
     {
         char buf[1000];
-        char *p = buf + sprintf( buf, "using cpu capabilities:" );
+        char *p = buf + sprintf(buf, "using cpu capabilities:");
         for (int i = 0; x265::cpu_names[i].flags; i++)
         {
             if (!strcmp(x265::cpu_names[i].name, "SSE2")
-                && cpuid & (X265_CPU_SSE2_IS_FAST|X265_CPU_SSE2_IS_SLOW))
+                && cpuid & (X265_CPU_SSE2_IS_FAST | X265_CPU_SSE2_IS_SLOW))
                 continue;
             if (!strcmp(x265::cpu_names[i].name, "SSE3")
                 && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
@@ -108,11 +108,12 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
                 && (cpuid & X265_CPU_SSE42))
                 continue;
             if ((cpuid & x265::cpu_names[i].flags) == x265::cpu_names[i].flags
-                && (!i || x265::cpu_names[i].flags != x265::cpu_names[i-1].flags))
-                p += sprintf( p, " %s", x265::cpu_names[i].name );
+                && (!i || x265::cpu_names[i].flags != x265::cpu_names[i - 1].flags))
+                p += sprintf(p, " %s", x265::cpu_names[i].name);
         }
-        if( !cpuid )
-            p += sprintf( p, " none!" );
+
+        if (!cpuid)
+            p += sprintf(p, " none!");
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
 
@@ -155,4 +156,5 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 // the intrinsic primitives will not use MMX instructions, so if assembly
 // is disabled there should be no reason to use EMMS.
 extern "C" void x265_cpu_emms(void) {}
+
 #endif

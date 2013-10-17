@@ -32,7 +32,7 @@ class PixelHarness : public TestHarness
 protected:
 
     pixel *pbuf1, *pbuf2, *pbuf3, *pbuf4;
-    
+
     short *sbuf1, *sbuf2;
 
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);

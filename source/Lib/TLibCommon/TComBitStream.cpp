@@ -53,7 +53,7 @@ using namespace x265;
 
 TComOutputBitstream::TComOutputBitstream()
 {
-    m_fifo = (uint8_t *)X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
+    m_fifo = (uint8_t*)X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
     clear();
 }
 
@@ -162,14 +162,14 @@ void TComOutputBitstream::writeAlignZero()
 void   TComOutputBitstream::addSubstream(TComOutputBitstream* pcSubstream)
 {
     UInt uiNumBits = pcSubstream->getNumberOfWrittenBits();
-    
+
     const uint8_t* rbsp = pcSubstream->getFIFO();
-    
+
     for (UInt count = 0; count < pcSubstream->m_fsize; count++)
     {
         write(rbsp[count], 8);
     }
-    
+
     if (uiNumBits & 0x7)
     {
         write(pcSubstream->getHeldBits() >> (8 - (uiNumBits & 0x7)), uiNumBits & 0x7);
@@ -187,7 +187,7 @@ int TComOutputBitstream::countStartCodeEmulations()
     UInt cnt = 0;
     uint8_t *rbsp = getFIFO();
     UInt fsize = getByteStreamLength();
-    
+
     for (UInt count = 0; count < fsize; count++)
     {
         if ((rbsp[count + 2] == 0x00 || rbsp[count + 2] == 0x01 || rbsp[count + 2] == 0x02 || rbsp[count + 2] == 0x03)
@@ -197,12 +197,12 @@ int TComOutputBitstream::countStartCodeEmulations()
             count = count + 1;
         }
     }
+
     return cnt;
 }
 
 void TComOutputBitstream::push_back(uint8_t val)
 {
-    
     /** Chenck FIFO Size if not reached MIN_FIFO_SIZE and Check Allocated m_fifo Buffer
     before push the encoded bit stream to m_fifo */
     if (m_fsize < buffsize && m_fifo)
@@ -213,10 +213,11 @@ void TComOutputBitstream::push_back(uint8_t val)
     else
     {
         buffsize *= 2;
+
         /**  FIFO size is Reached into MIN_FIFO_SIZE then Reallocate the FIFO and Copy the fifo to new memory
         location and continue to push encoded bit streams */
-        uint8_t *temp = (uint8_t *)X265_MALLOC(uint8_t, buffsize);
-        
+        uint8_t *temp = (uint8_t*)X265_MALLOC(uint8_t, buffsize);
+
         /** check Allocated buffer before copy the encoder bitstream and push into FIFO */
         if (temp)
         {
@@ -224,10 +225,11 @@ void TComOutputBitstream::push_back(uint8_t val)
             temp[m_fsize] = val;
             m_fsize++;
             X265_FREE(m_fifo);
-            
+
             /** point the reallocated buffer from temp to fifo, this can be free'd in Distructor */
-            m_fifo = temp; 
+            m_fifo = temp;
         }
     }
 }
+
 //! \}

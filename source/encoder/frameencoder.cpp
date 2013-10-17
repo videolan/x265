@@ -57,7 +57,10 @@ FrameEncoder::FrameEncoder()
     , m_rows(NULL)
 {
     for (int i = 0; i < MAX_NAL_UNITS; i++)
+    {
         m_nalList[i] = NULL;
+    }
+
     m_nalCount = 0;
 }
 
@@ -102,7 +105,7 @@ void FrameEncoder::init(Encoder *top, int numRows)
     m_cfg = top;
     m_numRows = numRows;
     m_filterRowDelay = (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary) ?
-                        2 : (m_cfg->param.bEnableSAO || m_cfg->param.bEnableLoopFilter ? 1 : 0);
+        2 : (m_cfg->param.bEnableSAO || m_cfg->param.bEnableLoopFilter ? 1 : 0);
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
@@ -147,6 +150,7 @@ void FrameEncoder::init(Encoder *top, int numRows)
             m_rows[i].m_trQuant.setFlatScalingList();
             m_rows[i].m_trQuant.setUseScalingList(false);
         }
+
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
     }
@@ -157,6 +161,7 @@ void FrameEncoder::init(Encoder *top, int numRows)
             m_rows[i].m_trQuant.setScalingList(m_top->getScalingList());
             m_rows[i].m_trQuant.setUseScalingList(true);
         }
+
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
     }
@@ -234,7 +239,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
         nalunits[count]->init(nalu);
     }
     return 0;
-    
+
 fail:
     return -1;
 }
@@ -250,7 +255,7 @@ void FrameEncoder::initSlice(TComPic* pic)
     slice->initSlice();
     slice->setPicOutputFlag(true);
     int type = pic->m_lowres.sliceType;
-    SliceType sliceType = IS_X265_TYPE_B(type)? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE: I_SLICE);
+    SliceType sliceType = IS_X265_TYPE_B(type) ? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE : I_SLICE);
     slice->setSliceType(sliceType);
     slice->setReferenced(true);
     slice->setScalingList(m_top->getScalingList());
@@ -307,11 +312,11 @@ void FrameEncoder::compressFrame()
     double lambda = 0;
     if (slice->getSliceType() == I_SLICE)
     {
-        lambda = X265_MAX(1,x265_lambda2_tab_I[qp]);
+        lambda = X265_MAX(1, x265_lambda2_tab_I[qp]);
     }
     else
     {
-        lambda = X265_MAX(1,x265_lambda2_non_I[qp]);
+        lambda = X265_MAX(1, x265_lambda2_non_I[qp]);
     }
 
     // for RDO
@@ -527,7 +532,7 @@ void FrameEncoder::compressFrame()
             PCMLFDisableProcess(m_pic);
 
             // Extend border after whole-frame SAO is finished
-            for(int row = 0; row < m_numRows; row++)
+            for (int row = 0; row < m_numRows; row++)
             {
                 m_frameFilter.processRowPost(row);
             }
@@ -887,7 +892,7 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
     }
 
-    UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA/2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
+    UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA / 2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_pic->m_SSDY = 0;
@@ -914,6 +919,7 @@ void FrameEncoder::compressCTURows()
                     {
                         refpic->m_reconRowWait.wait();
                     }
+
                     if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
                     {
                         slice->m_mref[list][ref]->applyWeight(row + refLagRows, m_numRows);
@@ -950,6 +956,7 @@ void FrameEncoder::compressCTURows()
                         {
                             refpic->m_reconRowWait.wait();
                         }
+
                         if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
                         {
                             slice->m_mref[list][ref]->applyWeight(i + refLagRows, m_numRows);
@@ -1017,6 +1024,7 @@ void FrameEncoder::processRowEncoder(int row)
             return;
         }
     }
+
     // this row of CTUs has been encoded
 
     // Run row-wise loop filters
@@ -1030,8 +1038,10 @@ void FrameEncoder::processRowEncoder(int row)
     }
     if (row == m_numRows - 1)
     {
-        for(int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
+        for (int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
+        {
             enableRowFilter(i);
+        }
     }
 }
 

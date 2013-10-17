@@ -57,7 +57,8 @@ void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intp
         }
     }
 }
-#else
+
+#else // if HIGH_BIT_DEPTH
 void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
@@ -92,6 +93,7 @@ void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intp
 void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+
     if (!(aligncheck & 15))
     {
         // fast path, multiples of 16 pixel wide blocks
@@ -133,6 +135,7 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
     int i = 1;
+
     if (!(aligncheck & 15))
     {
         __m128i maxval = _mm_set1_epi8((i << X265_DEPTH) - 1);
@@ -151,6 +154,7 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
                 sum = _mm_min_epu8(sum, maxval);
                 _mm_storeu_si128((__m128i*)&dst[x], sum);
             }
+
             src0 += sstride0;
             src1 += sstride1;
             dst += dstride;
@@ -174,6 +178,7 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
                 sum = _mm_min_epu8(sum, maxval);
                 _mm_storeu_si128((__m128i*)&dst[x], sum);
             }
+
             src0 += sstride0;
             src1 += sstride1;
             dst += dstride;
@@ -200,11 +205,13 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
         }
     }
 }
+
 #endif /* if HIGH_BIT_DEPTH */
 
 void blockcopy_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+
     if (!(aligncheck & 15))
     {
         // fast path, multiples of 16 pixel wide blocks
@@ -292,7 +299,7 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | sstride0 | sstride1 | dstride;
 
-    if ( !(aligncheck & 15) && !(bx & 7))
+    if (!(aligncheck & 15) && !(bx & 7))
     {
         __m128i maxval = _mm_set1_epi16((1 << X265_DEPTH) - 1);
         __m128i zero = _mm_setzero_si128();
@@ -391,6 +398,6 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
     p.blockcpy_sc = blockcopy_sp;
     p.pixelsub_sp = pixelsub_sp;
     p.pixeladd_ss = pixeladd_ss;
-#endif
+#endif // if HIGH_BIT_DEPTH
 }
 }

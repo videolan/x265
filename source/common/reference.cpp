@@ -97,7 +97,7 @@ void MotionReference::applyWeight(int rows, int numRows)
         return;
     int marginX = m_reconPic->m_lumaMarginX;
     int marginY = m_reconPic->m_lumaMarginY;
-    pixel* src = (pixel*) m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
+    pixel* src = (pixel*)m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
     pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUHeight) * lumaStride);
     int width = m_reconPic->getWidth();
     int height = ((rows - m_numWeightedRows) * g_maxCUHeight);

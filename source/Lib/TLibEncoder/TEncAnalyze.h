@@ -104,14 +104,15 @@ public:
     void printSummaryOut(double fps)
     {
         FILE* fp = fopen("summaryTotal.txt", "at");
+
         if (fp)
         {
             double scale = fps / 1000 / (double)m_numPics;
 
             fprintf(fp, "%f\t %f\t %f\t %f\n", getBits() * scale,
-                getPsnrY() / (double)getNumPic(),
-                getPsnrU() / (double)getNumPic(),
-                getPsnrV() / (double)getNumPic());
+                    getPsnrY() / (double)getNumPic(),
+                    getPsnrU() / (double)getNumPic(),
+                    getPsnrV() / (double)getNumPic());
 
             fclose(fp);
         }
@@ -142,10 +143,10 @@ public:
             double scale = fps / 1000 / (double)m_numPics;
 
             fprintf(fp, "%f\t %f\t %f\t %f\n",
-                getBits() * scale,
-                getPsnrY() / (double)getNumPic(),
-                getPsnrU() / (double)getNumPic(),
-                getPsnrV() / (double)getNumPic());
+                    getBits() * scale,
+                    getPsnrY() / (double)getNumPic(),
+                    getPsnrU() / (double)getNumPic(),
+                    getPsnrV() / (double)getNumPic());
 
             fclose(fp);
         }

@@ -434,6 +434,7 @@ void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, in
             txt[-marginX + x] = txt[0];
             txt[width + x] = txt[width - 1];
         }
+
 #else
         ::memset(txt - marginX, txt[0], marginX);
         ::memset(txt + width, txt[width - 1], marginX);
@@ -451,6 +452,7 @@ void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
     int offset =  (1 << (headRoom - 1));
     int16_t maxVal = (1 << X265_DEPTH) - 1;
     int cStride = 1;
+
     src -= (N / 2 - 1) * cStride;
 
     int row, col;
@@ -494,7 +496,7 @@ namespace x265 {
 // x265 private namespace
 
 #define SETUP_PARTITION(W, H) \
-    p.chroma_hpp[CHROMA_PARTITION_ ##W ##x ##H] = interp_horiz_pp_c<4, W, H>;
+    p.chroma_hpp[CHROMA_PARTITION_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>;
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 {

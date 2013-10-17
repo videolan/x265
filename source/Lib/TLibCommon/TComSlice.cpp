@@ -173,6 +173,7 @@ TComPic* TComSlice::xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb
     TComPic* stPic = pic;
 
     int pocCycle = 1 << getSPS()->getBitsForPOC();
+
     if (!pocHasMsb)
     {
         poc = poc % pocCycle;
@@ -270,7 +271,7 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
     }
 
     for (i = m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() + m_rps->getNumberOfLongtermPictures() - 1;
-        i > m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() - 1; i--)
+         i > m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() - 1; i--)
     {
         if (m_rps->getUsed(i))
         {

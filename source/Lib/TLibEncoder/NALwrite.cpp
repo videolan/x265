@@ -39,7 +39,6 @@
 #include <cstring>
 
 namespace x265 {
-
 //! \ingroup TLibEncoder
 //! \{
 
@@ -57,11 +56,11 @@ void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
     bsNALUHeader.write(nalu.m_nalUnitType, 6); // nal_unit_type
     bsNALUHeader.write(nalu.m_reservedZero6Bits, 6);                 // nuh_reserved_zero_6bits
     bsNALUHeader.write(nalu.m_temporalId + 1, 3); // nuh_temporal_id_plus1
-    
+
     packetSize += bsNALUHeader.getByteStreamLength();
-    out = (uint8_t *) malloc(packetSize);
+    out = (uint8_t*)malloc(packetSize);
     ::memcpy(out, bsNALUHeader.getByteStream(), packetSize);
-    
+
     /* write out rsbp_byte's, inserting any required
      * emulation_prevention_three_byte's */
 
@@ -85,15 +84,15 @@ void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
      */
     UInt fsize = nalu.m_Bitstream.getByteStreamLength();
     uint8_t* fifo = nalu.m_Bitstream.getFIFO();
-    uint8_t* emulation = (uint8_t *)X265_MALLOC(uint8_t, fsize + EMULATION_SIZE);
+    uint8_t* emulation = (uint8_t*)X265_MALLOC(uint8_t, fsize + EMULATION_SIZE);
     UInt nalsize = 0;
-    
+
     if (emulation)
     {
         for (int count = 0; count < fsize; count++)
         {
             uint8_t val = fifo[count];
-            if (count > 3 && (emulation[nalsize - 1] == 0x00 || emulation[nalsize - 1] == 0x01|| emulation[nalsize - 1] == 0x02 || emulation[nalsize - 1] == 0x03)
+            if (count > 3 && (emulation[nalsize - 1] == 0x00 || emulation[nalsize - 1] == 0x01 || emulation[nalsize - 1] == 0x02 || emulation[nalsize - 1] == 0x03)
                 && emulation[nalsize - 2] == 0x00 && emulation[nalsize - 3] == 0x00)
             {
                 uint8_t tmp = emulation[nalsize - 1];
@@ -108,11 +107,12 @@ void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
             }
             nalsize++;
         }
+
         UInt i = packetSize;
-        out = (uint8_t *) realloc (out, nalsize + 4 );
+        out = (uint8_t*)realloc(out, nalsize + 4);
         memcpy(out + packetSize, emulation, nalsize);
         packetSize += nalsize;
-        
+
         /* 7.4.1.1
         * ... when the last byte of the RBSP data is equal to 0x00 (which can
         * only occur when the RBSP ends in a cabac_zero_word), a final byte equal
@@ -135,6 +135,5 @@ void writeRBSPTrailingBits(TComOutputBitstream& bs)
     bs.write(1, 1);
     bs.writeAlignZero();
 }
-
 }
 //! \}

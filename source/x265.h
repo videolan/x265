@@ -210,8 +210,8 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
 #define X265_TYPE_B             0x0005
 #define X265_TYPE_KEYFRAME      0x0006  /* IDR or I depending on b_open_gop option */
-#define IS_X265_TYPE_I(x) ((x)==X265_TYPE_I || (x)==X265_TYPE_IDR)
-#define IS_X265_TYPE_B(x) ((x)==X265_TYPE_B || (x)==X265_TYPE_BREF)
+#define IS_X265_TYPE_I(x) ((x) == X265_TYPE_I || (x) == X265_TYPE_IDR)
+#define IS_X265_TYPE_B(x) ((x) == X265_TYPE_B || (x) == X265_TYPE_BREF)
 
 /* rate tolerance method */
 typedef enum RcMethod
@@ -224,8 +224,8 @@ X265_RC_METHODS;
 
 /*Level of Rate Distortion Optimization Allowed */
 typedef enum RDOLevel
-{   
-    X265_NO_RDO_NO_RDOQ, /* Partial RDO during mode decision (only at each depth/mode), no RDO in quantization*/ 
+{
+    X265_NO_RDO_NO_RDOQ, /* Partial RDO during mode decision (only at each depth/mode), no RDO in quantization*/
     X265_NO_RDO,         /* Partial RDO during mode decision (only at each depth/mode), quantization RDO enabled */
     X265_FULL_RDO        /* Full RD-based mode decision */
 }
@@ -274,7 +274,7 @@ typedef struct x265_param_t
     int       lookaheadDepth;                  ///< Number of frames to use for lookahead, determines encoder latency
     int       bFrameAdaptive;                  ///< 0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling
     int       bFrameBias;
-    int       scenecutThreshold;               ///< how aggressively to insert extra I frames 
+    int       scenecutThreshold;               ///< how aggressively to insert extra I frames
 
     // Intra coding tools
     int       bEnableConstrainedIntra;         ///< enable constrained intra prediction (ignore inter predicted reference samples)
@@ -320,7 +320,7 @@ typedef struct x265_param_t
     // quality metrics
     int       bEnablePsnr;
     int       bEnableSsim;
-    struct 
+    struct
     {
         int       bitrate;
         double    rateTolerance;
@@ -328,16 +328,17 @@ typedef struct x265_param_t
         double    ipFactor;
         double    pbFactor;
         int       qpStep;
-        int       rateControlMode;             ///<Values corresponding to RcMethod 
+        int       rateControlMode;             ///<Values corresponding to RcMethod
         int       qp;                          ///< Constant QP base value
         int       rateFactor;                  ///< Constant rate factor (CRF)
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
     } rc;
 }
+
 x265_param_t;
 
-/*** 
+/***
  * If not called, first encoder allocated will auto-detect the CPU and
  * initialize performance primitives, which are process global */
 void x265_setup_primitives(x265_param_t *param, int cpu);
@@ -391,9 +392,9 @@ extern const char *x265_build_info_str;
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro
  * is x265_encoder_open_##X264_BUILD (for purposes of dlopen). */
-#define x265_encoder_glue1(x,y) x##y
-#define x265_encoder_glue2(x,y) x265_encoder_glue1(x,y)
-#define x265_encoder_open x265_encoder_glue2(x265_encoder_open_,X265_BUILD)
+#define x265_encoder_glue1(x, y) x ## y
+#define x265_encoder_glue2(x, y) x265_encoder_glue1(x, y)
+#define x265_encoder_open x265_encoder_glue2(x265_encoder_open_, X265_BUILD)
 
 /* x265_encoder_open:
  *      create a new encoder handler, all parameters from x265_param_t are copied */

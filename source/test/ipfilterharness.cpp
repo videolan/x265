@@ -41,8 +41,8 @@ const char* IPFilterPPNames[] =
 
 const char* ChromaFilterPPNames[] =
 {
-   "2x4", "2x8", "4x2", "4x4", "4x8", "4x16", "6x8", "8x2", "8x4", "8x6", "8x8", "8x16", "8x32",
-   "12x16", "16x4", "16x8", "16x12", "16x16", "16x32", "24x32", "32x8", "32x16", "32x24", "32x32"
+    "2x4", "2x8", "4x2", "4x4", "4x8", "4x16", "6x8", "8x2", "8x4", "8x6", "8x8", "8x16", "8x32",
+    "12x16", "16x4", "16x8", "16x12", "16x16", "16x32", "24x32", "32x8", "32x16", "32x24", "32x32"
 };
 
 IPFilterHarness::IPFilterHarness()
@@ -296,7 +296,6 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
     return true;
 }
 
-
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -359,7 +358,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilterChroma_primitive(ref.chroma_hpp[value], opt.chroma_hpp[value]))
             {
-                 printf("interp_4tap_horiz_pp[%s]", ChromaFilterPPNames[value]);
+                printf("interp_4tap_horiz_pp[%s]", ChromaFilterPPNames[value]);
                 return false;
             }
         }

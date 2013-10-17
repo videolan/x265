@@ -101,7 +101,6 @@
 namespace x265 {
 // private namespace
 
-
 // initial probability for cu_transquant_bypass flag
 static const UChar
     INIT_CU_TRANSQUANT_BYPASS_FLAG[3][NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX] =

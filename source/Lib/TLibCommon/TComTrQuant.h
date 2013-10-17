@@ -200,8 +200,8 @@ private:
     UInt xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height, TextType ttype, UInt absPartIdx, int *lastPos);
 
     inline UInt xGetCodedLevel(double& codedCost, double& codedCost0, double& codedCostSig, int levelDouble,
-                                 UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,
-                                 UInt c1Idx, UInt c2Idx, int qbits, double scale, bool bLast) const;
+                               UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,
+                               UInt c1Idx, UInt c2Idx, int qbits, double scale, bool bLast) const;
 
     inline double xGetICRateCost(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 

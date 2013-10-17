@@ -98,6 +98,7 @@ private:
     int   m_strideC;
 
 public:
+
     int   m_numCuInWidth;
     int   m_numCuInHeight;
 

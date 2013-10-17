@@ -54,6 +54,7 @@ YUVInput::~YUVInput()
     {
         delete[] buf[i];
     }
+
 #else
     delete[] buf;
 #endif
@@ -99,10 +100,11 @@ void YUVInput::setDimensions(int w, int h)
                 threadActive = false;
             }
         }
+
         start();
-#else
+#else // if defined ENABLE_THREAD
         buf = new char[framesize];
-#endif
+#endif // if defined ENABLE_THREAD
     }
 }
 
@@ -125,6 +127,7 @@ bool YUVInput::populateFrameQueue()
         if (!threadActive)
             break;
     }
+
     ifs.read(buf[tail], framesize);
     frameStat[tail] = ifs.good();
     if (!frameStat[tail])
@@ -143,6 +146,7 @@ bool YUVInput::readPicture(x265_picture_t& pic)
     {
         notEmpty.wait();
     }
+
     if (!frameStat[head])
         return false;
     pic.planes[0] = buf[head];
@@ -164,7 +168,8 @@ bool YUVInput::readPicture(x265_picture_t& pic)
 
     return true;
 }
-#else
+
+#else // if defined ENABLE_THREAD
 
 // TODO: only supports 4:2:0 chroma sampling
 bool YUVInput::readPicture(x265_picture_t& pic)
@@ -188,7 +193,8 @@ bool YUVInput::readPicture(x265_picture_t& pic)
 
     return ifs.good();
 }
-#endif
+
+#endif // if defined ENABLE_THREAD
 
 void YUVInput::release()
 {

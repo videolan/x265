@@ -138,7 +138,6 @@ void TShortYUV::addClipLuma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int
 
 void TShortYUV::addClipChroma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
-
     short* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
     short* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
     short* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
@@ -174,6 +173,7 @@ void TShortYUV::copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int partIdx, u
 {
     short* src = getLumaAddr(partIdx);
     short* dst = dstPicYuv->getLumaAddr(partIdx);
+
     if (src == dst) return;
 
     unsigned int srcStride = m_width;
@@ -203,6 +203,7 @@ void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx,
     short* srcV = getCrAddr(partIdx);
     short* dstU = dstPicYuv->getCbAddr(partIdx);
     short* dstV = dstPicYuv->getCrAddr(partIdx);
+
     if (srcU == dstU && srcV == dstV) return;
 
     unsigned int srcStride = m_cwidth;

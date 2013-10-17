@@ -327,7 +327,7 @@ void blockfill_s_32(short *dst, intptr_t dstride, short val)
 
 void getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
 {
-    __m128i T00, T01, T02; 
+    __m128i T00, T01, T02;
 
     T00 = _mm_cvtsi32_si128(*(uint32_t*)fenc);
     T01 = _mm_cvtsi32_si128(*(uint32_t*)pred);
@@ -360,7 +360,7 @@ void getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
 
 void getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
 {
-    __m128i T00, T01, T02; 
+    __m128i T00, T01, T02;
 
     T00 = _mm_loadl_epi64((__m128i*)fenc);
     T01 = _mm_loadl_epi64((__m128i*)pred);
@@ -629,7 +629,8 @@ void calcRecons(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recI
         recIPred += predstride;
     }
 }
-#endif
+
+#endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {

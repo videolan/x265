@@ -43,18 +43,19 @@ Y4MInput::Y4MInput(const char *filename)
             for (int i = 0; i < QUEUE_SIZE; i++)
             {
                 buf[i] = new char[3 * width * height / 2];
-                if ( buf[i] == NULL)
+                if (buf[i] == NULL)
                 {
                     x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
                     threadActive = false;
                 }
             }
+
             head = 0;
             tail = 0;
             start();
-#else
+#else // if defined(ENABLE_THREAD)
             buf = new char[3 * width * height / 2];
-#endif
+#endif // if defined(ENABLE_THREAD)
         }
     }
     if (!threadActive)
@@ -69,6 +70,7 @@ Y4MInput::~Y4MInput()
     {
         delete[] buf[i];
     }
+
 #else
     delete[] buf;
 #endif
@@ -110,6 +112,7 @@ bool Y4MInput::parseHeader()
                         frame_width = frame_width * 10 + (c - '0');
                     }
                 }
+
                 break;
 
             case 'H':
@@ -243,6 +246,7 @@ bool Y4MInput::readPicture(x265_picture_t& pic)
     {
         notEmpty.wait();
     }
+
     if (!frameStat[head])
         return false;
 
@@ -278,6 +282,7 @@ bool Y4MInput::populateFrameQueue()
 {
     /* strip off the FRAME header */
     char hbuf[sizeof(header)];
+
     ifs.read(hbuf, strlen(header));
     if (!ifs || memcmp(hbuf, header, strlen(header)))
     {
@@ -291,6 +296,7 @@ bool Y4MInput::populateFrameQueue()
     {
         c = ifs.get();
     }
+
     const size_t count = width * height * 3 / 2;
     while ((tail + 1) % QUEUE_SIZE == head)
     {
@@ -298,6 +304,7 @@ bool Y4MInput::populateFrameQueue()
         if (!threadActive)
             break;
     }
+
     ifs.read(buf[tail], count);
     frameStat[tail] = ifs.good();
     if (!frameStat[tail])
@@ -306,7 +313,8 @@ bool Y4MInput::populateFrameQueue()
     notEmpty.trigger();
     return true;
 }
-#else
+
+#else // if defined(ENABLE_THREAD)
 bool Y4MInput::readPicture(x265_picture_t& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
@@ -346,7 +354,8 @@ bool Y4MInput::readPicture(x265_picture_t& pic)
 
     return ifs.good();
 }
-#endif
+
+#endif // if defined(ENABLE_THREAD)
 void Y4MInput::release()
 {
 #if defined(ENABLE_THREAD)

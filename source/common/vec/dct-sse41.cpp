@@ -41,13 +41,13 @@ using namespace x265;
 
 namespace {
 uint32_t quant(int* coef,
-    int* quantCoeff,
-    int* deltaU,
-    int* qCoef,
-    int  qBits,
-    int  add,
-    int  numCoeff,
-    int* lastPos)
+               int* quantCoeff,
+               int* deltaU,
+               int* qCoef,
+               int  qBits,
+               int  add,
+               int  numCoeff,
+               int* lastPos)
 {
     int qBits8 = qBits - 8;
     uint32_t acSum = 0;
@@ -82,7 +82,6 @@ uint32_t quant(int* coef,
         level1 = _mm_cvtepi16_epi32(_mm_packs_epi32(level1, level1));
         _mm_storeu_si128((__m128i*)(qCoef + dstOffset), level1);
 
-
         __m128i level2 = _mm_loadu_si128((__m128i*)(coef + blockpos + 4));
         __m128i sign2 = _mm_cmplt_epi32(level2, _mm_setzero_si128());
 
@@ -105,6 +104,7 @@ uint32_t quant(int* coef,
 
         dstOffset += 8;
     }
+
     acSum4 = _mm_hadd_epi32(acSum4, acSum4);
     acSum4 = _mm_hadd_epi32(acSum4, acSum4);
     acSum  = _mm_cvtsi128_si32(acSum4);

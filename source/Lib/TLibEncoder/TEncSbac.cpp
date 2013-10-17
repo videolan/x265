@@ -79,7 +79,7 @@ TEncSbac::TEncSbac()
     , m_saoMergeSCModel(1,             NUM_SAO_MERGE_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
     , m_saoTypeIdxSCModel(1,           NUM_SAO_TYPE_IDX_CTX, m_contextModels + m_numContextModels, m_numContextModels)
     , m_transformSkipSCModel(2,        NUM_TRANSFORMSKIP_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuTransquantBypassFlagSCModel(1,NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
+    , m_cuTransquantBypassFlagSCModel(1, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
 {
     assert(m_numContextModels <= MAX_NUM_CTX_MOD);
 }
@@ -1029,9 +1029,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx, UInt
     DTRACE_CABAC_T("\tpredmode=")
     DTRACE_CABAC_V(cu->getPredictionMode(absPartIdx))
     DTRACE_CABAC_T("\n")
-#else
+#else // if ENC_DEC_TRACE
     (void)depth;
-#endif
+#endif // if ENC_DEC_TRACE
 
     if (width > m_slice->getSPS()->getMaxTrSize())
     {
@@ -1048,7 +1048,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx, UInt
     {
         codeTransformSkipFlags(cu, absPartIdx, width, height, ttype);
     }
-    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA ;
+    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
 
     //----- encode significance map -----
     const UInt log2BlockSize = g_convertToBit[width] + 2;

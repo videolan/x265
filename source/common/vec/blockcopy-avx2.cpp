@@ -30,7 +30,6 @@
 #include <string.h>
 
 namespace {
-
 #if !HIGH_BIT_DEPTH
 void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
@@ -79,7 +78,8 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
         }
     }
 }
-#endif
+
+#endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {

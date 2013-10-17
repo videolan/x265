@@ -137,7 +137,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
         // NOTE: delay one CU to avoid conflict between V and H
         if (cuAddr > 0)
         {
-            cu = pic->getCU(cuAddr-1);
+            cu = pic->getCU(cuAddr - 1);
             ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(UChar) * m_numPartitions);
             ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(bool) * m_numPartitions);
 
@@ -147,7 +147,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
 
     // Last H-Filter
     {
-        TComDataCU* cu = pic->getCU(pic->getNumCUsInFrame()-1);
+        TComDataCU* cu = pic->getCU(pic->getNumCUsInFrame() - 1);
         ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(UChar) * m_numPartitions);
         ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(bool) * m_numPartitions);
 
@@ -469,24 +469,24 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, UInt ab
                         if (refP0 == refQ0)
                         {
                             bs  = ((abs(mvq0.x - mvp0.x) >= 4) ||
-                                     (abs(mvq0.y - mvp0.y) >= 4) ||
-                                     (abs(mvq1.x - mvp1.x) >= 4) ||
-                                     (abs(mvq1.y - mvp1.y) >= 4)) ? 1 : 0;
+                                   (abs(mvq0.y - mvp0.y) >= 4) ||
+                                   (abs(mvq1.x - mvp1.x) >= 4) ||
+                                   (abs(mvq1.y - mvp1.y) >= 4)) ? 1 : 0;
                         }
                         else
                         {
                             bs  = ((abs(mvq1.x - mvp0.x) >= 4) ||
-                                     (abs(mvq1.y - mvp0.y) >= 4) ||
-                                     (abs(mvq0.x - mvp1.x) >= 4) ||
-                                     (abs(mvq0.y - mvp1.y) >= 4)) ? 1 : 0;
+                                   (abs(mvq1.y - mvp0.y) >= 4) ||
+                                   (abs(mvq0.x - mvp1.x) >= 4) ||
+                                   (abs(mvq0.y - mvp1.y) >= 4)) ? 1 : 0;
                         }
                     }
                     else // Same L0 & L1
                     {
                         bs  = ((abs(mvq0.x - mvp0.x) >= 4) ||
-                                 (abs(mvq0.y - mvp0.y) >= 4) ||
-                                 (abs(mvq1.x - mvp1.x) >= 4) ||
-                                 (abs(mvq1.y - mvp1.y) >= 4)) &&
+                               (abs(mvq0.y - mvp0.y) >= 4) ||
+                               (abs(mvq1.x - mvp1.x) >= 4) ||
+                               (abs(mvq1.y - mvp1.y) >= 4)) &&
                             ((abs(mvq1.x - mvp0.x) >= 4) ||
                              (abs(mvq1.y - mvp0.y) >= 4) ||
                              (abs(mvq0.x - mvp1.x) >= 4) ||
@@ -513,8 +513,8 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, UInt ab
                 if (refq0 == NULL) mvq0 = 0;
 
                 bs = ((refp0 != refq0) ||
-                        (abs(mvq0.x - mvp0.x) >= 4) ||
-                        (abs(mvq0.y - mvp0.y) >= 4)) ? 1 : 0;
+                      (abs(mvq0.x - mvp0.x) >= 4) ||
+                      (abs(mvq0.y - mvp0.y) >= 4)) ? 1 : 0;
             }
         } // enf of "if( one of BCBP == 0 )"
     } // enf of "if( not Intra )"
@@ -664,7 +664,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt d
 
     if ((pelsInPartChroma < DEBLOCK_SMALLEST_BLOCK) &&
         (((edgeNumInLCUVert % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChroma)) && (dir == 0)) ||
-        ((edgeNumInLCUHor % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChroma)) && dir)))
+         ((edgeNumInLCUHor % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChroma)) && dir)))
     {
         return;
     }

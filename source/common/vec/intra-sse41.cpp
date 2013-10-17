@@ -425,9 +425,11 @@ intra_pred_planar_t *intraPlanarN[] =
 void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
 {
     int nLog2Size = g_convertToBit[width] + 2;
+
     intraPlanarN[nLog2Size - 2](above, left, dst, dstStride);
 }
-#endif
+
+#endif // if !HIGH_BIT_DEPTH
 
 ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
 {
@@ -8523,6 +8525,7 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
     p.intra_pred_allangs[2] = predIntraAngs16;
     p.intra_pred_allangs[3] = predIntraAngs32;
 #elif defined(_MSC_VER) && defined(X86_64)
+
     /* VC10 and VC11 both generate bad Win32 code for all these functions.
      * They apparently can't deal with register allocation for intrinsic
      * functions this large.  Even Win64 cannot handle 16x16 and 32x32 */

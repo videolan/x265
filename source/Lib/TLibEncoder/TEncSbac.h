@@ -115,6 +115,7 @@ private:
     void  xCopyContextsFrom(TEncSbac* src);
 
     void codeDFFlag(UInt /*code*/, const char* /*symbolName*/) { printf("Not supported in codeDFFlag()\n"); assert(0); }
+
     void codeDFSvlc(int /*code*/, const char* /*symbolName*/)  { printf("Not supported in codeDFSvlc()\n"); assert(0); }
 
 public:

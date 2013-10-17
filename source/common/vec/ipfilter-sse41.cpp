@@ -384,7 +384,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
         assert(height % 2 == 0);
 
     uint32_t leftCols = (8 - (width & 7)) * 8;
-    uint32_t mask_shift = ((uint32_t)~0 >> leftCols);
+    uint32_t mask_shift = ((uint32_t) ~0 >> leftCols);
     uint32_t mask0 = (width & 7) <= 4 ? mask_shift : ~0;
     uint32_t mask1 = (width & 7) <= 4 ? 0 : mask_shift;
     __m128i leftmask = _mm_setr_epi32(mask0, mask1, 0, 0);
@@ -400,7 +400,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
         vm45 = _mm_packs_epi16(vm45, vm45);
         vm67 = _mm_packs_epi16(vm67, vm67);
 
-        __m128i T00, T01, T02, T03, T04, T05, T06, T07/*, T08*/;
+        __m128i T00, T01, T02, T03, T04, T05, T06, T07 /*, T08*/;
         __m128i T10, T11, T12, T13;
         for (row = 0; row < height; row += 1)
         {
@@ -546,12 +546,12 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride,
 ALIGN_VAR_32(const uint8_t, Tm[][16]) =
 {
     // TODO: merge row0-3 into ipfilterH_0[0-3]
-    {0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8},
-    {2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 10},
-    {4, 5, 6, 7, 8, 9, 10, 11, 5, 6, 7, 8, 9, 10, 11, 12},
-    {6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14},
-    {0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6},
-    {4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10}
+    { 0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8 },
+    { 2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 10 },
+    { 4, 5, 6, 7, 8, 9, 10, 11, 5, 6, 7, 8, 9, 10, 11, 12 },
+    { 6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14 },
+    { 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6 },
+    { 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10 }
 };
 ALIGN_VAR_32(const int8_t, tab_leftmask[16]) =
 {
@@ -671,7 +671,7 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
 }
 }
 
-#else
+#else // if !HIGH_BIT_DEPTH
 
 #define INSTRSET 5
 #include "vectorclass.h"
@@ -1073,6 +1073,7 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
     int offset;
     short maxVal;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+
     offset =  (1 << (headRoom - 1));
     maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1);
@@ -1081,7 +1082,7 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
     Vec8s vec_src0, vec_sum, vec_c;
     vec_c.load(coeff);
     Vec8s vec_c0(coeff[0]), vec_c1(coeff[1]), vec_c2(coeff[2]), vec_c3(coeff[3]), vec_c4(coeff[4]), vec_c5(coeff[5]),
-          vec_c6(coeff[6]), vec_c7(coeff[7]);
+    vec_c6(coeff[6]), vec_c7(coeff[7]);
     Vec4i vec_offset(offset);
     Vec8s vec_maxVal(maxVal);
     for (row = 0; row < block_height; row++)
@@ -1176,13 +1177,14 @@ void filterHorizontal_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t d
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
     int offset = -IF_INTERNAL_OFFS << shift;
+
     src -= (N / 2 - 1);
 
     Vec4i vec_sum_low, vec_sum_high;
     Vec8s vec_src0, vec_sum, vec_c;
     vec_c.load(coeff);
     Vec8s vec_c0(coeff[0]), vec_c1(coeff[1]), vec_c2(coeff[2]), vec_c3(coeff[3]), vec_c4(coeff[4]), vec_c5(coeff[5]),
-          vec_c6(coeff[6]), vec_c7(coeff[7]);
+    vec_c6(coeff[6]), vec_c7(coeff[7]);
     Vec4i vec_offset(offset);
 
     for (row = 0; row < block_height; row++)
@@ -1351,8 +1353,7 @@ void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_
     }
 }
 }
-#endif
-
+#endif // if !HIGH_BIT_DEPTH
 
 namespace x265 {
 void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives& p)

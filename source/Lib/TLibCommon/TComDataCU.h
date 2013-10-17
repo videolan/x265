@@ -50,7 +50,6 @@
 namespace x265 {
 // private namespace
 
-
 //! \ingroup TLibCommon
 //! \{
 
@@ -154,6 +153,7 @@ private:
     // -------------------------------------------------------------------------------------------------------------------
     // misc. variables
     // -------------------------------------------------------------------------------------------------------------------
+
 protected:
 
     /// add possible motion vector predictor candidates
@@ -178,7 +178,7 @@ public:
     UInt64        m_totalCost;       ///< sum of partition RD costs
     UInt          m_totalDistortion; ///< sum of partition distortion
     UInt          m_totalBits;       ///< sum of partition signal bits
-    
+
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
@@ -285,7 +285,7 @@ public:
     int           getLastValidPartIdx(int absPartIdx);
     char          getLastCodedQP(UInt absPartIdx);
     void          setQPSubCUs(int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, bool &foundNonZeroCbf);
-  
+
     bool          isLosslessCoded(UInt absPartIdx);
 
     UChar*        getTransformIdx()                    { return m_trIdx; }

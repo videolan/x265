@@ -68,6 +68,7 @@ void x265_free(void *ptr)
 {
     if (ptr) free(ptr);
 }
+
 #endif // if _WIN32
 
 void x265_log(x265_param_t *param, int level, const char *fmt, ...)
@@ -110,7 +111,7 @@ void x265_param_default(x265_param_t *param)
     param->logLevel = X265_LOG_INFO;
     param->bEnableWavefront = 1;
     param->frameNumThreads = 1;
-    
+
     param->internalBitDepth = 8;
 
     /* CU definitions */
@@ -148,11 +149,11 @@ void x265_param_default(x265_param_t *param)
 
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
-    
+
     /* SAO Loop Filter */
     param->bEnableSAO = 1;
     param->saoLcuBasedOptimization = 1;
-    
+
     /* Rate control options */
     param->rc.bitrate = 0;
     param->rc.rateTolerance = 0.1;
@@ -279,14 +280,15 @@ int x265_check_params(x265_param_t *param)
           "Picture height must be an integer multiple of the specified chroma subsampling");
     CHECK(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
           "Rate control mode is out of range");
-    CHECK(param->bRDLevel < X265_NO_RDO_NO_RDOQ || param->bRDLevel> X265_FULL_RDO,
+    CHECK(param->bRDLevel < X265_NO_RDO_NO_RDOQ ||
+          param->bRDLevel > X265_FULL_RDO,
           "RD Level is out of range");
     CHECK(param->bframes > param->lookaheadDepth,
           "Lookahead depth must be greater than the max consecutive bframe count");
     CHECK(param->bframes > X265_BFRAME_MAX,
-        "max consecutive bframe count must be 16 or smaller");
+          "max consecutive bframe count must be 16 or smaller");
     CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
-        "Lookahead depth must be less than 256");
+          "Lookahead depth must be less than 256");
 
     // max CU size should be power of 2
     uint32_t i = param->maxCUSize;
@@ -438,7 +440,7 @@ int x265_param_parse(x265_param_t *p, const char *name, const char *value)
 
     if (!strncmp(name, "no-", 3))
     {
-        bvalue = 0; 
+        bvalue = 0;
         name += 3;
     }
     else
@@ -446,8 +448,8 @@ int x265_param_parse(x265_param_t *p, const char *name, const char *value)
 
     valuewasnull = !value;
 
-#define OPT(STR) else if (!strcmp( name, STR))
-    if (0);
+#define OPT(STR) else if (!strcmp(name, STR))
+    if (0) ;
     OPT("fps")
         p->frameRate = atoi(value);
     OPT("threads")

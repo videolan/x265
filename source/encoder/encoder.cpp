@@ -238,6 +238,7 @@ int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
                 pic_out->sliceType = X265_TYPE_B;
                 break;
             }
+
             pic_out->planes[0] = recpic->getLumaAddr();
             pic_out->stride[0] = recpic->getStride();
             pic_out->planes[1] = recpic->getCbAddr();
@@ -282,6 +283,7 @@ int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 double Encoder::printSummary()
 {
     double fps = (double)param.frameRate;
+
     if (param.logLevel >= X265_LOG_INFO)
     {
         m_analyzeI.printOut('i', fps);
@@ -401,12 +403,12 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
     int height = recon->getHeight() - getPad(1);
     int size = width * height;
 
-
     int maxvalY = 255 << (X265_DEPTH - 8);
     int maxvalC = 255 << (X265_DEPTH - 8);
     double refValueY = (double)maxvalY * maxvalY * size;
     double refValueC = (double)maxvalC * maxvalC * size / 4.0;
     UInt64 ssdY, ssdU, ssdV;
+
     ssdY = pic->m_SSDY;
     ssdU = pic->m_SSDU;
     ssdV = pic->m_SSDV;
@@ -444,8 +446,11 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
         writeRBSPTrailingBits(onalu.m_Bitstream);
 
         int count = 0;
-        while(nalunits[count] != NULL)
+        while (nalunits[count] != NULL)
+        {
             count++;
+        }
+
         nalunits[count] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
         if (nalunits[count])
             nalunits[count]->init(onalu);
@@ -893,7 +898,7 @@ void Encoder::configure(x265_param_t *_param)
     {
         x265_log(_param, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
     }
-        
+
     if (!_param->keyframeMin)
     {
         _param->keyframeMin = _param->keyframeMax;
@@ -914,16 +919,16 @@ void Encoder::configure(x265_param_t *_param)
         _param->rc.rateControlMode = X265_RC_ABR;
     }
 
-    if(!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
+    if (!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
     {
         _param->bEnableRDOQTS = 0;
     }
 
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
-    switch(_param->bRDLevel)
+    switch (_param->bRDLevel)
     {
     case X265_NO_RDO_NO_RDOQ:
-        _param->bEnableRDO = _param->bEnableRDOQ = 0; 
+        _param->bEnableRDO = _param->bEnableRDOQ = 0;
         break;
     case X265_NO_RDO:
         _param->bEnableRDO = 0;
@@ -933,6 +938,7 @@ void Encoder::configure(x265_param_t *_param)
         _param->bEnableRDO = _param->bEnableRDOQ = 1;
         break;
     }
+
     //====== Coding Tools ========
 
     uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
@@ -954,7 +960,7 @@ void Encoder::configure(x265_param_t *_param)
     vps.setMaxLayers(1);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
-        m_numReorderPics[i] = 1; 
+        m_numReorderPics[i] = 1;
         m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + 1);
         vps.setNumReorderPics(m_numReorderPics[i], i);
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
@@ -1027,12 +1033,13 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits)
     int nalcount = 0;
 
     int num = 0;
+
     for (; num < MAX_NAL_UNITS && nalunits[num] != NULL; num++)
     {
         const NALUnitEBSP& temp = *nalunits[num];
         memsize += temp.m_packetSize + 4;
     }
-    
+
     X265_FREE(m_packetData);
     X265_FREE(m_nals);
     CHECKED_MALLOC(m_packetData, char, memsize);
@@ -1124,7 +1131,7 @@ int x265_encoder_headers(x265_t *enc, x265_nal_t **pp_nal, int *pi_nal)
     Encoder *encoder = static_cast<Encoder*>(enc);
 
     int ret = 0;
-    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = {0, 0, 0, 0, 0};
+    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
     if (!encoder->getStreamHeaders(nalunits))
     {
         int nalcount = encoder->extractNalData(nalunits);
@@ -1153,7 +1160,7 @@ extern "C"
 int x265_encoder_encode(x265_t *enc, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
-    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = {0, 0, 0, 0, 0};
+    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
     int numEncoded = encoder->encode(!pic_in, pic_in, pic_out, nalunits);
 
     if (pp_nal && numEncoded > 0)
@@ -1173,6 +1180,7 @@ int x265_encoder_encode(x265_t *enc, x265_nal_t **pp_nal, int *pi_nal, x265_pict
             X265_FREE(nalunits[i]);
         }
     }
+
     return numEncoded;
 }
 
@@ -1182,6 +1190,7 @@ extern "C"
 void x265_encoder_get_stats(x265_t *enc, x265_stats_t *outputStats)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
+
     encoder->fetchStats(outputStats);
 }
 

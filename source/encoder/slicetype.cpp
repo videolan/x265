@@ -93,6 +93,7 @@ void Lookahead::destroy()
         pic->destroy(cfg->param.bframes);
         delete pic;
     }
+
     while (!outputQueue.empty())
     {
         TComPic* pic = outputQueue.popFront();
@@ -443,11 +444,14 @@ void Lookahead::slicetypeDecide()
         TComPic *ipic = inputQueue.first();
         int j;
         for (j = 0; ipic && j < cfg->param.bframes + 2; ipic = ipic->m_next)
+        {
             list[j++] = ipic;
+        }
+
         list[j] = NULL;
 
         int bframes, brefs;
-        for (bframes = 0, brefs = 0 ;; bframes++)
+        for (bframes = 0, brefs = 0;; bframes++)
         {
             Lowres& frm = list[bframes]->m_lowres;
 
@@ -457,6 +461,7 @@ void Lookahead::slicetypeDecide()
                 frm.sliceType = X265_TYPE_B;
                 x265_log(&cfg->param, X265_LOG_WARNING, "B-ref is not yet supported\n");
             }
+
             /* pyramid with multiple B-refs needs a big enough dpb that the preceding P-frame stays available.
                smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it.
             else if (frm.sliceType == X265_TYPE_BREF && cfg->param.i_bframe_pyramid == X265_B_PYRAMID_NORMAL &&
@@ -469,7 +474,7 @@ void Lookahead::slicetypeDecide()
 
             if (frm.sliceType == X265_TYPE_KEYFRAME)
                 frm.sliceType = cfg->param.bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR;
-            if ((/* !cfg->param.intraRefresh || */ frm.frameNum == 0) && frm.frameNum - lastKeyframe >= cfg->param.keyframeMax)
+            if (( /* !cfg->param.intraRefresh || */ frm.frameNum == 0) && frm.frameNum - lastKeyframe >= cfg->param.keyframeMax)
             {
                 if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
                     frm.sliceType = cfg->param.bOpenGOP && lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
@@ -504,7 +509,7 @@ void Lookahead::slicetypeDecide()
                 }
             }
 
-            if (bframes == cfg->param.bframes || !list[bframes+1])
+            if (bframes == cfg->param.bframes || !list[bframes + 1])
             {
                 if (IS_X265_TYPE_B(frm.sliceType))
                     x265_log(&cfg->param, X265_LOG_WARNING, "specified frame type is not compatible with max B-frames\n");
@@ -518,8 +523,9 @@ void Lookahead::slicetypeDecide()
             else if (!IS_X265_TYPE_B(frm.sliceType))
                 break;
         }
+
         if (bframes)
-            list[bframes-1]->m_lowres.bLastMiniGopBFrame = true;
+            list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
         list[bframes]->m_lowres.leadingBframes = bframes;
         lastNonB = &list[bframes]->m_lowres;
 
@@ -537,7 +543,7 @@ void Lookahead::slicetypeDecide()
             p1 = b = bframes + 1;
 
             frames[0] = lastNonB;
-            if (IS_X265_TYPE_I(frames[bframes+1]->sliceType))
+            if (IS_X265_TYPE_I(frames[bframes + 1]->sliceType))
                 p0 = bframes + 1;
             else // P
                 p0 = 0;
@@ -565,6 +571,7 @@ void Lookahead::slicetypeDecide()
                 }
             } */
         }
+
         /* Analyse for weighted P frames
         if (!h->param.rc.b_stat_read && h->lookahead->next.list[bframes]->i_type == X264_TYPE_P
             && h->param.analyse.i_weighted_pred >= X264_WEIGHTP_SIMPLE)
@@ -577,13 +584,18 @@ void Lookahead::slicetypeDecide()
          * in the output queue.  The order is important because TComPic can
          * only be in one list at a time */
         for (int i = 0; i <= bframes; i++)
+        {
             inputQueue.popFront();
- 
+        }
+
         /* add non-B to output queue */
         outputQueue.pushBack(*list[bframes]);
         /* add B frames to output queue */
         for (int i = 0; i < bframes; i++)
+        {
             outputQueue.pushBack(*list[i]);
+        }
+
         return;
     }
 
@@ -614,7 +626,7 @@ void Lookahead::slicetypeDecide()
     }
     else
     {
-        TComPic *list[X265_BFRAME_MAX+1];
+        TComPic *list[X265_BFRAME_MAX + 1];
         int j;
         for (j = 0; j <= cfg->param.bframes && !inputQueue.empty(); j++)
         {

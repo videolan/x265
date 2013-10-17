@@ -40,65 +40,65 @@ using namespace x265;
 extern unsigned char IntraFilterType[][35];
 
 #define PRED_INTRA_ANGLE_4_START \
-        __m128i row11, row12, row21, row22, row31, row32, row41, row42; \
-        __m128i tmp16_1, tmp16_2, tmp2, deltaFract; \
-        __m128i deltaPos = _mm_set1_epi16(0); \
-        __m128i ipAngle  = _mm_set1_epi16(0); \
-        __m128i thirty1  = _mm_set1_epi16(31); \
-        __m128i thirty2  = _mm_set1_epi16(32); \
-        bool modeHor     = (dirMode < 18);
+    __m128i row11, row12, row21, row22, row31, row32, row41, row42; \
+    __m128i tmp16_1, tmp16_2, tmp2, deltaFract; \
+    __m128i deltaPos = _mm_set1_epi16(0); \
+    __m128i ipAngle  = _mm_set1_epi16(0); \
+    __m128i thirty1  = _mm_set1_epi16(31); \
+    __m128i thirty2  = _mm_set1_epi16(32); \
+    bool modeHor     = (dirMode < 18);
 
 #define PRED_INTRA_ANGLE_4_END \
-        deltaFract = _mm_and_si128(deltaPos, thirty1); \
-        __m128i mullo = _mm_mullo_epi16(row11, _mm_sub_epi16(thirty2, deltaFract)); \
-        __m128i sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row12)); \
-        row11 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
+    deltaFract = _mm_and_si128(deltaPos, thirty1); \
+    __m128i mullo = _mm_mullo_epi16(row11, _mm_sub_epi16(thirty2, deltaFract)); \
+    __m128i sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row12)); \
+    row11 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
          \
-        deltaPos = _mm_add_epi16(deltaPos, ipAngle); \
-        deltaFract = _mm_and_si128(deltaPos, thirty1); \
-        mullo = _mm_mullo_epi16(row21, _mm_sub_epi16(thirty2, deltaFract)); \
-        sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row22)); \
-        row21 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
+    deltaPos = _mm_add_epi16(deltaPos, ipAngle); \
+    deltaFract = _mm_and_si128(deltaPos, thirty1); \
+    mullo = _mm_mullo_epi16(row21, _mm_sub_epi16(thirty2, deltaFract)); \
+    sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row22)); \
+    row21 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
          \
-        deltaPos = _mm_add_epi16(deltaPos, ipAngle); \
-        deltaFract = _mm_and_si128(deltaPos, thirty1); \
-        mullo = _mm_mullo_epi16(row31, _mm_sub_epi16(thirty2, deltaFract)); \
-        sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row32)); \
-        row31 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
+    deltaPos = _mm_add_epi16(deltaPos, ipAngle); \
+    deltaFract = _mm_and_si128(deltaPos, thirty1); \
+    mullo = _mm_mullo_epi16(row31, _mm_sub_epi16(thirty2, deltaFract)); \
+    sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row32)); \
+    row31 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
          \
-        deltaPos = _mm_add_epi16(deltaPos, ipAngle); \
-        deltaFract = _mm_and_si128(deltaPos, thirty1); \
-        mullo = _mm_mullo_epi16(row41, _mm_sub_epi16(thirty2, deltaFract)); \
-        sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row42)); \
-        row41 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
+    deltaPos = _mm_add_epi16(deltaPos, ipAngle); \
+    deltaFract = _mm_and_si128(deltaPos, thirty1); \
+    mullo = _mm_mullo_epi16(row41, _mm_sub_epi16(thirty2, deltaFract)); \
+    sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row42)); \
+    row41 = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5)); \
          \
-        if (modeHor) \
-        { \
-            __m128i _tmp1, _tmp2, _tmp3, _tmp4; \
+    if (modeHor) \
+    { \
+        __m128i _tmp1, _tmp2, _tmp3, _tmp4; \
              \
-            _tmp1 = _mm_unpacklo_epi16(row11, row31); \
-            _tmp2 = _mm_unpacklo_epi16(row21, row41); \
-            _tmp3 = _mm_unpacklo_epi16(_tmp1, _tmp2); \
-            _tmp4 = _mm_unpackhi_epi16(_tmp1, _tmp2); \
+        _tmp1 = _mm_unpacklo_epi16(row11, row31); \
+        _tmp2 = _mm_unpacklo_epi16(row21, row41); \
+        _tmp3 = _mm_unpacklo_epi16(_tmp1, _tmp2); \
+        _tmp4 = _mm_unpackhi_epi16(_tmp1, _tmp2); \
              \
-            tmp16_1 = _mm_packus_epi16(_tmp3, _tmp3); \
-            *(uint32_t*)(dst) = _mm_cvtsi128_si32(tmp16_1); \
-            _tmp2 = tmp16_1; \
-            _tmp2 = _mm_srl_epi64(_tmp2, _mm_cvtsi32_si128(32)); \
-            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(_tmp2); \
-            tmp16_1 = _mm_packus_epi16(_tmp4, _tmp4); \
-            *(uint32_t*)(dst + (2 * dstStride)) = _mm_cvtsi128_si32(tmp16_1); \
-            _tmp2 = tmp16_1; \
-            _tmp2 = _mm_srl_epi64(_tmp2, _mm_cvtsi32_si128(32)); \
-            *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_tmp2); \
-        } \
-        else \
-        { \
-            *(uint32_t*)(dst) = _mm_cvtsi128_si32(_mm_packus_epi16(row11, row11)); \
-            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(_mm_packus_epi16(row21, row21)); \
-            *(uint32_t*)(dst + (2 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row31, row31)); \
-            *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row41, row41)); \
-        }
+        tmp16_1 = _mm_packus_epi16(_tmp3, _tmp3); \
+        *(uint32_t*)(dst) = _mm_cvtsi128_si32(tmp16_1); \
+        _tmp2 = tmp16_1; \
+        _tmp2 = _mm_srl_epi64(_tmp2, _mm_cvtsi32_si128(32)); \
+        *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(_tmp2); \
+        tmp16_1 = _mm_packus_epi16(_tmp4, _tmp4); \
+        *(uint32_t*)(dst + (2 * dstStride)) = _mm_cvtsi128_si32(tmp16_1); \
+        _tmp2 = tmp16_1; \
+        _tmp2 = _mm_srl_epi64(_tmp2, _mm_cvtsi32_si128(32)); \
+        *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_tmp2); \
+    } \
+    else \
+    { \
+        *(uint32_t*)(dst) = _mm_cvtsi128_si32(_mm_packus_epi16(row11, row11)); \
+        *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(_mm_packus_epi16(row21, row21)); \
+        *(uint32_t*)(dst + (2 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row31, row31)); \
+        *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row41, row41)); \
+    }
 
 #define PRED_INTRA_ANG8_START   \
     /* Map the mode index to main prediction direction and angle*/    \
@@ -757,7 +757,6 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
     } \
 }
 
-
 #if HIGH_BIT_DEPTH
 // CHECK_ME: I am not sure the v_rightColumnN will be overflow when input is 12bpp
 void intra_pred_planar4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
@@ -834,6 +833,7 @@ void intra_pred_planar4(pixel* above, pixel* left, pixel* dst, intptr_t dstStrid
     __m128i v_topRow = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
 
     __m128i v_leftColumn = _mm_cvtsi32_si128(*(int*)left);  // leftColumn
+
     v_leftColumn = _mm_unpacklo_epi8(v_leftColumn, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
@@ -873,6 +873,7 @@ void intra_pred_planar4(pixel* above, pixel* left, pixel* dst, intptr_t dstStrid
 
 #undef COMP_PRED_PLANAR4_ROW
 }
+
 #endif /* if HIGH_BIT_DEPTH */
 
 #if HIGH_BIT_DEPTH
@@ -944,6 +945,7 @@ void intra_pred_planar8(pixel* above, pixel* left, pixel* dst, intptr_t dstStrid
     Vec8s v_topRow = extend_low(im0);
 
     Vec8s v_leftColumn = _mm_loadl_epi64((__m128i*)left);   // leftColumn
+
     v_leftColumn = _mm_unpacklo_epi8(v_leftColumn, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
@@ -1418,7 +1420,7 @@ void PredIntraAng4_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1457,7 +1459,7 @@ void PredIntraAng4_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1492,7 +1494,7 @@ void PredIntraAng4_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1527,7 +1529,7 @@ void PredIntraAng4_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1558,7 +1560,7 @@ void PredIntraAng4_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1588,7 +1590,7 @@ void PredIntraAng4_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1613,7 +1615,7 @@ void PredIntraAng4_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1638,7 +1640,7 @@ void PredIntraAng4_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1663,7 +1665,7 @@ void PredIntraAng4_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1688,14 +1690,14 @@ void PredIntraAng4_m_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row42 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
     row11 = row42;
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(16));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(16));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1714,18 +1716,19 @@ void PredIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START
 
-    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 1));
+        tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 1));
+
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row42 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
     row11 = row42;
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(16));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(16));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1748,14 +1751,14 @@ void PredIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row42 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
     row31 = row42;
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(16));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(16));
 
     tmp16_2 = tmp2;
     row32 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1765,7 +1768,7 @@ void PredIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11 = row32;
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(24));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(24));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1783,14 +1786,14 @@ void PredIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row42 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
     row31 = row42;
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(16));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(16));
 
     tmp16_2 = tmp2;
     row32 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1800,7 +1803,7 @@ void PredIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row11 = row32;
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(24));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(24));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -1818,28 +1821,28 @@ void PredIntraAng4_m_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
 
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(8));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(8));
 
     tmp16_2 = tmp2;
     row42 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
     row31 = row42;
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(16));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(16));
 
     tmp16_2 = tmp2;
     row32 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
     row21 = row32;
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(24));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(24));
 
     tmp16_2 = tmp2;
     row22 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
 
     row11 = row22;
     tmp2 = tmp16_1;
-    tmp2 = _mm_srl_epi64(tmp2,_mm_cvtsi32_si128(32));
+    tmp2 = _mm_srl_epi64(tmp2, _mm_cvtsi32_si128(32));
 
     tmp16_2 = tmp2;
     row12 = _mm_unpacklo_epi8(tmp16_2, _mm_setzero_si128());
@@ -2114,6 +2117,7 @@ void PredIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 void PredIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START LOADROW(row11, 0);
+
     LOADROW(row12, 1);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
@@ -2156,6 +2160,7 @@ void PredIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 void PredIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START LOADROW(row11, 0);
+
     LOADROW(row12, 1);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
@@ -2194,6 +2199,7 @@ void PredIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 void PredIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START LOADROW(row11, -1);
+
     LOADROW(row12, 0);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
@@ -2232,6 +2238,7 @@ void PredIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 void PredIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START LOADROW(row11, -1);
+
     LOADROW(row12, 0);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
@@ -2316,7 +2323,7 @@ PredIntraAng8x8_table PredIntraAng8[] =
 void xPredIntraAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
-    int blkSize= width;
+    int blkSize = width;
 
     assert(dirMode > 1); //no planar and dc
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };

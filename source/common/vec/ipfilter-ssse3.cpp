@@ -147,9 +147,11 @@ void filterConvertPelToShort(pixel *source, intptr_t sourceStride, short *dest, 
             val3 = _mm_sub_epi16(val2, _mm_set1_epi16(IF_INTERNAL_OFFS));
             _mm_storeu_si128((__m128i*)(dest + col), val3);
         }
+
         source += sourceStride;
         dest += destStride;
     }
+
     if (width % 8 != 0)
     {
         source = src;
@@ -162,11 +164,12 @@ void filterConvertPelToShort(pixel *source, intptr_t sourceStride, short *dest, 
             val3 = _mm_sub_epi16(val2, _mm_set1_epi16(IF_INTERNAL_OFFS));
 
             int n = width - col;
-            if (n >= 8) 
+            if (n >= 8)
             {
                 _mm_storeu_si128((__m128i*)(dest + col), val3);
             }
-            else if (n <= 0) ;    // do nothing if value of is n less than 0
+            else if (n <= 0)
+                ;                 // do nothing if value of is n less than 0
             else
             {
                 union
@@ -176,6 +179,7 @@ void filterConvertPelToShort(pixel *source, intptr_t sourceStride, short *dest, 
                     int32_t i[4];
                     int64_t q[2];
                 } u;
+
                 _mm_storeu_si128((__m128i*)u.c, val3);
                 int j = 0;
                 if (n & 4)    // n == (4,5,6,7)
@@ -185,12 +189,12 @@ void filterConvertPelToShort(pixel *source, intptr_t sourceStride, short *dest, 
                 }
                 if (n & 2)    // n == (2,3,6,7)
                 {
-                    ((int32_t*)(dest + col))[j/4] = u.i[j/4];
+                    ((int32_t*)(dest + col))[j / 4] = u.i[j / 4];
                     j += 4;
                 }
                 if (n & 1)    // n == (1,3,5,7)
                 {
-                    ((int16_t*)(dest + col))[j/2] = u.s[j/2];
+                    ((int16_t*)(dest + col))[j / 2] = u.s[j / 2];
                 }
             }
             source += sourceStride;
@@ -205,6 +209,7 @@ void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, 
     pixel* dst = dest;
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     short offset = IF_INTERNAL_OFFS;
+
     offset += shift ? (1 << (shift - 1)) : 0;
     short maxval = (1 << X265_DEPTH) - 1;
     int row, col;
@@ -232,9 +237,11 @@ void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, 
                 int8_t  c[16];
                 int64_t q[2];
             } u;
+
             _mm_storeu_si128((__m128i*)u.c, val3);
             *(int64_t*)(dest + col) = u.q[0];
         }
+
         source += sourceStride;
         dest += destStride;
     }
@@ -257,11 +264,12 @@ void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, 
             val3 = _mm_packus_epi16(lowm, highm);                 // unsigned pack
 
             int n = width - col;
-            if (n >= 16) 
+            if (n >= 16)
             {
                 _mm_storeu_si128((__m128i*)(dest + col), val3);
             }
-            else if (n <= 0) ;    // do nothing if value of is n less than 0
+            else if (n <= 0)
+                ;                 // do nothing if value of is n less than 0
             else
             {
                 union
@@ -271,6 +279,7 @@ void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, 
                     int32_t i[4];
                     int64_t q[2];
                 } u;
+
                 _mm_storeu_si128((__m128i*)u.c, val3);
                 int j = 0;
                 if (n & 8)    // n == (8,9,10,11,12,13,14,15)
@@ -280,12 +289,12 @@ void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, 
                 }
                 if (n & 4)    // n == (4,5,6,7,12,13,14,15)
                 {
-                    ((int32_t*)(dest + col))[j/4] = u.i[j/4];
+                    ((int32_t*)(dest + col))[j / 4] = u.i[j / 4];
                     j += 4;
                 }
                 if (n & 2)    // n == (2,3,6,7,10,11,14,15)
                 {
-                    ((int16_t*)(dest + col))[j/2] = u.s[j/2];
+                    ((int16_t*)(dest + col))[j / 2] = u.s[j / 2];
                     j += 2;
                 }
                 if (n & 1)    // n == (1,3,5,7,9,11,13,15)

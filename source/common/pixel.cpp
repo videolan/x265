@@ -416,7 +416,7 @@ void blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b, intpt
     }
 }
 
-template <int size>
+template<int size>
 void blockfil_s_c(short *dst, intptr_t dstride, short val)
 {
     for (int y = 0; y < size; y++)
@@ -497,18 +497,19 @@ void transpose(pixel* dst, pixel* src, intptr_t stride)
     }
 }
 
-template <typename T>
+template<typename T>
 void weightUnidir(T *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
+
     for (y = height - 1; y >= 0; y--)
     {
         for (x = width - 1; x >= 0; )
         {
             // note: luma min width is 4
-            dst[x] = (pixel) Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
             x--;
-            dst[x] = (pixel) Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
             x--;
         }
 
@@ -628,7 +629,7 @@ void frame_init_lowres_core(pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, 
             dstc[x] = FILTER(src1[2*x+1], src2[2*x+1], src1[2*x+2], src2[2*x+2]);
 #undef FILTER
         }
-        src0 += src_stride*2;
+        src0 += src_stride * 2;
         dst0 += dst_stride;
         dsth += dst_stride;
         dstv += dst_stride;
@@ -655,6 +656,7 @@ void ssim_4x4x2_core(const pixel *pix1, intptr_t stride1, const pixel *pix2, int
                 s12 += a * b;
             }
         }
+
         sums[z][0] = s1;
         sums[z][1] = s2;
         sums[z][2] = ss;
@@ -671,6 +673,7 @@ float ssim_end_1(ssim_t s1, ssim_t s2, ssim_t ss, ssim_t s12)
     static const ssim_t ssim_c2 = (ssim_t)(.03 * .03 * pixelMax * pixelMax * 64 * 63 + .5);
     ssim_t vars = ss * 64 - s1 * s1 - s2 * s2;
     ssim_t covar = s12 * 64 - s1 * s2;
+
     return (float)(2 * s1 * s2 + ssim_c1) * (float)(2 * covar + ssim_c2)
            / ((float)(s1 * s1 + s2 * s2 + ssim_c1) * (float)(vars + ssim_c2));
 }
@@ -686,6 +689,7 @@ float ssim_end_4(ssim_t sum0[5][4], ssim_t sum1[5][4], int width)
                            sum0[i][2] + sum0[i + 1][2] + sum1[i][2] + sum1[i + 1][2],
                            sum0[i][3] + sum0[i + 1][3] + sum1[i][3] + sum1[i + 1][3]);
     }
+
     return ssim;
 }
 
@@ -693,6 +697,7 @@ template<int w, int h>
 uint64_t pixel_var(pixel *pix, intptr_t i_stride)
 {
     uint32_t sum = 0, sqr = 0;
+
     for (int y = 0; y < h; y++)
     {
         for (int x = 0; x < w; x++)
@@ -700,8 +705,10 @@ uint64_t pixel_var(pixel *pix, intptr_t i_stride)
             sum += pix[x];
             sqr += pix[x] * pix[x];
         }
+
         pix += i_stride;
     }
+
     return sum + ((uint64_t)sqr << 32);
 }
 
@@ -709,11 +716,13 @@ void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dst
                                     pixel *src,  intptr_t srcStride, int w, int h)
 {
     for (int y = 0; y < h; y++, dstu += dstuStride, dstv += dstvStride, src += srcStride)
+    {
         for (int x = 0; x < w; x++)
         {
             dstu[x] = src[2 * x];
             dstv[x] = src[2 * x + 1];
         }
+    }
 }
 }  // end anonymous namespace
 
@@ -933,8 +942,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.ssim_4x4x2_core = ssim_4x4x2_core;
     p.ssim_end_4 = ssim_end_4;
 
-    p.var[PARTITION_16x16] = pixel_var<16,16>;
-    p.var[PARTITION_8x8] = pixel_var<8,8>;
+    p.var[PARTITION_16x16] = pixel_var<16, 16>;
+    p.var[PARTITION_8x8] = pixel_var<8, 8>;
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }
 }

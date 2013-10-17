@@ -35,7 +35,6 @@
 #include "md5.h"
 
 namespace x265 {
-
 //! \ingroup TLibCommon
 //! \{
 

@@ -236,17 +236,17 @@ void TComYuv::copyPartToChroma(TComYuv* dstPicYuv, UInt partIdx)
 
 void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma, bool bChroma)
 {
-    if(bLuma)
+    if (bLuma)
         copyPartToPartLuma(dstPicYuv, partIdx, width, height);
-    if(bChroma)
+    if (bChroma)
         copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
 }
 
 void TComYuv::copyPartToPartYuv(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma, bool bChroma)
 {
-    if(bLuma)
+    if (bLuma)
         copyPartToPartLuma(dstPicYuv, partIdx, width, height);
-    if(bChroma)
+    if (bChroma)
         copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
 }
 
@@ -254,6 +254,7 @@ void TComYuv::copyPartToPartLuma(TComYuv* dstPicYuv, UInt partIdx, UInt width, U
 {
     Pel* src = getLumaAddr(partIdx);
     Pel* dst = dstPicYuv->getLumaAddr(partIdx);
+
     if (src == dst) return;
 
     UInt srcstride = getStride();
@@ -279,6 +280,7 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, UInt partIdx, UInt width,
     Pel* srcV = getCrAddr(partIdx);
     Pel* dstU = dstPicYuv->getCbAddr(partIdx);
     Pel* dstV = dstPicYuv->getCrAddr(partIdx);
+
     if (srcU == dstU && srcV == dstV) return;
 
     UInt srcstride = getCStride();
@@ -394,6 +396,7 @@ void TComYuv::addClipLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UI
     UInt src0Stride = srcYuv0->getStride();
     UInt src1Stride = srcYuv1->getStride();
     UInt dststride = getStride();
+
     primitives.pixeladd_pp(partSize, partSize, dst, dststride, src0, src1, src0Stride, src1Stride);
 }
 
@@ -434,6 +437,7 @@ void TComYuv::addClipChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, 
     UInt src0Stride = srcYuv0->getCStride();
     UInt src1Stride = srcYuv1->getCStride();
     UInt dststride  = getCStride();
+
     primitives.pixeladd_pp(partSize, partSize, dstU, dststride, srcU0, srcU1, src0Stride, src1Stride);
     primitives.pixeladd_pp(partSize, partSize, dstV, dststride, srcV0, srcV1, src0Stride, src1Stride);
 }
@@ -551,7 +555,7 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt 
     Pel* dstU  = getCbAddr(partUnitIdx);
     Pel* dstV  = getCrAddr(partUnitIdx);
 
-    if(bLuma)
+    if (bLuma)
     {
         src0Stride = srcYuv0->getStride();
         src1Stride = srcYuv1->getStride();
@@ -574,7 +578,7 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt 
             dstY  += dststride;
         }
     }
-    if(bChroma)
+    if (bChroma)
     {
         shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
         offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
@@ -627,7 +631,7 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, U
     Pel* dstU = getCbAddr(partUnitIdx);
     Pel* dstV = getCrAddr(partUnitIdx);
 
-    if(bLuma)
+    if (bLuma)
     {
         src0Stride = srcYuv0->m_width;
         src1Stride = srcYuv1->m_width;
@@ -650,7 +654,7 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, U
             dstY  += dststride;
         }
     }
-    if(bChroma)
+    if (bChroma)
     {
         shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
         offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;

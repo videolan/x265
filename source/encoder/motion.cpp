@@ -38,7 +38,6 @@
 using namespace x265;
 
 namespace {
-
 struct SubpelWorkload
 {
     int hpel_iters;
@@ -48,7 +47,8 @@ struct SubpelWorkload
     bool hpel_satd;
 };
 
-SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL+1] = {
+SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
+{
     { 1, 4, 0, 4, false }, // 4 SAD HPEL only
     { 1, 4, 1, 4, false }, // 4 SAD HPEL + 4 SATD QPEL
     { 1, 4, 1, 4, true },  // 4 SATD HPEL + 4 SATD QPEL
@@ -58,7 +58,6 @@ SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL+1] = {
     { 2, 8, 1, 8, true },  // 2x8 SATD HPEL + 8 SATD QPEL
     { 2, 8, 2, 8, true },  // 2x8 SATD HPEL + 2x8 SATD QPEL
 };
-
 }
 
 static int size_scale[NUM_PARTITIONS];
@@ -732,6 +731,7 @@ me_hex2:
                 break;
             }
         }
+
         break;
     }
 
@@ -768,6 +768,7 @@ me_hex2:
                     COST_MV(tmv.x, tmv.y);
             }
         }
+
         break;
     }
 
@@ -804,8 +805,9 @@ me_hex2:
             {
                 MV qmv = bmv + square1[i] * 2;
                 cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
-                COPY2_IF_LT(bcost, cost, bdir, i+0);
+                COPY2_IF_LT(bcost, cost, bdir, i + 0);
             }
+
             bmv += square1[bdir] * 2;
         }
     }
@@ -816,8 +818,8 @@ me_hex2:
             int bdir = 0, cost0, cost1;
             for (int i = 1; i <= wl.hpel_dirs; i += 2)
             {
-                MV qmv0 = bmv + square1[i  ] * 2;
-                MV qmv1 = bmv + square1[i+1] * 2;
+                MV qmv0 = bmv + square1[i] * 2;
+                MV qmv1 = bmv + square1[i + 1] * 2;
                 int mvcost0 = mvcost(qmv0);
                 int mvcost1 = mvcost(qmv1);
                 int dir = square1_dir[i];
@@ -839,9 +841,10 @@ me_hex2:
                     cost0 = hpelcomp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE + (dir == 2)) + mvcost0;
                     cost1 = hpelcomp(fenc, FENC_STRIDE, subpelbuf + (dir == 2) + (dir == 1 ? FENC_STRIDE : 0), FENC_STRIDE + (dir == 2)) + mvcost1;
                 }
-                COPY2_IF_LT(bcost, cost0, bdir, i+0);
-                COPY2_IF_LT(bcost, cost1, bdir, i+1);
+                COPY2_IF_LT(bcost, cost0, bdir, i + 0);
+                COPY2_IF_LT(bcost, cost1, bdir, i + 1);
             }
+
             bmv += square1[bdir] * 2;
         }
     }
@@ -858,6 +861,7 @@ me_hex2:
             cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
+
         bmv += square1[bdir];
     }
 
@@ -1156,6 +1160,7 @@ void MotionEstimate::subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir)
 {
     int xFrac = qmv.x & 0x3;
     int yFrac = qmv.y & 0x3;
+
     assert(yFrac | xFrac);
     int realWidth = blockwidth + (dir == 2);
     int realHeight = blockheight + (dir == 1);

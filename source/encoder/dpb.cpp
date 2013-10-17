@@ -45,6 +45,7 @@ DPB::~DPB()
 void DPB::recycleUnreferenced(PicList& freeList)
 {
     TComPic *iterPic = m_picList.first();
+
     while (iterPic)
     {
         TComPic *pic = iterPic;
@@ -201,6 +202,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
     unsigned int poci = 0, numNeg = 0, numPos = 0;
 
     TComPic* iterPic = m_picList.first();
+
     while (iterPic && (poci < maxDecPicBuffer - 1))
     {
         if ((iterPic->getPOC() != curPoc) && (iterPic->getSlice()->isReferenced()))
@@ -243,7 +245,6 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
  */
 void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 {
-
     if (nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
         || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
         || nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
@@ -296,6 +297,7 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
 
     // loop through all pictures in the reference picture buffer
     TComPic* iterPic = m_picList.first();
+
     while (iterPic)
     {
         outPic = iterPic;

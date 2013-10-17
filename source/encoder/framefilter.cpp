@@ -199,7 +199,7 @@ void FrameFilter::processRow(int row)
         {
             m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());
 
-            for(int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
+            for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
             {
                 processSao(i);
             }
@@ -287,10 +287,11 @@ void FrameFilter::processRowPost(int row)
         int maxPixY = (row + 1) * 64 - 4 * !bEnd;
         int ssim_cnt;
         x265_emms();
+
         /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
-        m_pic->getSlice()->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2, 
+        m_pic->getSlice()->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
                                                    m_cfg->param.sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
         m_pic->getSlice()->m_ssimCnt += ssim_cnt;
     }
@@ -410,6 +411,7 @@ void FrameFilter::calculatePSNR(uint32_t cuAddr, int row)
 
     int width  = recon->getWidth() - m_cfg->getPad(0);
     int height;
+
     if (row == m_numRows - 1)
         height = ((recon->getHeight() % g_maxCUHeight) ? (recon->getHeight() % g_maxCUHeight) : g_maxCUHeight);
     else
@@ -434,6 +436,7 @@ float FrameFilter::calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, int
 {
     int z = 0;
     float ssim = 0.0;
+
     ssim_t(*sum0)[4] = (ssim_t(*)[4])buf;
     ssim_t(*sum1)[4] = sum0 + (width >> 2) + 3;
     width >>= 2;
@@ -459,8 +462,8 @@ float FrameFilter::calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, int
     }
 
     *cnt = (height - 1) * (width - 1);
-    return ssim; 
-} 
+    return ssim;
+}
 
 void FrameFilter::processSao(int row)
 {

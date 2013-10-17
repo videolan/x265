@@ -44,6 +44,7 @@ class Encoder;
 class CTURow
 {
 public:
+
     CTURow() : m_rdGoOnBinCodersCABAC(true) {}
 
     TEncSbac               m_sbacCoder;
@@ -78,6 +79,7 @@ public:
                 m_binCodersCABAC[depth][ciIdx]->m_fracBits = 0;
             }
         }
+
         m_rdGoOnSbacCoder.setSlice(slice);
         m_rdGoOnSbacCoder.resetEntropy();
     }
@@ -89,7 +91,6 @@ public:
     volatile bool       m_active;
     volatile uint32_t   m_completed;
 };
-
 }
 
 #endif // ifndef X265_CTUROW_H

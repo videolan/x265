@@ -45,7 +45,6 @@ extern "C" void x265_safe_intel_cpu_indicator_init(void);
 #endif
 
 namespace x265 {
-
 uint32_t cpu_detect(void);
 
 struct cpu_name_t
@@ -55,7 +54,6 @@ struct cpu_name_t
 };
 
 extern const cpu_name_t cpu_names[];
-
 }
 
 #endif // ifndef X265_CPU_H

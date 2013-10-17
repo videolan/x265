@@ -31,7 +31,7 @@
 using namespace x265;
 
 namespace {
-#if !HIGH_BIT_DEPTH 
+#if !HIGH_BIT_DEPTH
 template<int size>
 ALWAYSINLINE void unrollFunc_32_avx2(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16us& sad)
 {
@@ -441,7 +441,8 @@ void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel
     res[2] = horizontal_add(sum3);
     res[3] = horizontal_add(sum4);
 }
-#endif
+
+#endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {
@@ -449,11 +450,11 @@ void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives &p)
 {
     p.sad[0] = p.sad[0];
 #define SET_SADS(W, H) \
-    p.sad[PARTITION_##W##x##H] = sad_avx2_##W<H>; \
-    p.sad_x3[PARTITION_##W##x##H] = sad_avx2_x3_##W<H>; \
-    p.sad_x4[PARTITION_##W##x##H] = sad_avx2_x4_##W<H>; \
+    p.sad[PARTITION_ ## W ## x ## H] = sad_avx2_ ## W<H>; \
+    p.sad_x3[PARTITION_ ## W ## x ## H] = sad_avx2_x3_ ## W<H>; \
+    p.sad_x4[PARTITION_ ## W ## x ## H] = sad_avx2_x4_ ## W<H>; \
 
-#if !HIGH_BIT_DEPTH 
+#if !HIGH_BIT_DEPTH
 #if (defined(__GNUC__) || defined(__INTEL_COMPILER)) || defined(__clang__)
     SET_SADS(32, 8);
     SET_SADS(32, 16);
@@ -465,6 +466,6 @@ void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives &p)
     SET_SADS(64, 48);
     SET_SADS(64, 64);
 #endif
-#endif
+#endif // if !HIGH_BIT_DEPTH
 }
 }

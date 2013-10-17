@@ -27,7 +27,6 @@
 #include <cstdlib>
 
 namespace x265 {
-
 class TComPic;
 
 class PicList
@@ -63,9 +62,13 @@ public:
     void remove(TComPic& pic);
 
     TComPic* first()      { return m_start;   }
+
     TComPic* last()       { return m_end;     }
+
     int size()            { return m_count;   }
+
     bool empty() const    { return !m_count;  }
+
     operator bool() const { return !!m_count; }
 };
 }
