@@ -31,45 +31,59 @@
 
 using namespace x265;
 
-#define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 4,  DATA_TYPE1, DATA_TYPE2>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 8,  DATA_TYPE1, DATA_TYPE2>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 12, DATA_TYPE1, DATA_TYPE2>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 16, DATA_TYPE1, DATA_TYPE2>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 24, DATA_TYPE1, DATA_TYPE2>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 32, DATA_TYPE1, DATA_TYPE2>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 48, DATA_TYPE1, DATA_TYPE2>;  \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 64, DATA_TYPE1, DATA_TYPE2>;  \
-
 #define SET_FUNC_PRIMITIVE_TABLE_C(FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(4,  FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(8,  FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(12, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(16, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(24, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(32, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(48, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(64, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-
-#define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, WIDTH) \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x4]  = FUNC_PREFIX<WIDTH,  4>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x8]  = FUNC_PREFIX<WIDTH,  8>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x12] = FUNC_PREFIX<WIDTH, 12>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x16] = FUNC_PREFIX<WIDTH, 16>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x24] = FUNC_PREFIX<WIDTH, 24>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x32] = FUNC_PREFIX<WIDTH, 32>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x48] = FUNC_PREFIX<WIDTH, 48>; \
-    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x64] = FUNC_PREFIX<WIDTH, 64>;
+    p.FUNC_PREFIX[LUMA_4x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 4,  4, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8,  8, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8,  4, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_4x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 4,  8, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_16x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_16x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16,  8, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_16x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 12, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_12x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<12, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_16x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16,  4, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_4x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 4, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_32x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 32, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_32x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_16x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 32, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_32x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 24, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_24x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<24, 32, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_32x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32,  8, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8, 32, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_64x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<64, 64, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_64x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<64, 32, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_32x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 64, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_64x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<64, 48, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_48x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<48, 64, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_64x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<64, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_16x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 64, DATA_TYPE1, DATA_TYPE2>;
 
 #define SET_FUNC_PRIMITIVE_TABLE_C2(FUNC_PREFIX) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX,  4) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX,  8) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 12) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 16) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 24) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 32) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 48) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 64) \
+    p.FUNC_PREFIX[LUMA_4x4]   = FUNC_PREFIX< 4,  4>; \
+    p.FUNC_PREFIX[LUMA_8x8]   = FUNC_PREFIX< 8,  8>; \
+    p.FUNC_PREFIX[LUMA_8x4]   = FUNC_PREFIX< 8,  4>; \
+    p.FUNC_PREFIX[LUMA_4x8]   = FUNC_PREFIX< 4,  8>; \
+    p.FUNC_PREFIX[LUMA_16x16] = FUNC_PREFIX<16, 16>; \
+    p.FUNC_PREFIX[LUMA_16x8]  = FUNC_PREFIX<16,  8>; \
+    p.FUNC_PREFIX[LUMA_8x16]  = FUNC_PREFIX< 8, 16>; \
+    p.FUNC_PREFIX[LUMA_16x12] = FUNC_PREFIX<16, 12>; \
+    p.FUNC_PREFIX[LUMA_12x16] = FUNC_PREFIX<12, 16>; \
+    p.FUNC_PREFIX[LUMA_16x4]  = FUNC_PREFIX<16,  4>; \
+    p.FUNC_PREFIX[LUMA_4x16]  = FUNC_PREFIX< 4, 16>; \
+    p.FUNC_PREFIX[LUMA_32x32] = FUNC_PREFIX<32, 32>; \
+    p.FUNC_PREFIX[LUMA_32x16] = FUNC_PREFIX<32, 16>; \
+    p.FUNC_PREFIX[LUMA_16x32] = FUNC_PREFIX<16, 32>; \
+    p.FUNC_PREFIX[LUMA_32x24] = FUNC_PREFIX<32, 24>; \
+    p.FUNC_PREFIX[LUMA_24x32] = FUNC_PREFIX<24, 32>; \
+    p.FUNC_PREFIX[LUMA_32x8]  = FUNC_PREFIX<32,  8>; \
+    p.FUNC_PREFIX[LUMA_8x32]  = FUNC_PREFIX< 8, 32>; \
+    p.FUNC_PREFIX[LUMA_64x64] = FUNC_PREFIX<64, 64>; \
+    p.FUNC_PREFIX[LUMA_64x32] = FUNC_PREFIX<64, 32>; \
+    p.FUNC_PREFIX[LUMA_32x64] = FUNC_PREFIX<32, 64>; \
+    p.FUNC_PREFIX[LUMA_64x48] = FUNC_PREFIX<64, 48>; \
+    p.FUNC_PREFIX[LUMA_48x64] = FUNC_PREFIX<48, 64>; \
+    p.FUNC_PREFIX[LUMA_64x16] = FUNC_PREFIX<64, 16>; \
+    p.FUNC_PREFIX[LUMA_16x64] = FUNC_PREFIX<16, 64>;
 
 namespace {
 // place functions in anonymous namespace (file static)
@@ -743,77 +757,31 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE_C2(pixelavg_pp)
 
     // satd
-    p.satd[PARTITION_4x4]   = satd_4x4;
-    p.satd[PARTITION_4x8]   = satd4<4, 8>;
-    p.satd[PARTITION_4x12]  = satd4<4, 12>;
-    p.satd[PARTITION_4x16]  = satd4<4, 16>;
-    p.satd[PARTITION_4x24]  = satd4<4, 24>;
-    p.satd[PARTITION_4x32]  = satd4<4, 32>;
-    p.satd[PARTITION_4x48]  = satd4<4, 48>;
-    p.satd[PARTITION_4x64]  = satd4<4, 64>;
-
-    p.satd[PARTITION_8x4]   = satd_8x4;
-    p.satd[PARTITION_8x8]   = satd8<8, 8>;
-    p.satd[PARTITION_8x12]  = satd8<8, 12>;
-    p.satd[PARTITION_8x16]  = satd8<8, 16>;
-    p.satd[PARTITION_8x24]  = satd8<8, 24>;
-    p.satd[PARTITION_8x32]  = satd8<8, 32>;
-    p.satd[PARTITION_8x48]  = satd8<8, 48>;
-    p.satd[PARTITION_8x64]  = satd8<8, 64>;
-
-    p.satd[PARTITION_12x4]  = satd4<12, 4>;
-    p.satd[PARTITION_12x8]  = satd4<12, 8>;
-    p.satd[PARTITION_12x12] = satd4<12, 12>;
-    p.satd[PARTITION_12x16] = satd4<12, 16>;
-    p.satd[PARTITION_12x24] = satd4<12, 24>;
-    p.satd[PARTITION_12x32] = satd4<12, 32>;
-    p.satd[PARTITION_12x48] = satd4<12, 48>;
-    p.satd[PARTITION_12x64] = satd4<12, 64>;
-
-    p.satd[PARTITION_16x4]  = satd8<16, 4>;
-    p.satd[PARTITION_16x8]  = satd8<16, 8>;
-    p.satd[PARTITION_16x12] = satd8<16, 12>;
-    p.satd[PARTITION_16x16] = satd8<16, 16>;
-    p.satd[PARTITION_16x24] = satd8<16, 24>;
-    p.satd[PARTITION_16x32] = satd8<16, 32>;
-    p.satd[PARTITION_16x48] = satd8<16, 48>;
-    p.satd[PARTITION_16x64] = satd8<16, 64>;
-
-    p.satd[PARTITION_24x4]  = satd8<24, 4>;
-    p.satd[PARTITION_24x8]  = satd8<24, 8>;
-    p.satd[PARTITION_24x12] = satd8<24, 12>;
-    p.satd[PARTITION_24x16] = satd8<24, 16>;
-    p.satd[PARTITION_24x24] = satd8<24, 24>;
-    p.satd[PARTITION_24x32] = satd8<24, 32>;
-    p.satd[PARTITION_24x48] = satd8<24, 48>;
-    p.satd[PARTITION_24x64] = satd8<24, 64>;
-
-    p.satd[PARTITION_32x4]  = satd8<32, 4>;
-    p.satd[PARTITION_32x8]  = satd8<32, 8>;
-    p.satd[PARTITION_32x12] = satd8<32, 12>;
-    p.satd[PARTITION_32x16] = satd8<32, 16>;
-    p.satd[PARTITION_32x24] = satd8<32, 24>;
-    p.satd[PARTITION_32x32] = satd8<32, 32>;
-    p.satd[PARTITION_32x48] = satd8<32, 48>;
-    p.satd[PARTITION_32x64] = satd8<32, 64>;
-
-    p.satd[PARTITION_48x4]  = satd8<48, 4>;
-    p.satd[PARTITION_48x8]  = satd8<48, 8>;
-    p.satd[PARTITION_48x12] = satd8<48, 12>;
-    p.satd[PARTITION_48x16] = satd8<48, 16>;
-    p.satd[PARTITION_48x24] = satd8<48, 24>;
-    p.satd[PARTITION_48x32] = satd8<48, 32>;
-    p.satd[PARTITION_48x48] = satd8<48, 48>;
-    p.satd[PARTITION_48x64] = satd8<48, 64>;
-
-    p.satd[PARTITION_64x4]  = satd8<64, 4>;
-    p.satd[PARTITION_64x8]  = satd8<64, 8>;
-    p.satd[PARTITION_64x12] = satd8<64, 12>;
-    p.satd[PARTITION_64x16] = satd8<64, 16>;
-    p.satd[PARTITION_64x24] = satd8<64, 24>;
-    p.satd[PARTITION_64x32] = satd8<64, 32>;
-    p.satd[PARTITION_64x48] = satd8<64, 48>;
-    p.satd[PARTITION_64x64] = satd8<64, 64>;
+    p.satd[LUMA_4x4]   = satd_4x4;
+    p.satd[LUMA_8x8]   = satd8<8, 8>;
+    p.satd[LUMA_8x4]   = satd_8x4;
+    p.satd[LUMA_4x8]   = satd4<4, 8>;
+    p.satd[LUMA_16x16] = satd8<16, 16>;
+    p.satd[LUMA_16x8]  = satd8<16, 8>;
+    p.satd[LUMA_8x16]  = satd8<8, 16>;
+    p.satd[LUMA_16x12] = satd8<16, 12>;
+    p.satd[LUMA_12x16] = satd4<12, 16>;
+    p.satd[LUMA_16x4]  = satd8<16, 4>;
+    p.satd[LUMA_4x16]  = satd4<4, 16>;
+    p.satd[LUMA_32x32] = satd8<32, 32>;
+    p.satd[LUMA_32x16] = satd8<32, 16>;
+    p.satd[LUMA_16x32] = satd8<16, 32>;
+    p.satd[LUMA_32x24] = satd8<32, 24>;
+    p.satd[LUMA_24x32] = satd8<24, 32>;
+    p.satd[LUMA_32x8]  = satd8<32, 8>;
+    p.satd[LUMA_8x32]  = satd8<8, 32>;
+    p.satd[LUMA_64x64] = satd8<64, 64>;
+    p.satd[LUMA_64x32] = satd8<64, 32>;
+    p.satd[LUMA_32x64] = satd8<32, 64>;
+    p.satd[LUMA_64x48] = satd8<64, 48>;
+    p.satd[LUMA_48x64] = satd8<48, 64>;
+    p.satd[LUMA_64x16] = satd8<64, 16>;
+    p.satd[LUMA_16x64] = satd8<16, 64>;
 
     //sse
 #if HIGH_BIT_DEPTH
@@ -845,77 +813,31 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sa8d[BLOCK_32x32] = sa8d16<32, 32>;
     p.sa8d[BLOCK_64x64] = sa8d16<64, 64>;
 
-    p.sa8d_inter[PARTITION_4x4]   = satd_4x4;
-    p.sa8d_inter[PARTITION_4x8]   = satd4<4, 8>;
-    p.sa8d_inter[PARTITION_4x12]  = satd4<4, 12>;
-    p.sa8d_inter[PARTITION_4x16]  = satd4<4, 16>;
-    p.sa8d_inter[PARTITION_4x24]  = satd4<4, 24>;
-    p.sa8d_inter[PARTITION_4x32]  = satd4<4, 32>;
-    p.sa8d_inter[PARTITION_4x48]  = satd4<4, 48>;
-    p.sa8d_inter[PARTITION_4x64]  = satd4<4, 64>;
-
-    p.sa8d_inter[PARTITION_8x4]   = satd_8x4;
-    p.sa8d_inter[PARTITION_8x8]   = sa8d_8x8;
-    p.sa8d_inter[PARTITION_8x12]  = satd8<8, 12>;
-    p.sa8d_inter[PARTITION_8x16]  = sa8d8<8, 16>;
-    p.sa8d_inter[PARTITION_8x24]  = sa8d8<8, 24>;
-    p.sa8d_inter[PARTITION_8x32]  = sa8d8<8, 32>;
-    p.sa8d_inter[PARTITION_8x48]  = sa8d8<8, 48>;
-    p.sa8d_inter[PARTITION_8x64]  = sa8d8<8, 64>;
-
-    p.sa8d_inter[PARTITION_12x4]  = satd4<12, 4>;
-    p.sa8d_inter[PARTITION_12x8]  = satd4<12, 8>;
-    p.sa8d_inter[PARTITION_12x12] = satd4<12, 12>;
-    p.sa8d_inter[PARTITION_12x16] = satd4<12, 16>;
-    p.sa8d_inter[PARTITION_12x24] = satd4<12, 24>;
-    p.sa8d_inter[PARTITION_12x32] = satd4<12, 32>;
-    p.sa8d_inter[PARTITION_12x48] = satd4<12, 48>;
-    p.sa8d_inter[PARTITION_12x64] = satd4<12, 64>;
-
-    p.sa8d_inter[PARTITION_16x4]  = satd8<16, 4>;
-    p.sa8d_inter[PARTITION_16x8]  = sa8d8<16, 8>;
-    p.sa8d_inter[PARTITION_16x12] = satd8<16, 12>;
-    p.sa8d_inter[PARTITION_16x16] = sa8d_16x16;
-    p.sa8d_inter[PARTITION_16x24] = sa8d8<16, 24>;
-    p.sa8d_inter[PARTITION_16x32] = sa8d16<16, 32>;
-    p.sa8d_inter[PARTITION_16x48] = sa8d16<16, 48>;
-    p.sa8d_inter[PARTITION_16x64] = sa8d16<16, 64>;
-
-    p.sa8d_inter[PARTITION_24x4]  = satd8<24, 4>;
-    p.sa8d_inter[PARTITION_24x8]  = sa8d8<24, 8>;
-    p.sa8d_inter[PARTITION_24x12] = satd8<24, 12>;
-    p.sa8d_inter[PARTITION_24x16] = sa8d8<24, 16>;
-    p.sa8d_inter[PARTITION_24x24] = sa8d8<24, 24>;
-    p.sa8d_inter[PARTITION_24x32] = sa8d8<24, 32>;
-    p.sa8d_inter[PARTITION_24x48] = sa8d8<24, 48>;
-    p.sa8d_inter[PARTITION_24x64] = sa8d8<24, 64>;
-
-    p.sa8d_inter[PARTITION_32x4]  = satd8<32, 4>;
-    p.sa8d_inter[PARTITION_32x8]  = sa8d8<32, 8>;
-    p.sa8d_inter[PARTITION_32x12] = satd8<32, 12>;
-    p.sa8d_inter[PARTITION_32x16] = sa8d16<32, 16>;
-    p.sa8d_inter[PARTITION_32x24] = sa8d8<32, 24>;
-    p.sa8d_inter[PARTITION_32x32] = sa8d16<32, 32>;
-    p.sa8d_inter[PARTITION_32x48] = sa8d16<32, 48>;
-    p.sa8d_inter[PARTITION_32x64] = sa8d16<32, 64>;
-
-    p.sa8d_inter[PARTITION_48x4]  = satd8<48, 4>;
-    p.sa8d_inter[PARTITION_48x8]  = sa8d8<48, 8>;
-    p.sa8d_inter[PARTITION_48x12] = satd8<48, 12>;
-    p.sa8d_inter[PARTITION_48x16] = sa8d16<48, 16>;
-    p.sa8d_inter[PARTITION_48x24] = sa8d8<48, 24>;
-    p.sa8d_inter[PARTITION_48x32] = sa8d16<48, 32>;
-    p.sa8d_inter[PARTITION_48x48] = sa8d16<48, 48>;
-    p.sa8d_inter[PARTITION_48x64] = sa8d16<48, 64>;
-
-    p.sa8d_inter[PARTITION_64x4]  = satd8<64, 4>;
-    p.sa8d_inter[PARTITION_64x8]  = sa8d8<64, 8>;
-    p.sa8d_inter[PARTITION_64x12] = satd8<64, 12>;
-    p.sa8d_inter[PARTITION_64x16] = sa8d16<64, 16>;
-    p.sa8d_inter[PARTITION_64x24] = sa8d8<64, 24>;
-    p.sa8d_inter[PARTITION_64x32] = sa8d16<64, 32>;
-    p.sa8d_inter[PARTITION_64x48] = sa8d16<64, 48>;
-    p.sa8d_inter[PARTITION_64x64] = sa8d16<64, 64>;
+    p.sa8d_inter[LUMA_4x4]   = satd_4x4;
+    p.sa8d_inter[LUMA_8x8]   = sa8d_8x8;
+    p.sa8d_inter[LUMA_8x4]   = satd_8x4;
+    p.sa8d_inter[LUMA_4x8]   = satd4<4, 8>;
+    p.sa8d_inter[LUMA_16x16] = sa8d_16x16;
+    p.sa8d_inter[LUMA_16x8]  = sa8d8<16, 8>;
+    p.sa8d_inter[LUMA_8x16]  = sa8d8<8, 16>;
+    p.sa8d_inter[LUMA_16x12] = satd8<16, 12>;
+    p.sa8d_inter[LUMA_12x16] = satd4<12, 16>;
+    p.sa8d_inter[LUMA_4x16]  = satd4<4, 16>;
+    p.sa8d_inter[LUMA_16x4]  = satd8<16, 4>;
+    p.sa8d_inter[LUMA_32x32] = sa8d16<32, 32>;
+    p.sa8d_inter[LUMA_32x16] = sa8d16<32, 16>;
+    p.sa8d_inter[LUMA_16x32] = sa8d16<16, 32>;
+    p.sa8d_inter[LUMA_32x24] = sa8d8<32, 24>;
+    p.sa8d_inter[LUMA_24x32] = sa8d8<24, 32>;
+    p.sa8d_inter[LUMA_32x8]  = sa8d8<32, 8>;
+    p.sa8d_inter[LUMA_8x32]  = sa8d8<8, 32>;
+    p.sa8d_inter[LUMA_64x64] = sa8d16<64, 64>;
+    p.sa8d_inter[LUMA_64x32] = sa8d16<64, 32>;
+    p.sa8d_inter[LUMA_32x64] = sa8d16<32, 64>;
+    p.sa8d_inter[LUMA_64x48] = sa8d16<64, 48>;
+    p.sa8d_inter[LUMA_48x64] = sa8d16<48, 64>;
+    p.sa8d_inter[LUMA_64x16] = sa8d16<64, 16>;
+    p.sa8d_inter[LUMA_16x64] = sa8d16<16, 64>;
 
     p.calcresidual[BLOCK_4x4] = getResidual<4>;
     p.calcresidual[BLOCK_8x8] = getResidual<8>;
@@ -947,8 +869,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.ssim_4x4x2_core = ssim_4x4x2_core;
     p.ssim_end_4 = ssim_end_4;
 
-    p.var[PARTITION_16x16] = pixel_var<16, 16>;
-    p.var[PARTITION_8x8] = pixel_var<8, 8>;
+    p.var[LUMA_16x16] = pixel_var<16, 16>;
+    p.var[LUMA_8x8] = pixel_var<8, 8>;
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }
 }

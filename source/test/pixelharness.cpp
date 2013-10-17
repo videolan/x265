@@ -29,19 +29,6 @@
 
 using namespace x265;
 
-// Initialize the Func Names for all the Pixel Comp
-static const char *FuncNames[NUM_PARTITIONS] =
-{
-    "  4x4", "  4x8", " 4x12", " 4x16", " 4x24", " 4x32", " 4x48", " 4x64",
-    "  8x4", "  8x8", " 8x12", " 8x16", " 8x24", " 8x32", " 8x48", " 8x64",
-    " 12x4", " 12x8", "12x12", "12x16", "12x24", "12x32", "12x48", "12x64",
-    " 16x4", " 16x8", "16x12", "16x16", "16x24", "16x32", "16x48", "16x64",
-    " 24x4", " 24x8", "24x12", "24x16", "24x24", "24x32", "24x48", "24x64",
-    " 32x4", " 32x8", "32x12", "32x16", "32x24", "32x32", "32x48", "32x64",
-    " 48x4", " 48x8", "48x12", "48x16", "48x24", "48x32", "48x48", "48x64",
-    " 64x4", " 64x8", "64x12", "64x16", "64x24", "64x32", "64x48", "64x64"
-};
-
 #define INCR   32
 #define STRIDE 64
 #define ITERS  100
@@ -500,7 +487,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp(ref.satd[part], opt.satd[part]))
         {
-            printf("satd[%s]: failed!\n", FuncNames[part]);
+            printf("satd[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -509,7 +496,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp(ref.sa8d_inter[part], opt.sa8d_inter[part]))
         {
-            printf("sa8d_inter[%s]: failed!\n", FuncNames[part]);
+            printf("sa8d_inter[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -518,7 +505,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp(ref.sad[part], opt.sad[part]))
         {
-            printf("sad[%s]: failed!\n", FuncNames[part]);
+            printf("sad[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -527,7 +514,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp(ref.sse_pp[part], opt.sse_pp[part]))
         {
-            printf("sse_pp[%s]: failed!\n", FuncNames[part]);
+            printf("sse_pp[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -536,7 +523,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp_sp(ref.sse_sp[part], opt.sse_sp[part]))
         {
-            printf("sse_sp[%s]: failed!\n", FuncNames[part]);
+            printf("sse_sp[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -545,7 +532,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp_ss(ref.sse_ss[part], opt.sse_ss[part]))
         {
-            printf("sse_ss[%s]: failed!\n", FuncNames[part]);
+            printf("sse_ss[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -554,7 +541,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp_x3(ref.sad_x3[part], opt.sad_x3[part]))
         {
-            printf("sad_x3[%s]: failed!\n", FuncNames[part]);
+            printf("sad_x3[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -563,7 +550,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_pixelcmp_x4(ref.sad_x4[part], opt.sad_x4[part]))
         {
-            printf("sad_x4[%s]: failed!\n", FuncNames[part]);
+            printf("sad_x4[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -727,49 +714,49 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 
     if (opt.satd[part])
     {
-        printf("  satd[%s]", FuncNames[part]);
+        printf("  satd[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.satd[part], ref.satd[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sa8d_inter[part])
     {
-        printf("  sa8d[%s]", FuncNames[part]);
+        printf("  sa8d[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sa8d_inter[part], ref.sa8d_inter[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sad[part])
     {
-        printf("   sad[%s]", FuncNames[part]);
+        printf("   sad[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sad[part], ref.sad[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sad_x3[part])
     {
-        printf("sad_x3[%s]", FuncNames[part]);
+        printf("sad_x3[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sad_x3[part], ref.sad_x3[part], pbuf1, fref, fref + 1, fref - 1, FENC_STRIDE + 5, &cres[0]);
     }
 
     if (opt.sad_x4[part])
     {
-        printf("sad_x4[%s]", FuncNames[part]);
+        printf("sad_x4[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sad_x4[part], ref.sad_x4[part], pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
     }
 
     if (opt.sse_pp[part])
     {
-        printf("sse_pp[%s]", FuncNames[part]);
+        printf("sse_pp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sse_pp[part], ref.sse_pp[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sse_sp[part])
     {
-        printf("sse_sp[%s]", FuncNames[part]);
+        printf("sse_sp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sse_sp[part], ref.sse_sp[part], (short*)pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sse_ss[part])
     {
-        printf("sse_ss[%s]", FuncNames[part]);
+        printf("sse_ss[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sse_ss[part], ref.sse_ss[part], (short*)pbuf1, STRIDE, (short*)fref, STRIDE);
     }
 }

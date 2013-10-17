@@ -92,17 +92,10 @@ DECL_X4(sad, cache64_mmx2);
 DECL_X4(sad, cache64_sse2);
 DECL_X4(sad, cache64_ssse3);
 
-int x265_pixel_satd_8x12_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_8x24_sse2(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_satd_8x32_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_8x48_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_8x64_sse2(pixel *, intptr_t, pixel *, intptr_t);
-
 int x265_pixel_satd_16x4_sse2(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_satd_16x12_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_16x24_sse2(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_satd_16x32_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_16x48_sse2(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_satd_16x64_sse2(pixel *, intptr_t, pixel *, intptr_t);
 
 DECL_PIXELS(uint64_t, var, mmx2, (pixel * pix, intptr_t i_stride))
@@ -201,27 +194,39 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx(pixel *pix1, intptr_t stride1, pixel *pi
 uint64_t x265_pixel_sa8d_satd_16x16_xop(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 uint64_t x265_pixel_sa8d_satd_16x16_avx2(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 
-#define DECL_SSD(width, suffix) \
-    int x265_pixel_ssd_ ## width ## x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
-    int x265_pixel_ssd_ ## width ## x48_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
-    int x265_pixel_ssd_ ## width ## x32_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
-    int x265_pixel_ssd_ ## width ## x24_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
-    int x265_pixel_ssd_ ## width ## x16_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
-    int x265_pixel_ssd_ ## width ## x12_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
-    int x265_pixel_ssd_ ## width ## x8_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
-    int x265_pixel_ssd_ ## width ## x4_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+#define DECL_HEVC_SSD(suffix) \
+    int x265_pixel_ssd_32x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_16x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_32x32_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_32x16_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_16x32_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_32x24_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_24x32_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_32x8_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_8x32_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_16x16_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_16x8_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_8x16_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_16x12_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_16x4_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_8x8_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
+    int x265_pixel_ssd_8x4_ ## suffix(pixel *, intptr_t, pixel *, intptr_t);
+DECL_HEVC_SSD(sse2)
+DECL_HEVC_SSD(ssse3)
+DECL_HEVC_SSD(avx)
 
-DECL_SSD(8, sse2)
-DECL_SSD(16, sse2)
-DECL_SSD(32, sse2)
-
-DECL_SSD(8, ssse3)
-DECL_SSD(16, ssse3)
-DECL_SSD(32, ssse3)
-
-DECL_SSD(8, avx)
-DECL_SSD(16, avx)
-DECL_SSD(32, avx)
+#define DECL_SUF(func, args) \
+    void func ## _mmx2 args; \
+    void func ## _sse2 args; \
+    void func ## _ssse3 args;
+DECL_SUF(x265_pixel_avg_16x16, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_16x8,  (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_8x16,  (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_8x8,   (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_8x4,   (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_4x16,  (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_4x8,   (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_4x4,   (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 
 #define DECL_ADS(size, suffix) \
     int x265_pixel_ads ## size ## _ ## suffix(int enc_dc[size], uint16_t * sums, int delta, \
@@ -243,6 +248,8 @@ DECL_ADS(2, avx2)
 DECL_ADS(1, avx2)
 
 #undef DECL_PIXELS
+#undef DECL_SUF
+#undef DECL_HEVC_SSD
 #undef DECL_X1
 #undef DECL_X4
 #undef DECL_ADS

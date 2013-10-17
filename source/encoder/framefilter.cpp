@@ -328,18 +328,21 @@ static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int hei
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
             {
-                ssd += primitives.sse_pp[PARTITION_64x64](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[LUMA_64x64](fenc + x, stride, rec + x, stride);
             }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
             {
-                ssd += primitives.sse_pp[PARTITION_16x64](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[LUMA_16x64](fenc + x, stride, rec + x, stride);
             }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += primitives.sse_pp[PARTITION_4x64](fenc + x, stride, rec + x, stride);
+            ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
+            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 16 * stride, stride, rec + x + 16 * stride, stride);
+            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 32 * stride, stride, rec + x + 32 * stride, stride);
+            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 48 * stride, stride, rec + x + 48 * stride, stride);
         }
 
         fenc += stride * 64;
@@ -354,18 +357,18 @@ static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int hei
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
             {
-                ssd += primitives.sse_pp[PARTITION_64x16](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[LUMA_64x16](fenc + x, stride, rec + x, stride);
             }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
             {
-                ssd += primitives.sse_pp[PARTITION_16x16](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[LUMA_16x16](fenc + x, stride, rec + x, stride);
             }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += primitives.sse_pp[PARTITION_4x16](fenc + x, stride, rec + x, stride);
+            ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 16;
@@ -377,21 +380,15 @@ static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int hei
     {
         int x = 0;
 
-        if (!(stride & 31))
-            for (; x + 64 <= width; x += 64)
-            {
-                ssd += primitives.sse_pp[PARTITION_64x4](fenc + x, stride, rec + x, stride);
-            }
-
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
             {
-                ssd += primitives.sse_pp[PARTITION_16x4](fenc + x, stride, rec + x, stride);
+                ssd += primitives.sse_pp[LUMA_16x4](fenc + x, stride, rec + x, stride);
             }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += primitives.sse_pp[PARTITION_4x4](fenc + x, stride, rec + x, stride);
+            ssd += primitives.sse_pp[LUMA_4x4](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 4;

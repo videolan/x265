@@ -473,15 +473,24 @@ ALIGN 16
 %endif
 %endmacro
 
-%macro DECL_SSD 1
-SSD %1, 64
-SSD %1, 48
-SSD %1, 32
-SSD %1, 24
-SSD %1, 16
-SSD %1, 12
-SSD %1, 8
-SSD %1, 4
+%macro HEVC_SSD 0
+SSD 32, 64
+SSD 16, 64
+SSD 32, 32
+SSD 32, 16
+SSD 16, 32
+SSD 32, 8
+SSD 8,  32
+SSD 32, 24
+SSD 24, 32
+SSD 24, 24 ; not used, but resolves x265_pixel_ssd_24x24_sse2.startloop symbol
+SSD 8,  4
+SSD 8,  8
+SSD 16, 16
+SSD 16, 12
+SSD 16, 8
+SSD 8,  16
+SSD 16, 4
 %endmacro
 
 INIT_MMX mmx
@@ -502,19 +511,13 @@ SSD  8,  4
 INIT_XMM sse2
 %define SSD_CORE SSD_CORE_SSE2
 %define JOIN JOIN_SSE2
-DECL_SSD 8
-DECL_SSD 16
-DECL_SSD 32
+HEVC_SSD
 INIT_XMM ssse3
 %define SSD_CORE SSD_CORE_SSSE3
 %define JOIN JOIN_SSSE3
-DECL_SSD 8
-DECL_SSD 16
-DECL_SSD 32
+HEVC_SSD
 INIT_XMM avx
-DECL_SSD 8
-DECL_SSD 16
-DECL_SSD 32
+HEVC_SSD
 INIT_MMX ssse3
 SSD  4,  4
 SSD  4,  8
@@ -1651,58 +1654,11 @@ cglobal pixel_satd_8x8_internal
 ; These aren't any faster on AVX systems with fast movddup (Bulldozer, Sandy Bridge)
 %if HIGH_BIT_DEPTH == 0 && (WIN64 || UNIX64) && notcpuflag(avx)
 
-cglobal pixel_satd_8x12, 4,6,8
-    SATD_START_SSE2 m6, m7
-%if vertical
-    mova m7, [pw_00ff]
-%endif
-    call pixel_satd_8x8_internal
-    call %%pixel_satd_8x4_internal
-    SATD_END_SSE2 m6
-    
-cglobal pixel_satd_8x24, 4,6,8
-    SATD_START_SSE2 m6, m7
-%if vertical
-    mova m7, [pw_00ff]
-%endif
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6
-    
 cglobal pixel_satd_8x32, 4,6,8
     SATD_START_SSE2 m6, m7
 %if vertical
     mova m7, [pw_00ff]
 %endif
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6
-    
-cglobal pixel_satd_8x48, 4,6,8
-    SATD_START_SSE2 m6, m7
-%if vertical
-    mova m7, [pw_00ff]
-%endif
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6
-
-cglobal pixel_satd_8x64, 4,6,8
-    SATD_START_SSE2 m6, m7
-%if vertical
-    mova m7, [pw_00ff]
-%endif
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
     call pixel_satd_8x8_internal
     call pixel_satd_8x8_internal
     call pixel_satd_8x8_internal
@@ -1742,41 +1698,11 @@ cglobal pixel_satd_16x12, 4,6,12
     jmp %%pixel_satd_16x8_internal
     SATD_END_SSE2 m10  
 
-cglobal pixel_satd_16x24, 4,6,12
-    SATD_START_SSE2 m10, m7
-%if vertical
-    mova m7, [pw_00ff]
-%endif
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    jmp %%pixel_satd_16x8_internal
-    SATD_END_SSE2 m10
-
 cglobal pixel_satd_16x32, 4,6,12
     SATD_START_SSE2 m10, m7
 %if vertical
     mova m7, [pw_00ff]
 %endif
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    jmp %%pixel_satd_16x8_internal
-    SATD_END_SSE2 m10
-
-cglobal pixel_satd_16x48, 4,6,12
-    SATD_START_SSE2 m10, m7
-%if vertical
-    mova m7, [pw_00ff]
-%endif
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
-    call pixel_satd_16x4_internal
     call pixel_satd_16x4_internal
     call pixel_satd_16x4_internal
     call pixel_satd_16x4_internal

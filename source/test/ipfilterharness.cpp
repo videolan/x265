@@ -39,12 +39,6 @@ const char* IPFilterPPNames[] =
     "ipfilterV_pp<4>"
 };
 
-const char* ChromaFilterPPNames[] =
-{
-    "2x4", "2x8", "4x2", "4x4", "4x8", "4x16", "6x8", "8x2", "8x4", "8x6", "8x8", "8x16", "8x32",
-    "12x16", "16x4", "16x8", "16x12", "16x16", "16x32", "24x32", "32x8", "32x16", "32x24", "32x32"
-};
-
 IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
@@ -361,7 +355,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilterChroma_primitive(ref.chroma_hpp[value], opt.chroma_hpp[value]))
             {
-                printf("interp_4tap_horiz_pp[%s]", ChromaFilterPPNames[value]);
+                printf("interp_4tap_horiz_pp[%s]", chromaPartStr[value]);
                 return false;
             }
         }
@@ -426,7 +420,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.chroma_hpp[value])
         {
-            printf("interp_4tap_horiz_pp[%s]", ChromaFilterPPNames[value]);
+            printf("interp_4tap_horiz_pp[%s]", chromaPartStr[value]);
             REPORT_SPEEDUP(opt.chroma_hpp[value], ref.chroma_hpp[value],
                            pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }

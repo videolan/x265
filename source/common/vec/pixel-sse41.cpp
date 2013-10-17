@@ -5593,21 +5593,21 @@ extern void Setup_Vec_Pixel16Primitives_sse41(EncoderPrimitives &p);
 
 #if HIGH_BIT_DEPTH
 #define SETUP_PARTITION(W, H) \
-    p.sse_sp[PARTITION_ ## W ## x ## H] = (pixelcmp_sp_t)sse_ss ## W<H>; \
-    p.sse_ss[PARTITION_ ## W ## x ## H] = sse_ss ## W < H >
+    p.sse_sp[LUMA_ ## W ## x ## H] = (pixelcmp_sp_t)sse_ss ## W<H>; \
+    p.sse_ss[LUMA_ ## W ## x ## H] = sse_ss ## W < H >
 #define SETUP_NONSAD(W, H) \
-    p.sse_sp[PARTITION_ ## W ## x ## H] = (pixelcmp_sp_t)sse_ss ## W<H>; \
-    p.sse_ss[PARTITION_ ## W ## x ## H] = sse_ss ## W < H >
+    p.sse_sp[LUMA_ ## W ## x ## H] = (pixelcmp_sp_t)sse_ss ## W<H>; \
+    p.sse_ss[LUMA_ ## W ## x ## H] = sse_ss ## W < H >
 #else
 #define SETUP_PARTITION(W, H) \
-    p.sad[PARTITION_ ## W ## x ## H] = sad_ ## W<H>; \
-    p.sad_x3[PARTITION_ ## W ## x ## H] = sad_x3_ ## W<H>; \
-    p.sad_x4[PARTITION_ ## W ## x ## H] = sad_x4_ ## W<H>; \
-    p.sse_sp[PARTITION_ ## W ## x ## H] = sse_sp ## W<H>; \
-    p.sse_ss[PARTITION_ ## W ## x ## H] = sse_ss ## W < H >
+    p.sad[LUMA_ ## W ## x ## H] = sad_ ## W<H>; \
+    p.sad_x3[LUMA_ ## W ## x ## H] = sad_x3_ ## W<H>; \
+    p.sad_x4[LUMA_ ## W ## x ## H] = sad_x4_ ## W<H>; \
+    p.sse_sp[LUMA_ ## W ## x ## H] = sse_sp ## W<H>; \
+    p.sse_ss[LUMA_ ## W ## x ## H] = sse_ss ## W < H >
 #define SETUP_NONSAD(W, H) \
-    p.sse_sp[PARTITION_ ## W ## x ## H] = sse_sp ## W<H>; \
-    p.sse_ss[PARTITION_ ## W ## x ## H] = sse_ss ## W < H >
+    p.sse_sp[LUMA_ ## W ## x ## H] = sse_sp ## W<H>; \
+    p.sse_ss[LUMA_ ## W ## x ## H] = sse_ss ## W < H >
 #endif // if HIGH_BIT_DEPTH
 
 void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
@@ -5649,15 +5649,15 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     Setup_Vec_Pixel16Primitives_sse41(p);
 #else
     // These are the only SSE primitives uncovered by assembly
-    p.sad_x3[PARTITION_4x16] = sad_x3_4x16;
-    p.sad_x4[PARTITION_4x16] = sad_x4_4x16;
-    p.sse_pp[PARTITION_12x16] = sse_pp_12x16;
-    p.sse_pp[PARTITION_24x32] = sse_pp_24x32;
-    p.sse_pp[PARTITION_48x64] = sse_pp_48x64;
-    p.sse_pp[PARTITION_64x64] = sse_pp_64<64>;
-    p.sse_pp[PARTITION_64x32] = sse_pp_64<32>;
-    p.sse_pp[PARTITION_64x48] = sse_pp_64<48>;
-    p.sse_pp[PARTITION_64x16] = sse_pp_64<16>;
+    p.sad_x3[LUMA_4x16] = sad_x3_4x16;
+    p.sad_x4[LUMA_4x16] = sad_x4_4x16;
+    p.sse_pp[LUMA_12x16] = sse_pp_12x16;
+    p.sse_pp[LUMA_24x32] = sse_pp_24x32;
+    p.sse_pp[LUMA_48x64] = sse_pp_48x64;
+    p.sse_pp[LUMA_64x64] = sse_pp_64<64>;
+    p.sse_pp[LUMA_64x32] = sse_pp_64<32>;
+    p.sse_pp[LUMA_64x48] = sse_pp_64<48>;
+    p.sse_pp[LUMA_64x16] = sse_pp_64<16>;
 
     p.weightpUniPixel = weightUnidirPixel;
     p.weightpUni = weightUnidir;

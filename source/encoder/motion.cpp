@@ -60,22 +60,39 @@ SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
 };
 }
 
-static int size_scale[NUM_PARTITIONS];
+static int size_scale[NUM_LUMA_PARTITIONS];
 #define SAD_THRESH(v) (bcost < (((v >> 4) * size_scale[partEnum])))
 
 static void init_scales(void)
 {
-    int dims[] = { 4, 8, 12, 16, 24, 32, 48, 64 };
-
-    int i = 0;
-
-    for (size_t h = 0; h < sizeof(dims) / sizeof(int); h++)
-    {
-        for (size_t w = 0; w < sizeof(dims) / sizeof(int); w++)
-        {
-            size_scale[i++] = (dims[h] * dims[w]) >> 4;
-        }
-    }
+#define SETUP_SCALE(W, H) \
+    size_scale[LUMA_ ## W ## x ## H] = (H * H) >> 4;
+    SETUP_SCALE(4, 4);
+    SETUP_SCALE(8, 8);
+    SETUP_SCALE(8, 4);
+    SETUP_SCALE(4, 8);
+    SETUP_SCALE(16, 16);
+    SETUP_SCALE(16, 8);
+    SETUP_SCALE(8, 16);
+    SETUP_SCALE(16, 12);
+    SETUP_SCALE(12, 16);
+    SETUP_SCALE(4, 16);
+    SETUP_SCALE(16, 4);
+    SETUP_SCALE(32, 32);
+    SETUP_SCALE(32, 16);
+    SETUP_SCALE(16, 32);
+    SETUP_SCALE(32, 24);
+    SETUP_SCALE(24, 32);
+    SETUP_SCALE(32, 8);
+    SETUP_SCALE(8, 32);
+    SETUP_SCALE(64, 64);
+    SETUP_SCALE(64, 32);
+    SETUP_SCALE(32, 64);
+    SETUP_SCALE(64, 48);
+    SETUP_SCALE(48, 64);
+    SETUP_SCALE(64, 16);
+    SETUP_SCALE(16, 64);
+#undef SETUP_SCALE
 }
 
 MotionEstimate::MotionEstimate()
@@ -105,6 +122,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     primitives.blockcpy_pp(width, height, fenc, FENC_STRIDE, fencplane + offset, fencLumaStride);
 
     partEnum = PartitionFromSizes(width, height);
+    assert(LUMA_4x4 != partEnum);
     sad = primitives.sad[partEnum];
     satd = primitives.satd[partEnum];
     sa8d = primitives.sa8d_inter[partEnum];
@@ -442,7 +460,6 @@ me_hex2:
     {
         int ucost1, ucost2;
         int16_t cross_start = 1;
-        assert(PARTITION_4x4 != partEnum);
 
         /* refine predictors */
         omv = bmv;
@@ -501,7 +518,7 @@ me_hex2:
 
             if (numCandidates == 1)
             {
-                if (PARTITION_64x64 == partEnum)
+                if (LUMA_64x64 == partEnum)
                     /* mvc is probably the same as mvp, so the difference isn't meaningful.
                      * but prediction usually isn't too bad, so just use medium range */
                     mvd = 25;
@@ -517,7 +534,7 @@ me_hex2:
 
                 denom = numCandidates - 1;
                 mvd = 0;
-                if (partEnum != PARTITION_64x64)
+                if (partEnum != LUMA_64x64)
                 {
                     mvd = abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y);
                     denom++;
@@ -1127,7 +1144,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             pixel *frefB = ref->lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * ref->lumaStride;
 
             // average nearest two HPEL pixels to generate H.264 style QPEL pixels
-            primitives.pixelavg_pp[PARTITION_8x8](subpelbuf, FENC_STRIDE, frefA, ref->lumaStride, frefB, ref->lumaStride, 32);
+            primitives.pixelavg_pp[LUMA_8x8](subpelbuf, FENC_STRIDE, frefA, ref->lumaStride, frefB, ref->lumaStride, 32);
             return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
         }
         else

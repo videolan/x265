@@ -182,7 +182,7 @@ if(ENABLE_PRIMITIVES_ASM)
                 COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM} -o ${ASM}.o
                 DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM})
         endforeach()
-        add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h ${OBJS})
+        add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h x86/mc.h x86/ipfilter8.h ${OBJS})
     elseif(MSVC_IDE)
         # this is horrible. ugly, and hacky, and it reproduces logic found
         # in the yasm CMake modules, but this is required because of this cmake bug
@@ -204,10 +204,10 @@ if(ENABLE_PRIMITIVES_ASM)
                 COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM} -o ${ASM}.obj
                 DEPENDS x86/${ASM})
         endforeach()
-        add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h ${FULLPATHASM} ${OBJS})
+        add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h x86/mc.h x86/ipfilter8.h ${FULLPATHASM} ${OBJS})
     else()
         enable_language(ASM_YASM)
-        set(ASM_PRIMITIVES x86/asm-primitives.cpp x86/pixel.h ${FULLPATHASM})
+        set(ASM_PRIMITIVES x86/asm-primitives.cpp x86/pixel.h x86/mc.h x86/ipfilter8.h ${FULLPATHASM})
     endif()
 endif(ENABLE_PRIMITIVES_ASM)
 

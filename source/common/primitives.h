@@ -61,17 +61,25 @@ typedef int32_t ssim_t;
 namespace x265 {
 // x265 private namespace
 
-enum Partitions
+enum LumaPartitions
+{ // Square     Rectangular             Asymmetrical (0.75, 0.25)
+    LUMA_4x4,
+    LUMA_8x8,   LUMA_8x4,   LUMA_4x8,
+    LUMA_16x16, LUMA_16x8,  LUMA_8x16,  LUMA_16x12, LUMA_12x16, LUMA_4x16,  LUMA_16x4,
+    LUMA_32x32, LUMA_32x16, LUMA_16x32, LUMA_32x24, LUMA_24x32, LUMA_32x8,  LUMA_8x32,
+    LUMA_64x64, LUMA_64x32, LUMA_32x64, LUMA_64x48, LUMA_48x64, LUMA_64x16, LUMA_16x64,
+    NUM_LUMA_PARTITIONS
+};
+
+// 4:2:0 chroma partition sizes
+enum ChromaPartions
 {
-    PARTITION_4x4,  PARTITION_4x8,  PARTITION_4x12,  PARTITION_4x16,  PARTITION_4x24,  PARTITION_4x32,  PARTITION_4x48,   PARTITION_4x64,
-    PARTITION_8x4,  PARTITION_8x8,  PARTITION_8x12,  PARTITION_8x16,  PARTITION_8x24,  PARTITION_8x32,  PARTITION_8x48,   PARTITION_8x64,
-    PARTITION_12x4, PARTITION_12x8, PARTITION_12x12, PARTITION_12x16, PARTITION_12x24, PARTITION_12x32, PARTITION_12x48,  PARTITION_12x64,
-    PARTITION_16x4, PARTITION_16x8, PARTITION_16x12, PARTITION_16x16, PARTITION_16x24, PARTITION_16x32, PARTITION_16x48,  PARTITION_16x64,
-    PARTITION_24x4, PARTITION_24x8, PARTITION_24x12, PARTITION_24x16, PARTITION_24x24, PARTITION_24x32, PARTITION_24x48,  PARTITION_24x64,
-    PARTITION_32x4, PARTITION_32x8, PARTITION_32x12, PARTITION_32x16, PARTITION_32x24, PARTITION_32x32, PARTITION_32x48,  PARTITION_32x64,
-    PARTITION_48x4, PARTITION_48x8, PARTITION_48x12, PARTITION_48x16, PARTITION_48x24, PARTITION_48x32, PARTITION_48x48,  PARTITION_48x64,
-    PARTITION_64x4, PARTITION_64x8, PARTITION_64x12, PARTITION_64x16, PARTITION_64x24, PARTITION_64x32, PARTITION_64x48,  PARTITION_64x64,
-    NUM_PARTITIONS
+    CHROMA_2x2, // never used by HEVC
+    CHROMA_4x4,   CHROMA_4x2,   CHROMA_2x4,
+    CHROMA_8x8,   CHROMA_8x4,   CHROMA_4x8,   CHROMA_8x6,   CHROMA_6x8,   CHROMA_8x2,  CHROMA_2x8,
+    CHROMA_16x16, CHROMA_16x8,  CHROMA_8x16,  CHROMA_16x12, CHROMA_12x16, CHROMA_16x4, CHROMA_4x16,
+    CHROMA_32x32, CHROMA_32x16, CHROMA_16x32, CHROMA_32x24, CHROMA_24x32, CHROMA_32x8, CHROMA_8x32,
+    NUM_CHROMA_PARTITIONS
 };
 
 enum SquareBlocks   // Routines can be indexed using log2n(width)
@@ -137,17 +145,6 @@ enum IPFilterConf_S_S
     NUM_IPFILTER_S_S
 };
 
-enum ChromaPartions
-{
-    CHROMA_PARTITION_2x4, CHROMA_PARTITION_2x8, CHROMA_PARTITION_4x2, CHROMA_PARTITION_4x4,
-    CHROMA_PARTITION_4x8, CHROMA_PARTITION_4x16, CHROMA_PARTITION_6x8, CHROMA_PARTITION_8x2,
-    CHROMA_PARTITION_8x4, CHROMA_PARTITION_8x6, CHROMA_PARTITION_8x8, CHROMA_PARTITION_8x16,
-    CHROMA_PARTITION_8x32, CHROMA_PARTITION_12x16, CHROMA_PARTITION_16x4, CHROMA_PARTITION_16x8,
-    CHROMA_PARTITION_16x12, CHROMA_PARTITION_16x16, CHROMA_PARTITION_16x32, CHROMA_PARTITION_24x32,
-    CHROMA_PARTITION_32x8, CHROMA_PARTITION_32x16, CHROMA_PARTITION_32x24, CHROMA_PARTITION_32x32,
-    NUM_CHROMA_PARTITIONS
-};
-
 // Returns a Partitions enum for the given size, always expected to return a valid enum
 int PartitionFromSizes(int width, int height);
 
@@ -208,15 +205,15 @@ typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_
  * a vectorized primitive, or a C function. */
 struct EncoderPrimitives
 {
-    pixelcmp_t      sad[NUM_PARTITIONS];        // Sum of Differences for each size
-    pixelcmp_x3_t   sad_x3[NUM_PARTITIONS];     // Sum of Differences 3x for each size
-    pixelcmp_x4_t   sad_x4[NUM_PARTITIONS];     // Sum of Differences 4x for each size
-    pixelcmp_t      sse_pp[NUM_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
-    pixelcmp_ss_t   sse_ss[NUM_PARTITIONS];     // Sum of Square Error (short, short) fenc alignment not assumed
-    pixelcmp_sp_t   sse_sp[NUM_PARTITIONS];     // Sum of Square Error (short, pixel) fenc alignment not assumed
-    pixelcmp_t      satd[NUM_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
-    pixelcmp_t      sa8d_inter[NUM_PARTITIONS]; // sa8d primitives for motion search partitions
-    pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];    // sa8d primitives for square intra blocks
+    pixelcmp_t      sad[NUM_LUMA_PARTITIONS];        // Sum of Differences for each size
+    pixelcmp_x3_t   sad_x3[NUM_LUMA_PARTITIONS];     // Sum of Differences 3x for each size
+    pixelcmp_x4_t   sad_x4[NUM_LUMA_PARTITIONS];     // Sum of Differences 4x for each size
+    pixelcmp_t      sse_pp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
+    pixelcmp_ss_t   sse_ss[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, short) fenc alignment not assumed
+    pixelcmp_sp_t   sse_sp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, pixel) fenc alignment not assumed
+    pixelcmp_t      satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
+    pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
+    pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
 
     blockcpy_pp_t   blockcpy_pp;                // block copy pixel from pixel
     blockcpy_ps_t   blockcpy_ps;                // block copy pixel from short
@@ -255,13 +252,13 @@ struct EncoderPrimitives
     pixelsub_sp_t   pixelsub_sp;
     pixeladd_ss_t   pixeladd_ss;
     pixeladd_pp_t   pixeladd_pp;
-    pixelavg_pp_t   pixelavg_pp[NUM_PARTITIONS];
+    pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
 
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
     downscale_t     frame_init_lowres_core;
     ssim_end4_t     ssim_end_4;
-    var_t           var[NUM_PARTITIONS];
+    var_t           var[NUM_LUMA_PARTITIONS];
     ssim_4x4x2_core_t ssim_4x4x2_core;
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
 };

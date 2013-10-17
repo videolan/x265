@@ -68,10 +68,10 @@ static inline uint32_t acEnergyPlane(pixel* src, int srcStride, int bChroma)
     {
         ALIGN_VAR_8(pixel, pix[8 * 8]);
         primitives.blockcpy_pp(8, 8, pix, blockStride, src, srcStride);
-        return acEnergyVar(primitives.var[PARTITION_8x8](pix, blockStride), 6);
+        return acEnergyVar(primitives.var[LUMA_8x8](pix, blockStride), 6);
     }
     else
-        return acEnergyVar(primitives.var[PARTITION_16x16](src, srcStride), 8);
+        return acEnergyVar(primitives.var[LUMA_16x16](src, srcStride), 8);
 }
 
 /* Find the total AC energy of each CU in all planes */
