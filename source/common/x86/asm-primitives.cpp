@@ -253,6 +253,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_sse2;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse2;
         SA8D_INTER_FROM_BLOCK(sse2);
+
+        p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

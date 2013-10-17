@@ -153,7 +153,7 @@ if(ENABLE_PRIMITIVES_ASM)
         add_definitions(-DHAVE_ALIGNED_STACK=0)
     endif()
 
-    set(ASMS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm mc-a.asm mc-a2.asm ipfilter8.asm)
+    set(ASMS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm mc-a.asm mc-a2.asm ipfilter8.asm pixel-util.asm)
     if (X64)
         add_definitions(-DARCH_X86_64=1)
     else()

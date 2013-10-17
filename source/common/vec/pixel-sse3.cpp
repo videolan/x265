@@ -31,28 +31,6 @@
 using namespace x265;
 
 namespace {
-void convert32to16_shr(short *dst, int *org, intptr_t stride, int shift, int size)
-{
-    int i, j;
-    __m128i round = _mm_set1_epi32(1 << (shift - 1));
-
-    for (i = 0; i < size; i++)
-    {
-        for (j = 0; j < size; j += 4)
-        {
-            __m128i im32;
-            __m128i im16;
-
-            im32 = _mm_loadu_si128((__m128i const*)(org + j));
-            im32 = _mm_sra_epi32(_mm_add_epi32(im32, round), _mm_cvtsi32_si128(shift));
-            im16 = _mm_packs_epi32(im32, im32);
-            _mm_storel_epi64((__m128i*)(dst + j), im16);
-        }
-        org += size;
-        dst += stride;
-    }
-}
-
 void convert16to32_shl(int *dst, short *org, intptr_t stride, int shift, int size)
 {
     int i, j;
@@ -638,7 +616,6 @@ void calcRecons(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recI
 namespace x265 {
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
 {
-    p.cvt32to16_shr = convert32to16_shr;
     p.cvt16to32_shl = convert16to32_shl;
     p.cvt16to16_shl = convert16to16_shl;
 
