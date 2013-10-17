@@ -180,7 +180,7 @@ if(ENABLE_PRIMITIVES_ASM)
             add_custom_command(
                 OUTPUT ${ASM}.o
                 COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM} -o ${ASM}.o
-                DEPENDS ${ASM})
+                DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM})
         endforeach()
         add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h ${OBJS})
     elseif(MSVC_IDE)
@@ -202,7 +202,7 @@ if(ENABLE_PRIMITIVES_ASM)
             add_custom_command(
                 OUTPUT ${ASM}.obj
                 COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM} -o ${ASM}.obj
-                DEPENDS ${ASM})
+                DEPENDS x86/${ASM})
         endforeach()
         add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h ${FULLPATHASM} ${OBJS})
     else()
