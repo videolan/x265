@@ -39,7 +39,7 @@ using namespace x265;
 
 extern unsigned char IntraFilterType[][35];
 
-#define PRED_INTRA_ANGLE_4_START \
+#define PRED_INTRA_ANGLE_4_START() \
     __m128i row11, row12, row21, row22, row31, row32, row41, row42; \
     __m128i tmp16_1, tmp16_2, tmp2, deltaFract; \
     __m128i deltaPos = _mm_set1_epi16(0); \
@@ -48,7 +48,7 @@ extern unsigned char IntraFilterType[][35];
     __m128i thirty2  = _mm_set1_epi16(32); \
     bool modeHor     = (dirMode < 18);
 
-#define PRED_INTRA_ANGLE_4_END \
+#define PRED_INTRA_ANGLE_4_END() \
     deltaFract = _mm_and_si128(deltaPos, thirty1); \
     __m128i mullo = _mm_mullo_epi16(row11, _mm_sub_epi16(thirty2, deltaFract)); \
     __m128i sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, row12)); \
@@ -100,15 +100,15 @@ extern unsigned char IntraFilterType[][35];
         *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row41, row41)); \
     }
 
-#define PRED_INTRA_ANG8_START   \
-    /* Map the mode index to main prediction direction and angle*/    \
+#define PRED_INTRA_ANG8_START() \
+    /* Map the mode index to main prediction direction and angle*/ \
     bool modeHor       = (dirMode < 18);    \
     bool modeVer       = !modeHor;  \
-    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;    \
+    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0; \
     int absAng         = abs(intraPredAngle);   \
     int signAng        = intraPredAngle < 0 ? -1 : 1;   \
     /* Set bitshifts and scale the angle parameter to block size*/  \
-    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };   \
+    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 }; \
     absAng             = angTable[absAng];  \
     intraPredAngle     = signAng * absAng;  \
     if (modeHor)         /* Near horizontal modes*/   \
@@ -121,7 +121,7 @@ extern unsigned char IntraFilterType[][35];
         v_deltaPos = 0; \
         v_ipAngle = intraPredAngle; \
 
-#define PRED_INTRA_ANG8_MIDDLE   \
+#define PRED_INTRA_ANG8_MIDDLE()  \
     /* Flip the block */    \
     tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);    \
     tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);  \
@@ -1414,7 +1414,7 @@ void PredIntraAng4_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/
 
 void PredIntraAng4_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 1));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1448,12 +1448,12 @@ void PredIntraAng4_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(26);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 1));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1483,12 +1483,12 @@ void PredIntraAng4_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(21);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 1));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1518,12 +1518,12 @@ void PredIntraAng4_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(17);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 1));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1549,12 +1549,12 @@ void PredIntraAng4_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(13);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 1));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1579,12 +1579,12 @@ void PredIntraAng4_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(9);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 1));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1604,12 +1604,12 @@ void PredIntraAng4_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(5);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 1));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1629,12 +1629,12 @@ void PredIntraAng4_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(2);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain));
     row11   =_mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1654,12 +1654,12 @@ void PredIntraAng4_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(-2);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain));
     row11 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1679,12 +1679,12 @@ void PredIntraAng4_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(-5);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 1));
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1709,12 +1709,12 @@ void PredIntraAng4_m_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(-9);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
         tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 1));
 
@@ -1740,12 +1740,12 @@ void PredIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(-13);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 2));
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1775,12 +1775,12 @@ void PredIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(-17);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 2));
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1810,12 +1810,12 @@ void PredIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(-21);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANGLE_4_START
+    PRED_INTRA_ANGLE_4_START();
 
     tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain - 3));
     row41 = _mm_unpacklo_epi8(tmp16_1, _mm_setzero_si128());
@@ -1849,7 +1849,7 @@ void PredIntraAng4_m_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     deltaPos = ipAngle = _mm_set1_epi16(-26);
 
-    PRED_INTRA_ANGLE_4_END
+    PRED_INTRA_ANGLE_4_END();
 }
 
 void PredIntraAng4_m_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
@@ -2103,7 +2103,7 @@ void PredIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
         PREDANG_CALCROW_HOR(7, tmp2);
         row4 = compress(tmp1, tmp2);
 
-        PRED_INTRA_ANG8_MIDDLE PREDANG_CALCROW_VER(0);
+        PRED_INTRA_ANG8_MIDDLE(); PREDANG_CALCROW_VER(0);
         PREDANG_CALCROW_VER(1);
         PREDANG_CALCROW_VER(2);
         PREDANG_CALCROW_VER(3);
@@ -2116,7 +2116,7 @@ void PredIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
 void PredIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START LOADROW(row11, 0);
+    PRED_INTRA_ANG8_START(); LOADROW(row11, 0);
 
     LOADROW(row12, 1);
     CALCROW(tmp1, row11, row12);
@@ -2134,7 +2134,7 @@ void PredIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     CALCROW(tmp2, row11, row12);
     row4 = compress(tmp1, tmp2);
 
-    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, 0);
+    PRED_INTRA_ANG8_MIDDLE(); LOADROW(row11, 0);
     LOADROW(row12, 1);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
@@ -2159,7 +2159,7 @@ void PredIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
 void PredIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START LOADROW(row11, 0);
+    PRED_INTRA_ANG8_START(); LOADROW(row11, 0);
 
     LOADROW(row12, 1);
     CALCROW(tmp1, row11, row12);
@@ -2175,7 +2175,7 @@ void PredIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     CALCROW(tmp2, row11, row12);
     row4 = compress(tmp1, tmp2);
 
-    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, 0);
+    PRED_INTRA_ANG8_MIDDLE(); LOADROW(row11, 0);
     LOADROW(row12, 1);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
@@ -2198,7 +2198,7 @@ void PredIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
 void PredIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START LOADROW(row11, -1);
+    PRED_INTRA_ANG8_START(); LOADROW(row11, -1);
 
     LOADROW(row12, 0);
     CALCROW(tmp1, row11, row12);
@@ -2214,7 +2214,7 @@ void PredIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     CALCROW(tmp2, row11, row12);
     row4 = compress(tmp1, tmp2);
 
-    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, -1);
+    PRED_INTRA_ANG8_MIDDLE(); LOADROW(row11, -1);
     LOADROW(row12, 0);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
@@ -2237,7 +2237,7 @@ void PredIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
 void PredIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START LOADROW(row11, -1);
+    PRED_INTRA_ANG8_START(); LOADROW(row11, -1);
 
     LOADROW(row12, 0);
     CALCROW(tmp1, row11, row12);
@@ -2255,7 +2255,7 @@ void PredIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     CALCROW(tmp2, row11, row12);
     row4 = compress(tmp1, tmp2);
 
-    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, -1);
+    PRED_INTRA_ANG8_MIDDLE(); LOADROW(row11, -1);
     LOADROW(row12, 0);
     CALCROW(tmp1, row11, row12);
     CALCROW(tmp2, row11, row12);
