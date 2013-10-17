@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -124,32 +125,65 @@ extern "C" {
     p.pixelavg_pp[LUMA_8x8]   = x265_pixel_avg_8x8_ ## cpu; \
     p.pixelavg_pp[LUMA_8x4]   = x265_pixel_avg_8x4_ ## cpu;
 
-#define SETUP_CHROMA_PARTITION(W, H, cpu) \
-    p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu;
-#define CHROMA_IPFILTERS(cpu) \
-    SETUP_CHROMA_PARTITION(2,  4,  cpu); \
-    SETUP_CHROMA_PARTITION(2,  8,  cpu); \
-    SETUP_CHROMA_PARTITION(4,  2,  cpu); \
-    SETUP_CHROMA_PARTITION(4,  4,  cpu); \
-    SETUP_CHROMA_PARTITION(4,  8,  cpu); \
-    SETUP_CHROMA_PARTITION(4,  16, cpu); \
-    SETUP_CHROMA_PARTITION(6,  8,  cpu); \
-    SETUP_CHROMA_PARTITION(8,  2,  cpu); \
-    SETUP_CHROMA_PARTITION(8,  4,  cpu); \
-    SETUP_CHROMA_PARTITION(8,  6,  cpu); \
-    SETUP_CHROMA_PARTITION(8,  8,  cpu); \
-    SETUP_CHROMA_PARTITION(8,  16, cpu); \
-    SETUP_CHROMA_PARTITION(8,  32, cpu); \
-    SETUP_CHROMA_PARTITION(12, 16, cpu); \
-    SETUP_CHROMA_PARTITION(16, 4,  cpu); \
-    SETUP_CHROMA_PARTITION(16, 8,  cpu); \
-    SETUP_CHROMA_PARTITION(16, 12, cpu); \
-    SETUP_CHROMA_PARTITION(16, 16, cpu); \
-    SETUP_CHROMA_PARTITION(16, 32, cpu); \
-    SETUP_CHROMA_PARTITION(32, 8,  cpu); \
-    SETUP_CHROMA_PARTITION(32, 16, cpu); \
-    SETUP_CHROMA_PARTITION(32, 24, cpu); \
-    SETUP_CHROMA_PARTITION(32, 32, cpu);
+#define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
+    p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu
+
+#define CHROMA_FILTERS(cpu) \
+    SETUP_CHROMA_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_FUNC_DEF(6, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 32, cpu)
+
+//SETUP_CHROMA_FUNC_DEF(24, 32, cpu);  /* 24x32 has not yet been implemented */
+
+#define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
+    p.luma_hpp[LUMA_PARTITION_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu
+
+#define LUMA_FILTERS(cpu) \
+    SETUP_LUMA_FUNC_DEF(4,   4, cpu); \
+    SETUP_LUMA_FUNC_DEF(8,   8, cpu); \
+    SETUP_LUMA_FUNC_DEF(8,   4, cpu); \
+    SETUP_LUMA_FUNC_DEF(4,   8, cpu); \
+    SETUP_LUMA_FUNC_DEF(16, 16, cpu); \
+    SETUP_LUMA_FUNC_DEF(16,  8, cpu); \
+    SETUP_LUMA_FUNC_DEF(8,  16, cpu); \
+    SETUP_LUMA_FUNC_DEF(16, 12, cpu); \
+    SETUP_LUMA_FUNC_DEF(12, 16, cpu); \
+    SETUP_LUMA_FUNC_DEF(16,  4, cpu); \
+    SETUP_LUMA_FUNC_DEF(4,  16, cpu); \
+    SETUP_LUMA_FUNC_DEF(32, 32, cpu); \
+    SETUP_LUMA_FUNC_DEF(32, 16, cpu); \
+    SETUP_LUMA_FUNC_DEF(16, 32, cpu); \
+    SETUP_LUMA_FUNC_DEF(32, 24, cpu); \
+    SETUP_LUMA_FUNC_DEF(24, 32, cpu); \
+    SETUP_LUMA_FUNC_DEF(32,  8, cpu); \
+    SETUP_LUMA_FUNC_DEF(8,  32, cpu); \
+    SETUP_LUMA_FUNC_DEF(64, 64, cpu); \
+    SETUP_LUMA_FUNC_DEF(64, 32, cpu); \
+    SETUP_LUMA_FUNC_DEF(32, 64, cpu); \
+    SETUP_LUMA_FUNC_DEF(64, 48, cpu); \
+    SETUP_LUMA_FUNC_DEF(48, 64, cpu); \
+    SETUP_LUMA_FUNC_DEF(64, 16, cpu); \
+    SETUP_LUMA_FUNC_DEF(16, 64, cpu)
 
 using namespace x265;
 
@@ -242,7 +276,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse4;
         SA8D_INTER_FROM_BLOCK(sse4);
 
-        CHROMA_IPFILTERS(_sse4);
+        CHROMA_FILTERS(_sse4);
     }
     if (cpuMask & X265_CPU_AVX)
     {
