@@ -138,7 +138,7 @@ void x265_param_default(x265_param_t *param)
     param->maxNumMergeCand = 5u;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
-    param->bRDLevel = X265_FULL_RDO;
+    param->rdLevel = X265_FULL_RDO;
     param->bEnableRDO = 1;
     param->bEnableRDOQ = 1;
     param->bEnableRDOQTS = 1;
@@ -280,8 +280,7 @@ int x265_check_params(x265_param_t *param)
           "Picture height must be an integer multiple of the specified chroma subsampling");
     CHECK(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
           "Rate control mode is out of range");
-    CHECK(param->bRDLevel < X265_NO_RDO_NO_RDOQ ||
-          param->bRDLevel > X265_FULL_RDO,
+    CHECK(param->rdLevel < X265_NO_RDO_NO_RDOQ || param->rdLevel > X265_FULL_RDO,
           "RD Level is out of range");
     CHECK(param->bframes > param->lookaheadDepth,
           "Lookahead depth must be greater than the max consecutive bframe count");
@@ -395,7 +394,7 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
-    fprintf(stderr, "rd=%d ", param->bRDLevel);
+    fprintf(stderr, "rd=%d ", param->rdLevel);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
@@ -519,7 +518,7 @@ int x265_param_parse(x265_param_t *p, const char *name, const char *value)
     OPT("crqpoffs")
         p->crQpOffset = atoi(value);
     OPT("rd")
-        p->bRDLevel = atoi(value);
+        p->rdLevel = atoi(value);
     OPT("signhide")
         p->bEnableSignHiding = bvalue;
     OPT("lft")
@@ -586,7 +585,7 @@ char *x265_param2string( x265_param_t *p)
     s += sprintf(s, " qp=%d", p->rc.qp);
     s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
     s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
-    s += sprintf(s, " rd=%d", p->bRDLevel);
+    s += sprintf(s, " rd=%d", p->rdLevel);
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableLoopFilter, "lft");
     BOOL(p->bEnableSAO, "sao");

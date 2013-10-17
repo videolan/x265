@@ -399,7 +399,7 @@ void CLIOptions::do_help(x265_param_t *param)
     H0("-q/--qp                          Base QP for CQP mode. Default %d\n", param->rc.qp);
     H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
-    H0("   --rd                          Level of RD in mode decision 0:least....2:full RDO. Default %d\n", param->bRDLevel);
+    H0("   --rd                          Level of RD in mode decision 0:least....2:full RDO. Default %d\n", param->rdLevel);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
     H0("\nLoop filter:\n");
     H0("   --[no-]lft                    Enable Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));

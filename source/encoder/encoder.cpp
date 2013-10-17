@@ -925,7 +925,7 @@ void Encoder::configure(x265_param_t *_param)
     }
 
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
-    switch (_param->bRDLevel)
+    switch (_param->rdLevel)
     {
     case X265_NO_RDO_NO_RDOQ:
         _param->bEnableRDO = _param->bEnableRDOQ = 0;
