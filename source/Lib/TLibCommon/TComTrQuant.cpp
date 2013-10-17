@@ -490,11 +490,9 @@ void TComTrQuant::xITransformSkip(int* coef, short* residual, UInt stride, int w
     int  j, k;
     if (shift > 0)
     {
+        assert(width == height);
         transformSkipShift = shift;
-        for (j = 0; j < height; j++)
-        {
-            primitives.cvt32to16_shr(&residual[j * stride], &coef[j * width], shift, width);
-        }
+        primitives.cvt32to16_shr(residual, coef, stride, shift, width);
     }
     else
     {

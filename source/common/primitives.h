@@ -179,7 +179,7 @@ typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *
 
 typedef void (*cvt16to32_shl_t)(int *dst, short *src, intptr_t, int, int);
 typedef void (*cvt16to16_shl_t)(short *dst, short *src, int, int, intptr_t, int);
-typedef void (*cvt32to16_shr_t)(short *dst, int *src, int, int);
+typedef void (*cvt32to16_shr_t)(short *dst, int *src, intptr_t, int, int);
 
 typedef void (*dct_t)(short *src, int *dst, intptr_t stride);
 typedef void (*idct_t)(int *src, short *dst, intptr_t stride);
