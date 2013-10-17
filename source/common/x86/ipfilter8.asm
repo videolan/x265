@@ -54,7 +54,7 @@ SECTION .text
     pmulhrsw    %2, %3
     packuswb    %2, %2
     pextrw      [dstq], %2, 0
-    pextrw      [dstq + dststrideq], %2, 1
+    pextrw      [dstq + dststrideq], %2, 2
 %endmacro
 
 ;-----------------------------------------------------------------------------
