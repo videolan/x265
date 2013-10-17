@@ -1257,7 +1257,7 @@ inline int TComTrQuant::xGetICRate(UInt   absLevel,
             absLevel = symbol - maxVlc;
             int egs = 1;
             for (UInt max = 2; absLevel >= max; max <<= 1, egs += 2)
-            {}
+                ;
 
             rate   += egs << 15;
             symbol = std::min<UInt>(symbol, (maxVlc + 1));

@@ -516,6 +516,7 @@ void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pic)
 void TComSampleAdaptiveOffset::destroyPicSaoInfo()
 {
 }
+
 /** sample adaptive offset process for one LCU crossing LCU boundary
  * \param   addr, iSaoType, yCbCr
  */
