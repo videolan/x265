@@ -279,13 +279,13 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt(pixel_buff + 3 * rand_srcStride,
+        opt(pixel_buff + rand_srcStride,
             rand_srcStride,
             IPF_vec_output_p,
             rand_dstStride,
             rand_coeffIdx
             );
-        ref(pixel_buff + 3 * rand_srcStride,
+        ref(pixel_buff + rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
