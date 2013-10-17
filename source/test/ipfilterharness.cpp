@@ -270,23 +270,26 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_
 
 bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt)
 {
+    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+
     for (int i = 0; i <= 100; i++)
     {
-        int rand_coeffIdx = rand() % 8;     // Random coeffIdex in the filter
-        int srcStride = 2;
-        int dstStride = 2;
+        rand_coeffIdx = rand() % 8;                // Random coeffIdex in the filter
 
-        opt(pixel_buff + 3 * srcStride,
-            srcStride,
+        rand_srcStride = rand() % 100;              // Randomly generated srcStride
+        rand_dstStride = rand() % 100;              // Randomly generated dstStride
+
+        opt(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
             IPF_vec_output_p,
-            dstStride,
+            rand_dstStride,
             rand_coeffIdx
             );
-        ref(pixel_buff + 3 * srcStride,
-            srcStride,
+        ref(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
             IPF_C_output_p,
-            dstStride,
-            rand_coeffIdx
+            rand_dstStride,
+           rand_coeffIdx
             );
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
