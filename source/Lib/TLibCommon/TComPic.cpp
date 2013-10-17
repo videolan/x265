@@ -38,6 +38,7 @@
 #include "TComPic.h"
 #include "SEI.h"
 #include "mv.h"
+#include "TLibEncoder/TEncCfg.h"
 
 using namespace x265;
 
@@ -61,6 +62,7 @@ TComPic::TComPic()
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_next = NULL;
     m_prev = NULL;
+    m_qpAqOffset = NULL;
     m_SSDY = 0;
     m_SSDU = 0;
     m_SSDV = 0;
@@ -69,25 +71,32 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-void TComPic::create(int width, int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, int bframes)
+void TComPic::create(TEncCfg* cfg)
 {
     m_picSym = new TComPicSym;
-    m_picSym->create(width, height, maxWidth, maxHeight, maxDepth);
+    m_picSym->create(cfg->param.sourceWidth, cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
 
     m_origPicYuv = new TComPicYuv;
-    m_origPicYuv->create(width, height, maxWidth, maxHeight, maxDepth);
+    m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
 
     m_reconPicYuv = new TComPicYuv;
-    m_reconPicYuv->create(width, height, maxWidth, maxHeight, maxDepth);
+    m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
 
     /* store conformance window parameters with picture */
-    m_conformanceWindow = conformanceWindow;
+    m_conformanceWindow = cfg->getConformanceWindow();
 
     /* store display window parameters with picture */
-    m_defaultDisplayWindow = defaultDisplayWindow;
+    m_defaultDisplayWindow = cfg->getDefaultDisplayWindow();
 
     /* configure lowres dimensions */
-    m_lowres.create(this, bframes);
+    m_lowres.create(this, cfg->param.bframes);
+
+    if (cfg->param.rc.aqMode)
+    {
+        m_qpAqOffset = (double*)x265_malloc(sizeof(double) * getPicSym()->getNumberOfCUsInFrame());
+        if (!m_qpAqOffset)
+            cfg->param.rc.aqMode = 0;
+    }
 }
 
 void TComPic::destroy(int bframes)
@@ -114,6 +123,7 @@ void TComPic::destroy(int bframes)
     }
 
     m_lowres.destroy(bframes);
+    X265_FREE(m_qpAqOffset);
 }
 
 //! \}

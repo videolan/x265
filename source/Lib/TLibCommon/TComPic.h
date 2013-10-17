@@ -48,6 +48,8 @@
 namespace x265 {
 // private namespace
 
+class TEncCfg;
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -84,7 +86,7 @@ public:
 
     TComPic*              m_next;
     TComPic*              m_prev;
-
+    double*               m_qpAqOffset;
     UInt64                m_SSDY;
     UInt64                m_SSDU;
     UInt64                m_SSDV;
@@ -92,7 +94,7 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    void          create(int width, int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, int bframes);
+    void          create(TEncCfg* cfg);
 
     virtual void  destroy(int bframes);
 

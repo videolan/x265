@@ -166,8 +166,7 @@ int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
         if (m_freeList.empty())
         {
             pic = new TComPic;
-            pic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-                        getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
+            pic->create(this);
             if (param.bEnableSAO)
             {
                 // TODO: these should be allocated on demand within the encoder
