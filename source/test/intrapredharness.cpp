@@ -74,7 +74,7 @@ bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt)
 
     for (int i = 0; i <= 100; i++)
     {
-        int rand_width = 1 << ((rand() % 5) + 2);                  // Randomly generated Width
+        int rand_width = 1 << ((rand() % 4) + 2);                  // Randomly generated Width
         int rand_filter = rand() & 1;
 
         pixel left[MAX_CU_SIZE * 2 + 1];
@@ -113,7 +113,7 @@ bool IntraPredHarness::check_planar_primitive(intra_planar_t ref, intra_planar_t
 {
     int j = ADI_BUF_STRIDE;
 
-    for (int width = 4; width <= 64; width <<= 1)
+    for (int width = 4; width <= 32; width <<= 1)
     {
         for (int i = 0; i <= 100; i++)
         {
