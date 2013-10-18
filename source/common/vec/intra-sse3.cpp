@@ -24,16 +24,11 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#if defined(_MSC_VER)
-#define ALWAYSINLINE  __forceinline
-#endif
-
-#define INSTRSET 3
-#include "vectorclass.h"
-
 #include "primitives.h"
 #include "TLibCommon/TComRom.h"
 #include <assert.h>
+#include <xmmintrin.h> // SSE
+#include <pmmintrin.h> // SSE3
 
 using namespace x265;
 
@@ -960,7 +955,18 @@ void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *r
         predIntraAng4[dirMode - 2](dst, dstStride, refMain, dirMode);
     }
 }
+#endif
+}
 
+#if defined(_MSC_VER)
+#define ALWAYSINLINE  __forceinline
+#endif
+
+#define INSTRSET 3
+#include "vectorclass.h"
+
+#if !HIGH_BIT_DEPTH
+namespace {
 #define PRED_INTRA_ANG8_START() \
     /* Map the mode index to main prediction direction and angle*/ \
     bool modeHor       = (dirMode < 18); \
