@@ -2336,8 +2336,8 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
                 int partEnum = PartitionFromSizes(roiWidth, roiHeight);
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, m_predYuv[0].getStride(), ref1, m_predYuv[1].getStride(), 32);
-
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
+                x265_emms();
                 bits[2] = bits[0] + bits[1] - mbBits[0] - mbBits[1] + mbBits[2];
                 costbi =  satdCost + m_rdCost->getCost(bits[2]);
 
@@ -2347,10 +2347,9 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                     ref1 = cu->getSlice()->m_mref[1][refIdx[1]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref1
                     intptr_t refStride = cu->getSlice()->m_mref[0][refIdx[0]]->lumaStride;
 
-                    partEnum = PartitionFromSizes(roiWidth, roiHeight);
                     primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, refStride, ref1, refStride, 32);
-
                     satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
+                    x265_emms();
 
                     unsigned int bitsZero0, bitsZero1;
                     m_me.setMVP(mvPredBi[0][refIdxBidir[0]]);
