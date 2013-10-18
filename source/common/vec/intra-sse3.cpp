@@ -2008,7 +2008,6 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
     }
     else if (intraPredAngle == 32)
     {
-        Vec8s tmp;
         __m128i itmp;
         refMain += 2;
 
