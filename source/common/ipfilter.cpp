@@ -448,7 +448,7 @@ void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, in
 template<int N, int width, int height>
 void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 {
-    int16_t const * coeff = g_chromaFilter[coeffIdx];
+    int16_t const * coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int offset =  (1 << (headRoom - 1));
     int16_t maxVal = (1 << X265_DEPTH) - 1;
