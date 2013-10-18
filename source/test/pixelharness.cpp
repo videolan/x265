@@ -621,14 +621,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         int part = PartitionFromSizes(size, size); // 2Nx2N
         if (!testPartition(part, ref, opt)) return false;
 
-        if (part > 4)
+        if (size > 4)
         {
             part = PartitionFromSizes(size, size >> 1); // 2NxN
             if (!testPartition(part, ref, opt)) return false;
             part = PartitionFromSizes(size >> 1, size); // Nx2N
             if (!testPartition(part, ref, opt)) return false;
         }
-        if (part > 8)
+        if (size > 8)
         {
             // 4 AMP modes
             part = PartitionFromSizes(size, size >> 2);
@@ -839,14 +839,14 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         int part = PartitionFromSizes(size, size); // 2Nx2N
         measurePartition(part, ref, opt);
 
-        if (part > 4)
+        if (size > 4)
         {
             part = PartitionFromSizes(size, size >> 1); // 2NxN
             measurePartition(part, ref, opt);
             part = PartitionFromSizes(size >> 1, size); // Nx2N
             measurePartition(part, ref, opt);
         }
-        if (part > 8)
+        if (size > 8)
         {
             // 4 AMP modes
             part = PartitionFromSizes(size, size >> 2);
