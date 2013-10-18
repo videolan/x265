@@ -334,6 +334,34 @@ RET
     movu        [dstq],      %2
 %endmacro
 
+%macro FILTER_H4_w24 4
+    movu        %1, [srcq - 1]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    movu        %1, [srcq - 1 + 8]
+    pshufb      %4, %1, Tm0
+    pmaddubsw   %4, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %4, %1
+    pmulhrsw    %2, %3
+    pmulhrsw    %4, %3
+    packuswb    %2, %4
+    movu        [dstq],          %2
+    movu        %1, [srcq - 1 + 16]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    pmulhrsw    %2, %3
+    packuswb    %2, %2
+    movh        [dstq + 16],     %2
+%endmacro
+
 %macro FILTER_H4_w32 4
     movu        %1, [srcq - 1]
     pshufb      %2, %1, Tm0
@@ -468,4 +496,5 @@ IPFILTER_CHROMA_W 16, 32
 IPFILTER_CHROMA_W 32, 8
 IPFILTER_CHROMA_W 32, 16
 IPFILTER_CHROMA_W 32, 24
+IPFILTER_CHROMA_W 24, 32
 IPFILTER_CHROMA_W 32, 32

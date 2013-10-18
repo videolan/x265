@@ -150,10 +150,10 @@ extern "C" {
     SETUP_CHROMA_FUNC_DEF(32, 16, cpu); \
     SETUP_CHROMA_FUNC_DEF(16, 32, cpu); \
     SETUP_CHROMA_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_FUNC_DEF(24, 32, cpu); \
     SETUP_CHROMA_FUNC_DEF(32, 8, cpu); \
-    SETUP_CHROMA_FUNC_DEF(8, 32, cpu)
+    SETUP_CHROMA_FUNC_DEF(8, 32, cpu);
 
-//SETUP_CHROMA_FUNC_DEF(24, 32, cpu);  /* 24x32 has not yet been implemented */
 
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu
