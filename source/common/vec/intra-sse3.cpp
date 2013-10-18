@@ -218,11 +218,9 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
 
     }
 
-
     logSize += 1;
     pixel dcVal = (sum + (1 << (logSize - 1))) >> logSize;
     __m128i dcValN = _mm_set1_epi8(dcVal);
-    int k;
 
     pixel *dst1 = dst;
     switch (width)
@@ -256,7 +254,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         break;
 
     case 16:
-        for (k = 0; k < 16; k += 4)
+        for (int k = 0; k < 16; k += 4)
         {
             _mm_storeu_si128((__m128i*)dst1, dcValN);
             dst1 += dstStride;
@@ -267,11 +265,10 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
             _mm_storeu_si128((__m128i*)dst1, dcValN);
             dst1 += dstStride;
         }
-
         break;
 
     case 32:
-        for (k = 0; k < 32; k += 2)
+        for (int k = 0; k < 32; k += 2)
         {
             _mm_storeu_si128((__m128i*)dst1, dcValN);
             _mm_storeu_si128((__m128i*)(dst1 + 16), dcValN);
@@ -280,7 +277,6 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
             _mm_storeu_si128((__m128i*)(dst1 + 16), dcValN);
             dst1 += dstStride;
         }
-
         break;
     }
 
