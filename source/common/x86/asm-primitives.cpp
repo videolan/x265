@@ -280,6 +280,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(sse4);
 
         CHROMA_FILTERS(_sse4);
+        LUMA_FILTERS(_sse4);
     }
     if (cpuMask & X265_CPU_AVX)
     {
