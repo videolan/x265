@@ -352,7 +352,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         *(uint32_t*)(dst + (3 * dstStride)) = _mm_cvtsi128_si32(_mm_packus_epi16(row41, row41)); \
     }
 
-void PredIntraAng4_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
+void predIntraAng4_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     __m128i tmp16_1;
 
@@ -366,7 +366,7 @@ void PredIntraAng4_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/
     *(uint32_t*)(dst + 3 * dstStride) = _mm_cvtsi128_si32(tmp16_1);
 }
 
-void PredIntraAng4_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -405,7 +405,7 @@ void PredIntraAng4_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -440,7 +440,7 @@ void PredIntraAng4_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -475,7 +475,7 @@ void PredIntraAng4_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -506,7 +506,7 @@ void PredIntraAng4_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -536,7 +536,7 @@ void PredIntraAng4_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -561,7 +561,7 @@ void PredIntraAng4_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -586,7 +586,7 @@ void PredIntraAng4_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -611,7 +611,7 @@ void PredIntraAng4_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -636,7 +636,7 @@ void PredIntraAng4_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_m_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -666,7 +666,7 @@ void PredIntraAng4_m_9(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -697,7 +697,7 @@ void PredIntraAng4_m_13(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -732,7 +732,7 @@ void PredIntraAng4_m_17(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -767,7 +767,7 @@ void PredIntraAng4_m_21(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng4_m_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANGLE_4_START();
 
@@ -806,7 +806,7 @@ void PredIntraAng4_m_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANGLE_4_END();
 }
 
-void PredIntraAng4_m_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
+void predIntraAng4_m_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     __m128i tmp16_1;
 
@@ -820,47 +820,47 @@ void PredIntraAng4_m_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode
     *(uint32_t*)(dst + 3 * dstStride) = _mm_cvtsi128_si32(tmp16_1);
 }
 
-typedef void (*PredIntraAng4x4_table)(pixel* dst, int dstStride, pixel *refMain, int dirMode);
-PredIntraAng4x4_table PredIntraAng4[] =
+typedef void (*predIntraAng4x4_func)(pixel* dst, int dstStride, pixel *refMain, int dirMode);
+predIntraAng4x4_func predIntraAng4[] =
 {
     /* PredIntraAng4_0 is replaced with PredIntraAng4_2. For PredIntraAng4_0 we are going through default path in the
      * xPredIntraAng4x4 because we cannot afford to pass large number arguments for this function. */
-    PredIntraAng4_32,
-    PredIntraAng4_26,
-    PredIntraAng4_21,
-    PredIntraAng4_17,
-    PredIntraAng4_13,
-    PredIntraAng4_9,
-    PredIntraAng4_5,
-    PredIntraAng4_2,
-    PredIntraAng4_2,    // Intentionally wrong! It should be "PredIntraAng4_0" here.
-    PredIntraAng4_m_2,
-    PredIntraAng4_m_5,
-    PredIntraAng4_m_9,
-    PredIntraAng4_m_13,
-    PredIntraAng4_m_17,
-    PredIntraAng4_m_21,
-    PredIntraAng4_m_26,
-    PredIntraAng4_m_32,
-    PredIntraAng4_m_26,
-    PredIntraAng4_m_21,
-    PredIntraAng4_m_17,
-    PredIntraAng4_m_13,
-    PredIntraAng4_m_9,
-    PredIntraAng4_m_5,
-    PredIntraAng4_m_2,
-    PredIntraAng4_2,    // Intentionally wrong! It should be "PredIntraAng4_0" here.
-    PredIntraAng4_2,
-    PredIntraAng4_5,
-    PredIntraAng4_9,
-    PredIntraAng4_13,
-    PredIntraAng4_17,
-    PredIntraAng4_21,
-    PredIntraAng4_26,
-    PredIntraAng4_32
+    predIntraAng4_32,
+    predIntraAng4_26,
+    predIntraAng4_21,
+    predIntraAng4_17,
+    predIntraAng4_13,
+    predIntraAng4_9,
+    predIntraAng4_5,
+    predIntraAng4_2,
+    predIntraAng4_2,    // Intentionally wrong! It should be "PredIntraAng4_0" here.
+    predIntraAng4_m_2,
+    predIntraAng4_m_5,
+    predIntraAng4_m_9,
+    predIntraAng4_m_13,
+    predIntraAng4_m_17,
+    predIntraAng4_m_21,
+    predIntraAng4_m_26,
+    predIntraAng4_m_32,
+    predIntraAng4_m_26,
+    predIntraAng4_m_21,
+    predIntraAng4_m_17,
+    predIntraAng4_m_13,
+    predIntraAng4_m_9,
+    predIntraAng4_m_5,
+    predIntraAng4_m_2,
+    predIntraAng4_2,    // Intentionally wrong! It should be "PredIntraAng4_0" here.
+    predIntraAng4_2,
+    predIntraAng4_5,
+    predIntraAng4_9,
+    predIntraAng4_13,
+    predIntraAng4_17,
+    predIntraAng4_21,
+    predIntraAng4_26,
+    predIntraAng4_32
 };
 
-void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     assert(dirMode > 1); //no planar and dc
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
@@ -957,7 +957,7 @@ void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *
     }
     else
     {
-        PredIntraAng4[dirMode - 2](dst, dstStride, refMain, dirMode);
+        predIntraAng4[dirMode - 2](dst, dstStride, refMain, dirMode);
     }
 }
 
@@ -1051,7 +1051,7 @@ void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *
     LOADROW(row12, GETAP(lookIdx, X) + 1); \
     CALCROW(rowx, row11, row12);
 
-void PredIntraAng8_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
+void predIntraAng8_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     Vec8s tmp;
 
@@ -1073,7 +1073,7 @@ void PredIntraAng8_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/
     store_partial(const_int(8), dst + 7 * dstStride, tmp);
 }
 
-void PredIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     // Map the mode index to main prediction direction and angle
     bool modeHor       = (dirMode < 18);
@@ -1124,7 +1124,7 @@ void PredIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     }
 }
 
-void PredIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START();
         LOADROW(row11, 0);
@@ -1168,7 +1168,7 @@ void PredIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     }
 }
 
-void PredIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START();
         LOADROW(row11, 0);
@@ -1208,7 +1208,7 @@ void PredIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     }
 }
 
-void PredIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START();
         LOADROW(row11, -1);
@@ -1248,7 +1248,7 @@ void PredIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     }
 }
 
-void PredIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
+void predIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG8_START();
         LOADROW(row11, -1);
@@ -1292,47 +1292,47 @@ void PredIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
     }
 }
 
-typedef void (*PredIntraAng8x8_table)(pixel* dst, int dstStride, pixel *refMain, int dirMode);
-PredIntraAng8x8_table PredIntraAng8[] =
+typedef void (*predIntraAng8x8_func)(pixel* dst, int dstStride, pixel *refMain, int dirMode);
+predIntraAng8x8_func predIntraAng8[] =
 {
     /* PredIntraAng8_0 is replaced with PredIntraAng8_2. For PredIntraAng8_0 we are going through default path
      * in the xPredIntraAng8x8 because we cannot afford to pass large number arguments for this function. */
-    PredIntraAng8_32,
-    PredIntraAng8_26,
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_17" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_13" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_9" here.
-    PredIntraAng8_5,
-    PredIntraAng8_2,
-    PredIntraAng8_2,        //Intentionally wrong! It should be "PredIntraAng8_0" here.
-    PredIntraAng8_m_2,
-    PredIntraAng8_m_5,
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_9" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_13" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_17" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_21" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_26" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_32" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_26" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_21" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_17" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_13" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_9" here.
-    PredIntraAng8_m_5,
-    PredIntraAng8_m_2,
-    PredIntraAng8_2,        //Intentionally wrong! It should be "PredIntraAng8_0" here.
-    PredIntraAng8_2,
-    PredIntraAng8_5,
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_9" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_13" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_17" here.
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.
-    PredIntraAng8_26,
-    PredIntraAng8_32
+    predIntraAng8_32,
+    predIntraAng8_26,
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_17" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_13" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_9" here.
+    predIntraAng8_5,
+    predIntraAng8_2,
+    predIntraAng8_2,        //Intentionally wrong! It should be "PredIntraAng8_0" here.
+    predIntraAng8_m_2,
+    predIntraAng8_m_5,
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_9" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_13" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_17" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_21" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_26" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_32" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_26" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_21" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_17" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_13" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_9" here.
+    predIntraAng8_m_5,
+    predIntraAng8_m_2,
+    predIntraAng8_2,        //Intentionally wrong! It should be "PredIntraAng8_0" here.
+    predIntraAng8_2,
+    predIntraAng8_5,
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_9" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_13" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_17" here.
+    predIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.
+    predIntraAng8_26,
+    predIntraAng8_32
 };
 
-void xPredIntraAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
     int blkSize = width;
@@ -1466,7 +1466,7 @@ void xPredIntraAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *
     }
     else
     {
-        PredIntraAng8[dirMode - 2](dst, dstStride, refMain, dirMode);
+        predIntraAng8[dirMode - 2](dst, dstStride, refMain, dirMode);
     }
 }
 
@@ -1558,7 +1558,7 @@ void xPredIntraAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *
     BLND2_4(R3, R7); \
     BLND2_4(R4, R8);
 
-void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
     int blkSize        = width;
@@ -2142,7 +2142,7 @@ void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel
     PREDANG_CALCROW_HOR_MODE2(R6) \
     PREDANG_CALCROW_HOR_MODE2(R7) \
 
-void xPredIntraAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int k;
     int blkSize = width;
@@ -3245,16 +3245,16 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
     switch (width)
     {
     case 4:
-        xPredIntraAng4x4(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
+        intraPredAng4x4(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 8:
-        xPredIntraAng8x8(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
+        intraPredAng8x8(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 16:
-        xPredIntraAng16x16(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
+        intraPredAng16x16(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 32:
-        xPredIntraAng32x32(dst, dstStride, width, dirMode, refLeft, refAbove);
+        intraPredAng32x32(dst, dstStride, width, dirMode, refLeft, refAbove);
         return;
     }
 }
@@ -3785,7 +3785,7 @@ void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride
     }
 }
 
-void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int blkSize        = width;
 
