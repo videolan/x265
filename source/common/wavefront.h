@@ -47,11 +47,6 @@ private:
 
     int m_numRows;
 
-    // WaveFront's implementation of JobProvider::findJob. Consults
-    // m_queuedBitmap and calls ProcessRow(row) for lowest numbered queued row
-    // or returns false
-    bool findJob();
-
 public:
 
     WaveFront(ThreadPool *pool) : JobProvider(pool), m_queuedBitmap(0) {}
@@ -70,6 +65,11 @@ public:
     void enableAllRows();
 
     void clearEnabledRowMask();
+
+    // WaveFront's implementation of JobProvider::findJob. Consults
+    // m_queuedBitmap and calls ProcessRow(row) for lowest numbered queued row
+    // or returns false
+    bool findJob();
 
     // Returns true if a row above curRow is available for processing.  The processRow()
     // method may call this function periodically and voluntarily exit

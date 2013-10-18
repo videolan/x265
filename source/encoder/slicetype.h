@@ -26,7 +26,7 @@
 
 #include "motion.h"
 #include "piclist.h"
-#include "common.h"
+#include "wavefront.h"
 
 namespace x265 {
 // private namespace
@@ -35,14 +35,46 @@ struct Lowres;
 class TComPic;
 class TEncCfg;
 
-struct Lookahead
+struct LookaheadRow
 {
-    MotionEstimate   me;
+    Lock                lock;
+    volatile bool       active;
+    volatile uint32_t   completed;      // Number of CUs in this row for which cost estimation is completed
+    pixel*              predictions;    // buffer for 35 intra predictions
+    MotionEstimate      me;
+    int                 costEst;        // Estimated cost for all CUs in a row
+    int                 costIntra;      // Estimated Intra cost for all CUs in a row
+    int                 intraMbs;       // Number of Intra CUs
+
+    Lowres** frames;
+    int widthInCU;
+    int heightInCU;
+    int merange;
+
+    LookaheadRow()
+    {
+        me.setQP(X265_LOOKAHEAD_QP);
+        me.setSearchMethod(X265_HEX_SEARCH);
+        me.setSubpelRefine(1);
+        predictions = (pixel*)X265_MALLOC(pixel, 35 * 8 * 8);
+        merange = 16;
+    }
+
+    ~LookaheadRow()
+    {
+        X265_FREE(predictions);
+    }
+
+    void init();
+
+    void estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
+};
+
+struct Lookahead : public WaveFront
+{
     TEncCfg         *cfg;
-    pixel           *predictions;   // buffer for 35 intra predictions
     Lowres          *frames[X265_LOOKAHEAD_MAX];
     Lowres          *lastNonB;
-    int              merange;
     int              numDecided;
     int              lastKeyframe;
     int              widthInCU;       // width of lowres frame in downscale CUs
@@ -51,9 +83,16 @@ struct Lookahead
     PicList inputQueue;  // input pictures in order received
     PicList outputQueue; // pictures to be encoded, in encode order
 
-    Lookahead(TEncCfg *);
+    bool bDoSearch[2];
+    int curb, curp0, curp1;
+    bool rowsCompleted;
+
+    LookaheadRow* lhrows;
+
+    Lookahead(TEncCfg *, ThreadPool *);
     ~Lookahead();
 
+    void init();
     void addPicture(TComPic*, int sliceType);
     void flush();
     void destroy();
@@ -61,13 +100,14 @@ struct Lookahead
     int getEstimatedPictureCost(TComPic *pic);
 
     int estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty);
-    void estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
 
     void slicetypeAnalyse(bool bKeyframe);
     int scenecut(int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
     int scenecutInternal(int p0, int p1, bool bRealScenecut);
     void slicetypePath(int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
     int slicetypePathCost(char *path, int threshold);
+
+    void processRow(int row);
 };
 }
 

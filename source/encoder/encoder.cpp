@@ -91,7 +91,7 @@ void Encoder::create()
             m_frameEncoder[i].setThreadPool(m_threadPool);
         }
     }
-    m_lookahead = new Lookahead(this);
+    m_lookahead = new Lookahead(this, m_threadPool);
     m_dpb = new DPB(this);
     m_rateControl = new RateControl(this);
 }
@@ -144,6 +144,7 @@ void Encoder::init()
             m_frameEncoder[i].init(this, numRows);
         }
     }
+    m_lookahead->init();
 }
 
 int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)

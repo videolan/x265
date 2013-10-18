@@ -62,29 +62,43 @@ static inline void median_mv(MV &dst, MV a, MV b, MV c)
     dst.y = median(a.y, b.y, c.y);
 }
 
-Lookahead::Lookahead(TEncCfg *_cfg)
+Lookahead::Lookahead(TEncCfg *_cfg, ThreadPool* pool) : WaveFront(pool)
 {
     this->cfg = _cfg;
     numDecided = 0;
     lastKeyframe = -cfg->param.keyframeMax;
     lastNonB = NULL;
-    predictions = (pixel*)X265_MALLOC(pixel, 35 * 8 * 8);
-    me.setQP(X265_LOOKAHEAD_QP);
-    me.setSearchMethod(X265_HEX_SEARCH);
-    me.setSubpelRefine(1);
-    merange = 16;
     widthInCU = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     heightInCU = ((cfg->param.sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+
+    lhrows = new LookaheadRow[heightInCU];
+    for (int i = 0; i < heightInCU; i++)
+    {
+        lhrows[i].widthInCU = widthInCU;
+        lhrows[i].heightInCU = heightInCU;
+        lhrows[i].frames = frames;
+    }
 }
 
 Lookahead::~Lookahead()
 {
 }
 
+void Lookahead::init()
+{
+    if (!WaveFront::init(heightInCU))
+    {
+        m_pool = NULL;
+    }
+    else
+    {
+        WaveFront::enableAllRows();
+    }
+}
+
 void Lookahead::destroy()
 {
-    if (predictions)
-        X265_FREE(predictions);
+    delete[] lhrows;
 
     // these two queues will be empty, unless the encode was aborted
     while (!inputQueue.empty())
@@ -165,8 +179,11 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
 int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 {
     int score = 0;
-    bool bDoSearch[2];
     Lowres *fenc = frames[b];
+
+    curb = b;
+    curp0 = p0;
+    curp1 = p1;
 
     if (fenc->costEst[b - p0][p1 - b] >= 0 && fenc->rowSatds[b - p0][p1 - b][0] != -1)
         score = fenc->costEst[b - p0][p1 - b];
@@ -181,26 +198,45 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 
         fenc->costEst[b - p0][p1 - b] = 0;
 
-        /* Lowres lookahead goes backwards because the MVs are used as
-         * predictors in the main encode.  This considerably improves MV
-         * prediction overall. */
         // TODO: use lowres MVs as motion candidates in full-res search
-        me.setSourcePlane(fenc->lowresPlane[0], fenc->lumaStride);
-        for (int j = heightInCU - 1; j >= 0; j--)
-        {
-            if (!fenc->bIntraCalculated)
-                fenc->rowSatds[0][0][j] = 0;
-            fenc->rowSatds[b - p0][p1 - b][j] = 0;
 
-            for (int i = widthInCU - 1; i >= 0; i--)
+        for (int i = 0; i < heightInCU; i++)
+        {
+            lhrows[i].init();
+            lhrows[i].me.setSourcePlane(fenc->lowresPlane[0], fenc->lumaStride);
+        }
+
+        rowsCompleted = false;
+
+        if (m_pool)
+        {
+            WaveFront::enqueue();
+            // enableAllRows must be already called
+            enqueueRow(0);
+            while (!rowsCompleted)
             {
-                estimateCUCost(i, j, p0, p1, b, bDoSearch);
+                WaveFront::findJob();
+            }
+
+            WaveFront::dequeue();
+        }
+        else
+        {
+            for (int row = 0; row < heightInCU; row++)
+            {
+                processRow(row);
             }
         }
 
-        fenc->bIntraCalculated = true;
+        // Accumulate cost from each row
+        for (int row = 0; row < heightInCU; row++)
+        {
+            score += lhrows[row].costEst;
+            fenc->costEst[0][0] += lhrows[row].costIntra;
+            fenc->intraMbs[b - p0] += lhrows[row].intraMbs;
+        }
 
-        score = fenc->costEst[b - p0][p1 - b];
+        fenc->bIntraCalculated = true;
 
         if (b != p1)
             score = (uint64_t)score * 100 / (130 + cfg->param.bFrameBias);
@@ -218,7 +254,16 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
     return score;
 }
 
-void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2])
+void LookaheadRow::init()
+{
+    costEst = 0;
+    costIntra = 0;
+    intraMbs = 0;
+    active = false;
+    completed = 0;
+}
+
+void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2])
 {
     Lowres *fref0 = frames[p0];
     Lowres *fref1 = frames[p1];
@@ -412,14 +457,14 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
         // TOOD: i_icost += intra_penalty + lowres_penalty;
         fenc->intraCost[cuXY] = icost;
         fenc->rowSatds[0][0][cuy] += icost;
-        if (bFrameScoreCU) fenc->costEst[0][0] += icost;
+        if (bFrameScoreCU) costIntra += icost;
     }
 
     if (!bBidir)
     {
         if (fenc->intraCost[cuXY] < bcost)
         {
-            if (bFrameScoreCU) fenc->intraMbs[b - p0]++;
+            if (bFrameScoreCU) intraMbs++;
             bcost = fenc->intraCost[cuXY];
             listused = 0;
         }
@@ -429,7 +474,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDo
     if (p0 != p1)
     {
         fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
-        if (bFrameScoreCU) fenc->costEst[b - p0][p1 - b] += bcost;
+        if (bFrameScoreCU) costEst += bcost;
     }
     fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
@@ -547,6 +592,7 @@ void Lookahead::slicetypeDecide()
             {
                 frames[i + 1] = &list[i]->m_lowres;
             }
+
             if (IS_X265_TYPE_I(frames[bframes + 1]->sliceType))
                 p0 = bframes + 1;
             else // P
@@ -848,11 +894,11 @@ int Lookahead::scenecut(int p0, int p1, bool bRealScenecut, int num_frames, int 
         /* Where A and B are scenes: AAAAAABBBAAAAAA
          * If BBB is shorter than (maxp1-p0), it is detected as a flash
          * and not considered a scenecut. */
-        for (int curp1 = p1; curp1 <= maxp1; curp1++)
+        for (int cp1 = p1; cp1 <= maxp1; cp1++)
         {
-            if (!scenecutInternal(p0, curp1, 0))
+            if (!scenecutInternal(p0, cp1, 0))
                 /* Any frame in between p0 and cur_p1 cannot be a real scenecut. */
-                for (int i = curp1; i > p0; i--)
+                for (int i = cp1; i > p0; i--)
                 {
                     frames[i]->bScenecut = false;
                 }
@@ -863,11 +909,11 @@ int Lookahead::scenecut(int p0, int p1, bool bRealScenecut, int num_frames, int 
          * detected as flashes and not considered scenecuts.
          * Instead, the first F frame becomes a scenecut.
          * If the video ends before F, no frame becomes a scenecut. */
-        for (int curp0 = p0; curp0 <= maxp1; curp0++)
+        for (int cp0 = p0; cp0 <= maxp1; cp0++)
         {
-            if (origmaxp1 > maxSearch || (curp0 < maxp1 && scenecutInternal(curp0, maxp1, 0)))
+            if (origmaxp1 > maxSearch || (cp0 < maxp1 && scenecutInternal(cp0, maxp1, 0)))
                 /* If cur_p0 is the p0 of a scenecut, it cannot be the p1 of a scenecut. */
-                frames[curp0]->bScenecut = false;
+                frames[cp0]->bScenecut = false;
         }
     }
 
@@ -914,7 +960,7 @@ void Lookahead::slicetypePath(int length, char(*best_paths)[X265_LOOKAHEAD_MAX +
 {
     char paths[2][X265_LOOKAHEAD_MAX + 1];
     int num_paths = X265_MIN(cfg->param.bframes + 1, length);
-    int best_cost = me.COST_MAX;
+    int best_cost = MotionEstimate::COST_MAX;
     int idx = 0;
 
     /* Iterate over all currently possible paths */
@@ -992,4 +1038,46 @@ int Lookahead::slicetypePathCost(char *path, int threshold)
     }
 
     return cost;
+}
+
+void Lookahead::processRow(int row)
+{
+    int realrow = heightInCU - 1 - row;
+    Lowres *fenc = frames[curb];
+
+    if (!fenc->bIntraCalculated)
+        fenc->rowSatds[0][0][realrow] = 0;
+    fenc->rowSatds[curb - curp0][curp1 - curb][realrow] = 0;
+
+    /* Lowres lookahead goes backwards because the MVs are used as
+     * predictors in the main encode.  This considerably improves MV
+     * prediction overall. */
+    for (int i = widthInCU - 1 - lhrows[row].completed; i >= 0; i--)
+    {
+        lhrows[row].estimateCUCost(i, realrow, curp0, curp1, curb, bDoSearch);
+        lhrows[row].completed++;
+
+        if (lhrows[row].completed >= 2 && row < heightInCU - 1)
+        {
+            ScopedLock below(lhrows[row + 1].lock);
+            if (lhrows[row + 1].active == false &&
+                lhrows[row + 1].completed + 2 <= lhrows[row].completed)
+            {
+                lhrows[row + 1].active = true;
+                enqueueRow(row + 1);
+            }
+        }
+
+        ScopedLock self(lhrows[row].lock);
+        if (row > 0 && (int32_t)lhrows[row].completed < widthInCU - 1 && lhrows[row - 1].completed < lhrows[row].completed + 2)
+        {
+            lhrows[row].active = false;
+            return;
+        }
+    }
+
+    if (row == heightInCU - 1)
+    {
+        rowsCompleted = true;
+    }
 }
