@@ -167,113 +167,119 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
     int sum;
     int logSize = g_convertToBit[width] + 2;
 
-    Vec16uc pixL, pixT;
-    Vec8us  im;
-    Vec4ui  im1, im2;
+
+    __m128i pixL, pixT, temp;
 
     switch (width)
     {
     case 4:
-        pixL.fromUint32(*(uint32_t*)left);
-        pixT.fromUint32(*(uint32_t*)above);
-        sum  = horizontal_add(extend_low(pixL));
-        sum += horizontal_add(extend_low(pixT));
+        pixL = _mm_cvtsi32_si128(*(uint32_t*)left);
+        pixT = _mm_cvtsi32_si128(*(uint32_t*)above);
+        pixL = _mm_unpacklo_epi8(pixL, _mm_setzero_si128());
+        pixT = _mm_unpacklo_epi8(pixT, _mm_setzero_si128());
+        temp = _mm_add_epi16(pixL, pixT);
+        sum  = _mm_cvtsi128_si32(_mm_hadd_epi16(_mm_hadd_epi16(temp, temp), temp));
         break;
-
     case 8:
 #if X86_64
-        pixL.fromUint64(*(uint64_t*)left);
-        pixT.fromUint64(*(uint64_t*)above);
+        pixL = _mm_cvtsi64_si128(*(uint64_t*)left);
+        pixT = _mm_cvtsi64_si128(*(uint64_t*)above);
 #else
-        pixL.load_partial(8, left);
-        pixT.load_partial(8, above);
+        pixL = _mm_loadu_si128((__m128i*)left);
+        pixT = _mm_loadu_si128((__m128i*)above);
 #endif
-        sum  = horizontal_add(extend_low(pixL));
-        sum += horizontal_add(extend_low(pixT));
+        pixL = _mm_unpacklo_epi8(pixL, _mm_setzero_si128());
+        pixT = _mm_unpacklo_epi8(pixT, _mm_setzero_si128());
+        temp = _mm_add_epi16(pixL, pixT);
+        sum  = _mm_cvtsi128_si32(_mm_hadd_epi16(_mm_hadd_epi16(_mm_hadd_epi16(temp, temp), temp), temp));
         break;
-
     case 16:
-        pixL.load(left);
-        pixT.load(above);
-        sum  = horizontal_add_x(pixL);
-        sum += horizontal_add_x(pixT);
+        pixL = _mm_loadu_si128((__m128i*)left);
+        pixT = _mm_loadu_si128((__m128i*)above);
+        temp = _mm_sad_epu8(pixL, _mm_setzero_si128());
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixT, _mm_setzero_si128()));
+        sum = _mm_cvtsi128_si32(_mm_add_epi32(_mm_shuffle_epi32(temp, 2), temp));
         break;
 
     default:
     case 32:
-        pixL.load(left);
-        im1  = (Vec4ui)(pixL.sad(_mm_setzero_si128()));
-        pixL.load(left + 16);
-        im1 += (Vec4ui)(pixL.sad(_mm_setzero_si128()));
+        pixL = _mm_loadu_si128((__m128i*)left);
+        temp = _mm_sad_epu8(pixL, _mm_setzero_si128());
+        pixL = _mm_loadu_si128((__m128i*)(left + 16));
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixL, _mm_setzero_si128()));
 
-        pixT.load(above);
-        im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
-        pixT.load(above + 16);
-        im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
-        im1 += (Vec4ui)((Vec128b)im1 >> const_int(64));
-        sum = toInt32(im1);
+        pixT = _mm_loadu_si128((__m128i*)above);
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixT, _mm_setzero_si128()));
+        pixT = _mm_loadu_si128((__m128i*)(above + 16));
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixT, _mm_setzero_si128()));
+        sum = _mm_cvtsi128_si32(_mm_add_epi32(_mm_shuffle_epi32(temp, 2), temp));
         break;
+
     }
+
 
     logSize += 1;
     pixel dcVal = (sum + (1 << (logSize - 1))) >> logSize;
-    Vec16uc dcValN(dcVal);
-    pixel *dst1 = dst;
+    __m128i dcValN = _mm_set1_epi8(dcVal);
+    int k;
 
+    pixel *dst1 = dst;
     switch (width)
     {
     case 4:
-        store_partial(const_int(4), dst1, dcValN);
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
         dst1 += dstStride;
-        store_partial(const_int(4), dst1, dcValN);
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
         dst1 += dstStride;
-        store_partial(const_int(4), dst1, dcValN);
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
         dst1 += dstStride;
-        store_partial(const_int(4), dst1, dcValN);
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
         break;
 
     case 8:
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
         break;
 
     case 16:
-        for (int k = 0; k < 16; k += 4)
+        for (k = 0; k < 16; k += 4)
         {
-            store_partial(const_int(16), dst1, dcValN);
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
             dst1 += dstStride;
-            store_partial(const_int(16), dst1, dcValN);
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
             dst1 += dstStride;
-            store_partial(const_int(16), dst1, dcValN);
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
             dst1 += dstStride;
-            store_partial(const_int(16), dst1, dcValN);
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
             dst1 += dstStride;
         }
+
         break;
 
     case 32:
-        for (int k = 0; k < 32; k += 2)
+        for (k = 0; k < 32; k += 2)
         {
-            store_partial(const_int(16), dst1,      dcValN);
-            store_partial(const_int(16), dst1 + 16, dcValN);
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            _mm_storeu_si128((__m128i*)(dst1 + 16), dcValN);
             dst1 += dstStride;
-            store_partial(const_int(16), dst1,      dcValN);
-            store_partial(const_int(16), dst1 + 16, dcValN);
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            _mm_storeu_si128((__m128i*)(dst1 + 16), dcValN);
             dst1 += dstStride;
         }
+
         break;
     }
 
