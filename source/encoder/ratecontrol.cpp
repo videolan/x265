@@ -78,7 +78,7 @@ static inline uint32_t acEnergyPlane(pixel* src, int srcStride, int bChroma)
 double RateControl::acEnergyCu(TComPic* pic, uint32_t cuAddr)
 {
     uint32_t var = 0;
-    double avgQp = 0;
+    double avgQp = 0, strength = cfg->param.rc.aqStrength * 1.0397f;
     pixel* srcLuma = pic->getPicYuvOrg()->getLumaAddr(cuAddr);
     pixel* srcCb = pic->getPicYuvOrg()->getCbAddr(cuAddr);
     pixel* srcCr = pic->getPicYuvOrg()->getCrAddr(cuAddr);
@@ -97,7 +97,7 @@ double RateControl::acEnergyCu(TComPic* pic, uint32_t cuAddr)
             var = acEnergyPlane(srcLuma + blockOffsetLuma, frameStride, 0);
             var += acEnergyPlane(srcCb + blockOffsetChroma, cStride, 1);
             var += acEnergyPlane(srcCr + blockOffsetChroma, cStride, 1);
-            avgQp += cfg->param.rc.aqStrength * (X265_LOG2(X265_MAX(var, 1)) - (14.427f));
+            avgQp += strength * (X265_LOG2(X265_MAX(var, 1)) - (14.427f));
         }
     }
 
@@ -108,12 +108,9 @@ double RateControl::acEnergyCu(TComPic* pic, uint32_t cuAddr)
 
 void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
 {
-    double strength;
-
     /* Actual adaptive quantization */
     if (cfg->param.rc.aqMode)
     {
-        strength = cfg->param.rc.aqStrength * 1.0397f;
         int maxRows = pic->getPicSym()->getFrameHeightInCU();
         int maxCols = pic->getPicSym()->getFrameWidthInCU();
         for (int cu_y = 0; cu_y < maxRows; cu_y++)
