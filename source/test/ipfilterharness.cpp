@@ -395,7 +395,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     {
         if (opt.luma_hpp[value])
         {
-            if (!check_IPFilterChroma_primitive(ref.luma_hpp[value], opt.luma_hpp[value]))
+            if (!check_IPFilterLuma_primitive(ref.luma_hpp[value], opt.luma_hpp[value]))
             {
                 printf("interp_8tap_horiz_pp[%s]", lumaPartStr[value]);
                 return false;
