@@ -105,53 +105,54 @@ inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstS
     // boundary pixels processing
     dst[0] = (pixel)((above[0] + left[0] + 2 * pixDC + 2) >> 2);
 
-    Vec8us im1(pixDCx3);
-    Vec8us im2, im3;
-    Vec16uc pix;
+    __m128i im1 = _mm_set1_epi16(pixDCx3);
+    __m128i im2, im3;
+
+    __m128i pix;
     switch (width)
     {
     case 4:
-        pix = load_partial(const_int(4), &above[1]);
-        im2 = extend_low(pix);
-        im2 = (im1 + im2) >> const_int(2);
-        pix = compress(im2, im2);
-        store_partial(const_int(4), &dst[1], pix);
+        pix = _mm_cvtsi32_si128(*(uint32_t*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        pix = _mm_packus_epi16(im2, im2);
+        *(uint32_t*)&dst[1] = _mm_cvtsi128_si32(pix);
         break;
 
     case 8:
-        pix = load_partial(const_int(8), &above[1]);
-        im2 = extend_low(pix);
-        im2 = (im1 + im2) >> const_int(2);
-        pix = compress(im2, im2);
-        store_partial(const_int(8), &dst[1], pix);
+        pix = _mm_cvtsi64_si128(*(uint64_t*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        pix = _mm_packus_epi16(im2, im2);
+        _mm_storel_epi64((__m128i*)&dst[1], pix);
         break;
 
     case 16:
-        pix.load(&above[1]);
-        im2 = extend_low(pix);
-        im3 = extend_high(pix);
-        im2 = (im1 + im2) >> const_int(2);
-        im3 = (im1 + im3) >> const_int(2);
-        pix = compress(im2, im3);
-        pix.store(&dst[1]);
+        pix = _mm_loadu_si128((__m128i*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im3 = _mm_unpackhi_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        im3 = _mm_srai_epi16(_mm_add_epi16(im1, im3), 2);
+        pix = _mm_packus_epi16(im2, im3);
+        _mm_storeu_si128((__m128i*)&dst[1], pix);
         break;
 
     case 32:
-        pix.load(&above[1]);
-        im2 = extend_low(pix);
-        im3 = extend_high(pix);
-        im2 = (im1 + im2) >> const_int(2);
-        im3 = (im1 + im3) >> const_int(2);
-        pix = compress(im2, im3);
-        pix.store(&dst[1]);
+        pix = _mm_loadu_si128((__m128i*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im3 = _mm_unpackhi_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        im3 = _mm_srai_epi16(_mm_add_epi16(im1, im3), 2);
+        pix = _mm_packus_epi16(im2, im3);
+        _mm_storeu_si128((__m128i*)&dst[1], pix);
 
-        pix.load(&above[1 + 16]);
-        im2 = extend_low(pix);
-        im3 = extend_high(pix);
-        im2 = (im1 + im2) >> const_int(2);
-        im3 = (im1 + im3) >> const_int(2);
-        pix = compress(im2, im3);
-        pix.store(&dst[1 + 16]);
+        pix = _mm_loadu_si128((__m128i*)&above[1 + 16]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im3 = _mm_unpackhi_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        im3 = _mm_srai_epi16(_mm_add_epi16(im1, im3), 2);
+        pix = _mm_packus_epi16(im2, im3);
+        _mm_storeu_si128((__m128i*)&dst[1 + 16], pix);
         break;
     }
 
