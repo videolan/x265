@@ -385,7 +385,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilterChroma_primitive(ref.chroma_hpp[value], opt.chroma_hpp[value]))
             {
-                printf("interp_4tap_horiz_pp[%s]", chromaPartStr[value]);
+                printf("chroma_hpp[%s]", chromaPartStr[value]);
                 return false;
             }
         }
@@ -397,7 +397,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilterLuma_primitive(ref.luma_hpp[value], opt.luma_hpp[value]))
             {
-                printf("interp_8tap_horiz_pp[%s]", lumaPartStr[value]);
+                printf("luma_hpp[%s]", lumaPartStr[value]);
                 return false;
             }
         }
@@ -462,7 +462,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.chroma_hpp[value])
         {
-            printf("interp_4tap_horiz_pp[%s]", chromaPartStr[value]);
+            printf("chroma_hpp[%s]", chromaPartStr[value]);
             REPORT_SPEEDUP(opt.chroma_hpp[value], ref.chroma_hpp[value],
                            pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
@@ -472,7 +472,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.luma_hpp[value])
         {
-            printf("interp_8tap_horiz_pp[%s]", lumaPartStr[value]);
+            printf("  luma_hpp[%s]", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.luma_hpp[value], ref.luma_hpp[value],
                            pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
