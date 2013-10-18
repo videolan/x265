@@ -229,11 +229,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.sa8d[BLOCK_4x4] = x265_pixel_satd_4x4_mmx2;
         p.frame_init_lowres_core = x265_frame_init_lowres_core_mmx2;
-        p.pixelavg_pp[LUMA_4x16] = x265_pixel_avg_4x16_mmx2;
-        p.pixelavg_pp[LUMA_4x8]  = x265_pixel_avg_4x8_mmx2;
-        p.pixelavg_pp[LUMA_4x4]  = x265_pixel_avg_4x4_mmx2;
 
+        //p.pixelavg_pp[LUMA_4x16] = x265_pixel_avg_4x16_mmx2;
+        //p.pixelavg_pp[LUMA_4x8]  = x265_pixel_avg_4x8_mmx2;
+        //p.pixelavg_pp[LUMA_4x4]  = x265_pixel_avg_4x4_mmx2;
         //PIXEL_AVE(sse2);
+
         ASSGN_SSE(sse2);
         INIT2(sad, _sse2);
         INIT2(sad_x3, _sse2);
