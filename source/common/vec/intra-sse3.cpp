@@ -228,8 +228,7 @@ const int angAP[17][64] =
 
 #define GETAP(X, Y) angAP[8 - (X)][(Y)]
 
-static inline
-void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int /*height*/)
+inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
 {
     int y;
     pixel pixDC = *dst;
@@ -588,7 +587,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
 
     if (filter)
     {
-        predDCFiltering(above, left, dst, dstStride, width, width);
+        predDCFiltering(above, left, dst, dstStride, width);
     }
 #else // if !HIGH_BIT_DEPTH
 
@@ -739,7 +738,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
 
     if (filter)
     {
-        predDCFiltering(above, left, dst, dstStride, width, width);
+        predDCFiltering(above, left, dst, dstStride, width);
     }
 #endif // if HIGH_BIT_DEPTH
 }
