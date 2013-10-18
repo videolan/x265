@@ -134,11 +134,10 @@ void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, short *src, intp
 void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1)
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
-    unsigned char i = (1 << X265_DEPTH) - 1;
 
     if (!(aligncheck & 15))
     {
-        __m128i maxval = _mm_set1_epi8(i);
+        __m128i maxval = _mm_set1_epi8((unsigned char)((1 << X265_DEPTH) - 1));
         __m128i zero = _mm_setzero_si128();
 
         // fast path, multiples of 16 pixel wide blocks
@@ -162,7 +161,7 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
     }
     else if (!(bx & 15))
     {
-        __m128i maxval = _mm_set1_epi8(i);
+        __m128i maxval = _mm_set1_epi8((unsigned char)((1 << X265_DEPTH) - 1));
         __m128i zero = _mm_setzero_si128();
 
         // fast path, multiples of 16 pixel wide blocks but pointers/strides require unaligned accesses
