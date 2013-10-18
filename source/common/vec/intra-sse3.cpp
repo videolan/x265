@@ -199,6 +199,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         sum += horizontal_add_x(pixT);
         break;
 
+    default:
     case 32:
         pixL.load(left);
         im1  = (Vec4ui)(pixL.sad(_mm_setzero_si128()));
@@ -210,7 +211,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         pixT.load(above + 16);
         im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
         im1 += (Vec4ui)((Vec128b)im1 >> const_int(64));
-        sum  = toInt32(im1);
+        sum = toInt32(im1);
         break;
     }
 
