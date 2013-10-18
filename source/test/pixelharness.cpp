@@ -507,6 +507,27 @@ bool PixelHarness::check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t op
     return true;
 }
 
+bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        opt(opt_dest, STRIDE, pbuf1 + j, STRIDE, pbuf2 + j, STRIDE, 32);
+        ref(ref_dest, STRIDE, pbuf1 + j, STRIDE, pbuf2 + j, STRIDE, 32);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -577,6 +598,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         if (!check_pixelcmp_x4(ref.sad_x4[part], opt.sad_x4[part]))
         {
             printf("sad_x4[%s]: failed!\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
+    if (opt.pixelavg_pp[part])
+    {
+        if (!check_pixelavg_pp(ref.pixelavg_pp[part], opt.pixelavg_pp[part]))
+        {
+            printf("pixelavg_pp[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -751,6 +781,12 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         printf("  satd[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.satd[part], ref.satd[part], pbuf1, STRIDE, fref, STRIDE);
+    }
+
+    if (opt.pixelavg_pp[part])
+    {
+        printf("avg_pp[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.pixelavg_pp[part], ref.pixelavg_pp[part], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 0);
     }
 
     if (opt.sa8d_inter[part])

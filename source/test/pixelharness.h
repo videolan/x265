@@ -55,6 +55,7 @@ protected:
     bool check_pixeladd_pp(pixeladd_pp_t ref, pixeladd_pp_t opt);
     bool check_downscale_t(downscale_t ref, downscale_t opt);
     bool check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t opt);
+    bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
 
 public:
 
