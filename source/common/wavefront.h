@@ -67,6 +67,8 @@ public:
 
     void enableRow(int row);
 
+    void enableAllRows();
+
     void clearEnabledRowMask();
 
     // Returns true if a row above curRow is available for processing.  The processRow()

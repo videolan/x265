@@ -82,6 +82,11 @@ void WaveFront::enableRow(int row)
     ATOMIC_OR(&m_enableBitmap[row >> 6], bit);
 }
 
+void WaveFront::enableAllRows()
+{
+    memset((void*)m_enableBitmap, ~0, sizeof(uint64_t) * m_numWords);
+}
+
 bool WaveFront::checkHigherPriorityRow(int curRow)
 {
     int fullwords = curRow >> 6;
