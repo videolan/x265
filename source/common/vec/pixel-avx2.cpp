@@ -450,9 +450,9 @@ void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives &p)
 {
     p.sad[0] = p.sad[0];
 #define SET_SADS(W, H) \
-    p.sad[PARTITION_ ## W ## x ## H] = sad_avx2_ ## W<H>; \
-    p.sad_x3[PARTITION_ ## W ## x ## H] = sad_avx2_x3_ ## W<H>; \
-    p.sad_x4[PARTITION_ ## W ## x ## H] = sad_avx2_x4_ ## W<H>; \
+    p.sad[LUMA_ ## W ## x ## H] = sad_avx2_ ## W<H>; \
+    p.sad_x3[LUMA_ ## W ## x ## H] = sad_avx2_x3_ ## W<H>; \
+    p.sad_x4[LUMA_ ## W ## x ## H] = sad_avx2_x4_ ## W<H>; \
 
 #if !HIGH_BIT_DEPTH
 #if (defined(__GNUC__) || defined(__INTEL_COMPILER)) || defined(__clang__)

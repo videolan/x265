@@ -1818,9 +1818,9 @@ void Setup_Vec_Pixel16Primitives_sse41(EncoderPrimitives &p)
 {
 #if HIGH_BIT_DEPTH
 #define SETUP_PARTITION(W, H) \
-    p.sad[PARTITION_ ## W ## x ## H] = sad_ ## W<H>; \
-    p.sad_x3[PARTITION_ ## W ## x ## H] = sad_x3_ ## W<H>; \
-    p.sad_x4[PARTITION_ ## W ## x ## H] = sad_x4_ ## W<H>;
+    p.sad[LUMA_ ## W ## x ## H] = sad_ ## W<H>; \
+    p.sad_x3[LUMA_ ## W ## x ## H] = sad_x3_ ## W<H>; \
+    p.sad_x4[LUMA_ ## W ## x ## H] = sad_x4_ ## W<H>;
 
     /* 2Nx2N, 2NxN, Nx2N, 4Ax3A, 4AxA, 3Ax4A, Ax4A */
     SETUP_PARTITION(64, 64);

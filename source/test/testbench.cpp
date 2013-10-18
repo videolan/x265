@@ -37,6 +37,24 @@
 
 using namespace x265;
 
+const char* lumaPartStr[NUM_LUMA_PARTITIONS] =
+{
+    "  4x4",
+    "  8x8", "  8x4", "  4x8", 
+    "16x16", " 16x8", " 8x16", "16x12", "12x16", " 16x4", " 4x16",
+    "32x32", "32x16", "16x32", "32x24", "24x32", " 32x8", " 8x32",
+    "64x64", "64x32", "32x64", "64x48", "48x64", "64x16", "16x64",
+};
+
+const char* chromaPartStr[NUM_CHROMA_PARTITIONS] =
+{
+    "  2x2", // never used by HEVC
+    "  4x4", "  4x2", "  2x4",
+    "  8x8", "  8x4", "  4x8", "  8x6", "  6x8", "  8x2", "  2x8",
+    "16x16", " 16x8", " 8x16", "16x12", "12x16", " 16x4", " 4x16",
+    "32x32", "32x16", "16x32", "32x24", "24x32", " 32x8", " 8x32",
+};
+
 int main(int argc, char *argv[])
 {
     int cpuid = x265::cpu_detect();
