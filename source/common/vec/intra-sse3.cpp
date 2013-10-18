@@ -1086,59 +1086,51 @@ void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *
     {
         if (modeHor)
         {
-            Vec16uc v_main;
-            v_main = load_partial(const_int(4), (void*)(refMain + 1));
-
-            Vec16uc tmp16;
-            tmp16 = blend16c<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(v_main, v_main);
-            tmp16 = blend16c<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(tmp16, tmp16);
-            Vec2uq tmp;
+            __m128i main, temp16;
+            main =_mm_loadl_epi64((const __m128i*)(refMain + 1));
+            temp16 = _mm_unpacklo_epi8(main, main);
+            temp16 = _mm_unpacklo_epi8(temp16, temp16);
 
             if (bFilter)
             {
-                Vec16uc v_temp;
-                Vec8s v_side_0; // refSide[0] value in a vector
-                v_temp = load_partial(const_int(8), (void*)refSide);
-                v_side_0 = broadcast(const_int(0), (Vec8s)v_temp);
-                v_side_0 = v_side_0 & 0x00FF;
-
-                //shift v_side by 1 element (1 byte)
-                tmp = reinterpret_i(v_temp);
-                tmp = tmp >> 8;
-                v_temp = reinterpret_i(tmp);
-                Vec8s v_side = extend_low(v_temp);
-
-                Vec8s row0 = extend_low(tmp16);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row0 += v_side;
-                row0 = min(max(0, row0), 255);
-                Vec16uc v_res(compress_unsafe(row0, 0));
-                store_partial(const_int(4), dst, v_res);
+                __m128i temp, side;
+                temp = _mm_loadl_epi64((__m128i*)refSide);
+                side = _mm_shufflelo_epi16(temp, 0);
+                side = _mm_unpacklo_epi64(side, side);
+                side = _mm_and_si128(side, _mm_set1_epi16(0x00FF));
+                __m128i tempshift = temp;
+                tempshift = _mm_srl_epi64(tempshift, _mm_cvtsi32_si128(8)); 
+                temp = tempshift;
+                __m128i side1 = _mm_unpacklo_epi8(temp, _mm_setzero_si128());
+                __m128i row = _mm_unpacklo_epi8(temp16, _mm_setzero_si128());
+                side1 = _mm_sub_epi16(side1, side);
+                side1 = _mm_sra_epi16(side1, _mm_cvtsi32_si128(1));
+                row = _mm_add_epi16(row, side1);
+                row = _mm_min_epi16(_mm_max_epi16(_mm_set1_epi16(0), row), _mm_set1_epi16(255));
+                __m128i res = _mm_packus_epi16(row, _mm_set1_epi16(0));
+                *(uint32_t*)dst = _mm_cvtsi128_si32(res);
             }
             else
             {
-                store_partial(const_int(4), dst, tmp16);
+                *(uint32_t*)dst = _mm_cvtsi128_si32(temp16);
             }
 
-            tmp = (Vec2uq)tmp16;
-            tmp >>= 32;
-            store_partial(const_int(4), dst + dstStride, tmp);
-
-            tmp = blend2q<1, 3>(reinterpret_i(tmp16), reinterpret_i(tmp16));
-            store_partial(const_int(4), dst + (2 * dstStride), tmp);
-
-            tmp >>= 32;
-            store_partial(const_int(4), dst + (3 * dstStride), tmp);
+            __m128i temp = temp16;
+            temp = _mm_srl_epi64(temp, _mm_cvtsi32_si128(32));
+            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(temp);
+            temp = _mm_unpackhi_epi64(temp16, temp16);
+            *(uint32_t*)(dst + 2 * dstStride) = _mm_cvtsi128_si32(temp);
+            temp = _mm_srl_epi64(temp, _mm_cvtsi32_si128(32));
+            *(uint32_t*)(dst + 3 * dstStride) = _mm_cvtsi128_si32(temp);
         }
         else
         {
-            Vec16uc v_main;
-            v_main = load_partial(const_int(4), refMain + 1);
-            store_partial(const_int(4), dst, v_main);
-            store_partial(const_int(4), dst + dstStride, v_main);
-            store_partial(const_int(4), dst + (2 * dstStride), v_main);
-            store_partial(const_int(4), dst + (3 * dstStride), v_main);
+            __m128i main = _mm_loadl_epi64((const __m128i*)(refMain + 1));
+            *(uint32_t*)(dst) = _mm_cvtsi128_si32(main);
+            *(uint32_t*)(dst + dstStride) = _mm_cvtsi128_si32(main);
+            *(uint32_t*)(dst + 2 * dstStride) = _mm_cvtsi128_si32(main);
+            *(uint32_t*)(dst + 3 *dstStride) = _mm_cvtsi128_si32(main);
+
             if (bFilter)
             {
                 for (int k = 0; k < 4; k++)
