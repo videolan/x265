@@ -61,9 +61,9 @@ extern "C" {
 #define HEVC_X64_SATD(cpu)
 #else
 #define HEVC_X64_SATD(cpu) \
-    p.satd[PARTITION_8x32] = cmp<8, 32, 8, 16, x265_pixel_satd_8x16_ ## cpu>; \
-    p.satd[PARTITION_16x32] = cmp<16, 32, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
-    p.satd[PARTITION_16x64] = cmp<16, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>;
+    p.satd[LUMA_8x32] = cmp<8, 32, 8, 16, x265_pixel_satd_8x16_ ## cpu>; \
+    p.satd[LUMA_16x32] = cmp<16, 32, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
+    p.satd[LUMA_16x64] = cmp<16, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>;
 #endif
 #define HEVC_SATD(cpu) \
     HEVC_X64_SATD(cpu) \
