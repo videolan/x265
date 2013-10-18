@@ -45,10 +45,12 @@ PixelHarness::PixelHarness()
     pbuf3 = (pixel*)X265_MALLOC(pixel, bufsize);
     pbuf4 = (pixel*)X265_MALLOC(pixel, bufsize);
 
+    ibuf1 = (int*)X265_MALLOC(int, bufsize);
+
     sbuf1 = (short*)X265_MALLOC(short, bufsize);
     sbuf2 = (short*)X265_MALLOC(short, bufsize);
 
-    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2)
+    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !ibuf1)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -63,6 +65,8 @@ PixelHarness::PixelHarness()
 
         sbuf1[i] = (rand() & (2 * SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
         sbuf2[i] = (rand() & (2 * SHORT_MAX + 1)) - SHORT_MAX - 1; //max(SHORT_MIN, min(rand(), SHORT_MAX));
+
+        ibuf1[i] = (rand() & (2 * SHORT_MAX + 1)) - SHORT_MAX - 1;
     }
 }
 
@@ -481,6 +485,28 @@ bool PixelHarness::check_downscale_t(downscale_t ref, downscale_t opt)
     return true;
 }
 
+bool PixelHarness::check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t opt)
+{
+    ALIGN_VAR_16(short, ref_dest[64 * 64]);
+    ALIGN_VAR_16(short, opt_dest[64 * 64]);
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int shift = (rand() % 7 + 1);
+
+        opt(opt_dest, ibuf1 + j, STRIDE, shift, STRIDE);
+        ref(ref_dest, ibuf1 + j, STRIDE, shift, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -612,6 +638,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 printf("sa8d[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
+        }
+    }
+
+    if (opt.cvt32to16_shr)
+    {
+        if (!check_cvt32to16_shr_t(ref.cvt32to16_shr, opt.cvt32to16_shr))
+        {
+            printf("cvt32to16 failed!\n");
+            return false;
         }
     }
 
@@ -808,6 +843,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             printf("recon[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
         }
+    }
+
+    if (opt.cvt32to16_shr)
+    {
+        printf("cvt32to16_shr");
+        REPORT_SPEEDUP(opt.cvt32to16_shr, ref.cvt32to16_shr, sbuf1, ibuf1, 64, 5, 64);
     }
 
     if (opt.blockcpy_pp)
