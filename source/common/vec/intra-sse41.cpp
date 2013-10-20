@@ -35,6 +35,195 @@ using namespace x265;
 
 namespace {
 #if !HIGH_BIT_DEPTH
+inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
+{
+    int y;
+    pixel pixDC = *dst;
+    int pixDCx3 = pixDC * 3 + 2;
+
+    // boundary pixels processing
+    dst[0] = (pixel)((above[0] + left[0] + 2 * pixDC + 2) >> 2);
+
+    __m128i im1 = _mm_set1_epi16(pixDCx3);
+    __m128i im2, im3;
+
+    __m128i pix;
+    switch (width)
+    {
+    case 4:
+        pix = _mm_cvtsi32_si128(*(uint32_t*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        pix = _mm_packus_epi16(im2, im2);
+        *(uint32_t*)&dst[1] = _mm_cvtsi128_si32(pix);
+        break;
+
+    case 8:
+        pix = _mm_loadl_epi64((__m128i*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        pix = _mm_packus_epi16(im2, im2);
+        _mm_storel_epi64((__m128i*)&dst[1], pix);
+        break;
+
+    case 16:
+        pix = _mm_loadu_si128((__m128i*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im3 = _mm_unpackhi_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        im3 = _mm_srai_epi16(_mm_add_epi16(im1, im3), 2);
+        pix = _mm_packus_epi16(im2, im3);
+        _mm_storeu_si128((__m128i*)&dst[1], pix);
+        break;
+
+    case 32:
+        pix = _mm_loadu_si128((__m128i*)&above[1]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im3 = _mm_unpackhi_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        im3 = _mm_srai_epi16(_mm_add_epi16(im1, im3), 2);
+        pix = _mm_packus_epi16(im2, im3);
+        _mm_storeu_si128((__m128i*)&dst[1], pix);
+
+        pix = _mm_loadu_si128((__m128i*)&above[1 + 16]);
+        im2 = _mm_unpacklo_epi8(pix, _mm_setzero_si128());
+        im3 = _mm_unpackhi_epi8(pix, _mm_setzero_si128());
+        im2 = _mm_srai_epi16(_mm_add_epi16(im1, im2), 2);
+        im3 = _mm_srai_epi16(_mm_add_epi16(im1, im3), 2);
+        pix = _mm_packus_epi16(im2, im3);
+        _mm_storeu_si128((__m128i*)&dst[1 + 16], pix);
+        break;
+    }
+
+    for (y = 1; y < width; y++)
+    {
+        dst[dstStride] = (pixel)((left[y] + pixDCx3) >> 2);
+        dst += dstStride;
+    }
+}
+
+void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int filter)
+{
+    int sum;
+    int logSize = g_convertToBit[width] + 2;
+
+    __m128i pixL, pixT, temp;
+
+    switch (width)
+    {
+    case 4:
+        pixL = _mm_cvtsi32_si128(*(uint32_t*)left);
+        pixT = _mm_cvtsi32_si128(*(uint32_t*)above);
+        pixL = _mm_unpacklo_epi8(pixL, _mm_setzero_si128());
+        pixT = _mm_unpacklo_epi8(pixT, _mm_setzero_si128());
+        temp = _mm_add_epi16(pixL, pixT);
+        sum  = _mm_cvtsi128_si32(_mm_hadd_epi16(_mm_hadd_epi16(temp, temp), temp));
+        break;
+    case 8:
+#if X86_64
+        pixL = _mm_cvtsi64_si128(*(uint64_t*)left);
+        pixT = _mm_cvtsi64_si128(*(uint64_t*)above);
+#else
+        pixL = _mm_loadu_si128((__m128i*)left);
+        pixT = _mm_loadu_si128((__m128i*)above);
+#endif
+        pixL = _mm_unpacklo_epi8(pixL, _mm_setzero_si128());
+        pixT = _mm_unpacklo_epi8(pixT, _mm_setzero_si128());
+        temp = _mm_add_epi16(pixL, pixT);
+        sum  = _mm_cvtsi128_si32(_mm_hadd_epi16(_mm_hadd_epi16(_mm_hadd_epi16(temp, temp), temp), temp));
+        break;
+    case 16:
+        pixL = _mm_loadu_si128((__m128i*)left);
+        pixT = _mm_loadu_si128((__m128i*)above);
+        temp = _mm_sad_epu8(pixL, _mm_setzero_si128());
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixT, _mm_setzero_si128()));
+        sum = _mm_cvtsi128_si32(_mm_add_epi32(_mm_shuffle_epi32(temp, 2), temp));
+        break;
+
+    default:
+    case 32:
+        pixL = _mm_loadu_si128((__m128i*)left);
+        temp = _mm_sad_epu8(pixL, _mm_setzero_si128());
+        pixL = _mm_loadu_si128((__m128i*)(left + 16));
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixL, _mm_setzero_si128()));
+
+        pixT = _mm_loadu_si128((__m128i*)above);
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixT, _mm_setzero_si128()));
+        pixT = _mm_loadu_si128((__m128i*)(above + 16));
+        temp = _mm_add_epi16(temp, _mm_sad_epu8(pixT, _mm_setzero_si128()));
+        sum = _mm_cvtsi128_si32(_mm_add_epi32(_mm_shuffle_epi32(temp, 2), temp));
+        break;
+
+    }
+
+    logSize += 1;
+    pixel dcVal = (sum + (1 << (logSize - 1))) >> logSize;
+    __m128i dcValN = _mm_set1_epi8(dcVal);
+
+    pixel *dst1 = dst;
+    switch (width)
+    {
+    case 4:
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
+        dst1 += dstStride;
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
+        dst1 += dstStride;
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
+        dst1 += dstStride;
+        *(uint32_t*)dst1 = _mm_cvtsi128_si32(dcValN);
+        break;
+
+    case 8:
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        dst1 += dstStride;
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        dst1 += dstStride;
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        dst1 += dstStride;
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        dst1 += dstStride;
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        dst1 += dstStride;
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        dst1 += dstStride;
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        dst1 += dstStride;
+        _mm_storel_epi64((__m128i*)dst1, dcValN);
+        break;
+
+    case 16:
+        for (int k = 0; k < 16; k += 4)
+        {
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            dst1 += dstStride;
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            dst1 += dstStride;
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            dst1 += dstStride;
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            dst1 += dstStride;
+        }
+        break;
+
+    case 32:
+        for (int k = 0; k < 32; k += 2)
+        {
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            _mm_storeu_si128((__m128i*)(dst1 + 16), dcValN);
+            dst1 += dstStride;
+            _mm_storeu_si128((__m128i*)dst1, dcValN);
+            _mm_storeu_si128((__m128i*)(dst1 + 16), dcValN);
+            dst1 += dstStride;
+        }
+        break;
+    }
+
+    if (filter)
+    {
+        predDCFiltering(above, left, dst, dstStride, width);
+    }
+}
+
 __m128i v_multiL, v_multiH, v_multiH2, v_multiH3, v_multiH4, v_multiH5, v_multiH6, v_multiH7;
 __m128i v_multi_2Row;
 
@@ -8518,6 +8707,7 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
     initFileStaticVars();
 
     p.intra_pred_planar = intra_pred_planar;
+    p.intra_pred_dc = intra_pred_dc;
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
     p.intra_pred_allangs[0] = predIntraAngs4;
