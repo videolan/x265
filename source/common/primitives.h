@@ -233,6 +233,7 @@ struct EncoderPrimitives
     extendCURowBorder_t extendRowBorder;
     filter_pp_t     chroma_hpp[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
+    filter_pp_t     chroma_vpp[NUM_CHROMA_PARTITIONS];
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;
