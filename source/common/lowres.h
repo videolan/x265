@@ -50,9 +50,11 @@ struct Lowres : public ReferencePlanes
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
+    int       costEstAq[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int      *rowSatds[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int       intraMbs[X265_BFRAME_MAX + 2];
     int      *intraCost;
+    int       satdCost;
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];

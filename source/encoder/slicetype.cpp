@@ -257,7 +257,9 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 void LookaheadRow::init()
 {
     costEst = 0;
+    costEstAq = 0;
     costIntra = 0;
+    costIntraAq = 0;
     intraMbs = 0;
     active = false;
     completed = 0;
