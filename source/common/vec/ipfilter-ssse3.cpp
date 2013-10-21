@@ -34,9 +34,10 @@
 #include <tmmintrin.h> // SSSE3
 #include <string.h>
 
+#if !HIGH_BIT_DEPTH
 namespace {
 template<int N>
-void filterHorizontal_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     src -= (N / 2 - 1);
 
@@ -308,6 +309,7 @@ void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, 
     }
 }
 }
+#endif
 
 namespace x265 {
 void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives& p)
@@ -315,8 +317,8 @@ void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives& p)
 #if HIGH_BIT_DEPTH
     p.ipfilter_p2s = p.ipfilter_p2s;
 #else
-    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_p_s<4>;
-    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
+    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps<4>;
+    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps<8>;
 
     p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;

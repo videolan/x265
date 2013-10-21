@@ -42,7 +42,7 @@ ALIGN_VAR_32(const uint16_t, c_512[16]) =
 };
 
 template<int N>
-void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterVertical_sp(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     src -= (N / 2 - 1) * srcStride;
 
@@ -369,7 +369,7 @@ void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dst
 }
 
 template<int N>
-void filterVertical_p_p(pixel *src, intptr_t srcStride,
+void filterVertical_pp(pixel *src, intptr_t srcStride,
                         pixel *dst, intptr_t dstStride,
                         int width, int height,
                         const short *coeff)
@@ -559,7 +559,7 @@ ALIGN_VAR_32(const int8_t, tab_leftmask[16]) =
 };
 
 template<int N>
-void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
 {
     assert(X265_DEPTH == 8);
 
@@ -677,7 +677,7 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
 #include "vectorclass.h"
 namespace {
 template<int N>
-void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterVertical_sp(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
@@ -873,7 +873,7 @@ void filterVertical_s_p(short *src, intptr_t srcStride, pixel *dst, intptr_t dst
 }
 
 template<int N>
-void filterVertical_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterVertical_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
@@ -1067,7 +1067,7 @@ void filterVertical_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dst
 }
 
 template<int N>
-void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
     int offset;
@@ -1171,7 +1171,7 @@ void filterHorizontal_p_p(pixel *src, intptr_t srcStride, pixel *dst, intptr_t d
 }
 
 template<int N>
-void filterHorizontal_p_s(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
@@ -1358,13 +1358,21 @@ void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_
 namespace x265 {
 void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives& p)
 {
-    p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_p_p<4>;
-    p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_p_p<8>;
+    p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_pp<4>;
+    p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_pp<8>;
 
-    p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_p_p<4>;
-    p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_p_p<8>;
+    p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_pp<4>;
+    p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_pp<8>;
 
-    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_s_p<4>;
-    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_s_p<8>;
+    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_sp<4>;
+    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_sp<8>;
+
+#if HIGH_BIT_DEPTH
+    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps<4>;
+    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps<8>;
+
+    p.ipfilter_p2s = filterConvertPelToShort;
+    p.ipfilter_s2p = filterConvertShortToPel;
+#endif
 }
 }
