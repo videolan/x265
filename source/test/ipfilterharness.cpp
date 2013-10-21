@@ -421,6 +421,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     short val = 2;
     short srcStride = 96;
     short dstStride = 96;
+    int maxVerticalfilterHalfDistance = 3;
 
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
     {
@@ -428,7 +429,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("%s\t", IPFilterPPNames[value]);
             REPORT_SPEEDUP(opt.ipfilter_pp[value], ref.ipfilter_pp[value],
-                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
+                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -438,7 +439,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("ipfilter_ps %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_ps[value], ref.ipfilter_ps[value],
-                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, g_lumaFilter[val]);
+                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -448,7 +449,8 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("ipfilter_sp %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_sp[value], ref.ipfilter_sp[value],
-                           short_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
+                           short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                           IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -466,6 +468,16 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                        short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
     }
 
+    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
+    {
+        if (opt.luma_hpp[value])
+        {
+            printf("  luma_hpp[%s]", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.luma_hpp[value], ref.luma_hpp[value],
+                           pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+        }
+    }
+
     for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
     {
         if (opt.chroma_hpp[value])
@@ -474,15 +486,12 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             REPORT_SPEEDUP(opt.chroma_hpp[value], ref.chroma_hpp[value],
                            pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
-    }
-
-    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
-    {
-        if (opt.luma_hpp[value])
+        if (opt.chroma_vpp[value])
         {
-            printf("  luma_hpp[%s]", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_hpp[value], ref.luma_hpp[value],
-                           pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+            printf("chroma_vpp[%s]", chromaPartStr[value]);
+            REPORT_SPEEDUP(opt.chroma_vpp[value], ref.chroma_vpp[value],
+                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                           IPF_vec_output_p, dstStride, 1);
         }
     }
 }
