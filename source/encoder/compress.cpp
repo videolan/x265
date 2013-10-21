@@ -260,7 +260,8 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     m_tmpRecoYuv[depth]->clear();
     m_tmpResiYuv[depth]->clear();
 
-    m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG);
+    //do motion compensation only for Luma since luma cost alone is calculated
+    m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
     int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
     outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                      outPredYuv->getLumaAddr(), outPredYuv->getStride());
@@ -295,8 +296,8 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
         outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
 
-        // do MC
-        m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth]);
+        // do MC only for Luma part
+        m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, -1, true, false);
         int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
 
         outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
@@ -318,6 +319,12 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         outTempCU->initEstData(depth, orgQP);
     }
 
+    //calculate the motion compensation for chroma for the best mode selected
+    int numPart = outBestCU->getNumPartInter();
+    for (int partIdx = 0; partIdx < numPart; partIdx++)
+    {
+        m_search->motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, partIdx, false, true);
+    }
     m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], yuvReconBest, false);
     if (m_cfg->param.bEnableEarlySkip)
     {
@@ -465,6 +472,12 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 tempYuv = m_modePredYuv[2][depth];
                 m_modePredYuv[2][depth] = m_bestPredYuv[depth];
                 m_bestPredYuv[depth] = tempYuv;
+            }
+            //calculate the motion compensation for chroma for the best mode selected
+            int numPart = outBestCU->getNumPartInter();
+            for (int partIdx = 0; partIdx < numPart; partIdx++)
+            {
+                m_search->motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, partIdx, false, true);
             }
 
             m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
