@@ -265,13 +265,13 @@ void TEncCavlc::codeVUI(TComVUI *vui, TComSPS* sps)
     WRITE_FLAG(vui->getFrameFieldInfoPresentFlag(),             "frame_field_info_present_flag");
 
     Window defaultDisplayWindow = vui->getDefaultDisplayWindow();
-    WRITE_FLAG(defaultDisplayWindow.getWindowEnabledFlag(),       "default_display_window_flag");
-    if (defaultDisplayWindow.getWindowEnabledFlag())
+    WRITE_FLAG(defaultDisplayWindow.m_enabledFlag,       "default_display_window_flag");
+    if (defaultDisplayWindow.m_enabledFlag)
     {
-        WRITE_UVLC(defaultDisplayWindow.getWindowLeftOffset(),      "def_disp_win_left_offset");
-        WRITE_UVLC(defaultDisplayWindow.getWindowRightOffset(),     "def_disp_win_right_offset");
-        WRITE_UVLC(defaultDisplayWindow.getWindowTopOffset(),       "def_disp_win_top_offset");
-        WRITE_UVLC(defaultDisplayWindow.getWindowBottomOffset(),    "def_disp_win_bottom_offset");
+        WRITE_UVLC(defaultDisplayWindow.m_winLeftOffset,      "def_disp_win_left_offset");
+        WRITE_UVLC(defaultDisplayWindow.m_winRightOffset,     "def_disp_win_right_offset");
+        WRITE_UVLC(defaultDisplayWindow.m_winTopOffset,       "def_disp_win_top_offset");
+        WRITE_UVLC(defaultDisplayWindow.m_winBottomOffset,    "def_disp_win_bottom_offset");
     }
     TimingInfo *timingInfo = vui->getTimingInfo();
     WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),          "vui_timing_info_present_flag");
@@ -399,13 +399,13 @@ void TEncCavlc::codeSPS(TComSPS* sps)
     WRITE_UVLC(sps->getPicHeightInLumaSamples(),   "pic_height_in_luma_samples");
     Window conf = sps->getConformanceWindow();
 
-    WRITE_FLAG(conf.getWindowEnabledFlag(),          "conformance_window_flag");
-    if (conf.getWindowEnabledFlag())
+    WRITE_FLAG(conf.m_enabledFlag,          "conformance_window_flag");
+    if (conf.m_enabledFlag)
     {
-        WRITE_UVLC(conf.getWindowLeftOffset()   / TComSPS::getWinUnitX(sps->getChromaFormatIdc()), "conf_win_left_offset");
-        WRITE_UVLC(conf.getWindowRightOffset()  / TComSPS::getWinUnitX(sps->getChromaFormatIdc()), "conf_win_right_offset");
-        WRITE_UVLC(conf.getWindowTopOffset()    / TComSPS::getWinUnitY(sps->getChromaFormatIdc()), "conf_win_top_offset");
-        WRITE_UVLC(conf.getWindowBottomOffset() / TComSPS::getWinUnitY(sps->getChromaFormatIdc()), "conf_win_bottom_offset");
+        WRITE_UVLC(conf.m_winLeftOffset   / TComSPS::getWinUnitX(sps->getChromaFormatIdc()), "conf_win_left_offset");
+        WRITE_UVLC(conf.m_winRightOffset  / TComSPS::getWinUnitX(sps->getChromaFormatIdc()), "conf_win_right_offset");
+        WRITE_UVLC(conf.m_winTopOffset    / TComSPS::getWinUnitY(sps->getChromaFormatIdc()), "conf_win_top_offset");
+        WRITE_UVLC(conf.m_winBottomOffset / TComSPS::getWinUnitY(sps->getChromaFormatIdc()), "conf_win_bottom_offset");
     }
 
     WRITE_UVLC(sps->getBitDepthY() - 8,             "bit_depth_luma_minus8");

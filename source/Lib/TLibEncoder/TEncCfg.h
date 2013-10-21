@@ -59,7 +59,6 @@ protected:
 
     //==== File I/O ========
     int       m_conformanceMode;
-    Window    m_conformanceWindow;
     Window    m_defaultDisplayWindow;         ///< Represents the default display window parameters
     TComVPS   m_vps;
 
@@ -158,6 +157,7 @@ public:
     x265_param_t param;
 
     int       m_pad[2];
+    Window    m_conformanceWindow;
 
     TEncCfg()
     {}
@@ -166,8 +166,6 @@ public:
     {}
 
     TComVPS *getVPS() { return &m_vps; }
-
-    Window &getConformanceWindow() { return m_conformanceWindow; }
 
     //====== Coding Structure ========
 

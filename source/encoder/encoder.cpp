@@ -972,7 +972,13 @@ void Encoder::configure(x265_param_t *_param)
     m_maxCuDQPDepth = 0;
     m_maxNumOffsetsPerPic = 2048;
     m_log2ParallelMergeLevelMinus2 = 0;
-    m_conformanceWindow.setWindow(0, 0, 0, 0);
+
+    //========= set default confirmation window ==================================
+    m_defaultDisplayWindow.m_enabledFlag = true;
+    m_defaultDisplayWindow.m_winRightOffset = 0;
+    m_defaultDisplayWindow.m_winTopOffset = 0;
+    m_defaultDisplayWindow.m_winBottomOffset = 0;
+    m_defaultDisplayWindow.m_winLeftOffset = 0;
     m_pad[0] = m_pad[1] = 0;
 
     m_progressiveSourceFlag = true;
@@ -1006,7 +1012,6 @@ void Encoder::configure(x265_param_t *_param)
     m_chromaSampleLocTypeTopField = 0;
     m_chromaSampleLocTypeBottomField = 0;
     m_neutralChromaIndicationFlag = false;
-    m_defaultDisplayWindow.setWindow(0, 0, 0, 0);
     m_frameFieldInfoPresentFlag = false;
     m_pocProportionalToTimingFlag = false;
     m_numTicksPocDiffOneMinus1 = 0;

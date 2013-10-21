@@ -558,15 +558,13 @@ public:
 
 class Window
 {
-private:
+public:
 
     bool          m_enabledFlag;
     int           m_winLeftOffset;
     int           m_winRightOffset;
     int           m_winTopOffset;
     int           m_winBottomOffset;
-
-public:
 
     Window()
         : m_enabledFlag(false)
@@ -575,35 +573,6 @@ public:
         , m_winTopOffset(0)
         , m_winBottomOffset(0)
     {}
-
-    bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
-
-    void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; }
-
-    int           getWindowLeftOffset() const       { return m_enabledFlag ? m_winLeftOffset : 0; }
-
-    void          setWindowLeftOffset(int val)      { m_winLeftOffset = val; m_enabledFlag = true; }
-
-    int           getWindowRightOffset() const      { return m_enabledFlag ? m_winRightOffset : 0; }
-
-    void          setWindowRightOffset(int val)     { m_winRightOffset = val; m_enabledFlag = true; }
-
-    int           getWindowTopOffset() const        { return m_enabledFlag ? m_winTopOffset : 0; }
-
-    void          setWindowTopOffset(int val)       { m_winTopOffset = val; m_enabledFlag = true; }
-
-    int           getWindowBottomOffset() const     { return m_enabledFlag ? m_winBottomOffset : 0; }
-
-    void          setWindowBottomOffset(int val)    { m_winBottomOffset = val; m_enabledFlag = true; }
-
-    void          setWindow(int offsetLeft, int offsetLRight, int offsetLTop, int offsetLBottom)
-    {
-        m_enabledFlag       = true;
-        m_winLeftOffset     = offsetLeft;
-        m_winRightOffset    = offsetLRight;
-        m_winTopOffset      = offsetLTop;
-        m_winBottomOffset   = offsetLBottom;
-    }
 };
 
 class TComVUI

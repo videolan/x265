@@ -83,7 +83,7 @@ void TComPic::create(TEncCfg* cfg)
     m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
 
     /* store conformance window parameters with picture */
-    m_conformanceWindow = cfg->getConformanceWindow();
+    m_conformanceWindow = cfg->m_conformanceWindow;
 
     /* store display window parameters with picture */
     m_defaultDisplayWindow = cfg->getDefaultDisplayWindow();
