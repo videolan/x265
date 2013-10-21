@@ -25,7 +25,8 @@
 #define X265_IPFILTER8_H
 
 #define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
-    void x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx)
+    void x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);\
+    void x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
 #define CHROMA_FILTERS(cpu) \
     SETUP_CHROMA_FUNC_DEF(4, 4, cpu); \
