@@ -78,7 +78,7 @@ static int64_t x265_mdate(void)
 
 using namespace x265;
 
-static const char short_options[] = "o:f:F:r:i:b:s:q:m:hV";
+static const char short_options[] = "o:f:F:r:i:b:s:q:m:hwV";
 static const struct option long_options[] =
 {
 #if HIGH_BIT_DEPTH
