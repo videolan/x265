@@ -149,7 +149,7 @@ protected:
 
     void xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
                                 TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
-    void xComputeCostIntraInInter(TComDataCU*& outTempCU, PartSize partSize);
+    void xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize);
     void xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, bool bUseMRG = false);
     void xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYUV, PartSize partSize, bool bUseMRG = false);
     void xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool* earlyDetectionSkip, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);

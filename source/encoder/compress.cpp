@@ -82,7 +82,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     cu->m_totalCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 }
 
-void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
+void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
 {
     UInt depth = cu->getDepth(0);
 
@@ -113,128 +113,124 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
     int nLog2SizeMinus2 = g_convertToBit[width];
     pixelcmp_t sa8d = primitives.sa8d[nLog2SizeMinus2];
 
+    assert(numModesForFullRD < numModesAvailable);
+
+    for (UInt i = 0; i < numModesForFullRD; i++)
     {
-        assert(numModesForFullRD < numModesAvailable);
+        CandCostList[i] = MAX_INT64;
+    }
+
+    CandNum = 0;
+    UInt modeCosts[35];
+
+    // CHM: TODO - The code isn't copy from TEncSearch::estIntraPredQT by me, I sync it, please check its logic
+    Pel *pAbove0 = m_search->refAbove    + width - 1;
+    Pel *pAbove1 = m_search->refAboveFlt + width - 1;
+    Pel *pLeft0  = m_search->refLeft     + width - 1;
+    Pel *pLeft1  = m_search->refLeftFlt  + width - 1;
+
+    // 33 Angle modes once
+    ALIGN_VAR_32(Pel, buf_trans[32 * 32]);
+    ALIGN_VAR_32(Pel, tmp[33 * 32 * 32]);
+
+    if (width <= 32)
+    {
+        // 1
+        primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, (width <= 16));
+        modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
+
+        // 0
+        Pel *above = pAbove0;
+        Pel *left  = pLeft0;
+        if (width >= 8 && width <= 32)
+        {
+            above = pAbove1;
+            left  = pLeft1;
+        }
+        primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, pred, stride, width);
+        modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
+
+        // Transpose NxN
+        primitives.transpose[nLog2SizeMinus2](buf_trans, (pixel*)fenc, stride);
+
+        primitives.intra_pred_allangs[nLog2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (width <= 16));
+
+        // TODO: We need SATD_x4 here
+        for (UInt mode = 2; mode < numModesAvailable; mode++)
+        {
+            bool modeHor = (mode < 18);
+            Pel *cmp = (modeHor ? buf_trans : fenc);
+            intptr_t srcStride = (modeHor ? width : stride);
+            modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (width * width)], width);
+        }
+    }
+    else
+    {
+        ALIGN_VAR_32(Pel, buf_scale[32 * 32]);
+        primitives.scale2D_64to32(buf_scale, fenc, stride);
+        primitives.transpose[BLOCK_32x32](buf_trans, buf_scale, 32);
+
+        // some versions of intra angs primitives may write into above
+        // and/or left buffers above the original pointer, so we must
+        // reserve space for it
+        Pel _above[4 * 32 + 1];
+        Pel _left[4 * 32 + 1];
+        Pel *const above = _above + 2 * 32;
+        Pel *const left = _left + 2 * 32;
+
+        above[0] = left[0] = pAbove0[0];
+        primitives.scale1D_128to64(above + 1, pAbove0 + 1, 0);
+        primitives.scale1D_128to64(left + 1, pLeft0 + 1, 0);
+
+        // 1
+        primitives.intra_pred_dc(above + 1, left + 1, tmp, 32, 32, false);
+        modeCosts[DC_IDX] = 4 * primitives.sa8d[BLOCK_32x32](buf_scale, 32, tmp, 32);
+
+        // 0
+        primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, tmp, 32, 32);
+        modeCosts[PLANAR_IDX] = 4 * primitives.sa8d[BLOCK_32x32](buf_scale, 32, tmp, 32);
+
+        primitives.intra_pred_allangs[3](tmp, above, left, above, left, false);
+
+        // Use 4 * SATD32x32 to estimate real 64x64 cost
+        for (UInt mode = 2; mode < numModesAvailable; mode++)
+        {
+            bool modeHor = (mode < 18);
+            Pel *cmp_buf = (modeHor ? buf_trans : buf_scale);
+            modeCosts[mode] = 4 * primitives.sa8d[BLOCK_32x32](cmp_buf, 32, &tmp[(mode - 2) * (32 * 32)], 32);
+        }
+    }
+
+    // Find least cost mode
+    for (UInt mode = 0; mode < numModesAvailable; mode++)
+    {
+        UInt sad = modeCosts[mode];
+        UInt bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
+        UInt64 cost = m_rdCost->calcRdSADCost(sad, bits);
+        CandNum += m_search->xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, CandCostList);
+    }
+
+    int preds[3] = { -1, -1, -1 };
+    int mode = -1;
+    int numCand = cu->getIntraDirLumaPredictor(partOffset, preds, &mode);
+    if (mode >= 0)
+    {
+        numCand = mode;
+    }
+
+    for (int j = 0; j < numCand; j++)
+    {
+        bool mostProbableModeIncluded = false;
+        UInt mostProbableMode = preds[j];
 
         for (UInt i = 0; i < numModesForFullRD; i++)
         {
-            CandCostList[i] = MAX_INT64;
+            mostProbableModeIncluded |= (mostProbableMode == rdModeList[i]);
         }
 
-        CandNum = 0;
-        UInt modeCosts[35];
-
-        // CHM: TODO - The code isn't copy from TEncSearch::estIntraPredQT by me, I sync it, please check its logic
-        Pel *pAbove0 = m_search->refAbove    + width - 1;
-        Pel *pAbove1 = m_search->refAboveFlt + width - 1;
-        Pel *pLeft0  = m_search->refLeft     + width - 1;
-        Pel *pLeft1  = m_search->refLeftFlt  + width - 1;
-
-        // 33 Angle modes once
-        ALIGN_VAR_32(Pel, buf_trans[32 * 32]);
-        ALIGN_VAR_32(Pel, tmp[33 * 32 * 32]);
-
-        if (width <= 32)
+        if (!mostProbableModeIncluded)
         {
-            // 1
-            primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, (width <= 16));
-            modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
-
-            // 0
-            Pel *above = pAbove0;
-            Pel *left  = pLeft0;
-            if (width >= 8 && width <= 32)
-            {
-                above = pAbove1;
-                left  = pLeft1;
-            }
-            primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, pred, stride, width);
-            modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
-
-            // Transpose NxN
-            primitives.transpose[nLog2SizeMinus2](buf_trans, (pixel*)fenc, stride);
-
-            primitives.intra_pred_allangs[nLog2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (width <= 16));
-
-            // TODO: We need SATD_x4 here
-            for (UInt mode = 2; mode < numModesAvailable; mode++)
-            {
-                bool modeHor = (mode < 18);
-                Pel *cmp = (modeHor ? buf_trans : fenc);
-                intptr_t srcStride = (modeHor ? width : stride);
-                modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (width * width)], width);
-            }
-        }
-        else
-        {
-            ALIGN_VAR_32(Pel, buf_scale[32 * 32]);
-            primitives.scale2D_64to32(buf_scale, fenc, stride);
-            primitives.transpose[BLOCK_32x32](buf_trans, buf_scale, 32);
-
-            // some versions of intra angs primitives may write into above
-            // and/or left buffers above the original pointer, so we must
-            // reserve space for it
-            Pel _above[4 * 32 + 1];
-            Pel _left[4 * 32 + 1];
-            Pel *const above = _above + 2 * 32;
-            Pel *const left = _left + 2 * 32;
-
-            above[0] = left[0] = pAbove0[0];
-            primitives.scale1D_128to64(above + 1, pAbove0 + 1, 0);
-            primitives.scale1D_128to64(left + 1, pLeft0 + 1, 0);
-
-            // 1
-            primitives.intra_pred_dc(above + 1, left + 1, tmp, 32, 32, false);
-            modeCosts[DC_IDX] = 4 * primitives.sa8d[BLOCK_32x32](buf_scale, 32, tmp, 32);
-
-            // 0
-            primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, tmp, 32, 32);
-            modeCosts[PLANAR_IDX] = 4 * primitives.sa8d[BLOCK_32x32](buf_scale, 32, tmp, 32);
-
-            primitives.intra_pred_allangs[3](tmp, above, left, above, left, false);
-
-            // Use 4 * SATD32x32 to estimate real 64x64 cost
-            for (UInt mode = 2; mode < numModesAvailable; mode++)
-            {
-                bool modeHor = (mode < 18);
-                Pel *cmp_buf = (modeHor ? buf_trans : buf_scale);
-                modeCosts[mode] = 4 * primitives.sa8d[BLOCK_32x32](cmp_buf, 32, &tmp[(mode - 2) * (32 * 32)], 32);
-            }
-        }
-
-        // SJB: TODO - all this code looks redundant. You just want the least cost of the 35
-
-        // Find N least cost modes. N = numModesForFullRD
-        for (UInt mode = 0; mode < numModesAvailable; mode++)
-        {
-            UInt sad = modeCosts[mode];
-            UInt bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
-            UInt64 cost = m_rdCost->calcRdSADCost(sad, bits);
-            CandNum += m_search->xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, CandCostList);
-        }
-
-        int preds[3] = { -1, -1, -1 };
-        int mode = -1;
-        int numCand = cu->getIntraDirLumaPredictor(partOffset, preds, &mode);
-        if (mode >= 0)
-        {
-            numCand = mode;
-        }
-
-        for (int j = 0; j < numCand; j++)
-        {
-            bool mostProbableModeIncluded = false;
-            UInt mostProbableMode = preds[j];
-
-            for (UInt i = 0; i < numModesForFullRD; i++)
-            {
-                mostProbableModeIncluded |= (mostProbableMode == rdModeList[i]);
-            }
-
-            if (!mostProbableModeIncluded)
-            {
-                rdModeList[numModesForFullRD++] = mostProbableMode;
-            }
+            rdModeList[numModesForFullRD++] = mostProbableMode;
         }
     }
 
