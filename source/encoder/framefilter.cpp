@@ -406,7 +406,7 @@ void FrameFilter::calculatePSNR(uint32_t cuAddr, int row)
     //===== calculate PSNR =====
     int stride = recon->getStride();
 
-    int width  = recon->getWidth() - m_cfg->getPad(0);
+    int width  = recon->getWidth() - m_cfg->m_pad[0];
     int height;
 
     if (row == m_numRows - 1)

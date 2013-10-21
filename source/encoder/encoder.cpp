@@ -401,8 +401,8 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
     TComPicYuv* recon = pic->getPicYuvRec();
 
     //===== calculate PSNR =====
-    int width  = recon->getWidth() - getPad(0);
-    int height = recon->getHeight() - getPad(1);
+    int width  = recon->getWidth() - m_pad[0];
+    int height = recon->getHeight() - m_pad[1];
     int size = width * height;
 
     int maxvalY = 255 << (X265_DEPTH - 8);
@@ -973,8 +973,7 @@ void Encoder::configure(x265_param_t *_param)
     m_maxNumOffsetsPerPic = 2048;
     m_log2ParallelMergeLevelMinus2 = 0;
     m_conformanceWindow.setWindow(0, 0, 0, 0);
-    int nullpad[2] = { 0, 0 };
-    setPad(nullpad);
+    m_pad[0] = m_pad[1] = 0;
 
     m_progressiveSourceFlag = true;
     m_interlacedSourceFlag = false;

@@ -72,7 +72,6 @@ protected:
     bool      m_interlacedSourceFlag;
     bool      m_nonPackedConstraintFlag;
     bool      m_frameOnlyConstraintFlag;
-    int       m_pad[2];
 
     //====== Coding Structure ========
     int       m_maxDecPicBuffering[MAX_TLAYER];
@@ -158,6 +157,8 @@ public:
     /* copy of parameters used to create encoder */
     x265_param_t param;
 
+    int       m_pad[2];
+
     TEncCfg()
     {}
 
@@ -167,10 +168,6 @@ public:
     TComVPS *getVPS() { return &m_vps; }
 
     Window &getConformanceWindow() { return m_conformanceWindow; }
-
-    void setPad(int* iPad) { for (int i = 0; i < 2; i++) { m_pad[i] = iPad[i]; } }
-
-    int getPad(int i) { assert(i < 2); return m_pad[i]; }
 
     //====== Coding Structure ========
 
