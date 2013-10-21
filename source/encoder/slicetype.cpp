@@ -240,8 +240,8 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 
         if (b != p1)
             score = (uint64_t)score * 100 / (130 + cfg->param.bFrameBias);
-
-        fenc->costEst[b - p0][p1 - b] = score;
+        if (b != p0 || b != p1) //Not Intra cost
+            fenc->costEst[b - p0][p1 - b] = score;
     }
 
     if (bIntraPenalty)
