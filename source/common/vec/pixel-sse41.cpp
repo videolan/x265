@@ -5659,8 +5659,8 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     p.sse_pp[LUMA_64x48] = sse_pp_64<48>;
     p.sse_pp[LUMA_64x16] = sse_pp_64<16>;
 
-    p.weightpUniPixel = weightUnidirPixel;
-    p.weightpUni = weightUnidir;
+//    p.weightpUniPixel = weightUnidirPixel;
+//    p.weightpUni = weightUnidir;
 #endif /* !HIGH_BIT_DEPTH */
 }
 }
