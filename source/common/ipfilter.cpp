@@ -491,13 +491,88 @@ void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
         dst += dstStride;
     }
 }
+
+template<int N, int width, int height>
+void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+{
+    short c[8];
+    int16_t const * coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
+
+    c[0] = coeff[0];
+    c[1] = coeff[1];
+    if (N >= 4)
+    {
+        c[2] = coeff[2];
+        c[3] = coeff[3];
+    }
+    if (N >= 6)
+    {
+        c[4] = coeff[4];
+        c[5] = coeff[5];
+    }
+    if (N == 8)
+    {
+        c[6] = coeff[6];
+        c[7] = coeff[7];
+    }
+
+    src -= (N / 2 - 1) * srcStride;
+
+    int offset;
+    short maxVal;
+    //int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    int shift = IF_FILTER_PREC;
+
+    //shift += headRoom;
+    offset = 1 << (shift - 1);
+    //offset += IF_INTERNAL_OFFS << IF_FILTER_PREC;
+    maxVal = (1 << X265_DEPTH) - 1;
+
+    int row, col;
+
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int sum;
+
+            sum  = src[col + 0 * srcStride] * c[0];
+            sum += src[col + 1 * srcStride] * c[1];
+            if (N >= 4)
+            {
+                sum += src[col + 2 * srcStride] * c[2];
+                sum += src[col + 3 * srcStride] * c[3];
+            }
+            if (N >= 6)
+            {
+                sum += src[col + 4 * srcStride] * c[4];
+                sum += src[col + 5 * srcStride] * c[5];
+            }
+            if (N == 8)
+            {
+                sum += src[col + 6 * srcStride] * c[6];
+                sum += src[col + 7 * srcStride] * c[7];
+            }
+
+            short val = (short)((sum + offset) >> shift);
+            val = (val < 0) ? 0 : val;
+            val = (val > maxVal) ? maxVal : val;
+
+            dst[col] = (pixel)val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
 }
 
 namespace x265 {
 // x265 private namespace
 
 #define CHROMA(W, H) \
-    p.chroma_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>
+    p.chroma_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>;\
+    p.chroma_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c<4, W, H>
 
 #define LUMA(W, H) \
     p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>
