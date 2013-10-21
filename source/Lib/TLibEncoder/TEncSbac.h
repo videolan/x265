@@ -41,7 +41,6 @@
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/ContextTables.h"
 #include "TLibCommon/ContextModel.h"
-#include "TLibCommon/ContextModel3DBuffer.h"
 #include "TEncEntropy.h"
 #include "TEncBinCoder.h"
 #include "TEncBinCoderCABAC.h"
@@ -173,39 +172,7 @@ public:
 private:
 
     UInt                 m_lastQp;
-
     ContextModel         m_contextModels[MAX_NUM_CTX_MOD];
-    int                  m_numContextModels;
-    ContextModel3DBuffer m_cuSplitFlagSCModel;
-    ContextModel3DBuffer m_cuSkipFlagSCModel;
-    ContextModel3DBuffer m_cuMergeFlagExtSCModel;
-    ContextModel3DBuffer m_cuMergeIdxExtSCModel;
-    ContextModel3DBuffer m_cuPartSizeSCModel;
-    ContextModel3DBuffer m_cuPredModeSCModel;
-    ContextModel3DBuffer m_cuIntraPredSCModel;
-    ContextModel3DBuffer m_cuChromaPredSCModel;
-    ContextModel3DBuffer m_cuDeltaQpSCModel;
-    ContextModel3DBuffer m_cuInterDirSCModel;
-    ContextModel3DBuffer m_cuRefPicSCModel;
-    ContextModel3DBuffer m_cuMvdSCModel;
-    ContextModel3DBuffer m_cuQtCbfSCModel;
-    ContextModel3DBuffer m_cuTransSubdivFlagSCModel;
-    ContextModel3DBuffer m_cuQtRootCbfSCModel;
-
-    ContextModel3DBuffer m_cuSigCoeffGroupSCModel;
-    ContextModel3DBuffer m_cuSigSCModel;
-    ContextModel3DBuffer m_cuCtxLastX;
-    ContextModel3DBuffer m_cuCtxLastY;
-    ContextModel3DBuffer m_cuOneSCModel;
-    ContextModel3DBuffer m_cuAbsSCModel;
-
-    ContextModel3DBuffer m_mvpIdxSCModel;
-
-    ContextModel3DBuffer m_cuAMPSCModel;
-    ContextModel3DBuffer m_saoMergeSCModel;
-    ContextModel3DBuffer m_saoTypeIdxSCModel;
-    ContextModel3DBuffer m_transformSkipSCModel;
-    ContextModel3DBuffer m_cuTransquantBypassFlagSCModel;
 };
 }
 //! \}

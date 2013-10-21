@@ -94,6 +94,36 @@
 #define NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX  1
 #define CNU                          154      ///< dummy initialization value for unused context models 'Context model Not Used'
 
+// Offset for context
+#define OFF_SPLIT_FLAG_CTX                  (0)
+#define OFF_SKIP_FLAG_CTX                   (OFF_SPLIT_FLAG_CTX         +     NUM_SPLIT_FLAG_CTX)
+#define OFF_MERGE_FLAG_EXT_CTX              (OFF_SKIP_FLAG_CTX          +     NUM_SKIP_FLAG_CTX)
+#define OFF_MERGE_IDX_EXT_CTX               (OFF_MERGE_FLAG_EXT_CTX     +     NUM_MERGE_FLAG_EXT_CTX)
+#define OFF_PART_SIZE_CTX                   (OFF_MERGE_IDX_EXT_CTX      +     NUM_MERGE_IDX_EXT_CTX)
+#define OFF_PRED_MODE_CTX                   (OFF_PART_SIZE_CTX          +     NUM_PART_SIZE_CTX)
+#define OFF_ADI_CTX                         (OFF_PRED_MODE_CTX          +     NUM_PRED_MODE_CTX)
+#define OFF_CHROMA_PRED_CTX                 (OFF_ADI_CTX                +     NUM_ADI_CTX)
+#define OFF_DELTA_QP_CTX                    (OFF_CHROMA_PRED_CTX        +     NUM_CHROMA_PRED_CTX)
+#define OFF_INTER_DIR_CTX                   (OFF_DELTA_QP_CTX           +     NUM_DELTA_QP_CTX)
+#define OFF_REF_NO_CTX                      (OFF_INTER_DIR_CTX          +     NUM_INTER_DIR_CTX)
+#define OFF_MV_RES_CTX                      (OFF_REF_NO_CTX             +     NUM_REF_NO_CTX)
+#define OFF_QT_CBF_CTX                      (OFF_MV_RES_CTX             +     NUM_MV_RES_CTX)
+#define OFF_TRANS_SUBDIV_FLAG_CTX           (OFF_QT_CBF_CTX             + 2 * NUM_QT_CBF_CTX)
+#define OFF_QT_ROOT_CBF_CTX                 (OFF_TRANS_SUBDIV_FLAG_CTX  +     NUM_TRANS_SUBDIV_FLAG_CTX)
+#define OFF_SIG_CG_FLAG_CTX                 (OFF_QT_ROOT_CBF_CTX        +     NUM_QT_ROOT_CBF_CTX)
+#define OFF_SIG_FLAG_CTX                    (OFF_SIG_CG_FLAG_CTX        + 2 * NUM_SIG_CG_FLAG_CTX)
+#define OFF_CTX_LAST_FLAG_X                 (OFF_SIG_FLAG_CTX           +     NUM_SIG_FLAG_CTX)
+#define OFF_CTX_LAST_FLAG_Y                 (OFF_CTX_LAST_FLAG_X        + 2 * NUM_CTX_LAST_FLAG_XY)
+#define OFF_ONE_FLAG_CTX                    (OFF_CTX_LAST_FLAG_Y        + 2 * NUM_CTX_LAST_FLAG_XY)
+#define OFF_ABS_FLAG_CTX                    (OFF_ONE_FLAG_CTX           +     NUM_ONE_FLAG_CTX)
+#define OFF_MVP_IDX_CTX                     (OFF_ABS_FLAG_CTX           +     NUM_ABS_FLAG_CTX)
+#define OFF_CU_AMP_CTX                      (OFF_MVP_IDX_CTX            +     NUM_MVP_IDX_CTX)
+#define OFF_SAO_MERGE_FLAG_CTX              (OFF_CU_AMP_CTX             +     NUM_CU_AMP_CTX)
+#define OFF_SAO_TYPE_IDX_CTX                (OFF_SAO_MERGE_FLAG_CTX     +     NUM_SAO_MERGE_FLAG_CTX)
+#define OFF_TRANSFORMSKIP_FLAG_CTX          (OFF_SAO_TYPE_IDX_CTX       +     NUM_SAO_TYPE_IDX_CTX)
+#define OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX   (OFF_TRANSFORMSKIP_FLAG_CTX + 2 * NUM_TRANSFORMSKIP_FLAG_CTX)
+#define MAX_OFF_CTX_MOD                     (OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX + NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX)
+
 // ====================================================================================================================
 // Tables
 // ====================================================================================================================

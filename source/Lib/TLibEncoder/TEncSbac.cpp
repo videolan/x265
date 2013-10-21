@@ -42,6 +42,53 @@ using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
 
+static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, UChar* ctxModel, int size)
+{
+    ctxModel += sliceType * size;
+
+    for (int n = 0; n < size; n++)
+    {
+        contextModel[n].init(qp, ctxModel[n]);
+        contextModel[n].setBinsCoded(0);
+    }
+}
+
+static UInt calcCost(ContextModel *contextModel, SliceType sliceType, int qp, UChar* ctxModel, int size)
+{
+    UInt cost = 0;
+
+    ctxModel += sliceType * size;
+
+    for (int n = 0; n < size; n++)
+    {
+        ContextModel tmpContextModel;
+        tmpContextModel.init(qp, ctxModel[n]);
+
+        // Map the 64 CABAC states to their corresponding probability values
+        static double aStateToProbLPS[] = { 0.50000000, 0.47460857, 0.45050660, 0.42762859, 0.40591239, 0.38529900, 0.36573242, 0.34715948, 0.32952974, 0.31279528, 0.29691064, 0.28183267, 0.26752040, 0.25393496, 0.24103941, 0.22879875, 0.21717969, 0.20615069, 0.19568177, 0.18574449, 0.17631186, 0.16735824, 0.15885931, 0.15079198, 0.14313433, 0.13586556, 0.12896592, 0.12241667, 0.11620000, 0.11029903, 0.10469773, 0.09938088, 0.09433404, 0.08954349, 0.08499621, 0.08067986, 0.07658271, 0.07269362, 0.06900203, 0.06549791, 0.06217174, 0.05901448, 0.05601756, 0.05317283, 0.05047256, 0.04790942, 0.04547644, 0.04316702, 0.04097487, 0.03889405, 0.03691890, 0.03504406, 0.03326442, 0.03157516, 0.02997168, 0.02844963, 0.02700488, 0.02563349, 0.02433175, 0.02309612, 0.02192323, 0.02080991, 0.01975312, 0.01875000 };
+
+        double probLPS          = aStateToProbLPS[contextModel[n].getState()];
+        double prob0, prob1;
+        if (contextModel[n].getMps() == 1)
+        {
+            prob0 = probLPS;
+            prob1 = 1.0 - prob0;
+        }
+        else
+        {
+            prob1 = probLPS;
+            prob0 = 1.0 - prob1;
+        }
+
+        if (contextModel[n].getBinsCoded() > 0)
+        {
+            cost += (UInt)(prob0 * tmpContextModel.getEntropyBits(0) + prob1 * tmpContextModel.getEntropyBits(1));
+        }
+    }
+
+    return cost;
+}
+
 // ====================================================================================================================
 // Constructor / destructor / create / destroy
 // ====================================================================================================================
@@ -52,36 +99,8 @@ TEncSbac::TEncSbac()
     , m_slice(NULL)
     , m_binIf(NULL)
     , m_coeffCost(0)
-    , m_numContextModels(0)
-    , m_cuSplitFlagSCModel(1,          NUM_SPLIT_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuSkipFlagSCModel(1,           NUM_SKIP_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuMergeFlagExtSCModel(1,       NUM_MERGE_FLAG_EXT_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuMergeIdxExtSCModel(1,        NUM_MERGE_IDX_EXT_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuPartSizeSCModel(1,           NUM_PART_SIZE_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuPredModeSCModel(1,           NUM_PRED_MODE_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuIntraPredSCModel(1,          NUM_ADI_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuChromaPredSCModel(1,         NUM_CHROMA_PRED_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuDeltaQpSCModel(1,            NUM_DELTA_QP_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuInterDirSCModel(1,           NUM_INTER_DIR_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuRefPicSCModel(1,             NUM_REF_NO_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuMvdSCModel(1,                NUM_MV_RES_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuQtCbfSCModel(2,              NUM_QT_CBF_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuTransSubdivFlagSCModel(1,    NUM_TRANS_SUBDIV_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuQtRootCbfSCModel(1,          NUM_QT_ROOT_CBF_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuSigCoeffGroupSCModel(2,      NUM_SIG_CG_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuSigSCModel(1,                NUM_SIG_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuCtxLastX(2,                  NUM_CTX_LAST_FLAG_XY, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuCtxLastY(2,                  NUM_CTX_LAST_FLAG_XY, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuOneSCModel(1,                NUM_ONE_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuAbsSCModel(1,                NUM_ABS_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_mvpIdxSCModel(1,               NUM_MVP_IDX_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuAMPSCModel(1,                NUM_CU_AMP_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_saoMergeSCModel(1,             NUM_SAO_MERGE_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_saoTypeIdxSCModel(1,           NUM_SAO_TYPE_IDX_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_transformSkipSCModel(2,        NUM_TRANSFORMSKIP_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-    , m_cuTransquantBypassFlagSCModel(1, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
 {
-    assert(m_numContextModels <= MAX_NUM_CTX_MOD);
+    assert(MAX_OFF_CTX_MOD <= MAX_NUM_CTX_MOD);
 }
 
 TEncSbac::~TEncSbac()
@@ -103,34 +122,33 @@ void TEncSbac::resetEntropy()
         sliceType = (SliceType)encCABACTableIdx;
     }
 
-    m_cuSplitFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SPLIT_FLAG);
-
-    m_cuSkipFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SKIP_FLAG);
-    m_cuMergeFlagExtSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT);
-    m_cuMergeIdxExtSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MERGE_IDX_EXT);
-    m_cuPartSizeSCModel.initBuffer(sliceType, qp, (UChar*)INIT_PART_SIZE);
-    m_cuAMPSCModel.initBuffer(sliceType, qp, (UChar*)INIT_CU_AMP_POS);
-    m_cuPredModeSCModel.initBuffer(sliceType, qp, (UChar*)INIT_PRED_MODE);
-    m_cuIntraPredSCModel.initBuffer(sliceType, qp, (UChar*)INIT_INTRA_PRED_MODE);
-    m_cuChromaPredSCModel.initBuffer(sliceType, qp, (UChar*)INIT_CHROMA_PRED_MODE);
-    m_cuInterDirSCModel.initBuffer(sliceType, qp, (UChar*)INIT_INTER_DIR);
-    m_cuMvdSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MVD);
-    m_cuRefPicSCModel.initBuffer(sliceType, qp, (UChar*)INIT_REF_PIC);
-    m_cuDeltaQpSCModel.initBuffer(sliceType, qp, (UChar*)INIT_DQP);
-    m_cuQtCbfSCModel.initBuffer(sliceType, qp, (UChar*)INIT_QT_CBF);
-    m_cuQtRootCbfSCModel.initBuffer(sliceType, qp, (UChar*)INIT_QT_ROOT_CBF);
-    m_cuSigCoeffGroupSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SIG_CG_FLAG);
-    m_cuSigSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SIG_FLAG);
-    m_cuCtxLastX.initBuffer(sliceType, qp, (UChar*)INIT_LAST);
-    m_cuCtxLastY.initBuffer(sliceType, qp, (UChar*)INIT_LAST);
-    m_cuOneSCModel.initBuffer(sliceType, qp, (UChar*)INIT_ONE_FLAG);
-    m_cuAbsSCModel.initBuffer(sliceType, qp, (UChar*)INIT_ABS_FLAG);
-    m_mvpIdxSCModel.initBuffer(sliceType, qp, (UChar*)INIT_MVP_IDX);
-    m_cuTransSubdivFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG);
-    m_saoMergeSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SAO_MERGE_FLAG);
-    m_saoTypeIdxSCModel.initBuffer(sliceType, qp, (UChar*)INIT_SAO_TYPE_IDX);
-    m_transformSkipSCModel.initBuffer(sliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG);
-    m_cuTransquantBypassFlagSCModel.initBuffer(sliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG);
+    initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (UChar*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_SKIP_FLAG_CTX], sliceType, qp, (UChar*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], sliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
+    initBuffer(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], sliceType, qp, (UChar*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
+    initBuffer(&m_contextModels[OFF_PART_SIZE_CTX], sliceType, qp, (UChar*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
+    initBuffer(&m_contextModels[OFF_PRED_MODE_CTX], sliceType, qp, (UChar*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
+    initBuffer(&m_contextModels[OFF_ADI_CTX], sliceType, qp, (UChar*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
+    initBuffer(&m_contextModels[OFF_CHROMA_PRED_CTX], sliceType, qp, (UChar*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
+    initBuffer(&m_contextModels[OFF_DELTA_QP_CTX], sliceType, qp, (UChar*)INIT_DQP, NUM_DELTA_QP_CTX);
+    initBuffer(&m_contextModels[OFF_INTER_DIR_CTX], sliceType, qp, (UChar*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
+    initBuffer(&m_contextModels[OFF_REF_NO_CTX], sliceType, qp, (UChar*)INIT_REF_PIC, NUM_REF_NO_CTX);
+    initBuffer(&m_contextModels[OFF_MV_RES_CTX], sliceType, qp, (UChar*)INIT_MVD, NUM_MV_RES_CTX);
+    initBuffer(&m_contextModels[OFF_QT_CBF_CTX], sliceType, qp, (UChar*)INIT_QT_CBF, 2 * NUM_QT_CBF_CTX);
+    initBuffer(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], sliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_QT_ROOT_CBF_CTX], sliceType, qp, (UChar*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
+    initBuffer(&m_contextModels[OFF_SIG_CG_FLAG_CTX], sliceType, qp, (UChar*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_SIG_FLAG_CTX], sliceType, qp, (UChar*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_X], sliceType, qp, (UChar*)INIT_LAST, 2 * NUM_CTX_LAST_FLAG_XY);
+    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_Y], sliceType, qp, (UChar*)INIT_LAST, 2 * NUM_CTX_LAST_FLAG_XY);
+    initBuffer(&m_contextModels[OFF_ONE_FLAG_CTX], sliceType, qp, (UChar*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_ABS_FLAG_CTX], sliceType, qp, (UChar*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_MVP_IDX_CTX], sliceType, qp, (UChar*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
+    initBuffer(&m_contextModels[OFF_CU_AMP_CTX], sliceType, qp, (UChar*)INIT_CU_AMP_POS, NUM_CU_AMP_CTX);
+    initBuffer(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], sliceType, qp, (UChar*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], sliceType, qp, (UChar*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
+    initBuffer(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], sliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
     // new structure
     m_lastQp = qp;
 
@@ -156,33 +174,33 @@ void TEncSbac::determineCabacInitIdx()
             UInt curCost = 0;
             SliceType curSliceType = aSliceTypeChoices[idx];
 
-            curCost  = m_cuSplitFlagSCModel.calcCost(curSliceType, qp, (UChar*)INIT_SPLIT_FLAG);
-            curCost += m_cuSkipFlagSCModel.calcCost(curSliceType, qp, (UChar*)INIT_SKIP_FLAG);
-            curCost += m_cuMergeFlagExtSCModel.calcCost(curSliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT);
-            curCost += m_cuMergeIdxExtSCModel.calcCost(curSliceType, qp, (UChar*)INIT_MERGE_IDX_EXT);
-            curCost += m_cuPartSizeSCModel.calcCost(curSliceType, qp, (UChar*)INIT_PART_SIZE);
-            curCost += m_cuAMPSCModel.calcCost(curSliceType, qp, (UChar*)INIT_CU_AMP_POS);
-            curCost += m_cuPredModeSCModel.calcCost(curSliceType, qp, (UChar*)INIT_PRED_MODE);
-            curCost += m_cuIntraPredSCModel.calcCost(curSliceType, qp, (UChar*)INIT_INTRA_PRED_MODE);
-            curCost += m_cuChromaPredSCModel.calcCost(curSliceType, qp, (UChar*)INIT_CHROMA_PRED_MODE);
-            curCost += m_cuInterDirSCModel.calcCost(curSliceType, qp, (UChar*)INIT_INTER_DIR);
-            curCost += m_cuMvdSCModel.calcCost(curSliceType, qp, (UChar*)INIT_MVD);
-            curCost += m_cuRefPicSCModel.calcCost(curSliceType, qp, (UChar*)INIT_REF_PIC);
-            curCost += m_cuDeltaQpSCModel.calcCost(curSliceType, qp, (UChar*)INIT_DQP);
-            curCost += m_cuQtCbfSCModel.calcCost(curSliceType, qp, (UChar*)INIT_QT_CBF);
-            curCost += m_cuQtRootCbfSCModel.calcCost(curSliceType, qp, (UChar*)INIT_QT_ROOT_CBF);
-            curCost += m_cuSigCoeffGroupSCModel.calcCost(curSliceType, qp, (UChar*)INIT_SIG_CG_FLAG);
-            curCost += m_cuSigSCModel.calcCost(curSliceType, qp, (UChar*)INIT_SIG_FLAG);
-            curCost += m_cuCtxLastX.calcCost(curSliceType, qp, (UChar*)INIT_LAST);
-            curCost += m_cuCtxLastY.calcCost(curSliceType, qp, (UChar*)INIT_LAST);
-            curCost += m_cuOneSCModel.calcCost(curSliceType, qp, (UChar*)INIT_ONE_FLAG);
-            curCost += m_cuAbsSCModel.calcCost(curSliceType, qp, (UChar*)INIT_ABS_FLAG);
-            curCost += m_mvpIdxSCModel.calcCost(curSliceType, qp, (UChar*)INIT_MVP_IDX);
-            curCost += m_cuTransSubdivFlagSCModel.calcCost(curSliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG);
-            curCost += m_saoMergeSCModel.calcCost(curSliceType, qp, (UChar*)INIT_SAO_MERGE_FLAG);
-            curCost += m_saoTypeIdxSCModel.calcCost(curSliceType, qp, (UChar*)INIT_SAO_TYPE_IDX);
-            curCost += m_transformSkipSCModel.calcCost(curSliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG);
-            curCost += m_cuTransquantBypassFlagSCModel.calcCost(curSliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG);
+            curCost  = calcCost(&m_contextModels[OFF_SPLIT_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SKIP_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], curSliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], curSliceType, qp, (UChar*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
+            curCost += calcCost(&m_contextModels[OFF_PART_SIZE_CTX], curSliceType, qp, (UChar*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
+            curCost += calcCost(&m_contextModels[OFF_PRED_MODE_CTX], curSliceType, qp, (UChar*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
+            curCost += calcCost(&m_contextModels[OFF_ADI_CTX], curSliceType, qp, (UChar*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
+            curCost += calcCost(&m_contextModels[OFF_CHROMA_PRED_CTX], curSliceType, qp, (UChar*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
+            curCost += calcCost(&m_contextModels[OFF_DELTA_QP_CTX], curSliceType, qp, (UChar*)INIT_DQP, NUM_DELTA_QP_CTX);
+            curCost += calcCost(&m_contextModels[OFF_INTER_DIR_CTX], curSliceType, qp, (UChar*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
+            curCost += calcCost(&m_contextModels[OFF_REF_NO_CTX], curSliceType, qp, (UChar*)INIT_REF_PIC, NUM_REF_NO_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MV_RES_CTX], curSliceType, qp, (UChar*)INIT_MVD, NUM_MV_RES_CTX);
+            curCost += calcCost(&m_contextModels[OFF_QT_CBF_CTX], curSliceType, qp, (UChar*)INIT_QT_CBF, 2 * NUM_QT_CBF_CTX);
+            curCost += calcCost(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], curSliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_QT_ROOT_CBF_CTX], curSliceType, qp, (UChar*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SIG_CG_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SIG_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_X], curSliceType, qp, (UChar*)INIT_LAST, 2 * NUM_CTX_LAST_FLAG_XY);
+            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_Y], curSliceType, qp, (UChar*)INIT_LAST, 2 * NUM_CTX_LAST_FLAG_XY);
+            curCost += calcCost(&m_contextModels[OFF_ONE_FLAG_CTX], curSliceType, qp, (UChar*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_ABS_FLAG_CTX], curSliceType, qp, (UChar*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MVP_IDX_CTX], curSliceType, qp, (UChar*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
+            curCost += calcCost(&m_contextModels[OFF_CU_AMP_CTX], curSliceType, qp, (UChar*)INIT_CU_AMP_POS, NUM_CU_AMP_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], curSliceType, qp, (UChar*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
+            curCost += calcCost(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], curSliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], curSliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
             if (curCost < bestCost)
             {
                 bestSliceType = curSliceType;
@@ -338,7 +356,7 @@ void  TEncSbac::loadIntraDirModeLuma(TEncSbac* src)
 {
     m_binIf->copyState(src->m_binIf);
 
-    this->m_cuIntraPredSCModel.copyFrom(&src->m_cuIntraPredSCModel);
+    ::memcpy(&this->m_contextModels[OFF_ADI_CTX], &src->m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
 }
 
 void  TEncSbac::store(TEncSbac* pDest)
@@ -353,7 +371,7 @@ void TEncSbac::xCopyFrom(TEncSbac* src)
     this->m_coeffCost = src->m_coeffCost;
     this->m_lastQp    = src->m_lastQp;
 
-    memcpy(m_contextModels, src->m_contextModels, m_numContextModels * sizeof(ContextModel));
+    memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
 void TEncSbac::codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
@@ -361,7 +379,7 @@ void TEncSbac::codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
     int symbol = cu->getMVPIdx(eRefList, absPartIdx);
     int num = AMVP_MAX_NUM_CANDS;
 
-    xWriteUnaryMaxSymbol(symbol, &m_mvpIdxSCModel.get(0), 1, num - 1);
+    xWriteUnaryMaxSymbol(symbol, &m_contextModels[OFF_MVP_IDX_CTX], 1, num - 1);
 }
 
 void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
@@ -372,7 +390,7 @@ void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
     {
         if (depth == g_maxCUDepth - g_addCUDepth)
         {
-            m_binIf->encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_cuPartSizeSCModel.get(0));
+            m_binIf->encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
         }
         return;
     }
@@ -381,24 +399,20 @@ void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
     {
     case SIZE_2Nx2N:
     {
-        m_binIf->encodeBin(1, m_cuPartSizeSCModel.get(0));
+        m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
         break;
     }
     case SIZE_2NxN:
     case SIZE_2NxnU:
     case SIZE_2NxnD:
     {
-        m_binIf->encodeBin(0, m_cuPartSizeSCModel.get(0));
-        m_binIf->encodeBin(1, m_cuPartSizeSCModel.get(1));
+        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            if (partSize == SIZE_2NxN)
+            m_binIf->encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_CU_AMP_CTX]);
+            if (partSize != SIZE_2NxN)
             {
-                m_binIf->encodeBin(1, m_cuAMPSCModel.get(0));
-            }
-            else
-            {
-                m_binIf->encodeBin(0, m_cuAMPSCModel.get(0));
                 m_binIf->encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
             }
         }
@@ -408,21 +422,17 @@ void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
     case SIZE_nLx2N:
     case SIZE_nRx2N:
     {
-        m_binIf->encodeBin(0, m_cuPartSizeSCModel.get(0));
-        m_binIf->encodeBin(0, m_cuPartSizeSCModel.get(1));
+        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8 && cu->getHeight(absPartIdx) == 8))
         {
-            m_binIf->encodeBin(1, m_cuPartSizeSCModel.get(2));
+            m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            if (partSize == SIZE_Nx2N)
+            m_binIf->encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_CU_AMP_CTX]);
+            if (partSize != SIZE_Nx2N)
             {
-                m_binIf->encodeBin(1, m_cuAMPSCModel.get(0));
-            }
-            else
-            {
-                m_binIf->encodeBin(0, m_cuAMPSCModel.get(0));
                 m_binIf->encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
             }
         }
@@ -432,9 +442,9 @@ void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
     {
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8 && cu->getHeight(absPartIdx) == 8))
         {
-            m_binIf->encodeBin(0, m_cuPartSizeSCModel.get(0));
-            m_binIf->encodeBin(0, m_cuPartSizeSCModel.get(1));
-            m_binIf->encodeBin(0, m_cuPartSizeSCModel.get(2));
+            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
         break;
     }
@@ -455,14 +465,14 @@ void TEncSbac::codePredMode(TComDataCU* cu, UInt absPartIdx)
     // get context function is here
     int predMode = cu->getPredictionMode(absPartIdx);
 
-    m_binIf->encodeBin(predMode == MODE_INTER ? 0 : 1, m_cuPredModeSCModel.get(0));
+    m_binIf->encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
 }
 
 void TEncSbac::codeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx)
 {
     UInt symbol = cu->getCUTransquantBypass(absPartIdx);
 
-    m_binIf->encodeBin(symbol, m_cuTransquantBypassFlagSCModel.get(0));
+    m_binIf->encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
 /** code skip flag
@@ -476,7 +486,7 @@ void TEncSbac::codeSkipFlag(TComDataCU* cu, UInt absPartIdx)
     UInt symbol = cu->isSkipped(absPartIdx) ? 1 : 0;
     UInt ctxSkip = cu->getCtxSkipFlag(absPartIdx);
 
-    m_binIf->encodeBin(symbol, m_cuSkipFlagSCModel.get(ctxSkip));
+    m_binIf->encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tSkipFlag");
     DTRACE_CABAC_T("\tuiCtxSkip: ");
@@ -495,7 +505,7 @@ void TEncSbac::codeMergeFlag(TComDataCU* cu, UInt absPartIdx)
 {
     const UInt symbol = cu->getMergeFlag(absPartIdx) ? 1 : 0;
 
-    m_binIf->encodeBin(symbol, m_cuMergeFlagExtSCModel.get(0));
+    m_binIf->encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
 
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tMergeFlag: ");
@@ -524,7 +534,7 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, UInt absPartIdx)
             const UInt symbol = ui == unaryIdx ? 0 : 1;
             if (ui == 0)
             {
-                m_binIf->encodeBin(symbol, m_cuMergeIdxExtSCModel.get(0));
+                m_binIf->encodeBin(symbol, m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
             }
             else
             {
@@ -552,14 +562,14 @@ void TEncSbac::codeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth)
     UInt currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;
 
     assert(ctx < 3);
-    m_binIf->encodeBin(currSplitFlag, m_cuSplitFlagSCModel.get(ctx));
+    m_binIf->encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tSplitFlag\n")
 }
 
 void TEncSbac::codeTransformSubdivFlag(UInt symbol, UInt ctx)
 {
-    m_binIf->encodeBin(symbol, m_cuTransSubdivFlagSCModel.get(ctx));
+    m_binIf->encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSubdivFlag()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -590,7 +600,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMulti
             }
         }
 
-        m_binIf->encodeBin((predIdx[j] != -1) ? 1 : 0, m_cuIntraPredSCModel.get(0));
+        m_binIf->encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
     }
 
     for (j = 0; j < partNum; j++)
@@ -633,7 +643,7 @@ void TEncSbac::codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx)
 
     if (intraDirChroma == DM_CHROMA_IDX)
     {
-        m_binIf->encodeBin(0, m_cuChromaPredSCModel.get(0));
+        m_binIf->encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
     }
     else
     {
@@ -649,7 +659,7 @@ void TEncSbac::codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx)
             }
         }
 
-        m_binIf->encodeBin(1, m_cuChromaPredSCModel.get(0));
+        m_binIf->encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
 
         m_binIf->encodeBinsEP(intraDirChroma, 2);
     }
@@ -662,11 +672,11 @@ void TEncSbac::codeInterDir(TComDataCU* cu, UInt absPartIdx)
 
     if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getHeight(absPartIdx) != 8)
     {
-        m_binIf->encodeBin(interDir == 2 ? 1 : 0, m_cuInterDirSCModel.get(ctx));
+        m_binIf->encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
     }
     if (interDir < 2)
     {
-        m_binIf->encodeBin(interDir, m_cuInterDirSCModel.get(4));
+        m_binIf->encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
     }
 }
 
@@ -675,7 +685,7 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefLis
     {
         int refFrame = cu->getCUMvField(eRefList)->getRefIdx(absPartIdx);
         int idx = 0;
-        m_binIf->encodeBin((refFrame == 0 ? 0 : 1), m_cuRefPicSCModel.get(0));
+        m_binIf->encodeBin((refFrame == 0 ? 0 : 1), m_contextModels[OFF_REF_NO_CTX]);
 
         if (refFrame > 0)
         {
@@ -687,7 +697,7 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefLis
                 const UInt symbol = i == refFrame ? 0 : 1;
                 if (i == 0)
                 {
-                    m_binIf->encodeBin(symbol, m_cuRefPicSCModel.get(idx));
+                    m_binIf->encodeBin(symbol, m_contextModels[OFF_REF_NO_CTX + idx]);
                 }
                 else
                 {
@@ -713,8 +723,8 @@ void TEncSbac::codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
     const int hor = cuMvField->getMvd(absPartIdx).x;
     const int ver = cuMvField->getMvd(absPartIdx).y;
 
-    m_binIf->encodeBin(hor != 0 ? 1 : 0, m_cuMvdSCModel.get(0));
-    m_binIf->encodeBin(ver != 0 ? 1 : 0, m_cuMvdSCModel.get(0));
+    m_binIf->encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    m_binIf->encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
 
     const bool bHorAbsGr0 = hor != 0;
     const bool bVerAbsGr0 = ver != 0;
@@ -723,12 +733,12 @@ void TEncSbac::codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
 
     if (bHorAbsGr0)
     {
-        m_binIf->encodeBin(horAbs > 1 ? 1 : 0, m_cuMvdSCModel.get(1));
+        m_binIf->encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
     }
 
     if (bVerAbsGr0)
     {
-        m_binIf->encodeBin(verAbs > 1 ? 1 : 0, m_cuMvdSCModel.get(1));
+        m_binIf->encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
     }
 
     if (bHorAbsGr0)
@@ -762,7 +772,7 @@ void TEncSbac::codeDeltaQP(TComDataCU* cu, UInt absPartIdx)
 
     UInt absDQp = (UInt)((dqp > 0) ? dqp  : (-dqp));
     UInt TUValue = X265_MIN((int)absDQp, CU_DQP_TU_CMAX);
-    xWriteUnaryMaxSymbol(TUValue, &m_cuDeltaQpSCModel.get(0), 1, CU_DQP_TU_CMAX);
+    xWriteUnaryMaxSymbol(TUValue, &m_contextModels[OFF_DELTA_QP_CTX], 1, CU_DQP_TU_CMAX);
     if (absDQp >= CU_DQP_TU_CMAX)
     {
         xWriteEpExGolomb(absDQp - CU_DQP_TU_CMAX, CU_DQP_EG_k);
@@ -780,7 +790,7 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt t
     UInt cbf = cu->getCbf(absPartIdx, ttype, trDepth);
     UInt ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_binIf->encodeBin(cbf, m_cuQtCbfSCModel.get((ttype ? TEXT_CHROMA : 0) * NUM_QT_CBF_CTX + ctx));
+    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + (ttype ? TEXT_CHROMA : 0) * NUM_QT_CBF_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseQtCbf()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -806,7 +816,7 @@ void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt widt
     }
 
     UInt useTransformSkip = cu->getTransformSkip(absPartIdx, ttype);
-    m_binIf->encodeBin(useTransformSkip, m_transformSkipSCModel.get((ttype ? TEXT_CHROMA : TEXT_LUMA) * NUM_TRANSFORMSKIP_FLAG_CTX));
+    m_binIf->encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? TEXT_CHROMA : TEXT_LUMA) * NUM_TRANSFORMSKIP_FLAG_CTX]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSkip()");
     DTRACE_CABAC_T("\tsymbol=")
@@ -906,7 +916,7 @@ void TEncSbac::codeQtRootCbf(TComDataCU* cu, UInt absPartIdx)
     UInt cbf = cu->getQtRootCbf(absPartIdx);
     UInt ctx = 0;
 
-    m_binIf->encodeBin(cbf, m_cuQtRootCbfSCModel.get(ctx));
+    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseQtRootCbf()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -925,7 +935,7 @@ void TEncSbac::codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth)
     UInt cbf = 0;
     UInt ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_binIf->encodeBin(cbf, m_cuQtCbfSCModel.get((ttype ? TEXT_CHROMA : 0) * NUM_QT_CBF_CTX + ctx));
+    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + (ttype ? TEXT_CHROMA : 0) * NUM_QT_CBF_CTX + ctx]);
 }
 
 void TEncSbac::codeQtRootCbfZero(TComDataCU*)
@@ -935,7 +945,7 @@ void TEncSbac::codeQtRootCbfZero(TComDataCU*)
     UInt cbf = 0;
     UInt ctx = 0;
 
-    m_binIf->encodeBin(cbf, m_cuQtRootCbfSCModel.get(ctx));
+    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
 /** Encode (X,Y) position of the last significant coefficient
@@ -957,8 +967,8 @@ void TEncSbac::codeLastSignificantXY(UInt posx, UInt posy, int width, int height
     }
 
     UInt ctxLast;
-    ContextModel *ctxX = &m_cuCtxLastX.get(ttype ? NUM_CTX_LAST_FLAG_XY : 0);
-    ContextModel *ctxY = &m_cuCtxLastY.get(ttype ? NUM_CTX_LAST_FLAG_XY : 0);
+    ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X + (ttype ? NUM_CTX_LAST_FLAG_XY : 0)];
+    ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y + (ttype ? NUM_CTX_LAST_FLAG_XY : 0)];
     UInt groupIdxX    = g_groupIdx[posx];
     UInt groupIdxY    = g_groupIdx[posy];
 
@@ -1110,8 +1120,8 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx, UInt
     codeLastSignificantXY(posLastX, posLastY, width, height, ttype, scanIdx);
 
     //===== code significance flag =====
-    ContextModel * const baseCoeffGroupCtx = &m_cuSigCoeffGroupSCModel.get(ttype ? NUM_SIG_CG_FLAG_CTX : 0);
-    ContextModel * const baseCtx = (ttype == TEXT_LUMA) ? &m_cuSigSCModel.get(0) : &m_cuSigSCModel.get(NUM_SIG_FLAG_CTX_LUMA);
+    ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype ? NUM_SIG_CG_FLAG_CTX : 0)];
+    ContextModel * const baseCtx = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_SIG_FLAG_CTX] : &m_contextModels[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
 
     const int lastScanSet      = scanPosLast >> LOG2_SCAN_SET_SIZE;
     UInt c1 = 1;
@@ -1197,7 +1207,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx, UInt
                 ctxSet++;
             }
             c1 = 1;
-            ContextModel *baseCtxMod = (ttype == TEXT_LUMA) ? &m_cuOneSCModel.get(4 * ctxSet) : &m_cuOneSCModel.get(NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet);
+            ContextModel *baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextModels[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
 
             int numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             int firstC2FlagIdx = -1;
@@ -1222,7 +1232,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx, UInt
 
             if (c1 == 0)
             {
-                baseCtxMod = (ttype == TEXT_LUMA) ? &m_cuAbsSCModel.get(ctxSet) : &m_cuAbsSCModel.get(NUM_ABS_FLAG_CTX_LUMA + ctxSet);
+                baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                 if (firstC2FlagIdx != -1)
                 {
                     UInt symbol = absCoeff[firstC2FlagIdx] > 2;
@@ -1316,14 +1326,8 @@ void TEncSbac::codeSaoUflc(UInt length, UInt code)
  */
 void TEncSbac::codeSaoMerge(UInt code)
 {
-    if (code == 0)
-    {
-        m_binIf->encodeBin(0,  m_saoMergeSCModel.get(0));
-    }
-    else
-    {
-        m_binIf->encodeBin(1,  m_saoMergeSCModel.get(0));
-    }
+    assert((code == 0) || (code == 1));
+    m_binIf->encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
 }
 
 /** Code SAO type index
@@ -1331,13 +1335,9 @@ void TEncSbac::codeSaoMerge(UInt code)
  */
 void TEncSbac::codeSaoTypeIdx(UInt code)
 {
-    if (code == 0)
+    m_binIf->encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
+    if (code != 0)
     {
-        m_binIf->encodeBin(0, m_saoTypeIdxSCModel.get(0));
-    }
-    else
-    {
-        m_binIf->encodeBin(1, m_saoTypeIdxSCModel.get(0));
         m_binIf->encodeBinEP(code <= 4 ? 1 : 0);
     }
 }
@@ -1369,7 +1369,7 @@ void TEncSbac::estBit(estBitsSbacStruct* estBitsSbac, int width, int height, Tex
  */
 void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 {
-    ContextModel *ctx = &m_cuQtCbfSCModel.get(0);
+    ContextModel *ctx = &m_contextModels[OFF_QT_CBF_CTX];
 
     for (UInt uiCtxInc = 0; uiCtxInc < 3 * NUM_QT_CBF_CTX; uiCtxInc++)
     {
@@ -1377,7 +1377,7 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
         estBitsSbac->blockCbpBits[uiCtxInc][1] = ctx[uiCtxInc].getEntropyBits(1);
     }
 
-    ctx = &m_cuQtRootCbfSCModel.get(0);
+    ctx = &m_contextModels[OFF_QT_ROOT_CBF_CTX];
 
     for (UInt uiCtxInc = 0; uiCtxInc < 4; uiCtxInc++)
     {
@@ -1401,7 +1401,7 @@ void TEncSbac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, Te
     {
         for (UInt bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = m_cuSigCoeffGroupSCModel.get((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx).getEntropyBits(bin);
+            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].getEntropyBits(bin);
         }
     }
 }
@@ -1431,14 +1431,14 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
     {
         for (UInt bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantBits[0][bin] = m_cuSigSCModel.get(0).getEntropyBits(bin);
+            estBitsSbac->significantBits[0][bin] = m_contextModels[OFF_SIG_FLAG_CTX].getEntropyBits(bin);
         }
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
         {
             for (UInt bin = 0; bin < 2; bin++)
             {
-                estBitsSbac->significantBits[ctxIdx][bin] = m_cuSigSCModel.get(ctxIdx).getEntropyBits(bin);
+                estBitsSbac->significantBits[ctxIdx][bin] = m_contextModels[OFF_SIG_FLAG_CTX + ctxIdx].getEntropyBits(bin);
             }
         }
     }
@@ -1446,14 +1446,14 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
     {
         for (UInt bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantBits[0][bin] = m_cuSigSCModel.get(NUM_SIG_FLAG_CTX_LUMA + 0).getEntropyBits(bin);
+            estBitsSbac->significantBits[0][bin] = m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)].getEntropyBits(bin);
         }
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
         {
             for (UInt bin = 0; bin < 2; bin++)
             {
-                estBitsSbac->significantBits[ctxIdx][bin] = m_cuSigSCModel.get(NUM_SIG_FLAG_CTX_LUMA + ctxIdx).getEntropyBits(bin);
+                estBitsSbac->significantBits[ctxIdx][bin] = m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)].getEntropyBits(bin);
             }
         }
     }
@@ -1470,16 +1470,16 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
     for (ctx = 0; ctx < g_groupIdx[width - 1]; ctx++)
     {
         int ctxOffset = blkSizeOffsetX + (ctx >> shiftX);
-        estBitsSbac->lastXBits[ctx] = bitsX + m_cuCtxLastX.get((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset).getEntropyBits(0);
-        bitsX += m_cuCtxLastX.get((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset).getEntropyBits(1);
+        estBitsSbac->lastXBits[ctx] = bitsX + m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(0);
+        bitsX += m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(1);
     }
 
     estBitsSbac->lastXBits[ctx] = bitsX;
     for (ctx = 0; ctx < g_groupIdx[height - 1]; ctx++)
     {
         int ctxOffset = blkSizeOffsetY + (ctx >> shiftY);
-        estBitsSbac->lastYBits[ctx] = bitsY + m_cuCtxLastY.get((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset).getEntropyBits(0);
-        bitsY += m_cuCtxLastY.get((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset).getEntropyBits(1);
+        estBitsSbac->lastYBits[ctx] = bitsY + m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(0);
+        bitsY += m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(1);
     }
 
     estBitsSbac->lastYBits[ctx] = bitsY;
@@ -1495,8 +1495,8 @@ void TEncSbac::estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, Tex
 {
     if (ttype == TEXT_LUMA)
     {
-        ContextModel *ctxOne = &m_cuOneSCModel.get(0);
-        ContextModel *ctxAbs = &m_cuAbsSCModel.get(0);
+        ContextModel *ctxOne = &m_contextModels[OFF_ONE_FLAG_CTX];
+        ContextModel *ctxAbs = &m_contextModels[OFF_ABS_FLAG_CTX];
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_LUMA; ctxIdx++)
         {
@@ -1512,8 +1512,8 @@ void TEncSbac::estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, Tex
     }
     else
     {
-        ContextModel *ctxOne = &m_cuOneSCModel.get(NUM_ONE_FLAG_CTX_LUMA);
-        ContextModel *ctxAbs = &m_cuAbsSCModel.get(NUM_ABS_FLAG_CTX_LUMA);
+        ContextModel *ctxOne = &m_contextModels[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA];
+        ContextModel *ctxAbs = &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA];
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_CHROMA; ctxIdx++)
         {
@@ -1536,7 +1536,7 @@ void TEncSbac::estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, Tex
  */
 void TEncSbac::xCopyContextsFrom(TEncSbac* src)
 {
-    memcpy(m_contextModels, src->m_contextModels, m_numContextModels * sizeof(m_contextModels[0]));
+    memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(m_contextModels[0]));
 }
 
 void  TEncSbac::loadContexts(TEncSbac* src)
