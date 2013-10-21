@@ -3068,8 +3068,8 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
         return;
     }
 }
+}//namespace
 #endif
-}
 
 #if HIGH_BIT_DEPTH
 namespace {
