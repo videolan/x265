@@ -379,6 +379,18 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
+    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
+    {
+        if (opt.luma_hpp[value])
+        {
+            if (!check_IPFilterLuma_primitive(ref.luma_hpp[value], opt.luma_hpp[value]))
+            {
+                printf("luma_hpp[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
+    }
+
     for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
     {
         if (opt.chroma_hpp[value])
@@ -389,15 +401,11 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
-    }
-
-    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
-    {
-        if (opt.luma_hpp[value])
+        if (opt.chroma_vpp[value])
         {
-            if (!check_IPFilterLuma_primitive(ref.luma_hpp[value], opt.luma_hpp[value]))
+            if (!check_IPFilterChroma_primitive(ref.chroma_vpp[value], opt.chroma_vpp[value]))
             {
-                printf("luma_hpp[%s]", lumaPartStr[value]);
+                printf("chroma_vpp[%s]", chromaPartStr[value]);
                 return false;
             }
         }
