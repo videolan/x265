@@ -158,25 +158,7 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     {
         ::memcpy(src + y * srcStride, src, sizeof(Pel) * (extWidth));
     }
-
-    /* extending right margin*/
-    if (2 * width > orig->getWidth())
-    {
-        for (y = 0; y < srcHeight; y++)
-        {
-            ::memset(src + srcWidth, src[srcWidth - 1], sizeof(Pel) * (X265_LOWRES_CU_SIZE - 1));
-            src += srcStride;
-        }
-    }
-
-    /* extending bottom margin */
-    src = orig->getLumaAddr() + (srcHeight - 1) * srcStride;
-
-    for (y = 1; y <= 2 * lines - srcHeight; y++)
-    {
-        ::memcpy(src + y * srcStride, src, sizeof(Pel) * (extWidth));
-    }
-
+    
     /* downscale and generate 4 HPEL planes for lookahead */
     primitives.frame_init_lowres_core(orig->getLumaAddr(),
                                       lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
