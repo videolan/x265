@@ -580,7 +580,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
 
     if (refIdx0 >= 0 && refIdx1 >= 0)
     {
-        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv, bLuma, bChroma);
+        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv, true, bLuma, bChroma);
     }
     else if (refIdx0 >= 0 && refIdx1 <  0)
     {
@@ -616,7 +616,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcY
 
     if (refIdx0 >= 0 && refIdx1 >= 0)
     {
-        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv, bLuma, bChroma);
+        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outDstYuv, true, bLuma, bChroma);
     }
     else if (refIdx0 >= 0 && refIdx1 <  0)
     {

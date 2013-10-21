@@ -269,7 +269,7 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
                 if (bChroma)
                     xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
 
-                xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv, bLuma, bChroma);
+                xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv, -1, bLuma, bChroma);
             }
             else
             {
@@ -311,7 +311,7 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
                 if (bChroma)
                     xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
 
-                xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv, bLuma, bChroma);
+                xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv, -1, bLuma, bChroma);
             }
             else
             {
@@ -433,7 +433,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
             if (bChroma)
                 xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
 
-            xWeightedPredictionUni(cu, &m_predShortYuv[0], partAddr, width, height, REF_PIC_LIST_0, outPredYuv, bLuma, bChroma);
+            xWeightedPredictionUni(cu, &m_predShortYuv[0], partAddr, width, height, REF_PIC_LIST_0, outPredYuv, -1, bLuma, bChroma);
         }
     }
     else
