@@ -86,7 +86,6 @@ public:
 
     TComPic*              m_next;
     TComPic*              m_prev;
-    double*               m_qpAqOffset;
     UInt64                m_SSDY;
     UInt64                m_SSDU;
     UInt64                m_SSDV;

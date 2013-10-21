@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-void Lowres::create(TComPic *pic, int bframes)
+void Lowres::create(TComPic *pic, int bframes, int *aqMode)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
 
@@ -44,6 +44,13 @@ void Lowres::create(TComPic *pic, int bframes)
     /* rounding the width to multiple of lowres CU size */
     width = cuWidth * X265_LOWRES_CU_SIZE;
     lines = cuHeight * X265_LOWRES_CU_SIZE;
+
+    if (*aqMode)
+    {
+        m_qpAqOffset = (double*)x265_malloc(sizeof(double) * cuCount);
+        if (!m_qpAqOffset)
+            *aqMode = 0;
+    }
 
     /* allocate lowres buffers */
     for (int i = 0; i < 4; i++)
@@ -102,6 +109,7 @@ void Lowres::destroy(int bframes)
         X265_FREE(lowresMvCosts[0][i]);
         X265_FREE(lowresMvCosts[1][i]);
     }
+    X265_FREE(m_qpAqOffset);
 }
 
 // (re) initialize lowres state
