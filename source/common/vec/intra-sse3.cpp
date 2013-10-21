@@ -863,24 +863,22 @@ namespace {
 
 void predIntraAng8_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
-    Vec8s tmp;
-
-    tmp = load_partial(const_int(8), refMain + 2); //-1,0,1,2
-    store_partial(const_int(8), dst, tmp);
-    tmp = load_partial(const_int(8), refMain + 3); //-2,-1,0,1
-    store_partial(const_int(8), dst + dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain + 4);
-    store_partial(const_int(8), dst + 2 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain + 5);
-    store_partial(const_int(8), dst + 3 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain + 6);
-    store_partial(const_int(8), dst + 4 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain + 7);
-    store_partial(const_int(8), dst + 5 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain + 8);
-    store_partial(const_int(8), dst + 6 * dstStride, tmp);
-    tmp = load_partial(const_int(8), refMain + 9);
-    store_partial(const_int(8), dst + 7 * dstStride, tmp);
+    __m128i tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 2));
+    _mm_storel_epi64((__m128i*)(dst), tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 3));
+    _mm_storel_epi64((__m128i*)(dst + dstStride), tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 4));
+    _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 5));
+    _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 6));
+    _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 7));
+    _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 8));
+    _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), tmp16_1);
+    tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 9));
+    _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), tmp16_1);
 }
 
 void predIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
