@@ -1678,7 +1678,8 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
             int preds[3] = { -1, -1, -1 };
             int mode = -1;
-            int numCand = cu->getIntraDirLumaPredictor(partOffset, preds, &mode);
+            int numCand = 3;
+            cu->getIntraDirLumaPredictor(partOffset, preds, &mode);
             if (mode >= 0)
             {
                 numCand = mode;

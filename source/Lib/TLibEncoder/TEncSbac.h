@@ -100,7 +100,15 @@ public:
     void  codeSaoMerge(UInt code);
     void  codeSaoTypeIdx(UInt code);
     void  codeSaoUflc(UInt length, UInt code);
-    void  codeSAOSign(UInt code);
+
+    /** code SAO offset sign
+     * \param code sign value
+     */
+    void codeSAOSign(UInt code)
+    {
+        m_binIf->encodeBinEP(code);
+    }
+
     void  codeScalingList(TComScalingList*) { assert(0); }
 
 private:

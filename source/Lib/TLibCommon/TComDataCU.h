@@ -490,7 +490,7 @@ public:
     UInt          getIntraSizeIdx(UInt absPartIdx);
 
     void          getAllowedChromaDir(UInt absPartIdx, UInt* modeList);
-    int           getIntraDirLumaPredictor(UInt absPartIdx, int* intraDirPred, int* mode = NULL);
+    void          getIntraDirLumaPredictor(UInt absPartIdx, int* intraDirPred, int* mode = NULL);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for SBAC context

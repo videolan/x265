@@ -529,21 +529,15 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, UInt absPartIdx)
 
     if (numCand > 1)
     {
-        for (UInt ui = 0; ui < numCand - 1; ++ui)
+        m_binIf->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
+
+        assert(unaryIdx < numCand);
+
+        if (unaryIdx != 0)
         {
-            const UInt symbol = ui == unaryIdx ? 0 : 1;
-            if (ui == 0)
-            {
-                m_binIf->encodeBin(symbol, m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
-            }
-            else
-            {
-                m_binIf->encodeBinEP(symbol);
-            }
-            if (symbol == 0)
-            {
-                break;
-            }
+            UInt mask = (1 << unaryIdx) - 2;
+            mask >>= (unaryIdx == numCand - 1) ? 1 : 0;
+            m_binIf->encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
         }
     }
     DTRACE_CABAC_VL(g_nSymbolCounter++);
@@ -583,7 +577,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMulti
 {
     UInt dir[4], j;
     int preds[4][3] = { { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 } };
-    int predNum[4], predIdx[4] = { -1, -1, -1, -1 };
+    int predIdx[4] = { -1, -1, -1, -1 };
     PartSize mode = cu->getPartitionSize(absPartIdx);
     UInt partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;
     UInt partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
@@ -591,8 +585,8 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMulti
     for (j = 0; j < partNum; j++)
     {
         dir[j] = cu->getLumaIntraDir(absPartIdx + partOffset * j);
-        predNum[j] = cu->getIntraDirLumaPredictor(absPartIdx + partOffset * j, preds[j]);
-        for (UInt i = 0; i < predNum[j]; i++)
+        cu->getIntraDirLumaPredictor(absPartIdx + partOffset * j, preds[j]);
+        for (UInt i = 0; i < 3; i++)
         {
             if (dir[j] == preds[j][i])
             {
@@ -607,11 +601,13 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMulti
     {
         if (predIdx[j] != -1)
         {
-            m_binIf->encodeBinEP(predIdx[j] ? 1 : 0);
-            if (predIdx[j])
-            {
-                m_binIf->encodeBinEP(predIdx[j] - 1);
-            }
+            assert((predIdx[j] >= 0) && (predIdx[j] <= 2));
+            // NOTE: Mapping
+            //       0 = 0
+            //       1 = 10
+            //       2 = 11
+            int nonzero = (!!predIdx[j]);
+            m_binIf->encodeBinsEP(predIdx[j] + nonzero, 1 + nonzero);
         }
         else
         {
@@ -627,10 +623,9 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMulti
             {
                 std::swap(preds[j][1], preds[j][2]);
             }
-            for (int i = (predNum[j] - 1); i >= 0; i--)
-            {
-                dir[j] = dir[j] > preds[j][i] ? dir[j] - 1 : dir[j];
-            }
+            dir[j] += (dir[j] > preds[j][2]) ? -1 : 0;
+            dir[j] += (dir[j] > preds[j][1]) ? -1 : 0;
+            dir[j] += (dir[j] > preds[j][0]) ? -1 : 0;
 
             m_binIf->encodeBinsEP(dir[j], 5);
         }
@@ -692,6 +687,7 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefLis
             UInt refNum = cu->getSlice()->getNumRefIdx(eRefList) - 2;
             idx++;
             refFrame--;
+            // TODO: reference codeMergeIndex() to improvement
             for (UInt i = 0; i < refNum; ++i)
             {
                 const UInt symbol = i == refFrame ? 0 : 1;
@@ -1274,40 +1270,21 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx, UInt
     }
 }
 
-/** code SAO offset sign
- * \param code sign value
- */
-void TEncSbac::codeSAOSign(UInt code)
-{
-    m_binIf->encodeBinEP(code);
-}
-
 void TEncSbac::codeSaoMaxUvlc(UInt code, UInt maxSymbol)
 {
-    if (maxSymbol == 0)
-    {
-        return;
-    }
+    assert(maxSymbol > 0);
 
-    int i;
-    bool bCodeLast = (maxSymbol > code);
+    UInt isCodeLast = (maxSymbol > code) ? 1 : 0;
+    UInt isCodeNonZero = (code != 0) ? 1 : 0;
 
-    if (code == 0)
+    m_binIf->encodeBinEP(isCodeNonZero);
+    if (isCodeNonZero)
     {
-        m_binIf->encodeBinEP(0);
-    }
-    else
-    {
-        m_binIf->encodeBinEP(1);
-        for (i = 0; i < code - 1; i++)
-        {
-            m_binIf->encodeBinEP(1);
-        }
+        UInt mask = (1 << (code - 1)) - 1;
+        UInt len = code - 1 + isCodeLast;
+        mask <<= isCodeLast;
 
-        if (bCodeLast)
-        {
-            m_binIf->encodeBinEP(0);
-        }
+        m_binIf->encodeBinsEP(mask, len);
     }
 }
 
