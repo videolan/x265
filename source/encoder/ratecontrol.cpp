@@ -129,6 +129,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
 RateControl::RateControl(TEncCfg * _cfg)
 {
     this->cfg = _cfg;
+    frameThreads = cfg->param.frameNumThreads;
     bitrate = cfg->param.rc.bitrate * 1000;
     frameDuration = 1.0 / cfg->param.frameRate;
     ncu = (int)((cfg->param.sourceHeight * cfg->param.sourceWidth) / pow((int)cfg->param.maxCUSize, 2.0));
