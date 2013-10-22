@@ -66,7 +66,7 @@ void TEncBinCABAC::start()
 {
     m_low              = 0;
     m_range            = 510;
-    m_bitsLeft         = 23;
+    m_bitsLeft         = -12;
     m_numBufferedBytes = 0;
     m_bufferedByte     = 0xff;
 }
@@ -81,7 +81,7 @@ void TEncBinCABAC::finish()
         assert(0);
     }
 
-    if (m_low >> (32 - m_bitsLeft))
+    if (m_low >> (21 + m_bitsLeft))
     {
         //assert( m_numBufferedBytes > 0 );
         //assert( m_bufferedByte != 0xff );
@@ -92,7 +92,7 @@ void TEncBinCABAC::finish()
             m_numBufferedBytes--;
         }
 
-        m_low -= 1 << (32 - m_bitsLeft);
+        m_low -= 1 << (21 + m_bitsLeft);
     }
     else
     {
@@ -106,7 +106,7 @@ void TEncBinCABAC::finish()
             m_numBufferedBytes--;
         }
     }
-    m_bitIf->write(m_low >> 8, 24 - m_bitsLeft);
+    m_bitIf->write(m_low >> 8, 13 + m_bitsLeft);
 }
 
 void TEncBinCABAC::flush()
@@ -147,10 +147,8 @@ void TEncBinCABAC::xWritePCMCode(UInt code, UInt length)
     m_bitIf->write(code, length);
 }
 
-void TEncBinCABAC::copyState(TEncBinIf* binIf)
+void TEncBinCABAC::copyState(TEncBinCABAC* binCABAC)
 {
-    TEncBinCABAC* binCABAC = (TEncBinCABAC*)binIf;
-
     m_low              = binCABAC->m_low;
     m_range            = binCABAC->m_range;
     m_bitsLeft         = binCABAC->m_bitsLeft;
@@ -162,18 +160,10 @@ void TEncBinCABAC::copyState(TEncBinIf* binIf)
 void TEncBinCABAC::resetBits()
 {
     m_low              = 0;
-    m_bitsLeft         = 23;
+    m_bitsLeft         = -12;
     m_numBufferedBytes = 0;
     m_bufferedByte     = 0xff;
     m_fracBits        &= 32767;
-}
-
-UInt TEncBinCABAC::getNumWrittenBits()
-{
-    if (bIsCounter)
-        return m_bitIf->getNumberOfWrittenBits() + UInt(m_fracBits >> 15);
-    else
-        return m_bitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
 }
 
 /**
@@ -210,7 +200,7 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
         m_range   = lps << numBits;
         ctxModel.updateLPS();
 
-        m_bitsLeft -= numBits;
+        m_bitsLeft += numBits;
     }
     else
     {
@@ -222,7 +212,7 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
 
         m_low <<= 1;
         m_range <<= 1;
-        m_bitsLeft--;
+        m_bitsLeft++;
     }
 
     testAndWriteOut();
@@ -251,7 +241,7 @@ void TEncBinCABAC::encodeBinEP(UInt binValue)
     {
         m_low += m_range;
     }
-    m_bitsLeft--;
+    m_bitsLeft++;
 
     testAndWriteOut();
 }
@@ -285,14 +275,14 @@ void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
         m_low <<= 8;
         m_low += m_range * pattern;
         binValues -= pattern << numBins;
-        m_bitsLeft -= 8;
+        m_bitsLeft += 8;
 
         testAndWriteOut();
     }
 
     m_low <<= numBins;
     m_low += m_range * binValues;
-    m_bitsLeft -= numBins;
+    m_bitsLeft += numBins;
 
     testAndWriteOut();
 }
@@ -316,7 +306,7 @@ void TEncBinCABAC::encodeBinTrm(UInt binValue)
         m_low  += m_range;
         m_low <<= 7;
         m_range = 2 << 7;
-        m_bitsLeft -= 7;
+        m_bitsLeft += 7;
     }
     else if (m_range >= 256)
     {
@@ -326,7 +316,7 @@ void TEncBinCABAC::encodeBinTrm(UInt binValue)
     {
         m_low   <<= 1;
         m_range <<= 1;
-        m_bitsLeft--;
+        m_bitsLeft++;
     }
 
     testAndWriteOut();
@@ -334,7 +324,7 @@ void TEncBinCABAC::encodeBinTrm(UInt binValue)
 
 void TEncBinCABAC::testAndWriteOut()
 {
-    if (m_bitsLeft < 12)
+    if (m_bitsLeft >= 0)
     {
         writeOut();
     }
@@ -345,10 +335,10 @@ void TEncBinCABAC::testAndWriteOut()
  */
 void TEncBinCABAC::writeOut()
 {
-    UInt leadByte = m_low >> (24 - m_bitsLeft);
+    UInt leadByte = m_low >> (13 + m_bitsLeft);
 
-    m_bitsLeft += 8;
-    m_low &= 0xffffffffu >> m_bitsLeft;
+    m_bitsLeft -= 8;
+    m_low &= 0xffffffffu >> (11 - m_bitsLeft);
 
     if (leadByte == 0xff)
     {

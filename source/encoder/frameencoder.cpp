@@ -178,7 +178,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
 {
     TEncEntropy* entropyCoder = getEntropyCoder(0);
 
-    entropyCoder->setEntropyCoder(&m_cavlcCoder, NULL);
+    entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
     int count = 0;
 
     /* headers for start of bitstream */
@@ -553,7 +553,7 @@ void FrameEncoder::compressFrame()
         outStreams[i].clear();
     }
 
-    entropyCoder->setEntropyCoder(&m_cavlcCoder, slice);
+    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
 
     /* start slice NALunit */
@@ -572,7 +572,7 @@ void FrameEncoder::compressFrame()
         // We've not completed our slice header info yet, do the alignment later.
     }
 
-    m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
+    m_sbacCoder.init(&m_binCoderCABAC);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
     resetEntropy(slice);
@@ -580,7 +580,7 @@ void FrameEncoder::compressFrame()
     if (slice->isNextSlice())
     {
         // set entropy coder for writing
-        m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
+        m_sbacCoder.init(&m_binCoderCABAC);
         resetEntropy(slice);
         getSbacCoder(0)->load(&m_sbacCoder);
 
@@ -631,7 +631,7 @@ void FrameEncoder::compressFrame()
         }
 
         // Complete the slice header info.
-        entropyCoder->setEntropyCoder(&m_cavlcCoder, slice);
+        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
         entropyCoder->setBitstream(&nalu.m_Bitstream);
         entropyCoder->encodeTilesWPPEntryPoint(slice);
 
@@ -694,7 +694,7 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
     TComSlice* slice = m_pic->getSlice();
 
     // Initialize slice singletons
-    m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
+    m_sbacCoder.init(&m_binCoderCABAC);
     getCuEncoder(0)->setBitCounter(NULL);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
 

@@ -520,13 +520,13 @@ void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStri
 {
     int x, y;
 
-    for (y = height - 1; y >= 0; y--)
+    for (y = 0; y <= height - 1; y++)
     {
-        for (x = width - 1; x >= 0; )
+        for (x = 0; x <= width - 1; )
         {
             // note: width can be odd
             dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
-            x--;
+            x++;
         }
 
         src += srcStride;
@@ -537,14 +537,14 @@ void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStri
 void weightUnidirPix(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
-    for (y = height - 1; y >= 0; y--)
+    for (y = 0; y <= height - 1; y++)
     {
-        for (x = width - 1; x >= 0; )
+        for (x = 0; x <= width - 1; )
         {
             // simulating pixel to short conversion
             short val = src[x] << (IF_INTERNAL_PREC - X265_DEPTH);
             dst[x] = (pixel) Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (val) + round) >> shift) + offset);
-            x--;
+            x++;
         }
 
         src += srcStride;

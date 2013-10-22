@@ -259,10 +259,6 @@ int x265_check_params(x265_param_t *param)
           "Minimum partition width size should be larger than or equal to 8");
     CHECK(param->maxCUSize < 16,
           "Maximum partition width size should be larger than or equal to 16");
-    CHECK((param->sourceWidth  % (param->maxCUSize >> (maxCUDepth - 1))) != 0,
-          "Resulting coded frame width must be a multiple of the minimum CU size");
-    CHECK((param->sourceHeight % (param->maxCUSize >> (maxCUDepth - 1))) != 0,
-          "Resulting coded frame height must be a multiple of the minimum CU size");
 
     CHECK((1u << tuQTMaxLog2Size) > param->maxCUSize,
           "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");

@@ -38,7 +38,8 @@
 #ifndef X265_TENCBINCODERCABAC_H
 #define X265_TENCBINCODERCABAC_H
 
-#include "TEncBinCoder.h"
+#include "TLibCommon/ContextModel.h"
+#include "TLibCommon/TComBitStream.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -46,7 +47,7 @@
 namespace x265 {
 // private namespace
 
-class TEncBinCABAC : public TEncBinIf
+class TEncBinCABAC
 {
 public:
 
@@ -58,7 +59,7 @@ public:
 
     void  start();
     void  finish();
-    void  copyState(TEncBinIf* binIf);
+    void  copyState(TEncBinCABAC* binIf);
     void  flush();
 
     void  resetBac();
@@ -66,7 +67,17 @@ public:
     void  xWritePCMCode(UInt code, UInt length);
 
     void  resetBits();
-    UInt  getNumWrittenBits();
+
+    UInt getNumWrittenBits()
+    {
+        // NOTE: the HM go here only in Counter mode
+        assert(!bIsCounter || (m_bitIf->getNumberOfWrittenBits() == 0));
+        assert(bIsCounter);
+        return UInt(m_fracBits >> 15);
+
+        // NOTE: I keep the old code, so someone may active if they want
+        //return m_bitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
+    }
 
     void  encodeBin(UInt binValue, ContextModel& ctxModel);
     void  encodeBinEP(UInt binValue);
