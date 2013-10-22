@@ -56,10 +56,10 @@ SECTION .text
 
 %macro FILTER_H4_w2_2 3
     movu        %2, [srcq - 1]
-    pshufb      %2, Tm0
+    pshufb      %2, %2, Tm0
     pmaddubsw   %2, coef2
     movu        %1, [srcq + srcstrideq - 1]
-    pshufb      %1, Tm0
+    pshufb      %1, %1, Tm0
     pmaddubsw   %1, coef2
     phaddw      %2, %1
     pmulhrsw    %2, %3
@@ -138,10 +138,10 @@ RET
 
 %macro FILTER_H4_w4_2 3
     movu        %2, [srcq - 1]
-    pshufb      %2, Tm0
+    pshufb      %2, %2, Tm0
     pmaddubsw   %2, coef2
     movu        %1, [srcq + srcstrideq - 1]
-    pshufb      %1, Tm0
+    pshufb      %1, %1, Tm0
     pmaddubsw   %1, coef2
     phaddw      %2, %1
     pmulhrsw    %2, %3
