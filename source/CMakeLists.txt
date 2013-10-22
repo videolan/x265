@@ -108,7 +108,7 @@ if(YASM_FOUND)
 endif(YASM_FOUND)
 
 if(UNIX)
-    SET(PLATFORM_LIBS pthread m)
+    SET(PLATFORM_LIBS pthread)
     if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         SET(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
     endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -182,6 +182,15 @@ if(X265_LATEST_TAG)
             RUNTIME DESTINATION bin
             LIBRARY DESTINATION lib
             ARCHIVE DESTINATION lib)
+
+    # convert lists of link libraries into -lstdc++ -lm etc..
+    foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
+        set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
+    endforeach()
+    # Produce a pkg-config file for linking against the shared lib
+    configure_file("x265.pc.in" "x265.pc" @ONLY)
+    install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
+            DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
 endif()
 install(TARGETS x265-static
         RUNTIME DESTINATION bin
