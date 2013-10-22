@@ -180,7 +180,7 @@ int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
 
         /* Copy input picture into a TComPic, send to lookahead */
         pic->getSlice()->setPOC(++m_pocLast);
-        pic->getPicYuvOrg()->copyFromPicture(*pic_in);
+        pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_pad);
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
 
@@ -973,13 +973,43 @@ void Encoder::configure(x265_param_t *_param)
     m_maxNumOffsetsPerPic = 2048;
     m_log2ParallelMergeLevelMinus2 = 0;
 
-    //========= set default confirmation window ==================================
+    //========= set default display window ==================================
     m_defaultDisplayWindow.m_enabledFlag = true;
     m_defaultDisplayWindow.m_winRightOffset = 0;
     m_defaultDisplayWindow.m_winTopOffset = 0;
     m_defaultDisplayWindow.m_winBottomOffset = 0;
     m_defaultDisplayWindow.m_winLeftOffset = 0;
     m_pad[0] = m_pad[1] = 0;
+
+    //======== set pad size if width is not multiple of the minimum CU size =========
+    uint32_t maxCUDepth = (uint32_t)g_convertToBit[_param->maxCUSize];
+    uint32_t minCUDepth = (_param->maxCUSize >> (maxCUDepth - 1));
+    if ((_param->sourceWidth % minCUDepth) != 0)
+    {
+        uint32_t padsize = 0;
+        uint32_t rem = _param->sourceWidth % minCUDepth;
+        padsize = minCUDepth - rem;
+        _param->sourceWidth += padsize;
+        m_pad[0] = padsize; //pad width
+
+        /* set the confirmation window offsets  */
+        m_conformanceWindow.m_enabledFlag = true;
+        m_conformanceWindow.m_winRightOffset = m_pad[0];
+    }
+
+    //======== set pad size if height is not multiple of the minimum CU size =========
+    if ((_param->sourceHeight % minCUDepth) != 0)
+    {
+        uint32_t padsize = 0;
+        uint32_t rem = _param->sourceHeight % minCUDepth;
+        padsize = minCUDepth - rem;
+        _param->sourceHeight += padsize;
+        m_pad[1] = padsize; //pad height
+
+        /* set the confirmation window offsets  */
+        m_conformanceWindow.m_enabledFlag = true;
+        m_conformanceWindow.m_winBottomOffset = m_pad[1];
+    }
 
     m_progressiveSourceFlag = true;
     m_interlacedSourceFlag = false;
