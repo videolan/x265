@@ -43,6 +43,7 @@
 #include "TLibCommon/ContextModel.h"
 #include "TEncEntropy.h"
 #include "TEncBinCoderCABAC.h"
+#include "SyntaxElementWriter.h"
 
 namespace x265 {
 // private namespace
@@ -55,7 +56,7 @@ namespace x265 {
 // ====================================================================================================================
 
 /// SBAC encoder class
-class TEncSbac : public TEncEntropyIf
+class TEncSbac : public SyntaxElementWriter, public TEncEntropyIf
 {
 public:
 
@@ -69,7 +70,13 @@ public:
     //  Virtual list
     void  resetEntropy();
     void  determineCabacInitIdx();
-    void  setBitstream(TComBitIf* p)  { m_bitIf = p; m_binIf->init(p); }
+    void  setBitstream(TComBitIf* p)
+    {
+        m_bitIf = p;
+        // NOTE: When write hrader, it isn't initial
+        if (m_binIf)
+            m_binIf->init(p);
+    }
 
     void  setSlice(TComSlice* p)      { m_slice = p; }
 
@@ -91,14 +98,21 @@ public:
     void  codeVPS(TComVPS* vps);
     void  codeSPS(TComSPS* sps);
     void  codePPS(TComPPS* pps);
+    void  codeVUI(TComVUI* vui, TComSPS* sps);
     void  codeSliceHeader(TComSlice* slice);
-    void  codeTilesWPPEntryPoint(TComSlice* pSlice);
+    void  codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1);
+    void  codeProfileTier(ProfileTierLevel* ptl);
+    void  codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
+    void  codeTilesWPPEntryPoint(TComSlice* slice);
     void  codeTerminatingBit(UInt lsLast);
     void  codeSliceFinish();
     void  codeSaoMaxUvlc(UInt code, UInt maxSymbol);
     void  codeSaoMerge(UInt code);
     void  codeSaoTypeIdx(UInt code);
     void  codeSaoUflc(UInt length, UInt code);
+    void codeShortTermRefPicSet(TComReferencePictureSet* pcRPS, bool calledFromSliceHeader, int idx);
+    bool findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, int ltrpPOC, bool usedFlag);
+    void xCodePredWeightTable(TComSlice* slice);
 
     /** code SAO offset sign
      * \param code sign value
@@ -108,7 +122,7 @@ public:
         m_binIf->encodeBinEP(code);
     }
 
-    void  codeScalingList(TComScalingList*) { assert(0); }
+    void  codeScalingList(TComScalingList*);
 
 private:
 
@@ -120,13 +134,12 @@ private:
     void  xCopyFrom(TEncSbac* src);
     void  xCopyContextsFrom(TEncSbac* src);
 
-    void codeDFFlag(UInt /*code*/, const char* /*symbolName*/) { printf("Not supported in codeDFFlag()\n"); assert(0); }
-
-    void codeDFSvlc(int /*code*/, const char* /*symbolName*/)  { printf("Not supported in codeDFSvlc()\n"); assert(0); }
+    void codeDFFlag(UInt /*code*/, const char* /*symbolName*/);
+    void codeDFSvlc(int /*code*/, const char* /*symbolName*/);
+    void xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId);
 
 public:
 
-    TComBitIf*    m_bitIf;
     TComSlice*    m_slice;
     TEncBinCABAC* m_binIf;
     //SBAC RD

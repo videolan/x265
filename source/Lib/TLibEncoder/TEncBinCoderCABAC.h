@@ -67,7 +67,17 @@ public:
     void  xWritePCMCode(UInt code, UInt length);
 
     void  resetBits();
-    UInt  getNumWrittenBits();
+
+    UInt getNumWrittenBits()
+    {
+        // NOTE: the HM go here only in Counter mode
+        assert(!bIsCounter || (m_bitIf->getNumberOfWrittenBits() == 0));
+        assert(bIsCounter);
+        return UInt(m_fracBits >> 15);
+
+        // NOTE: I keep the old code, so someone may active if they want
+        //return m_bitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
+    }
 
     void  encodeBin(UInt binValue, ContextModel& ctxModel);
     void  encodeBinEP(UInt binValue);

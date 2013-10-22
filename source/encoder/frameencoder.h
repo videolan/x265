@@ -36,7 +36,6 @@
 #include "TLibEncoder/WeightPredAnalysis.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 #include "TLibEncoder/SEIwrite.h"
-#include "TLibEncoder/TEncCavlc.h"
 
 #include "wavefront.h"
 #include "framefilter.h"
@@ -172,7 +171,6 @@ protected:
     WeightPredAnalysis       m_wp;
     TEncSbac                 m_sbacCoder;
     TEncBinCABAC             m_binCoderCABAC;
-    TEncCavlc                m_cavlcCoder;
     FrameFilter              m_frameFilter;
     TComBitCounter           m_bitCounter;
 

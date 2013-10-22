@@ -178,7 +178,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
 {
     TEncEntropy* entropyCoder = getEntropyCoder(0);
 
-    entropyCoder->setEntropyCoder(&m_cavlcCoder, NULL);
+    entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
     int count = 0;
 
     /* headers for start of bitstream */
@@ -553,7 +553,7 @@ void FrameEncoder::compressFrame()
         outStreams[i].clear();
     }
 
-    entropyCoder->setEntropyCoder(&m_cavlcCoder, slice);
+    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
 
     /* start slice NALunit */
@@ -631,7 +631,7 @@ void FrameEncoder::compressFrame()
         }
 
         // Complete the slice header info.
-        entropyCoder->setEntropyCoder(&m_cavlcCoder, slice);
+        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
         entropyCoder->setBitstream(&nalu.m_Bitstream);
         entropyCoder->encodeTilesWPPEntryPoint(slice);
 

@@ -166,17 +166,6 @@ void TEncBinCABAC::resetBits()
     m_fracBits        &= 32767;
 }
 
-UInt TEncBinCABAC::getNumWrittenBits()
-{
-    // NOTE: in Counter mode, we always not call testAndWriteOut(), so m_bitIf unused
-    assert(!bIsCounter || (m_bitIf->getNumberOfWrittenBits() == 0));
-
-    if (bIsCounter)
-        return UInt(m_fracBits >> 15);
-    else
-        return m_bitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
-}
-
 /**
  * \brief Encode bin
  *
