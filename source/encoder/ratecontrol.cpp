@@ -149,7 +149,7 @@ RateControl::RateControl(TEncCfg * _cfg)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(2 * ncu, 0.5);
+        cplxrSum = .01 * pow(7.0e5, cfg->param.rc.qCompress) * pow(2 * ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
     }
@@ -261,7 +261,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
     }
     else
     {
-        double abrBuffer = 1.5 * rateTolerance * bitrate;
+        double abrBuffer = 1.5 * cfg->param.rc.rateTolerance * bitrate;
 
         /* 1pass ABR */
 
@@ -291,7 +291,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         if (lastSatd)
         {
             /* use framesDone instead of POC as poc count is not serial with bframes enabled */
-            double timeDone = (double)(framesDone - frameThreads + 1) / framerate;
+            double timeDone = (double)(framesDone - frameThreads + 1) / cfg->param.frameRate;
             wantedBits = timeDone * bitrate;
             if (wantedBits > 0 && totalBits > 0)
             {
@@ -301,11 +301,11 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
             }
         }
 
-        if (pictType == I_SLICE && keyFrameInterval > 1
+        if (pictType == I_SLICE && cfg->param.keyframeMax > 1
             && lastNonBPictType != I_SLICE)
         {
             q = qp2qScale(accumPQp / accumPNorm);
-            q /= fabs(ipFactor);
+            q /= fabs(cfg->param.rc.ipFactor);
         }
         if (cfg->param.rc.rateControlMode != X265_RC_CRF)
         {
@@ -354,7 +354,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         lastQScaleFor[pictType] = q;
 
         if (curFrame->getPOC() == 0)
-            lastQScaleFor[P_SLICE] = q * fabs(ipFactor);
+            lastQScaleFor[P_SLICE] = q * fabs(cfg->param.rc.ipFactor);
 
         return q;
     }
@@ -367,7 +367,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 {
     double q;
 
-    q = pow(rce->blurredComplexity, 1 - qCompress);
+    q = pow(rce->blurredComplexity, 1 - cfg->param.rc.qCompress);
 
     // avoid NaN's in the rc_eq
     if (rce->texBits + rce->mvBits == 0)
@@ -393,7 +393,7 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
         {
             /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
              * Not perfectly accurate with B-refs, but good enough. */
-            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(pbFactor));
+            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(cfg->param.rc.pbFactor));
         }
         wantedBitsWindow += frameDuration * bitrate;
         rce = NULL;
