@@ -1180,95 +1180,97 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     {
         if (modeHor)
         {
-            Vec16uc v_temp;
-            Vec16uc tmp1;
-
-            v_temp.load(refMain + 1);
-            Vec8s v_main;
-            v_main = extend_low(v_temp);
+            __m128i temp, temp1;
+            temp = _mm_loadu_si128((__m128i const*)(refMain + 1));
+            __m128i main = _mm_unpacklo_epi8(temp, _mm_setzero_si128());
 
             if (bFilter)
             {
-                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
-                Vec16uc v_temp16;
-                v_temp16.load(refSide + 1);
-                Vec8s v_side;
-                v_side = extend_low(v_temp16);
+                __m128i side0 = _mm_set1_epi16(refSide[0]);
+                __m128i temp16;
 
-                Vec8s row0;
-                row0 = permute8s<0, 0, 0, 0, 0, 0, 0, 0>(v_main);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row0 = row0 + v_side;
-                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
+                temp16 = _mm_loadu_si128((__m128i const*)(refSide + 1));
+                __m128i side = _mm_unpacklo_epi8(temp16, _mm_setzero_si128());
 
-                tmp1 = compress(row0, row0);
-                store_partial(const_int(8), dst, tmp1);            //row0
+                __m128i row = _mm_shufflelo_epi16(main, 0);
+                row = _mm_unpacklo_epi64(row, row);
+
+                side = _mm_sub_epi16(side, side0);
+                side = _mm_sra_epi16(side, _mm_cvtsi32_si128(1));
+                row = _mm_add_epi16(row, side);
+                row = _mm_min_epi16(_mm_max_epi16(_mm_set1_epi16(0), row), _mm_set1_epi16((1 << X265_DEPTH) - 1));
+
+                __m128i mask  = _mm_set1_epi32(0x00FF00FF);
+                __m128i lowm  = _mm_and_si128(row, mask);
+                __m128i highm = _mm_and_si128(row, mask);
+                temp1 = _mm_packus_epi16(lowm, highm);
+
+                _mm_storel_epi64((__m128i*)(dst), temp1);
             }
             else
             {
-                tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-                store_partial(const_int(8), dst, tmp1); //row0
+                temp1 = _mm_shuffle_epi8(temp, _mm_setzero_si128());
+                _mm_storel_epi64((__m128i*)(dst), temp1);
             }
-            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (1 * dstStride), tmp1); //row1
 
-            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (2 * dstStride), tmp1); //row2
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(1));
+            _mm_storel_epi64((__m128i*)(dst + 1 * dstStride), temp1);
 
-            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (3 * dstStride), tmp1); //row3
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(2));
+            _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), temp1);
 
-            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (4 * dstStride), tmp1); //row4
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(3));
+            _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), temp1);
 
-            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (5 * dstStride), tmp1); //row5
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(4));
+            _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), temp1);
 
-            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (6 * dstStride), tmp1); //row6
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(5));
+            _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), temp1);
 
-            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (7 * dstStride), tmp1); //row7
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(6));
+            _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), temp1);
+
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(7));
+            _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), temp1);
         }
         else
         {
-            Vec16uc v_main;
-            v_main = load_partial(const_int(8), refMain + 1);
-            store_partial(const_int(8), dst, v_main);
-            store_partial(const_int(8), dst + dstStride, v_main);
-            store_partial(const_int(8), dst + (2 * dstStride), v_main);
-            store_partial(const_int(8), dst + (3 * dstStride), v_main);
-            store_partial(const_int(8), dst + (4 * dstStride), v_main);
-            store_partial(const_int(8), dst + (5 * dstStride), v_main);
-            store_partial(const_int(8), dst + (6 * dstStride), v_main);
-            store_partial(const_int(8), dst + (7 * dstStride), v_main);
+            __m128i main = _mm_loadl_epi64((__m128i*)(refMain + 1));
+
+            _mm_storeu_si128((__m128i*)(dst), main);
+            _mm_storeu_si128((__m128i*)(dst + dstStride), main);
+            _mm_storeu_si128((__m128i*)(dst + 2 * dstStride), main);
+            _mm_storeu_si128((__m128i*)(dst + 3 * dstStride), main);
+            _mm_storeu_si128((__m128i*)(dst + 4 * dstStride), main);
+            _mm_storeu_si128((__m128i*)(dst + 5 * dstStride), main);
+            _mm_storeu_si128((__m128i*)(dst + 6 * dstStride), main);
+            _mm_storeu_si128((__m128i*)(dst + 7 * dstStride), main);
 
             if (bFilter)
             {
-                Vec16uc v_temp;
-                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+                __m128i temp;
+                __m128i side0 = _mm_set1_epi16(refSide[0]);
 
-                v_temp.load(refSide + 1);
-                Vec8s v_side;
-                v_side = extend_low(v_temp);
+                temp =  _mm_loadu_si128((__m128i const*)(refSide + 1));
+                __m128i side = _mm_unpacklo_epi8(temp, _mm_setzero_si128());;
 
-                v_temp.load(refMain + 1);
-                Vec8s row0;
-                row0 = permute16uc<0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1>(v_temp);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row0 = row0 + v_side;
-                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
+                temp = _mm_loadu_si128((const __m128i*)(refMain + 1));
+                __m128i mask = _mm_setr_epi8(0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1);
+                __m128i row = _mm_shuffle_epi8(temp, mask);
+                side = _mm_sub_epi16(side, side0);
+                side = _mm_sra_epi16(side, _mm_cvtsi32_si128(1));
+                row = _mm_add_epi16(row, side);
+                row = _mm_min_epi16(_mm_max_epi16(_mm_set1_epi16(0), row), _mm_set1_epi16((1 << X265_DEPTH) - 1));
 
-                dst[0 * dstStride] = row0[0];
-                dst[1 * dstStride] = row0[1];
-                dst[2 * dstStride] = row0[2];
-                dst[3 * dstStride] = row0[3];
-                dst[4 * dstStride] = row0[4];
-                dst[5 * dstStride] = row0[5];
-                dst[6 * dstStride] = row0[6];
-                dst[7 * dstStride] = row0[7];
+                dst[0 * dstStride] = _mm_extract_epi16(row, 0);
+                dst[1 * dstStride] = _mm_extract_epi16(row, 1);
+                dst[2 * dstStride] = _mm_extract_epi16(row, 2);
+                dst[3 * dstStride] = _mm_extract_epi16(row, 3);
+                dst[4 * dstStride] = _mm_extract_epi16(row, 4);
+                dst[5 * dstStride] = _mm_extract_epi16(row, 5);
+                dst[6 * dstStride] = _mm_extract_epi16(row, 6);
+                dst[7 * dstStride] = _mm_extract_epi16(row, 7);
             }
         }
     }
