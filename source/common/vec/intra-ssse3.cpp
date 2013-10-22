@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <xmmintrin.h> // SSE
 #include <pmmintrin.h> // SSE3
+#include <tmmintrin.h> // SSSE3
 
 using namespace x265;
 
@@ -3725,7 +3726,7 @@ void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *r
 #endif
 
 namespace x265 {
-void Setup_Vec_IPredPrimitives_sse3(EncoderPrimitives& p)
+void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 {
 #if HIGH_BIT_DEPTH
     p.intra_pred_dc = intra_pred_dc;

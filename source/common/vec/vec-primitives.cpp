@@ -87,7 +87,7 @@ void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
 
-void Setup_Vec_IPredPrimitives_sse3(EncoderPrimitives&);
+void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives&);
 
 void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives&);
@@ -108,13 +108,13 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
         Setup_Vec_PixelPrimitives_sse3(p);
 #endif
         Setup_Vec_DCTPrimitives_sse3(p);
-        Setup_Vec_IPredPrimitives_sse3(p);
         Setup_Vec_BlockCopyPrimitives_sse3(p);
     }
 #endif
 #ifdef HAVE_SSSE3
     if (cpuMask & X265_CPU_SSSE3)
     {
+        Setup_Vec_IPredPrimitives_ssse3(p);
         Setup_Vec_PixelPrimitives_ssse3(p);
         Setup_Vec_IPFilterPrimitives_ssse3(p);
         Setup_Vec_DCTPrimitives_ssse3(p);
