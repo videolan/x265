@@ -28,12 +28,15 @@
 #include "TLibCommon/CommonDef.h"
 
 namespace x265 {
+// encoder namespace
+
 struct Lookahead;
 class TComPic;
 class TEncCfg;
+
 struct RateControlEntry
 {
-    int pictType;
+    int sliceType;
     int texBits;
     int mvBits;
     double blurredComplexity;
@@ -43,19 +46,18 @@ struct RateControlEntry
 
 struct RateControl
 {
-    TComSlice *curFrame;        /* all info abt the current frame */
+    TComSlice *curSlice;      /* all info about the current frame */
     TEncCfg *cfg;
-    SliceType frameType;        /* Current frame type */
-    int ncu;                    /* number of CUs in a frame */
-    int frameThreads;
-    int keyFrameInterval;       /* TODO: need to initialize in init */
-    int qp;                     /* updated qp for current frame */
-    int baseQp;                 /* CQP base QP */
-    double frameDuration;        /* current frame duration in seconds */
+    SliceType sliceType;      /* Current frame type */
+    int ncu;                  /* number of CUs in a frame */
+    int keyFrameInterval;     /* TODO: need to initialize in init */
+    int qp;                   /* updated qp for current frame */
+    int baseQp;               /* CQP base QP */
+    double frameDuration;     /* current frame duration in seconds */
     double bitrate;
     int    lastSatd;
     int    qpConstant[3];
-    double cplxrSum;           /* sum of bits*qscale/rceq */
+    double cplxrSum;          /* sum of bits*qscale/rceq */
     double wantedBitsWindow;  /* target bitrate * window */
     double ipOffset;
     double pbOffset;
@@ -68,12 +70,12 @@ struct RateControl
     double lmax[3];
     double shortTermCplxSum;
     double shortTermCplxCount;
-    int64_t totalBits;   /* totalbits used for already encoded frames */
+    int64_t totalBits;        /* totalbits used for already encoded frames */
     double lastRceq;
-    int framesDone;   /* framesDone keeps track of # of frames passed through RateCotrol already */
+    int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
     RateControl(TEncCfg * _cfg);
 
-    // to be called for each frame to process RateCOntrol and set QP
+    // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce);
     void calcAdaptiveQuantFrame(TComPic *pic);
     int rateControlEnd(int64_t bits, RateControlEntry* rce);
