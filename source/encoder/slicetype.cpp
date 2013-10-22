@@ -137,7 +137,7 @@ void Lookahead::flush()
 int Lookahead::getEstimatedPictureCost(TComPic *pic)
 {
     // POC distances to each reference
-    int d0, d1;
+    int d0, d1, p0, p1, b;
     int poc = pic->getSlice()->getPOC();
     int l0poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
     int l1poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_1, 0);
@@ -146,12 +146,16 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
     {
     case I_SLICE:
         frames[0] = &pic->m_lowres;
-        return estimateFrameCost(0, 0, 0, false);
+        p0 = p1 = b = 0;
+        break;
     case P_SLICE:
         d0 = poc - l0poc;
         frames[0] = lastNonB;
         frames[d0] = &pic->m_lowres;
-        return estimateFrameCost(0, d0, d0, false);
+        p0 = 0;
+        p1 = d0;
+        b = d0;
+        break;
     case B_SLICE:
         d0 = poc - l0poc;
         if (l1poc > poc)
@@ -161,17 +165,29 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
             frames[0] = lastNonB;
             frames[d0] = &pic->m_lowres;
             frames[d0 + d1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
-            return estimateFrameCost(0, d0 + d1, d0, false);
+            p0 = 0;
+            p1 = d0 + d1;
+            b = d0;
         }
         else
         {
             frames[0] = lastNonB;
             frames[d0] = &pic->m_lowres;
-            return estimateFrameCost(0, d0, d0, false);
+            p0 = 0;
+            p1 = d0;
+            b = d0;
         }
+        break;
+    default:
+        return -1;
     }
 
-    return -1;
+    estimateFrameCost(p0, p1, b, false);
+    if (cfg->param.rc.aqMode)
+        pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
+    else
+        pic->m_lowres.satdCost = pic->m_lowres.costEst[b - p0][p1 - b];
+    return pic->m_lowres.satdCost;
 }
 
 #define NUM_CUS (widthInCU > 2 && heightInCU > 2 ? (widthInCU - 2) * (heightInCU - 2) : widthInCU * heightInCU)
@@ -197,7 +213,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
 
         fenc->costEst[b - p0][p1 - b] = 0;
-
+        fenc->costEstAq[b - p0][p1 - b] = 0;
         // TODO: use lowres MVs as motion candidates in full-res search
 
         for (int i = 0; i < heightInCU; i++)
@@ -233,6 +249,11 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         {
             score += lhrows[row].costEst;
             fenc->costEst[0][0] += lhrows[row].costIntra;
+            if (cfg->param.rc.aqMode)
+            {
+                fenc->costEstAq[0][0] += lhrows[row].costIntraAq;
+                fenc->costEstAq[b - p0][p1 - b] += lhrows[row].costEstAq;
+            }
             fenc->intraMbs[b - p0] += lhrows[row].intraMbs;
         }
 
@@ -459,9 +480,13 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         // TOOD: i_icost += intra_penalty + lowres_penalty;
         fenc->intraCost[cuXY] = icost;
         fenc->rowSatds[0][0][cuy] += icost;
-        if (bFrameScoreCU) costIntra += icost;
+        if (bFrameScoreCU)
+        {
+            costIntra += icost;
+            if (fenc->m_qpAqOffset)
+                costIntraAq += (icost * x265_exp2fix8(fenc->m_qpAqOffset[cuXY]) + 128) >> 8;
+        }
     }
-
     if (!bBidir)
     {
         if (fenc->intraCost[cuXY] < bcost)
@@ -476,7 +501,12 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
     if (p0 != p1)
     {
         fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
-        if (bFrameScoreCU) costEst += bcost;
+        if (bFrameScoreCU)
+        {
+            costEst += bcost;
+            if (fenc->m_qpAqOffset)
+                costEstAq += (bcost * x265_exp2fix8(fenc->m_qpAqOffset[cuXY]) + 128) >> 8;
+        }
     }
     fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
