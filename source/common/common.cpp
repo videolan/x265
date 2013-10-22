@@ -395,6 +395,7 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
     fprintf(stderr, "rd=%d ", param->rdLevel);
+    fprintf(stderr, "ref=%d ", param->maxNumReferences);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
