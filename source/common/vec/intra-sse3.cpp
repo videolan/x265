@@ -2004,110 +2004,33 @@ void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel 
     {
         if (modeHor)
         {
-            Vec16uc v_temp, tmp1;
+            __m128i temp, temp1;
 
-            v_temp.load(refMain + 1);
-            /*BROADSTORE16ROWS;*/
-            tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>(v_temp);
-            tmp1.store(dst + (0 * dstStride));
-            tmp1.store(dst + (0 * dstStride) + 16);
-            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(v_temp);
-            tmp1.store(dst + (1 * dstStride));
-            tmp1.store(dst + (1 * dstStride) + 16);
-            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>(v_temp);
-            tmp1.store(dst + (2 * dstStride));
-            tmp1.store(dst + (2 * dstStride) + 16);
-            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3>(v_temp);
-            tmp1.store(dst + (3 * dstStride));
-            tmp1.store(dst + (3 * dstStride) + 16);
-            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4>(v_temp);
-            tmp1.store(dst + (4 * dstStride));
-            tmp1.store(dst + (4 * dstStride) + 16);
-            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5>(v_temp);
-            tmp1.store(dst + (5 * dstStride));
-            tmp1.store(dst + (5 * dstStride) + 16);
-            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6>(v_temp);
-            tmp1.store(dst + (6 * dstStride));
-            tmp1.store(dst + (6 * dstStride) + 16);
-            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7>(v_temp);
-            tmp1.store(dst + (7 * dstStride));
-            tmp1.store(dst + (7 * dstStride) + 16);
-            tmp1 = permute16uc<8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8>(v_temp);
-            tmp1.store(dst + (8 * dstStride));
-            tmp1.store(dst + (8 * dstStride) + 16);
-            tmp1 = permute16uc<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9>(v_temp);
-            tmp1.store(dst + (9 * dstStride));
-            tmp1.store(dst + (9 * dstStride) + 16);
-            tmp1 = permute16uc<10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10>(v_temp);
-            tmp1.store(dst + (10 * dstStride));
-            tmp1.store(dst + (10 * dstStride) + 16);
-            tmp1 = permute16uc<11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11>(v_temp);
-            tmp1.store(dst + (11 * dstStride));
-            tmp1.store(dst + (11 * dstStride) + 16);
-            tmp1 = permute16uc<12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12>(v_temp);
-            tmp1.store(dst + (12 * dstStride));
-            tmp1.store(dst + (12 * dstStride) + 16);
-            tmp1 = permute16uc<13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13>(v_temp);
-            tmp1.store(dst + (13 * dstStride));
-            tmp1.store(dst + (13 * dstStride) + 16);
-            tmp1 = permute16uc<14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14>(v_temp);
-            tmp1.store(dst + (14 * dstStride));
-            tmp1.store(dst + (14 * dstStride) + 16);
-            tmp1 = permute16uc<15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15>(v_temp);
-            tmp1.store(dst + (15 * dstStride));
-            tmp1.store(dst + (15 * dstStride) + 16);
+        #define BROADCAST_STORE(X) \
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(X)); \
+            _mm_storeu_si128((__m128i*)(dst + ((X)  * dstStride)), temp1); \
+            _mm_storeu_si128((__m128i*)(dst + ((X)  * dstStride) + 16), temp1); \
+
+            temp = _mm_loadu_si128((__m128i const*)(refMain + 1));
+
+            for(int i = 0; i < 16; i += 4) // BROADCAST & STORE 16 ROWS
+            {
+                BROADCAST_STORE(i)
+                BROADCAST_STORE(i + 1)
+                BROADCAST_STORE(i + 2)
+                BROADCAST_STORE(i + 3)
+            }
 
             dst += 16 * dstStride;
-            v_temp.load(refMain + 1 + 16);
-            /*BROADSTORE16ROWS;*/
-            tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>(v_temp);
-            tmp1.store(dst + (0 * dstStride));
-            tmp1.store(dst + (0 * dstStride) + 16);
-            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(v_temp);
-            tmp1.store(dst + (1 * dstStride));
-            tmp1.store(dst + (1 * dstStride) + 16);
-            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>(v_temp);
-            tmp1.store(dst + (2 * dstStride));
-            tmp1.store(dst + (2 * dstStride) + 16);
-            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3>(v_temp);
-            tmp1.store(dst + (3 * dstStride));
-            tmp1.store(dst + (3 * dstStride) + 16);
-            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4>(v_temp);
-            tmp1.store(dst + (4 * dstStride));
-            tmp1.store(dst + (4 * dstStride) + 16);
-            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5>(v_temp);
-            tmp1.store(dst + (5 * dstStride));
-            tmp1.store(dst + (5 * dstStride) + 16);
-            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6>(v_temp);
-            tmp1.store(dst + (6 * dstStride));
-            tmp1.store(dst + (6 * dstStride) + 16);
-            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7>(v_temp);
-            tmp1.store(dst + (7 * dstStride));
-            tmp1.store(dst + (7 * dstStride) + 16);
-            tmp1 = permute16uc<8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8>(v_temp);
-            tmp1.store(dst + (8 * dstStride));
-            tmp1.store(dst + (8 * dstStride) + 16);
-            tmp1 = permute16uc<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9>(v_temp);
-            tmp1.store(dst + (9 * dstStride));
-            tmp1.store(dst + (9 * dstStride) + 16);
-            tmp1 = permute16uc<10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10>(v_temp);
-            tmp1.store(dst + (10 * dstStride));
-            tmp1.store(dst + (10 * dstStride) + 16);
-            tmp1 = permute16uc<11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11>(v_temp);
-            tmp1.store(dst + (11 * dstStride));
-            tmp1.store(dst + (11 * dstStride) + 16);
-            tmp1 = permute16uc<12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12>(v_temp);
-            tmp1.store(dst + (12 * dstStride));
-            tmp1.store(dst + (12 * dstStride) + 16);
-            tmp1 = permute16uc<13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13>(v_temp);
-            tmp1.store(dst + (13 * dstStride));
-            tmp1.store(dst + (13 * dstStride) + 16);
-            tmp1 = permute16uc<14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14>(v_temp);
-            tmp1.store(dst + (14 * dstStride));
-            tmp1.store(dst + (14 * dstStride) + 16);
-            tmp1 = permute16uc<15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15>(v_temp);
-            tmp1.store(dst + (15 * dstStride));
-            tmp1.store(dst + (15 * dstStride) + 16);
+            temp = _mm_loadu_si128((__m128i const*)(refMain + 1 + 16));
+
+            for(int i = 0; i < 16; i += 4) // BROADCAST & STORE 16 ROWS
+            {
+                BROADCAST_STORE(i)
+                BROADCAST_STORE(i + 1)
+                BROADCAST_STORE(i + 2)
+                BROADCAST_STORE(i + 3)
+            }
         }
         else
         {
@@ -2248,16 +2171,17 @@ void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel 
     }
     else if (intraPredAngle == -32)
     {
-        Vec16uc v_refSide;
+        __m128i ref_side;
+        __m128i mask = _mm_setr_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
         pixel refMain0 = refMain[0];
 
-        v_refSide.load(refSide);
-        v_refSide = permute16uc<15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0>(v_refSide);
-        v_refSide.store(refMain - 15);
+        ref_side = _mm_loadu_si128((__m128i const*)(refSide));
+        ref_side = _mm_shuffle_epi8(ref_side, mask);
+        _mm_storeu_si128((__m128i*)(refMain - 15), ref_side);
 
-        v_refSide.load(refSide + 16);
-        v_refSide = permute16uc<15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0>(v_refSide);
-        v_refSide.store(refMain - 31);
+        ref_side = _mm_loadu_si128((__m128i const*)(refSide + 16));
+        ref_side = _mm_shuffle_epi8(ref_side, mask);
+        _mm_storeu_si128((__m128i*)(refMain - 31), ref_side);
 
         refMain[0] = refMain0;
 
