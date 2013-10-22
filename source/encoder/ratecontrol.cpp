@@ -87,7 +87,7 @@ double RateControl::acEnergyCu(TComPic* pic, uint32_t cuAddr)
     UInt frameStride = pic->getPicYuvOrg()->getStride();
     UInt cStride = pic->getPicYuvOrg()->getCStride();
 
-    // Calculate Qp offset for each 16x16 block in the CU and average them over entire CU
+    /* Calculate Qp offset for each 16x16 block in the CU and average them over entire CU */
     for (UInt h = 0, cnt = 0; h < g_maxCUHeight; h += blockHeight)
     {
         for (UInt w = 0; w < g_maxCUWidth; w += blockWidth, cnt++)
@@ -135,7 +135,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     lastNonBPictType = -1;
     baseQp = cfg->param.rc.qp;
     qp = baseQp;
-    lastRceq = 1; // handles the cmplxrsum when the previous frame cost is zero
+    lastRceq = 1; /* handles the cmplxrsum when the previous frame cost is zero */
     totalBits = 0;
     shortTermCplxSum = 0;
     shortTermCplxCount = 0;
@@ -143,7 +143,7 @@ RateControl::RateControl(TEncCfg * _cfg)
 
     if (cfg->param.rc.rateControlMode == X265_RC_ABR)
     {
-        // Adjust the first frame in order to stabilize the quality level compared to the rest.
+        /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
         accumPNorm = .01;
@@ -169,7 +169,7 @@ RateControl::RateControl(TEncCfg * _cfg)
         qpConstant[B_SLICE] = Clip3(0, MAX_QP, (int)(baseQp + pbOffset + 0.5));
     }
 
-    // qstep - value set as encoder specific.
+    /* qstep - value set as encoder specific */
     lstep = pow(2, cfg->param.rc.qpStep / 6.0);
 }
 
@@ -359,9 +359,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
     }
 }
 
-/**
- * modify the bitrate curve from pass1 for one frame
- */
+/* modify the bitrate curve from pass1 for one frame */
 double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 {
     double q;
@@ -379,7 +377,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
     return q;
 }
 
-/* After encoding one frame,  update ratecontrol state */
+/* After encoding one frame, update rate control state */
 int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
 {
     if (cfg->param.rc.rateControlMode == X265_RC_ABR)
