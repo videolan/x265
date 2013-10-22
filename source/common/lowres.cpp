@@ -122,7 +122,7 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     sliceType = type;
     frameNum = poc;
     leadingBframes = 0;
-    satdCost = 0;
+    satdCost = -1;
     memset(costEst, -1, sizeof(costEst));
 
     if (m_qpAqOffset)
