@@ -170,8 +170,11 @@ void TEncBinCABAC::resetBits()
 
 UInt TEncBinCABAC::getNumWrittenBits()
 {
+    // NOTE: in Counter mode, we always not call testAndWriteOut(), so m_bitIf unused
+    assert(!bIsCounter || (m_bitIf->getNumberOfWrittenBits() == 0));
+
     if (bIsCounter)
-        return m_bitIf->getNumberOfWrittenBits() + UInt(m_fracBits >> 15);
+        return UInt(m_fracBits >> 15);
     else
         return m_bitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
 }
