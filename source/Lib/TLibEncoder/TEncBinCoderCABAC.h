@@ -38,7 +38,8 @@
 #ifndef X265_TENCBINCODERCABAC_H
 #define X265_TENCBINCODERCABAC_H
 
-#include "TEncBinCoder.h"
+#include "TLibCommon/ContextModel.h"
+#include "TLibCommon/TComBitStream.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -46,7 +47,7 @@
 namespace x265 {
 // private namespace
 
-class TEncBinCABAC : public TEncBinIf
+class TEncBinCABAC
 {
 public:
 
@@ -58,7 +59,7 @@ public:
 
     void  start();
     void  finish();
-    void  copyState(TEncBinIf* binIf);
+    void  copyState(TEncBinCABAC* binIf);
     void  flush();
 
     void  resetBac();

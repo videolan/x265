@@ -42,7 +42,6 @@
 #include "TLibCommon/ContextTables.h"
 #include "TLibCommon/ContextModel.h"
 #include "TEncEntropy.h"
-#include "TEncBinCoder.h"
 #include "TEncBinCoderCABAC.h"
 
 namespace x265 {
@@ -63,7 +62,7 @@ public:
     TEncSbac();
     virtual ~TEncSbac();
 
-    void  init(TEncBinIf* p)          { m_binIf = p; }
+    void  init(TEncBinCABAC* p)       { m_binIf = p; }
 
     void  uninit()                    { m_binIf = 0; }
 
@@ -129,7 +128,7 @@ public:
 
     TComBitIf*    m_bitIf;
     TComSlice*    m_slice;
-    TEncBinIf*    m_binIf;
+    TEncBinCABAC* m_binIf;
     //SBAC RD
     UInt          m_coeffCost;
 
@@ -175,7 +174,7 @@ public:
     void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
     void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
 
-    TEncBinIf* getEncBinIf()  { return m_binIf; }
+    TEncBinCABAC* getEncBinIf()  { return m_binIf; }
 
 private:
 

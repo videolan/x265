@@ -147,10 +147,8 @@ void TEncBinCABAC::xWritePCMCode(UInt code, UInt length)
     m_bitIf->write(code, length);
 }
 
-void TEncBinCABAC::copyState(TEncBinIf* binIf)
+void TEncBinCABAC::copyState(TEncBinCABAC* binCABAC)
 {
-    TEncBinCABAC* binCABAC = (TEncBinCABAC*)binIf;
-
     m_low              = binCABAC->m_low;
     m_range            = binCABAC->m_range;
     m_bitsLeft         = binCABAC->m_bitsLeft;
