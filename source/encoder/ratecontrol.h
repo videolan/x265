@@ -47,23 +47,18 @@ struct RateControl
     TEncCfg *cfg;
     SliceType frameType;        /* Current frame type */
     int ncu;                    /* number of CUs in a frame */
-    int framerate;              /* current frame rate TODO: need to initialize in init */
     int frameThreads;
     int keyFrameInterval;       /* TODO: need to initialize in init */
     int qp;                     /* updated qp for current frame */
     int baseQp;                 /* CQP base QP */
     double frameDuration;        /* current frame duration in seconds */
     double bitrate;
-    double rateTolerance;
-    double qCompress;
     int    lastSatd;
     int    qpConstant[3];
     double cplxrSum;           /* sum of bits*qscale/rceq */
     double wantedBitsWindow;  /* target bitrate * window */
     double ipOffset;
     double pbOffset;
-    double ipFactor;
-    double pbFactor;
     int lastNonBPictType;
     double accumPQp;          /* for determining I-frame quant */
     double accumPNorm;
