@@ -126,9 +126,6 @@
 
 #define CABAC_INIT_PRESENT_FLAG     1
 
-#define _SUMMARY_OUT_               0           ///< print-out PSNR results of all slices to summary.txt
-#define _SUMMARY_PIC_               0           ///< print-out PSNR results for each slice type to summary.txt
-
 #define MAX_GOP                     64          ///< max. value of hierarchical GOP size
 
 #define MAX_NUM_REF_PICS            16          ///< max. number of pictures used for reference

@@ -239,10 +239,12 @@ typedef struct x265_stats_t
     double    globalPsnrV;
     double    globalPsnr;
     double    globalSsim;
-    double    accBits;
-    uint32_t  totalNumPics;
-}
-x265_stats_t;
+    double    accBits;              // total bits output thus far
+    uint32_t  encodedPictureCount;  // number of output pictures thus far
+    double    elapsedEncodeTime;    // wall time since encoder was opened
+    double    elapsedVideoTime;     // encoded picture count / frame rate
+    double    bitrate;              // accBits / elapsed video time
+} x265_stats_t;
 
 /* Input parameters to the encoder */
 typedef struct x265_param_t
@@ -252,9 +254,9 @@ typedef struct x265_param_t
     int       poolNumThreads;                  ///< number of threads to allocate for thread pool
     int       frameNumThreads;                 ///< number of concurrently encoded frames
 
-    int       internalBitDepth;                ///< bit-depth the codec operates at
+    int       internalBitDepth;                ///< bit-depth at which the encoder operates
 
-    const char *csvfn;                        ///< csv log filename
+    const char *csvfn;                         ///< csv log filename. logLevel >= 3 is frame logging, else one line per run
 
     // source specification
     int       frameRate;                       ///< source frame-rate in Hz
@@ -416,13 +418,19 @@ int x265_encoder_headers(x265_t *, x265_nal_t **pp_nal, int *pi_nal);
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
 int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out);
 
-/* x265_encoder_stats:
-*       returns output stats from the encoder */
+/* x265_encoder_get_stats:
+ *       returns encoder statistics */
 void x265_encoder_get_stats(x265_t *encoder, x265_stats_t *);
 
+/* x265_encoder_log:
+ *       write a line to the configured CSV file.  If a CSV filename was not
+ *       configured, or file open failed, or the log level indicated frame level
+ *       logging, this function will perform no write. */
+void x265_encoder_log(x265_t *encoder, int argc, char **argv);
+
 /* x265_encoder_close:
- *      close an encoder handler.  Optionally return the global PSNR value (6 * psnrY + psnrU + psnrV) / 8 */
-void x265_encoder_close(x265_t *, double *globalPsnr);
+ *      close an encoder handler */
+void x265_encoder_close(x265_t *);
 
 /***
  * Release library static allocations

@@ -468,6 +468,8 @@ int x265_param_parse(x265_param_t *p, const char *name, const char *value)
     if (0) ;
     OPT("fps")
         p->frameRate = atoi(value);
+    OPT("csv")
+        p->csvfn = value;
     OPT("threads")
         p->poolNumThreads = atoi(value);
     OPT("frame-threads")

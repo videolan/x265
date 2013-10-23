@@ -11,5 +11,6 @@ x265_build_info_str
 x265_encoder_headers
 x265_encoder_encode
 x265_encoder_get_stats
+x265_encoder_log
 x265_encoder_close
 x265_cleanup

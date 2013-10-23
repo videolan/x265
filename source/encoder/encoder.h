@@ -67,13 +67,15 @@ private:
     TEncAnalyze        m_analyzeB;
     double             m_globalSsim;
     FILE*              m_csvfpt;
+    int64_t            m_encodeStartTime;
+
     // quality control
     TComScalingList    m_scalingList;      ///< quantization matrix information
 
 public:
 
-    x265_nal_t *m_nals;
-    char *m_packetData;
+    x265_nal_t* m_nals;
+    char*       m_packetData;
 
     Encoder();
 
@@ -92,7 +94,9 @@ public:
 
     void fetchStats(x265_stats_t* stats);
 
-    double printSummary();
+    void writeLog(int argc, char **argv);
+
+    void printSummary();
 
     TComScalingList* getScalingList() { return &m_scalingList; }
 

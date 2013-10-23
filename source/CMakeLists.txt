@@ -10,7 +10,7 @@ project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 1)
+set(X265_BUILD 2)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
