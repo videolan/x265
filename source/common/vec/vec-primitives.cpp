@@ -81,7 +81,6 @@ namespace x265 {
 // private x265 namespace
 
 void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives&);
-void Setup_Vec_BlockCopyPrimitives_avx2(EncoderPrimitives&);
 
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
@@ -135,7 +134,6 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_AVX2)
     {
         Setup_Vec_PixelPrimitives_avx2(p);
-        Setup_Vec_BlockCopyPrimitives_avx2(p);
     }
 #endif
 }

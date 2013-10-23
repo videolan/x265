@@ -98,8 +98,8 @@ if(ENABLE_PRIMITIVES_VEC)
                 PROPERTIES COMPILE_FLAGS /arch:SSE2)
         endif()
         if (MSVC_VERSION EQUAL 1700 OR INTEL_CXX)
-            set(PRIMITIVES ${PRIMITIVES} vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp)
-            set_source_files_properties(vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp
+            set(PRIMITIVES ${PRIMITIVES} vec/pixel-avx2.cpp)
+            set_source_files_properties(vec/pixel-avx2.cpp
                 PROPERTIES COMPILE_FLAGS /arch:AVX)
         endif()
     endif()
@@ -131,10 +131,8 @@ if(ENABLE_PRIMITIVES_VEC)
                 PROPERTIES COMPILE_FLAGS "-msse4.1")
         endif()
         if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.7))
-            set(PRIMITIVES ${PRIMITIVES}
-                vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp)
-            set_source_files_properties(
-                vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp
+            set(PRIMITIVES ${PRIMITIVES} vec/pixel-avx2.cpp)
+            set_source_files_properties(vec/pixel-avx2.cpp
                 PROPERTIES COMPILE_FLAGS "-march=core-avx2")
         endif()
     endif(GCC)
