@@ -42,6 +42,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <algorithm>
 
 namespace x265 {
 // private namespace

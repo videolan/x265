@@ -97,7 +97,7 @@ if(ENABLE_PRIMITIVES_VEC)
                 vec/intra-sse3.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp
                 PROPERTIES COMPILE_FLAGS /arch:SSE2)
         endif()
-        if (MSVC_VERSION EQUAL 1700 OR INTEL_CXX)
+        if (NOT (MSVC_VERSION LESS 1700) OR INTEL_CXX)
             set(PRIMITIVES ${PRIMITIVES} vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp)
             set_source_files_properties(vec/blockcopy-avx2.cpp vec/pixel-avx2.cpp
                 PROPERTIES COMPILE_FLAGS /arch:AVX)
