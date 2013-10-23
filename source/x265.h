@@ -113,8 +113,7 @@ typedef enum
     NAL_UNIT_UNSPECIFIED_62,
     NAL_UNIT_UNSPECIFIED_63,
     NAL_UNIT_INVALID,
-}
-NalUnitType;
+} NalUnitType;
 
 /* The data within the payload is already NAL-encapsulated; the type
  * is merely in the struct for easy access by the calling application.
@@ -126,8 +125,7 @@ typedef struct
     int     i_type;      /* NalUnitType */
     int     i_payload;   /* size in bytes */
     uint8_t *p_payload;
-}
-x265_nal_t;
+} x265_nal_t;
 
 typedef struct x265_picture_t
 {
@@ -138,8 +136,7 @@ typedef struct x265_picture_t
     int     poc;
     int64_t pts;
     void*   userData;
-}
-x265_picture_t;
+} x265_picture_t;
 
 typedef enum
 {
@@ -148,8 +145,7 @@ typedef enum
     X265_UMH_SEARCH,
     X265_STAR_SEARCH,
     X265_FULL_SEARCH
-}
-X265_ME_METHODS;
+} X265_ME_METHODS;
 
 /* CPU flags */
 
@@ -219,8 +215,7 @@ typedef enum RcMethod
     X265_RC_ABR,
     X265_RC_CQP,
     X265_RC_CRF
-}
-X265_RC_METHODS;
+} X265_RC_METHODS;
 
 /*Level of Rate Distortion Optimization Allowed */
 typedef enum RDOLevel
@@ -228,8 +223,7 @@ typedef enum RDOLevel
     X265_NO_RDO_NO_RDOQ, /* Partial RDO during mode decision (only at each depth/mode), no RDO in quantization*/
     X265_NO_RDO,         /* Partial RDO during mode decision (only at each depth/mode), quantization RDO enabled */
     X265_FULL_RDO        /* Full RD-based mode decision */
-}
-X265_RDO_LEVEL;
+} X265_RDO_LEVEL;
 
 /* Output statistics from encoder */
 typedef struct x265_stats_t
@@ -338,9 +332,7 @@ typedef struct x265_param_t
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
     } rc;
-}
-
-x265_param_t;
+} x265_param_t;
 
 /***
  * If not called, first encoder allocated will auto-detect the CPU and
