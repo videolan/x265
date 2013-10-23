@@ -25,8 +25,13 @@
 
 #include "primitives.h"
 
-#define INSTRSET 8
-#include "vectorclass.h"
+#ifdef __GNUC__
+#include <x86intrin.h>                 // x86intrin.h includes header files for whatever instruction
+                                       // sets are specified on the compiler command line, such as:
+                                       // xopintrin.h, fma4intrin.h
+#else
+#include <immintrin.h>                 // MS version of immintrin.h covers AVX, AVX2 and FMA3
+#endif // __GNUC__
 
 using namespace x265;
 
