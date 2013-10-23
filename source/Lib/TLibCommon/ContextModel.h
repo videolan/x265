@@ -76,6 +76,7 @@ public:
     }
 
     int getEntropyBits(UInt val) { return s_entropyBits[m_state ^ val]; }
+    int getEntropyBits(UInt state, UInt val) { return s_entropyBits[state ^ val]; }
 
     void update(int binVal)
     {
@@ -89,7 +90,7 @@ public:
 
     UInt getBinsCoded()           { return bBinsCoded;   }
 
-private:
+public:
 
     UChar         m_state;  ///< internal state variable
     UChar         bBinsCoded;

@@ -182,38 +182,40 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
         DTRACE_CABAC_V(binValue)
         DTRACE_CABAC_T("\n")
     }
+
+    UInt mstate = ctxModel.m_state;
+    ctxModel.update(binValue);
+
     if (bIsCounter)
     {
-        m_fracBits += ctxModel.getEntropyBits(binValue);
-        ctxModel.update(binValue);
+        m_fracBits += ctxModel.getEntropyBits(mstate, binValue);
         return;
     }
     ctxModel.setBinsCoded(1);
 
-    UInt lps = g_lpsTable[ctxModel.getState()][(m_range >> 6) & 3];
+    // TODO: Sync encode proto of cabac status
+    UInt mps = mstate & 1;
+    UInt state = mstate >> 1;
+    UInt lps = g_lpsTable[state][(m_range >> 6) & 3];
     m_range -= lps;
 
-    if (binValue != ctxModel.getMps())
+    int numBits = g_renormTable[lps >> 3];
+    if (binValue != mps)
     {
-        int numBits = g_renormTable[lps >> 3];
         m_low     = (m_low + m_range) << numBits;
         m_range   = lps << numBits;
-        ctxModel.updateLPS();
-
-        m_bitsLeft += numBits;
     }
     else
     {
-        ctxModel.updateMPS();
         if (m_range >= 256)
         {
             return;
         }
-
+        numBits = 1;
         m_low <<= 1;
         m_range <<= 1;
-        m_bitsLeft++;
     }
+    m_bitsLeft += numBits;
 
     testAndWriteOut();
 }
