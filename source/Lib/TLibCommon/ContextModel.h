@@ -43,6 +43,13 @@
 //! \ingroup TLibCommon
 //! \{
 
+using namespace x265;
+
+extern const UChar g_nextStateMPS[128];
+extern const UChar g_nextStateLPS[128];
+extern const int   g_entropyBits[128];
+extern       UChar g_nextState[128][2];
+
 namespace x265 {
 // private namespace
 
@@ -67,24 +74,24 @@ public:
 
     void updateLPS()
     {
-        m_state = s_nextStateLPS[m_state];
+        m_state = g_nextStateLPS[m_state];
     }
 
     void updateMPS()
     {
-        m_state = s_nextStateMPS[m_state];
+        m_state = g_nextStateMPS[m_state];
     }
 
-    int getEntropyBits(UInt val) { return s_entropyBits[m_state ^ val]; }
-    int getEntropyBits(UInt state, UInt val) { return s_entropyBits[state ^ val]; }
+    int getEntropyBits(UInt val) { return g_entropyBits[m_state ^ val]; }
+    int getEntropyBits(UInt state, UInt val) { return g_entropyBits[state ^ val]; }
 
     void update(int binVal)
     {
-        m_state = m_nextState[m_state][binVal];
+        m_state = g_nextState[m_state][binVal];
     }
 
     static void buildNextStateTable();
-    static int getEntropyBitsTrm(int val) { return s_entropyBits[126 ^ val]; }
+    static int getEntropyBitsTrm(int val) { return g_entropyBits[126 ^ val]; }
 
     void setBinsCoded(UInt val)   { bBinsCoded = (UChar)val;  }
 
@@ -94,10 +101,6 @@ public:
 
     UChar         m_state;  ///< internal state variable
     UChar         bBinsCoded;
-    static const UChar s_nextStateMPS[128];
-    static const UChar s_nextStateLPS[128];
-    static const int   s_entropyBits[128];
-    static UChar  m_nextState[128][2];
 };
 }
 //! \}
