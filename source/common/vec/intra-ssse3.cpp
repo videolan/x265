@@ -2777,14 +2777,14 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
         {
             __m128i main = _mm_loadl_epi64((__m128i*)(refMain + 1));
 
-            _mm_storeu_si128((__m128i*)(dst), main);
-            _mm_storeu_si128((__m128i*)(dst + dstStride), main);
-            _mm_storeu_si128((__m128i*)(dst + 2 * dstStride), main);
-            _mm_storeu_si128((__m128i*)(dst + 3 * dstStride), main);
-            _mm_storeu_si128((__m128i*)(dst + 4 * dstStride), main);
-            _mm_storeu_si128((__m128i*)(dst + 5 * dstStride), main);
-            _mm_storeu_si128((__m128i*)(dst + 6 * dstStride), main);
-            _mm_storeu_si128((__m128i*)(dst + 7 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 0 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 1 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), main);
 
             if (bFilter)
             {
@@ -2802,14 +2802,17 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
                 row = _mm_add_epi16(row, side);
                 row = _mm_min_epi16(_mm_max_epi16(_mm_set1_epi16(0), row), _mm_set1_epi16((1 << X265_DEPTH) - 1));
 
-                dst[0 * dstStride] = _mm_extract_epi16(row, 0);
-                dst[1 * dstStride] = _mm_extract_epi16(row, 1);
-                dst[2 * dstStride] = _mm_extract_epi16(row, 2);
-                dst[3 * dstStride] = _mm_extract_epi16(row, 3);
-                dst[4 * dstStride] = _mm_extract_epi16(row, 4);
-                dst[5 * dstStride] = _mm_extract_epi16(row, 5);
-                dst[6 * dstStride] = _mm_extract_epi16(row, 6);
-                dst[7 * dstStride] = _mm_extract_epi16(row, 7);
+                uint8_t tmp[16];
+                _mm_storeu_si128((__m128i*)tmp, row);
+
+                dst[0 * dstStride] = tmp[ 0];
+                dst[1 * dstStride] = tmp[ 2];
+                dst[2 * dstStride] = tmp[ 4];
+                dst[3 * dstStride] = tmp[ 6];
+                dst[4 * dstStride] = tmp[ 8];
+                dst[5 * dstStride] = tmp[10];
+                dst[6 * dstStride] = tmp[12];
+                dst[7 * dstStride] = tmp[14];
             }
         }
     }
