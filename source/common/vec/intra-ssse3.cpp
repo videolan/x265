@@ -2113,96 +2113,6 @@ namespace {
         __m128i lowm, highm; \
         __m128i mask = _mm_set1_epi32(0x00FF00FF);
 
-#define PRED_INTRA_ANG8_START() \
-    /* Map the mode index to main prediction direction and angle*/ \
-    bool modeHor       = (dirMode < 18); \
-    bool modeVer       = !modeHor; \
-    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0; \
-    int absAng         = abs(intraPredAngle); \
-    int signAng        = intraPredAngle < 0 ? -1 : 1; \
-    /* Set bitshifts and scale the angle parameter to block size*/ \
-    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 }; \
-    absAng             = angTable[absAng]; \
-    intraPredAngle     = signAng * absAng; \
-    if (modeHor) /* Near horizontal modes*/ \
-    { \
-        Vec16uc tmp; \
-        Vec8s row11, row12; \
-        Vec16uc row1, row2, row3, row4, tmp16_1, tmp16_2; \
-        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle; \
-        Vec8s tmp1, tmp2; \
-        v_deltaPos = 0; \
-        v_ipAngle = intraPredAngle;
-
-#define PRED_INTRA_ANG8_MIDDLE() \
-        /* Flip the block */ \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2); \
-        row1 = tmp16_1; \
-        row2 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4); \
-        row3 = tmp16_1; \
-        row4 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2); \
-        row1 = tmp16_1; \
-        row2 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4); \
-        row3 = tmp16_1; \
-        row4 = tmp16_2; \
-        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row1, (Vec4i)row3); \
-        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row1, (Vec4i)row3); \
-        row1 = tmp16_1; \
-        row3 = tmp16_2; \
-        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row2, (Vec4i)row4); \
-        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row2, (Vec4i)row4); \
-        row2 = tmp16_1; \
-        row4 = tmp16_2; \
-        store_partial(const_int(8), dst, row1); /*row1*/ \
-        store_partial(const_int(8), dst + (2 * dstStride), row3); /*row3*/ \
-        store_partial(const_int(8), dst + (4 * dstStride), row2); /*row5*/ \
-        store_partial(const_int(8), dst + (6 * dstStride), row4); /*row7*/ \
-        row1 = blend2q<1, 3>((Vec2q)row1, (Vec2q)row1); \
-        store_partial(const_int(8), dst + (1 * dstStride), row1); /*row2*/ \
-        row1 = blend2q<1, 3>((Vec2q)row3, (Vec2q)row3); \
-        store_partial(const_int(8), dst + (3 * dstStride), row1); /*row4*/ \
-        row1 = blend2q<1, 3>((Vec2q)row2, (Vec2q)row2); \
-        store_partial(const_int(8), dst + (5 * dstStride), row1); /*row6*/ \
-        row1 = blend2q<1, 3>((Vec2q)row4, (Vec2q)row4); \
-        store_partial(const_int(8), dst + (7 * dstStride), row1); /*row8*/ \
-    } \
-    else /* Vertical modes*/ \
-    { \
-        Vec8s row11, row12; \
-        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle; \
-        Vec16uc tmp; \
-        Vec8s tmp1, tmp2; \
-        v_deltaPos = 0; \
-        v_ipAngle = intraPredAngle; \
-
-// ROW is a Vec8s variable, X is the index in of data to be loaded
-#define LOADROW(ROW, X) \
-    tmp = load_partial(const_int(8), refMain + 1 + X); \
-    ROW = extend_low(tmp); \
-
-#define CALCROW(RES, ROW1, ROW2) \
-    v_deltaPos += v_ipAngle; \
-    v_deltaFract = v_deltaPos & thirty1; \
-    RES = ((thirty2 - v_deltaFract) * ROW1 + (v_deltaFract * ROW2) + 16) >> 5;
-
-#define PREDANG_CALCROW_VER(X) \
-    LOADROW(row11, GETAP(lookIdx, X)); \
-    LOADROW(row12, GETAP(lookIdx, X) + 1); \
-    CALCROW(row11, row11, row12); \
-    store_partial(const_int(8), dst + (X * dstStride), compress(row11, row11)); \
-
-#define PREDANG_CALCROW_HOR(X, rowx) \
-    LOADROW(row11, GETAP(lookIdx, X)); \
-    LOADROW(row12, GETAP(lookIdx, X) + 1); \
-    CALCROW(rowx, row11, row12);
-
 void predIntraAng8_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     __m128i tmp16_1 = _mm_loadl_epi64((__m128i*)(refMain + 2));
@@ -2822,12 +2732,7 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     }
 }
 
-#undef PREDANG_CALCROW_VER
-#undef PREDANG_CALCROW_HOR
-#undef LOADROW
-#undef CALCROW
-
-//16x16
+// 16x16
 #define PREDANG_CALCROW_VER(X) \
     LOADROW(row11L, row11H, GETAP(lookIdx, X)); \
     LOADROW(row12L, row12H, GETAP(lookIdx, X) + 1); \
