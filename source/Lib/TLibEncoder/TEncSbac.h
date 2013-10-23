@@ -40,7 +40,6 @@
 
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/ContextTables.h"
-#include "TLibCommon/ContextModel.h"
 #include "TEncEntropy.h"
 #include "TEncBinCoderCABAC.h"
 #include "SyntaxElementWriter.h"

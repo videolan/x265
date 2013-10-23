@@ -61,14 +61,83 @@ void  xTraceSliceHeader(TComSlice *)
 
 #endif // if ENC_DEC_TRACE
 
+const int g_entropyBits[128] =
+{
+    // Corrected table, most notably for last state
+    0x07b23, 0x085f9, 0x074a0, 0x08cbc, 0x06ee4, 0x09354, 0x067f4, 0x09c1b, 0x060b0, 0x0a62a, 0x05a9c, 0x0af5b, 0x0548d, 0x0b955, 0x04f56, 0x0c2a9,
+    0x04a87, 0x0cbf7, 0x045d6, 0x0d5c3, 0x04144, 0x0e01b, 0x03d88, 0x0e937, 0x039e0, 0x0f2cd, 0x03663, 0x0fc9e, 0x03347, 0x10600, 0x03050, 0x10f95,
+    0x02d4d, 0x11a02, 0x02ad3, 0x12333, 0x0286e, 0x12cad, 0x02604, 0x136df, 0x02425, 0x13f48, 0x021f4, 0x149c4, 0x0203e, 0x1527b, 0x01e4d, 0x15d00,
+    0x01c99, 0x166de, 0x01b18, 0x17017, 0x019a5, 0x17988, 0x01841, 0x18327, 0x016df, 0x18d50, 0x015d9, 0x19547, 0x0147c, 0x1a083, 0x0138e, 0x1a8a3,
+    0x01251, 0x1b418, 0x01166, 0x1bd27, 0x01068, 0x1c77b, 0x00f7f, 0x1d18e, 0x00eda, 0x1d91a, 0x00e19, 0x1e254, 0x00d4f, 0x1ec9a, 0x00c90, 0x1f6e0,
+    0x00c01, 0x1fef8, 0x00b5f, 0x208b1, 0x00ab6, 0x21362, 0x00a15, 0x21e46, 0x00988, 0x2285d, 0x00934, 0x22ea8, 0x008a8, 0x239b2, 0x0081d, 0x24577,
+    0x007c9, 0x24ce6, 0x00763, 0x25663, 0x00710, 0x25e8f, 0x006a0, 0x26a26, 0x00672, 0x26f23, 0x005e8, 0x27ef8, 0x005ba, 0x284b5, 0x0055e, 0x29057,
+    0x0050c, 0x29bab, 0x004c1, 0x2a674, 0x004a7, 0x2aa5e, 0x0046f, 0x2b32f, 0x0041f, 0x2c0ad, 0x003e7, 0x2ca8d, 0x003ba, 0x2d323, 0x0010c, 0x3bfbb
+};
+
+const uint8_t g_nextStateMPS[128] =
+{
+    2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+    18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+    34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+    50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65,
+    66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81,
+    82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97,
+    98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113,
+    114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 124, 125, 126, 127
+};
+
+const uint8_t g_nextStateLPS[128] =
+{
+    1, 0, 0, 1, 2, 3, 4, 5, 4, 5, 8, 9, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17, 18, 19, 18, 19, 22, 23, 22, 23, 24, 25,
+    26, 27, 26, 27, 30, 31, 30, 31, 32, 33, 32, 33, 36, 37, 36, 37,
+    38, 39, 38, 39, 42, 43, 42, 43, 44, 45, 44, 45, 46, 47, 48, 49,
+    48, 49, 50, 51, 52, 53, 52, 53, 54, 55, 54, 55, 56, 57, 58, 59,
+    58, 59, 60, 61, 60, 61, 60, 61, 62, 63, 64, 65, 64, 65, 66, 67,
+    66, 67, 66, 67, 68, 69, 68, 69, 70, 71, 70, 71, 70, 71, 72, 73,
+    72, 73, 72, 73, 74, 75, 74, 75, 74, 75, 76, 77, 76, 77, 126, 127
+};
+
+UChar g_nextState[128][2];
+
+void buildNextStateTable()
+{
+    for (int i = 0; i < 128; i++)
+    {
+        for (int j = 0; j < 2; j++)
+        {
+            g_nextState[i][j] = ((i & 1) == j) ? g_nextStateMPS[i] : g_nextStateLPS[i];
+        }
+    }
+}
+
+/**
+ - initialize context model with respect to QP and initialization value
+ .
+ \param  qp         input QP value
+ \param  initValue  8 bit initialization value
+ */
+uint8_t sbacInit(int qp, int initValue)
+{
+    qp = Clip3(0, 51, qp);
+
+    int  slope      = (initValue >> 4) * 5 - 45;
+    int  offset     = ((initValue & 15) << 3) - 16;
+    int  initState  =  X265_MIN(X265_MAX(1, (((slope * qp) >> 4) + offset)), 126);
+    UInt mpState    = (initState >= 64);
+    uint8_t m_state = ((mpState ? (initState - 64) : (63 - initState)) << 1) + mpState;
+
+    return m_state;
+}
+
 static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, UChar* ctxModel, int size)
 {
     ctxModel += sliceType * size;
 
     for (int n = 0; n < size; n++)
     {
-        contextModel[n].init(qp, ctxModel[n]);
-        contextModel[n].setBinsCoded(0);
+        contextModel[n].m_state = sbacInit(qp, ctxModel[n]);
+        contextModel[n].bBinsCoded = 0;
     }
 }
 
@@ -81,14 +150,14 @@ static UInt calcCost(ContextModel *contextModel, SliceType sliceType, int qp, UC
     for (int n = 0; n < size; n++)
     {
         ContextModel tmpContextModel;
-        tmpContextModel.init(qp, ctxModel[n]);
+        tmpContextModel.m_state = sbacInit(qp, ctxModel[n]);
 
         // Map the 64 CABAC states to their corresponding probability values
         static double aStateToProbLPS[] = { 0.50000000, 0.47460857, 0.45050660, 0.42762859, 0.40591239, 0.38529900, 0.36573242, 0.34715948, 0.32952974, 0.31279528, 0.29691064, 0.28183267, 0.26752040, 0.25393496, 0.24103941, 0.22879875, 0.21717969, 0.20615069, 0.19568177, 0.18574449, 0.17631186, 0.16735824, 0.15885931, 0.15079198, 0.14313433, 0.13586556, 0.12896592, 0.12241667, 0.11620000, 0.11029903, 0.10469773, 0.09938088, 0.09433404, 0.08954349, 0.08499621, 0.08067986, 0.07658271, 0.07269362, 0.06900203, 0.06549791, 0.06217174, 0.05901448, 0.05601756, 0.05317283, 0.05047256, 0.04790942, 0.04547644, 0.04316702, 0.04097487, 0.03889405, 0.03691890, 0.03504406, 0.03326442, 0.03157516, 0.02997168, 0.02844963, 0.02700488, 0.02563349, 0.02433175, 0.02309612, 0.02192323, 0.02080991, 0.01975312, 0.01875000 };
 
-        double probLPS          = aStateToProbLPS[contextModel[n].getState()];
+        double probLPS          = aStateToProbLPS[sbacGetState(contextModel[n].m_state)];
         double prob0, prob1;
-        if (contextModel[n].getMps() == 1)
+        if (sbacGetMps(contextModel[n].m_state) == 1)
         {
             prob0 = probLPS;
             prob1 = 1.0 - prob0;
@@ -99,9 +168,9 @@ static UInt calcCost(ContextModel *contextModel, SliceType sliceType, int qp, UC
             prob0 = 1.0 - prob1;
         }
 
-        if (contextModel[n].getBinsCoded() > 0)
+        if (contextModel[n].bBinsCoded > 0)
         {
-            cost += (UInt)(prob0 * tmpContextModel.getEntropyBits(0) + prob1 * tmpContextModel.getEntropyBits(1));
+            cost += (UInt)(prob0 * sbacGetEntropyBits(tmpContextModel.m_state, 0) + prob1 * sbacGetEntropyBits(tmpContextModel.m_state, 1));
         }
     }
 
@@ -119,6 +188,8 @@ TEncSbac::TEncSbac()
     , m_coeffCost(0)
 {
     assert(MAX_OFF_CTX_MOD <= MAX_NUM_CTX_MOD);
+
+    memset(m_contextModels, 0, sizeof(m_contextModels));
 }
 
 TEncSbac::~TEncSbac()
@@ -2442,16 +2513,16 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 
     for (UInt uiCtxInc = 0; uiCtxInc < 3 * NUM_QT_CBF_CTX; uiCtxInc++)
     {
-        estBitsSbac->blockCbpBits[uiCtxInc][0] = ctx[uiCtxInc].getEntropyBits(0);
-        estBitsSbac->blockCbpBits[uiCtxInc][1] = ctx[uiCtxInc].getEntropyBits(1);
+        estBitsSbac->blockCbpBits[uiCtxInc][0] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 0);
+        estBitsSbac->blockCbpBits[uiCtxInc][1] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 1);
     }
 
     ctx = &m_contextModels[OFF_QT_ROOT_CBF_CTX];
 
     for (UInt uiCtxInc = 0; uiCtxInc < 4; uiCtxInc++)
     {
-        estBitsSbac->blockRootCbpBits[uiCtxInc][0] = ctx[uiCtxInc].getEntropyBits(0);
-        estBitsSbac->blockRootCbpBits[uiCtxInc][1] = ctx[uiCtxInc].getEntropyBits(1);
+        estBitsSbac->blockRootCbpBits[uiCtxInc][0] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 0);
+        estBitsSbac->blockRootCbpBits[uiCtxInc][1] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 1);
     }
 }
 
@@ -2470,7 +2541,7 @@ void TEncSbac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, Te
     {
         for (UInt bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].getEntropyBits(bin);
+            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].m_state, bin);
         }
     }
 }
@@ -2500,14 +2571,14 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
     {
         for (UInt bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantBits[0][bin] = m_contextModels[OFF_SIG_FLAG_CTX].getEntropyBits(bin);
+            estBitsSbac->significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX].m_state, bin);
         }
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
         {
             for (UInt bin = 0; bin < 2; bin++)
             {
-                estBitsSbac->significantBits[ctxIdx][bin] = m_contextModels[OFF_SIG_FLAG_CTX + ctxIdx].getEntropyBits(bin);
+                estBitsSbac->significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + ctxIdx].m_state, bin);
             }
         }
     }
@@ -2515,14 +2586,14 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
     {
         for (UInt bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantBits[0][bin] = m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)].getEntropyBits(bin);
+            estBitsSbac->significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)].m_state, bin);
         }
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
         {
             for (UInt bin = 0; bin < 2; bin++)
             {
-                estBitsSbac->significantBits[ctxIdx][bin] = m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)].getEntropyBits(bin);
+                estBitsSbac->significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)].m_state, bin);
             }
         }
     }
@@ -2539,16 +2610,16 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
     for (ctx = 0; ctx < g_groupIdx[width - 1]; ctx++)
     {
         int ctxOffset = blkSizeOffsetX + (ctx >> shiftX);
-        estBitsSbac->lastXBits[ctx] = bitsX + m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(0);
-        bitsX += m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(1);
+        estBitsSbac->lastXBits[ctx] = bitsX + sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].m_state, 0);
+        bitsX += sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].m_state, 1);
     }
 
     estBitsSbac->lastXBits[ctx] = bitsX;
     for (ctx = 0; ctx < g_groupIdx[height - 1]; ctx++)
     {
         int ctxOffset = blkSizeOffsetY + (ctx >> shiftY);
-        estBitsSbac->lastYBits[ctx] = bitsY + m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(0);
-        bitsY += m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].getEntropyBits(1);
+        estBitsSbac->lastYBits[ctx] = bitsY + sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].m_state, 0);
+        bitsY += sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY : 0) + ctxOffset)].m_state, 1);
     }
 
     estBitsSbac->lastYBits[ctx] = bitsY;
@@ -2569,14 +2640,14 @@ void TEncSbac::estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, Tex
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_LUMA; ctxIdx++)
         {
-            estBitsSbac->greaterOneBits[ctxIdx][0] = ctxOne[ctxIdx].getEntropyBits(0);
-            estBitsSbac->greaterOneBits[ctxIdx][1] = ctxOne[ctxIdx].getEntropyBits(1);
+            estBitsSbac->greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 0);
+            estBitsSbac->greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 1);
         }
 
         for (int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_LUMA; ctxIdx++)
         {
-            estBitsSbac->levelAbsBits[ctxIdx][0] = ctxAbs[ctxIdx].getEntropyBits(0);
-            estBitsSbac->levelAbsBits[ctxIdx][1] = ctxAbs[ctxIdx].getEntropyBits(1);
+            estBitsSbac->levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 0);
+            estBitsSbac->levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 1);
         }
     }
     else
@@ -2586,14 +2657,14 @@ void TEncSbac::estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, Tex
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            estBitsSbac->greaterOneBits[ctxIdx][0] = ctxOne[ctxIdx].getEntropyBits(0);
-            estBitsSbac->greaterOneBits[ctxIdx][1] = ctxOne[ctxIdx].getEntropyBits(1);
+            estBitsSbac->greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 0);
+            estBitsSbac->greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 1);
         }
 
         for (int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            estBitsSbac->levelAbsBits[ctxIdx][0] = ctxAbs[ctxIdx].getEntropyBits(0);
-            estBitsSbac->levelAbsBits[ctxIdx][1] = ctxAbs[ctxIdx].getEntropyBits(1);
+            estBitsSbac->levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 0);
+            estBitsSbac->levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 1);
         }
     }
 }

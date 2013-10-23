@@ -38,7 +38,7 @@
 #ifndef X265_TENCBINCODERCABAC_H
 #define X265_TENCBINCODERCABAC_H
 
-#include "TLibCommon/ContextModel.h"
+#include "TLibCommon/ContextTables.h"
 #include "TLibCommon/TComBitStream.h"
 
 //! \ingroup TLibEncoder

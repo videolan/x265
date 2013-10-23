@@ -184,18 +184,17 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
     }
 
     UInt mstate = ctxModel.m_state;
-    ctxModel.update(binValue);
+    ctxModel.m_state = sbacNext(ctxModel.m_state, binValue);
 
     if (bIsCounter)
     {
-        m_fracBits += ctxModel.getEntropyBits(mstate, binValue);
+        m_fracBits += sbacGetEntropyBits(mstate, binValue);
         return;
     }
-    ctxModel.setBinsCoded(1);
+    ctxModel.bBinsCoded = 1;
 
-    // TODO: Sync encode proto of cabac status
-    UInt mps = mstate & 1;
-    UInt state = mstate >> 1;
+    UInt mps = sbacGetMps(mstate);
+    UInt state = sbacGetState(mstate);
     UInt lps = g_lpsTable[state][(m_range >> 6) & 3];
     m_range -= lps;
 
@@ -298,7 +297,7 @@ void TEncBinCABAC::encodeBinTrm(UInt binValue)
 {
     if (bIsCounter)
     {
-        m_fracBits += ContextModel::getEntropyBitsTrm(binValue);
+        m_fracBits += sbacGetEntropyBitsTrm(binValue);
         return;
     }
 

@@ -8,7 +8,6 @@ endif(ENABLE_PRIMITIVES_ASM)
 
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
-    ../Lib/TLibCommon/ContextModel.h
     ../Lib/TLibCommon/ContextTables.h
     ../Lib/TLibCommon/NAL.h
     ../Lib/TLibCommon/SEI.h
@@ -31,7 +30,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComYuv.h
     ../Lib/TLibCommon/TypeDef.h)
 set(LIBCOMMON_SRC
-    ../Lib/TLibCommon/ContextModel.cpp
     ../Lib/TLibCommon/TComBitStream.cpp
     ../Lib/TLibCommon/TComDataCU.cpp
     ../Lib/TLibCommon/TComLoopFilter.cpp
