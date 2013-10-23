@@ -434,99 +434,157 @@ void sad_avx2_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3,pixel 
     res[3] = _mm_cvtsi128_si32(tmpsum0);
 }
 
+#define PROCESS_X4_64x4(BASE) \
+    T00 = _mm256_load_si256((__m256i*)(fenc + (BASE + 0) * FENC_STRIDE)); \
+    T01 = _mm256_load_si256((__m256i*)(fenc + (BASE + 1) * FENC_STRIDE)); \
+    T02 = _mm256_load_si256((__m256i*)(fenc + (BASE + 2) * FENC_STRIDE)); \
+    T03 = _mm256_load_si256((__m256i*)(fenc + (BASE + 3) * FENC_STRIDE)); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref1 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref1 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref1 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref1 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum0 = _mm256_add_epi32(T20, sum0); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref2 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref2 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref2 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref2 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum1 = _mm256_add_epi32(T20, sum1); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref3 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref3 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref3 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref3 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum2 = _mm256_add_epi32(T20, sum2); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref4 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref4 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref4 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref4 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum3 = _mm256_add_epi32(T20, sum3); \
+    T00 = _mm256_load_si256((__m256i*)(fenc + 32 + (BASE + 0) * FENC_STRIDE)); \
+    T01 = _mm256_load_si256((__m256i*)(fenc + 32 + (BASE + 1) * FENC_STRIDE)); \
+    T02 = _mm256_load_si256((__m256i*)(fenc + 32 + (BASE + 2) * FENC_STRIDE)); \
+    T03 = _mm256_load_si256((__m256i*)(fenc + 32 + (BASE + 3) * FENC_STRIDE)); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref1 + 32 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref1 + 32 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref1 + 32 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref1 + 32 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum0 = _mm256_add_epi32(T20, sum0); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref2 + 32 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref2 + 32 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref2 + 32 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref2 + 32 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum1 = _mm256_add_epi32(T20, sum1); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref3 + 32 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref3 + 32 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref3 + 32 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref3 + 32 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum2 = _mm256_add_epi32(T20, sum2); \
+    T10 = _mm256_loadu_si256((__m256i*)(fref4 + 32 + (BASE + 0) * frefstride)); \
+    T11 = _mm256_loadu_si256((__m256i*)(fref4 + 32 + (BASE + 1) * frefstride)); \
+    T12 = _mm256_loadu_si256((__m256i*)(fref4 + 32 + (BASE + 2) * frefstride)); \
+    T13 = _mm256_loadu_si256((__m256i*)(fref4 + 32 + (BASE + 3) * frefstride)); \
+    T20 = _mm256_sad_epu8(T00, T10); \
+    T21 = _mm256_sad_epu8(T01, T11); \
+    T22 = _mm256_sad_epu8(T02, T12); \
+    T23 = _mm256_sad_epu8(T03, T13); \
+    T20 = _mm256_add_epi32(T20, T21); \
+    T20 = _mm256_add_epi32(T20, T22); \
+    T20 = _mm256_add_epi32(T20, T23); \
+    sum3 = _mm256_add_epi32(T20, sum3)
+
 template<int ly>
-void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3,pixel *fref4, intptr_t frefstride, int *res)
 {
-    Vec32uc m1, n1, n2, n3, n4;
+    __m256i sum0 = _mm256_setzero_si256();
+    __m256i sum1 = _mm256_setzero_si256();
+    __m256i sum2 = _mm256_setzero_si256();
+    __m256i sum3 = _mm256_setzero_si256();
+    __m256i sum4;
+    __m256i T00, T01, T02, T03;
+    __m256i T10, T11, T12, T13;
+    __m256i T20, T21, T22, T23;
 
-    Vec8i sum1(0), sum2(0), sum3(0), sum4(0);
-    Vec16s sad1(0), sad2(0), sad3(0), sad4(0);
-    int max_iterators = (ly >> 3) << 3;
-    int row;
-
-    for (row = 0; row < max_iterators; row += 8)
+    for (int i = 0; i < ly; i += 8)
     {
-        for (int i = 0; i < 8; i++)
-        {
-            m1.load_a(fenc);
-            n1.load(fref1);
-            n2.load(fref2);
-            n3.load(fref3);
-            n4.load(fref4);
-
-            sad1.addSumAbsDiff(m1, n1);
-            sad2.addSumAbsDiff(m1, n2);
-            sad3.addSumAbsDiff(m1, n3);
-            sad4.addSumAbsDiff(m1, n4);
-
-            m1.load_a(fenc + 32);
-            n1.load(fref1 + 32);
-            n2.load(fref2 + 32);
-            n3.load(fref3 + 32);
-            n4.load(fref4 + 32);
-
-            sad1.addSumAbsDiff(m1, n1);
-            sad2.addSumAbsDiff(m1, n2);
-            sad3.addSumAbsDiff(m1, n3);
-            sad4.addSumAbsDiff(m1, n4);
-
-            fenc += FENC_STRIDE;
-            fref1 += frefstride;
-            fref2 += frefstride;
-            fref3 += frefstride;
-            fref4 += frefstride;
-        }
-
-        sum1 += extend_low(sad1) + extend_high(sad1);
-        sum2 += extend_low(sad2) + extend_high(sad2);
-        sum3 += extend_low(sad3) + extend_high(sad3);
-        sum4 += extend_low(sad4) + extend_high(sad4);
-        sad1 = 0;
-        sad2 = 0;
-        sad3 = 0;
-        sad4 = 0;
+        PROCESS_X4_64x4(i);
+        PROCESS_X4_64x4(i + 4);
     }
 
-    while (row++ < ly)
-    {
-        m1.load_a(fenc);
-        n1.load(fref1);
-        n2.load(fref2);
-        n3.load(fref3);
-        n4.load(fref4);
+    sum4 = _mm256_shuffle_epi32(sum0, 2);
+    sum0 = _mm256_add_epi32(sum0, sum4);
+    __m128i tmpsum0 = _mm256_extracti128_si256(sum0, 0);
+    __m128i tmpsum1 = _mm256_extracti128_si256(sum0, 1);
+    tmpsum0 = _mm_add_epi32(tmpsum0, tmpsum1);
+    res[0] = _mm_cvtsi128_si32(tmpsum0);
 
-        sad1.addSumAbsDiff(m1, n1);
-        sad2.addSumAbsDiff(m1, n2);
-        sad3.addSumAbsDiff(m1, n3);
-        sad4.addSumAbsDiff(m1, n4);
+    sum4 = _mm256_shuffle_epi32(sum1, 2);
+    sum1 = _mm256_add_epi32(sum1, sum4);
+    tmpsum0 = _mm256_extracti128_si256(sum1, 0);
+    tmpsum1 = _mm256_extracti128_si256(sum1, 1);
+    tmpsum0 = _mm_add_epi32(tmpsum0, tmpsum1);
+    res[1] = _mm_cvtsi128_si32(tmpsum0);
 
-        m1.load_a(fenc + 32);
-        n1.load(fref1 + 32);
-        n2.load(fref2 + 32);
-        n3.load(fref3 + 32);
-        n4.load(fref4 + 32);
+    sum4 = _mm256_shuffle_epi32(sum2, 2);
+    sum2 = _mm256_add_epi32(sum2, sum4);
+    tmpsum0 = _mm256_extracti128_si256(sum2, 0);
+    tmpsum1 = _mm256_extracti128_si256(sum2, 1);
+    tmpsum0 = _mm_add_epi32(tmpsum0, tmpsum1);
+    res[2] = _mm_cvtsi128_si32(tmpsum0);
 
-        sad1.addSumAbsDiff(m1, n1);
-        sad2.addSumAbsDiff(m1, n2);
-        sad3.addSumAbsDiff(m1, n3);
-        sad4.addSumAbsDiff(m1, n4);
-
-        fenc += FENC_STRIDE;
-        fref1 += frefstride;
-        fref2 += frefstride;
-        fref3 += frefstride;
-        fref4 += frefstride;
-    }
-
-    sum1 += extend_low(sad1) + extend_high(sad1);
-    sum2 += extend_low(sad2) + extend_high(sad2);
-    sum3 += extend_low(sad3) + extend_high(sad3);
-    sum4 += extend_low(sad4) + extend_high(sad4);
-
-    res[0] = horizontal_add(sum1);
-    res[1] = horizontal_add(sum2);
-    res[2] = horizontal_add(sum3);
-    res[3] = horizontal_add(sum4);
+    sum4 = _mm256_shuffle_epi32(sum3, 2);
+    sum3 = _mm256_add_epi32(sum3, sum4);
+    tmpsum0 = _mm256_extracti128_si256(sum3, 0);
+    tmpsum1 = _mm256_extracti128_si256(sum3, 1);
+    tmpsum0 = _mm_add_epi32(tmpsum0, tmpsum1);
+    res[3] = _mm_cvtsi128_si32(tmpsum0);
 }
 
 #endif // if !HIGH_BIT_DEPTH
