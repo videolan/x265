@@ -30,6 +30,7 @@
 #include "encoder.h"
 #include "frameencoder.h"
 #include "cturow.h"
+#include "common.h"
 
 #include <math.h>
 
@@ -62,6 +63,7 @@ FrameEncoder::FrameEncoder()
     }
 
     m_nalCount = 0;
+    m_totalTime = 0;
 }
 
 void FrameEncoder::setThreadPool(ThreadPool *p)
@@ -304,6 +306,7 @@ void FrameEncoder::threadMain()
 void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
+    int64_t startCompressTime = x265_mdate();
     TEncEntropy* entropyCoder = getEntropyCoder(0);
     TComSlice*   slice        = m_pic->getSlice();
     m_nalCount = 0;
@@ -682,7 +685,7 @@ void FrameEncoder::compressFrame()
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
-
+    m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
     delete[] outStreams;
     delete bitstreamRedirect;
 }
@@ -974,12 +977,15 @@ void FrameEncoder::compressCTURows()
             }
         }
     }
+    m_pic->m_frameTime = (double)m_totalTime / 1000000;
+    m_totalTime = 0;
 }
 
 void FrameEncoder::processRowEncoder(int row)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
+    int64_t startTime = x265_mdate();
     // Called by worker threads
     CTURow& curRow  = m_rows[row];
     CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
@@ -1021,6 +1027,7 @@ void FrameEncoder::processRowEncoder(int row)
         if (row > 0 && m_rows[row].m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2)
         {
             curRow.m_active = false;
+            m_totalTime = m_totalTime + (x265_mdate() - startTime);
             return;
         }
     }
@@ -1043,6 +1050,7 @@ void FrameEncoder::processRowEncoder(int row)
             enableRowFilter(i);
         }
     }
+    m_totalTime = m_totalTime + (x265_mdate() - startTime);
 }
 
 TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)

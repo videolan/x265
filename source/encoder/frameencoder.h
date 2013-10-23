@@ -183,6 +183,7 @@ protected:
     int                      m_filterRowDelay;
     CTURow*                  m_rows;
     Event                    m_completionEvent;
+    int64_t                  m_totalTime;
 };
 }
 

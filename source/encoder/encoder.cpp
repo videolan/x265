@@ -59,6 +59,8 @@ Encoder::Encoder()
     m_globalSsim = 0;
     m_nals = NULL;
     m_packetData = NULL;
+    m_outputCount = 0;
+    m_csvfpt = NULL;
 
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
@@ -94,6 +96,25 @@ void Encoder::create()
     m_lookahead = new Lookahead(this, m_threadPool);
     m_dpb = new DPB(this);
     m_rateControl = new RateControl(this);
+    if (param.csvfn && param.logLevel >= X265_LOG_DEBUG)
+    {
+        m_csvfpt = fopen(param.csvfn, "r");
+        if (m_csvfpt)
+        {
+            // file already exists, re-open for append
+            fclose(m_csvfpt);
+            m_csvfpt = fopen(param.csvfn, "ab");
+        }
+        else
+        {
+            // new CSV file, write header
+            m_csvfpt = fopen(param.csvfn, "wb");
+            if (m_csvfpt)
+            {
+                fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, PSNR Y, PSNR U, PSNR V, PSNR, SSIM, Encoding time, Elapsed time, List 0, List 1\n");
+            }
+        }
+    }
 }
 
 void Encoder::destroy()
@@ -132,6 +153,8 @@ void Encoder::destroy()
 
     X265_FREE(m_nals);
     X265_FREE(m_packetData);
+    if (m_csvfpt)
+        fclose(m_csvfpt);
 }
 
 void Encoder::init()
@@ -494,44 +517,62 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
     {
         m_analyzeB.addResult(psnrY, psnrU, psnrV, (double)bits);
     }
+    double ssim = 0.0;
     if (param.bEnableSsim)
     {
         if (pic->getSlice()->m_ssimCnt > 0)
         {
-            double ssim = pic->getSlice()->m_ssim / pic->getSlice()->m_ssimCnt;
+            ssim = pic->getSlice()->m_ssim / pic->getSlice()->m_ssimCnt;
             m_globalSsim += ssim;
         }
     }
+
+    // if debug log level is enabled, per frame logging is performed
     if (param.logLevel >= X265_LOG_DEBUG)
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
-
+        int poc = slice->getPOC();
+        int QP_Base = slice->getSliceQpBase();
+        int QP = slice->getSliceQp();
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
-
-        fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d) %10d bits",
-                slice->getPOC(),
-                c,
-                slice->getSliceQpBase(),
-                slice->getSliceQp(),
-                bits);
-
-        fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
-
+        fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d) %10d bits", poc, c, QP_Base, QP, bits);
+        fprintf(m_csvfpt, "\n%d, %c-SLICE, %4d, %d, %d, %10d,", m_outputCount++, c, poc, QP_Base, QP, bits);
+        if (param.bEnablePsnr)
+        {
+            fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
+            double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
+            fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
+        }
+        else
+            fprintf(m_csvfpt, " -, -, -, -,");
+        if (param.bEnableSsim)
+            fprintf(m_csvfpt, " %.3lf,", ssim);
+        else
+            fprintf(m_csvfpt, " -,");
+        fprintf(m_csvfpt, " %.3lf, %.3lf", pic->m_frameTime, pic->m_elapsedCompressTime);
         if (!slice->isIntra())
         {
             int numLists = slice->isInterP() ? 1 : 2;
             for (int list = 0; list < numLists; list++)
             {
                 fprintf(stderr, " [L%d ", list);
+                fprintf(m_csvfpt, ", ");
                 for (int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
                 {
-                    fprintf(stderr, "%d ", slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR());
+                    int k = slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR();
+                    fprintf(stderr, "%d ",k);
+                    fprintf(m_csvfpt, " %d", k);
                 }
 
                 fprintf(stderr, "]");
             }
+            if (numLists == 1)
+                fprintf(m_csvfpt, ", -");
         }
+        else
+            fprintf(m_csvfpt, ", -, -");
+
         if (digestStr && param.logLevel >= 4)
         {
             if (param.decodedPictureHashSEI == 1)

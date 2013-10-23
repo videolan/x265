@@ -48,6 +48,7 @@ class Encoder : public TEncCfg, public x265_t
 private:
 
     int                m_pocLast;          ///< time index (POC)
+    int                m_outputCount;
     PicList            m_freeList;
 
     ThreadPool*        m_threadPool;
@@ -65,7 +66,7 @@ private:
     TEncAnalyze        m_analyzeP;
     TEncAnalyze        m_analyzeB;
     double             m_globalSsim;
-
+    FILE*              m_csvfpt;
     // quality control
     TComScalingList    m_scalingList;      ///< quantization matrix information
 

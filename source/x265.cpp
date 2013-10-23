@@ -36,12 +36,6 @@
 #endif
 #include "PPA/ppa.h"
 
-#if _WIN32
-#include <sys/types.h>
-#include <sys/timeb.h>
-#else
-#include <sys/time.h>
-#endif
 #include <time.h>
 
 #include <signal.h>
@@ -62,19 +56,6 @@
 #define GetConsoleTitle(t, n)
 #define SetConsoleTitle(t)
 #endif
-
-static int64_t x265_mdate(void)
-{
-#if _WIN32
-    struct timeb tb;
-    ftime(&tb);
-    return ((int64_t)tb.time * 1000 + (int64_t)tb.millitm) * 1000;
-#else
-    struct timeval tv_date;
-    gettimeofday(&tv_date, NULL);
-    return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
-#endif
-}
 
 using namespace x265;
 
@@ -427,7 +408,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param_t* param)
     const char *inputfn = NULL;
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
-    const char *csvfn = NULL;
     const char *inputRes = NULL;
 
     x265_param_default(param);
@@ -484,7 +464,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param_t* param)
             OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
             OPT("no-progress") this->bProgress = false;
             OPT("frame-skip") this->frameSkip = (uint32_t)atoi(optarg);
-            OPT("csv") csvfn = optarg;
+            OPT("csv") param->csvfn = optarg;
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
@@ -600,22 +580,22 @@ bool CLIOptions::parse(int argc, char **argv, x265_param_t* param)
         return true;
     }
 
-    if (csvfn)
+    if (param->csvfn && param->logLevel < X265_LOG_DEBUG)
     {
-        csvfp = fopen(csvfn, "r");
+        csvfp = fopen(param->csvfn, "r");
         if (csvfp)
         {
             // file already exists, re-open for append
             fclose(csvfp);
-            csvfp = fopen(csvfn, "ab");
+            csvfp = fopen(param->csvfn, "ab");
         }
         else
         {
             // new CSV file, write header
-            csvfp = fopen(csvfn, "wb");
+            csvfp = fopen(param->csvfn, "wb");
             if (csvfp)
             {
-                fprintf(csvfp, "CLI arguments, date/time, elapsed time, fps, bitrate, global PSNR, version\n");
+                fprintf(csvfp, "CLI arguments, date/time, elapsed time, fps, bitrate, global PSNR Y, global PSNR U, global PSNR V, global PSNR, global SSIM, version\n");
             }
         }
     }
@@ -744,9 +724,10 @@ int main(int argc, char **argv)
 
     x265_cleanup(); /* Free library singletons */
 
-    if (cliopt.csvfp)
+    if (param.logLevel < X265_LOG_DEBUG && cliopt.csvfp)
     {
         // CLI arguments, date/time, elapsed time, fps, bitrate, global PSNR
+        fprintf(cliopt.csvfp,"\n");
         for (int i = 1; i < argc; i++)
         {
             if (i) fputc(' ', cliopt.csvfp);
@@ -759,8 +740,18 @@ int main(int argc, char **argv)
         timeinfo = localtime(&now);
         char buffer[128];
         strftime(buffer, 128, "%c", timeinfo);
-        fprintf(cliopt.csvfp, ", %s, %.2f, %.2f, %.2f, %.2f, %s\n",
-                buffer, elapsed, outFrameCount / elapsed, bitrate, stats.globalPsnr, x265_version_str);
+        fprintf(cliopt.csvfp, ", %s, %.2f, %.2f, %.2f,", buffer, elapsed, outFrameCount / elapsed, bitrate);
+        if (param.bEnablePsnr)
+            fprintf(cliopt.csvfp, " %.3lf, %.3lf, %.3lf, %.3lf,",
+                    stats.globalPsnrY/stats.totalNumPics, stats.globalPsnrU/stats.totalNumPics,
+                    stats.globalPsnrV/stats.totalNumPics, stats.globalPsnr);
+        else
+            fprintf(cliopt.csvfp, " -, -, -, -,");
+        if (param.bEnableSsim)
+            fprintf(cliopt.csvfp, " %.2f,", stats.globalSsim);
+        else
+            fprintf(cliopt.csvfp, " -,");
+        fprintf(cliopt.csvfp, " %s\n", x265_version_str);
     }
 
     cliopt.destroy();

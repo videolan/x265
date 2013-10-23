@@ -254,6 +254,8 @@ typedef struct x265_param_t
 
     int       internalBitDepth;                ///< bit-depth the codec operates at
 
+    const char *csvfn;                        ///< csv log filename
+
     // source specification
     int       frameRate;                       ///< source frame-rate in Hz
     int       sourceWidth;                     ///< source width in pixels

@@ -32,6 +32,13 @@
 #include <string.h>
 #include <stdarg.h>
 
+#if _WIN32
+#include <sys/types.h>
+#include <sys/timeb.h>
+#else
+#include <sys/time.h>
+#endif
+
 using namespace x265;
 
 #define X265_ALIGNBYTES 32
@@ -42,6 +49,19 @@ using namespace x265;
 #define _aligned_free   __mingw_aligned_free
 #include "malloc.h"
 #endif
+
+int64_t x265_mdate(void)
+{
+#if _WIN32
+    struct timeb tb;
+    ftime(&tb);
+    return ((int64_t)tb.time * 1000 + (int64_t)tb.millitm) * 1000;
+#else
+    struct timeval tv_date;
+    gettimeofday(&tv_date, NULL);
+    return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
+#endif
+}
 
 void *x265_malloc(size_t size)
 {

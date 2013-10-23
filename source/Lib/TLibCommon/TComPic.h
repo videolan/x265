@@ -90,6 +90,8 @@ public:
     UInt64                m_SSDY;
     UInt64                m_SSDU;
     UInt64                m_SSDV;
+    double                m_elapsedCompressTime;
+    double                m_frameTime;
 
     TComPic();
     virtual ~TComPic();
