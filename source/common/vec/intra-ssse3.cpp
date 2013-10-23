@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <xmmintrin.h> // SSE
 #include <pmmintrin.h> // SSE3
+#include <tmmintrin.h> // SSSE3
 
 using namespace x265;
 
@@ -759,19 +760,8 @@ void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *r
         predIntraAng4[dirMode - 2](dst, dstStride, refMain, dirMode);
     }
 }
-#endif
-}
 
-#if defined(_MSC_VER)
-#define ALWAYSINLINE  __forceinline
-#endif
-
-#define INSTRSET 3
-#include "vectorclass.h"
-
-#if !HIGH_BIT_DEPTH
-namespace {
-#define PRED_INTRA_ANG8_START() \
+#define PRED_INTRA_ANGLE_8_START() \
     /* Map the mode index to main prediction direction and angle*/ \
     bool modeHor       = (dirMode < 18); \
     bool modeVer       = !modeHor; \
@@ -784,82 +774,90 @@ namespace {
     intraPredAngle     = signAng * absAng; \
     if (modeHor) /* Near horizontal modes*/ \
     { \
-        Vec16uc tmp; \
-        Vec8s row11, row12; \
-        Vec16uc row1, row2, row3, row4, tmp16_1, tmp16_2; \
-        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle; \
-        Vec8s tmp1, tmp2; \
-        v_deltaPos = 0; \
-        v_ipAngle = intraPredAngle;
+        __m128i row11, row12, row1, row2, row3, row4; \
+        __m128i tmp16_1, tmp16_2, tmp, tmp1, tmp2, deltaFract; \
+        __m128i deltaPos = _mm_set1_epi16(0); \
+        __m128i ipAngle  = _mm_set1_epi16(intraPredAngle); \
+        __m128i thirty1  = _mm_set1_epi16(31); \
+        __m128i thirty2  = _mm_set1_epi16(32); \
+        __m128i lowm, highm; \
+        __m128i mask = _mm_set1_epi32(0x00FF00FF); \
+        __m128i mullo, sum;
 
-#define PRED_INTRA_ANG8_MIDDLE() \
-        /* Flip the block */ \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2); \
+#define LOAD_ROW(ROW, X) \
+        tmp = _mm_loadl_epi64((__m128i*)(refMain + 1 + X)); \
+        ROW = _mm_unpacklo_epi8(tmp, _mm_setzero_si128());
+
+#define CALC_ROW(RES, ROW1, ROW2) \
+        deltaPos = _mm_add_epi16(deltaPos, ipAngle); \
+        deltaFract = _mm_and_si128(deltaPos, thirty1); \
+        mullo = _mm_mullo_epi16(ROW1, _mm_sub_epi16(thirty2, deltaFract)); \
+        sum = _mm_add_epi16(_mm_set1_epi16(16), _mm_mullo_epi16(deltaFract, ROW2)); \
+        RES = _mm_sra_epi16(_mm_add_epi16(mullo, sum), _mm_cvtsi32_si128(5));
+
+#define PREDANG_CALC_ROW_VER(X) \
+        LOAD_ROW(row11, GETAP(lookIdx, X)); \
+        LOAD_ROW(row12, GETAP(lookIdx, X) + 1); \
+        CALC_ROW(row11, row11, row12); \
+        lowm  = _mm_and_si128(row11, mask); \
+        highm = _mm_and_si128(row11, mask); \
+        _mm_storel_epi64((__m128i*)(dst + (X * dstStride)), _mm_packus_epi16(lowm, highm));
+
+#define PREDANG_CALC_ROW_HOR(X, rowx) \
+        LOAD_ROW(row11, GETAP(lookIdx, X)); \
+        LOAD_ROW(row12, GETAP(lookIdx, X) + 1); \
+        CALC_ROW(rowx, row11, row12);
+
+#define PRED_INTRA_ANGLE_8_MIDDLE() \
+        tmp16_1 = _mm_unpacklo_epi8(row1, row2); \
+        tmp16_2 = _mm_unpackhi_epi8(row1, row2); \
         row1 = tmp16_1; \
         row2 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4); \
+        tmp16_1 = _mm_unpacklo_epi8(row3, row4); \
+        tmp16_2 = _mm_unpackhi_epi8(row3, row4); \
         row3 = tmp16_1; \
         row4 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2); \
+        tmp16_1 = _mm_unpacklo_epi8(row1, row2); \
+        tmp16_2 = _mm_unpackhi_epi8(row1, row2); \
         row1 = tmp16_1; \
         row2 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4); \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4); \
+        tmp16_1 = _mm_unpacklo_epi8(row3, row4); \
+        tmp16_2 = _mm_unpackhi_epi8(row3, row4); \
         row3 = tmp16_1; \
         row4 = tmp16_2; \
-        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row1, (Vec4i)row3); \
-        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row1, (Vec4i)row3); \
+        tmp16_1 = _mm_unpacklo_epi32(row1, row3); \
+        tmp16_2 = _mm_unpackhi_epi32(row1, row3); \
         row1 = tmp16_1; \
         row3 = tmp16_2; \
-        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row2, (Vec4i)row4); \
-        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row2, (Vec4i)row4); \
+        tmp16_1 = _mm_unpacklo_epi32(row2, row4); \
+        tmp16_2 = _mm_unpackhi_epi32(row2, row4); \
         row2 = tmp16_1; \
         row4 = tmp16_2; \
-        store_partial(const_int(8), dst, row1); /*row1*/ \
-        store_partial(const_int(8), dst + (2 * dstStride), row3); /*row3*/ \
-        store_partial(const_int(8), dst + (4 * dstStride), row2); /*row5*/ \
-        store_partial(const_int(8), dst + (6 * dstStride), row4); /*row7*/ \
-        row1 = blend2q<1, 3>((Vec2q)row1, (Vec2q)row1); \
-        store_partial(const_int(8), dst + (1 * dstStride), row1); /*row2*/ \
-        row1 = blend2q<1, 3>((Vec2q)row3, (Vec2q)row3); \
-        store_partial(const_int(8), dst + (3 * dstStride), row1); /*row4*/ \
-        row1 = blend2q<1, 3>((Vec2q)row2, (Vec2q)row2); \
-        store_partial(const_int(8), dst + (5 * dstStride), row1); /*row6*/ \
-        row1 = blend2q<1, 3>((Vec2q)row4, (Vec2q)row4); \
-        store_partial(const_int(8), dst + (7 * dstStride), row1); /*row8*/ \
+        _mm_storel_epi64((__m128i*)(dst), row1); \
+        _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), row3); \
+        _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), row2); \
+        _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), row4); \
+        \
+        row1 = _mm_unpackhi_epi64(row1, row1); \
+        _mm_storel_epi64((__m128i*)(dst + 1 * dstStride), row1); \
+        row1 = _mm_unpackhi_epi64(row3, row3); \
+        _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), row1); \
+        row1 = _mm_unpackhi_epi64(row2, row2); \
+        _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), row1); \
+        row1 = _mm_unpackhi_epi64(row4, row4); \
+        _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), row1); \
     } \
     else /* Vertical modes*/ \
     { \
-        Vec8s row11, row12; \
-        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle; \
-        Vec16uc tmp; \
-        Vec8s tmp1, tmp2; \
-        v_deltaPos = 0; \
-        v_ipAngle = intraPredAngle; \
-
-// ROW is a Vec8s variable, X is the index in of data to be loaded
-#define LOADROW(ROW, X) \
-    tmp = load_partial(const_int(8), refMain + 1 + X); \
-    ROW = extend_low(tmp); \
-
-#define CALCROW(RES, ROW1, ROW2) \
-    v_deltaPos += v_ipAngle; \
-    v_deltaFract = v_deltaPos & thirty1; \
-    RES = ((thirty2 - v_deltaFract) * ROW1 + (v_deltaFract * ROW2) + 16) >> 5;
-
-#define PREDANG_CALCROW_VER(X) \
-    LOADROW(row11, GETAP(lookIdx, X)); \
-    LOADROW(row12, GETAP(lookIdx, X) + 1); \
-    CALCROW(row11, row11, row12); \
-    store_partial(const_int(8), dst + (X * dstStride), compress(row11, row11)); \
-
-#define PREDANG_CALCROW_HOR(X, rowx) \
-    LOADROW(row11, GETAP(lookIdx, X)); \
-    LOADROW(row12, GETAP(lookIdx, X) + 1); \
-    CALCROW(rowx, row11, row12);
+        __m128i row11, row12; \
+        __m128i tmp, deltaFract; \
+        __m128i deltaPos = _mm_set1_epi16(0); \
+        __m128i ipAngle  = _mm_set1_epi16(intraPredAngle); \
+        __m128i thirty1  = _mm_set1_epi16(31); \
+        __m128i thirty2  = _mm_set1_epi16(32); \
+        __m128i mullo, sum; \
+        __m128i lowm, highm; \
+        __m128i mask = _mm_set1_epi32(0x00FF00FF);
 
 void predIntraAng8_32(pixel* dst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
@@ -899,204 +897,401 @@ void predIntraAng8_26(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 
     if (modeHor) // Near horizontal modes
     {
-        Vec16uc tmp;
-        Vec8s row11, row12;
-        Vec16uc row1, row2, row3, row4, tmp16_1, tmp16_2;
-        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-        Vec8s tmp1, tmp2;
-        v_deltaPos = 0;
-        v_ipAngle = intraPredAngle;
+        __m128i row11, row12, row1, row2, row3, row4; \
+        __m128i tmp16_1, tmp16_2, tmp, tmp1, tmp2, deltaFract; \
+        __m128i deltaPos = _mm_set1_epi16(0); \
+        __m128i ipAngle  = _mm_set1_epi16(intraPredAngle); \
+        __m128i thirty1  = _mm_set1_epi16(31); \
+        __m128i thirty2  = _mm_set1_epi16(32); \
+        __m128i lowm, highm; \
+        __m128i mask = _mm_set1_epi32(0x00FF00FF); \
+        __m128i mullo, sum; \
 
-        PREDANG_CALCROW_HOR(0, tmp1);
-        PREDANG_CALCROW_HOR(1, tmp2);
-        row1 = compress(tmp1, tmp2);
-        PREDANG_CALCROW_HOR(2, tmp1);
-        PREDANG_CALCROW_HOR(3, tmp2);
-        row2 = compress(tmp1, tmp2);
-        PREDANG_CALCROW_HOR(4, tmp1);
-        PREDANG_CALCROW_HOR(5, tmp2);
-        row3 = compress(tmp1, tmp2);
-        PREDANG_CALCROW_HOR(6, tmp1);
-        PREDANG_CALCROW_HOR(7, tmp2);
-        row4 = compress(tmp1, tmp2);
 
-    PRED_INTRA_ANG8_MIDDLE();
-        PREDANG_CALCROW_VER(0);
-        PREDANG_CALCROW_VER(1);
-        PREDANG_CALCROW_VER(2);
-        PREDANG_CALCROW_VER(3);
-        PREDANG_CALCROW_VER(4);
-        PREDANG_CALCROW_VER(5);
-        PREDANG_CALCROW_VER(6);
-        PREDANG_CALCROW_VER(7);
+        PREDANG_CALC_ROW_HOR(0, tmp1);
+        PREDANG_CALC_ROW_HOR(1, tmp2);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row1 = _mm_packus_epi16(lowm, highm);
+
+        PREDANG_CALC_ROW_HOR(2, tmp1);
+        PREDANG_CALC_ROW_HOR(3, tmp2);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row2 = _mm_packus_epi16(lowm, highm);
+
+        PREDANG_CALC_ROW_HOR(4, tmp1);
+        PREDANG_CALC_ROW_HOR(5, tmp2);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row3 = _mm_packus_epi16(lowm, highm);
+
+        PREDANG_CALC_ROW_HOR(6, tmp1);
+        PREDANG_CALC_ROW_HOR(7, tmp2);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row4 = _mm_packus_epi16(lowm, highm);
+
+    PRED_INTRA_ANGLE_8_MIDDLE();
+
+        PREDANG_CALC_ROW_VER(0);
+        PREDANG_CALC_ROW_VER(1);
+        PREDANG_CALC_ROW_VER(2);
+        PREDANG_CALC_ROW_VER(3);
+        PREDANG_CALC_ROW_VER(4);
+        PREDANG_CALC_ROW_VER(5);
+        PREDANG_CALC_ROW_VER(6);
+        PREDANG_CALC_ROW_VER(7);
     }
 }
 
 void predIntraAng8_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START();
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        row11 = row12;
-        LOADROW(row12, 2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
+    PRED_INTRA_ANGLE_8_START();
 
-    PRED_INTRA_ANG8_MIDDLE();
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst, compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + dstStride, compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (5 * dstStride), compress(tmp2, tmp2));
+        LOAD_ROW(row11, 0);
+        LOAD_ROW(row12, 1);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row1 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row2 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row3 = _mm_packus_epi16(lowm, highm);
+
         row11 = row12;
-        LOADROW(row12, 2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (7 * dstStride), compress(tmp2, tmp2));
+        LOAD_ROW(row12, 2);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row4 = _mm_packus_epi16(lowm, highm);
+
+
+    PRED_INTRA_ANGLE_8_MIDDLE();
+
+        __m128i tmp1, tmp2;
+
+        LOAD_ROW(row11, 0);
+        LOAD_ROW(row12, 1);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        row11 = row12;
+        LOAD_ROW(row12, 2);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), _mm_packus_epi16(lowm, highm));
     }
 }
 
 void predIntraAng8_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START();
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
+    PRED_INTRA_ANGLE_8_START();
 
-    PRED_INTRA_ANG8_MIDDLE();
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst, compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + dstStride, compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (5 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (7 * dstStride), compress(tmp2, tmp2));
+        LOAD_ROW(row11, 0);
+        LOAD_ROW(row12, 1);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row1 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row2 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row3 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row4 = _mm_packus_epi16(lowm, highm);
+
+    PRED_INTRA_ANGLE_8_MIDDLE();
+
+        __m128i tmp1, tmp2;
+
+        LOAD_ROW(row11, 0);
+        LOAD_ROW(row12, 1);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), _mm_packus_epi16(lowm, highm));
     }
 }
 
 void predIntraAng8_m_2(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START();
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
+    PRED_INTRA_ANGLE_8_START();
 
-    PRED_INTRA_ANG8_MIDDLE();
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst, compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (5 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (7 * dstStride), compress(tmp2, tmp2));
+        LOAD_ROW(row11, -1);
+        LOAD_ROW(row12, 0);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row1 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row2 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row3 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row4 = _mm_packus_epi16(lowm, highm);
+
+    PRED_INTRA_ANGLE_8_MIDDLE();
+
+        __m128i tmp1, tmp2;
+
+        LOAD_ROW(row11, -1);
+        LOAD_ROW(row12, 0);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), _mm_packus_epi16(lowm, highm));
     }
 }
 
 void predIntraAng8_m_5(pixel* dst, int dstStride, pixel *refMain, int dirMode)
 {
-    PRED_INTRA_ANG8_START();
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        row12 = row11;
-        LOADROW(row11, -2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
+    PRED_INTRA_ANGLE_8_START();
 
-    PRED_INTRA_ANG8_MIDDLE();
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst, compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (5 * dstStride), compress(tmp2, tmp2));
+        LOAD_ROW(row11, -1);
+        LOAD_ROW(row12, 0);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row1 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row2 = _mm_packus_epi16(lowm, highm);
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row3 = _mm_packus_epi16(lowm, highm);
+
         row12 = row11;
-        LOADROW(row11, -2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), dst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), dst + (7 * dstStride), compress(tmp2, tmp2));
+        LOAD_ROW(row11, -2);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        row4 = _mm_packus_epi16(lowm, highm);
+
+
+    PRED_INTRA_ANGLE_8_MIDDLE();
+
+        __m128i tmp1, tmp2;
+
+        LOAD_ROW(row11, -1);
+        LOAD_ROW(row12, 0);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+
+        _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), _mm_packus_epi16(lowm, highm));
+
+        row12 = row11;
+        LOAD_ROW(row11, -2);
+        CALC_ROW(tmp1, row11, row12);
+        CALC_ROW(tmp2, row11, row12);
+
+        lowm  = _mm_and_si128(tmp1, mask);
+        highm = _mm_and_si128(tmp1, mask);
+        _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), _mm_packus_epi16(lowm, highm));
+        lowm  = _mm_and_si128(tmp2, mask);
+        highm = _mm_and_si128(tmp2, mask);
+        _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), _mm_packus_epi16(lowm, highm));
     }
 }
 
@@ -1180,95 +1375,100 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     {
         if (modeHor)
         {
-            Vec16uc v_temp;
-            Vec16uc tmp1;
-
-            v_temp.load(refMain + 1);
-            Vec8s v_main;
-            v_main = extend_low(v_temp);
+            __m128i temp, temp1;
+            temp = _mm_loadu_si128((__m128i const*)(refMain + 1));
+            __m128i main = _mm_unpacklo_epi8(temp, _mm_setzero_si128());
 
             if (bFilter)
             {
-                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
-                Vec16uc v_temp16;
-                v_temp16.load(refSide + 1);
-                Vec8s v_side;
-                v_side = extend_low(v_temp16);
+                __m128i side0 = _mm_set1_epi16(refSide[0]);
+                __m128i temp16;
 
-                Vec8s row0;
-                row0 = permute8s<0, 0, 0, 0, 0, 0, 0, 0>(v_main);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row0 = row0 + v_side;
-                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
+                temp16 = _mm_loadu_si128((__m128i const*)(refSide + 1));
+                __m128i side = _mm_unpacklo_epi8(temp16, _mm_setzero_si128());
 
-                tmp1 = compress(row0, row0);
-                store_partial(const_int(8), dst, tmp1);            //row0
+                __m128i row = _mm_shufflelo_epi16(main, 0);
+                row = _mm_unpacklo_epi64(row, row);
+
+                side = _mm_sub_epi16(side, side0);
+                side = _mm_sra_epi16(side, _mm_cvtsi32_si128(1));
+                row = _mm_add_epi16(row, side);
+                row = _mm_min_epi16(_mm_max_epi16(_mm_set1_epi16(0), row), _mm_set1_epi16((1 << X265_DEPTH) - 1));
+
+                __m128i mask  = _mm_set1_epi32(0x00FF00FF);
+                __m128i lowm  = _mm_and_si128(row, mask);
+                __m128i highm = _mm_and_si128(row, mask);
+                temp1 = _mm_packus_epi16(lowm, highm);
+
+                _mm_storel_epi64((__m128i*)(dst), temp1);
             }
             else
             {
-                tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-                store_partial(const_int(8), dst, tmp1); //row0
+                temp1 = _mm_shuffle_epi8(temp, _mm_setzero_si128());
+                _mm_storel_epi64((__m128i*)(dst), temp1);
             }
-            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (1 * dstStride), tmp1); //row1
 
-            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (2 * dstStride), tmp1); //row2
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(1));
+            _mm_storel_epi64((__m128i*)(dst + 1 * dstStride), temp1);
 
-            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (3 * dstStride), tmp1); //row3
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(2));
+            _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), temp1);
 
-            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (4 * dstStride), tmp1); //row4
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(3));
+            _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), temp1);
 
-            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (5 * dstStride), tmp1); //row5
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(4));
+            _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), temp1);
 
-            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (6 * dstStride), tmp1); //row6
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(5));
+            _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), temp1);
 
-            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
-            store_partial(const_int(8), dst + (7 * dstStride), tmp1); //row7
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(6));
+            _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), temp1);
+
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(7));
+            _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), temp1);
         }
         else
         {
-            Vec16uc v_main;
-            v_main = load_partial(const_int(8), refMain + 1);
-            store_partial(const_int(8), dst, v_main);
-            store_partial(const_int(8), dst + dstStride, v_main);
-            store_partial(const_int(8), dst + (2 * dstStride), v_main);
-            store_partial(const_int(8), dst + (3 * dstStride), v_main);
-            store_partial(const_int(8), dst + (4 * dstStride), v_main);
-            store_partial(const_int(8), dst + (5 * dstStride), v_main);
-            store_partial(const_int(8), dst + (6 * dstStride), v_main);
-            store_partial(const_int(8), dst + (7 * dstStride), v_main);
+            __m128i main = _mm_loadl_epi64((__m128i*)(refMain + 1));
+
+            _mm_storel_epi64((__m128i*)(dst + 0 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 1 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 2 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 3 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 4 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 5 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 6 * dstStride), main);
+            _mm_storel_epi64((__m128i*)(dst + 7 * dstStride), main);
 
             if (bFilter)
             {
-                Vec16uc v_temp;
-                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+                __m128i temp;
+                __m128i side0 = _mm_set1_epi16(refSide[0]);
 
-                v_temp.load(refSide + 1);
-                Vec8s v_side;
-                v_side = extend_low(v_temp);
+                temp =  _mm_loadu_si128((__m128i const*)(refSide + 1));
+                __m128i side = _mm_unpacklo_epi8(temp, _mm_setzero_si128());;
 
-                v_temp.load(refMain + 1);
-                Vec8s row0;
-                row0 = permute16uc<0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1>(v_temp);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row0 = row0 + v_side;
-                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
+                temp = _mm_loadu_si128((const __m128i*)(refMain + 1));
+                __m128i mask = _mm_setr_epi8(0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1);
+                __m128i row = _mm_shuffle_epi8(temp, mask);
+                side = _mm_sub_epi16(side, side0);
+                side = _mm_sra_epi16(side, _mm_cvtsi32_si128(1));
+                row = _mm_add_epi16(row, side);
+                row = _mm_min_epi16(_mm_max_epi16(_mm_set1_epi16(0), row), _mm_set1_epi16((1 << X265_DEPTH) - 1));
 
-                dst[0 * dstStride] = row0[0];
-                dst[1 * dstStride] = row0[1];
-                dst[2 * dstStride] = row0[2];
-                dst[3 * dstStride] = row0[3];
-                dst[4 * dstStride] = row0[4];
-                dst[5 * dstStride] = row0[5];
-                dst[6 * dstStride] = row0[6];
-                dst[7 * dstStride] = row0[7];
+                uint8_t tmp[16];
+                _mm_storeu_si128((__m128i*)tmp, row);
+
+                dst[0 * dstStride] = tmp[ 0];
+                dst[1 * dstStride] = tmp[ 2];
+                dst[2 * dstStride] = tmp[ 4];
+                dst[3 * dstStride] = tmp[ 6];
+                dst[4 * dstStride] = tmp[ 8];
+                dst[5 * dstStride] = tmp[10];
+                dst[6 * dstStride] = tmp[12];
+                dst[7 * dstStride] = tmp[14];
             }
         }
     }
@@ -1278,12 +1478,7 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     }
 }
 
-#undef PREDANG_CALCROW_VER
-#undef PREDANG_CALCROW_HOR
-#undef LOADROW
-#undef CALCROW
-
-//16x16
+// 16x16
 #define PREDANG_CALCROW_VER(X) \
     LOADROW(row11L, row11H, GETAP(lookIdx, X)); \
     LOADROW(row12L, row12H, GETAP(lookIdx, X) + 1); \
@@ -1392,7 +1587,7 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
     pixel* refMain;
     pixel* refSide;
 
-    // Initialize the Main and Left reference array.
+    // Initialise the Main and Left reference array.
     if (intraPredAngle < 0)
     {
         refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
@@ -1414,91 +1609,92 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
     }
 
     // bfilter will always be true for blocksize 8
-    if (intraPredAngle == 0)  // Exactly horizontal/vertical angles
+    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
     {
         if (modeHor)
         {
-            Vec16uc v_temp;
-            Vec16uc tmp1;
-            v_temp.load(refMain + 1);
+            __m128i v_temp;
+            __m128i tmp1;
+            v_temp = _mm_loadu_si128((__m128i*)(refMain + 1));
 
             if (bFilter)
             {
-                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
-                Vec16uc v_temp16;
-                v_temp16.load(refSide + 1);
-                Vec8s v_side;
-                v_side = extend_low(v_temp16);
+                __m128i v_side_0 = _mm_set1_epi16(refSide[0]); // refSide[0] value in a vector
+                __m128i v_temp16;
+                v_temp16 = _mm_loadu_si128((__m128i*)(refSide + 1));
+                __m128i v_side;
+                v_side = _mm_unpacklo_epi8(v_temp16, _mm_setzero_si128());
 
-                Vec8s row01, row02, ref(refMain[1]);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row01 = ref + v_side;
-                row01 = min(max(0, row01), (1 << X265_DEPTH) - 1);
+                __m128i row01, row02, ref;
+                ref = _mm_set1_epi16(refMain[1]);
+                v_side = _mm_sub_epi16(v_side, v_side_0);
+                v_side = _mm_srai_epi16(v_side, 1);
+                row01 = _mm_add_epi16(ref, v_side);
+                row01 = _mm_min_epi16(_mm_max_epi16(_mm_setzero_si128(), row01), _mm_set1_epi16((1 << X265_DEPTH) - 1));
 
-                v_side = extend_high(v_temp16);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row02 = ref + v_side;
-                row02 = min(max(0, row02), (1 << X265_DEPTH) - 1);
+                v_side = _mm_unpackhi_epi8(v_temp16, _mm_setzero_si128());
+                v_side = _mm_sub_epi16(v_side, v_side_0);
+                v_side = _mm_srai_epi16(v_side, 1);
+                row02 = _mm_add_epi16(ref, v_side);
+                row02 = _mm_min_epi16(_mm_max_epi16(_mm_setzero_si128(), row02), _mm_set1_epi16((1 << X265_DEPTH) - 1));
 
-                tmp1 = compress_unsafe(row01, row02);
-                tmp1.store(dst); //row0
+                tmp1 = _mm_packus_epi16(row01, row02);
+                _mm_storeu_si128((__m128i*)dst, tmp1);            //row0
             }
             else
             {
-                tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>(v_temp);
-                tmp1.store(dst); //row0
+                tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(0));
+                _mm_storeu_si128((__m128i*)dst, tmp1); //row0
             }
 
-            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(v_temp);
-            tmp1.store(dst + (1 * dstStride)); //row1
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(1));
+            _mm_storeu_si128((__m128i*)(dst + (1 * dstStride)), tmp1); //row1
 
-            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>(v_temp);
-            tmp1.store(dst + (2 * dstStride)); //row2
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(2));
+            _mm_storeu_si128((__m128i*)(dst + (2 * dstStride)), tmp1); //row2
 
-            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3>(v_temp);
-            tmp1.store(dst + (3 * dstStride)); //row3
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(3));
+            _mm_storeu_si128((__m128i*)(dst + (3 * dstStride)), tmp1); //row3
 
-            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4>(v_temp);
-            tmp1.store(dst + (4 * dstStride)); //row4
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(4));
+            _mm_storeu_si128((__m128i*)(dst + (4 * dstStride)), tmp1); //row4
 
-            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5>(v_temp);
-            tmp1.store(dst + (5 * dstStride)); //row5
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(5));
+            _mm_storeu_si128((__m128i*)(dst + (5 * dstStride)), tmp1); //row5
 
-            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6>(v_temp);
-            tmp1.store(dst + (6 * dstStride)); //row6
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(6));
+            _mm_storeu_si128((__m128i*)(dst + (6 * dstStride)), tmp1); //row6
 
-            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7>(v_temp);
-            tmp1.store(dst + (7 * dstStride)); //row7
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(7));
+            _mm_storeu_si128((__m128i*)(dst + (7 * dstStride)), tmp1); //row7
 
-            tmp1 = permute16uc<8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8>(v_temp);
-            tmp1.store(dst + (8 * dstStride)); //row8
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(8));
+            _mm_storeu_si128((__m128i*)(dst + (8 * dstStride)), tmp1); //row8
 
-            tmp1 = permute16uc<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9>(v_temp);
-            tmp1.store(dst + (9 * dstStride)); //row9
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(9));
+            _mm_storeu_si128((__m128i*)(dst + (9 * dstStride)), tmp1); //row9
 
-            tmp1 = permute16uc<10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10>(v_temp);
-            tmp1.store(dst + (10 * dstStride)); //row10
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(10));
+            _mm_storeu_si128((__m128i*)(dst + (10 * dstStride)), tmp1); //row10
 
-            tmp1 = permute16uc<11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11>(v_temp);
-            tmp1.store(dst + (11 * dstStride)); //row11
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(11));
+            _mm_storeu_si128((__m128i*)(dst + (11 * dstStride)), tmp1); //row11
 
-            tmp1 = permute16uc<12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12>(v_temp);
-            tmp1.store(dst + (12 * dstStride)); //row12
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(12));
+            _mm_storeu_si128((__m128i*)(dst + (12 * dstStride)), tmp1); //row12
 
-            tmp1 = permute16uc<13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13>(v_temp);
-            tmp1.store(dst + (13 * dstStride)); //row13
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(13));
+            _mm_storeu_si128((__m128i*)(dst + (13 * dstStride)), tmp1); //row13
 
-            tmp1 = permute16uc<14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14>(v_temp);
-            tmp1.store(dst + (14 * dstStride)); //row14
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(14));
+            _mm_storeu_si128((__m128i*)(dst + (14 * dstStride)), tmp1); //row14
 
-            tmp1 = permute16uc<15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15>(v_temp);
-            tmp1.store(dst + (15 * dstStride)); //row15
+            tmp1 = _mm_shuffle_epi8(v_temp, _mm_set1_epi8(15));
+            _mm_storeu_si128((__m128i*)(dst + (15 * dstStride)), tmp1); //row15
         }
         else
         {
-            Vec16uc v_main;
+            __m128i v_main;
             v_main = _mm_loadu_si128((__m128i const*)(refMain + 1));
 
             _mm_storeu_si128((__m128i*)dst, v_main);
@@ -1520,55 +1716,60 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
 
             if (bFilter)
             {
-                Vec16uc v_temp;
-                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+                __m128i v_temp;
+                __m128i v_side_0 = _mm_set1_epi16(refSide[0]); // refSide[0] value in a vector
 
-                v_temp.load(refSide + 1);
-                Vec8s v_side;
-                v_side = extend_low(v_temp);
+                v_temp = _mm_loadu_si128((__m128i*)(refSide + 1));
+                __m128i v_side;
+                v_side = _mm_unpacklo_epi8(v_temp, _mm_setzero_si128());
 
-                Vec8s row0, ref(refMain[1]);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row0 = ref + v_side;
-                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
+                __m128i row0, ref;
+                ref = _mm_set1_epi16(refMain[1]);
+                v_side = _mm_sub_epi16(v_side, v_side_0);
+                v_side = _mm_srai_epi16(v_side, 1);
+                row0 = _mm_add_epi16(ref, v_side);
+                row0 = _mm_min_epi16(_mm_max_epi16(_mm_setzero_si128(), row0), _mm_set1_epi16((1 << X265_DEPTH) - 1));
 
-                dst[0 * dstStride] = row0[0];
-                dst[1 * dstStride] = row0[1];
-                dst[2 * dstStride] = row0[2];
-                dst[3 * dstStride] = row0[3];
-                dst[4 * dstStride] = row0[4];
-                dst[5 * dstStride] = row0[5];
-                dst[6 * dstStride] = row0[6];
-                dst[7 * dstStride] = row0[7];
+                uint16_t x[8];
+                _mm_storeu_si128((__m128i*)x, row0);
+                dst[0 * dstStride] = x[0];
+                dst[1 * dstStride] = x[1];
+                dst[2 * dstStride] = x[2];
+                dst[3 * dstStride] = x[3];
+                dst[4 * dstStride] = x[4];
+                dst[5 * dstStride] = x[5];
+                dst[6 * dstStride] = x[6];
+                dst[7 * dstStride] = x[7];
 
-                v_side = extend_high(v_temp);
-                v_side -= v_side_0;
-                v_side = v_side >> 1;
-                row0 = ref + v_side;
-                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
-                dst[8 * dstStride] = row0[0];
-                dst[9 * dstStride] = row0[1];
-                dst[10 * dstStride] = row0[2];
-                dst[11 * dstStride] = row0[3];
-                dst[12 * dstStride] = row0[4];
-                dst[13 * dstStride] = row0[5];
-                dst[14 * dstStride] = row0[6];
-                dst[15 * dstStride] = row0[7];
+                v_side = _mm_unpackhi_epi8(v_temp, _mm_setzero_si128());
+                v_side = _mm_sub_epi16(v_side, v_side_0);
+                v_side = _mm_srai_epi16(v_side, 1);
+                row0 = _mm_add_epi16(ref, v_side);
+                row0 = _mm_min_epi16(_mm_max_epi16(_mm_setzero_si128(), row0), _mm_set1_epi16((1 << X265_DEPTH) - 1));
+
+                _mm_storeu_si128((__m128i*)x, row0);
+                dst[8 * dstStride] = x[0];
+                dst[9 * dstStride] = x[1];
+                dst[10 * dstStride] = x[2];
+                dst[11 * dstStride] = x[3];
+                dst[12 * dstStride] = x[4];
+                dst[13 * dstStride] = x[5];
+                dst[14 * dstStride] = x[6];
+                dst[15 * dstStride] = x[7];
             }
         }
     }
     else if (intraPredAngle == -32)
     {
-        Vec16uc v_refSide;
-        v_refSide.load(refSide);
-        v_refSide = permute16uc<15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0>(v_refSide);
+        __m128i v_refSide;
+        v_refSide = _mm_loadu_si128((__m128i*)refSide);
+        __m128i temp = _mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+        v_refSide = _mm_shuffle_epi8(v_refSide, temp);
         pixel refMain0 = refMain[0];
 
-        v_refSide.store(refMain - 15);
+        _mm_storeu_si128((__m128i*)(refMain - 15), v_refSide);
         refMain[0] = refMain0;
 
-        Vec16uc tmp;
         __m128i itmp;
 
         itmp = _mm_loadu_si128((__m128i const*)refMain);
@@ -1619,6 +1820,7 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
         itmp = _mm_loadu_si128((__m128i const*)--refMain);
         dst += dstStride;
         _mm_storeu_si128((__m128i*)dst, itmp);
+
         return;
     }
     else if (intraPredAngle == 32)
@@ -1628,6 +1830,7 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
 
         itmp = _mm_loadu_si128((__m128i const*)refMain++);
         _mm_storeu_si128((__m128i*)dst, itmp);
+
         itmp = _mm_loadu_si128((__m128i const*)refMain++);
         dst += dstStride;
         _mm_storeu_si128((__m128i*)dst, itmp);
@@ -1673,21 +1876,22 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
         itmp = _mm_loadu_si128((__m128i const*)refMain++);
         dst += dstStride;
         _mm_storeu_si128((__m128i*)dst, itmp);
+
         return;
     }
     else
     {
         if (modeHor)
         {
-            Vec8s row11L, row12L, row11H, row12H;
-            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-            Vec16uc tmp;
-            Vec16uc R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16;
-            Vec16uc tmp1, tmp2;
-            v_deltaPos = 0;
-            v_ipAngle = intraPredAngle;
+            __m128i row11L, row12L, row11H, row12H;
+            __m128i v_deltaFract;
+            __m128i v_deltaPos = _mm_setzero_si128();
+            __m128i thirty2 = _mm_set1_epi16(32);
+            __m128i thirty1 = _mm_set1_epi16(31);
+            __m128i v_ipAngle = _mm_set1_epi16(intraPredAngle);
+            __m128i R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16;
             __m128i itmp, itmp1, itmp2, it1, it2, it3, i16;
-//          MB16;
+//            MB16;
             CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 0)
             CALC_BLND_8ROWS(R9, R10, R11, R12, R13, R14, R15, R16, 8)
             BLND2_2(R1, R9)
@@ -1701,12 +1905,12 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
         }
         else
         {
-            Vec8s row11L, row12L, row11H, row12H;
-            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-            Vec16uc tmp;
-            Vec8s tmp1, tmp2;
-            v_deltaPos = 0;
-            v_ipAngle = intraPredAngle;
+            __m128i row11L, row12L, row11H, row12H;
+            __m128i v_deltaFract;
+            __m128i v_deltaPos = _mm_setzero_si128();
+            __m128i thirty2 = _mm_set1_epi16(32);
+            __m128i thirty1 = _mm_set1_epi16(31);
+            __m128i v_ipAngle = _mm_set1_epi16(intraPredAngle);
             __m128i itmp, it1, it2, it3, i16;
 
             PREDANG_CALCROW_VER(0);
@@ -2002,110 +2206,33 @@ void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel 
     {
         if (modeHor)
         {
-            Vec16uc v_temp, tmp1;
+            __m128i temp, temp1;
 
-            v_temp.load(refMain + 1);
-            /*BROADSTORE16ROWS;*/
-            tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>(v_temp);
-            tmp1.store(dst + (0 * dstStride));
-            tmp1.store(dst + (0 * dstStride) + 16);
-            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(v_temp);
-            tmp1.store(dst + (1 * dstStride));
-            tmp1.store(dst + (1 * dstStride) + 16);
-            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>(v_temp);
-            tmp1.store(dst + (2 * dstStride));
-            tmp1.store(dst + (2 * dstStride) + 16);
-            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3>(v_temp);
-            tmp1.store(dst + (3 * dstStride));
-            tmp1.store(dst + (3 * dstStride) + 16);
-            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4>(v_temp);
-            tmp1.store(dst + (4 * dstStride));
-            tmp1.store(dst + (4 * dstStride) + 16);
-            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5>(v_temp);
-            tmp1.store(dst + (5 * dstStride));
-            tmp1.store(dst + (5 * dstStride) + 16);
-            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6>(v_temp);
-            tmp1.store(dst + (6 * dstStride));
-            tmp1.store(dst + (6 * dstStride) + 16);
-            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7>(v_temp);
-            tmp1.store(dst + (7 * dstStride));
-            tmp1.store(dst + (7 * dstStride) + 16);
-            tmp1 = permute16uc<8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8>(v_temp);
-            tmp1.store(dst + (8 * dstStride));
-            tmp1.store(dst + (8 * dstStride) + 16);
-            tmp1 = permute16uc<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9>(v_temp);
-            tmp1.store(dst + (9 * dstStride));
-            tmp1.store(dst + (9 * dstStride) + 16);
-            tmp1 = permute16uc<10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10>(v_temp);
-            tmp1.store(dst + (10 * dstStride));
-            tmp1.store(dst + (10 * dstStride) + 16);
-            tmp1 = permute16uc<11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11>(v_temp);
-            tmp1.store(dst + (11 * dstStride));
-            tmp1.store(dst + (11 * dstStride) + 16);
-            tmp1 = permute16uc<12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12>(v_temp);
-            tmp1.store(dst + (12 * dstStride));
-            tmp1.store(dst + (12 * dstStride) + 16);
-            tmp1 = permute16uc<13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13>(v_temp);
-            tmp1.store(dst + (13 * dstStride));
-            tmp1.store(dst + (13 * dstStride) + 16);
-            tmp1 = permute16uc<14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14>(v_temp);
-            tmp1.store(dst + (14 * dstStride));
-            tmp1.store(dst + (14 * dstStride) + 16);
-            tmp1 = permute16uc<15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15>(v_temp);
-            tmp1.store(dst + (15 * dstStride));
-            tmp1.store(dst + (15 * dstStride) + 16);
+        #define BROADCAST_STORE(X) \
+            temp1 = _mm_shuffle_epi8(temp, _mm_set1_epi8(X)); \
+            _mm_storeu_si128((__m128i*)(dst + ((X)  * dstStride)), temp1); \
+            _mm_storeu_si128((__m128i*)(dst + ((X)  * dstStride) + 16), temp1); \
+
+            temp = _mm_loadu_si128((__m128i const*)(refMain + 1));
+
+            for(int i = 0; i < 16; i += 4) // BROADCAST & STORE 16 ROWS
+            {
+                BROADCAST_STORE(i)
+                BROADCAST_STORE(i + 1)
+                BROADCAST_STORE(i + 2)
+                BROADCAST_STORE(i + 3)
+            }
 
             dst += 16 * dstStride;
-            v_temp.load(refMain + 1 + 16);
-            /*BROADSTORE16ROWS;*/
-            tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>(v_temp);
-            tmp1.store(dst + (0 * dstStride));
-            tmp1.store(dst + (0 * dstStride) + 16);
-            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(v_temp);
-            tmp1.store(dst + (1 * dstStride));
-            tmp1.store(dst + (1 * dstStride) + 16);
-            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>(v_temp);
-            tmp1.store(dst + (2 * dstStride));
-            tmp1.store(dst + (2 * dstStride) + 16);
-            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3>(v_temp);
-            tmp1.store(dst + (3 * dstStride));
-            tmp1.store(dst + (3 * dstStride) + 16);
-            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4>(v_temp);
-            tmp1.store(dst + (4 * dstStride));
-            tmp1.store(dst + (4 * dstStride) + 16);
-            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5>(v_temp);
-            tmp1.store(dst + (5 * dstStride));
-            tmp1.store(dst + (5 * dstStride) + 16);
-            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6>(v_temp);
-            tmp1.store(dst + (6 * dstStride));
-            tmp1.store(dst + (6 * dstStride) + 16);
-            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7>(v_temp);
-            tmp1.store(dst + (7 * dstStride));
-            tmp1.store(dst + (7 * dstStride) + 16);
-            tmp1 = permute16uc<8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8>(v_temp);
-            tmp1.store(dst + (8 * dstStride));
-            tmp1.store(dst + (8 * dstStride) + 16);
-            tmp1 = permute16uc<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9>(v_temp);
-            tmp1.store(dst + (9 * dstStride));
-            tmp1.store(dst + (9 * dstStride) + 16);
-            tmp1 = permute16uc<10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10>(v_temp);
-            tmp1.store(dst + (10 * dstStride));
-            tmp1.store(dst + (10 * dstStride) + 16);
-            tmp1 = permute16uc<11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11>(v_temp);
-            tmp1.store(dst + (11 * dstStride));
-            tmp1.store(dst + (11 * dstStride) + 16);
-            tmp1 = permute16uc<12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12>(v_temp);
-            tmp1.store(dst + (12 * dstStride));
-            tmp1.store(dst + (12 * dstStride) + 16);
-            tmp1 = permute16uc<13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13>(v_temp);
-            tmp1.store(dst + (13 * dstStride));
-            tmp1.store(dst + (13 * dstStride) + 16);
-            tmp1 = permute16uc<14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14>(v_temp);
-            tmp1.store(dst + (14 * dstStride));
-            tmp1.store(dst + (14 * dstStride) + 16);
-            tmp1 = permute16uc<15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15>(v_temp);
-            tmp1.store(dst + (15 * dstStride));
-            tmp1.store(dst + (15 * dstStride) + 16);
+            temp = _mm_loadu_si128((__m128i const*)(refMain + 1 + 16));
+
+            for(int i = 0; i < 16; i += 4) // BROADCAST & STORE 16 ROWS
+            {
+                BROADCAST_STORE(i)
+                BROADCAST_STORE(i + 1)
+                BROADCAST_STORE(i + 2)
+                BROADCAST_STORE(i + 3)
+            }
         }
         else
         {
@@ -2246,16 +2373,17 @@ void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel 
     }
     else if (intraPredAngle == -32)
     {
-        Vec16uc v_refSide;
+        __m128i ref_side;
+        __m128i mask = _mm_setr_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
         pixel refMain0 = refMain[0];
 
-        v_refSide.load(refSide);
-        v_refSide = permute16uc<15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0>(v_refSide);
-        v_refSide.store(refMain - 15);
+        ref_side = _mm_loadu_si128((__m128i const*)(refSide));
+        ref_side = _mm_shuffle_epi8(ref_side, mask);
+        _mm_storeu_si128((__m128i*)(refMain - 15), ref_side);
 
-        v_refSide.load(refSide + 16);
-        v_refSide = permute16uc<15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0>(v_refSide);
-        v_refSide.store(refMain - 31);
+        ref_side = _mm_loadu_si128((__m128i const*)(refSide + 16));
+        ref_side = _mm_shuffle_epi8(ref_side, mask);
+        _mm_storeu_si128((__m128i*)(refMain - 31), ref_side);
 
         refMain[0] = refMain0;
 
@@ -3047,6 +3175,15 @@ void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel 
         }
     }
 }
+#undef PREDANG_CALCROW_VER
+#undef PREDANG_CALCROW_HOR
+#undef LOADROW
+#undef CALCROW
+#undef BLND2_16
+#undef BLND2_2
+#undef BLND2_4
+#undef MB4
+#undef CALC_BLND_8ROWS
 
 void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
@@ -3066,10 +3203,19 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
         return;
     }
 }
-}//namespace
-#endif
+#endif // !HIGH_BIT_DEPTH
+}
+
 
 #if HIGH_BIT_DEPTH
+
+#if defined(_MSC_VER)
+#define ALWAYSINLINE  __forceinline
+#endif
+
+#define INSTRSET 3
+#include "vectorclass.h"
+
 namespace {
 inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
 {
@@ -3789,7 +3935,7 @@ void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *r
 #endif
 
 namespace x265 {
-void Setup_Vec_IPredPrimitives_sse3(EncoderPrimitives& p)
+void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 {
 #if HIGH_BIT_DEPTH
     p.intra_pred_dc = intra_pred_dc;

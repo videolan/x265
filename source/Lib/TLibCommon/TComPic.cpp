@@ -62,7 +62,6 @@ TComPic::TComPic()
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_next = NULL;
     m_prev = NULL;
-    m_qpAqOffset = NULL;
     m_SSDY = 0;
     m_SSDU = 0;
     m_SSDV = 0;
@@ -89,14 +88,7 @@ void TComPic::create(TEncCfg* cfg)
     m_defaultDisplayWindow = cfg->getDefaultDisplayWindow();
 
     /* configure lowres dimensions */
-    m_lowres.create(this, cfg->param.bframes);
-
-    if (cfg->param.rc.aqMode)
-    {
-        m_qpAqOffset = (double*)x265_malloc(sizeof(double) * getPicSym()->getNumberOfCUsInFrame());
-        if (!m_qpAqOffset)
-            cfg->param.rc.aqMode = 0;
-    }
+    m_lowres.create(this, cfg->param.bframes, &cfg->param.rc.aqMode);
 }
 
 void TComPic::destroy(int bframes)
@@ -123,7 +115,6 @@ void TComPic::destroy(int bframes)
     }
 
     m_lowres.destroy(bframes);
-    X265_FREE(m_qpAqOffset);
 }
 
 //! \}
