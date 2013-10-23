@@ -178,7 +178,7 @@ public:
     void  copyToPicLuma(TComPicYuv* destYuv);
     void  copyToPicCb(TComPicYuv* destYuv);
     void  copyToPicCr(TComPicYuv* destYuv);
-    void  copyFromPicture(const x265_picture_t&, int *pad);
+    void  copyFromPicture(const x265_picture&, int *pad);
 
     MotionReference* generateMotionReference(wpScalingParam *w);
 

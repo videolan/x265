@@ -189,7 +189,7 @@ int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
  \param   nalunits            output NAL packets
  \retval                      number of encoded pictures
  */
-int Encoder::encode(bool flush, const x265_picture_t* pic_in, x265_picture_t *pic_out, NALUnitEBSP **nalunits)
+int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_out, NALUnitEBSP **nalunits)
 {
     if (pic_in)
     {
@@ -325,7 +325,7 @@ void Encoder::printSummary()
     }
 }
 
-void Encoder::fetchStats(x265_stats_t *stats)
+void Encoder::fetchStats(x265_stats *stats)
 {
     stats->globalPsnrY = m_analyzeAll.getPsnrY();
     stats->globalPsnrU = m_analyzeAll.getPsnrU();
@@ -368,7 +368,7 @@ void Encoder::writeLog(int argc, char **argv)
         strftime(buffer, 128, "%c", timeinfo);
         fprintf(m_csvfpt, ", %s, ", buffer);
 
-        x265_stats_t stats;
+        x265_stats stats;
         fetchStats(&stats);
 
         // elapsed time, fps, bitrate
@@ -833,7 +833,7 @@ void Encoder::initPPS(TComPPS *pps)
     pps->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
-void Encoder::determineLevelAndProfile(x265_param_t *_param)
+void Encoder::determineLevelAndProfile(x265_param *_param)
 {
     // this is all based on the table at on Wikipedia at
     // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
@@ -953,7 +953,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *_param)
     x265_log(_param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
 }
 
-void Encoder::configure(x265_param_t *_param)
+void Encoder::configure(x265_param *_param)
 {
     // Trim the thread pool if WPP is disabled
     if (!_param->bEnableWavefront)
@@ -1159,7 +1159,7 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits)
     X265_FREE(m_packetData);
     X265_FREE(m_nals);
     CHECKED_MALLOC(m_packetData, char, memsize);
-    CHECKED_MALLOC(m_nals, x265_nal_t, num);
+    CHECKED_MALLOC(m_nals, x265_nal, num);
 
     memsize = 0;
 
@@ -1210,7 +1210,7 @@ fail:
 }
 
 extern "C"
-x265_t *x265_encoder_open(x265_param_t *param)
+x265_encoder *x265_encoder_open(x265_param *param)
 {
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
 
@@ -1239,7 +1239,7 @@ x265_t *x265_encoder_open(x265_param_t *param)
 }
 
 extern "C"
-int x265_encoder_headers(x265_t *enc, x265_nal_t **pp_nal, int *pi_nal)
+int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, int *pi_nal)
 {
     if (!pp_nal)
         return 0;
@@ -1273,7 +1273,7 @@ int x265_encoder_headers(x265_t *enc, x265_nal_t **pp_nal, int *pi_nal)
 }
 
 extern "C"
-int x265_encoder_encode(x265_t *enc, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out)
+int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, int *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
     NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
@@ -1303,7 +1303,7 @@ int x265_encoder_encode(x265_t *enc, x265_nal_t **pp_nal, int *pi_nal, x265_pict
 EXTERN_CYCLE_COUNTER(ME);
 
 extern "C"
-void x265_encoder_get_stats(x265_t *enc, x265_stats_t *outputStats)
+void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
 
@@ -1311,7 +1311,7 @@ void x265_encoder_get_stats(x265_t *enc, x265_stats_t *outputStats)
 }
 
 extern "C"
-void x265_encoder_log(x265_t* enc, int argc, char **argv)
+void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
 
@@ -1319,7 +1319,7 @@ void x265_encoder_log(x265_t* enc, int argc, char **argv)
 }
 
 extern "C"
-void x265_encoder_close(x265_t *enc)
+void x265_encoder_close(x265_encoder *enc)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
     REPORT_CYCLE_COUNTER(ME);

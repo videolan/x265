@@ -31,7 +31,7 @@
 
 #include "piclist.h"
 
-struct x265_t {};
+struct x265_encoder {};
 
 namespace x265 {
 // private namespace
@@ -43,7 +43,7 @@ struct RateControl;
 class ThreadPool;
 struct NALUnitEBSP;
 
-class Encoder : public TEncCfg, public x265_t
+class Encoder : public TEncCfg, public x265_encoder
 {
 private:
 
@@ -74,7 +74,7 @@ private:
 
 public:
 
-    x265_nal_t* m_nals;
+    x265_nal* m_nals;
     char*       m_packetData;
 
     Encoder();
@@ -88,11 +88,11 @@ public:
     void initSPS(TComSPS *sps);
     void initPPS(TComPPS *pps);
 
-    int encode(bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, NALUnitEBSP **nalunits);
+    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out, NALUnitEBSP **nalunits);
 
     int getStreamHeaders(NALUnitEBSP **nalunits);
 
-    void fetchStats(x265_stats_t* stats);
+    void fetchStats(x265_stats* stats);
 
     void writeLog(int argc, char **argv);
 
@@ -102,9 +102,9 @@ public:
 
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
-    void configure(x265_param_t *param);
+    void configure(x265_param *param);
 
-    void determineLevelAndProfile(x265_param_t *param);
+    void determineLevelAndProfile(x265_param *param);
 
     int  extractNalData(NALUnitEBSP **nalunits);
 

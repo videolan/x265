@@ -177,11 +177,11 @@ struct CLIOptions
     }
 
     void destroy();
-    void writeNALs(const x265_nal_t* nal, int nalcount);
-    void printStatus(int frameNum, x265_param_t *param);
-    void printVersion(x265_param_t *param);
-    void showHelp(x265_param_t *param);
-    bool parse(int argc, char **argv, x265_param_t* param);
+    void writeNALs(const x265_nal* nal, int nalcount);
+    void printStatus(int frameNum, x265_param *param);
+    void printVersion(x265_param *param);
+    void showHelp(x265_param *param);
+    bool parse(int argc, char **argv, x265_param* param);
 };
 
 void CLIOptions::destroy()
@@ -194,7 +194,7 @@ void CLIOptions::destroy()
     recon = NULL;
 }
 
-void CLIOptions::writeNALs(const x265_nal_t* nal, int nalcount)
+void CLIOptions::writeNALs(const x265_nal* nal, int nalcount)
 {
     PPAScopeEvent(bitstream_write);
     for (int i = 0; i < nalcount; i++)
@@ -205,7 +205,7 @@ void CLIOptions::writeNALs(const x265_nal_t* nal, int nalcount)
     }
 }
 
-void CLIOptions::printStatus(int i_frame, x265_param_t *param)
+void CLIOptions::printStatus(int i_frame, x265_param *param)
 {
     char buf[200];
     int64_t i_time = x265_mdate();
@@ -233,14 +233,14 @@ void CLIOptions::printStatus(int i_frame, x265_param_t *param)
     prevUpdateTime = i_time;
 }
 
-void CLIOptions::printVersion(x265_param_t *param)
+void CLIOptions::printVersion(x265_param *param)
 {
     fprintf(stderr, "x265 [info]: HEVC encoder version %s\n", x265_version_str);
     fprintf(stderr, "x265 [info]: build info %s\n", x265_build_info_str);
     x265_setup_primitives(param, 0);
 }
 
-void CLIOptions::showHelp(x265_param_t *param)
+void CLIOptions::showHelp(x265_param *param)
 {
     x265_param_default(param);
     printVersion(param);
@@ -322,7 +322,7 @@ void CLIOptions::showHelp(x265_param_t *param)
     exit(0);
 }
 
-bool CLIOptions::parse(int argc, char **argv, x265_param_t* param)
+bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 {
     int berror = 0;
     int help = 0;
@@ -520,7 +520,7 @@ int main(int argc, char **argv)
     fp1 = fopen("LOG_CU_COST.txt", "w");
 #endif
 
-    x265_param_t param;
+    x265_param param;
     CLIOptions   cliopt;
 
     if (cliopt.parse(argc, argv, &param))
@@ -529,7 +529,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    x265_t *encoder = x265_encoder_open(&param);
+    x265_encoder *encoder = x265_encoder_open(&param);
     if (!encoder)
     {
         x265_log(&param, X265_LOG_ERROR, "failed to open encoder\n");
@@ -542,11 +542,11 @@ int main(int argc, char **argv)
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
         x265_log(&param, X265_LOG_ERROR, "Unable to register CTRL+C handler: %s\n", strerror(errno));
 
-    x265_picture_t pic_orig, pic_out;
-    x265_picture_t *pic_in = &pic_orig;
-    x265_picture_t *pic_recon = cliopt.recon ? &pic_out : NULL;
-    x265_nal_t *p_nal;
-    x265_stats_t stats;
+    x265_picture pic_orig, pic_out;
+    x265_picture *pic_in = &pic_orig;
+    x265_picture *pic_recon = cliopt.recon ? &pic_out : NULL;
+    x265_nal *p_nal;
+    x265_stats stats;
     int nal;
 
     if (!x265_encoder_headers(encoder, &p_nal, &nal))

@@ -99,7 +99,7 @@ public:
 
     void skipFrames(int numFrames);
 
-    bool readPicture(x265_picture_t&);
+    bool readPicture(x265_picture&);
 
 #if defined(ENABLE_THREAD)
 

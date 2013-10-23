@@ -137,7 +137,7 @@ bool YUVInput::populateFrameQueue()
     return true;
 }
 
-bool YUVInput::readPicture(x265_picture_t& pic)
+bool YUVInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
     if (!threadActive)
@@ -172,7 +172,7 @@ bool YUVInput::readPicture(x265_picture_t& pic)
 #else // if defined ENABLE_THREAD
 
 // TODO: only supports 4:2:0 chroma sampling
-bool YUVInput::readPicture(x265_picture_t& pic)
+bool YUVInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
 

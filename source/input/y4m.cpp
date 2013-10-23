@@ -228,7 +228,7 @@ int Y4MInput::guessFrameCount()
 
 void Y4MInput::skipFrames(int numFrames)
 {
-    x265_picture_t pic;
+    x265_picture pic;
 
     for (int i = 0; i < numFrames; i++)
     {
@@ -237,7 +237,7 @@ void Y4MInput::skipFrames(int numFrames)
 }
 
 #if defined(ENABLE_THREAD)
-bool Y4MInput::readPicture(x265_picture_t& pic)
+bool Y4MInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
     if (!threadActive)
@@ -315,7 +315,7 @@ bool Y4MInput::populateFrameQueue()
 }
 
 #else // if defined(ENABLE_THREAD)
-bool Y4MInput::readPicture(x265_picture_t& pic)
+bool Y4MInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
 

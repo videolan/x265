@@ -47,7 +47,7 @@ Y4MOutput::~Y4MOutput()
     delete [] buf;
 }
 
-bool Y4MOutput::writePicture(const x265_picture_t& pic)
+bool Y4MOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
     std::ofstream::pos_type outPicPos = header;

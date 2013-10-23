@@ -91,7 +91,7 @@ void x265_free(void *ptr)
 
 #endif // if _WIN32
 
-void x265_log(x265_param_t *param, int level, const char *fmt, ...)
+void x265_log(x265_param *param, int level, const char *fmt, ...)
 {
     if (param && level > param->logLevel)
         return;
@@ -123,9 +123,9 @@ void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 }
 
 extern "C"
-void x265_param_default(x265_param_t *param)
+void x265_param_default(x265_param *param)
 {
-    memset(param, 0, sizeof(x265_param_t));
+    memset(param, 0, sizeof(x265_param));
 
     /* Applying non-zero default values to all elements in the param structure */
     param->logLevel = X265_LOG_INFO;
@@ -192,14 +192,14 @@ void x265_param_default(x265_param_t *param)
 }
 
 extern "C"
-void x265_picture_init(x265_param_t *param, x265_picture_t *pic)
+void x265_picture_init(x265_param *param, x265_picture *pic)
 {
-    memset(pic, 0, sizeof(x265_picture_t));
+    memset(pic, 0, sizeof(x265_picture));
     pic->bitDepth = param->internalBitDepth;
 }
 
 extern "C"
-int x265_param_apply_profile(x265_param_t *param, const char *profile)
+int x265_param_apply_profile(x265_param *param, const char *profile)
 {
     if (!profile)
         return 0;
@@ -228,7 +228,7 @@ int x265_param_apply_profile(x265_param_t *param, const char *profile)
     return 0;
 }
 
-static inline int _confirm(x265_param_t *param, bool bflag, const char* message)
+static inline int _confirm(x265_param *param, bool bflag, const char* message)
 {
     if (!bflag)
         return 0;
@@ -237,7 +237,7 @@ static inline int _confirm(x265_param_t *param, bool bflag, const char* message)
     return 1;
 }
 
-int x265_check_params(x265_param_t *param)
+int x265_check_params(x265_param *param)
 {
 #define CHECK(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
@@ -319,7 +319,7 @@ int x265_check_params(x265_param_t *param)
     return check_failed;
 }
 
-int x265_set_globals(x265_param_t *param)
+int x265_set_globals(x265_param *param)
 {
     uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
     uint32_t tuQTMinLog2Size = 2; //log2(4)
@@ -368,7 +368,7 @@ int x265_set_globals(x265_param_t *param)
     return 0;
 }
 
-void x265_print_params(x265_param_t *param)
+void x265_print_params(x265_param *param)
 {
     if (param->logLevel < X265_LOG_INFO)
         return;
@@ -440,7 +440,7 @@ void x265_print_params(x265_param_t *param)
 }
 
 extern "C"
-int x265_param_parse(x265_param_t *p, const char *name, const char *value)
+int x265_param_parse(x265_param *p, const char *name, const char *value)
 {
     int berror = 0;
     int valuewasnull;
@@ -562,7 +562,7 @@ int x265_param_parse(x265_param_t *p, const char *name, const char *value)
     return berror ? X265_PARAM_BAD_VALUE : 0;
 }
 
-char *x265_param2string( x265_param_t *p)
+char *x265_param2string( x265_param *p)
 {
     char *buf, *s;
     buf = s = (char *)X265_MALLOC(char, 2000);

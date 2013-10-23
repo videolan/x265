@@ -357,7 +357,7 @@ void TComPicYuv::dump(char* pFileName, bool bAdd)
  * Upscale pixels from 8bits to 16 bits when required, but do not modify pixels.
  * This new routine is GPL
  */
-void TComPicYuv::copyFromPicture(const x265_picture_t& pic, int *pad)
+void TComPicYuv::copyFromPicture(const x265_picture& pic, int *pad)
 {
     Pel *Y = getLumaAddr();
     Pel *U = getCbAddr();
