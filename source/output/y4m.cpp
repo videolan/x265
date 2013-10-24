@@ -50,9 +50,8 @@ Y4MOutput::~Y4MOutput()
 bool Y4MOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
-    std::ofstream::pos_type outPicPos = header;
-    outPicPos += pic.poc * (6 + 3 * (width * height) / 2);
-    ofs.seekp(outPicPos);
+    std::ofstream::pos_type frameSize = (6 + 3 * (width * height) / 2);
+    ofs.seekp(header + frameSize * pic.poc); 
     ofs << "FRAME\n";
 
     if (pic.bitDepth > 8)
