@@ -97,6 +97,7 @@ void Encoder::create()
     m_lookahead = new Lookahead(this, m_threadPool);
     m_dpb = new DPB(this);
     m_rateControl = new RateControl(this);
+    m_numWPFrames = 0;
 
     /* Try to open CSV file handle */
     if (param.csvfn)
@@ -279,6 +280,8 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             pic_out->stride[2] = recpic->getCStride();
         }
 
+        if (out->getSlice()->m_numWPRefs > 0)
+            m_numWPFrames++;
         uint64_t bits = calculateHashAndPSNR(out, nalunits);
         // Allow this frame to be recycled if no frame encoders are using it for reference
         ATOMIC_DEC(&out->m_countRefEncoders);
@@ -323,6 +326,12 @@ void Encoder::printSummary()
         m_analyzeB.printOut('b', fps);
         m_analyzeAll.printOut('a', fps);
     }
+    if (param.bEnableWeightedPred)
+    {
+        int numPFrames = m_analyzeP.getNumPic();
+        x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
+                 m_numWPFrames, numPFrames, (float) 100.0 * m_numWPFrames / numPFrames); 
+    }
 }
 
 void Encoder::fetchStats(x265_stats *stats)
@@ -345,6 +354,7 @@ void Encoder::fetchStats(x265_stats *stats)
     stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
     stats->elapsedVideoTime = stats->encodedPictureCount / param.frameRate;
     stats->bitrate = (0.008f * stats->accBits) / stats->elapsedVideoTime;
+    stats->totalWPFrames = m_numWPFrames;
 }
 
 void Encoder::writeLog(int argc, char **argv)

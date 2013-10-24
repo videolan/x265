@@ -125,6 +125,7 @@ void TComSlice::initSlice()
     m_enableTMVPFlag = true;
     m_ssim = 0;
     m_ssimCnt = 0;
+    m_numWPRefs = 0;
 }
 
 bool TComSlice::getRapPicFlag()

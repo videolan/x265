@@ -429,7 +429,10 @@ void FrameEncoder::compressFrame()
         {
             TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
             if ((slice->isInterP() && slice->getPPS()->getUseWP()))
+            {
                 w = slice->m_weightPredTable[list][ref];
+                slice->m_numWPRefs++;
+            }
             slice->m_mref[list][ref] = recon->generateMotionReference(w);
         }
     }
