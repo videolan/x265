@@ -72,6 +72,9 @@ private:
     // quality control
     TComScalingList    m_scalingList;      ///< quantization matrix information
 
+    // weighted prediction
+    int                m_numWPFrames;      // number of Unidirectional weighted frames used
+
 public:
 
     x265_nal* m_nals;

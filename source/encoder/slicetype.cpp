@@ -444,10 +444,10 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         // filtering with [1 2 1]
         // assume getUseStrongIntraSmoothing() is disabled
         pAbove1[0] = pAbove0[0];
-        pAbove1[2 * cuSize - 1] = pAbove0[2 * cuSize - 1];
+        pAbove1[2 * cuSize] = pAbove0[2 * cuSize];
         pLeft1[0] = pLeft0[0];
-        pLeft1[2 * cuSize - 1] = pLeft0[2 * cuSize - 1];
-        for (int i = 1; i < 2 * cuSize - 1; i++)
+        pLeft1[2 * cuSize] = pLeft0[2 * cuSize];
+        for (int i = 1; i < 2 * cuSize; i++)
         {
             pAbove1[i] = (pAbove0[i - 1] + 2 * pAbove0[i] + pAbove0[i + 1] + 2) >> 2;
             pLeft1[i] = (pLeft0[i - 1] + 2 * pLeft0[i] + pLeft0[i + 1] + 2) >> 2;

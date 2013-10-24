@@ -430,10 +430,12 @@ void FrameEncoder::compressFrame()
         wpScalingParam *w = NULL;
         for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
         {
-            TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
             if ((slice->isInterP() && slice->getPPS()->getUseWP()))
+            {
                 w = slice->m_weightPredTable[list][ref];
-            m_mref[l][ref].init(recon, w);
+                slice->m_numWPRefs++;
+            }
+            m_mref[l][ref].init(slice->getRefPic(list, ref)->getPicYuvRec(), w);
         }
     }
 
