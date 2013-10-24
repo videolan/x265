@@ -290,25 +290,25 @@ bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
         for (int refIdxTmp = 0; refIdxTmp < slice->getNumRefIdx(picList); refIdxTmp++)
         {
             Pel*  fenc = pic->getLumaAddr();
-            Pel*  fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getLumaAddr();
+            Pel*  fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getLumaAddr();
             int   orgStride = pic->getStride();
-            int   refStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getStride();
+            int   refStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getStride();
 
             // calculate SAD costs with/without wp for luma
             SADWP   = this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width, height, orgStride, refStride, denom, weightPredTable[refList][refIdxTmp][0].inputWeight, weightPredTable[refList][refIdxTmp][0].inputOffset);
             SADnoWP = this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width, height, orgStride, refStride, denom, defaultWeight, 0);
 
             fenc = pic->getCbAddr();
-            fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getCbAddr();
+            fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getCbAddr();
             orgStride = pic->getCStride();
-            refStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getCStride();
+            refStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getCStride();
 
             // calculate SAD costs with/without wp for chroma cb
             SADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, weightPredTable[refList][refIdxTmp][1].inputWeight, weightPredTable[refList][refIdxTmp][1].inputOffset);
             SADnoWP += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, defaultWeight, 0);
 
             fenc = pic->getCrAddr();
-            fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getCrAddr();
+            fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getCrAddr();
 
             // calculate SAD costs with/without wp for chroma cr
             SADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, weightPredTable[refList][refIdxTmp][2].inputWeight, weightPredTable[refList][refIdxTmp][2].inputOffset);
