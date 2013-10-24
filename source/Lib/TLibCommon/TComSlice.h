@@ -41,7 +41,6 @@
 #include "CommonDef.h"
 #include "TComRom.h"
 #include "x265.h"  // NAL type enums
-#include "reference.h"
 #include "piclist.h"
 
 #include <cstring>
@@ -55,6 +54,8 @@ namespace x265 {
 
 class TComPic;
 class TComTrQuant;
+class MotionReference;
+
 // ====================================================================================================================
 // Constants
 // ====================================================================================================================
@@ -1375,7 +1376,6 @@ private:
 
 public:
 
-    MotionReference * m_mref[2][MAX_NUM_REF + 1];
     wpScalingParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
 
     /* SSIM values per frame */

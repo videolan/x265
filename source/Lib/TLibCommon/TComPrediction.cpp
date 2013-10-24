@@ -342,7 +342,7 @@ void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int
     cu->clipMv(mv);
 
     if (bLuma)
-        xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refIdx], partAddr, &mv, width, height, outPredYuv);
+        xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
 
     if (bChroma)
         xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
@@ -469,15 +469,14 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
  * \param height   Height of block
  * \param dstPic   Pointer to destination picture
  */
-void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, MotionReference *ref, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic)
+void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic)
 {
     int dstStride = dstPic->getStride();
     Pel *dst      = dstPic->getLumaAddr(partAddr);
 
-    TComPicYuv* pic = ref->m_reconPic;
-    int srcStride = ref->lumaStride;
-    int refOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
-    Pel* src = pic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    int srcStride = refPic->getStride();
+    int srcOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
+    Pel* src = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + srcOffset;
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;

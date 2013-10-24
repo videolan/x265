@@ -226,7 +226,6 @@ add_library(common OBJECT
     wavefront.h wavefront.cpp
     md5.cpp md5.h
     TShortYUV.cpp TShortYUV.h mv.h
-    reference.cpp reference.h
     common.cpp common.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h)

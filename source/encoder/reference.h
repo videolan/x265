@@ -25,34 +25,14 @@
 #define X265_REFERENCE_H
 
 #include "primitives.h"
+#include "mv.h"
 
 namespace x265 {
 // private x265 namespace
 
 class TComPicYuv;
-class TComPic;
 struct WpScalingParam;
 typedef WpScalingParam wpScalingParam;
-
-struct ReferencePlanes
-{
-    ReferencePlanes() : isWeighted(false), isLowres(false) {}
-
-    void setWeight(const wpScalingParam&);
-    bool matchesWeight(const wpScalingParam&);
-
-    pixel* fpelPlane;
-    pixel* lowresPlane[4];
-    pixel* unweightedFPelPlane;
-
-    bool isWeighted;
-    bool isLowres;
-    int  lumaStride;
-    int  weight;
-    int  offset;
-    int  shift;
-    int  round;
-};
 
 class MotionReference : public ReferencePlanes
 {
@@ -63,8 +43,8 @@ public:
     int  init(TComPicYuv*, wpScalingParam* w = NULL);
     void applyWeight(int rows, int numRows);
 
-    MotionReference *m_next;
     TComPicYuv      *m_reconPic;
+    pixel           *m_weightBuffer;
     int              m_numWeightedRows;
 
 protected:

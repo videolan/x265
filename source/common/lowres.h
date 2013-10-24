@@ -24,9 +24,8 @@
 #ifndef X265_LOWRES_H
 #define X265_LOWRES_H
 
-#include "TLibCommon/TComPicYuv.h"
+#include "primitives.h"
 #include "common.h"
-#include "reference.h"
 #include "mv.h"
 
 namespace x265 {

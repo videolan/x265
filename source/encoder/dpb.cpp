@@ -52,7 +52,6 @@ void DPB::recycleUnreferenced(PicList& freeList)
         iterPic = iterPic->m_next;
         if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
         {
-            pic->getPicYuvRec()->clearReferences();
             pic->m_reconRowCount = 0;
 
             // iterator is invalidated by remove, restart scan
