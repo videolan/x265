@@ -73,36 +73,34 @@ void TComPicYuv::create(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCU
     m_cuWidth  = maxCUWidth;
     m_cuHeight = maxCUHeight;
 
-    int numCuInWidth  = (m_picWidth + m_cuWidth - 1)  / m_cuWidth;
-    int numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
+    m_numCuInWidth = (m_picWidth + m_cuWidth - 1)  / m_cuWidth;
+    m_numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
 
-    m_numCuInWidth = numCuInWidth;
-    m_numCuInHeight = numCuInHeight;
+    m_lumaMarginX = g_maxCUWidth  + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
+    m_lumaMarginY = g_maxCUHeight + 4;  // search margin and 8-tap filter half-length
+    m_stride = (m_numCuInWidth * g_maxCUWidth) + (m_lumaMarginX << 1);
 
-    m_lumaMarginX = g_maxCUWidth  + 16; // for 16-byte alignment
-    m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
-    m_stride = m_picWidth + (m_lumaMarginX << 1);
-
-    m_chromaMarginX = m_lumaMarginX;       // keep 16-byte alignment for chroma CTUs
+    m_chromaMarginX = m_lumaMarginX;    // keep 16-byte alignment for chroma CTUs
     m_chromaMarginY = m_lumaMarginY >> 1;
-    m_strideC = (m_picWidth >> 1) + (m_chromaMarginX << 1);
+    m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> 1) + (m_chromaMarginX << 1);
+    int maxHeight = m_numCuInHeight * g_maxCUHeight;
 
-    m_picBufY = (Pel*)X265_MALLOC(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
-    m_picBufU = (Pel*)X265_MALLOC(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
-    m_picBufV = (Pel*)X265_MALLOC(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    m_picBufY = (Pel*)X265_MALLOC(Pel, m_stride * (maxHeight + (m_lumaMarginY << 1)));
+    m_picBufU = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> 1) + (m_chromaMarginY << 1)));
+    m_picBufV = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> 1) + (m_chromaMarginY << 1)));
 
     m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
     m_picOrgV = m_picBufV + m_chromaMarginY * getCStride() + m_chromaMarginX;
 
-    m_cuOffsetY = new int[numCuInWidth * numCuInHeight];
-    m_cuOffsetC = new int[numCuInWidth * numCuInHeight];
-    for (int cuRow = 0; cuRow < numCuInHeight; cuRow++)
+    m_cuOffsetY = new int[m_numCuInWidth * m_numCuInHeight];
+    m_cuOffsetC = new int[m_numCuInWidth * m_numCuInHeight];
+    for (int cuRow = 0; cuRow < m_numCuInHeight; cuRow++)
     {
-        for (int cuCol = 0; cuCol < numCuInWidth; cuCol++)
+        for (int cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
         {
-            m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
-            m_cuOffsetC[cuRow * numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight / 2) + cuCol * (m_cuWidth / 2);
+            m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
+            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight / 2) + cuCol * (m_cuWidth / 2);
         }
     }
 

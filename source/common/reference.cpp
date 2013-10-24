@@ -67,12 +67,9 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
 
     if (w)
     {
-        int width = pic->getWidth();
-        int height = pic->getHeight();
-        size_t padwidth = width + pic->m_lumaMarginX * 2;
-        size_t padheight = height + pic->m_lumaMarginY * 2;
+        size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
         setWeight(*w);
-        fpelPlane = (pixel*)X265_MALLOC(pixel,  padwidth * padheight);
+        fpelPlane = (pixel*)X265_MALLOC(pixel, lumaStride * padheight);
         if (fpelPlane) fpelPlane += m_startPad;
         else return -1;
     }
