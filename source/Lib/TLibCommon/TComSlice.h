@@ -1513,8 +1513,6 @@ public:
 
     UInt getSliceCurEndCUAddr()                { return m_sliceCurEndCUAddr; }
 
-    void copySliceInfo(TComSlice *pcSliceSrc);
-
     void setNextSlice(bool b)                  { m_nextSlice = b; }
 
     bool isNextSlice()                         { return m_nextSlice; }
