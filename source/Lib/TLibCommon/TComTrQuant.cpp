@@ -730,7 +730,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCo
             {
                 if (sigCoeffGroupFlag[cgBlkPos] == 0)
                 {
-                    UInt  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, width, height);
+                    UInt  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, log2BlkSize);
                     baseCost += xGetRateSigCoeffGroup(0, ctxSig) - rdStats.sigCost;
                     costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(0, ctxSig);
                 }
@@ -747,7 +747,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCo
                         double costZeroCG = baseCost;
 
                         // add SigCoeffGroupFlag cost to total cost
-                        UInt  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, width, height);
+                        UInt  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, log2BlkSize);
                         if (cgScanPos < cgLastScanPos)
                         {
                             baseCost  += xGetRateSigCoeffGroup(1, ctxSig);
@@ -1032,8 +1032,11 @@ int TComTrQuant::calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, U
     const int size = (1 << log2BlockSize);
     const UInt* sigPos = &sigCoeffGroupFlag[(posYCG << log2BlockSize) + posXCG];
 
-    assert(sigPos[1] <= 1);
-    assert(sigPos[size] <= 1);
+    if (posXCG < size - 1)
+        assert(sigPos[1] <= 1);
+
+    if (posYCG < size - 1)
+        assert(sigPos[size] <= 1);
 
     UInt sigRight = (sigPos[1]);
     UInt sigLower = (sigPos[size]);
@@ -1351,23 +1354,23 @@ inline double TComTrQuant::xGetRateLast(UInt posx, UInt posy) const
  * \param uiLog2BlkSize log2 value of block size
  * \returns ctxInc for current scan position
  */
-UInt TComTrQuant::getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cgPosX, UInt cgPosY,
-                                         int width, int height)
+UInt TComTrQuant::getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cgPosX, UInt cgPosY, int log2BlockSize)
 {
-    UInt right = 0;
-    UInt lower = 0;
+    log2BlockSize -= 2;
 
-    width >>= 2;
-    height >>= 2;
-    if (cgPosX < width - 1)
-    {
-        right = (sigCoeffGroupFlag[cgPosY * width + cgPosX + 1] != 0);
-    }
-    if (cgPosY < height - 1)
-    {
-        lower = (sigCoeffGroupFlag[(cgPosY  + 1) * width + cgPosX] != 0);
-    }
-    return right || lower;
+    const int size = (1 << log2BlockSize);
+    const UInt* sigPos = &sigCoeffGroupFlag[(cgPosY << log2BlockSize) + cgPosX];
+
+    if (cgPosX < size - 1)
+        assert(sigPos[1] <= 1);
+
+    if (cgPosY < size - 1)
+        assert(sigPos[size] <= 1);
+
+    UInt sigRight = (cgPosX == size - 1) ? 0 : (sigPos[1]);
+    UInt sigLower = (cgPosY == size - 1) ? 0 : (sigPos[size]);
+
+    return sigRight | sigLower;
 }
 
 /** set quantized matrix coefficient for encode

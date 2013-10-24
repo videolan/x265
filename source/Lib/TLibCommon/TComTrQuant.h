@@ -164,7 +164,7 @@ public:
 
     static int  getSigCtxInc(int patternSigCtx, UInt scanIdx, int posX, int posY, int log2BlkSize, TextType ttype);
 
-    static UInt getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cGPosX, UInt cGPosY, int width, int height);
+    static UInt getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cGPosX, UInt cGPosY, int log2BlockSize);
 
     estBitsSbacStruct* m_estBitsSbac;
 
