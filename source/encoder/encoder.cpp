@@ -353,7 +353,7 @@ void Encoder::fetchStats(x265_stats *stats)
     }
     stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
     stats->elapsedVideoTime = stats->encodedPictureCount / param.frameRate;
-    stats->bitrate = (0.008f * stats->accBits) / stats->elapsedVideoTime;
+    stats->bitrate = (0.001f * stats->accBits) / stats->elapsedVideoTime;
     stats->totalWPFrames = m_numWPFrames;
 }
 
