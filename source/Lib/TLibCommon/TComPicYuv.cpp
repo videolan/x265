@@ -36,7 +36,6 @@
 */
 
 #include "TComPicYuv.h"
-#include "TComPrediction.h"
 #include "primitives.h"
 
 #include <cstdlib>
