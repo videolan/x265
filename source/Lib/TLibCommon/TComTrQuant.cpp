@@ -259,6 +259,8 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, int* coef, TCoeff* qCoef, int width, in
     int add = 0;
     bool useRDOQ = cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ;
 
+    assert(width == height);
+
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
     {
         acSum = xRateDistOptQuant(cu, coef, qCoef, width, height, ttype, absPartIdx, lastPos);
@@ -590,7 +592,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCo
         UInt cgPosX   = cgBlkPos - (cgPosY * numBlkSide);
         ::memset(&rdStats, 0, sizeof(coeffGroupRDStats));
 
-        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, width, height);
+        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, log2BlkSize);
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
             scanPos = cgScanPos * cgSize + scanPosinCG;
@@ -1020,23 +1022,27 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int* srcCoeff, TCoeff* dstCo
  * \param height height of the block
  * \returns pattern for current coefficient group
  */
-int TComTrQuant::calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, int width, int height)
+int TComTrQuant::calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, int log2BlockSize)
 {
-    if (width == 4 && height == 4) return -1;
+    if (log2BlockSize == 2)
+        return -1;
 
-    UInt sigRight = 0;
-    UInt sigLower = 0;
+    log2BlockSize -= 2;
 
-    width >>= 2;
-    height >>= 2;
-    if (posXCG < width - 1)
-    {
-        sigRight = (sigCoeffGroupFlag[posYCG * width + posXCG + 1] != 0);
-    }
-    if (posYCG < height - 1)
-    {
-        sigLower = (sigCoeffGroupFlag[(posYCG  + 1) * width + posXCG] != 0);
-    }
+    const int size = (1 << log2BlockSize);
+    const UInt* sigPos = &sigCoeffGroupFlag[(posYCG << log2BlockSize) + posXCG];
+
+    assert(sigPos[1] <= 1);
+    assert(sigPos[size] <= 1);
+
+    UInt sigRight = (sigPos[1]);
+    UInt sigLower = (sigPos[size]);
+    int maskRight = ((int)(posXCG - size + 1)) >> 31;
+    int maskLower = ((int)(posYCG - size + 1)) >> 31;
+
+    sigRight &= maskRight;
+    sigLower &= maskLower;
+
     return sigRight + (sigLower << 1);
 }
 

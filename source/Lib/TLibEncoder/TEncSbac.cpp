@@ -2276,7 +2276,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, UInt absPartIdx, UInt
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag[cgBlkPos])
         {
-            int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, width, height);
+            int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, log2BlockSize);
             UInt blkPos, posy, posx, sig, ctxSig;
             for (; scanPosSig >= subPos; scanPosSig--)
             {
