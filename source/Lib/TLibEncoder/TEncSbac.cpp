@@ -1223,55 +1223,6 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
             slice->setNumRefIdx(REF_PIC_LIST_1, 0);
         }
 
-        if (slice->getPPS()->getListsModificationPresentFlag() && slice->getNumRpsCurrTempList() > 1)
-        {
-            TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
-            if (!slice->isIntra())
-            {
-                WRITE_FLAG(slice->getRefPicListModification()->getRefPicListModificationFlagL0() ? 1 : 0,       "ref_pic_list_modification_flag_l0");
-                if (slice->getRefPicListModification()->getRefPicListModificationFlagL0())
-                {
-                    int numRpsCurrTempList0 = slice->getNumRpsCurrTempList();
-                    if (numRpsCurrTempList0 > 1)
-                    {
-                        int length = 1;
-                        numRpsCurrTempList0--;
-                        while (numRpsCurrTempList0 >>= 1)
-                        {
-                            length++;
-                        }
-
-                        for (int i = 0; i < slice->getNumRefIdx(REF_PIC_LIST_0); i++)
-                        {
-                            WRITE_CODE(refPicListModification->getRefPicSetIdxL0(i), length, "list_entry_l0");
-                        }
-                    }
-                }
-            }
-            if (slice->isInterB())
-            {
-                WRITE_FLAG(slice->getRefPicListModification()->getRefPicListModificationFlagL1() ? 1 : 0,       "ref_pic_list_modification_flag_l1");
-                if (slice->getRefPicListModification()->getRefPicListModificationFlagL1())
-                {
-                    int numRpsCurrTempList1 = slice->getNumRpsCurrTempList();
-                    if (numRpsCurrTempList1 > 1)
-                    {
-                        int length = 1;
-                        numRpsCurrTempList1--;
-                        while (numRpsCurrTempList1 >>= 1)
-                        {
-                            length++;
-                        }
-
-                        for (int i = 0; i < slice->getNumRefIdx(REF_PIC_LIST_1); i++)
-                        {
-                            WRITE_CODE(refPicListModification->getRefPicSetIdxL1(i), length, "list_entry_l1");
-                        }
-                    }
-                }
-            }
-        }
-
         if (slice->isInterB())
         {
             WRITE_FLAG(slice->getMvdL1ZeroFlag() ? 1 : 0,   "mvd_l1_zero_flag");

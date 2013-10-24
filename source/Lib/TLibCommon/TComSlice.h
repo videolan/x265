@@ -1053,41 +1053,6 @@ public:
     TComPTL* getPTL() { return &m_ptl; }
 };
 
-/// Reference Picture Lists class
-class TComRefPicListModification
-{
-private:
-
-    bool m_bRefPicListModificationFlagL0;
-    bool m_bRefPicListModificationFlagL1;
-    UInt m_RefPicSetIdxL0[32];
-    UInt m_RefPicSetIdxL1[32];
-
-public:
-
-    TComRefPicListModification();
-    virtual ~TComRefPicListModification();
-
-    void create();
-    void destroy();
-
-    bool getRefPicListModificationFlagL0() { return m_bRefPicListModificationFlagL0; }
-
-    void setRefPicListModificationFlagL0(bool flag) { m_bRefPicListModificationFlagL0 = flag; }
-
-    bool getRefPicListModificationFlagL1() { return m_bRefPicListModificationFlagL1; }
-
-    void setRefPicListModificationFlagL1(bool flag) { m_bRefPicListModificationFlagL1 = flag; }
-
-    void setRefPicSetIdxL0(UInt idx, UInt refPicSetIdx) { m_RefPicSetIdxL0[idx] = refPicSetIdx; }
-
-    UInt getRefPicSetIdxL0(UInt idx) { return m_RefPicSetIdxL0[idx]; }
-
-    void setRefPicSetIdxL1(UInt idx, UInt refPicSetIdx) { m_RefPicSetIdxL1[idx] = refPicSetIdx; }
-
-    UInt getRefPicSetIdxL1(UInt idx) { return m_RefPicSetIdxL1[idx]; }
-};
-
 /// PPS class
 class TComPPS
 {
@@ -1317,7 +1282,6 @@ private:
     TComReferencePictureSet *m_rps;
     TComReferencePictureSet m_localRPS;
     int         m_bdIdx;
-    TComRefPicListModification m_refPicListModification;
     NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
     SliceType   m_sliceType;
     int         m_sliceQp;
@@ -1423,8 +1387,6 @@ public:
     void      setRPSidx(int bdidx)                { m_bdIdx = bdidx; }
 
     int       getRPSidx()                         { return m_bdIdx; }
-
-    TComRefPicListModification* getRefPicListModification() { return &m_refPicListModification; }
 
     void      setLastIDR(int idrPoc)              { m_lastIDR = idrPoc; }
 

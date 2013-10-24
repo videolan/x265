@@ -359,7 +359,7 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
 
     for (int rIdx = 0; rIdx < m_numRefIdx[0]; rIdx++)
     {
-        cIdx = m_refPicListModification.getRefPicListModificationFlagL0() ? m_refPicListModification.getRefPicSetIdxL0(rIdx) : rIdx % numPocTotalCurr;
+        cIdx = rIdx % numPocTotalCurr;
         assert(cIdx >= 0 && cIdx < numPocTotalCurr);
         m_refPicList[0][rIdx] = rpsCurrList0[cIdx];
         m_bIsUsedAsLongTerm[0][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
@@ -374,7 +374,7 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
     {
         for (int rIdx = 0; rIdx < m_numRefIdx[1]; rIdx++)
         {
-            cIdx = m_refPicListModification.getRefPicListModificationFlagL1() ? m_refPicListModification.getRefPicSetIdxL1(rIdx) : rIdx % numPocTotalCurr;
+            cIdx = rIdx % numPocTotalCurr;
             assert(cIdx >= 0 && cIdx < numPocTotalCurr);
             m_refPicList[1][rIdx] = rpsCurrList1[cIdx];
             m_bIsUsedAsLongTerm[1][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
@@ -1031,17 +1031,6 @@ int TComRPSList::getNumberOfReferencePictureSets() const
 {
     return m_numberOfReferencePictureSets;
 }
-
-TComRefPicListModification::TComRefPicListModification()
-    : m_bRefPicListModificationFlagL0(false)
-    , m_bRefPicListModificationFlagL1(false)
-{
-    ::memset(m_RefPicSetIdxL0, 0, sizeof(m_RefPicSetIdxL0));
-    ::memset(m_RefPicSetIdxL1, 0, sizeof(m_RefPicSetIdxL1));
-}
-
-TComRefPicListModification::~TComRefPicListModification()
-{}
 
 TComScalingList::TComScalingList()
 {

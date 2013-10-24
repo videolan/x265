@@ -112,9 +112,6 @@ void DPB::prepareEncode(TComPic *pic)
     applyReferencePictureSet(slice->getRPS(), pocCurr); // Mark pictures in m_piclist as unreferenced if they are not included in RPS
 
     arrangeLongtermPicturesInRPS(slice);
-    TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
-    refPicListModification->setRefPicListModificationFlagL0(false);
-    refPicListModification->setRefPicListModificationFlagL1(false);
     slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->getNumberOfNegativePictures())); // Ensuring L0 contains just the -ve POC
     slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->getNumberOfPositivePictures()));
 
