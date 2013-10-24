@@ -215,7 +215,7 @@ private:
 
     inline double xGetICost(double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
 
-    inline double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
+    inline UInt xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
     void xITransformSkip(int* coeff, short* residual, UInt stride, int width, int height);
 };

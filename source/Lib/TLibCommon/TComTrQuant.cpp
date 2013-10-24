@@ -1334,7 +1334,7 @@ inline double TComTrQuant::xGetRateLast(UInt posx, UInt posy) const
 {
     UInt ctxX = g_groupIdx[posx];
     UInt ctxY = g_groupIdx[posy];
-    double cost = m_estBitsSbac->lastXBits[ctxX] + m_estBitsSbac->lastYBits[ctxY];
+    UInt cost = m_estBitsSbac->lastXBits[ctxX] + m_estBitsSbac->lastYBits[ctxY];
 
     if (ctxX > 3)
     {
