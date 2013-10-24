@@ -1316,8 +1316,6 @@ private:
     UInt        m_colRefIdx;
     UInt        m_maxNumMergeCand;
 
-    bool        m_bEqualRef[2][MAX_NUM_REF][MAX_NUM_REF];
-
     UInt        m_sliceCurEndCUAddr;
     bool        m_nextSlice;
     UInt        m_sliceBits;
@@ -1504,19 +1502,6 @@ public:
     bool      isInterB()                    { return m_sliceType == B_SLICE; }
 
     bool      isInterP()                    { return m_sliceType == P_SLICE; }
-
-    void      initEqualRef();
-
-    bool      isEqualRef(RefPicList e, int refIdx1, int refIdx2)
-    {
-        if (refIdx1 < 0 || refIdx2 < 0) return false;
-        return m_bEqualRef[e][refIdx1][refIdx2];
-    }
-
-    void setEqualRef(RefPicList e, int refIdx1, int refIdx2, bool b)
-    {
-        m_bEqualRef[e][refIdx1][refIdx2] = m_bEqualRef[e][refIdx2][refIdx1] = b;
-    }
 
     void setTLayerInfo(UInt tlayer);
 

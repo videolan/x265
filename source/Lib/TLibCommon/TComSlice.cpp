@@ -84,8 +84,6 @@ TComSlice::TComSlice()
 {
     m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
-    initEqualRef();
-
     for (int numCount = 0; numCount < MAX_NUM_REF; numCount++)
     {
         m_refPicList[0][numCount] = NULL;
@@ -112,7 +110,6 @@ void TComSlice::initSlice()
     m_colFromL0Flag = 1;
 
     m_colRefIdx = 0;
-    initEqualRef();
     m_bCheckLDC = false;
     m_sliceQpDeltaCb = 0;
     m_sliceQpDeltaCr = 0;
@@ -399,20 +396,6 @@ int TComSlice::getNumRpsCurrTempList()
     }
 
     return numRpsCurrTempList;
-}
-
-void TComSlice::initEqualRef()
-{
-    for (int dir = 0; dir < 2; dir++)
-    {
-        for (int refIdx1 = 0; refIdx1 < MAX_NUM_REF; refIdx1++)
-        {
-            for (int refIdx2 = refIdx1; refIdx2 < MAX_NUM_REF; refIdx2++)
-            {
-                m_bEqualRef[dir][refIdx1][refIdx2] = m_bEqualRef[dir][refIdx2][refIdx1] = (refIdx1 == refIdx2 ? true : false);
-            }
-        }
-    }
 }
 
 void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRAPisBLA)
