@@ -49,8 +49,6 @@ public:
 
 protected:
 
-    intptr_t         m_startPad;
-
     MotionReference& operator =(const MotionReference&);
 };
 }

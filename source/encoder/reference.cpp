@@ -40,8 +40,10 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
     m_reconPic = pic;
     unweightedFPelPlane = pic->getLumaAddr();
     lumaStride = pic->getStride();
-    m_startPad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
-    m_numWeightedRows = 0;
+    intptr_t startpad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
+
+    /* directly reference the pre-extended integer pel plane */
+    fpelPlane = pic->m_picBufY + startpad;
     isWeighted = false;
 
     if (w)
@@ -59,15 +61,12 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
         offset = w->inputOffset * (1 << (X265_DEPTH - 8));
         shift  = w->log2WeightDenom;
         round  = (w->log2WeightDenom >= 1) ? (1 << (w->log2WeightDenom - 1)) : (0);
+        m_numWeightedRows = 0;
 
         /* use our buffer which will have weighted pixels written to it */
-        fpelPlane = m_weightBuffer + m_startPad;
+        fpelPlane = m_weightBuffer + startpad;
     }
-    else
-    {
-        /* directly reference the pre-extended integer pel plane */
-        fpelPlane = pic->m_picBufY + m_startPad;
-    }
+
     return 0;
 }
 
