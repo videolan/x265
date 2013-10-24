@@ -1504,8 +1504,10 @@ SAD_X_SSE2 4,  8,  4, 7
 INIT_XMM sse3
 SAD_X_SSE2 3, 16, 16, 7
 SAD_X_SSE2 3, 16,  8, 7
+SAD_X_SSE2 3, 16,  4, 7
 SAD_X_SSE2 4, 16, 16, 7
 SAD_X_SSE2 4, 16,  8, 7
+SAD_X_SSE2 4, 16,  4, 7
 
 %macro SAD_X_SSSE3 3
 cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,8
@@ -1518,19 +1520,32 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,8
 %endmacro
 
 INIT_XMM ssse3
+SAD_X_SSE2  3, 16, 32, 7
 SAD_X_SSE2  3, 16, 16, 7
+SAD_X_SSE2  3, 16, 12, 7
 SAD_X_SSE2  3, 16,  8, 7
+SAD_X_SSE2  3,  8, 32, 7
+SAD_X_SSE2  3,  8, 16, 7
+SAD_X_SSE2  4, 16, 32, 7
 SAD_X_SSE2  4, 16, 16, 7
+SAD_X_SSE2  4, 16, 12, 7
 SAD_X_SSE2  4, 16,  8, 7
+SAD_X_SSSE3 4,  8, 32
 SAD_X_SSSE3 4,  8, 16
 SAD_X_SSSE3 4,  8,  8
 SAD_X_SSSE3 4,  8,  4
 
 INIT_XMM avx
+SAD_X_SSE2 3, 16, 32, 6
 SAD_X_SSE2 3, 16, 16, 6
+SAD_X_SSE2 3, 16, 12, 6
 SAD_X_SSE2 3, 16,  8, 6
+SAD_X_SSE2 3, 16,  4, 6
+SAD_X_SSE2 4, 16, 32, 7
 SAD_X_SSE2 4, 16, 16, 7
+SAD_X_SSE2 4, 16, 12, 7
 SAD_X_SSE2 4, 16,  8, 7
+SAD_X_SSE2 4, 16,  4, 7
 
 %macro SAD_X_AVX2 4
 cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,%4
@@ -1543,9 +1558,13 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,%4
 %endmacro
 
 INIT_YMM avx2
+SAD_X_AVX2 3, 16, 32, 7
 SAD_X_AVX2 3, 16, 16, 7
+SAD_X_AVX2 3, 16, 12, 7
 SAD_X_AVX2 3, 16,  8, 7
+SAD_X_AVX2 4, 16, 32, 8
 SAD_X_AVX2 4, 16, 16, 8
+SAD_X_AVX2 4, 16, 12, 8
 SAD_X_AVX2 4, 16,  8, 8
 
 ;=============================================================================

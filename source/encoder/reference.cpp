@@ -24,36 +24,16 @@
 
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComPicYuv.h"
-#include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComSlice.h"
 #include "primitives.h"
 #include "reference.h"
+#include "common.h"
 
 using namespace x265;
 
-void ReferencePlanes::setWeight(const wpScalingParam& w)
-{
-    weight = w.inputWeight;
-    offset = w.inputOffset * (1 << (X265_DEPTH - 8));
-    shift  = w.log2WeightDenom;
-    round  = (w.log2WeightDenom >= 1) ? (1 << (w.log2WeightDenom - 1)) : (0);
-    isWeighted = true;
-}
-
-bool ReferencePlanes::matchesWeight(const wpScalingParam& w)
-{
-    if (!isWeighted)
-        return false;
-
-    if ((weight == w.inputWeight) && (shift == (int)w.log2WeightDenom) &&
-        (offset == w.inputOffset * (1 << (X265_DEPTH - 8))))
-        return true;
-
-    return false;
-}
-
 MotionReference::MotionReference()
-{}
+{
+}
 
 int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
 {
@@ -61,17 +41,27 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
     unweightedFPelPlane = pic->getLumaAddr();
     lumaStride = pic->getStride();
     m_startPad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
-    m_next = NULL;
-    isWeighted = false;
     m_numWeightedRows = 0;
+    isWeighted = false;
 
     if (w)
     {
-        size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
-        setWeight(*w);
-        fpelPlane = (pixel*)X265_MALLOC(pixel, lumaStride * padheight);
-        if (fpelPlane) fpelPlane += m_startPad;
-        else return -1;
+        if (!m_weightBuffer)
+        {
+            size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
+            m_weightBuffer = (pixel*)X265_MALLOC(pixel, lumaStride * padheight);
+            if (!m_weightBuffer)
+                return -1;
+        }
+
+        isWeighted = true;
+        weight = w->inputWeight;
+        offset = w->inputOffset * (1 << (X265_DEPTH - 8));
+        shift  = w->log2WeightDenom;
+        round  = (w->log2WeightDenom >= 1) ? (1 << (w->log2WeightDenom - 1)) : (0);
+
+        /* use our buffer which will have weighted pixels written to it */
+        fpelPlane = m_weightBuffer + m_startPad;
     }
     else
     {
@@ -83,8 +73,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
 
 MotionReference::~MotionReference()
 {
-    if (isWeighted && fpelPlane)
-        X265_FREE(fpelPlane - m_startPad);
+    X265_FREE(m_weightBuffer);
 }
 
 void MotionReference::applyWeight(int rows, int numRows)

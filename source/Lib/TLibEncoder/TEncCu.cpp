@@ -781,13 +781,8 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt de
 #if CU_STAT_LOGFILE
             mergeFlag = 1;
 #endif
-            // SKIP
-#if 0       // Turn ON to test the optimized merge routine
-            xComputeCostMerge2Nx2N(outBestCU, outTempCU, &earlyDetectionSkipMode, m_bestPredYuv[depth], m_bestRecoYuv[depth]);
-#else
             // by Merge for inter_2Nx2N
             xCheckRDCostMerge2Nx2N(outBestCU, outTempCU, &earlyDetectionSkipMode, m_bestPredYuv[depth], m_bestRecoYuv[depth]);
-#endif
 
 #if CU_STAT_LOGFILE
             mergeFlag = 0;

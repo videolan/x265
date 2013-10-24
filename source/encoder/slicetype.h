@@ -43,7 +43,9 @@ struct LookaheadRow
     pixel*              predictions;    // buffer for 35 intra predictions
     MotionEstimate      me;
     int                 costEst;        // Estimated cost for all CUs in a row
+    int                 costEstAq;      // Estimated weight Aq cost for all CUs in a row
     int                 costIntra;      // Estimated Intra cost for all CUs in a row
+    int                 costIntraAq;    // Estimated weighted Aq Intra cost for all CUs in a row
     int                 intraMbs;       // Number of Intra CUs
 
     Lowres** frames;

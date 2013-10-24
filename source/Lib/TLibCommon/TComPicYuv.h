@@ -40,9 +40,7 @@
 
 #include "CommonDef.h"
 #include "TComRom.h"
-
 #include "x265.h"
-#include "reference.h"
 
 namespace x265 {
 // private namespace
@@ -59,7 +57,7 @@ class TShortYUV;
 /// picture YUV buffer class
 class TComPicYuv
 {
-private:
+public:
 
     // ------------------------------------------------------------------------------------------------
     //  YUV buffer
@@ -72,10 +70,6 @@ private:
     Pel*  m_picOrgY;          ///< m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
     Pel*  m_picOrgU;
     Pel*  m_picOrgV;
-
-    // Pre-interpolated reference pictures for each QPEL offset, may be more than
-    // one if weighted references are in use
-    MotionReference *m_refList;
 
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
@@ -97,8 +91,6 @@ private:
     int   m_stride;
     int   m_strideC;
 
-public:
-
     int   m_numCuInWidth;
     int   m_numCuInHeight;
 
@@ -106,6 +98,7 @@ public:
     virtual ~TComPicYuv();
 
     void xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int marginX, int marginY);
+
     // ------------------------------------------------------------------------------------------------
     //  Memory management
     // ------------------------------------------------------------------------------------------------
@@ -115,8 +108,6 @@ public:
 
     void  createLuma(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
     void  destroyLuma();
-
-    void  clearReferences();
 
     // ------------------------------------------------------------------------------------------------
     //  Get information of picture
@@ -180,12 +171,8 @@ public:
     void  copyToPicCr(TComPicYuv* destYuv);
     void  copyFromPicture(const x265_picture&, int *pad);
 
-    MotionReference* generateMotionReference(wpScalingParam *w);
-
     //  Dump picture
     void  dump(char* pFileName, bool bAdd = false);
-
-    friend class MotionReference;
 }; // END CLASS DEFINITION TComPicYuv
 
 void calcChecksum(TComPicYuv & pic, UChar digest[3][16]);

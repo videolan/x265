@@ -41,6 +41,7 @@
 #include "framefilter.h"
 #include "cturow.h"
 #include "ratecontrol.h"
+#include "reference.h"
 
 namespace x265 {
 // private x265 namespace
@@ -168,6 +169,7 @@ protected:
     Encoder*                 m_top;
     TEncCfg*                 m_cfg;
 
+    MotionReference          m_mref[2][MAX_NUM_REF + 1];
     WeightPredAnalysis       m_wp;
     TEncSbac                 m_sbacCoder;
     TEncBinCABAC             m_binCoderCABAC;

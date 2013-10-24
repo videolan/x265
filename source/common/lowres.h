@@ -24,9 +24,8 @@
 #ifndef X265_LOWRES_H
 #define X265_LOWRES_H
 
-#include "TLibCommon/TComPicYuv.h"
+#include "primitives.h"
 #include "common.h"
-#include "reference.h"
 #include "mv.h"
 
 namespace x265 {
@@ -36,6 +35,7 @@ struct Lowres : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
     pixel *buffer[4];
+    double *m_qpAqOffset; // qp Aq offset values for each Cu
     int    width;     // width of lowres frame in pixels
     int    lines;     // height of lowres frame in pixel lines
     int    frameNum;  // Presentation frame number
@@ -49,14 +49,16 @@ struct Lowres : public ReferencePlanes
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
+    int       costEstAq[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int      *rowSatds[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int       intraMbs[X265_BFRAME_MAX + 2];
     int      *intraCost;
+    int       satdCost;
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
 
-    void create(TComPic *pic, int bframes);
+    void create(TComPic *pic, int bframes, int *aqMode);
     void destroy(int bframes);
     void init(TComPicYuv *orig, int poc, int sliceType, int bframes);
 };

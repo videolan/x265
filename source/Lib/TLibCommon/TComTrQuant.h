@@ -160,11 +160,11 @@ public:
     void processScalingListEnc(int *coeff, int *quantcoeff, int quantScales, UInt height, UInt width, UInt ratio, int sizuNum, UInt dc);
     void processScalingListDec(int *coeff, int *dequantcoeff, int invQuantScales, UInt height, UInt width, UInt ratio, int sizuNum, UInt dc);
 
-    static int  calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, int width, int height);
+    static int  calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, int log2BlockSize);
 
     static int  getSigCtxInc(int patternSigCtx, UInt scanIdx, int posX, int posY, int log2BlkSize, TextType ttype);
 
-    static UInt getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cGPosX, UInt cGPosY, int width, int height);
+    static UInt getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cGPosX, UInt cGPosY, int log2BlockSize);
 
     estBitsSbacStruct* m_estBitsSbac;
 
@@ -215,7 +215,7 @@ private:
 
     inline double xGetICost(double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
 
-    inline double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
+    inline UInt xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
     void xITransformSkip(int* coeff, short* residual, UInt stride, int width, int height);
 };
