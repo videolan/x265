@@ -1057,7 +1057,7 @@ int TComTrQuant::getSigCtxInc(int      patternSigCtx,
                               int      log2BlockSize,
                               TextType ttype)
 {
-    const int ctxIndMap[16] =
+    static const int ctxIndMap[16] =
     {
         0, 1, 4, 5,
         2, 3, 4, 5,
@@ -1075,29 +1075,48 @@ int TComTrQuant::getSigCtxInc(int      patternSigCtx,
         return ctxIndMap[4 * posY + posX];
     }
 
+    int posXinSubset = posX & 3;
+    int posYinSubset = posY & 3;
+
+    // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
+    static uint8_t table_cnt[4][4][4] =
+    {
+        // patternSigCtx = 0
+        {
+            { 2, 1, 1, 0 },
+            { 1, 1, 0, 0 },
+            { 1, 0, 0, 0 },
+            { 0, 0, 0, 0 },
+        },
+        // patternSigCtx = 1
+        {
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+        },
+        // patternSigCtx = 2
+        {
+            { 2, 2, 2, 2 },
+            { 1, 1, 1, 1 },
+            { 0, 0, 0, 0 },
+            { 0, 0, 0, 0 },
+        },
+        // patternSigCtx = 3
+        {
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
+        }
+    };
+
+    int cnt = table_cnt[patternSigCtx][posXinSubset][posYinSubset];
     int offset = log2BlockSize == 3 ? (scanIdx == SCAN_DIAG ? 9 : 15) : (ttype == TEXT_LUMA ? 21 : 12);
 
-    int posXinSubset = posX - ((posX >> 2) << 2);
-    int posYinSubset = posY - ((posY >> 2) << 2);
-    int cnt = 0;
-    if (patternSigCtx == 0)
-    {
-        cnt = posXinSubset + posYinSubset <= 2 ? (posXinSubset + posYinSubset == 0 ? 2 : 1) : 0;
-    }
-    else if (patternSigCtx == 1)
-    {
-        cnt = posYinSubset <= 1 ? (posYinSubset == 0 ? 2 : 1) : 0;
-    }
-    else if (patternSigCtx == 2)
-    {
-        cnt = posXinSubset <= 1 ? (posXinSubset == 0 ? 2 : 1) : 0;
-    }
-    else
-    {
-        cnt = 2;
-    }
+    offset += cnt;
 
-    return ((ttype == TEXT_LUMA && ((posX >> 2) + (posY >> 2)) > 0) ? 3 : 0) + offset + cnt;
+    return (ttype == TEXT_LUMA && (posX | posY) >= 4) ? 3 + offset : offset;
 }
 
 /** Get the best level in RD sense
@@ -1255,7 +1274,8 @@ inline int TComTrQuant::xGetICRate(UInt   absLevel,
             absLevel = symbol - maxVlc;
             int egs = 1;
             for (UInt max = 2; absLevel >= max; max <<= 1, egs += 2)
-                ;
+            {
+            }
 
             rate   += egs << 15;
             symbol = std::min<UInt>(symbol, (maxVlc + 1));
