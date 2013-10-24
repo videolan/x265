@@ -307,8 +307,13 @@ bool Y4MInput::populateFrameQueue()
 
     ifs.read(buf[tail], count);
     frameStat[tail] = ifs.good();
+
     if (!frameStat[tail])
+    {
+        x265_log(NULL, X265_LOG_ERROR, "y4m: error in frame reading from file");
+        threadActive = false;
         return false;
+    }
     tail = (tail + 1) % QUEUE_SIZE;
     notEmpty.trigger();
     return true;
