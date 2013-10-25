@@ -29,8 +29,13 @@
 #define X265_I386_PIXEL_H
 
 #define DECL_PIXELS(ret, name, suffix, args) \
+    ret x265_pixel_ ## name ## _16x64_ ## suffix args; \
+    ret x265_pixel_ ## name ## _16x32_ ## suffix args; \
     ret x265_pixel_ ## name ## _16x16_ ## suffix args; \
+    ret x265_pixel_ ## name ## _16x12_ ## suffix args; \
     ret x265_pixel_ ## name ## _16x8_ ## suffix args; \
+    ret x265_pixel_ ## name ## _16x4_ ## suffix args; \
+    ret x265_pixel_ ## name ## _8x32_ ## suffix args; \
     ret x265_pixel_ ## name ## _8x16_ ## suffix args; \
     ret x265_pixel_ ## name ## _8x8_ ## suffix args; \
     ret x265_pixel_ ## name ## _8x4_ ## suffix args; \
@@ -58,6 +63,7 @@ DECL_X4(sad, mmx2)
 DECL_X4(sad, sse2)
 DECL_X4(sad, sse3)
 DECL_X4(sad, ssse3)
+DECL_X4(sad, avx)
 DECL_X4(sad, avx2)
 DECL_X1(ssd, mmx)
 DECL_X1(ssd, mmx2)

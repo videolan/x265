@@ -135,8 +135,6 @@ public:
 
     void setBitCounter(TComBitCounter* pcBitCounter) { m_bitCounter = pcBitCounter; }
 
-    UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
-
 protected:
 
     void finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
@@ -163,7 +161,6 @@ protected:
     void xCopyYuv2Pic(TComPic* outPic, UInt cuAddr, UInt absPartIdx, UInt depth, UInt uiSrcDepth, TComDataCU* cu,
                       UInt lpelx, UInt tpely);
     void xCopyYuv2Tmp(UInt uhPartUnitIdx, UInt depth);
-    void xCopyYuv2Best(UInt partUnitIdx, UInt uiNextDepth);
 
     bool getdQPFlag()        { return m_bEncodeDQP; }
 

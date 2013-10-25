@@ -71,7 +71,7 @@ protected:
     char* buf;
 #endif // if defined(ENABLE_THREAD)
 
-    std::ifstream ifs;
+    std::istream *ifs;
 
 public:
 
@@ -89,9 +89,9 @@ public:
 
     int getHeight() const                         { return height; }
 
-    bool isEof() const                            { return ifs.eof(); }
+    bool isEof() const                            { return (ifs && ifs->eof()); }
 
-    bool isFail()                                 { return !(ifs.is_open() && threadActive); }
+    bool isFail()                                 { return !(ifs && !ifs->fail() && threadActive); }
 
     void startReader();
 

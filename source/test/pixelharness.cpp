@@ -913,13 +913,13 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     if (opt.weightpUniPixel)
     {
-        printf("WeightpUni");
+        printf("Weightp 8bpp");
         REPORT_SPEEDUP(opt.weightpUniPixel, ref.weightpUniPixel, pbuf1, pbuf2, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
     if (opt.weightpUni)
     {
-        printf("WeightpUni");
+        printf("Weightp16bpp");
         REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 

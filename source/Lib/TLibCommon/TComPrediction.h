@@ -45,10 +45,11 @@
 #include "TComTrQuant.h"
 #include "TComWeightPrediction.h"
 #include "TShortYUV.h"
-#include "reference.h"
 
 namespace x265 {
 // private namespace
+
+struct ReferencePlanes;
 
 //! \ingroup TLibCommon
 //! \{
@@ -85,7 +86,7 @@ protected:
     // motion compensation functions
     void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TComYuv* outPredYuv, bool bLuma = true, bool bChroma = true);
     void xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TShortYUV* outPredYuv, bool bLuma = true, bool bChroma = true);
-    void xPredInterLumaBlk(TComDataCU *cu, MotionReference *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
+    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
     void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TComYuv *dstPic);
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, int width, int height, TShortYUV *dstPic);

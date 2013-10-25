@@ -26,6 +26,7 @@
 #include "common.h"
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 
 using namespace x265;
 using namespace std;
@@ -40,19 +41,26 @@ YUVInput::YUVInput(const char *filename)
 #else
     buf = NULL;
 #endif
-    ifs.open(filename, ios::binary | ios::in);
     width = height = 0;
     depth = 8;
     threadActive = false;
-    if (!ifs.fail())
-        threadActive = true;
+    if (!strcmp(filename, "-"))
+        ifs = &cin;
     else
-        ifs.close();
+        ifs = new ifstream(filename, ios::binary | ios::in);
+    if (ifs && !ifs->fail())
+        threadActive = true;
+    else if (ifs && ifs != &cin)
+    {
+        delete ifs;
+        ifs = NULL;
+    }
 }
 
 YUVInput::~YUVInput()
 {
-    ifs.close();
+    if (ifs && ifs != &cin)
+        delete ifs;
 #if defined ENABLE_THREAD
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
@@ -65,22 +73,25 @@ YUVInput::~YUVInput()
 
 int YUVInput::guessFrameCount()
 {
-    ifstream::pos_type cur = ifs.tellg();
+    if (!ifs) return -1;
+
+    ifstream::pos_type cur = ifs->tellg();
     if (cur < 0)
         return -1;
 
-    ifs.seekg(0, ios::end);
-    ifstream::pos_type size = ifs.tellg();
+    ifs->seekg(0, ios::end);
+    ifstream::pos_type size = ifs->tellg();
     if (size < 0)
         return -1;
-    ifs.seekg(cur, ios::beg);
+    ifs->seekg(cur, ios::beg);
 
     return (int)((size - cur) / (width * height * pixelbytes * 3 / 2));
 }
 
 void YUVInput::skipFrames(int numFrames)
 {
-    ifs.seekg(framesize * numFrames, ios::cur);
+    if (ifs)
+        ifs->seekg(framesize * numFrames, ios::cur);
 }
 
 void YUVInput::startReader()
@@ -101,7 +112,11 @@ void YUVInput::setDimensions(int w, int h)
         height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT)
     {
         threadActive = false;
-        ifs.close();
+        if (ifs && ifs != &cin)
+        {
+            delete ifs;
+            ifs = NULL;
+        }
     }
     else
     {
@@ -141,8 +156,9 @@ bool YUVInput::populateFrameQueue()
             break;
     }
 
-    ifs.read(buf[tail], framesize);
-    frameStat[tail] = ifs.good();
+    if (!ifs) return false;
+    ifs->read(buf[tail], framesize);
+    frameStat[tail] = ifs->good();
     if (!frameStat[tail])
         return false;
     tail = (tail + 1) % QUEUE_SIZE;
@@ -201,10 +217,11 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    ifs.read(buf, framesize);
+    if (!ifs) return false;
+    ifs->read(buf, framesize);
     PPAStopCpuEventFunc(read_yuv);
 
-    return ifs.good();
+    return ifs->good();
 }
 
 #endif // if defined ENABLE_THREAD

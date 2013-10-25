@@ -4943,10 +4943,9 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
     int x, y;
     __m128i temp;
     __m128i vw0    = _mm_set1_epi32(w0);                // broadcast (32-bit integer) w0 to all elements of vw0
-    __m128i iofs   = _mm_set1_epi32(IF_INTERNAL_OFFS);
     __m128i ofs    = _mm_set1_epi32(offset);
     __m128i round  = _mm_set1_epi32(arg_round);
-    __m128i src, dst;
+    __m128i src, dst, val;
 
     for (y = height - 1; y >= 0; y--)
     {
@@ -4955,7 +4954,8 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
             // The intermediate results would outgrow 16 bits because internal offset is too high
             temp = _mm_cvtsi32_si128(*(uint32_t*)(source + x));
             src = _mm_unpacklo_epi16(_mm_unpacklo_epi8(temp, _mm_setzero_si128()), _mm_setzero_si128());
-            dst = _mm_add_epi32((_mm_mullo_epi32(vw0, _mm_add_epi32(src, iofs))), round);
+            val = _mm_slli_epi32(src, (IF_INTERNAL_PREC - X265_DEPTH));
+            dst = _mm_add_epi32(_mm_mullo_epi32(vw0, val), round);
             dst =  _mm_sra_epi32(dst, _mm_cvtsi32_si128(shift));
             dst = _mm_add_epi32(dst, ofs);
             *(uint32_t*)(dest + x) = _mm_cvtsi128_si32(_mm_packus_epi16(_mm_packs_epi32(dst, dst), _mm_setzero_si128()));
@@ -4965,7 +4965,8 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
         {
             temp = _mm_cvtsi32_si128(*(uint32_t*)(source + x));
             src = _mm_unpacklo_epi16(_mm_unpacklo_epi8(temp, _mm_setzero_si128()), _mm_setzero_si128());
-            dst = _mm_add_epi32((_mm_mullo_epi32(vw0, _mm_add_epi32(src, iofs))), round);
+            val = _mm_slli_epi32(src, (IF_INTERNAL_PREC - X265_DEPTH));
+            dst = _mm_add_epi32(_mm_mullo_epi32(vw0, val), round);
             dst =  _mm_sra_epi32(dst, _mm_cvtsi32_si128(shift));
             dst = _mm_add_epi32(dst, ofs);
             temp = _mm_packus_epi16(_mm_packs_epi32(dst, dst), _mm_setzero_si128());
@@ -5661,8 +5662,8 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     p.sse_pp[LUMA_64x48] = sse_pp_64<48>;
     p.sse_pp[LUMA_64x16] = sse_pp_64<16>;
 
-//    p.weightpUniPixel = weightUnidirPixel;
-//    p.weightpUni = weightUnidir;
+    p.weightpUniPixel = weightUnidirPixel;
+    p.weightpUni = weightUnidir;
 #endif /* !HIGH_BIT_DEPTH */
 }
 }
