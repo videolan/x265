@@ -39,6 +39,8 @@
 #ifndef X265_CONTEXTTABLES_H
 #define X265_CONTEXTTABLES_H
 
+#include <stdint.h>
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -125,6 +127,29 @@
 #define MAX_OFF_CTX_MOD                     (OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX + NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX)
 
 // ====================================================================================================================
+// Sbac interface
+// ====================================================================================================================
+typedef struct ContextModel {
+    uint8_t m_state;  ///< internal state variable
+    uint8_t bBinsCoded;
+} ContextModel;
+
+extern const uint8_t g_nextStateMPS[128];
+extern const uint8_t g_nextStateLPS[128];
+extern const int     g_entropyBits[128];
+extern       uint8_t g_nextState[128][2];
+extern void buildNextStateTable();
+extern uint8_t sbacInit(int qp, int initValue);   ///< initialize state with initial probability
+
+#define sbacGetMps(S)               ((S) & 1)
+#define sbacGetState(S)             ((S) >> 1)
+#define sbacNextLPS(S)              (g_nextStateLPS[(S)])
+#define sbacNextMPS(S)              (g_nextStateMPS[(S)])
+#define sbacNext(S, V)              (g_nextState[(S)][(V)])
+#define sbacGetEntropyBits(S, V)    (g_entropyBits[(S) ^ (V)])
+#define sbacGetEntropyBitsTrm(V)    (g_entropyBits[126 ^ (V)])
+
+// ====================================================================================================================
 // Tables
 // ====================================================================================================================
 
@@ -132,7 +157,7 @@ namespace x265 {
 // private namespace
 
 // initial probability for cu_transquant_bypass flag
-static const UChar
+static const uint8_t
     INIT_CU_TRANSQUANT_BYPASS_FLAG[3][NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX] =
 {
     { 154 },
@@ -141,7 +166,7 @@ static const UChar
 };
 
 // initial probability for split flag
-static const UChar
+static const uint8_t
     INIT_SPLIT_FLAG[3][NUM_SPLIT_FLAG_CTX] =
 {
     { 107,  139,  126, },
@@ -149,7 +174,7 @@ static const UChar
     { 139,  141,  157, },
 };
 
-static const UChar
+static const uint8_t
     INIT_SKIP_FLAG[3][NUM_SKIP_FLAG_CTX] =
 {
     { 197,  185,  201, },
@@ -157,7 +182,7 @@ static const UChar
     { CNU,  CNU,  CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_MERGE_FLAG_EXT[3][NUM_MERGE_FLAG_EXT_CTX] =
 {
     { 154, },
@@ -165,7 +190,7 @@ static const UChar
     { CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_MERGE_IDX_EXT[3][NUM_MERGE_IDX_EXT_CTX] =
 {
     { 137, },
@@ -173,7 +198,7 @@ static const UChar
     { CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_PART_SIZE[3][NUM_PART_SIZE_CTX] =
 {
     { 154,  139,  CNU,  CNU, },
@@ -181,7 +206,7 @@ static const UChar
     { 184,  CNU,  CNU,  CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_CU_AMP_POS[3][NUM_CU_AMP_CTX] =
 {
     { 154, },
@@ -189,7 +214,7 @@ static const UChar
     { CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_PRED_MODE[3][NUM_PRED_MODE_CTX] =
 {
     { 134, },
@@ -197,7 +222,7 @@ static const UChar
     { CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_INTRA_PRED_MODE[3][NUM_ADI_CTX] =
 {
     { 183, },
@@ -205,7 +230,7 @@ static const UChar
     { 184, },
 };
 
-static const UChar
+static const uint8_t
     INIT_CHROMA_PRED_MODE[3][NUM_CHROMA_PRED_CTX] =
 {
     { 152,  139, },
@@ -213,7 +238,7 @@ static const UChar
     {  63,  139, },
 };
 
-static const UChar
+static const uint8_t
     INIT_INTER_DIR[3][NUM_INTER_DIR_CTX] =
 {
     {  95,   79,   63,   31,  31, },
@@ -221,7 +246,7 @@ static const UChar
     { CNU,  CNU,  CNU,  CNU, CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_MVD[3][NUM_MV_RES_CTX] =
 {
     { 169,  198, },
@@ -229,7 +254,7 @@ static const UChar
     { CNU,  CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_REF_PIC[3][NUM_REF_NO_CTX] =
 {
     { 153,  153 },
@@ -237,7 +262,7 @@ static const UChar
     { CNU,  CNU },
 };
 
-static const UChar
+static const uint8_t
     INIT_DQP[3][NUM_DELTA_QP_CTX] =
 {
     { 154,  154,  154, },
@@ -245,7 +270,7 @@ static const UChar
     { 154,  154,  154, },
 };
 
-static const UChar
+static const uint8_t
     INIT_QT_CBF[3][2 * NUM_QT_CBF_CTX] =
 {
     { 153,  111,  CNU,  CNU,  CNU,  149,   92,  167,  CNU,  CNU, },
@@ -253,7 +278,7 @@ static const UChar
     { 111,  141,  CNU,  CNU,  CNU,   94,  138,  182,  CNU,  CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_QT_ROOT_CBF[3][NUM_QT_ROOT_CBF_CTX] =
 {
     {  79, },
@@ -261,7 +286,7 @@ static const UChar
     { CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_LAST[3][2 * NUM_CTX_LAST_FLAG_XY] =
 {
     { 125,  110,  124,  110,   95,   94,  125,  111,  111,   79,  125,  126,  111,  111,   79,
@@ -272,7 +297,7 @@ static const UChar
       108,  123,   63,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_SIG_CG_FLAG[3][2 * NUM_SIG_CG_FLAG_CTX] =
 {
     { 121,  140,
@@ -283,7 +308,7 @@ static const UChar
        134,  141, },
 };
 
-static const UChar
+static const uint8_t
     INIT_SIG_FLAG[3][NUM_SIG_FLAG_CTX] =
 {
     { 170,  154,  139,  153,  139,  123,  123,   63,  124,  166,  183,  140,  136,  153,  154,  166,  183,  140,  136,  153,  154,  166,  183,  140,  136,  153,  154,  170,  153,  138,  138,  122,  121,  122,  121,  167,  151,  183,  140,  151,  183,  140,  },
@@ -291,7 +316,7 @@ static const UChar
     { 111,  111,  125,  110,  110,   94,  124,  108,  124,  107,  125,  141,  179,  153,  125,  107,  125,  141,  179,  153,  125,  107,  125,  141,  179,  153,  125,  140,  139,  182,  182,  152,  136,  152,  136,  153,  136,  139,  111,  136,  139,  111,  },
 };
 
-static const UChar
+static const uint8_t
     INIT_ONE_FLAG[3][NUM_ONE_FLAG_CTX] =
 {
     { 154,  196,  167,  167,  154,  152,  167,  182,  182,  134,  149,  136,  153,  121,  136,  122,  169,  208,  166,  167,  154,  152,  167,  182, },
@@ -299,7 +324,7 @@ static const UChar
     { 140,   92,  137,  138,  140,  152,  138,  139,  153,   74,  149,   92,  139,  107,  122,  152,  140,  179,  166,  182,  140,  227,  122,  197, },
 };
 
-static const UChar
+static const uint8_t
     INIT_ABS_FLAG[3][NUM_ABS_FLAG_CTX] =
 {
     { 107,  167,   91,  107,  107,  167, },
@@ -307,7 +332,7 @@ static const UChar
     { 138,  153,  136,  167,  152,  152, },
 };
 
-static const UChar
+static const uint8_t
     INIT_MVP_IDX[3][NUM_MVP_IDX_CTX] =
 {
     { 168,  CNU, },
@@ -315,7 +340,7 @@ static const UChar
     { CNU,  CNU, },
 };
 
-static const UChar
+static const uint8_t
     INIT_SAO_MERGE_FLAG[3][NUM_SAO_MERGE_FLAG_CTX] =
 {
     { 153,  },
@@ -323,7 +348,7 @@ static const UChar
     { 153,  },
 };
 
-static const UChar
+static const uint8_t
     INIT_SAO_TYPE_IDX[3][NUM_SAO_TYPE_IDX_CTX] =
 {
     { 160, },
@@ -331,7 +356,7 @@ static const UChar
     { 200, },
 };
 
-static const UChar
+static const uint8_t
     INIT_TRANS_SUBDIV_FLAG[3][NUM_TRANS_SUBDIV_FLAG_CTX] =
 {
     { 224,  167,  122, },
@@ -339,7 +364,7 @@ static const UChar
     { 153,  138,  138, },
 };
 
-static const UChar
+static const uint8_t
     INIT_TRANSFORMSKIP_FLAG[3][2 * NUM_TRANSFORMSKIP_FLAG_CTX] =
 {
     { 139,  139 },

@@ -2283,7 +2283,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
                     MV mvmin, mvmax;
                     xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                    int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][idx],
+                    int satdCost = m_me.motionEstimate(m_mref[picList][idx],
                                                        mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
                     /* Get total cost of partition, but only include MV bit cost once */
@@ -2327,8 +2327,8 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                 ::memcpy(mvpIdxBi, mvpIdx, sizeof(mvpIdx));
 
                 // Generate reference subpels
-                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[0][refIdx[0]], partAddr, &mv[0], roiWidth, roiHeight, &m_predYuv[0]);
-                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[1][refIdx[1]], partAddr, &mv[1], roiWidth, roiHeight, &m_predYuv[1]);
+                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx[0])->getPicYuvRec(), partAddr, &mv[0], roiWidth, roiHeight, &m_predYuv[0]);
+                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(REF_PIC_LIST_1, refIdx[1])->getPicYuvRec(), partAddr, &mv[1], roiWidth, roiHeight, &m_predYuv[1]);
 
                 pixel *ref0 = m_predYuv[0].getLumaAddr(partAddr);
                 pixel *ref1 = m_predYuv[1].getLumaAddr(partAddr);
@@ -2344,9 +2344,9 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
                 if (mv[0].notZero() || mv[1].notZero())
                 {
-                    ref0 = cu->getSlice()->m_mref[0][refIdx[0]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref0
-                    ref1 = cu->getSlice()->m_mref[1][refIdx[1]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref1
-                    intptr_t refStride = cu->getSlice()->m_mref[0][refIdx[0]]->lumaStride;
+                    ref0 = m_mref[0][refIdx[0]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref0
+                    ref1 = m_mref[1][refIdx[1]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref1
+                    intptr_t refStride = m_mref[0][refIdx[0]]->lumaStride;
 
                     primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, refStride, ref1, refStride, 32);
                     satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
@@ -2725,8 +2725,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templa
     cu->clipMv(mvCand);
 
     // prediction pattern
-    MotionReference* ref = cu->getSlice()->m_mref[picList][refIdx];
-    xPredInterLumaBlk(cu, ref, partAddr, &mvCand, sizex, sizey, templateCand);
+    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mvCand, sizex, sizey, templateCand);
 
     // calc distortion
     UInt cost = m_me.bufSAD(templateCand->getLumaAddr(partAddr), templateCand->getStride());

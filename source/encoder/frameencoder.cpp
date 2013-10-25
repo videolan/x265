@@ -113,6 +113,9 @@ void FrameEncoder::init(Encoder *top, int numRows)
     for (int i = 0; i < m_numRows; ++i)
     {
         m_rows[i].create(top);
+        for (int list = 0; list <= 1; list++)
+            for (int ref = 0; ref <= MAX_NUM_REF; ref++)
+                m_rows[i].m_search.m_mref[list][ref] = &m_mref[list][ref];
     }
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
@@ -121,7 +124,7 @@ void FrameEncoder::init(Encoder *top, int numRows)
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
     }
-
+    
     m_frameFilter.init(top, numRows, getRDGoOnSbacCoder(0));
 
     // initialize SPS
@@ -427,13 +430,12 @@ void FrameEncoder::compressFrame()
         wpScalingParam *w = NULL;
         for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
         {
-            TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
             if ((slice->isInterP() && slice->getPPS()->getUseWP()))
             {
                 w = slice->m_weightPredTable[list][ref];
                 slice->m_numWPRefs++;
             }
-            slice->m_mref[list][ref] = recon->generateMotionReference(w);
+            m_mref[l][ref].init(slice->getRefPic(list, ref)->getPicYuvRec(), w);
         }
     }
 
@@ -928,7 +930,7 @@ void FrameEncoder::compressCTURows()
 
                     if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
                     {
-                        slice->m_mref[list][ref]->applyWeight(row + refLagRows, m_numRows);
+                        m_mref[list][ref].applyWeight(row + refLagRows, m_numRows);
                     }
                 }
             }
@@ -965,7 +967,7 @@ void FrameEncoder::compressCTURows()
 
                         if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
                         {
-                            slice->m_mref[list][ref]->applyWeight(i + refLagRows, m_numRows);
+                            m_mref[list][ref].applyWeight(i + refLagRows, m_numRows);
                         }
                     }
                 }

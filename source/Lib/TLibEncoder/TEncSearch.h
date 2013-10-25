@@ -70,7 +70,8 @@ class TEncSearch : public TComPrediction
 {
 public:
 
-    MotionEstimate  m_me;
+    MotionEstimate   m_me;
+    MotionReference* m_mref[2][MAX_NUM_REF + 1];
 
 protected:
 

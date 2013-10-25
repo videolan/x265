@@ -24,6 +24,7 @@
 #ifndef X265_MV_H
 #define X265_MV_H
 
+#include "primitives.h"
 #include <stdint.h>
 
 namespace x265 {
@@ -97,6 +98,23 @@ public:
     {
         return x >= _min.x && x <= _max.x && y >= _min.y && y <= _max.y;
     }
+};
+
+struct ReferencePlanes
+{
+    ReferencePlanes() : isWeighted(false), isLowres(false) {}
+
+    pixel* fpelPlane;
+    pixel* lowresPlane[4];
+    pixel* unweightedFPelPlane;
+
+    bool isWeighted;
+    bool isLowres;
+    int  lumaStride;
+    int  weight;
+    int  offset;
+    int  shift;
+    int  round;
 };
 }
 
