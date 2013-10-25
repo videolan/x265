@@ -205,27 +205,27 @@ void CLIOptions::writeNALs(const x265_nal* nal, int nalcount)
     }
 }
 
-void CLIOptions::printStatus(int i_frame, x265_param *param)
+void CLIOptions::printStatus(int frameNum, x265_param *param)
 {
     char buf[200];
     int64_t i_time = x265_mdate();
 
-    if (!bProgress || (prevUpdateTime && i_time - prevUpdateTime < UPDATE_INTERVAL))
+    if (!bProgress || !frameNum || (prevUpdateTime && i_time - prevUpdateTime < UPDATE_INTERVAL))
         return;
     int64_t i_elapsed = i_time - startTime;
-    double fps = i_elapsed > 0 ? i_frame * 1000000. / i_elapsed : 0;
-    if (framesToBeEncoded && i_frame)
+    double fps = i_elapsed > 0 ? frameNum * 1000000. / i_elapsed : 0;
+    if (framesToBeEncoded)
     {
-        float bitrate = 0.008f * totalbytes / ((float)i_frame / param->frameRate);
-        int eta = (int)(i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000));
+        float bitrate = 0.008f * totalbytes / ((float)frameNum / param->frameRate);
+        int eta = (int)(i_elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
         sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
-                100. * i_frame / framesToBeEncoded, i_frame, framesToBeEncoded, fps, bitrate,
+                100. * frameNum / framesToBeEncoded, frameNum, framesToBeEncoded, fps, bitrate,
                 eta / 3600, (eta / 60) % 60, eta % 60);
     }
     else
     {
         double bitrate = (double)totalbytes * 8 / ((double)1000 * param->frameRate);
-        sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", i_frame, fps, bitrate);
+        sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", frameNum, fps, bitrate);
     }
     fprintf(stderr, "%s  \r", buf + 5);
     SetConsoleTitle(buf);
@@ -461,23 +461,26 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (!outputBitDepth) { outputBitDepth = param->internalBitDepth; }
 
     int guess = this->input->guessFrameCount();
-    uint32_t numRemainingFrames = guess < 0 ? 0x7fffffff : (uint32_t) guess;
-    this->framesToBeEncoded = this->framesToBeEncoded ? X265_MIN(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
+    if (this->frameSkip)
+    {
+        this->input->skipFrames(this->frameSkip);
+    }
+
+    uint32_t fileFrameCount = guess < 0 ? 0 : (uint32_t) guess;
+    if (this->framesToBeEncoded && fileFrameCount)
+        this->framesToBeEncoded = X265_MIN(this->framesToBeEncoded, fileFrameCount - this->frameSkip);
+    else if (fileFrameCount)
+        this->framesToBeEncoded = fileFrameCount - this->frameSkip;
 
     if (param->logLevel >= X265_LOG_INFO)
     {
-        if (guess < 0)
+        if (this->framesToBeEncoded == 0)
             fprintf(stderr, "%s  [info]: %dx%d %dHz, unknown frame count\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate);
         else
             fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate,
-                    this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
-    }
-
-    if (this->frameSkip)
-    {
-        this->input->skipFrames(this->frameSkip);
+                    this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, fileFrameCount);
     }
 
     this->input->startReader();
@@ -569,8 +572,9 @@ int main(int argc, char **argv)
     {
         pic_orig.poc = inFrameCount;
 
-        // read input YUV file
-        if (inFrameCount < cliopt.framesToBeEncoded && cliopt.input->readPicture(pic_orig))
+        if (cliopt.framesToBeEncoded && inFrameCount >= cliopt.framesToBeEncoded)
+            pic_in = NULL;
+        else if (cliopt.input->readPicture(pic_orig))
             inFrameCount++;
         else
             pic_in = NULL;
