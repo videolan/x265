@@ -127,10 +127,10 @@ public:
     void init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast);
 
     // transform & inverse transform functions
-    UInt transformNxN(TComDataCU* cu, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
+    UInt transformNxN(TComDataCU* cu, int16_t* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
                       TextType ttype, UInt absPartIdx, int* lastPos, bool useTransformSkip = false);
 
-    void invtransformNxN(bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
+    void invtransformNxN(bool transQuantBypass, UInt mode, int16_t* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
 
     // Misc functions
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset);
@@ -190,7 +190,7 @@ protected:
 
 private:
 
-    void xTransformSkip(short* resiBlock, UInt stride, int* coeff, int width, int height);
+    void xTransformSkip(int16_t* resiBlock, UInt stride, int* coeff, int width, int height);
 
     void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, int* deltaU, int width, int height);
 
@@ -217,7 +217,7 @@ private:
 
     inline UInt xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
-    void xITransformSkip(int* coeff, short* residual, UInt stride, int width, int height);
+    void xITransformSkip(int* coeff, int16_t* residual, UInt stride, int width, int height);
 };
 }
 //! \}

@@ -40,7 +40,7 @@
 using namespace x265;
 
 namespace {
-ALIGN_VAR_32(static const short, tab_dst_4[][8]) =
+ALIGN_VAR_32(static const int16_t, tab_dst_4[][8]) =
 {
     { 29, 55, 74, 84, 29, 55, 74, 84 },
     { 74, 74,  0, -74, 74, 74, 0, -74 },
@@ -48,7 +48,7 @@ ALIGN_VAR_32(static const short, tab_dst_4[][8]) =
     { 55, -84, 74, -29, 55, -84, 74, -29 },
 };
 
-void dst4(short *src, int *dst, intptr_t stride)
+void dst4(int16_t *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_1     = _mm_set1_epi32(1);
@@ -107,7 +107,7 @@ void dst4(short *src, int *dst, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[3 * 4], T61);
 }
 
-ALIGN_VAR_32(static const short, tab_dct_8[][8]) =
+ALIGN_VAR_32(static const int16_t, tab_dct_8[][8]) =
 {
     { 0x0100, 0x0F0E, 0x0706, 0x0908, 0x0302, 0x0D0C, 0x0504, 0x0B0A },
 
@@ -128,7 +128,7 @@ ALIGN_VAR_32(static const short, tab_dct_8[][8]) =
     { 18, -18, -89, 89, -50, 50, 75, -75 },
 };
 
-void dct8(short *src, int *dst, intptr_t stride)
+void dct8(int16_t *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_2     = _mm_set1_epi32(2);
@@ -307,7 +307,7 @@ void dct8(short *src, int *dst, intptr_t stride)
 #undef MAKE_ODD
 }
 
-ALIGN_VAR_32(static const short, tab_dct_16_0[][8]) =
+ALIGN_VAR_32(static const int16_t, tab_dct_16_0[][8]) =
 {
     { 0x0F0E, 0x0D0C, 0x0B0A, 0x0908, 0x0706, 0x0504, 0x0302, 0x0100 },  // 0
     { 0x0100, 0x0F0E, 0x0706, 0x0908, 0x0302, 0x0D0C, 0x0504, 0x0B0A },  // 1
@@ -315,7 +315,7 @@ ALIGN_VAR_32(static const short, tab_dct_16_0[][8]) =
     { 0x0F0E, 0x0908, 0x0D0C, 0x0B0A, 0x0100, 0x0706, 0x0302, 0x0504 },  // 3
 };
 
-ALIGN_VAR_32(static const short, tab_dct_16_1[][8]) =
+ALIGN_VAR_32(static const int16_t, tab_dct_16_1[][8]) =
 {
     { 90, 87, 80, 70, 57, 43, 25,  9 },  //  0
     { 87, 57,  9, -43, -80, -90, -70, -25 },  //  1
@@ -348,7 +348,7 @@ ALIGN_VAR_32(static const short, tab_dct_16_1[][8]) =
 #undef MAKE_COEF
 };
 
-void dct16(short *src, int *dst, intptr_t stride)
+void dct16(int16_t *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_4     = _mm_set1_epi32(4);
@@ -356,7 +356,7 @@ void dct16(short *src, int *dst, intptr_t stride)
 
     int i;
 
-    ALIGN_VAR_32(short, tmp[16 * 16]);
+    ALIGN_VAR_32(int16_t, tmp[16 * 16]);
 
     __m128i T00A, T01A, T02A, T03A, T04A, T05A, T06A, T07A;
     __m128i T00B, T01B, T02B, T03B, T04B, T05B, T06B, T07B;
@@ -755,12 +755,12 @@ void dct16(short *src, int *dst, intptr_t stride)
     }
 }
 
-ALIGN_VAR_32(static const short, tab_dct_32_0[][8]) =
+ALIGN_VAR_32(static const int16_t, tab_dct_32_0[][8]) =
 {
     { 0x0F0E, 0x0100, 0x0908, 0x0706, 0x0D0C, 0x0302, 0x0B0A, 0x0504 },  // 0
 };
 
-ALIGN_VAR_32(static const short, tab_dct_32_1[][8]) =
+ALIGN_VAR_32(static const int16_t, tab_dct_32_1[][8]) =
 {
     { 89, -89, 18, -18, 75, -75, 50, -50 },          //  0
     { 75, -75, -50, 50, -18, 18, -89, 89 },          //  1
@@ -905,7 +905,7 @@ ALIGN_VAR_32(static const short, tab_dct_32_1[][8]) =
 #undef MAKE_COEF16
 };
 
-void dct32(short *src, int *dst, intptr_t stride)
+void dct32(int16_t *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_8     = _mm_set1_epi32(8);

@@ -31,7 +31,7 @@
 using namespace x265;
 
 namespace {
-void convert16to32_shl(int *dst, short *org, intptr_t stride, int shift, int size)
+void convert16to32_shl(int *dst, int16_t *org, intptr_t stride, int shift, int size)
 {
     int i, j;
 
@@ -52,7 +52,7 @@ void convert16to32_shl(int *dst, short *org, intptr_t stride, int shift, int siz
     }
 }
 
-void convert16to16_shl(short *dst, short *org, int width, int height, intptr_t stride, int shift)
+void convert16to16_shl(int16_t *dst, int16_t *org, int width, int height, intptr_t stride, int shift)
 {
     int i, j;
 
@@ -232,7 +232,7 @@ void transpose32(pixel* dst, pixel* src, intptr_t srcstride)
     transpose16_dummy(dst + 16,           32, src + 16 * srcstride,      srcstride);
 }
 
-void blockfill_s_4(short *dst, intptr_t dstride, short val)
+void blockfill_s_4(int16_t *dst, intptr_t dstride, int16_t val)
 {
     __m128i T00;
 
@@ -245,7 +245,7 @@ void blockfill_s_4(short *dst, intptr_t dstride, short val)
     _mm_storel_epi64((__m128i*)&dst[3 * dstride], T00);
 }
 
-void blockfill_s_8(short *dst, intptr_t dstride, short val)
+void blockfill_s_8(int16_t *dst, intptr_t dstride, int16_t val)
 {
     __m128i T00;
 
@@ -263,7 +263,7 @@ void blockfill_s_8(short *dst, intptr_t dstride, short val)
     _mm_storeu_si128((__m128i*)&dst[7 * dstride], T00);
 }
 
-void blockfill_s_16(short *dst, intptr_t dstride, short val)
+void blockfill_s_16(int16_t *dst, intptr_t dstride, int16_t val)
 {
     __m128i T00;
 
@@ -284,7 +284,7 @@ void blockfill_s_16(short *dst, intptr_t dstride, short val)
     }
 }
 
-void blockfill_s_32(short *dst, intptr_t dstride, short val)
+void blockfill_s_32(int16_t *dst, intptr_t dstride, int16_t val)
 {
     __m128i T00;
 
@@ -305,7 +305,7 @@ void blockfill_s_32(short *dst, intptr_t dstride, short val)
     }
 }
 
-void getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual4(pixel *fenc, pixel *pred, int16_t *resi, int stride)
 {
     __m128i T00, T01, T02;
 
@@ -338,7 +338,7 @@ void getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
     _mm_storel_epi64((__m128i*)(resi + (3) * stride), T02);
 }
 
-void getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual8(pixel *fenc, pixel *pred, int16_t *resi, int stride)
 {
     __m128i T00, T01, T02;
 
@@ -399,7 +399,7 @@ void getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
     _mm_storeu_si128((__m128i*)(resi + (7) * stride), T02);
 }
 
-void getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual16(pixel *fenc, pixel *pred, int16_t *resi, int stride)
 {
     __m128i T00, T01, T02, T03, T04;
 
@@ -451,7 +451,7 @@ void getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
     RESIDUAL_16x4(12);
 }
 
-void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual32(pixel *fenc, pixel *pred, int16_t *resi, int stride)
 {
     __m128i T00, T01, T02, T03, T04;
 
@@ -484,7 +484,7 @@ void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
     }
 }
 
-void getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual64(pixel *fenc, pixel *pred, int16_t *resi, int stride)
 {
     __m128i T00, T01, T02, T03, T04;
 
@@ -497,7 +497,7 @@ void getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
     }
 }
 
-void calcRecons4(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recIPred, int stride, int recstride, int predstride)
+void calcRecons4(pixel* pred, int16_t* resi, pixel* reco, int16_t* recQt, pixel* recIPred, int stride, int recstride, int predstride)
 {
     for (int y = 0; y < 4; y++)
     {
@@ -531,7 +531,7 @@ void calcRecons4(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* rec
     }
 }
 
-void calcRecons8(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recIPred, int stride, int recstride, int predstride)
+void calcRecons8(pixel* pred, int16_t* resi, pixel* reco, int16_t* recQt, pixel* recIPred, int stride, int recstride, int predstride)
 {
     for (int y = 0; y < 8; y++)
     {
@@ -566,7 +566,7 @@ void calcRecons8(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* rec
 }
 
 template<int blockSize>
-void calcRecons(pixel* pred, short* resi, pixel* reco, short* recQt, pixel* recIPred, int stride, int recstride, int predstride)
+void calcRecons(pixel* pred, int16_t* resi, pixel* reco, int16_t* recQt, pixel* recIPred, int stride, int recstride, int predstride)
 {
     for (int y = 0; y < blockSize; y++)
     {

@@ -79,7 +79,7 @@ protected:
     /* This holds intermediate values for filtering operations which need to maintain short precision */
     TShortYUV m_filteredBlockTmp[4];
 
-    short*    m_immedVals;
+    int16_t*    m_immedVals;
     Pel*      m_lumaRecBuffer; ///< array for down-sampled reconstructed luma sample
     int       m_lumaRecStride; ///< stride of m_lumaRecBuffer
 

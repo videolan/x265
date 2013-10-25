@@ -284,7 +284,7 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
 void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     int width = 64;
-    short srcStride = 96;
+    int16_t srcStride = 96;
 
     if (opt.intra_pred_dc)
     {

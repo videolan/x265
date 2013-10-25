@@ -152,7 +152,7 @@ public:
     /// set ME search range
     void setAdaptiveSearchRange(int dir, int refIdx, int merange) { m_adaptiveRange[dir][refIdx] = merange; }
 
-    void xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, Pel* pred, short* residual, Pel* recon, UInt stride,
+    void xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, Pel* pred, int16_t* residual, Pel* recon, UInt stride,
                  UInt width, UInt height, TextType ttype);
 
     void IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv);

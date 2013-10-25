@@ -339,7 +339,7 @@ void TComTrQuant::init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransf
 }
 
 UInt TComTrQuant::transformNxN(TComDataCU* cu,
-                               short*      residual,
+                               int16_t*      residual,
                                UInt        stride,
                                TCoeff*     coeff,
                                UInt        width,
@@ -356,7 +356,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
         {
             for (UInt j = 0; j < width; j++)
             {
-                coeff[k * width + j] = ((short)residual[k * stride + j]);
+                coeff[k * width + j] = ((int16_t)residual[k * stride + j]);
                 absSum += abs(residual[k * stride + j]);
             }
         }
@@ -388,7 +388,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
 }
 
-void TComTrQuant::invtransformNxN(bool transQuantBypass, UInt mode, short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip, int lastPos)
+void TComTrQuant::invtransformNxN(bool transQuantBypass, UInt mode, int16_t* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, int scalingListType, bool useTransformSkip, int lastPos)
 {
     if (transQuantBypass)
     {
@@ -396,7 +396,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, UInt mode, short* resid
         {
             for (UInt j = 0; j < width; j++)
             {
-                residual[k * stride + j] = (short)(coeff[k * width + j]);
+                residual[k * stride + j] = (int16_t)(coeff[k * width + j]);
             }
         }
 
@@ -450,7 +450,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, UInt mode, short* resid
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, int* coeff, int width, int height)
+void TComTrQuant::xTransformSkip(int16_t* resiBlock, UInt stride, int* coeff, int width, int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
@@ -483,7 +483,7 @@ void TComTrQuant::xTransformSkip(short* resiBlock, UInt stride, int* coeff, int 
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xITransformSkip(int* coef, short* residual, UInt stride, int width, int height)
+void TComTrQuant::xITransformSkip(int* coef, int16_t* residual, UInt stride, int width, int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;

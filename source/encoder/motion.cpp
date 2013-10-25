@@ -104,7 +104,7 @@ MotionEstimate::MotionEstimate()
 
     fenc = (pixel*)X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
     subpelbuf = (pixel*)X265_MALLOC(pixel, (MAX_CU_SIZE + 1) * (MAX_CU_SIZE + 1));
-    immedVal = (short*)X265_MALLOC(short, (MAX_CU_SIZE + 1) * (MAX_CU_SIZE + 1 + NTAPS_LUMA - 1));
+    immedVal = (int16_t*)X265_MALLOC(int16_t, (MAX_CU_SIZE + 1) * (MAX_CU_SIZE + 1 + NTAPS_LUMA - 1));
     immedVal2 = (int16_t*)X265_MALLOC(int16_t, (MAX_CU_SIZE + 1) * (MAX_CU_SIZE + 1 + NTAPS_LUMA - 1));
 }
 

@@ -763,14 +763,14 @@ inline void TComLoopFilter::xPelFilterLuma(Pel* src, int offset, int tc, bool sw
 {
     int delta;
 
-    short m4  = (short)src[0];
-    short m3  = (short)src[-offset];
-    short m5  = (short)src[offset];
-    short m2  = (short)src[-offset * 2];
-    short m6  = (short)src[offset * 2];
-    short m1  = (short)src[-offset * 3];
-    short m7  = (short)src[offset * 3];
-    short m0  = (short)src[-offset * 4];
+    int16_t m4  = (int16_t)src[0];
+    int16_t m3  = (int16_t)src[-offset];
+    int16_t m5  = (int16_t)src[offset];
+    int16_t m2  = (int16_t)src[-offset * 2];
+    int16_t m6  = (int16_t)src[offset * 2];
+    int16_t m1  = (int16_t)src[-offset * 3];
+    int16_t m7  = (int16_t)src[offset * 3];
+    int16_t m0  = (int16_t)src[-offset * 4];
 
     if (sw)
     {
@@ -833,10 +833,10 @@ inline void TComLoopFilter::xPelFilterChroma(Pel* src, int offset, int tc, bool 
 {
     int delta;
 
-    short m4  = (short)src[0];
-    short m3  = (short)src[-offset];
-    short m5  = (short)src[offset];
-    short m2  = (short)src[-offset * 2];
+    int16_t m4  = (int16_t)src[0];
+    int16_t m3  = (int16_t)src[-offset];
+    int16_t m5  = (int16_t)src[offset];
+    int16_t m2  = (int16_t)src[-offset * 2];
 
     delta = Clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
     src[-offset] = (Pel)ClipC(m3 + delta);
@@ -863,10 +863,10 @@ inline void TComLoopFilter::xPelFilterChroma(Pel* src, int offset, int tc, bool 
  */
 inline bool TComLoopFilter::xUseStrongFiltering(int offset, int d, int beta, int tc, Pel* src)
 {
-    short m4  = (short)src[0];
-    short m3  = (short)src[-offset];
-    short m7  = (short)src[offset * 3];
-    short m0  = (short)src[-offset * 4];
+    int16_t m4  = (int16_t)src[0];
+    int16_t m3  = (int16_t)src[-offset];
+    int16_t m7  = (int16_t)src[offset * 3];
+    int16_t m0  = (int16_t)src[-offset * 4];
 
     int d_strong = abs(m0 - m3) + abs(m7 - m4);
 
