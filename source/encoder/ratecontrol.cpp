@@ -177,7 +177,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
 {
     curSlice = pic->getSlice();
     sliceType = curSlice->getSliceType();
-
+    rce->sliceType = sliceType;
     switch (cfg->param.rc.rateControlMode)
     {
     case X265_RC_ABR:
@@ -382,7 +382,7 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
 {
     if (cfg->param.rc.rateControlMode == X265_RC_ABR)
     {
-        if (sliceType != B_SLICE)
+        if (rce->sliceType != B_SLICE)
             /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
              * to improve short term compensation for next frame. */
             cplxrSum += 1.5 * bits * qp2qScale(rce->qpaRc) / rce->qRceq;
