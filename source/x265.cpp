@@ -626,14 +626,21 @@ int main(int argc, char **argv)
         fprintf(stderr, "aborted at input frame %d, output frame %d\n", 
                 cliopt.frameSkip + inFrameCount, stats.encodedPictureCount);
 
-    printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
-           stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
+    if (stats.encodedPictureCount)
+    {
+        printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
+            stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
-    if (param.bEnablePsnr)
-        printf("Global PSNR: %.3f\n", stats.globalPsnr);
+        if (param.bEnablePsnr)
+            printf("Global PSNR: %.3f\n", stats.globalPsnr);
 
-    if (param.bEnableSsim)
-        printf("Global SSIM: %.3f\n", stats.globalSsim);
+        if (param.bEnableSsim)
+            printf("Global SSIM: %.3f\n", stats.globalSsim);
+    }
+    else
+    {
+        printf("\nencoded 0 frames\n");
+    }
 
     x265_cleanup(); /* Free library singletons */
 
