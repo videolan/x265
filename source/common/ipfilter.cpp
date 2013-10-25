@@ -411,7 +411,8 @@ namespace x265 {
     p.chroma_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c<4, W, H>
 
 #define LUMA(W, H) \
-    p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>
+    p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>;\
+    p.luma_vpp[LUMA_ ## W ## x ## H]     = interp_vert_pp_c<8, W, H>
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 {
