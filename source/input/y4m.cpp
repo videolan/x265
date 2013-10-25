@@ -32,6 +32,14 @@ using namespace std;
 
 Y4MInput::Y4MInput(const char *filename)
 {
+
+#if defined ENABLE_THREAD
+    for (int i = 0; i < QUEUE_SIZE; i++)
+        buf[i] = NULL;
+#else
+    buf = NULL;
+#endif
+
     ifs.open(filename, ios::binary | ios::in);
     threadActive = false;
     if (!ifs.fail())

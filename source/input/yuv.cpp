@@ -32,6 +32,14 @@ using namespace std;
 
 YUVInput::YUVInput(const char *filename)
 {
+#if defined ENABLE_THREAD
+    for (int i = 0; i < QUEUE_SIZE; i++)
+        buf[i] = NULL;
+    head = 0;
+    tail = 0;
+#else
+    buf = NULL;
+#endif
     ifs.open(filename, ios::binary | ios::in);
     width = height = 0;
     depth = 8;
@@ -40,10 +48,6 @@ YUVInput::YUVInput(const char *filename)
         threadActive = true;
     else
         ifs.close();
-#if defined ENABLE_THREAD
-    head = 0;
-    tail = 0;
-#endif
 }
 
 YUVInput::~YUVInput()
