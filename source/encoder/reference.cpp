@@ -33,6 +33,7 @@ using namespace x265;
 
 MotionReference::MotionReference()
 {
+    m_weightBuffer = NULL;
 }
 
 int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
