@@ -77,7 +77,7 @@ void TComPicYuv::create(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCU
     m_numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
 
     m_lumaMarginX = g_maxCUWidth  + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
-    m_lumaMarginY = g_maxCUHeight + 4;  // search margin and 8-tap filter half-length
+    m_lumaMarginY = g_maxCUHeight + 16; // search margin plus 8 plus 8-tap filter half-length, rounded to 16
     m_stride = (m_numCuInWidth * g_maxCUWidth) + (m_lumaMarginX << 1);
 
     m_chromaMarginX = m_lumaMarginX;    // keep 16-byte alignment for chroma CTUs
