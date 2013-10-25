@@ -5635,7 +5635,9 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     SETUP_PARTITION(16, 4);
     SETUP_PARTITION(16, 12);
     SETUP_NONSAD(4, 16); // 4x16 SAD covered by assembly
+#if !defined(__clang__)
     SETUP_PARTITION(12, 16);
+#endif
 
     SETUP_NONSAD(8, 8); // 8x8 SAD covered by assembly
     SETUP_NONSAD(8, 4); // 8x4 SAD covered by assembly
