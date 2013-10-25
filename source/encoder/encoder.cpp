@@ -340,21 +340,23 @@ void Encoder::fetchStats(x265_stats *stats)
     stats->globalPsnrU = m_analyzeAll.getPsnrU();
     stats->globalPsnrV = m_analyzeAll.getPsnrV();
     stats->encodedPictureCount = m_analyzeAll.getNumPic();
+    stats->totalWPFrames = m_numWPFrames;
     stats->accBits = m_analyzeAll.getBits();
+    stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
     if (stats->encodedPictureCount > 0)
     {
         stats->globalSsim = m_globalSsim / stats->encodedPictureCount;
         stats->globalPsnr = (stats->globalPsnrY * 6 + stats->globalPsnrU + stats->globalPsnrV) / (8 * stats->encodedPictureCount);
+        stats->elapsedVideoTime = (double)stats->encodedPictureCount / param.frameRate;
+        stats->bitrate = (0.001f * stats->accBits) / stats->elapsedVideoTime;
     }
     else
     {
         stats->globalSsim = 0;
         stats->globalPsnr = 0;
+        stats->bitrate = 0;
+        stats->elapsedVideoTime = 0;
     }
-    stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
-    stats->elapsedVideoTime = (double)stats->encodedPictureCount / param.frameRate;
-    stats->bitrate = (0.001f * stats->accBits) / stats->elapsedVideoTime;
-    stats->totalWPFrames = m_numWPFrames;
 }
 
 void Encoder::writeLog(int argc, char **argv)
