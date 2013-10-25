@@ -235,7 +235,7 @@ void Y4MInput::skipFrames(int numFrames)
     const size_t count = (width * height * 3 / 2) + strlen(header);
     for (int i = 0; i < numFrames; i++)
     {
-        ifs.read(buf[0], count);
+        ifs.ignore(count);
     }
 }
 
@@ -316,11 +316,11 @@ bool Y4MInput::populateFrameQueue()
     {
         notFull.wait();
         if (!threadActive)
-            break;
+            return false;
     }
 
     ifs.read(buf[tail], count);
-    frameStat[tail] = ifs.good();
+    frameStat[tail] = !ifs.fail();
 
     if (!frameStat[tail])
     {
@@ -370,7 +370,7 @@ bool Y4MInput::readPicture(x265_picture& pic)
     ifs.read(buf, count);
     PPAStopCpuEventFunc(read_yuv);
 
-    return ifs.good();
+    return !ifs.fail();
 }
 
 #endif // if defined(ENABLE_THREAD)

@@ -95,7 +95,7 @@ void YUVInput::skipFrames(int numFrames)
         if (ifs == &cin)
         {
             for (int i = 0; i < numFrames; i++)
-                ifs->read(buf[tail], framesize);
+                ifs->ignore(framesize);
         }
         else
             ifs->seekg(framesize * numFrames, ios::cur);
@@ -120,11 +120,6 @@ void YUVInput::setDimensions(int w, int h)
         height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT)
     {
         threadActive = false;
-        if (ifs && ifs != &cin)
-        {
-            delete ifs;
-            ifs = NULL;
-        }
     }
     else
     {
@@ -164,13 +159,13 @@ bool YUVInput::populateFrameQueue()
     {
         notFull.wait();
         if (!threadActive)
-            break;
+            return false;
     }
-
-    if (!ifs)
+    if (!ifs || !threadActive)
         return false;
+
     ifs->read(buf[tail], framesize);
-    frameStat[tail] = ifs->good();
+    frameStat[tail] = !ifs->fail();
     if (!frameStat[tail])
     {
         x265_log(NULL, X265_LOG_ERROR, "yuv: error reading frame\n");
@@ -218,6 +213,8 @@ bool YUVInput::readPicture(x265_picture& pic)
 // TODO: only supports 4:2:0 chroma sampling
 bool YUVInput::readPicture(x265_picture& pic)
 {
+    if (!ifs) return false;
+
     PPAStartCpuEventFunc(read_yuv);
 
     pic.planes[0] = buf;
@@ -232,11 +229,10 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    if (!ifs) return false;
     ifs->read(buf, framesize);
     PPAStopCpuEventFunc(read_yuv);
 
-    return ifs->good();
+    return !ifs->fail();
 }
 
 #endif // if defined ENABLE_THREAD
