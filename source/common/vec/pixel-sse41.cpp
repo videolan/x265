@@ -4897,7 +4897,7 @@ int sse_pp_64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref
     return _mm_cvtsi128_si32(sum);
 }
 
-void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     __m128i w00, roundoff, ofs, fs, tmpsrc, tmpdst, tmp, sign;
     int x, y;
@@ -4986,7 +4986,7 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
 }
 
 template<int ly>
-int sse_sp4(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp4(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum = _mm_setzero_si128();
 
@@ -5027,7 +5027,7 @@ int sse_sp4(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     sum1 = _mm_add_epi32(sum1, T13)
 
 template<int ly>
-int sse_sp8(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp8(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5057,7 +5057,7 @@ int sse_sp8(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp12(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp12(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
 
@@ -5105,7 +5105,7 @@ int sse_sp12(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp16(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp16(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5140,7 +5140,7 @@ int sse_sp16(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp24(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp24(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5181,7 +5181,7 @@ int sse_sp24(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp32(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp32(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5227,7 +5227,7 @@ int sse_sp32(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp48(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp48(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5284,7 +5284,7 @@ int sse_sp48(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp64(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp64(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5363,7 +5363,7 @@ int sse_sp64(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     sum = _mm_add_epi32(sum, diff)
 
 template<int ly>
-int sse_ss4(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss4(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i diff;
@@ -5383,7 +5383,7 @@ int sse_ss4(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss8(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss8(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5410,7 +5410,7 @@ int sse_ss8(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss12(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss12(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5439,7 +5439,7 @@ int sse_ss12(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss16(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss16(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5469,7 +5469,7 @@ int sse_ss16(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss24(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss24(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5499,7 +5499,7 @@ int sse_ss24(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss32(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss32(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5529,7 +5529,7 @@ int sse_ss32(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss48(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss48(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5559,7 +5559,7 @@ int sse_ss48(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss64(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss64(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();

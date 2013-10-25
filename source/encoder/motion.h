@@ -53,7 +53,7 @@ protected:
 
     /* subpel generation buffers */
     pixel *subpelbuf;
-    short *immedVal;
+    int16_t *immedVal;
     int16_t *immedVal2;
     int blockwidth;
     int blockheight;

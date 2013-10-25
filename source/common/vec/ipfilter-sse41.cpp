@@ -42,7 +42,7 @@ ALIGN_VAR_32(const uint16_t, c_512[16]) =
 };
 
 template<int N>
-void filterVertical_sp(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
 {
     src -= (N / 2 - 1) * srcStride;
 
@@ -372,7 +372,7 @@ template<int N>
 void filterVertical_pp(pixel *src, intptr_t srcStride,
                         pixel *dst, intptr_t dstStride,
                         int width, int height,
-                        const short *coeff)
+                        const int16_t *coeff)
 {
     src -= (N / 2 - 1) * srcStride;
 
@@ -559,7 +559,7 @@ ALIGN_VAR_32(const int8_t, tab_leftmask[16]) =
 };
 
 template<int N>
-void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
 {
     assert(X265_DEPTH == 8);
 
@@ -677,14 +677,14 @@ void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t ds
 #include "vectorclass.h"
 namespace {
 template<int N>
-void filterVertical_sp(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const int16_t *coeff)
 {
     int row, col;
 
     src -= (N / 2 - 1) * srcStride;
 
     int offset;
-    short maxVal;
+    int16_t maxVal;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC;
 
@@ -873,14 +873,14 @@ void filterVertical_sp(short *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 }
 
 template<int N>
-void filterVertical_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterVertical_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const int16_t *coeff)
 {
     int row, col;
 
     src -= (N / 2 - 1) * srcStride;
 
     int offset;
-    short maxVal;
+    int16_t maxVal;
 
     int shift = IF_FILTER_PREC;
 
@@ -1067,11 +1067,11 @@ void filterVertical_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 }
 
 template<int N>
-void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const int16_t *coeff)
 {
     int row, col;
     int offset;
-    short maxVal;
+    int16_t maxVal;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
 
     offset =  (1 << (headRoom - 1));
@@ -1158,7 +1158,7 @@ void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t ds
 
             vec_src0 = vec_src0 * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
             int sum = horizontal_add(vec_src0);
-            short val = (short)(sum + offset) >> headRoom;
+            int16_t val = (int16_t)(sum + offset) >> headRoom;
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
 
@@ -1171,7 +1171,7 @@ void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t ds
 }
 
 template<int N>
-void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int block_width, int block_height, const short *coeff)
+void filterHorizontal_ps(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int block_width, int block_height, const int16_t *coeff)
 {
     int row, col;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
@@ -1257,7 +1257,7 @@ void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t ds
 
             vec_src0 = vec_src0 * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
             int sum = horizontal_add(vec_src0);
-            short val = (short)(sum + offset) >> shift;
+            int16_t val = (int16_t)(sum + offset) >> shift;
 
             dst[col] = val;
         }
@@ -1267,10 +1267,10 @@ void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t ds
     }
 }
 
-void filterConvertPelToShort(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height)
+void filterConvertPelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height)
 {
     pixel* srcOrg = src;
-    short* dstOrg = dst;
+    int16_t* dstOrg = dst;
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int row, col;
     Vec8s src_v, dst_v, val_v;
@@ -1307,15 +1307,15 @@ void filterConvertPelToShort(pixel *src, intptr_t srcStride, short *dst, intptr_
     }
 }
 
-void filterConvertShortToPel(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
+void filterConvertShortToPel(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
 {
-    short* srcOrg = src;
+    int16_t* srcOrg = src;
     pixel* dstOrg = dst;
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
-    short offset = IF_INTERNAL_OFFS;
+    int16_t offset = IF_INTERNAL_OFFS;
 
     offset += shift ? (1 << (shift - 1)) : 0;
-    short maxVal = (1 << X265_DEPTH) - 1;
+    int16_t maxVal = (1 << X265_DEPTH) - 1;
     Vec8s minVal(0);
     int row, col;
     Vec8s src_c, val_c;

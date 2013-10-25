@@ -37,12 +37,12 @@ using namespace x265;
 
 namespace {
 template<int N>
-void filterVertical_sp_c(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterVertical_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC + headRoom;
     int offset = (1 << (shift - 1)) + (IF_INTERNAL_OFFS << IF_FILTER_PREC);
-    short maxVal = (1 << X265_DEPTH) - 1;
+    int16_t maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1) * srcStride;
 
     int row, col;
@@ -64,7 +64,7 @@ void filterVertical_sp_c(short *src, intptr_t srcStride, pixel *dst, intptr_t ds
                 sum += src[col + 7 * srcStride] * coeff[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
+            int16_t val = (int16_t)((sum + offset) >> shift);
 
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
@@ -78,11 +78,11 @@ void filterVertical_sp_c(short *src, intptr_t srcStride, pixel *dst, intptr_t ds
 }
 
 template<int N>
-void filterHorizontal_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterHorizontal_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int offset =  (1 << (headRoom - 1));
-    short maxVal = (1 << X265_DEPTH) - 1;
+    int16_t maxVal = (1 << X265_DEPTH) - 1;
     const int cStride = 1;
     src -= (N / 2 - 1) * cStride;
 
@@ -105,7 +105,7 @@ void filterHorizontal_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t 
                 sum += src[col + 7 * cStride] * coeff[7];
             }
 
-            short val = (short)(sum + offset) >> headRoom;
+            int16_t val = (int16_t)(sum + offset) >> headRoom;
 
             if (val < 0) val = 0;
             if (val > maxVal) val = maxVal;
@@ -118,7 +118,7 @@ void filterHorizontal_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t 
 }
 
 template<int N>
-void filterVertical_ss_c(short *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *c)
+void filterVertical_ss_c(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, int16_t const *c)
 {
     int shift = IF_FILTER_PREC;
     int row, col;
@@ -141,7 +141,7 @@ void filterVertical_ss_c(short *src, intptr_t srcStride, short *dst, intptr_t ds
                 sum += src[col + 7 * srcStride] * c[7];
             }
 
-            short val = (short)((sum) >> shift);
+            int16_t val = (int16_t)((sum) >> shift);
             dst[col] = val;
         }
 
@@ -151,7 +151,7 @@ void filterVertical_ss_c(short *src, intptr_t srcStride, short *dst, intptr_t ds
 }
 
 template<int N>
-void filterVertical_ps_c(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *c)
+void filterVertical_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, int16_t const *c)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
@@ -177,7 +177,7 @@ void filterVertical_ps_c(pixel *src, intptr_t srcStride, short *dst, intptr_t ds
                 sum += src[col + 7 * srcStride] * c[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
+            int16_t val = (int16_t)((sum + offset) >> shift);
             dst[col] = val;
         }
 
@@ -187,7 +187,7 @@ void filterVertical_ps_c(pixel *src, intptr_t srcStride, short *dst, intptr_t ds
 }
 
 template<int N>
-void filterHorizontal_ps_c(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterHorizontal_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
@@ -213,7 +213,7 @@ void filterHorizontal_ps_c(pixel *src, intptr_t srcStride, short *dst, intptr_t 
                 sum += src[col + 7] * coeff[7];
             }
 
-            short val = (short)(sum + offset) >> shift;
+            int16_t val = (int16_t)(sum + offset) >> shift;
             dst[col] = val;
         }
 
@@ -222,17 +222,17 @@ void filterHorizontal_ps_c(pixel *src, intptr_t srcStride, short *dst, intptr_t 
     }
 }
 
-void filterConvertShortToPel_c(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
+void filterConvertShortToPel_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
-    short offset = IF_INTERNAL_OFFS + (shift ? (1 << (shift - 1)) : 0);
-    short maxVal = (1 << X265_DEPTH) - 1;
+    int16_t offset = IF_INTERNAL_OFFS + (shift ? (1 << (shift - 1)) : 0);
+    int16_t maxVal = (1 << X265_DEPTH) - 1;
     int row, col;
     for (row = 0; row < height; row++)
     {
         for (col = 0; col < width; col++)
         {
-            short val = src[col];
+            int16_t val = src[col];
             val = (val + offset) >> shift;
             if (val < 0) val = 0;
             if (val > maxVal) val = maxVal;
@@ -244,7 +244,7 @@ void filterConvertShortToPel_c(short *src, intptr_t srcStride, pixel *dst, intpt
     }
 }
 
-void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height)
+void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int row, col;
@@ -253,8 +253,8 @@ void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, short *dst, intpt
     {
         for (col = 0; col < width; col++)
         {
-            short val = src[col] << shift;
-            dst[col] = val - (short)IF_INTERNAL_OFFS;
+            int16_t val = src[col] << shift;
+            dst[col] = val - (int16_t)IF_INTERNAL_OFFS;
         }
 
         src += srcStride;
@@ -263,11 +263,11 @@ void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, short *dst, intpt
 }
 
 template<int N>
-void filterVertical_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, short const *c)
+void filterVertical_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *c)
 {
     int shift = IF_FILTER_PREC;
     int offset = 1 << (shift - 1);
-    short maxVal = (1 << X265_DEPTH) - 1;
+    int16_t maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1) * srcStride;
 
     int row, col;
@@ -290,7 +290,7 @@ void filterVertical_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t ds
                 sum += src[col + 7 * srcStride] * c[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
+            int16_t val = (int16_t)((sum + offset) >> shift);
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
 
@@ -368,7 +368,7 @@ void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstSt
     int16_t const * c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int shift = IF_FILTER_PREC;
     int offset = 1 << (shift - 1);
-    short maxVal = (1 << X265_DEPTH) - 1;
+    int16_t maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1) * srcStride;
 
     int row, col;
@@ -390,7 +390,7 @@ void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstSt
                 sum += src[col + 7 * srcStride] * c[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
+            int16_t val = (int16_t)((sum + offset) >> shift);
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
 

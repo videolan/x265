@@ -37,7 +37,7 @@
 
 #ifndef X265_TYPEDEF_H
 #define X265_TYPEDEF_H
-
+#include <stdint.h>
 namespace x265 {
 // private namespace
 

@@ -53,7 +53,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
     if (pic.bitDepth > 8 && depth == 8)
     {
         // encoder gave us short pixels, downscale, then write
-        short *Y = (short*)pic.planes[0];
+        int16_t *Y = (int16_t*)pic.planes[0];
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
@@ -65,7 +65,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             Y += pic.stride[0];
         }
 
-        short *U = (short*)pic.planes[1];
+        int16_t *U = (int16_t*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
             for (int j = 0; j < width >> 1; j++)
@@ -77,7 +77,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             U += pic.stride[1];
         }
 
-        short *V = (short*)pic.planes[2];
+        int16_t *V = (int16_t*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {
             for (int j = 0; j < width >> 1; j++)

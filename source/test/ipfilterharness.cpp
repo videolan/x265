@@ -44,9 +44,9 @@ IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
     pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    short_buff = (short*)X265_MALLOC(short, ipf_t_size);
-    IPF_vec_output_s = (short*)malloc(ipf_t_size * sizeof(short)); // Output Buffer1
-    IPF_C_output_s = (short*)malloc(ipf_t_size * sizeof(short));   // Output Buffer2
+    short_buff = (int16_t*)X265_MALLOC(int16_t, ipf_t_size);
+    IPF_vec_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t)); // Output Buffer1
+    IPF_C_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t));   // Output Buffer2
     IPF_vec_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel)); // Output Buffer1
     IPF_C_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel));   // Output Buffer2
 
@@ -61,7 +61,7 @@ IPFilterHarness::IPFilterHarness()
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
         pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
-        short_buff[i] = (short)(isPositive) * (rand() &  SHRT_MAX);
+        short_buff[i] = (int16_t)(isPositive) * (rand() &  SHRT_MAX);
     }
 }
 
@@ -125,7 +125,7 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_ps_t ref, ipfilter_ps_t 
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
+    int16_t rand_val, rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -162,7 +162,7 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
+    int16_t rand_val, rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -197,9 +197,9 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
 
 bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_t opt)
 {
-    short rand_height = (short)rand() % 100;                 // Randomly generated Height
-    short rand_width = (short)rand() % 100;                  // Randomly generated Width
-    short rand_srcStride, rand_dstStride;
+    int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
+    int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
+    int16_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -231,9 +231,9 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_
 
 bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt)
 {
-    short rand_height = (short)rand() % 100;                 // Randomly generated Height
-    short rand_width = (short)rand() % 100;                  // Randomly generated Width
-    short rand_srcStride, rand_dstStride;
+    int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
+    int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
+    int16_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -428,9 +428,9 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 {
     int height = 64;
     int width = 64;
-    short val = 2;
-    short srcStride = 96;
-    short dstStride = 96;
+    int16_t val = 2;
+    int16_t srcStride = 96;
+    int16_t dstStride = 96;
     int maxVerticalfilterHalfDistance = 3;
 
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)

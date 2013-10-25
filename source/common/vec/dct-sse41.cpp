@@ -236,7 +236,7 @@ void dequant(const int* quantCoef, int* coef, int width, int height, int per, in
     }
 }
 
-ALIGN_VAR_32(static const short, tab_idst_4x4[8][8]) =
+ALIGN_VAR_32(static const int16_t, tab_idst_4x4[8][8]) =
 {
     {   29, +84, 29,  +84,  29, +84,  29, +84 },
     {  +74, +55, +74, +55, +74, +55, +74, +55 },
@@ -248,7 +248,7 @@ ALIGN_VAR_32(static const short, tab_idst_4x4[8][8]) =
     {  -74, -29, -74, -29, -74, -29, -74, -29 }
 };
 
-void idst4(int *src, short *dst, intptr_t stride)
+void idst4(int *src, int16_t *dst, intptr_t stride)
 {
     __m128i m128iAdd, S0, S8, m128iTmp1, m128iTmp2, m128iAC, m128iBD, m128iA, m128iD;
 

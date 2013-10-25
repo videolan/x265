@@ -41,14 +41,14 @@ using namespace x265;
 
 namespace {
 #if !HIGH_BIT_DEPTH
-ALIGN_VAR_32(static const short, tab_dct_4[][8]) =
+ALIGN_VAR_32(static const int16_t, tab_dct_4[][8]) =
 {
     { 64, 64, 64, 64, 64, 64, 64, 64 },
     { 83, 36, 83, 36, 83, 36, 83, 36 },
     { 64, -64, 64, -64, 64, -64, 64, -64 },
     { 36, -83, 36, -83, 36, -83, 36, -83 },
 };
-void dct4(short *src, int *dst, intptr_t stride)
+void dct4(int16_t *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_1         = _mm_set1_epi32(1);
@@ -124,14 +124,14 @@ void dct4(short *src, int *dst, intptr_t stride)
 
 #endif // if !HIGH_BIT_DEPTH
 
-ALIGN_VAR_32(static const short, tab_idct_4x4[4][8]) =
+ALIGN_VAR_32(static const int16_t, tab_idct_4x4[4][8]) =
 {
     { 64,  64, 64,  64, 64,  64, 64,  64 },
     { 64, -64, 64, -64, 64, -64, 64, -64 },
     { 83,  36, 83,  36, 83,  36, 83,  36 },
     { 36, -83, 36, -83, 36, -83, 36, -83 },
 };
-void idct4(int *src, short *dst, intptr_t stride)
+void idct4(int *src, int16_t *dst, intptr_t stride)
 {
     __m128i S0, S8, m128iAdd, m128Tmp1, m128Tmp2, E1, E2, O1, O2, m128iA, m128iD;
 
@@ -215,7 +215,7 @@ void idct4(int *src, short *dst, intptr_t stride)
     _mm_storeh_pi((__m64*)&dst[3 * stride], _mm_castsi128_ps(m128iD));
 }
 
-ALIGN_VAR_32(static const short, tab_idct_8x8[12][8]) =
+ALIGN_VAR_32(static const int16_t, tab_idct_8x8[12][8]) =
 {
     {  89,  75,  89,  75, 89,  75, 89,  75 },
     {  50,  18,  50,  18, 50,  18, 50,  18 },
@@ -230,7 +230,7 @@ ALIGN_VAR_32(static const short, tab_idct_8x8[12][8]) =
     {  83,  36,  83,  36, 83,  36, 83,  36 },
     {  36, -83,  36, -83, 36, -83, 36, -83 }
 };
-void idct8(int *src, short *dst, intptr_t stride)
+void idct8(int *src, int16_t *dst, intptr_t stride)
 {
     __m128i m128iS0, m128iS1, m128iS2, m128iS3, m128iS4, m128iS5, m128iS6, m128iS7, m128iAdd, m128Tmp0, m128Tmp1, m128Tmp2, m128Tmp3, E0h, E1h, E2h, E3h, E0l, E1l, E2l, E3l, O0h, O1h, O2h, O3h, O0l, O1l, O2l, O3l, EE0l, EE1l, E00l, E01l, EE0h, EE1h, E00h, E01h;
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
@@ -483,7 +483,7 @@ void idct8(int *src, short *dst, intptr_t stride)
     _mm_storeh_pi((__m64*)&dst[7 * stride +  4], _mm_castsi128_ps(T11));
 }
 
-void idct16(int *src, short *dst, intptr_t stride)
+void idct16(int *src, int16_t *dst, intptr_t stride)
 {
     const __m128i c16_p87_p90   = _mm_set1_epi32(0x0057005A); //row0 87high - 90low address
     const __m128i c16_p70_p80   = _mm_set1_epi32(0x00460050);
@@ -894,7 +894,7 @@ void idct16(int *src, short *dst, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[15 * stride + 8], in15[1]);
 }
 
-void idct32(int *src, short *dst, intptr_t stride)
+void idct32(int *src, int16_t *dst, intptr_t stride)
 {
     //Odd
     const __m128i c16_p90_p90   = _mm_set1_epi32(0x005A005A); //column 0

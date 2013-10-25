@@ -90,7 +90,7 @@ void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intp
     }
 }
 
-void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
+void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
 
@@ -207,7 +207,7 @@ void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixe
 
 #endif /* if HIGH_BIT_DEPTH */
 
-void blockcopy_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
+void blockcopy_sp(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
 
@@ -236,7 +236,7 @@ void blockcopy_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, in
         {
             for (int x = 0; x < bx; x++)
             {
-                dst[x] = (short)src[x];
+                dst[x] = (int16_t)src[x];
             }
 
             src += sstride;
@@ -245,7 +245,7 @@ void blockcopy_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, in
     }
 }
 
-void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, uint8_t *src1, intptr_t sstride0, intptr_t sstride1)
+void pixelsub_sp(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src0, uint8_t *src1, intptr_t sstride0, intptr_t sstride1)
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
 
@@ -284,7 +284,7 @@ void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, ui
         {
             for (int x = 0; x < bx; x++)
             {
-                dst[x] = (short)(src0[x] - src1[x]);
+                dst[x] = (int16_t)(src0[x] - src1[x]);
             }
 
             src0 += sstride0;
@@ -294,7 +294,7 @@ void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, ui
     }
 }
 
-void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, short *src1, intptr_t sstride0, intptr_t sstride1)
+void pixeladd_ss(int bx, int by, int16_t *dst, intptr_t dstride, int16_t *src0, int16_t *src1, intptr_t sstride0, intptr_t sstride1)
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | sstride0 | sstride1 | dstride;
 
@@ -363,7 +363,7 @@ void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, shor
                 tmp = src0[x] + src1[x];
                 tmp = tmp < 0 ? 0 : tmp;
                 tmp = tmp > max ? max : tmp;
-                dst[x] = (short)tmp;
+                dst[x] = (int16_t)tmp;
             }
 
             src0 += sstride0;

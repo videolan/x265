@@ -131,7 +131,7 @@ void TComPrediction::initTempBuff()
         m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE);
 
         m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE);
-        m_immedVals = (short*)X265_MALLOC(short, 64 * (64 + NTAPS_LUMA - 1));
+        m_immedVals = (int16_t*)X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
     }
 
     if (m_lumaRecStride != (MAX_CU_SIZE >> 1) + 1)
@@ -511,7 +511,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     int dstStride = dstPic->m_width;
-    short *dst    = dstPic->getLumaAddr(partAddr);
+    int16_t *dst    = dstPic->getLumaAddr(partAddr);
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
@@ -608,8 +608,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     Pel* refCb = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
     Pel* refCr = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-    short* dstCb = dstPic->getCbAddr(partAddr);
-    short* dstCr = dstPic->getCrAddr(partAddr);
+    int16_t* dstCb = dstPic->getCbAddr(partAddr);
+    int16_t* dstCr = dstPic->getCrAddr(partAddr);
 
     int xFrac = mv->x & 0x7;
     int yFrac = mv->y & 0x7;

@@ -47,8 +47,8 @@ PixelHarness::PixelHarness()
 
     ibuf1 = (int*)X265_MALLOC(int, bufsize);
 
-    sbuf1 = (short*)X265_MALLOC(short, bufsize);
-    sbuf2 = (short*)X265_MALLOC(short, bufsize);
+    sbuf1 = (int16_t*)X265_MALLOC(int16_t, bufsize);
+    sbuf2 = (int16_t*)X265_MALLOC(int16_t, bufsize);
 
     if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !ibuf1)
     {
@@ -194,8 +194,8 @@ bool PixelHarness::check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt)
 
 bool PixelHarness::check_block_copy_s_p(blockcpy_sp_t ref, blockcpy_sp_t opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64 * 64]);
-    ALIGN_VAR_16(short, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
@@ -204,7 +204,7 @@ bool PixelHarness::check_block_copy_s_p(blockcpy_sp_t ref, blockcpy_sp_t opt)
         opt(bx, by, opt_dest, 64, pbuf2 + j, 128);
         ref(bx, by, ref_dest, 64, pbuf2 + j, 128);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         j += 4;
@@ -217,8 +217,8 @@ bool PixelHarness::check_block_copy_s_p(blockcpy_sp_t ref, blockcpy_sp_t opt)
 
 bool PixelHarness::check_block_copy_s_c(blockcpy_sc_t ref, blockcpy_sc_t opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64 * 64]);
-    ALIGN_VAR_16(short, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
@@ -227,7 +227,7 @@ bool PixelHarness::check_block_copy_s_c(blockcpy_sc_t ref, blockcpy_sc_t opt)
         opt(bx, by, opt_dest, 64, (uint8_t*)pbuf2 + j, STRIDE);
         ref(bx, by, ref_dest, 64, (uint8_t*)pbuf2 + j, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         j += 4;
@@ -247,8 +247,8 @@ bool PixelHarness::check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, STRIDE);
-        ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, STRIDE);
+        opt(bx, by, opt_dest, 64, (int16_t*)pbuf2 + j, STRIDE);
+        ref(bx, by, ref_dest, 64, (int16_t*)pbuf2 + j, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -263,10 +263,10 @@ bool PixelHarness::check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt)
 
 bool PixelHarness::check_calresidual(calcresidual_t ref, calcresidual_t opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64 * 64]);
-    ALIGN_VAR_16(short, opt_dest[64 * 64]);
-    memset(ref_dest, 0, 64 * 64 * sizeof(short));
-    memset(opt_dest, 0, 64 * 64 * sizeof(short));
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+    memset(ref_dest, 0, 64 * 64 * sizeof(int16_t));
+    memset(opt_dest, 0, 64 * 64 * sizeof(int16_t));
 
     int j = 0;
     for (int i = 0; i < ITERS; i++)
@@ -274,7 +274,7 @@ bool PixelHarness::check_calresidual(calcresidual_t ref, calcresidual_t opt)
         opt(pbuf1 + j, pbuf2 + j, opt_dest, STRIDE);
         ref(pbuf1 + j, pbuf2 + j, ref_dest, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         j += INCR;
@@ -285,8 +285,8 @@ bool PixelHarness::check_calresidual(calcresidual_t ref, calcresidual_t opt)
 
 bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
 {
-    ALIGN_VAR_16(short, ref_recq[64 * 64]);
-    ALIGN_VAR_16(short, opt_recq[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_recq[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_recq[64 * 64]);
 
     ALIGN_VAR_16(pixel, ref_reco[64 * 64]);
     ALIGN_VAR_16(pixel, opt_reco[64 * 64]);
@@ -294,8 +294,8 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
     ALIGN_VAR_16(pixel, ref_pred[64 * 64]);
     ALIGN_VAR_16(pixel, opt_pred[64 * 64]);
 
-    memset(ref_recq, 0, 64 * 64 * sizeof(short));
-    memset(opt_recq, 0, 64 * 64 * sizeof(short));
+    memset(ref_recq, 0, 64 * 64 * sizeof(int16_t));
+    memset(opt_recq, 0, 64 * 64 * sizeof(int16_t));
     memset(ref_reco, 0, 64 * 64 * sizeof(pixel));
     memset(opt_reco, 0, 64 * 64 * sizeof(pixel));
     memset(ref_pred, 0, 64 * 64 * sizeof(pixel));
@@ -308,7 +308,7 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
         opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
         ref(pbuf1 + j, sbuf1 + j, ref_reco, ref_recq, ref_pred, stride, stride, stride);
 
-        if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
             return false;
         if (memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)))
             return false;
@@ -379,8 +379,8 @@ bool PixelHarness::check_weightpUni(weightpUniPixel_t ref, weightpUniPixel_t opt
 
 bool PixelHarness::check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64 * 64]);
-    ALIGN_VAR_16(short, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
@@ -389,7 +389,7 @@ bool PixelHarness::check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt)
         opt(bx, by, opt_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
         ref(bx, by, ref_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         j += INCR;
@@ -402,17 +402,17 @@ bool PixelHarness::check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt)
 
 bool PixelHarness::check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64 * 64]);
-    ALIGN_VAR_16(short, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, STRIDE, (short*)pbuf2 + j, (short*)pbuf1 + j, STRIDE, STRIDE);
-        ref(bx, by, ref_dest, STRIDE, (short*)pbuf2 + j, (short*)pbuf1 + j, STRIDE, STRIDE);
+        opt(bx, by, opt_dest, STRIDE, (int16_t*)pbuf2 + j, (int16_t*)pbuf1 + j, STRIDE, STRIDE);
+        ref(bx, by, ref_dest, STRIDE, (int16_t*)pbuf2 + j, (int16_t*)pbuf1 + j, STRIDE, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         j += INCR;
@@ -487,8 +487,8 @@ bool PixelHarness::check_downscale_t(downscale_t ref, downscale_t opt)
 
 bool PixelHarness::check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64 * 64]);
-    ALIGN_VAR_16(short, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
 
     int j = 0;
     for (int i = 0; i < ITERS; i++)
@@ -498,7 +498,7 @@ bool PixelHarness::check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t op
         opt(opt_dest, ibuf1 + j, STRIDE, shift, STRIDE);
         ref(ref_dest, ibuf1 + j, STRIDE, shift, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         j += INCR;
@@ -822,13 +822,13 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     if (opt.sse_sp[part])
     {
         printf("sse_sp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sse_sp[part], ref.sse_sp[part], (short*)pbuf1, STRIDE, fref, STRIDE);
+        REPORT_SPEEDUP(opt.sse_sp[part], ref.sse_sp[part], (int16_t*)pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sse_ss[part])
     {
         printf("sse_ss[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sse_ss[part], ref.sse_ss[part], (short*)pbuf1, STRIDE, (short*)fref, STRIDE);
+        REPORT_SPEEDUP(opt.sse_ss[part], ref.sse_ss[part], (int16_t*)pbuf1, STRIDE, (int16_t*)fref, STRIDE);
     }
 }
 
@@ -896,19 +896,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.blockcpy_ps)
     {
         printf("p_s   cpy");
-        REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (int16_t*)pbuf2, STRIDE);
     }
 
     if (opt.blockcpy_sp)
     {
         printf("s_p   cpy");
-        REPORT_SPEEDUP(opt.blockcpy_sp, ref.blockcpy_sp, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_sp, ref.blockcpy_sp, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.blockcpy_sc)
     {
         printf("s_c   cpy");
-        REPORT_SPEEDUP(opt.blockcpy_sc, ref.blockcpy_sc, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_sc, ref.blockcpy_sc, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
     }
 
     if (opt.weightpUniPixel)
@@ -926,13 +926,13 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.pixelsub_sp)
     {
         printf("Pixel Sub");
-        REPORT_SPEEDUP(opt.pixelsub_sp, ref.pixelsub_sp, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pixelsub_sp, ref.pixelsub_sp, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 
     if (opt.pixeladd_ss)
     {
         printf("pixel_ss add");
-        REPORT_SPEEDUP(opt.pixeladd_ss, ref.pixeladd_ss, 64, 64, (short*)pbuf1, FENC_STRIDE, (short*)pbuf2, (short*)pbuf1, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pixeladd_ss, ref.pixeladd_ss, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, (int16_t*)pbuf2, (int16_t*)pbuf1, STRIDE, STRIDE);
     }
 
     if (opt.pixeladd_pp)

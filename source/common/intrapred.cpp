@@ -208,7 +208,7 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
             {
                 for (k = 0; k < blkSize; k++)
                 {
-                    dst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << X265_DEPTH) - 1), static_cast<short>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
+                    dst[k * dstStride] = (pixel)Clip3((int16_t)0, (int16_t)((1 << X265_DEPTH) - 1), static_cast<int16_t>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
                 }
             }
         }
