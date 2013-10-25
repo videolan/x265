@@ -78,10 +78,10 @@ Y4MInput::~Y4MInput()
 
 bool Y4MInput::parseHeader()
 {
-    int frame_width = 0;
-    int frame_height = 0;
-    int frame_rateNumerator = 0;
-    int frame_rateDenominator = 0;
+    width = 0;
+    height = 0;
+    rateNum = 0;
+    rateDenom = 0;
 
     while (ifs)
     {
@@ -98,7 +98,7 @@ bool Y4MInput::parseHeader()
             switch (ifs.get())
             {
             case 'W':
-                frame_width = 0;
+                width = 0;
                 while (ifs)
                 {
                     c = ifs.get();
@@ -109,14 +109,14 @@ bool Y4MInput::parseHeader()
                     }
                     else
                     {
-                        frame_width = frame_width * 10 + (c - '0');
+                        width = width * 10 + (c - '0');
                     }
                 }
 
                 break;
 
             case 'H':
-                frame_height = 0;
+                height = 0;
                 while (ifs)
                 {
                     c = ifs.get();
@@ -126,21 +126,21 @@ bool Y4MInput::parseHeader()
                     }
                     else
                     {
-                        frame_height = frame_height * 10 + (c - '0');
+                        height = height * 10 + (c - '0');
                     }
                 }
 
                 break;
 
             case 'F':
-                frame_rateNumerator = 0;
-                frame_rateDenominator = 0;
+                rateNum = 0;
+                rateDenom = 0;
                 while (ifs)
                 {
                     c = ifs.get();
                     if (c == '.')
                     {
-                        frame_rateDenominator = 1;
+                        rateDenom = 1;
                         while (ifs)
                         {
                             c = ifs.get();
@@ -150,8 +150,8 @@ bool Y4MInput::parseHeader()
                             }
                             else
                             {
-                                frame_rateNumerator = frame_rateNumerator * 10 + (c - '0');
-                                frame_rateDenominator = frame_rateDenominator * 10;
+                                rateNum = rateNum * 10 + (c - '0');
+                                rateDenom = rateDenom * 10;
                             }
                         }
 
@@ -167,14 +167,14 @@ bool Y4MInput::parseHeader()
                                 break;
                             }
                             else
-                                frame_rateDenominator = frame_rateDenominator * 10 + (c - '0');
+                                rateDenom = rateDenom * 10 + (c - '0');
                         }
 
                         break;
                     }
                     else
                     {
-                        frame_rateNumerator = frame_rateNumerator * 10 + (c - '0');
+                        rateNum = rateNum * 10 + (c - '0');
                     }
                 }
 
@@ -199,17 +199,11 @@ bool Y4MInput::parseHeader()
         }
     }
 
-//TODO need to include code for parsing colourspace from file.
-
-    if (frame_width < MIN_FRAME_WIDTH || frame_width > MAX_FRAME_WIDTH ||
-        frame_height < MIN_FRAME_HEIGHT || frame_width > MAX_FRAME_HEIGHT ||
-        (frame_rateNumerator / frame_rateDenominator) < 1 || (frame_rateNumerator / frame_rateDenominator) > MAX_FRAME_RATE)
+    if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
+        height < MIN_FRAME_HEIGHT || width > MAX_FRAME_HEIGHT ||
+        (rateNum / rateDenom) < 1 || (rateNum / rateDenom) > MAX_FRAME_RATE)
         return false;
 
-    width = frame_width;
-    height = frame_height;
-    rateNum = frame_rateNumerator;
-    rateDenom = frame_rateDenominator;
     return true;
 }
 
