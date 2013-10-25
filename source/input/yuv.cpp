@@ -90,8 +90,16 @@ int YUVInput::guessFrameCount()
 
 void YUVInput::skipFrames(int numFrames)
 {
-    if (ifs)
-        ifs->seekg(framesize * numFrames, ios::cur);
+    if (ifs && numFrames)
+    {
+        if (ifs == &cin)
+        {
+            for (int i = 0; i < numFrames; i++)
+                ifs->read(buf[tail], framesize);
+        }
+        else
+            ifs->seekg(framesize * numFrames, ios::cur);
+    }
 }
 
 void YUVInput::startReader()
