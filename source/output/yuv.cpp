@@ -47,10 +47,8 @@ bool YUVOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
     int pixelbytes = (depth > 8) ? 2 : 1;
-    uint64_t size = (pic.poc * 3);
-    size *= (width * height * pixelbytes);
-    size /= 2;
-    ofs.seekp(size);
+    std::ofstream::pos_type size = 3 * (width * height * pixelbytes) / 2;
+    ofs.seekp(size * pic.poc);
 
     if (pic.bitDepth > 8 && depth == 8)
     {
