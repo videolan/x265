@@ -288,6 +288,7 @@ bool Y4MInput::populateFrameQueue()
     {
         if (ifs)
             x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing");
+        threadActive = false;
         return false;
     }
     /* consume bytes up to line feed */
