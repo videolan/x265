@@ -44,8 +44,11 @@ YUVInput::YUVInput(const char *filename)
     threadActive = false;
     if (ifs && !ifs->fail())
         threadActive = true;
-    else
-        if (ifs && ifs != &cin) delete ifs;
+    else if (ifs && ifs != &cin)
+    {
+        delete ifs;
+        ifs = NULL;
+    }
 #if defined ENABLE_THREAD
     head = 0;
     tail = 0;
@@ -54,7 +57,8 @@ YUVInput::YUVInput(const char *filename)
 
 YUVInput::~YUVInput()
 {
-    if (ifs && ifs != &cin) delete ifs;
+    if (ifs && ifs != &cin)
+        delete ifs;
 #if defined ENABLE_THREAD
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
@@ -106,7 +110,11 @@ void YUVInput::setDimensions(int w, int h)
         height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT)
     {
         threadActive = false;
-        if (ifs && ifs != &cin) delete ifs;
+        if (ifs && ifs != &cin)
+        {
+            delete ifs;
+            ifs = NULL;
+        }
     }
     else
     {
