@@ -93,6 +93,8 @@ public:
 
     bool isFail()                                 { return !(ifs.is_open() && threadActive); }
 
+    void startReader();
+
     void release();
 
     int  guessFrameCount();

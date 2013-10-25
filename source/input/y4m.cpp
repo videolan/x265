@@ -40,19 +40,17 @@ Y4MInput::Y4MInput(const char *filename)
         {
             threadActive = true;
 #if defined(ENABLE_THREAD)
+            head = 0;
+            tail = 0;
             for (int i = 0; i < QUEUE_SIZE; i++)
             {
                 buf[i] = new char[3 * width * height / 2];
                 if (buf[i] == NULL)
                 {
-                    x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
+                    x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting\n");
                     threadActive = false;
                 }
             }
-
-            head = 0;
-            tail = 0;
-            start();
 #else // if defined(ENABLE_THREAD)
             buf = new char[3 * width * height / 2];
 #endif // if defined(ENABLE_THREAD)
@@ -78,10 +76,10 @@ Y4MInput::~Y4MInput()
 
 bool Y4MInput::parseHeader()
 {
-    int frame_width = 0;
-    int frame_height = 0;
-    int frame_rateNumerator = 0;
-    int frame_rateDenominator = 0;
+    width = 0;
+    height = 0;
+    rateNum = 0;
+    rateDenom = 0;
 
     while (ifs)
     {
@@ -98,7 +96,7 @@ bool Y4MInput::parseHeader()
             switch (ifs.get())
             {
             case 'W':
-                frame_width = 0;
+                width = 0;
                 while (ifs)
                 {
                     c = ifs.get();
@@ -109,14 +107,14 @@ bool Y4MInput::parseHeader()
                     }
                     else
                     {
-                        frame_width = frame_width * 10 + (c - '0');
+                        width = width * 10 + (c - '0');
                     }
                 }
 
                 break;
 
             case 'H':
-                frame_height = 0;
+                height = 0;
                 while (ifs)
                 {
                     c = ifs.get();
@@ -126,21 +124,21 @@ bool Y4MInput::parseHeader()
                     }
                     else
                     {
-                        frame_height = frame_height * 10 + (c - '0');
+                        height = height * 10 + (c - '0');
                     }
                 }
 
                 break;
 
             case 'F':
-                frame_rateNumerator = 0;
-                frame_rateDenominator = 0;
+                rateNum = 0;
+                rateDenom = 0;
                 while (ifs)
                 {
                     c = ifs.get();
                     if (c == '.')
                     {
-                        frame_rateDenominator = 1;
+                        rateDenom = 1;
                         while (ifs)
                         {
                             c = ifs.get();
@@ -150,8 +148,8 @@ bool Y4MInput::parseHeader()
                             }
                             else
                             {
-                                frame_rateNumerator = frame_rateNumerator * 10 + (c - '0');
-                                frame_rateDenominator = frame_rateDenominator * 10;
+                                rateNum = rateNum * 10 + (c - '0');
+                                rateDenom = rateDenom * 10;
                             }
                         }
 
@@ -167,14 +165,14 @@ bool Y4MInput::parseHeader()
                                 break;
                             }
                             else
-                                frame_rateDenominator = frame_rateDenominator * 10 + (c - '0');
+                                rateDenom = rateDenom * 10 + (c - '0');
                         }
 
                         break;
                     }
                     else
                     {
-                        frame_rateNumerator = frame_rateNumerator * 10 + (c - '0');
+                        rateNum = rateNum * 10 + (c - '0');
                     }
                 }
 
@@ -199,17 +197,11 @@ bool Y4MInput::parseHeader()
         }
     }
 
-//TODO need to include code for parsing colourspace from file.
-
-    if (frame_width < MIN_FRAME_WIDTH || frame_width > MAX_FRAME_WIDTH ||
-        frame_height < MIN_FRAME_HEIGHT || frame_width > MAX_FRAME_HEIGHT ||
-        (frame_rateNumerator / frame_rateDenominator) < 1 || (frame_rateNumerator / frame_rateDenominator) > MAX_FRAME_RATE)
+    if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
+        height < MIN_FRAME_HEIGHT || width > MAX_FRAME_HEIGHT ||
+        (rateNum / rateDenom) < 1 || (rateNum / rateDenom) > MAX_FRAME_RATE)
         return false;
 
-    width = frame_width;
-    height = frame_height;
-    rateNum = frame_rateNumerator;
-    rateDenom = frame_rateDenominator;
     return true;
 }
 
@@ -218,9 +210,13 @@ static const char header[] = "FRAME";
 int Y4MInput::guessFrameCount()
 {
     istream::pos_type cur = ifs.tellg();
+    if (cur < 0)
+        return -1;
 
     ifs.seekg(0, ios::end);
     istream::pos_type size = ifs.tellg();
+    if (size < 0)
+        return -1;
     ifs.seekg(cur, ios::beg);
 
     return (int)((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
@@ -266,6 +262,14 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     PPAStopCpuEventFunc(read_yuv);
     return true;
+}
+
+void Y4MInput::startReader()
+{
+#if defined(ENABLE_THREAD)
+    if (threadActive)
+        start();
+#endif
 }
 
 void Y4MInput::threadMain()

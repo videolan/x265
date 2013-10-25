@@ -54,7 +54,6 @@ YUVInput::~YUVInput()
     {
         delete[] buf[i];
     }
-
 #else
     delete[] buf;
 #endif
@@ -63,9 +62,13 @@ YUVInput::~YUVInput()
 int YUVInput::guessFrameCount()
 {
     ifstream::pos_type cur = ifs.tellg();
+    if (cur < 0)
+        return -1;
 
     ifs.seekg(0, ios::end);
     ifstream::pos_type size = ifs.tellg();
+    if (size < 0)
+        return -1;
     ifs.seekg(cur, ios::beg);
 
     return (int)((size - cur) / (width * height * pixelbytes * 3 / 2));
@@ -74,6 +77,14 @@ int YUVInput::guessFrameCount()
 void YUVInput::skipFrames(int numFrames)
 {
     ifs.seekg(framesize * numFrames, ios::cur);
+}
+
+void YUVInput::startReader()
+{
+#if defined ENABLE_THREAD
+    if (threadActive)
+        start();
+#endif
 }
 
 void YUVInput::setDimensions(int w, int h)
@@ -100,8 +111,6 @@ void YUVInput::setDimensions(int w, int h)
                 threadActive = false;
             }
         }
-
-        start();
 #else // if defined ENABLE_THREAD
         buf = new char[framesize];
 #endif // if defined ENABLE_THREAD

@@ -362,7 +362,6 @@ void Encoder::writeLog(int argc, char **argv)
     if (param.logLevel < X265_LOG_DEBUG && m_csvfpt)
     {
         // CLI arguments or other
-        fprintf(m_csvfpt, "\n");
         for (int i = 1; i < argc; i++)
         {
             if (i) fputc(' ', m_csvfpt);
@@ -567,13 +566,10 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
         m_analyzeB.addResult(psnrY, psnrU, psnrV, (double)bits);
     }
     double ssim = 0.0;
-    if (param.bEnableSsim)
+    if (param.bEnableSsim && pic->getSlice()->m_ssimCnt > 0)
     {
-        if (pic->getSlice()->m_ssimCnt > 0)
-        {
-            ssim = pic->getSlice()->m_ssim / pic->getSlice()->m_ssimCnt;
-            m_globalSsim += ssim;
-        }
+        ssim = pic->getSlice()->m_ssim / pic->getSlice()->m_ssimCnt;
+        m_globalSsim += ssim;
     }
 
     // if debug log level is enabled, per frame logging is performed
@@ -586,41 +582,60 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
         fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d) %10d bits", poc, c, QP_Base, QP, bits);
-        fprintf(m_csvfpt, "\n%d, %c-SLICE, %4d, %d, %d, %10d,", m_outputCount++, c, poc, QP_Base, QP, bits);
         if (param.bEnablePsnr)
-        {
             fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
-            double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
-            fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
-        }
-        else
-            fprintf(m_csvfpt, " -, -, -, -,");
         if (param.bEnableSsim)
-            fprintf(m_csvfpt, " %.3lf,", ssim);
-        else
-            fprintf(m_csvfpt, " -,");
-        fprintf(m_csvfpt, " %.3lf, %.3lf", pic->m_frameTime, pic->m_elapsedCompressTime);
+            fprintf(stderr, "[SSIM: %.3lf]", ssim);
+
         if (!slice->isIntra())
         {
             int numLists = slice->isInterP() ? 1 : 2;
             for (int list = 0; list < numLists; list++)
             {
                 fprintf(stderr, " [L%d ", list);
-                fprintf(m_csvfpt, ", ");
                 for (int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
                 {
                     int k = slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR();
                     fprintf(stderr, "%d ",k);
-                    fprintf(m_csvfpt, " %d", k);
                 }
 
                 fprintf(stderr, "]");
             }
-            if (numLists == 1)
-                fprintf(m_csvfpt, ", -");
         }
-        else
-            fprintf(m_csvfpt, ", -, -");
+
+        // per frame CSV logging if the file handle is valid
+        if (m_csvfpt)
+        {
+            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %d, %d, %10d,", m_outputCount++, c, poc, QP_Base, QP, bits);
+            double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
+            if (param.bEnablePsnr)
+                fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
+            else
+                fprintf(m_csvfpt, " -, -, -, -,");
+            if (param.bEnableSsim)
+                fprintf(m_csvfpt, " %.3lf,", ssim);
+            else
+                fprintf(m_csvfpt, " -,");
+            fprintf(m_csvfpt, " %.3lf, %.3lf", pic->m_frameTime, pic->m_elapsedCompressTime);
+            if (!slice->isIntra())
+            {
+                int numLists = slice->isInterP() ? 1 : 2;
+                for (int list = 0; list < numLists; list++)
+                {
+                    fprintf(m_csvfpt, ", ");
+                    for (int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
+                    {
+                        int k = slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR();
+                        fprintf(m_csvfpt, " %d", k);
+                    }
+                }
+                if (numLists == 1)
+                    fprintf(m_csvfpt, ", -");
+            }
+            else
+                fprintf(m_csvfpt, ", -, -");
+            fprintf(m_csvfpt, "\n");
+        }
 
         if (digestStr && param.logLevel >= 4)
         {

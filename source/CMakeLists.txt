@@ -224,6 +224,7 @@ if(ENABLE_CLI)
         if(MSVC)
             set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "/wd4100 /wd4131 -DHAVE_STRING_H=1")
         endif(MSVC)
+        include_directories(compat/msvc)
         set(GETOPT compat/msvc/getopt.c compat/msvc/getopt.h)
     endif(NOT HAVE_GETOPT_H)
 

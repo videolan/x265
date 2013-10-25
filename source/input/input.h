@@ -59,6 +59,8 @@ public:
 
     virtual int getHeight() const = 0;
 
+    virtual void startReader() = 0;
+
     virtual void release() = 0;
 
     virtual void skipFrames(int numFrames) = 0;

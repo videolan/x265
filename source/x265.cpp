@@ -460,21 +460,27 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
     if (!outputBitDepth) { outputBitDepth = param->internalBitDepth; }
 
-    uint32_t numRemainingFrames = (uint32_t) this->input->guessFrameCount();
+    int guess = this->input->guessFrameCount();
+    uint32_t numRemainingFrames = guess < 0 ? 0x7fffffff : (uint32_t) guess;
+    this->framesToBeEncoded = this->framesToBeEncoded ? X265_MIN(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
+
+    if (param->logLevel >= X265_LOG_INFO)
+    {
+        if (guess < 0)
+            fprintf(stderr, "%s  [info]: %dx%d %dHz, unknown frame count\n", input->getName(),
+                    param->sourceWidth, param->sourceHeight, param->frameRate);
+        else
+            fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
+                    param->sourceWidth, param->sourceHeight, param->frameRate,
+                    this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
+    }
 
     if (this->frameSkip)
     {
         this->input->skipFrames(this->frameSkip);
     }
 
-    this->framesToBeEncoded = this->framesToBeEncoded ? X265_MIN(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
-
-    if (param->logLevel >= X265_LOG_INFO)
-    {
-        fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
-                param->sourceWidth, param->sourceHeight, param->frameRate,
-                this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
-    }
+    this->input->startReader();
 
     if (reconfn)
     {
