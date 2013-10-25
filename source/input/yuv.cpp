@@ -28,6 +28,14 @@
 #include <string.h>
 #include <iostream>
 
+#if WIN32
+#include "io.h"
+#include "fcntl.h"
+#if defined(_MSC_VER)
+#pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
+#endif
+#endif
+
 using namespace x265;
 using namespace std;
 
@@ -45,7 +53,12 @@ YUVInput::YUVInput(const char *filename)
     depth = 8;
     threadActive = false;
     if (!strcmp(filename, "-"))
+    {
         ifs = &cin;
+#if WIN32
+        setmode(fileno(stdin), O_BINARY);
+#endif
+    }
     else
         ifs = new ifstream(filename, ios::binary | ios::in);
     if (ifs && !ifs->fail())
