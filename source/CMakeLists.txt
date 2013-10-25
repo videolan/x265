@@ -8,6 +8,8 @@ endif()
 
 project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
+include(CheckIncludeFiles)
+include(CheckFunctionExists)
 
 # X265_BUILD must be incremented each time the public API is changed
 set(X265_BUILD 2)
@@ -57,7 +59,11 @@ if(MSVC)
     add_definitions(/Ob2) # always inline
     add_definitions(/Oi)  # enable intrinsics
     add_definitions(/MP)  # multithreaded build
-    include_directories(compat/msvc)
+
+    check_include_files(stdint.h HAVE_STDINT_H)
+    if(NOT HAVE_STDINT_H)
+        include_directories(compat/msvc)
+    endif()
 endif(MSVC)
 
 if(INTEL_CXX AND UNIX)
@@ -213,15 +219,15 @@ if(ENABLE_CLI)
     file(GLOB OutputFiles output/*.cpp output/*.h)
     source_group(input FILES ${InputFiles})
     source_group(output FILES ${OutputFiles})
-    if(MSVC)
-        set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "/wd4100 /wd4131 -DHAVE_STRING_H=1")
-    elseif(GCC)
-        set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
-    endif()
+    check_include_files(getopt.h HAVE_GETOPT_H)
+    if(NOT HAVE_GETOPT_H)
+        if(MSVC)
+            set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "/wd4100 /wd4131 -DHAVE_STRING_H=1")
+        endif(MSVC)
+        set(GETOPT compat/msvc/getopt.c compat/msvc/getopt.h)
+    endif(NOT HAVE_GETOPT_H)
 
-    add_executable(cli ../COPYING ${InputFiles} ${OutputFiles}
-                   x265.cpp x265.h
-                   compat/msvc/getopt.c compat/msvc/getopt.h)
+    add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h)
     target_link_libraries(cli x265-static ${PLATFORM_LIBS})
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 
