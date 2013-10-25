@@ -510,22 +510,24 @@ IPFILTER_CHROMA_W 24, 32
 IPFILTER_CHROMA_W 32, 32
 
 
-%macro FILTER_H8_W8 3
-    movu        %1, [r0 - 3 + r5]
-    pshufb      %2, %1, [tab_Lm]
-    pmaddubsw   %2, m3
-    pshufb      m7, %1, [tab_Lm + 16]
-    pmaddubsw   m7, m3
-    phaddw      %2, m7
-    pshufb      m7, %1, [tab_Lm + 32]
-    pmaddubsw   m7, m3
+%macro FILTER_H8_W8 7-8   ; t0, t1, t2, t3, coef, c512, src, dst
+    movu        %1, %7
+    pshufb      %2, %1, [tab_Lm +  0]
+    pmaddubsw   %2, %5
+    pshufb      %3, %1, [tab_Lm + 16]
+    pmaddubsw   %3, %5
+    phaddw      %2, %3
+    pshufb      %4, %1, [tab_Lm + 32]
+    pmaddubsw   %4, %5
     pshufb      %1, %1, [tab_Lm + 48]
-    pmaddubsw   %1, m3
-    phaddw      m7, %1
-    phaddw      %2, m7
-    pmulhrsw    %2, %3
+    pmaddubsw   %1, %5
+    phaddw      %4, %1
+    phaddw      %2, %4
+    pmulhrsw    %2, %6
+  %if %0 == 8
     packuswb    %2, %2
-    movh        [r2 + r5], %2
+    movh        %8, %2
+  %endif
 %endmacro
 
 %macro FILTER_H8_W4 3
@@ -574,7 +576,7 @@ mov         r4,       %2
 .loop
     xor    r5,    r5
 %rep %1 / 8
-    FILTER_H8_W8  m0, m1, m2
+    FILTER_H8_W8  m0, m1, m4, m5, m3, m2, [r0 - 3 + r5], [r2 + r5]
     add    r5,    8
 %endrep
 
