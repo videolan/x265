@@ -476,6 +476,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
                 this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
     }
 
+    this->input->startReader();
+
     if (reconfn)
     {
         this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, outputBitDepth, param->frameRate);

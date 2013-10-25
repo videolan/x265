@@ -54,7 +54,6 @@ YUVInput::~YUVInput()
     {
         delete[] buf[i];
     }
-
 #else
     delete[] buf;
 #endif
@@ -74,6 +73,14 @@ int YUVInput::guessFrameCount()
 void YUVInput::skipFrames(int numFrames)
 {
     ifs.seekg(framesize * numFrames, ios::cur);
+}
+
+void YUVInput::startReader()
+{
+#if defined ENABLE_THREAD
+    if (threadActive)
+        start();
+#endif
 }
 
 void YUVInput::setDimensions(int w, int h)
@@ -100,8 +107,6 @@ void YUVInput::setDimensions(int w, int h)
                 threadActive = false;
             }
         }
-
-        start();
 #else // if defined ENABLE_THREAD
         buf = new char[framesize];
 #endif // if defined ENABLE_THREAD

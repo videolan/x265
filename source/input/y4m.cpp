@@ -40,19 +40,17 @@ Y4MInput::Y4MInput(const char *filename)
         {
             threadActive = true;
 #if defined(ENABLE_THREAD)
+            head = 0;
+            tail = 0;
             for (int i = 0; i < QUEUE_SIZE; i++)
             {
                 buf[i] = new char[3 * width * height / 2];
                 if (buf[i] == NULL)
                 {
-                    x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
+                    x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting\n");
                     threadActive = false;
                 }
             }
-
-            head = 0;
-            tail = 0;
-            start();
 #else // if defined(ENABLE_THREAD)
             buf = new char[3 * width * height / 2];
 #endif // if defined(ENABLE_THREAD)
@@ -260,6 +258,14 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     PPAStopCpuEventFunc(read_yuv);
     return true;
+}
+
+void Y4MInput::startReader()
+{
+#if defined(ENABLE_THREAD)
+    if (threadActive)
+        start();
+#endif
 }
 
 void Y4MInput::threadMain()
