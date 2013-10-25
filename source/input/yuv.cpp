@@ -73,7 +73,7 @@ YUVInput::~YUVInput()
 
 int YUVInput::guessFrameCount()
 {
-    if (!ifs) return -1;
+    if (!ifs || ifs == &cin) return -1;
 
     ifstream::pos_type cur = ifs->tellg();
     if (cur < 0)
