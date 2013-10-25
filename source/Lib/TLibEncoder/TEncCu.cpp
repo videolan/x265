@@ -1746,11 +1746,6 @@ void TEncCu::xCopyYuv2Tmp(UInt partUnitIdx, UInt nextDepth)
     m_bestRecoYuv[nextDepth]->copyToPartYuv(m_tmpRecoYuv[nextDepth - 1], partUnitIdx);
 }
 
-void TEncCu::xCopyYuv2Best(UInt partUnitIdx, UInt nextDepth)
-{
-    m_tmpRecoYuv[nextDepth]->copyToPartYuv(m_bestRecoYuv[nextDepth - 1], partUnitIdx);
-}
-
 /** Function for filling the PCM buffer of a CU using its original sample array
  * \param cu pointer to current CU
  * \param fencYuv pointer to original sample array
