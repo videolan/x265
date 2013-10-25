@@ -287,7 +287,7 @@ bool Y4MInput::populateFrameQueue()
     if (!ifs || memcmp(hbuf, header, strlen(header)))
     {
         if (ifs)
-            x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing");
+            x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing\n");
         threadActive = false;
         return false;
     }
@@ -311,7 +311,7 @@ bool Y4MInput::populateFrameQueue()
 
     if (!frameStat[tail])
     {
-        x265_log(NULL, X265_LOG_ERROR, "y4m: error in frame reading from file");
+        x265_log(NULL, X265_LOG_ERROR, "y4m: error in frame reading from file\n");
         threadActive = false;
         return false;
     }
@@ -330,7 +330,7 @@ bool Y4MInput::readPicture(x265_picture& pic)
     ifs.read(hbuf, strlen(header));
     if (!ifs || memcmp(hbuf, header, strlen(header)))
     {
-        x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing");
+        x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing\n");
         return false;
     }
 

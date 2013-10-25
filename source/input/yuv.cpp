@@ -96,7 +96,7 @@ void YUVInput::setDimensions(int w, int h)
             buf[i] = new char[framesize];
             if (buf[i] == NULL)
             {
-                x265_log(NULL, X265_LOG_ERROR, "yuv: buffer allocation failure, aborting");
+                x265_log(NULL, X265_LOG_ERROR, "yuv: buffer allocation failure, aborting\n");
                 threadActive = false;
             }
         }
