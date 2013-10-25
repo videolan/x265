@@ -120,7 +120,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
                 double qp_adj;
                 int cu_xy = maxCols * cu_y + cu_x;
                 qp_adj = acEnergyCu(pic, cu_xy);
-                pic->m_qpAqOffset[cu_xy] = qp_adj;
+                pic->m_lowres.m_qpAqOffset[cu_xy] = qp_adj;
             }
         }
     }

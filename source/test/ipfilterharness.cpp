@@ -391,6 +391,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
+        if (opt.luma_vpp[value])
+        {
+            if (!check_IPFilterLuma_primitive(ref.luma_vpp[value], opt.luma_vpp[value]))
+            {
+                printf("luma_vpp[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
     }
 
     for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
@@ -474,9 +482,16 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.luma_hpp[value])
         {
-            printf("  luma_hpp[%s]", lumaPartStr[value]);
+            printf("luma_hpp[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.luma_hpp[value], ref.luma_hpp[value],
                            pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+        }
+        if (opt.luma_vpp[value])
+        {
+            printf("luma_vpp[%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.luma_vpp[value], ref.luma_vpp[value],
+                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                           IPF_vec_output_p, dstStride, 1);
         }
     }
 

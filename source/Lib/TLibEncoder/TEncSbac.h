@@ -40,7 +40,6 @@
 
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/ContextTables.h"
-#include "TLibCommon/ContextModel.h"
 #include "TEncEntropy.h"
 #include "TEncBinCoderCABAC.h"
 #include "SyntaxElementWriter.h"
@@ -73,7 +72,7 @@ public:
     void  setBitstream(TComBitIf* p)
     {
         m_bitIf = p;
-        // NOTE: When write hrader, it isn't initial
+        // NOTE: When write header, it isn't initial
         if (m_binIf)
             m_binIf->init(p);
     }

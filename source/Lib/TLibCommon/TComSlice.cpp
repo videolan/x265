@@ -84,8 +84,6 @@ TComSlice::TComSlice()
 {
     m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
-    initEqualRef();
-
     for (int numCount = 0; numCount < MAX_NUM_REF; numCount++)
     {
         m_refPicList[0][numCount] = NULL;
@@ -112,7 +110,6 @@ void TComSlice::initSlice()
     m_colFromL0Flag = 1;
 
     m_colRefIdx = 0;
-    initEqualRef();
     m_bCheckLDC = false;
     m_sliceQpDeltaCb = 0;
     m_sliceQpDeltaCr = 0;
@@ -360,7 +357,7 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
 
     for (int rIdx = 0; rIdx < m_numRefIdx[0]; rIdx++)
     {
-        cIdx = m_refPicListModification.getRefPicListModificationFlagL0() ? m_refPicListModification.getRefPicSetIdxL0(rIdx) : rIdx % numPocTotalCurr;
+        cIdx = rIdx % numPocTotalCurr;
         assert(cIdx >= 0 && cIdx < numPocTotalCurr);
         m_refPicList[0][rIdx] = rpsCurrList0[cIdx];
         m_bIsUsedAsLongTerm[0][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
@@ -375,7 +372,7 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
     {
         for (int rIdx = 0; rIdx < m_numRefIdx[1]; rIdx++)
         {
-            cIdx = m_refPicListModification.getRefPicListModificationFlagL1() ? m_refPicListModification.getRefPicSetIdxL1(rIdx) : rIdx % numPocTotalCurr;
+            cIdx = rIdx % numPocTotalCurr;
             assert(cIdx >= 0 && cIdx < numPocTotalCurr);
             m_refPicList[1][rIdx] = rpsCurrList1[cIdx];
             m_bIsUsedAsLongTerm[1][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
@@ -400,20 +397,6 @@ int TComSlice::getNumRpsCurrTempList()
     }
 
     return numRpsCurrTempList;
-}
-
-void TComSlice::initEqualRef()
-{
-    for (int dir = 0; dir < 2; dir++)
-    {
-        for (int refIdx1 = 0; refIdx1 < MAX_NUM_REF; refIdx1++)
-        {
-            for (int refIdx2 = refIdx1; refIdx2 < MAX_NUM_REF; refIdx2++)
-            {
-                m_bEqualRef[dir][refIdx1][refIdx2] = m_bEqualRef[dir][refIdx2][refIdx1] = (refIdx1 == refIdx2 ? true : false);
-            }
-        }
-    }
 }
 
 void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRAPisBLA)
@@ -458,92 +441,6 @@ void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRA
         pocCRA = getPOC();
         prevRAPisBLA = true;
     }
-}
-
-void TComSlice::copySliceInfo(TComSlice *src)
-{
-    assert(src != NULL);
-
-    int i, j, k;
-
-    m_poc                 = src->m_poc;
-    m_nalUnitType         = src->m_nalUnitType;
-    m_sliceType           = src->m_sliceType;
-    m_sliceQp             = src->m_sliceQp;
-    m_sliceQpBase         = src->m_sliceQpBase;
-    m_deblockingFilterDisable   = src->m_deblockingFilterDisable;
-    m_deblockingFilterOverrideFlag = src->m_deblockingFilterOverrideFlag;
-    m_deblockingFilterBetaOffsetDiv2 = src->m_deblockingFilterBetaOffsetDiv2;
-    m_deblockingFilterTcOffsetDiv2 = src->m_deblockingFilterTcOffsetDiv2;
-
-    for (i = 0; i < 2; i++)
-    {
-        m_numRefIdx[i] = src->m_numRefIdx[i];
-    }
-
-    m_bCheckLDC           = src->m_bCheckLDC;
-    m_sliceQpDelta        = src->m_sliceQpDelta;
-    m_sliceQpDeltaCb      = src->m_sliceQpDeltaCb;
-    m_sliceQpDeltaCr      = src->m_sliceQpDeltaCr;
-    for (i = 0; i < 2; i++)
-    {
-        for (j = 0; j < MAX_NUM_REF; j++)
-        {
-            m_refPicList[i][j] = src->m_refPicList[i][j];
-            m_refPOCList[i][j] = src->m_refPOCList[i][j];
-        }
-    }
-
-    for (i = 0; i < 2; i++)
-    {
-        for (j = 0; j < MAX_NUM_REF + 1; j++)
-        {
-            m_bIsUsedAsLongTerm[i][j] = src->m_bIsUsedAsLongTerm[i][j];
-        }
-    }
-
-    // referenced slice
-    m_bReferenced = src->m_bReferenced;
-
-    // access channel
-    m_sps = src->m_sps;
-    m_pps = src->m_pps;
-    m_rps = src->m_rps;
-    m_lastIDR = src->m_lastIDR;
-
-    m_pic = src->m_pic;
-
-    m_colFromL0Flag = src->m_colFromL0Flag;
-    m_colRefIdx = src->m_colRefIdx;
-    for (i = 0; i < 2; i++)
-    {
-        for (j = 0; j < MAX_NUM_REF; j++)
-        {
-            for (k = 0; k < MAX_NUM_REF; k++)
-            {
-                m_bEqualRef[i][j][k] = src->m_bEqualRef[i][j][k];
-            }
-        }
-    }
-
-    m_sliceCurEndCUAddr = src->m_sliceCurEndCUAddr;
-    m_nextSlice = src->m_nextSlice;
-    for (int e = 0; e < 2; e++)
-    {
-        for (int n = 0; n < MAX_NUM_REF; n++)
-        {
-            memcpy(m_weightPredTable[e][n], src->m_weightPredTable[e][n], sizeof(wpScalingParam) * 3);
-        }
-    }
-
-    m_saoEnabledFlag = src->m_saoEnabledFlag;
-    m_saoEnabledFlagChroma = src->m_saoEnabledFlagChroma;
-    m_cabacInitFlag = src->m_cabacInitFlag;
-    m_numEntryPointOffsets  = src->m_numEntryPointOffsets;
-
-    m_bLMvdL1Zero = src->m_bLMvdL1Zero;
-    m_enableTMVPFlag = src->m_enableTMVPFlag;
-    m_maxNumMergeCand = src->m_maxNumMergeCand;
 }
 
 /** get AC and DC values for weighted pred
@@ -1032,17 +929,6 @@ int TComRPSList::getNumberOfReferencePictureSets() const
 {
     return m_numberOfReferencePictureSets;
 }
-
-TComRefPicListModification::TComRefPicListModification()
-    : m_bRefPicListModificationFlagL0(false)
-    , m_bRefPicListModificationFlagL1(false)
-{
-    ::memset(m_RefPicSetIdxL0, 0, sizeof(m_RefPicSetIdxL0));
-    ::memset(m_RefPicSetIdxL1, 0, sizeof(m_RefPicSetIdxL1));
-}
-
-TComRefPicListModification::~TComRefPicListModification()
-{}
 
 TComScalingList::TComScalingList()
 {

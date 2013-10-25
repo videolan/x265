@@ -41,7 +41,6 @@
 #include "TLibCommon/TComSlice.h"
 #include "TLibCommon/TComDataCU.h"
 #include "TLibCommon/TComBitStream.h"
-#include "TLibCommon/ContextModel.h"
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
