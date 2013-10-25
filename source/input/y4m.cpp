@@ -232,11 +232,10 @@ int Y4MInput::guessFrameCount()
 
 void Y4MInput::skipFrames(int numFrames)
 {
-    x265_picture pic;
-
+    const size_t count = (width * height * 3 / 2) + strlen(header);
     for (int i = 0; i < numFrames; i++)
     {
-        readPicture(pic);
+        ifs.read(buf[0], count);
     }
 }
 
@@ -288,6 +287,9 @@ void Y4MInput::threadMain()
             break;
     }
     while (threadActive);
+
+    threadActive = false;
+    notEmpty.trigger();
 }
 
 bool Y4MInput::populateFrameQueue()
@@ -300,7 +302,6 @@ bool Y4MInput::populateFrameQueue()
     {
         if (ifs)
             x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing\n");
-        threadActive = false;
         return false;
     }
     /* consume bytes up to line feed */
@@ -323,8 +324,7 @@ bool Y4MInput::populateFrameQueue()
 
     if (!frameStat[tail])
     {
-        x265_log(NULL, X265_LOG_ERROR, "y4m: error in frame reading from file\n");
-        threadActive = false;
+        x265_log(NULL, X265_LOG_ERROR, "y4m: error reading frame\n");
         return false;
     }
     tail = (tail + 1) % QUEUE_SIZE;

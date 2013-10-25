@@ -153,6 +153,9 @@ void YUVInput::threadMain()
             break;
     }
     while (threadActive);
+
+    threadActive = false;
+    notEmpty.trigger();
 }
 
 bool YUVInput::populateFrameQueue()
@@ -164,11 +167,15 @@ bool YUVInput::populateFrameQueue()
             break;
     }
 
-    if (!ifs) return false;
+    if (!ifs)
+        return false;
     ifs->read(buf[tail], framesize);
     frameStat[tail] = ifs->good();
     if (!frameStat[tail])
+    {
+        x265_log(NULL, X265_LOG_ERROR, "yuv: error reading frame\n");
         return false;
+    }
     tail = (tail + 1) % QUEUE_SIZE;
     notEmpty.trigger();
     return true;
