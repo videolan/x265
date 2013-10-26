@@ -168,35 +168,30 @@ void YUVInput::threadMain()
 
 bool YUVInput::populateFrameQueue()
 {
+    if (!ifs)
+        return false;
     while ((tail + 1) % QUEUE_SIZE == head)
     {
         notFull.wait();
         if (!threadActive)
             return false;
     }
-    if (!ifs || !threadActive)
-        return false;
 
     ifs->read(buf[tail], framesize);
     frameStat[tail] = !ifs->fail();
-    if (!frameStat[tail])
-    {
-        x265_log(NULL, X265_LOG_ERROR, "yuv: error reading frame\n");
-        return false;
-    }
     tail = (tail + 1) % QUEUE_SIZE;
     notEmpty.trigger();
-    return true;
+    return !ifs->fail();
 }
 
 bool YUVInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
-    if (!threadActive)
-        return false;
     while (head == tail)
     {
         notEmpty.wait();
+        if (!threadActive)
+            return false;
     }
 
     if (!frameStat[head])

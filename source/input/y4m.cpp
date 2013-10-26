@@ -243,11 +243,11 @@ void Y4MInput::skipFrames(int numFrames)
 bool Y4MInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
-    if (!threadActive)
-        return false;
     while (head == tail)
     {
         notEmpty.wait();
+        if (!threadActive)
+            return false;
     }
 
     if (!frameStat[head])
@@ -321,15 +321,9 @@ bool Y4MInput::populateFrameQueue()
 
     ifs.read(buf[tail], count);
     frameStat[tail] = !ifs.fail();
-
-    if (!frameStat[tail])
-    {
-        x265_log(NULL, X265_LOG_ERROR, "y4m: error reading frame\n");
-        return false;
-    }
     tail = (tail + 1) % QUEUE_SIZE;
     notEmpty.trigger();
-    return true;
+    return !ifs.fail();
 }
 
 #else // if defined(ENABLE_THREAD)
