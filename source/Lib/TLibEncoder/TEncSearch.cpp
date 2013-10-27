@@ -2095,7 +2095,7 @@ UInt TEncSearch::xGetInterPredictionError(TComDataCU* cu, int partIdx)
     UInt absPartIdx;
     int width, height;
 
-    motionCompensation(cu, &m_tmpYuvPred, REF_PIC_LIST_X, partIdx);
+    motionCompensation(cu, &m_tmpYuvPred, REF_PIC_LIST_X, partIdx, true, false);
     cu->getPartIndexAndSize(partIdx, absPartIdx, width, height);
     UInt cost = m_me.bufSA8D(m_tmpYuvPred.getLumaAddr(absPartIdx), m_tmpYuvPred.getStride());
     x265_emms();
