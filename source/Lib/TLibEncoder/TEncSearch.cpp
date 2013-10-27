@@ -2473,9 +2473,9 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
         if (cu->getPartitionSize(partAddr) != SIZE_2Nx2N)
         {
-            UInt msgInterDir = 0;
+            UInt mrgInterDir = 0;
             TComMvField mrgMvField[2];
-            UInt msgIndex = 0;
+            UInt mrgIndex = 0;
 
             UInt meInterDir = 0;
             TComMvField meMvField[2];
@@ -2497,13 +2497,13 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
             // find Merge result
             UInt mrgCost = MAX_UINT;
-            xMergeEstimation(cu, partIdx, msgInterDir, mrgMvField, msgIndex, mrgCost, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+            xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
             if (mrgCost < meCost)
             {
                 // set Merge result
                 cu->setMergeFlagSubParts(true, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setMergeIndexSubParts(msgIndex, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setInterDirSubParts(msgInterDir, partAddr, partIdx, cu->getDepth(partAddr));
+                cu->setMergeIndexSubParts(mrgIndex, partAddr, partIdx, cu->getDepth(partAddr));
+                cu->setInterDirSubParts(mrgInterDir, partAddr, partIdx, cu->getDepth(partAddr));
                 {
                     cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mrgMvField[0], partSize, partAddr, 0, partIdx);
                     cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mrgMvField[1], partSize, partAddr, 0, partIdx);
