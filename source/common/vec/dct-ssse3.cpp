@@ -48,7 +48,7 @@ ALIGN_VAR_32(static const int16_t, tab_dst_4[][8]) =
     { 55, -84, 74, -29, 55, -84, 74, -29 },
 };
 
-void dst4(int16_t *src, int *dst, intptr_t stride)
+void dst4(int16_t *src, int32_t *dst, intptr_t stride)
 {
     // Const
     __m128i c_1     = _mm_set1_epi32(1);
@@ -128,7 +128,7 @@ ALIGN_VAR_32(static const int16_t, tab_dct_8[][8]) =
     { 18, -18, -89, 89, -50, 50, 75, -75 },
 };
 
-void dct8(int16_t *src, int *dst, intptr_t stride)
+void dct8(int16_t *src, int32_t *dst, intptr_t stride)
 {
     // Const
     __m128i c_2     = _mm_set1_epi32(2);
@@ -348,7 +348,7 @@ ALIGN_VAR_32(static const int16_t, tab_dct_16_1[][8]) =
 #undef MAKE_COEF
 };
 
-void dct16(int16_t *src, int *dst, intptr_t stride)
+void dct16(int16_t *src, int32_t *dst, intptr_t stride)
 {
     // Const
     __m128i c_4     = _mm_set1_epi32(4);
@@ -905,7 +905,7 @@ ALIGN_VAR_32(static const int16_t, tab_dct_32_1[][8]) =
 #undef MAKE_COEF16
 };
 
-void dct32(int16_t *src, int *dst, intptr_t stride)
+void dct32(int16_t *src, int32_t *dst, intptr_t stride)
 {
     // Const
     __m128i c_8     = _mm_set1_epi32(8);

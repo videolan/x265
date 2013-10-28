@@ -332,10 +332,10 @@ bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
 /** calculate DC value of original image for luma.
  * \param TComSlice *slice
  * \param Pel *pels
- * \param int *sample
+ * \param int32_t *sample
  * \returns Int64
  */
-Int64 WeightPredAnalysis::xCalcDCValueSlice(TComSlice *slice, Pel *pels, int *sample)
+Int64 WeightPredAnalysis::xCalcDCValueSlice(TComSlice *slice, Pel *pels, int32_t *sample)
 {
     TComPicYuv* pic = slice->getPic()->getPicYuvOrg();
     int stride = pic->getStride();
@@ -370,10 +370,10 @@ Int64 WeightPredAnalysis::xCalcACValueSlice(TComSlice *slice, Pel *pels, Int64 d
 /** calculate DC value of original image for chroma.
  * \param TComSlice *slice
  * \param Pel *pels
- * \param int *sample
+ * \param int32_t *sample
  * \returns Int64
  */
-Int64 WeightPredAnalysis::xCalcDCValueUVSlice(TComSlice *slice, Pel *pels, int *sample)
+Int64 WeightPredAnalysis::xCalcDCValueUVSlice(TComSlice *slice, Pel *pels, int32_t *sample)
 {
     TComPicYuv* pic = slice->getPic()->getPicYuvOrg();
     int cstride = pic->getCStride();

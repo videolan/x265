@@ -63,10 +63,10 @@ public:
 
     virtual void        writeAlignZero() {}
 
-    virtual void        write(UInt uiBits, UInt uiNumberOfBits)  = 0;
-    virtual void        writeByte(UInt val)                      = 0;
+    virtual void        write(uint32_t uiBits, uint32_t uiNumberOfBits)  = 0;
+    virtual void        writeByte(uint32_t val)                      = 0;
     virtual void        resetBits()                              = 0;
-    virtual UInt getNumberOfWrittenBits() const = 0;
+    virtual uint32_t getNumberOfWrittenBits() const = 0;
     virtual ~TComBitIf() {}
 };
 
@@ -84,10 +84,10 @@ class TComOutputBitstream : public TComBitIf
      *    NB, this pointer is only valid until the next push_back()/clear()
      */
     uint8_t *m_fifo;
-    UInt m_fsize;
-    UInt buffsize;
+    uint32_t m_fsize;
+    uint32_t buffsize;
 
-    UInt m_num_held_bits; /// number of bits not flushed to bytestream.
+    uint32_t m_num_held_bits; /// number of bits not flushed to bytestream.
     UChar m_held_bits; /// the bits held and not flushed to bytestream.
     /// this value is always msb-aligned, bigendian.
 
@@ -103,8 +103,8 @@ public:
      * append uiNumberOfBits least significant bits of uiBits to
      * the current bitstream
      */
-    void        write(UInt uiBits, UInt uiNumberOfBits);
-    void        writeByte(UInt val);
+    void        write(uint32_t uiBits, uint32_t uiNumberOfBits);
+    void        writeByte(uint32_t val);
 
     /** insert one bits until the bitstream is byte-aligned */
     void        writeAlignOne();
@@ -128,7 +128,7 @@ public:
     /**
      * Return the number of valid bytes available from  getByteStream()
      */
-    UInt getByteStreamLength();
+    uint32_t getByteStreamLength();
 
     /**
      * Reset all internal state.
@@ -144,7 +144,7 @@ public:
     /**
      * Return the number of bits that have been written since the last clear()
      */
-    UInt getNumberOfWrittenBits() const { return m_fsize * 8 + m_num_held_bits; }
+    uint32_t getNumberOfWrittenBits() const { return m_fsize * 8 + m_num_held_bits; }
 
     /**
      * Return a reference to the internal fifo

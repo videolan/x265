@@ -617,7 +617,7 @@ void FrameEncoder::compressFrame()
     {
         // Construct the final bitstream by flushing and concatenating substreams.
         // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
-        UInt* substreamSizes = slice->getSubstreamSizes();
+        uint32_t* substreamSizes = slice->getSubstreamSizes();
         for (int i = 0; i < numSubstreams; i++)
         {
             // Flush all substreams -- this includes empty ones.
@@ -703,9 +703,9 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
     getCuEncoder(0)->setBitCounter(NULL);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
 
-    UInt cuAddr;
-    UInt startCUAddr = 0;
-    UInt boundingCUAddr = slice->getSliceCurEndCUAddr();
+    uint32_t cuAddr;
+    uint32_t startCUAddr = 0;
+    uint32_t boundingCUAddr = slice->getSliceCurEndCUAddr();
 
     // Appropriate substream bitstream is switched later.
     // for every CU
@@ -721,9 +721,9 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
 #endif
 
     const int  bWaveFrontsynchro = m_cfg->param.bEnableWavefront;
-    const UInt heightInLCUs = m_pic->getPicSym()->getFrameHeightInCU();
+    const uint32_t heightInLCUs = m_pic->getPicSym()->getFrameHeightInCU();
     const int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
-    UInt bitsOriginallyInSubstreams = 0;
+    uint32_t bitsOriginallyInSubstreams = 0;
 
     for (int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
     {
@@ -731,12 +731,12 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
         bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
     }
 
-    UInt widthInLCUs = m_pic->getPicSym()->getFrameWidthInCU();
-    UInt col = 0, lin = 0, subStrm = 0;
+    uint32_t widthInLCUs = m_pic->getPicSym()->getFrameWidthInCU();
+    uint32_t col = 0, lin = 0, subStrm = 0;
     cuAddr = (startCUAddr / m_pic->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
                                                        an encoding order index, so we need to convert the index (startCUAddr)
                                                        into the real raster scan address (cuAddr) via the CUOrderMap */
-    UInt encCUOrder;
+    uint32_t encCUOrder;
     for (encCUOrder = startCUAddr / m_pic->getNumPartInCU();
          encCUOrder < (boundingCUAddr + m_pic->getNumPartInCU() - 1) / m_pic->getNumPartInCU();
          cuAddr = ++encCUOrder)
@@ -752,7 +752,7 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
         {
             // We'll sync if the TR is available.
             TComDataCU *cuUp = m_pic->getCU(cuAddr)->getCUAbove();
-            UInt widthInCU = m_pic->getFrameWidthInCU();
+            uint32_t widthInCU = m_pic->getFrameWidthInCU();
             TComDataCU *cuTr = NULL;
 
             // CHECK_ME: here can be optimize a little, do it later
@@ -872,8 +872,8 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
  */
 void FrameEncoder::determineSliceBounds()
 {
-    UInt numberOfCUsInFrame = m_pic->getNumCUsInFrame();
-    UInt boundingCUAddrSlice = numberOfCUsInFrame * m_pic->getNumPartInCU();
+    uint32_t numberOfCUsInFrame = m_pic->getNumCUsInFrame();
+    uint32_t boundingCUAddrSlice = numberOfCUsInFrame * m_pic->getNumPartInCU();
 
     // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
     m_pic->getSlice()->setSliceCurEndCUAddr(boundingCUAddrSlice);
@@ -897,7 +897,7 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
     }
 
-    UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA / 2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
+    uint32_t refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA / 2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_pic->m_SSDY = 0;
@@ -911,7 +911,7 @@ void FrameEncoder::compressCTURows()
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        for (UInt row = 0; row < (UInt)m_numRows; row++)
+        for (uint32_t row = 0; row < (uint32_t)m_numRows; row++)
         {
             // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
@@ -919,7 +919,7 @@ void FrameEncoder::compressCTURows()
                 for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
                 {
                     TComPic *refpic = slice->getRefPic(l, ref);
-                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < row + refLagRows))
+                    while ((refpic->m_reconRowCount != (uint32_t)m_numRows) && (refpic->m_reconRowCount < row + refLagRows))
                     {
                         refpic->m_reconRowWait.wait();
                     }
@@ -956,7 +956,7 @@ void FrameEncoder::compressCTURows()
                     for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
                         TComPic *refpic = slice->getRefPic(list, ref);
-                        while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
+                        while ((refpic->m_reconRowCount != (uint32_t)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
                         {
                             refpic->m_reconRowWait.wait();
                         }
@@ -993,7 +993,7 @@ void FrameEncoder::processRowEncoder(int row)
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    for (UInt col = m_rows[row].m_completed; col < numCols; col++)
+    for (uint32_t col = m_rows[row].m_completed; col < numCols; col++)
     {
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_pic->getCU(cuAddr);

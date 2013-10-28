@@ -79,8 +79,8 @@ protected:
                                                 // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
 
     //======= Transform =============
-    UInt      m_quadtreeTULog2MaxSize;
-    UInt      m_quadtreeTULog2MinSize;
+    uint32_t      m_quadtreeTULog2MaxSize;
+    uint32_t      m_quadtreeTULog2MinSize;
 
     //====== Loop/Deblock Filter ========
     bool      m_loopFilterOffsetInPPS;
@@ -97,12 +97,12 @@ protected:
     //====== Tool list ========
     bool      m_bUseASR;
     bool      m_usePCM;
-    UInt      m_pcmLog2MaxSize;
-    UInt      m_pcmLog2MinSize;
+    uint32_t      m_pcmLog2MaxSize;
+    uint32_t      m_pcmLog2MinSize;
 
     bool      m_bPCMInputBitDepthFlag;
-    UInt      m_pcmBitDepthLuma;
-    UInt      m_pcmBitDepthChroma;
+    uint32_t      m_pcmBitDepthLuma;
+    uint32_t      m_pcmBitDepthChroma;
     bool      m_bPCMFilterDisableFlag;
     bool      m_loopFilterAcrossTilesEnabledFlag;
 
@@ -115,7 +115,7 @@ protected:
 
     //====== Weighted Prediction ========
 
-    UInt      m_log2ParallelMergeLevelMinus2;                 ///< Parallel merge estimation region
+    uint32_t      m_log2ParallelMergeLevelMinus2;                 ///< Parallel merge estimation region
 
     int       m_useScalingListId;                             ///< Using quantization matrix i.e. 0=off, 1=default.
 
@@ -173,14 +173,14 @@ public:
 
     //==== Coding Structure ========
 
-    int getMaxDecPicBuffering(UInt tlayer) { return m_maxDecPicBuffering[tlayer]; }
+    int getMaxDecPicBuffering(uint32_t tlayer) { return m_maxDecPicBuffering[tlayer]; }
 
-    int getNumReorderPics(UInt tlayer) { return m_numReorderPics[tlayer]; }
+    int getNumReorderPics(uint32_t tlayer) { return m_numReorderPics[tlayer]; }
 
     //======== Transform =============
-    UInt getQuadtreeTULog2MaxSize() const { return m_quadtreeTULog2MaxSize; }
+    uint32_t getQuadtreeTULog2MaxSize() const { return m_quadtreeTULog2MaxSize; }
 
-    UInt getQuadtreeTULog2MinSize() const { return m_quadtreeTULog2MinSize; }
+    uint32_t getQuadtreeTULog2MinSize() const { return m_quadtreeTULog2MinSize; }
 
     //==== Loop/Deblock Filter ========
     bool getLoopFilterOffsetInPPS() { return m_loopFilterOffsetInPPS; }
@@ -204,9 +204,9 @@ public:
 
     bool getUsePCM() { return m_usePCM; }
 
-    UInt getPCMLog2MaxSize() { return m_pcmLog2MaxSize; }
+    uint32_t getPCMLog2MaxSize() { return m_pcmLog2MaxSize; }
 
-    UInt getPCMLog2MinSize() { return m_pcmLog2MinSize; }
+    uint32_t getPCMLog2MinSize() { return m_pcmLog2MinSize; }
 
     int   getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
 
@@ -224,7 +224,7 @@ public:
 
     int   getDecodingUnitInfoSEIEnabled() { return m_decodingUnitInfoSEIEnabled; }
 
-    UInt getLog2ParallelMergeLevelMinus2() { return m_log2ParallelMergeLevelMinus2; }
+    uint32_t getLog2ParallelMergeLevelMinus2() { return m_log2ParallelMergeLevelMinus2; }
 
     int  getUseScalingListId() { return m_useScalingListId; }
 

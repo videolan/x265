@@ -76,7 +76,7 @@ void TEncBinCABAC::finish()
     if (bIsCounter)
     {
         // TODO: why write 0 bits?
-        m_bitIf->write(0, UInt(m_fracBits >> 15));
+        m_bitIf->write(0, uint32_t(m_fracBits >> 15));
         m_fracBits &= 32767;
         assert(0);
     }
@@ -142,7 +142,7 @@ void TEncBinCABAC::encodePCMAlignBits()
  * \param length code bit-depth
  * \returns void
  */
-void TEncBinCABAC::xWritePCMCode(UInt code, UInt length)
+void TEncBinCABAC::xWritePCMCode(uint32_t code, uint32_t length)
 {
     m_bitIf->write(code, length);
 }
@@ -172,7 +172,7 @@ void TEncBinCABAC::resetBits()
  * \param binValue   bin value
  * \param rcCtxModel context model
  */
-void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
+void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 {
     {
         DTRACE_CABAC_VL(g_nSymbolCounter++)
@@ -183,7 +183,7 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
         DTRACE_CABAC_T("\n")
     }
 
-    UInt mstate = ctxModel.m_state;
+    uint32_t mstate = ctxModel.m_state;
     ctxModel.m_state = sbacNext(ctxModel.m_state, binValue);
 
     if (bIsCounter)
@@ -193,9 +193,9 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
     }
     ctxModel.bBinsCoded = 1;
 
-    UInt mps = sbacGetMps(mstate);
-    UInt state = sbacGetState(mstate);
-    UInt lps = g_lpsTable[state][(m_range >> 6) & 3];
+    uint32_t mps = sbacGetMps(mstate);
+    uint32_t state = sbacGetState(mstate);
+    uint32_t lps = g_lpsTable[state][(m_range >> 6) & 3];
     m_range -= lps;
 
     int numBits = g_renormTable[lps >> 3];
@@ -224,7 +224,7 @@ void TEncBinCABAC::encodeBin(UInt binValue, ContextModel &ctxModel)
  *
  * \param binValue bin value
  */
-void TEncBinCABAC::encodeBinEP(UInt binValue)
+void TEncBinCABAC::encodeBinEP(uint32_t binValue)
 {
     {
         DTRACE_CABAC_VL(g_nSymbolCounter++)
@@ -253,7 +253,7 @@ void TEncBinCABAC::encodeBinEP(UInt binValue)
  * \param binValues bin values
  * \param numBins number of bins
  */
-void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
+void TEncBinCABAC::encodeBinsEP(uint32_t binValues, int numBins)
 {
     if (bIsCounter)
     {
@@ -272,7 +272,7 @@ void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
     while (numBins > 8)
     {
         numBins -= 8;
-        UInt pattern = binValues >> numBins;
+        uint32_t pattern = binValues >> numBins;
         m_low <<= 8;
         m_low += m_range * pattern;
         binValues -= pattern << numBins;
@@ -293,7 +293,7 @@ void TEncBinCABAC::encodeBinsEP(UInt binValues, int numBins)
  *
  * \param binValue bin value
  */
-void TEncBinCABAC::encodeBinTrm(UInt binValue)
+void TEncBinCABAC::encodeBinTrm(uint32_t binValue)
 {
     if (bIsCounter)
     {
@@ -336,7 +336,7 @@ void TEncBinCABAC::testAndWriteOut()
  */
 void TEncBinCABAC::writeOut()
 {
-    UInt leadByte = m_low >> (13 + m_bitsLeft);
+    uint32_t leadByte = m_low >> (13 + m_bitsLeft);
 
     m_bitsLeft -= 8;
     m_low &= 0xffffffffu >> (11 - m_bitsLeft);
@@ -349,8 +349,8 @@ void TEncBinCABAC::writeOut()
     {
         if (m_numBufferedBytes > 0)
         {
-            UInt carry = leadByte >> 8;
-            UInt byte = m_bufferedByte + carry;
+            uint32_t carry = leadByte >> 8;
+            uint32_t byte = m_bufferedByte + carry;
             m_bufferedByte = leadByte & 0xff;
             m_bitIf->writeByte(byte);
 

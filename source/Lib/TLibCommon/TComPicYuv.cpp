@@ -63,7 +63,7 @@ TComPicYuv::~TComPicYuv()
 {
 }
 
-void TComPicYuv::create(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::create(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -131,7 +131,7 @@ void TComPicYuv::destroy()
     delete[] m_buOffsetC;
 }
 
-void TComPicYuv::createLuma(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::createLuma(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -179,9 +179,9 @@ void TComPicYuv::destroyLuma()
     delete[] m_buOffsetY;
 }
 
-UInt TComPicYuv::getCUHeight(int rowNum)
+uint32_t TComPicYuv::getCUHeight(int rowNum)
 {
-    UInt height;
+    uint32_t height;
 
     if (rowNum == m_numCuInHeight - 1)
         height = ((getHeight() % g_maxCUHeight) ? (getHeight() % g_maxCUHeight) : g_maxCUHeight);
@@ -322,7 +322,7 @@ void TComPicYuv::dump(char* pFileName, bool bAdd)
  * Upscale pixels from 8bits to 16 bits when required, but do not modify pixels.
  * This new routine is GPL
  */
-void TComPicYuv::copyFromPicture(const x265_picture& pic, int *pad)
+void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 {
     Pel *Y = getLumaAddr();
     Pel *U = getCbAddr();

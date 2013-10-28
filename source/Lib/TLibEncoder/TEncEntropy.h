@@ -67,8 +67,8 @@ public:
     virtual void setSlice(TComSlice* p) = 0;
     virtual void resetBits() = 0;
     virtual void resetCoeffCost() = 0;
-    virtual UInt getNumberOfWrittenBits() = 0;
-    virtual UInt getCoeffCost() = 0;
+    virtual uint32_t getNumberOfWrittenBits() = 0;
+    virtual uint32_t getCoeffCost() = 0;
 
     virtual void codeVPS(TComVPS* vps) = 0;
     virtual void codeSPS(TComSPS* sps) = 0;
@@ -76,46 +76,46 @@ public:
     virtual void codeSliceHeader(TComSlice* slice) = 0;
 
     virtual void codeTilesWPPEntryPoint(TComSlice* slice) = 0;
-    virtual void codeTerminatingBit(UInt isLast) = 0;
+    virtual void codeTerminatingBit(uint32_t isLast) = 0;
     virtual void codeSliceFinish() = 0;
-    virtual void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, int list) = 0;
+    virtual void codeMVPIdx(TComDataCU* cu, uint32_t absPartIdx, int list) = 0;
     virtual void codeScalingList(TComScalingList* scalingList) = 0;
 
 public:
 
-    virtual void codeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeSkipFlag(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeMergeFlag(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeMergeIndex(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth) = 0;
+    virtual void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth) = 0;
 
-    virtual void codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth) = 0;
-    virtual void codePredMode(TComDataCU* cu, UInt absPartIdx) = 0;
+    virtual void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth) = 0;
+    virtual void codePredMode(TComDataCU* cu, uint32_t absPartIdx) = 0;
 
-    virtual void codeIPCMInfo(TComDataCU* cu, UInt absPartIdx) = 0;
+    virtual void codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx) = 0;
 
-    virtual void codeTransformSubdivFlag(UInt symbol, UInt ctx) = 0;
-    virtual void codeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth) = 0;
-    virtual void codeQtRootCbf(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth) = 0;
+    virtual void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx) = 0;
+    virtual void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth) = 0;
+    virtual void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth) = 0;
     virtual void codeQtRootCbfZero(TComDataCU* cu) = 0;
-    virtual void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, bool isMultiplePU) = 0;
+    virtual void codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU) = 0;
 
-    virtual void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeInterDir(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, int eRefList) = 0;
-    virtual void codeMvd(TComDataCU* cu, UInt absPartIdx, int eRefList) = 0;
-    virtual void codeDeltaQP(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType ttype) = 0;
-    virtual void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType ttype) = 0;
-    virtual void codeSAOSign(UInt code) = 0;
-    virtual void codeSaoMaxUvlc(UInt code, UInt maxSymbol) = 0;
-    virtual void codeSaoMerge(UInt code) = 0;
-    virtual void codeSaoTypeIdx(UInt code) = 0;
-    virtual void codeSaoUflc(UInt length, UInt code) = 0;
+    virtual void codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeInterDir(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int eRefList) = 0;
+    virtual void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int eRefList) = 0;
+    virtual void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx) = 0;
+    virtual void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, uint32_t absPartIdx, uint32_t width, uint32_t height, uint32_t depth, TextType ttype) = 0;
+    virtual void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype) = 0;
+    virtual void codeSAOSign(uint32_t code) = 0;
+    virtual void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol) = 0;
+    virtual void codeSaoMerge(uint32_t code) = 0;
+    virtual void codeSaoTypeIdx(uint32_t code) = 0;
+    virtual void codeSaoUflc(uint32_t length, uint32_t code) = 0;
     virtual void estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype) = 0;
 
-    virtual void codeDFFlag(UInt code, const char *symbolName) = 0;
+    virtual void codeDFFlag(uint32_t code, const char *symbolName) = 0;
     virtual void codeDFSvlc(int code, const char *symbolName)   = 0;
 
     virtual ~TEncEntropyIf() {}
@@ -126,9 +126,9 @@ class TEncEntropy
 {
 private:
 
-    UInt    m_bakAbsPartIdx;
-    UInt    m_bakChromaOffset;
-    UInt    m_bakAbsPartIdxCU;
+    uint32_t    m_bakAbsPartIdx;
+    uint32_t    m_bakChromaOffset;
+    uint32_t    m_bakAbsPartIdxCU;
 
 public:
 
@@ -139,9 +139,9 @@ public:
 
     void    resetCoeffCost() { m_entropyCoderIf->resetCoeffCost(); }
 
-    UInt    getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
+    uint32_t    getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
 
-    UInt    getCoeffCost() { return m_entropyCoderIf->getCoeffCost(); }
+    uint32_t    getCoeffCost() { return m_entropyCoderIf->getCoeffCost(); }
 
     void    resetEntropy() { m_entropyCoderIf->resetEntropy();  }
 
@@ -149,7 +149,7 @@ public:
 
     void    encodeSliceHeader(TComSlice* slice);
     void    encodeTilesWPPEntryPoint(TComSlice* pSlice);
-    void    encodeTerminatingBit(UInt uiIsLast);
+    void    encodeTerminatingBit(uint32_t uiIsLast);
     void    encodeSliceFinish();
     TEncEntropyIf*      m_entropyCoderIf;
 
@@ -159,47 +159,47 @@ public:
     // SPS
     void encodeSPS(TComSPS* sps);
     void encodePPS(TComPPS* pps);
-    void encodeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth, bool bRD = false);
-    void encodeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void encodeSkipFlag(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void encodePUWise(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void encodeInterDirPU(TComDataCU* pcSubCU, UInt absPartIdx);
-    void encodeRefFrmIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, int eRefList);
-    void encodeMvdPU(TComDataCU* pcSubCU, UInt absPartIdx, int eRefList);
-    void encodeMVPIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, int eRefList);
-    void encodeMergeFlag(TComDataCU* cu, UInt absPartIdx);
-    void encodeMergeIndex(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void encodePredMode(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void encodePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth, bool bRD = false);
-    void encodeIPCMInfo(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void encodePredInfo(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
-    void encodeIntraDirModeLuma(TComDataCU* cu, UInt absPartIdx, bool isMultiplePU = false);
+    void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD = false);
+    void encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodePUWise(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeInterDirPU(TComDataCU* pcSubCU, uint32_t absPartIdx);
+    void encodeRefFrmIdxPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
+    void encodeMvdPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
+    void encodeMVPIdxPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
+    void encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodePredMode(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD = false);
+    void encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU = false);
 
-    void encodeIntraDirModeChroma(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
 
-    void encodeTransformSubdivFlag(UInt symbol, UInt ctx);
-    void encodeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth);
-    void encodeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth);
+    void encodeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
+    void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
+    void encodeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void encodeQtRootCbfZero(TComDataCU* cu);
-    void encodeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
-    void encodeQP(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
+    void encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
+    void encodeQP(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
 
     void encodeScalingList(TComScalingList* scalingList);
 
 private:
 
-    void xEncodeTransform(TComDataCU* cu, UInt offsetLumaOffset, UInt offsetChroma, UInt absPartIdx, UInt depth, UInt width, UInt height, UInt uiTrIdx, bool& bCodeDQP);
+    void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, uint32_t uiTrIdx, bool& bCodeDQP);
 
 public:
 
-    void encodeCoeff(TComDataCU* cu, UInt absPartIdx, UInt depth, UInt width, UInt height, bool& bCodeDQP);
+    void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP);
 
-    void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt absPartIdx, UInt trWidth, UInt trHeight, UInt depth, TextType ttype);
+    void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t trHeight, uint32_t depth, TextType ttype);
 
     void estimateBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
-    void encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
+    void encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
-    static int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
+    static int countNonZeroCoeffs(TCoeff* pcCoef, uint32_t uiSize);
 }; // END CLASS DEFINITION TEncEntropy
 }
 //! \}

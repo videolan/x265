@@ -82,18 +82,18 @@ double RateControl::acEnergyCu(TComPic* pic, uint32_t cuAddr)
     pixel* srcLuma = pic->getPicYuvOrg()->getLumaAddr(cuAddr);
     pixel* srcCb = pic->getPicYuvOrg()->getCbAddr(cuAddr);
     pixel* srcCr = pic->getPicYuvOrg()->getCrAddr(cuAddr);
-    UInt blockWidth = g_maxCUWidth >> 2;
-    UInt blockHeight = g_maxCUHeight >> 2;
-    UInt frameStride = pic->getPicYuvOrg()->getStride();
-    UInt cStride = pic->getPicYuvOrg()->getCStride();
+    uint32_t blockWidth = g_maxCUWidth >> 2;
+    uint32_t blockHeight = g_maxCUHeight >> 2;
+    uint32_t frameStride = pic->getPicYuvOrg()->getStride();
+    uint32_t cStride = pic->getPicYuvOrg()->getCStride();
 
     /* Calculate Qp offset for each 16x16 block in the CU and average them over entire CU */
-    for (UInt h = 0, cnt = 0; h < g_maxCUHeight; h += blockHeight)
+    for (uint32_t h = 0, cnt = 0; h < g_maxCUHeight; h += blockHeight)
     {
-        for (UInt w = 0; w < g_maxCUWidth; w += blockWidth, cnt++)
+        for (uint32_t w = 0; w < g_maxCUWidth; w += blockWidth, cnt++)
         {
-            UInt blockOffsetLuma = w + (h * frameStride);
-            UInt blockOffsetChroma = (w >> 1) + ((h >> 1) * cStride);
+            uint32_t blockOffsetLuma = w + (h * frameStride);
+            uint32_t blockOffsetChroma = (w >> 1) + ((h >> 1) * cStride);
             var = acEnergyPlane(srcLuma + blockOffsetLuma, frameStride, 0);
             var += acEnergyPlane(srcCb + blockOffsetChroma, cStride, 1);
             var += acEnergyPlane(srcCr + blockOffsetChroma, cStride, 1);

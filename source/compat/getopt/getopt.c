@@ -508,7 +508,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
      char *const *argv;
      const char *optstring;
      const struct option *longopts;
-     int *longind;
+     int32_t *longind;
      int long_only;
 {
   int print_errors = opterr;
@@ -976,7 +976,7 @@ getopt (argc, argv, optstring)
 {
   return _getopt_internal (argc, argv, optstring,
 			   (const struct option *) 0,
-			   (int *) 0,
+			   (int32_t *) 0,
 			   0);
 }
 
@@ -986,7 +986,7 @@ getopt_long (argc, argv, options, long_options, opt_index)
     char *const *argv;
     const char *options;
     const struct option *long_options;
-int *opt_index;
+    int32_t *opt_index;
 {
     return _getopt_internal (argc, argv, options, long_options, opt_index, 0);
 }

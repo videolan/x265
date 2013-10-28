@@ -80,7 +80,7 @@ TComWeightPrediction::TComWeightPrediction()
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
+void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
 {
     int x, y;
 
@@ -106,9 +106,9 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt 
         int round   = shift ? (1 << (shift - 1)) * bRound : 0;
         int w1      = wp1[0].w;
 
-        UInt  src0Stride = srcYuv0->getStride();
-        UInt  src1Stride = srcYuv1->getStride();
-        UInt  dststride  = outDstYuv->getStride();
+        uint32_t  src0Stride = srcYuv0->getStride();
+        uint32_t  src1Stride = srcYuv1->getStride();
+        uint32_t  dststride  = outDstYuv->getStride();
 
         for (y = height - 1; y >= 0; y--)
         {
@@ -141,9 +141,9 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt 
         int round   = shift ? (1 << (shift - 1)) : 0;
         int w1      = wp1[1].w;
 
-        UInt src0Stride = srcYuv0->getCStride();
-        UInt src1Stride = srcYuv1->getCStride();
-        UInt dststride  = outDstYuv->getCStride();
+        uint32_t src0Stride = srcYuv0->getCStride();
+        uint32_t src1Stride = srcYuv1->getCStride();
+        uint32_t dststride  = outDstYuv->getCStride();
 
         width  >>= 1;
         height >>= 1;
@@ -200,12 +200,12 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt 
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
+void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
 {
     int x, y;
 
     int w0, w1, offset, shiftNum, shift, round;
-    UInt src0Stride, src1Stride, dststride;
+    uint32_t src0Stride, src1Stride, dststride;
 
     int16_t* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     int16_t* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
@@ -321,12 +321,12 @@ void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, U
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
+void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     int x, y;
 
     int w0, offset, shiftNum, shift, round;
-    UInt src0Stride, dststride;
+    uint32_t src0Stride, dststride;
 
     Pel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     Pel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
@@ -430,7 +430,7 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt
  * \returns void
  */
 
-void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
+void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     int16_t* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     int16_t* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
@@ -441,7 +441,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     int w0, offset, shiftNum, shift, round;
-    UInt srcStride, dstStride;
+    uint32_t srcStride, dstStride;
 
     if (bLuma)
     {
@@ -572,7 +572,7 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
+void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp0, *pwp1;
 
@@ -608,7 +608,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, int refIdx0, int refIdx1, UInt partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
+void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp0, *pwp1;
 
@@ -644,7 +644,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcY
  * \param refIdx
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYuv, UInt partAddr, int width, int height, int picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
+void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYuv, uint32_t partAddr, int width, int height, int picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
@@ -677,7 +677,7 @@ void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYu
  * \param refIdx
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* srcYuv, UInt partAddr, int width, int height, int picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
+void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* srcYuv, uint32_t partAddr, int width, int height, int picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp, *pwpTmp;
 

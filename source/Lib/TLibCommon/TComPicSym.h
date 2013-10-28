@@ -61,19 +61,19 @@ class TComPicSym
 {
 private:
 
-    UInt          m_widthInCU;
-    UInt          m_heightInCU;
+    uint32_t          m_widthInCU;
+    uint32_t          m_heightInCU;
 
-    UInt          m_maxCUWidth;
-    UInt          m_maxCUHeight;
-    UInt          m_minCUWidth;
-    UInt          m_minCUHeight;
+    uint32_t          m_maxCUWidth;
+    uint32_t          m_maxCUHeight;
+    uint32_t          m_minCUWidth;
+    uint32_t          m_minCUHeight;
 
     UChar         m_totalDepth;
-    UInt          m_numPartitions;
-    UInt          m_numPartInWidth;
-    UInt          m_numPartInHeight;
-    UInt          m_numCUsInFrame;
+    uint32_t          m_numPartitions;
+    uint32_t          m_numPartInWidth;
+    uint32_t          m_numPartInHeight;
+    uint32_t          m_numCUsInFrame;
 
     TComSlice*    m_slice;
     TComDataCU**  m_cuData;
@@ -82,30 +82,30 @@ private:
 
 public:
 
-    void        create(int picWidth, int picHeight, UInt maxWidth, UInt maxHeight, UInt maxDepth);
+    void        create(int picWidth, int picHeight, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth);
     void        destroy();
 
     TComPicSym();
 
     TComSlice*  getSlice()                { return m_slice; }
 
-    UInt        getFrameWidthInCU()       { return m_widthInCU; }
+    uint32_t        getFrameWidthInCU()       { return m_widthInCU; }
 
-    UInt        getFrameHeightInCU()      { return m_heightInCU; }
+    uint32_t        getFrameHeightInCU()      { return m_heightInCU; }
 
-    UInt        getMinCUWidth()           { return m_minCUWidth; }
+    uint32_t        getMinCUWidth()           { return m_minCUWidth; }
 
-    UInt        getMinCUHeight()          { return m_minCUHeight; }
+    uint32_t        getMinCUHeight()          { return m_minCUHeight; }
 
-    UInt        getNumberOfCUsInFrame()   { return m_numCUsInFrame; }
+    uint32_t        getNumberOfCUsInFrame()   { return m_numCUsInFrame; }
 
-    TComDataCU*&  getCU(UInt cuAddr)      { return m_cuData[cuAddr]; }
+    TComDataCU*&  getCU(uint32_t cuAddr)      { return m_cuData[cuAddr]; }
 
-    UInt        getNumPartition()         { return m_numPartitions; }
+    uint32_t        getNumPartition()         { return m_numPartitions; }
 
-    UInt        getNumPartInWidth()       { return m_numPartInWidth; }
+    uint32_t        getNumPartInWidth()       { return m_numPartInWidth; }
 
-    UInt        getNumPartInHeight()      { return m_numPartInHeight; }
+    uint32_t        getNumPartInHeight()      { return m_numPartInHeight; }
 
     void allocSaoParam(TComSampleAdaptiveOffset *sao);
 

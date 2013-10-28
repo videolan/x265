@@ -166,7 +166,7 @@ void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
     g_HLSTraceEnable = traceEnable;
 #endif
 
-    UInt payload_data_num_bits = bs_count.getNumberOfWrittenBits();
+    uint32_t payload_data_num_bits = bs_count.getNumberOfWrittenBits();
     assert(0 == payload_data_num_bits % 8);
 
     setBitstream(&bs);
@@ -176,7 +176,7 @@ void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
         xTraceSEIHeader();
 #endif
 
-    UInt payloadType = sei.payloadType();
+    uint32_t payloadType = sei.payloadType();
     for (; payloadType >= 0xff; payloadType -= 0xff)
     {
         WRITE_CODE(0xff, 8, "payload_type");
@@ -184,7 +184,7 @@ void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
 
     WRITE_CODE(payloadType, 8, "payload_type");
 
-    UInt payloadSize = payload_data_num_bits / 8;
+    uint32_t payloadSize = payload_data_num_bits / 8;
     for (; payloadSize >= 0xff; payloadSize -= 0xff)
     {
         WRITE_CODE(0xff, 8, "payload_size");
@@ -207,12 +207,12 @@ void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
  */
 void SEIWriter::xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei)
 {
-    for (UInt i = 0; i < 16; i++)
+    for (uint32_t i = 0; i < 16; i++)
     {
         WRITE_CODE(sei.uuid_iso_iec_11578[i], 8, "sei.uuid_iso_iec_11578[i]");
     }
 
-    for (UInt i = 0; i < sei.userDataLength; i++)
+    for (uint32_t i = 0; i < sei.userDataLength; i++)
     {
         WRITE_CODE(sei.userData[i], 8, "user_data");
     }
@@ -224,7 +224,7 @@ void SEIWriter::xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei
  */
 void SEIWriter::xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei)
 {
-    UInt val;
+    uint32_t val;
 
     WRITE_CODE(sei.method, 8, "hash_type");
 
@@ -232,7 +232,7 @@ void SEIWriter::xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei)
     {
         if (sei.method == SEIDecodedPictureHash::MD5)
         {
-            for (UInt i = 0; i < 16; i++)
+            for (uint32_t i = 0; i < 16; i++)
             {
                 WRITE_CODE(sei.digest[yuvIdx][i], 8, "picture_md5");
             }
@@ -258,8 +258,8 @@ void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
     WRITE_UVLC(sei.numSpsIdsMinus1,    "num_sps_ids_minus1");
     WRITE_UVLC(sei.activeSeqParamSetId, "active_seq_param_set_id");
 
-    UInt bits = m_bitIf->getNumberOfWrittenBits();
-    UInt alignedBits = (8 - (bits & 7)) % 8;
+    uint32_t bits = m_bitIf->getNumberOfWrittenBits();
+    uint32_t alignedBits = (8 - (bits & 7)) % 8;
     if (alignedBits)
     {
         WRITE_FLAG(1, "alignment_bit");

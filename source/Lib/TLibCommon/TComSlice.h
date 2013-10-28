@@ -173,21 +173,21 @@ public:
 
     void     setUseTransformSkip(bool b)                        { m_useTransformSkip = b; }
 
-    int*     getScalingListAddress(UInt sizeId, UInt listId)    { return m_scalingListCoef[sizeId][listId]; }          //!< get matrix coefficient
+    int32_t*     getScalingListAddress(uint32_t sizeId, uint32_t listId)    { return m_scalingListCoef[sizeId][listId]; }          //!< get matrix coefficient
 
-    bool     checkPredMode(UInt sizeId, UInt listId);
-    void     setRefMatrixId(UInt sizeId, UInt listId, UInt u)   { m_refMatrixId[sizeId][listId] = u;    }                    //!< set reference matrix ID
+    bool     checkPredMode(uint32_t sizeId, uint32_t listId);
+    void     setRefMatrixId(uint32_t sizeId, uint32_t listId, uint32_t u)   { m_refMatrixId[sizeId][listId] = u;    }                    //!< set reference matrix ID
 
-    UInt     getRefMatrixId(UInt sizeId, UInt listId)           { return m_refMatrixId[sizeId][listId]; }                    //!< get reference matrix ID
+    uint32_t     getRefMatrixId(uint32_t sizeId, uint32_t listId)           { return m_refMatrixId[sizeId][listId]; }                    //!< get reference matrix ID
 
-    int*     getScalingListDefaultAddress(UInt sizeId, UInt listId);                                                         //!< get default matrix coefficient
-    void     processDefaultMarix(UInt sizeId, UInt listId);
-    void     setScalingListDC(UInt sizeId, UInt listId, UInt u) { m_scalingListDC[sizeId][listId] = u; }                   //!< set DC value
+    int32_t*     getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);                                                         //!< get default matrix coefficient
+    void     processDefaultMarix(uint32_t sizeId, uint32_t listId);
+    void     setScalingListDC(uint32_t sizeId, uint32_t listId, uint32_t u) { m_scalingListDC[sizeId][listId] = u; }                   //!< set DC value
 
-    int      getScalingListDC(UInt sizeId, UInt listId)         { return m_scalingListDC[sizeId][listId]; }                //!< get DC value
+    int      getScalingListDC(uint32_t sizeId, uint32_t listId)         { return m_scalingListDC[sizeId][listId]; }                //!< get DC value
 
     void     checkDcOfMatrix();
-    void     processRefMatrix(UInt sizeId, UInt listId, UInt refListId);
+    void     processRefMatrix(uint32_t sizeId, uint32_t listId, uint32_t refListId);
     bool     xParseScalingList(char* pchFile);
 
 private:
@@ -196,9 +196,9 @@ private:
     void     destroy();
     int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];              //!< the DC value of the matrix coefficient for 16x16
     bool     m_useDefaultScalingMatrixFlag[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< UseDefaultScalingMatrixFlag
-    UInt     m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                //!< RefMatrixID
+    uint32_t     m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                //!< RefMatrixID
     bool     m_scalingListPresentFlag;                                              //!< flag for using default matrix
-    UInt     m_predMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];               //!< reference list index
+    uint32_t     m_predMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];               //!< reference list index
     int      *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];           //!< quantization matrix
     bool     m_useTransformSkip;                                                    //!< transform skipping flag for setting default scaling matrix for 4x4
 };
@@ -281,14 +281,14 @@ struct HrdSubLayerInfo
 {
     bool fixedPicRateFlag;
     bool fixedPicRateWithinCvsFlag;
-    UInt picDurationInTcMinus1;
+    uint32_t picDurationInTcMinus1;
     bool lowDelayHrdFlag;
-    UInt cpbCntMinus1;
-    UInt bitRateValueMinus1[MAX_CPB_CNT][2];
-    UInt cpbSizeValue[MAX_CPB_CNT][2];
-    UInt ducpbSizeValue[MAX_CPB_CNT][2];
+    uint32_t cpbCntMinus1;
+    uint32_t bitRateValueMinus1[MAX_CPB_CNT][2];
+    uint32_t cpbSizeValue[MAX_CPB_CNT][2];
+    uint32_t ducpbSizeValue[MAX_CPB_CNT][2];
     bool cbrFlag[MAX_CPB_CNT][2];
-    UInt duBitRateValue[MAX_CPB_CNT][2];
+    uint32_t duBitRateValue[MAX_CPB_CNT][2];
 };
 
 class TComHRD
@@ -298,16 +298,16 @@ private:
     bool m_nalHrdParametersPresentFlag;
     bool m_vclHrdParametersPresentFlag;
     bool m_subPicCpbParamsPresentFlag;
-    UInt m_tickDivisorMinus2;
-    UInt m_duCpbRemovalDelayLengthMinus1;
+    uint32_t m_tickDivisorMinus2;
+    uint32_t m_duCpbRemovalDelayLengthMinus1;
     bool m_subPicCpbParamsInPicTimingSEIFlag;
-    UInt m_dpbOutputDelayDuLengthMinus1;
-    UInt m_bitRateScale;
-    UInt m_cpbSizeScale;
-    UInt m_ducpbSizeScale;
-    UInt m_initialCpbRemovalDelayLengthMinus1;
-    UInt m_cpbRemovalDelayLengthMinus1;
-    UInt m_dpbOutputDelayLengthMinus1;
+    uint32_t m_dpbOutputDelayDuLengthMinus1;
+    uint32_t m_bitRateScale;
+    uint32_t m_cpbSizeScale;
+    uint32_t m_ducpbSizeScale;
+    uint32_t m_initialCpbRemovalDelayLengthMinus1;
+    uint32_t m_cpbRemovalDelayLengthMinus1;
+    uint32_t m_dpbOutputDelayLengthMinus1;
     HrdSubLayerInfo m_HRD[MAX_TLAYER];
 
 public:
@@ -341,45 +341,45 @@ public:
 
     bool getSubPicCpbParamsPresentFlag() { return m_subPicCpbParamsPresentFlag; }
 
-    void setTickDivisorMinus2(UInt value) { m_tickDivisorMinus2 = value; }
+    void setTickDivisorMinus2(uint32_t value) { m_tickDivisorMinus2 = value; }
 
-    UInt getTickDivisorMinus2() { return m_tickDivisorMinus2; }
+    uint32_t getTickDivisorMinus2() { return m_tickDivisorMinus2; }
 
-    void setDuCpbRemovalDelayLengthMinus1(UInt value) { m_duCpbRemovalDelayLengthMinus1 = value; }
+    void setDuCpbRemovalDelayLengthMinus1(uint32_t value) { m_duCpbRemovalDelayLengthMinus1 = value; }
 
-    UInt getDuCpbRemovalDelayLengthMinus1() { return m_duCpbRemovalDelayLengthMinus1; }
+    uint32_t getDuCpbRemovalDelayLengthMinus1() { return m_duCpbRemovalDelayLengthMinus1; }
 
     void setSubPicCpbParamsInPicTimingSEIFlag(bool flag) { m_subPicCpbParamsInPicTimingSEIFlag = flag; }
 
     bool getSubPicCpbParamsInPicTimingSEIFlag() { return m_subPicCpbParamsInPicTimingSEIFlag; }
 
-    void setDpbOutputDelayDuLengthMinus1(UInt value) { m_dpbOutputDelayDuLengthMinus1 = value; }
+    void setDpbOutputDelayDuLengthMinus1(uint32_t value) { m_dpbOutputDelayDuLengthMinus1 = value; }
 
-    UInt getDpbOutputDelayDuLengthMinus1() { return m_dpbOutputDelayDuLengthMinus1; }
+    uint32_t getDpbOutputDelayDuLengthMinus1() { return m_dpbOutputDelayDuLengthMinus1; }
 
-    void setBitRateScale(UInt value) { m_bitRateScale = value; }
+    void setBitRateScale(uint32_t value) { m_bitRateScale = value; }
 
-    UInt getBitRateScale() { return m_bitRateScale; }
+    uint32_t getBitRateScale() { return m_bitRateScale; }
 
-    void setCpbSizeScale(UInt value) { m_cpbSizeScale = value; }
+    void setCpbSizeScale(uint32_t value) { m_cpbSizeScale = value; }
 
-    UInt getCpbSizeScale() { return m_cpbSizeScale; }
+    uint32_t getCpbSizeScale() { return m_cpbSizeScale; }
 
-    void setDuCpbSizeScale(UInt value) { m_ducpbSizeScale = value; }
+    void setDuCpbSizeScale(uint32_t value) { m_ducpbSizeScale = value; }
 
-    UInt getDuCpbSizeScale() { return m_ducpbSizeScale; }
+    uint32_t getDuCpbSizeScale() { return m_ducpbSizeScale; }
 
-    void setInitialCpbRemovalDelayLengthMinus1(UInt value) { m_initialCpbRemovalDelayLengthMinus1 = value; }
+    void setInitialCpbRemovalDelayLengthMinus1(uint32_t value) { m_initialCpbRemovalDelayLengthMinus1 = value; }
 
-    UInt getInitialCpbRemovalDelayLengthMinus1() { return m_initialCpbRemovalDelayLengthMinus1; }
+    uint32_t getInitialCpbRemovalDelayLengthMinus1() { return m_initialCpbRemovalDelayLengthMinus1; }
 
-    void setCpbRemovalDelayLengthMinus1(UInt value) { m_cpbRemovalDelayLengthMinus1 = value; }
+    void setCpbRemovalDelayLengthMinus1(uint32_t value) { m_cpbRemovalDelayLengthMinus1 = value; }
 
-    UInt getCpbRemovalDelayLengthMinus1() { return m_cpbRemovalDelayLengthMinus1; }
+    uint32_t getCpbRemovalDelayLengthMinus1() { return m_cpbRemovalDelayLengthMinus1; }
 
-    void setDpbOutputDelayLengthMinus1(UInt value) { m_dpbOutputDelayLengthMinus1 = value; }
+    void setDpbOutputDelayLengthMinus1(uint32_t value) { m_dpbOutputDelayLengthMinus1 = value; }
 
-    UInt getDpbOutputDelayLengthMinus1() { return m_dpbOutputDelayLengthMinus1; }
+    uint32_t getDpbOutputDelayLengthMinus1() { return m_dpbOutputDelayLengthMinus1; }
 
     void setFixedPicRateFlag(int layer, bool flag) { m_HRD[layer].fixedPicRateFlag = flag; }
 
@@ -389,33 +389,33 @@ public:
 
     bool getFixedPicRateWithinCvsFlag(int layer) { return m_HRD[layer].fixedPicRateWithinCvsFlag; }
 
-    void setPicDurationInTcMinus1(int layer, UInt value) { m_HRD[layer].picDurationInTcMinus1 = value; }
+    void setPicDurationInTcMinus1(int layer, uint32_t value) { m_HRD[layer].picDurationInTcMinus1 = value; }
 
-    UInt getPicDurationInTcMinus1(int layer) { return m_HRD[layer].picDurationInTcMinus1; }
+    uint32_t getPicDurationInTcMinus1(int layer) { return m_HRD[layer].picDurationInTcMinus1; }
 
     void setLowDelayHrdFlag(int layer, bool flag) { m_HRD[layer].lowDelayHrdFlag = flag; }
 
     bool getLowDelayHrdFlag(int layer) { return m_HRD[layer].lowDelayHrdFlag; }
 
-    void setCpbCntMinus1(int layer, UInt value) { m_HRD[layer].cpbCntMinus1 = value; }
+    void setCpbCntMinus1(int layer, uint32_t value) { m_HRD[layer].cpbCntMinus1 = value; }
 
-    UInt getCpbCntMinus1(int layer) { return m_HRD[layer].cpbCntMinus1; }
+    uint32_t getCpbCntMinus1(int layer) { return m_HRD[layer].cpbCntMinus1; }
 
-    void setBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl, UInt value) { m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl] = value; }
+    void setBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl] = value; }
 
-    UInt getBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl]; }
+    uint32_t getBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl]; }
 
-    void setCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl, UInt value) { m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl] = value; }
+    void setCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl] = value; }
 
-    UInt getCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl)  { return m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl]; }
+    uint32_t getCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl)  { return m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl]; }
 
-    void setDuCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl, UInt value) { m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl] = value; }
+    void setDuCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl] = value; }
 
-    UInt getDuCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl)  { return m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl]; }
+    uint32_t getDuCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl)  { return m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl]; }
 
-    void setDuBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl, UInt value) { m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl] = value; }
+    void setDuBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl] = value; }
 
-    UInt getDuBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl]; }
+    uint32_t getDuBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl]; }
 
     void setCbrFlag(int layer, int cpbcnt, int nalOrVcl, bool value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value; }
 
@@ -427,8 +427,8 @@ public:
 class TimingInfo
 {
     bool m_timingInfoPresentFlag;
-    UInt m_numUnitsInTick;
-    UInt m_timeScale;
+    uint32_t m_numUnitsInTick;
+    uint32_t m_timeScale;
     bool m_pocProportionalToTimingFlag;
     int  m_numTicksPocDiffOneMinus1;
 
@@ -445,13 +445,13 @@ public:
 
     bool getTimingInfoPresentFlag()             { return m_timingInfoPresentFlag; }
 
-    void setNumUnitsInTick(UInt value)          { m_numUnitsInTick = value; }
+    void setNumUnitsInTick(uint32_t value)          { m_numUnitsInTick = value; }
 
-    UInt getNumUnitsInTick()                    { return m_numUnitsInTick; }
+    uint32_t getNumUnitsInTick()                    { return m_numUnitsInTick; }
 
-    void setTimeScale(UInt value)               { m_timeScale = value; }
+    void setTimeScale(uint32_t value)               { m_timeScale = value; }
 
-    UInt getTimeScale()                         { return m_timeScale; }
+    uint32_t getTimeScale()                         { return m_timeScale; }
 
     bool getPocProportionalToTimingFlag()       { return m_pocProportionalToTimingFlag; }
 
@@ -467,20 +467,20 @@ class TComVPS
 private:
 
     int         m_VPSId;
-    UInt        m_uiMaxTLayers;
-    UInt        m_maxLayers;
+    uint32_t        m_uiMaxTLayers;
+    uint32_t        m_maxLayers;
     bool        m_bTemporalIdNestingFlag;
 
-    UInt        m_numReorderPics[MAX_TLAYER];
-    UInt        m_maxDecPicBuffering[MAX_TLAYER];
-    UInt        m_maxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
+    uint32_t        m_numReorderPics[MAX_TLAYER];
+    uint32_t        m_maxDecPicBuffering[MAX_TLAYER];
+    uint32_t        m_maxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
 
-    UInt        m_numHrdParameters;
-    UInt        m_maxNuhReservedZeroLayerId;
+    uint32_t        m_numHrdParameters;
+    uint32_t        m_maxNuhReservedZeroLayerId;
     TComHRD*    m_hrdParameters;
-    UInt*       m_hrdOpSetIdx;
+    uint32_t*       m_hrdOpSetIdx;
     bool*       m_cprmsPresentFlag;
-    UInt        m_numOpSets;
+    uint32_t        m_numOpSets;
     bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 
     TComPTL     m_ptl;
@@ -494,63 +494,63 @@ public:
     void    createHrdParamBuffer()
     {
         m_hrdParameters    = new TComHRD[getNumHrdParameters()];
-        m_hrdOpSetIdx      = new UInt[getNumHrdParameters()];
+        m_hrdOpSetIdx      = new uint32_t[getNumHrdParameters()];
         m_cprmsPresentFlag = new bool[getNumHrdParameters()];
     }
 
-    TComHRD* getHrdParameters(UInt i)             { return &m_hrdParameters[i]; }
+    TComHRD* getHrdParameters(uint32_t i)             { return &m_hrdParameters[i]; }
 
-    UInt    getHrdOpSetIdx(UInt i)                { return m_hrdOpSetIdx[i]; }
+    uint32_t    getHrdOpSetIdx(uint32_t i)                { return m_hrdOpSetIdx[i]; }
 
-    void    setHrdOpSetIdx(UInt val, UInt i)      { m_hrdOpSetIdx[i] = val; }
+    void    setHrdOpSetIdx(uint32_t val, uint32_t i)      { m_hrdOpSetIdx[i] = val; }
 
-    bool    getCprmsPresentFlag(UInt i)           { return m_cprmsPresentFlag[i]; }
+    bool    getCprmsPresentFlag(uint32_t i)           { return m_cprmsPresentFlag[i]; }
 
-    void    setCprmsPresentFlag(bool val, UInt i) { m_cprmsPresentFlag[i] = val; }
+    void    setCprmsPresentFlag(bool val, uint32_t i) { m_cprmsPresentFlag[i] = val; }
 
     int     getVPSId()                            { return m_VPSId; }
 
     void    setVPSId(int i)                       { m_VPSId = i; }
 
-    UInt    getMaxTLayers()                       { return m_uiMaxTLayers; }
+    uint32_t    getMaxTLayers()                       { return m_uiMaxTLayers; }
 
-    void    setMaxTLayers(UInt t)                 { m_uiMaxTLayers = t; }
+    void    setMaxTLayers(uint32_t t)                 { m_uiMaxTLayers = t; }
 
-    UInt    getMaxLayers()                        { return m_maxLayers; }
+    uint32_t    getMaxLayers()                        { return m_maxLayers; }
 
-    void    setMaxLayers(UInt l)                  { m_maxLayers = l; }
+    void    setMaxLayers(uint32_t l)                  { m_maxLayers = l; }
 
     bool    getTemporalNestingFlag()              { return m_bTemporalIdNestingFlag; }
 
     void    setTemporalNestingFlag(bool t)        { m_bTemporalIdNestingFlag = t; }
 
-    void    setNumReorderPics(UInt v, UInt tLayer)     { m_numReorderPics[tLayer] = v; }
+    void    setNumReorderPics(uint32_t v, uint32_t tLayer)     { m_numReorderPics[tLayer] = v; }
 
-    UInt    getNumReorderPics(UInt tLayer)             { return m_numReorderPics[tLayer]; }
+    uint32_t    getNumReorderPics(uint32_t tLayer)             { return m_numReorderPics[tLayer]; }
 
-    void    setMaxDecPicBuffering(UInt v, UInt tLayer) { m_maxDecPicBuffering[tLayer] = v; }
+    void    setMaxDecPicBuffering(uint32_t v, uint32_t tLayer) { m_maxDecPicBuffering[tLayer] = v; }
 
-    UInt    getMaxDecPicBuffering(UInt tLayer)         { return m_maxDecPicBuffering[tLayer]; }
+    uint32_t    getMaxDecPicBuffering(uint32_t tLayer)         { return m_maxDecPicBuffering[tLayer]; }
 
-    void    setMaxLatencyIncrease(UInt v, UInt tLayer) { m_maxLatencyIncrease[tLayer] = v; }
+    void    setMaxLatencyIncrease(uint32_t v, uint32_t tLayer) { m_maxLatencyIncrease[tLayer] = v; }
 
-    UInt    getMaxLatencyIncrease(UInt tLayer)         { return m_maxLatencyIncrease[tLayer]; }
+    uint32_t    getMaxLatencyIncrease(uint32_t tLayer)         { return m_maxLatencyIncrease[tLayer]; }
 
-    UInt    getNumHrdParameters()                      { return m_numHrdParameters; }
+    uint32_t    getNumHrdParameters()                      { return m_numHrdParameters; }
 
-    void    setNumHrdParameters(UInt v)                { m_numHrdParameters = v; }
+    void    setNumHrdParameters(uint32_t v)                { m_numHrdParameters = v; }
 
-    UInt    getMaxNuhReservedZeroLayerId()             { return m_maxNuhReservedZeroLayerId; }
+    uint32_t    getMaxNuhReservedZeroLayerId()             { return m_maxNuhReservedZeroLayerId; }
 
-    void    setMaxNuhReservedZeroLayerId(UInt v)       { m_maxNuhReservedZeroLayerId = v; }
+    void    setMaxNuhReservedZeroLayerId(uint32_t v)       { m_maxNuhReservedZeroLayerId = v; }
 
-    UInt    getMaxOpSets()                             { return m_numOpSets; }
+    uint32_t    getMaxOpSets()                             { return m_numOpSets; }
 
-    void    setMaxOpSets(UInt v)                       { m_numOpSets = v; }
+    void    setMaxOpSets(uint32_t v)                       { m_numOpSets = v; }
 
-    bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)        { return m_layerIdIncludedFlag[opsIdx][id]; }
+    bool    getLayerIdIncludedFlag(uint32_t opsIdx, uint32_t id)        { return m_layerIdIncludedFlag[opsIdx][id]; }
 
-    void    setLayerIdIncludedFlag(bool v, UInt opsIdx, UInt id) { m_layerIdIncludedFlag[opsIdx][id] = v; }
+    void    setLayerIdIncludedFlag(bool v, uint32_t opsIdx, uint32_t id) { m_layerIdIncludedFlag[opsIdx][id] = v; }
 
     TComPTL* getPTL()           { return &m_ptl; }
 
@@ -778,17 +778,17 @@ private:
     int         m_VPSId;
     int         m_chromaFormatIdc;
 
-    UInt        m_maxTLayers;         // maximum number of temporal layers
+    uint32_t        m_maxTLayers;         // maximum number of temporal layers
 
     // Structure
-    UInt        m_picWidthInLumaSamples;
-    UInt        m_picHeightInLumaSamples;
+    uint32_t        m_picWidthInLumaSamples;
+    uint32_t        m_picHeightInLumaSamples;
 
     int         m_log2MinCodingBlockSize;
     int         m_log2DiffMaxMinCodingBlockSize;
-    UInt        m_maxCUWidth;
-    UInt        m_maxCUHeight;
-    UInt        m_maxCUDepth;
+    uint32_t        m_maxCUWidth;
+    uint32_t        m_maxCUHeight;
+    uint32_t        m_maxCUDepth;
 
     Window      m_conformanceWindow;
 
@@ -798,13 +798,13 @@ private:
     int         m_numReorderPics[MAX_TLAYER];
 
     // Tool list
-    UInt        m_quadtreeTULog2MaxSize;
-    UInt        m_quadtreeTULog2MinSize;
-    UInt        m_quadtreeTUMaxDepthInter;
-    UInt        m_quadtreeTUMaxDepthIntra;
+    uint32_t        m_quadtreeTULog2MaxSize;
+    uint32_t        m_quadtreeTULog2MinSize;
+    uint32_t        m_quadtreeTUMaxDepthInter;
+    uint32_t        m_quadtreeTUMaxDepthIntra;
     bool        m_usePCM;
-    UInt        m_pcmLog2MaxSize;
-    UInt        m_pcmLog2MinSize;
+    uint32_t        m_pcmLog2MaxSize;
+    uint32_t        m_pcmLog2MinSize;
     bool        m_useAMP;
 
     // Parameter
@@ -815,17 +815,17 @@ private:
 
     bool        m_useLossless;
 
-    UInt        m_pcmBitDepthLuma;
-    UInt        m_pcmBitDepthChroma;
+    uint32_t        m_pcmBitDepthLuma;
+    uint32_t        m_pcmBitDepthChroma;
     bool        m_bPCMFilterDisableFlag;
 
-    UInt        m_bitsForPOC;
-    UInt        m_numLongTermRefPicSPS;
-    UInt        m_ltRefPicPocLsbSps[33];
+    uint32_t        m_bitsForPOC;
+    uint32_t        m_numLongTermRefPicSPS;
+    uint32_t        m_ltRefPicPocLsbSps[33];
     bool        m_usedByCurrPicLtSPSFlag[33];
 
     // Max physical transform size
-    UInt        m_maxTrSize;
+    uint32_t        m_maxTrSize;
 
     int m_iAMPAcc[MAX_CU_DEPTH];
     bool        m_bUseSAO;
@@ -835,8 +835,8 @@ private:
     bool        m_scalingListEnabledFlag;
     bool        m_scalingListPresentFlag;
     TComScalingList* m_scalingList; //!< ScalingList class pointer
-    UInt        m_maxDecPicBuffering[MAX_TLAYER];
-    UInt        m_maxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
+    uint32_t        m_maxDecPicBuffering[MAX_TLAYER];
+    uint32_t        m_maxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
 
     bool        m_useDF;
     bool        m_useStrongIntraSmoothing;
@@ -867,25 +867,25 @@ public:
     static int getWinUnitY(int chromaFormatIdc) { assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return g_winUnitY[chromaFormatIdc]; }
 
     // structure
-    void setPicWidthInLumaSamples(UInt u) { m_picWidthInLumaSamples = u; }
+    void setPicWidthInLumaSamples(uint32_t u) { m_picWidthInLumaSamples = u; }
 
-    UInt getPicWidthInLumaSamples() const { return m_picWidthInLumaSamples; }
+    uint32_t getPicWidthInLumaSamples() const { return m_picWidthInLumaSamples; }
 
-    void setPicHeightInLumaSamples(UInt u) { m_picHeightInLumaSamples = u; }
+    void setPicHeightInLumaSamples(uint32_t u) { m_picHeightInLumaSamples = u; }
 
-    UInt getPicHeightInLumaSamples() const { return m_picHeightInLumaSamples; }
+    uint32_t getPicHeightInLumaSamples() const { return m_picHeightInLumaSamples; }
 
     Window& getConformanceWindow() { return m_conformanceWindow; }
 
     void    setConformanceWindow(Window& conformanceWindow) { m_conformanceWindow = conformanceWindow; }
 
-    UInt  getNumLongTermRefPicSPS() const { return m_numLongTermRefPicSPS; }
+    uint32_t  getNumLongTermRefPicSPS() const { return m_numLongTermRefPicSPS; }
 
-    void  setNumLongTermRefPicSPS(UInt val) { m_numLongTermRefPicSPS = val; }
+    void  setNumLongTermRefPicSPS(uint32_t val) { m_numLongTermRefPicSPS = val; }
 
-    UInt  getLtRefPicPocLsbSps(UInt index) const { return m_ltRefPicPocLsbSps[index]; }
+    uint32_t  getLtRefPicPocLsbSps(uint32_t index) const { return m_ltRefPicPocLsbSps[index]; }
 
-    void  setLtRefPicPocLsbSps(UInt index, UInt val) { m_ltRefPicPocLsbSps[index] = val; }
+    void  setLtRefPicPocLsbSps(uint32_t index, uint32_t val) { m_ltRefPicPocLsbSps[index] = val; }
 
     bool getUsedByCurrPicLtSPSFlag(int i) const { return m_usedByCurrPicLtSPSFlag[i]; }
 
@@ -899,57 +899,57 @@ public:
 
     void setLog2DiffMaxMinCodingBlockSize(int val) { m_log2DiffMaxMinCodingBlockSize = val; }
 
-    void setMaxCUWidth(UInt u) { m_maxCUWidth = u; }
+    void setMaxCUWidth(uint32_t u) { m_maxCUWidth = u; }
 
-    UInt getMaxCUWidth() const  { return m_maxCUWidth; }
+    uint32_t getMaxCUWidth() const  { return m_maxCUWidth; }
 
-    void setMaxCUHeight(UInt u) { m_maxCUHeight = u; }
+    void setMaxCUHeight(uint32_t u) { m_maxCUHeight = u; }
 
-    UInt getMaxCUHeight() const { return m_maxCUHeight; }
+    uint32_t getMaxCUHeight() const { return m_maxCUHeight; }
 
-    void setMaxCUDepth(UInt u) { m_maxCUDepth = u; }
+    void setMaxCUDepth(uint32_t u) { m_maxCUDepth = u; }
 
-    UInt getMaxCUDepth() const { return m_maxCUDepth; }
+    uint32_t getMaxCUDepth() const { return m_maxCUDepth; }
 
     void setUsePCM(bool b)   { m_usePCM = b; }
 
     bool getUsePCM() const   { return m_usePCM; }
 
-    void setPCMLog2MaxSize(UInt u) { m_pcmLog2MaxSize = u; }
+    void setPCMLog2MaxSize(uint32_t u) { m_pcmLog2MaxSize = u; }
 
-    UInt getPCMLog2MaxSize() const { return m_pcmLog2MaxSize; }
+    uint32_t getPCMLog2MaxSize() const { return m_pcmLog2MaxSize; }
 
-    void setPCMLog2MinSize(UInt u) { m_pcmLog2MinSize = u; }
+    void setPCMLog2MinSize(uint32_t u) { m_pcmLog2MinSize = u; }
 
-    UInt getPCMLog2MinSize() const { return m_pcmLog2MinSize; }
+    uint32_t getPCMLog2MinSize() const { return m_pcmLog2MinSize; }
 
-    void setBitsForPOC(UInt u) { m_bitsForPOC = u; }
+    void setBitsForPOC(uint32_t u) { m_bitsForPOC = u; }
 
-    UInt getBitsForPOC() const { return m_bitsForPOC; }
+    uint32_t getBitsForPOC() const { return m_bitsForPOC; }
 
     bool getUseAMP() { return m_useAMP; }
 
     void setUseAMP(bool b) { m_useAMP = b; }
 
-    void setQuadtreeTULog2MaxSize(UInt u)   { m_quadtreeTULog2MaxSize = u; }
+    void setQuadtreeTULog2MaxSize(uint32_t u)   { m_quadtreeTULog2MaxSize = u; }
 
-    UInt getQuadtreeTULog2MaxSize() const   { return m_quadtreeTULog2MaxSize; }
+    uint32_t getQuadtreeTULog2MaxSize() const   { return m_quadtreeTULog2MaxSize; }
 
-    void setQuadtreeTULog2MinSize(UInt u)   { m_quadtreeTULog2MinSize = u; }
+    void setQuadtreeTULog2MinSize(uint32_t u)   { m_quadtreeTULog2MinSize = u; }
 
-    UInt getQuadtreeTULog2MinSize() const   { return m_quadtreeTULog2MinSize; }
+    uint32_t getQuadtreeTULog2MinSize() const   { return m_quadtreeTULog2MinSize; }
 
-    void setQuadtreeTUMaxDepthInter(UInt u) { m_quadtreeTUMaxDepthInter = u; }
+    void setQuadtreeTUMaxDepthInter(uint32_t u) { m_quadtreeTUMaxDepthInter = u; }
 
-    void setQuadtreeTUMaxDepthIntra(UInt u) { m_quadtreeTUMaxDepthIntra = u; }
+    void setQuadtreeTUMaxDepthIntra(uint32_t u) { m_quadtreeTUMaxDepthIntra = u; }
 
-    UInt getQuadtreeTUMaxDepthInter() const   { return m_quadtreeTUMaxDepthInter; }
+    uint32_t getQuadtreeTUMaxDepthInter() const   { return m_quadtreeTUMaxDepthInter; }
 
-    UInt getQuadtreeTUMaxDepthIntra() const    { return m_quadtreeTUMaxDepthIntra; }
+    uint32_t getQuadtreeTUMaxDepthIntra() const    { return m_quadtreeTUMaxDepthIntra; }
 
-    void setNumReorderPics(int i, UInt tlayer) { m_numReorderPics[tlayer] = i; }
+    void setNumReorderPics(int i, uint32_t tlayer) { m_numReorderPics[tlayer] = i; }
 
-    int  getNumReorderPics(UInt tlayer) const  { return m_numReorderPics[tlayer]; }
+    int  getNumReorderPics(uint32_t tlayer) const  { return m_numReorderPics[tlayer]; }
 
     void createRPSList(int numRPS);
 
@@ -964,9 +964,9 @@ public:
     void      setTMVPFlagsPresent(bool b)   { m_TMVPFlagsPresent = b; }
 
     // physical transform
-    void setMaxTrSize(UInt u)   { m_maxTrSize = u; }
+    void setMaxTrSize(uint32_t u)   { m_maxTrSize = u; }
 
-    UInt getMaxTrSize() const   { return m_maxTrSize; }
+    uint32_t getMaxTrSize() const   { return m_maxTrSize; }
 
     // Tool list
     bool getUseLossless() const { return m_useLossless; }
@@ -974,9 +974,9 @@ public:
     void setUseLossless(bool b) { m_useLossless  = b; }
 
     // AMP accuracy
-    int       getAMPAcc(UInt depth) const { return m_iAMPAcc[depth]; }
+    int       getAMPAcc(uint32_t depth) const { return m_iAMPAcc[depth]; }
 
-    void      setAMPAcc(UInt depth, int iAccu) { assert(depth < g_maxCUDepth);  m_iAMPAcc[depth] = iAccu; }
+    void      setAMPAcc(uint32_t depth, int iAccu) { assert(depth < g_maxCUDepth);  m_iAMPAcc[depth] = iAccu; }
 
     // Bit-depth
     int      getBitDepthY() const { return m_bitDepthY; }
@@ -999,21 +999,21 @@ public:
 
     bool getUseSAO() const { return m_bUseSAO; }
 
-    UInt      getMaxTLayers() const                   { return m_maxTLayers; }
+    uint32_t      getMaxTLayers() const                   { return m_maxTLayers; }
 
-    void      setMaxTLayers(UInt maxTLayers)          { assert(maxTLayers <= MAX_TLAYER); m_maxTLayers = maxTLayers; }
+    void      setMaxTLayers(uint32_t maxTLayers)          { assert(maxTLayers <= MAX_TLAYER); m_maxTLayers = maxTLayers; }
 
     bool      getTemporalIdNestingFlag() const        { return m_bTemporalIdNestingFlag; }
 
     void      setTemporalIdNestingFlag(bool bValue)   { m_bTemporalIdNestingFlag = bValue; }
 
-    UInt      getPCMBitDepthLuma() const { return m_pcmBitDepthLuma; }
+    uint32_t      getPCMBitDepthLuma() const { return m_pcmBitDepthLuma; }
 
-    void      setPCMBitDepthLuma(UInt u) { m_pcmBitDepthLuma = u; }
+    void      setPCMBitDepthLuma(uint32_t u) { m_pcmBitDepthLuma = u; }
 
-    UInt      getPCMBitDepthChroma() const { return m_pcmBitDepthChroma; }
+    uint32_t      getPCMBitDepthChroma() const { return m_pcmBitDepthChroma; }
 
-    void      setPCMBitDepthChroma(UInt u) { m_pcmBitDepthChroma = u; }
+    void      setPCMBitDepthChroma(uint32_t u) { m_pcmBitDepthChroma = u; }
 
     void      setPCMFilterDisableFlag(bool bValue)    { m_bPCMFilterDisableFlag = bValue; }
 
@@ -1030,13 +1030,13 @@ public:
     void setScalingList(TComScalingList *scalingList);
     TComScalingList* getScalingList() { return m_scalingList; } //!< get ScalingList class pointer in SPS
 
-    UInt getMaxDecPicBuffering(UInt tlayer) { return m_maxDecPicBuffering[tlayer]; }
+    uint32_t getMaxDecPicBuffering(uint32_t tlayer) { return m_maxDecPicBuffering[tlayer]; }
 
-    void setMaxDecPicBuffering(UInt ui, UInt tlayer) { m_maxDecPicBuffering[tlayer] = ui; }
+    void setMaxDecPicBuffering(uint32_t ui, uint32_t tlayer) { m_maxDecPicBuffering[tlayer] = ui; }
 
-    UInt getMaxLatencyIncrease(UInt tlayer) { return m_maxLatencyIncrease[tlayer]; }
+    uint32_t getMaxLatencyIncrease(uint32_t tlayer) { return m_maxLatencyIncrease[tlayer]; }
 
-    void setMaxLatencyIncrease(UInt ui, UInt tlayer) { m_maxLatencyIncrease[tlayer] = ui; }
+    void setMaxLatencyIncrease(uint32_t ui, uint32_t tlayer) { m_maxLatencyIncrease[tlayer] = ui; }
 
     void setUseStrongIntraSmoothing(bool bVal) { m_useStrongIntraSmoothing = bVal; }
 
@@ -1048,7 +1048,7 @@ public:
 
     TComVUI* getVuiParameters() { return &m_vuiParameters; }
 
-    void setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, bool randomAccess);
+    void setHrdParameters(uint32_t frameRate, uint32_t numDU, uint32_t bitRate, bool randomAccess);
 
     TComPTL* getPTL() { return &m_ptl; }
 };
@@ -1067,14 +1067,14 @@ private:
 
     // access channel
     TComSPS*    m_sps;
-    UInt        m_maxCuDQPDepth;
-    UInt        m_minCuDQPSize;
+    uint32_t        m_maxCuDQPDepth;
+    uint32_t        m_minCuDQPSize;
 
     int         m_chromaCbQpOffset;
     int         m_chromaCrQpOffset;
 
-    UInt        m_numRefIdxL0DefaultActive;
-    UInt        m_numRefIdxL1DefaultActive;
+    uint32_t        m_numRefIdxL0DefaultActive;
+    uint32_t        m_numRefIdxL1DefaultActive;
 
     bool        m_bUseWeightPred;         // Use of Weighting Prediction (P_SLICE)
     bool        m_useWeightedBiPred;      // Use of Weighting Bi-Prediction (B_SLICE)
@@ -1089,7 +1089,7 @@ private:
     int      m_signHideFlag;
 
     bool     m_cabacInitPresentFlag;
-    UInt     m_encCABACTableIdx;         // Used to transmit table selection across slices
+    uint32_t     m_encCABACTableIdx;         // Used to transmit table selection across slices
 
     bool     m_sliceHeaderExtensionPresentFlag;
     bool     m_deblockingFilterControlPresentFlag;
@@ -1100,7 +1100,7 @@ private:
     bool     m_scalingListPresentFlag;
     TComScalingList* m_scalingList; //!< ScalingList class pointer
     bool m_listsModificationPresentFlag;
-    UInt m_log2ParallelMergeLevelMinus2;
+    uint32_t m_log2ParallelMergeLevelMinus2;
     int m_numExtraSliceHeaderBits;
 
 public:
@@ -1136,13 +1136,13 @@ public:
 
     TComSPS*  getSPS() { return m_sps; }
 
-    void      setMaxCuDQPDepth(UInt u) { m_maxCuDQPDepth = u; }
+    void      setMaxCuDQPDepth(uint32_t u) { m_maxCuDQPDepth = u; }
 
-    UInt      getMaxCuDQPDepth() const { return m_maxCuDQPDepth; }
+    uint32_t      getMaxCuDQPDepth() const { return m_maxCuDQPDepth; }
 
-    void      setMinCuDQPSize(UInt u) { m_minCuDQPSize = u; }
+    void      setMinCuDQPSize(uint32_t u) { m_minCuDQPSize = u; }
 
-    UInt      getMinCuDQPSize() const { return m_minCuDQPSize; }
+    uint32_t      getMinCuDQPSize() const { return m_minCuDQPSize; }
 
     void      setChromaCbQpOffset(int i) { m_chromaCbQpOffset = i; }
 
@@ -1152,13 +1152,13 @@ public:
 
     int       getChromaCrQpOffset() const { return m_chromaCrQpOffset; }
 
-    void      setNumRefIdxL0DefaultActive(UInt i)    { m_numRefIdxL0DefaultActive = i; }
+    void      setNumRefIdxL0DefaultActive(uint32_t i)    { m_numRefIdxL0DefaultActive = i; }
 
-    UInt      getNumRefIdxL0DefaultActive() const     { return m_numRefIdxL0DefaultActive; }
+    uint32_t      getNumRefIdxL0DefaultActive() const     { return m_numRefIdxL0DefaultActive; }
 
-    void      setNumRefIdxL1DefaultActive(UInt i)    { m_numRefIdxL1DefaultActive = i; }
+    void      setNumRefIdxL1DefaultActive(uint32_t i)    { m_numRefIdxL1DefaultActive = i; }
 
-    UInt      getNumRefIdxL1DefaultActive() const     { return m_numRefIdxL1DefaultActive; }
+    uint32_t      getNumRefIdxL1DefaultActive() const     { return m_numRefIdxL1DefaultActive; }
 
     bool getUseWP() const    { return m_bUseWeightPred; }
 
@@ -1198,7 +1198,7 @@ public:
 
     bool     getCabacInitPresentFlag() const        { return m_cabacInitPresentFlag; }
 
-    UInt     getEncCABACTableIdx() const            { return m_encCABACTableIdx; }
+    uint32_t     getEncCABACTableIdx() const            { return m_encCABACTableIdx; }
 
     void     setDeblockingFilterControlPresentFlag(bool val)  { m_deblockingFilterControlPresentFlag = val; }
 
@@ -1232,9 +1232,9 @@ public:
 
     void setListsModificationPresentFlag(bool b) { m_listsModificationPresentFlag = b; }
 
-    UInt getLog2ParallelMergeLevelMinus2() const { return m_log2ParallelMergeLevelMinus2; }
+    uint32_t getLog2ParallelMergeLevelMinus2() const { return m_log2ParallelMergeLevelMinus2; }
 
-    void setLog2ParallelMergeLevelMinus2(UInt mrgLevel) { m_log2ParallelMergeLevelMinus2 = mrgLevel; }
+    void setLog2ParallelMergeLevelMinus2(uint32_t mrgLevel) { m_log2ParallelMergeLevelMinus2 = mrgLevel; }
 
     int getNumExtraSliceHeaderBits() const { return m_numExtraSliceHeaderBits; }
 
@@ -1250,7 +1250,7 @@ struct WpScalingParam
     // Explicit weighted prediction parameters parsed in slice header,
     // or Implicit weighted prediction parameters (8 bits depth values).
     bool        bPresentFlag;
-    UInt        log2WeightDenom;
+    uint32_t        log2WeightDenom;
     int         inputWeight;
     int         inputOffset;
 
@@ -1311,22 +1311,22 @@ private:
     TComPPS*    m_pps;
     TComVPS*    m_vps;
     TComPic*    m_pic;
-    UInt        m_colFromL0Flag; // collocated picture from List0 flag
+    uint32_t        m_colFromL0Flag; // collocated picture from List0 flag
 
-    UInt        m_colRefIdx;
-    UInt        m_maxNumMergeCand;
+    uint32_t        m_colRefIdx;
+    uint32_t        m_maxNumMergeCand;
 
-    UInt        m_sliceCurEndCUAddr;
+    uint32_t        m_sliceCurEndCUAddr;
     bool        m_nextSlice;
-    UInt        m_sliceBits;
-    UInt        m_sliceSegmentBits;
+    uint32_t        m_sliceBits;
+    uint32_t        m_sliceSegmentBits;
     bool        m_bFinalized;
 
     wpACDCParam     m_weightACDCParam[3];                 // [0:Y, 1:U, 2:V]
 
-    UInt        m_tileOffstForMultES;
+    uint32_t        m_tileOffstForMultES;
 
-    UInt*       m_substreamSizes;
+    uint32_t*       m_substreamSizes;
     TComScalingList* m_scalingList; //!< pointer of quantization matrix
     bool        m_cabacInitFlag;
 
@@ -1425,9 +1425,9 @@ public:
 
     int       getRefPOC(int e, int refIdx) { return m_refPOCList[e][refIdx]; }
 
-    UInt      getColFromL0Flag()                  { return m_colFromL0Flag; }
+    uint32_t      getColFromL0Flag()                  { return m_colFromL0Flag; }
 
-    UInt      getColRefIdx()                      { return m_colRefIdx; }
+    uint32_t      getColRefIdx()                      { return m_colRefIdx; }
 
     bool      getIsUsedAsLongTerm(int i, int j)   { return m_bIsUsedAsLongTerm[i][j]; }
 
@@ -1490,9 +1490,9 @@ public:
 
     void      setRefPOCList();
 
-    void      setColFromL0Flag(UInt colFromL0) { m_colFromL0Flag = colFromL0; }
+    void      setColFromL0Flag(uint32_t colFromL0) { m_colFromL0Flag = colFromL0; }
 
-    void      setColRefIdx(UInt refIdx)     { m_colRefIdx = refIdx; }
+    void      setColRefIdx(uint32_t refIdx)     { m_colRefIdx = refIdx; }
 
     void      setCheckLDC(bool b)           { m_bCheckLDC = b; }
 
@@ -1504,27 +1504,27 @@ public:
 
     bool      isInterP()                    { return m_sliceType == P_SLICE; }
 
-    void setTLayerInfo(UInt tlayer);
+    void setTLayerInfo(uint32_t tlayer);
 
-    void setMaxNumMergeCand(UInt val)          { m_maxNumMergeCand = val; }
+    void setMaxNumMergeCand(uint32_t val)          { m_maxNumMergeCand = val; }
 
-    UInt getMaxNumMergeCand()                  { return m_maxNumMergeCand; }
+    uint32_t getMaxNumMergeCand()                  { return m_maxNumMergeCand; }
 
-    void setSliceCurEndCUAddr(UInt uiAddr)     { m_sliceCurEndCUAddr = uiAddr; }
+    void setSliceCurEndCUAddr(uint32_t uiAddr)     { m_sliceCurEndCUAddr = uiAddr; }
 
-    UInt getSliceCurEndCUAddr()                { return m_sliceCurEndCUAddr; }
+    uint32_t getSliceCurEndCUAddr()                { return m_sliceCurEndCUAddr; }
 
     void setNextSlice(bool b)                  { m_nextSlice = b; }
 
     bool isNextSlice()                         { return m_nextSlice; }
 
-    void setSliceBits(UInt val)                { m_sliceBits = val; }
+    void setSliceBits(uint32_t val)                { m_sliceBits = val; }
 
-    UInt getSliceBits()                        { return m_sliceBits; }
+    uint32_t getSliceBits()                        { return m_sliceBits; }
 
-    void setSliceSegmentBits(UInt val)         { m_sliceSegmentBits = val; }
+    void setSliceSegmentBits(uint32_t val)         { m_sliceSegmentBits = val; }
 
-    UInt getSliceSegmentBits()                 { return m_sliceSegmentBits; }
+    uint32_t getSliceSegmentBits()                 { return m_sliceSegmentBits; }
 
     void setFinalized(bool val)                { m_bFinalized = val; }
 
@@ -1543,12 +1543,12 @@ public:
     void  getWpAcDcParam(wpACDCParam *&wp);
     void  initWpAcDcParam();
 
-    void setTileOffstForMultES(UInt offset)      { m_tileOffstForMultES = offset; }
+    void setTileOffstForMultES(uint32_t offset)      { m_tileOffstForMultES = offset; }
 
-    UInt getTileOffstForMultES()                 { return m_tileOffstForMultES; }
+    uint32_t getTileOffstForMultES()                 { return m_tileOffstForMultES; }
 
-    void allocSubstreamSizes(UInt uiNumSubstreams);
-    UInt* getSubstreamSizes()                    { return m_substreamSizes; }
+    void allocSubstreamSizes(uint32_t uiNumSubstreams);
+    uint32_t* getSubstreamSizes()                    { return m_substreamSizes; }
 
     void  setScalingList(TComScalingList* scalingList) { m_scalingList = scalingList; }
 

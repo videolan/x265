@@ -467,7 +467,7 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
         pixelcmp_t satd = primitives.satd[partitionFromSizes(cuSize, cuSize)];
         int icost = me.COST_MAX, cost;
-        for (UInt mode = 0; mode < 35; mode++)
+        for (uint32_t mode = 0; mode < 35; mode++)
         {
             if ((mode >= 2) && (mode < 18))
                 cost = satd(buf_trans, cuSize, &predictions[mode * predsize], cuSize);

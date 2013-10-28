@@ -30,7 +30,7 @@
 using namespace x265;
 
 static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int *cnt);
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int32_t *cnt);
 
 // **************************************************************************
 // * LoopFilter
@@ -152,7 +152,7 @@ void FrameFilter::processRow(int row)
 
     if (m_cfg->param.bEnableLoopFilter)
     {
-        for (UInt col = 0; col < numCols; col++)
+        for (uint32_t col = 0; col < numCols; col++)
         {
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
@@ -269,7 +269,7 @@ void FrameFilter::processRowPost(int row)
 
     // Notify other FrameEncoders that this row of reconstructed pixels is available
     m_pic->m_reconRowCount++;
-    for (UInt i = 0; i < m_pic->m_countRefEncoders; i++)
+    for (uint32_t i = 0; i < m_pic->m_countRefEncoders; i++)
     {
         m_pic->m_reconRowWait.trigger();
     }
@@ -324,9 +324,9 @@ void FrameFilter::processRowPost(int row)
     }
     if (m_cfg->param.decodedPictureHashSEI == 1)
     {
-        UInt width = recon->getWidth();
-        UInt height = recon->getCUHeight(row);
-        UInt stride = recon->getStride();
+        uint32_t width = recon->getWidth();
+        uint32_t height = recon->getCUHeight(row);
+        uint32_t stride = recon->getStride();
 
         if (row == 0)
         {
@@ -346,9 +346,9 @@ void FrameFilter::processRowPost(int row)
     }
     else if (m_cfg->param.decodedPictureHashSEI == 2)
     {
-        UInt width = recon->getWidth();
-        UInt height = recon->getCUHeight(row);
-        UInt stride = recon->getStride();
+        uint32_t width = recon->getWidth();
+        uint32_t height = recon->getCUHeight(row);
+        uint32_t stride = recon->getStride();
         if (row == 0)
         {
             m_pic->m_crc[0] = m_pic->m_crc[1] = m_pic->m_crc[2] = 0xffff;
@@ -364,10 +364,10 @@ void FrameFilter::processRowPost(int row)
     }
     else if (m_cfg->param.decodedPictureHashSEI == 3)
     {
-        UInt width = recon->getWidth();
-        UInt height = recon->getCUHeight(row);
-        UInt stride = recon->getStride();
-        UInt cuHeight = g_maxCUHeight;
+        uint32_t width = recon->getWidth();
+        uint32_t height = recon->getCUHeight(row);
+        uint32_t stride = recon->getStride();
+        uint32_t cuHeight = g_maxCUHeight;
         if (row == 0)
         {
             m_pic->m_checksum[0] = m_pic->m_checksum[1] = m_pic->m_checksum[2] = 0;
@@ -484,7 +484,7 @@ static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int hei
 }
 
 /* Function to calculate SSIM for each row */
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int *cnt)
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int32_t* cnt)
 {
     int z = 0;
     float ssim = 0.0;
@@ -542,7 +542,7 @@ void FrameFilter::processSao(int row)
     bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
     if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        for (UInt col = 0; col < numCols; col++)
+        for (uint32_t col = 0; col < numCols; col++)
         {
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);

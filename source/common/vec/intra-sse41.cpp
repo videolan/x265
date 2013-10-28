@@ -253,7 +253,7 @@ void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dst
     pixel bottomLeft, topRight;
 
     // Get left and above reference column and row
-    __m128i im0 = _mm_cvtsi32_si128(*(int*)above); // topRow
+    __m128i im0 = _mm_cvtsi32_si128(*(int32_t*)above); // topRow
     __m128i v_topRow = _mm_cvtepu8_epi16(im0);
 
     v_topRow = _mm_shuffle_epi32(v_topRow, 0x44);

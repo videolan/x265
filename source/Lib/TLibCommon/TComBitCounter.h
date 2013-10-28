@@ -55,7 +55,7 @@ class TComBitCounter : public TComBitIf
 {
 protected:
 
-    UInt  m_uiBitCounter;
+    uint32_t  m_uiBitCounter;
 
 public:
 
@@ -63,13 +63,13 @@ public:
 
     virtual ~TComBitCounter()   {}
 
-    void        write(UInt /*uiBits*/, UInt uiNumberOfBits)  { m_uiBitCounter += uiNumberOfBits; }
+    void        write(uint32_t /*uiBits*/, uint32_t uiNumberOfBits)  { m_uiBitCounter += uiNumberOfBits; }
 
-    void        writeByte(UInt /*val*/)                      { m_uiBitCounter += 8; }
+    void        writeByte(uint32_t /*val*/)                      { m_uiBitCounter += 8; }
 
     void        resetBits()                                  { m_uiBitCounter = 0; }
 
-    UInt getNumberOfWrittenBits() const { return m_uiBitCounter; }
+    uint32_t getNumberOfWrittenBits() const { return m_uiBitCounter; }
 };
 }
 //! \}

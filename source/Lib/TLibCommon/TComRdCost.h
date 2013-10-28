@@ -62,9 +62,9 @@ private:
 
     UInt64                  m_lambdaMotionSAD;  // m_lambda w/ 16 bits of fraction
 
-    UInt                    m_cbDistortionWeight;
+    uint32_t                    m_cbDistortionWeight;
 
-    UInt                    m_crDistortionWeight;
+    uint32_t                    m_crDistortionWeight;
 
 public:
 
@@ -78,23 +78,23 @@ public:
 
     void setCbDistortionWeight(double cbDistortionWeight)
     {
-        m_cbDistortionWeight = (UInt)floor(256.0 * cbDistortionWeight);
+        m_cbDistortionWeight = (uint32_t)floor(256.0 * cbDistortionWeight);
     }
 
     void setCrDistortionWeight(double crDistortionWeight)
     {
-        m_crDistortionWeight = (UInt)floor(256.0 * crDistortionWeight);
+        m_crDistortionWeight = (uint32_t)floor(256.0 * crDistortionWeight);
     }
 
-    inline UInt64  calcRdCost(UInt distortion, UInt bits) { return distortion + ((bits * m_lambdaMotionSSE + 32768) >> 16); }
+    inline UInt64  calcRdCost(uint32_t distortion, uint32_t bits) { return distortion + ((bits * m_lambdaMotionSSE + 32768) >> 16); }
 
-    inline UInt64  calcRdSADCost(UInt sadCost, UInt bits) { return sadCost + ((bits * m_lambdaMotionSAD + 32768) >> 16); }
+    inline UInt64  calcRdSADCost(uint32_t sadCost, uint32_t bits) { return sadCost + ((bits * m_lambdaMotionSAD + 32768) >> 16); }
 
-    inline UInt    getCost(UInt bits)                     { return (UInt)((bits * m_lambdaMotionSAD + 32768) >> 16); }
+    inline uint32_t    getCost(uint32_t bits)                     { return (uint32_t)((bits * m_lambdaMotionSAD + 32768) >> 16); }
 
-    inline UInt    scaleChromaDistCb(UInt dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
+    inline uint32_t    scaleChromaDistCb(uint32_t dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
 
-    inline UInt    scaleChromaDistCr(UInt dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
+    inline uint32_t    scaleChromaDistCr(uint32_t dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
 
     inline double  getSADLambda() const                   { return m_lambda; }
 };

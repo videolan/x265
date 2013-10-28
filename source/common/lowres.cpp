@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-void Lowres::create(TComPic *pic, int bframes, int *aqMode)
+void Lowres::create(TComPic *pic, int bframes, int32_t *aqMode)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
 
@@ -64,13 +64,13 @@ void Lowres::create(TComPic *pic, int bframes, int *aqMode)
     lowresPlane[2] = buffer[2] + padoffset;
     lowresPlane[3] = buffer[3] + padoffset;
 
-    intraCost = (int*)X265_MALLOC(int, cuCount);
+    intraCost = (int32_t*)X265_MALLOC(int, cuCount);
 
     for (int i = 0; i < bframes + 2; i++)
     {
         for (int j = 0; j < bframes + 2; j++)
         {
-            rowSatds[i][j] = (int*)X265_MALLOC(int, cuHeight);
+            rowSatds[i][j] = (int32_t*)X265_MALLOC(int, cuHeight);
             lowresCosts[i][j] = (uint16_t*)X265_MALLOC(uint16_t, cuCount);
         }
     }
@@ -79,8 +79,8 @@ void Lowres::create(TComPic *pic, int bframes, int *aqMode)
     {
         lowresMvs[0][i] = (MV*)X265_MALLOC(MV, cuCount);
         lowresMvs[1][i] = (MV*)X265_MALLOC(MV, cuCount);
-        lowresMvCosts[0][i] = (int*)X265_MALLOC(int, cuCount);
-        lowresMvCosts[1][i] = (int*)X265_MALLOC(int, cuCount);
+        lowresMvCosts[0][i] = (int32_t*)X265_MALLOC(int, cuCount);
+        lowresMvCosts[1][i] = (int32_t*)X265_MALLOC(int, cuCount);
     }
 }
 

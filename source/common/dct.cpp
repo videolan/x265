@@ -441,7 +441,7 @@ void partialButterfly4(int16_t *src, int16_t *dst, int shift, int line)
     }
 }
 
-void dst4_c(int16_t *src, int *dst, intptr_t stride)
+void dst4_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
     const int shift_1st = 1;
     const int shift_2nd = 8;
@@ -469,7 +469,7 @@ void dst4_c(int16_t *src, int *dst, intptr_t stride)
 #undef N
 }
 
-void dct4_c(int16_t *src, int *dst, intptr_t stride)
+void dct4_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
     const int shift_1st = 1;
     const int shift_2nd = 8;
@@ -496,7 +496,7 @@ void dct4_c(int16_t *src, int *dst, intptr_t stride)
 #undef N
 }
 
-void dct8_c(int16_t *src, int *dst, intptr_t stride)
+void dct8_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
     const int shift_1st = 2;
     const int shift_2nd = 9;
@@ -524,7 +524,7 @@ void dct8_c(int16_t *src, int *dst, intptr_t stride)
 #undef N
 }
 
-void dct16_c(int16_t *src, int *dst, intptr_t stride)
+void dct16_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
     const int shift_1st = 3;
     const int shift_2nd = 10;
@@ -552,7 +552,7 @@ void dct16_c(int16_t *src, int *dst, intptr_t stride)
 #undef N
 }
 
-void dct32_c(int16_t *src, int *dst, intptr_t stride)
+void dct32_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
     const int shift_1st = 4;
     const int shift_2nd = 11;
@@ -580,7 +580,7 @@ void dct32_c(int16_t *src, int *dst, intptr_t stride)
 #undef N
 }
 
-void idst4_c(int *src, int16_t *dst, intptr_t stride)
+void idst4_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -608,7 +608,7 @@ void idst4_c(int *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void idct4_c(int *src, int16_t *dst, intptr_t stride)
+void idct4_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -636,7 +636,7 @@ void idct4_c(int *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void idct8_c(int *src, int16_t *dst, intptr_t stride)
+void idct8_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -663,7 +663,7 @@ void idct8_c(int *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void idct16_c(int *src, int16_t *dst, intptr_t stride)
+void idct16_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -690,7 +690,7 @@ void idct16_c(int *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void idct32_c(int *src, int16_t *dst, intptr_t stride)
+void idct32_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -718,7 +718,7 @@ void idct32_c(int *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void dequant_c(const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *dequantCoef)
+void dequant_c(const int32_t* quantCoef, int32_t* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int32_t *dequantCoef)
 {
     int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
 
@@ -773,7 +773,7 @@ void dequant_c(const int* quantCoef, int* coef, int width, int height, int per, 
     }
 }
 
-uint32_t quant_c(int* coef, int* quantCoeff, int* deltaU, int* qCoef, int qBits, int add, int numCoeff, int* lastPos)
+uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* qCoef, int qBits, int add, int numCoeff, int32_t* lastPos)
 {
     int qBits8 = qBits - 8;
     uint32_t acSum = 0;

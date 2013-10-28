@@ -29,7 +29,7 @@
  *****************************************************************************/
 
 #include "primitives.h"
-#include "TLibCommon/TypeDef.h"    // TCoeff, int, UInt
+#include "TLibCommon/TypeDef.h"    // TCoeff, int, uint32_t
 #include "TLibCommon/TComRom.h"
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1
@@ -40,14 +40,14 @@
 using namespace x265;
 
 namespace {
-uint32_t quant(int* coef,
-               int* quantCoeff,
-               int* deltaU,
-               int* qCoef,
+uint32_t quant(int32_t* coef,
+               int32_t* quantCoeff,
+               int32_t* deltaU,
+               int32_t* qCoef,
                int  qBits,
                int  add,
                int  numCoeff,
-               int* lastPos)
+               int32_t* lastPos)
 {
     int qBits8 = qBits - 8;
     uint32_t acSum = 0;
@@ -117,7 +117,7 @@ uint32_t quant(int* coef,
     return acSum;
 }
 
-void dequant(const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoef)
+void dequant(const int32_t* quantCoef, int32_t* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int32_t *deQuantCoef)
 {
     int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
 
@@ -248,7 +248,7 @@ ALIGN_VAR_32(static const int16_t, tab_idst_4x4[8][8]) =
     {  -74, -29, -74, -29, -74, -29, -74, -29 }
 };
 
-void idst4(int *src, int16_t *dst, intptr_t stride)
+void idst4(int32_t *src, int16_t *dst, intptr_t stride)
 {
     __m128i m128iAdd, S0, S8, m128iTmp1, m128iTmp2, m128iAC, m128iBD, m128iA, m128iD;
 

@@ -241,8 +241,8 @@ public:
 #define ATOMIC_OR(ptr, mask)                __sync_or_and_fetch(ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval)     __sync_val_compare_and_swap(ptr, oldval, newval)
 #define ATOMIC_CAS32(ptr, oldval, newval)   __sync_val_compare_and_swap(ptr, oldval, newval)
-#define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int*)ptr, 1)
-#define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int*)ptr, -1)
+#define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
+#define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
 #define GIVE_UP_TIME()                      usleep(0)
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */

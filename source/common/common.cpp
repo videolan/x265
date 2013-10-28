@@ -368,7 +368,7 @@ int x265_set_globals(x265_param *param)
         g_maxCUDepth = maxCUDepth;
 
         // initialize partition order
-        UInt* tmp = &g_zscanToRaster[0];
+        uint32_t* tmp = &g_zscanToRaster[0];
         initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
         initRasterToZscan(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
 

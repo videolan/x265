@@ -43,6 +43,7 @@
 #define REF_PIC_LIST_X 100
 
 #include <stdint.h>
+
 namespace x265 {
 // private namespace
 
@@ -52,7 +53,6 @@ namespace x265 {
 
 typedef unsigned char  UChar;
 typedef unsigned short UShort;
-typedef unsigned int   UInt;
 
 // ====================================================================================================================
 // 64-bit integer type

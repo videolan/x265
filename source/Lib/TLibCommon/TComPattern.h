@@ -83,7 +83,7 @@ public:
 
     /// set parameters of one color component from CU data for accessing neighboring pixels
     void setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
-                           int offsetLeft, int offsetAbove, UInt absZOrderIdx);
+                           int offsetLeft, int offsetAbove, uint32_t absZOrderIdx);
 };
 
 /// neighboring pixel access class for all components
@@ -113,7 +113,7 @@ public:
     Pel*  getAdiCbBuf(int cuWidth, int cuHeight, Pel* adiBuf);
     Pel*  getAdiCrBuf(int cuWidth, int cuHeight, Pel* adiBuf);
 
-    Pel*  getPredictorPtr(UInt dirMode, UInt uiWidthBits, Pel* adiBuf);
+    Pel*  getPredictorPtr(uint32_t dirMode, uint32_t uiWidthBits, Pel* adiBuf);
 
     // -------------------------------------------------------------------------------------------------------------------
     // initialization functions
@@ -123,32 +123,32 @@ public:
     void initPattern(Pel* y, Pel* cb, Pel* cr, int roiWidth, int roiHeight, int stride,
                      int offsetLeft, int offsetAbove);
 
-    void initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
+    void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf,
                         int strideOrig, int heightOrig, Pel* refAbove, Pel* refLeft,
                         Pel* refAboveFlt, Pel* refLeftFlt);
 
     /// set parameters from CU data for accessing neighboring pixels
-    void  initPattern(TComDataCU* cu, UInt partDepth, UInt absPartIdx);
+    void  initPattern(TComDataCU* cu, uint32_t partDepth, uint32_t absPartIdx);
 
     /// set luma parameters from CU data for accessing ADI data
-    void  initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
+    void  initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf,
                          int strideOrig, int heightOrig);
 
     /// set chroma parameters from CU data for accessing ADI data
-    void  initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth,
+    void  initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
                                Pel* adiBuf, int strideOrig, int heightOrig);
 
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, int picStride);
+    void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
 
     /// constrained intra prediction
-    bool  isAboveLeftAvailable(TComDataCU* cu, UInt partIdxLT);
-    int   isAboveAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, bool* bValidFlags);
-    int   isLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, bool* bValidFlags);
-    int   isAboveRightAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, bool* bValidFlags);
-    int   isBelowLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, bool* bValidFlags);
+    bool  isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT);
+    int   isAboveAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    int   isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+    int   isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    int   isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
 };
 }
 //! \}

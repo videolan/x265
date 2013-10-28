@@ -140,10 +140,10 @@ bool TComSlice::getRapPicFlag()
  .
  \param uiNumSubstreams Number of substreams -- the allocation will be this value - 1.
  */
-void  TComSlice::allocSubstreamSizes(UInt numSubstreams)
+void  TComSlice::allocSubstreamSizes(uint32_t numSubstreams)
 {
     delete[] m_substreamSizes;
-    m_substreamSizes = new UInt[numSubstreams > 0 ? numSubstreams - 1 : 0];
+    m_substreamSizes = new uint32_t[numSubstreams > 0 ? numSubstreams - 1 : 0];
 }
 
 TComPic* TComSlice::xGetRefPic(PicList& picList, int poc)
@@ -239,9 +239,9 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
     TComPic* refPicSetStCurr0[16];
     TComPic* refPicSetStCurr1[16];
     TComPic* refPicSetLtCurr[16];
-    UInt numPocStCurr0 = 0;
-    UInt numPocStCurr1 = 0;
-    UInt numPocLtCurr = 0;
+    uint32_t numPocStCurr0 = 0;
+    uint32_t numPocStCurr1 = 0;
+    uint32_t numPocLtCurr = 0;
     int i;
 
     for (i = 0; i < m_rps->getNumberOfNegativePictures(); i++)
@@ -388,7 +388,7 @@ int TComSlice::getNumRpsCurrTempList()
     {
         return 0;
     }
-    for (UInt i = 0; i < m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() + m_rps->getNumberOfLongtermPictures(); i++)
+    for (uint32_t i = 0; i < m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() + m_rps->getNumberOfLongtermPictures(); i++)
     {
         if (m_rps->getUsed(i))
         {
@@ -623,7 +623,7 @@ void  TComSPS::createRPSList(int numRPS)
     m_RPSList.create(numRPS);
 }
 
-void TComSPS::setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, bool randomAccess)
+void TComSPS::setHrdParameters(uint32_t frameRate, uint32_t numDU, uint32_t bitRate, bool randomAccess)
 {
     if (!getVuiParametersPresentFlag())
     {
@@ -701,9 +701,9 @@ void TComSPS::setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, bool ra
    Note: only the case of "vps_max_temporal_layers_minus1 = 0" is supported.
 */
     int i, j;
-    UInt birateValue, cpbSizeValue;
-    UInt ducpbSizeValue;
-    UInt duBitRateValue = 0;
+    uint32_t birateValue, cpbSizeValue;
+    uint32_t ducpbSizeValue;
+    uint32_t duBitRateValue = 0;
 
     for (i = 0; i < MAX_TLAYER; i++)
     {
@@ -945,9 +945,9 @@ TComScalingList::~TComScalingList()
 */
 void TComSlice::setDefaultScalingList()
 {
-    for (UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
-        for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
             getScalingList()->processDefaultMarix(sizeId, listId);
         }
@@ -959,11 +959,11 @@ void TComSlice::setDefaultScalingList()
 */
 bool TComSlice::checkDefaultScalingList()
 {
-    UInt defaultCounter = 0;
+    uint32_t defaultCounter = 0;
 
-    for (UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
-        for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
             if (!memcmp(getScalingList()->getScalingListAddress(sizeId, listId), getScalingList()->getScalingListDefaultAddress(sizeId, listId), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
                 && ((sizeId < SCALING_LIST_16x16) || (getScalingList()->getScalingListDC(sizeId, listId) == 16))) // check DC value
@@ -981,7 +981,7 @@ bool TComSlice::checkDefaultScalingList()
  * \param Index of input matrix
  * \param Index of reference matrix
  */
-void TComScalingList::processRefMatrix(UInt sizeId, UInt listId, UInt refListId)
+void TComScalingList::processRefMatrix(uint32_t sizeId, uint32_t listId, uint32_t refListId)
 {
     ::memcpy(getScalingListAddress(sizeId, listId), ((listId == refListId) ? getScalingListDefaultAddress(sizeId, refListId) : getScalingListAddress(sizeId, refListId)), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
 }
@@ -994,11 +994,11 @@ bool TComScalingList::xParseScalingList(char* pchFile)
 {
     FILE *fp;
     char line[1024];
-    UInt sizeIdc, listIdc;
-    UInt i, size = 0;
-    int *src = 0, data;
+    uint32_t sizeIdc, listIdc;
+    uint32_t i, size = 0;
+    int32_t *src = 0, data;
     char *ret;
-    UInt  retval;
+    uint32_t  retval;
 
     if ((fp = fopen(pchFile, "r")) == (FILE*)NULL)
     {
@@ -1071,9 +1071,9 @@ bool TComScalingList::xParseScalingList(char* pchFile)
  */
 void TComScalingList::init()
 {
-    for (UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
-        for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
             m_scalingListCoef[sizeId][listId] = new int[X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])];
         }
@@ -1086,9 +1086,9 @@ void TComScalingList::init()
  */
 void TComScalingList::destroy()
 {
-    for (UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
-        for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
             if (m_scalingListCoef[sizeId][listId]) delete [] m_scalingListCoef[sizeId][listId];
         }
@@ -1100,9 +1100,9 @@ void TComScalingList::destroy()
  * \param listId list index
  * \returns pointer of quantization matrix
  */
-int* TComScalingList::getScalingListDefaultAddress(UInt sizeId, UInt listId)
+int32_t* TComScalingList::getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId)
 {
-    int *src = 0;
+    int32_t *src = 0;
 
     switch (sizeId)
     {
@@ -1131,7 +1131,7 @@ int* TComScalingList::getScalingListDefaultAddress(UInt sizeId, UInt listId)
  * \param sizeId size index
  * \param Index of input matrix
  */
-void TComScalingList::processDefaultMarix(UInt sizeId, UInt listId)
+void TComScalingList::processDefaultMarix(uint32_t sizeId, uint32_t listId)
 {
     ::memcpy(getScalingListAddress(sizeId, listId), getScalingListDefaultAddress(sizeId, listId), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
     setScalingListDC(sizeId, listId, SCALING_LIST_DC);
@@ -1141,9 +1141,9 @@ void TComScalingList::processDefaultMarix(UInt sizeId, UInt listId)
  */
 void TComScalingList::checkDcOfMatrix()
 {
-    for (UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
-        for (UInt listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
             //check default matrix?
             if (getScalingListDC(sizeId, listId) == 0)

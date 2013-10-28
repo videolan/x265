@@ -64,25 +64,25 @@ public:
 
     void  resetBac();
     void  encodePCMAlignBits();
-    void  xWritePCMCode(UInt code, UInt length);
+    void  xWritePCMCode(uint32_t code, uint32_t length);
 
     void  resetBits();
 
-    UInt getNumWrittenBits()
+    uint32_t getNumWrittenBits()
     {
         // NOTE: the HM go here only in Counter mode
         assert(!bIsCounter || (m_bitIf->getNumberOfWrittenBits() == 0));
         assert(bIsCounter);
-        return UInt(m_fracBits >> 15);
+        return uint32_t(m_fracBits >> 15);
 
         // NOTE: I keep the old code, so someone may active if they want
         //return m_bitIf->getNumberOfWrittenBits() + 8 * m_numBufferedBytes + 23 - m_bitsLeft;
     }
 
-    void  encodeBin(UInt binValue, ContextModel& ctxModel);
-    void  encodeBinEP(UInt binValue);
-    void  encodeBinsEP(UInt binValues, int numBins);
-    void  encodeBinTrm(UInt binValue);
+    void  encodeBin(uint32_t binValue, ContextModel& ctxModel);
+    void  encodeBinEP(uint32_t binValue);
+    void  encodeBinsEP(uint32_t binValues, int numBins);
+    void  encodeBinTrm(uint32_t binValue);
 
 protected:
 
@@ -92,9 +92,9 @@ protected:
 public:
 
     TComBitIf*          m_bitIf;
-    UInt                m_low;
-    UInt                m_range;
-    UInt                m_bufferedByte;
+    uint32_t                m_low;
+    uint32_t                m_range;
+    uint32_t                m_bufferedByte;
     int                 m_numBufferedBytes;
     int                 m_bitsLeft;
     UInt64              m_fracBits;

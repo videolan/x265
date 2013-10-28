@@ -40,10 +40,10 @@ extern FILE* fp1;
 void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  TShortYUV* outResiYuv, TComYuv* outReconYuv)
 {
     UInt64 puCost = 0;
-    UInt puDistY = 0;
-    UInt puDistC = 0;
-    UInt depth = cu->getDepth(0);
-    UInt initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
+    uint32_t puDistY = 0;
+    uint32_t puDistC = 0;
+    uint32_t depth = cu->getDepth(0);
+    uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
 
     // set context models
     m_search->m_rdGoOnSbacCoder->load(m_search->m_rdSbacCoders[depth][CI_CURR_BEST]);
@@ -84,16 +84,16 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 
 void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
 {
-    UInt depth = cu->getDepth(0);
+    uint32_t depth = cu->getDepth(0);
 
     cu->setSkipFlagSubParts(false, 0, depth);
     cu->setPartSizeSubParts(partSize, 0, depth);
     cu->setPredModeSubParts(MODE_INTRA, 0, depth);
     cu->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
 
-    UInt initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-    UInt width       = cu->getWidth(0) >> initTrDepth;
-    UInt partOffset  = 0;
+    uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
+    uint32_t width       = cu->getWidth(0) >> initTrDepth;
+    uint32_t partOffset  = 0;
 
     //===== init pattern for luma prediction =====
     cu->getPattern()->initPattern(cu, initTrDepth, partOffset);
@@ -102,14 +102,14 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
 
     Pel* fenc   = m_origYuv[depth]->getLumaAddr(0, width);
     Pel* pred   = m_modePredYuv[5][depth]->getLumaAddr(0, width);
-    UInt stride = m_modePredYuv[5][depth]->getStride();
+    uint32_t stride = m_modePredYuv[5][depth]->getStride();
 
     Pel *pAbove0 = m_search->refAbove    + width - 1;
     Pel *pAbove1 = m_search->refAboveFlt + width - 1;
     Pel *pLeft0  = m_search->refLeft     + width - 1;
     Pel *pLeft1  = m_search->refLeftFlt  + width - 1;
     int sad;
-    UInt bits, mode, bmode;
+    uint32_t bits, mode, bmode;
     UInt64 cost, bcost;
 
     // 33 Angle modes once
@@ -235,7 +235,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     UChar interDirNeighbours[MRG_MAX_NUM_CANDS];
     int numValidMergeCand = 0;
 
-    for (UInt i = 0; i < outTempCU->getSlice()->getMaxNumMergeCand(); ++i)
+    for (uint32_t i = 0; i < outTempCU->getSlice()->getMaxNumMergeCand(); ++i)
     {
         interDirNeighbours[i] = 0;
     }
@@ -298,7 +298,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             else
             {
                 bool allZero = true;
-                for (UInt list = 0; list < 2; list++)
+                for (uint32_t list = 0; list < 2; list++)
                 {
                     if (outBestCU->getSlice()->getNumRefIdx(list) > 0)
                     {
@@ -318,7 +318,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     x265_emms();
 }
 
-void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex)
+void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, uint32_t PartitionIndex)
 {
 #if CU_STAT_LOGFILE
     cntTotalCu[depth]++;
@@ -335,10 +335,10 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     bool bSubBranch = true;
     bool bTrySplitDQP = true;
     bool bBoundary = false;
-    UInt lpelx = outTempCU->getCUPelX();
-    UInt rpelx = lpelx + outTempCU->getWidth(0)  - 1;
-    UInt tpely = outTempCU->getCUPelY();
-    UInt bpely = tpely + outTempCU->getHeight(0) - 1;
+    uint32_t lpelx = outTempCU->getCUPelX();
+    uint32_t rpelx = lpelx + outTempCU->getWidth(0)  - 1;
+    uint32_t tpely = outTempCU->getCUPelY();
+    uint32_t bpely = tpely + outTempCU->getHeight(0) - 1;
     TComDataCU* subTempPartCU, * subBestPartCU;
     int qp = outTempCU->getQP(0);
 
@@ -541,7 +541,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             subBestPartCU = NULL;
             /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
             nxnCost = 0;
-            for (UInt partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
+            for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
             {
                 subTempPartCU = m_interCU_NxN[partUnitIdx][nextDepth];
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp);     // clear sub partition datas or init.
@@ -594,7 +594,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         outTempCU->initEstData(depth, qp);
         UChar nextDepth = (UChar)(depth + 1);
         subTempPartCU = m_tempCU[nextDepth];
-        for (UInt nextDepth_partIndex = 0; nextDepth_partIndex < 4; nextDepth_partIndex++)
+        for (uint32_t nextDepth_partIndex = 0; nextDepth_partIndex < 4; nextDepth_partIndex++)
         {
             subBestPartCU = NULL;
             subTempPartCU->initSubCU(outTempCU, nextDepth_partIndex, nextDepth, qp); // clear sub partition datas or init.
@@ -637,7 +637,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         if ((g_maxCUWidth >> depth) == outTempCU->getSlice()->getPPS()->getMinCuDQPSize() && outTempCU->getSlice()->getPPS()->getUseDQP())
         {
             bool hasResidual = false;
-            for (UInt uiBlkIdx = 0; uiBlkIdx < outTempCU->getTotalNumPart(); uiBlkIdx++)
+            for (uint32_t uiBlkIdx = 0; uiBlkIdx < outTempCU->getTotalNumPart(); uiBlkIdx++)
             {
                 if (outTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || outTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) ||
                     outTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
@@ -647,7 +647,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 }
             }
 
-            UInt targetPartIdx = 0;
+            uint32_t targetPartIdx = 0;
             if (hasResidual)
             {
                 bool foundNonZeroCbf = false;

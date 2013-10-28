@@ -161,8 +161,8 @@ inline int partitionFromSizes(int width, int height)
 typedef int  (*pixelcmp_t)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref, intptr_t frefstride);
 typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
-typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
-typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
+typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res);
+typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int32_t *res);
 typedef void (*ipfilter_pp_t)(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
 typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
 typedef void (*ipfilter_sp_t)(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
@@ -184,18 +184,18 @@ typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t d
 typedef void (*intra_ang_t)(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 
-typedef void (*cvt16to32_shl_t)(int *dst, int16_t *src, intptr_t, int, int);
+typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
 typedef void (*cvt16to16_shl_t)(int16_t *dst, int16_t *src, int, int, intptr_t, int);
-typedef void (*cvt32to16_shr_t)(int16_t *dst, int *src, intptr_t, int, int);
+typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
 
-typedef void (*dct_t)(int16_t *src, int *dst, intptr_t stride);
-typedef void (*idct_t)(int *src, int16_t *dst, intptr_t stride);
+typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
+typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, int stride);
 typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
-typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff, int* lastPos);
-typedef void (*dequant_t)(const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
-                          unsigned int trSizeLog2, int *dequantCoef);
+typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);
+typedef void (*dequant_t)(const int32_t* src, int32_t* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
+                          unsigned int trSizeLog2, int32_t *dequantCoef);
 
 typedef void (*weightpUniPixel_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightpUni_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);

@@ -65,9 +65,9 @@ void initROM()
         c = 2;
         for (i = 0; i < MAX_CU_DEPTH; i++)
         {
-            g_sigLastScan[0][i] = new UInt[c * c];
-            g_sigLastScan[1][i] = new UInt[c * c];
-            g_sigLastScan[2][i] = new UInt[c * c];
+            g_sigLastScan[0][i] = new uint32_t[c * c];
+            g_sigLastScan[1][i] = new uint32_t[c * c];
+            g_sigLastScan[2][i] = new uint32_t[c * c];
             initSigLastScan(g_sigLastScan[0][i], g_sigLastScan[1][i], g_sigLastScan[2][i], c, c);
 
             c <<= 1;
@@ -95,18 +95,18 @@ void destroyROM()
 // ====================================================================================================================
 
 int  g_bitDepth = 8;
-UInt g_maxCUWidth  = MAX_CU_SIZE;
-UInt g_maxCUHeight = MAX_CU_SIZE;
-UInt g_maxCUDepth  = MAX_CU_DEPTH;
-UInt g_addCUDepth  = 0;
-UInt g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-UInt g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-UInt g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-UInt g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+uint32_t g_maxCUWidth  = MAX_CU_SIZE;
+uint32_t g_maxCUHeight = MAX_CU_SIZE;
+uint32_t g_maxCUDepth  = MAX_CU_DEPTH;
+uint32_t g_addCUDepth  = 0;
+uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 
-UInt g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
+uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
-void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
+void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx)
 {
     int stride = 1 << (maxDepth - 1);
 
@@ -125,32 +125,32 @@ void initZscanToRaster(int maxDepth, int depth, UInt startVal, UInt*& curIdx)
     }
 }
 
-void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
+void initRasterToZscan(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxDepth)
 {
-    UInt  minWidth  = maxCUWidth  >> (maxDepth - 1);
-    UInt  minHeight = maxCUHeight >> (maxDepth - 1);
+    uint32_t  minWidth  = maxCUWidth  >> (maxDepth - 1);
+    uint32_t  minHeight = maxCUHeight >> (maxDepth - 1);
 
-    UInt  numPartInWidth  = (UInt)maxCUWidth  / minWidth;
-    UInt  numPartInHeight = (UInt)maxCUHeight / minHeight;
+    uint32_t  numPartInWidth  = (uint32_t)maxCUWidth  / minWidth;
+    uint32_t  numPartInHeight = (uint32_t)maxCUHeight / minHeight;
 
-    for (UInt i = 0; i < numPartInWidth * numPartInHeight; i++)
+    for (uint32_t i = 0; i < numPartInWidth * numPartInHeight; i++)
     {
         g_rasterToZscan[g_zscanToRaster[i]] = i;
     }
 }
 
-void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
+void initRasterToPelXY(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxDepth)
 {
-    UInt i;
+    uint32_t i;
 
-    UInt* tempX = &g_rasterToPelX[0];
-    UInt* tempY = &g_rasterToPelY[0];
+    uint32_t* tempX = &g_rasterToPelX[0];
+    uint32_t* tempY = &g_rasterToPelY[0];
 
-    UInt  minWidth  = maxCUWidth  >> (maxDepth - 1);
-    UInt  minHeight = maxCUHeight >> (maxDepth - 1);
+    uint32_t  minWidth  = maxCUWidth  >> (maxDepth - 1);
+    uint32_t  minHeight = maxCUHeight >> (maxDepth - 1);
 
-    UInt  numPartInWidth  = maxCUWidth  / minWidth;
-    UInt  numPartInHeight = maxCUHeight / minHeight;
+    uint32_t  numPartInWidth  = maxCUWidth  / minWidth;
+    uint32_t  numPartInHeight = maxCUHeight / minHeight;
 
     tempX[0] = 0;
     tempX++;
@@ -162,7 +162,7 @@ void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
 
     for (i = 1; i < numPartInHeight; i++)
     {
-        memcpy(tempX, tempX - numPartInWidth, sizeof(UInt) * numPartInWidth);
+        memcpy(tempX, tempX - numPartInWidth, sizeof(uint32_t) * numPartInWidth);
         tempX += numPartInWidth;
     }
 
@@ -325,37 +325,37 @@ UInt64 g_nSymbolCounter = 0;
 // ====================================================================================================================
 
 // scanning order table
-UInt* g_sigLastScan[3][MAX_CU_DEPTH];
+uint32_t* g_sigLastScan[3][MAX_CU_DEPTH];
 
-const UInt g_sigLastScan8x8[3][4] =
+const uint32_t g_sigLastScan8x8[3][4] =
 {
     { 0, 2, 1, 3 },
     { 0, 1, 2, 3 },
     { 0, 2, 1, 3 }
 };
-UInt g_sigLastScanCG32x32[64];
+uint32_t g_sigLastScanCG32x32[64];
 
-const UInt g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
-const UInt g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
+const uint32_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
+const uint32_t g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
 
 // Rice parameters for absolute transform levels
-const UInt g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
+const uint32_t g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
 
-const UInt g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
+const uint32_t g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
 
-void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, int width, int height)
+void initSigLastScan(uint32_t* buffD, uint32_t* buffH, uint32_t* buffV, int width, int height)
 {
-    const UInt  numScanPos  = UInt(width * width);
-    UInt        nextScanPos = 0;
+    const uint32_t  numScanPos  = uint32_t(width * width);
+    uint32_t        nextScanPos = 0;
 
     if (width < 16)
     {
-        UInt* buffTemp = buffD;
+        uint32_t* buffTemp = buffD;
         if (width == 8)
         {
             buffTemp = g_sigLastScanCG32x32;
         }
-        for (UInt scanLine = 0; nextScanPos < numScanPos; scanLine++)
+        for (uint32_t scanLine = 0; nextScanPos < numScanPos; scanLine++)
         {
             int primDim = int(scanLine);
             int scndDim = 0;
@@ -376,23 +376,23 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, int width, int heigh
     }
     if (width > 4)
     {
-        UInt numBlkSide = width >> 2;
-        UInt numBlks    = numBlkSide * numBlkSide;
-        UInt log2Blk    = g_convertToBit[numBlkSide] + 1;
+        uint32_t numBlkSide = width >> 2;
+        uint32_t numBlks    = numBlkSide * numBlkSide;
+        uint32_t log2Blk    = g_convertToBit[numBlkSide] + 1;
 
-        for (UInt blk = 0; blk < numBlks; blk++)
+        for (uint32_t blk = 0; blk < numBlks; blk++)
         {
             nextScanPos   = 0;
-            UInt initBlkPos = g_sigLastScan[SCAN_DIAG][log2Blk][blk];
+            uint32_t initBlkPos = g_sigLastScan[SCAN_DIAG][log2Blk][blk];
             if (width == 32)
             {
                 initBlkPos = g_sigLastScanCG32x32[blk];
             }
-            UInt offsetY    = initBlkPos / numBlkSide;
-            UInt offsetX    = initBlkPos - offsetY * numBlkSide;
-            UInt offsetD    = 4 * (offsetX + offsetY * width);
-            UInt offsetScan = 16 * blk;
-            for (UInt scanLine = 0; nextScanPos < 16; scanLine++)
+            uint32_t offsetY    = initBlkPos / numBlkSide;
+            uint32_t offsetX    = initBlkPos - offsetY * numBlkSide;
+            uint32_t offsetD    = 4 * (offsetX + offsetY * width);
+            uint32_t offsetScan = 16 * blk;
+            for (uint32_t scanLine = 0; nextScanPos < 16; scanLine++)
             {
                 int primDim = int(scanLine);
                 int scndDim = 0;
@@ -413,15 +413,15 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, int width, int heigh
         }
     }
 
-    UInt cnt = 0;
+    uint32_t cnt = 0;
     if (width > 2)
     {
-        UInt numBlkSide = width >> 2;
+        uint32_t numBlkSide = width >> 2;
         for (int blkY = 0; blkY < numBlkSide; blkY++)
         {
             for (int blkX = 0; blkX < numBlkSide; blkX++)
             {
-                UInt offset = blkY * 4 * width + blkX * 4;
+                uint32_t offset = blkY * 4 * width + blkX * 4;
                 for (int y = 0; y < 4; y++)
                 {
                     for (int x = 0; x < 4; x++)
@@ -438,7 +438,7 @@ void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, int width, int heigh
         {
             for (int blkY = 0; blkY < numBlkSide; blkY++)
             {
-                UInt offset    = blkY * 4 * width + blkX * 4;
+                uint32_t offset    = blkY * 4 * width + blkX * 4;
                 for (int x = 0; x < 4; x++)
                 {
                     for (int y = 0; y < 4; y++)
@@ -504,9 +504,9 @@ int g_quantInterDefault8x8[64] =
     20, 24, 25, 28, 33, 41, 54, 71,
     24, 25, 28, 33, 41, 54, 71, 91
 };
-UInt g_scalingListSize[4] = { 16, 64, 256, 1024 };
-UInt g_scalingListSizeX[4] = { 4, 8, 16,  32 };
-UInt g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 2 };
+uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
+uint32_t g_scalingListSizeX[4] = { 4, 8, 16,  32 };
+uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 2 };
 int  g_eTTable[4] = { 0, 3, 1, 2 };
 
 const int g_winUnitX[] = { 1, 2, 2, 1 };

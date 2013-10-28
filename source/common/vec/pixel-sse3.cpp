@@ -31,7 +31,7 @@
 using namespace x265;
 
 namespace {
-void convert16to32_shl(int *dst, int16_t *org, intptr_t stride, int shift, int size)
+void convert16to32_shl(int32_t *dst, int16_t *org, intptr_t stride, int shift, int size)
 {
     int i, j;
 
@@ -90,10 +90,10 @@ void transpose4(pixel* dst, pixel* src, intptr_t stride)
 {
     __m128i T00, T01, T02, T03;
 
-    T00 = _mm_cvtsi32_si128(*(int*)&src[0 * stride]);   // [03 02 01 00]
-    T01 = _mm_cvtsi32_si128(*(int*)&src[1 * stride]);   // [13 12 11 10]
-    T02 = _mm_cvtsi32_si128(*(int*)&src[2 * stride]);   // [23 22 21 20]
-    T03 = _mm_cvtsi32_si128(*(int*)&src[3 * stride]);   // [33 32 31 30]
+    T00 = _mm_cvtsi32_si128(*(int32_t*)&src[0 * stride]);   // [03 02 01 00]
+    T01 = _mm_cvtsi32_si128(*(int32_t*)&src[1 * stride]);   // [13 12 11 10]
+    T02 = _mm_cvtsi32_si128(*(int32_t*)&src[2 * stride]);   // [23 22 21 20]
+    T03 = _mm_cvtsi32_si128(*(int32_t*)&src[3 * stride]);   // [33 32 31 30]
 
     T00 = _mm_unpacklo_epi8(T00, T01);
     T01 = _mm_unpacklo_epi8(T02, T03);

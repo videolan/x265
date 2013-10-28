@@ -45,7 +45,7 @@ using namespace x265;
 
 #if ENC_DEC_TRACE
 
-void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const char *symbolName)
+void  SyntaxElementWriter::xWriteCodeTr(uint32_t value, uint32_t  length, const char *symbolName)
 {
     xWriteCode(value, length);
     if (g_HLSTraceEnable)
@@ -62,7 +62,7 @@ void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const char *sy
     }
 }
 
-void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const char *symbolName)
+void  SyntaxElementWriter::xWriteUvlcTr(uint32_t value, const char *symbolName)
 {
     xWriteUvlc(value);
     if (g_HLSTraceEnable)
@@ -82,7 +82,7 @@ void  SyntaxElementWriter::xWriteSvlcTr(int value, const char *symbolName)
     }
 }
 
-void  SyntaxElementWriter::xWriteFlagTr(UInt value, const char *symbolName)
+void  SyntaxElementWriter::xWriteFlagTr(uint32_t value, const char *symbolName)
 {
     xWriteFlag(value);
     if (g_HLSTraceEnable)
@@ -94,16 +94,16 @@ void  SyntaxElementWriter::xWriteFlagTr(UInt value, const char *symbolName)
 
 #endif // if ENC_DEC_TRACE
 
-void SyntaxElementWriter::xWriteCode(UInt code, UInt len)
+void SyntaxElementWriter::xWriteCode(uint32_t code, uint32_t len)
 {
     assert(len > 0);
     m_bitIf->write(code, len);
 }
 
-void SyntaxElementWriter::xWriteUvlc(UInt code)
+void SyntaxElementWriter::xWriteUvlc(uint32_t code)
 {
-    UInt len = 1;
-    UInt temp = ++code;
+    uint32_t len = 1;
+    uint32_t temp = ++code;
 
     assert(temp);
 
@@ -120,12 +120,12 @@ void SyntaxElementWriter::xWriteUvlc(UInt code)
 
 void SyntaxElementWriter::xWriteSvlc(int code)
 {
-    UInt ucode = xConvertToUInt(code);
+    uint32_t ucode = xConvertToUInt(code);
 
     xWriteUvlc(ucode);
 }
 
-void SyntaxElementWriter::xWriteFlag(UInt code)
+void SyntaxElementWriter::xWriteFlag(uint32_t code)
 {
     m_bitIf->write(code, 1);
 }

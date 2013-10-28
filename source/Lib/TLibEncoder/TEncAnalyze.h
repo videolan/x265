@@ -56,7 +56,7 @@ private:
     double    m_psnrSumU;
     double    m_psnrSumV;
     double    m_accBits;
-    UInt      m_numPics;
+    uint32_t      m_numPics;
 
 public:
 
@@ -79,7 +79,7 @@ public:
 
     double  getBits()   { return m_accBits;  }
 
-    UInt    getNumPic() { return m_numPics;  }
+    uint32_t    getNumPic() { return m_numPics;  }
 
     void    clear() { m_psnrSumY = m_psnrSumU = m_psnrSumV = m_accBits = m_numPics = 0; }
 

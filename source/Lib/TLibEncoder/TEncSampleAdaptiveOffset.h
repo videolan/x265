@@ -101,7 +101,7 @@ public:
     void disablePartTree(SAOQTPart *psQTPart, int partIdx);
     void getSaoStats(SAOQTPart *psQTPart, int yCbCr);
     void calcSaoStatsCu(int addr, int partIdx, int yCbCr);
-    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, UInt width, UInt height, bool* bBorderAvail, int yCbCr);
+    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, uint32_t width, uint32_t height, bool* bBorderAvail, int yCbCr);
     void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int idxY);
     void destroyEncBuffer();
     void createEncBuffer();
@@ -110,8 +110,8 @@ public:
     void saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int yCbCr, double lambda, SaoLcuParam *compSaoParam, double *distortion);
     void sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion);
     inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, int shift);
-    inline Int64 estIterOffset(int typeIdx, int classIdx, double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh);
-    inline Int64 estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int *currentDistortionTableBo, double *currentRdCostTableBo);
+    inline Int64 estIterOffset(int typeIdx, int classIdx, double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int32_t *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh);
+    inline Int64 estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int32_t *currentDistortionTableBo, double *currentRdCostTableBo);
     void setMaxNumOffsetsPerPic(int val) { m_maxNumOffsetsPerPic = val; }
 
     int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }

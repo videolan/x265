@@ -108,7 +108,7 @@ int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 }
 
 template<int lx, int ly>
-void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstride, int *res)
+void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstride, int32_t *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -130,7 +130,7 @@ void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstr
 }
 
 template<int lx, int ly>
-void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t frefstride, int *res)
+void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t frefstride, int32_t *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -442,7 +442,7 @@ void blockfil_s_c(int16_t *dst, intptr_t dstride, int16_t val)
     }
 }
 
-void convert16to32_shl(int *dst, int16_t *src, intptr_t stride, int shift, int size)
+void convert16to32_shl(int32_t *dst, int16_t *src, intptr_t stride, int shift, int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -453,7 +453,7 @@ void convert16to32_shl(int *dst, int16_t *src, intptr_t stride, int shift, int s
     }
 }
 
-void convert32to16_shr(int16_t *dst, int *src, intptr_t stride, int shift, int size)
+void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, int size)
 {
     int round = 1 << (shift - 1);
 
