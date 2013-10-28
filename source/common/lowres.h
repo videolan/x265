@@ -36,6 +36,7 @@ struct Lowres : public ReferencePlanes
     /* lowres buffers, sizes and strides */
     pixel *buffer[4];
     double *m_qpAqOffset; // qp Aq offset values for each Cu
+    int*   m_invQscaleFactor; // qScale values for qp Aq Offsets 
     int    width;     // width of lowres frame in pixels
     int    lines;     // height of lowres frame in pixel lines
     int    frameNum;  // Presentation frame number

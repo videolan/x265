@@ -1003,6 +1003,8 @@ void FrameEncoder::processRowEncoder(int row)
         codeRow.m_entropyCoder.resetEntropy();
 
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        int qp = calcQpForCu(m_pic, cuAddr);
+        cu->setQP(0,(char)qp);
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
         // TODO: Keep atomic running totals for rate control?
@@ -1052,6 +1054,34 @@ void FrameEncoder::processRowEncoder(int row)
         }
     }
     m_totalTime = m_totalTime + (x265_mdate() - startTime);
+}
+
+int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
+{
+    x265_emms();
+    double qp = pic->getSlice()->getSliceQp();
+    if (m_cfg->param.rc.aqMode)
+    {
+        /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
+        double qp_offset = 0;
+        int blockSize = g_maxCUWidth >> 2;
+        int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (blockSize - 1)) / blockSize;
+        int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (blockSize - 1)) / blockSize;
+        int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * 4;
+        int block_x = (cuAddr * 4) - block_y * pic->getPicSym()->getFrameWidthInCU();
+        int cnt = 0;
+        for (int h = 0; h < 4 && block_y < maxBlockRows ; h++, block_y++)
+        {
+            for (int w = 0; w < 4 && (block_x + w) < maxBlockCols; w++)
+            {
+                qp_offset += pic->m_lowres.m_qpAqOffset[block_x + w + (block_y * maxBlockCols)];
+                cnt++;
+            }
+        }
+        qp_offset /= cnt;
+        qp += qp_offset;
+    }
+    return Clip3(MIN_QP, MAX_QP, (int)(qp + 0.5));
 }
 
 TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)

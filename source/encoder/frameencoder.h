@@ -165,7 +165,7 @@ public:
 protected:
 
     void determineSliceBounds();
-
+    int calcQpForCu(TComPic *pic, uint32_t cuAddr);
     Encoder*                 m_top;
     TEncCfg*                 m_cfg;
 
