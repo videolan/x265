@@ -37,12 +37,14 @@ using namespace x265;
 
 namespace {
 template<int N>
-void filterVertical_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
+void filterVertical_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int coeffIdx)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC + headRoom;
     int offset = (1 << (shift - 1)) + (IF_INTERNAL_OFFS << IF_FILTER_PREC);
     int16_t maxVal = (1 << X265_DEPTH) - 1;
+    const int16_t *coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
+
     src -= (N / 2 - 1) * srcStride;
 
     int row, col;
@@ -409,7 +411,7 @@ void interp_hv_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStri
 {
     short m_immedVals[(64 + 8) * (64 + 8)];
     filterHorizontal_ps_c<N>(src - 3 * srcStride, srcStride, m_immedVals, width, width, height + 7, g_lumaFilter[idxX]);
-    filterVertical_sp_c<N>(m_immedVals + 3 * width, width, dst, dstStride, width, height, g_lumaFilter[idxY]);
+    filterVertical_sp_c<N>(m_immedVals + 3 * width, width, dst, dstStride, width, height, idxY);
 }
 
 }

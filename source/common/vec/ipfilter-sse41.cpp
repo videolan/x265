@@ -34,6 +34,8 @@
 #include <assert.h>
 #include <string.h>
 
+using namespace x265;
+
 #if !HIGH_BIT_DEPTH
 namespace {
 ALIGN_VAR_32(const uint16_t, c_512[16]) =
@@ -42,8 +44,10 @@ ALIGN_VAR_32(const uint16_t, c_512[16]) =
 };
 
 template<int N>
-void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
+void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int coeffIdx)
 {
+    const int16_t *coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
+
     src -= (N / 2 - 1) * srcStride;
 
     int offset;

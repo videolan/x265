@@ -1232,7 +1232,7 @@ void MotionEstimate::subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir)
             int filterSize = NTAPS_LUMA;
             int halfFilterSize = (filterSize >> 1);
             primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, blockwidth, blockwidth, realHeight + filterSize - 1, g_lumaFilter[xFrac]);
-            primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, blockwidth, realHeight, g_lumaFilter[yFrac]);
+            primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, blockwidth, realHeight, yFrac);
         }
     }
 }

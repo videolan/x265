@@ -178,14 +178,14 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
-            rand_height, g_lumaFilter[rand_val]
+            rand_height, rand_val
             );
         ref(short_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
             rand_width,
-            rand_height, g_lumaFilter[rand_val]
+            rand_height, rand_val
             );
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
@@ -506,7 +506,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             printf("ipfilter_sp %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_sp[value], ref.ipfilter_sp[value],
                            short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                           IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
+                           IPF_vec_output_p, dstStride, width, height, val);
         }
     }
 
