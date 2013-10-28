@@ -47,11 +47,11 @@ protected:
 
     int height;
 
-    int depth;
+    uint32_t depth;
 
-    int pixelbytes;
+    uint32_t pixelbytes;
 
-    int framesize;
+    uint32_t framesize;
 
     bool threadActive;
 
@@ -81,7 +81,7 @@ public:
 
     void setDimensions(int w, int h);
 
-    void setBitDepth(int bitDepth)                { depth = bitDepth; }
+    void setBitDepth(uint32_t bitDepth)                { depth = bitDepth; }
 
     float getRate() const                         { return 0.0f; }
 
@@ -99,7 +99,7 @@ public:
 
     int  guessFrameCount();
 
-    void skipFrames(int numFrames);
+    void skipFrames(uint32_t numFrames);
 
     bool readPicture(x265_picture&);
 

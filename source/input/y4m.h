@@ -43,9 +43,9 @@ class Y4MInput : public Input
 {
 protected:
 
-    int rateNum;
+    uint32_t rateNum;
 
-    int rateDenom;
+    uint32_t rateDenom;
 
     int width;
 
@@ -80,7 +80,7 @@ public:
 
     void setDimensions(int, int)                  { /* ignore, warn */ }
 
-    void setBitDepth(int)                         { /* ignore, warn */ }
+    void setBitDepth(uint32_t)                         { /* ignore, warn */ }
 
     float getRate() const                         { return ((float)rateNum) / rateDenom; }
 
@@ -98,7 +98,7 @@ public:
 
     int  guessFrameCount();
 
-    void skipFrames(int numFrames);
+    void skipFrames(uint32_t numFrames);
 
     bool readPicture(x265_picture&);
 

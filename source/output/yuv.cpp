@@ -28,7 +28,7 @@
 using namespace x265;
 using namespace std;
 
-YUVOutput::YUVOutput(const char *filename, int w, int h, int d)
+YUVOutput::YUVOutput(const char *filename, int w, int h, uint32_t d)
     : width(w)
     , height(h)
     , depth(d)
@@ -46,7 +46,7 @@ YUVOutput::~YUVOutput()
 bool YUVOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
-    int pixelbytes = (depth > 8) ? 2 : 1;
+    uint32_t pixelbytes = (depth > 8) ? 2 : 1;
     std::ofstream::pos_type size = 3 * (width * height * pixelbytes) / 2;
     ofs.seekp(size * pic.poc);
 

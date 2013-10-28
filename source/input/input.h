@@ -51,7 +51,7 @@ public:
 
     virtual void setDimensions(int width, int height) = 0;
 
-    virtual void setBitDepth(int bitDepth) = 0;
+    virtual void setBitDepth(uint32_t bitDepth) = 0;
 
     virtual float getRate() const = 0;
 
@@ -63,7 +63,7 @@ public:
 
     virtual void release() = 0;
 
-    virtual void skipFrames(int numFrames) = 0;
+    virtual void skipFrames(uint32_t numFrames) = 0;
 
     virtual bool readPicture(x265_picture& pic) = 0;
 

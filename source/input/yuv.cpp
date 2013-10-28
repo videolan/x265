@@ -101,13 +101,13 @@ int YUVInput::guessFrameCount()
     return (int)((size - cur) / (width * height * pixelbytes * 3 / 2));
 }
 
-void YUVInput::skipFrames(int numFrames)
+void YUVInput::skipFrames(uint32_t numFrames)
 {
     if (ifs && numFrames)
     {
         if (ifs == &cin)
         {
-            for (int i = 0; i < numFrames; i++)
+            for (uint32_t i = 0; i < numFrames; i++)
                 ifs->ignore(framesize);
         }
         else
@@ -137,7 +137,7 @@ void YUVInput::setDimensions(int w, int h)
     else
     {
 #if defined ENABLE_THREAD
-        for (int i = 0; i < QUEUE_SIZE; i++)
+        for (uint32_t i = 0; i < QUEUE_SIZE; i++)
         {
             buf[i] = new char[framesize];
             if (buf[i] == NULL)

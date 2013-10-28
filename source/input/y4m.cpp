@@ -43,7 +43,7 @@ Y4MInput::Y4MInput(const char *filename)
 {
 
 #if defined ENABLE_THREAD
-    for (int i = 0; i < QUEUE_SIZE; i++)
+    for (uint32_t i = 0; i < QUEUE_SIZE; i++)
         buf[i] = NULL;
 #else
     buf = NULL;
@@ -69,7 +69,7 @@ Y4MInput::Y4MInput(const char *filename)
 #if defined(ENABLE_THREAD)
             head = 0;
             tail = 0;
-            for (int i = 0; i < QUEUE_SIZE; i++)
+            for (uint32_t i = 0; i < QUEUE_SIZE; i++)
             {
                 buf[i] = new char[3 * width * height / 2];
                 if (buf[i] == NULL)
@@ -95,7 +95,7 @@ Y4MInput::~Y4MInput()
     if (ifs && ifs != &cin)
         delete ifs;
 #if defined(ENABLE_THREAD)
-    for (int i = 0; i < QUEUE_SIZE; i++)
+    for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
         delete[] buf[i];
     }
@@ -258,7 +258,7 @@ int Y4MInput::guessFrameCount()
     return (int)((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
 }
 
-void Y4MInput::skipFrames(int numFrames)
+void Y4MInput::skipFrames(uint32_t numFrames)
 {
     const size_t count = (width * height * 3 / 2) + strlen(header) + 1;
     if (ifs && numFrames)

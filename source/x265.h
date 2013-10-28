@@ -122,9 +122,9 @@ typedef enum
  * before calling x265_encoder_encode again. */
 typedef struct
 {
-    int      i_type;      /* NalUnitType */
-    int      i_payload;   /* size in bytes */
-    uint8_t *p_payload;
+    uint32_t i_type;      /* NalUnitType */
+    uint32_t i_payload;   /* size in bytes */
+    uint8_t* p_payload;
 } x265_nal;
 
 typedef struct
@@ -402,14 +402,14 @@ x265_encoder* x265_encoder_open(x265_param *);
  *      *pi_nal is the number of NAL units outputted in pp_nal.
  *      returns negative on error.
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
-int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, int *pi_nal);
+int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, uint32_t *pi_nal);
 
 /* x265_encoder_encode:
  *      encode one picture.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
  *      returns negative on error, zero if no NAL units returned.
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
-int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, int *pi_nal, x265_picture *pic_in, x265_picture *pic_out);
+int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out);
 
 /* x265_encoder_get_stats:
  *       returns encoder statistics */

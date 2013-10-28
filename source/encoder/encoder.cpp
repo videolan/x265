@@ -1275,7 +1275,7 @@ x265_encoder *x265_encoder_open(x265_param *param)
 }
 
 extern "C"
-int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, int32_t *pi_nal)
+int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
     if (!pp_nal)
         return 0;
@@ -1309,7 +1309,7 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, int32_t *pi_nal)
 }
 
 extern "C"
-int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, int32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
+int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
     NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };

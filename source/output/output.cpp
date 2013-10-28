@@ -28,7 +28,7 @@
 
 using namespace x265;
 
-Output* Output::open(const char *fname, int width, int height, int bitdepth, int rate)
+Output* Output::open(const char *fname, int width, int height, uint32_t bitdepth, int rate)
 {
     const char * s = strrchr(fname, '.');
 
