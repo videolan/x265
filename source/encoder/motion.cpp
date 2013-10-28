@@ -854,9 +854,19 @@ me_hex2:
                 }
                 else
                 {
-                    subpelInterpolate(ref, qmv0, dir);
-                    cost0 = hpelcomp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE + (dir == 2)) + mvcost0;
-                    cost1 = hpelcomp(fenc, FENC_STRIDE, subpelbuf + (dir == 2) + (dir == 1 ? FENC_STRIDE : 0), FENC_STRIDE + (dir == 2)) + mvcost1;
+                    if (dir == 1)
+                    {
+                        subpelInterpolate(ref, qmv0, 1);
+                        cost0 = hpelcomp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE + (dir == 2)) + mvcost0;
+                        cost1 = hpelcomp(fenc, FENC_STRIDE, subpelbuf + (dir == 2) + (dir == 1 ? FENC_STRIDE : 0), FENC_STRIDE + (dir == 2)) + mvcost1;
+                    }
+                    else
+                    {
+                        subpelInterpolate(ref, qmv0, 0);
+                        cost0 = hpelcomp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost0;
+                        subpelInterpolate(ref, qmv1, 0);
+                        cost1 = hpelcomp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE) + mvcost1;
+                    }
                 }
                 COPY2_IF_LT(bcost, cost0, bdir, i + 0);
                 COPY2_IF_LT(bcost, cost1, bdir, i + 1);
@@ -1179,9 +1189,9 @@ void MotionEstimate::subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir)
     int yFrac = qmv.y & 0x3;
 
     assert(yFrac | xFrac);
-    int realWidth = blockwidth + (dir == 2);
+    assert(dir != 2);
+    assert((blockwidth % 4) == 0);
     int realHeight = blockheight + (dir == 1);
-    intptr_t realStride = FENC_STRIDE + (dir == 2);
     pixel *fref = ref->unweightedFPelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
     int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     int local_shift = ref->shift + shiftNum;
@@ -1190,39 +1200,39 @@ void MotionEstimate::subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir)
     {
         if (yFrac == 0)
         {
-            primitives.ipfilter_ps[FILTER_H_P_S_8](fref, ref->lumaStride, immedVal, realStride, realWidth, realHeight, g_lumaFilter[xFrac]);
-            primitives.weightpUni(immedVal, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
+            primitives.ipfilter_ps[FILTER_H_P_S_8](fref, ref->lumaStride, immedVal, FENC_STRIDE, blockwidth, realHeight, g_lumaFilter[xFrac]);
+            primitives.weightpUni(immedVal, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
         }
         else if (xFrac == 0)
         {
-            primitives.ipfilter_ps[FILTER_V_P_S_8](fref, ref->lumaStride, immedVal, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
-            primitives.weightpUni(immedVal, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
+            primitives.ipfilter_ps[FILTER_V_P_S_8](fref, ref->lumaStride, immedVal, FENC_STRIDE, blockwidth, realHeight, g_lumaFilter[yFrac]);
+            primitives.weightpUni(immedVal, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
         }
         else
         {
             int filterSize = NTAPS_LUMA;
             int halfFilterSize = (filterSize >> 1);
-            primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, realWidth, realWidth, realHeight + filterSize - 1, g_lumaFilter[xFrac]);
-            primitives.ipfilter_ss[FILTER_V_S_S_8](immedVal + (halfFilterSize - 1) * realWidth, realWidth, immedVal2, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
-            primitives.weightpUni(immedVal2, subpelbuf, realStride, realStride, realWidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
+            primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, blockwidth, blockwidth, realHeight + filterSize - 1, g_lumaFilter[xFrac]);
+            primitives.ipfilter_ss[FILTER_V_S_S_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, immedVal2, FENC_STRIDE, blockwidth, realHeight, g_lumaFilter[yFrac]);
+            primitives.weightpUni(immedVal2, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, realHeight, ref->weight, local_round, local_shift, ref->offset);
         }
     }
     else
     {
         if (yFrac == 0)
         {
-            primitives.ipfilter_pp[FILTER_H_P_P_8](fref, ref->lumaStride, subpelbuf, realStride, realWidth, realHeight, g_lumaFilter[xFrac]);
+            primitives.ipfilter_pp[FILTER_H_P_P_8](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, blockwidth, realHeight, g_lumaFilter[xFrac]);
         }
         else if (xFrac == 0)
         {
-            primitives.ipfilter_pp[FILTER_V_P_P_8](fref, ref->lumaStride, subpelbuf, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
+            primitives.ipfilter_pp[FILTER_V_P_P_8](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, blockwidth, realHeight, g_lumaFilter[yFrac]);
         }
         else
         {
             int filterSize = NTAPS_LUMA;
             int halfFilterSize = (filterSize >> 1);
-            primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, realWidth, realWidth, realHeight + filterSize - 1, g_lumaFilter[xFrac]);
-            primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * realWidth, realWidth, subpelbuf, realStride, realWidth, realHeight, g_lumaFilter[yFrac]);
+            primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, blockwidth, blockwidth, realHeight + filterSize - 1, g_lumaFilter[xFrac]);
+            primitives.ipfilter_sp[FILTER_V_S_P_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, blockwidth, realHeight, g_lumaFilter[yFrac]);
         }
     }
 }
