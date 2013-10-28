@@ -131,7 +131,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     this->cfg = _cfg;
     bitrate = cfg->param.rc.bitrate * 1000;
     frameDuration = 1.0 / cfg->param.frameRate;
-    ncu = (int)((cfg->param.sourceHeight * cfg->param.sourceWidth) / pow((int)cfg->param.maxCUSize, 2.0));
+    ncu = (int)((cfg->param.sourceHeight * cfg->param.sourceWidth) / pow((int)16, 2.0));
     lastNonBPictType = -1;
     baseQp = cfg->param.rc.qp;
     qp = baseQp;
@@ -149,7 +149,7 @@ RateControl::RateControl(TEncCfg * _cfg)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, cfg->param.rc.qCompress) * pow(2 * ncu, 0.5);
+        cplxrSum = .01 * pow(7.0e5, cfg->param.rc.qCompress) * pow(ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
     }
@@ -260,7 +260,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
     }
     else
     {
-        double abrBuffer = 1.5 * cfg->param.rc.rateTolerance * bitrate;
+		double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
 
         /* 1pass ABR */
 
@@ -306,46 +306,30 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
             q = qp2qScale(accumPQp / accumPNorm);
             q /= fabs(cfg->param.rc.ipFactor);
         }
-        if (cfg->param.rc.rateControlMode != X265_RC_CRF)
-        {
-            double lqmin = 0, lqmax = 0;
+		else if (framesDone>0)
+		{
+			 if (cfg->param.rc.rateControlMode != X265_RC_CRF)
+			 {
+				double lqmin = 0, lqmax = 0;
+				if (totalBits == 0)
+				{
+					lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
+					lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
+				}
+				else
+				{
+					lqmin = lastQScaleFor[sliceType] / lstep;
+					lqmax = lastQScaleFor[sliceType] * lstep;
+				}
 
-            /* Clip the qp of 1st 'N' frames running parallely to ensure it doesnt detoriate
-             * the quality */
-            if (totalBits == 0)
-            {
-                lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
-                lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
-            }
+				if (overflow > 1.1 && framesDone > 3)
+					lqmax *= lstep;
+				else if (overflow <0.9)
+					lqmin /= lstep;
 
-            /* Asymmetric clipping, because symmetric would prevent
-             * overflow control in areas of rapidly oscillating complexity */
-            else
-            {
-                lqmin = lastQScaleFor[sliceType] / lstep;
-                lqmax = lastQScaleFor[sliceType] * lstep;
-            }
-
-            /* Rate control needs to be more aggressive based on actual costs obtained for
-             * previous encoded frame */
-            int rfAdapt = 1;
-            if (overflow > 1.1 && framesDone > 3)
-            {
-                /* Control propagation of excessive overflow / underfow */
-                if (overflow > 1.5)
-                    rfAdapt = 2;
-                lqmax *= pow(lstep, rfAdapt);
-                lqmin /= pow(lstep, rfAdapt / cfg->param.frameNumThreads);
-            }
-            else if (overflow < 0.9)
-            {
-                if (overflow < 0.6)
-                    rfAdapt = 2;
-                lqmin /= pow(lstep, rfAdapt);
-                lqmax /= pow(lstep, rfAdapt / cfg->param.frameNumThreads);
-            }
-            q = Clip3(lqmin, lqmax, q);
-        }
+				q = Clip3(lqmin, lqmax, q);
+			 }
+		}
 
         double lmin1 = lmin[sliceType];
         double lmax1 = lmax[sliceType];
@@ -385,7 +369,7 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
         if (rce->sliceType != B_SLICE)
             /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
              * to improve short term compensation for next frame. */
-            cplxrSum += 1.5 * bits * qp2qScale(rce->qpaRc) / rce->qRceq;
+            cplxrSum += bits * qp2qScale(rce->qpaRc) / rce->qRceq;
         else
         {
             /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
