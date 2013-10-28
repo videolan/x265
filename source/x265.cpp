@@ -71,6 +71,7 @@ static const struct option long_options[] =
     { "frame-threads",  required_argument, NULL, 'F' },
     { "log",            required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
+    { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
     { "output",         required_argument, NULL, 'o' },
     { "input",          required_argument, NULL, 0 },
@@ -154,7 +155,8 @@ struct CLIOptions
     Input*  input;
     Output* recon;
     std::fstream bitstreamFile;
-    int bProgress;
+    bool bProgress;
+    bool bForceY4m;
     int totalbytes;
 
     uint32_t frameSkip;         // number of frames to skip from the beginning
@@ -172,6 +174,7 @@ struct CLIOptions
         recon = NULL;
         framesToBeEncoded = frameSkip = totalbytes = 0;
         bProgress = true;
+        bForceY4m = false;
         startTime = x265_mdate();
         prevUpdateTime = 0;
     }
@@ -258,6 +261,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-F/--frame-threads               Number of concurrently encoded frames. Default %d\n", param->frameNumThreads);
     H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
     H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
+    H0("   --y4m                         Parse input stream as YUV4MPEG2 regardless of file extension\n");
     H0("   --no-progress                 Disable CLI progress reports\n");
     H0("-o/--output                      Bitstream output file name\n");
     H0("\nInput Options:\n");
@@ -394,6 +398,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("input-depth") inputBitDepth = (uint32_t)atoi(optarg);
             OPT("recon-depth") outputBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
+            OPT("y4m") bForceY4m = true;
         else
             berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
 
@@ -425,7 +430,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
         return true;
     }
-    this->input = Input::open(inputfn);
+    this->input = Input::open(inputfn, bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);

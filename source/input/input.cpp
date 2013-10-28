@@ -28,11 +28,11 @@
 
 using namespace x265;
 
-Input* Input::open(const char *filename)
+Input* Input::open(const char *filename, bool bForceY4m)
 {
     const char * s = strrchr(filename, '.');
 
-    if (s && !strcmp(s, ".y4m"))
+    if (bForceY4m || (s && !strcmp(s, ".y4m")))
         return new Y4MInput(filename);
     else
         return new YUVInput(filename);
