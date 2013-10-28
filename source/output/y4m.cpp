@@ -57,7 +57,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
     if (pic.bitDepth > 8)
     {
         // encoder gave us short pixels, downscale, then write
-        int16_t *Y = (int16_t*)pic.planes[0];
+        uint16_t *Y = (uint16_t*)pic.planes[0];
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
@@ -68,8 +68,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
             ofs.write(buf, width);
             Y += pic.stride[0];
         }
-
-        int16_t *U = (int16_t*)pic.planes[1];
+        uint16_t *U = (uint16_t*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
             for (int j = 0; j < width >> 1; j++)
@@ -80,8 +79,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
             ofs.write(buf, width >> 1);
             U += pic.stride[1];
         }
-
-        int16_t *V = (int16_t*)pic.planes[2];
+        uint16_t *V = (uint16_t*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {
             for (int j = 0; j < width >> 1; j++)
