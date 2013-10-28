@@ -48,6 +48,7 @@ protected:
     bool check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt);
     bool check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt);
     bool check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t opt);
+    bool check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_hv_pp_t opt);
 
 public:
 

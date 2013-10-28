@@ -401,6 +401,17 @@ void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstSt
         dst += dstStride;
     }
 }
+typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_sp_t)(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const short *coeff);
+
+template<int N, int width, int height>
+void interp_hv_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY)
+{
+    short m_immedVals[(64 + 8) * (64 + 8)];
+    filterHorizontal_ps_c<N>(src - 3 * srcStride, srcStride, m_immedVals, width, width, height + 7, g_lumaFilter[idxX]);
+    filterVertical_sp_c<N>(m_immedVals + 3 * width, width, dst, dstStride, width, height, g_lumaFilter[idxY]);
+}
+
 }
 
 namespace x265 {
@@ -412,7 +423,8 @@ namespace x265 {
 
 #define LUMA(W, H) \
     p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>;\
-    p.luma_vpp[LUMA_ ## W ## x ## H]     = interp_vert_pp_c<8, W, H>
+    p.luma_vpp[LUMA_ ## W ## x ## H]     = interp_vert_pp_c<8, W, H>; \
+    p.luma_hvpp[LUMA_ ## W ## x ## H]    = interp_hv_pp_c<8, W, H>;
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 {
