@@ -44,6 +44,7 @@
 #include "TComPicYuv.h"
 #include "lowres.h"
 #include "threading.h"
+#include "md5.h"
 
 namespace x265 {
 // private namespace
@@ -91,6 +92,9 @@ public:
     UInt64                m_SSDV;
     double                m_elapsedCompressTime;
     double                m_frameTime;
+    MD5Context            m_state[3];
+    UInt                  m_crc[3];
+    UInt                  m_checksum[3];
 
     TComPic();
     virtual ~TComPic();

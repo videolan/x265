@@ -41,6 +41,7 @@
 #include "CommonDef.h"
 #include "TComRom.h"
 #include "x265.h"
+#include "md5.h"
 
 namespace x265 {
 // private namespace
@@ -160,6 +161,8 @@ public:
 
     Pel*  getCrAddr(int cuAddr, int absZOrderIdx) { return m_picOrgV + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
 
+    UInt getCUHeight(int rowNum);
+
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous
     // ------------------------------------------------------------------------------------------------
@@ -175,9 +178,11 @@ public:
     void  dump(char* pFileName, bool bAdd = false);
 }; // END CLASS DEFINITION TComPicYuv
 
-void calcChecksum(TComPicYuv & pic, UChar digest[3][16]);
-void calcCRC(TComPicYuv & pic, UChar digest[3][16]);
-void calcMD5(TComPicYuv & pic, UChar digest[3][16]);
+void updateChecksum(const Pel* plane, UInt& checksumVal, UInt height, UInt width, UInt stride, int row, UInt cu_Height);
+void updateCRC(const Pel* plane, UInt& crcVal, UInt height, UInt width, UInt stride);
+void crcFinish(UInt& crc, UChar digest[16]);
+void checksumFinish(UInt& checksum, UChar digest[16]);
+void updateMD5Plane(MD5Context& md5, const Pel* plane, UInt width, UInt height, UInt stride);
 }
 //! \}
 

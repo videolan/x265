@@ -53,8 +53,6 @@ public:
     void processRow(int row);
     void processRowPost(int row);
     void processSao(int row);
-    void calculatePSNR(uint32_t cu, int row);
-    float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int *cnt);
 
 protected:
 

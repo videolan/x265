@@ -499,19 +499,28 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
         {
             /* calculate MD5sum for entire reconstructed picture */
             sei_recon_picture_digest.method = SEIDecodedPictureHash::MD5;
-            calcMD5(*recon, sei_recon_picture_digest.digest);
+            for (int i = 0; i < 3; i++)
+            {
+                MD5Final(&(pic->m_state[i]), sei_recon_picture_digest.digest[i]);
+            }
             digestStr = digestToString(sei_recon_picture_digest.digest, 16);
         }
         else if (param.decodedPictureHashSEI == 2)
         {
             sei_recon_picture_digest.method = SEIDecodedPictureHash::CRC;
-            calcCRC(*recon, sei_recon_picture_digest.digest);
+            for (int i = 0; i < 3; i++)
+            {
+                crcFinish((pic->m_crc[i]), sei_recon_picture_digest.digest[i]);
+            }
             digestStr = digestToString(sei_recon_picture_digest.digest, 2);
         }
         else if (param.decodedPictureHashSEI == 3)
         {
             sei_recon_picture_digest.method = SEIDecodedPictureHash::CHECKSUM;
-            calcChecksum(*recon, sei_recon_picture_digest.digest);
+            for (int i = 0; i < 3; i++)
+            {
+                checksumFinish(pic->m_checksum[i], sei_recon_picture_digest.digest[i]);
+            }
             digestStr = digestToString(sei_recon_picture_digest.digest, 4);
         }
 

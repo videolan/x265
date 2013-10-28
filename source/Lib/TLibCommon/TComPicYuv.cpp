@@ -179,6 +179,17 @@ void TComPicYuv::destroyLuma()
     delete[] m_buOffsetY;
 }
 
+UInt TComPicYuv::getCUHeight(int rowNum)
+{
+    UInt height;
+
+    if (rowNum == m_numCuInHeight - 1)
+        height = ((getHeight() % g_maxCUHeight) ? (getHeight() % g_maxCUHeight) : g_maxCUHeight);
+    else
+        height = g_maxCUHeight;
+    return height;
+}
+
 void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
 {
     assert(m_picWidth  == destPicYuv->getWidth());

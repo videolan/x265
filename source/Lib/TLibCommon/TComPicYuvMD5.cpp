@@ -43,7 +43,7 @@ namespace x265 {
  * OUTBIT_BITDEPTH_DIV8.
  */
 template<UInt OUTPUT_BITDEPTH_DIV8>
-static void md5_block(MD5& md5, const Pel* plane, UInt n)
+static void md5_block(MD5Context& md5, const Pel* plane, UInt n)
 {
     /* create a 64 byte buffer for packing Pel's into */
     UChar buf[64 / OUTPUT_BITDEPTH_DIV8][OUTPUT_BITDEPTH_DIV8];
@@ -58,7 +58,7 @@ static void md5_block(MD5& md5, const Pel* plane, UInt n)
         }
     }
 
-    md5.update((UChar*)buf, n * OUTPUT_BITDEPTH_DIV8);
+    MD5Update(&md5, (UChar*)buf, n * OUTPUT_BITDEPTH_DIV8);
 }
 
 /**
@@ -66,7 +66,7 @@ static void md5_block(MD5& md5, const Pel* plane, UInt n)
  * is adjusted to OUTBIT_BITDEPTH_DIV8.
  */
 template<UInt OUTPUT_BITDEPTH_DIV8>
-static void md5_plane(MD5& md5, const Pel* plane, UInt width, UInt height, UInt stride)
+static void md5_plane(MD5Context& md5, const Pel* plane, UInt width, UInt height, UInt stride)
 {
     /* N is the number of samples to process per md5 update.
      * All N samples must fit in buf */
@@ -88,11 +88,10 @@ static void md5_plane(MD5& md5, const Pel* plane, UInt width, UInt height, UInt 
     }
 }
 
-static void compCRC(const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
+void updateCRC(const Pel* plane, UInt& crcVal, UInt height, UInt width, UInt stride)
 {
     UInt crcMsb;
     UInt bitVal;
-    UInt crcVal = 0xffff;
     UInt bitIdx;
 
     for (UInt y = 0; y < height; y++)
@@ -119,106 +118,55 @@ static void compCRC(const Pel* plane, UInt width, UInt height, UInt stride, UCha
             }
         }
     }
+}
 
-    for (bitIdx = 0; bitIdx < 16; bitIdx++)
+void crcFinish(UInt& crcVal, UChar digest[16])
+{
+    UInt crcMsb;
+    for (int bitIdx = 0; bitIdx < 16; bitIdx++)
     {
         crcMsb = (crcVal >> 15) & 1;
         crcVal = ((crcVal << 1) & 0xffff) ^ (crcMsb * 0x1021);
     }
-
     digest[0] = (crcVal >> 8)  & 0xff;
-    digest[1] =  crcVal      & 0xff;
+    digest[1] =  crcVal        & 0xff;
 }
 
-void calcCRC(TComPicYuv& pic, UChar digest[3][16])
+void updateChecksum(const Pel* plane, UInt& checksumVal, UInt height, UInt width, UInt stride, int row, UInt cuHeight)
 {
-    UInt width = pic.getWidth();
-    UInt height = pic.getHeight();
-    UInt stride = pic.getStride();
-
-    compCRC(pic.getLumaAddr(), width, height, stride, digest[0]);
-
-    width >>= 1;
-    height >>= 1;
-    stride = pic.getCStride();
-
-    compCRC(pic.getCbAddr(), width, height, stride, digest[1]);
-    compCRC(pic.getCrAddr(), width, height, stride, digest[2]);
-}
-
-static void compChecksum(const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
-{
-    UInt checksum = 0;
     UChar xor_mask;
 
-    for (UInt y = 0; y < height; y++)
+    for (UInt y = row * cuHeight; y < ((row * cuHeight) + height); y++)
     {
         for (UInt x = 0; x < width; x++)
         {
             xor_mask = (x & 0xff) ^ (y & 0xff) ^ (x >> 8) ^ (y >> 8);
-            checksum = (checksum + ((plane[y * stride + x] & 0xff) ^ xor_mask)) & 0xffffffff;
+            checksumVal = (checksumVal + ((plane[y * stride + x] & 0xff) ^ xor_mask)) & 0xffffffff;
 
             if (X265_DEPTH > 8)
             {
-                checksum = (checksum + ((plane[y * stride + x] >> 7 >> 1) ^ xor_mask)) & 0xffffffff;
+                checksumVal = (checksumVal + ((plane[y * stride + x] >> 7 >> 1) ^ xor_mask)) & 0xffffffff;
             }
         }
     }
+}
 
+void checksumFinish(UInt& checksum, UChar digest[16])
+{
     digest[0] = (checksum >> 24) & 0xff;
     digest[1] = (checksum >> 16) & 0xff;
     digest[2] = (checksum >> 8)  & 0xff;
-    digest[3] =  checksum      & 0xff;
+    digest[3] =  checksum        & 0xff;
 }
 
-void calcChecksum(TComPicYuv& pic, UChar digest[3][16])
-{
-    UInt width = pic.getWidth();
-    UInt height = pic.getHeight();
-    UInt stride = pic.getStride();
-
-    compChecksum(pic.getLumaAddr(), width, height, stride, digest[0]);
-
-    width >>= 1;
-    height >>= 1;
-    stride = pic.getCStride();
-
-    compChecksum(pic.getCbAddr(), width, height, stride, digest[1]);
-    compChecksum(pic.getCrAddr(), width, height, stride, digest[2]);
-}
-
-/**
- * Calculate the MD5sum of pic, storing the result in digest.
- * MD5 calculation is performed on Y' then Cb, then Cr; each in raster order.
- * Pel data is inserted into the MD5 function in little-endian byte order,
- * using sufficient bytes to represent the picture bitdepth.  Eg, 10bit data
- * uses little-endian two byte words; 8bit data uses single byte words.
- */
-void calcMD5(TComPicYuv& pic, UChar digest[3][16])
+void updateMD5Plane(MD5Context& md5, const Pel* plane, UInt width, UInt height, UInt stride)
 {
     /* choose an md5_plane packing function based on the system bitdepth */
-    typedef void (*MD5PlaneFunc)(MD5&, const Pel*, UInt, UInt, UInt);
+    typedef void (*MD5PlaneFunc)(MD5Context&, const Pel*, UInt, UInt, UInt);
     MD5PlaneFunc md5_plane_func;
     md5_plane_func = X265_DEPTH <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
 
-    MD5 md5Y, md5U, md5V;
-    UInt width = pic.getWidth();
-    UInt height = pic.getHeight();
-    UInt stride = pic.getStride();
-
-    md5_plane_func(md5Y, pic.getLumaAddr(), width, height, stride);
-    md5Y.finalize(digest[0]);
-
-    md5_plane_func = X265_DEPTH <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
-    width >>= 1;
-    height >>= 1;
-    stride = pic.getCStride();
-
-    md5_plane_func(md5U, pic.getCbAddr(), width, height, stride);
-    md5U.finalize(digest[1]);
-
-    md5_plane_func(md5V, pic.getCrAddr(), width, height, stride);
-    md5V.finalize(digest[2]);
+    md5_plane_func(md5, plane, width, height, stride);
 }
 }
 //! \}
