@@ -232,7 +232,7 @@ int Y4MInput::guessFrameCount()
 
 void Y4MInput::skipFrames(int numFrames)
 {
-    const size_t count = (width * height * 3 / 2) + strlen(header);
+    const size_t count = (width * height * 3 / 2) + strlen(header) + 1;
     for (int i = 0; i < numFrames; i++)
     {
         ifs.ignore(count);
