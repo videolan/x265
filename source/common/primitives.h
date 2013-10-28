@@ -30,6 +30,7 @@
 #define X265_PRIMITIVES_H
 
 #include <stdint.h>
+#include <assert.h>
 #include "cpu.h"
 
 #define FENC_STRIDE 64
@@ -145,8 +146,17 @@ enum IPFilterConf_S_S
     NUM_IPFILTER_S_S
 };
 
-// Returns a Partitions enum for the given size, always expected to return a valid enum
-int PartitionFromSizes(int width, int height);
+// Returns a LumaPartitions enum for the given size, always expected to return a valid enum
+inline int PartitionFromSizes(int width, int height)
+{
+    assert(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
+    extern uint8_t lumaPartitioneMapTable[];
+    int w = (width >> 2) - 1;
+    int h = (height >> 2) - 1;
+    int part = (int)lumaPartitioneMapTable[(w << 4) + h];
+    assert(part != 255);
+    return part;
+}
 
 typedef int  (*pixelcmp_t)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref, intptr_t frefstride);
