@@ -26,6 +26,15 @@
 #include "common.h"
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
+
+#if WIN32
+#include "io.h"
+#include "fcntl.h"
+#if defined(_MSC_VER)
+#pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
+#endif
+#endif
 
 using namespace x265;
 using namespace std;
@@ -40,9 +49,19 @@ Y4MInput::Y4MInput(const char *filename)
     buf = NULL;
 #endif
 
-    ifs.open(filename, ios::binary | ios::in);
+    ifs = NULL;
+    if (!strcmp(filename, "-"))
+    {
+        ifs = &cin;
+#if WIN32
+        setmode(fileno(stdin), O_BINARY);
+#endif
+    }
+    else
+        ifs = new ifstream(filename, ios::binary | ios::in);
+
     threadActive = false;
-    if (!ifs.fail())
+    if (ifs && !ifs->fail())
     {
         if (parseHeader())
         {
@@ -64,13 +83,17 @@ Y4MInput::Y4MInput(const char *filename)
 #endif // if defined(ENABLE_THREAD)
         }
     }
-    if (!threadActive)
-        ifs.close();
+    if (!threadActive && ifs && ifs != &cin)
+    {
+        delete ifs;
+        ifs = NULL;
+    }
 }
 
 Y4MInput::~Y4MInput()
 {
-    ifs.close();
+    if (ifs && ifs != &cin)
+        delete ifs;
 #if defined(ENABLE_THREAD)
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
@@ -84,6 +107,9 @@ Y4MInput::~Y4MInput()
 
 bool Y4MInput::parseHeader()
 {
+    if (!ifs)
+        return false;
+
     width = 0;
     height = 0;
     rateNum = 0;
@@ -92,22 +118,22 @@ bool Y4MInput::parseHeader()
     while (ifs)
     {
         // Skip Y4MPEG string
-        int c = ifs.get();
-        while (!ifs.eof() && (c != ' ') && (c != '\n'))
+        int c = ifs->get();
+        while (!ifs->eof() && (c != ' ') && (c != '\n'))
         {
-            c = ifs.get();
+            c = ifs->get();
         }
 
         while (c == ' ' && ifs)
         {
             // read parameter identifier
-            switch (ifs.get())
+            switch (ifs->get())
             {
             case 'W':
                 width = 0;
                 while (ifs)
                 {
-                    c = ifs.get();
+                    c = ifs->get();
 
                     if (c == ' ' || c == '\n')
                     {
@@ -125,7 +151,7 @@ bool Y4MInput::parseHeader()
                 height = 0;
                 while (ifs)
                 {
-                    c = ifs.get();
+                    c = ifs->get();
                     if (c == ' ' || c == '\n')
                     {
                         break;
@@ -143,13 +169,13 @@ bool Y4MInput::parseHeader()
                 rateDenom = 0;
                 while (ifs)
                 {
-                    c = ifs.get();
+                    c = ifs->get();
                     if (c == '.')
                     {
                         rateDenom = 1;
                         while (ifs)
                         {
-                            c = ifs.get();
+                            c = ifs->get();
                             if (c == ' ' || c == '\n')
                             {
                                 break;
@@ -167,7 +193,7 @@ bool Y4MInput::parseHeader()
                     {
                         while (ifs)
                         {
-                            c = ifs.get();
+                            c = ifs->get();
                             if (c == ' ' || c == '\n')
                             {
                                 break;
@@ -190,7 +216,7 @@ bool Y4MInput::parseHeader()
                 while (ifs)
                 {
                     // consume this unsupported configuration word
-                    c = ifs.get();
+                    c = ifs->get();
                     if (c == ' ' || c == '\n')
                         break;
                 }
@@ -217,15 +243,17 @@ static const char header[] = "FRAME";
 
 int Y4MInput::guessFrameCount()
 {
-    istream::pos_type cur = ifs.tellg();
+    if (!ifs || ifs == &cin) 
+        return -1;
+    istream::pos_type cur = ifs->tellg();
     if (cur < 0)
         return -1;
 
-    ifs.seekg(0, ios::end);
-    istream::pos_type size = ifs.tellg();
+    ifs->seekg(0, ios::end);
+    istream::pos_type size = ifs->tellg();
     if (size < 0)
         return -1;
-    ifs.seekg(cur, ios::beg);
+    ifs->seekg(cur, ios::beg);
 
     return (int)((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
 }
@@ -233,9 +261,9 @@ int Y4MInput::guessFrameCount()
 void Y4MInput::skipFrames(int numFrames)
 {
     const size_t count = (width * height * 3 / 2) + strlen(header) + 1;
-    for (int i = 0; i < numFrames; i++)
+    if (ifs && numFrames)
     {
-        ifs.ignore(count);
+        ifs->ignore(count * numFrames);
     }
 }
 
@@ -296,8 +324,10 @@ bool Y4MInput::populateFrameQueue()
 {
     /* strip off the FRAME header */
     char hbuf[sizeof(header)];
+    if (!ifs)
+        return false;
 
-    ifs.read(hbuf, strlen(header));
+    ifs->read(hbuf, strlen(header));
     if (!ifs || memcmp(hbuf, header, strlen(header)))
     {
         if (ifs)
@@ -305,10 +335,10 @@ bool Y4MInput::populateFrameQueue()
         return false;
     }
     /* consume bytes up to line feed */
-    int c = ifs.get();
+    int c = ifs->get();
     while (c != '\n' && !ifs)
     {
-        c = ifs.get();
+        c = ifs->get();
     }
 
     const size_t count = width * height * 3 / 2;
@@ -319,11 +349,11 @@ bool Y4MInput::populateFrameQueue()
             return false;
     }
 
-    ifs.read(buf[tail], count);
-    frameStat[tail] = !ifs.fail();
+    ifs->read(buf[tail], count);
+    frameStat[tail] = !ifs->fail();
     tail = (tail + 1) % QUEUE_SIZE;
     notEmpty.trigger();
-    return !ifs.fail();
+    return !ifs->fail();
 }
 
 #else // if defined(ENABLE_THREAD)
@@ -333,7 +363,11 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     /* strip off the FRAME header */
     char hbuf[sizeof(header)];
-    ifs.read(hbuf, strlen(header));
+
+    if (!ifs)
+        return false;
+
+    ifs->read(hbuf, strlen(header));
     if (!ifs || memcmp(hbuf, header, strlen(header)))
     {
         x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing\n");
@@ -341,10 +375,10 @@ bool Y4MInput::readPicture(x265_picture& pic)
     }
 
     /* consume bytes up to line feed */
-    int c = ifs.get();
+    int c = ifs->get();
     while (c != '\n' && !ifs)
     {
-        c = ifs.get();
+        c = ifs->get();
     }
 
     const size_t count = width * height * 3 / 2;
@@ -361,10 +395,10 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    ifs.read(buf, count);
+    ifs->read(buf, count);
     PPAStopCpuEventFunc(read_yuv);
 
-    return !ifs.fail();
+    return !ifs->fail();
 }
 
 #endif // if defined(ENABLE_THREAD)
