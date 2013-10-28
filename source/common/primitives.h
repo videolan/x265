@@ -147,7 +147,7 @@ enum IPFilterConf_S_S
 };
 
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
-inline int PartitionFromSizes(int width, int height)
+inline int partitionFromSizes(int width, int height)
 {
     assert(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
     extern uint8_t lumaPartitioneMapTable[];

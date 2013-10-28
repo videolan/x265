@@ -498,7 +498,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
 
     //===== update distortion =====
-    int part = PartitionFromSizes(width, height);
+    int part = partitionFromSizes(width, height);
     outDist += primitives.sse_pp[part](fenc, stride, recon, stride);
 }
 
@@ -632,7 +632,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
 
     //===== update distortion =====
-    int part = PartitionFromSizes(width, height);
+    int part = partitionFromSizes(width, height);
     UInt dist = primitives.sse_pp[part](fenc, stride, recon, stride);
     if (ttype == TEXT_CHROMA_U)
     {
@@ -2335,7 +2335,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
                 ALIGN_VAR_32(pixel, avg[MAX_CU_SIZE * MAX_CU_SIZE]);
 
-                int partEnum = PartitionFromSizes(roiWidth, roiHeight);
+                int partEnum = partitionFromSizes(roiWidth, roiHeight);
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, m_predYuv[0].getStride(), ref1, m_predYuv[1].getStride(), 32);
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
                 x265_emms();
@@ -2786,9 +2786,9 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
         predYuv->copyToPartYuv(outReconYuv, 0);
 
-        int part = PartitionFromSizes(width, height);
+        int part = partitionFromSizes(width, height);
         distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
-        part = PartitionFromSizes(width >> 1, height >> 1);
+        part = partitionFromSizes(width >> 1, height >> 1);
         distortion += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
         distortion += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
 
@@ -2906,9 +2906,9 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     outReconYuv->addClip(predYuv, outBestResiYuv, 0, width);
 
     // update with clipped distortion and cost (qp estimation loop uses unclipped values)
-    int part = PartitionFromSizes(width, height);
+    int part = partitionFromSizes(width, height);
     bdist = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
-    part = PartitionFromSizes(width >> 1, height >> 1);
+    part = partitionFromSizes(width >> 1, height >> 1);
     bdist += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
     bdist += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
     bcost = m_rdCost->calcRdCost(bdist, bestBits);
@@ -3064,7 +3064,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
         ::memset(m_tempPel, 0, sizeof(Pel) * numSamplesLuma); // not necessary needed for inside of recursion (only at the beginning)
 
-        int partSize = PartitionFromSizes(trWidth, trHeight);
+        int partSize = partitionFromSizes(trWidth, trHeight);
         UInt distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, m_tempPel, trWidth);
 
         if (outZeroDist)
@@ -3133,7 +3133,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         UInt distU = 0;
         UInt distV = 0;
 
-        int partSizeC = PartitionFromSizes(trWidthC, trHeightC);
+        int partSizeC = partitionFromSizes(trWidthC, trHeightC);
         if (bCodeChroma)
         {
             distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth, m_tempPel, trWidthC));

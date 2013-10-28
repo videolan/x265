@@ -618,27 +618,27 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 {
     for (int size = 4; size <= 64; size *= 2)
     {
-        int part = PartitionFromSizes(size, size); // 2Nx2N
+        int part = partitionFromSizes(size, size); // 2Nx2N
         if (!testPartition(part, ref, opt)) return false;
 
         if (size > 4)
         {
-            part = PartitionFromSizes(size, size >> 1); // 2NxN
+            part = partitionFromSizes(size, size >> 1); // 2NxN
             if (!testPartition(part, ref, opt)) return false;
-            part = PartitionFromSizes(size >> 1, size); // Nx2N
+            part = partitionFromSizes(size >> 1, size); // Nx2N
             if (!testPartition(part, ref, opt)) return false;
         }
         if (size > 8)
         {
             // 4 AMP modes
-            part = PartitionFromSizes(size, size >> 2);
+            part = partitionFromSizes(size, size >> 2);
             if (!testPartition(part, ref, opt)) return false;
-            part = PartitionFromSizes(size, 3 * (size >> 2));
+            part = partitionFromSizes(size, 3 * (size >> 2));
             if (!testPartition(part, ref, opt)) return false;
 
-            part = PartitionFromSizes(size >> 2, size);
+            part = partitionFromSizes(size >> 2, size);
             if (!testPartition(part, ref, opt)) return false;
-            part = PartitionFromSizes(3 * (size >> 2), size);
+            part = partitionFromSizes(3 * (size >> 2), size);
             if (!testPartition(part, ref, opt)) return false;
         }
     }
@@ -836,27 +836,27 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 {
     for (int size = 4; size <= 64; size *= 2)
     {
-        int part = PartitionFromSizes(size, size); // 2Nx2N
+        int part = partitionFromSizes(size, size); // 2Nx2N
         measurePartition(part, ref, opt);
 
         if (size > 4)
         {
-            part = PartitionFromSizes(size, size >> 1); // 2NxN
+            part = partitionFromSizes(size, size >> 1); // 2NxN
             measurePartition(part, ref, opt);
-            part = PartitionFromSizes(size >> 1, size); // Nx2N
+            part = partitionFromSizes(size >> 1, size); // Nx2N
             measurePartition(part, ref, opt);
         }
         if (size > 8)
         {
             // 4 AMP modes
-            part = PartitionFromSizes(size, size >> 2);
+            part = partitionFromSizes(size, size >> 2);
             measurePartition(part, ref, opt);
-            part = PartitionFromSizes(size, 3 * (size >> 2));
+            part = partitionFromSizes(size, 3 * (size >> 2));
             measurePartition(part, ref, opt);
 
-            part = PartitionFromSizes(size >> 2, size);
+            part = partitionFromSizes(size >> 2, size);
             measurePartition(part, ref, opt);
-            part = PartitionFromSizes(3 * (size >> 2), size);
+            part = partitionFromSizes(3 * (size >> 2), size);
             measurePartition(part, ref, opt);
         }
     }

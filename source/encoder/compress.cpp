@@ -223,7 +223,7 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
 
     //do motion compensation only for Luma since luma cost alone is calculated
     m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
-    int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
+    int part = partitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
     outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                      outPredYuv->getLumaAddr(), outPredYuv->getStride());
 }
@@ -259,7 +259,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         // do MC only for Luma part
         m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, -1, true, false);
-        int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
+        int part = partitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
 
         outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                          m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());

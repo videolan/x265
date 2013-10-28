@@ -465,7 +465,7 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         // calculate 35 satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
         primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
-        pixelcmp_t satd = primitives.satd[PartitionFromSizes(cuSize, cuSize)];
+        pixelcmp_t satd = primitives.satd[partitionFromSizes(cuSize, cuSize)];
         int icost = me.COST_MAX, cost;
         for (UInt mode = 0; mode < 35; mode++)
         {
