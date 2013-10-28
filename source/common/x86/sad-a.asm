@@ -1037,9 +1037,9 @@ SAD_X 4,  4,  4
     psadbw   m5, m3
     psadbw   m3, m6
 %endif
-    paddw    m0, m4
-    paddw    m1, m5
-    paddw    m2, m3
+    paddd    m0, m4
+    paddd    m1, m5
+    paddd    m2, m3
 %endmacro
 
 %if ARCH_X86_64
@@ -1167,8 +1167,8 @@ SAD_X 4,  4,  4
     psadbw   m4, m6
     psadbw   m5, m6
 %endif
-    paddw    m0, m4
-    paddw    m1, m5
+    paddd    m0, m4
+    paddd    m1, m5
 %if cpuflag(avx)
     psadbw   m4, m6, [r3+%2]
     psadbw   m5, m6, [r4+%2]
@@ -1178,8 +1178,8 @@ SAD_X 4,  4,  4
     psadbw   m4, m6
     psadbw   m5, m6
 %endif
-    paddw    m2, m4
-    paddw    m3, m5
+    paddd    m2, m4
+    paddd    m3, m5
 %endmacro
 
 %macro SAD_X4_4x16P_SSE2 2
@@ -1240,45 +1240,65 @@ SAD_X 4,  4,  4
 %endif
 %endmacro
 
-%macro SAD_X3_END_SSE2 0
+%macro SAD_X3_END_SSE2 1
     movifnidn r5, r5mp
 %if cpuflag(ssse3)
-    packssdw m0, m1
-    packssdw m2, m2
-    phaddd   m0, m2
-    mova   [r5], m0
+%if %1
+    pshufd     m3, m0, 8
+    pshufd     m4, m1, 8
+    pshufd     m5, m2, 8
+    punpcklqdq m3, m4
+    phaddd     m3, m5
+    mova     [r5], m3
 %else
-    movhlps  m3, m0
-    movhlps  m4, m1
-    movhlps  m5, m2
-    paddw    m0, m3
-    paddw    m1, m4
-    paddw    m2, m5
-    movd [r5+0], m0
-    movd [r5+4], m1
-    movd [r5+8], m2
+    packssdw   m0, m1
+    packssdw   m2, m2
+    phaddd     m0, m2
+    mova     [r5], m0
+%endif
+%else
+    movhlps    m3, m0
+    movhlps    m4, m1
+    movhlps    m5, m2
+    paddd      m0, m3
+    paddd      m1, m4
+    paddd      m2, m5
+    movd   [r5+0], m0
+    movd   [r5+4], m1
+    movd   [r5+8], m2
 %endif
     RET
 %endmacro
 
-%macro SAD_X4_END_SSE2 0
+%macro SAD_X4_END_SSE2 1
     mov      r0, r6mp
 %if cpuflag(ssse3)
-    packssdw m0, m1
-    packssdw m2, m3
-    phaddd   m0, m2
-    mova   [r0], m0
+%if %1
+    pshufd     m4, m0, 8
+    pshufd     m5, m1, 8
+    punpcklqdq m4, m5
+    pshufd     m0, m2, 8
+    pshufd     m5, m3, 8
+    punpcklqdq m0, m5
+    phaddd     m4, m0
+    mova     [r0], m4
 %else
-    psllq    m1, 32
-    psllq    m3, 32
-    paddw    m0, m1
-    paddw    m2, m3
-    movhlps  m1, m0
-    movhlps  m3, m2
-    paddw    m0, m1
-    paddw    m2, m3
-    movq [r0+0], m0
-    movq [r0+8], m2
+    packssdw   m0, m1
+    packssdw   m2, m3
+    phaddd     m0, m2
+    mova     [r0], m0
+%endif
+%else
+    psllq      m1, 32
+    psllq      m3, 32
+    paddd      m0, m1
+    paddd      m2, m3
+    movhlps    m1, m0
+    movhlps    m3, m2
+    paddd      m0, m1
+    paddd      m2, m3
+    movq   [r0+0], m0
+    movq   [r0+8], m2
 %endif
     RET
 %endmacro
@@ -1486,7 +1506,11 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,%4
     SAD_X%1_4x%2P_SSE2 x, %3/4
 %assign x x+1
 %endrep
-    SAD_X%1_END_SSE2
+%if %3 == 64
+    SAD_X%1_END_SSE2 1
+%else
+    SAD_X%1_END_SSE2 0
+%endif
 %endmacro
 
 INIT_XMM sse2
@@ -1520,12 +1544,14 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,8
 %endmacro
 
 INIT_XMM ssse3
+SAD_X_SSE2  3, 16, 64, 7
 SAD_X_SSE2  3, 16, 32, 7
 SAD_X_SSE2  3, 16, 16, 7
 SAD_X_SSE2  3, 16, 12, 7
 SAD_X_SSE2  3, 16,  8, 7
 SAD_X_SSE2  3,  8, 32, 7
 SAD_X_SSE2  3,  8, 16, 7
+SAD_X_SSE2  4, 16, 64, 7
 SAD_X_SSE2  4, 16, 32, 7
 SAD_X_SSE2  4, 16, 16, 7
 SAD_X_SSE2  4, 16, 12, 7
@@ -1536,11 +1562,13 @@ SAD_X_SSSE3 4,  8,  8
 SAD_X_SSSE3 4,  8,  4
 
 INIT_XMM avx
+SAD_X_SSE2 3, 16, 64, 7
 SAD_X_SSE2 3, 16, 32, 6
 SAD_X_SSE2 3, 16, 16, 6
 SAD_X_SSE2 3, 16, 12, 6
 SAD_X_SSE2 3, 16,  8, 6
 SAD_X_SSE2 3, 16,  4, 6
+SAD_X_SSE2 4, 16, 64, 7
 SAD_X_SSE2 4, 16, 32, 7
 SAD_X_SSE2 4, 16, 16, 7
 SAD_X_SSE2 4, 16, 12, 7
