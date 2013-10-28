@@ -184,10 +184,9 @@ void DPB::prepareEncode(TComPic *pic)
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
     {
-        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            TComPic *refpic = slice->getRefPic(list, ref);
+            TComPic *refpic = slice->getRefPic(l, ref);
             ATOMIC_INC(&refpic->m_countRefEncoders);
         }
     }

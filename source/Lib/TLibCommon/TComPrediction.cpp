@@ -245,7 +245,7 @@ bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, UInt partAddr)
     return false;
 }
 
-void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList, int partIdx, bool bLuma, bool bChroma)
+void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList, int partIdx, bool bLuma, bool bChroma)
 {
     int  width;
     int  height;
@@ -332,7 +332,7 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
     }
 }
 
-void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TComYuv* outPredYuv, bool bLuma, bool bChroma)
+void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma)
 {
     int refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
@@ -348,7 +348,7 @@ void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int
         xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
 }
 
-void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, RefPicList picList, TShortYUV* outPredYuv, bool bLuma, bool bChroma)
+void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, int width, int height, int picList, TShortYUV* outPredYuv, bool bLuma, bool bChroma)
 {
     int refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
@@ -372,7 +372,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
         TShortYUV* pcMbYuv;
         for (int refList = 0; refList < 2; refList++)
         {
-            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            int picList = refList;
             refIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
             assert(refIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
@@ -395,7 +395,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
         TShortYUV* pcMbYuv;
         for (int refList = 0; refList < 2; refList++)
         {
-            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            int picList = refList;
             refIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
             if (refIdx[refList] < 0)
@@ -415,7 +415,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
     {
         TShortYUV* pcMbYuv;
 
-        RefPicList picList = REF_PIC_LIST_0;
+        int picList = REF_PIC_LIST_0;
         refIdx[0] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
         if (!(refIdx[0] < 0))
@@ -440,7 +440,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, int width, int 
     {
         for (int refList = 0; refList < 2; refList++)
         {
-            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            int picList = refList;
             refIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
             if (refIdx[refList] < 0)
@@ -660,7 +660,7 @@ void TComPrediction::xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int re
 }
 
 // AMVP
-void TComPrediction::getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, MV& mvPred)
+void TComPrediction::getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, int picList, MV& mvPred)
 {
     AMVPInfo* pcAMVPInfo = cu->getCUMvField(picList)->getAMVPInfo();
 

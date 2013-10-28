@@ -2262,36 +2262,34 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
             // Uni-directional prediction
             for (int list = 0; list < numPredDir; list++)
             {
-                RefPicList picList = (list ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-
-                for (int idx = 0; idx < cu->getSlice()->getNumRefIdx(picList); idx++)
+                for (int idx = 0; idx < cu->getSlice()->getNumRefIdx(list); idx++)
                 {
                     bitsTemp = mbBits[list];
-                    if (cu->getSlice()->getNumRefIdx(picList) > 1)
+                    if (cu->getSlice()->getNumRefIdx(list) > 1)
                     {
                         bitsTemp += idx + 1;
-                        if (idx == cu->getSlice()->getNumRefIdx(picList) - 1) bitsTemp--;
+                        if (idx == cu->getSlice()->getNumRefIdx(list) - 1) bitsTemp--;
                     }
-                    xEstimateMvPredAMVP(cu, partIdx, picList, idx, mvPred[list][idx], &biPDistTemp);
-                    mvpIdx[list][idx] = cu->getMVPIdx(picList, partAddr);
-                    mvpNum[list][idx] = cu->getMVPNum(picList, partAddr);
+                    xEstimateMvPredAMVP(cu, partIdx, list, idx, mvPred[list][idx], &biPDistTemp);
+                    mvpIdx[list][idx] = cu->getMVPIdx(list, partAddr);
+                    mvpNum[list][idx] = cu->getMVPNum(list, partAddr);
 
                     bitsTemp += m_mvpIdxCost[mvpIdx[list][idx]][AMVP_MAX_NUM_CANDS];
-                    int merange = m_adaptiveRange[picList][idx];
+                    int merange = m_adaptiveRange[list][idx];
                     MV& mvp = mvPred[list][idx];
                     MV& outmv = mvTemp[list][idx];
 
                     MV mvmin, mvmax;
                     xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                    int satdCost = m_me.motionEstimate(m_mref[picList][idx],
+                    int satdCost = m_me.motionEstimate(m_mref[list][idx],
                                                        mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
                     /* Get total cost of partition, but only include MV bit cost once */
                     bitsTemp += m_me.bitcost(outmv);
                     costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
 
-                    xCopyAMVPInfo(cu->getCUMvField(picList)->getAMVPInfo(), &amvpInfo[list][idx]); // must always be done ( also when AMVP_MODE = AM_NONE )
-                    xCheckBestMVP(cu, picList, mvTemp[list][idx], mvPred[list][idx], mvpIdx[list][idx], bitsTemp, costTemp);
+                    xCopyAMVPInfo(cu->getCUMvField(list)->getAMVPInfo(), &amvpInfo[list][idx]); // must always be done ( also when AMVP_MODE = AM_NONE )
+                    xCheckBestMVP(cu, list, mvTemp[list][idx], mvPred[list][idx], mvpIdx[list][idx], bitsTemp, costTemp);
 
                     if (costTemp < listCost[list])
                     {
@@ -2541,9 +2539,9 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 }
 
 // AMVP
-void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, int refIdx, MV& mvPred, UInt* distBiP)
+void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, int list, int refIdx, MV& mvPred, UInt* distBiP)
 {
-    AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
+    AMVPInfo* amvpInfo = cu->getCUMvField(list)->getAMVPInfo();
 
     MV   bestMv;
     int  bestIdx = 0;
@@ -2555,19 +2553,19 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
     cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
     // Fill the MV Candidates
-    cu->fillMvpCand(partIdx, partAddr, picList, refIdx, amvpInfo);
+    cu->fillMvpCand(partIdx, partAddr, list, refIdx, amvpInfo);
 
     bestMv = amvpInfo->m_mvCand[0];
     if (amvpInfo->m_num <= 1)
     {
         mvPred = bestMv;
 
-        cu->setMVPIdxSubParts(bestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(amvpInfo->m_num, picList, partAddr, partIdx, cu->getDepth(partAddr));
+        cu->setMVPIdxSubParts(bestIdx, list, partAddr, partIdx, cu->getDepth(partAddr));
+        cu->setMVPNumSubParts(amvpInfo->m_num, list, partAddr, partIdx, cu->getDepth(partAddr));
 
-        if (cu->getSlice()->getMvdL1ZeroFlag() && picList == REF_PIC_LIST_1)
+        if (cu->getSlice()->getMvdL1ZeroFlag() && list == REF_PIC_LIST_1)
         {
-            (*distBiP) = xGetTemplateCost(cu, partAddr, &m_predTempYuv, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIdx, roiWidth, roiHeight);
+            (*distBiP) = xGetTemplateCost(cu, partAddr, &m_predTempYuv, mvPred, 0, AMVP_MAX_NUM_CANDS, list, refIdx, roiWidth, roiHeight);
         }
         return;
     }
@@ -2577,7 +2575,7 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
     //-- Check Minimum Cost.
     for (i = 0; i < amvpInfo->m_num; i++)
     {
-        UInt cost = xGetTemplateCost(cu, partAddr, &m_predTempYuv, amvpInfo->m_mvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIdx, roiWidth, roiHeight);
+        UInt cost = xGetTemplateCost(cu, partAddr, &m_predTempYuv, amvpInfo->m_mvCand[i], i, AMVP_MAX_NUM_CANDS, list, refIdx, roiWidth, roiHeight);
         if (bestCost > cost)
         {
             bestCost = cost;
@@ -2591,8 +2589,8 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList pi
 
     // Setting Best MVP
     mvPred = bestMv;
-    cu->setMVPIdxSubParts(bestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
-    cu->setMVPNumSubParts(amvpInfo->m_num, picList, partAddr, partIdx, cu->getDepth(partAddr));
+    cu->setMVPIdxSubParts(bestIdx, list, partAddr, partIdx, cu->getDepth(partAddr));
+    cu->setMVPNumSubParts(amvpInfo->m_num, list, partAddr, partIdx, cu->getDepth(partAddr));
 }
 
 UInt TEncSearch::xGetMvpIdxBits(int idx, int num)
@@ -2680,9 +2678,9 @@ void TEncSearch::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 }
 
 /* Check if using an alternative MVP would result in a smaller MVD + signal bits */
-void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mvPred, int& outMvpIdx, UInt& outBits, UInt& outCost)
+void TEncSearch::xCheckBestMVP(TComDataCU* cu, int list, MV mv, MV& mvPred, int& outMvpIdx, UInt& outBits, UInt& outCost)
 {
-    AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
+    AMVPInfo* amvpInfo = cu->getCUMvField(list)->getAMVPInfo();
 
     assert(amvpInfo->m_mvCand[outMvpIdx] == mvPred);
     if (amvpInfo->m_num < 2) return;
@@ -2719,13 +2717,13 @@ void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mv
 }
 
 UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
-                                  int mvpCandCount, RefPicList picList, int refIdx, int sizex, int sizey)
+                                  int mvpCandCount, int list, int refIdx, int sizex, int sizey)
 {
     // TODO: does it clip with m_referenceRowsAvailable?
     cu->clipMv(mvCand);
 
     // prediction pattern
-    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mvCand, sizex, sizey, templateCand);
+    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(list, refIdx)->getPicYuvRec(), partAddr, &mvCand, sizex, sizey, templateCand);
 
     // calc distortion
     UInt cost = m_me.bufSAD(templateCand->getLumaAddr(partAddr), templateCand->getStride());
@@ -3866,7 +3864,7 @@ UInt  TEncSearch::estimateHeaderBits(TComDataCU* cu, UInt absPartIdx)
     return bits;
 }
 
-void  TEncSearch::setWpScalingDistParam(TComDataCU*, int, RefPicList)
+void  TEncSearch::setWpScalingDistParam(TComDataCU*, int, int)
 {
 #if 0 // dead code
     if (refIdx < 0)
@@ -3881,8 +3879,8 @@ void  TEncSearch::setWpScalingDistParam(TComDataCU*, int, RefPicList)
     m_distParam.applyWeight = (slice->getSliceType() == P_SLICE && pps->getUseWP()) || (slice->getSliceType() == B_SLICE && pps->getWPBiPred());
     if (!m_distParam.applyWeight) return;
 
-    int refIdx0 = (picList == REF_PIC_LIST_0) ? refIdx : (-1);
-    int refIdx1 = (picList == REF_PIC_LIST_1) ? refIdx : (-1);
+    int refIdx0 = (list == REF_PIC_LIST_0) ? refIdx : (-1);
+    int refIdx1 = (list == REF_PIC_LIST_1) ? refIdx : (-1);
 
     getWpScaling(cu, refIdx0, refIdx1, wp0, wp1);
 
@@ -3891,7 +3889,7 @@ void  TEncSearch::setWpScalingDistParam(TComDataCU*, int, RefPicList)
 
     m_distParam.wpCur  = NULL;
 
-    if (picList == REF_PIC_LIST_0)
+    if (list == REF_PIC_LIST_0)
     {
         m_distParam.wpCur = wp0;
     }

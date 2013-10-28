@@ -453,11 +453,11 @@ void TEncEntropy::encodePUWise(TComDataCU* cu, UInt absPartIdx, bool bRD)
             encodeInterDirPU(cu, subPartIdx);
             for (UInt refListIdx = 0; refListIdx < 2; refListIdx++)
             {
-                if (cu->getSlice()->getNumRefIdx(RefPicList(refListIdx)) > 0)
+                if (cu->getSlice()->getNumRefIdx(refListIdx) > 0)
                 {
-                    encodeRefFrmIdxPU(cu, subPartIdx, RefPicList(refListIdx));
-                    encodeMvdPU(cu, subPartIdx, RefPicList(refListIdx));
-                    encodeMVPIdxPU(cu, subPartIdx, RefPicList(refListIdx));
+                    encodeRefFrmIdxPU(cu, subPartIdx, refListIdx);
+                    encodeMvdPU(cu, subPartIdx, refListIdx);
+                    encodeMVPIdxPU(cu, subPartIdx, refListIdx);
                 }
             }
         }
@@ -480,7 +480,7 @@ void TEncEntropy::encodeInterDirPU(TComDataCU* cu, UInt absPartIdx)
  * \param eRefList
  * \returns void
  */
-void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, UInt absPartIdx, RefPicList list)
+void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, UInt absPartIdx, int list)
 {
     assert(!cu->isIntra(absPartIdx));
     {
@@ -502,7 +502,7 @@ void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, UInt absPartIdx, RefPicList 
  * \param eRefList
  * \returns void
  */
-void TEncEntropy::encodeMvdPU(TComDataCU* cu, UInt absPartIdx, RefPicList list)
+void TEncEntropy::encodeMvdPU(TComDataCU* cu, UInt absPartIdx, int list)
 {
     assert(!cu->isIntra(absPartIdx));
 
@@ -512,7 +512,7 @@ void TEncEntropy::encodeMvdPU(TComDataCU* cu, UInt absPartIdx, RefPicList list)
     }
 }
 
-void TEncEntropy::encodeMVPIdxPU(TComDataCU* cu, UInt absPartIdx, RefPicList list)
+void TEncEntropy::encodeMVPIdxPU(TComDataCU* cu, UInt absPartIdx, int list)
 {
     if ((cu->getInterDir(absPartIdx) & (1 << list)))
     {

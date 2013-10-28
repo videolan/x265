@@ -78,7 +78,7 @@ public:
     virtual void codeTilesWPPEntryPoint(TComSlice* slice) = 0;
     virtual void codeTerminatingBit(UInt isLast) = 0;
     virtual void codeSliceFinish() = 0;
-    virtual void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList list) = 0;
+    virtual void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, int list) = 0;
     virtual void codeScalingList(TComScalingList* scalingList) = 0;
 
 public:
@@ -103,8 +103,8 @@ public:
 
     virtual void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx) = 0;
     virtual void codeInterDir(TComDataCU* cu, UInt absPartIdx) = 0;
-    virtual void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
-    virtual void codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList) = 0;
+    virtual void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, int eRefList) = 0;
+    virtual void codeMvd(TComDataCU* cu, UInt absPartIdx, int eRefList) = 0;
     virtual void codeDeltaQP(TComDataCU* cu, UInt absPartIdx) = 0;
     virtual void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType ttype) = 0;
     virtual void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType ttype) = 0;
@@ -164,9 +164,9 @@ public:
     void encodeSkipFlag(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
     void encodePUWise(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
     void encodeInterDirPU(TComDataCU* pcSubCU, UInt absPartIdx);
-    void encodeRefFrmIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, RefPicList eRefList);
-    void encodeMvdPU(TComDataCU* pcSubCU, UInt absPartIdx, RefPicList eRefList);
-    void encodeMVPIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, RefPicList eRefList);
+    void encodeRefFrmIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, int eRefList);
+    void encodeMvdPU(TComDataCU* pcSubCU, UInt absPartIdx, int eRefList);
+    void encodeMVPIdxPU(TComDataCU* pcSubCU, UInt absPartIdx, int eRefList);
     void encodeMergeFlag(TComDataCU* cu, UInt absPartIdx);
     void encodeMergeIndex(TComDataCU* cu, UInt absPartIdx, bool bRD = false);
     void encodePredMode(TComDataCU* cu, UInt absPartIdx, bool bRD = false);

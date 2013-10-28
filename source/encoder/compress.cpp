@@ -300,9 +300,9 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                 bool allZero = true;
                 for (UInt list = 0; list < 2; list++)
                 {
-                    if (outBestCU->getSlice()->getNumRefIdx(RefPicList(list)) > 0)
+                    if (outBestCU->getSlice()->getNumRefIdx(list) > 0)
                     {
-                        allZero &= !outBestCU->getCUMvField(RefPicList(list))->getMvd(0).word;
+                        allZero &= !outBestCU->getCUMvField(list)->getMvd(0).word;
                     }
                 }
 

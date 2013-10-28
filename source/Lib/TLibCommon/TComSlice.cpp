@@ -465,12 +465,12 @@ void TComSlice::initWpAcDcParam()
 }
 
 /** get WP tables for weighted pred
- * \param RefPicList
+ * \param int
  * \param refIdx
  * \param *&wpScalingParam
  * \returns void
  */
-void TComSlice::getWpScaling(RefPicList l, int refIdx, wpScalingParam *&wp)
+void TComSlice::getWpScaling(int l, int refIdx, wpScalingParam *&wp)
 {
     wp = m_weightPredTable[l][refIdx];
 }

@@ -604,9 +604,9 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
             for (int list = 0; list < numLists; list++)
             {
                 fprintf(stderr, " [L%d ", list);
-                for (int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
+                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
-                    int k = slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR();
+                    int k = slice->getRefPOC(list, ref) - slice->getLastIDR();
                     fprintf(stderr, "%d ",k);
                 }
 
@@ -634,9 +634,9 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
                 for (int list = 0; list < numLists; list++)
                 {
                     fprintf(m_csvfpt, ", ");
-                    for (int ref = 0; ref < slice->getNumRefIdx(RefPicList(list)); ref++)
+                    for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
-                        int k = slice->getRefPOC(RefPicList(list), ref) - slice->getLastIDR();
+                        int k = slice->getRefPOC(list, ref) - slice->getLastIDR();
                         fprintf(m_csvfpt, " %d", k);
                     }
                 }

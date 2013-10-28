@@ -213,14 +213,13 @@ bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, int log2Denom)
 {
     int numPredDir = slice->isInterP() ? 1 : 2;
 
-    for (int refList = 0; refList < numPredDir; refList++)
+    for (int list = 0; list < numPredDir; list++)
     {
-        RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
+        for (int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(list); refIdxTemp++)
         {
             wpACDCParam *currWeightACDCParam, *refWeightACDCParam;
             slice->getWpAcDcParam(currWeightACDCParam);
-            slice->getRefPic(picList, refIdxTemp)->getSlice()->getWpAcDcParam(refWeightACDCParam);
+            slice->getRefPic(list, refIdxTemp)->getSlice()->getWpAcDcParam(refWeightACDCParam);
 
             for (int comp = 0; comp < 3; comp++)
             {
@@ -258,10 +257,10 @@ bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, int log2Denom)
                 if (deltaWeight > 127 || deltaWeight < -128)
                     return false;
 
-                m_wp[refList][refIdxTemp][comp].bPresentFlag = true;
-                m_wp[refList][refIdxTemp][comp].inputWeight = (int)weight;
-                m_wp[refList][refIdxTemp][comp].inputOffset = (int)offset;
-                m_wp[refList][refIdxTemp][comp].log2WeightDenom = (int)log2Denom;
+                m_wp[list][refIdxTemp][comp].bPresentFlag = true;
+                m_wp[list][refIdxTemp][comp].inputWeight = (int)weight;
+                m_wp[list][refIdxTemp][comp].inputOffset = (int)offset;
+                m_wp[list][refIdxTemp][comp].log2WeightDenom = (int)log2Denom;
             }
         }
     }
@@ -283,35 +282,34 @@ bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
     int defaultWeight = ((int)1 << denom);
     int numPredDir = slice->isInterP() ? 1 : 2;
 
-    for (int refList = 0; refList < numPredDir; refList++)
+    for (int list = 0; list < numPredDir; list++)
     {
         Int64 SADWP = 0, SADnoWP = 0;
-        RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (int refIdxTmp = 0; refIdxTmp < slice->getNumRefIdx(picList); refIdxTmp++)
+        for (int refIdxTmp = 0; refIdxTmp < slice->getNumRefIdx(list); refIdxTmp++)
         {
             Pel*  fenc = pic->getLumaAddr();
-            Pel*  fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getLumaAddr();
+            Pel*  fref = slice->getRefPic(list, refIdxTmp)->getPicYuvOrg()->getLumaAddr();
             int   orgStride = pic->getStride();
-            int   refStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getStride();
+            int   refStride = slice->getRefPic(list, refIdxTmp)->getPicYuvOrg()->getStride();
 
             // calculate SAD costs with/without wp for luma
-            SADWP   = this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width, height, orgStride, refStride, denom, weightPredTable[refList][refIdxTmp][0].inputWeight, weightPredTable[refList][refIdxTmp][0].inputOffset);
+            SADWP   = this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width, height, orgStride, refStride, denom, weightPredTable[list][refIdxTmp][0].inputWeight, weightPredTable[list][refIdxTmp][0].inputOffset);
             SADnoWP = this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width, height, orgStride, refStride, denom, defaultWeight, 0);
 
             fenc = pic->getCbAddr();
-            fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getCbAddr();
+            fref = slice->getRefPic(list, refIdxTmp)->getPicYuvOrg()->getCbAddr();
             orgStride = pic->getCStride();
-            refStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getCStride();
+            refStride = slice->getRefPic(list, refIdxTmp)->getPicYuvOrg()->getCStride();
 
             // calculate SAD costs with/without wp for chroma cb
-            SADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, weightPredTable[refList][refIdxTmp][1].inputWeight, weightPredTable[refList][refIdxTmp][1].inputOffset);
+            SADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, weightPredTable[list][refIdxTmp][1].inputWeight, weightPredTable[list][refIdxTmp][1].inputOffset);
             SADnoWP += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, defaultWeight, 0);
 
             fenc = pic->getCrAddr();
-            fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvOrg()->getCrAddr();
+            fref = slice->getRefPic(list, refIdxTmp)->getPicYuvOrg()->getCrAddr();
 
             // calculate SAD costs with/without wp for chroma cr
-            SADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, weightPredTable[refList][refIdxTmp][2].inputWeight, weightPredTable[refList][refIdxTmp][2].inputOffset);
+            SADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, weightPredTable[list][refIdxTmp][2].inputWeight, weightPredTable[list][refIdxTmp][2].inputOffset);
             SADnoWP += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, defaultWeight, 0);
 
             double dRatio = ((double)SADWP / (double)SADnoWP);
@@ -319,10 +317,10 @@ bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
             {
                 for (int comp = 0; comp < 3; comp++)
                 {
-                    weightPredTable[refList][refIdxTmp][comp].bPresentFlag = false;
-                    weightPredTable[refList][refIdxTmp][comp].inputOffset = (int)0;
-                    weightPredTable[refList][refIdxTmp][comp].inputWeight = (int)defaultWeight;
-                    weightPredTable[refList][refIdxTmp][comp].log2WeightDenom = (int)denom;
+                    weightPredTable[list][refIdxTmp][comp].bPresentFlag = false;
+                    weightPredTable[list][refIdxTmp][comp].inputOffset = (int)0;
+                    weightPredTable[list][refIdxTmp][comp].inputWeight = (int)defaultWeight;
+                    weightPredTable[list][refIdxTmp][comp].log2WeightDenom = (int)denom;
                 }
             }
         }

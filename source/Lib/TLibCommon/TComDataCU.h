@@ -157,13 +157,13 @@ private:
 protected:
 
     /// add possible motion vector predictor candidates
-    bool          xAddMVPCand(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir);
+    bool          xAddMVPCand(AMVPInfo* info, int picList, int refIdx, UInt partUnitIdx, MVP_DIR dir);
 
-    bool          xAddMVPCandOrder(AMVPInfo* info, RefPicList picList, int refIdx, UInt partUnitIdx, MVP_DIR dir);
+    bool          xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, UInt partUnitIdx, MVP_DIR dir);
 
     void          deriveRightBottomIdx(UInt partIdx, UInt& outPartIdxRB);
 
-    bool          xGetColMVP(RefPicList picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx);
+    bool          xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx);
 
     /// compute scaling factor from POC difference
     int           xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC);
@@ -192,7 +192,7 @@ public:
     void          setOutsideCUPart(UInt absPartIdx, UInt depth);
 
     void          copySubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth);
-    void          copyInterPredInfoFrom(TComDataCU* cu, UInt absPartIdx, RefPicList picList);
+    void          copyInterPredInfoFrom(TComDataCU* cu, UInt absPartIdx, int picList);
     void          copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(UChar depth);
@@ -303,7 +303,7 @@ public:
 
     UInt          getQuadtreeTULog2MinSizeInCU(UInt absPartIdx);
 
-    TComCUMvField* getCUMvField(RefPicList e) { return &m_cuMvField[e]; }
+    TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
 
     TCoeff*&      getCoeffY()                 { return m_trCoeffY; }
 
@@ -401,25 +401,25 @@ public:
     // member functions for motion vector
     // -------------------------------------------------------------------------------------------------------------------
 
-    void          getMvField(TComDataCU* cu, UInt absPartIdx, RefPicList picList, TComMvField& rcMvField);
+    void          getMvField(TComDataCU* cu, UInt absPartIdx, int picList, TComMvField& rcMvField);
 
-    void          fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, int refIdx, AMVPInfo* info);
+    void          fillMvpCand(UInt partIdx, UInt partAddr, int picList, int refIdx, AMVPInfo* info);
     bool          isDiffMER(int xN, int yN, int xP, int yP);
     void          getPartPosition(UInt partIdx, int& xP, int& yP, int& nPSW, int& nPSH);
-    void          setMVPIdx(RefPicList picList, UInt idx, int mvpIdx) { m_mvpIdx[picList][idx] = (char)mvpIdx; }
+    void          setMVPIdx(int picList, UInt idx, int mvpIdx) { m_mvpIdx[picList][idx] = (char)mvpIdx; }
 
-    int           getMVPIdx(RefPicList picList, UInt idx)             { return m_mvpIdx[picList][idx]; }
+    int           getMVPIdx(int picList, UInt idx)             { return m_mvpIdx[picList][idx]; }
 
-    char*         getMVPIdx(RefPicList picList)                       { return m_mvpIdx[picList]; }
+    char*         getMVPIdx(int picList)                       { return m_mvpIdx[picList]; }
 
-    void          setMVPNum(RefPicList picList, UInt idx, int mvpNum) { m_mvpNum[picList][idx] = (char)mvpNum; }
+    void          setMVPNum(int picList, UInt idx, int mvpNum) { m_mvpNum[picList][idx] = (char)mvpNum; }
 
-    int           getMVPNum(RefPicList picList, UInt idx)             { return m_mvpNum[picList][idx]; }
+    int           getMVPNum(int picList, UInt idx)             { return m_mvpNum[picList][idx]; }
 
-    char*         getMVPNum(RefPicList picList)                       { return m_mvpNum[picList]; }
+    char*         getMVPNum(int picList)                       { return m_mvpNum[picList]; }
 
-    void          setMVPIdxSubParts(int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
-    void          setMVPNumSubParts(int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
+    void          setMVPIdxSubParts(int mvpIdx, int picList, UInt absPartIdx, UInt partIdx, UInt depth);
+    void          setMVPNumSubParts(int iMVPNum, int picList, UInt absPartIdx, UInt partIdx, UInt depth);
 
     void          clipMv(MV& outMV);
 
@@ -441,7 +441,7 @@ public:
 
     TComDataCU*   getCUAboveRight() { return m_cuAboveRight; }
 
-    TComDataCU*   getCUColocated(RefPicList picList) { return m_cuColocated[picList]; }
+    TComDataCU*   getCUColocated(int picList) { return m_cuColocated[picList]; }
 
     TComDataCU*   getPULeft(UInt& lPartUnitIdx,
                             UInt  curPartUnitIdx,

@@ -153,7 +153,7 @@ public:
     void codeMergeFlag(TComDataCU* cu, UInt absPartIdx);
     void codeMergeIndex(TComDataCU* cu, UInt absPartIdx);
     void codeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth);
-    void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList);
+    void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, int eRefList);
 
     void codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth);
     void codePredMode(TComDataCU* cu, UInt absPartIdx);
@@ -167,8 +167,8 @@ public:
 
     void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx);
     void codeInterDir(TComDataCU* cu, UInt absPartIdx);
-    void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList);
-    void codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList);
+    void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, int eRefList);
+    void codeMvd(TComDataCU* cu, UInt absPartIdx, int eRefList);
 
     void codeDeltaQP(TComDataCU* cu, UInt absPartIdx);
 

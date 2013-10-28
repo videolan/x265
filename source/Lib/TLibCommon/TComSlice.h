@@ -1417,13 +1417,13 @@ public:
 
     int       getDeblockingFilterTcOffsetDiv2()   { return m_deblockingFilterTcOffsetDiv2; }
 
-    int       getNumRefIdx(RefPicList e)          { return m_numRefIdx[e]; }
+    int       getNumRefIdx(int e)                 { return m_numRefIdx[e]; }
 
     TComPic*  getPic()                            { return m_pic; }
 
-    TComPic*  getRefPic(RefPicList e, int refIdx) { return m_refPicList[e][refIdx]; }
+    TComPic*  getRefPic(int e, int refIdx) { return m_refPicList[e][refIdx]; }
 
-    int       getRefPOC(RefPicList e, int refIdx) { return m_refPOCList[e][refIdx]; }
+    int       getRefPOC(int e, int refIdx) { return m_refPOCList[e][refIdx]; }
 
     UInt      getColFromL0Flag()                  { return m_colFromL0Flag; }
 
@@ -1478,11 +1478,11 @@ public:
 
     void      setDeblockingFilterTcOffsetDiv2(int i)   { m_deblockingFilterTcOffsetDiv2 = i; }
 
-    void      setRefPic(TComPic* p, RefPicList e, int refIdx) { m_refPicList[e][refIdx] = p; }
+    void      setRefPic(TComPic* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
 
-    void      setRefPOC(int i, RefPicList e, int refIdx) { m_refPOCList[e][refIdx] = i; }
+    void      setRefPOC(int i, int e, int refIdx) { m_refPOCList[e][refIdx] = i; }
 
-    void      setNumRefIdx(RefPicList e, int i)   { m_numRefIdx[e] = i; }
+    void      setNumRefIdx(int e, int i)   { m_numRefIdx[e] = i; }
 
     void      setPic(TComPic* p)                  { m_pic = p; }
 
@@ -1532,7 +1532,7 @@ public:
 
     void  setWpScaling(wpScalingParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(wpScalingParam) * 2 * MAX_NUM_REF * 3); }
 
-    void  getWpScaling(RefPicList e, int refIdx, wpScalingParam *&wp);
+    void  getWpScaling(int e, int refIdx, wpScalingParam *&wp);
 
     void  resetWpScaling();
     void  initWpScaling();

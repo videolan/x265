@@ -860,10 +860,8 @@ void TEncSbac::xCodePredWeightTable(TComSlice* slice)
     }
     if (mode == 1)
     {
-        for (int iNumRef = 0; iNumRef < iNbRef; iNumRef++)
+        for (int picList = 0; picList < iNbRef; picList++)
         {
-            RefPicList  picList = (iNumRef ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-
             for (int refIdx = 0; refIdx < slice->getNumRefIdx(picList); refIdx++)
             {
                 slice->getWpScaling(picList, refIdx, wp);
@@ -1488,7 +1486,7 @@ void TEncSbac::xCopyFrom(TEncSbac* src)
     memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
-void TEncSbac::codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
+void TEncSbac::codeMVPIdx(TComDataCU* cu, UInt absPartIdx, int eRefList)
 {
     int symbol = cu->getMVPIdx(eRefList, absPartIdx);
     int num = AMVP_MAX_NUM_CANDS;
@@ -1789,7 +1787,7 @@ void TEncSbac::codeInterDir(TComDataCU* cu, UInt absPartIdx)
     }
 }
 
-void TEncSbac::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
+void TEncSbac::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, int eRefList)
 {
     {
         int refFrame = cu->getCUMvField(eRefList)->getRefIdx(absPartIdx);
@@ -1822,7 +1820,7 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefLis
     }
 }
 
-void TEncSbac::codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
+void TEncSbac::codeMvd(TComDataCU* cu, UInt absPartIdx, int eRefList)
 {
     if (cu->getSlice()->getMvdL1ZeroFlag() && eRefList == REF_PIC_LIST_1 && cu->getInterDir(absPartIdx) == 3)
     {

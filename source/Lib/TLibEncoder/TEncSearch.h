@@ -197,14 +197,14 @@ protected:
     // Inter search (AMP)
     // --------------------------------------------------------------------------------------------
 
-    void xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, int refIdx,
+    void xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, int picList, int refIdx,
                              MV& mvPred, UInt* distBiP = NULL);
 
-    void xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV cMv, MV& mvPred, int& mvpIdx,
+    void xCheckBestMVP(TComDataCU* cu, int picList, MV cMv, MV& mvPred, int& mvpIdx,
                        UInt& outBits, UInt& outCost);
 
     UInt xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
-                          int mvpCandCount, RefPicList picList, int refIdx, int sizex, int sizey);
+                          int mvpCandCount, int picList, int refIdx, int sizex, int sizey);
 
     void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
     UInt xGetMvpIdxBits(int idx, int num);
@@ -238,7 +238,7 @@ protected:
 
     UInt xSymbolBitsInter(TComDataCU* cu);
 
-    void setWpScalingDistParam(TComDataCU* cu, int refIdx, RefPicList picList);
+    void setWpScalingDistParam(TComDataCU* cu, int refIdx, int picList);
 };
 }
 //! \}

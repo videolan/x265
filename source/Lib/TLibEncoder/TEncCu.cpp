@@ -1481,9 +1481,9 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     int mvsum = 0;
                     for (UInt refListIdx = 0; refListIdx < 2; refListIdx++)
                     {
-                        if (outBestCU->getSlice()->getNumRefIdx(RefPicList(refListIdx)) > 0)
+                        if (outBestCU->getSlice()->getNumRefIdx(refListIdx) > 0)
                         {
-                            TComCUMvField* pcCUMvField = outBestCU->getCUMvField(RefPicList(refListIdx));
+                            TComCUMvField* pcCUMvField = outBestCU->getCUMvField(refListIdx);
                             int hor = abs(pcCUMvField->getMvd(0).x);
                             int ver = abs(pcCUMvField->getMvd(0).y);
                             mvsum += hor + ver;

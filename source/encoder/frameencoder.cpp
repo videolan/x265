@@ -380,10 +380,9 @@ void FrameEncoder::compressFrame()
 
         for (int dir = 0; dir <= numPredDir; dir++)
         {
-            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            for (int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
+            for (int refIdx = 0; refIdx < slice->getNumRefIdx(dir); refIdx++)
             {
-                int refPOC = slice->getRefPic(e, refIdx)->getPOC();
+                int refPOC = slice->getRefPic(dir, refIdx)->getPOC();
                 int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
                 for (int i = 0; i < m_numRows; i++)
                 {
@@ -426,16 +425,15 @@ void FrameEncoder::compressFrame()
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
     {
-        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
         wpScalingParam *w = NULL;
-        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
             if ((slice->isInterP() && slice->getPPS()->getUseWP()))
             {
-                w = slice->m_weightPredTable[list][ref];
+                w = slice->m_weightPredTable[l][ref];
                 slice->m_numWPRefs++;
             }
-            m_mref[l][ref].init(slice->getRefPic(list, ref)->getPicYuvRec(), w);
+            m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
         }
     }
 
@@ -683,10 +681,9 @@ void FrameEncoder::compressFrame()
     /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)
     {
-        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            TComPic *refpic = slice->getRefPic(list, ref);
+            TComPic *refpic = slice->getRefPic(l, ref);
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
@@ -919,10 +916,9 @@ void FrameEncoder::compressCTURows()
             // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
             {
-                RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
                 {
-                    TComPic *refpic = slice->getRefPic(list, ref);
+                    TComPic *refpic = slice->getRefPic(l, ref);
                     while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < row + refLagRows))
                     {
                         refpic->m_reconRowWait.wait();
@@ -930,7 +926,7 @@ void FrameEncoder::compressCTURows()
 
                     if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
                     {
-                        m_mref[list][ref].applyWeight(row + refLagRows, m_numRows);
+                        m_mref[l][ref].applyWeight(row + refLagRows, m_numRows);
                     }
                 }
             }
@@ -956,7 +952,7 @@ void FrameEncoder::compressCTURows()
                 // block until all reference frames have reconstructed the rows we need
                 for (int l = 0; l < numPredDir; l++)
                 {
-                    RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+                    int list = l;
                     for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
                         TComPic *refpic = slice->getRefPic(list, ref);
