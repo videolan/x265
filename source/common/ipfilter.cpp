@@ -42,7 +42,7 @@ void filterVertical_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t 
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC + headRoom;
     int offset = (1 << (shift - 1)) + (IF_INTERNAL_OFFS << IF_FILTER_PREC);
-    int16_t maxVal = (1 << X265_DEPTH) - 1;
+    uint16_t maxVal = (1 << X265_DEPTH) - 1;
     const int16_t *coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
 
     src -= (N / 2 - 1) * srcStride;
@@ -84,7 +84,7 @@ void filterHorizontal_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t 
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int offset =  (1 << (headRoom - 1));
-    int16_t maxVal = (1 << X265_DEPTH) - 1;
+    uint16_t maxVal = (1 << X265_DEPTH) - 1;
     const int cStride = 1;
     src -= (N / 2 - 1) * cStride;
 
@@ -228,7 +228,7 @@ void filterConvertShortToPel_c(int16_t *src, intptr_t srcStride, pixel *dst, int
 {
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int16_t offset = IF_INTERNAL_OFFS + (shift ? (1 << (shift - 1)) : 0);
-    int16_t maxVal = (1 << X265_DEPTH) - 1;
+    uint16_t maxVal = (1 << X265_DEPTH) - 1;
     int row, col;
     for (row = 0; row < height; row++)
     {
@@ -269,7 +269,7 @@ void filterVertical_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t ds
 {
     int shift = IF_FILTER_PREC;
     int offset = 1 << (shift - 1);
-    int16_t maxVal = (1 << X265_DEPTH) - 1;
+    uint16_t maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1) * srcStride;
 
     int row, col;
@@ -330,7 +330,7 @@ void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
     int16_t const * coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int offset =  (1 << (headRoom - 1));
-    int16_t maxVal = (1 << X265_DEPTH) - 1;
+    uint16_t maxVal = (1 << X265_DEPTH) - 1;
     int cStride = 1;
     src -= (N / 2 - 1) * cStride;
 
@@ -370,7 +370,7 @@ void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstSt
     int16_t const * c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int shift = IF_FILTER_PREC;
     int offset = 1 << (shift - 1);
-    int16_t maxVal = (1 << X265_DEPTH) - 1;
+    uint16_t maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1) * srcStride;
 
     int row, col;

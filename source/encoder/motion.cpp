@@ -561,7 +561,7 @@ me_hex2:
         omv = bmv;
         const uint16_t *p_cost_omvx = m_cost_mvx + omv.x * 4;
         const uint16_t *p_cost_omvy = m_cost_mvy + omv.y * 4;
-        int16_t i = 1;
+        uint16_t i = 1;
         do
         {
             if (4 * i > X265_MIN4(mvmax.x - omv.x, omv.x - mvmin.x,
