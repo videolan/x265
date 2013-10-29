@@ -138,6 +138,41 @@ SAD  4,  4
     lea     r0,  [r0 + 2 * r1]
 %endmacro
 
+%macro PROCESS_SAD_32x4 0
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+%endmacro
+
 %macro SAD_W16 0
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_16x16( uint8_t *, intptr_t, uint8_t *, intptr_t )
