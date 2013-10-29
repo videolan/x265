@@ -76,17 +76,19 @@ tab_LumaCoeffV: times 4 dw 0, 0
 SECTION .text
 
 %macro FILTER_H4_w2_2 3
-    movu        %2, [srcq - 1]
+    movh        %2, [srcq - 1]
     pshufb      %2, %2, Tm0
-    pmaddubsw   %2, coef2
-    movu        %1, [srcq + srcstrideq - 1]
+    movh        %1, [srcq + srcstrideq - 1]
     pshufb      %1, %1, Tm0
-    pmaddubsw   %1, coef2
-    phaddw      %2, %1
+    punpcklqdq  %2, %1
+    pmaddubsw   %2, coef2
+    phaddw      %2, %2
     pmulhrsw    %2, %3
     packuswb    %2, %2
-    pextrw      [dstq], %2, 0
-    pextrw      [dstq + dststrideq], %2, 2
+    movd        r4, %2
+    mov         [dstq], r4w
+    shr         r4, 16
+    mov         [dstq + dststrideq], r4w
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -158,17 +160,18 @@ lea         dstq,       [dstq + dststrideq * 2]
 RET
 
 %macro FILTER_H4_w4_2 3
-    movu        %2, [srcq - 1]
+    movh        %2, [srcq - 1]
     pshufb      %2, %2, Tm0
     pmaddubsw   %2, coef2
-    movu        %1, [srcq + srcstrideq - 1]
+    movh        %1, [srcq + srcstrideq - 1]
     pshufb      %1, %1, Tm0
     pmaddubsw   %1, coef2
     phaddw      %2, %1
     pmulhrsw    %2, %3
     packuswb    %2, %2
-    movd        [dstq],      %2
-    pextrd      [dstq + dststrideq], %2,  1
+    movd        [dstq], %2
+    palignr     %2, %2, 4
+    movd        [dstq + dststrideq], %2
 %endmacro
 
 ;-----------------------------------------------------------------------------
