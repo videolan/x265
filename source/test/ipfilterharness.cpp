@@ -164,6 +164,8 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
     int rand_width = rand() % 100;                  // Randomly generated Width
     int16_t rand_val, rand_srcStride, rand_dstStride;
 
+    rand_width &= ~3;
+
     for (int i = 0; i <= 100; i++)
     {
         memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
@@ -173,16 +175,16 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt(short_buff + 3 * rand_srcStride,
+        ref(short_buff + 3 * rand_srcStride,
             rand_srcStride,
-            IPF_vec_output_p,
+            IPF_C_output_p,
             rand_dstStride,
             rand_width,
             rand_height, rand_val
             );
-        ref(short_buff + 3 * rand_srcStride,
+        opt(short_buff + 3 * rand_srcStride,
             rand_srcStride,
-            IPF_C_output_p,
+            IPF_vec_output_p,
             rand_dstStride,
             rand_width,
             rand_height, rand_val

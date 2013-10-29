@@ -89,6 +89,7 @@ CHROMA_FILTERS(_sse4);
 LUMA_FILTERS(_sse4);
 
 void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
+void x265_interp_8tap_v_sp_ssse3(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
 
 #undef SETUP_CHROMA_FUNC_DEF
 #undef SETUP_LUMA_FUNC_DEF

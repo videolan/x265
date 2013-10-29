@@ -774,3 +774,127 @@ cglobal interp_8tap_hv_pp_8x8, 4, 7, 8, 0-15*16
     jnz         .loopV
 
     RET
+
+
+;-----------------------------------------------------------------------------
+; void interp_8tap_v_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+
+%if ARCH_X86_64
+cglobal interp_8tap_v_sp, 4, 7+5, 8
+%define tmp_r0      r7
+%define tmp_r2      r8
+%define tmp_r3      r9
+%define tmp_r4d     r10d
+%define tmp_6rows   r11
+
+%else ; ARCH_X86_64 = 0
+
+cglobal interp_8tap_v_sp, 4, 7, 8, 0-(5*4)
+%define tmp_r0      [(rsp + 0 * 4)]
+%define tmp_r2      [(rsp + 1 * 4)]
+%define tmp_r3      [(rsp + 2 * 4)]
+%define tmp_r4d     [(rsp + 3 * 4)]
+%define tmp_6rows   [(rsp + 4 * 4)]
+%endif ; ARCH_X86_64
+
+    mov         r4d,        r4m
+    mov         r5d,        r5m
+
+    mov         tmp_r4d, r4d
+    mov         tmp_r2, r2
+
+    ; load coeff table
+    mov         r6d,        r6m
+    shl         r6,         6
+    lea         r4,         [tab_LumaCoeffV]
+    lea         r6,         [r4 + r6]
+
+    ; move to -3
+    lea         r1, [r1 * 2]
+    lea         r4, [r1 + r1 * 2]
+    sub         r0, r4
+    lea         r4, [r4 * 2]
+    mov         tmp_6rows, r4
+
+.loopH:
+
+    ; load width
+    mov         r4d, tmp_r4d
+
+    ; save old src
+    mov         tmp_r0, r0
+
+.loopW:
+
+    movu        m0, [r0]
+    movu        m1, [r0 + r1]
+    lea         r0, [r0 + r1 * 2]
+    punpcklwd   m2, m0, m1
+    pmaddwd     m2, [r6 + 0 * 16]
+    punpckhwd   m0, m1
+    pmaddwd     m0, [r6 + 0 * 16]
+
+    movu        m3, [r0]
+    movu        m4, [r0 + r1]
+    lea         r0, [r0 + r1 * 2]
+    punpcklwd   m1, m3, m4
+    pmaddwd     m1, [r6 + 1 * 16]
+    paddd       m2, m1
+    punpckhwd   m3, m4
+    pmaddwd     m3, [r6 + 1 * 16]
+    paddd       m0, m3
+
+    movu        m3, [r0]
+    movu        m4, [r0 + r1]
+    lea         r0, [r0 + r1 * 2]
+    punpcklwd   m1, m3, m4
+    pmaddwd     m1, [r6 + 2 * 16]
+    paddd       m2, m1
+    punpckhwd   m3, m4
+    pmaddwd     m3, [r6 + 2 * 16]
+    paddd       m0, m3
+
+    movu        m3, [r0]
+    movu        m4, [r0 + r1]
+    punpcklwd   m1, m3, m4
+    pmaddwd     m1, [r6 + 3 * 16]
+    paddd       m2, m1
+    punpckhwd   m3, m4
+    pmaddwd     m3, [r6 + 3 * 16]
+    paddd       m0, m3
+
+    paddd       m2, [tab_c_526336]
+    paddd       m0, [tab_c_526336]
+    psrad       m2, 12
+    psrad       m0, 12
+    packssdw    m2, m0
+    packuswb    m2, m2
+
+    ; move to next 8 col
+    sub         r0, tmp_6rows
+
+    sub         r4, 8
+    jl          .width4
+    movq        [r2], m2
+    je          .nextH
+    lea         r0, [r0 + 16]
+    lea         r2, [r2 + 8]
+    jmp         .loopW
+
+.width4:
+    movd        [r2], m2
+    lea         r0, [r0 + 4]
+
+.nextH:
+    ; move to next row
+    mov         r0, tmp_r0
+    lea         r0, [r0 + r1]
+    add         tmp_r2, r3
+    mov         r2, tmp_r2
+
+    dec         r5d
+    jnz         .loopH
+
+    RET
