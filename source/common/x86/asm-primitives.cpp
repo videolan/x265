@@ -235,6 +235,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         //p.pixelavg_pp[LUMA_4x4]  = x265_pixel_avg_4x4_mmx2;
         //PIXEL_AVE(sse2);
 
+        p.sad[LUMA_16x32]  = x265_pixel_sad_16x32_sse2;
+
         ASSGN_SSE(sse2);
         INIT2(sad, _sse2);
         INIT2(sad_x3, _sse2);

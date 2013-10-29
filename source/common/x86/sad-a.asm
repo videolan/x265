@@ -119,6 +119,25 @@ SAD  4,  4
     RET
 %endmacro
 
+%macro PROCESS_SAD_16x4 0
+    movu    m1,  [r2]
+    movu    m2,  [r2 + r3]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + r1]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + 2 * r3]
+    lea     r0,  [r0 + 2 * r1]
+    movu    m1,  [r2]
+    movu    m2,  [r2 + r3]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + r1]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + 2 * r3]
+    lea     r0,  [r0 + 2 * r1]
+%endmacro
+
 %macro SAD_W16 0
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_16x16( uint8_t *, intptr_t, uint8_t *, intptr_t )
@@ -223,6 +242,41 @@ cglobal pixel_sad_16x8, 4,4
     paddw   m0, m1
     paddw   m0, m3
     SAD_END_SSE2
+
+;-----------------------------------------------------------------------------
+; int pixel_sad_16x32( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+cglobal pixel_sad_16x32, 4,4,3
+    pxor m0, m0
+
+    PROCESS_SAD_16x4
+    PROCESS_SAD_16x4
+    PROCESS_SAD_16x4
+    PROCESS_SAD_16x4
+    PROCESS_SAD_16x4
+    PROCESS_SAD_16x4
+    PROCESS_SAD_16x4
+
+    movu    m1,  [r2]
+    movu    m2,  [r2 + r3]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + r1]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + 2 * r3]
+    lea     r0,  [r0 + 2 * r1]
+    movu    m1,  [r2]
+    movu    m2,  [r2 + r3]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + r1]
+    paddd   m1,  m2
+    paddd   m0,  m1
+
+    movhlps m1, m0
+    paddd   m0, m1
+    movd    eax, m0
+    RET
+
 %endmacro
 
 INIT_XMM sse2
