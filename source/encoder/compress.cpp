@@ -26,6 +26,7 @@
 
 /* Lambda Partition Select adjusts the threshold value for Early Exit in No-RDO flow */
 #define LAMBDA_PARTITION_SELECT     0.9
+#define EARLY_EXIT                  1
 
 using namespace x265;
 
@@ -570,7 +571,78 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     // further split
     if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
     {
+#if EARLY_EXIT // turn ON this to enable early exit
+        // early exit when the RD cost of best mode at depth n is less than the avgerage of RD cost of the
+        // CU's(above, aboveleft, aboveright, left, colocated) at depth "n" of previosuly coded CU's
+        if (outBestCU != 0)
+        {
+            UInt64 costCU = 0, costCUAbove = 0, costCUAboveLeft = 0, costCUAboveRight = 0, costCULeft = 0, costCUColocated0 = 0, costCUColocated1 = 0, totalCost = 0, avgCost= 0;
+            UInt64 countCU = 0, countCUAbove = 0, countCUAboveLeft = 0, countCUAboveRight = 0, countCULeft = 0, countCUColocated0 = 0, countCUColocated1 = 0;
+            UInt64 totalCount = 0;
+            TComDataCU* above = outTempCU->getCUAbove();
+            TComDataCU* aboveLeft = outTempCU->getCUAboveLeft();
+            TComDataCU* aboveRight = outTempCU->getCUAboveRight();
+            TComDataCU* left = outTempCU->getCULeft();
+            TComDataCU* colocated0 = outTempCU->getCUColocated(REF_PIC_LIST_0);
+            TComDataCU* colocated1 = outTempCU->getCUColocated(REF_PIC_LIST_1);
+
+            costCU = outTempCU->m_avgCost[depth] * outTempCU->m_count[depth];
+            countCU = outTempCU->m_count[depth];
+            if (above)
+            {
+                costCUAbove = above->m_avgCost[depth] * above->m_count[depth];
+                countCUAbove = above->m_count[depth];
+            }
+            if (aboveLeft)
+            {
+                costCUAboveLeft = aboveLeft->m_avgCost[depth] * aboveLeft->m_count[depth];
+                countCUAboveLeft = aboveLeft->m_count[depth];
+            }
+            if (aboveRight)
+            {
+                costCUAboveRight = aboveRight->m_avgCost[depth] * aboveRight->m_count[depth];
+                countCUAboveRight = aboveRight->m_count[depth];
+            }
+            if (left)
+            {
+                costCULeft = left->m_avgCost[depth] * left->m_count[depth];
+                countCULeft = left->m_count[depth];
+            }
+            if (colocated0)
+            {
+                costCUColocated0 = colocated0->m_avgCost[depth] * colocated0->m_count[depth];
+                countCUColocated0 = colocated0->m_count[depth];
+            }
+            if (colocated1)
+            {
+                costCUColocated1 = colocated1->m_avgCost[depth] * colocated1->m_count[depth];
+                countCUColocated1 = colocated1->m_count[depth];
+            }
+
+            totalCost = costCU + costCUAbove + costCUAboveLeft + costCUAboveRight + costCULeft + costCUColocated0 + costCUColocated1;
+            totalCount = countCU + countCUAbove + countCUAboveLeft + countCUAboveRight + countCULeft + countCUColocated0 + countCUColocated1;
+            if (totalCount != 0)
+                avgCost = totalCost / totalCount;
+
+            float lambda = 1.0f;
+
+            if (outBestCU->m_totalCost < lambda * avgCost && avgCost != 0 && depth != 0)
+            {
+                m_entropyCoder->resetBits();
+                m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
+                outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits();        // split bits
+                outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
+                /* Copy Best data to Picture for next partition prediction. */
+                outBestCU->copyToPic((UChar)depth);
+
+                /* Copy Yuv data to picture Yuv */
+                xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpely);
+                return;
+            }
+        }
+#endif
 #if 0 // turn ON this to enable early exit
+        //early exit when RD cost of best mode is less than the cumulative RD cost of 4 subpartition
         UInt64 nxnCost = 0;
         if (outBestCU != 0 && depth > 0)
         {
@@ -651,7 +723,22 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     m_rdSbacCoders[nextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
                 }
                 xCompressInterCU(subBestPartCU, subTempPartCU, outTempCU, nextDepth, nextDepth_partIndex);
-
+#if EARLY_EXIT
+                for (int k = 0; k < 4; k++)
+                {
+                    outTempCU->m_avgCost[k] = subTempPartCU->m_avgCost[k];
+                    outTempCU->m_count[k] = subTempPartCU->m_count[k];
+                }
+                if (subBestPartCU->getPredictionMode(0) != MODE_INTRA)
+                {
+                    UInt64 tempavgCost = subBestPartCU->m_totalCost;
+                    UInt64 temp = outTempCU->m_avgCost[depth + 1] * outTempCU->m_count[depth + 1];
+                    outTempCU->m_count[depth + 1] += 1;
+                    outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_count[depth + 1] += 1;
+                    outTempCU->m_avgCost[depth + 1] = (temp + tempavgCost) / outTempCU->m_count[depth + 1];
+                    outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_avgCost[depth + 1] = outTempCU->m_avgCost[depth + 1];
+                }
+#endif
                 /* Adding costs from best SUbCUs */
                 outTempCU->copyPartFrom(subBestPartCU, nextDepth_partIndex, nextDepth, true); // Keep best part data to current temporary data.
                 xCopyYuv2Tmp(subBestPartCU->getTotalNumPart() * nextDepth_partIndex, nextDepth);
@@ -747,6 +834,16 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
          * Copy recon data from Temp structure to Best structure */
         if (outBestCU)
         {
+            if (depth == 0)
+            {
+                UInt64 tempavgCost = outBestCU->m_totalCost;
+                UInt64 temp = outTempCU->m_avgCost[depth] * outTempCU->m_count[depth];
+                outTempCU->m_count[depth] += 1;
+                outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_count[depth] += 1;
+
+                outTempCU->m_avgCost[depth] = (temp + tempavgCost) / outTempCU->m_count[depth];
+                outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_avgCost[depth] = outTempCU->m_avgCost[depth];
+            }
             if (outTempCU->m_totalCost < outBestCU->m_totalCost)
             {
                 outBestCU = outTempCU;

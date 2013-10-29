@@ -247,6 +247,12 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     m_totalBits        = 0;
     m_numPartitions    = pic->getNumPartInCU();
 
+    for (int i = 0; i < 4; i++)
+    {
+        m_avgCost[i] = 0;
+        m_count[i] = 0;
+    }
+
     // CHECK_ME: why partStartIdx always negative
     int partStartIdx = 0 - (cuAddr) * pic->getNumPartInCU();
 
@@ -469,6 +475,12 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_totalDistortion  = 0;
     m_totalBits        = 0;
     m_numPartitions    = cu->getTotalNumPart() >> 2;
+
+    for (int i = 0; i < 4; i++)
+    {
+        m_avgCost[i] = cu->m_avgCost[i];
+        m_count[i] = cu->m_count[i];
+    }
 
     int iSizeInUchar = sizeof(UChar) * m_numPartitions;
     int iSizeInBool  = sizeof(bool) * m_numPartitions;

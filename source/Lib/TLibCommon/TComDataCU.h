@@ -178,6 +178,8 @@ public:
     UInt64        m_totalCost;       ///< sum of partition RD costs
     uint32_t      m_totalDistortion; ///< sum of partition distortion
     uint32_t      m_totalBits;       ///< sum of partition signal bits
+    UInt64        m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
+    uint32_t      m_count[4];
 
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
