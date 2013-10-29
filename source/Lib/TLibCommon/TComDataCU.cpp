@@ -293,7 +293,6 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     if (numElements > 0)
     {
         memset(m_skipFlag         + firstElement, false,                    numElements * sizeof(*m_skipFlag));
-        memset(m_partSizes        + firstElement, SIZE_NONE,                numElements * sizeof(*m_partSizes));
         memset(m_predModes        + firstElement, MODE_NONE,                numElements * sizeof(*m_predModes));
         memset(m_cuTransquantBypass + firstElement, false,                  numElements * sizeof(*m_cuTransquantBypass));
         memset(m_depth            + firstElement, 0,                        numElements * sizeof(*m_depth));
@@ -303,8 +302,6 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
         memset(m_transformSkip[2] + firstElement, 0,                        numElements * sizeof(*m_transformSkip[2]));
         memset(m_width            + firstElement, g_maxCUWidth,             numElements * sizeof(*m_width));
         memset(m_height           + firstElement, g_maxCUHeight,            numElements * sizeof(*m_height));
-        memset(m_mvpIdx[0]        + firstElement, -1,                       numElements * sizeof(*m_mvpIdx[0]));
-        memset(m_mvpIdx[1]        + firstElement, -1,                       numElements * sizeof(*m_mvpIdx[1]));
         memset(m_mvpNum[0]        + firstElement, -1,                       numElements * sizeof(*m_mvpNum[0]));
         memset(m_mvpNum[1]        + firstElement, -1,                       numElements * sizeof(*m_mvpNum[1]));
         memset(m_qp               + firstElement, getSlice()->getSliceQp(), numElements * sizeof(*m_qp));
