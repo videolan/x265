@@ -84,7 +84,7 @@ public:
 /// class for motion information in one CU
 class TComCUMvField
 {
-private:
+public:
 
     MV* m_mv;
     MV* m_mvd;
@@ -94,8 +94,6 @@ private:
 
     template<typename T>
     void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
-
-public:
 
     TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0) {}
 
