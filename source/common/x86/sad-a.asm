@@ -319,6 +319,30 @@ cglobal pixel_sad_16x64, 4,4,3
     movd    eax, m0
     RET
 
+;-----------------------------------------------------------------------------
+; int pixel_sad_16x4( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+cglobal pixel_sad_16x4, 4,4,3
+
+    movu    m0,  [r2]
+    movu    m1,  [r2 + r3]
+    psadbw  m0,  [r0]
+    psadbw  m1,  [r0 + r1]
+    paddd   m0,  m1
+    lea     r2,  [r2 + 2 * r3]
+    lea     r0,  [r0 + 2 * r1]
+    movu    m1,  [r2]
+    movu    m2,  [r2 + r3]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + r1]
+    paddd   m1,  m2
+    paddd   m0,  m1
+
+    movhlps m1,  m0
+    paddd   m0,  m1
+    movd    eax, m0
+    RET
+
 %endmacro
 
 INIT_XMM sse2
