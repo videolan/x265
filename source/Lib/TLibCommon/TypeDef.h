@@ -52,7 +52,6 @@ namespace x265 {
 // ====================================================================================================================
 
 typedef unsigned char  UChar;
-typedef unsigned short UShort;
 
 // ====================================================================================================================
 // 64-bit integer type
@@ -71,7 +70,7 @@ typedef unsigned long long  UInt64;
 // ====================================================================================================================
 
 #if HIGH_BIT_DEPTH
-typedef UShort Pel;            // 16-bit pixel type
+typedef uint16_t Pel;            // 16-bit pixel type
 #define X265_DEPTH x265::g_bitDepth  // runtime configurable bit depth
 extern int g_bitDepth;
 #else

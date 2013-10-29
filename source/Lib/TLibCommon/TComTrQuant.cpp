@@ -640,7 +640,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 {
                     uint32_t   posY   = blkPos >> log2BlkSize;
                     uint32_t   posX   = blkPos - (posY << log2BlkSize);
-                    UShort ctxSig = getSigCtxInc(patternSigCtx, scanIdx, posX, posY, log2BlkSize, ttype);
+                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, scanIdx, posX, posY, log2BlkSize, ttype);
                     level         = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
                                                    levelDouble, maxAbsLevel, ctxSig, oneCtx, absCtx, goRiceParam,
                                                    c1Idx, c2Idx, qbits, scaleFactor, 0);
@@ -1149,10 +1149,10 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double& codedCost,
                                         double& codedCostSig,
                                         int     levelDouble,
                                         uint32_t    maxAbsLevel,
-                                        UShort  ctxNumSig,
-                                        UShort  ctxNumOne,
-                                        UShort  ctxNumAbs,
-                                        UShort  absGoRice,
+                                        uint16_t  ctxNumSig,
+                                        uint16_t  ctxNumOne,
+                                        uint16_t  ctxNumAbs,
+                                        uint16_t  absGoRice,
                                         uint32_t    c1Idx,
                                         uint32_t    c2Idx,
                                         int     qbits,
@@ -1207,9 +1207,9 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double& codedCost,
  * \returns cost of given absolute transform level
  */
 inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
-                                          UShort ctxNumOne,
-                                          UShort ctxNumAbs,
-                                          UShort absGoRice,
+                                          uint16_t ctxNumOne,
+                                          uint16_t ctxNumAbs,
+                                          uint16_t absGoRice,
                                           uint32_t   c1Idx,
                                           uint32_t   c2Idx) const
 {
@@ -1263,9 +1263,9 @@ inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
 }
 
 inline int TComTrQuant::xGetICRate(uint32_t   absLevel,
-                                   UShort ctxNumOne,
-                                   UShort ctxNumAbs,
-                                   UShort absGoRice,
+                                   uint16_t ctxNumOne,
+                                   uint16_t ctxNumAbs,
+                                   uint16_t absGoRice,
                                    uint32_t   c1Idx,
                                    uint32_t   c2Idx) const
 {
@@ -1290,8 +1290,8 @@ inline int TComTrQuant::xGetICRate(uint32_t   absLevel,
             symbol = std::min<uint32_t>(symbol, (maxVlc + 1));
         }
 
-        UShort prefLen = UShort(symbol >> absGoRice) + 1;
-        UShort numBins = std::min<uint32_t>(prefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
+        uint16_t prefLen = uint16_t(symbol >> absGoRice) + 1;
+        uint16_t numBins = std::min<uint32_t>(prefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
 
         rate += numBins << 15;
 
