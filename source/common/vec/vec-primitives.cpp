@@ -43,9 +43,29 @@ void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, ui
     *edx = output[3];
 }
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4100)
+#endif
 void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
 {
+#if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
+
+    // MSVC 2010 SP1 or later, or similar Intel release
     uint64_t out = _xgetbv(op);
+
+#elif defined(__GNUC__)    // use inline assembly, Gnu/AT&T syntax
+
+    uint32_t a, d;
+    __asm("xgetbv" : "=a" (a), "=d" (d) : "c" (ctr) :);
+    *eax = a;
+    *edx = d;
+    return;
+
+#elif defined(_WIN64)      // On x64 with older compilers, this is impossible
+
+    uint64_t out = 0;
+
+#endif
 
     *eax = (uint32_t)out;
     *edx = (uint32_t)(out >> 32);
