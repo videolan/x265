@@ -89,12 +89,6 @@ void TComCUMvField::destroy()
 
 void TComCUMvField::clearMvField()
 {
-    for (int i = 0; i < m_numPartitions; i++)
-    {
-        m_mv[i] = 0;
-        m_mvd[i] = 0;
-    }
-
     assert(sizeof(*m_refIdx) == 1);
     memset(m_refIdx, NOT_VALID, m_numPartitions * sizeof(*m_refIdx));
 }
