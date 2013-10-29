@@ -28,7 +28,7 @@
 #include <string.h>
 #include <iostream>
 
-#if WIN32
+#if _WIN32
 #include "io.h"
 #include "fcntl.h"
 #if defined(_MSC_VER)
@@ -53,7 +53,7 @@ Y4MInput::Y4MInput(const char *filename)
     if (!strcmp(filename, "-"))
     {
         ifs = &cin;
-#if WIN32
+#if _WIN32
         setmode(fileno(stdin), O_BINARY);
 #endif
     }
