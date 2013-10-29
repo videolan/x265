@@ -100,7 +100,7 @@ public:
     }
 
     UChar uuid_iso_iec_11578[16];
-    UInt userDataLength;
+    uint32_t userDataLength;
     UChar *userData;
 };
 
@@ -167,16 +167,16 @@ public:
 
     virtual ~SEIBufferingPeriod() {}
 
-    UInt m_bpSeqParameterSetId;
+    uint32_t m_bpSeqParameterSetId;
     bool m_rapCpbParamsPresentFlag;
     bool m_cpbDelayOffset;
     bool m_dpbDelayOffset;
-    UInt m_initialCpbRemovalDelay[MAX_CPB_CNT][2];
-    UInt m_initialCpbRemovalDelayOffset[MAX_CPB_CNT][2];
-    UInt m_initialAltCpbRemovalDelay[MAX_CPB_CNT][2];
-    UInt m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
+    uint32_t m_initialCpbRemovalDelay[MAX_CPB_CNT][2];
+    uint32_t m_initialCpbRemovalDelayOffset[MAX_CPB_CNT][2];
+    uint32_t m_initialAltCpbRemovalDelay[MAX_CPB_CNT][2];
+    uint32_t m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
     bool m_concatenationFlag;
-    UInt m_auCpbRemovalDelayDelta;
+    uint32_t m_auCpbRemovalDelayDelta;
 };
 
 class SEIPictureTiming : public SEI
@@ -200,18 +200,18 @@ public:
         delete m_duCpbRemovalDelayMinus1;
     }
 
-    UInt  m_picStruct;
-    UInt  m_sourceScanType;
+    uint32_t  m_picStruct;
+    uint32_t  m_sourceScanType;
     bool  m_duplicateFlag;
 
-    UInt  m_auCpbRemovalDelay;
-    UInt  m_picDpbOutputDelay;
-    UInt  m_picDpbOutputDuDelay;
-    UInt  m_numDecodingUnitsMinus1;
+    uint32_t  m_auCpbRemovalDelay;
+    uint32_t  m_picDpbOutputDelay;
+    uint32_t  m_picDpbOutputDuDelay;
+    uint32_t  m_numDecodingUnitsMinus1;
     bool  m_duCommonCpbRemovalDelayFlag;
-    UInt  m_duCommonCpbRemovalDelayMinus1;
-    UInt* m_numNalusInDuMinus1;
-    UInt* m_duCpbRemovalDelayMinus1;
+    uint32_t  m_duCommonCpbRemovalDelayMinus1;
+    uint32_t* m_numNalusInDuMinus1;
+    uint32_t* m_duCpbRemovalDelayMinus1;
 };
 
 class SEIDecodingUnitInfo : public SEI
@@ -268,7 +268,7 @@ public:
     bool horFlip;
     bool verFlip;
 
-    UInt anticlockwiseRotation;
+    uint32_t anticlockwiseRotation;
     bool persistenceFlag;
     bool extensionFlag;
 };

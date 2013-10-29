@@ -57,13 +57,13 @@ const DctConf_t IDctConf_infos[] =
 
 MBDstHarness::MBDstHarness()
 {
-    mbuf1 = (short*)X265_MALLOC(short, mb_t_size);
-    mbufdct = (short*)X265_MALLOC(short, mb_t_size);
+    mbuf1 = (int16_t*)X265_MALLOC(int16_t, mb_t_size);
+    mbufdct = (int16_t*)X265_MALLOC(int16_t, mb_t_size);
     mbufidct = (int*)X265_MALLOC(int,   mb_t_size);
 
-    mbuf2 = (short*)X265_MALLOC(short, mem_cmp_size);
-    mbuf3 = (short*)X265_MALLOC(short, mem_cmp_size);
-    mbuf4 = (short*)X265_MALLOC(short, mem_cmp_size);
+    mbuf2 = (int16_t*)X265_MALLOC(int16_t, mem_cmp_size);
+    mbuf3 = (int16_t*)X265_MALLOC(int16_t, mem_cmp_size);
+    mbuf4 = (int16_t*)X265_MALLOC(int16_t, mem_cmp_size);
 
     mintbuf1 = (int*)X265_MALLOC(int, mb_t_size);
     mintbuf2 = (int*)X265_MALLOC(int, mb_t_size);
@@ -167,7 +167,7 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
 {
     int j = 0;
-    int cmp_size = sizeof(short) * width * width;
+    int cmp_size = sizeof(int16_t) * width * width;
 
     for (int i = 0; i <= 100; i++)
     {

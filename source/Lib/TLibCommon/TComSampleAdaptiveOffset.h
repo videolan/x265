@@ -139,27 +139,27 @@ protected:
 
     TComPic* m_pic;
 
-    static const UInt m_maxDepth;
+    static const uint32_t m_maxDepth;
     static const int m_numCulPartsLevel[5];
-    static const UInt m_eoTable[9];
+    static const uint32_t m_eoTable[9];
     static const int m_numClass[MAX_NUM_SAO_TYPE];
 
-    int *m_offsetBo;
-    int *m_chromaOffsetBo;
+    int32_t *m_offsetBo;
+    int32_t *m_chromaOffsetBo;
     int m_offsetEo[LUMA_GROUP_NUM];
 
     int  m_picWidth;
     int  m_picHeight;
-    UInt m_maxSplitLevel;
-    UInt m_maxCUWidth;
-    UInt m_maxCUHeight;
+    uint32_t m_maxSplitLevel;
+    uint32_t m_maxCUWidth;
+    uint32_t m_maxCUHeight;
     int  m_numCuInWidth;
     int  m_numCuInHeight;
     int  m_numTotalParts;
 
-    UInt m_saoBitIncreaseY;
-    UInt m_saoBitIncreaseC; //for chroma
-    UInt m_qp;
+    uint32_t m_saoBitIncreaseY;
+    uint32_t m_saoBitIncreaseC; //for chroma
+    uint32_t m_qp;
 
     Pel   *m_clipTable;
     Pel   *m_clipTableBase;
@@ -167,9 +167,9 @@ protected:
     Pel   *m_chromaClipTable;
     Pel   *m_chromaClipTableBase;
     Pel   *m_chromaTableBo;
-    int   *m_upBuff1;
-    int   *m_upBuff2;
-    int   *m_upBufft;
+    int32_t    *m_upBuff1;
+    int32_t    *m_upBuff2;
+    int32_t    *m_upBufft;
     TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
     Pel* m_tmpU1[3];
@@ -185,7 +185,7 @@ public:
     TComSampleAdaptiveOffset();
     virtual ~TComSampleAdaptiveOffset();
 
-    void create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight);
+    void create(uint32_t sourceWidth, uint32_t sourceHeight, uint32_t maxCUWidth, uint32_t maxCUHeight);
     void destroy();
 
     int  convertLevelRowCol2Idx(int level, int row, int col) const;
@@ -203,8 +203,8 @@ public:
     void destroyPicSaoInfo();
 
     void resetLcuPart(SaoLcuParam* saoLcuParam);
-    void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, int yCbCr);
-    void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, int yCbCr);
+    void convertQT2SaoUnit(SAOParam* saoParam, uint32_t partIdx, int yCbCr);
+    void convertOnePart2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int yCbCr);
     void processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr);
     void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr);
     void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
@@ -220,7 +220,7 @@ public:
 };
 
 void PCMLFDisableProcess(TComPic* pic);
-void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
+void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth);
 }
 
 //! \}

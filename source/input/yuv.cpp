@@ -26,6 +26,15 @@
 #include "common.h"
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
+
+#if _WIN32
+#include "io.h"
+#include "fcntl.h"
+#if defined(_MSC_VER)
+#pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
+#endif
+#endif
 
 using namespace x265;
 using namespace std;
@@ -40,19 +49,31 @@ YUVInput::YUVInput(const char *filename)
 #else
     buf = NULL;
 #endif
-    ifs.open(filename, ios::binary | ios::in);
     width = height = 0;
     depth = 8;
     threadActive = false;
-    if (!ifs.fail())
-        threadActive = true;
+    if (!strcmp(filename, "-"))
+    {
+        ifs = &cin;
+#if _WIN32
+        setmode(fileno(stdin), O_BINARY);
+#endif
+    }
     else
-        ifs.close();
+        ifs = new ifstream(filename, ios::binary | ios::in);
+    if (ifs && !ifs->fail())
+        threadActive = true;
+    else if (ifs && ifs != &cin)
+    {
+        delete ifs;
+        ifs = NULL;
+    }
 }
 
 YUVInput::~YUVInput()
 {
-    ifs.close();
+    if (ifs && ifs != &cin)
+        delete ifs;
 #if defined ENABLE_THREAD
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
@@ -65,22 +86,33 @@ YUVInput::~YUVInput()
 
 int YUVInput::guessFrameCount()
 {
-    ifstream::pos_type cur = ifs.tellg();
+    if (!ifs || ifs == &cin) return -1;
+
+    ifstream::pos_type cur = ifs->tellg();
     if (cur < 0)
         return -1;
 
-    ifs.seekg(0, ios::end);
-    ifstream::pos_type size = ifs.tellg();
+    ifs->seekg(0, ios::end);
+    ifstream::pos_type size = ifs->tellg();
     if (size < 0)
         return -1;
-    ifs.seekg(cur, ios::beg);
+    ifs->seekg(cur, ios::beg);
 
     return (int)((size - cur) / (width * height * pixelbytes * 3 / 2));
 }
 
-void YUVInput::skipFrames(int numFrames)
+void YUVInput::skipFrames(uint32_t numFrames)
 {
-    ifs.seekg(framesize * numFrames, ios::cur);
+    if (ifs && numFrames)
+    {
+        if (ifs == &cin)
+        {
+            for (uint32_t i = 0; i < numFrames; i++)
+                ifs->ignore(framesize);
+        }
+        else
+            ifs->seekg(framesize * numFrames, ios::cur);
+    }
 }
 
 void YUVInput::startReader()
@@ -101,12 +133,11 @@ void YUVInput::setDimensions(int w, int h)
         height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT)
     {
         threadActive = false;
-        ifs.close();
     }
     else
     {
 #if defined ENABLE_THREAD
-        for (int i = 0; i < QUEUE_SIZE; i++)
+        for (uint32_t i = 0; i < QUEUE_SIZE; i++)
         {
             buf[i] = new char[framesize];
             if (buf[i] == NULL)
@@ -130,34 +161,37 @@ void YUVInput::threadMain()
             break;
     }
     while (threadActive);
+
+    threadActive = false;
+    notEmpty.trigger();
 }
 
 bool YUVInput::populateFrameQueue()
 {
+    if (!ifs)
+        return false;
     while ((tail + 1) % QUEUE_SIZE == head)
     {
         notFull.wait();
         if (!threadActive)
-            break;
+            return false;
     }
 
-    ifs.read(buf[tail], framesize);
-    frameStat[tail] = ifs.good();
-    if (!frameStat[tail])
-        return false;
+    ifs->read(buf[tail], framesize);
+    frameStat[tail] = !ifs->fail();
     tail = (tail + 1) % QUEUE_SIZE;
     notEmpty.trigger();
-    return true;
+    return !ifs->fail();
 }
 
 bool YUVInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
-    if (!threadActive)
-        return false;
     while (head == tail)
     {
         notEmpty.wait();
+        if (!threadActive)
+            return false;
     }
 
     if (!frameStat[head])
@@ -187,6 +221,8 @@ bool YUVInput::readPicture(x265_picture& pic)
 // TODO: only supports 4:2:0 chroma sampling
 bool YUVInput::readPicture(x265_picture& pic)
 {
+    if (!ifs) return false;
+
     PPAStartCpuEventFunc(read_yuv);
 
     pic.planes[0] = buf;
@@ -201,10 +237,10 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    ifs.read(buf, framesize);
+    ifs->read(buf, framesize);
     PPAStopCpuEventFunc(read_yuv);
 
-    return ifs.good();
+    return !ifs->fail();
 }
 
 #endif // if defined ENABLE_THREAD

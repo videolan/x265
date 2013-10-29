@@ -49,9 +49,9 @@ class WeightPredAnalysis
     bool m_weighted_bipred_flag;
     wpScalingParam  m_wp[2][MAX_NUM_REF][3];
 
-    Int64   xCalcDCValueSlice(TComSlice *slice, Pel *pels, int *sample);
+    Int64   xCalcDCValueSlice(TComSlice *slice, Pel *pels, int32_t *sample);
     Int64   xCalcACValueSlice(TComSlice *slice, Pel *pels, Int64 dc);
-    Int64   xCalcDCValueUVSlice(TComSlice *slice, Pel *pels, int *sample);
+    Int64   xCalcDCValueUVSlice(TComSlice *slice, Pel *pels, int32_t *sample);
     Int64   xCalcACValueUVSlice(TComSlice *slice, Pel *pels, Int64 dc);
     Int64   xCalcSADvalueWPSlice(TComSlice *slice, Pel *orgPel, Pel *refPel, int denom, int inputWeight, int inputOffset);
 

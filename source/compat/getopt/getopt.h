@@ -23,6 +23,8 @@
 # define _GETOPT_H 1
 #endif
 
+#include<stdint.h>
+
 /* If __GNU_LIBRARY__ is not already defined, either we are being used
    standalone, or this is the first header included in the source file.
    If we are being used with glibc, we need to include <features.h>, but
@@ -101,7 +103,7 @@ struct option
   /* has_arg can't be an enum because some compilers complain about
      type mismatches in all the code that assumes it is an int.  */
   int has_arg;
-  int *flag;
+  int32_t *flag;
   int val;
 };
 
@@ -149,15 +151,15 @@ extern int getopt ();
 
 # ifndef __need_getopt
 extern int getopt_long (int __argc, char *const *__argv, const char *__shortopts,
-		        const struct option *__longopts, int *__longind);
+		        const struct option *__longopts, int32_t *__longind);
 extern int getopt_long_only (int __argc, char *const *__argv,
 			     const char *__shortopts,
-		             const struct option *__longopts, int *__longind);
+		             const struct option *__longopts, int32_t *__longind);
 
 /* Internal only.  Users should not call this directly.  */
 extern int _getopt_internal (int __argc, char *const *__argv,
 			     const char *__shortopts,
-		             const struct option *__longopts, int *__longind,
+		             const struct option *__longopts, int32_t *__longind,
 			     int __long_only);
 # endif
 #else /* not __STDC__ */

@@ -751,7 +751,7 @@ int sad_64(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 }
 
 #if HAVE_MMX
-void sad_x3_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0, sum1, sum2;
 
@@ -940,7 +940,7 @@ void sad_x3_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t
 
 #else /* if HAVE_MMX */
 
-void sad_x3_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -1134,7 +1134,7 @@ void sad_x3_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t
 #if HAVE_MMX
 template<int ly>
 // ly will always be 32
-void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     __m64 sum0 = _mm_setzero_si64();
     __m64 sum1 = _mm_setzero_si64();
@@ -1246,7 +1246,7 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
 
 template<int ly>
 // ly will always be 32
-void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     __m128i T00, T01, T02, T03;
     __m128i T10, T11, T12, T13;
@@ -1361,7 +1361,7 @@ void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t fr
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 
 template<int ly>
-void sad_x3_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     assert(ly == 16);
     res[0] = res[1] = res[2] = 0;
@@ -1445,7 +1445,7 @@ void sad_x3_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
 }
 
 template<int ly>
-void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
 #define PROCESS_16x4x3(BASE) \
     T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 0) * FENC_STRIDE)); \
@@ -1528,7 +1528,7 @@ void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
 }
 
 template<int ly>
-void sad_x3_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     res[0] = res[1] = res[2] = 0;
     __m128i T00, T01, T02, T03, T04, T05;
@@ -1630,7 +1630,7 @@ void sad_x3_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
 
 template<int ly>
 // ly will be 8, 16, 24, or 32
-void sad_x3_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     res[0] = res[1] = res[2] = 0;
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
@@ -1734,7 +1734,7 @@ void sad_x3_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
 }
 
 template<int ly>
-void sad_x3_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -2063,7 +2063,7 @@ void sad_x3_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
 
 template<int ly>
 // ly will be 16, 32, 48, or 64
-void sad_x3_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+void sad_x3_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -2491,7 +2491,7 @@ void sad_x3_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t f
 }
 
 #if HAVE_MMX
-void sad_x4_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0, sum1, sum2, sum3;
 
@@ -2728,7 +2728,7 @@ void sad_x4_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *f
 
 #else /* if HAVE_MMX */
 
-void sad_x4_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -2971,7 +2971,7 @@ void sad_x4_4x16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *f
 #if HAVE_MMX
 template<int ly>
 // ly will always be 32
-void sad_x4_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m64 sum0 = _mm_setzero_si64();
     __m64 sum1 = _mm_setzero_si64();
@@ -3112,7 +3112,7 @@ void sad_x4_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
 
 template<int ly>
 // ly will always be 32
-void sad_x4_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -3255,7 +3255,7 @@ void sad_x4_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 
 template<int ly>
-void sad_x4_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     assert(ly == 16);
     res[0] = res[1] = res[2] = res[3] = 0;
@@ -3357,7 +3357,7 @@ void sad_x4_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fre
 }
 
 template<int ly>
-void sad_x4_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
 #define PROCESS_16x4x4(BASE) \
     T00 = _mm_load_si128((__m128i*)(fenc + (BASE + 0) * FENC_STRIDE)); \
@@ -3455,7 +3455,7 @@ void sad_x4_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fre
 }
 
 template<int ly>
-void sad_x4_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     res[0] = res[1] = res[2] = res[3] = 0;
     __m128i T00, T01, T02, T03, T04, T05;
@@ -3581,7 +3581,7 @@ void sad_x4_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fre
 
 template<int ly>
 // ly will be 8, 16, 24, or 32
-void sad_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     res[0] = res[1] = res[2] = res[3] = 0;
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
@@ -3711,7 +3711,7 @@ void sad_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fre
 }
 
 template<int ly>
-void sad_x4_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -4134,7 +4134,7 @@ void sad_x4_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fre
 }
 
 template<int ly>
-void sad_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
+void sad_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -4897,7 +4897,7 @@ int sse_pp_64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref
     return _mm_cvtsi128_si32(sum);
 }
 
-void weightUnidir(short *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     __m128i w00, roundoff, ofs, fs, tmpsrc, tmpdst, tmp, sign;
     int x, y;
@@ -4943,10 +4943,9 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
     int x, y;
     __m128i temp;
     __m128i vw0    = _mm_set1_epi32(w0);                // broadcast (32-bit integer) w0 to all elements of vw0
-    __m128i iofs   = _mm_set1_epi32(IF_INTERNAL_OFFS);
     __m128i ofs    = _mm_set1_epi32(offset);
     __m128i round  = _mm_set1_epi32(arg_round);
-    __m128i src, dst;
+    __m128i src, dst, val;
 
     for (y = height - 1; y >= 0; y--)
     {
@@ -4955,7 +4954,8 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
             // The intermediate results would outgrow 16 bits because internal offset is too high
             temp = _mm_cvtsi32_si128(*(uint32_t*)(source + x));
             src = _mm_unpacklo_epi16(_mm_unpacklo_epi8(temp, _mm_setzero_si128()), _mm_setzero_si128());
-            dst = _mm_add_epi32((_mm_mullo_epi32(vw0, _mm_add_epi32(src, iofs))), round);
+            val = _mm_slli_epi32(src, (IF_INTERNAL_PREC - X265_DEPTH));
+            dst = _mm_add_epi32(_mm_mullo_epi32(vw0, val), round);
             dst =  _mm_sra_epi32(dst, _mm_cvtsi32_si128(shift));
             dst = _mm_add_epi32(dst, ofs);
             *(uint32_t*)(dest + x) = _mm_cvtsi128_si32(_mm_packus_epi16(_mm_packs_epi32(dst, dst), _mm_setzero_si128()));
@@ -4965,7 +4965,8 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
         {
             temp = _mm_cvtsi32_si128(*(uint32_t*)(source + x));
             src = _mm_unpacklo_epi16(_mm_unpacklo_epi8(temp, _mm_setzero_si128()), _mm_setzero_si128());
-            dst = _mm_add_epi32((_mm_mullo_epi32(vw0, _mm_add_epi32(src, iofs))), round);
+            val = _mm_slli_epi32(src, (IF_INTERNAL_PREC - X265_DEPTH));
+            dst = _mm_add_epi32(_mm_mullo_epi32(vw0, val), round);
             dst =  _mm_sra_epi32(dst, _mm_cvtsi32_si128(shift));
             dst = _mm_add_epi32(dst, ofs);
             temp = _mm_packus_epi16(_mm_packs_epi32(dst, dst), _mm_setzero_si128());
@@ -4985,7 +4986,7 @@ void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr
 }
 
 template<int ly>
-int sse_sp4(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp4(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum = _mm_setzero_si128();
 
@@ -5026,7 +5027,7 @@ int sse_sp4(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     sum1 = _mm_add_epi32(sum1, T13)
 
 template<int ly>
-int sse_sp8(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp8(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5056,7 +5057,7 @@ int sse_sp8(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp12(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp12(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
 
@@ -5104,7 +5105,7 @@ int sse_sp12(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp16(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp16(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5139,7 +5140,7 @@ int sse_sp16(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp24(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp24(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5180,7 +5181,7 @@ int sse_sp24(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp32(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp32(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5226,7 +5227,7 @@ int sse_sp32(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp48(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp48(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5283,7 +5284,7 @@ int sse_sp48(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_sp64(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
+int sse_sp64(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
 {
     __m128i sum0 = _mm_setzero_si128();
     __m128i sum1 = _mm_setzero_si128();
@@ -5362,7 +5363,7 @@ int sse_sp64(short* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref)
     sum = _mm_add_epi32(sum, diff)
 
 template<int ly>
-int sse_ss4(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss4(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i diff;
@@ -5382,7 +5383,7 @@ int sse_ss4(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss8(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss8(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5409,7 +5410,7 @@ int sse_ss8(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss12(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss12(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5438,7 +5439,7 @@ int sse_ss12(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss16(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss16(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5468,7 +5469,7 @@ int sse_ss16(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss24(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss24(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5498,7 +5499,7 @@ int sse_ss24(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss32(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss32(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5528,7 +5529,7 @@ int sse_ss32(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss48(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss48(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5558,7 +5559,7 @@ int sse_ss48(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
 }
 
 template<int ly>
-int sse_ss64(short* fenc, intptr_t strideFenc, short* fref, intptr_t strideFref)
+int sse_ss64(int16_t* fenc, intptr_t strideFenc, int16_t* fref, intptr_t strideFref)
 {
     int rows = ly;
     __m128i sum  = _mm_setzero_si128();
@@ -5661,8 +5662,8 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     p.sse_pp[LUMA_64x48] = sse_pp_64<48>;
     p.sse_pp[LUMA_64x16] = sse_pp_64<16>;
 
-//    p.weightpUniPixel = weightUnidirPixel;
-//    p.weightpUni = weightUnidir;
+    p.weightpUniPixel = weightUnidirPixel;
+    p.weightpUni = weightUnidir;
 #endif /* !HIGH_BIT_DEPTH */
 }
 }

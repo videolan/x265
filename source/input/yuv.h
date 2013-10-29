@@ -47,11 +47,11 @@ protected:
 
     int height;
 
-    int depth;
+    uint32_t depth;
 
-    int pixelbytes;
+    uint32_t pixelbytes;
 
-    int framesize;
+    uint32_t framesize;
 
     bool threadActive;
 
@@ -71,7 +71,7 @@ protected:
     char* buf;
 #endif // if defined(ENABLE_THREAD)
 
-    std::ifstream ifs;
+    std::istream *ifs;
 
 public:
 
@@ -81,7 +81,7 @@ public:
 
     void setDimensions(int w, int h);
 
-    void setBitDepth(int bitDepth)                { depth = bitDepth; }
+    void setBitDepth(uint32_t bitDepth)                { depth = bitDepth; }
 
     float getRate() const                         { return 0.0f; }
 
@@ -89,9 +89,9 @@ public:
 
     int getHeight() const                         { return height; }
 
-    bool isEof() const                            { return ifs.eof(); }
+    bool isEof() const                            { return (ifs && ifs->eof()); }
 
-    bool isFail()                                 { return !(ifs.is_open() && threadActive); }
+    bool isFail()                                 { return !(ifs && !ifs->fail() && threadActive); }
 
     void startReader();
 
@@ -99,7 +99,7 @@ public:
 
     int  guessFrameCount();
 
-    void skipFrames(int numFrames);
+    void skipFrames(uint32_t numFrames);
 
     bool readPicture(x265_picture&);
 

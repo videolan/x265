@@ -44,9 +44,9 @@ IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
     pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    short_buff = (short*)X265_MALLOC(short, ipf_t_size);
-    IPF_vec_output_s = (short*)malloc(ipf_t_size * sizeof(short)); // Output Buffer1
-    IPF_C_output_s = (short*)malloc(ipf_t_size * sizeof(short));   // Output Buffer2
+    short_buff = (int16_t*)X265_MALLOC(int16_t, ipf_t_size);
+    IPF_vec_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t)); // Output Buffer1
+    IPF_C_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t));   // Output Buffer2
     IPF_vec_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel)); // Output Buffer1
     IPF_C_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel));   // Output Buffer2
 
@@ -61,7 +61,7 @@ IPFilterHarness::IPFilterHarness()
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
         pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
-        short_buff[i] = (short)(isPositive) * (rand() &  SHRT_MAX);
+        short_buff[i] = (int16_t)(isPositive) * (rand() &  SHRT_MAX);
     }
 }
 
@@ -125,7 +125,7 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_ps_t ref, ipfilter_ps_t 
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
+    int16_t rand_val, rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -162,7 +162,9 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
+    int16_t rand_val, rand_srcStride, rand_dstStride;
+
+    rand_width &= ~3;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -173,19 +175,19 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_p,
-            rand_dstStride,
-            rand_width,
-            rand_height, g_lumaFilter[rand_val]
-            );
         ref(short_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
             rand_width,
-            rand_height, g_lumaFilter[rand_val]
+            rand_height, rand_val
+            );
+        opt(short_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_vec_output_p,
+            rand_dstStride,
+            rand_width,
+            rand_height, rand_val
             );
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
@@ -197,9 +199,9 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
 
 bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_t opt)
 {
-    short rand_height = (short)rand() % 100;                 // Randomly generated Height
-    short rand_width = (short)rand() % 100;                  // Randomly generated Width
-    short rand_srcStride, rand_dstStride;
+    int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
+    int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
+    int16_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -231,9 +233,9 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_
 
 bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt)
 {
-    short rand_height = (short)rand() % 100;                 // Randomly generated Height
-    short rand_width = (short)rand() % 100;                  // Randomly generated Width
-    short rand_srcStride, rand_dstStride;
+    int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
+    int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
+    int16_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -325,6 +327,40 @@ bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t 
     return true;
 }
 
+bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_hv_pp_t opt)
+{
+    int rand_srcStride, rand_dstStride, rand_coeffIdxX, rand_coeffIdxY;
+
+    for (int i = 0; i <= 1000; i++)
+    {
+        rand_coeffIdxX = rand() % 3;                // Random coeffIdex in the filter
+        rand_coeffIdxY = rand() % 3;                // Random coeffIdex in the filter
+
+        rand_srcStride = rand() % 100;             // Randomly generated srcStride
+        rand_dstStride = rand() % 100;             // Randomly generated dstStride
+
+        ref(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_C_output_p,
+            rand_dstStride,
+            rand_coeffIdxX,
+            rand_coeffIdxY
+        );
+        opt(pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_vec_output_p,
+            rand_dstStride,
+            rand_coeffIdxX,
+            rand_coeffIdxY
+        );
+
+        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
+            return false;
+    }
+
+    return true;
+}
+
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -391,6 +427,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
+        if (opt.luma_vpp[value])
+        {
+            if (!check_IPFilterLuma_primitive(ref.luma_vpp[value], opt.luma_vpp[value]))
+            {
+                printf("luma_vpp[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
     }
 
     for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
@@ -413,6 +457,18 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
+    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
+    {
+        if (opt.luma_hvpp[value])
+        {
+            if (!check_IPFilterLumaHV_primitive(ref.luma_hvpp[value], opt.luma_hvpp[value]))
+            {
+                printf("luma_hvpp[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -420,9 +476,9 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 {
     int height = 64;
     int width = 64;
-    short val = 2;
-    short srcStride = 96;
-    short dstStride = 96;
+    int16_t val = 2;
+    int16_t srcStride = 96;
+    int16_t dstStride = 96;
     int maxVerticalfilterHalfDistance = 3;
 
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -452,7 +508,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             printf("ipfilter_sp %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_sp[value], ref.ipfilter_sp[value],
                            short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                           IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
+                           IPF_vec_output_p, dstStride, width, height, val);
         }
     }
 
@@ -474,9 +530,24 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.luma_hpp[value])
         {
-            printf("  luma_hpp[%s]", lumaPartStr[value]);
+            printf("luma_hpp[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.luma_hpp[value], ref.luma_hpp[value],
                            pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+        }
+
+        if (opt.luma_vpp[value])
+        {
+            printf("luma_vpp[%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.luma_vpp[value], ref.luma_vpp[value],
+                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                           IPF_vec_output_p, dstStride, 1);
+        }
+
+        if (opt.luma_hvpp[value])
+        {
+            printf("luma_hv [%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.luma_hvpp[value], ref.luma_hvpp[value],
+                           pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1, 3);
         }
     }
 

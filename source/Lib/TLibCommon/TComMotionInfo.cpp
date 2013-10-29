@@ -53,7 +53,7 @@ using namespace x265;
 // Create / destroy
 // --------------------------------------------------------------------------------------------------------------------
 
-void TComCUMvField::create(UInt numPartition)
+void TComCUMvField::create(uint32_t numPartition)
 {
     assert(m_mv     == NULL);
     assert(m_mvd    == NULL);
@@ -113,7 +113,7 @@ void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const
     copyTo(cuMvFieldDst, partAddrDst, 0, m_numPartitions);
 }
 
-void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, UInt offset, UInt numPart) const
+void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const
 {
     int sizeInMv = sizeof(MV) * numPart;
     int partOffset = offset + partAddrDst;
@@ -128,7 +128,7 @@ void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, UInt of
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T>
-void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, UInt depth, int partIdx)
+void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
     int i;
 
@@ -311,22 +311,22 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, U
     }
 }
 
-void TComCUMvField::setAllMv(const MV& mv, PartSize cuMode, int partAddr, UInt depth, int partIdx)
+void TComCUMvField::setAllMv(const MV& mv, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
     setAll(m_mv, mv, cuMode, partAddr, depth, partIdx);
 }
 
-void TComCUMvField::setAllMvd(const MV& mvd, PartSize cuMode, int partAddr, UInt depth, int partIdx)
+void TComCUMvField::setAllMvd(const MV& mvd, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
     setAll(m_mvd, mvd, cuMode, partAddr, depth, partIdx);
 }
 
-void TComCUMvField::setAllRefIdx(int refIdx, PartSize cuMode, int partAddr, UInt depth, int partIdx)
+void TComCUMvField::setAllRefIdx(int refIdx, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
     setAll(m_refIdx, static_cast<char>(refIdx), cuMode, partAddr, depth, partIdx);
 }
 
-void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, int partAddr, UInt depth, int partIdx)
+void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
     setAllMv(mvField.mv, cuMode, partAddr, depth, partIdx);
     setAllRefIdx(mvField.refIdx, cuMode, partAddr, depth, partIdx);

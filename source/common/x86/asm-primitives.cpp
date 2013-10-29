@@ -235,6 +235,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         //p.pixelavg_pp[LUMA_4x4]  = x265_pixel_avg_4x4_mmx2;
         //PIXEL_AVE(sse2);
 
+        p.sad[LUMA_16x32]  = x265_pixel_sad_16x32_sse2;
+        p.sad[LUMA_16x64]  = x265_pixel_sad_16x64_sse2;
+
         ASSGN_SSE(sse2);
         INIT2(sad, _sse2);
         INIT2(sad_x3, _sse2);
@@ -269,7 +272,20 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.sad_x4[LUMA_8x4] = x265_pixel_sad_x4_8x4_ssse3;
         p.sad_x4[LUMA_8x8] = x265_pixel_sad_x4_8x8_ssse3;
+        p.sad_x3[LUMA_8x16] = x265_pixel_sad_x3_8x16_ssse3;
         p.sad_x4[LUMA_8x16] = x265_pixel_sad_x4_8x16_ssse3;
+        p.sad_x3[LUMA_8x32]  = x265_pixel_sad_x3_8x32_ssse3;
+        p.sad_x4[LUMA_8x32]  = x265_pixel_sad_x4_8x32_ssse3;
+
+        p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_ssse3;
+        p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_ssse3;
+        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_ssse3;
+        p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_ssse3;
+        p.sad_x3[LUMA_16x64] = x265_pixel_sad_x3_16x64_ssse3;
+        p.sad_x4[LUMA_16x64] = x265_pixel_sad_x4_16x64_ssse3;
+
+        p.luma_hvpp[LUMA_8x8] = x265_interp_8tap_hv_pp_8x8_ssse3;
+        p.ipfilter_sp[FILTER_V_S_P_8] = x265_interp_8tap_v_sp_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
@@ -291,6 +307,15 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_avx;
         SA8D_INTER_FROM_BLOCK(avx);
         ASSGN_SSE(avx);
+
+        p.sad_x3[LUMA_16x4] = x265_pixel_sad_x3_16x4_avx;
+        p.sad_x4[LUMA_16x4] = x265_pixel_sad_x4_16x4_avx;
+        p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_avx;
+        p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_avx;
+        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_avx;
+        p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx;
+        p.sad_x3[LUMA_16x64] = x265_pixel_sad_x3_16x64_avx;
+        p.sad_x4[LUMA_16x64] = x265_pixel_sad_x4_16x64_avx;
     }
     if (cpuMask & X265_CPU_XOP)
     {
@@ -310,6 +335,11 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT2_NAME(sse_pp, ssd, _avx2);
         p.sa8d[BLOCK_8x8] = x265_pixel_sa8d_8x8_avx2;
         SA8D_INTER_FROM_BLOCK8(avx2);
+
+        p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_avx2;
+        p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_avx2;
+        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_avx2;
+        p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
 }

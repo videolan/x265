@@ -38,6 +38,12 @@
 #ifndef X265_TYPEDEF_H
 #define X265_TYPEDEF_H
 
+#define REF_PIC_LIST_0 0
+#define REF_PIC_LIST_1 1
+#define REF_PIC_LIST_X 100
+
+#include <stdint.h>
+
 namespace x265 {
 // private namespace
 
@@ -46,8 +52,6 @@ namespace x265 {
 // ====================================================================================================================
 
 typedef unsigned char  UChar;
-typedef unsigned short UShort;
-typedef unsigned int   UInt;
 
 // ====================================================================================================================
 // 64-bit integer type
@@ -66,7 +70,7 @@ typedef unsigned long long  UInt64;
 // ====================================================================================================================
 
 #if HIGH_BIT_DEPTH
-typedef UShort Pel;            // 16-bit pixel type
+typedef uint16_t Pel;            // 16-bit pixel type
 #define X265_DEPTH x265::g_bitDepth  // runtime configurable bit depth
 extern int g_bitDepth;
 #else
@@ -126,14 +130,6 @@ enum TextType
     TEXT_CHROMA_U,      ///< chroma U
     TEXT_CHROMA_V,      ///< chroma V
     TEXT_ALL,           ///< Y+U+V
-};
-
-/// reference list index
-enum RefPicList
-{
-    REF_PIC_LIST_0 = 0, ///< reference list 0
-    REF_PIC_LIST_1 = 1, ///< reference list 1
-    REF_PIC_LIST_X = 100 ///< special mark
 };
 
 /// index for SBAC based RD optimization

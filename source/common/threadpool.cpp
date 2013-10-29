@@ -369,7 +369,7 @@ void JobProvider::dequeue()
 
 static int get_cpu_count()
 {
-#if WIN32
+#if _WIN32
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
     return sysinfo.dwNumberOfProcessors;
@@ -393,8 +393,8 @@ static int get_cpu_count()
     }
 
     return count;
-#else // if WIN32
+#else // if _WIN32
     return 2; // default to 2 threads, everywhere else
-#endif // if WIN32
+#endif // if _WIN32
 }
 } // end namespace x265

@@ -63,9 +63,9 @@ TComPicSym::TComPicSym()
     , m_cuData(NULL)
 {}
 
-void TComPicSym::create(int picWidth, int picHeight, UInt maxWidth, UInt maxHeight, UInt maxDepth)
+void TComPicSym::create(int picWidth, int picHeight, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth)
 {
-    UInt i;
+    uint32_t i;
 
     m_totalDepth      = maxDepth;
     m_numPartitions   = 1 << (m_totalDepth << 1);

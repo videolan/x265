@@ -57,14 +57,13 @@ TComPicYuv::TComPicYuv()
     m_picOrgY = NULL;  // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
     m_picOrgU = NULL;
     m_picOrgV = NULL;
-
-    m_refList = NULL;
 }
 
 TComPicYuv::~TComPicYuv()
-{}
+{
+}
 
-void TComPicYuv::create(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::create(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -130,26 +129,9 @@ void TComPicYuv::destroy()
     delete[] m_cuOffsetC;
     delete[] m_buOffsetY;
     delete[] m_buOffsetC;
-
-    while (m_refList)
-    {
-        MotionReference *mref = m_refList->m_next;
-        delete m_refList;
-        m_refList = mref;
-    }
 }
 
-void  TComPicYuv::clearReferences()
-{
-    while (m_refList)
-    {
-        MotionReference *mref = m_refList->m_next;
-        delete m_refList;
-        m_refList = mref;
-    }
-}
-
-void TComPicYuv::createLuma(int picWidth, int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
+void TComPicYuv::createLuma(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -197,6 +179,17 @@ void TComPicYuv::destroyLuma()
     delete[] m_buOffsetY;
 }
 
+uint32_t TComPicYuv::getCUHeight(int rowNum)
+{
+    uint32_t height;
+
+    if (rowNum == m_numCuInHeight - 1)
+        height = ((getHeight() % g_maxCUHeight) ? (getHeight() % g_maxCUHeight) : g_maxCUHeight);
+    else
+        height = g_maxCUHeight;
+    return height;
+}
+
 void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
 {
     assert(m_picWidth  == destPicYuv->getWidth());
@@ -229,31 +222,6 @@ void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
     assert(m_picHeight == destPicYuv->getHeight());
 
     ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
-}
-
-MotionReference* TComPicYuv::generateMotionReference(wpScalingParam *w)
-{
-    /* HPEL generation requires luma integer plane to already be extended */
-    // NOTE: We extend border every CURow, so I remove code here
-
-    MotionReference *mref;
-
-    for (mref = m_refList; mref != NULL; mref = mref->m_next)
-    {
-        if (w)
-        {
-            if (mref->matchesWeight(*w))
-                return mref;
-        }
-        else if (mref->isWeighted == false)
-            return mref;
-    }
-
-    mref = new MotionReference();
-    mref->init(this, w);
-    mref->m_next = m_refList;
-    m_refList = mref;
-    return mref;
 }
 
 void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int iMarginX, int iMarginY)
@@ -354,7 +322,7 @@ void TComPicYuv::dump(char* pFileName, bool bAdd)
  * Upscale pixels from 8bits to 16 bits when required, but do not modify pixels.
  * This new routine is GPL
  */
-void TComPicYuv::copyFromPicture(const x265_picture& pic, int *pad)
+void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 {
     Pel *Y = getLumaAddr();
     Pel *U = getCbAddr();

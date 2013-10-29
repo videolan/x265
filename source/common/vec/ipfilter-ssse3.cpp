@@ -37,7 +37,7 @@
 #if !HIGH_BIT_DEPTH
 namespace {
 template<int N>
-void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, short const *coeff)
+void filterHorizontal_ps(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
 {
     src -= (N / 2 - 1);
 
@@ -115,13 +115,13 @@ void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t ds
             __m128i NewSrc = _mm_loadl_epi64((__m128i*)(src + col));
             __m128i T00 = _mm_maddubs_epi16(NewSrc, T10);
             __m128i add = _mm_hadd_epi16(T00, T00);
-            short sum = _mm_extract_epi16(add, 0);
+            int16_t sum = _mm_extract_epi16(add, 0);
             if (N == 8)
             {
                 add = _mm_hadd_epi16(add, add);
                 sum = _mm_extract_epi16(add, 0);
             }
-            short val = (short)(sum + offset) >> shift;
+            int16_t val = (int16_t)(sum + offset) >> shift;
             dst[col] = val;
         }
 
@@ -130,10 +130,10 @@ void filterHorizontal_ps(pixel *src, intptr_t srcStride, short *dst, intptr_t ds
     }
 }
 
-void filterConvertPelToShort(pixel *source, intptr_t sourceStride, short *dest, intptr_t destStride, int width, int height)
+void filterConvertPelToShort(pixel *source, intptr_t sourceStride, int16_t *dest, intptr_t destStride, int width, int height)
 {
     pixel* src = source;
-    short* dst = dest;
+    int16_t* dst = dest;
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int row, col;
 
@@ -204,15 +204,15 @@ void filterConvertPelToShort(pixel *source, intptr_t sourceStride, short *dest, 
     }
 }
 
-void filterConvertShortToPel(short *source, intptr_t sourceStride, pixel *dest, intptr_t destStride, int width, int height)
+void filterConvertShortToPel(int16_t *source, intptr_t sourceStride, pixel *dest, intptr_t destStride, int width, int height)
 {
-    short* src = source;
+    int16_t* src = source;
     pixel* dst = dest;
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
-    short offset = IF_INTERNAL_OFFS;
+    int16_t offset = IF_INTERNAL_OFFS;
 
     offset += shift ? (1 << (shift - 1)) : 0;
-    short maxval = (1 << X265_DEPTH) - 1;
+    int16_t maxval = (1 << X265_DEPTH) - 1;
     int row, col;
 
     __m128i minval  = _mm_setzero_si128();

@@ -48,7 +48,7 @@ static const char emulation_prevention_three_byte[] = { 3 };
  * write nalu to bytestream out, performing RBSP anti startcode
  * emulation as required.  nalu.m_RBSPayload must be byte aligned.
  */
-void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
+void write(uint8_t*& out, OutputNALUnit& nalu, uint32_t &packetSize)
 {
     packetSize = 0;
     TComOutputBitstream bsNALUHeader;
@@ -82,10 +82,10 @@ void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
      *  - 0x00000302
      *  - 0x00000303
      */
-    UInt fsize = nalu.m_Bitstream.getByteStreamLength();
+    uint32_t fsize = nalu.m_Bitstream.getByteStreamLength();
     uint8_t* fifo = nalu.m_Bitstream.getFIFO();
     uint8_t* emulation = (uint8_t*)X265_MALLOC(uint8_t, fsize + EMULATION_SIZE);
-    UInt nalsize = 0;
+    uint32_t nalsize = 0;
 
     if (emulation)
     {
@@ -108,7 +108,7 @@ void write(uint8_t*& out, OutputNALUnit& nalu, UInt &packetSize)
             nalsize++;
         }
 
-        UInt i = packetSize;
+        uint32_t i = packetSize;
         out = (uint8_t*)realloc(out, nalsize + 4);
         memcpy(out + packetSize, emulation, nalsize);
         packetSize += nalsize;

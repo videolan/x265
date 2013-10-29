@@ -24,67 +24,56 @@
 
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComPicYuv.h"
-#include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComSlice.h"
 #include "primitives.h"
 #include "reference.h"
+#include "common.h"
 
 using namespace x265;
 
-void ReferencePlanes::setWeight(const wpScalingParam& w)
-{
-    weight = w.inputWeight;
-    offset = w.inputOffset * (1 << (X265_DEPTH - 8));
-    shift  = w.log2WeightDenom;
-    round  = (w.log2WeightDenom >= 1) ? (1 << (w.log2WeightDenom - 1)) : (0);
-    isWeighted = true;
-}
-
-bool ReferencePlanes::matchesWeight(const wpScalingParam& w)
-{
-    if (!isWeighted)
-        return false;
-
-    if ((weight == w.inputWeight) && (shift == (int)w.log2WeightDenom) &&
-        (offset == w.inputOffset * (1 << (X265_DEPTH - 8))))
-        return true;
-
-    return false;
-}
-
 MotionReference::MotionReference()
-{}
+{
+    m_weightBuffer = NULL;
+}
 
 int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
 {
     m_reconPic = pic;
     unweightedFPelPlane = pic->getLumaAddr();
     lumaStride = pic->getStride();
-    m_startPad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
-    m_next = NULL;
+    intptr_t startpad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
+
+    /* directly reference the pre-extended integer pel plane */
+    fpelPlane = pic->m_picBufY + startpad;
     isWeighted = false;
-    m_numWeightedRows = 0;
 
     if (w)
     {
-        size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
-        setWeight(*w);
-        fpelPlane = (pixel*)X265_MALLOC(pixel, lumaStride * padheight);
-        if (fpelPlane) fpelPlane += m_startPad;
-        else return -1;
+        if (!m_weightBuffer)
+        {
+            size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
+            m_weightBuffer = (pixel*)X265_MALLOC(pixel, lumaStride * padheight);
+            if (!m_weightBuffer)
+                return -1;
+        }
+
+        isWeighted = true;
+        weight = w->inputWeight;
+        offset = w->inputOffset * (1 << (X265_DEPTH - 8));
+        shift  = w->log2WeightDenom;
+        round  = (w->log2WeightDenom >= 1) ? (1 << (w->log2WeightDenom - 1)) : (0);
+        m_numWeightedRows = 0;
+
+        /* use our buffer which will have weighted pixels written to it */
+        fpelPlane = m_weightBuffer + startpad;
     }
-    else
-    {
-        /* directly reference the pre-extended integer pel plane */
-        fpelPlane = pic->m_picBufY + m_startPad;
-    }
+
     return 0;
 }
 
 MotionReference::~MotionReference()
 {
-    if (isWeighted && fpelPlane)
-        X265_FREE(fpelPlane - m_startPad);
+    X265_FREE(m_weightBuffer);
 }
 
 void MotionReference::applyWeight(int rows, int numRows)

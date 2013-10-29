@@ -190,7 +190,7 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, d
                 for (int i = 0; i < SAO_MAX_BO_CLASSES - SAO_BO_LEN + 1; i++)
                 {
                     currentRDCost = 0.0;
-                    for (UInt uj = i; uj < i + SAO_BO_LEN; uj++)
+                    for (uint32_t uj = i; uj < i + SAO_BO_LEN; uj++)
                     {
                         currentRDCost += currentRdCostTableBo[uj];
                     }
@@ -326,7 +326,7 @@ void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, int partId
 {
     SAOQTPart* onePart = &(qtPart[partIdx]);
 
-    UInt nextDepth = onePart->partLevel + 1;
+    uint32_t nextDepth = onePart->partLevel + 1;
 
     if (partIdx == 0)
     {
@@ -540,7 +540,7 @@ void TEncSampleAdaptiveOffset::endSaoEnc()
 
 inline int xSign(int x)
 {
-    return (x >> 31) | ((int)((((UInt) - x)) >> 31));
+    return (x >> 31) | ((int)((((uint32_t) - x)) >> 31));
 }
 
 /** Calculate SAO statistics for non-cross-slice or non-cross-tile processing
@@ -553,15 +553,15 @@ inline int xSign(int x)
  * \param  height block height
  * \param  bBorderAvail availabilities of block border pixels
  */
-void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, UInt width, UInt height, bool* bBorderAvail, int yCbCr)
+void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, uint32_t width, uint32_t height, bool* bBorderAvail, int yCbCr)
 {
     Int64 *stat, *count;
     int classIdx, posShift, startX, endX, startY, endY, signLeft, signRight, signDown, signDown1;
     Pel *fenc, *pRec;
-    UInt edgeType;
+    uint32_t edgeType;
     int x, y;
     Pel *pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
-    int *tmp_swap;
+    int32_t *tmp_swap;
 
     //--------- Band offset-----------//
     stat = stats[SAO_BO];
@@ -815,10 +815,10 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int stride;
     int iLcuHeight = pTmpSPS->getMaxCUHeight();
     int iLcuWidth  = pTmpSPS->getMaxCUWidth();
-    UInt lpelx   = pTmpCu->getCUPelX();
-    UInt tpely   = pTmpCu->getCUPelY();
-    UInt rpelx;
-    UInt bpely;
+    uint32_t lpelx   = pTmpCu->getCUPelX();
+    uint32_t tpely   = pTmpCu->getCUPelY();
+    uint32_t rpelx;
+    uint32_t bpely;
     Int64* iStats;
     Int64* iCount;
     int iClassIdx;
@@ -829,7 +829,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int iEndX;
     int iEndY;
     Pel* pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
-    int *tmp_swap;
+    int32_t *tmp_swap;
 
     int iIsChroma = (yCbCr != 0) ? 1 : 0;
     int numSkipLine = iIsChroma ? 2 : 4;
@@ -897,7 +897,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int iSignDown1;
     int iSignDown2;
 
-    UInt uiEdgeType;
+    uint32_t uiEdgeType;
 
 //if (iSaoType == EO_0  || iSaoType == EO_1 || iSaoType == EO_2 || iSaoType == EO_3)
     {
@@ -1087,8 +1087,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     int stride;
     int lcuHeight = pTmpSPS->getMaxCUHeight();
     int lcuWidth  = pTmpSPS->getMaxCUWidth();
-    UInt rPelX;
-    UInt bPelY;
+    uint32_t rPelX;
+    uint32_t bPelY;
     Int64* stats;
     Int64* count;
     int classIdx;
@@ -1106,10 +1106,10 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     int isChroma;
     int numSkipLine, numSkipLineRight;
 
-    UInt lPelX, tPelY;
+    uint32_t lPelX, tPelY;
     TComDataCU *pTmpCu;
     Pel* pTableBo;
-    int *tmp_swap;
+    int32_t *tmp_swap;
 
     {
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
@@ -1190,7 +1190,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
                 int signDown1;
                 int signDown2;
 
-                UInt uiEdgeType;
+                uint32_t uiEdgeType;
 
                 //if (iSaoType == EO_0)
 
@@ -1685,7 +1685,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             addrLeft = idxX == 0               ? -1 : idxX - 1 + frameWidthInCU * idxY;
             int allowMergeLeft = 1;
             int allowMergeUp   = 1;
-            UInt rate;
+            uint32_t rate;
             double bestCost, mergeCost;
             if (idxX == 0)
             {
@@ -1825,7 +1825,7 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
  * \param yCbCr color component index
  * \param lambda
  */
-inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int *currentDistortionTableBo, double *currentRdCostTableBo)
+inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int32_t *currentDistortionTableBo, double *currentRdCostTableBo)
 {
     Int64 estDist = 0;
     int classIdx;
@@ -1875,7 +1875,7 @@ inline Int64 TEncSampleAdaptiveOffset::estSaoDist(Int64 count, Int64 offset, Int
     return (count * offset * offset - offsetOrg * offset * 2) >> shift;
 }
 
-inline Int64 TEncSampleAdaptiveOffset::estIterOffset(int typeIdx, int classIdx, double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh)
+inline Int64 TEncSampleAdaptiveOffset::estIterOffset(int typeIdx, int classIdx, double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int32_t *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh)
 {
     //Clean up, best_q_offset.
     Int64 iterOffset, tempOffset;
@@ -1962,7 +1962,7 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
             for (int i = 0; i < SAO_MAX_BO_CLASSES - SAO_BO_LEN + 1; i++)
             {
                 currentRDCost = 0.0;
-                for (UInt uj = i; uj < i + SAO_BO_LEN; uj++)
+                for (uint32_t uj = i; uj < i + SAO_BO_LEN; uj++)
                 {
                     currentRDCost += currentRdCostTableBo[uj];
                 }
@@ -2114,7 +2114,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
                 for (int i = 0; i < SAO_MAX_BO_CLASSES - SAO_BO_LEN + 1; i++)
                 {
                     currentRDCost = 0.0;
-                    for (UInt uj = i; uj < i + SAO_BO_LEN; uj++)
+                    for (uint32_t uj = i; uj < i + SAO_BO_LEN; uj++)
                     {
                         currentRDCost += currentRdCostTableBo[uj];
                     }

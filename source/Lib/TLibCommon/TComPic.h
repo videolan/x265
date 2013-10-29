@@ -44,6 +44,7 @@
 #include "TComPicYuv.h"
 #include "lowres.h"
 #include "threading.h"
+#include "md5.h"
 
 namespace x265 {
 // private namespace
@@ -86,12 +87,14 @@ public:
 
     TComPic*              m_next;
     TComPic*              m_prev;
-    double*               m_qpAqOffset;
     UInt64                m_SSDY;
     UInt64                m_SSDU;
     UInt64                m_SSDV;
     double                m_elapsedCompressTime;
     double                m_frameTime;
+    MD5Context            m_state[3];
+    uint32_t                  m_crc[3];
+    uint32_t                  m_checksum[3];
 
     TComPic();
     virtual ~TComPic();
@@ -118,31 +121,31 @@ public:
 
     int           getPOC()                { return m_picSym->getSlice()->getPOC(); }
 
-    TComDataCU*   getCU(UInt cuAddr)    { return m_picSym->getCU(cuAddr); }
+    TComDataCU*   getCU(uint32_t cuAddr)    { return m_picSym->getCU(cuAddr); }
 
     TComPicYuv*   getPicYuvOrg()          { return m_origPicYuv; }
 
     TComPicYuv*   getPicYuvRec()          { return m_reconPicYuv; }
 
-    UInt          getNumCUsInFrame()      { return m_picSym->getNumberOfCUsInFrame(); }
+    uint32_t          getNumCUsInFrame()      { return m_picSym->getNumberOfCUsInFrame(); }
 
-    UInt          getNumPartInWidth()     { return m_picSym->getNumPartInWidth(); }
+    uint32_t          getNumPartInWidth()     { return m_picSym->getNumPartInWidth(); }
 
-    UInt          getNumPartInHeight()    { return m_picSym->getNumPartInHeight(); }
+    uint32_t          getNumPartInHeight()    { return m_picSym->getNumPartInHeight(); }
 
-    UInt          getNumPartInCU()        { return m_picSym->getNumPartition(); }
+    uint32_t          getNumPartInCU()        { return m_picSym->getNumPartition(); }
 
-    UInt          getFrameWidthInCU()     { return m_picSym->getFrameWidthInCU(); }
+    uint32_t          getFrameWidthInCU()     { return m_picSym->getFrameWidthInCU(); }
 
-    UInt          getFrameHeightInCU()    { return m_picSym->getFrameHeightInCU(); }
+    uint32_t          getFrameHeightInCU()    { return m_picSym->getFrameHeightInCU(); }
 
-    UInt          getMinCUWidth()         { return m_picSym->getMinCUWidth(); }
+    uint32_t          getMinCUWidth()         { return m_picSym->getMinCUWidth(); }
 
-    UInt          getMinCUHeight()        { return m_picSym->getMinCUHeight(); }
+    uint32_t          getMinCUHeight()        { return m_picSym->getMinCUHeight(); }
 
-    UInt          getParPelX(UChar partIdx) { return getParPelX(partIdx); }
+    uint32_t          getParPelX(UChar partIdx) { return getParPelX(partIdx); }
 
-    UInt          getParPelY(UChar partIdx) { return getParPelX(partIdx); }
+    uint32_t          getParPelY(UChar partIdx) { return getParPelX(partIdx); }
 
     int           getStride()             { return m_reconPicYuv->getStride(); }
 

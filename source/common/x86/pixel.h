@@ -29,8 +29,13 @@
 #define X265_I386_PIXEL_H
 
 #define DECL_PIXELS(ret, name, suffix, args) \
+    ret x265_pixel_ ## name ## _16x64_ ## suffix args; \
+    ret x265_pixel_ ## name ## _16x32_ ## suffix args; \
     ret x265_pixel_ ## name ## _16x16_ ## suffix args; \
+    ret x265_pixel_ ## name ## _16x12_ ## suffix args; \
     ret x265_pixel_ ## name ## _16x8_ ## suffix args; \
+    ret x265_pixel_ ## name ## _16x4_ ## suffix args; \
+    ret x265_pixel_ ## name ## _8x32_ ## suffix args; \
     ret x265_pixel_ ## name ## _8x16_ ## suffix args; \
     ret x265_pixel_ ## name ## _8x8_ ## suffix args; \
     ret x265_pixel_ ## name ## _8x4_ ## suffix args; \
@@ -58,6 +63,7 @@ DECL_X4(sad, mmx2)
 DECL_X4(sad, sse2)
 DECL_X4(sad, sse3)
 DECL_X4(sad, ssse3)
+DECL_X4(sad, avx)
 DECL_X4(sad, avx2)
 DECL_X1(ssd, mmx)
 DECL_X1(ssd, mmx2)
@@ -194,7 +200,7 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx(pixel *pix1, intptr_t stride1, pixel *pi
 uint64_t x265_pixel_sa8d_satd_16x16_xop(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 uint64_t x265_pixel_sa8d_satd_16x16_avx2(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 
-void x265_cvt32to16_shr_sse2(short *dst, int *src, intptr_t, int, int);
+void x265_cvt32to16_shr_sse2(int16_t *dst, int *src, intptr_t, int, int);
 
 #define DECL_HEVC_SSD(suffix) \
     int x265_pixel_ssd_32x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \

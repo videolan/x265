@@ -73,12 +73,12 @@ private:
     //  Parameter for general YUV buffer usage
     // ------------------------------------------------------------------------------------------------------------------
 
-    UInt m_width;
-    UInt m_height;
-    UInt m_cwidth;
-    UInt m_cheight;
+    uint32_t m_width;
+    uint32_t m_height;
+    uint32_t m_cwidth;
+    uint32_t m_cheight;
 
-    static int getAddrOffset(UInt partUnitIdx, UInt width)
+    static int getAddrOffset(uint32_t partUnitIdx, uint32_t width)
     {
         int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
         int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]];
@@ -86,7 +86,7 @@ private:
         return blkX + blkY * width;
     }
 
-    static int getAddrOffset(UInt unitIdx, UInt size, UInt width)
+    static int getAddrOffset(uint32_t unitIdx, uint32_t size, uint32_t width)
     {
         int blkX = (unitIdx * size) &  (width - 1);
         int blkY = (unitIdx * size) & ~(width - 1);
@@ -103,7 +103,7 @@ public:
     //  Memory management
     // ------------------------------------------------------------------------------------------------------------------
 
-    void    create(UInt width, UInt height);              ///< Create  YUV buffer
+    void    create(uint32_t width, uint32_t height);              ///< Create  YUV buffer
     void    destroy();                                      ///< Destroy YUV buffer
     void    clear();                                        ///< clear   YUV buffer
 
@@ -112,59 +112,59 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Copy YUV buffer to picture buffer
-    void    copyToPicYuv(TComPicYuv* destPicYuv, UInt cuAddr, UInt absZOrderIdx, UInt partDepth = 0, UInt partIdx = 0);
-    void    copyToPicLuma(TComPicYuv* destPicYuv, UInt cuAddr, UInt absZOrderIdx, UInt partDepth = 0, UInt partIdx = 0);
-    void    copyToPicChroma(TComPicYuv* destPicYuv, UInt cuAddr, UInt absZOrderIdx, UInt partDepth = 0, UInt partIdx = 0);
+    void    copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
+    void    copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
+    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
 
     //  Copy YUV buffer from picture buffer
-    void    copyFromPicYuv(TComPicYuv* srcPicYuv, UInt cuAddr, UInt absZOrderIdx);
-    void    copyFromPicLuma(TComPicYuv* srcPicYuv, UInt cuAddr, UInt absZOrderIdx);
-    void    copyFromPicChroma(TComPicYuv* srcPicYuv, UInt cuAddr, UInt absZOrderIdx);
+    void    copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
+    void    copyFromPicLuma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
+    void    copyFromPicChroma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
 
     //  Copy Small YUV buffer to the part of other Big YUV buffer
-    void    copyToPartYuv(TComYuv* dstPicYuv, UInt uiDstPartIdx);
-    void    copyToPartLuma(TComYuv* dstPicYuv, UInt uiDstPartIdx);
-    void    copyToPartChroma(TComYuv* dstPicYuv, UInt uiDstPartIdx);
+    void    copyToPartYuv(TComYuv* dstPicYuv, uint32_t uiDstPartIdx);
+    void    copyToPartLuma(TComYuv* dstPicYuv, uint32_t uiDstPartIdx);
+    void    copyToPartChroma(TComYuv* dstPicYuv, uint32_t uiDstPartIdx);
 
     //  Copy the part of Big YUV buffer to other Small YUV buffer
-    void    copyPartToYuv(TComYuv* dstPicYuv, UInt uiSrcPartIdx);
-    void    copyPartToLuma(TComYuv* dstPicYuv, UInt uiSrcPartIdx);
-    void    copyPartToChroma(TComYuv* dstPicYuv, UInt uiSrcPartIdx);
+    void    copyPartToYuv(TComYuv* dstPicYuv, uint32_t uiSrcPartIdx);
+    void    copyPartToLuma(TComYuv* dstPicYuv, uint32_t uiSrcPartIdx);
+    void    copyPartToChroma(TComYuv* dstPicYuv, uint32_t uiSrcPartIdx);
 
     //  Copy YUV partition buffer to other YUV partition buffer
-    void    copyPartToPartYuv(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
-    void    copyPartToPartYuv(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
-    void    copyPartToPartLuma(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height);
-    void    copyPartToPartLuma(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height);
-    void    copyPartToPartChroma(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height);
-    void    copyPartToPartChroma(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height);
+    void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
+    void    copyPartToPartYuv(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
+    void    copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void    copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void    copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
 
-    void    copyPartToPartChroma(TComYuv* dstPicYuv, UInt partIdx, UInt width, UInt height, UInt chromaId);
-    void    copyPartToPartChroma(TShortYUV* dstPicYuv, UInt partIdx, UInt width, UInt height, UInt chromaId);
+    void    copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId);
+    void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Clip(srcYuv0 + srcYuv1) -> m_apiBuf
-    void    addClip(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
-    void    addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize);
-    void    addClipLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
-    void    addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize);
-    void    addClipChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
-    void    addClipChroma(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize);
+    void    addClip(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    addClipLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    addClipChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    addClipChroma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
 
     //  srcYuv0 - srcYuv1 -> m_apiBuf
-    void    subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
-    void    subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
-    void    subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
+    void    subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
 
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
-    void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
-    void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height, bool bLuma = true, bool bChroma = true);
+    void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
+    void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
 
     //   Remove High frequency
-    void    removeHighFreq(TComYuv* srcYuv, UInt partIdx, UInt width, UInt height);
+    void    removeHighFreq(TComYuv* srcYuv, uint32_t partIdx, uint32_t width, uint32_t height);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Access function for YUV buffer
@@ -178,31 +178,31 @@ public:
     Pel* getCrAddr()    { return m_bufV; }
 
     //  Access starting position of YUV partition unit buffer
-    Pel* getLumaAddr(UInt partUnitIdx) { return m_bufY + getAddrOffset(partUnitIdx, m_width); }
+    Pel* getLumaAddr(uint32_t partUnitIdx) { return m_bufY + getAddrOffset(partUnitIdx, m_width); }
 
-    Pel* getCbAddr(UInt partUnitIdx) { return m_bufU + (getAddrOffset(partUnitIdx, m_cwidth) >> 1); }
+    Pel* getCbAddr(uint32_t partUnitIdx) { return m_bufU + (getAddrOffset(partUnitIdx, m_cwidth) >> 1); }
 
-    Pel* getCrAddr(UInt partUnitIdx) { return m_bufV + (getAddrOffset(partUnitIdx, m_cwidth) >> 1); }
+    Pel* getCrAddr(uint32_t partUnitIdx) { return m_bufV + (getAddrOffset(partUnitIdx, m_cwidth) >> 1); }
 
     //  Access starting position of YUV transform unit buffer
-    Pel* getLumaAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_bufY + getAddrOffset(iTransUnitIdx, iBlkSize, m_width); }
+    Pel* getLumaAddr(uint32_t iTransUnitIdx, uint32_t iBlkSize) { return m_bufY + getAddrOffset(iTransUnitIdx, iBlkSize, m_width); }
 
-    Pel* getCbAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_bufU + getAddrOffset(iTransUnitIdx, iBlkSize, m_cwidth); }
+    Pel* getCbAddr(uint32_t iTransUnitIdx, uint32_t iBlkSize) { return m_bufU + getAddrOffset(iTransUnitIdx, iBlkSize, m_cwidth); }
 
-    Pel* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_bufV + getAddrOffset(iTransUnitIdx, iBlkSize, m_cwidth); }
+    Pel* getCrAddr(uint32_t iTransUnitIdx, uint32_t iBlkSize) { return m_bufV + getAddrOffset(iTransUnitIdx, iBlkSize, m_cwidth); }
 
     //  Get stride value of YUV buffer
-    UInt getStride()    { return m_width;   }
+    uint32_t getStride()    { return m_width;   }
 
-    UInt getCStride()   { return m_cwidth;  }
+    uint32_t getCStride()   { return m_cwidth;  }
 
-    UInt getHeight()    { return m_height;  }
+    uint32_t getHeight()    { return m_height;  }
 
-    UInt getWidth()     { return m_width;   }
+    uint32_t getWidth()     { return m_width;   }
 
-    UInt getCHeight()   { return m_cheight; }
+    uint32_t getCHeight()   { return m_cheight; }
 
-    UInt getCWidth()    { return m_cwidth;  }
+    uint32_t getCWidth()    { return m_cwidth;  }
 }; // END CLASS DEFINITION TComYuv
 }
 //! \}

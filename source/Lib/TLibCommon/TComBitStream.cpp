@@ -71,7 +71,7 @@ char* TComOutputBitstream::getByteStream() const
     return (char*)m_fifo;
 }
 
-UInt TComOutputBitstream::getByteStreamLength()
+uint32_t TComOutputBitstream::getByteStreamLength()
 {
     return m_fsize;
 }
@@ -84,15 +84,15 @@ void TComOutputBitstream::clear()
     buffsize = MIN_FIFO_SIZE;
 }
 
-void TComOutputBitstream::write(UInt uiBits, UInt uiNumberOfBits)
+void TComOutputBitstream::write(uint32_t uiBits, uint32_t uiNumberOfBits)
 {
     assert(uiNumberOfBits <= 32);
     assert(uiNumberOfBits == 32 || (uiBits & (~0 << uiNumberOfBits)) == 0);
 
     /* any modulo 8 remainder of num_total_bits cannot be written this time,
      * and will be held until next time. */
-    UInt num_total_bits = uiNumberOfBits + m_num_held_bits;
-    UInt next_num_held_bits = num_total_bits % 8;
+    uint32_t num_total_bits = uiNumberOfBits + m_num_held_bits;
+    uint32_t next_num_held_bits = num_total_bits % 8;
 
     /* form a byte aligned word (write_bits), by concatenating any held bits
      * with the new bits, discarding the bits that will form the next_held_bits.
@@ -113,8 +113,8 @@ void TComOutputBitstream::write(UInt uiBits, UInt uiNumberOfBits)
     }
 
     /* topword serves to justify held_bits to align with the msb of uiBits */
-    UInt topword = (uiNumberOfBits - next_num_held_bits) & ~((1 << 3) - 1);
-    UInt write_bits = (m_held_bits << topword) | (uiBits >> next_num_held_bits);
+    uint32_t topword = (uiNumberOfBits - next_num_held_bits) & ~((1 << 3) - 1);
+    uint32_t write_bits = (m_held_bits << topword) | (uiBits >> next_num_held_bits);
 
     switch (num_total_bits >> 3)
     {
@@ -128,7 +128,7 @@ void TComOutputBitstream::write(UInt uiBits, UInt uiNumberOfBits)
     m_num_held_bits = next_num_held_bits;
 }
 
-void TComOutputBitstream::writeByte(UInt val)
+void TComOutputBitstream::writeByte(uint32_t val)
 {
     // NOTE: we are here only in Cabac
     assert(m_num_held_bits == 0);
@@ -138,7 +138,7 @@ void TComOutputBitstream::writeByte(UInt val)
 
 void TComOutputBitstream::writeAlignOne()
 {
-    UInt num_bits = getNumBitsUntilByteAligned();
+    uint32_t num_bits = getNumBitsUntilByteAligned();
 
     write((1 << num_bits) - 1, num_bits);
 }
@@ -161,11 +161,11 @@ void TComOutputBitstream::writeAlignZero()
  */
 void   TComOutputBitstream::addSubstream(TComOutputBitstream* pcSubstream)
 {
-    UInt uiNumBits = pcSubstream->getNumberOfWrittenBits();
+    uint32_t uiNumBits = pcSubstream->getNumberOfWrittenBits();
 
     const uint8_t* rbsp = pcSubstream->getFIFO();
 
-    for (UInt count = 0; count < pcSubstream->m_fsize; count++)
+    for (uint32_t count = 0; count < pcSubstream->m_fsize; count++)
     {
         write(rbsp[count], 8);
     }
@@ -184,11 +184,11 @@ void TComOutputBitstream::writeByteAlignment()
 
 int TComOutputBitstream::countStartCodeEmulations()
 {
-    UInt cnt = 0;
+    uint32_t cnt = 0;
     uint8_t *rbsp = getFIFO();
-    UInt fsize = getByteStreamLength();
+    uint32_t fsize = getByteStreamLength();
 
-    for (UInt count = 0; count < fsize; count++)
+    for (uint32_t count = 0; count < fsize; count++)
     {
         if ((rbsp[count + 2] == 0x00 || rbsp[count + 2] == 0x01 || rbsp[count + 2] == 0x02 || rbsp[count + 2] == 0x03)
             && rbsp[count + 1] == 0x00 && rbsp[count] == 0x00)

@@ -113,6 +113,9 @@ void FrameEncoder::init(Encoder *top, int numRows)
     for (int i = 0; i < m_numRows; ++i)
     {
         m_rows[i].create(top);
+        for (int list = 0; list <= 1; list++)
+            for (int ref = 0; ref <= MAX_NUM_REF; ref++)
+                m_rows[i].m_search.m_mref[list][ref] = &m_mref[list][ref];
     }
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
@@ -121,7 +124,7 @@ void FrameEncoder::init(Encoder *top, int numRows)
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
     }
-
+    
     m_frameFilter.init(top, numRows, getRDGoOnSbacCoder(0));
 
     // initialize SPS
@@ -377,10 +380,9 @@ void FrameEncoder::compressFrame()
 
         for (int dir = 0; dir <= numPredDir; dir++)
         {
-            RefPicList e = (dir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            for (int refIdx = 0; refIdx < slice->getNumRefIdx(e); refIdx++)
+            for (int refIdx = 0; refIdx < slice->getNumRefIdx(dir); refIdx++)
             {
-                int refPOC = slice->getRefPic(e, refIdx)->getPOC();
+                int refPOC = slice->getRefPic(dir, refIdx)->getPOC();
                 int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
                 for (int i = 0; i < m_numRows; i++)
                 {
@@ -423,17 +425,15 @@ void FrameEncoder::compressFrame()
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
     {
-        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
         wpScalingParam *w = NULL;
-        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            TComPicYuv *recon = slice->getRefPic(list, ref)->getPicYuvRec();
             if ((slice->isInterP() && slice->getPPS()->getUseWP()))
             {
-                w = slice->m_weightPredTable[list][ref];
+                w = slice->m_weightPredTable[l][ref];
                 slice->m_numWPRefs++;
             }
-            slice->m_mref[list][ref] = recon->generateMotionReference(w);
+            m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
         }
     }
 
@@ -617,7 +617,7 @@ void FrameEncoder::compressFrame()
     {
         // Construct the final bitstream by flushing and concatenating substreams.
         // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
-        UInt* substreamSizes = slice->getSubstreamSizes();
+        uint32_t* substreamSizes = slice->getSubstreamSizes();
         for (int i = 0; i < numSubstreams; i++)
         {
             // Flush all substreams -- this includes empty ones.
@@ -681,10 +681,9 @@ void FrameEncoder::compressFrame()
     /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)
     {
-        RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            TComPic *refpic = slice->getRefPic(list, ref);
+            TComPic *refpic = slice->getRefPic(l, ref);
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
@@ -704,9 +703,9 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
     getCuEncoder(0)->setBitCounter(NULL);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
 
-    UInt cuAddr;
-    UInt startCUAddr = 0;
-    UInt boundingCUAddr = slice->getSliceCurEndCUAddr();
+    uint32_t cuAddr;
+    uint32_t startCUAddr = 0;
+    uint32_t boundingCUAddr = slice->getSliceCurEndCUAddr();
 
     // Appropriate substream bitstream is switched later.
     // for every CU
@@ -722,9 +721,9 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
 #endif
 
     const int  bWaveFrontsynchro = m_cfg->param.bEnableWavefront;
-    const UInt heightInLCUs = m_pic->getPicSym()->getFrameHeightInCU();
+    const uint32_t heightInLCUs = m_pic->getPicSym()->getFrameHeightInCU();
     const int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
-    UInt bitsOriginallyInSubstreams = 0;
+    uint32_t bitsOriginallyInSubstreams = 0;
 
     for (int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
     {
@@ -732,12 +731,12 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
         bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
     }
 
-    UInt widthInLCUs = m_pic->getPicSym()->getFrameWidthInCU();
-    UInt col = 0, lin = 0, subStrm = 0;
+    uint32_t widthInLCUs = m_pic->getPicSym()->getFrameWidthInCU();
+    uint32_t col = 0, lin = 0, subStrm = 0;
     cuAddr = (startCUAddr / m_pic->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
                                                        an encoding order index, so we need to convert the index (startCUAddr)
                                                        into the real raster scan address (cuAddr) via the CUOrderMap */
-    UInt encCUOrder;
+    uint32_t encCUOrder;
     for (encCUOrder = startCUAddr / m_pic->getNumPartInCU();
          encCUOrder < (boundingCUAddr + m_pic->getNumPartInCU() - 1) / m_pic->getNumPartInCU();
          cuAddr = ++encCUOrder)
@@ -753,7 +752,7 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
         {
             // We'll sync if the TR is available.
             TComDataCU *cuUp = m_pic->getCU(cuAddr)->getCUAbove();
-            UInt widthInCU = m_pic->getFrameWidthInCU();
+            uint32_t widthInCU = m_pic->getFrameWidthInCU();
             TComDataCU *cuTr = NULL;
 
             // CHECK_ME: here can be optimize a little, do it later
@@ -873,8 +872,8 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
  */
 void FrameEncoder::determineSliceBounds()
 {
-    UInt numberOfCUsInFrame = m_pic->getNumCUsInFrame();
-    UInt boundingCUAddrSlice = numberOfCUsInFrame * m_pic->getNumPartInCU();
+    uint32_t numberOfCUsInFrame = m_pic->getNumCUsInFrame();
+    uint32_t boundingCUAddrSlice = numberOfCUsInFrame * m_pic->getNumPartInCU();
 
     // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
     m_pic->getSlice()->setSliceCurEndCUAddr(boundingCUAddrSlice);
@@ -898,7 +897,7 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
     }
 
-    UInt refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA / 2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
+    uint32_t refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA / 2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_pic->m_SSDY = 0;
@@ -912,23 +911,22 @@ void FrameEncoder::compressCTURows()
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        for (UInt row = 0; row < (UInt)m_numRows; row++)
+        for (uint32_t row = 0; row < (uint32_t)m_numRows; row++)
         {
             // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
             {
-                RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
                 {
-                    TComPic *refpic = slice->getRefPic(list, ref);
-                    while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < row + refLagRows))
+                    TComPic *refpic = slice->getRefPic(l, ref);
+                    while ((refpic->m_reconRowCount != (uint32_t)m_numRows) && (refpic->m_reconRowCount < row + refLagRows))
                     {
                         refpic->m_reconRowWait.wait();
                     }
 
                     if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
                     {
-                        slice->m_mref[list][ref]->applyWeight(row + refLagRows, m_numRows);
+                        m_mref[l][ref].applyWeight(row + refLagRows, m_numRows);
                     }
                 }
             }
@@ -954,18 +952,18 @@ void FrameEncoder::compressCTURows()
                 // block until all reference frames have reconstructed the rows we need
                 for (int l = 0; l < numPredDir; l++)
                 {
-                    RefPicList list = (l ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+                    int list = l;
                     for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
                         TComPic *refpic = slice->getRefPic(list, ref);
-                        while ((refpic->m_reconRowCount != (UInt)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
+                        while ((refpic->m_reconRowCount != (uint32_t)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
                         {
                             refpic->m_reconRowWait.wait();
                         }
 
                         if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
                         {
-                            slice->m_mref[list][ref]->applyWeight(i + refLagRows, m_numRows);
+                            m_mref[list][ref].applyWeight(i + refLagRows, m_numRows);
                         }
                     }
                 }
@@ -995,7 +993,7 @@ void FrameEncoder::processRowEncoder(int row)
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    for (UInt col = m_rows[row].m_completed; col < numCols; col++)
+    for (uint32_t col = m_rows[row].m_completed; col < numCols; col++)
     {
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_pic->getCU(cuAddr);
@@ -1005,6 +1003,8 @@ void FrameEncoder::processRowEncoder(int row)
         codeRow.m_entropyCoder.resetEntropy();
 
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        int qp = calcQpForCu(m_pic, cuAddr);
+        cu->setQP(0,(char)qp);
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
         // TODO: Keep atomic running totals for rate control?
@@ -1054,6 +1054,34 @@ void FrameEncoder::processRowEncoder(int row)
         }
     }
     m_totalTime = m_totalTime + (x265_mdate() - startTime);
+}
+
+int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
+{
+    x265_emms();
+    double qp = pic->getSlice()->getSliceQp();
+    if (m_cfg->param.rc.aqMode)
+    {
+        /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
+        double qp_offset = 0;
+        int blockSize = g_maxCUWidth >> 2;
+        int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (blockSize - 1)) / blockSize;
+        int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (blockSize - 1)) / blockSize;
+        int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * 4;
+        int block_x = (cuAddr * 4) - block_y * pic->getPicSym()->getFrameWidthInCU();
+        int cnt = 0;
+        for (int h = 0; h < 4 && block_y < maxBlockRows ; h++, block_y++)
+        {
+            for (int w = 0; w < 4 && (block_x + w) < maxBlockCols; w++)
+            {
+                qp_offset += pic->m_lowres.m_qpAqOffset[block_x + w + (block_y * maxBlockCols)];
+                cnt++;
+            }
+        }
+        qp_offset /= cnt;
+        qp += qp_offset;
+    }
+    return Clip3(MIN_QP, MAX_QP, (int)(qp + 0.5));
 }
 
 TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)

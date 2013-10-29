@@ -85,7 +85,7 @@ protected:
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
-    double acEnergyCu(TComPic* pic, uint32_t cuAddr);
+    double acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y);
 };
 }
 

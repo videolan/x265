@@ -49,8 +49,8 @@ class TComOutputBitstream;
 struct NALUnit
 {
     NalUnitType m_nalUnitType; ///< nal_unit_type
-    UInt        m_temporalId; ///< temporal_id
-    UInt        m_reservedZero6Bits; ///< reserved_zero_6bits
+    uint32_t        m_temporalId; ///< temporal_id
+    uint32_t        m_reservedZero6Bits; ///< reserved_zero_6bits
 
     /** construct an NALunit structure with given header values. */
     NALUnit(NalUnitType nalUnitType,
@@ -63,38 +63,6 @@ struct NALUnit
 
     /** default constructor - no initialization; must be perfomed by user */
     NALUnit() {}
-
-    /** returns true if the NALunit is a slice NALunit */
-    bool isSlice()
-    {
-        return m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_R
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_TLA_R
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_R
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_N
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
-               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R;
-    }
-
-    bool isSei()
-    {
-        return m_nalUnitType == NAL_UNIT_PREFIX_SEI
-               || m_nalUnitType == NAL_UNIT_SUFFIX_SEI;
-    }
-
-    bool isVcl()
-    {
-        return (UInt)m_nalUnitType < 32;
-    }
 };
 
 struct OutputNALUnit;
@@ -104,7 +72,7 @@ struct OutputNALUnit;
  */
 struct NALUnitEBSP : public NALUnit
 {
-    UInt m_packetSize;
+    uint32_t m_packetSize;
     uint8_t *m_nalUnitData;
 
     /**

@@ -71,6 +71,7 @@ static const struct option long_options[] =
     { "frame-threads",  required_argument, NULL, 'F' },
     { "log",            required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
+    { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
     { "output",         required_argument, NULL, 'o' },
     { "input",          required_argument, NULL, 0 },
@@ -154,8 +155,9 @@ struct CLIOptions
     Input*  input;
     Output* recon;
     std::fstream bitstreamFile;
-    int bProgress;
-    int totalbytes;
+    bool bProgress;
+    bool bForceY4m;
+    uint32_t totalbytes;
 
     uint32_t frameSkip;         // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
@@ -172,13 +174,14 @@ struct CLIOptions
         recon = NULL;
         framesToBeEncoded = frameSkip = totalbytes = 0;
         bProgress = true;
+        bForceY4m = false;
         startTime = x265_mdate();
         prevUpdateTime = 0;
     }
 
     void destroy();
-    void writeNALs(const x265_nal* nal, int nalcount);
-    void printStatus(int frameNum, x265_param *param);
+    void writeNALs(const x265_nal* nal, uint32_t nalcount);
+    void printStatus(uint32_t frameNum, x265_param *param);
     void printVersion(x265_param *param);
     void showHelp(x265_param *param);
     bool parse(int argc, char **argv, x265_param* param);
@@ -194,10 +197,10 @@ void CLIOptions::destroy()
     recon = NULL;
 }
 
-void CLIOptions::writeNALs(const x265_nal* nal, int nalcount)
+void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
 {
     PPAScopeEvent(bitstream_write);
-    for (int i = 0; i < nalcount; i++)
+    for (uint32_t i = 0; i < nalcount; i++)
     {
         bitstreamFile.write((const char*)nal->p_payload, nal->i_payload);
         totalbytes += nal->i_payload;
@@ -205,7 +208,7 @@ void CLIOptions::writeNALs(const x265_nal* nal, int nalcount)
     }
 }
 
-void CLIOptions::printStatus(int frameNum, x265_param *param)
+void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
 {
     char buf[200];
     int64_t i_time = x265_mdate();
@@ -244,7 +247,7 @@ void CLIOptions::showHelp(x265_param *param)
 {
     x265_param_default(param);
     printVersion(param);
-    int inputBitDepth = 8, outputBitDepth = param->internalBitDepth;
+    uint32_t inputBitDepth = 8, outputBitDepth = param->internalBitDepth;
 #define H0 printf
 #define OPT(value) (value ? "enabled" : "disabled")
     H0("\nSyntax: x265 [options] infile [-o] outfile\n");
@@ -258,6 +261,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-F/--frame-threads               Number of concurrently encoded frames. Default %d\n", param->frameNumThreads);
     H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
     H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
+    H0("   --y4m                         Parse input stream as YUV4MPEG2 regardless of file extension\n");
     H0("   --no-progress                 Disable CLI progress reports\n");
     H0("-o/--output                      Bitstream output file name\n");
     H0("\nInput Options:\n");
@@ -394,6 +398,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("input-depth") inputBitDepth = (uint32_t)atoi(optarg);
             OPT("recon-depth") outputBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
+            OPT("y4m") bForceY4m = true;
         else
             berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
 
@@ -425,7 +430,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
         return true;
     }
-    this->input = Input::open(inputfn);
+    this->input = Input::open(inputfn, bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -556,7 +561,7 @@ int main(int argc, char **argv)
     x265_picture *pic_recon = cliopt.recon ? &pic_out : NULL;
     x265_nal *p_nal;
     x265_stats stats;
-    int nal;
+    uint32_t nal;
 
     if (!x265_encoder_headers(encoder, &p_nal, &nal))
     {
@@ -579,7 +584,7 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
+        uint32_t numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
         outFrameCount += numEncoded;
         if (numEncoded && pic_recon)
         {
@@ -596,7 +601,7 @@ int main(int argc, char **argv)
     /* Flush the encoder */
     while (!b_ctrl_c)
     {
-        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
+        uint32_t numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
         outFrameCount += numEncoded;
         if (numEncoded && pic_recon)
         {
@@ -626,14 +631,21 @@ int main(int argc, char **argv)
         fprintf(stderr, "aborted at input frame %d, output frame %d\n", 
                 cliopt.frameSkip + inFrameCount, stats.encodedPictureCount);
 
-    printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
-           stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
+    if (stats.encodedPictureCount)
+    {
+        printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
+            stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
-    if (param.bEnablePsnr)
-        printf("Global PSNR: %.3f\n", stats.globalPsnr);
+        if (param.bEnablePsnr)
+            printf("Global PSNR: %.3f\n", stats.globalPsnr);
 
-    if (param.bEnableSsim)
-        printf("Global SSIM: %.3f\n", stats.globalSsim);
+        if (param.bEnableSsim)
+            printf("Global SSIM: %.3f\n", stats.globalSsim);
+    }
+    else
+    {
+        printf("\nencoded 0 frames\n");
+    }
 
     x265_cleanup(); /* Free library singletons */
 

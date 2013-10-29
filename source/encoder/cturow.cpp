@@ -38,7 +38,7 @@ void CTURow::create(Encoder* top)
     m_rdSbacCoders = new TEncSbac **[g_maxCUDepth + 1];
     m_binCodersCABAC = new TEncBinCABAC **[g_maxCUDepth + 1];
 
-    for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
+    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
         m_rdSbacCoders[depth]  = new TEncSbac*[CI_NUM];
         m_binCodersCABAC[depth] = new TEncBinCABAC*[CI_NUM];
@@ -97,7 +97,7 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
 
 void CTURow::destroy()
 {
-    for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
+    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
         for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
         {
@@ -106,7 +106,7 @@ void CTURow::destroy()
         }
     }
 
-    for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
+    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
         delete [] m_rdSbacCoders[depth];
         delete [] m_binCodersCABAC[depth];

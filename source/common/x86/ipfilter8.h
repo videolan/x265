@@ -55,7 +55,8 @@
     SETUP_CHROMA_FUNC_DEF(8, 32, cpu)
 
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
-    void x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx)
+    void x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);\
+    void x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
 #define LUMA_FILTERS(cpu) \
     SETUP_LUMA_FUNC_DEF(4,   4, cpu); \
@@ -86,6 +87,9 @@
 
 CHROMA_FILTERS(_sse4);
 LUMA_FILTERS(_sse4);
+
+void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
+void x265_interp_8tap_v_sp_ssse3(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
 
 #undef SETUP_CHROMA_FUNC_DEF
 #undef SETUP_LUMA_FUNC_DEF

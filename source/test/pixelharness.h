@@ -35,7 +35,7 @@ protected:
 
     int *ibuf1;
 
-    short *sbuf1, *sbuf2;
+    int16_t *sbuf1, *sbuf2;
 
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt);

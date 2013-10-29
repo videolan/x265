@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-void Lowres::create(TComPic *pic, int bframes)
+void Lowres::create(TComPic *pic, int bframes, int32_t *aqMode)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
 
@@ -45,6 +45,14 @@ void Lowres::create(TComPic *pic, int bframes)
     width = cuWidth * X265_LOWRES_CU_SIZE;
     lines = cuHeight * X265_LOWRES_CU_SIZE;
 
+    if (*aqMode)
+    {
+        m_qpAqOffset = (double*)x265_malloc(sizeof(double) * cuCount);
+        m_invQscaleFactor = (int*)x265_malloc(sizeof(int) * cuCount);
+        if (!m_qpAqOffset || !m_invQscaleFactor)
+            *aqMode = 0;
+    }
+
     /* allocate lowres buffers */
     for (int i = 0; i < 4; i++)
     {
@@ -57,13 +65,13 @@ void Lowres::create(TComPic *pic, int bframes)
     lowresPlane[2] = buffer[2] + padoffset;
     lowresPlane[3] = buffer[3] + padoffset;
 
-    intraCost = (int*)X265_MALLOC(int, cuCount);
+    intraCost = (int32_t*)X265_MALLOC(int, cuCount);
 
     for (int i = 0; i < bframes + 2; i++)
     {
         for (int j = 0; j < bframes + 2; j++)
         {
-            rowSatds[i][j] = (int*)X265_MALLOC(int, cuHeight);
+            rowSatds[i][j] = (int32_t*)X265_MALLOC(int, cuHeight);
             lowresCosts[i][j] = (uint16_t*)X265_MALLOC(uint16_t, cuCount);
         }
     }
@@ -72,8 +80,8 @@ void Lowres::create(TComPic *pic, int bframes)
     {
         lowresMvs[0][i] = (MV*)X265_MALLOC(MV, cuCount);
         lowresMvs[1][i] = (MV*)X265_MALLOC(MV, cuCount);
-        lowresMvCosts[0][i] = (int*)X265_MALLOC(int, cuCount);
-        lowresMvCosts[1][i] = (int*)X265_MALLOC(int, cuCount);
+        lowresMvCosts[0][i] = (int32_t*)X265_MALLOC(int, cuCount);
+        lowresMvCosts[1][i] = (int32_t*)X265_MALLOC(int, cuCount);
     }
 }
 
@@ -102,6 +110,8 @@ void Lowres::destroy(int bframes)
         X265_FREE(lowresMvCosts[0][i]);
         X265_FREE(lowresMvCosts[1][i]);
     }
+    X265_FREE(m_qpAqOffset);
+    X265_FREE(m_invQscaleFactor);
 }
 
 // (re) initialize lowres state
@@ -114,7 +124,12 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     sliceType = type;
     frameNum = poc;
     leadingBframes = 0;
+    satdCost = -1;
     memset(costEst, -1, sizeof(costEst));
+
+    if (m_qpAqOffset && m_invQscaleFactor)
+        memset(costEstAq, -1, sizeof(costEstAq));
+
     for (int y = 0; y < bframes + 2; y++)
     {
         for (int x = 0; x < bframes + 2; x++)

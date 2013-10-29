@@ -64,4 +64,5 @@ add_library(encoder OBJECT ../x265.h
     dpb.cpp dpb.h
     ratecontrol.cpp ratecontrol.h
     compress.cpp
+    reference.cpp reference.h
     encoder.cpp encoder.h)
