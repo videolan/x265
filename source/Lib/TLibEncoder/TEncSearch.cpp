@@ -2144,11 +2144,11 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
     {
         uint32_t costCand = MAX_UINT;
         uint32_t bitsCand = 0;
-
-        PartSize size = cu->getPartitionSize(0);
-
-        cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * mergeCand], size, absPartIdx, 0, puIdx);
-        cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * mergeCand], size, absPartIdx, 0, puIdx);
+       
+        cu->getCUMvField(REF_PIC_LIST_0)->m_mv[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].mv;
+        cu->getCUMvField(REF_PIC_LIST_0)->m_refIdx[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].refIdx;
+        cu->getCUMvField(REF_PIC_LIST_1)->m_mv[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].mv;
+        cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].refIdx;
 
         costCand = xGetInterPredictionError(cu, puIdx);
         bitsCand = mergeCand + 1;
