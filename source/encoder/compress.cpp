@@ -245,6 +245,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
 
+    int bestMergeCand = 0;
     for (int mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
     {
         // set MC parameters, interprets depth relative to LCU level
@@ -268,6 +269,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         if (outTempCU->m_totalCost < outBestCU->m_totalCost)
         {
+            bestMergeCand = mergeCand;
             TComDataCU* tmp = outTempCU;
             outTempCU = outBestCU;
             outBestCU = tmp;
@@ -286,7 +288,44 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     {
         m_search->motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, partIdx, false, true);
     }
-    m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], yuvReconBest, false);
+
+    TComDataCU* tmp;
+    TComYuv *yuv;
+
+    outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
+    outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
+    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    outTempCU->setMergeFlagSubParts(true, 0, 0, depth);
+    outTempCU->setMergeIndexSubParts(bestMergeCand, 0, 0, depth);
+    outTempCU->setInterDirSubParts(interDirNeighbours[bestMergeCand], 0, 0, depth);
+    outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
+    outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
+
+    //No-residue mode
+    m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
+
+    tmp = outTempCU;
+    outTempCU = outBestCU;
+    outBestCU = tmp;
+
+    yuv = yuvReconBest;
+    yuvReconBest = m_tmpRecoYuv[depth];
+    m_tmpRecoYuv[depth] = yuv;
+
+    //Encode with residue
+    m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false);
+
+    if (outTempCU->m_totalCost < outBestCU->m_totalCost)    //Choose best from no-residue mode and residue mode
+    {
+        tmp = outTempCU;
+        outTempCU = outBestCU;
+        outBestCU = tmp;
+
+        yuv = yuvReconBest;
+        yuvReconBest = m_tmpRecoYuv[depth];
+        m_tmpRecoYuv[depth] = yuv;
+    }
+
     if (m_cfg->param.bEnableEarlySkip)
     {
         if (outBestCU->getQtRootCbf(0) == 0)
