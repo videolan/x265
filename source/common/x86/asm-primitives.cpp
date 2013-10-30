@@ -126,7 +126,8 @@ extern "C" {
     p.pixelavg_pp[LUMA_8x4]   = x265_pixel_avg_8x4_ ## cpu;
 
 #define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
-    p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu
+    p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu;\
+    p.chroma_vpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu;
 
 #define CHROMA_FILTERS(cpu) \
     SETUP_CHROMA_FUNC_DEF(4, 4, cpu); \
