@@ -31,8 +31,9 @@
 
 SECTION_RODATA 32
 
+MSK:                  db 255,255,255,255,255,255,255,255,255,255,255,255,0,0,0,0
 pb_shuf8x8c2: times 2 db 0,0,0,0,8,8,8,8,-1,-1,-1,-1,-1,-1,-1,-1
-hpred_shuf: db 0,0,2,2,8,8,10,10,1,1,3,3,9,9,11,11
+hpred_shuf:           db 0,0,2,2,8,8,10,10,1,1,3,3,9,9,11,11
 
 SECTION .text
 
@@ -117,6 +118,39 @@ SAD  4,  4
     paddw   m0, m1
     movd   eax, m0
     RET
+%endmacro
+
+%macro PROCESS_SAD_12x4 0
+    movu    m1,  [r2]
+    movu    m2,  [r0]
+    pand    m1,  m4
+    pand    m2,  m4
+    psadbw  m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+    movu    m1,  [r2]
+    movu    m2,  [r0]
+    pand    m1,  m4
+    pand    m2,  m4
+    psadbw  m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+    movu    m1,  [r2]
+    movu    m2,  [r0]
+    pand    m1,  m4
+    pand    m2,  m4
+    psadbw  m1,  m2
+    paddd   m0,  m1
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+    movu    m1,  [r2]
+    movu    m2,  [r0]
+    pand    m1,  m4
+    pand    m2,  m4
+    psadbw  m1,  m2
+    paddd   m0,  m1
 %endmacro
 
 %macro PROCESS_SAD_16x4 0
@@ -1030,6 +1064,29 @@ jnz .loop
     lea         r2,  [r2 + r3]
     lea         r0,  [r0 + r1]
     PROCESS_SAD_24x4
+
+    movhlps m1,  m0
+    paddd   m0,  m1
+    movd    eax, m0
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_sad_12x16( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+cglobal pixel_sad_12x16, 4,4,4
+    mova  m4,  [MSK]
+    pxor  m0,  m0
+
+    PROCESS_SAD_12x4
+    lea         r2,  [r2 + r3]
+    lea         r0,  [r0 + r1]
+    PROCESS_SAD_12x4
+    lea         r2,  [r2 + r3]
+    lea         r0,  [r0 + r1]
+    PROCESS_SAD_12x4
+    lea         r2,  [r2 + r3]
+    lea         r0,  [r0 + r1]
+    PROCESS_SAD_12x4
 
     movhlps m1,  m0
     paddd   m0,  m1
