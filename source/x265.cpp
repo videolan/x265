@@ -542,9 +542,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(NULL, X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
         return true;
     }
-
-    x265_setup_primitives(param, cpuid);
-
+    printVersion(param);
     return false;
 }
 
