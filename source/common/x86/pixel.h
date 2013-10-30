@@ -47,6 +47,10 @@
     ret x265_pixel_ ## name ## _32x24_ ## suffix args; \
     ret x265_pixel_ ## name ## _32x32_ ## suffix args; \
     ret x265_pixel_ ## name ## _32x64_ ## suffix args; \
+    ret x265_pixel_ ## name ## _64x16_ ## suffix args; \
+    ret x265_pixel_ ## name ## _64x32_ ## suffix args; \
+    ret x265_pixel_ ## name ## _64x48_ ## suffix args; \
+    ret x265_pixel_ ## name ## _64x64_ ## suffix args; \
 
 #define DECL_X1(name, suffix) \
     DECL_PIXELS(int, name, suffix, (pixel *, intptr_t, pixel *, intptr_t))
