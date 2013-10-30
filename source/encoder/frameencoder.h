@@ -161,6 +161,7 @@ public:
     TComSPS                  m_sps;
     TComPPS                  m_pps;
     RateControlEntry         m_rce;
+    SEIDecodedPictureHash    m_seiReconPictureDigest;
 
 protected:
 

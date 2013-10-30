@@ -670,6 +670,45 @@ void FrameEncoder::compressFrame()
         m_nalCount++;
     }
 
+    /* write decoded picture hash SEI messages */
+    if (m_cfg->param.decodedPictureHashSEI)
+    {
+        if (m_cfg->param.decodedPictureHashSEI == 1)
+        {
+            m_seiReconPictureDigest.method = SEIDecodedPictureHash::MD5;
+            for (int i = 0; i < 3; i++)
+            {
+                MD5Final(&(m_pic->m_state[i]), m_seiReconPictureDigest.digest[i]);
+            }
+        }
+        else if (m_cfg->param.decodedPictureHashSEI == 2)
+        {
+            m_seiReconPictureDigest.method = SEIDecodedPictureHash::CRC;
+            for (int i = 0; i < 3; i++)
+            {
+                crcFinish((m_pic->m_crc[i]), m_seiReconPictureDigest.digest[i]);
+            }
+        }
+        else if (m_cfg->param.decodedPictureHashSEI == 3)
+        {
+            m_seiReconPictureDigest.method = SEIDecodedPictureHash::CHECKSUM;
+            for (int i = 0; i < 3; i++)
+            {
+                checksumFinish(m_pic->m_checksum[i], m_seiReconPictureDigest.digest[i]);
+            }
+        }
+        OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
+        m_seiWriter.writeSEImessage(onalu.m_Bitstream, m_seiReconPictureDigest, slice->getSPS());
+        writeRBSPTrailingBits(onalu.m_Bitstream);
+
+        m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+        if (m_nalList[m_nalCount])
+        {
+            m_nalList[m_nalCount]->init(onalu);
+            m_nalCount++;
+        }
+    }
+
     if (m_sps.getUseSAO())
     {
         m_frameFilter.end();

@@ -494,52 +494,18 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
     const char* digestStr = NULL;
     if (param.decodedPictureHashSEI)
     {
-        SEIDecodedPictureHash sei_recon_picture_digest;
         if (param.decodedPictureHashSEI == 1)
         {
-            /* calculate MD5sum for entire reconstructed picture */
-            sei_recon_picture_digest.method = SEIDecodedPictureHash::MD5;
-            for (int i = 0; i < 3; i++)
-            {
-                MD5Final(&(pic->m_state[i]), sei_recon_picture_digest.digest[i]);
-            }
-            digestStr = digestToString(sei_recon_picture_digest.digest, 16);
+            digestStr = digestToString(m_frameEncoder->m_seiReconPictureDigest.digest, 16);
         }
         else if (param.decodedPictureHashSEI == 2)
         {
-            sei_recon_picture_digest.method = SEIDecodedPictureHash::CRC;
-            for (int i = 0; i < 3; i++)
-            {
-                crcFinish((pic->m_crc[i]), sei_recon_picture_digest.digest[i]);
-            }
-            digestStr = digestToString(sei_recon_picture_digest.digest, 2);
+            digestStr = digestToString(m_frameEncoder->m_seiReconPictureDigest.digest, 2);
         }
         else if (param.decodedPictureHashSEI == 3)
         {
-            sei_recon_picture_digest.method = SEIDecodedPictureHash::CHECKSUM;
-            for (int i = 0; i < 3; i++)
-            {
-                checksumFinish(pic->m_checksum[i], sei_recon_picture_digest.digest[i]);
-            }
-            digestStr = digestToString(sei_recon_picture_digest.digest, 4);
+            digestStr = digestToString(m_frameEncoder->m_seiReconPictureDigest.digest, 4);
         }
-
-        /* write the SEI messages */
-        OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
-        m_frameEncoder->m_seiWriter.writeSEImessage(onalu.m_Bitstream, sei_recon_picture_digest, pic->getSlice()->getSPS());
-        writeRBSPTrailingBits(onalu.m_Bitstream);
-
-        int count = 0;
-        while (nalunits[count] != NULL)
-        {
-            count++;
-        }
-
-        nalunits[count] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
-        if (nalunits[count])
-            nalunits[count]->init(onalu);
-        else
-            digestStr = NULL;
     }
 
     /* calculate the size of the access unit, excluding:
