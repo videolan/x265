@@ -59,7 +59,7 @@
 
 using namespace x265;
 
-static const char short_options[] = "o:f:F:r:i:b:s:q:m:hwV";
+static const char short_options[] = "o:p:f:F:r:i:b:s:t:q:m:hwV";
 static const struct option long_options[] =
 {
 #if HIGH_BIT_DEPTH
@@ -68,6 +68,8 @@ static const struct option long_options[] =
     { "help",                 no_argument, NULL, 'h' },
     { "cpuid",          required_argument, NULL, 0 },
     { "threads",        required_argument, NULL, 0 },
+    { "preset",         required_argument, NULL, 'p' },
+    { "tune",           required_argument, NULL, 't' },
     { "frame-threads",  required_argument, NULL, 'F' },
     { "log",            required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
@@ -248,6 +250,7 @@ void CLIOptions::showHelp(x265_param *param)
     x265_param_default(param);
     printVersion(param);
     uint32_t inputBitDepth = 8, outputBitDepth = param->internalBitDepth;
+
 #define H0 printf
 #define OPT(value) (value ? "enabled" : "disabled")
     H0("\nSyntax: x265 [options] infile [-o] outfile\n");
@@ -258,6 +261,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-V/--version                     Show version info and exit\n");
     H0("   --cpuid                       Limit SIMD capability bitmap 0:auto 1:None. Default:0\n");
     H0("   --threads                     Number of threads for thread pool (0: detect CPU core count, default)\n");
+    H0("-p/--preset                      ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
+    H0("-t/--tune                        Tune the settings for a particular type of source or situation\n");
     H0("-F/--frame-threads               Number of concurrently encoded frames. Default %d\n", param->frameNumThreads);
     H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
     H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
@@ -337,8 +342,25 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
     const char *inputRes = NULL;
+    const char *preset = "medium";
+    const char *tune = "psnr";
 
-    x265_param_default(param);
+    /* Presets are applied before all other options. */
+    for (optind = 0;; )
+    {
+        int c = getopt_long(argc, argv, short_options, long_options, NULL);
+        if (c == -1)
+            break;
+        if (c == 'p')
+            preset = optarg;
+        if (c == 't')
+            tune = optarg;
+        else if (c == '?')
+            return true;
+    }
+
+    if (x265_param_default_preset(param, preset, tune) < 0)
+        return true;
 
     for (optind = 0;; )
     {
@@ -390,6 +412,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         if (0);
             OPT("cpuid") cpuid = atoi(optarg);
             OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
+            OPT("preset") preset = optarg;
+            OPT("tune") tune = optarg;
             OPT("no-progress") this->bProgress = false;
             OPT("frame-skip") this->frameSkip = (uint32_t)atoi(optarg);
             OPT("output") bitstreamfn = optarg;

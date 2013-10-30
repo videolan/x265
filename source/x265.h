@@ -356,11 +356,6 @@ void x265_param_default(x265_param *param);
 #define X265_PARAM_BAD_VALUE (-2)
 int x265_param_parse(x265_param *p, const char *name, const char *value);
 
-/***
- * Initialize an x265_picture_t structure to default values
- */
-void x265_picture_init(x265_param *param, x265_picture *pic);
-
 /* x265_param_apply_profile:
  *      Applies the restrictions of the given profile. (one of below) */
 static const char * const x265_profile_names[] = { "main", "main10", "mainstillpicture", 0 };
@@ -368,6 +363,34 @@ static const char * const x265_profile_names[] = { "main", "main10", "mainstillp
 /*      (can be NULL, in which case the function will do nothing)
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
 int x265_param_apply_profile(x265_param *, const char *profile);
+
+/* x265_param_default_preset:
+ *      The same as x265_param_default, but also use the passed preset and tune
+ *      to modify the default settings.
+ *      (either can be NULL, which implies no preset or no tune, respectively)
+ *
+ *      Currently available presets are, ordered from fastest to slowest: */
+static const char * const x265_preset_names[] = { "ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo", 0 };
+
+/*      The presets can also be indexed numerically, as in:
+ *      x265_param_default_preset( &param, "3", ... )
+ *      with ultrafast mapping to "0" and placebo mapping to "9".  This mapping may
+ *      of course change if new presets are added in between, but will always be
+ *      ordered from fastest to slowest.
+ *
+ *      Warning: the speed of these presets scales dramatically.  Ultrafast is a full
+ *      100 times faster than placebo!
+ *
+ *      Currently available tunings are: */
+static const char * const x265_tune_names[] = { "psnr", "ssim", 0 };
+
+/*      returns 0 on success, negative on failure (e.g. invalid preset/tune name). */
+int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
+
+/***
+ * Initialize an x265_picture structure to default values
+ */
+void x265_picture_init(x265_param *param, x265_picture *pic);
 
 /* x265_max_bit_depth:
  *      Specifies the maximum number of bits per pixel that x265 can input. This

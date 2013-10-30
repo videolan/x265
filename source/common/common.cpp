@@ -238,6 +238,167 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     return 0;
 }
 
+extern "C"
+int x265_param_default_preset(x265_param *param, const char *preset, const char *tune)
+{
+    x265_param_default(param);
+
+    if (preset)
+    {
+        char *end;
+        int i = strtol(preset, &end, 10);
+        if (*end == 0 && i >= 0 && i < (int)(sizeof(x265_preset_names)/sizeof(*x265_preset_names)-1))
+            preset = x265_preset_names[i];
+
+        if (!strcmp(preset, "ultrafast"))
+        {
+            param->maxCUSize = 32;
+            param->bFrameAdaptive = 0;
+            param->bframes = 4;
+            param->tuQTMaxInterDepth = 1;
+            param->tuQTMaxIntraDepth = 1;
+            param->rdLevel = 0;
+            param->subpelRefine = 0;
+            param->maxNumMergeCand = 1;
+            param->searchMethod = 0;
+            param->bEnableRectInter = 0;
+            param->bEnableAMP = 0;
+            param->bEnableTransformSkip = 0;
+            param->bEnableEarlySkip = 1;
+            param->bEnableCbfFastMode = 1;
+            param->bEnableLoopFilter = 0;
+            param->bEnableSAO = 0;
+            param->bEnableSignHiding = 0;
+            param->bEnableWeightedPred = 0;
+        }
+        else if (!strcmp(preset, "superfast"))
+        {
+            param->maxCUSize = 32;
+            param->bFrameAdaptive = 0;
+            param->bframes = 4;
+            param->tuQTMaxInterDepth = 1;
+            param->tuQTMaxIntraDepth = 1;
+            param->rdLevel = 0;
+            param->subpelRefine = 1;
+            param->maxNumMergeCand = 1;
+            param->searchMethod = 1;
+            param->bEnableRectInter = 0;
+            param->bEnableAMP = 0;
+            param->bEnableTransformSkip = 0;
+            param->bEnableEarlySkip = 1;
+            param->bEnableCbfFastMode = 1;
+            param->bEnableSAO = 0;
+            param->bEnableSignHiding = 0;
+            param->bEnableWeightedPred = 0;
+        }
+        else if (!strcmp(preset, "veryfast"))
+        {
+            param->bFrameAdaptive = 0;
+            param->bframes = 4;
+            param->tuQTMaxInterDepth = 1;
+            param->tuQTMaxIntraDepth = 1;
+            param->rdLevel = 0;
+            param->subpelRefine = 1;
+            param->searchMethod = 1;
+            param->maxNumMergeCand = 2;
+            param->bEnableRectInter = 0;
+            param->bEnableAMP = 0;
+            param->bEnableTransformSkip = 0;
+            param->bEnableEarlySkip = 1;
+            param->bEnableCbfFastMode = 1;
+        }
+        else if (!strcmp(preset, "faster"))
+        {
+            param->bFrameAdaptive = 0;
+            param->bframes = 4;
+            param->tuQTMaxInterDepth = 1;
+            param->tuQTMaxIntraDepth = 1;
+            param->rdLevel = 0;
+            param->subpelRefine = 1;
+            param->searchMethod = 1;
+            param->maxNumMergeCand = 2;
+            param->bEnableRectInter = 0;
+            param->bEnableAMP = 0;
+            param->bEnableTransformSkip = 0;
+            param->bEnableEarlySkip = 1;
+        }
+        else if (!strcmp(preset, "fast"))
+        {
+            param->tuQTMaxInterDepth = 1;
+            param->tuQTMaxIntraDepth = 1;
+            param->rdLevel = 0;
+            param->subpelRefine = 1;
+            param->searchMethod = 1;
+            param->maxNumMergeCand = 2;
+            param->bEnableAMP = 0;
+            param->bEnableTransformSkip = 0;
+        }
+        else if (!strcmp(preset, "medium"))
+        {
+            param->tuQTMaxInterDepth = 1;
+            param->tuQTMaxIntraDepth = 1;
+            param->rdLevel = 0;
+            param->maxNumMergeCand = 3;
+            param->bEnableTransformSkip = 0;
+        }
+        else if (!strcmp(preset, "slow"))
+        {
+            param->bFrameAdaptive = 2;
+            param->bframes = 4;
+            param->tuQTMaxInterDepth = 1;
+            param->tuQTMaxIntraDepth = 1;
+            param->rdLevel = 1;
+            param->maxNumMergeCand = 3;
+            param->bEnableTransformSkip = 0;
+        }
+        else if (!strcmp(preset, "slower"))
+        {
+            param->bFrameAdaptive = 2;
+            param->lookaheadDepth = 20;
+            param->bframes = 5;
+            param->tuQTMaxInterDepth = 2;
+            param->tuQTMaxIntraDepth = 2;
+            param->rdLevel = 2;
+            param->maxNumMergeCand = 4;
+            param->bEnableTransformSkip = 0;
+            param->maxNumReferences = 3;
+        }
+        else if (!strcmp(preset, "veryslow"))
+        {
+            param->bFrameAdaptive = 2;
+            param->lookaheadDepth = 30;
+            param->bframes = 9;
+            param->maxNumReferences = 5;
+        }
+        else if (!strcmp(preset, "placebo"))
+        {
+            param->bFrameAdaptive = 2;
+            param->lookaheadDepth = 60;
+            param->bframes = 16;
+            param->maxNumReferences = 16;
+            param->searchRange = 124;
+            // TODO: optimized esa
+        }
+        else
+            return -1;
+    }
+    if (tune)
+    {
+        if (!strcmp(tune, "psnr"))
+        {
+            // nop; currently the default
+        }
+        else if (!strcmp(tune, "ssim"))
+        {
+            // not yet supported
+        }
+        else
+            return -1;
+    }
+
+    return 0;
+}
+
 static inline int _confirm(x265_param *param, bool bflag, const char* message)
 {
     if (!bflag)
