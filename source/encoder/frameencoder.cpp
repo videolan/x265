@@ -188,25 +188,25 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
 
     /* headers for start of bitstream */
     OutputNALUnit nalu(NAL_UNIT_VPS);
-    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->setBitstream(&nalu.m_bitstream);
     entropyCoder->encodeVPS(m_cfg->getVPS());
-    writeRBSPTrailingBits(nalu.m_Bitstream);
+    writeRBSPTrailingBits(nalu.m_bitstream);
     CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
     nalunits[count]->init(nalu);
     count++;
 
     nalu = NALUnit(NAL_UNIT_SPS);
-    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->setBitstream(&nalu.m_bitstream);
     entropyCoder->encodeSPS(&m_sps);
-    writeRBSPTrailingBits(nalu.m_Bitstream);
+    writeRBSPTrailingBits(nalu.m_bitstream);
     CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
     nalunits[count]->init(nalu);
     count++;
 
     nalu = NALUnit(NAL_UNIT_PPS);
-    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->setBitstream(&nalu.m_bitstream);
     entropyCoder->encodePPS(&m_pps);
-    writeRBSPTrailingBits(nalu.m_Bitstream);
+    writeRBSPTrailingBits(nalu.m_bitstream);
     CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
     nalunits[count]->init(nalu);
     count++;
@@ -220,9 +220,9 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
         sei.numSpsIdsMinus1 = 0;
         sei.activeSeqParamSetId = m_sps.getSPSId();
 
-        entropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei, &m_sps);
-        writeRBSPTrailingBits(nalu.m_Bitstream);
+        entropyCoder->setBitstream(&nalu.m_bitstream);
+        m_seiWriter.writeSEImessage(nalu.m_bitstream, sei, &m_sps);
+        writeRBSPTrailingBits(nalu.m_bitstream);
         CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
         nalunits[count]->init(nalu);
         count++;
@@ -237,9 +237,9 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
         sei.anticlockwiseRotation = m_cfg->getDisplayOrientationSEIAngle();
 
         nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-        entropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei, &m_sps);
-        writeRBSPTrailingBits(nalu.m_Bitstream);
+        entropyCoder->setBitstream(&nalu.m_bitstream);
+        m_seiWriter.writeSEImessage(nalu.m_bitstream, sei, &m_sps);
+        writeRBSPTrailingBits(nalu.m_bitstream);
         CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
         nalunits[count]->init(nalu);
     }
@@ -499,8 +499,8 @@ void FrameEncoder::compressFrame()
             SEIGradualDecodingRefreshInfo seiGradualDecodingRefreshInfo;
             seiGradualDecodingRefreshInfo.m_gdrForegroundFlag = true; // Indicating all "foreground"
 
-            m_seiWriter.writeSEImessage(nalu.m_Bitstream, seiGradualDecodingRefreshInfo, slice->getSPS());
-            writeRBSPTrailingBits(nalu.m_Bitstream);
+            m_seiWriter.writeSEImessage(nalu.m_bitstream, seiGradualDecodingRefreshInfo, slice->getSPS());
+            writeRBSPTrailingBits(nalu.m_bitstream);
             m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
             if (m_nalList[m_nalCount])
             {
@@ -516,8 +516,8 @@ void FrameEncoder::compressFrame()
         sei_recovery_point.m_exactMatchingFlag = (slice->getPOC() == 0) ? (true) : (false);
         sei_recovery_point.m_brokenLinkFlag    = false;
 
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recovery_point, slice->getSPS());
-        writeRBSPTrailingBits(nalu.m_Bitstream);
+        m_seiWriter.writeSEImessage(nalu.m_bitstream, sei_recovery_point, slice->getSPS());
+        writeRBSPTrailingBits(nalu.m_bitstream);
         m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
         if (m_nalList[m_nalCount])
         {
@@ -565,7 +565,7 @@ void FrameEncoder::compressFrame()
     /* start slice NALunit */
     bool sliceSegment = !slice->isNextSlice();
     OutputNALUnit nalu(slice->getNalUnitType(), 0);
-    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->setBitstream(&nalu.m_bitstream);
     entropyCoder->encodeSliceHeader(slice);
 
     // is it needed?
@@ -601,7 +601,7 @@ void FrameEncoder::compressFrame()
         }
         else
         {
-            entropyCoder->setBitstream(&nalu.m_Bitstream);
+            entropyCoder->setBitstream(&nalu.m_bitstream);
         }
 
         // for now, override the TILES_DECODER setting in order to write substreams.
@@ -616,7 +616,7 @@ void FrameEncoder::compressFrame()
 
     {
         // Construct the final bitstream by flushing and concatenating substreams.
-        // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
+        // The final bitstream is either nalu.m_bitstream or pcBitstreamRedirect;
         uint32_t* substreamSizes = slice->getSubstreamSizes();
         for (int i = 0; i < numSubstreams; i++)
         {
@@ -638,7 +638,7 @@ void FrameEncoder::compressFrame()
 
         // Complete the slice header info.
         entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-        entropyCoder->setBitstream(&nalu.m_Bitstream);
+        entropyCoder->setBitstream(&nalu.m_bitstream);
         entropyCoder->encodeTilesWPPEntryPoint(slice);
 
         // Substreams...
@@ -654,14 +654,14 @@ void FrameEncoder::compressFrame()
     // current NALU is the last NALU of slice and a NALU was buffered, then (a)
     // Write current NALU (b) Update an write buffered NALU at appropriate
     // location in NALU list.
-    nalu.m_Bitstream.writeByteAlignment(); // Slice header byte-alignment
+    nalu.m_bitstream.writeByteAlignment(); // Slice header byte-alignment
 
     // Perform bitstream concatenation
     if (bitstreamRedirect->getNumberOfWrittenBits() > 0)
     {
-        nalu.m_Bitstream.addSubstream(bitstreamRedirect);
+        nalu.m_bitstream.addSubstream(bitstreamRedirect);
     }
-    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->setBitstream(&nalu.m_bitstream);
     bitstreamRedirect->clear();
     m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
     if (m_nalList[m_nalCount])
@@ -698,8 +698,8 @@ void FrameEncoder::compressFrame()
             }
         }
         OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
-        m_seiWriter.writeSEImessage(onalu.m_Bitstream, m_seiReconPictureDigest, slice->getSPS());
-        writeRBSPTrailingBits(onalu.m_Bitstream);
+        m_seiWriter.writeSEImessage(onalu.m_bitstream, m_seiReconPictureDigest, slice->getSPS());
+        writeRBSPTrailingBits(onalu.m_bitstream);
 
         m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
         if (m_nalList[m_nalCount])

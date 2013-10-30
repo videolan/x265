@@ -61,17 +61,17 @@ struct OutputNALUnit : public NALUnit
                   uint32_t        temporalID = 0,
                   uint32_t        reserved_zero_6bits = 0)
         : NALUnit(nalUnitType, temporalID, reserved_zero_6bits)
-        , m_Bitstream()
+        , m_bitstream()
     {}
 
     OutputNALUnit& operator =(const NALUnit& src)
     {
-        m_Bitstream.clear();
+        m_bitstream.clear();
         static_cast<NALUnit*>(this)->operator =(src);
         return *this;
     }
 
-    TComOutputBitstream m_Bitstream;
+    TComOutputBitstream m_bitstream;
 };
 
 void write(uint8_t*& out, OutputNALUnit& nalu, uint32_t& packetSize);
