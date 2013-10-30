@@ -758,6 +758,21 @@ void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dst
         }
     }
 }
+
+template<int bx, int by>
+void blockcopy_pp_c(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = b[x];
+        }
+
+        a += stridea;
+        b += strideb;
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -797,6 +812,37 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_48x64] = satd8<48, 64>;
     p.satd[LUMA_64x16] = satd8<64, 16>;
     p.satd[LUMA_16x64] = satd8<16, 64>;
+
+#define CHROMA(W, H) \
+    p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>
+#define LUMA(W, H) \
+    p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>
+
+    LUMA(4, 4);
+    LUMA(8, 8);   CHROMA(4, 4);
+    LUMA(4, 8);   CHROMA(2, 4);
+    LUMA(8, 4);   CHROMA(4, 2);
+    LUMA(16, 16); CHROMA(8, 8);
+    LUMA(16,  8); CHROMA(8, 4);
+    LUMA( 8, 16); CHROMA(4, 8);
+    LUMA(16, 12); CHROMA(8, 6);
+    LUMA(12, 16); CHROMA(6, 8);
+    LUMA(16,  4); CHROMA(8, 2);
+    LUMA( 4, 16); CHROMA(2, 8);
+    LUMA(32, 32); CHROMA(16, 16);
+    LUMA(32, 16); CHROMA(16, 8);
+    LUMA(16, 32); CHROMA(8, 16);
+    LUMA(32, 24); CHROMA(16, 12);
+    LUMA(24, 32); CHROMA(12, 16);
+    LUMA(32,  8); CHROMA(16, 4);
+    LUMA( 8, 32); CHROMA(4, 16);
+    LUMA(64, 64); CHROMA(32, 32);
+    LUMA(64, 32); CHROMA(32, 16);
+    LUMA(32, 64); CHROMA(16, 32);
+    LUMA(64, 48); CHROMA(32, 24);
+    LUMA(48, 64); CHROMA(24, 32);
+    LUMA(64, 16); CHROMA(32, 8);
+    LUMA(16, 64); CHROMA(8, 32);
 
     //sse
 #if HIGH_BIT_DEPTH
