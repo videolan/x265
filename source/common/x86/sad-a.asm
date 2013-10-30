@@ -775,6 +775,34 @@ cglobal pixel_sad_8x32, 4,4,3
     movd    eax, m0
     RET
 
+;-----------------------------------------------------------------------------
+; int pixel_sad_64x16( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+cglobal pixel_sad_64x16, 4,4,5
+    pxor  m0,  m0
+
+    PROCESS_SAD_64x4
+
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    PROCESS_SAD_64x4
+
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    PROCESS_SAD_64x4
+
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    PROCESS_SAD_64x4
+
+    movhlps m1,  m0
+    paddd   m0,  m1
+    movd    eax, m0
+    RET
+
 %endmacro
 
 INIT_XMM sse2
