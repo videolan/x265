@@ -45,6 +45,7 @@
     ret x265_pixel_ ## name ## _32x8_ ## suffix args; \
     ret x265_pixel_ ## name ## _32x16_ ## suffix args; \
     ret x265_pixel_ ## name ## _32x24_ ## suffix args; \
+    ret x265_pixel_ ## name ## _24x32_ ## suffix args; \
     ret x265_pixel_ ## name ## _32x32_ ## suffix args; \
     ret x265_pixel_ ## name ## _32x64_ ## suffix args; \
     ret x265_pixel_ ## name ## _64x16_ ## suffix args; \
