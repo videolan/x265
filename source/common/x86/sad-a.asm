@@ -196,6 +196,67 @@ SAD  4,  4
     paddd       m0, m1
 %endmacro
 
+%macro PROCESS_SAD_64x4 0
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    movu    m4,  [r2 + 48]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    psadbw  m4,  [r0 + 48]
+    paddd   m1,  m2
+    paddd   m3,  m4
+    paddd   m0,  m1
+    paddd   m0,  m3
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    movu    m4,  [r2 + 48]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    psadbw  m4,  [r0 + 48]
+    paddd   m1,  m2
+    paddd   m3,  m4
+    paddd   m0,  m1
+    paddd   m0,  m3
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    movu    m4,  [r2 + 48]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    psadbw  m4,  [r0 + 48]
+    paddd   m1,  m2
+    paddd   m3,  m4
+    paddd   m0,  m1
+    paddd   m0,  m3
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    movu    m4,  [r2 + 48]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    psadbw  m4,  [r0 + 48]
+    paddd   m1,  m2
+    paddd   m3,  m4
+    paddd   m0,  m1
+    paddd   m0,  m3
+
+%endmacro
+
 %macro SAD_W16 0
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_16x16( uint8_t *, intptr_t, uint8_t *, intptr_t )
