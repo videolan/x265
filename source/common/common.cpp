@@ -185,6 +185,7 @@ void x265_param_default(x265_param *param)
     param->saoLcuBasedOptimization = 1;
 
     /* Rate control options */
+    param->rc.rfConstant = 28;
     param->rc.bitrate = 0;
     param->rc.rateTolerance = 1.0;
     param->rc.qCompress = 0.6;
@@ -569,7 +570,7 @@ void x265_print_params(x265_param *param)
         x265_log(param, X265_LOG_INFO, "Rate Control                 : CQP-%d\n", param->rc.qp);
         break;
     case X265_RC_CRF:
-        x265_log(param, X265_LOG_INFO, "Rate Control                 : CRF-%d\n", param->rc.rateFactor);
+        x265_log(param, X265_LOG_INFO, "Rate Control                 : CRF-%f\n", param->rc.rfConstant);
         break;
     }
 
@@ -710,10 +711,21 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->maxNumReferences = atoi(value);
     OPT("weightp")
         p->bEnableWeightedPred = bvalue;
+    OPT("crf")
+    {
+        p->rc.rfConstant = atof(value);
+        p->rc.rateControlMode = X265_RC_CRF;
+    }
     OPT("bitrate")
+    {
         p->rc.bitrate = atoi(value);
+        p->rc.rateControlMode = X265_RC_ABR;
+    }
     OPT("qp")
+    {
         p->rc.qp = atoi(value);
+        p->rc.rateControlMode = X265_RC_CQP;
+    }
     OPT("cbqpoffs")
         p->cbQpOffset = atoi(value);
     OPT("crqpoffs")

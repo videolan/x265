@@ -329,7 +329,7 @@ typedef struct x265_param
         int       qpStep;
         int       rateControlMode;             ///<Values corresponding to RcMethod
         int       qp;                          ///< Constant QP base value
-        int       rateFactor;                  ///< Constant rate factor (CRF)
+        double    rfConstant;                  ///< Constant rate factor (CRF)
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
     } rc;

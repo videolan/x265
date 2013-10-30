@@ -55,6 +55,9 @@ struct RateControl
     int baseQp;               /* CQP base QP */
     double frameDuration;     /* current frame duration in seconds */
     double bitrate;
+    double rateFactorConstant;
+    bool   isAbr;
+
     int    lastSatd;
     int    qpConstant[3];
     double cplxrSum;          /* sum of bits*qscale/rceq */

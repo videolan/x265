@@ -997,11 +997,6 @@ void Encoder::configure(x265_param *_param)
     {
         _param->bEnableAMP = false;
     }
-    // if a bitrate is specified, chose ABR.  Else default to CQP
-    if (_param->rc.bitrate)
-    {
-        _param->rc.rateControlMode = X265_RC_ABR;
-    }
 
     if (!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
     {

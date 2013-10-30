@@ -117,6 +117,7 @@ static const struct option long_options[] =
     { "ref",            required_argument, NULL, 0 },
     { "no-weightp",           no_argument, NULL, 0 },
     { "weightp",              no_argument, NULL, 'w' },
+    { "crf",            required_argument, NULL, 0 },
     { "bitrate",        required_argument, NULL, 0 },
     { "qp",             required_argument, NULL, 'q' },
     { "cbqpoffs",       required_argument, NULL, 0 },
@@ -307,6 +308,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
     H0("\nQP, rate control and rate distortion options:\n");
     H0("   --bitrate                     Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
+    H0("   --crf                         Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
     H0("-q/--qp                          Base QP for CQP mode. Default %d\n", param->rc.qp);
     H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
