@@ -78,6 +78,10 @@ tab_LumaCoeffV: times 4 dw 0, 0
                 times 4 dw 58, -10
                 times 4 dw 4, -1
 
+tab_c_128:      times 16 db 0x80
+tab_c_64_n64:   times 8 db 64, -64
+
+
 SECTION .text
 
 %macro FILTER_H4_w2_2 3
@@ -906,6 +910,7 @@ cglobal interp_8tap_v_sp, 4, 7, 8, 0-(5*4)
     jnz         .loopH
 
     RET
+
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
@@ -2056,3 +2061,69 @@ FILTER_V4_W32 32,  8
 FILTER_V4_W32 32, 16
 FILTER_V4_W32 32, 24
 FILTER_V4_W32 32, 32
+
+
+;-----------------------------------------------------------------------------
+; void filterConvertPelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal luma_p2s, 3, 7, 8
+
+    ; load width and height
+    mov         r3d, r3m
+    mov         r4d, r4m
+
+    ; load constant
+    mova        m6, [tab_c_128]
+    mova        m7, [tab_c_64_n64]
+
+    ;shr         r4d, 2
+    lea         r2, [r2 - 16]
+.loopH:
+
+    xor         r5d, r5d
+.loopW:
+    lea         r6, [r0 + r5]
+
+    movh        m0, [r6]
+    punpcklbw   m0, m6
+    pmaddubsw   m0, m7
+
+    movh        m1, [r6 + r1]
+    punpcklbw   m1, m6
+    pmaddubsw   m1, m7
+
+    movh        m2, [r6 + r1 * 2]
+    punpcklbw   m2, m6
+    pmaddubsw   m2, m7
+
+    lea         r6, [r6 + r1 * 2]
+    movh        m3, [r6 + r1]
+    punpcklbw   m3, m6
+    pmaddubsw   m3, m7
+
+    add         r5, 8
+    cmp         r5, r3
+    jg          .width4
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 0], m0
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 2], m1
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 4], m2
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 6], m3
+    lea         r5, [r5 + 8]
+    je          .nextH
+    jmp         .loopW
+
+.width4:
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 0], m0
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 2], m1
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 4], m2
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 6], m3
+
+.nextH:
+    lea         r0, [r0 + r1 * 4]
+    add         r2, FENC_STRIDE * 2 * 4
+
+    sub         r4, 4
+    jnz         .loopH
+
+    RET

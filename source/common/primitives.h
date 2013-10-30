@@ -210,6 +210,7 @@ typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixe
 
 typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hv_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY);
+typedef void (*filter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -247,6 +248,7 @@ struct EncoderPrimitives
     filter_pp_t     chroma_vpp[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
+    filter_p2s_t    luma_p2s;
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;

@@ -264,6 +264,24 @@ void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, int16_t *dst, int
     }
 }
 
+void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height)
+{
+    int shift = IF_INTERNAL_PREC - X265_DEPTH;
+    int row, col;
+
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int16_t val = src[col] << shift;
+            dst[col] = val - (int16_t)IF_INTERNAL_OFFS;
+        }
+
+        src += srcStride;
+        dst += MAX_CU_SIZE;
+    }
+}
+
 template<int N>
 void filterVertical_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *c)
 {
@@ -471,6 +489,7 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 
     p.ipfilter_p2s = filterConvertPelToShort_c;
     p.ipfilter_s2p = filterConvertShortToPel_c;
+    p.luma_p2s = filterConvertPelToShort_c;
 
     p.extendRowBorder = extendCURowColBorder;
 }

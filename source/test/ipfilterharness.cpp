@@ -240,6 +240,48 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_
     return true;
 }
 
+bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt)
+{
+    int16_t rand_srcStride;
+
+    for (int i = 0; i <= 1000; i++)
+    {
+        int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
+        int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
+
+        memset(IPF_vec_output_s, 0, ipf_t_size);      // Initialize output buffer to zero
+        memset(IPF_C_output_s, 0, ipf_t_size);        // Initialize output buffer to zero
+
+        rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
+        if (rand_srcStride < rand_width)
+            rand_srcStride = rand_width;
+
+        rand_width %= 4;
+        if (rand_width < 4)
+            rand_width = 4;
+
+        rand_height %= 4;
+        if (rand_height < 4)
+            rand_height = 4;
+
+        ref(pixel_buff,
+            rand_srcStride,
+            IPF_C_output_s,
+            rand_width,
+            rand_height);
+        opt(pixel_buff,
+            rand_srcStride,
+            IPF_vec_output_s,
+            rand_width,
+            rand_height);
+
+        if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size))
+            return false;
+    }
+
+    return true;
+}
+
 bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt)
 {
     int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
@@ -411,6 +453,15 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     if (opt.ipfilter_p2s)
     {
         if (!check_IPFilter_primitive(ref.ipfilter_p2s, opt.ipfilter_p2s))
+        {
+            printf("ipfilter_p2s failed\n");
+            return false;
+        }
+    }
+
+    if (opt.luma_p2s)
+    {
+        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s))
         {
             printf("ipfilter_p2s failed\n");
             return false;

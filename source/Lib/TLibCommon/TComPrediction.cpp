@@ -516,6 +516,9 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
 
+    assert((width % 4) + (height % 4) == 0);
+    assert(dstStride == MAX_CU_SIZE);
+
     if ((yFrac | xFrac) == 0)
     {
         primitives.ipfilter_p2s(ref, refStride, dst, dstStride, width, height);
