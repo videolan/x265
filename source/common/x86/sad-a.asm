@@ -2195,6 +2195,133 @@ cglobal intra_sad_x3_16x16, 3,5,6
     lea     r3,  [r3 + r4]
 %endmacro
 
+%macro SAD_X4_32x4 0
+    mova    m4,  [r0]
+    mova    m5,  [r0 + 16]
+    movu    m6,  [r1]
+    movu    m7,  [r1 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m0,  m6
+    movu    m6,  [r2]
+    movu    m7,  [r2 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m1,  m6
+    movu    m6,  [r3]
+    movu    m7,  [r3 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m2,  m6
+    movu    m6,  [r4]
+    movu    m7,  [r4 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m3,  m6
+    lea     r0,  [r0 + FENC_STRIDE]
+    lea     r1,  [r1 + r5]
+    lea     r2,  [r2 + r5]
+    lea     r3,  [r3 + r5]
+    lea     r4,  [r4 + r5]
+    mova    m4,  [r0]
+    mova    m5,  [r0 + 16]
+    movu    m6,  [r1]
+    movu    m7,  [r1 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m0,  m6
+    movu    m6,  [r2]
+    movu    m7,  [r2 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m1,  m6
+    movu    m6,  [r3]
+    movu    m7,  [r3 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m2,  m6
+    movu    m6,  [r4]
+    movu    m7,  [r4 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m3,  m6
+    lea     r0,  [r0 + FENC_STRIDE]
+    lea     r1,  [r1 + r5]
+    lea     r2,  [r2 + r5]
+    lea     r3,  [r3 + r5]
+    lea     r4,  [r4 + r5]
+    mova    m4,  [r0]
+    mova    m5,  [r0 + 16]
+    movu    m6,  [r1]
+    movu    m7,  [r1 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m0,  m6
+    movu    m6,  [r2]
+    movu    m7,  [r2 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m1,  m6
+    movu    m6,  [r3]
+    movu    m7,  [r3 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m2,  m6
+    movu    m6,  [r4]
+    movu    m7,  [r4 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m3,  m6
+    lea     r0,  [r0 + FENC_STRIDE]
+    lea     r1,  [r1 + r5]
+    lea     r2,  [r2 + r5]
+    lea     r3,  [r3 + r5]
+    lea     r4,  [r4 + r5]
+    mova    m4,  [r0]
+    mova    m5,  [r0 + 16]
+    movu    m6,  [r1]
+    movu    m7,  [r1 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m0,  m6
+    movu    m6,  [r2]
+    movu    m7,  [r2 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m1,  m6
+    movu    m6,  [r3]
+    movu    m7,  [r3 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m2,  m6
+    movu    m6,  [r4]
+    movu    m7,  [r4 + 16]
+    psadbw  m6,  m4
+    psadbw  m7,  m5
+    paddd   m6,  m7
+    paddd   m3,  m6
+    lea     r0,  [r0 + FENC_STRIDE]
+    lea     r1,  [r1 + r5]
+    lea     r2,  [r2 + r5]
+    lea     r3,  [r3 + r5]
+    lea     r4,  [r4 + r5]
+%endmacro
+
 ;-----------------------------------------------------------------------------
 ; void pixel_sad_x3_16x16( uint8_t *fenc, uint8_t *pix0, uint8_t *pix1,
 ;                          uint8_t *pix2, intptr_t i_stride, int scores[3] )
@@ -2846,6 +2973,81 @@ jnz .loop1
     SAD_X3_END_SSE2 1
 %endmacro
 
+%macro SAD_X4_W32 0
+cglobal pixel_sad_x4_32x8, 6, 7, 8
+    pxor  m0, m0
+    pxor  m1, m1
+    pxor  m2, m2
+    pxor  m3, m3
+
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_END_SSE2 1
+
+cglobal pixel_sad_x4_32x16, 6, 7, 8
+    pxor  m0, m0
+    pxor  m1, m1
+    pxor  m2, m2
+    pxor  m3, m3
+
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_END_SSE2 1
+
+cglobal pixel_sad_x4_32x24, 6, 7, 8
+    pxor  m0, m0
+    pxor  m1, m1
+    pxor  m2, m2
+    pxor  m3, m3
+
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_END_SSE2 1
+
+cglobal pixel_sad_x4_32x32, 6, 8, 8
+    pxor  m0, m0
+    pxor  m1, m1
+    pxor  m2, m2
+    pxor  m3, m3
+    mov   r7, 32
+
+.loop
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+
+    sub r7,  16
+    cmp r7,  0
+jnz .loop
+    SAD_X4_END_SSE2 1
+
+cglobal pixel_sad_x4_32x64, 6, 8, 8
+    pxor  m0, m0
+    pxor  m1, m1
+    pxor  m2, m2
+    pxor  m3, m3
+    mov   r7, 64
+
+.loop1
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+    SAD_X4_32x4
+
+    sub r7,  16
+    cmp r7,  0
+jnz .loop1
+    SAD_X4_END_SSE2 1
+%endmacro
+
+
 INIT_XMM sse2
 SAD_X_SSE2 3, 16, 16, 7
 SAD_X_SSE2 3, 16,  8, 7
@@ -2887,6 +3089,7 @@ SAD_X_SSE2  3, 16,  8, 7
 SAD_X_SSE2  3,  8, 32, 7
 SAD_X_SSE2  3,  8, 16, 7
 SAD_X4_W24
+SAD_X4_W32
 SAD_X_SSE2  4, 16, 64, 7
 SAD_X_SSE2  4, 16, 32, 7
 SAD_X_SSE2  4, 16, 16, 7
@@ -2907,6 +3110,7 @@ SAD_X_SSE2 3, 16, 12, 6
 SAD_X_SSE2 3, 16,  8, 6
 SAD_X_SSE2 3, 16,  4, 6
 SAD_X4_W24
+SAD_X4_W32
 SAD_X_SSE2 4, 16, 64, 7
 SAD_X_SSE2 4, 16, 32, 7
 SAD_X_SSE2 4, 16, 16, 7
