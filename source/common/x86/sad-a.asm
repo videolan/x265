@@ -173,6 +173,54 @@ SAD  4,  4
     lea     r0,  [r0 + r1]
 %endmacro
 
+%macro PROCESS_SAD_48x4 0
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    paddd   m0,  m3
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    paddd   m0,  m3
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    paddd   m0,  m3
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    movu    m1,  [r2]
+    movu    m2,  [r2 + 16]
+    movu    m3,  [r2 + 32]
+    psadbw  m1,  [r0]
+    psadbw  m2,  [r0 + 16]
+    psadbw  m3,  [r0 + 32]
+    paddd   m1,  m2
+    paddd   m0,  m1
+    paddd   m0,  m3
+%endmacro
+
 %macro PROCESS_SAD_8x4 0
     movq        m1, [r2]
     movq        m2, [r2 + r3]
@@ -887,6 +935,36 @@ jnz .loop
     lea   r2,  [r2 + r3]
     lea   r0,  [r0 + r1]
     PROCESS_SAD_64x4
+
+    movhlps m1,  m0
+    paddd   m0,  m1
+    movd    eax, m0
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_sad_48x64( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+cglobal pixel_sad_48x64, 4,4,5
+    pxor  m0,  m0
+    mov   r4,  64
+
+.loop
+    PROCESS_SAD_48x4
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    PROCESS_SAD_48x4
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
+
+    sub   r4,  8
+    cmp   r4,  8
+
+jnz .loop
+    PROCESS_SAD_48x4
+    lea   r2,  [r2 + r3]
+    lea   r0,  [r0 + r1]
+    PROCESS_SAD_48x4
 
     movhlps m1,  m0
     paddd   m0,  m1
