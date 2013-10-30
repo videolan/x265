@@ -211,7 +211,7 @@ protected:
     void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     void xMergeEstimation(TComDataCU* cu, int partIdx, uint32_t& uiInterDir,
-                          TComMvField* pacMvField, uint32_t& mergeIndex, uint32_t& outCost,
+                          TComMvField* pacMvField, uint32_t& mergeIndex, uint32_t& outCost, uint32_t& outbits,
                           TComMvField* mvFieldNeighbors, UChar* interDirNeighbors, int& numValidMergeCand);
 
     void xRestrictBipredMergeCand(TComDataCU* cu, uint32_t puIdx, TComMvField* mvFieldNeighbours,

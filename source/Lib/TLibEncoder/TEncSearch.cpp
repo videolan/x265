@@ -2115,7 +2115,7 @@ uint32_t TEncSearch::xGetInterPredictionError(TComDataCU* cu, int partIdx)
  * \param bValid
  * \returns void
  */
-void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir, TComMvField* mvField, uint32_t& mergeIndex, uint32_t& outCost, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, int& numValidMergeCand)
+void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir, TComMvField* mvField, uint32_t& mergeIndex, uint32_t& outCost, uint32_t& outbits, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, int& numValidMergeCand)
 {
     uint32_t absPartIdx = 0;
     int width = 0;
@@ -2144,7 +2144,7 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
     {
         uint32_t costCand = MAX_UINT;
         uint32_t bitsCand = 0;
-       
+
         cu->getCUMvField(REF_PIC_LIST_0)->m_mv[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].mv;
         cu->getCUMvField(REF_PIC_LIST_0)->m_refIdx[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].refIdx;
         cu->getCUMvField(REF_PIC_LIST_1)->m_mv[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].mv;
@@ -2160,6 +2160,7 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
         if (costCand < outCost)
         {
             outCost = costCand;
+            outbits = bitsCand;
             mvField[0] = mvFieldNeighbours[0 + 2 * mergeCand];
             mvField[1] = mvFieldNeighbours[1 + 2 * mergeCand];
             interDir = interDirNeighbours[mergeCand];
@@ -2225,6 +2226,8 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar interDirNeighbours[MRG_MAX_NUM_CANDS];
     int numValidMergeCand = 0;
+
+    int totalmebits = 0;
 
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
@@ -2495,7 +2498,8 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
             // find Merge result
             uint32_t mrgCost = MAX_UINT;
-            xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+            uint32_t mrgBits = 0;
+            xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mrgBits, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
             if (mrgCost < meCost)
             {
                 // set Merge result
@@ -2517,6 +2521,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 #if CU_STAT_LOGFILE
                 meCost += mrgCost;
 #endif
+                totalmebits += mrgBits;
             }
             else
             {
@@ -2530,10 +2535,17 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 #if CU_STAT_LOGFILE
                 meCost += meCost;
 #endif
+                totalmebits += mebits;
             }
+        }
+        else
+        {
+            totalmebits += mebits;
         }
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, bLuma, bChroma);
     }
+
+    cu->m_totalBits = totalmebits;
 
     setWpScalingDistParam(cu, -1, REF_PIC_LIST_X);
 }

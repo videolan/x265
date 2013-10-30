@@ -223,10 +223,12 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     m_tmpResiYuv[depth]->clear();
 
     //do motion compensation only for Luma since luma cost alone is calculated
+    outTempCU->m_totalBits = 0;
     m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
     int part = partitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-    outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                                     outPredYuv->getLumaAddr(), outPredYuv->getStride());
+    uint32_t distortion = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+                                                  outPredYuv->getLumaAddr(), outPredYuv->getStride());
+    outTempCU->m_totalCost = m_rdCost->calcRdCost(distortion, outTempCU->m_totalBits);
 }
 
 void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool* earlyDetectionSkip, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
