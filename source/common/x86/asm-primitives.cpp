@@ -221,8 +221,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     {
         INIT8_NAME(sse_pp, ssd, _mmx);
         INIT8(sad, _mmx2);
-        INIT7(sad_x3, _mmx2);
-        INIT7(sad_x4, _mmx2);
+        INIT8(sad_x3, _mmx2);
+        INIT8(sad_x4, _mmx2);
         INIT8(satd, _mmx2);
         HEVC_SATD(mmx2);
         p.satd[LUMA_12x16] = cmp<12, 16, 4, 16, x265_pixel_satd_4x16_mmx2>;

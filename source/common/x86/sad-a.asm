@@ -1482,6 +1482,7 @@ SAD_X 3, 16,  8
 SAD_X 3,  8, 16
 SAD_X 3,  8,  8
 SAD_X 3,  8,  4
+SAD_X 3,  4, 16
 SAD_X 3,  4,  8
 SAD_X 3,  4,  4
 SAD_X 4, 16, 16
@@ -1489,6 +1490,7 @@ SAD_X 4, 16,  8
 SAD_X 4,  8, 16
 SAD_X 4,  8,  8
 SAD_X 4,  8,  4
+SAD_X 4,  4, 16
 SAD_X 4,  4,  8
 SAD_X 4,  4,  4
 
