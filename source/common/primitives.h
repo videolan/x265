@@ -212,6 +212,8 @@ typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_
 typedef void (*filter_hv_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY);
 typedef void (*filter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 
+typedef void (*copy_pp_t)(pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
+
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
  * a vectorized primitive, or a C function. */
@@ -235,6 +237,9 @@ struct EncoderPrimitives
     cvt16to32_shl_t cvt16to32_shl;
     cvt16to16_shl_t cvt16to16_shl;
     cvt32to16_shr_t cvt32to16_shr;
+
+    copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
+    copy_pp_t       chroma_copy_pp[NUM_CHROMA_PARTITIONS];
 
     ipfilter_pp_t   ipfilter_pp[NUM_IPFILTER_P_P];
     ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
