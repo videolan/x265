@@ -297,6 +297,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_8x32]  = x265_pixel_sad_x4_8x32_ssse3;
 
         p.sad_x3[LUMA_12x16] = x265_pixel_sad_x3_12x16_ssse3;
+        p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_ssse3;
         p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_ssse3;
         p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_ssse3;
         p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_ssse3;
@@ -343,6 +344,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         ASSGN_SSE(avx);
 
         p.sad_x3[LUMA_12x16] = x265_pixel_sad_x3_12x16_avx;
+        p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_avx;
         p.sad_x3[LUMA_16x4] = x265_pixel_sad_x3_16x4_avx;
         p.sad_x4[LUMA_16x4] = x265_pixel_sad_x4_16x4_avx;
         p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_avx;

@@ -1666,6 +1666,90 @@ cglobal intra_sad_x3_16x16, 3,5,6
     lea     r3,  [r3 + r4 * 2]
 %endmacro
 
+%macro SAD_X4_12x4 0
+    mova    m4,  [r0]
+    movu    m5,  [r1]
+    pand    m4,  m6
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m0,  m5
+    movu    m5,  [r2]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m1,  m5
+    movu    m5,  [r3]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m2,  m5
+    movu    m5,  [r4]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m3,  m5
+    mova    m4,  [r0 + FENC_STRIDE]
+    movu    m5,  [r1 + r5]
+    pand    m4,  m6
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m0,  m5
+    movu    m5,  [r2 + r5]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m1,  m5
+    movu    m5,  [r3 + r5]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m2,  m5
+    movu    m5,  [r4 + r5]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m3,  m5
+    mova    m4,  [r0 + FENC_STRIDE * 2]
+    movu    m5,  [r1 + r5 * 2]
+    pand    m4,  m6
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m0,  m5
+    movu    m5,  [r2 + r5 * 2]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m1,  m5
+    movu    m5,  [r3 + r5 * 2]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m2,  m5
+    movu    m5,  [r4 + r5 * 2]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m3,  m5
+    lea     r1, [r1 + r5 * 2]
+    lea     r2, [r2 + r5 * 2]
+    lea     r3, [r3 + r5 * 2]
+    lea     r4, [r4 + r5 * 2]
+    mova    m4,  [r0 + FENC_STRIDE + FENC_STRIDE * 2]
+    movu    m5,  [r1 + r5]
+    pand    m4,  m6
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m0,  m5
+    movu    m5,  [r2 + r5]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m1,  m5
+    movu    m5,  [r3 + r5]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m2,  m5
+    movu    m5,  [r4 + r5]
+    pand    m5,  m6
+    psadbw  m5,  m4
+    paddd   m3,  m5
+    lea     r0,  [r0 + FENC_STRIDE * 4]
+    lea     r1,  [r1 + r5 * 2]
+    lea     r2,  [r2 + r5 * 2]
+    lea     r3,  [r3 + r5 * 2]
+    lea     r4,  [r4 + r5 * 2]
+%endmacro
+
 %macro SAD_X3_24x4 0
     mova    m3,  [r0]
     mova    m4,  [r0 + 16]
@@ -2703,6 +2787,21 @@ cglobal pixel_sad_x3_12x16, 5, 7, 8
     SAD_X3_END_SSE2 1
 %endmacro
 
+%macro SAD_X4_W12 0
+cglobal pixel_sad_x4_12x16, 6, 8, 8
+    mova  m6,  [MSK]
+    pxor  m0,  m0
+    pxor  m1,  m1
+    pxor  m2,  m2
+    pxor  m3,  m3
+
+    SAD_X4_12x4
+    SAD_X4_12x4
+    SAD_X4_12x4
+    SAD_X4_12x4
+    SAD_X4_END_SSE2 1
+%endmacro
+
 %macro SAD_X3_W24 0
 cglobal pixel_sad_x3_24x32, 5, 7, 8
     pxor  m0, m0
@@ -2944,6 +3043,7 @@ SAD_X_SSE2  3, 16, 12, 7
 SAD_X_SSE2  3, 16,  8, 7
 SAD_X_SSE2  3,  8, 32, 7
 SAD_X_SSE2  3,  8, 16, 7
+SAD_X4_W12
 SAD_X4_W24
 SAD_X4_W32
 SAD_X_SSE2  4, 16, 64, 7
@@ -2966,6 +3066,7 @@ SAD_X_SSE2 3, 16, 16, 6
 SAD_X_SSE2 3, 16, 12, 6
 SAD_X_SSE2 3, 16,  8, 6
 SAD_X_SSE2 3, 16,  4, 6
+SAD_X4_W12
 SAD_X4_W24
 SAD_X4_W32
 SAD_X_SSE2 4, 16, 64, 7
