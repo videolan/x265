@@ -784,7 +784,7 @@ void Encoder::initSPS(TComSPS *sps)
 void Encoder::initPPS(TComPPS *pps)
 {
     pps->setConstrainedIntraPred(param.bEnableConstrainedIntra);
-    bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
+    bool bUseDQP = ((getMaxCuDQPDepth() > 0) || param.rc.aqMode) ? true : false;
 
     int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
 

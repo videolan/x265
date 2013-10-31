@@ -306,6 +306,42 @@ void FrameEncoder::threadMain()
     while (m_threadActive);
 }
 
+void FrameEncoder::setLambda(int qp, int row)
+{
+    TComSlice* slice = m_pic->getSlice();
+    TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
+
+    double lambda = 0;
+    if (m_pic->getSlice()->getSliceType() == I_SLICE)
+    {
+        lambda = X265_MAX(1, x265_lambda2_tab_I[qp]);
+    }
+    else
+    {
+        lambda = X265_MAX(1, x265_lambda2_non_I[qp]);
+    }
+
+    // for RDO
+    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
+    // instead we weight the distortion of chroma.
+    int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
+    int qpc = Clip3(0, 57, qp + chromaQPOffset);
+    double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
+
+    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
+    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
+    double chromaLambda = lambda / crWeight;
+
+    m_rows[row].m_search.setQPLambda(qp, lambda, chromaLambda);
+    m_rows[row].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+    m_rows[row].m_rdCost.setLambda(lambda);
+    m_rows[row].m_rdCost.setCbDistortionWeight(cbWeight);
+    m_rows[row].m_rdCost.setCrDistortionWeight(crWeight);
+    m_frameFilter.m_sao.lumaLambda = lambda;
+    m_frameFilter.m_sao.chromaLambda = chromaLambda;
+}
+
 void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
@@ -1042,8 +1078,12 @@ void FrameEncoder::processRowEncoder(int row)
         codeRow.m_entropyCoder.resetEntropy();
 
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        int qp = calcQpForCu(m_pic, cuAddr);
-        cu->setQP(0,(char)qp);
+        if (m_cfg->param.rc.aqMode)
+        {
+            int qp = calcQpForCu(m_pic, cuAddr);
+            cu->setQP(0, (char)qp);
+            setLambda(qp, row);
+        }
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
         // TODO: Keep atomic running totals for rate control?

@@ -150,6 +150,8 @@ public:
     /* blocks until worker thread is done, returns encoded picture and bitstream */
     TComPic *getEncodedPicture(NALUnitEBSP **nalunits);
 
+    void setLambda(int qp , int row);
+
     // worker thread
     void threadMain();
 

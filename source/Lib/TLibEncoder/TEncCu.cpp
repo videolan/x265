@@ -1643,7 +1643,8 @@ void TEncCu::xCheckDQP(TComDataCU* cu)
 
     if (cu->getSlice()->getPPS()->getUseDQP() && (g_maxCUWidth >> depth) >= cu->getSlice()->getPPS()->getMinCuDQPSize())
     {
-        cu->setQPSubParts(cu->getRefQP(0), 0, depth); // set QP to default QP
+        if (!cu->getCbf(0, TEXT_LUMA, 0) && !cu->getCbf(0, TEXT_CHROMA_U, 0) && !cu->getCbf(0, TEXT_CHROMA_V, 0))
+            cu->setQPSubParts(cu->getRefQP(0), 0, depth); // set QP to default QP
     }
 }
 
