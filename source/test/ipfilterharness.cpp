@@ -240,14 +240,15 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_
     return true;
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt)
+bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma)
 {
-    int16_t rand_srcStride;
+    intptr_t rand_srcStride;
+    const int min_size = isChroma ? 2 : 4;
 
     for (int i = 0; i <= 1000; i++)
     {
-        int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
-        int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
+        int rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
+        int rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
 
         memset(IPF_vec_output_s, 0, ipf_t_size);      // Initialize output buffer to zero
         memset(IPF_C_output_s, 0, ipf_t_size);        // Initialize output buffer to zero
@@ -256,13 +257,13 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
         if (rand_srcStride < rand_width)
             rand_srcStride = rand_width;
 
-        rand_width %= 4;
-        if (rand_width < 4)
-            rand_width = 4;
+        rand_width %= min_size;
+        if (rand_width < min_size)
+            rand_width = min_size;
 
-        rand_height %= 4;
-        if (rand_height < 4)
-            rand_height = 4;
+        rand_height %= min_size;
+        if (rand_height < min_size)
+            rand_height = min_size;
 
         ref(pixel_buff,
             rand_srcStride,
@@ -461,7 +462,16 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 
     if (opt.luma_p2s)
     {
-        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s))
+        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s, 0))
+        {
+            printf("ipfilter_p2s failed\n");
+            return false;
+        }
+    }
+
+    if (opt.chroma_p2s)
+    {
+        if (!check_IPFilter_primitive(ref.chroma_p2s, opt.chroma_p2s, 1))
         {
             printf("ipfilter_p2s failed\n");
             return false;
@@ -583,6 +593,13 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         printf("luma_p2s\t");
         REPORT_SPEEDUP(opt.luma_p2s, ref.luma_p2s,
+                       pixel_buff, srcStride, IPF_vec_output_s, width, height);
+    }
+
+    if (opt.chroma_p2s)
+    {
+        printf("chroma_p2s\t");
+        REPORT_SPEEDUP(opt.chroma_p2s, ref.chroma_p2s,
                        pixel_buff, srcStride, IPF_vec_output_s, width, height);
     }
 

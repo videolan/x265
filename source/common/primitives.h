@@ -254,6 +254,7 @@ struct EncoderPrimitives
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
     filter_p2s_t    luma_p2s;
+    filter_p2s_t    chroma_p2s;
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;

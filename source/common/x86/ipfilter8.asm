@@ -2124,3 +2124,61 @@ cglobal luma_p2s, 3, 7, 8
     jnz         .loopH
 
     RET
+
+
+; TODO: combin of U and V is more performance, but need more register
+; TODO: use two path for height alignment to 4 and otherwise may improvement 10% performance, but code is more complex, so I disable it
+INIT_XMM ssse3
+cglobal chroma_p2s, 3, 7, 6
+
+    ; load width and height
+    mov         r3d, r3m
+    mov         r4d, r4m
+
+    ; load constant
+    mova        m4, [tab_c_128]
+    mova        m5, [tab_c_64_n64]
+
+.loopH:
+
+    xor         r5d, r5d
+.loopW:
+    lea         r6, [r0 + r5]
+
+    movh        m0, [r6]
+    punpcklbw   m0, m4
+    pmaddubsw   m0, m5
+
+    movh        m1, [r6 + r1]
+    punpcklbw   m1, m6
+    pmaddubsw   m1, m7
+
+    add         r5d, 8
+    cmp         r5d, r3d
+    lea         r6, [r2 + r5 * 2]
+    jg          .width2
+    movu        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
+    movu        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
+    je          .nextH
+    jmp         .loopW
+
+.width4:
+    cmp         r3d, 4
+    jl          .width2
+    movh        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
+    movh        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
+    lea         r6, [r6 + 8]
+    jz          .nextH
+
+.width2:
+    movd        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
+    movd        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
+
+.nextH:
+    lea         r0, [r0 + r1 * 2]
+    add         r2, FENC_STRIDE / 2 * 4
+
+    sub         r4d, 2
+    jnz         .loopH
+
+    RET

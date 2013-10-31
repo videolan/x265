@@ -619,10 +619,13 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
     uint32_t cxWidth = width >> 1;
     uint32_t cxHeight = height >> 1;
 
+    assert(dstStride == MAX_CU_SIZE / 2);
+    assert(((cxWidth | cxHeight) % 2) == 0);
+
     if ((yFrac | xFrac) == 0)
     {
-        primitives.ipfilter_p2s(refCb, refStride, dstCb, dstStride, cxWidth, cxHeight);
-        primitives.ipfilter_p2s(refCr, refStride, dstCr, dstStride, cxWidth, cxHeight);
+        primitives.chroma_p2s(refCb, refStride, dstCb, cxWidth, cxHeight);
+        primitives.chroma_p2s(refCr, refStride, dstCr, cxWidth, cxHeight);
     }
     else if (yFrac == 0)
     {
