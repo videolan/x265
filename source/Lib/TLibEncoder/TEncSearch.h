@@ -165,6 +165,12 @@ public:
 
     void xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, bool bLumaOnly, TComYuv* reconYuv);
 
+    // -------------------------------------------------------------------------------------------------------------------
+    // compute symbol bits
+    // -------------------------------------------------------------------------------------------------------------------
+
+    uint32_t xSymbolBitsInter(TComDataCU* cu);
+
 protected:
 
     // --------------------------------------------------------------------------------------------
@@ -231,12 +237,6 @@ protected:
     void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth,
                              UInt64 &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist);
     void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth, bool bSpatial);
-
-    // -------------------------------------------------------------------------------------------------------------------
-    // compute symbol bits
-    // -------------------------------------------------------------------------------------------------------------------
-
-    uint32_t xSymbolBitsInter(TComDataCU* cu);
 
     void setWpScalingDistParam(TComDataCU* cu, int refIdx, int picList);
 };
