@@ -862,33 +862,12 @@ cglobal pixel_sad_32x64, 4,4,3
 ;-----------------------------------------------------------------------------
 cglobal pixel_sad_8x32, 4,4,3
     pxor  m0,  m0
-
+    mov   r4d, 4
+.loop
     PROCESS_SAD_8x4
     PROCESS_SAD_8x4
-    PROCESS_SAD_8x4
-    PROCESS_SAD_8x4
-    PROCESS_SAD_8x4
-    PROCESS_SAD_8x4
-    PROCESS_SAD_8x4
-
-    movq        m1, [r2]
-    movq        m2, [r2 + r3]
-    lea         r2, [r2 + 2 * r3]
-    movq        m3, [r0]
-    movq        m4, [r0 + r1]
-    lea         r0, [r0 + 2 * r1]
-    punpcklqdq  m1, m2
-    punpcklqdq  m3, m4
-    psadbw      m1, m3
-    paddd       m0, m1
-    movq        m1, [r2]
-    movq        m2, [r2 + r3]
-    movq        m3, [r0]
-    movq        m4, [r0 + r1]
-    punpcklqdq  m1, m2
-    punpcklqdq  m3, m4
-    psadbw      m1, m3
-    paddd       m0, m1
+    dec  r4d
+    jnz .loop
 
     movhlps m1,  m0
     paddd   m0,  m1
