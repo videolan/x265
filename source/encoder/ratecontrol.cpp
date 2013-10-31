@@ -62,13 +62,11 @@ static inline uint32_t acEnergyVar(uint64_t sum_ssd, int shift)
 /* Find the energy of each block in Y/Cb/Cr plane */
 static inline uint32_t acEnergyPlane(pixel* src, int srcStride, int bChroma)
 {
-    int blockStride = FENC_STRIDE >> 3;
-
     if (bChroma)
     {
         ALIGN_VAR_8(pixel, pix[8 * 8]);
-        primitives.blockcpy_pp(8, 8, pix, blockStride, src, srcStride);
-        return acEnergyVar(primitives.var[LUMA_8x8](pix, blockStride), 6);
+        primitives.blockcpy_pp(8, 8, pix, 8, src, srcStride);
+        return acEnergyVar(primitives.var[LUMA_8x8](pix, 8), 6);
     }
     else
         return acEnergyVar(primitives.var[LUMA_16x16](src, srcStride), 8);
