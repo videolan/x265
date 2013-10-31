@@ -504,7 +504,7 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         if (bFrameScoreCU)
         {
             costEst += bcost;
-            if (fenc->m_qpAqOffset)
+            if (fenc->m_invQscaleFactor)
                 costEstAq += (bcost * fenc->m_invQscaleFactor[cuXY] + 128) >> 8;
         }
     }
