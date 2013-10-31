@@ -2561,13 +2561,13 @@ cglobal chroma_p2s, 3, 7, 6
     pmaddubsw   m0, m5
 
     movh        m1, [r6 + r1]
-    punpcklbw   m1, m6
-    pmaddubsw   m1, m7
+    punpcklbw   m1, m4
+    pmaddubsw   m1, m5
 
     add         r5d, 8
     cmp         r5d, r3d
     lea         r6, [r2 + r5 * 2]
-    jg          .width2
+    jg          .width4
     movu        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
     movu        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
     je          .nextH
