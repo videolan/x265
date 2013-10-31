@@ -464,6 +464,9 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 
     valuewasnull = !value;
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
 #define OPT(STR) else if (!strcmp(name, STR))
     if (0) ;
     OPT("fps")
