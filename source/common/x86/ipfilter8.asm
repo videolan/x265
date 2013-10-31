@@ -2077,8 +2077,6 @@ cglobal luma_p2s, 3, 7, 8
     mova        m6, [tab_c_128]
     mova        m7, [tab_c_64_n64]
 
-    ;shr         r4d, 2
-    lea         r2, [r2 - 16]
 .loopH:
 
     xor         r5d, r5d
@@ -2105,19 +2103,19 @@ cglobal luma_p2s, 3, 7, 8
     add         r5, 8
     cmp         r5, r3
     jg          .width4
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 0], m0
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 2], m1
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 4], m2
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 6], m3
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 0 - 16], m0
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 2 - 16], m1
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 4 - 16], m2
+    movu        [r2 + r5 * 2 + FENC_STRIDE * 6 - 16], m3
     lea         r5, [r5 + 8]
     je          .nextH
     jmp         .loopW
 
 .width4:
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 0], m0
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 2], m1
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 4], m2
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 6], m3
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 0 - 16], m0
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 2 - 16], m1
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 4 - 16], m2
+    movh        [r2 + r5 * 2 + FENC_STRIDE * 6 - 16], m3
 
 .nextH:
     lea         r0, [r0 + r1 * 4]
