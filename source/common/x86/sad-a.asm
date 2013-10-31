@@ -1600,6 +1600,72 @@ cglobal intra_sad_x3_16x16, 3,5,6
     RET
 %endmacro
 
+%macro SAD_X3_12x4 0
+    mova    m3,  [r0]
+    movu    m5,  [r1]
+    pand    m3,  m4
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m0,  m5
+    movu    m5,  [r2]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m1,  m5
+    movu    m5,  [r3]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m2,  m5
+    mova    m3,  [r0 + FENC_STRIDE]
+    movu    m5,  [r1 + r4]
+    pand    m3,  m4
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m0,  m5
+    movu    m5,  [r2 + r4]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m1,  m5
+    movu    m5,  [r3 + r4]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m2,  m5
+    mova    m3,  [r0 + FENC_STRIDE * 2]
+    movu    m5,  [r1 + r4 * 2]
+    pand    m3,  m4
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m0,  m5
+    movu    m5,  [r2 + r4 * 2]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m1,  m5
+    movu    m5,  [r3 + r4 * 2]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m2,  m5
+    lea     r1, [r1 + r4 * 2]
+    lea     r2, [r2 + r4 * 2]
+    lea     r3, [r3 + r4 * 2]
+    mova    m3,  [r0 + FENC_STRIDE + FENC_STRIDE * 2]
+    movu    m5,  [r1 + r4]
+    pand    m3,  m4
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m0,  m5
+    movu    m5,  [r2 + r4]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m1,  m5
+    movu    m5,  [r3 + r4]
+    pand    m5,  m4
+    psadbw  m5,  m3
+    paddd   m2,  m5
+    lea     r0,  [r0 + FENC_STRIDE * 4]
+    lea     r1,  [r1 + r4 * 2]
+    lea     r2,  [r2 + r4 * 2]
+    lea     r3,  [r3 + r4 * 2]
+%endmacro
+
 %macro SAD_X3_24x4 0
     mova    m3,  [r0]
     mova    m4,  [r0 + 16]
@@ -2623,6 +2689,20 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,%4
 %endif
 %endmacro
 
+%macro SAD_X3_W12 0
+cglobal pixel_sad_x3_12x16, 5, 7, 8
+    mova  m4,  [MSK]
+    pxor  m0,  m0
+    pxor  m1,  m1
+    pxor  m2,  m2
+
+    SAD_X3_12x4
+    SAD_X3_12x4
+    SAD_X3_12x4
+    SAD_X3_12x4
+    SAD_X3_END_SSE2 1
+%endmacro
+
 %macro SAD_X3_W24 0
 cglobal pixel_sad_x3_24x32, 5, 7, 8
     pxor  m0, m0
@@ -2854,6 +2934,7 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,8
 %endmacro
 
 INIT_XMM ssse3
+SAD_X3_W12
 SAD_X3_W32
 SAD_X3_W24
 SAD_X_SSE2  3, 16, 64, 7
@@ -2876,6 +2957,7 @@ SAD_X_SSSE3 4,  8,  8
 SAD_X_SSSE3 4,  8,  4
 
 INIT_XMM avx
+SAD_X3_W12
 SAD_X3_W32
 SAD_X3_W24
 SAD_X_SSE2 3, 16, 64, 7
