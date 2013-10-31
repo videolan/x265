@@ -276,9 +276,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --fps                         Source frame rate, auto-detected if Y4M\n");
     H0("   --frame-skip                  Number of frames to skip at start of input file\n");
     H0("-f/--frames                      Number of frames to be encoded. Default all\n");
-    H0("\nReconstructed video options (debugging):\n");
-    H0("-r/--recon                       Reconstructed image YUV or Y4M output file name\n");
-    H0("   --recon-depth                 Bit-depth of output file. Default %d\n", outputBitDepth);
     H0("\nQuad-Tree analysis:\n");
     H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
     H0("-s/--ctu                         Maximum CU size (default: 64x64). Default %d\n", param->maxCUSize);
@@ -292,7 +289,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]amp                    Enable asymmetric motion partitions, requires --rect. Default %s\n", OPT(param->bEnableAMP));
     H0("   --max-merge                   Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
-    H0("   --[no-]fast-cbf               Enable Cbf fast mode \n \t\t\t\t Default : %s\n", OPT(param->bEnableCbfFastMode));
+    H0("   --[no-]fast-cbf               Enable Cbf fast mode. Default %s\n", OPT(param->bEnableCbfFastMode));
     H0("\nSpatial / intra options:\n");
     H0("   --rdpenalty                   penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum. Default %d\n", param->rdPenalty);
     H0("   --[no-]tskip                  Enable intra transform skipping. Default %s\n", OPT(param->bEnableTransformSkip));
@@ -324,6 +321,9 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nQuality reporting metrics:\n");
     H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
+    H0("\nReconstructed video options (debugging):\n");
+    H0("-r/--recon                       Reconstructed image YUV or Y4M output file name\n");
+    H0("   --recon-depth                 Bit-depth of output file. Default %d\n", outputBitDepth);
     H0("\nSEI options:\n");
     H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
 #undef OPT
