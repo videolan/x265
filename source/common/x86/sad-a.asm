@@ -926,7 +926,7 @@ cglobal pixel_sad_64x16, 4,4,5
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_64x32( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_64x32, 4,4,5
+cglobal pixel_sad_64x32, 4,5,5
     pxor  m0,  m0
     mov   r4,  32
 
@@ -956,7 +956,7 @@ jnz .loop
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_64x48( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_64x48, 4,4,5
+cglobal pixel_sad_64x48, 4,5,5
     pxor  m0,  m0
     mov   r4,  48
 
@@ -986,7 +986,7 @@ jnz .loop
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_64x64( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_64x64, 4,4,5
+cglobal pixel_sad_64x64, 4,5,5
     pxor  m0,  m0
     mov   r4,  64
 
@@ -1016,7 +1016,7 @@ jnz .loop
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_48x64( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_48x64, 4,4,5
+cglobal pixel_sad_48x64, 4,5,5
     pxor  m0,  m0
     mov   r4,  64
 
@@ -1046,7 +1046,7 @@ jnz .loop
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_24x32( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_24x32, 4,4,4
+cglobal pixel_sad_24x32, 4,5,4
     pxor  m0,  m0
     mov   r4,  32
 
@@ -2866,7 +2866,7 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,%4
 %endmacro
 
 %macro SAD_X3_W24 0
-cglobal pixel_sad_x3_24x32, 5, 6, 8
+cglobal pixel_sad_x3_24x32, 5, 7, 8
     pxor  m0, m0
     pxor  m1, m1
     pxor  m2, m2
@@ -2885,12 +2885,18 @@ jnz .loop
 %endmacro
 
 %macro SAD_X4_W24 0
+%if ARCH_X86_64 == 1
 cglobal pixel_sad_x4_24x32, 6, 8, 8
+%define count r7
+%else
+cglobal pixel_sad_x4_24x32, 6, 7, 8, 0-4
+%define count dword [rsp]
+%endif
     pxor  m0, m0
     pxor  m1, m1
     pxor  m2, m2
     pxor  m3, m3
-    mov   r7, 32
+    mov   count, 32
 
 .loop
     SAD_X4_24x4
@@ -2898,11 +2904,11 @@ cglobal pixel_sad_x4_24x32, 6, 8, 8
     SAD_X4_24x4
     SAD_X4_24x4
 
-    sub r7,  16
-    cmp r7,  0
-jnz .loop
+    sub count,  16
+    jnz .loop
     SAD_X4_END_SSE2 1
-%endmacro
+
+%endmacro
 
 %macro SAD_X3_W32 0
 cglobal pixel_sad_x3_32x8, 5, 6, 8
@@ -3010,12 +3016,18 @@ cglobal pixel_sad_x4_32x24, 6, 7, 8
     SAD_X4_32x4
     SAD_X4_END_SSE2 1
 
+%if ARCH_X86_64 == 1
 cglobal pixel_sad_x4_32x32, 6, 8, 8
+%define count r7
+%else
+cglobal pixel_sad_x4_32x32, 6, 7, 8, 0-4
+%define count dword [rsp]
+%endif
     pxor  m0, m0
     pxor  m1, m1
     pxor  m2, m2
     pxor  m3, m3
-    mov   r7, 32
+    mov   count, 32
 
 .loop
     SAD_X4_32x4
@@ -3023,28 +3035,33 @@ cglobal pixel_sad_x4_32x32, 6, 8, 8
     SAD_X4_32x4
     SAD_X4_32x4
 
-    sub r7,  16
-    cmp r7,  0
-jnz .loop
+    sub count,  16
+    jnz .loop
     SAD_X4_END_SSE2 1
 
+%if ARCH_X86_64 == 1
 cglobal pixel_sad_x4_32x64, 6, 8, 8
+%define count r7
+%else
+cglobal pixel_sad_x4_32x64, 6, 7, 8, 0-4
+%define count dword [rsp]
+%endif
     pxor  m0, m0
     pxor  m1, m1
     pxor  m2, m2
     pxor  m3, m3
-    mov   r7, 64
+    mov   count, 64
 
-.loop1
+.loop
     SAD_X4_32x4
     SAD_X4_32x4
     SAD_X4_32x4
     SAD_X4_32x4
 
-    sub r7,  16
-    cmp r7,  0
-jnz .loop1
+    sub count,  16
+    jnz .loop
     SAD_X4_END_SSE2 1
+
 %endmacro
 
 
