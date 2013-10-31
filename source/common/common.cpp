@@ -394,6 +394,12 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             // not yet supported
         }
+        else if (!strcmp(tune, "zero-latency"))
+        {
+            param->bFrameAdaptive = 0;
+            param->bframes = 0;
+            param->lookaheadDepth = 0;
+        }
         else
             return -1;
     }
