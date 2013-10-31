@@ -386,9 +386,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_8x8] = x265_pixel_sa8d_8x8_avx2;
         SA8D_INTER_FROM_BLOCK8(avx2);
 
-        p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_avx2;
         p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_avx2;
-        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_avx2;
         p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
