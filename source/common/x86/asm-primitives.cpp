@@ -292,7 +292,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.sad_x4[LUMA_8x4] = x265_pixel_sad_x4_8x4_ssse3;
         p.sad_x4[LUMA_8x8] = x265_pixel_sad_x4_8x8_ssse3;
-        p.sad_x3[LUMA_8x16] = x265_pixel_sad_x3_8x16_ssse3;
         p.sad_x4[LUMA_8x16] = x265_pixel_sad_x4_8x16_ssse3;
         p.sad_x3[LUMA_8x32]  = x265_pixel_sad_x3_8x32_ssse3;
         p.sad_x4[LUMA_8x32]  = x265_pixel_sad_x4_8x32_ssse3;
@@ -301,13 +300,14 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_ssse3;
         p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_ssse3;
         p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_ssse3;
-        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_ssse3;
         p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_ssse3;
         p.sad_x3[LUMA_16x64] = x265_pixel_sad_x3_16x64_ssse3;
         p.sad_x4[LUMA_16x64] = x265_pixel_sad_x4_16x64_ssse3;
         p.sad_x3[LUMA_24x32] = x265_pixel_sad_x3_24x32_ssse3;
         p.sad_x4[LUMA_24x32] = x265_pixel_sad_x4_24x32_ssse3;
 #if 0
+        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_ssse3;
+        p.sad_x3[LUMA_8x16] = x265_pixel_sad_x3_8x16_ssse3;
         p.sad_x3[LUMA_32x8] = x265_pixel_sad_x3_32x8_ssse3;
         p.sad_x3[LUMA_32x16] = x265_pixel_sad_x3_32x16_ssse3;
         p.sad_x3[LUMA_32x24] = x265_pixel_sad_x3_32x24_ssse3;
@@ -352,7 +352,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_16x4] = x265_pixel_sad_x4_16x4_avx;
         p.sad_x3[LUMA_16x12] = x265_pixel_sad_x3_16x12_avx;
         p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_avx;
-        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_avx;
         p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx;
         p.sad_x3[LUMA_16x64] = x265_pixel_sad_x3_16x64_avx;
         p.sad_x4[LUMA_16x64] = x265_pixel_sad_x4_16x64_avx;
@@ -360,6 +359,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_24x32] = x265_pixel_sad_x4_24x32_avx;
 
 #if 0
+        p.sad_x3[LUMA_16x32] = x265_pixel_sad_x3_16x32_avx;
         p.sad_x3[LUMA_32x8] = x265_pixel_sad_x3_32x8_avx;
         p.sad_x3[LUMA_32x16] = x265_pixel_sad_x3_32x16_avx;
         p.sad_x3[LUMA_32x24] = x265_pixel_sad_x3_32x24_avx;
