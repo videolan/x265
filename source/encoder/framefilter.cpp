@@ -277,7 +277,6 @@ void FrameFilter::processRowPost(int row)
     int cuAddr = lineStartCUAddr;
     if (m_cfg->param.bEnablePsnr)
     {
-        TComPicYuv* recon = m_pic->getPicYuvRec();
         TComPicYuv* orig  = m_pic->getPicYuvOrg();
 
         int stride = recon->getStride();
