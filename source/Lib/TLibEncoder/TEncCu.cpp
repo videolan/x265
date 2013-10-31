@@ -86,12 +86,7 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
     m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
     m_bestResiYuv = new TShortYUV*[m_totalDepth - 1];
     m_bestRecoYuv = new TComYuv*[m_totalDepth - 1];
-    for (int j = 0; j < 4; j++)
-    {
-        m_bestPredYuvNxN[j] = new TComYuv*[m_totalDepth - 1];
-        m_interCU_NxN[j]  = new TComDataCU*[m_totalDepth - 1];
-    }
-
+    
     m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
 
     m_modePredYuv[0] = new TComYuv*[m_totalDepth - 1];
@@ -119,12 +114,6 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
         m_tempCU[i] = new TComDataCU;
         m_tempCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
 
-        for (int j = 0; j < 4; j++)
-        {
-            m_interCU_NxN[j][i] = new TComDataCU;
-            m_interCU_NxN[j][i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
-        }
-
         m_interCU_2Nx2N[i] = new TComDataCU;
         m_interCU_2Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_interCU_2NxN[i] = new TComDataCU;
@@ -143,12 +132,6 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
         m_bestResiYuv[i]->create(width, height);
         m_bestRecoYuv[i] = new TComYuv;
         m_bestRecoYuv[i]->create(width, height);
-
-        for (int j = 0; j < 4; j++)
-        {
-            m_bestPredYuvNxN[j][i] = new TComYuv;
-            m_bestPredYuvNxN[j][i]->create(width, height);
-        }
 
         m_tmpPredYuv[i] = new TComYuv;
         m_tmpPredYuv[i]->create(width, height);
@@ -231,16 +214,6 @@ void TEncCu::destroy()
             m_tempCU[i] = NULL;
         }
 
-        for (int j = 0; j < 4; j++)
-        {
-            if (m_interCU_NxN[j][i])
-            {
-                m_interCU_NxN[j][i]->destroy();
-                delete m_interCU_NxN[j][i];
-                m_interCU_NxN[j][i] = NULL;
-            }
-        }
-
         if (m_bestPredYuv[i])
         {
             m_bestPredYuv[i]->destroy();
@@ -259,16 +232,7 @@ void TEncCu::destroy()
             delete m_bestRecoYuv[i];
             m_bestRecoYuv[i] = NULL;
         }
-        for (int j = 0; j < 4; j++)
-        {
-            if (m_bestPredYuvNxN[j][i])
-            {
-                m_bestPredYuvNxN[j][i]->destroy();
-                delete m_bestPredYuvNxN[j][i];
-                m_bestPredYuvNxN[j][i] = NULL;
-            }
-        }
-
+    
         if (m_tmpPredYuv[i])
         {
             m_tmpPredYuv[i]->destroy();
@@ -329,24 +293,12 @@ void TEncCu::destroy()
     delete [] m_tempCU;
     m_tempCU = NULL;
 
-    for (int j = 0; j < 4; j++)
-    {
-        delete [] m_interCU_NxN[j];
-        m_interCU_NxN[j] = NULL;
-    }
-
     delete [] m_bestPredYuv;
     m_bestPredYuv = NULL;
     delete [] m_bestResiYuv;
     m_bestResiYuv = NULL;
     delete [] m_bestRecoYuv;
     m_bestRecoYuv = NULL;
-
-    for (int j = 0; j < 4; j++)
-    {
-        delete [] m_bestPredYuvNxN[j];
-        m_bestPredYuvNxN[j] = NULL;
-    }
 
     delete [] m_bestMergeRecoYuv;
     m_bestMergeRecoYuv = NULL;

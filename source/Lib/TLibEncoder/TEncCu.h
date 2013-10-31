@@ -76,15 +76,13 @@ private:
     TComDataCU** m_intraInInterCU;
     TComDataCU** m_mergeCU;
     TComDataCU** m_bestMergeCU;
-    TComDataCU** m_interCU_NxN[4];
     TComDataCU** m_bestCU;      ///< Best CUs at each depth
     TComDataCU** m_tempCU;      ///< Temporary CUs at each depth
 
     TComYuv**    m_bestPredYuv; ///< Best Prediction Yuv for each depth
     TShortYUV**  m_bestResiYuv; ///< Best Residual Yuv for each depth
     TComYuv**    m_bestRecoYuv; ///< Best Reconstruction Yuv for each depth
-    TComYuv**    m_bestPredYuvNxN[4];
-
+   
     TComYuv**    m_tmpPredYuv;  ///< Temporary Prediction Yuv for each depth
     TShortYUV**  m_tmpResiYuv;  ///< Temporary Residual Yuv for each depth
     TComYuv**    m_tmpRecoYuv;  ///< Temporary Reconstruction Yuv for each depth
