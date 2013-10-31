@@ -139,8 +139,8 @@ RateControl::RateControl(TEncCfg * _cfg)
         wantedBitsWindow = bitrate * frameDuration;
         lastNonBPictType = I_SLICE;
     }
-    ipOffset = 6.0 * (float)(X265_LOG2(cfg->param.rc.ipFactor));
-    pbOffset = 6.0 * (float)(X265_LOG2(cfg->param.rc.pbFactor));
+    ipOffset = 6.0 * X265_LOG2(cfg->param.rc.ipFactor);
+    pbOffset = 6.0 * X265_LOG2(cfg->param.rc.pbFactor);
     for (int i = 0; i < 3; i++)
     {
         lastQScaleFor[i] = qp2qScale(ABR_INIT_QP_MIN);
