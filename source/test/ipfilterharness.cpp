@@ -359,7 +359,7 @@ bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t 
         rand_coeffIdx = rand() % 3;                // Random coeffIdex in the filter
 
         rand_srcStride = rand() % 100;             // Randomly generated srcStride
-        rand_dstStride = rand() % 100;             // Randomly generated dstStride
+        rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
 
         opt(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
