@@ -30,6 +30,7 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 #include <sstream>
 #include <iostream>
 
