@@ -157,7 +157,8 @@ extern "C" {
 
 
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
-    p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu
+    p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu;\
+    p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu
 
 #define LUMA_FILTERS(cpu) \
     SETUP_LUMA_FUNC_DEF(4,   4, cpu); \
