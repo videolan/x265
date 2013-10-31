@@ -61,8 +61,8 @@ int PartitionFromSizes(int width, int height)
 {
     assert(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
 
-    int8_t w = (width >> 2) - 1;
-    int8_t h = (height >> 2) - 1;
+    int w = (width >> 2) - 1;
+    int h = (height >> 2) - 1;
     int part = (int)maptable[(w << 4) + h];
     assert(part >= 0);
     return part;
