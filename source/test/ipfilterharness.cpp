@@ -579,6 +579,13 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                        pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
     }
 
+    if (opt.luma_p2s)
+    {
+        printf("luma_p2s\t");
+        REPORT_SPEEDUP(opt.luma_p2s, ref.luma_p2s,
+                       pixel_buff, srcStride, IPF_vec_output_s, width, height);
+    }
+
     if (opt.ipfilter_s2p)
     {
         printf("ipfilter_s2p\t");

@@ -2107,7 +2107,6 @@ cglobal luma_p2s, 3, 7, 8
     movu        [r2 + r5 * 2 + FENC_STRIDE * 2 - 16], m1
     movu        [r2 + r5 * 2 + FENC_STRIDE * 4 - 16], m2
     movu        [r2 + r5 * 2 + FENC_STRIDE * 6 - 16], m3
-    lea         r5, [r5 + 8]
     je          .nextH
     jmp         .loopW
 
@@ -2119,9 +2118,9 @@ cglobal luma_p2s, 3, 7, 8
 
 .nextH:
     lea         r0, [r0 + r1 * 4]
-    add         r2, FENC_STRIDE * 2 * 4
+    add         r2, FENC_STRIDE * 8
 
-    sub         r4, 4
+    sub         r4d, 4
     jnz         .loopH
 
     RET

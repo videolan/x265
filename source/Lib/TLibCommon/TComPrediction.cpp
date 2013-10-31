@@ -508,7 +508,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
 {
     int refStride = refPic->getStride();
     int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
-    Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    pixel *ref    =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     int dstStride = dstPic->m_width;
     int16_t *dst    = dstPic->getLumaAddr(partAddr);
@@ -521,7 +521,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
 
     if ((yFrac | xFrac) == 0)
     {
-        primitives.ipfilter_p2s(ref, refStride, dst, dstStride, width, height);
+        primitives.luma_p2s(ref, refStride, dst, width, height);
     }
     else if (yFrac == 0)
     {
