@@ -120,14 +120,14 @@ typedef enum
  * All data returned in an x265_nal_t, including the data in p_payload, is no longer
  * valid after the next call to x265_encoder_encode.  Thus it must be used or copied
  * before calling x265_encoder_encode again. */
-typedef struct
+typedef struct x265_nal
 {
     uint32_t i_type;      /* NalUnitType */
     uint32_t i_payload;   /* size in bytes */
     uint8_t* p_payload;
 } x265_nal;
 
-typedef struct
+typedef struct x265_picture
 {
     void*   planes[3];
     int     stride[3];
@@ -242,7 +242,7 @@ typedef struct x265_stats
 } x265_stats;
 
 /* Input parameters to the encoder */
-typedef struct
+typedef struct x265_param
 {
     int       logLevel;
     int       bEnableWavefront;                ///< enable wavefront parallel processing
