@@ -94,18 +94,16 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     /* Actual adaptive quantization */
     if (cfg->param.rc.aqMode)
     {
-        uint32_t blockWidth = g_maxCUWidth >> 2;
-        uint32_t blockHeight = g_maxCUHeight >> 2;
-        double qp_adj = 0;
-        int block_xy = 0;
         int maxCol = pic->getPicYuvOrg()->getWidth();
         int maxRow = pic->getPicYuvOrg()->getHeight();
+
         /* Calculate Qp offset for each 16x16 block in the frame */
-         for (int block_y = 0; block_y < maxRow; block_y += blockHeight)
+        int block_xy = 0;
+        for (int block_y = 0; block_y < maxRow; block_y += 16)
         {
-            for (int block_x = 0; block_x < maxCol; block_x += blockWidth)
+            for (int block_x = 0; block_x < maxCol; block_x += 16)
             {
-                qp_adj = acEnergyCu(pic, block_x, block_y);
+                double qp_adj = acEnergyCu(pic, block_x, block_y);
                 pic->m_lowres.m_qpAqOffset[block_xy] = qp_adj;
                 pic->m_lowres.m_invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
                 block_xy++;
