@@ -681,8 +681,9 @@ void filterHorizontal_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t ds
 #include "vectorclass.h"
 namespace {
 template<int N>
-void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, const int16_t *coeff)
+void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int block_width, int block_height, int coeffIdx)
 {
+    const int16_t *coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
     int row, col;
 
     src -= (N / 2 - 1) * srcStride;
