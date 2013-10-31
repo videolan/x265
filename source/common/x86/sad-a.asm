@@ -490,21 +490,7 @@ cglobal pixel_sad_16x12, 4,4,3
 
     PROCESS_SAD_16x4
     PROCESS_SAD_16x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + r3]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + r1]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + 2 * r3]
-    lea     r0,  [r0 + 2 * r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + r3]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + r1]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    PROCESS_SAD_16x4
 
     movhlps m1, m0
     paddd   m0, m1
@@ -514,31 +500,14 @@ cglobal pixel_sad_16x12, 4,4,3
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_16x32( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_16x32, 4,4,3
-    pxor m0, m0
-
+cglobal pixel_sad_16x32, 4,5,3
+    pxor m0,  m0
+    mov  r4d, 4
+.loop
     PROCESS_SAD_16x4
     PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + r3]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + r1]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + 2 * r3]
-    lea     r0,  [r0 + 2 * r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + r3]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + r1]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    dec  r4d
+    jnz .loop
 
     movhlps m1, m0
     paddd   m0, m1
@@ -548,39 +517,14 @@ cglobal pixel_sad_16x32, 4,4,3
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_16x64( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_16x64, 4,4,3
-    pxor m0, m0
-
+cglobal pixel_sad_16x64, 4,5,3
+    pxor m0,  m0
+    mov  r4d, 8
+.loop
     PROCESS_SAD_16x4
     PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-    PROCESS_SAD_16x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + r3]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + r1]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + 2 * r3]
-    lea     r0,  [r0 + 2 * r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + r3]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + r1]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    dec  r4d
+    jnz .loop
 
     movhlps m1, m0
     paddd   m0, m1
@@ -618,37 +562,7 @@ cglobal pixel_sad_32x8, 4,4,3
     pxor  m0,  m0
 
     PROCESS_SAD_32x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    PROCESS_SAD_32x4
 
     movhlps m1,  m0
     paddd   m0,  m1
@@ -658,45 +572,14 @@ cglobal pixel_sad_32x8, 4,4,3
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_32x24( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_32x24, 4,4,3
+cglobal pixel_sad_32x24, 4,5,3
     pxor  m0,  m0
-
+    mov   r4d, 3
+.loop
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    dec r4d
+    jnz .loop
 
     movhlps m1,  m0
     paddd   m0,  m1
@@ -706,47 +589,14 @@ cglobal pixel_sad_32x24, 4,4,3
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_32x32( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_32x32, 4,4,3
+cglobal pixel_sad_32x32, 4,5,3
     pxor  m0,  m0
-
+    mov   r4d, 4
+.loop
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    dec r4d
+    jnz .loop
 
     movhlps m1,  m0
     paddd   m0,  m1
@@ -762,37 +612,7 @@ cglobal pixel_sad_32x16, 4,4,3
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    PROCESS_SAD_32x4
 
     movhlps m1,  m0
     paddd   m0,  m1
@@ -802,55 +622,14 @@ cglobal pixel_sad_32x16, 4,4,3
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_32x64( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
-cglobal pixel_sad_32x64, 4,4,3
+cglobal pixel_sad_32x64, 4,5,3
     pxor  m0,  m0
-
+    mov   r4d, 8
+.loop
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-    PROCESS_SAD_32x4
-
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-    movu    m1,  [r2]
-    movu    m2,  [r2 + 16]
-    psadbw  m1,  [r0]
-    psadbw  m2,  [r0 + 16]
-    paddd   m1,  m2
-    paddd   m0,  m1
+    dec  r4d
+    jnz .loop
 
     movhlps m1,  m0
     paddd   m0,  m1
