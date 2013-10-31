@@ -75,21 +75,18 @@ static inline uint32_t acEnergyPlane(pixel* src, int srcStride, int bChroma)
 /* Find the total AC energy of each block in all planes */
 double RateControl::acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y)
 {
-    uint32_t var = 0;
-    double avgQp = 0, strength = cfg->param.rc.aqStrength * 1.0397f;
-    pixel* srcLuma = pic->getPicYuvOrg()->getLumaAddr() ;
-    pixel* srcCb = pic->getPicYuvOrg()->getCbAddr() ;
-    pixel* srcCr = pic->getPicYuvOrg()->getCrAddr();
-    int frameStride = pic->getPicYuvOrg()->getStride();
+    int stride = pic->getPicYuvOrg()->getStride();
     int cStride = pic->getPicYuvOrg()->getCStride();
-    uint32_t blockOffsetLuma = block_x + (block_y * frameStride);
+    uint32_t blockOffsetLuma = block_x + (block_y * stride);
     uint32_t blockOffsetChroma = (block_x >> 1) + ((block_y >> 1) * cStride);
-    var = acEnergyPlane(srcLuma + blockOffsetLuma, frameStride, 0);
-    var += acEnergyPlane(srcCb + blockOffsetChroma, cStride, 1);
-    var += acEnergyPlane(srcCr + blockOffsetChroma, cStride, 1);
-    avgQp = strength * (X265_LOG2( X265_MAX(var, 1) ) - 14.427f);
+
+    uint32_t var;
+    var  = acEnergyPlane(pic->getPicYuvOrg()->getLumaAddr() + blockOffsetLuma, stride, 0);
+    var += acEnergyPlane(pic->getPicYuvOrg()->getCbAddr() + blockOffsetChroma, cStride, 1);
+    var += acEnergyPlane(pic->getPicYuvOrg()->getCrAddr() + blockOffsetChroma, cStride, 1);
     x265_emms();
-    return avgQp;
+    double strength = cfg->param.rc.aqStrength * 1.0397f;
+    return strength * (X265_LOG2(X265_MAX(var, 1)) - 14.427f);
 }
 
 void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
