@@ -135,7 +135,7 @@ option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
     add_subdirectory(PPA)
-    SET(EXTRA_LIBS ${EXTRA_LIBS} PPA)
+    SET(PLATFORM_LIBS ${PLATFORM_LIBS} PPA)
     if(UNIX)
         SET(PLATFORM_LIBS ${PLATFORM_LIBS} dl)
     endif(UNIX)
@@ -162,14 +162,34 @@ include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
-add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def"
-                               $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
-if(ENABLE_PRIMITIVES_ASM AND (MSVC_IDE OR XCODE))
-    SET(EXTRA_LIBS ${EXTRA_LIBS} assembly)
+if(MSVC_IDE AND ENABLE_PRIMITIVES_ASM)
+    # this is horrible. ugly, and hacky, and it reproduces logic found
+    # in the yasm CMake modules, but this is required because of this cmake bug
+    # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
+    if (X64)
+        set(FLAGS -f win64 -m amd64 -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
+    else()
+        set(FLAGS -f win32 -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
+    endif()
+    if (HIGH_BIT_DEPTH)
+        set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=1 -DBIT_DEPTH=10)
+    else()
+        set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8)
+    endif()
+    foreach(ASM ${MSVC_ASMS})
+        set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
+        set(YASM_SRCS ${YASM_SRCS} ${YASM_SRC})
+        set(YASM_OBJS ${YASM_OBJS} ${ASM}.obj)
+        add_custom_command(
+            OUTPUT ${ASM}.obj
+            COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${YASM_SRC} -o ${ASM}.obj
+            DEPENDS ${YASM_SRC})
+    endforeach()
 endif()
-target_link_libraries(x265-shared ${EXTRA_LIBS})
-target_link_libraries(x265-static ${EXTRA_LIBS})
+
+add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
+add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
+                               $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
 set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)

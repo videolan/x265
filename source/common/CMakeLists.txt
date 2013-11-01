@@ -69,7 +69,9 @@ if(MSVC)
 endif(MSVC)
 
 if(ENABLE_PRIMITIVES_VEC)
-    include_directories(../VectorClass)
+    if(HIGH_BIT_DEPTH)
+        include_directories(../VectorClass)
+    endif()
     if (MSVC)
         add_definitions(/wd4127) # conditional expression is constant
         add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
@@ -154,54 +156,16 @@ if(ENABLE_PRIMITIVES_ASM)
         add_definitions(-DARCH_X86_64=0)
         set(ASMS ${ASMS} pixel-32.asm)
     endif()
-    foreach(ASM ${ASMS})
-        set(FULLPATHASM ${FULLPATHASM} x86/${ASM})
-    endforeach()
 
-    if(XCODE)
-        if (X64)
-            set(FLAGS -f macho64 -m amd64 -DPREFIX -DPIC -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=1)
-        else()
-            set(FLAGS -f macho -DPREFIX -DPIC -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=1)
-        endif()
-        if (HIGH_BIT_DEPTH)
-            set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=1 -DBIT_DEPTH=10)
-        else()
-            set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8)
-        endif()
-        foreach(ASM ${ASMS})
-            set(OBJS ${OBJS} ${ASM}.o)
-            add_custom_command(
-                OUTPUT ${ASM}.o
-                COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM} -o ${ASM}.o
-                DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM})
-        endforeach()
-        add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h x86/mc.h x86/ipfilter8.h ${OBJS})
-    elseif(MSVC_IDE)
-        # this is horrible. ugly, and hacky, and it reproduces logic found
-        # in the yasm CMake modules, but this is required because of this cmake bug
-        # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
-        if (X64)
-            set(FLAGS -f win64 -m amd64 -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
-        else()
-            set(FLAGS -f win32 -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
-        endif()
-        if (HIGH_BIT_DEPTH)
-            set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=1 -DBIT_DEPTH=10)
-        else()
-            set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8)
-        endif()
-        foreach(ASM ${ASMS})
-            set(OBJS ${OBJS} ${ASM}.obj)
-            add_custom_command(
-                OUTPUT ${ASM}.obj
-                COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM} -o ${ASM}.obj
-                DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/x86/${ASM})
-        endforeach()
-        add_library(assembly STATIC x86/asm-primitives.cpp x86/pixel.h x86/mc.h x86/ipfilter8.h ${FULLPATHASM} ${OBJS})
+    set(ASM_PRIMITIVES x86/asm-primitives.cpp x86/pixel.h x86/mc.h x86/ipfilter8.h)
+    if(MSVC_IDE)
+        set(MSVC_ASMS "${ASMS}" CACHE INTERNAL "yasm sources")
+        source_group(Assembly FILES ${ASM_PRIMITIVES})
     else()
+        foreach(ASM ${ASMS})
+            set(ASM_PRIMITIVES ${ASM_PRIMITIVES} x86/${ASM})
+        endforeach()
         enable_language(ASM_YASM)
-        set(ASM_PRIMITIVES x86/asm-primitives.cpp x86/pixel.h x86/mc.h x86/ipfilter8.h ${FULLPATHASM})
     endif()
 endif(ENABLE_PRIMITIVES_ASM)
 
@@ -214,7 +178,6 @@ if(GCC)
 endif(GCC)
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
-enable_language(ASM_YASM)
 add_library(common OBJECT
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
