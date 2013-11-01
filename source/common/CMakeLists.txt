@@ -72,34 +72,29 @@ if(ENABLE_PRIMITIVES_VEC)
     if(HIGH_BIT_DEPTH)
         include_directories(../VectorClass)
     endif()
+    set(SSE3  vec/pixel-sse3.cpp  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
+    set(SSSE3 vec/pixel-ssse3.cpp vec/dct-ssse3.cpp vec/ipfilter-ssse3.cpp vec/intra-ssse3.cpp)
+    set(SSE41 vec/pixel-sse41.cpp vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp)
+    set(AVX2  vec/pixel-avx2.cpp)
+
     if (MSVC)
         add_definitions(/wd4127) # conditional expression is constant
         add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
+        set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
         if (INTEL_CXX)
-            add_definitions(/Qwd111)    # statement is unreachable
-            add_definitions(/Qwd128)    # loop is unreachable
-            add_definitions(/Qwd177)    # declared function is unused
-            add_definitions(/Qwd185)    # dynamic initialization in unreachable code
-            add_definitions(/Qwd280)    # conditional expression is constant
+            add_definitions(/Qwd111) # statement is unreachable
+            add_definitions(/Qwd128) # loop is unreachable
+            add_definitions(/Qwd177) # declared function is unused
+            add_definitions(/Qwd185) # dynamic initialization in unreachable code
+            add_definitions(/Qwd280) # conditional expression is constant
         endif()
-        set(PRIMITIVES vec/blockcopy-sse3.cpp
-            vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
-            vec/dct-sse3.cpp vec/dct-ssse3.cpp vec/dct-sse41.cpp
-            vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
-            vec/pixel16-sse41.cpp vec/intra-ssse3.cpp vec/intra-sse41.cpp)
         if (NOT X64)
             # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
-            set_source_files_properties(vec/blockcopy-sse3.cpp
-                vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
-                vec/dct-sse3.cpp vec/dct-ssse3.cpp vec/dct-sse41.cpp
-                vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
-                vec/intra-ssse3.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp
-                PROPERTIES COMPILE_FLAGS /arch:SSE2)
+            set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS /arch:SSE2)
         endif()
         if (NOT (MSVC_VERSION LESS 1700) OR INTEL_CXX)
-            set(PRIMITIVES ${PRIMITIVES} vec/pixel-avx2.cpp)
-            set_source_files_properties(vec/pixel-avx2.cpp
-                PROPERTIES COMPILE_FLAGS /arch:AVX)
+            set(PRIMITIVES ${PRIMITIVES} ${AVX2})
+            set_source_files_properties(${AVX2} PROPERTIES COMPILE_FLAGS /arch:AVX)
         endif()
     endif()
     if(GCC)
@@ -110,26 +105,14 @@ if(ENABLE_PRIMITIVES_VEC)
             add_definitions(-Wno-shift-overflow -Wno-uninitialized)
         endif()
         if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.3))
-            set(PRIMITIVES vec/blockcopy-sse3.cpp
-                vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
-                vec/ipfilter-ssse3.cpp vec/ipfilter-sse41.cpp
-                vec/dct-sse3.cpp vec/dct-ssse3.cpp vec/dct-sse41.cpp
-                vec/pixel16-sse41.cpp vec/intra-ssse3.cpp vec/intra-sse41.cpp)
-            set_source_files_properties(
-                vec/blockcopy-sse3.cpp vec/pixel-sse3.cpp vec/dct-sse3.cpp
-                PROPERTIES COMPILE_FLAGS "-msse3")
-            set_source_files_properties(
-                vec/ipfilter-ssse3.cpp vec/pixel-ssse3.cpp vec/dct-ssse3.cpp vec/intra-ssse3.cpp
-                PROPERTIES COMPILE_FLAGS "-mssse3")
-            set_source_files_properties(
-                vec/pixel-sse41.cpp vec/ipfilter-sse41.cpp vec/dct-sse41.cpp vec/intra-sse41.cpp
-                vec/pixel16-sse41.cpp
-                PROPERTIES COMPILE_FLAGS "-msse4.1")
+            set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
+            set_source_files_properties(${SSE3}  PROPERTIES COMPILE_FLAGS "-msse3")
+            set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "-mssse3")
+            set_source_files_properties(${SSE41} PROPERTIES COMPILE_FLAGS "-msse4.1")
         endif()
         if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.7))
-            set(PRIMITIVES ${PRIMITIVES} vec/pixel-avx2.cpp)
-            set_source_files_properties(vec/pixel-avx2.cpp
-                PROPERTIES COMPILE_FLAGS "-march=core-avx2")
+            set(PRIMITIVES ${PRIMITIVES} ${AVX2})
+            set_source_files_properties(${AVX2}  PROPERTIES COMPILE_FLAGS "-march=core-avx2")
         endif()
     endif(GCC)
 
