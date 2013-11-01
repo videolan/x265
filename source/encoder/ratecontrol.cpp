@@ -246,7 +246,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
     }
     else
     {
-		double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
+        double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
 
         /* 1pass ABR */
 
@@ -292,30 +292,30 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
             q = qp2qScale(accumPQp / accumPNorm);
             q /= fabs(cfg->param.rc.ipFactor);
         }
-		else if (framesDone>0)
-		{
-			 if (cfg->param.rc.rateControlMode != X265_RC_CRF)
-			 {
-				double lqmin = 0, lqmax = 0;
-				if (totalBits == 0)
-				{
-					lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
-					lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
-				}
-				else
-				{
-					lqmin = lastQScaleFor[sliceType] / lstep;
-					lqmax = lastQScaleFor[sliceType] * lstep;
-				}
+        else if (framesDone>0)
+        {
+            if (cfg->param.rc.rateControlMode != X265_RC_CRF)
+            {
+                double lqmin = 0, lqmax = 0;
+                if (totalBits == 0)
+                {
+                    lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
+                    lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
+                }
+                else
+                {
+                    lqmin = lastQScaleFor[sliceType] / lstep;
+                    lqmax = lastQScaleFor[sliceType] * lstep;
+                }
 
-				if (overflow > 1.1 && framesDone > 3)
-					lqmax *= lstep;
-				else if (overflow <0.9)
-					lqmin /= lstep;
+                if (overflow > 1.1 && framesDone > 3)
+                    lqmax *= lstep;
+                else if (overflow <0.9)
+                    lqmin /= lstep;
 
-				q = Clip3(lqmin, lqmax, q);
-			 }
-		}
+                q = Clip3(lqmin, lqmax, q);
+            }
+        }
 
         double lmin1 = lmin[sliceType];
         double lmax1 = lmax[sliceType];
