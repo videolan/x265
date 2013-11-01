@@ -81,7 +81,6 @@ if(ENABLE_PRIMITIVES_VEC)
             add_definitions(/Qwd177)    # declared function is unused
             add_definitions(/Qwd185)    # dynamic initialization in unreachable code
             add_definitions(/Qwd280)    # conditional expression is constant
-            add_definitions(/Qwd13200)  # function using MMX does not call EMMS
         endif()
         set(PRIMITIVES vec/blockcopy-sse3.cpp
             vec/pixel-sse3.cpp vec/pixel-ssse3.cpp vec/pixel-sse41.cpp
@@ -104,9 +103,6 @@ if(ENABLE_PRIMITIVES_VEC)
         endif()
     endif()
     if(GCC)
-        if(INTEL_CXX)
-            add_definitions(-wd13200)  # function using MMX does not call EMMS
-        endif()
         if(CLANG)
             # llvm intrinsic headers trigger this warning
             add_definitions(-Wno-shadow)
@@ -142,13 +138,6 @@ if(ENABLE_PRIMITIVES_VEC)
 endif(ENABLE_PRIMITIVES_VEC)
 
 if(ENABLE_PRIMITIVES_ASM)
-    if (GCC)
-        add_definitions(-DHAVE_ALIGNED_STACK=1)
-        add_definitions(-Wno-error=unused-parameter)
-    else()
-        add_definitions(-DHAVE_ALIGNED_STACK=0)
-    endif()
-
     set(ASMS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm mc-a.asm mc-a2.asm ipfilter8.asm pixel-util.asm)
     if (X64)
         add_definitions(-DARCH_X86_64=1)
