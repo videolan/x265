@@ -405,14 +405,14 @@ me_hex2:
 #else // if 0
       /* equivalent to the above, but eliminates duplicate candidates */
         COST_MV_X3_DIR(-2, 0, -1, 2,  1, 2, costs);
-        COST_MV_X3_DIR(2, 0,  1, -2, -1, -2, costs + 3);
         bcost <<= 3;
         COPY1_IF_LT(bcost, (costs[0] << 3) + 2);
         COPY1_IF_LT(bcost, (costs[1] << 3) + 3);
         COPY1_IF_LT(bcost, (costs[2] << 3) + 4);
-        COPY1_IF_LT(bcost, (costs[3] << 3) + 5);
-        COPY1_IF_LT(bcost, (costs[4] << 3) + 6);
-        COPY1_IF_LT(bcost, (costs[5] << 3) + 7);
+        COST_MV_X3_DIR(2, 0,  1, -2, -1, -2, costs);
+        COPY1_IF_LT(bcost, (costs[0] << 3) + 5);
+        COPY1_IF_LT(bcost, (costs[1] << 3) + 6);
+        COPY1_IF_LT(bcost, (costs[2] << 3) + 7);
 
         if (bcost & 7)
         {
