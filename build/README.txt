@@ -1,8 +1,10 @@
 = Mandatory Prerequisites =
 
-* GCC, MSVC (9, 10, or 11), or Intel C/C++
-* CMake 2.6 or later http://www.cmake.org
+* GCC, MSVC (9, 10, 11, 12), Xcode or Intel C/C++
+* CMake 2.8.8 or later http://www.cmake.org
 * On linux, ccmake is helpful, usually a package named cmake-curses-gui 
+
+Note: MSVC12 requires cmake 2.8.11 or later
 
 
 = Optional Prerequisites =
