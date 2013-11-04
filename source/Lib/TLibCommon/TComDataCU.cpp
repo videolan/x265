@@ -246,7 +246,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     m_totalDistortion  = 0;
     m_totalBits        = 0;
     m_numPartitions    = pic->getNumPartInCU();
-    int qp             = pic->m_lowres.m_invQscaleFactor ? pic->getCU(getAddr())->getQP(0) : m_slice->getSliceQp();
+    int qp             = pic->m_lowres.invQscaleFactor ? pic->getCU(getAddr())->getQP(0) : m_slice->getSliceQp();
     for (int i = 0; i < 4; i++)
     {
         m_avgCost[i] = 0;

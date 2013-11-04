@@ -35,15 +35,15 @@ struct Lowres : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
     pixel *buffer[4];
-    double *m_qpAqOffset; // qp Aq offset values for each Cu
-    int*   m_invQscaleFactor; // qScale values for qp Aq Offsets 
+    double *qpAqOffset; // qp Aq offset values for each Cu
+    int    *invQscaleFactor; // qScale values for qp Aq Offsets 
     int    width;     // width of lowres frame in pixels
     int    lines;     // height of lowres frame in pixel lines
     int    frameNum;  // Presentation frame number
     int    sliceType; // Slice type decided by lookahead
     int    leadingBframes; // number of leading B frames for P or I
-    uint64_t m_wp_ssd[3];  // This is different than m_SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
-    uint64_t m_wp_sum[3];
+    uint64_t wp_ssd[3];  // This is different than m_SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
+    uint64_t wp_sum[3];
 
     bool   bIntraCalculated;
     bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut.

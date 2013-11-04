@@ -483,8 +483,8 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         if (bFrameScoreCU)
         {
             costIntra += icost;
-            if (fenc->m_invQscaleFactor)
-                costIntraAq += (icost * fenc->m_invQscaleFactor[cuXY] + 128) >> 8;
+            if (fenc->invQscaleFactor)
+                costIntraAq += (icost * fenc->invQscaleFactor[cuXY] + 128) >> 8;
         }
     }
     if (!bBidir)
@@ -504,8 +504,8 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         if (bFrameScoreCU)
         {
             costEst += bcost;
-            if (fenc->m_invQscaleFactor)
-                costEstAq += (bcost * fenc->m_invQscaleFactor[cuXY] + 128) >> 8;
+            if (fenc->invQscaleFactor)
+                costEstAq += (bcost * fenc->invQscaleFactor[cuXY] + 128) >> 8;
         }
     }
     fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));

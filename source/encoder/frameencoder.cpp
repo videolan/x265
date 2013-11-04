@@ -1153,7 +1153,7 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
         {
             for (int w = 0; w < 4 && (block_x + w) < maxBlockCols; w++)
             {
-                qp_offset += pic->m_lowres.m_qpAqOffset[block_x + w + (block_y * maxBlockCols)];
+                qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
                 cnt++;
             }
         }

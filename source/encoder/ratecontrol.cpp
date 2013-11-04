@@ -55,8 +55,8 @@ static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, in
 {
     uint32_t sum = (uint32_t)sum_ssd;
     uint32_t ssd = (uint32_t)(sum_ssd >> 32);
-    pic->m_lowres.m_wp_sum[i] += sum;
-    pic->m_lowres.m_wp_ssd[i] += ssd;
+    pic->m_lowres.wp_sum[i] += sum;
+    pic->m_lowres.wp_ssd[i] += ssd;
     return ssd - ((uint64_t)sum * sum >> shift);
 }
 
@@ -106,8 +106,8 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             double qp_adj = acEnergyCu(pic, block_x, block_y);
             if (cfg->param.rc.aqMode)
             {
-                pic->m_lowres.m_qpAqOffset[block_xy] = qp_adj;
-                pic->m_lowres.m_invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
+                pic->m_lowres.qpAqOffset[block_xy] = qp_adj;
+                pic->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
                 block_xy++;
             }
         }
@@ -117,9 +117,9 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
         for(int i=0; i < 3; i++)
         {
             UInt64 sum, ssd;
-            sum = pic->m_lowres.m_wp_sum[i];
-            ssd = pic->m_lowres.m_wp_ssd[i];
-            pic->m_lowres.m_wp_ssd[i] = ssd - (sum*sum + (block_x * block_y) / 2 ) / (block_x * block_y);
+            sum = pic->m_lowres.wp_sum[i];
+            ssd = pic->m_lowres.wp_ssd[i];
+            pic->m_lowres.wp_ssd[i] = ssd - (sum*sum + (block_x * block_y) / 2 ) / (block_x * block_y);
         }
     }
 }
