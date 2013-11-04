@@ -42,6 +42,8 @@ struct Lowres : public ReferencePlanes
     int    frameNum;  // Presentation frame number
     int    sliceType; // Slice type decided by lookahead
     int    leadingBframes; // number of leading B frames for P or I
+    uint64_t m_wp_ssd[3];  // This is different than m_SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
+    uint64_t m_wp_sum[3];
 
     bool   bIntraCalculated;
     bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut.
@@ -51,12 +53,12 @@ struct Lowres : public ReferencePlanes
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int       costEstAq[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
-    int32_t      *rowSatds[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
+    int32_t*  rowSatds[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int       intraMbs[X265_BFRAME_MAX + 2];
-    int32_t      *intraCost;
+    int32_t*  intraCost;
     int       satdCost;
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
-    int32_t      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
+    int32_t  *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
 
     void create(TComPic *pic, int bframes, int32_t *aqMode);
