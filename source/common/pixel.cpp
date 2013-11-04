@@ -773,6 +773,21 @@ void blockcopy_pp_c(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
         b += strideb;
     }
 }
+
+template<int bx, int by>
+void blockcopy_ps_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = (pixel)b[x];
+        }
+
+        a += stridea;
+        b += strideb;
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
