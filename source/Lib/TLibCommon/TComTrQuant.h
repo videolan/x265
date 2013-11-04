@@ -128,7 +128,7 @@ public:
 
     // transform & inverse transform functions
     uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t width, uint32_t height,
-                      TextType ttype, uint32_t absPartIdx, int32_t* lastPos, bool useTransformSkip = false);
+                          TextType ttype, uint32_t absPartIdx, int32_t* lastPos, bool useTransformSkip = false, bool curUseRDOQ = true);
 
     void invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t width, uint32_t height, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
 
@@ -194,7 +194,7 @@ private:
 
     void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const uint32_t* scan, int32_t* deltaU, int width, int height);
 
-    uint32_t xQuant(TComDataCU* cu, int32_t* src, TCoeff* dst, int width, int height, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
+    uint32_t xQuant(TComDataCU* cu, int32_t* src, TCoeff* dst, int width, int height, TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ = true);
 
     // RDOQ functions
     uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t width, uint32_t height, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);

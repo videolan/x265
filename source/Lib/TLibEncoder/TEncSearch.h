@@ -147,7 +147,7 @@ public:
 
     /// encode residual and compute rd-cost for inter mode
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TShortYUV* bestResiYuv,
-                                   TComYuv* reconYuv, bool bSkipRes);
+                                   TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ = true);
 
     /// set ME search range
     void setAdaptiveSearchRange(int dir, int refIdx, int merange) { m_adaptiveRange[dir][refIdx] = merange; }
@@ -235,7 +235,7 @@ protected:
 
     void xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype);
     void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth,
-                             UInt64 &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist);
+                             UInt64 &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist, bool curUseRDOQ = true);
     void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth, bool bSpatial);
 
     void setWpScalingDistParam(TComDataCU* cu, int refIdx, int picList);

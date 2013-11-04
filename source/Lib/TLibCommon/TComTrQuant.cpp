@@ -253,11 +253,11 @@ void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, uint32_t const *
 }
 
 uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int width, int height,
-                         TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
+                             TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ)
 {
     uint32_t acSum = 0;
     int add = 0;
-    bool useRDOQ = cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ;
+    bool useRDOQ = (cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ) && curUseRDOQ;
 
     assert(width == height);
 
@@ -339,15 +339,16 @@ void TComTrQuant::init(uint32_t maxTrSize, int useRDOQ, int useRDOQTS, int useTr
 }
 
 uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
-                               int16_t*      residual,
-                               uint32_t        stride,
-                               TCoeff*     coeff,
-                               uint32_t        width,
-                               uint32_t        height,
-                               TextType    ttype,
-                               uint32_t        absPartIdx,
-                               int32_t*        lastPos,
-                               bool        useTransformSkip)
+                                   int16_t*    residual,
+                                   uint32_t    stride,
+                                   TCoeff*     coeff,
+                                   uint32_t    width,
+                                   uint32_t    height,
+                                   TextType    ttype,
+                                   uint32_t    absPartIdx,
+                                   int32_t*    lastPos,
+                                   bool        useTransformSkip,
+                                   bool        curUseRDOQ)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
     {
@@ -385,7 +386,7 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         const uint32_t log2BlockSize = g_convertToBit[width];
         primitives.dct[DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
-    return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos);
+    return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos, curUseRDOQ);
 }
 
 void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t width, uint32_t height, int scalingListType, bool useTransformSkip, int lastPos)
