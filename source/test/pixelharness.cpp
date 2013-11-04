@@ -649,11 +649,10 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (!check_block_copy_pp(ref.chroma_copy_pp[part], opt.chroma_copy_pp[part]))
         {
-            printf("chroma_copy_pp[%s] failed\n", chromaPartStr[part]);
+            printf("chroma_copy_pp[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
-
     return true;
 }
 
@@ -812,7 +811,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
-
     return true;
 }
 

@@ -129,6 +129,9 @@ extern "C" {
     p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu;\
     p.chroma_vpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu;
 
+#define SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
+    p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = x265_blockcopy_pp_## W ## x ## H ## cpu;
+
 #define CHROMA_FILTERS(cpu) \
     SETUP_CHROMA_FUNC_DEF(4, 4, cpu); \
     SETUP_CHROMA_FUNC_DEF(4, 2, cpu); \
@@ -155,10 +158,38 @@ extern "C" {
     SETUP_CHROMA_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_FUNC_DEF(8, 32, cpu);
 
+#define CHROMA_BLOCKCOPY(cpu) \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(6, 8, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 32, cpu);
 
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu;\
-    p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu
+    p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu;\
+
+#define SETUP_LUMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
+    p.luma_copy_pp[LUMA_ ## W ## x ## H] = x265_blockcopy_pp_## W ## x ## H ## cpu;
 
 #define LUMA_FILTERS(cpu) \
     SETUP_LUMA_FUNC_DEF(4,   4, cpu); \
@@ -185,7 +216,34 @@ extern "C" {
     SETUP_LUMA_FUNC_DEF(64, 48, cpu); \
     SETUP_LUMA_FUNC_DEF(48, 64, cpu); \
     SETUP_LUMA_FUNC_DEF(64, 16, cpu); \
-    SETUP_LUMA_FUNC_DEF(16, 64, cpu)
+    SETUP_LUMA_FUNC_DEF(16, 64, cpu);
+
+#define LUMA_BLOCKCOPY(cpu) \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(4,   4, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(8,   8, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(8,   4, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(4,   8, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16, 16, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16,  8, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(8,  16, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16, 12, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(12, 16, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16,  4, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(4,  16, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(32, 32, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(32, 16, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16, 32, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(32, 24, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(24, 32, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(32,  8, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(8,  32, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(64, 64, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(64, 32, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(32, 64, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(64, 48, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(48, 64, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(64, 16, cpu); \
+    SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16, 64, cpu);
 
 using namespace x265;
 
@@ -265,6 +323,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT6(satd, _sse2);
         HEVC_SATD(sse2);
 
+        CHROMA_BLOCKCOPY(_sse2);
+        LUMA_BLOCKCOPY(_sse2);
 #if X86_64
         p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
         p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
