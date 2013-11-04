@@ -245,6 +245,7 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
 {
     intptr_t rand_srcStride;
     const int min_size = isChroma ? 2 : 4;
+    const int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
 
     for (int i = 0; i <= 1000; i++)
     {
@@ -258,13 +259,11 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
         if (rand_srcStride < rand_width)
             rand_srcStride = rand_width;
 
-        rand_width %= min_size;
-        if (rand_width < min_size)
-            rand_width = min_size;
+        rand_width &= ~(min_size - 1);
+        rand_width = Clip3(min_size, max_size, rand_width);
 
-        rand_height %= min_size;
-        if (rand_height < min_size)
-            rand_height = min_size;
+        rand_height &= ~(min_size - 1);
+        rand_height = Clip3(min_size, max_size, rand_height);
 
         ref(pixel_buff,
             rand_srcStride,

@@ -2574,11 +2574,14 @@ cglobal chroma_p2s, 3, 7, 6
     jmp         .loopW
 
 .width4:
-    cmp         r3d, 4
-    jl          .width2
+    test        r3d, 4
+    jz          .width2
+    test        r3d, 2
     movh        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
     movh        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
     lea         r6, [r6 + 8]
+    pshufd      m0, m0, 2
+    pshufd      m1, m1, 2
     jz          .nextH
 
 .width2:
