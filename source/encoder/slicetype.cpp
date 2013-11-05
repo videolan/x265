@@ -720,7 +720,6 @@ void Lookahead::slicetypeDecide()
                 pic->m_lowres.sliceType = X265_TYPE_I;
                 pic->m_lowres.bKeyframe = true;
                 lastKeyframe = pic->m_lowres.frameNum;
-                if (j) list[j - 1]->m_lowres.sliceType = X265_TYPE_P;
                 j++;
                 break;
             }
