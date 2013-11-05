@@ -425,12 +425,12 @@ void Encoder::writeLog(int argc, char **argv)
 
         // elapsed time, fps, bitrate
         fprintf(m_csvfpt, "%.2f, %.2f, %.2f,",
-            stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
+                stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
         if (param.bEnablePsnr)
             fprintf(m_csvfpt, " %.3lf, %.3lf, %.3lf, %.3lf,",
-            stats.globalPsnrY/stats.encodedPictureCount, stats.globalPsnrU/stats.encodedPictureCount,
-            stats.globalPsnrV/stats.encodedPictureCount, stats.globalPsnr);
+                    stats.globalPsnrY/stats.encodedPictureCount, stats.globalPsnrU/stats.encodedPictureCount,
+                    stats.globalPsnrV/stats.encodedPictureCount, stats.globalPsnr);
         else
             fprintf(m_csvfpt, " -, -, -, -,");
         if (param.bEnableSsim)
