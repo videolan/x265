@@ -187,6 +187,7 @@ extern "C" {
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu;\
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu;\
+    p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu;
 
 #define SETUP_LUMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = x265_blockcopy_pp_## W ## x ## H ## cpu;
