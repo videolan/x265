@@ -121,8 +121,6 @@ void x265_setup_primitives(x265_param *param, int cpuid)
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
 
-    x265_log(param, X265_LOG_INFO, "performance primitives:");
-
     Setup_C_Primitives(primitives);
 
 #if ENABLE_VECTOR_PRIMITIVES
@@ -146,14 +144,15 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     primitives.sa8d_inter[LUMA_16x12] = primitives.satd[LUMA_16x12];
     primitives.sa8d_inter[LUMA_12x16] = primitives.satd[LUMA_12x16];
 
-#if ENABLE_VECTOR_PRIMITIVES
-    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " intrinsic");
+#if ENABLE_VECTOR_PRIMITIVES && ENABLE_ASM_PRIMITIVES
+    /* no logging if full optimizations are enabled */
+#elif ENABLE_ASM_PRIMITIVES
+    x265_log(param, X265_LOG_INFO, "performance primitives: only assembly\n");
+#elif ENABLE_VECTOR_PRIMITIVES
+    x265_log(param, X265_LOG_INFO, "performance primitives: only intrinsics\n");
+#else
+    x265_log(param, X265_LOG_INFO, "performance primitives: none\n");
 #endif
-#if ENABLE_ASM_PRIMITIVES
-    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " assembly");
-#endif
-
-    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, "\n");
 }
 
 #if !defined(ENABLE_ASM_PRIMITIVES)
