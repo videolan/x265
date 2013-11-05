@@ -528,7 +528,6 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
             if (outTempCU->getWidth(0) > (1 << outTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
             {
                 xCheckRDCostIntra(outBestCU, outTempCU, SIZE_NxN);
-                outTempCU->initEstData(depth, qp);
             }
         }
 
@@ -918,7 +917,6 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                 if ((bestbits > rawbits) || (outBestCU->m_totalCost > m_rdCost->calcRdCost(0, rawbits)))
                 {
                     xCheckIntraPCM(outBestCU, outTempCU);
-                    outTempCU->initEstData(depth, qp);
                 }
             }
         }
