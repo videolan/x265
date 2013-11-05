@@ -160,10 +160,10 @@ struct CLIOptions
     std::fstream bitstreamFile;
     bool bProgress;
     bool bForceY4m;
-    uint32_t totalbytes;
 
     uint32_t frameSkip;         // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
+    uint64_t totalbytes;
 
     int64_t startTime;
     int64_t prevUpdateTime;
@@ -175,7 +175,8 @@ struct CLIOptions
     {
         input = NULL;
         recon = NULL;
-        framesToBeEncoded = frameSkip = totalbytes = 0;
+        framesToBeEncoded = frameSkip = 0;
+        totalbytes = 0;
         bProgress = true;
         bForceY4m = false;
         startTime = x265_mdate();
