@@ -209,6 +209,7 @@ typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
 typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
 
 typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+typedef void (*filter_ps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hv_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY);
 typedef void (*filter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 
@@ -255,6 +256,7 @@ struct EncoderPrimitives
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
     filter_pp_t     chroma_vpp[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
+    filter_ps_t     luma_vps[NUM_LUMA_PARTITIONS];
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
     filter_p2s_t    luma_p2s;
     filter_p2s_t    chroma_p2s;
