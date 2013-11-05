@@ -356,23 +356,22 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
 
 void Encoder::printSummary()
 {
-    char buffer[200];
     if (param.logLevel >= X265_LOG_INFO)
     {
+        char buffer[200];
         if (m_analyzeI.m_numPics)
-            fprintf(stderr, "x265 [info]: frame I: %s\n", statsString(m_analyzeI, buffer));
+            x265_log(&param, X265_LOG_INFO, "frame I: %s\n", statsString(m_analyzeI, buffer));
         if (m_analyzeP.m_numPics)
-            fprintf(stderr, "x265 [info]: frame P: %s\n", statsString(m_analyzeP,buffer));
+            x265_log(&param, X265_LOG_INFO, "frame P: %s\n", statsString(m_analyzeP, buffer));
         if (m_analyzeB.m_numPics)
-            fprintf(stderr, "x265 [info]: frame B: %s\n", statsString(m_analyzeB, buffer));
+            x265_log(&param, X265_LOG_INFO, "frame B: %s\n", statsString(m_analyzeB, buffer));
         if (m_analyzeAll.m_numPics)
-            fprintf(stderr, "x265 [info]: global : %s\n", statsString(m_analyzeAll, buffer));
-    }
-    if (param.bEnableWeightedPred)
-    {
-        int numPFrames = m_analyzeP.m_numPics;
-        x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
-                 m_numWPFrames, numPFrames, (float) 100.0 * m_numWPFrames / numPFrames); 
+            x265_log(&param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
+        if (param.bEnableWeightedPred)
+        {
+            x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
+                m_numWPFrames, m_analyzeP.m_numPics, (float) 100.0 * m_numWPFrames / m_analyzeP.m_numPics);
+        }
     }
 }
 
