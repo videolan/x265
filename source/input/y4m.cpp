@@ -251,9 +251,9 @@ int Y4MInput::guessFrameCount()
 
     ifs->seekg(0, ios::end);
     istream::pos_type size = ifs->tellg();
+    ifs->seekg(cur, ios::beg);
     if (size < 0)
         return -1;
-    ifs->seekg(cur, ios::beg);
 
     return (int)((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
 }

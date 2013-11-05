@@ -94,9 +94,9 @@ int YUVInput::guessFrameCount()
 
     ifs->seekg(0, ios::end);
     ifstream::pos_type size = ifs->tellg();
+    ifs->seekg(cur, ios::beg);
     if (size < 0)
         return -1;
-    ifs->seekg(cur, ios::beg);
 
     return (int)((size - cur) / (width * height * pixelbytes * 3 / 2));
 }
