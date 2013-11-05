@@ -443,7 +443,7 @@ void partialButterfly4(int16_t *src, int16_t *dst, int shift, int line)
 
 void dst4_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
-    const int shift_1st = 1;
+    const int shift_1st = 1 + X265_DEPTH - 8;
     const int shift_2nd = 8;
 
     ALIGN_VAR_32(int16_t, coef[4 * 4]);
@@ -471,7 +471,7 @@ void dst4_c(int16_t *src, int32_t *dst, intptr_t stride)
 
 void dct4_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
-    const int shift_1st = 1;
+    const int shift_1st = 1 + X265_DEPTH - 8;
     const int shift_2nd = 8;
 
     ALIGN_VAR_32(int16_t, coef[4 * 4]);
@@ -498,7 +498,7 @@ void dct4_c(int16_t *src, int32_t *dst, intptr_t stride)
 
 void dct8_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
-    const int shift_1st = 2;
+    const int shift_1st = 2 + X265_DEPTH - 8;
     const int shift_2nd = 9;
 
     ALIGN_VAR_32(int16_t, coef[8 * 8]);
@@ -526,7 +526,7 @@ void dct8_c(int16_t *src, int32_t *dst, intptr_t stride)
 
 void dct16_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
-    const int shift_1st = 3;
+    const int shift_1st = 3 + X265_DEPTH - 8;
     const int shift_2nd = 10;
 
     ALIGN_VAR_32(int16_t, coef[16 * 16]);
@@ -554,7 +554,7 @@ void dct16_c(int16_t *src, int32_t *dst, intptr_t stride)
 
 void dct32_c(int16_t *src, int32_t *dst, intptr_t stride)
 {
-    const int shift_1st = 4;
+    const int shift_1st = 4 + X265_DEPTH - 8;
     const int shift_2nd = 11;
 
     ALIGN_VAR_32(int16_t, coef[32 * 32]);
@@ -583,7 +583,7 @@ void dct32_c(int16_t *src, int32_t *dst, intptr_t stride)
 void idst4_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
-    const int shift_2nd = 12;
+    const int shift_2nd = 12 - (X265_DEPTH - 8);
 
     ALIGN_VAR_32(int16_t, coef[4 * 4]);
     ALIGN_VAR_32(int16_t, block[4 * 4]);
@@ -611,7 +611,7 @@ void idst4_c(int32_t *src, int16_t *dst, intptr_t stride)
 void idct4_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
-    const int shift_2nd = 12;
+    const int shift_2nd = 12 - (X265_DEPTH - 8);
 
     ALIGN_VAR_32(int16_t, coef[4 * 4]);
     ALIGN_VAR_32(int16_t, block[4 * 4]);
@@ -639,7 +639,7 @@ void idct4_c(int32_t *src, int16_t *dst, intptr_t stride)
 void idct8_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
-    const int shift_2nd = 12;
+    const int shift_2nd = 12 - (X265_DEPTH - 8);
 
     ALIGN_VAR_32(int16_t, coef[8 * 8]);
     ALIGN_VAR_32(int16_t, block[8 * 8]);
@@ -666,7 +666,7 @@ void idct8_c(int32_t *src, int16_t *dst, intptr_t stride)
 void idct16_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
-    const int shift_2nd = 12;
+    const int shift_2nd = 12 - (X265_DEPTH - 8);
 
     ALIGN_VAR_32(int16_t, coef[16 * 16]);
     ALIGN_VAR_32(int16_t, block[16 * 16]);
@@ -693,7 +693,7 @@ void idct16_c(int32_t *src, int16_t *dst, intptr_t stride)
 void idct32_c(int32_t *src, int16_t *dst, intptr_t stride)
 {
     const int shift_1st = 7;
-    const int shift_2nd = 12;
+    const int shift_2nd = 12 - (X265_DEPTH - 8);
 
     ALIGN_VAR_32(int16_t, coef[32 * 32]);
     ALIGN_VAR_32(int16_t, block[32 * 32]);

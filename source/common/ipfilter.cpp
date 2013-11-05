@@ -82,7 +82,7 @@ void filterVertical_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t 
 template<int N>
 void filterHorizontal_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
 {
-    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    int headRoom = IF_FILTER_PREC;
     int offset =  (1 << (headRoom - 1));
     uint16_t maxVal = (1 << X265_DEPTH) - 1;
     const int cStride = 1;
