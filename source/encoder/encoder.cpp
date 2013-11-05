@@ -1005,7 +1005,7 @@ void Encoder::determineLevelAndProfile(x265_param *_param)
         break;
     }
 
-    if (_param->internalBitDepth == 10)
+    if (_param->inputBitDepth > 8)
         m_profile = Profile::MAIN10;
     else if (_param->keyframeMax == 1)
         m_profile = Profile::MAINSTILLPICTURE;

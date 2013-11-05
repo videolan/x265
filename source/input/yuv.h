@@ -75,7 +75,7 @@ protected:
 
 public:
 
-    YUVInput(const char *filename);
+    YUVInput(const char *filename, uint32_t inputBitDepth);
 
     virtual ~YUVInput();
 

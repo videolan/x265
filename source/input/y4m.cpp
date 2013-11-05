@@ -39,7 +39,7 @@
 using namespace x265;
 using namespace std;
 
-Y4MInput::Y4MInput(const char *filename)
+Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
 {
 #if defined ENABLE_THREAD
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)

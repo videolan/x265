@@ -75,7 +75,7 @@
 
 #if HIGH_BIT_DEPTH
 #define BITDEPTH "16bpp"
-const int x265_max_bit_depth = 8; // 12;
+const int x265_max_bit_depth = 12;
 #else
 #define BITDEPTH "8bpp"
 const int x265_max_bit_depth = 8;

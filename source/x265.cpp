@@ -252,7 +252,6 @@ void CLIOptions::showHelp(x265_param *param)
 {
     x265_param_default(param);
     printVersion(param);
-    uint32_t inputBitDepth = 8, outputBitDepth = param->internalBitDepth;
 
 #define H0 printf
 #define OPT(value) (value ? "enabled" : "disabled")
@@ -274,7 +273,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-o/--output                      Bitstream output file name\n");
     H0("\nInput Options:\n");
     H0("   --input                       Raw YUV or Y4M input file name\n");
-    H0("   --input-depth                 Bit-depth of input file (YUV only) Default %d\n", inputBitDepth);
+    H0("   --input-depth                 Bit-depth of input file (YUV only) Default %d\n", param->inputBitDepth);
     H0("   --input-res                   Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --fps                         Source frame rate, auto-detected if Y4M\n");
     H0("   --frame-skip                  Number of frames to skip at start of input file\n");
@@ -328,7 +327,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nReconstructed video options (debugging):\n");
     H0("-r/--recon                       Reconstructed image YUV or Y4M output file name\n");
-    H0("   --recon-depth                 Bit-depth of output file. Default %d\n", outputBitDepth);
+    H0("   --recon-depth                 Bit-depth of output file. Default %d\n", param->reconFileBitDepth);
     H0("\nSEI options:\n");
     H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
 #undef OPT
@@ -341,8 +340,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     int berror = 0;
     int help = 0;
     int cpuid = 0;
-    uint32_t inputBitDepth = 8;
-    uint32_t outputBitDepth = 8;
     const char *inputfn = NULL;
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
@@ -424,8 +421,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
-            OPT("input-depth") inputBitDepth = (uint32_t)atoi(optarg);
-            OPT("recon-depth") outputBitDepth = (uint32_t)atoi(optarg);
+            OPT("input-depth") param->inputBitDepth = (uint32_t)atoi(optarg);
+            OPT("recon-depth") param->reconFileBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
             OPT("y4m") bForceY4m = true;
             else
@@ -459,7 +456,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
         return true;
     }
-    this->input = Input::open(inputfn, bForceY4m);
+    this->input = Input::open(inputfn, param->inputBitDepth, bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -471,13 +468,12 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         param->sourceWidth = this->input->getWidth();
         param->sourceHeight = this->input->getHeight();
         param->frameRate = (int)this->input->getRate();
-        inputBitDepth = 8;
     }
     else if (inputRes)
     {
         sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
         this->input->setDimensions(param->sourceWidth, param->sourceHeight);
-        this->input->setBitDepth(inputBitDepth);
+        this->input->setBitDepth(param->inputBitDepth);
     }
     else if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->frameRate <= 0)
     {
@@ -487,12 +483,22 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     else
     {
         this->input->setDimensions(param->sourceWidth, param->sourceHeight);
-        this->input->setBitDepth(inputBitDepth);
+        this->input->setBitDepth(param->inputBitDepth);
     }
 
-    /* rules for input, output and internal bitdepths as per help text */
-    if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
-    if (!outputBitDepth) { outputBitDepth = param->internalBitDepth; }
+    if (param->reconFileBitDepth > 0)
+    {
+        if (param->reconFileBitDepth != param->inputBitDepth)
+        {
+            x265_log(param, X265_LOG_ERROR, "Bit depth of the recon file should be the same as input bit depth\n");
+            /* TODO: Support recon files with bitdepth > input bit depth??*/
+            return true;
+        }
+    }
+    else
+    {
+        param->reconFileBitDepth = param->inputBitDepth;
+    }
 
     int guess = this->input->guessFrameCount();
     if (this->frameSkip)
@@ -521,7 +527,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
     if (reconfn)
     {
-        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, outputBitDepth, param->frameRate);
+        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, param->reconFileBitDepth, param->frameRate);
         if (this->recon->isFail())
         {
             x265_log(param, X265_LOG_WARNING, "unable to write reconstruction file\n");
@@ -530,10 +536,16 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         }
     }
 
-#if !HIGH_BIT_DEPTH
-    if (inputBitDepth != 8 || outputBitDepth != 8 || param->internalBitDepth != 8)
+#if HIGH_BIT_DEPTH
+    if (param->inputBitDepth != 12 && param->inputBitDepth != 10 && param->inputBitDepth != 8)
     {
-        x265_log(NULL, X265_LOG_ERROR, "not compiled for bit depths greater than 8\n");
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of 8, 10, or 12 are supported\n");
+        return true;
+    }
+#else
+    if (param->inputBitDepth != 8)
+    {
+        x265_log(param, X265_LOG_ERROR, "not compiled for bit depths greater than 8\n");
         return true;
     }
 #endif

@@ -74,7 +74,7 @@ protected:
 
 public:
 
-    Y4MInput(const char *filename);
+    Y4MInput(const char *filename, uint32_t inputBitDepth);
 
     virtual ~Y4MInput();
 

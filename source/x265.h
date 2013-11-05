@@ -250,10 +250,10 @@ typedef struct x265_param
     int       bEnableWavefront;                ///< enable wavefront parallel processing
     int       poolNumThreads;                  ///< number of threads to allocate for thread pool
     int       frameNumThreads;                 ///< number of concurrently encoded frames
-
-    int       internalBitDepth;                ///< bit-depth at which the encoder operates
-
     const char *csvfn;                         ///< csv log filename. logLevel >= 3 is frame logging, else one line per run
+
+    int       inputBitDepth;
+    int       reconFileBitDepth;
 
     // source specification
     int       frameRate;                       ///< source frame-rate in Hz

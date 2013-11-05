@@ -47,7 +47,7 @@ public:
 
     Input()           {}
 
-    static Input* open(const char *filename, bool bForceY4m);
+    static Input* open(const char *filename, uint32_t inputBitDepth, bool bForceY4m);
 
     virtual void setDimensions(int width, int height) = 0;
 

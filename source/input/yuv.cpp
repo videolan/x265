@@ -39,7 +39,7 @@
 using namespace x265;
 using namespace std;
 
-YUVInput::YUVInput(const char *filename)
+YUVInput::YUVInput(const char *filename, uint32_t inputBitDepth)
 {
 #if defined ENABLE_THREAD
     for (int i = 0; i < QUEUE_SIZE; i++)
@@ -53,7 +53,7 @@ YUVInput::YUVInput(const char *filename)
     buf = NULL;
 #endif
     width = height = 0;
-    depth = 8;
+    depth = inputBitDepth;
     threadActive = false;
     if (!strcmp(filename, "-"))
     {

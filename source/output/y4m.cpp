@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "PPA/ppa.h"
+#include "common.h"
 #include "output.h"
 #include "y4m.h"
 
@@ -56,13 +57,18 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
 
     if (pic.bitDepth > 8)
     {
-        // encoder gave us short pixels, downscale, then write
+        if (pic.poc == 0)
+        {
+            x265_log(NULL, X265_LOG_WARNING, "y4m: down-shifting reconstructed pixels to 8 bits\n");
+        }
+        // encoder gave us short pixels, downshift, then write
         uint16_t *Y = (uint16_t*)pic.planes[0];
+        int shift = pic.bitDepth - 8;
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
             {
-                buf[j] = (char)Y[j];
+                buf[j] = (char)(Y[j] >> shift);
             }
 
             ofs.write(buf, width);
@@ -74,7 +80,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width >> 1; j++)
             {
-                buf[j] = (char)U[j];
+                buf[j] = (char)(U[j] >> shift);
             }
 
             ofs.write(buf, width >> 1);
@@ -86,7 +92,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width >> 1; j++)
             {
-                buf[j] = (char)V[j];
+                buf[j] = (char)(V[j] >> shift);
             }
 
             ofs.write(buf, width >> 1);
