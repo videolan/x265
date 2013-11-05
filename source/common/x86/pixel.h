@@ -272,7 +272,7 @@ DECL_ADS(1, avx2)
 
 #define SETUP_CHROMA_BLOCKCOPY_FUNC(W, H, cpu) \
     void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb);\
-    void x265_blockcopy_ps_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
+    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
 
 #define CHROMA_BLOCKCOPY_DEF(cpu) \
     SETUP_CHROMA_BLOCKCOPY_FUNC(4, 4, cpu); \
@@ -302,7 +302,7 @@ DECL_ADS(1, avx2)
 
 #define SETUP_LUMA_BLOCKCOPY_FUNC(W, H, cpu) \
     void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb);\
-    void x265_blockcopy_ps_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
+    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
 
 #define LUMA_BLOCKCOPY_DEF(cpu) \
     SETUP_LUMA_BLOCKCOPY_FUNC(4,   4, cpu); \
