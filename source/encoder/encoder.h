@@ -27,11 +27,32 @@
 #include "x265.h"
 
 #include "TLibEncoder/TEncCfg.h"
-#include "TLibEncoder/TEncAnalyze.h"
 
 #include "piclist.h"
 
 struct x265_encoder {};
+
+struct EncStats
+{
+    double        m_psnrSumY;
+    double        m_psnrSumU;
+    double        m_psnrSumV;
+    double        m_accBits;
+    double        m_globalSsim;
+    uint32_t      m_numPics;
+
+    EncStats() 
+    {
+        m_psnrSumY = m_psnrSumU = m_psnrSumV = m_accBits = m_numPics = 0;
+        m_globalSsim = 0;
+    }
+
+    void addPsnr(double psnrY, double psnrU, double psnrV);
+
+    void addBits(uint64_t bits);
+
+    void addSsim(double ssim);
+};
 
 namespace x265 {
 // private namespace
@@ -61,11 +82,10 @@ private:
     int                m_curEncoder;
 
     /* Collect statistics globally */
-    TEncAnalyze        m_analyzeAll;
-    TEncAnalyze        m_analyzeI;
-    TEncAnalyze        m_analyzeP;
-    TEncAnalyze        m_analyzeB;
-    double             m_globalSsim;
+    EncStats           m_analyzeAll;
+    EncStats           m_analyzeI;
+    EncStats           m_analyzeP;
+    EncStats           m_analyzeB;
     FILE*              m_csvfpt;
     int64_t            m_encodeStartTime;
 
@@ -100,6 +120,8 @@ public:
     void writeLog(int argc, char **argv);
 
     void printSummary();
+
+    char* statsString(EncStats&, char*);
 
     TComScalingList* getScalingList() { return &m_scalingList; }
 

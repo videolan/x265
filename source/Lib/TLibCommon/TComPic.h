@@ -96,6 +96,10 @@ public:
     uint32_t              m_crc[3];
     uint32_t              m_checksum[3];
 
+    /* SSIM values per frame */
+    double                m_ssim;
+    int                   m_ssimCnt;
+
     TComPic();
     virtual ~TComPic();
 

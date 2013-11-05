@@ -57,7 +57,6 @@ Encoder::Encoder()
     m_frameEncoder = NULL;
     m_rateControl = NULL;
     m_dpb = NULL;
-    m_globalSsim = 0;
     m_nals = NULL;
     m_packetData = NULL;
     m_outputCount = 0;
@@ -315,20 +314,63 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
     return ret;
 }
 
-void Encoder::printSummary()
+void EncStats::addPsnr(double psnrY, double psnrU, double psnrV)
+{
+    m_psnrSumY += psnrY;
+    m_psnrSumU += psnrU;
+    m_psnrSumV += psnrV;
+}
+
+void EncStats::addBits(uint64_t bits)
+{
+    m_accBits  += bits;
+    m_numPics++;
+}
+
+void EncStats::addSsim(double ssim)
+{
+    m_globalSsim += ssim;
+}
+
+char* Encoder::statsString(EncStats& stat, char* buffer)
 {
     double fps = (double)param.frameRate;
+    double scale = fps / 1000 / (double)stat.m_numPics;
+    int len = sprintf(buffer, "%-6d ", stat.m_numPics);
+        sprintf(buffer + len, "kb/s: %-8.2lf", stat.m_accBits * scale);
 
+    if (param.bEnablePsnr)
+    {
+        len = sprintf(buffer + len, " PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf",
+                stat.m_psnrSumY / (double)stat.m_numPics,
+                stat.m_psnrSumU / (double)stat.m_numPics,
+                stat.m_psnrSumV / (double)stat.m_numPics);
+    }
+    if (param.bEnableSsim)
+    {
+        sprintf(buffer + len, " SSIM Mean: %.3lf",
+            stat.m_globalSsim / (double)stat.m_numPics);
+    }
+    return buffer;
+}
+
+void Encoder::printSummary()
+{
+    char buffer[200];
     if (param.logLevel >= X265_LOG_INFO)
     {
-        m_analyzeI.printOut('i', fps);
-        m_analyzeP.printOut('p', fps);
-        m_analyzeB.printOut('b', fps);
-        m_analyzeAll.printOut('a', fps);
+        if (m_analyzeI.m_numPics)
+            fprintf(stderr, "x265 [info]: frame I: %s\n", statsString(m_analyzeI, buffer));
+        if (m_analyzeP.m_numPics)
+            fprintf(stderr, "x265 [info]: frame P: %s\n", statsString(m_analyzeP,buffer));
+        if (m_analyzeB.m_numPics)
+            fprintf(stderr, "x265 [info]: frame B: %s\n", statsString(m_analyzeB, buffer));
+        if (m_analyzeAll.m_numPics)
+            fprintf(stderr, "x265 [info]: global: %s\n", statsString(m_analyzeAll, buffer));
     }
     if (param.bEnableWeightedPred)
     {
-        int numPFrames = m_analyzeP.getNumPic();
+        int numPFrames = m_analyzeP.m_numPics;
         x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
                  m_numWPFrames, numPFrames, (float) 100.0 * m_numWPFrames / numPFrames); 
     }
@@ -336,16 +378,16 @@ void Encoder::printSummary()
 
 void Encoder::fetchStats(x265_stats *stats)
 {
-    stats->globalPsnrY = m_analyzeAll.getPsnrY();
-    stats->globalPsnrU = m_analyzeAll.getPsnrU();
-    stats->globalPsnrV = m_analyzeAll.getPsnrV();
-    stats->encodedPictureCount = m_analyzeAll.getNumPic();
+    stats->globalPsnrY = m_analyzeAll.m_psnrSumY;
+    stats->globalPsnrU = m_analyzeAll.m_psnrSumU;
+    stats->globalPsnrV = m_analyzeAll.m_psnrSumV;
+    stats->encodedPictureCount = m_analyzeAll.m_numPics;
     stats->totalWPFrames = m_numWPFrames;
-    stats->accBits = m_analyzeAll.getBits();
+    stats->accBits = m_analyzeAll.m_accBits;
     stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
     if (stats->encodedPictureCount > 0)
     {
-        stats->globalSsim = m_globalSsim / stats->encodedPictureCount;
+        stats->globalSsim = m_analyzeAll.m_globalSsim / stats->encodedPictureCount;
         stats->globalPsnr = (stats->globalPsnrY * 6 + stats->globalPsnrU + stats->globalPsnrV) / (8 * stats->encodedPictureCount);
         stats->elapsedVideoTime = (double)stats->encodedPictureCount / param.frameRate;
         stats->bitrate = (0.001f * stats->accBits) / stats->elapsedVideoTime;
@@ -527,26 +569,45 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
 
     uint32_t bits = numRBSPBytes * 8;
 
-    //===== add PSNR =====
-    m_analyzeAll.addResult(psnrY, psnrU, psnrV, (double)bits);
     TComSlice*  slice = pic->getSlice();
+
+    //===== add bits, psnr and ssim =====
+    m_analyzeAll.addBits(bits);
+
+    if (param.bEnablePsnr)
+    {
+        m_analyzeAll.addPsnr(psnrY, psnrU, psnrV);
+    }
+
+    double ssim = 0.0;
+    if (param.bEnableSsim && pic->m_ssimCnt > 0)
+    {
+        ssim = pic->m_ssim / pic->m_ssimCnt;
+        m_analyzeAll.addSsim(ssim);
+    }
     if (slice->isIntra())
     {
-        m_analyzeI.addResult(psnrY, psnrU, psnrV, (double)bits);
+        m_analyzeI.addBits(bits);
+        if (param.bEnablePsnr)
+            m_analyzeI.addPsnr(psnrY, psnrU, psnrV);
+        if (param.bEnableSsim)
+            m_analyzeI.addSsim(ssim);
     }
-    if (slice->isInterP())
+    else if (slice->isInterP())
     {
-        m_analyzeP.addResult(psnrY, psnrU, psnrV, (double)bits);
+        m_analyzeP.addBits(bits);
+        if (param.bEnablePsnr)
+            m_analyzeP.addPsnr(psnrY, psnrU, psnrV);
+        if (param.bEnableSsim)
+            m_analyzeP.addSsim(ssim);
     }
-    if (slice->isInterB())
+    else if (slice->isInterB())
     {
-        m_analyzeB.addResult(psnrY, psnrU, psnrV, (double)bits);
-    }
-    double ssim = 0.0;
-    if (param.bEnableSsim && pic->getSlice()->m_ssimCnt > 0)
-    {
-        ssim = pic->getSlice()->m_ssim / pic->getSlice()->m_ssimCnt;
-        m_globalSsim += ssim;
+        m_analyzeB.addBits(bits);
+        if (param.bEnablePsnr)
+            m_analyzeB.addPsnr(psnrY, psnrU, psnrV);
+        if (param.bEnableSsim)
+            m_analyzeB.addSsim(ssim);
     }
 
     // if debug log level is enabled, per frame logging is performed

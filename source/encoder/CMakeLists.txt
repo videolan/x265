@@ -15,7 +15,6 @@ set(LIBENCODER_HDR
     ../Lib/TLibEncoder/NALwrite.h
     ../Lib/TLibEncoder/SEIwrite.h
     ../Lib/TLibEncoder/SyntaxElementWriter.h
-    ../Lib/TLibEncoder/TEncAnalyze.h
     ../Lib/TLibEncoder/TEncBinCoderCABAC.h
     ../Lib/TLibEncoder/TEncCfg.h
     ../Lib/TLibEncoder/TEncCu.h

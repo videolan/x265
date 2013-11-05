@@ -65,6 +65,8 @@ TComPic::TComPic()
     m_SSDY = 0;
     m_SSDU = 0;
     m_SSDV = 0;
+    m_ssim = 0;
+    m_ssimCnt = 0;
     m_frameTime = 0.0;
     m_elapsedCompressTime = 0.0;
 }
