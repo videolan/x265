@@ -193,7 +193,6 @@ public:
     void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp);
 
     void          copySubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth);
-    void          copyInterPredInfoFrom(TComDataCU* cu, uint32_t absPartIdx, int picList);
     void          copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(UChar depth);

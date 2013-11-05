@@ -615,46 +615,6 @@ void TComDataCU::copySubCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     m_cuMvField[1].linkToWithOffset(cu->getCUMvField(REF_PIC_LIST_1), part);
 }
 
-// Copy inter prediction info from the biggest CU
-void TComDataCU::copyInterPredInfoFrom(TComDataCU* cu, uint32_t absPartIdx, int picList)
-{
-    m_pic              = cu->getPic();
-    m_slice            = cu->getSlice();
-    m_cuAddr           = cu->getAddr();
-    m_absIdxInLCU      = absPartIdx;
-
-    int rastPartIdx     = g_zscanToRaster[absPartIdx];
-    m_cuPelX           = cu->getCUPelX() + m_pic->getMinCUWidth() * (rastPartIdx % m_pic->getNumPartInWidth());
-    m_cuPelY           = cu->getCUPelY() + m_pic->getMinCUHeight() * (rastPartIdx / m_pic->getNumPartInWidth());
-
-    m_cuAboveLeft      = cu->getCUAboveLeft();
-    m_cuAboveRight     = cu->getCUAboveRight();
-    m_cuAbove          = cu->getCUAbove();
-    m_cuLeft           = cu->getCULeft();
-
-    m_cuColocated[0]  = cu->getCUColocated(REF_PIC_LIST_0);
-    m_cuColocated[1]  = cu->getCUColocated(REF_PIC_LIST_1);
-
-    m_skipFlag           = cu->getSkipFlag() + absPartIdx;
-
-    m_partSizes         = cu->getPartitionSize() + absPartIdx;
-    m_predModes         = cu->getPredictionMode() + absPartIdx;
-    m_cuTransquantBypass = cu->getCUTransquantBypass() + absPartIdx;
-    m_interDir        = cu->getInterDir() + absPartIdx;
-
-    m_depth           = cu->getDepth()                + absPartIdx;
-    m_width           = cu->getWidth()                + absPartIdx;
-    m_height          = cu->getHeight()               + absPartIdx;
-
-    m_bMergeFlags     = cu->getMergeFlag()            + absPartIdx;
-    m_mergeIndex      = cu->getMergeIndex()           + absPartIdx;
-
-    m_mvpIdx[picList] = cu->getMVPIdx(picList) + absPartIdx;
-    m_mvpNum[picList] = cu->getMVPNum(picList) + absPartIdx;
-
-    m_cuMvField[picList].linkToWithOffset(cu->getCUMvField(picList), absPartIdx);
-}
-
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
 void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis)
