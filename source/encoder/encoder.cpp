@@ -366,7 +366,7 @@ void Encoder::printSummary()
         if (m_analyzeB.m_numPics)
             fprintf(stderr, "x265 [info]: frame B: %s\n", statsString(m_analyzeB, buffer));
         if (m_analyzeAll.m_numPics)
-            fprintf(stderr, "x265 [info]: global: %s\n", statsString(m_analyzeAll, buffer));
+            fprintf(stderr, "x265 [info]: global : %s\n", statsString(m_analyzeAll, buffer));
     }
     if (param.bEnableWeightedPred)
     {
