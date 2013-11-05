@@ -149,15 +149,10 @@ void TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     m_mvpIdx[1] = new char[numPartition];
     m_mvpNum[0] = new char[numPartition];
     m_mvpNum[1] = new char[numPartition];
-    memset(m_mvpIdx[0], -1, numPartition * sizeof(char));
-    memset(m_mvpIdx[1], -1, numPartition * sizeof(char));
 
     m_trCoeffY  = (TCoeff*)X265_MALLOC(TCoeff, width * height);
     m_trCoeffCb = (TCoeff*)X265_MALLOC(TCoeff, width * height / 4);
     m_trCoeffCr = (TCoeff*)X265_MALLOC(TCoeff, width * height / 4);
-    memset(m_trCoeffY, 0, width * height * sizeof(TCoeff));
-    memset(m_trCoeffCb, 0, width * height / 4 * sizeof(TCoeff));
-    memset(m_trCoeffCr, 0, width * height / 4 * sizeof(TCoeff));
 
     m_iPCMFlags   = (bool*)X265_MALLOC(bool, numPartition);
     m_iPCMSampleY  = (Pel*)X265_MALLOC(Pel, width * height);
