@@ -131,7 +131,7 @@ bool Y4MInput::parseHeader()
             {
             case 'W':
                 width = 0;
-                while (ifs)
+                while (!ifs->eof())
                 {
                     c = ifs->get();
 
@@ -149,7 +149,7 @@ bool Y4MInput::parseHeader()
 
             case 'H':
                 height = 0;
-                while (ifs)
+                while (!ifs->eof())
                 {
                     c = ifs->get();
                     if (c == ' ' || c == '\n')
@@ -167,13 +167,13 @@ bool Y4MInput::parseHeader()
             case 'F':
                 rateNum = 0;
                 rateDenom = 0;
-                while (ifs)
+                while (!ifs->eof())
                 {
                     c = ifs->get();
                     if (c == '.')
                     {
                         rateDenom = 1;
-                        while (ifs)
+                        while (!ifs->eof())
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
@@ -191,7 +191,7 @@ bool Y4MInput::parseHeader()
                     }
                     else if (c == ':')
                     {
-                        while (ifs)
+                        while (!ifs->eof())
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
@@ -213,7 +213,7 @@ bool Y4MInput::parseHeader()
                 break;
 
             default:
-                while (ifs)
+                while (!ifs->eof())
                 {
                     // consume this unsupported configuration word
                     c = ifs->get();
