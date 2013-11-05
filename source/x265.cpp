@@ -120,6 +120,7 @@ static const struct option long_options[] =
     { "crf",            required_argument, NULL, 0 },
     { "bitrate",        required_argument, NULL, 0 },
     { "qp",             required_argument, NULL, 'q' },
+    { "aq-mode",        required_argument, NULL, 0 },
     { "cbqpoffs",       required_argument, NULL, 0 },
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
@@ -311,6 +312,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --bitrate                     Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
     H0("   --crf                         Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
     H0("-q/--qp                          Base QP for CQP mode. Default %d\n", param->rc.qp);
+    H0("   --aq-mode                     Mode for Adaptive Quantization - 0:none 1:aqVariance Default %d\n", param->rc.aqMode);
     H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
     H0("   --rd                          Level of RD in mode decision 0:least....2:full RDO. Default %d\n", param->rdLevel);

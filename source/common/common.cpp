@@ -194,7 +194,7 @@ void x265_param_default(x265_param *param)
     param->rc.qpStep = 4;
     param->rc.rateControlMode = X265_RC_CQP;
     param->rc.qp = 32;
-    param->rc.aqMode = 0;
+    param->rc.aqMode = X265_AQ_NONE;
     param->rc.aqStrength = 1.0;
 
     /* Quality Measurement Metrics */
@@ -389,10 +389,12 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
     {
         if (!strcmp(tune, "psnr"))
         {
-            // nop; currently the default
+            //currently the default
+            param->rc.aqMode = X265_AQ_NONE;
         }
         else if (!strcmp(tune, "ssim"))
         {
+            param->rc.aqMode = X265_AQ_VARIANCE;
             // not yet supported
         }
         else if (!strcmp(tune, "zero-latency"))
@@ -484,6 +486,8 @@ int x265_check_params(x265_param *param)
           "max consecutive bframe count must be 16 or smaller");
     CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
           "Lookahead depth must be less than 256");
+    CHECK(param->rc.aqMode < X265_AQ_NONE || param->rc.aqMode > X265_AQ_VARIANCE,
+          "Aq-Mode is out of range");
 
     // max CU size should be power of 2
     uint32_t i = param->maxCUSize;
@@ -615,6 +619,7 @@ void x265_print_params(x265_param *param)
     }
     TOOLOPT(param->bEnableWeightedPred, "weightp");
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
+    TOOLOPT(param->rc.aqMode, "aq");
     fprintf(stderr, "\n");
     fflush(stderr);
 }
@@ -725,6 +730,11 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->rc.qp = atoi(value);
         p->rc.rateControlMode = X265_RC_CQP;
+        p->rc.aqMode = X265_AQ_NONE;
+    }
+    OPT("aq-mode")
+    {
+        p->rc.aqMode = atoi(value);
     }
     OPT("cbqpoffs")
         p->cbQpOffset = atoi(value);
