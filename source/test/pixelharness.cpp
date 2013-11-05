@@ -875,13 +875,13 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 
     if (opt.luma_copy_pp[part])
     {
-        printf("luma_copy_pp[%s]", lumaPartStr[part]);
+        printf("lcpy_pp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_copy_pp[part], ref.luma_copy_pp[part], pbuf1, 64, pbuf2, 128);
     }
 
     if (opt.chroma_copy_pp[part])
     {
-        printf("chroma_copy_pp[%s]", chromaPartStr[part]);
+        printf("ccpy_pp[%s]", chromaPartStr[part]);
         REPORT_SPEEDUP(opt.chroma_copy_pp[part], ref.chroma_copy_pp[part], pbuf1, 64, pbuf2, 128);
     }
 }
