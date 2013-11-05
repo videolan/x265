@@ -115,7 +115,7 @@ bool Y4MInput::parseHeader()
     rateNum = 0;
     rateDenom = 0;
 
-    while (ifs)
+    while (!ifs->eof())
     {
         // Skip Y4MPEG string
         int c = ifs->get();
@@ -124,7 +124,7 @@ bool Y4MInput::parseHeader()
             c = ifs->get();
         }
 
-        while (c == ' ' && ifs)
+        while (c == ' ' && !ifs->eof())
         {
             // read parameter identifier
             switch (ifs->get())
