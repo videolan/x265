@@ -62,18 +62,22 @@ TComYuv::TComYuv()
 TComYuv::~TComYuv()
 {}
 
-void TComYuv::create(uint32_t width, uint32_t height)
+void TComYuv::create(uint32_t width, uint32_t height, int csp)
 {
+    m_hChromaShift = CHROMA_H_SHIFT(csp);
+    m_vChromaShift = CHROMA_V_SHIFT(csp);
+
     // memory allocation
     m_bufY = (Pel*)X265_MALLOC(Pel, width * height);
-    m_bufU = (Pel*)X265_MALLOC(Pel, width * height >> 2);
-    m_bufV = (Pel*)X265_MALLOC(Pel, width * height >> 2);
+    m_bufU = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_bufV = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
 
     // set width and height
     m_width   = width;
     m_height  = height;
-    m_cwidth  = width  >> 1;
-    m_cheight = height >> 1;
+
+    m_cwidth  = width  >> m_hChromaShift;
+    m_cheight = height >> m_vChromaShift;
 }
 
 void TComYuv::destroy()
@@ -239,7 +243,7 @@ void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t w
     if (bLuma)
         copyPartToPartLuma(dstPicYuv, partIdx, width, height);
     if (bChroma)
-        copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
+        copyPartToPartChroma(dstPicYuv, partIdx, width >> m_hChromaShift, height >> m_vChromaShift);
 }
 
 void TComYuv::copyPartToPartYuv(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
@@ -247,7 +251,7 @@ void TComYuv::copyPartToPartYuv(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t
     if (bLuma)
         copyPartToPartLuma(dstPicYuv, partIdx, width, height);
     if (bChroma)
-        copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
+        copyPartToPartChroma(dstPicYuv, partIdx, width >> m_hChromaShift, height >> m_vChromaShift);
 }
 
 void TComYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height)
@@ -378,13 +382,13 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
 void TComYuv::addClip(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
 {
     addClipLuma(srcYuv0, srcYuv1, trUnitIdx, partSize);
-    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> 1);
+    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift);
 }
 
 void TComYuv::addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
 {
     addClipLuma(srcYuv0, srcYuv1, trUnitIdx, partSize);
-    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> 1);
+    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift);
 }
 
 void TComYuv::addClipLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
@@ -587,8 +591,8 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, u
         src1Stride = srcYuv1->getCStride();
         dststride  = getCStride();
 
-        width  >>= 1;
-        height >>= 1;
+        width  >>= m_hChromaShift;
+        height >>= m_vChromaShift;
 
         for (y = height - 1; y >= 0; y--)
         {
@@ -663,8 +667,8 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitId
         src1Stride = srcYuv1->m_cwidth;
         dststride  = getCStride();
 
-        width  >>= 1;
-        height >>= 1;
+        width  >>= m_hChromaShift;
+        height >>= m_vChromaShift;
 
         for (y = height - 1; y >= 0; y--)
         {
@@ -692,7 +696,7 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitId
 #define DISABLING_CLIP_FOR_BIPREDME 0  // x265 disables this flag so 8bpp and 16bpp outputs match
                                        // the intent is for all HM bipred to be replaced with x264 logic
 
-void TComYuv::removeHighFreq(TComYuv* srcYuv, uint32_t partIdx, uint32_t widht, uint32_t height)
+void TComYuv::removeHighFreq(TComYuv* srcYuv, uint32_t partIdx, uint32_t width, uint32_t height)
 {
     int x, y;
 
@@ -709,7 +713,7 @@ void TComYuv::removeHighFreq(TComYuv* srcYuv, uint32_t partIdx, uint32_t widht, 
 
     for (y = height - 1; y >= 0; y--)
     {
-        for (x = widht - 1; x >= 0; x--)
+        for (x = width - 1; x >= 0; x--)
         {
 #if DISABLING_CLIP_FOR_BIPREDME
             dst[x] = (dst[x] << 1) - src[x];
@@ -725,12 +729,12 @@ void TComYuv::removeHighFreq(TComYuv* srcYuv, uint32_t partIdx, uint32_t widht, 
     srcstride = srcYuv->getCStride();
     dststride = getCStride();
 
-    height >>= 1;
-    widht  >>= 1;
+    width  >>= m_hChromaShift;
+    height >>= m_vChromaShift;
 
     for (y = height - 1; y >= 0; y--)
     {
-        for (x = widht - 1; x >= 0; x--)
+        for (x = width - 1; x >= 0; x--)
         {
 #if DISABLING_CLIP_FOR_BIPREDME
             dstU[x] = (dstU[x] << 1) - srcU[x];

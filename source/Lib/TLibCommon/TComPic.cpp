@@ -77,13 +77,13 @@ TComPic::~TComPic()
 void TComPic::create(TEncCfg* cfg)
 {
     m_picSym = new TComPicSym;
-    m_picSym->create(cfg->param.sourceWidth, cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
+    m_picSym->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->getColorFormat(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
 
     m_origPicYuv = new TComPicYuv;
-    m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
+    m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->getColorFormat(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
 
     m_reconPicYuv = new TComPicYuv;
-    m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
+    m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->getColorFormat(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
 
     /* store conformance window parameters with picture */
     m_conformanceWindow = cfg->m_conformanceWindow;

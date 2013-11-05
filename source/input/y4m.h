@@ -51,6 +51,12 @@ protected:
 
     int height;
 
+    int colorSpace;   ///< source Color Space Parameter
+
+    uint32_t plane_size[3];
+
+    uint32_t plane_stride[3];
+
     bool threadActive;
 
 #if defined(ENABLE_THREAD)
@@ -60,13 +66,13 @@ protected:
 
     bool frameStat[QUEUE_SIZE];
 
-    char* buf[QUEUE_SIZE];
+    char* plane[QUEUE_SIZE][3];
 
     Event notFull;
 
     Event notEmpty;
 #else // if defined(ENABLE_THREAD)
-    char *buf;
+    char *plane[1][3];
 #endif // if defined(ENABLE_THREAD)
     std::istream *ifs;
 
@@ -78,19 +84,23 @@ public:
 
     virtual ~Y4MInput();
 
-    void setDimensions(int, int)                  { /* ignore, warn */ }
+    void setDimensions(int, int)  { /* ignore, warn */ }
 
-    void setBitDepth(uint32_t)                         { /* ignore, warn */ }
+    void setBitDepth(uint32_t)    { /* ignore, warn */ }
 
-    float getRate() const                         { return ((float)rateNum) / rateDenom; }
+    void setColorSpace(int)       { /* ignore, warn */ }
 
-    int getWidth() const                          { return width; }
+    float getRate() const         { return ((float)rateNum) / rateDenom; }
 
-    int getHeight() const                         { return height; }
+    int getWidth() const          { return width; }
 
-    bool isEof() const                            { return ifs && ifs->eof();  }
+    int getHeight() const         { return height; }
 
-    bool isFail()                                 { return !(ifs && !ifs->fail() && threadActive); }
+    int getColorSpace() const     { return colorSpace; }
+
+    bool isEof() const            { return ifs && ifs->eof();  }
+
+    bool isFail()                 { return !(ifs && !ifs->fail() && threadActive); }
 
     void startReader();
 
@@ -102,6 +112,8 @@ public:
 
     bool readPicture(x265_picture&);
 
+    void pictureAlloc(int index);
+
 #if defined(ENABLE_THREAD)
 
     void threadMain();
@@ -110,7 +122,7 @@ public:
 
 #endif
 
-    const char *getName() const                   { return "y4m"; }
+    const char *getName() const   { return "y4m"; }
 };
 }
 

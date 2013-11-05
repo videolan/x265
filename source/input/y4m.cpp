@@ -44,11 +44,11 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
 #if defined ENABLE_THREAD
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
-        buf[i] = NULL;
+        plane[i][2] = plane[i][1] = plane[i][0] = NULL;
     }
 
 #else
-    buf = NULL;
+    plane[0][2] = plane[0][1] = plane[0][0] = NULL;
 #endif
 
     ifs = NULL;
@@ -73,16 +73,11 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
             tail = 0;
             for (uint32_t i = 0; i < QUEUE_SIZE; i++)
             {
-                buf[i] = new char[3 * width * height / 2];
-                if (buf[i] == NULL)
-                {
-                    x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting\n");
-                    threadActive = false;
-                }
+                pictureAlloc(i);
             }
 
 #else // if defined(ENABLE_THREAD)
-            buf = new char[3 * width * height / 2];
+            pictureAlloc(0);
 #endif // if defined(ENABLE_THREAD)
         }
     }
@@ -100,12 +95,36 @@ Y4MInput::~Y4MInput()
 #if defined(ENABLE_THREAD)
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
-        delete[] buf[i];
+        for (int j = 0; j < x265_cli_csps[colorSpace].planes; j++)
+        {
+            delete[] plane[i][j];
+        }
     }
 
 #else
-    delete[] buf;
-#endif
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        delete[] plane[0][i];
+    }
+
+#endif // if defined(ENABLE_THREAD)
+}
+
+void Y4MInput::pictureAlloc(int queueindex)
+{
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        plane_size[i] = (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
+        plane[queueindex][i] = new char[plane_size[i]];
+        plane_stride[i] = (uint32_t)(width >> x265_cli_csps[colorSpace].width[i]);
+
+        if (plane[queueindex][i] == NULL)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
+            threadActive = false;
+            return;
+        }
+    }
 }
 
 bool Y4MInput::parseHeader()
@@ -117,6 +136,8 @@ bool Y4MInput::parseHeader()
     height = 0;
     rateNum = 0;
     rateDenom = 0;
+    colorSpace = X265_CSP_I420;
+    int csp = 0;
 
     while (!ifs->eof())
     {
@@ -215,6 +236,24 @@ bool Y4MInput::parseHeader()
 
                 break;
 
+            case 'C':
+                while (!ifs->eof())
+                {
+                    c = ifs->get();
+
+                    if (c == ' ' || c == '\n')
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        csp = csp * 10 + (c - '0');
+                    }
+                }
+
+                colorSpace = (csp == 444) ? X265_CSP_I444 : (csp == 422) ? X265_CSP_I422 : X265_CSP_I420;
+                break;
+
             default:
                 while (!ifs->eof())
                 {
@@ -236,7 +275,8 @@ bool Y4MInput::parseHeader()
 
     if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
         height < MIN_FRAME_HEIGHT || width > MAX_FRAME_HEIGHT ||
-        (rateNum / rateDenom) < 1 || (rateNum / rateDenom) > MAX_FRAME_RATE)
+        (rateNum / rateDenom) < 1 || (rateNum / rateDenom) > MAX_FRAME_RATE ||
+        colorSpace <= X265_CSP_NONE || colorSpace >= X265_CSP_MAX)
         return false;
 
     return true;
@@ -258,16 +298,27 @@ int Y4MInput::guessFrameCount()
     if (size < 0)
         return -1;
 
-    return (int)((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
+    int frameSize = 0;
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        frameSize += (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
+    }
+
+    return (int)((size - cur) / (frameSize + strlen(header) + 1));
 }
 
 void Y4MInput::skipFrames(uint32_t numFrames)
 {
-    const size_t count = (width * height * 3 / 2) + strlen(header) + 1;
+    int frameSize = 0;
+
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        frameSize += (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
+    }
 
     if (ifs && numFrames)
     {
-        ifs->ignore(count * numFrames);
+        ifs->ignore((frameSize + strlen(header) + 1) * numFrames);
     }
 }
 
@@ -285,17 +336,12 @@ bool Y4MInput::readPicture(x265_picture& pic)
     if (!frameStat[head])
         return false;
 
-    pic.planes[0] = buf[head];
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        pic.planes[i] = plane[head][i];
+        pic.stride[i] = plane_stride[i];
+    }
 
-    pic.planes[1] = buf[head] + width * height;
-
-    pic.planes[2] = buf[head] + width * height + ((width * height) >> 2);
-
-    pic.bitDepth = 8;
-
-    pic.stride[0] = width;
-
-    pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
     head = (head + 1) % QUEUE_SIZE;
     notFull.trigger();
 
@@ -346,7 +392,6 @@ bool Y4MInput::populateFrameQueue()
         c = ifs->get();
     }
 
-    const size_t count = width * height * 3 / 2;
     while ((tail + 1) % QUEUE_SIZE == head)
     {
         notFull.wait();
@@ -354,7 +399,11 @@ bool Y4MInput::populateFrameQueue()
             return false;
     }
 
-    ifs->read(buf[tail], count);
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        ifs->read(plane[tail][i], plane_size[i]);
+    }
+
     frameStat[tail] = !ifs->fail();
     tail = (tail + 1) % QUEUE_SIZE;
     notEmpty.trigger();
@@ -386,19 +435,12 @@ bool Y4MInput::readPicture(x265_picture& pic)
         c = ifs->get();
     }
 
-    const size_t count = width * height * 3 / 2;
-
-    pic.planes[0] = buf;
-
-    pic.planes[1] = buf + width * height;
-
-    pic.planes[2] = buf + width * height + ((width * height) >> 2);
-
-    pic.bitDepth = 8;
-
-    pic.stride[0] = width;
-
-    pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        ifs->read(plane[0][i], plane_size[i]);
+        pic.planes[i] = plane[0][i];
+        pic.stride[i] = plane_stride[i];
+    }
 
     ifs->read(buf, count);
     PPAStopCpuEventFunc(read_yuv);

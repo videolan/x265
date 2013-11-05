@@ -98,7 +98,7 @@ TComPrediction::~TComPrediction()
     }
 }
 
-void TComPrediction::initTempBuff()
+void TComPrediction::initTempBuff(int csp)
 {
     if (m_predBuf == NULL)
     {
@@ -107,10 +107,11 @@ void TComPrediction::initTempBuff()
         int i, j;
         for (i = 0; i < 4; i++)
         {
-            m_filteredBlockTmp[i].create(extWidth, extHeight + 7);
+            m_filteredBlockTmp[i].create(extWidth, extHeight + 7, csp);
+
             for (j = 0; j < 4; j++)
             {
-                m_filteredBlock[i][j].create(extWidth, extHeight);
+                m_filteredBlock[i][j].create(extWidth, extHeight, csp);
             }
         }
 
@@ -124,13 +125,12 @@ void TComPrediction::initTempBuff()
         refLeft = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
         refLeftFlt = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
 
-        // new structure
-        m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
-        m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE);
-        m_predShortYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
-        m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE);
+        m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
+        m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
+        m_predShortYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
+        m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
+        m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
 
-        m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE);
         m_immedVals = (int16_t*)X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
     }
 

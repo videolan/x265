@@ -43,17 +43,21 @@ TShortYUV::TShortYUV()
 TShortYUV::~TShortYUV()
 {}
 
-void TShortYUV::create(unsigned int width, unsigned int height)
+void TShortYUV::create(unsigned int width, unsigned int height, int csp)
 {
+    m_hChromaShift = CHROMA_H_SHIFT(csp);
+    m_vChromaShift = CHROMA_V_SHIFT(csp);
+
     m_bufY  = (int16_t*)X265_MALLOC(int16_t, width * height);
-    m_bufCb = (int16_t*)X265_MALLOC(int16_t, width * height >> 2);
-    m_bufCr = (int16_t*)X265_MALLOC(int16_t, width * height >> 2);
+    m_bufCb = (int16_t*)X265_MALLOC(int16_t, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_bufCr = (int16_t*)X265_MALLOC(int16_t, (width >> m_hChromaShift) * (height >> m_vChromaShift));
 
     // set width and height
-    m_width   = width;
-    m_height  = height;
-    m_cwidth  = width  >> 1;
-    m_cheight = height >> 1;
+    m_width  = width;
+    m_height = height;
+
+    m_cwidth  = width  >> m_hChromaShift;
+    m_cheight = height >> m_vChromaShift;
 }
 
 void TShortYUV::destroy()
@@ -75,8 +79,8 @@ void TShortYUV::clear()
 
 void TShortYUV::subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
-    subtractLuma(srcYuv0, srcYuv1,  trUnitIdx, partSize);
-    subtractChroma(srcYuv0, srcYuv1,  trUnitIdx, partSize >> 1);
+    subtractLuma(srcYuv0, srcYuv1, trUnitIdx, partSize);
+    subtractChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift);
 }
 
 void TShortYUV::subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
@@ -116,7 +120,7 @@ void TShortYUV::subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int 
 void TShortYUV::addClip(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
     addClipLuma(srcYuv0, srcYuv1, trUnitIdx, partSize);
-    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> 1);
+    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift);
 }
 
 #if _MSC_VER
@@ -160,13 +164,13 @@ void TShortYUV::addClipChroma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned i
 void TShortYUV::copyPartToPartYuv(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
 {
     copyPartToPartLuma(dstPicYuv, partIdx, width, height);
-    copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
+    copyPartToPartChroma(dstPicYuv, partIdx, width >> m_hChromaShift, height >> m_vChromaShift);
 }
 
 void TShortYUV::copyPartToPartYuv(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
 {
     copyPartToPartLuma(dstPicYuv, partIdx, width, height);
-    copyPartToPartChroma(dstPicYuv, partIdx, width >> 1, height >> 1);
+    copyPartToPartChroma(dstPicYuv, partIdx, width >> m_hChromaShift, height >> m_vChromaShift);
 }
 
 void TShortYUV::copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)

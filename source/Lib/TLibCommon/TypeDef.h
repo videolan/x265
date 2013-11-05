@@ -100,6 +100,9 @@ enum ChromaFormat
     CHROMA_444  = 3
 };
 
+#define CHROMA_H_SHIFT(x) (x == CHROMA_420 || x == CHROMA_422)
+#define CHROMA_V_SHIFT(x) (x == CHROMA_420)
+
 /// supported partition shape
 enum PartSize
 {

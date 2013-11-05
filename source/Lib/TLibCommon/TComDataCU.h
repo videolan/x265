@@ -92,46 +92,49 @@ private:
     // CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    uint32_t          m_cuAddr;         ///< CU address in a slice
-    uint32_t          m_absIdxInLCU;    ///< absolute address in a CU. It's Z scan order
-    uint32_t          m_cuPelX;         ///< CU position in a pixel (X)
-    uint32_t          m_cuPelY;         ///< CU position in a pixel (Y)
-    uint32_t          m_numPartitions;   ///< total number of minimum partitions in a CU
-    UChar*        m_width;         ///< array of widths
-    UChar*        m_height;        ///< array of heights
-    UChar*        m_depth;         ///< array of depths
-    int           m_unitSize;         ///< size of a "minimum partition"
-    uint32_t          m_unitMask;       ///< mask for mapping index to CompressMV field
+    uint32_t      m_cuAddr;          ///< CU address in a slice
+    uint32_t      m_absIdxInLCU;     ///< absolute address in a CU. It's Z scan order
+    uint32_t      m_cuPelX;          ///< CU position in a pixel (X)
+    uint32_t      m_cuPelY;          ///< CU position in a pixel (Y)
+    uint32_t      m_numPartitions;   ///< total number of minimum partitions in a CU
+    UChar*        m_width;           ///< array of widths
+    UChar*        m_height;          ///< array of heights
+    UChar*        m_depth;           ///< array of depths
+    int           m_chromaFormat;
+    int           m_hChromaShift;
+    int           m_vChromaShift;
+    int           m_unitSize;        ///< size of a "minimum partition"
+    uint32_t      m_unitMask;        ///< mask for mapping index to CompressMV field
 
     // -------------------------------------------------------------------------------------------------------------------
     // CU data
     // -------------------------------------------------------------------------------------------------------------------
-    bool*         m_skipFlag;         ///< array of skip flags
-    char*         m_partSizes;       ///< array of partition sizes
-    char*         m_predModes;       ///< array of prediction modes
+    bool*         m_skipFlag;           ///< array of skip flags
+    char*         m_partSizes;          ///< array of partition sizes
+    char*         m_predModes;          ///< array of prediction modes
     bool*         m_cuTransquantBypass; ///< array of cu_transquant_bypass flags
-    char*         m_qp;             ///< array of QP values
-    UChar*        m_trIdx;         ///< array of transform indices
-    UChar*        m_transformSkip[3]; ///< array of transform skipping flags
-    UChar*        m_cbf[3];        ///< array of coded block flags (CBF)
-    TComCUMvField m_cuMvField[2];   ///< array of motion vectors
-    TCoeff*       m_trCoeffY;       ///< transformed coefficient buffer (Y)
-    TCoeff*       m_trCoeffCb;      ///< transformed coefficient buffer (Cb)
-    TCoeff*       m_trCoeffCr;      ///< transformed coefficient buffer (Cr)
+    char*         m_qp;                 ///< array of QP values
+    UChar*        m_trIdx;              ///< array of transform indices
+    UChar*        m_transformSkip[3];   ///< array of transform skipping flags
+    UChar*        m_cbf[3];             ///< array of coded block flags (CBF)
+    TComCUMvField m_cuMvField[2];       ///< array of motion vectors
+    TCoeff*       m_trCoeffY;           ///< transformed coefficient buffer (Y)
+    TCoeff*       m_trCoeffCb;          ///< transformed coefficient buffer (Cb)
+    TCoeff*       m_trCoeffCr;          ///< transformed coefficient buffer (Cr)
 
-    Pel*          m_iPCMSampleY;    ///< PCM sample buffer (Y)
-    Pel*          m_iPCMSampleCb;   ///< PCM sample buffer (Cb)
-    Pel*          m_iPCMSampleCr;   ///< PCM sample buffer (Cr)
+    Pel*          m_iPCMSampleY;        ///< PCM sample buffer (Y)
+    Pel*          m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
+    Pel*          m_iPCMSampleCr;       ///< PCM sample buffer (Cr)
 
     // -------------------------------------------------------------------------------------------------------------------
     // neighbor access variables
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComDataCU*   m_cuAboveLeft;    ///< pointer of above-left CU
-    TComDataCU*   m_cuAboveRight;   ///< pointer of above-right CU
-    TComDataCU*   m_cuAbove;        ///< pointer of above CU
-    TComDataCU*   m_cuLeft;         ///< pointer of left CU
-    TComDataCU*   m_cuColocated[2]; ///< pointer of temporally colocated CU's for both directions
+    TComDataCU*   m_cuAboveLeft;     ///< pointer of above-left CU
+    TComDataCU*   m_cuAboveRight;    ///< pointer of above-right CU
+    TComDataCU*   m_cuAbove;         ///< pointer of above CU
+    TComDataCU*   m_cuLeft;          ///< pointer of left CU
+    TComDataCU*   m_cuColocated[2];  ///< pointer of temporally colocated CU's for both directions
     TComMvField   m_mvFieldA;        ///< motion vector of position A
     TComMvField   m_mvFieldB;        ///< motion vector of position B
     TComMvField   m_mvFieldC;        ///< motion vector of position C
@@ -141,14 +144,14 @@ private:
     // -------------------------------------------------------------------------------------------------------------------
 
     bool*         m_bMergeFlags;      ///< array of merge flags
-    UChar*        m_mergeIndex;    ///< array of merge candidate indices
+    UChar*        m_mergeIndex;       ///< array of merge candidate indices
     bool          m_bIsMergeAMP;
-    UChar*        m_lumaIntraDir;  ///< array of intra directions (luma)
-    UChar*        m_chromaIntraDir; ///< array of intra directions (chroma)
-    UChar*        m_interDir;      ///< array of inter directions
-    char*         m_mvpIdx[2];     ///< array of motion vector predictor candidates
-    char*         m_mvpNum[2];     ///< array of number of possible motion vectors predictors
-    bool*         m_iPCMFlags;       ///< array of intra_pcm flags
+    UChar*        m_lumaIntraDir;     ///< array of intra directions (luma)
+    UChar*        m_chromaIntraDir;   ///< array of intra directions (chroma)
+    UChar*        m_interDir;         ///< array of inter directions
+    char*         m_mvpIdx[2];        ///< array of motion vector predictor candidates
+    char*         m_mvpNum[2];        ///< array of number of possible motion vectors predictors
+    bool*         m_iPCMFlags;        ///< array of intra_pcm flags
 
     // -------------------------------------------------------------------------------------------------------------------
     // misc. variables
@@ -185,7 +188,7 @@ public:
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
 
-    void          create(uint32_t numPartition, uint32_t width, uint32_t height, int unitSize);
+    void          create(uint32_t numPartition, uint32_t width, uint32_t height, int unitSize, int csp);
     void          destroy();
 
     void          initCU(TComPic* pic, uint32_t cuAddr);
@@ -486,7 +489,7 @@ public:
     // member functions for symbol prediction (most probable / mode conversion)
     // -------------------------------------------------------------------------------------------------------------------
 
-    uint32_t          getIntraSizeIdx(uint32_t absPartIdx);
+    uint32_t      getIntraSizeIdx(uint32_t absPartIdx);
 
     void          getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList);
     void          getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDirPred, int32_t* mode = NULL);
@@ -495,19 +498,27 @@ public:
     // member functions for SBAC context
     // -------------------------------------------------------------------------------------------------------------------
 
-    uint32_t          getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth);
-    uint32_t          getCtxQtCbf(TextType ttype, uint32_t trDepth);
+    uint32_t      getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth);
+    uint32_t      getCtxQtCbf(TextType ttype, uint32_t trDepth);
 
-    uint32_t          getCtxSkipFlag(uint32_t absPartIdx);
-    uint32_t          getCtxInterDir(uint32_t absPartIdx);
+    uint32_t      getCtxSkipFlag(uint32_t absPartIdx);
+    uint32_t      getCtxInterDir(uint32_t absPartIdx);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
 
-    uint32_t&         getTotalNumPart()               { return m_numPartitions; }
+    uint32_t&     getTotalNumPart()               { return m_numPartitions; }
 
-    uint32_t          getCoefScanIdx(uint32_t absPartIdx, uint32_t width, bool bIsLuma, bool bIsIntra);
+    uint32_t      getCoefScanIdx(uint32_t absPartIdx, uint32_t width, bool bIsLuma, bool bIsIntra);
+
+    // -------------------------------------------------------------------------------------------------------------------
+    // member functions to support multiple color space formats
+    // -------------------------------------------------------------------------------------------------------------------
+
+    int           getHorzChromaShift()  { return m_hChromaShift; }
+
+    int           getVertChromaShift()  { return m_vChromaShift; }
 };
 
 namespace RasterAddress {

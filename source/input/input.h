@@ -53,11 +53,15 @@ public:
 
     virtual void setBitDepth(uint32_t bitDepth) = 0;
 
+    virtual void setColorSpace(int csp) = 0;
+
     virtual float getRate() const = 0;
 
     virtual int getWidth() const = 0;
 
     virtual int getHeight() const = 0;
+
+    virtual int getColorSpace() const = 0;
 
     virtual void startReader() = 0;
 

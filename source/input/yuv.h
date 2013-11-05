@@ -47,6 +47,8 @@ protected:
 
     int height;
 
+    int colorSpace; //< source Color Space Parameter
+
     uint32_t depth;
 
     uint32_t pixelbytes;
@@ -81,7 +83,11 @@ public:
 
     void setDimensions(int w, int h);
 
-    void setBitDepth(uint32_t bitDepth)                { depth = bitDepth; }
+    void setColorSpace(int csp)                   { colorSpace = csp; }
+
+    int getColorSpace() const                     { return colorSpace; }
+
+    void setBitDepth(uint32_t bitDepth)           { depth = bitDepth; }
 
     float getRate() const                         { return 0.0f; }
 

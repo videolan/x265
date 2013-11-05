@@ -240,7 +240,8 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     pic.bitDepth = depth;
 
-    pic.stride[0] = width * pixelbytes;
+    /* Stride is measured in pixels */
+    pic.stride[0] = width;
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 

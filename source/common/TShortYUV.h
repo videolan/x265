@@ -64,10 +64,14 @@ public:
     unsigned int m_cwidth;
     unsigned int m_cheight;
 
+    int m_hChromaShift;
+    int m_vChromaShift;
+
     TShortYUV();
     virtual ~TShortYUV();
 
-    void create(unsigned int width, unsigned int height);
+    void create(unsigned int width, unsigned int height, int csp);
+
     void destroy();
     void clear();
 

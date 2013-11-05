@@ -79,6 +79,7 @@ static const struct option long_options[] =
     { "input",          required_argument, NULL, 0 },
     { "input-depth",    required_argument, NULL, 0 },
     { "input-res",      required_argument, NULL, 0 },
+    { "input-csp",      required_argument, NULL, 0 },
     { "fps",            required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
     { "frames",         required_argument, NULL, 'f' },
@@ -273,8 +274,9 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-o/--output                      Bitstream output file name\n");
     H0("\nInput Options:\n");
     H0("   --input                       Raw YUV or Y4M input file name\n");
-    H0("   --input-depth                 Bit-depth of input file (YUV only) Default %d\n", param->inputBitDepth);
+    H0("   --input-depth                 Bit-depth of input file and internal encoder bit depth. Default %d\n", param->inputBitDepth);
     H0("   --input-res                   Source picture size [w x h], auto-detected if Y4M\n");
+    H0("   --input-csp                   Source color space parameter, auto-detected if Y4M\n");
     H0("   --fps                         Source frame rate, auto-detected if Y4M\n");
     H0("   --frame-skip                  Number of frames to skip at start of input file\n");
     H0("-f/--frames                      Number of frames to be encoded. Default all\n");
@@ -326,8 +328,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nReconstructed video options (debugging):\n");
-    H0("-r/--recon                       Reconstructed image YUV or Y4M output file name\n");
-    H0("   --recon-depth                 Bit-depth of output file. Default %d\n", param->reconFileBitDepth);
+    H0("-r/--recon                       Reconstructed raw image YUV or Y4M output file name\n");
+    H0("   --recon-depth                 Bit-depth of reconstructed raw image file. Default 8\n");
     H0("\nSEI options:\n");
     H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
 #undef OPT
@@ -340,12 +342,14 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     int berror = 0;
     int help = 0;
     int cpuid = 0;
+    int reconFileBitDepth = 8;
     const char *inputfn = NULL;
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
     const char *inputRes = NULL;
     const char *preset = "medium";
     const char *tune = "psnr";
+    const char *inputCsp = NULL;
 
     /* Presets are applied before all other options. */
     for (optind = 0;; )
@@ -422,8 +426,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
             OPT("input-depth") param->inputBitDepth = (uint32_t)atoi(optarg);
-            OPT("recon-depth") param->reconFileBitDepth = (uint32_t)atoi(optarg);
+            OPT("recon-depth") reconFileBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
+            OPT("input-csp") inputCsp = optarg;
             OPT("y4m") bForceY4m = true;
             else
                 berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
@@ -465,12 +470,15 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (this->input->getWidth())
     {
         /* parse the width, height, frame rate from the y4m file */
+        param->sourceCsp = this->input->getColorSpace();
         param->sourceWidth = this->input->getWidth();
         param->sourceHeight = this->input->getHeight();
         param->frameRate = (int)this->input->getRate();
     }
     else if (inputRes)
     {
+        parseCspName(inputCsp, &param->sourceCsp);
+        this->input->setColorSpace(param->sourceCsp);
         sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
         this->input->setDimensions(param->sourceWidth, param->sourceHeight);
         this->input->setBitDepth(param->inputBitDepth);
@@ -486,9 +494,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         this->input->setBitDepth(param->inputBitDepth);
     }
 
-    if (param->reconFileBitDepth > 0)
+    if (reconFileBitDepth > 0)
     {
-        if (param->reconFileBitDepth != param->inputBitDepth)
+        if (reconFileBitDepth != param->inputBitDepth)
         {
             x265_log(param, X265_LOG_ERROR, "Bit depth of the recon file should be the same as input bit depth\n");
             /* TODO: Support recon files with bitdepth > input bit depth??*/
@@ -497,7 +505,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
     else
     {
-        param->reconFileBitDepth = param->inputBitDepth;
+        reconFileBitDepth = param->inputBitDepth;
     }
 
     int guess = this->input->guessFrameCount();
@@ -515,11 +523,13 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (param->logLevel >= X265_LOG_INFO)
     {
         if (this->framesToBeEncoded == 0)
-            fprintf(stderr, "%s  [info]: %dx%d %dHz, unknown frame count\n", input->getName(),
-                    param->sourceWidth, param->sourceHeight, param->frameRate);
-        else
-            fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
+            fprintf(stderr, "%s  [info]: %dx%d %dHz %s, unknown frame count\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate,
+                    (param->sourceCsp >= X265_CSP_I444) ? "C444" : (param->sourceCsp >= X265_CSP_I422) ? "C422" : "C420");
+        else
+            fprintf(stderr, "%s  [info]: %dx%d %dHz %s, frames %u - %d of %d\n", input->getName(),
+                    param->sourceWidth, param->sourceHeight, param->frameRate,
+                    (param->sourceCsp >= X265_CSP_I444) ? "C444" : (param->sourceCsp >= X265_CSP_I422) ? "C422" : "C420",
                     this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, fileFrameCount);
     }
 
@@ -527,7 +537,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
     if (reconfn)
     {
-        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, param->reconFileBitDepth, param->frameRate);
+        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->sourceCsp);
         if (this->recon->isFail())
         {
             x265_log(param, X265_LOG_WARNING, "unable to write reconstruction file\n");
@@ -548,7 +558,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "not compiled for bit depths greater than 8\n");
         return true;
     }
-#endif
+#endif // if HIGH_BIT_DEPTH
 
     this->bitstreamFile.open(bitstreamfn, std::fstream::binary | std::fstream::out);
     if (!this->bitstreamFile)

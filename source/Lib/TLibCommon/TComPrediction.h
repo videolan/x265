@@ -105,7 +105,7 @@ public:
     TComPrediction();
     virtual ~TComPrediction();
 
-    void initTempBuff();
+    void initTempBuff(int csp);
 
     // inter
     void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList = REF_PIC_LIST_X, int partIdx = -1, bool bLuma = true, bool bChroma = true);

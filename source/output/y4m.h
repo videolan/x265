@@ -38,6 +38,10 @@ protected:
 
     int height;
 
+    int colorSpace;
+
+    uint32_t frameSize;
+
     std::ofstream ofs;
 
     std::ofstream::pos_type header;
@@ -48,7 +52,7 @@ protected:
 
 public:
 
-    Y4MOutput(const char *filename, int width, int height, int rate);
+    Y4MOutput(const char *filename, int width, int height, int rate, int csp);
 
     virtual ~Y4MOutput();
 

@@ -137,6 +137,9 @@ void TComPattern::initPattern(TComDataCU* cu, uint32_t partDepth, uint32_t absPa
     UChar width        = cu->getWidth(0) >> partDepth;
     UChar height       = cu->getHeight(0) >> partDepth;
 
+    int hChromaShift = cu->getHorzChromaShift();
+    int vChromaShift = cu->getVertChromaShift();
+
     uint32_t absZOrderIdx  = cu->getZorderIdxInCU() + absPartIdx;
     uint32_t uiCurrPicPelX = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
     uint32_t uiCurrPicPelY = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
@@ -152,8 +155,8 @@ void TComPattern::initPattern(TComDataCU* cu, uint32_t partDepth, uint32_t absPa
     }
 
     m_patternY.setPatternParamCU(cu, 0, width,      height,      offsetLeft, offsetAbove, absPartIdx);
-    m_patternCb.setPatternParamCU(cu, 1, width >> 1, height >> 1, offsetLeft, offsetAbove, absPartIdx);
-    m_patternCr.setPatternParamCU(cu, 2, width >> 1, height >> 1, offsetLeft, offsetAbove, absPartIdx);
+    m_patternCb.setPatternParamCU(cu, 1, width >> hChromaShift, height >> vChromaShift, offsetLeft, offsetAbove, absPartIdx);
+    m_patternCr.setPatternParamCU(cu, 2, width >> hChromaShift, height >> vChromaShift, offsetLeft, offsetAbove, absPartIdx);
 }
 
 void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf,
@@ -333,8 +336,8 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     cu->deriveLeftRightTopIdxAdi(partIdxLT, partIdxRT, zOrderIdxInPart, partDepth);
     cu->deriveLeftBottomIdxAdi(partIdxLB,              zOrderIdxInPart, partDepth);
 
-    unitSize      = (g_maxCUWidth >> g_maxCUDepth) >> 1; // for chroma
-    numUnitsInCU  = (cuWidth / unitSize) >> 1;          // for chroma
+    unitSize      = (g_maxCUWidth >> g_maxCUDepth) >> cu->getHorzChromaShift(); // for chroma
+    numUnitsInCU  = (cuWidth / unitSize) >> cu->getHorzChromaShift();           // for chroma
     totalUnits    = (numUnitsInCU << 2) + 1;
 
     bNeighborFlags[numUnitsInCU * 2] = isAboveLeftAvailable(cu, partIdxLT);
@@ -344,8 +347,8 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     numIntraNeighbor += isLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + (numUnitsInCU * 2) - 1);
     numIntraNeighbor += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + numUnitsInCU   - 1);
 
-    cuWidth = cuWidth >> 1; // for chroma
-    cuHeight = cuHeight >> 1; // for chroma
+    cuWidth = cuWidth >> cu->getHorzChromaShift(); // for chroma
+    cuHeight = cuHeight >> cu->getVertChromaShift(); // for chroma
 
     width = cuWidth * 2 + 1;
     height = cuHeight * 2 + 1;

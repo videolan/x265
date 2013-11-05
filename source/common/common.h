@@ -117,5 +117,6 @@ void x265_print_params(x265_param *param);
 int x265_set_globals(x265_param *param);
 int x265_exp2fix8(double x);
 char *x265_param2string(x265_param *p);
+void parseCspName(const char *arg, int *dst);
 
 #endif // ifndef X265_COMMON_H

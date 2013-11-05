@@ -63,10 +63,13 @@ TComPicYuv::~TComPicYuv()
 {
 }
 
-void TComPicYuv::create(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
+void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
+    m_hChromaShift = CHROMA_H_SHIFT(picCsp);
+    m_vChromaShift = CHROMA_V_SHIFT(picCsp);
+    m_picCsp = picCsp;
 
     // --> After config finished!
     m_cuWidth  = maxCUWidth;
@@ -76,12 +79,13 @@ void TComPicYuv::create(int picWidth, int picHeight, uint32_t maxCUWidth, uint32
     m_numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
 
     m_lumaMarginX = g_maxCUWidth  + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
-    m_lumaMarginY = g_maxCUHeight + 16; // search margin plus 8 plus 8-tap filter half-length, rounded to 16
+    m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
     m_stride = (m_numCuInWidth * g_maxCUWidth) + (m_lumaMarginX << 1);
 
-    m_chromaMarginX = m_lumaMarginX;    // keep 16-byte alignment for chroma CTUs
-    m_chromaMarginY = m_lumaMarginY >> 1;
-    m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> 1) + (m_chromaMarginX << 1);
+    m_chromaMarginX = m_lumaMarginX;       // keep 16-byte alignment for chroma CTUs
+    m_chromaMarginY = m_lumaMarginY >> m_vChromaShift;
+
+    m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUHeight;
 
     m_picBufY = (Pel*)X265_MALLOC(Pel, m_stride * (maxHeight + (m_lumaMarginY << 1)));
@@ -99,7 +103,7 @@ void TComPicYuv::create(int picWidth, int picHeight, uint32_t maxCUWidth, uint32
         for (int cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
         {
             m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
-            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight / 2) + cuCol * (m_cuWidth / 2);
+            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight >> m_vChromaShift) + cuCol * (m_cuWidth >> m_hChromaShift);
         }
     }
 
@@ -110,7 +114,7 @@ void TComPicYuv::create(int picWidth, int picHeight, uint32_t maxCUWidth, uint32
         for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
         {
             m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
-            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * (maxCUHeight / 2 >> maxCUDepth) + buCol * (maxCUWidth / 2 >> maxCUDepth);
+            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * ((maxCUHeight >> m_vChromaShift) >> maxCUDepth) + buCol * ((maxCUWidth >> m_hChromaShift) >> maxCUDepth);
         }
     }
 }
@@ -196,8 +200,8 @@ void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
     assert(m_picHeight == destPicYuv->getHeight());
 
     ::memcpy(destPicYuv->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
-    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
-    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
 }
 
 void  TComPicYuv::copyToPicLuma(TComPicYuv* destPicYuv)
@@ -213,7 +217,7 @@ void  TComPicYuv::copyToPicCb(TComPicYuv* destPicYuv)
     assert(m_picWidth  == destPicYuv->getWidth());
     assert(m_picHeight == destPicYuv->getHeight());
 
-    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
 }
 
 void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
@@ -221,7 +225,7 @@ void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
     assert(m_picWidth  == destPicYuv->getWidth());
     assert(m_picHeight == destPicYuv->getHeight());
 
-    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
 }
 
 void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int iMarginX, int iMarginY)
@@ -291,9 +295,9 @@ void TComPicYuv::dump(char* pFileName, bool bAdd)
     shift = X265_DEPTH - 8;
     offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
-    for (y = 0; y < m_picHeight >> 1; y++)
+    for (y = 0; y < m_picHeight >> m_vChromaShift; y++)
     {
-        for (x = 0; x < m_picWidth >> 1; x++)
+        for (x = 0; x < m_picWidth >> m_hChromaShift; x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (pelCb[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
@@ -302,9 +306,9 @@ void TComPicYuv::dump(char* pFileName, bool bAdd)
         pelCb += getCStride();
     }
 
-    for (y = 0; y < m_picHeight >> 1; y++)
+    for (y = 0; y < m_picHeight >> m_vChromaShift; y++)
     {
-        for (x = 0; x < m_picWidth >> 1; x++)
+        for (x = 0; x < m_picWidth >> m_hChromaShift; x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (pelCr[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
@@ -328,17 +332,15 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
     Pel *U = getCbAddr();
     Pel *V = getCrAddr();
 
-    uint8_t *y = (uint8_t*)pic.planes[0];
-    uint8_t *u = (uint8_t*)pic.planes[1];
-    uint8_t *v = (uint8_t*)pic.planes[2];
-
     int padx = pad[0];
     int pady = pad[1];
 
 #if HIGH_BIT_DEPTH
-    if (sizeof(Pel) * 8 > pic.bitDepth)
+    if (pic.bitDepth > 8)
     {
-        assert(pic.bitDepth == 8);
+        uint16_t *y = (uint16_t*)pic.planes[0];
+        uint16_t *u = (uint16_t*)pic.planes[1];
+        uint16_t *v = (uint16_t*)pic.planes[2];
 
         /* width and height - without padsize */
         int width = m_picWidth - padx;
@@ -356,9 +358,9 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             y += pic.stride[0];
         }
 
-        for (int r = 0; r < height >> 1; r++)
+        for (int r = 0; r < height >> m_vChromaShift; r++)
         {
-            for (int c = 0; c < width >> 1; c++)
+            for (int c = 0; c < width >> m_hChromaShift; c++)
             {
                 U[c] = (Pel)u[c];
                 V[c] = (Pel)v[c];
@@ -388,12 +390,12 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
                 Y += getStride();
             }
 
-            for (int r = 0; r < height >> 1; r++)
+            for (int r = 0; r < height >> m_vChromaShift; r++)
             {
-                for (int x = 0; x < padx >> 1; x++)
+                for (int x = 0; x < padx >> m_hChromaShift; x++)
                 {
-                    U[(width >> 1) + x] = U[(width >> 1) - 1];
-                    V[(width >> 1) + x] = V[(width >> 1) - 1];
+                    U[(width >> m_hChromaShift) + x] = U[(width >> m_hChromaShift) - 1];
+                    V[(width >> m_hChromaShift) + x] = V[(width >> m_hChromaShift) - 1];
                 }
 
                 U += getCStride();
@@ -406,24 +408,28 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         {
             width = m_picWidth;
             Y = getLumaAddr() + (height - 1) * getStride();
-            U = getCbAddr() + ((height >> 1) - 1) * getCStride();
-            V = getCrAddr() + ((height >> 1) - 1) * getCStride();
+            U = getCbAddr() + ((height >> m_vChromaShift) - 1) * getCStride();
+            V = getCrAddr() + ((height >> m_vChromaShift) - 1) * getCStride();
 
             for (uint32_t i = 1; i <= pady; i++)
             {
                 memcpy(Y + i * getStride(), Y, width * sizeof(Pel));
             }
 
-            for (uint32_t j = 1; j <= pady >> 1; j++)
+            for (uint32_t j = 1; j <= pady >> m_vChromaShift; j++)
             {
-                memcpy(U + j * getCStride(), U, (width >> 1) * sizeof(Pel));
-                memcpy(V + j * getCStride(), V, (width >> 1) * sizeof(Pel));
+                memcpy(U + j * getCStride(), U, (width >> m_hChromaShift) * sizeof(Pel));
+                memcpy(V + j * getCStride(), V, (width >> m_hChromaShift) * sizeof(Pel));
             }
         }
     }
     else
 #endif // if HIGH_BIT_DEPTH
     {
+        uint8_t *y = (uint8_t*)pic.planes[0];
+        uint8_t *u = (uint8_t*)pic.planes[1];
+        uint8_t *v = (uint8_t*)pic.planes[2];
+
         /* width and height - without padsize */
         int width = (m_picWidth * (pic.bitDepth > 8 ? 2 : 1)) - padx;
         int height = m_picHeight - pady;
@@ -441,16 +447,16 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             y += pic.stride[0];
         }
 
-        for (int r = 0; r < height >> 1; r++)
+        for (int r = 0; r < height >> m_vChromaShift; r++)
         {
-            memcpy(U, u, width >> 1);
-            memcpy(V, v, width >> 1);
+            memcpy(U, u, width >> m_hChromaShift);
+            memcpy(V, v, width >> m_hChromaShift);
 
             /* extend the right if width is not multiple of the minimum CU size */
             if (padx)
             {
-                ::memset(U + (width >> 1), U[(width >> 1) - 1], padx >> 1);
-                ::memset(V + (width >> 1), V[(width >> 1) - 1], padx >> 1);
+                ::memset(U + (width >> m_hChromaShift), U[(width >> m_hChromaShift) - 1], padx >> m_hChromaShift);
+                ::memset(V + (width >> m_hChromaShift), V[(width >> m_hChromaShift) - 1], padx >> m_hChromaShift);
             }
 
             U += getCStride();
@@ -464,18 +470,18 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         {
             width = m_picWidth;
             Y = getLumaAddr() + (height - 1) * getStride();
-            U = getCbAddr() + ((height >> 1) - 1) * getCStride();
-            V = getCrAddr() + ((height >> 1) - 1) * getCStride();
+            U = getCbAddr() + ((height >> m_vChromaShift) - 1) * getCStride();
+            V = getCrAddr() + ((height >> m_vChromaShift) - 1) * getCStride();
 
             for (uint32_t i = 1; i <= pady; i++)
             {
                 memcpy(Y + i * getStride(), Y, width * sizeof(pixel));
             }
 
-            for (uint32_t j = 1; j <= pady >> 1; j++)
+            for (uint32_t j = 1; j <= pady >> m_vChromaShift; j++)
             {
-                memcpy(U + j * getCStride(), U, (width >> 1) * sizeof(pixel));
-                memcpy(V + j * getCStride(), V, (width >> 1) * sizeof(pixel));
+                memcpy(U + j * getCStride(), U, (width >> m_hChromaShift) * sizeof(pixel));
+                memcpy(V + j * getCStride(), V, (width >> m_hChromaShift) * sizeof(pixel));
             }
         }
     }

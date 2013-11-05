@@ -151,7 +151,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
         }
     }
 
-    initTempBuff();
+    initTempBuff(cfg->getColorFormat());
 
     m_tempPel = new Pel[g_maxCUWidth * g_maxCUHeight];
 
@@ -166,12 +166,17 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempCbf[1]  = new UChar[numPartitions];
     m_qtTempCbf[2]  = new UChar[numPartitions];
     m_qtTempTComYuv  = new TShortYUV[numLayersToAllocate];
+
+    m_hChromaShift = CHROMA_H_SHIFT(cfg->getColorFormat());
+    m_vChromaShift = CHROMA_V_SHIFT(cfg->getColorFormat());
+
     for (uint32_t i = 0; i < numLayersToAllocate; ++i)
     {
         m_qtTempCoeffY[i]  = new TCoeff[g_maxCUWidth * g_maxCUHeight];
-        m_qtTempCoeffCb[i] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempCoeffCr[i] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempTComYuv[i].create(g_maxCUWidth, g_maxCUHeight);
+
+        m_qtTempCoeffCb[i] = new TCoeff[(g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift)];
+        m_qtTempCoeffCr[i] = new TCoeff[(g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift)];
+        m_qtTempTComYuv[i].create(g_maxCUWidth, g_maxCUHeight, cfg->getColorFormat());
     }
 
     m_sharedPredTransformSkip[0] = new Pel[MAX_TS_WIDTH * MAX_TS_HEIGHT];
@@ -180,12 +185,13 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTUCoeffY  = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_qtTempTUCoeffCb = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_qtTempTUCoeffCr = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
-    m_qtTempTransformSkipTComYuv.create(g_maxCUWidth, g_maxCUHeight);
+
+    m_qtTempTransformSkipTComYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->getColorFormat());
 
     m_qtTempTransformSkipFlag[0] = new UChar[numPartitions];
     m_qtTempTransformSkipFlag[1] = new UChar[numPartitions];
     m_qtTempTransformSkipFlag[2] = new UChar[numPartitions];
-    m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE);
+    m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->getColorFormat());
 }
 
 void TEncSearch::setQPLambda(int QP, double lambdaLuma, double lambdaChroma)
@@ -530,8 +536,8 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
     TextType ttype          = (chromaId > 0 ? TEXT_CHROMA_V : TEXT_CHROMA_U);
     uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdx);
-    uint32_t width          = cu->getWidth(0) >> (trDepth + 1);
-    uint32_t height         = cu->getHeight(0) >> (trDepth + 1);
+    uint32_t width          = cu->getWidth(0) >> (trDepth + m_hChromaShift);
+    uint32_t height         = cu->getHeight(0) >> (trDepth + m_vChromaShift);
     uint32_t stride         = fencYuv->getCStride();
     Pel*     fenc           = (chromaId > 0 ? fencYuv->getCrAddr(absPartIdx) : fencYuv->getCbAddr(absPartIdx));
     Pel*     pred           = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));

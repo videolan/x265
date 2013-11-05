@@ -77,6 +77,9 @@ public:
     // ------------------------------------------------------------------------------------------------
     int   m_picWidth;          ///< Width of picture
     int   m_picHeight;         ///< Height of picture
+    int   m_picCsp;            ///< Picture color format
+    int   m_hChromaShift;
+    int   m_vChromaShift;
 
     int   m_cuWidth;           ///< Width of Coding Unit (CU)
     int   m_cuHeight;          ///< Height of Coding Unit (CU)
@@ -104,7 +107,7 @@ public:
     //  Memory management
     // ------------------------------------------------------------------------------------------------
 
-    void  create(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
+    void  create(int picWidth, int picHeight, int csp, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
     void  destroy();
 
     void  createLuma(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);

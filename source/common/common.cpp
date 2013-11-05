@@ -143,7 +143,7 @@ void x265_param_default(x265_param *param)
     param->bEnableWavefront = 1;
     param->frameNumThreads = 1;
     param->inputBitDepth = 8;
-    
+
     /* CU definitions */
     param->maxCUSize = 64;
     param->tuQTMaxInterDepth = 3;
@@ -775,4 +775,34 @@ char *x265_param2string(x265_param *p)
 #undef BOOL
 
     return buf;
+}
+
+const char * const source_csp_names[] =
+{
+    "i420",
+    "i422",
+    "i444",
+    0
+};
+
+const uint8_t source_csp_fix[] =
+{
+    X265_CSP_I420,
+    X265_CSP_I422,
+    X265_CSP_I444
+};
+
+void parseCspName(const char *arg, int *dst)
+{
+    int csp = 0;
+
+    for (int i = 0; source_csp_names[i]; i++)
+    {
+        if (!strcmp(arg, source_csp_names[i]))
+        {
+            csp = i;
+        }
+    }
+
+    *dst = source_csp_fix[csp];
 }

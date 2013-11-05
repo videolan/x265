@@ -39,7 +39,7 @@ public:
 
     Output()           {}
 
-    static Output* open(const char *fname, int width, int height, uint32_t bitdepth, int rate);
+    static Output* open(const char *fname, int width, int height, uint32_t bitdepth, int rate, int csp);
 
     virtual bool isFail() const = 0;
 

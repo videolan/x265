@@ -107,7 +107,11 @@ protected:
     Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
 
     // AMVP cost of a given mvp index for a given mvp candidate count
-    uint32_t            m_mvpIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1];
+    uint32_t        m_mvpIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1];
+
+    // Color space parameters
+    int             m_hChromaShift;
+    int             m_vChromaShift;
 
 public:
 

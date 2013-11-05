@@ -82,7 +82,7 @@ private:
 
 public:
 
-    void        create(int picWidth, int picHeight, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth);
+    void        create(int picWidth, int picHeight, int picCsp, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth);
     void        destroy();
 
     TComPicSym();
