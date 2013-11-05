@@ -702,6 +702,7 @@ void Lookahead::slicetypeDecide()
             pic->m_lowres.sliceType = X265_TYPE_I;
             pic->m_lowres.bKeyframe = true;
             lastKeyframe = pic->m_lowres.frameNum;
+            lastNonB = &pic->m_lowres;
         }
         outputQueue.pushBack(*pic);
         numDecided++;
@@ -725,12 +726,18 @@ void Lookahead::slicetypeDecide()
             }
         }
 
-        TComPic *pic = list[j - 1];
+        int bframes = j - 1;
+        if (bframes)
+            list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
+        list[bframes]->m_lowres.leadingBframes = bframes;
+        lastNonB = &list[bframes]->m_lowres;
+
+        TComPic *pic = list[bframes];
         if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
             pic->m_lowres.sliceType = X265_TYPE_P;
         outputQueue.pushBack(*pic);
         numDecided++;
-        for (int i = 0; i < j - 1; i++)
+        for (int i = 0; i < bframes; i++)
         {
             pic = list[i];
             if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
