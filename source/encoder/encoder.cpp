@@ -323,7 +323,7 @@ void EncStats::addPsnr(double psnrY, double psnrU, double psnrV)
 
 void EncStats::addBits(uint64_t bits)
 {
-    m_accBits  += bits;
+    m_accBits += bits;
     m_numPics++;
 }
 

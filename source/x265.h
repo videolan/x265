@@ -233,12 +233,12 @@ typedef struct x265_stats
     double    globalPsnrV;
     double    globalPsnr;
     double    globalSsim;
-    double    accBits;              /* total bits output thus far */
-    uint32_t  encodedPictureCount;  /* number of output pictures thus far */
     double    elapsedEncodeTime;    /* wall time since encoder was opened */
     double    elapsedVideoTime;     /* encoded picture count / frame rate */
     double    bitrate;              /* accBits / elapsed video time */
+    uint32_t  encodedPictureCount;  /* number of output pictures thus far */
     uint32_t  totalWPFrames;        /* number of uni-directional weighted frames used */
+    uint64_t  accBits;              /* total bits output thus far */
 } x265_stats;
 
 /* Input parameters to the encoder */

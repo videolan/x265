@@ -37,14 +37,15 @@ struct EncStats
     double        m_psnrSumY;
     double        m_psnrSumU;
     double        m_psnrSumV;
-    double        m_accBits;
     double        m_globalSsim;
+    uint64_t      m_accBits;
     uint32_t      m_numPics;
 
     EncStats() 
     {
-        m_psnrSumY = m_psnrSumU = m_psnrSumV = m_accBits = m_numPics = 0;
-        m_globalSsim = 0;
+        m_psnrSumY = m_psnrSumU = m_psnrSumV = m_globalSsim = 0;
+        m_accBits = 0;
+        m_numPics = 0;
     }
 
     void addPsnr(double psnrY, double psnrU, double psnrV);
