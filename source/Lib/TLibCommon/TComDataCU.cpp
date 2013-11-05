@@ -536,19 +536,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_cuColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 }
 
-void TComDataCU::setOutsideCUPart(uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t numPartition = m_numPartitions >> (depth << 1);
-    uint32_t sizeInUChar = sizeof(UChar) * numPartition;
-
-    UChar width  = g_maxCUWidth  >> depth;
-    UChar height = g_maxCUHeight >> depth;
-
-    memset(m_depth  + absPartIdx, depth,  sizeInUChar);
-    memset(m_width  + absPartIdx, width,  sizeInUChar);
-    memset(m_height + absPartIdx, height, sizeInUChar);
-}
-
 // --------------------------------------------------------------------------------------------------------------------
 // Copy
 // --------------------------------------------------------------------------------------------------------------------
