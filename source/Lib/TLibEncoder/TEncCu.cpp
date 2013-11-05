@@ -520,8 +520,6 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
             m_addSADDepth = depth;
         }
 
-        outTempCU->initEstData(depth, qp);
-
         xCheckRDCostIntra(outBestCU, outTempCU, SIZE_2Nx2N);
         outTempCU->initEstData(depth, qp);
 
