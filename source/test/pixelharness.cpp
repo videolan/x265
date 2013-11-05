@@ -553,6 +553,31 @@ bool PixelHarness::check_block_copy_pp(copy_pp_t ref, copy_pp_t opt)
     return true;
 }
 
+bool PixelHarness::check_block_copy_sp(copy_sp_t ref, copy_sp_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    // we don't know the partition size so we are checking the entire output buffer so
+    // we must initialize the buffers
+    memset(ref_dest, 0, sizeof(ref_dest));
+    memset(opt_dest, 0, sizeof(opt_dest));
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        opt(opt_dest, 64, sbuf1 + j, STRIDE);
+        ref(ref_dest, 64, sbuf1 + j, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -650,6 +675,24 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         if (!check_block_copy_pp(ref.chroma_copy_pp[part], opt.chroma_copy_pp[part]))
         {
             printf("chroma_copy_pp[%s] failed\n", chromaPartStr[part]);
+            return false;
+        }
+    }
+
+    if (opt.luma_copy_sp[part])
+    {
+        if (!check_block_copy_sp(ref.luma_copy_sp[part], opt.luma_copy_sp[part]))
+        {
+            printf("luma_copy_sp[%s] failed\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
+    if (opt.chroma_copy_sp[part])
+    {
+        if (!check_block_copy_sp(ref.chroma_copy_sp[part], opt.chroma_copy_sp[part]))
+        {
+            printf("chroma_copy_sp[%s] failed\n", chromaPartStr[part]);
             return false;
         }
     }
@@ -883,6 +926,18 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         printf("ccpy_pp[%s]", chromaPartStr[part]);
         REPORT_SPEEDUP(opt.chroma_copy_pp[part], ref.chroma_copy_pp[part], pbuf1, 64, pbuf2, 128);
+    }
+
+    if (opt.luma_copy_sp[part])
+    {
+        printf("lcpy_sp[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.luma_copy_sp[part], ref.luma_copy_sp[part], pbuf1, 64, sbuf1, 128);
+    }
+
+    if (opt.chroma_copy_sp[part])
+    {
+        printf("ccpy_sp[%s]", chromaPartStr[part]);
+        REPORT_SPEEDUP(opt.chroma_copy_sp[part], ref.chroma_copy_sp[part], pbuf1, 64, sbuf1, 128);
     }
 }
 

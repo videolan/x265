@@ -58,6 +58,7 @@ protected:
     bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
 
     bool check_block_copy_pp(copy_pp_t ref, copy_pp_t opt);
+    bool check_block_copy_sp(copy_sp_t ref, copy_sp_t opt);
 public:
 
     PixelHarness();
