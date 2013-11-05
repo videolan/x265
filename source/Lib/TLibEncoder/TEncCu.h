@@ -101,7 +101,7 @@ private:
     TEncSbac***  m_rdSbacCoders;
     TEncSbac*    m_rdGoOnSbacCoder;
 
-    uint32_t         m_LCUPredictionSAD;
+    uint32_t     m_LCUPredictionSAD;
     int          m_addSADDepth;
     int          m_temporalSAD;
     UChar        m_totalDepth;

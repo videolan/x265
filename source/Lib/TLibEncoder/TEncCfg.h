@@ -79,8 +79,8 @@ protected:
                                                 // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
 
     //======= Transform =============
-    uint32_t      m_quadtreeTULog2MaxSize;
-    uint32_t      m_quadtreeTULog2MinSize;
+    uint32_t  m_quadtreeTULog2MaxSize;
+    uint32_t  m_quadtreeTULog2MinSize;
 
     //====== Loop/Deblock Filter ========
     bool      m_loopFilterOffsetInPPS;
@@ -97,12 +97,12 @@ protected:
     //====== Tool list ========
     bool      m_bUseASR;
     bool      m_usePCM;
-    uint32_t      m_pcmLog2MaxSize;
-    uint32_t      m_pcmLog2MinSize;
+    uint32_t  m_pcmLog2MaxSize;
+    uint32_t  m_pcmLog2MinSize;
 
     bool      m_bPCMInputBitDepthFlag;
-    uint32_t      m_pcmBitDepthLuma;
-    uint32_t      m_pcmBitDepthChroma;
+    uint32_t  m_pcmBitDepthLuma;
+    uint32_t  m_pcmBitDepthChroma;
     bool      m_bPCMFilterDisableFlag;
     bool      m_loopFilterAcrossTilesEnabledFlag;
 
@@ -115,7 +115,7 @@ protected:
 
     //====== Weighted Prediction ========
 
-    uint32_t      m_log2ParallelMergeLevelMinus2;                 ///< Parallel merge estimation region
+    uint32_t  m_log2ParallelMergeLevelMinus2;                 ///< Parallel merge estimation region
 
     int       m_useScalingListId;                             ///< Using quantization matrix i.e. 0=off, 1=default.
 
