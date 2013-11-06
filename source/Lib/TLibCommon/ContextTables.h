@@ -129,7 +129,8 @@
 // ====================================================================================================================
 // Sbac interface
 // ====================================================================================================================
-typedef struct ContextModel {
+typedef struct ContextModel
+{
     uint8_t m_state;  ///< internal state variable
     uint8_t bBinsCoded;
 } ContextModel;

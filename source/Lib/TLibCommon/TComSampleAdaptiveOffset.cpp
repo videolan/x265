@@ -502,7 +502,7 @@ void TComSampleAdaptiveOffset::resetSAOParam(SAOParam *saoParam)
  */
 inline int xSign(int x)
 {
-    return (x >> 31) | ((int)((((uint32_t) - x)) >> 31));
+    return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
 }
 
 /** initialize variables for SAO process

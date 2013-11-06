@@ -64,6 +64,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             ofs.write(buf, width);
             Y += pic.stride[0];
         }
+
         uint16_t *U = (uint16_t*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
@@ -75,6 +76,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             ofs.write(buf, width >> 1);
             U += pic.stride[1];
         }
+
         uint16_t *V = (uint16_t*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {

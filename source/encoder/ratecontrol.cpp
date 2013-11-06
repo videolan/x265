@@ -55,6 +55,7 @@ static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, in
 {
     uint32_t sum = (uint32_t)sum_ssd;
     uint32_t ssd = (uint32_t)(sum_ssd >> 32);
+
     pic->m_lowres.wp_sum[i] += sum;
     pic->m_lowres.wp_ssd[i] += ssd;
     return ssd - ((uint64_t)sum * sum >> shift);
@@ -82,6 +83,7 @@ double RateControl::acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y)
     uint32_t blockOffsetChroma = (block_x >> 1) + ((block_y >> 1) * cStride);
 
     uint32_t var;
+
     var  = acEnergyPlane(pic, pic->getPicYuvOrg()->getLumaAddr() + blockOffsetLuma, stride, 0);
     var += acEnergyPlane(pic, pic->getPicYuvOrg()->getCbAddr() + blockOffsetChroma, cStride, 1);
     var += acEnergyPlane(pic, pic->getPicYuvOrg()->getCrAddr() + blockOffsetChroma, cStride, 2);
@@ -99,6 +101,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     /* Calculate Qp offset for each 16x16 block in the frame */
     int block_xy = 0;
     int block_x = 0, block_y = 0;
+
     for (block_y = 0; block_y < maxRow; block_y += 16)
     {
         for (block_x = 0; block_x < maxCol; block_x += 16)
@@ -112,14 +115,15 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             }
         }
     }
+
     if (cfg->param.bEnableWeightedPred)
     {
-        for(int i=0; i < 3; i++)
+        for (int i = 0; i < 3; i++)
         {
             UInt64 sum, ssd;
             sum = pic->m_lowres.wp_sum[i];
             ssd = pic->m_lowres.wp_ssd[i];
-            pic->m_lowres.wp_ssd[i] = ssd - (sum*sum + (block_x * block_y) / 2 ) / (block_x * block_y);
+            pic->m_lowres.wp_ssd[i] = ssd - (sum * sum + (block_x * block_y) / 2) / (block_x * block_y);
         }
     }
 }
@@ -137,9 +141,9 @@ RateControl::RateControl(TEncCfg * _cfg)
         cfg->param.rc.bitrate = 0;
 
         double baseCplx = ncu * (cfg->param.bframes ? 120 : 80);
-        double mbtree_offset = 0;//added later
+        double mbtree_offset = 0; //added later
         rateFactorConstant = pow(baseCplx, 1 - cfg->param.rc.qCompress) /
-                             qp2qScale(cfg->param.rc.rfConstant + mbtree_offset + QP_BD_OFFSET);
+            qp2qScale(cfg->param.rc.rfConstant + mbtree_offset + QP_BD_OFFSET);
     }
 
     isAbr = cfg->param.rc.rateControlMode != X265_RC_CQP; // later add 2pass option
@@ -348,7 +352,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
 
                 if (overflow > 1.1 && framesDone > 3)
                     lqmax *= lstep;
-                else if (overflow <0.9)
+                else if (overflow < 0.9)
                     lqmin /= lstep;
 
                 q = Clip3(lqmin, lqmax, q);

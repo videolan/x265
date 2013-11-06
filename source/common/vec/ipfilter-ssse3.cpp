@@ -170,7 +170,7 @@ void filterConvertPelToShort(pixel *source, intptr_t sourceStride, int16_t *dest
                 _mm_storeu_si128((__m128i*)(dest + col), val3);
             }
             else if (n <= 0)
-                ;                 // do nothing if value of is n less than 0
+                ; // do nothing if value of is n less than 0
             else
             {
                 union
@@ -270,7 +270,7 @@ void filterConvertShortToPel(int16_t *source, intptr_t sourceStride, pixel *dest
                 _mm_storeu_si128((__m128i*)(dest + col), val3);
             }
             else if (n <= 0)
-                ;                 // do nothing if value of is n less than 0
+                ; // do nothing if value of is n less than 0
             else
             {
                 union
@@ -309,7 +309,7 @@ void filterConvertShortToPel(int16_t *source, intptr_t sourceStride, pixel *dest
     }
 }
 }
-#endif
+#endif // if !HIGH_BIT_DEPTH
 
 namespace x265 {
 void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives& p)

@@ -120,14 +120,14 @@ void partialButterfly16(int16_t *src, int16_t *dst, int shift, int line)
         for (k = 2; k < 16; k += 4)
         {
             dst[k * line] = (int16_t)((g_t16[k][0] * EO[0] + g_t16[k][1] * EO[1] + g_t16[k][2] * EO[2] +
-                                     g_t16[k][3] * EO[3] + add) >> shift);
+                                       g_t16[k][3] * EO[3] + add) >> shift);
         }
 
         for (k = 1; k < 16; k += 2)
         {
             dst[k * line] =  (int16_t)((g_t16[k][0] * O[0] + g_t16[k][1] * O[1] + g_t16[k][2] * O[2] + g_t16[k][3] * O[3] +
-                                      g_t16[k][4] * O[4] + g_t16[k][5] * O[5] + g_t16[k][6] * O[6] + g_t16[k][7] * O[7] +
-                                      add) >> shift);
+                                        g_t16[k][4] * O[4] + g_t16[k][5] * O[5] + g_t16[k][6] * O[6] + g_t16[k][7] * O[7] +
+                                        add) >> shift);
         }
 
         src += 16;
@@ -180,23 +180,23 @@ void partialButterfly32(int16_t *src, int16_t *dst, int shift, int line)
         for (k = 4; k < 32; k += 8)
         {
             dst[k * line] = (int16_t)((g_t32[k][0] * EEO[0] + g_t32[k][1] * EEO[1] + g_t32[k][2] * EEO[2] +
-                                     g_t32[k][3] * EEO[3] + add) >> shift);
+                                       g_t32[k][3] * EEO[3] + add) >> shift);
         }
 
         for (k = 2; k < 32; k += 4)
         {
             dst[k * line] = (int16_t)((g_t32[k][0] * EO[0] + g_t32[k][1] * EO[1] + g_t32[k][2] * EO[2] +
-                                     g_t32[k][3] * EO[3] + g_t32[k][4] * EO[4] + g_t32[k][5] * EO[5] +
-                                     g_t32[k][6] * EO[6] + g_t32[k][7] * EO[7] + add) >> shift);
+                                       g_t32[k][3] * EO[3] + g_t32[k][4] * EO[4] + g_t32[k][5] * EO[5] +
+                                       g_t32[k][6] * EO[6] + g_t32[k][7] * EO[7] + add) >> shift);
         }
 
         for (k = 1; k < 32; k += 2)
         {
             dst[k * line] = (int16_t)((g_t32[k][0] * O[0] + g_t32[k][1] * O[1] + g_t32[k][2] * O[2] + g_t32[k][3] * O[3] +
-                                     g_t32[k][4] * O[4] + g_t32[k][5] * O[5] + g_t32[k][6] * O[6] + g_t32[k][7] * O[7] +
-                                     g_t32[k][8] * O[8] + g_t32[k][9] * O[9] + g_t32[k][10] * O[10] + g_t32[k][11] *
-                                     O[11] + g_t32[k][12] * O[12] + g_t32[k][13] * O[13] + g_t32[k][14] * O[14] +
-                                     g_t32[k][15] * O[15] + add) >> shift);
+                                       g_t32[k][4] * O[4] + g_t32[k][5] * O[5] + g_t32[k][6] * O[6] + g_t32[k][7] * O[7] +
+                                       g_t32[k][8] * O[8] + g_t32[k][9] * O[9] + g_t32[k][10] * O[10] + g_t32[k][11] *
+                                       O[11] + g_t32[k][12] * O[12] + g_t32[k][13] * O[13] + g_t32[k][14] * O[14] +
+                                       g_t32[k][15] * O[15] + add) >> shift);
         }
 
         src += 32;

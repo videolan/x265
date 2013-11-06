@@ -381,7 +381,10 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             for (int r = 0; r < height; r++)
             {
                 for (int x = 0; x < padx; x++)
+                {
                     Y[width + x] = Y[width - 1];
+                }
+
                 Y += getStride();
             }
 
@@ -392,6 +395,7 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
                     U[(width >> 1) + x] = U[(width >> 1) - 1];
                     V[(width >> 1) + x] = V[(width >> 1) - 1];
                 }
+
                 U += getCStride();
                 V += getCStride();
             }
@@ -406,7 +410,9 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             V = getCrAddr() + ((height >> 1) - 1) * getCStride();
 
             for (uint32_t i = 1; i <= pady; i++)
+            {
                 memcpy(Y + i * getStride(), Y, width * sizeof(Pel));
+            }
 
             for (uint32_t j = 1; j <= pady >> 1; j++)
             {
@@ -418,7 +424,6 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
     else
 #endif // if HIGH_BIT_DEPTH
     {
-
         /* width and height - without padsize */
         int width = (m_picWidth * (pic.bitDepth > 8 ? 2 : 1)) - padx;
         int height = m_picHeight - pady;
@@ -434,7 +439,6 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 
             Y += getStride();
             y += pic.stride[0];
-
         }
 
         for (int r = 0; r < height >> 1; r++)
@@ -464,7 +468,9 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             V = getCrAddr() + ((height >> 1) - 1) * getCStride();
 
             for (uint32_t i = 1; i <= pady; i++)
+            {
                 memcpy(Y + i * getStride(), Y, width * sizeof(pixel));
+            }
 
             for (uint32_t j = 1; j <= pady >> 1; j++)
             {

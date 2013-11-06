@@ -337,7 +337,6 @@ void sad_avx2_x3_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intpt
     res[2] = _mm_cvtsi128_si32(tmpsum0);
 }
 
-
 #define PROCESS_X4_32x4(BASE) \
     T00 = _mm256_load_si256((__m256i*)(fenc + (BASE + 0) * FENC_STRIDE)); \
     T01 = _mm256_load_si256((__m256i*)(fenc + (BASE + 1) * FENC_STRIDE)); \
@@ -393,7 +392,7 @@ void sad_avx2_x3_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intpt
     sum3 = _mm256_add_epi32(T20, sum3)
 
 template<int ly>
-void sad_avx2_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3,pixel *fref4, intptr_t frefstride, int32_t *res)
+void sad_avx2_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m256i sum0 = _mm256_setzero_si256();
     __m256i sum1 = _mm256_setzero_si256();
@@ -546,7 +545,7 @@ void sad_avx2_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3,pixel 
     sum3 = _mm256_add_epi32(T20, sum3)
 
 template<int ly>
-void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3,pixel *fref4, intptr_t frefstride, int32_t *res)
+void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int32_t *res)
 {
     __m256i sum0 = _mm256_setzero_si256();
     __m256i sum1 = _mm256_setzero_si256();

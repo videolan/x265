@@ -44,9 +44,9 @@ uint32_t quant(int32_t* coef,
                int32_t* quantCoeff,
                int32_t* deltaU,
                int32_t* qCoef,
-               int  qBits,
-               int  add,
-               int  numCoeff,
+               int      qBits,
+               int      add,
+               int      numCoeff,
                int32_t* lastPos)
 {
     int qBits8 = qBits - 8;

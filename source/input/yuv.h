@@ -89,7 +89,7 @@ public:
 
     int getHeight() const                         { return height; }
 
-    bool isEof() const                            { return (ifs && ifs->eof()); }
+    bool isEof() const                            { return ifs && ifs->eof();  }
 
     bool isFail()                                 { return !(ifs && !ifs->fail() && threadActive); }
 

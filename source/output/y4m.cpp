@@ -51,7 +51,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
     std::ofstream::pos_type frameSize = (6 + 3 * (width * height) / 2);
-    ofs.seekp(header + frameSize * pic.poc); 
+    ofs.seekp(header + frameSize * pic.poc);
     ofs << "FRAME\n";
 
     if (pic.bitDepth > 8)
@@ -68,6 +68,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
             ofs.write(buf, width);
             Y += pic.stride[0];
         }
+
         uint16_t *U = (uint16_t*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
@@ -79,6 +80,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
             ofs.write(buf, width >> 1);
             U += pic.stride[1];
         }
+
         uint16_t *V = (uint16_t*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {

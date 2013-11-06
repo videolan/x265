@@ -41,7 +41,7 @@ struct EncStats
     uint64_t      m_accBits;
     uint32_t      m_numPics;
 
-    EncStats() 
+    EncStats()
     {
         m_psnrSumY = m_psnrSumU = m_psnrSumV = m_globalSsim = 0;
         m_accBits = 0;

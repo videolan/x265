@@ -2729,7 +2729,7 @@ void TEncSearch::xCheckBestMVP(TComDataCU* cu, int list, MV mv, MV& mvPred, int&
 }
 
 uint32_t TEncSearch::xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
-                                  int mvpCandCount, int list, int refIdx, int sizex, int sizey)
+                                      int mvpCandCount, int list, int refIdx, int sizex, int sizey)
 {
     // TODO: does it clip with m_referenceRowsAvailable?
     cu->clipMv(mvCand);
@@ -3093,7 +3093,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, m_qtTempTComYuv[qtlayer].m_width,  coeffCurY, trWidth, trHeight, scalingListType, false, lastPosY); //this is for inter mode only
 
             const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx),
-                                                                  m_qtTempTComYuv[qtlayer].m_width);
+                                                                      m_qtTempTComYuv[qtlayer].m_width);
             if (cu->isLosslessCoded(0))
             {
                 distY = nonZeroDistY;
@@ -3165,8 +3165,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, false, lastPosU);
 
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                         m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
-                                                         m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
+                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
                 const uint32_t nonZeroDistU = m_rdCost->scaleChromaDistCb(dist);
 
                 if (cu->isLosslessCoded(0))
@@ -3231,8 +3231,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, false, lastPosV);
 
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                         m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
-                                                         m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
+                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
                 const uint32_t nonZeroDistV = m_rdCost->scaleChromaDistCr(dist);
 
                 if (cu->isLosslessCoded(0))
@@ -3427,8 +3427,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiU, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, true, lastPosTransformSkipU);
 
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                         m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
-                                                         m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
+                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
                 nonZeroDistU = m_rdCost->scaleChromaDistCb(dist);
                 singleCostU = m_rdCost->calcRdCost(nonZeroDistU, singleBitsU);
             }
@@ -3465,8 +3465,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, true, lastPosTransformSkipV);
 
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                         m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
-                                                         m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
+                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
                 nonZeroDistV = m_rdCost->scaleChromaDistCr(dist);
                 singleCostV = m_rdCost->calcRdCost(nonZeroDistV, singleBitsV);
             }

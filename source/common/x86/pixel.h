@@ -213,7 +213,7 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx(pixel *pix1, intptr_t stride1, pixel *pi
 uint64_t x265_pixel_sa8d_satd_16x16_xop(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 uint64_t x265_pixel_sa8d_satd_16x16_avx2(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 
-void x265_cvt32to16_shr_sse2(int16_t *dst, int *src, intptr_t, int, int);
+void x265_cvt32to16_shr_sse2(int16_t * dst, int *src, intptr_t, int, int);
 
 #define DECL_HEVC_SSD(suffix) \
     int x265_pixel_ssd_32x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
@@ -268,11 +268,9 @@ DECL_ADS(4, avx2)
 DECL_ADS(2, avx2)
 DECL_ADS(1, avx2)
 
-
-
 #define SETUP_CHROMA_BLOCKCOPY_FUNC(W, H, cpu) \
-    void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb);\
-    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
+    void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb); \
+    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
 
 #define CHROMA_BLOCKCOPY_DEF(cpu) \
     SETUP_CHROMA_BLOCKCOPY_FUNC(4, 4, cpu); \
@@ -301,8 +299,8 @@ DECL_ADS(1, avx2)
     SETUP_CHROMA_BLOCKCOPY_FUNC(8, 32, cpu);
 
 #define SETUP_LUMA_BLOCKCOPY_FUNC(W, H, cpu) \
-    void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb);\
-    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
+    void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb); \
+    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
 
 #define LUMA_BLOCKCOPY_DEF(cpu) \
     SETUP_LUMA_BLOCKCOPY_FUNC(4,   4, cpu); \

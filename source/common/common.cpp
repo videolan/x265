@@ -96,6 +96,7 @@ void x265_free(void *ptr)
 int x265_exp2fix8(double x)
 {
     int i = (int)(x * (-64.f / 6.f) + 512.5f);
+
     if (i < 0) return 0;
     if (i > 1023) return 0xffff;
     return (x265_exp2_lut[i & 63] + 256) << (i >> 6) >> 8;
@@ -248,7 +249,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
     {
         char *end;
         int i = strtol(preset, &end, 10);
-        if (*end == 0 && i >= 0 && i < (int)(sizeof(x265_preset_names)/sizeof(*x265_preset_names)-1))
+        if (*end == 0 && i >= 0 && i < (int)(sizeof(x265_preset_names) / sizeof(*x265_preset_names) - 1))
             preset = x265_preset_names[i];
 
         if (!strcmp(preset, "ultrafast"))
@@ -478,7 +479,7 @@ int x265_check_params(x265_param *param)
           "Picture height must be an integer multiple of the specified chroma subsampling");
     CHECK(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
           "Rate control mode is out of range");
-    CHECK(param->rdLevel < X265_NO_RDO_NO_RDOQ || param->rdLevel > X265_FULL_RDO,
+    CHECK(param->rdLevel<X265_NO_RDO_NO_RDOQ || param->rdLevel> X265_FULL_RDO,
           "RD Level is out of range");
     CHECK(param->bframes > param->lookaheadDepth,
           "Lookahead depth must be greater than the max consecutive bframe count");
@@ -486,7 +487,7 @@ int x265_check_params(x265_param *param)
           "max consecutive bframe count must be 16 or smaller");
     CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
           "Lookahead depth must be less than 256");
-    CHECK(param->rc.aqMode < X265_AQ_NONE || param->rc.aqMode > X265_AQ_VARIANCE,
+    CHECK(param->rc.aqMode<X265_AQ_NONE || param->rc.aqMode> X265_AQ_VARIANCE,
           "Aq-Mode is out of range");
 
     // max CU size should be power of 2
@@ -654,68 +655,49 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 #endif
 #define OPT(STR) else if (!strcmp(name, STR))
     if (0) ;
-    OPT("fps")
-        p->frameRate = atoi(value);
-    OPT("csv")
-        p->csvfn = value;
-    OPT("threads")
-        p->poolNumThreads = atoi(value);
-    OPT("frame-threads")
-        p->frameNumThreads = atoi(value);
-    OPT("log")
-        p->logLevel = atoi(value);
-    OPT("wpp")
-        p->bEnableWavefront = bvalue;
-    OPT("ctu")
-        p->maxCUSize =(uint32_t) atoi(value);
-    OPT("tu-intra-depth")
-        p->tuQTMaxIntraDepth = (uint32_t) atoi(value);
-    OPT("tu-inter-depth")
-        p->tuQTMaxInterDepth =(uint32_t) atoi(value);
-    OPT("me")
-        p->searchMethod = atoi(value);
-    OPT("subme")
-        p->subpelRefine = atoi(value);
-    OPT("merange") 
-        p->searchRange = atoi(value);
-    OPT("rect")
-        p->bEnableRectInter = bvalue;
-    OPT("amp")
-        p->bEnableAMP = bvalue;
-    OPT("max-merge")
-        p->maxNumMergeCand = (uint32_t)atoi(value);
-    OPT("early-skip")
-        p->bEnableEarlySkip = bvalue;
-    OPT("fast-cbf")
-        p->bEnableCbfFastMode = bvalue;
-    OPT("rdpenalty")
-        p->rdPenalty = atoi(value);
-    OPT("tskip")
-        p->bEnableTransformSkip = bvalue;
-    OPT("no-tskip-fast")
-        p->bEnableTSkipFast = bvalue;
-    OPT("tskip-fast")
-        p->bEnableTSkipFast = bvalue;
-    OPT("strong-intra-smoothing")
-        p->bEnableStrongIntraSmoothing = bvalue;
-    OPT("constrained-intra")
-        p->bEnableConstrainedIntra = bvalue;
-    OPT("refresh")
-        p->decodingRefreshType = atoi(value);
-    OPT("keyint")
-        p->keyframeMax = atoi(value);
-    OPT("rc-lookahead")
-        p->lookaheadDepth = atoi(value);
-    OPT("bframes")
-        p->bframes = atoi(value);
-    OPT("bframe-bias")
-        p->bFrameBias = atoi(value);
-    OPT("b-adapt")
-        p->bFrameAdaptive = atoi(value);
-    OPT("ref")
-        p->maxNumReferences = atoi(value);
-    OPT("weightp")
-        p->bEnableWeightedPred = bvalue;
+    OPT("fps") p->frameRate = atoi(value);
+    OPT("csv") p->csvfn = value;
+    OPT("threads") p->poolNumThreads = atoi(value);
+    OPT("frame-threads") p->frameNumThreads = atoi(value);
+    OPT("log") p->logLevel = atoi(value);
+    OPT("wpp") p->bEnableWavefront = bvalue;
+    OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);
+    OPT("tu-intra-depth") p->tuQTMaxIntraDepth = (uint32_t)atoi(value);
+    OPT("tu-inter-depth") p->tuQTMaxInterDepth = (uint32_t)atoi(value);
+    OPT("me") p->searchMethod = atoi(value);
+    OPT("subme") p->subpelRefine = atoi(value);
+    OPT("merange") p->searchRange = atoi(value);
+    OPT("rect") p->bEnableRectInter = bvalue;
+    OPT("amp") p->bEnableAMP = bvalue;
+    OPT("max-merge") p->maxNumMergeCand = (uint32_t)atoi(value);
+    OPT("early-skip") p->bEnableEarlySkip = bvalue;
+    OPT("fast-cbf") p->bEnableCbfFastMode = bvalue;
+    OPT("rdpenalty") p->rdPenalty = atoi(value);
+    OPT("tskip") p->bEnableTransformSkip = bvalue;
+    OPT("no-tskip-fast") p->bEnableTSkipFast = bvalue;
+    OPT("tskip-fast") p->bEnableTSkipFast = bvalue;
+    OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = bvalue;
+    OPT("constrained-intra") p->bEnableConstrainedIntra = bvalue;
+    OPT("refresh") p->decodingRefreshType = atoi(value);
+    OPT("keyint") p->keyframeMax = atoi(value);
+    OPT("rc-lookahead") p->lookaheadDepth = atoi(value);
+    OPT("bframes") p->bframes = atoi(value);
+    OPT("bframe-bias") p->bFrameBias = atoi(value);
+    OPT("b-adapt") p->bFrameAdaptive = atoi(value);
+    OPT("ref") p->maxNumReferences = atoi(value);
+    OPT("weightp") p->bEnableWeightedPred = bvalue;
+    OPT("cbqpoffs") p->cbQpOffset = atoi(value);
+    OPT("crqpoffs") p->crQpOffset = atoi(value);
+    OPT("rd") p->rdLevel = atoi(value);
+    OPT("signhide") p->bEnableSignHiding = bvalue;
+    OPT("lft") p->bEnableLoopFilter = bvalue;
+    OPT("sao") p->bEnableSAO = bvalue;
+    OPT("sao-lcu-bounds") p->saoLcuBoundary = atoi(value);
+    OPT("sao-lcu-opt") p->saoLcuBasedOptimization = atoi(value);
+    OPT("ssim") p->bEnableSsim = bvalue;
+    OPT("psnr") p->bEnablePsnr = bvalue;
+    OPT("hash") p->decodedPictureHashSEI = atoi(value);
+    OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("crf")
     {
         p->rc.rfConstant = atof(value);
@@ -732,32 +714,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->rc.rateControlMode = X265_RC_CQP;
         p->rc.aqMode = X265_AQ_NONE;
     }
-    OPT("aq-mode")
-    {
-        p->rc.aqMode = atoi(value);
-    }
-    OPT("cbqpoffs")
-        p->cbQpOffset = atoi(value);
-    OPT("crqpoffs")
-        p->crQpOffset = atoi(value);
-    OPT("rd")
-        p->rdLevel = atoi(value);
-    OPT("signhide")
-        p->bEnableSignHiding = bvalue;
-    OPT("lft")
-        p->bEnableLoopFilter = bvalue;
-    OPT("sao")
-        p->bEnableSAO = bvalue;
-    OPT("sao-lcu-bounds")
-        p->saoLcuBoundary = atoi(value);
-    OPT("sao-lcu-opt")
-        p->saoLcuBasedOptimization = atoi(value);
-    OPT("ssim")
-        p->bEnableSsim = bvalue;
-    OPT("psnr")
-        p->bEnablePsnr = bvalue;
-    OPT("hash")
-        p->decodedPictureHashSEI = atoi(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -766,10 +722,11 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     return berror ? X265_PARAM_BAD_VALUE : 0;
 }
 
-char *x265_param2string( x265_param *p)
+char *x265_param2string(x265_param *p)
 {
     char *buf, *s;
-    buf = s = (char *)X265_MALLOC(char, 2000);
+
+    buf = s = (char*)X265_MALLOC(char, 2000);
     if (!buf)
         return NULL;
 

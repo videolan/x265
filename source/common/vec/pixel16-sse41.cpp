@@ -68,6 +68,7 @@ int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
         T21 = _mm_add_epi16(T20, T21);
         sum1 = _mm_add_epi16(sum1, T21);
     }
+
     sum1 = _mm_hadd_epi16(sum1, sum1);
     sum1 = _mm_unpacklo_epi16(sum1, _mm_setzero_si128());
     sum1 = _mm_hadd_epi32(_mm_hadd_epi32(sum1, sum1), sum1);

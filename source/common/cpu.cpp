@@ -331,7 +331,7 @@ void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
 
     uint64_t out = 0;
 
-#endif
+#endif // if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
 
     *eax = (uint32_t)out;
     *edx = (uint32_t)(out >> 32);

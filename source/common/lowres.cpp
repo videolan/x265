@@ -110,6 +110,7 @@ void Lowres::destroy(int bframes)
         X265_FREE(lowresMvCosts[0][i]);
         X265_FREE(lowresMvCosts[1][i]);
     }
+
     X265_FREE(qpAqOffset);
     X265_FREE(invQscaleFactor);
 }
@@ -173,7 +174,7 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     {
         ::memcpy(src + y * srcStride, src, sizeof(Pel) * (extWidth));
     }
-    
+
     /* downscale and generate 4 HPEL planes for lookahead */
     primitives.frame_init_lowres_core(orig->getLumaAddr(),
                                       lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],

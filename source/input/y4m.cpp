@@ -41,10 +41,12 @@ using namespace std;
 
 Y4MInput::Y4MInput(const char *filename)
 {
-
 #if defined ENABLE_THREAD
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
+    {
         buf[i] = NULL;
+    }
+
 #else
     buf = NULL;
 #endif
@@ -78,6 +80,7 @@ Y4MInput::Y4MInput(const char *filename)
                     threadActive = false;
                 }
             }
+
 #else // if defined(ENABLE_THREAD)
             buf = new char[3 * width * height / 2];
 #endif // if defined(ENABLE_THREAD)
@@ -243,7 +246,7 @@ static const char header[] = "FRAME";
 
 int Y4MInput::guessFrameCount()
 {
-    if (!ifs || ifs == &cin) 
+    if (!ifs || ifs == &cin)
         return -1;
     istream::pos_type cur = ifs->tellg();
     if (cur < 0)
@@ -261,6 +264,7 @@ int Y4MInput::guessFrameCount()
 void Y4MInput::skipFrames(uint32_t numFrames)
 {
     const size_t count = (width * height * 3 / 2) + strlen(header) + 1;
+
     if (ifs && numFrames)
     {
         ifs->ignore(count * numFrames);
@@ -324,6 +328,7 @@ bool Y4MInput::populateFrameQueue()
 {
     /* strip off the FRAME header */
     char hbuf[sizeof(header)];
+
     if (!ifs)
         return false;
 

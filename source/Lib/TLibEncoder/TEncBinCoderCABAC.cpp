@@ -184,6 +184,7 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
     }
 
     uint32_t mstate = ctxModel.m_state;
+
     ctxModel.m_state = sbacNext(ctxModel.m_state, binValue);
 
     if (bIsCounter)

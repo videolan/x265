@@ -337,19 +337,20 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
     double fps = (double)param.frameRate;
     double scale = fps / 1000 / (double)stat.m_numPics;
     int len = sprintf(buffer, "%-6d ", stat.m_numPics);
-        sprintf(buffer + len, "kb/s: %-8.2lf", stat.m_accBits * scale);
+
+    sprintf(buffer + len, "kb/s: %-8.2lf", stat.m_accBits * scale);
 
     if (param.bEnablePsnr)
     {
         len = sprintf(buffer + len, " PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf",
-                stat.m_psnrSumY / (double)stat.m_numPics,
-                stat.m_psnrSumU / (double)stat.m_numPics,
-                stat.m_psnrSumV / (double)stat.m_numPics);
+                      stat.m_psnrSumY / (double)stat.m_numPics,
+                      stat.m_psnrSumU / (double)stat.m_numPics,
+                      stat.m_psnrSumV / (double)stat.m_numPics);
     }
     if (param.bEnableSsim)
     {
         sprintf(buffer + len, " SSIM Mean: %.3lf",
-            stat.m_globalSsim / (double)stat.m_numPics);
+                stat.m_globalSsim / (double)stat.m_numPics);
     }
     return buffer;
 }
@@ -370,7 +371,7 @@ void Encoder::printSummary()
         if (param.bEnableWeightedPred)
         {
             x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
-                m_numWPFrames, m_analyzeP.m_numPics, (float) 100.0 * m_numWPFrames / m_analyzeP.m_numPics);
+                     m_numWPFrames, m_analyzeP.m_numPics, (float)100.0 * m_numWPFrames / m_analyzeP.m_numPics);
         }
     }
 }
@@ -429,8 +430,8 @@ void Encoder::writeLog(int argc, char **argv)
 
         if (param.bEnablePsnr)
             fprintf(m_csvfpt, " %.3lf, %.3lf, %.3lf, %.3lf,",
-                    stats.globalPsnrY/stats.encodedPictureCount, stats.globalPsnrU/stats.encodedPictureCount,
-                    stats.globalPsnrV/stats.encodedPictureCount, stats.globalPsnr);
+                    stats.globalPsnrY / stats.encodedPictureCount, stats.globalPsnrU / stats.encodedPictureCount,
+                    stats.globalPsnrV / stats.encodedPictureCount, stats.globalPsnr);
         else
             fprintf(m_csvfpt, " -, -, -, -,");
         if (param.bEnableSsim)
@@ -633,7 +634,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
                 for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
                     int k = slice->getRefPOC(list, ref) - slice->getLastIDR();
-                    fprintf(stderr, "%d ",k);
+                    fprintf(stderr, "%d ", k);
                 }
 
                 fprintf(stderr, "]");
@@ -666,6 +667,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
                         fprintf(m_csvfpt, " %d", k);
                     }
                 }
+
                 if (numLists == 1)
                     fprintf(m_csvfpt, ", -");
             }
@@ -1379,6 +1381,7 @@ extern "C"
 void x265_encoder_close(x265_encoder *enc)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
+
     REPORT_CYCLE_COUNTER(ME);
 
     encoder->printSummary();

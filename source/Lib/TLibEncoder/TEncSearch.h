@@ -210,7 +210,7 @@ protected:
                        uint32_t& outBits, uint32_t& outCost);
 
     uint32_t xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
-                          int mvpCandCount, int picList, int refIdx, int sizex, int sizey);
+                              int mvpCandCount, int picList, int refIdx, int sizex, int sizey);
 
     void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
     uint32_t xGetMvpIdxBits(int idx, int num);

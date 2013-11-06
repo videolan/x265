@@ -43,7 +43,10 @@ YUVInput::YUVInput(const char *filename)
 {
 #if defined ENABLE_THREAD
     for (int i = 0; i < QUEUE_SIZE; i++)
+    {
         buf[i] = NULL;
+    }
+
     head = 0;
     tail = 0;
 #else
@@ -79,6 +82,7 @@ YUVInput::~YUVInput()
     {
         delete[] buf[i];
     }
+
 #else
     delete[] buf;
 #endif
@@ -108,7 +112,9 @@ void YUVInput::skipFrames(uint32_t numFrames)
         if (ifs == &cin)
         {
             for (uint32_t i = 0; i < numFrames; i++)
+            {
                 ifs->ignore(framesize);
+            }
         }
         else
             ifs->seekg(framesize * numFrames, ios::cur);
@@ -146,6 +152,7 @@ void YUVInput::setDimensions(int w, int h)
                 threadActive = false;
             }
         }
+
 #else // if defined ENABLE_THREAD
         buf = new char[framesize];
 #endif // if defined ENABLE_THREAD

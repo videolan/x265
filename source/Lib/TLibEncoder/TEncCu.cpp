@@ -86,7 +86,7 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
     m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
     m_bestResiYuv = new TShortYUV*[m_totalDepth - 1];
     m_bestRecoYuv = new TComYuv*[m_totalDepth - 1];
-    
+
     m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
 
     m_modePredYuv[0] = new TComYuv*[m_totalDepth - 1];
@@ -232,7 +232,7 @@ void TEncCu::destroy()
             delete m_bestRecoYuv[i];
             m_bestRecoYuv[i] = NULL;
         }
-    
+
         if (m_tmpPredYuv[i])
         {
             m_tmpPredYuv[i]->destroy();

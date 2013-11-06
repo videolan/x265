@@ -525,7 +525,7 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
  * coding engines using probability models like CABAC
  */
 uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t width, uint32_t height,
-                                    TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
+                                        TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
     uint32_t log2TrSize = g_convertToBit[width] + 2;
     uint32_t absSum = 0;
@@ -1061,7 +1061,7 @@ int TComTrQuant::calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t p
  * \returns ctxInc for current scan position
  */
 int TComTrQuant::getSigCtxInc(int      patternSigCtx,
-                              uint32_t     scanIdx,
+                              uint32_t scanIdx,
                               int      posX,
                               int      posY,
                               int      log2BlockSize,
@@ -1145,20 +1145,20 @@ int TComTrQuant::getSigCtxInc(int      patternSigCtx,
  * \returns best quantized transform level for given scan position
  * This method calculates the best quantized transform level for a given scan position.
  */
-inline uint32_t TComTrQuant::xGetCodedLevel(double& codedCost,
-                                        double& codedCost0,
-                                        double& codedCostSig,
-                                        int     levelDouble,
-                                        uint32_t    maxAbsLevel,
-                                        uint16_t  ctxNumSig,
-                                        uint16_t  ctxNumOne,
-                                        uint16_t  ctxNumAbs,
-                                        uint16_t  absGoRice,
-                                        uint32_t    c1Idx,
-                                        uint32_t    c2Idx,
-                                        int     qbits,
-                                        double  scaleFactor,
-                                        bool    last) const
+inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
+                                            double&  codedCost0,
+                                            double&  codedCostSig,
+                                            int      levelDouble,
+                                            uint32_t maxAbsLevel,
+                                            uint16_t ctxNumSig,
+                                            uint16_t ctxNumOne,
+                                            uint16_t ctxNumAbs,
+                                            uint16_t absGoRice,
+                                            uint32_t c1Idx,
+                                            uint32_t c2Idx,
+                                            int      qbits,
+                                            double   scaleFactor,
+                                            bool     last) const
 {
     double curCostSig   = 0;
     uint32_t   bestAbsLevel = 0;
@@ -1207,12 +1207,12 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double& codedCost,
  * \param absGoRice Rice parameter for coeff_abs_level_minus3
  * \returns cost of given absolute transform level
  */
-inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
+inline double TComTrQuant::xGetICRateCost(uint32_t absLevel,
                                           uint16_t ctxNumOne,
                                           uint16_t ctxNumAbs,
                                           uint16_t absGoRice,
-                                          uint32_t   c1Idx,
-                                          uint32_t   c2Idx) const
+                                          uint32_t c1Idx,
+                                          uint32_t c2Idx) const
 {
     double rate = xGetIEPRate();
     uint32_t baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
@@ -1263,12 +1263,12 @@ inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
     return xGetICost(rate);
 }
 
-inline int TComTrQuant::xGetICRate(uint32_t   absLevel,
+inline int TComTrQuant::xGetICRate(uint32_t absLevel,
                                    uint16_t ctxNumOne,
                                    uint16_t ctxNumAbs,
                                    uint16_t absGoRice,
-                                   uint32_t   c1Idx,
-                                   uint32_t   c2Idx) const
+                                   uint32_t c1Idx,
+                                   uint32_t c2Idx) const
 {
     int rate = 0;
     uint32_t baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;

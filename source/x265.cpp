@@ -414,7 +414,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 #define OPT(longname) \
     else if (!strcmp(long_options[long_options_index].name, longname))
 
-        if (0);
+            if (0) ;
             OPT("cpuid") cpuid = atoi(optarg);
             OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
             OPT("preset") preset = optarg;
@@ -428,15 +428,15 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("recon-depth") outputBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
             OPT("y4m") bForceY4m = true;
-        else
-            berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
+            else
+                berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
 
-        if (berror)
-        {
-            const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind-2];
-            x265_log(NULL, X265_LOG_ERROR, "invalid argument: %s = %s\n", name, optarg);
-            return true;
-        }
+            if (berror)
+            {
+                const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind - 2];
+                x265_log(NULL, X265_LOG_ERROR, "invalid argument: %s = %s\n", name, optarg);
+                return true;
+            }
 #undef OPT
         }
     }
@@ -500,7 +500,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         this->input->skipFrames(this->frameSkip);
     }
 
-    uint32_t fileFrameCount = guess < 0 ? 0 : (uint32_t) guess;
+    uint32_t fileFrameCount = guess < 0 ? 0 : (uint32_t)guess;
     if (this->framesToBeEncoded && fileFrameCount)
         this->framesToBeEncoded = X265_MIN(this->framesToBeEncoded, fileFrameCount - this->frameSkip);
     else if (fileFrameCount)
@@ -657,13 +657,13 @@ int main(int argc, char **argv)
     cliopt.bitstreamFile.close();
 
     if (b_ctrl_c)
-        fprintf(stderr, "aborted at input frame %d, output frame %d\n", 
+        fprintf(stderr, "aborted at input frame %d, output frame %d\n",
                 cliopt.frameSkip + inFrameCount, stats.encodedPictureCount);
 
     if (stats.encodedPictureCount)
     {
         printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
-            stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
+               stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
         if (param.bEnablePsnr)
             printf("Global PSNR: %.3f\n", stats.globalPsnr);

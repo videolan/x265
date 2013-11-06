@@ -123,11 +123,13 @@ void updateCRC(const Pel* plane, uint32_t& crcVal, uint32_t height, uint32_t wid
 void crcFinish(uint32_t& crcVal, UChar digest[16])
 {
     uint32_t crcMsb;
+
     for (int bitIdx = 0; bitIdx < 16; bitIdx++)
     {
         crcMsb = (crcVal >> 15) & 1;
         crcVal = ((crcVal << 1) & 0xffff) ^ (crcMsb * 0x1021);
     }
+
     digest[0] = (crcVal >> 8)  & 0xff;
     digest[1] =  crcVal        & 0xff;
 }

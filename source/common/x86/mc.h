@@ -26,7 +26,7 @@
 
 #define LOWRES(cpu) \
     void x265_frame_init_lowres_core_ ## cpu(pixel * src0, pixel * dst0, pixel * dsth, pixel * dstv, pixel * dstc, \
-    intptr_t src_stride, intptr_t dst_stride, int width, int height);
+                                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
 LOWRES(mmx2)
 LOWRES(sse2)
 LOWRES(ssse3)

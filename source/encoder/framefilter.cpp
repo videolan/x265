@@ -318,7 +318,7 @@ void FrameFilter::processRowPost(int row)
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
         m_pic->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
-                                                   m_cfg->param.sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
+                                       m_cfg->param.sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
         m_pic->m_ssimCnt += ssim_cnt;
     }
     if (m_cfg->param.decodedPictureHashSEI == 1)
@@ -330,7 +330,9 @@ void FrameFilter::processRowPost(int row)
         if (row == 0)
         {
             for (int i = 0; i < 3; i++)
+            {
                 MD5Init(&(m_pic->m_state[i]));
+            }
         }
 
         updateMD5Plane(m_pic->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);

@@ -571,7 +571,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         // CU's(above, aboveleft, aboveright, left, colocated) at depth "n" of previosuly coded CU's
         if (outBestCU != 0)
         {
-            UInt64 costCU = 0, costCUAbove = 0, costCUAboveLeft = 0, costCUAboveRight = 0, costCULeft = 0, costCUColocated0 = 0, costCUColocated1 = 0, totalCost = 0, avgCost= 0;
+            UInt64 costCU = 0, costCUAbove = 0, costCUAboveLeft = 0, costCUAboveRight = 0, costCULeft = 0, costCUColocated0 = 0, costCUColocated1 = 0, totalCost = 0, avgCost = 0;
             UInt64 countCU = 0, countCUAbove = 0, countCUAboveLeft = 0, countCUAboveRight = 0, countCULeft = 0, countCUColocated0 = 0, countCUColocated1 = 0;
             UInt64 totalCount = 0;
             TComDataCU* above = outTempCU->getCUAbove();
@@ -635,7 +635,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 return;
             }
         }
-#endif
+#endif // if EARLY_EXIT
         outTempCU->initEstData(depth, qp);
         UChar nextDepth = (UChar)(depth + 1);
         subTempPartCU = m_tempCU[nextDepth];
@@ -663,6 +663,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     outTempCU->m_avgCost[k] = subTempPartCU->m_avgCost[k];
                     outTempCU->m_count[k] = subTempPartCU->m_count[k];
                 }
+
                 if (subBestPartCU->getPredictionMode(0) != MODE_INTRA)
                 {
                     UInt64 tempavgCost = subBestPartCU->m_totalCost;
@@ -672,7 +673,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     outTempCU->m_avgCost[depth + 1] = (temp + tempavgCost) / outTempCU->m_count[depth + 1];
                     outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_avgCost[depth + 1] = outTempCU->m_avgCost[depth + 1];
                 }
-#endif
+#endif // if EARLY_EXIT
                 /* Adding costs from best SUbCUs */
                 outTempCU->copyPartFrom(subBestPartCU, nextDepth_partIndex, nextDepth, true); // Keep best part data to current temporary data.
                 xCopyYuv2Tmp(subBestPartCU->getTotalNumPart() * nextDepth_partIndex, nextDepth);

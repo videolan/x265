@@ -153,7 +153,6 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         temp = _mm_add_epi16(temp, _mm_sad_epu8(pixT, _mm_setzero_si128()));
         sum = _mm_cvtsi128_si32(_mm_add_epi32(_mm_shuffle_epi32(temp, 2), temp));
         break;
-
     }
 
     logSize += 1;
@@ -203,6 +202,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
             _mm_storeu_si128((__m128i*)dst1, dcValN);
             dst1 += dstStride;
         }
+
         break;
 
     case 32:
@@ -215,6 +215,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
             _mm_storeu_si128((__m128i*)(dst1 + 16), dcValN);
             dst1 += dstStride;
         }
+
         break;
     }
 
@@ -244,8 +245,8 @@ static void initFileStaticVars()
 }
 
 #define BROADCAST16(a, d, x) { \
-    const __m128i mask = _mm_set1_epi16( (((d) * 2) | ((d) * 2 + 1) << 8) ); \
-    (x) = _mm_shuffle_epi8((a), mask); \
+        const __m128i mask = _mm_set1_epi16((((d) * 2) | ((d) * 2 + 1) << 8)); \
+        (x) = _mm_shuffle_epi8((a), mask); \
 }
 
 void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)

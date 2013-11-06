@@ -105,15 +105,13 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_pp_t ref, ipfilter_pp_t 
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
-            rand_height, g_lumaFilter[rand_val]
-            );
+            rand_height, g_lumaFilter[rand_val]);
         ref(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
             rand_width,
-            rand_height, g_lumaFilter[rand_val]
-            );
+            rand_height, g_lumaFilter[rand_val]);
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
             return false;
@@ -142,15 +140,13 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_ps_t ref, ipfilter_ps_t 
             IPF_vec_output_s,
             rand_dstStride,
             rand_width,
-            rand_height, g_lumaFilter[rand_val]
-            );
+            rand_height, g_lumaFilter[rand_val]);
         ref(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_s,
             rand_dstStride,
             rand_width,
-            rand_height, g_lumaFilter[rand_val]
-            );
+            rand_height, g_lumaFilter[rand_val]);
 
         if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size))
             return false;
@@ -190,15 +186,13 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
             IPF_C_output_p,
             rand_dstStride,
             rand_width,
-            rand_height, rand_val
-            );
+            rand_height, rand_val);
         opt(short_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
-            rand_height, rand_val
-            );
+            rand_height, rand_val);
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
             return false;
@@ -328,20 +322,18 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-       // maxVerticalfilterHalfDistance = 3
+        // maxVerticalfilterHalfDistance = 3
 
         opt(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_vec_output_p,
             rand_dstStride,
-            rand_coeffIdx
-            );
+            rand_coeffIdx);
         ref(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
-           rand_coeffIdx
-            );
+            rand_coeffIdx);
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
             return false;
@@ -401,7 +393,7 @@ bool IPFilterHarness::check_IPFilterLuma_ps_primitive(filter_ps_t ref, filter_ps
             rand_dstStride,
             rand_coeffIdx);
 
-        if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size* sizeof(int16_t)))
+        if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
             return false;
     }
 
@@ -425,15 +417,13 @@ bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_
             IPF_C_output_p,
             rand_dstStride,
             rand_coeffIdxX,
-            rand_coeffIdxY
-        );
+            rand_coeffIdxY);
         opt(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_vec_output_p,
             rand_dstStride,
             rand_coeffIdxX,
-            rand_coeffIdxY
-        );
+            rand_coeffIdxY);
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
             return false;

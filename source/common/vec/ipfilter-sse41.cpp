@@ -374,9 +374,9 @@ void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t ds
 
 template<int N>
 void filterVertical_pp(pixel *src, intptr_t srcStride,
-                        pixel *dst, intptr_t dstStride,
-                        int width, int height,
-                        const int16_t *coeff)
+                       pixel *dst, intptr_t dstStride,
+                       int width, int height,
+                       const int16_t *coeff)
 {
     src -= (N / 2 - 1) * srcStride;
 

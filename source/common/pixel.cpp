@@ -32,24 +32,24 @@
 using namespace x265;
 
 #define SET_FUNC_PRIMITIVE_TABLE_C(FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    p.FUNC_PREFIX[LUMA_4x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 4,  4, DATA_TYPE1, DATA_TYPE2>; \
-    p.FUNC_PREFIX[LUMA_8x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8,  8, DATA_TYPE1, DATA_TYPE2>; \
-    p.FUNC_PREFIX[LUMA_8x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8,  4, DATA_TYPE1, DATA_TYPE2>; \
-    p.FUNC_PREFIX[LUMA_4x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 4,  8, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_4x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<4,  4, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<8,  8, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<8,  4, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_4x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<4,  8, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_16x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 16, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_16x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16,  8, DATA_TYPE1, DATA_TYPE2>; \
-    p.FUNC_PREFIX[LUMA_8x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<8, 16, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_16x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 12, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_12x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<12, 16, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_16x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16,  4, DATA_TYPE1, DATA_TYPE2>; \
-    p.FUNC_PREFIX[LUMA_4x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 4, 16, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_4x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<4, 16, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_32x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 32, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_32x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 16, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_16x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 32, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_32x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 24, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_24x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<24, 32, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_32x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32,  8, DATA_TYPE1, DATA_TYPE2>; \
-    p.FUNC_PREFIX[LUMA_8x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF< 8, 32, DATA_TYPE1, DATA_TYPE2>; \
+    p.FUNC_PREFIX[LUMA_8x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<8, 32, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_64x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<64, 64, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_64x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<64, 32, DATA_TYPE1, DATA_TYPE2>; \
     p.FUNC_PREFIX[LUMA_32x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<32, 64, DATA_TYPE1, DATA_TYPE2>; \
@@ -59,24 +59,24 @@ using namespace x265;
     p.FUNC_PREFIX[LUMA_16x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<16, 64, DATA_TYPE1, DATA_TYPE2>;
 
 #define SET_FUNC_PRIMITIVE_TABLE_C2(FUNC_PREFIX) \
-    p.FUNC_PREFIX[LUMA_4x4]   = FUNC_PREFIX< 4,  4>; \
-    p.FUNC_PREFIX[LUMA_8x8]   = FUNC_PREFIX< 8,  8>; \
-    p.FUNC_PREFIX[LUMA_8x4]   = FUNC_PREFIX< 8,  4>; \
-    p.FUNC_PREFIX[LUMA_4x8]   = FUNC_PREFIX< 4,  8>; \
+    p.FUNC_PREFIX[LUMA_4x4]   = FUNC_PREFIX<4,  4>; \
+    p.FUNC_PREFIX[LUMA_8x8]   = FUNC_PREFIX<8,  8>; \
+    p.FUNC_PREFIX[LUMA_8x4]   = FUNC_PREFIX<8,  4>; \
+    p.FUNC_PREFIX[LUMA_4x8]   = FUNC_PREFIX<4,  8>; \
     p.FUNC_PREFIX[LUMA_16x16] = FUNC_PREFIX<16, 16>; \
     p.FUNC_PREFIX[LUMA_16x8]  = FUNC_PREFIX<16,  8>; \
-    p.FUNC_PREFIX[LUMA_8x16]  = FUNC_PREFIX< 8, 16>; \
+    p.FUNC_PREFIX[LUMA_8x16]  = FUNC_PREFIX<8, 16>; \
     p.FUNC_PREFIX[LUMA_16x12] = FUNC_PREFIX<16, 12>; \
     p.FUNC_PREFIX[LUMA_12x16] = FUNC_PREFIX<12, 16>; \
     p.FUNC_PREFIX[LUMA_16x4]  = FUNC_PREFIX<16,  4>; \
-    p.FUNC_PREFIX[LUMA_4x16]  = FUNC_PREFIX< 4, 16>; \
+    p.FUNC_PREFIX[LUMA_4x16]  = FUNC_PREFIX<4, 16>; \
     p.FUNC_PREFIX[LUMA_32x32] = FUNC_PREFIX<32, 32>; \
     p.FUNC_PREFIX[LUMA_32x16] = FUNC_PREFIX<32, 16>; \
     p.FUNC_PREFIX[LUMA_16x32] = FUNC_PREFIX<16, 32>; \
     p.FUNC_PREFIX[LUMA_32x24] = FUNC_PREFIX<32, 24>; \
     p.FUNC_PREFIX[LUMA_24x32] = FUNC_PREFIX<24, 32>; \
     p.FUNC_PREFIX[LUMA_32x8]  = FUNC_PREFIX<32,  8>; \
-    p.FUNC_PREFIX[LUMA_8x32]  = FUNC_PREFIX< 8, 32>; \
+    p.FUNC_PREFIX[LUMA_8x32]  = FUNC_PREFIX<8, 32>; \
     p.FUNC_PREFIX[LUMA_64x64] = FUNC_PREFIX<64, 64>; \
     p.FUNC_PREFIX[LUMA_64x32] = FUNC_PREFIX<64, 32>; \
     p.FUNC_PREFIX[LUMA_32x64] = FUNC_PREFIX<32, 64>; \
@@ -463,6 +463,7 @@ void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, i
         {
             dst[j] = (int16_t)((src[j] + round) >> shift);
         }
+
         src += size;
         dst += stride;
     }
@@ -537,13 +538,14 @@ void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStri
 void weightUnidirPix(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
+
     for (y = 0; y <= height - 1; y++)
     {
         for (x = 0; x <= width - 1; )
         {
             // simulating pixel to short conversion
             int16_t val = src[x] << (IF_INTERNAL_PREC - X265_DEPTH);
-            dst[x] = (pixel) Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (val) + round) >> shift) + offset);
+            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (val) + round) >> shift) + offset);
             x++;
         }
 
@@ -656,11 +658,11 @@ void frame_init_lowres_core(pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, 
         for (int x = 0; x < width; x++)
         {
             // slower than naive bilinear, but matches asm
-#define FILTER(a,b,c,d) ((((a+b+1)>>1)+((c+d+1)>>1)+1)>>1)
-            dst0[x] = FILTER(src0[2*x  ], src1[2*x  ], src0[2*x+1], src1[2*x+1]);
-            dsth[x] = FILTER(src0[2*x+1], src1[2*x+1], src0[2*x+2], src1[2*x+2]);
-            dstv[x] = FILTER(src1[2*x  ], src2[2*x  ], src1[2*x+1], src2[2*x+1]);
-            dstc[x] = FILTER(src1[2*x+1], src2[2*x+1], src1[2*x+2], src2[2*x+2]);
+#define FILTER(a, b, c, d) ((((a + b + 1) >> 1) + ((c + d + 1) >> 1) + 1) >> 1)
+            dst0[x] = FILTER(src0[2 * x], src1[2 * x], src0[2 * x + 1], src1[2 * x + 1]);
+            dsth[x] = FILTER(src0[2 * x + 1], src1[2 * x + 1], src0[2 * x + 2], src1[2 * x + 2]);
+            dstv[x] = FILTER(src1[2 * x], src2[2 * x], src1[2 * x + 1], src2[2 * x + 1]);
+            dstc[x] = FILTER(src1[2 * x + 1], src2[2 * x + 1], src1[2 * x + 2], src2[2 * x + 2]);
 #undef FILTER
         }
         src0 += src_stride * 2;
@@ -829,37 +831,61 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_16x64] = satd8<16, 64>;
 
 #define CHROMA(W, H) \
-    p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>;\
+    p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma_copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>;
 #define LUMA(W, H) \
-    p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>;\
+    p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>;
 
     LUMA(4, 4);
-    LUMA(8, 8);   CHROMA(4, 4);
-    LUMA(4, 8);   CHROMA(2, 4);
-    LUMA(8, 4);   CHROMA(4, 2);
-    LUMA(16, 16); CHROMA(8, 8);
-    LUMA(16,  8); CHROMA(8, 4);
-    LUMA( 8, 16); CHROMA(4, 8);
-    LUMA(16, 12); CHROMA(8, 6);
-    LUMA(12, 16); CHROMA(6, 8);
-    LUMA(16,  4); CHROMA(8, 2);
-    LUMA( 4, 16); CHROMA(2, 8);
-    LUMA(32, 32); CHROMA(16, 16);
-    LUMA(32, 16); CHROMA(16, 8);
-    LUMA(16, 32); CHROMA(8, 16);
-    LUMA(32, 24); CHROMA(16, 12);
-    LUMA(24, 32); CHROMA(12, 16);
-    LUMA(32,  8); CHROMA(16, 4);
-    LUMA( 8, 32); CHROMA(4, 16);
-    LUMA(64, 64); CHROMA(32, 32);
-    LUMA(64, 32); CHROMA(32, 16);
-    LUMA(32, 64); CHROMA(16, 32);
-    LUMA(64, 48); CHROMA(32, 24);
-    LUMA(48, 64); CHROMA(24, 32);
-    LUMA(64, 16); CHROMA(32, 8);
-    LUMA(16, 64); CHROMA(8, 32);
+    LUMA(8, 8);
+    CHROMA(4, 4);
+    LUMA(4, 8);
+    CHROMA(2, 4);
+    LUMA(8, 4);
+    CHROMA(4, 2);
+    LUMA(16, 16);
+    CHROMA(8, 8);
+    LUMA(16,  8);
+    CHROMA(8, 4);
+    LUMA(8, 16);
+    CHROMA(4, 8);
+    LUMA(16, 12);
+    CHROMA(8, 6);
+    LUMA(12, 16);
+    CHROMA(6, 8);
+    LUMA(16,  4);
+    CHROMA(8, 2);
+    LUMA(4, 16);
+    CHROMA(2, 8);
+    LUMA(32, 32);
+    CHROMA(16, 16);
+    LUMA(32, 16);
+    CHROMA(16, 8);
+    LUMA(16, 32);
+    CHROMA(8, 16);
+    LUMA(32, 24);
+    CHROMA(16, 12);
+    LUMA(24, 32);
+    CHROMA(12, 16);
+    LUMA(32,  8);
+    CHROMA(16, 4);
+    LUMA(8, 32);
+    CHROMA(4, 16);
+    LUMA(64, 64);
+    CHROMA(32, 32);
+    LUMA(64, 32);
+    CHROMA(32, 16);
+    LUMA(32, 64);
+    CHROMA(16, 32);
+    LUMA(64, 48);
+    CHROMA(32, 24);
+    LUMA(48, 64);
+    CHROMA(24, 32);
+    LUMA(64, 16);
+    CHROMA(32, 8);
+    LUMA(16, 64);
+    CHROMA(8, 32);
 
     //sse
 #if HIGH_BIT_DEPTH

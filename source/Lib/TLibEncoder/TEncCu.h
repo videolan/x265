@@ -82,7 +82,7 @@ private:
     TComYuv**    m_bestPredYuv; ///< Best Prediction Yuv for each depth
     TShortYUV**  m_bestResiYuv; ///< Best Residual Yuv for each depth
     TComYuv**    m_bestRecoYuv; ///< Best Reconstruction Yuv for each depth
-   
+
     TComYuv**    m_tmpPredYuv;  ///< Temporary Prediction Yuv for each depth
     TShortYUV**  m_tmpResiYuv;  ///< Temporary Residual Yuv for each depth
     TComYuv**    m_tmpRecoYuv;  ///< Temporary Reconstruction Yuv for each depth

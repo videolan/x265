@@ -114,8 +114,12 @@ void FrameEncoder::init(Encoder *top, int numRows)
     {
         m_rows[i].create(top);
         for (int list = 0; list <= 1; list++)
+        {
             for (int ref = 0; ref <= MAX_NUM_REF; ref++)
+            {
                 m_rows[i].m_search.m_mref[list][ref] = &m_mref[list][ref];
+            }
+        }
     }
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
@@ -124,7 +128,7 @@ void FrameEncoder::init(Encoder *top, int numRows)
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
     }
-    
+
     m_frameFilter.init(top, numRows, getRDGoOnSbacCoder(0));
 
     // initialize SPS
@@ -312,6 +316,7 @@ void FrameEncoder::setLambda(int qp, int row)
     TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
 
     double lambda = 0;
+
     if (m_pic->getSlice()->getSliceType() == I_SLICE)
     {
         lambda = X265_MAX(1, x265_lambda2_tab_I[qp]);
@@ -762,6 +767,7 @@ void FrameEncoder::compressFrame()
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
+
     m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
     delete[] outStreams;
     delete bitstreamRedirect;
@@ -1149,7 +1155,7 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
         int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * 4;
         int block_x = (cuAddr * 4) - block_y * pic->getPicSym()->getFrameWidthInCU();
         int cnt = 0;
-        for (int h = 0; h < 4 && block_y < maxBlockRows ; h++, block_y++)
+        for (int h = 0; h < 4 && block_y < maxBlockRows; h++, block_y++)
         {
             for (int w = 0; w < 4 && (block_x + w) < maxBlockCols; w++)
             {
@@ -1157,6 +1163,7 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
                 cnt++;
             }
         }
+
         qp_offset /= cnt;
         qp += qp_offset;
     }
