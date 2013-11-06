@@ -254,6 +254,7 @@ struct EncoderPrimitives
     extendCURowBorder_t extendRowBorder;
     filter_pp_t     chroma_hpp[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
+    filter_ps_t     luma_hps[NUM_LUMA_PARTITIONS];
     filter_pp_t     chroma_vpp[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
     filter_ps_t     luma_vps[NUM_LUMA_PARTITIONS];

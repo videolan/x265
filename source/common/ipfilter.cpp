@@ -391,6 +391,43 @@ void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 }
 
 template<int N, int width, int height>
+void interp_horiz_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+{
+    int16_t const * coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    int shift = IF_FILTER_PREC - headRoom;
+    int offset = -IF_INTERNAL_OFFS << shift;
+    src -= N / 2 - 1;
+
+    int row, col;
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int sum;
+
+            sum  = src[col + 0] * coeff[0];
+            sum += src[col + 1] * coeff[1];
+            sum += src[col + 2] * coeff[2];
+            sum += src[col + 3] * coeff[3];
+            if (N == 8)
+            {
+                sum += src[col + 4] * coeff[4];
+                sum += src[col + 5] * coeff[5];
+                sum += src[col + 6] * coeff[6];
+                sum += src[col + 7] * coeff[7];
+            }
+
+            int16_t val = (int16_t)(sum + offset) >> shift;
+            dst[col] = val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
+template<int N, int width, int height>
 void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 {
     int16_t const * c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
@@ -491,6 +528,7 @@ namespace x265 {
 
 #define LUMA(W, H) \
     p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>; \
+    p.luma_hps[LUMA_ ## W ## x ## H]     = interp_horiz_ps_c<8, W, H>;\
     p.luma_vpp[LUMA_ ## W ## x ## H]     = interp_vert_pp_c<8, W, H>; \
     p.luma_vps[LUMA_ ## W ## x ## H]     = interp_vert_ps_c<8, W, H>; \
     p.luma_hvpp[LUMA_ ## W ## x ## H]    = interp_hv_pp_c<8, W, H>;
