@@ -835,6 +835,69 @@ mov        [r4 + r1],     r5w
 
 RET
 
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_2x8(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_sp_2x8, 4, 7, 8, dest, destStride, src, srcStride
+
+add        r3,      r3
+
+mova       m0,      [tab_Vm]
+
+movd       m1,      [r2]
+movd       m2,      [r2 + r3]
+movd       m3,      [r2 + 2 * r3]
+lea        r4,      [r2 + 2 * r3]
+movd       m4,      [r4 + r3]
+movd       m5,      [r4 + 2 * r3]
+lea        r4,      [r4 + 2 * r3]
+movd       m6,      [r4 + r3]
+movd       m7,      [r4 + 2 * r3]
+lea        r5,      [r4 + 2 * r3]
+
+pshufb     m1,      m0
+pshufb     m2,      m0
+pshufb     m3,      m0
+pshufb     m4,      m0
+pshufb     m5,      m0
+pshufb     m6,      m0
+pshufb     m7,      m0
+
+pextrw     r6,            m1,          0
+mov        [r0],          r6w
+
+pextrw     r6,            m2,          0
+mov        [r0 + r1],     r6w
+
+pextrw     r6,            m3,          0
+mov        [r0 + 2 * r1], r6w
+
+lea        r4,            [r0 + 2 * r1]
+pextrw     r6,            m4,          0
+mov        [r4 + r1],     r6w
+
+pextrw     r6,            m5,          0
+mov        [r4 + 2 * r1], r6w
+
+
+lea        r4,            [r4 + 2 * r1]
+pextrw     r6,            m6,          0
+mov        [r4 + r1],     r6w
+
+pextrw     r6,            m7,          0
+mov        [r4 + 2 * r1], r6w
+
+movd       m1,            [r5 + r3]
+pshufb     m1,            m0
+
+lea        r4,            [r4 + 2 * r1]
+pextrw     r6,            m1,          0
+mov        [r4 + r1],     r6w
+
+RET
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_4x2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
