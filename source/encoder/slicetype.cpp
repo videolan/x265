@@ -702,8 +702,8 @@ void Lookahead::slicetypeDecide()
             pic->m_lowres.sliceType = X265_TYPE_I;
             pic->m_lowres.bKeyframe = true;
             lastKeyframe = pic->m_lowres.frameNum;
-            lastNonB = &pic->m_lowres;
         }
+        lastNonB = &pic->m_lowres;
         outputQueue.pushBack(*pic);
         numDecided++;
     }
