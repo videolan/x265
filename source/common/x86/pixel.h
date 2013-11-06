@@ -213,8 +213,6 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx(pixel *pix1, intptr_t stride1, pixel *pi
 uint64_t x265_pixel_sa8d_satd_16x16_xop(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 uint64_t x265_pixel_sa8d_satd_16x16_avx2(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 
-void x265_cvt32to16_shr_sse2(int16_t *dst, int *src, intptr_t, int, int);
-
 #define DECL_HEVC_SSD(suffix) \
     int x265_pixel_ssd_32x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
     int x265_pixel_ssd_16x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
@@ -268,83 +266,11 @@ DECL_ADS(4, avx2)
 DECL_ADS(2, avx2)
 DECL_ADS(1, avx2)
 
-#define SETUP_CHROMA_BLOCKCOPY_FUNC(W, H, cpu) \
-    void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb); \
-    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
-
-#define CHROMA_BLOCKCOPY_DEF(cpu) \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(4, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(4, 2, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(2, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(8, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(8, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(4, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(8, 6, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(6, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(8, 2, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(2, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(16, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(16, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(8, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(16, 12, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(12, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(16, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(4, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(32, 32, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(32, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(16, 32, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(32, 24, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(24, 32, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(32, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC(8, 32, cpu);
-
-#define SETUP_LUMA_BLOCKCOPY_FUNC(W, H, cpu) \
-    void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb); \
-    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
-
-#define LUMA_BLOCKCOPY_DEF(cpu) \
-    SETUP_LUMA_BLOCKCOPY_FUNC(4,   4, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(8,   8, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(8,   4, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(4,   8, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(16, 16, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(16,  8, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(8,  16, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(16, 12, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(12, 16, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(16,  4, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(4,  16, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(32, 32, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(32, 16, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(16, 32, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(32, 24, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(24, 32, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(32,  8, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(8,  32, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(64, 64, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(64, 32, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(32, 64, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(64, 48, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(48, 64, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(64, 16, cpu); \
-    SETUP_LUMA_BLOCKCOPY_FUNC(16, 64, cpu);
-
-CHROMA_BLOCKCOPY_DEF(_sse2);
-LUMA_BLOCKCOPY_DEF(_sse2);
-
-void x265_blockcopy_sp_2x4_sse4(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
-void x265_blockcopy_sp_2x8_sse4(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
-void x265_blockcopy_sp_6x8_sse4(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
-
 #undef DECL_PIXELS
 #undef DECL_SUF
 #undef DECL_HEVC_SSD
 #undef DECL_X1
 #undef DECL_X4
 #undef DECL_ADS
-#undef SETUP_CHROMA_BLOCKCOPY_FUNC
-#undef SETUP_LUMA_BLOCK_FUNC
-#undef CHROMA_BLOCKCOPY_DEF
-#undef LUMA_BLOCKCOPY_DEF
 
 #endif // ifndef X265_I386_PIXEL_H

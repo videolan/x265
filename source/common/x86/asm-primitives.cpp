@@ -29,6 +29,7 @@ extern "C" {
 #include "pixel.h"
 #include "mc.h"
 #include "ipfilter8.h"
+#include "blockcopy8.h"
 }
 
 #define INIT2_NAME(name1, name2, cpu) \
