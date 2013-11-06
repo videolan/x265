@@ -1417,6 +1417,7 @@ BLOCKCOPY_SP_W16_H4 16,  8
 BLOCKCOPY_SP_W16_H4 16, 12
 BLOCKCOPY_SP_W16_H4 16, 16
 BLOCKCOPY_SP_W16_H4 16, 32
+BLOCKCOPY_SP_W16_H4 16, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
