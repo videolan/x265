@@ -255,40 +255,8 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
 
     // CHECK_ME: why partStartIdx always negative
     int partStartIdx = 0 - (cuAddr) * pic->getNumPartInCU();
-
-    int numElements = std::min<int>(partStartIdx, m_numPartitions);
-    for (int i = 0; i < numElements; i++)
-    {
-        TComDataCU* from = pic->getCU(getAddr());
-        m_skipFlag[i]   = from->getSkipFlag(i);
-        m_partSizes[i] = from->getPartitionSize(i);
-        m_predModes[i] = from->getPredictionMode(i);
-        m_cuTransquantBypass[i] = from->getCUTransquantBypass(i);
-        m_depth[i] = from->getDepth(i);
-        m_width[i] = from->getWidth(i);
-        m_height[i] = from->getHeight(i);
-        m_trIdx[i] = from->getTransformIdx(i);
-        m_transformSkip[0][i] = from->getTransformSkip(i, TEXT_LUMA);
-        m_transformSkip[1][i] = from->getTransformSkip(i, TEXT_CHROMA_U);
-        m_transformSkip[2][i] = from->getTransformSkip(i, TEXT_CHROMA_V);
-        m_mvpIdx[0][i] = from->m_mvpIdx[0][i];
-        m_mvpIdx[1][i] = from->m_mvpIdx[1][i];
-        m_mvpNum[0][i] = from->m_mvpNum[0][i];
-        m_mvpNum[1][i] = from->m_mvpNum[1][i];
-        m_qp[i] = from->m_qp[i];
-        m_bMergeFlags[i] = from->m_bMergeFlags[i];
-        m_mergeIndex[i] = from->m_mergeIndex[i];
-        m_lumaIntraDir[i] = from->m_lumaIntraDir[i];
-        m_chromaIntraDir[i] = from->m_chromaIntraDir[i];
-        m_interDir[i] = from->m_interDir[i];
-        m_cbf[0][i] = from->m_cbf[0][i];
-        m_cbf[1][i] = from->m_cbf[1][i];
-        m_cbf[2][i] = from->m_cbf[2][i];
-        m_iPCMFlags[i] = from->m_iPCMFlags[i];
-    }
-
     int firstElement = std::max<int>(partStartIdx, 0);
-    numElements = m_numPartitions - firstElement;
+    int numElements = m_numPartitions - firstElement;
 
     if (numElements > 0)
     {
