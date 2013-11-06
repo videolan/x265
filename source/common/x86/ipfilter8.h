@@ -56,6 +56,7 @@
 
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     void x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
+    void x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx); \
     void x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
     void x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx);
 
