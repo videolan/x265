@@ -326,6 +326,17 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_BLOCKCOPY(_sse2);
         LUMA_BLOCKCOPY(_sse2);
+
+        // This function pointer initialization is temporary will be removed
+        // later with macro definitions.  It is used to avoid linker errors
+        // until all partitions are coded and commit smaller patches, easier to
+        // review.
+
+        p.chroma_copy_sp[CHROMA_8x2] = x265_blockcopy_sp_8x2_sse2;
+        p.chroma_copy_sp[CHROMA_8x4] = x265_blockcopy_sp_8x4_sse2;
+        p.chroma_copy_sp[CHROMA_8x6] = x265_blockcopy_sp_8x6_sse2;
+        p.chroma_copy_sp[CHROMA_8x8] = x265_blockcopy_sp_8x8_sse2;
+        p.chroma_copy_sp[CHROMA_8x16] = x265_blockcopy_sp_8x16_sse2;
 #if X86_64
         p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
         p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
