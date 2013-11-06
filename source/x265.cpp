@@ -245,7 +245,7 @@ void CLIOptions::printVersion(x265_param *param)
 {
     fprintf(stderr, "x265 [info]: HEVC encoder version %s\n", x265_version_str);
     fprintf(stderr, "x265 [info]: build info %s\n", x265_build_info_str);
-    x265_setup_primitives(param, 0);
+    x265_setup_primitives(param, -1);
 }
 
 void CLIOptions::showHelp(x265_param *param)
@@ -544,6 +544,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(NULL, X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
         return true;
     }
+
+    x265_setup_primitives(param, cpuid);
     printVersion(param);
     return false;
 }
