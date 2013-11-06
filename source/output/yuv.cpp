@@ -54,33 +54,51 @@ YUVOutput::~YUVOutput()
 bool YUVOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
-    uint32_t pixelbytes = (depth > 8) ? 2 : 1;
-    ofs.seekp(pic.poc * frameSize * pixelbytes);
 
-    if (pic.bitDepth > 8)
+#if HIGH_BIT_DEPTH
+    if (depth == 8)
     {
+        ofs.seekp(pic.poc * frameSize);
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
             uint16_t *src = (uint16_t*)pic.planes[i];
             for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
             {
-                ofs.write((const char*)src, (width * pixelbytes) >> x265_cli_csps[colorSpace].width[i]);
+                for (int w = 0; w < width >> x265_cli_csps[colorSpace].width[i]; w++)
+                {
+                    buf[w] = (char)src[w];
+                }
+
+                ofs.write(buf, width >> x265_cli_csps[colorSpace].width[i]);
                 src += pic.stride[i];
             }
         }
     }
     else
     {
+        ofs.seekp(pic.poc * frameSize * 2);
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
-            char *src = (char*)pic.planes[i];
+            uint16_t *src = (uint16_t*)pic.planes[i];
             for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
             {
-                ofs.write(src, width >> x265_cli_csps[colorSpace].width[i]);
+                ofs.write((const char*)src, (width * 2) >> x265_cli_csps[colorSpace].width[i]);
                 src += pic.stride[i];
             }
         }
     }
+#else
+    ofs.seekp(pic.poc * frameSize);
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        char *src = (char*)pic.planes[i];
+        for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
+        {
+            ofs.write(src, width >> x265_cli_csps[colorSpace].width[i]);
+            src += pic.stride[i];
+        }
+    }
+#endif
 
     PPAStopCpuEventFunc(write_yuv);
     return true;
