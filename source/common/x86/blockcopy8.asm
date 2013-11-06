@@ -1527,7 +1527,7 @@ BLOCKCOPY_SP_W32_H2 32, 64
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
-%macro BLOCKCOPY_SP_W32_H2 2
+%macro BLOCKCOPY_SP_W48_H2 2
 INIT_XMM sse2
 cglobal blockcopy_sp_%1x%2, 4, 5, 5, dest, destStride, src, srcStride
 
@@ -1589,4 +1589,4 @@ mova       m0,      [tab_Vm]
 RET
 %endmacro
 
-BLOCKCOPY_SP_W32_H2 48, 64
+BLOCKCOPY_SP_W48_H2 48, 64
