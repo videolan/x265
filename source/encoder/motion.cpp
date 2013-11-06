@@ -290,6 +290,248 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         } \
     }
 
+void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
+                                       const MV &       mvmin,
+                                       const MV &       mvmax,
+                                       MV &             bmv,
+                                       int &            bcost,
+                                       int &            bPointNr,
+                                       int &            bDistance,
+                                       int              earlyExitIters,
+                                       int              merange)
+{
+    ALIGN_VAR_16(int, costs[16]);
+    pixel *fref = ref->fpelPlane + blockOffset;
+    size_t stride = ref->lumaStride;
+
+    MV omv = bmv;
+    int saved = bcost;
+    int rounds = 0;
+
+    {
+        int16_t dist = 1;
+
+        /* bPointNr
+              2
+            4 * 5
+              7
+         */
+        const int16_t top    = omv.y - dist;
+        const int16_t bottom = omv.y + dist;
+        const int16_t left   = omv.x - dist;
+        const int16_t right  = omv.x + dist;
+
+        if (top >= mvmin.y && left >= mvmin.x && right <= mvmax.x && bottom <= mvmax.y)
+        {
+            COST_MV_PT_DIST_X4(omv.x,  top,    2, dist,
+                               left,  omv.y,   4, dist,
+                               right, omv.y,   5, dist,
+                               omv.x,  bottom, 7, dist);
+        }
+        else
+        {
+            if (top >= mvmin.y) // check top
+            {
+                COST_MV_PT_DIST(omv.x, top, 2, dist);
+            }
+            if (left >= mvmin.x) // check middle left
+            {
+                COST_MV_PT_DIST(left, omv.y, 4, dist);
+            }
+            if (right <= mvmax.x) // check middle right
+            {
+                COST_MV_PT_DIST(right, omv.y, 5, dist);
+            }
+            if (bottom <= mvmax.y) // check bottom
+            {
+                COST_MV_PT_DIST(omv.x, bottom, 7, dist);
+            }
+        }
+        if (bcost < saved)
+            rounds = 0;
+        else if (++rounds >= earlyExitIters)
+            return;
+    }
+
+    for (int16_t dist = 2; dist <= 8; dist <<= 1)
+    {
+        /* bPointNr
+              2
+             1 3
+            4 * 5
+             6 8
+              7
+         Points 2, 4, 5, 7 are dist
+         Points 1, 3, 6, 8 are dist>>1
+         */
+        const int16_t top     = omv.y - dist;
+        const int16_t bottom  = omv.y + dist;
+        const int16_t left    = omv.x - dist;
+        const int16_t right   = omv.x + dist;
+        const int16_t top2    = omv.y - (dist >> 1);
+        const int16_t bottom2 = omv.y + (dist >> 1);
+        const int16_t left2   = omv.x - (dist >> 1);
+        const int16_t right2  = omv.x + (dist >> 1);
+        saved = bcost;
+
+        if (top >= mvmin.y && left >= mvmin.x &&
+            right <= mvmax.x && bottom <= mvmax.y) // check border
+        {
+            COST_MV_PT_DIST_X4(omv.x,  top,   2, dist,
+                               left2,  top2,  1, dist >> 1,
+                               right2, top2,  3, dist >> 1,
+                               left,   omv.y, 4, dist);
+            COST_MV_PT_DIST_X4(right,  omv.y,   5, dist,
+                               left2,  bottom2, 6, dist >> 1,
+                               right2, bottom2, 8, dist >> 1,
+                               omv.x,  bottom,  7, dist);
+        }
+        else // check border for each mv
+        {
+            if (top >= mvmin.y) // check top
+            {
+                COST_MV_PT_DIST(omv.x, top, 2, dist);
+            }
+            if (top2 >= mvmin.y) // check half top
+            {
+                if (left2 >= mvmin.x) // check half left
+                {
+                    COST_MV_PT_DIST(left2, top2, 1, (dist >> 1));
+                }
+                if (right2 <= mvmax.x) // check half right
+                {
+                    COST_MV_PT_DIST(right2, top2, 3, (dist >> 1));
+                }
+            }
+            if (left >= mvmin.x) // check left
+            {
+                COST_MV_PT_DIST(left, omv.y, 4, dist);
+            }
+            if (right <= mvmax.x) // check right
+            {
+                COST_MV_PT_DIST(right, omv.y, 5, dist);
+            }
+            if (bottom2 <= mvmax.y) // check half bottom
+            {
+                if (left2 >= mvmin.x) // check half left
+                {
+                    COST_MV_PT_DIST(left2, bottom2, 6, (dist >> 1));
+                }
+                if (right2 <= mvmax.x) // check half right
+                {
+                    COST_MV_PT_DIST(right2, bottom2, 8, (dist >> 1));
+                }
+            }
+            if (bottom <= mvmax.y) // check bottom
+            {
+                COST_MV_PT_DIST(omv.x, bottom, 7, dist);
+            }
+        }
+
+        if (bcost < saved)
+            rounds = 0;
+        else if (++rounds >= earlyExitIters)
+            return;
+    }
+
+    for (int16_t dist = 16; dist <= (int16_t)merange; dist <<= 1)
+    {
+        const int16_t top    = omv.y - dist;
+        const int16_t bottom = omv.y + dist;
+        const int16_t left   = omv.x - dist;
+        const int16_t right  = omv.x + dist;
+
+        saved = bcost;
+        if (top >= mvmin.y && left >= mvmin.x &&
+            right <= mvmax.x && bottom <= mvmax.y) // check border
+        {
+            /* index
+                  0
+                  3
+                  2
+                  1
+          0 3 2 1 * 1 2 3 0
+                  1
+                  2
+                  3
+                  0
+            */
+
+            COST_MV_PT_DIST_X4(omv.x,  top,    0, dist,
+                               left,   omv.y,  0, dist,
+                               right,  omv.y,  0, dist,
+                               omv.x,  bottom, 0, dist);
+
+            for (int16_t index = 1; index < 4; index++)
+            {
+                int16_t posYT = top    + ((dist >> 2) * index);
+                int16_t posYB = bottom - ((dist >> 2) * index);
+                int16_t posXL = omv.x  - ((dist >> 2) * index);
+                int16_t posXR = omv.x  + ((dist >> 2) * index);
+
+                COST_MV_PT_DIST_X4(posXL, posYT, 0, dist,
+                                   posXR, posYT, 0, dist,
+                                   posXL, posYB, 0, dist,
+                                   posXR, posYB, 0, dist);
+            }
+        }
+        else // check border for each mv
+        {
+            if (top >= mvmin.y) // check top
+            {
+                COST_MV_PT_DIST(omv.x, top, 0, dist);
+            }
+            if (left >= mvmin.x) // check left
+            {
+                COST_MV_PT_DIST(left, omv.y, 0, dist);
+            }
+            if (right <= mvmax.x) // check right
+            {
+                COST_MV_PT_DIST(right, omv.y, 0, dist);
+            }
+            if (bottom <= mvmax.y) // check bottom
+            {
+                COST_MV_PT_DIST(omv.x, bottom, 0, dist);
+            }
+            for (int16_t index = 1; index < 4; index++)
+            {
+                int16_t posYT = top    + ((dist >> 2) * index);
+                int16_t posYB = bottom - ((dist >> 2) * index);
+                int16_t posXL = omv.x - ((dist >> 2) * index);
+                int16_t posXR = omv.x + ((dist >> 2) * index);
+
+                if (posYT >= mvmin.y) // check top
+                {
+                    if (posXL >= mvmin.x) // check left
+                    {
+                        COST_MV_PT_DIST(posXL, posYT, 0, dist);
+                    }
+                    if (posXR <= mvmax.x) // check right
+                    {
+                        COST_MV_PT_DIST(posXR, posYT, 0, dist);
+                    }
+                }
+                if (posYB <= mvmax.y) // check bottom
+                {
+                    if (posXL >= mvmin.x) // check left
+                    {
+                        COST_MV_PT_DIST(posXL, posYB, 0, dist);
+                    }
+                    if (posXR <= mvmax.x) // check right
+                    {
+                        COST_MV_PT_DIST(posXR, posYB, 0, dist);
+                    }
+                }
+            }
+        }
+
+        if (bcost < saved)
+            rounds = 0;
+        else if (++rounds >= earlyExitIters)
+            return;
+    }
+}
+
 int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    const MV &       mvmin,
                                    const MV &       mvmax,
@@ -895,248 +1137,6 @@ me_hex2:
     x265_emms();
     outQMv = bmv;
     return bcost;
-}
-
-void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
-                                       const MV &       mvmin,
-                                       const MV &       mvmax,
-                                       MV &             bmv,
-                                       int &            bcost,
-                                       int &            bPointNr,
-                                       int &            bDistance,
-                                       int              earlyExitIters,
-                                       int              merange)
-{
-    ALIGN_VAR_16(int, costs[16]);
-    pixel *fref = ref->fpelPlane + blockOffset;
-    size_t stride = ref->lumaStride;
-
-    MV omv = bmv;
-    int saved = bcost;
-    int rounds = 0;
-
-    {
-        int16_t dist = 1;
-
-        /* bPointNr
-              2
-            4 * 5
-              7
-         */
-        const int16_t top    = omv.y - dist;
-        const int16_t bottom = omv.y + dist;
-        const int16_t left   = omv.x - dist;
-        const int16_t right  = omv.x + dist;
-
-        if (top >= mvmin.y && left >= mvmin.x && right <= mvmax.x && bottom <= mvmax.y)
-        {
-            COST_MV_PT_DIST_X4(omv.x,  top,    2, dist,
-                               left,  omv.y,   4, dist,
-                               right, omv.y,   5, dist,
-                               omv.x,  bottom, 7, dist);
-        }
-        else
-        {
-            if (top >= mvmin.y) // check top
-            {
-                COST_MV_PT_DIST(omv.x, top, 2, dist);
-            }
-            if (left >= mvmin.x) // check middle left
-            {
-                COST_MV_PT_DIST(left, omv.y, 4, dist);
-            }
-            if (right <= mvmax.x) // check middle right
-            {
-                COST_MV_PT_DIST(right, omv.y, 5, dist);
-            }
-            if (bottom <= mvmax.y) // check bottom
-            {
-                COST_MV_PT_DIST(omv.x, bottom, 7, dist);
-            }
-        }
-        if (bcost < saved)
-            rounds = 0;
-        else if (++rounds >= earlyExitIters)
-            return;
-    }
-
-    for (int16_t dist = 2; dist <= 8; dist <<= 1)
-    {
-        /* bPointNr
-              2
-             1 3
-            4 * 5
-             6 8
-              7
-         Points 2, 4, 5, 7 are dist
-         Points 1, 3, 6, 8 are dist>>1
-         */
-        const int16_t top     = omv.y - dist;
-        const int16_t bottom  = omv.y + dist;
-        const int16_t left    = omv.x - dist;
-        const int16_t right   = omv.x + dist;
-        const int16_t top2    = omv.y - (dist >> 1);
-        const int16_t bottom2 = omv.y + (dist >> 1);
-        const int16_t left2   = omv.x - (dist >> 1);
-        const int16_t right2  = omv.x + (dist >> 1);
-        saved = bcost;
-
-        if (top >= mvmin.y && left >= mvmin.x &&
-            right <= mvmax.x && bottom <= mvmax.y) // check border
-        {
-            COST_MV_PT_DIST_X4(omv.x,  top,   2, dist,
-                               left2,  top2,  1, dist >> 1,
-                               right2, top2,  3, dist >> 1,
-                               left,   omv.y, 4, dist);
-            COST_MV_PT_DIST_X4(right,  omv.y,   5, dist,
-                               left2,  bottom2, 6, dist >> 1,
-                               right2, bottom2, 8, dist >> 1,
-                               omv.x,  bottom,  7, dist);
-        }
-        else // check border for each mv
-        {
-            if (top >= mvmin.y) // check top
-            {
-                COST_MV_PT_DIST(omv.x, top, 2, dist);
-            }
-            if (top2 >= mvmin.y) // check half top
-            {
-                if (left2 >= mvmin.x) // check half left
-                {
-                    COST_MV_PT_DIST(left2, top2, 1, (dist >> 1));
-                }
-                if (right2 <= mvmax.x) // check half right
-                {
-                    COST_MV_PT_DIST(right2, top2, 3, (dist >> 1));
-                }
-            } // check half top
-            if (left >= mvmin.x) // check left
-            {
-                COST_MV_PT_DIST(left, omv.y, 4, dist);
-            }
-            if (right <= mvmax.x) // check right
-            {
-                COST_MV_PT_DIST(right, omv.y, 5, dist);
-            }
-            if (bottom2 <= mvmax.y) // check half bottom
-            {
-                if (left2 >= mvmin.x) // check half left
-                {
-                    COST_MV_PT_DIST(left2, bottom2, 6, (dist >> 1));
-                }
-                if (right2 <= mvmax.x) // check half right
-                {
-                    COST_MV_PT_DIST(right2, bottom2, 8, (dist >> 1));
-                }
-            } // check half bottom
-            if (bottom <= mvmax.y) // check bottom
-            {
-                COST_MV_PT_DIST(omv.x, bottom, 7, dist);
-            }
-        } // check border for each mv
-
-        if (bcost < saved)
-            rounds = 0;
-        else if (++rounds >= earlyExitIters)
-            return;
-    }
-
-    for (int16_t dist = 16; dist <= (int16_t)merange; dist <<= 1)
-    {
-        const int16_t top    = omv.y - dist;
-        const int16_t bottom = omv.y + dist;
-        const int16_t left   = omv.x - dist;
-        const int16_t right  = omv.x + dist;
-
-        saved = bcost;
-        if (top >= mvmin.y && left >= mvmin.x &&
-            right <= mvmax.x && bottom <= mvmax.y) // check border
-        {
-            /* index
-                  0
-                  3
-                  2
-                  1
-          0 3 2 1 * 1 2 3 0
-                  1
-                  2
-                  3
-                  0
-            */
-
-            COST_MV_PT_DIST_X4(omv.x,  top,    0, dist,
-                               left,   omv.y,  0, dist,
-                               right,  omv.y,  0, dist,
-                               omv.x,  bottom, 0, dist);
-
-            for (int16_t index = 1; index < 4; index++)
-            {
-                int16_t posYT = top    + ((dist >> 2) * index);
-                int16_t posYB = bottom - ((dist >> 2) * index);
-                int16_t posXL = omv.x  - ((dist >> 2) * index);
-                int16_t posXR = omv.x  + ((dist >> 2) * index);
-
-                COST_MV_PT_DIST_X4(posXL, posYT, 0, dist,
-                                   posXR, posYT, 0, dist,
-                                   posXL, posYB, 0, dist,
-                                   posXR, posYB, 0, dist);
-            }
-        }
-        else // check border for each mv
-        {
-            if (top >= mvmin.y) // check top
-            {
-                COST_MV_PT_DIST(omv.x, top, 0, dist);
-            }
-            if (left >= mvmin.x) // check left
-            {
-                COST_MV_PT_DIST(left, omv.y, 0, dist);
-            }
-            if (right <= mvmax.x) // check right
-            {
-                COST_MV_PT_DIST(right, omv.y, 0, dist);
-            }
-            if (bottom <= mvmax.y) // check bottom
-            {
-                COST_MV_PT_DIST(omv.x, bottom, 0, dist);
-            }
-            for (int16_t index = 1; index < 4; index++)
-            {
-                int16_t posYT = top    + ((dist >> 2) * index);
-                int16_t posYB = bottom - ((dist >> 2) * index);
-                int16_t posXL = omv.x - ((dist >> 2) * index);
-                int16_t posXR = omv.x + ((dist >> 2) * index);
-
-                if (posYT >= mvmin.y) // check top
-                {
-                    if (posXL >= mvmin.x) // check left
-                    {
-                        COST_MV_PT_DIST(posXL, posYT, 0, dist);
-                    }
-                    if (posXR <= mvmax.x) // check right
-                    {
-                        COST_MV_PT_DIST(posXR, posYT, 0, dist);
-                    }
-                } // check top
-                if (posYB <= mvmax.y) // check bottom
-                {
-                    if (posXL >= mvmin.x) // check left
-                    {
-                        COST_MV_PT_DIST(posXL, posYB, 0, dist);
-                    }
-                    if (posXR <= mvmax.x) // check right
-                    {
-                        COST_MV_PT_DIST(posXR, posYB, 0, dist);
-                    }
-                } // check bottom
-            } // for ...
-        } // check border for each mv
-
-        if (bcost < saved)
-            rounds = 0;
-        else if (++rounds >= earlyExitIters)
-            return;
-    } // dist > 8
 }
 
 int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_t cmp)
