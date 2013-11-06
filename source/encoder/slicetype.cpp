@@ -717,10 +717,18 @@ void Lookahead::slicetypeDecide()
             list[j] = pic;
             if (pic->m_lowres.frameNum >= lastKeyframe + cfg->param.keyframeMax)
             {
-                pic->m_lowres.sliceType = X265_TYPE_I;
-                pic->m_lowres.bKeyframe = true;
-                lastKeyframe = pic->m_lowres.frameNum;
-                j++;
+                if (j)
+                {
+                    list[j - 1]->m_lowres.sliceType = X265_TYPE_P;
+                    inputQueue.pushFront(*pic); // push I-frame back onto input queue
+                }
+                else
+                {
+                    pic->m_lowres.sliceType = X265_TYPE_I;
+                    pic->m_lowres.bKeyframe = true;
+                    lastKeyframe = pic->m_lowres.frameNum;
+                    j++;
+                }
                 break;
             }
         }
