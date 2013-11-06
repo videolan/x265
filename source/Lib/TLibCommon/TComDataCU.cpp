@@ -438,16 +438,6 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
 
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
-
-    uint32_t tmp = width * height;
-    memset(m_trCoeffY,    0, tmp * sizeof(*m_trCoeffY));
-    memset(m_iPCMSampleY, 0, tmp * sizeof(*m_iPCMSampleY));
-
-    tmp = (width >> m_hChromaShift) * (height >> m_vChromaShift);
-    memset(m_trCoeffCb,    0, tmp * sizeof(*m_trCoeffCb));
-    memset(m_trCoeffCr,    0, tmp * sizeof(*m_trCoeffCr));
-    memset(m_iPCMSampleCb, 0, tmp * sizeof(*m_iPCMSampleCb));
-    memset(m_iPCMSampleCr, 0, tmp * sizeof(*m_iPCMSampleCr));
 }
 
 // initialize Sub partition
