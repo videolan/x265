@@ -532,6 +532,27 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
     }
 }
 
+static inline int lowresQPelCost(ReferencePlanes *ref, pixel *fenc, intptr_t blockOffset, const MV& qmv, pixelcmp_t comp)
+{
+    if ((qmv.x | qmv.y) & 1)
+    {
+        ALIGN_VAR_16(pixel, subpelbuf[8 * 8]);
+        int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+        pixel *frefA = ref->lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
+        MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
+        int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
+        pixel *frefB = ref->lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * ref->lumaStride;
+        primitives.pixelavg_pp[LUMA_8x8](subpelbuf, 8, frefA, ref->lumaStride, frefB, ref->lumaStride, 32);
+        return comp(fenc, FENC_STRIDE, subpelbuf, 8);
+    }
+    else
+    {
+        int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+        pixel *fref = ref->lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
+        return comp(fenc, FENC_STRIDE, fref, ref->lumaStride);
+    }
+}
+
 int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    const MV &       mvmin,
                                    const MV &       mvmax,
@@ -560,7 +581,12 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     // measure SAD cost at clipped QPEL MVP
     MV pmv = qmvp.clipped(qmvmin, qmvmax);
     MV bestpre = pmv;
-    int bprecost = subpelCompare(ref, pmv, sad);
+    int bprecost;
+
+    if (ref->isLowres)
+        bprecost = lowresQPelCost(ref, fenc, blockOffset, pmv, sad);
+    else
+        bprecost = subpelCompare(ref, pmv, sad);
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
@@ -587,7 +613,12 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         MV m = mvc[i].clipped(qmvmin, qmvmax);
         if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            int cost = subpelCompare(ref, m, sad) + mvcost(m);
+            int cost;
+            if (ref->isLowres)
+                cost = lowresQPelCost(ref, fenc, blockOffset, m, sad) + mvcost(m);
+            else
+                cost = subpelCompare(ref, m, sad) + mvcost(m);
+
             if (cost < bprecost)
             {
                 bprecost = cost;
@@ -1045,33 +1076,40 @@ me_hex2:
         bmv = bmv.toQPel(); // promote search bmv to qpel
 
     SubpelWorkload& wl = workload[this->subpelRefine];
-    pixelcmp_t hpelcomp;
-
-    if (wl.hpel_satd)
-    {
-        bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
-        hpelcomp = satd;
-    }
-    else
-        hpelcomp = sad;
 
     if (ref->isLowres)
     {
-        for (int iter = 0; iter < wl.hpel_iters; iter++)
+        int bdir = 0, cost;
+        for (int i = 1; i <= wl.hpel_dirs; i++)
         {
-            int bdir = 0, cost;
-            for (int i = 1; i <= wl.hpel_dirs; i++)
-            {
-                MV qmv = bmv + square1[i] * 2;
-                cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
-                COPY2_IF_LT(bcost, cost, bdir, i + 0);
-            }
-
-            bmv += square1[bdir] * 2;
+            MV qmv = bmv + square1[i] * 2;
+            cost = lowresQPelCost(ref, fenc, blockOffset, qmv, sad) + mvcost(qmv);
+            COPY2_IF_LT(bcost, cost, bdir, i);
         }
+        bmv += square1[bdir] * 2;
+        bcost = lowresQPelCost(ref, fenc, blockOffset, bmv, satd) + mvcost(bmv);
+
+        bdir = 0;
+        for (int i = 1; i <= wl.qpel_dirs; i++)
+        {
+            MV qmv = bmv + square1[i];
+            cost = lowresQPelCost(ref, fenc, blockOffset, qmv, satd) + mvcost(qmv);
+            COPY2_IF_LT(bcost, cost, bdir, i);
+        }
+        bmv += square1[bdir];
     }
     else
     {
+        pixelcmp_t hpelcomp;
+
+        if (wl.hpel_satd)
+        {
+            bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
+            hpelcomp = satd;
+        }
+        else
+            hpelcomp = sad;
+
         for (int iter = 0; iter < wl.hpel_iters; iter++)
         {
             int bdir = 0, cost0, cost1;
@@ -1116,22 +1154,22 @@ me_hex2:
 
             bmv += square1[bdir] * 2;
         }
-    }
-    /* if HPEL search used SAD, remeasure with SATD before QPEL */
-    if (!wl.hpel_satd)
-        bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
+        /* if HPEL search used SAD, remeasure with SATD before QPEL */
+        if (!wl.hpel_satd)
+            bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
 
-    for (int iter = 0; iter < wl.qpel_iters; iter++)
-    {
-        int bdir = 0, cost;
-        for (int i = 1; i <= wl.qpel_dirs; i++)
+        for (int iter = 0; iter < wl.qpel_iters; iter++)
         {
-            MV qmv = bmv + square1[i];
-            cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
-            COPY2_IF_LT(bcost, cost, bdir, i);
-        }
+            int bdir = 0, cost;
+            for (int i = 1; i <= wl.qpel_dirs; i++)
+            {
+                MV qmv = bmv + square1[i];
+                cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
+                COPY2_IF_LT(bcost, cost, bdir, i);
+            }
 
-        bmv += square1[bdir];
+            bmv += square1[bdir];
+        }
     }
 
     x265_emms();
@@ -1141,46 +1179,19 @@ me_hex2:
 
 int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_t cmp)
 {
-    if (ref->isLowres)
+    pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
+    int xFrac = qmv.x & 0x3;
+    int yFrac = qmv.y & 0x3;
+
+    if ((yFrac | xFrac) == 0)
     {
-        if ((qmv.x | qmv.y) & 1)
-        {
-            /* QPel: use H.264's simple QPEL generation from averaged HPEL pixels */
-            int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-            pixel *frefA = ref->lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-
-            MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
-            int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
-            pixel *frefB = ref->lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * ref->lumaStride;
-
-            // average nearest two HPEL pixels to generate H.264 style QPEL pixels
-            primitives.pixelavg_pp[LUMA_8x8](subpelbuf, FENC_STRIDE, frefA, ref->lumaStride, frefB, ref->lumaStride, 32);
-            return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
-        }
-        else
-        {
-            /* FPEL/HPEL */
-            int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-            pixel *fref = ref->lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride);
-        }
+        return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride);
     }
     else
     {
-        pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-        int xFrac = qmv.x & 0x3;
-        int yFrac = qmv.y & 0x3;
-
-        if ((yFrac | xFrac) == 0)
-        {
-            return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride);
-        }
-        else
-        {
-            subpelInterpolate(ref, qmv, 0);
-        }
-        return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
+        subpelInterpolate(ref, qmv, 0);
     }
+    return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
 }
 
 void MotionEstimate::subpelInterpolate(ReferencePlanes *ref, MV qmv, int dir)
