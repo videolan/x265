@@ -224,8 +224,6 @@ public:
 
     UChar         getDepth(uint32_t idx)           { return m_depth[idx]; }
 
-    void          setDepth(uint32_t idx, UChar h)  { m_depth[idx] = h; }
-
     void          setDepthSubParts(uint32_t depth, uint32_t absPartIdx);
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -234,11 +232,7 @@ public:
 
     char*         getPartitionSize()                      { return m_partSizes; }
 
-    int           getUnitSize()                           { return m_unitSize; }
-
     PartSize      getPartitionSize(uint32_t idx)              { return static_cast<PartSize>(m_partSizes[idx]); }
-
-    void          setPartitionSize(uint32_t idx, PartSize uh) { m_partSizes[idx] = (char)uh; }
 
     void          setPartSizeSubParts(PartSize eMode, uint32_t absPartIdx, uint32_t depth);
     void          setCUTransquantBypassSubParts(bool flag, uint32_t absPartIdx, uint32_t depth);
@@ -246,8 +240,6 @@ public:
     bool*        getSkipFlag()                        { return m_skipFlag; }
 
     bool         getSkipFlag(uint32_t idx)            { return m_skipFlag[idx]; }
-
-    void         setSkipFlag(uint32_t idx, bool skip) { m_skipFlag[idx] = skip; }
 
     void         setSkipFlagSubParts(bool skip, uint32_t absPartIdx, uint32_t depth);
 
@@ -259,23 +251,15 @@ public:
 
     bool          getCUTransquantBypass(uint32_t idx)     { return m_cuTransquantBypass[idx]; }
 
-    void          setPredictionMode(uint32_t idx, PredMode uh) { m_predModes[idx] = (char)uh; }
-
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
     UChar*        getWidth()                     { return m_width; }
 
     UChar         getWidth(uint32_t idx)             { return m_width[idx]; }
 
-    void          setWidth(uint32_t idx, UChar  uh)  { m_width[idx] = uh; }
-
     UChar*        getHeight()                    { return m_height; }
 
     UChar         getHeight(uint32_t idx)            { return m_height[idx]; }
-
-    void          setHeight(uint32_t idx, UChar  uh) { m_height[idx] = uh; }
-
-    void          setSizeSubParts(uint32_t width, uint32_t height, uint32_t absPartIdx, uint32_t depth);
 
     char*         getQP()                        { return m_qp; }
 
@@ -342,15 +326,11 @@ public:
 
     bool          getMergeFlag(uint32_t idx)            { return m_bMergeFlags[idx]; }
 
-    void          setMergeFlag(uint32_t idx, bool b)    { m_bMergeFlags[idx] = b; }
-
     void          setMergeFlagSubParts(bool bMergeFlag, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
 
     UChar*        getMergeIndex()                   { return m_mergeIndex; }
 
     UChar         getMergeIndex(uint32_t idx)           { return m_mergeIndex[idx]; }
-
-    void          setMergeIndex(uint32_t idx, uint32_t mergeIndex) { m_mergeIndex[idx] = (UChar)mergeIndex; }
 
     void          setMergeIndexSubParts(uint32_t mergeIndex, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
     template<typename T>
@@ -364,23 +344,17 @@ public:
 
     UChar         getLumaIntraDir(uint32_t idx) { return m_lumaIntraDir[idx]; }
 
-    void          setLumaIntraDir(uint32_t idx, UChar uh) { m_lumaIntraDir[idx] = uh; }
-
     void          setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
     UChar*        getChromaIntraDir()                 { return m_chromaIntraDir; }
 
     UChar         getChromaIntraDir(uint32_t idx)         { return m_chromaIntraDir[idx]; }
 
-    void          setChromaIntraDir(uint32_t idx, UChar  uh) { m_chromaIntraDir[idx] = uh; }
-
     void          setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
     UChar*        getInterDir()                    { return m_interDir; }
 
     UChar         getInterDir(uint32_t idx)            { return m_interDir[idx]; }
-
-    void          setInterDir(uint32_t idx, UChar  uh) { m_interDir[idx] = uh; }
 
     void          setInterDirSubParts(uint32_t dir,  uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
     bool*         getIPCMFlag()                     { return m_iPCMFlags; }
@@ -413,8 +387,6 @@ public:
     int           getMVPIdx(int picList, uint32_t idx)             { return m_mvpIdx[picList][idx]; }
 
     char*         getMVPIdx(int picList)                       { return m_mvpIdx[picList]; }
-
-    void          setMVPNum(int picList, uint32_t idx, int mvpNum) { m_mvpNum[picList][idx] = (char)mvpNum; }
 
     int           getMVPNum(int picList, uint32_t idx)             { return m_mvpNum[picList][idx]; }
 

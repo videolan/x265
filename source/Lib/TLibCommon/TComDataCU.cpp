@@ -1597,14 +1597,6 @@ void TComDataCU::setTransformSkipSubParts(uint32_t useTransformSkip, TextType tt
     memset(m_transformSkip[g_convertTxtTypeToIdx[ttype]] + absPartIdx, useTransformSkip, sizeof(UChar) * curPartNum);
 }
 
-void TComDataCU::setSizeSubParts(uint32_t width, uint32_t height, uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
-
-    memset(m_width  + absPartIdx, width,  sizeof(UChar) * curPartNum);
-    memset(m_height + absPartIdx, height, sizeof(UChar) * curPartNum);
-}
-
 UChar TComDataCU::getNumPartInter()
 {
     UChar numPart = 0;
