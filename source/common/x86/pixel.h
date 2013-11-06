@@ -213,7 +213,7 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx(pixel *pix1, intptr_t stride1, pixel *pi
 uint64_t x265_pixel_sa8d_satd_16x16_xop(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 uint64_t x265_pixel_sa8d_satd_16x16_avx2(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2);
 
-void x265_cvt32to16_shr_sse2(int16_t * dst, int *src, intptr_t, int, int);
+void x265_cvt32to16_shr_sse2(int16_t *dst, int *src, intptr_t, int, int);
 
 #define DECL_HEVC_SSD(suffix) \
     int x265_pixel_ssd_32x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
