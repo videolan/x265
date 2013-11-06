@@ -467,20 +467,20 @@ class TComVPS
 private:
 
     int         m_VPSId;
-    uint32_t        m_uiMaxTLayers;
-    uint32_t        m_maxLayers;
+    uint32_t    m_maxTLayers;
+    uint32_t    m_maxLayers;
     bool        m_bTemporalIdNestingFlag;
 
-    uint32_t        m_numReorderPics[MAX_TLAYER];
-    uint32_t        m_maxDecPicBuffering[MAX_TLAYER];
-    uint32_t        m_maxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
+    uint32_t    m_numReorderPics[MAX_TLAYER];
+    uint32_t    m_maxDecPicBuffering[MAX_TLAYER];
+    uint32_t    m_maxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
 
-    uint32_t        m_numHrdParameters;
-    uint32_t        m_maxNuhReservedZeroLayerId;
+    uint32_t    m_numHrdParameters;
+    uint32_t    m_maxNuhReservedZeroLayerId;
     TComHRD*    m_hrdParameters;
-    uint32_t*       m_hrdOpSetIdx;
+    uint32_t*   m_hrdOpSetIdx;
     bool*       m_cprmsPresentFlag;
-    uint32_t        m_numOpSets;
+    uint32_t    m_numOpSets;
     bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 
     TComPTL     m_ptl;
@@ -512,9 +512,9 @@ public:
 
     void    setVPSId(int i)                       { m_VPSId = i; }
 
-    uint32_t    getMaxTLayers()                       { return m_uiMaxTLayers; }
+    uint32_t    getMaxTLayers()                       { return m_maxTLayers; }
 
-    void    setMaxTLayers(uint32_t t)                 { m_uiMaxTLayers = t; }
+    void    setMaxTLayers(uint32_t t)                 { m_maxTLayers = t; }
 
     uint32_t    getMaxLayers()                        { return m_maxLayers; }
 

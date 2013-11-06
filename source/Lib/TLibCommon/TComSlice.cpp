@@ -529,7 +529,7 @@ void  TComSlice::initWpScaling()
 // ------------------------------------------------------------------------------------------------
 TComVPS::TComVPS()
     : m_VPSId(0)
-    , m_uiMaxTLayers(1)
+    , m_maxTLayers(1)
     , m_maxLayers(1)
     , m_bTemporalIdNestingFlag(false)
     , m_numHrdParameters(0)
