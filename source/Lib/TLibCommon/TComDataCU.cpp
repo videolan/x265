@@ -298,25 +298,6 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
         memset(m_iPCMSampleCb, 0, sizeof(Pel) * c_tmp);
         memset(m_iPCMSampleCr, 0, sizeof(Pel) * c_tmp);
     }
-    else
-    {
-        TComDataCU * from = pic->getCU(getAddr());
-        m_cuMvField[0].copyFrom(&from->m_cuMvField[0], m_numPartitions, 0);
-        m_cuMvField[1].copyFrom(&from->m_cuMvField[1], m_numPartitions, 0);
-        for (int i = 0; i < y_tmp; i++)
-        {
-            m_trCoeffY[i] = from->m_trCoeffY[i];
-            m_iPCMSampleY[i] = from->m_iPCMSampleY[i];
-        }
-
-        for (int i = 0; i < c_tmp; i++)
-        {
-            m_trCoeffCb[i] = from->m_trCoeffCb[i];
-            m_trCoeffCr[i] = from->m_trCoeffCr[i];
-            m_iPCMSampleCb[i] = from->m_iPCMSampleCb[i];
-            m_iPCMSampleCr[i] = from->m_iPCMSampleCr[i];
-        }
-    }
 
     // Setting neighbor CU
     m_cuLeft        = NULL;
