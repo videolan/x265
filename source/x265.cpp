@@ -477,7 +477,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
     else if (inputRes)
     {
-        parseCspName(inputCsp, &param->sourceCsp);
+        if (inputCsp)
+            parseCspName(inputCsp, &param->sourceCsp);
         this->input->setColorSpace(param->sourceCsp);
         sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
         this->input->setDimensions(param->sourceWidth, param->sourceHeight);
