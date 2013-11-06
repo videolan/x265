@@ -1529,7 +1529,7 @@ BLOCKCOPY_SP_W32_H2 32, 64
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_SP_W48_H2 2
 INIT_XMM sse2
-cglobal blockcopy_sp_%1x%2, 4, 5, 5, dest, destStride, src, srcStride
+cglobal blockcopy_sp_%1x%2, 4, 5, 7, dest, destStride, src, srcStride
 
 mov         r4d,    %2
 
