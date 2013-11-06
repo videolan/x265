@@ -583,7 +583,7 @@ IPFILTER_CHROMA_W 32, 32
   %endif
 %endmacro
 
-%macro FILTER_H8_W4 3
+%macro FILTER_H8_W4 2
     movu        %1, [r0 - 3 + r5]
     pshufb      %2, %1, [tab_Lm]
     pmaddubsw   %2, m3
@@ -591,92 +591,127 @@ IPFILTER_CHROMA_W 32, 32
     pmaddubsw   m7, m3
     phaddw      %2, m7
     phaddw      %2, %2
-    pmulhrsw    %2, %3
-    packuswb    %2, %2
-    movd       [r2 + r5], %2
 %endmacro
 
-%macro FILTER_H8_W1 3
-    movu        %1, [r0 - 3 + r5]
-    pshufb      %2, %1, [tab_Lm]
-    pmaddubsw   %2, m3
-    phaddw      %2, %2
-    phaddw      %2, %2
-    pmulhrsw    %2, %3
-    packuswb    %2, %2
-    pextrb      [r2 + r5], %2, 0
-%endmacro
+;-------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_%3_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_LUMA 3
+INIT_XMM sse4
+cglobal interp_8tap_horiz_%3_%1x%2, 4, 6, 5
 
-;-----------------------------------------------------------------------------
-; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-%macro IPFILTER_LUMA 2
-cglobal interp_8tap_horiz_pp_%1x%2, 4, 6, 5
-
-mov         r4d,        r4m
+mov         r4d, r4m
 
 %ifdef PIC
-lea         r5,       [tab_LumaCoeff]
-movh        m3,       [r5 + r4 * 8]
+lea         r5, [tab_LumaCoeff]
+movh        m3, [r5 + r4 * 8]
 %else
-movh        m3,       [tab_LumaCoeff + r4 * 8]
+movh        m3, [tab_LumaCoeff + r4 * 8]
 %endif
 
-punpcklqdq  m3,       m3
-mova        m2,       [tab_c_512]
-mov         r4,       %2
+%ifidn %3, ps
+    add     r3d, r3d
+%endif
+
+punpcklqdq  m3, m3
+%ifidn %3, pp 
+    mova    m2, [tab_c_512]
+%else
+    mova    m2, [tab_c_8192]
+%endif
+
+mov         r4, %2
 
 .loop
-    xor    r5,    r5
+    xor     r5, r5
 %rep %1 / 8
+  %ifidn %3, pp 
     FILTER_H8_W8  m0, m1, m4, m5, m3, m2, [r0 - 3 + r5], [r2 + r5]
-    add    r5,    8
+  %else
+    FILTER_H8_W8  m0, m1, m4, m5, m3, UNUSED, [r0 - 3 + r5]
+    psubw   m1, m2
+    movu    [r2 + 2 * r5], m1
+  %endif
+    add     r5, 8
 %endrep
 
 %rep (%1 % 8) / 4
-    FILTER_H8_W4  m0, m1, m2
-    add     r5,   4
+    FILTER_H8_W4  m0, m1
+  %ifidn %3, pp 
+    pmulhrsw    m1, m2
+    packuswb    m1, m1
+    movd        [r2 + r5], m1
+  %else
+    psubw       m1, m2
+    movh        [r2 + 2 * r5], m1
+  %endif
 %endrep
 
- %rep(%1 % 4)
-    FILTER_H8_W1  m0, m1, m2
-    add    r5,    1
- %endrep
-
-    add    r0,    r1
-    add    r2,    r3
+    add    r0, r1
+    add    r2, r3
 
     dec    r4d
     jnz   .loop
     RET
 %endmacro
 
-    IPFILTER_LUMA 4,   4
-    IPFILTER_LUMA 8,   8
-    IPFILTER_LUMA 8,   4
-    IPFILTER_LUMA 4,   8
-    IPFILTER_LUMA 16, 16
-    IPFILTER_LUMA 16,  8
-    IPFILTER_LUMA 8,  16
-    IPFILTER_LUMA 16, 12
-    IPFILTER_LUMA 12, 16
-    IPFILTER_LUMA 16,  4
-    IPFILTER_LUMA 4,  16
-    IPFILTER_LUMA 32, 32
-    IPFILTER_LUMA 32, 16
-    IPFILTER_LUMA 16, 32
-    IPFILTER_LUMA 32, 24
-    IPFILTER_LUMA 24, 32
-    IPFILTER_LUMA 32,  8
-    IPFILTER_LUMA 8,  32
-    IPFILTER_LUMA 64, 64
-    IPFILTER_LUMA 64, 32
-    IPFILTER_LUMA 32, 64
-    IPFILTER_LUMA 64, 48
-    IPFILTER_LUMA 48, 64
-    IPFILTER_LUMA 64, 16
-    IPFILTER_LUMA 16, 64
+;-------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+    IPFILTER_LUMA 4, 4, pp
+    IPFILTER_LUMA 8, 8, pp
+    IPFILTER_LUMA 8, 4, pp
+    IPFILTER_LUMA 4, 8, pp
+    IPFILTER_LUMA 16, 16, pp
+    IPFILTER_LUMA 16, 8, pp
+    IPFILTER_LUMA 8, 16, pp
+    IPFILTER_LUMA 16, 12, pp
+    IPFILTER_LUMA 12, 16, pp
+    IPFILTER_LUMA 16, 4, pp
+    IPFILTER_LUMA 4, 16, pp
+    IPFILTER_LUMA 32, 32, pp
+    IPFILTER_LUMA 32, 16, pp
+    IPFILTER_LUMA 16, 32, pp
+    IPFILTER_LUMA 32, 24, pp
+    IPFILTER_LUMA 24, 32, pp
+    IPFILTER_LUMA 32, 8, pp
+    IPFILTER_LUMA 8, 32, pp
+    IPFILTER_LUMA 64, 64, pp
+    IPFILTER_LUMA 64, 32, pp
+    IPFILTER_LUMA 32, 64, pp
+    IPFILTER_LUMA 64, 48, pp
+    IPFILTER_LUMA 48, 64, pp
+    IPFILTER_LUMA 64, 16, pp
+    IPFILTER_LUMA 16, 64, pp
 
+;-------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_ps_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+    IPFILTER_LUMA 4, 4, ps
+    IPFILTER_LUMA 8, 8, ps
+    IPFILTER_LUMA 8, 4, ps
+    IPFILTER_LUMA 4, 8, ps
+    IPFILTER_LUMA 16, 16, ps
+    IPFILTER_LUMA 16, 8, ps
+    IPFILTER_LUMA 8, 16, ps
+    IPFILTER_LUMA 16, 12, ps
+    IPFILTER_LUMA 12, 16, ps
+    IPFILTER_LUMA 16, 4, ps
+    IPFILTER_LUMA 4, 16, ps
+    IPFILTER_LUMA 32, 32, ps
+    IPFILTER_LUMA 32, 16, ps
+    IPFILTER_LUMA 16, 32, ps
+    IPFILTER_LUMA 32, 24, ps
+    IPFILTER_LUMA 24, 32, ps
+    IPFILTER_LUMA 32, 8, ps
+    IPFILTER_LUMA 8, 32, ps
+    IPFILTER_LUMA 64, 64, ps
+    IPFILTER_LUMA 64, 32, ps
+    IPFILTER_LUMA 32, 64, ps
+    IPFILTER_LUMA 64, 48, ps
+    IPFILTER_LUMA 48, 64, ps
+    IPFILTER_LUMA 64, 16, ps
+    IPFILTER_LUMA 16, 64, ps
 
 ;-----------------------------------------------------------------------------
 ; Interpolate HV
