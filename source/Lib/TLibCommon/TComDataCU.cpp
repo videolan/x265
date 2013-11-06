@@ -503,16 +503,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
         m_mvpNum[1][i] = -1;
     }
 
-    uint32_t tmp = width * heigth;
-    memset(m_trCoeffY, 0, sizeof(TCoeff) * tmp);
-    memset(m_iPCMSampleY, 0, sizeof(Pel) * tmp);
-
-    tmp = (width >> m_hChromaShift) * (heigth >> m_vChromaShift);
-    memset(m_trCoeffCb, 0, sizeof(TCoeff) * tmp);
-    memset(m_trCoeffCr, 0, sizeof(TCoeff) * tmp);
-    memset(m_iPCMSampleCb, 0, sizeof(Pel) * tmp);
-    memset(m_iPCMSampleCr, 0, sizeof(Pel) * tmp);
-
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
 
