@@ -74,7 +74,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
             char *src = (char*)pic.planes[0];
-            for (int h = 0; h < height; h++)
+            for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
             {
                 ofs.write(src, width >> x265_cli_csps[colorSpace].width[i]);
                 src += pic.stride[i];
