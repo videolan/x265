@@ -179,6 +179,7 @@ endif()
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
 add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
                                $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+target_link_libraries(x265-shared ${PLATFORM_LIBS})
 set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
