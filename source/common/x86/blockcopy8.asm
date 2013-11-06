@@ -1053,6 +1053,60 @@ RET
 
 BLOCKCOPY_SP_W4_H8 4, 16
 
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_6x8(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SP_W6_H4 2
+INIT_XMM sse2
+cglobal blockcopy_sp_6x8, 4, 7, 8, dest, destStride, src, srcStride
+
+mov       r5d,    %2
+
+add       r3,      r3
+
+mova      m0,      [tab_Vm]
+
+.loop
+     movu      m1,      [r2]
+     movu      m2,      [r2 + r3]
+     movu      m3,      [r2 + 2 * r3]
+     lea       r4,      [r2 + 2 * r3]
+     movu      m4,      [r4 + r3]
+
+     pshufb    m1,      m0
+     pshufb    m2,      m0
+     pshufb    m3,      m0
+     pshufb    m4,      m0
+
+     movd      [r0],              m1
+     pextrw    r6,                m1,    2
+     mov       [r0 + 4],          r6w
+
+     movd      [r0 + r1],         m2
+     pextrw    r6,                m2,    2
+     mov       [r0 + r1 + 4],     r6w
+
+     movd      [r0 + 2 * r1],     m3
+     pextrw    r6,                m3,    2
+     mov       [r0 + 2 * r1 + 4], r6w
+
+     lea       r4,                [r0 + 2 * r1]
+     movd      [r4 + r1],         m4
+     pextrw    r6,                m4,    2
+     mov       [r4 + r1 + 4],     r6w
+
+     lea        r0,               [r0 + 4 * r1]
+     lea        r2,               [r2 + 4 * r3]
+
+     sub        r5d,              4
+     jnz        .loop
+
+RET
+%endmacro
+
+BLOCKCOPY_SP_W6_H4 6, 8
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_8x2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
