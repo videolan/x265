@@ -121,8 +121,9 @@ void filterHorizontal_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t 
 }
 
 template<int N>
-void filterVertical_ss_c(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, int16_t const *c)
+void filterVertical_ss_c(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coefIdx)
 {
+    const int16_t *const c = (N == 8 ? g_lumaFilter[coefIdx] : g_chromaFilter[coefIdx]);
     int shift = IF_FILTER_PREC;
     int row, col;
 

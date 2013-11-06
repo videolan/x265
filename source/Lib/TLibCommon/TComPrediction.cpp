@@ -537,7 +537,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.ipfilter_ps[FILTER_H_P_S_8](ref - (halfFilterSize - 1) * refStride, refStride, m_immedVals, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
-        primitives.ipfilter_ss[FILTER_V_S_S_8](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        primitives.ipfilter_ss[FILTER_V_S_S_8](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, yFrac);
     }
 }
 
@@ -643,9 +643,9 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.ipfilter_ps[FILTER_H_P_S_4](refCb - (halfFilterSize - 1) * refStride, refStride, m_immedVals, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
-        primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
+        primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, yFrac);
         primitives.ipfilter_ps[FILTER_H_P_S_4](refCr - (halfFilterSize - 1) * refStride, refStride, m_immedVals, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
-        primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
+        primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac);
     }
 }
 

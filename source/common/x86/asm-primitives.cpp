@@ -362,6 +362,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(sse2);
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
+        p.ipfilter_ss[FILTER_V_S_S_8] = x265_interp_8tap_v_ss_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

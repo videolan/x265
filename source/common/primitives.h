@@ -166,7 +166,7 @@ typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fr
 typedef void (*ipfilter_pp_t)(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
 typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
 typedef void (*ipfilter_sp_t)(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
-typedef void (*ipfilter_ss_t)(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
+typedef void (*ipfilter_ss_t)(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
 typedef void (*ipfilter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height);
 typedef void (*ipfilter_s2p_t)(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height);
 typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
