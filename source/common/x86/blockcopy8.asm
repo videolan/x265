@@ -799,6 +799,162 @@ BLOCKCOPY_PP_W64_H2 64, 32
 BLOCKCOPY_PP_W64_H2 64, 48
 BLOCKCOPY_PP_W64_H2 64, 64
 
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_4x2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_sp_4x2, 4, 4, 3, dest, destStride, src, srcStride
+
+add        r3,        r3
+
+mova       m0,        [tab_Vm]
+
+movh       m1,        [r2]
+movh       m2,        [r2 + r3]
+
+pshufb     m1,        m0
+pshufb     m2,        m0
+
+movd       [r0],      m1
+movd       [r0 + r1], m2
+
+RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_4x4(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_sp_4x4, 4, 5, 5, dest, destStride, src, srcStride
+
+add        r3,     r3
+
+mova       m0,     [tab_Vm]
+
+movh       m1,     [r2]
+movh       m2,     [r2 + r3]
+movh       m3,     [r2 + 2 * r3]
+lea        r4,     [r2 + 2 * r3]
+movh       m4,     [r4 + r3]
+
+pshufb     m1,     m0
+pshufb     m2,     m0
+pshufb     m3,     m0
+pshufb     m4,     m0
+
+movd       [r0],          m1
+movd       [r0 + r1],     m2
+movd       [r0 + 2 * r1], m3
+lea        r4,            [r0 + 2 * r1]
+movd       [r4 + r1],     m4
+
+RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_4x8(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_sp_4x8, 4, 6, 8, dest, destStride, src, srcStride
+
+add        r3,      r3
+
+mova       m0,      [tab_Vm]
+
+movh       m1,      [r2]
+movh       m2,      [r2 + r3]
+movh       m3,      [r2 + 2 * r3]
+lea        r4,      [r2 + 2 * r3]
+movh       m4,      [r4 + r3]
+movh       m5,      [r4 + 2 * r3]
+lea        r4,      [r4 + 2 * r3]
+movh       m6,      [r4 + r3]
+movh       m7,      [r4 + 2 * r3]
+lea        r5,      [r4 + 2 * r3]
+
+pshufb     m1,      m0
+pshufb     m2,      m0
+pshufb     m3,      m0
+pshufb     m4,      m0
+pshufb     m5,      m0
+pshufb     m6,      m0
+pshufb     m7,      m0
+
+movd       [r0],            m1
+movd       [r0 + r1],       m2
+movd       [r0 + 2 * r1],   m3
+lea        r4,              [r0 + 2 * r1]
+movd       [r4 + r1],       m4
+movd       [r4 + 2 * r1],   m5
+lea        r4,              [r4 + 2 * r1]
+movd       [r4 + r1],       m6
+movd       [r4 + 2 * r1],   m7
+
+movh       m1,              [r5 + r3]
+pshufb     m1,              m0
+lea        r4,              [r4 + 2 * r1]
+movd       [r4 + r1],       m1
+
+RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SP_W4_H8 2
+INIT_XMM sse2
+cglobal blockcopy_sp_%1x%2, 4, 7, 8, dest, destStride, src, srcStride
+
+mov         r6d,    %2
+
+add         r3,     r3
+
+mova        m0,     [tab_Vm]
+
+.loop
+      movh       m1,     [r2]
+      movh       m2,     [r2 + r3]
+      movh       m3,     [r2 + 2 * r3]
+      lea        r4,     [r2 + 2 * r3]
+      movh       m4,     [r4 + r3]
+      movh       m5,     [r4 + 2 * r3]
+      lea        r4,     [r4 + 2 * r3]
+      movh       m6,     [r4 + r3]
+      movh       m7,     [r4 + 2 * r3]
+      lea        r5,     [r4 + 2 * r3]
+
+      pshufb     m1,     m0
+      pshufb     m2,     m0
+      pshufb     m3,     m0
+      pshufb     m4,     m0
+      pshufb     m5,     m0
+      pshufb     m6,     m0
+      pshufb     m7,     m0
+
+      movd       [r0],            m1
+      movd       [r0 + r1],       m2
+      movd       [r0 + 2 * r1],   m3
+      lea        r4,              [r0 + 2 * r1]
+      movd       [r4 + r1],       m4
+      movd       [r4 + 2 * r1],   m5
+      lea        r4,              [r4 + 2 * r1]
+      movd       [r4 + r1],       m6
+      movd       [r4 + 2 * r1],   m7
+
+      movh       m1,              [r5 + r3]
+      pshufb     m1,              m0
+      lea        r4,              [r4 + 2 * r1]
+      movd       [r4 + r1],       m1
+
+      lea        r0,              [r0 + 8 * r1]
+      lea        r2,              [r2 + 8 * r3]
+
+      sub        r6d,             8
+      jnz        .loop
+
+RET
+%endmacro
+
+BLOCKCOPY_SP_W4_H8 4, 16
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_8x2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
