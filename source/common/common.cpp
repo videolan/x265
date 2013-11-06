@@ -143,6 +143,7 @@ void x265_param_default(x265_param *param)
     param->bEnableWavefront = 1;
     param->frameNumThreads = 1;
     param->inputBitDepth = 8;
+    param->sourceCsp = X265_CSP_I420;
 
     /* CU definitions */
     param->maxCUSize = 64;
