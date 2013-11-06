@@ -516,6 +516,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
+        if (opt.luma_hps[value])
+        {
+            if (!check_IPFilterLuma_ps_primitive(ref.luma_hps[value], opt.luma_hps[value]))
+            {
+                printf("luma_hps[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
         if (opt.luma_vpp[value])
         {
             if (!check_IPFilterLuma_primitive(ref.luma_vpp[value], opt.luma_vpp[value]))
@@ -646,6 +654,14 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                            pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
 
+        if (opt.luma_hps[value])
+        {
+            printf("luma_hps[%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.luma_hps[value], ref.luma_hps[value],
+                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                           IPF_vec_output_s, dstStride, 1);
+        }
+
         if (opt.luma_vpp[value])
         {
             printf("luma_vpp[%s]\t", lumaPartStr[value]);
@@ -661,6 +677,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                            pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_s, dstStride, 1);
         }
+
         if (opt.luma_hvpp[value])
         {
             printf("luma_hv [%s]\t", lumaPartStr[value]);
