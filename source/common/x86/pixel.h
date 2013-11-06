@@ -332,6 +332,10 @@ DECL_ADS(1, avx2)
 CHROMA_BLOCKCOPY_DEF(_sse2);
 LUMA_BLOCKCOPY_DEF(_sse2);
 
+void x265_blockcopy_sp_2x4_sse4(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
+void x265_blockcopy_sp_2x8_sse4(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
+void x265_blockcopy_sp_6x8_sse4(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);
+
 #undef DECL_PIXELS
 #undef DECL_SUF
 #undef DECL_HEVC_SSD

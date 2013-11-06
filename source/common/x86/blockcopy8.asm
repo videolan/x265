@@ -802,7 +802,7 @@ BLOCKCOPY_PP_W64_H2 64, 64
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_2x4(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal blockcopy_sp_2x4, 4, 6, 5, dest, destStride, src, srcStride
 
 add        r3,     r3
@@ -839,7 +839,7 @@ RET
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_2x8(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal blockcopy_sp_2x8, 4, 7, 8, dest, destStride, src, srcStride
 
 add        r3,      r3
@@ -1058,7 +1058,7 @@ BLOCKCOPY_SP_W4_H8 4, 16
 ; void blockcopy_sp_6x8(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_SP_W6_H4 2
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal blockcopy_sp_6x8, 4, 7, 8, dest, destStride, src, srcStride
 
 mov       r5d,    %2
