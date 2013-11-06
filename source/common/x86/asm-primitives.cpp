@@ -342,6 +342,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_copy_sp[CHROMA_8x6] = x265_blockcopy_sp_8x6_sse2;
         p.chroma_copy_sp[CHROMA_8x8] = x265_blockcopy_sp_8x8_sse2;
         p.chroma_copy_sp[CHROMA_8x16] = x265_blockcopy_sp_8x16_sse2;
+        p.chroma_copy_sp[CHROMA_12x16] = x265_blockcopy_sp_12x16_sse2;
         p.chroma_copy_sp[CHROMA_16x4] = x265_blockcopy_sp_16x4_sse2;
         p.chroma_copy_sp[CHROMA_16x8] = x265_blockcopy_sp_16x8_sse2;
         p.chroma_copy_sp[CHROMA_16x12] = x265_blockcopy_sp_16x12_sse2;
