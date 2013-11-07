@@ -414,6 +414,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_32x24] = x265_pixel_sad_x4_32x24_ssse3;
         p.sad_x4[LUMA_32x32] = x265_pixel_sad_x4_32x32_ssse3;
         p.sad_x4[LUMA_32x64] = x265_pixel_sad_x4_32x64_ssse3;
+        p.sad_x3[LUMA_48x64] = x265_pixel_sad_x3_48x64_ssse3;
 
         p.luma_hvpp[LUMA_8x8] = x265_interp_8tap_hv_pp_8x8_ssse3;
         p.ipfilter_sp[FILTER_V_S_P_8] = x265_interp_8tap_v_sp_ssse3;
@@ -468,6 +469,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_32x24] = x265_pixel_sad_x4_32x24_avx;
         p.sad_x4[LUMA_32x32] = x265_pixel_sad_x4_32x32_avx;
         p.sad_x4[LUMA_32x64] = x265_pixel_sad_x4_32x64_avx;
+        p.sad_x3[LUMA_48x64] = x265_pixel_sad_x3_48x64_avx;
     }
     if (cpuMask & X265_CPU_XOP)
     {
