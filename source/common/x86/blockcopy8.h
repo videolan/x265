@@ -97,6 +97,7 @@ void x265_blockcopy_sp_6x8_sse4(pixel *a, intptr_t stridea, int16_t *b, intptr_t
 void x265_blockfill_s_4x4_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_8x8_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_16x16_sse2(int16_t *dst, intptr_t dstride, int16_t val);
+void x265_blockfill_s_32x32_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 
 #undef SETUP_CHROMA_BLOCKCOPY_FUNC
 #undef SETUP_LUMA_BLOCK_FUNC

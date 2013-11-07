@@ -365,6 +365,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.blockfill_s[BLOCK_4x4] = x265_blockfill_s_4x4_sse2;
         p.blockfill_s[BLOCK_8x8] = x265_blockfill_s_8x8_sse2;
         p.blockfill_s[BLOCK_16x16] = x265_blockfill_s_16x16_sse2;
+        p.blockfill_s[BLOCK_32x32] = x265_blockfill_s_32x32_sse2;
 
 #if X86_64
         p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
