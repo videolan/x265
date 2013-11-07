@@ -1149,9 +1149,8 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
     {
         /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
         double qp_offset = 0;
-        int blockSize = g_maxCUWidth >> 2;
-        int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (blockSize - 1)) / blockSize;
-        int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (blockSize - 1)) / blockSize;
+        int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
+        int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
         int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * 4;
         int block_x = (cuAddr * 4) - block_y * pic->getPicSym()->getFrameWidthInCU();
         int cnt = 0;
