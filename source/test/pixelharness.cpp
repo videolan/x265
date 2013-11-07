@@ -555,6 +555,28 @@ bool PixelHarness::check_block_copy_sp(copy_sp_t ref, copy_sp_t opt)
     return true;
 }
 
+bool PixelHarness::check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int16_t value = (rand() % SHORT_MAX) + 1;
+
+        opt(opt_dest, 64, value);
+        ref(ref_dest, 64, value);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -728,6 +750,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_pixelcmp(ref.sa8d[i], opt.sa8d[i]))
             {
                 printf("sa8d[%dx%d]: failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+
+        if (opt.blockfill_s[i])
+        {
+            if (!check_blockfill_s(ref.blockfill_s[i], opt.blockfill_s[i]))
+            {
+                printf("blockfill_s[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -955,6 +986,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("recon[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
+        }
+
+        if (opt.blockfill_s[i])
+        {
+            printf("blkfill[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.blockfill_s[i], ref.blockfill_s[i], sbuf1, 64, SHORT_MAX);
         }
     }
 
