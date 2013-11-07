@@ -366,7 +366,10 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
 
     if (x265_param_default_preset(param, preset, tune) < 0)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "preset or tune unrecognized\n");
         return true;
+    }
 
     for (optind = 0;; )
     {
