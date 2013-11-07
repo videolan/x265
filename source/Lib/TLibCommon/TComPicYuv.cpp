@@ -354,6 +354,10 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
                 Y[c] = (Pel)y[c];
             }
 
+            for (int x = 0; x < padx; x++)
+            {
+                Y[width + x] = Y[width - 1];
+            }
             Y += getStride();
             y += pic.stride[0];
         }
@@ -366,41 +370,15 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
                 V[c] = (Pel)v[c];
             }
 
+            for (int x = 0; x < padx >> m_hChromaShift; x++)
+            {
+                U[(width >> m_hChromaShift) + x] = U[(width >> m_hChromaShift) - 1];
+                V[(width >> m_hChromaShift) + x] = V[(width >> m_hChromaShift) - 1];
+            }
             U += getCStride();
             V += getCStride();
             u += pic.stride[1];
             v += pic.stride[2];
-        }
-
-        /* Extend the right if width is not multiple of minimum CU size */
-
-        if (padx)
-        {
-            Y = getLumaAddr();
-            U = getCbAddr();
-            V = getCrAddr();
-
-            for (int r = 0; r < height; r++)
-            {
-                for (int x = 0; x < padx; x++)
-                {
-                    Y[width + x] = Y[width - 1];
-                }
-
-                Y += getStride();
-            }
-
-            for (int r = 0; r < height >> m_vChromaShift; r++)
-            {
-                for (int x = 0; x < padx >> m_hChromaShift; x++)
-                {
-                    U[(width >> m_hChromaShift) + x] = U[(width >> m_hChromaShift) - 1];
-                    V[(width >> m_hChromaShift) + x] = V[(width >> m_hChromaShift) - 1];
-                }
-
-                U += getCStride();
-                V += getCStride();
-            }
         }
 
         /* extend the bottom if height is not multiple of the minimum CU size */
@@ -441,6 +419,10 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
                 Y[c] = (Pel)y[c];
             }
 
+            for (int x = 0; x < padx; x++)
+            {
+                Y[width + x] = Y[width - 1];
+            }
             Y += getStride();
             y += pic.stride[0];
         }
@@ -453,41 +435,16 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
                 V[c] = (Pel)v[c];
             }
 
+            for (int x = 0; x < padx >> m_hChromaShift; x++)
+            {
+                U[(width >> m_hChromaShift) + x] = U[(width >> m_hChromaShift) - 1];
+                V[(width >> m_hChromaShift) + x] = V[(width >> m_hChromaShift) - 1];
+            }
+
             U += getCStride();
             V += getCStride();
             u += pic.stride[1];
             v += pic.stride[2];
-        }
-
-        /* Extend the right if width is not multiple of minimum CU size */
-
-        if (padx)
-        {
-            Y = getLumaAddr();
-            U = getCbAddr();
-            V = getCrAddr();
-
-            for (int r = 0; r < height; r++)
-            {
-                for (int x = 0; x < padx; x++)
-                {
-                    Y[width + x] = Y[width - 1];
-                }
-
-                Y += getStride();
-            }
-
-            for (int r = 0; r < height >> m_vChromaShift; r++)
-            {
-                for (int x = 0; x < padx >> m_hChromaShift; x++)
-                {
-                    U[(width >> m_hChromaShift) + x] = U[(width >> m_hChromaShift) - 1];
-                    V[(width >> m_hChromaShift) + x] = V[(width >> m_hChromaShift) - 1];
-                }
-
-                U += getCStride();
-                V += getCStride();
-            }
         }
 
         /* extend the bottom if height is not multiple of the minimum CU size */
