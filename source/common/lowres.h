@@ -96,22 +96,19 @@ struct ReferencePlanes
     }
 };
 
+/* lowres buffers, sizes and strides */
 struct Lowres : public ReferencePlanes
 {
-    /* lowres buffers, sizes and strides */
     pixel *buffer[4];
-    double *qpAqOffset; // qp Aq offset values for each Cu
-    int    *invQscaleFactor; // qScale values for qp Aq Offsets
-    int    width;     // width of lowres frame in pixels
-    int    lines;     // height of lowres frame in pixel lines
-    int    frameNum;  // Presentation frame number
-    int    sliceType; // Slice type decided by lookahead
-    int    leadingBframes; // number of leading B frames for P or I
-    uint64_t wp_ssd[3];  // This is different than m_SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
-    uint64_t wp_sum[3];
+
+    int    frameNum;         // Presentation frame number
+    int    sliceType;        // Slice type decided by lookahead
+    int    width;            // width of lowres frame in pixels
+    int    lines;            // height of lowres frame in pixel lines
+    int    leadingBframes;   // number of leading B frames for P or I
 
     bool   bIntraCalculated;
-    bool   bScenecut; // Set to false if the frame cannot possibly be part of a real scenecut.
+    bool   bScenecut;        // Set to false if the frame cannot possibly be part of a real scenecut.
     bool   bKeyframe;
     bool   bLastMiniGopBFrame;
 
@@ -125,6 +122,12 @@ struct Lowres : public ReferencePlanes
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int32_t  *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
+
+    /* rate control / adaptive quant data */
+    double *qpAqOffset;      // qp Aq offset values for each Cu
+    int    *invQscaleFactor; // qScale values for qp Aq Offsets
+    uint64_t wp_ssd[3];      // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
+    uint64_t wp_sum[3];
 
     void create(TComPic *pic, int bframes, int32_t *aqMode);
     void destroy(int bframes);
