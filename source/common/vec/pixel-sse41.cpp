@@ -974,7 +974,7 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     SETUP_SSE(16, 4);
     SETUP_SSE(16, 12);
     SETUP_SSE(4, 16);
-#if !defined(__clang__)
+#if !defined(__clang__) && !defined(__GNUC__)
     SETUP_SSE(12, 16);
 #endif
 
