@@ -387,7 +387,6 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
 
 #if HIGH_BIT_DEPTH
     // At high bit depth, a pixel is a short
-    p.blockcpy_sc = (blockcpy_sc_t)blockcopy_sp;
     p.pixeladd_pp = (pixeladd_pp_t)pixeladd_ss;
     p.pixeladd_ss = pixeladd_ss;
 #else
