@@ -1646,3 +1646,22 @@ BLOCKCOPY_SP_W64_H1 64, 16
 BLOCKCOPY_SP_W64_H1 64, 32
 BLOCKCOPY_SP_W64_H1 64, 48
 BLOCKCOPY_SP_W64_H1 64, 64
+
+;-----------------------------------------------------------------------------
+; void blockfill_s_4x4(int16_t *dest, intptr_t destride, int16_t val)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockfill_s_4x4, 3, 3, 1, dest, destStride, val
+
+add        r1,            r1
+
+movd       m0,            r2d
+pshuflw    m0,            m0,         0
+
+movh       [r0],          m0
+movh       [r0 + r1],     m0
+movh       [r0 + 2 * r1], m0
+lea        r0,            [r0 + 2 * r1]
+movh       [r0 + r1],     m0
+
+RET
