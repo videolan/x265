@@ -234,7 +234,6 @@ struct EncoderPrimitives
     blockcpy_pp_t   blockcpy_pp;                // block copy pixel from pixel
     blockcpy_ps_t   blockcpy_ps;                // block copy pixel from short
     blockcpy_sp_t   blockcpy_sp;                // block copy short from pixel
-    blockcpy_sc_t   blockcpy_sc;                // block copy short from unsigned char
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     cvt16to32_shl_t cvt16to32_shl;
     cvt16to16_shl_t cvt16to16_shl;

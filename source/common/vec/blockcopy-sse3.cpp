@@ -394,7 +394,6 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
     p.blockcpy_pp = blockcopy_pp;
     p.blockcpy_ps = blockcopy_ps;
     p.blockcpy_sp = blockcopy_sp;
-    p.blockcpy_sc = blockcopy_sp;
     p.pixelsub_sp = pixelsub_sp;
     p.pixeladd_ss = pixeladd_ss;
 #endif // if HIGH_BIT_DEPTH

@@ -417,20 +417,6 @@ void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, int16_t *b, intpt
     }
 }
 
-void blockcopy_s_c(int bx, int by, int16_t *a, intptr_t stridea, uint8_t *b, intptr_t strideb)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            a[x] = (int16_t)b[x];
-        }
-
-        a += stridea;
-        b += strideb;
-    }
-}
-
 template<int size>
 void blockfil_s_c(int16_t *dst, intptr_t dstride, int16_t val)
 {
@@ -902,7 +888,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.blockcpy_pp = blockcopy_p_p;
     p.blockcpy_ps = blockcopy_p_s;
     p.blockcpy_sp = blockcopy_s_p;
-    p.blockcpy_sc = blockcopy_s_c;
 
     p.blockfill_s[BLOCK_4x4]   = blockfil_s_c<4>;
     p.blockfill_s[BLOCK_8x8]   = blockfil_s_c<8>;
