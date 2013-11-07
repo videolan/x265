@@ -25,6 +25,7 @@
 #define X265_REFERENCE_H
 
 #include "primitives.h"
+#include "lowres.h"
 #include "mv.h"
 
 namespace x265 {

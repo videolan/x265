@@ -21,11 +21,12 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include "common.h"
+#include "lowres.h"
 #include "motion.h"
 #include "x265.h"
-#include "TLibCommon/TComRom.h"
 
 #include <string.h>
 #include <stdio.h>

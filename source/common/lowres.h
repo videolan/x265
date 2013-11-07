@@ -29,7 +29,72 @@
 #include "mv.h"
 
 namespace x265 {
+// private namespace
+
 class TComPic;
+class TComPicYuv;
+
+struct ReferencePlanes
+{
+    ReferencePlanes() : isWeighted(false), isLowres(false) {}
+
+    pixel* fpelPlane;
+    pixel* lowresPlane[4];
+    pixel* unweightedFPelPlane;
+
+    bool isWeighted;
+    bool isLowres;
+    int  lumaStride;
+    int  weight;
+    int  offset;
+    int  shift;
+    int  round;
+
+    /* lowres motion compensation, you must provide a buffer and stride for QPEL averaged pixels
+     * in case QPEL is required.  Else it returns a pointer to the HPEL pixels */
+    inline pixel *lowresMC(intptr_t blockOffset, const MV& qmv, pixel *buf, intptr_t& outstride)
+    {
+        if ((qmv.x | qmv.y) & 1)
+        {
+            int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+            pixel *frefA = lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
+
+            MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
+            int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
+            
+            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * lumaStride;
+            primitives.pixelavg_pp[LUMA_8x8](buf, outstride, frefA, lumaStride, frefB, lumaStride, 32);
+            return buf;
+        }
+        else
+        {
+            outstride = lumaStride;
+            int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+            return lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
+        }
+    }
+
+    inline int lowresQPelCost(pixel *fenc, intptr_t blockOffset, const MV& qmv, pixelcmp_t comp)
+    {
+        if ((qmv.x | qmv.y) & 1)
+        {
+            ALIGN_VAR_16(pixel, subpelbuf[8 * 8]);
+            int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+            pixel *frefA = lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
+            MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
+            int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
+            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * lumaStride;
+            primitives.pixelavg_pp[LUMA_8x8](subpelbuf, 8, frefA, lumaStride, frefB, lumaStride, 32);
+            return comp(fenc, FENC_STRIDE, subpelbuf, 8);
+        }
+        else
+        {
+            int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
+            pixel *fref = lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
+            return comp(fenc, FENC_STRIDE, fref, lumaStride);
+        }
+    }
+};
 
 struct Lowres : public ReferencePlanes
 {
