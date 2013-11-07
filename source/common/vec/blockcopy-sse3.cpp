@@ -245,7 +245,7 @@ void blockcopy_sp(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src, 
     }
 }
 
-void pixelsub_sp(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src0, uint8_t *src1, intptr_t sstride0, intptr_t sstride1)
+void pixelsub_ps(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src0, uint8_t *src1, intptr_t sstride0, intptr_t sstride1)
 {
     size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
 
@@ -394,7 +394,7 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
     p.blockcpy_pp = blockcopy_pp;
     p.blockcpy_ps = blockcopy_ps;
     p.blockcpy_sp = blockcopy_sp;
-    p.pixelsub_sp = pixelsub_sp;
+    p.pixelsub_ps = pixelsub_ps;
     p.pixeladd_ss = pixeladd_ss;
 #endif // if HIGH_BIT_DEPTH
 }

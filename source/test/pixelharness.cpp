@@ -354,7 +354,7 @@ bool PixelHarness::check_weightpUni(weightpUniPixel_t ref, weightpUniPixel_t opt
     return true;
 }
 
-bool PixelHarness::check_pixelsub_sp(pixelsub_sp_t ref, pixelsub_sp_t opt)
+bool PixelHarness::check_pixelsub_sp(pixelsub_ps_t ref, pixelsub_ps_t opt)
 {
     ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
     ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
@@ -818,9 +818,9 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.pixelsub_sp)
+    if (opt.pixelsub_ps)
     {
-        if (!check_pixelsub_sp(ref.pixelsub_sp, opt.pixelsub_sp))
+        if (!check_pixelsub_sp(ref.pixelsub_ps, opt.pixelsub_ps))
         {
             printf("Luma Substract failed!\n");
             return false;
@@ -1031,10 +1031,10 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
-    if (opt.pixelsub_sp)
+    if (opt.pixelsub_ps)
     {
         printf("Pixel Sub");
-        REPORT_SPEEDUP(opt.pixelsub_sp, ref.pixelsub_sp, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pixelsub_ps, ref.pixelsub_ps, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 
     if (opt.pixeladd_ss)

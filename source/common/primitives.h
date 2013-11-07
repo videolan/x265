@@ -173,7 +173,7 @@ typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixe
 typedef void (*blockcpy_sp_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_ps_t)(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_sc_t)(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
-typedef void (*pixelsub_sp_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
+typedef void (*pixelsub_ps_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixeladd_ss_t)(int bx, int by, int16_t *dst, intptr_t dstride, int16_t *src0, int16_t *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixeladd_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixelavg_pp_t)(pixel *dst, intptr_t dstride, pixel *src0, intptr_t sstride0, pixel *src1, intptr_t sstride1, int weight);
@@ -277,7 +277,7 @@ struct EncoderPrimitives
 
     weightpUni_t    weightpUni;
     weightpUniPixel_t weightpUniPixel;
-    pixelsub_sp_t   pixelsub_sp;
+    pixelsub_ps_t   pixelsub_ps;
     pixeladd_ss_t   pixeladd_ss;
     pixeladd_pp_t   pixeladd_pp;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
