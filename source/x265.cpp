@@ -266,7 +266,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --threads                     Number of threads for thread pool (0: detect CPU core count, default)\n");
     H0("-p/--preset                      ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
     H0("-t/--tune                        Tune the settings for a particular type of source or situation\n");
-    H0("-F/--frame-threads               Number of concurrently encoded frames. Default %d\n", param->frameNumThreads);
+    H0("-F/--frame-threads               Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
     H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("   --y4m                         Parse input stream as YUV4MPEG2 regardless of file extension\n");

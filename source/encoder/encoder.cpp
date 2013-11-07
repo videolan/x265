@@ -1024,11 +1024,26 @@ void Encoder::configure(x265_param *_param)
         _param->poolNumThreads = 1;
 
     setThreadPool(ThreadPool::allocThreadPool(_param->poolNumThreads));
-    int actual = ThreadPool::getThreadPool()->getThreadCount();
-    if (actual > 1)
+    int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
+    int rows = (_param->sourceHeight + _param->maxCUSize - 1) / _param->maxCUSize;
+
+    if (_param->frameNumThreads == 0)
     {
-        x265_log(_param, X265_LOG_INFO, "WPP streams / pool / frames  : %d / %d / %d\n",
-                 (_param->sourceHeight + _param->maxCUSize - 1) / _param->maxCUSize, actual, _param->frameNumThreads);
+        // auto-detect frame threads
+        if (poolThreadCount > 32)
+            _param->frameNumThreads = 6;  // dual-socket 10-core IvyBridge or higher
+        else if (poolThreadCount >= 16)
+            _param->frameNumThreads = 5;  // 8 HT cores, or dual socket
+        else if (poolThreadCount >= 12)
+            _param->frameNumThreads = 3;  // 6 HT cores
+        else if (poolThreadCount >= 4)
+            _param->frameNumThreads = 2;  // Dual or Quad core
+        else
+            _param->frameNumThreads = 1;
+    }
+    if (poolThreadCount > 1)
+    {
+        x265_log(_param, X265_LOG_INFO, "WPP streams / pool / frames  : %d / %d / %d\n", rows, poolThreadCount, _param->frameNumThreads);
     }
     else if (_param->frameNumThreads > 1)
     {
@@ -1044,7 +1059,6 @@ void Encoder::configure(x265_param *_param)
     {
         x265_log(_param, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
     }
-
     if (!_param->keyframeMin)
     {
         _param->keyframeMin = _param->keyframeMax;

@@ -141,7 +141,7 @@ void x265_param_default(x265_param *param)
     /* Applying non-zero default values to all elements in the param structure */
     param->logLevel = X265_LOG_INFO;
     param->bEnableWavefront = 1;
-    param->frameNumThreads = 1;
+    param->frameNumThreads = 0;
     param->inputBitDepth = 8;
     param->sourceCsp = X265_CSP_I420;
 
@@ -444,8 +444,8 @@ int x265_check_params(x265_param *param)
           "Search Range must be less than 32768");
     CHECK(param->keyframeMax < 0,
           "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
-    CHECK(param->frameNumThreads <= 0,
-          "frameNumThreads (--frame-threads) must be 1 or higher");
+    CHECK(param->frameNumThreads < 0,
+          "frameNumThreads (--frame-threads) must be 0 or higher");
     CHECK(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CHECK(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
     CHECK(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");

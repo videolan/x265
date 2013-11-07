@@ -289,8 +289,8 @@ typedef struct x265_param
 {
     int       logLevel;
     int       bEnableWavefront;                ///< enable wavefront parallel processing
-    int       poolNumThreads;                  ///< number of threads to allocate for thread pool
-    int       frameNumThreads;                 ///< number of concurrently encoded frames
+    int       poolNumThreads;                  ///< number of threads to allocate for thread pool, 0 implies auto-detection (default)
+    int       frameNumThreads;                 ///< number of concurrently encoded frames, 0 implies auto-detection (default)
     const char *csvfn;                         ///< csv log filename. logLevel >= 3 is frame logging, else one line per run
 
     // source specification
