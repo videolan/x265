@@ -784,6 +784,7 @@ void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
     {
         for (int x = 0; x < bx; x++)
         {
+            assert((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)));
             a[x] = (pixel)b[x];
         }
 
