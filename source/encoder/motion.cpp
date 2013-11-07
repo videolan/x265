@@ -1147,12 +1147,12 @@ me_hex2:
 
 int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_t cmp)
 {
-    pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
     int xFrac = qmv.x & 0x3;
     int yFrac = qmv.y & 0x3;
 
     if ((yFrac | xFrac) == 0)
     {
+        pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
         return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride);
     }
     else
@@ -1162,6 +1162,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
             int shift = ref->shift + shiftNum;
             int round = shift ? (1 << (shift - 1)) : 0;
+            pixel *fref = ref->unweightedFPelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
 
             if (yFrac == 0)
             {
@@ -1184,6 +1185,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
         }
         else
         {
+            pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
             if (yFrac == 0)
             {
                 primitives.luma_hpp[partEnum](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, xFrac);
