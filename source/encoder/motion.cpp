@@ -1192,7 +1192,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             }
             else if (xFrac == 0)
             {
-                primitives.ipfilter_pp[FILTER_V_P_P_8](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
+                primitives.luma_vpp[partEnum](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, yFrac);
             }
             else
             {

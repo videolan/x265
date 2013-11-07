@@ -492,7 +492,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
     }
     else if (xFrac == 0)
     {
-        primitives.ipfilter_pp[FILTER_V_P_P_8](src, srcStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        primitives.luma_vpp[partEnum](src, srcStride, dst, dstStride, yFrac);
     }
     else
     {
