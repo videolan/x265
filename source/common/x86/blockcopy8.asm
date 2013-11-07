@@ -1665,3 +1665,32 @@ lea        r0,            [r0 + 2 * r1]
 movh       [r0 + r1],     m0
 
 RET
+
+;-----------------------------------------------------------------------------
+; void blockfill_s_8x8(int16_t *dest, intptr_t destride, int16_t val)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockfill_s_8x8, 3, 3, 1, dest, destStride, val
+
+add        r1,            r1
+
+movd       m0,            r2d
+pshuflw    m0,            m0,         0
+pshufd     m0,            m0,         0
+
+movu       [r0],          m0
+movu       [r0 + r1],     m0
+movu       [r0 + 2 * r1], m0
+
+lea        r0,            [r0 + 2 * r1]
+movu       [r0 + r1],     m0
+movu       [r0 + 2 * r1], m0
+
+lea        r0,            [r0 + 2 * r1]
+movu       [r0 + r1],     m0
+movu       [r0 + 2 * r1], m0
+
+lea        r0,            [r0 + 2 * r1]
+movu       [r0 + r1],     m0
+
+RET
