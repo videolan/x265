@@ -532,27 +532,6 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
     }
 }
 
-static inline int lowresQPelCost(ReferencePlanes *ref, pixel *fenc, intptr_t blockOffset, const MV& qmv, pixelcmp_t comp)
-{
-    if ((qmv.x | qmv.y) & 1)
-    {
-        ALIGN_VAR_16(pixel, subpelbuf[8 * 8]);
-        int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-        pixel *frefA = ref->lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-        MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
-        int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
-        pixel *frefB = ref->lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * ref->lumaStride;
-        primitives.pixelavg_pp[LUMA_8x8](subpelbuf, 8, frefA, ref->lumaStride, frefB, ref->lumaStride, 32);
-        return comp(fenc, FENC_STRIDE, subpelbuf, 8);
-    }
-    else
-    {
-        int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-        pixel *fref = ref->lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-        return comp(fenc, FENC_STRIDE, fref, ref->lumaStride);
-    }
-}
-
 int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    const MV &       mvmin,
                                    const MV &       mvmax,
@@ -584,7 +563,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     int bprecost;
 
     if (ref->isLowres)
-        bprecost = lowresQPelCost(ref, fenc, blockOffset, pmv, sad);
+        bprecost = ref->lowresQPelCost(fenc, blockOffset, pmv, sad);
     else
         bprecost = subpelCompare(ref, pmv, sad);
 
@@ -615,7 +594,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         {
             int cost;
             if (ref->isLowres)
-                cost = lowresQPelCost(ref, fenc, blockOffset, m, sad) + mvcost(m);
+                cost = ref->lowresQPelCost(fenc, blockOffset, m, sad) + mvcost(m);
             else
                 cost = subpelCompare(ref, m, sad) + mvcost(m);
 
@@ -1083,17 +1062,17 @@ me_hex2:
         for (int i = 1; i <= wl.hpel_dirs; i++)
         {
             MV qmv = bmv + square1[i] * 2;
-            cost = lowresQPelCost(ref, fenc, blockOffset, qmv, sad) + mvcost(qmv);
+            cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
         bmv += square1[bdir] * 2;
-        bcost = lowresQPelCost(ref, fenc, blockOffset, bmv, satd) + mvcost(bmv);
+        bcost = ref->lowresQPelCost(fenc, blockOffset, bmv, satd) + mvcost(bmv);
 
         bdir = 0;
         for (int i = 1; i <= wl.qpel_dirs; i++)
         {
             MV qmv = bmv + square1[i];
-            cost = lowresQPelCost(ref, fenc, blockOffset, qmv, satd) + mvcost(qmv);
+            cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
         bmv += square1[bdir];

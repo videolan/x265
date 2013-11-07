@@ -359,61 +359,20 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
         }
         if (bBidir)
         {
-            pixel subpelbuf1[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE], subpelbuf2[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
-            pixel *src0, *src1;
-            intptr_t stride0, stride1;
-            if (((*fenc_mvs[0]).x | (*fenc_mvs[0]).y) & 1)
-            {
-                int hpelA = ((*fenc_mvs[0]).y & 2) | (((*fenc_mvs[0]).x & 2) >> 1);
-                pixel *frefA = fref0->lowresPlane[hpelA] + pelOffset + ((*fenc_mvs[0]).x >> 2) + ((*fenc_mvs[0]).y >> 2) * fref0->lumaStride;
-
-                MV qmvB = (*fenc_mvs[0]) + MV(((*fenc_mvs[0]).x & 1) * 2, ((*fenc_mvs[0]).y & 1) * 2);
-                int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
-                pixel *frefB = fref0->lowresPlane[hpelB] + pelOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * fref0->lumaStride;
-
-                primitives.pixelavg_pp[LUMA_8x8](subpelbuf1, X265_LOWRES_CU_SIZE, frefA, fref0->lumaStride, frefB, fref0->lumaStride, 32);
-                src0 = subpelbuf1;
-                stride0 = X265_LOWRES_CU_SIZE;
-            }
-            else
-            {
-                /* FPEL/HPEL */
-                int hpel = ((*fenc_mvs[0]).y & 2) | (((*fenc_mvs[0]).x & 2) >> 1);
-                src0 = fref0->lowresPlane[hpel] + pelOffset + ((*fenc_mvs[0]).x >> 2) + ((*fenc_mvs[0]).y >> 2) * fref0->lumaStride;
-                stride0 = fref0->lumaStride;
-            }
-            if (((*fenc_mvs[1]).x | (*fenc_mvs[1]).y) & 1)
-            {
-                int hpelA = ((*fenc_mvs[1]).y & 2) | (((*fenc_mvs[1]).x & 2) >> 1);
-                pixel *frefA = fref1->lowresPlane[hpelA] + pelOffset + ((*fenc_mvs[1]).x >> 2) + ((*fenc_mvs[1]).y >> 2) * fref1->lumaStride;
-
-                MV qmvB = (*fenc_mvs[1]) + MV(((*fenc_mvs[1]).x & 1) * 2, ((*fenc_mvs[1]).y & 1) * 2);
-                int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
-                pixel *frefB = fref1->lowresPlane[hpelB] + pelOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * fref1->lumaStride;
-
-                primitives.pixelavg_pp[LUMA_8x8](subpelbuf2, X265_LOWRES_CU_SIZE, frefA, fref1->lumaStride, frefB, fref1->lumaStride, 32);
-                src1 = subpelbuf2;
-                stride1 = X265_LOWRES_CU_SIZE;
-            }
-            else
-            {
-                int hpel = ((*fenc_mvs[1]).y & 2) | (((*fenc_mvs[1]).x & 2) >> 1);
-                src1 = fref1->lowresPlane[hpel] + pelOffset + ((*fenc_mvs[1]).x >> 2) + ((*fenc_mvs[1]).y >> 2) * fref1->lumaStride;
-                stride1 = fref1->lumaStride;
-            }
+            pixel subpelbuf0[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE], subpelbuf1[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
+            intptr_t stride0 = X265_LOWRES_CU_SIZE, stride1 = X265_LOWRES_CU_SIZE;
+            pixel *src0 = fref0->lowresMC(pelOffset, *fenc_mvs[0], subpelbuf0, stride0);
+            pixel *src1 = fref1->lowresMC(pelOffset, *fenc_mvs[1], subpelbuf1, stride1);
 
             pixel ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
             primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 0);
-
             int bicost = primitives.satd[LUMA_8x8](fenc->lowresPlane[0] + pelOffset, fenc->lumaStride, ref, X265_LOWRES_CU_SIZE);
             COPY2_IF_LT(bcost, bicost, listused, 3);
 
-            //Try 0,0 candidates
+            // Try 0,0 candidates
             src0 = fref0->lowresPlane[0] + pelOffset;
             src1 = fref1->lowresPlane[0] + pelOffset;
-
             primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, fref0->lumaStride, src1, fref1->lumaStride, 0);
-
             bicost = primitives.satd[LUMA_8x8](fenc->lowresPlane[0] + pelOffset, fenc->lumaStride, ref, X265_LOWRES_CU_SIZE);
             COPY2_IF_LT(bcost, bicost, listused, 3);
         }
