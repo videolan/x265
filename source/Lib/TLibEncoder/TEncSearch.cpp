@@ -2915,6 +2915,144 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     cu->setQPSubParts(qpBest, 0, cu->getDepth(0));
 }
 
+void TEncSearch::estimateRDInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv,
+                                   TShortYUV* outBestResiYuv, TComYuv* outReconYuv, bool /*bSkipRes*/, bool curUseRDOQ)
+{
+    uint32_t width  = cu->getWidth(0);
+    uint32_t height = cu->getHeight(0);
+
+    outResiYuv->subtract(fencYuv, predYuv, 0, width);
+
+    uint32_t zerobits = estimateZerobits(cu);
+    uint32_t zerodistortion = estimateZeroDist(cu, fencYuv, predYuv);
+    uint64_t zerocost = m_rdCost->calcRdCost(zerodistortion, zerobits);
+
+    uint32_t distortion = 0;
+    uint32_t bits = 0;
+    estimateBitsDist(cu, outResiYuv, bits, distortion, curUseRDOQ);
+    uint64_t cost = m_rdCost->calcRdCost(distortion, bits);
+
+    if (cu->isLosslessCoded(0))
+    {
+        zerocost = cost + 1;
+    }
+
+    if (zerocost < cost)
+    {
+        const uint32_t qpartnum = cu->getPic()->getNumPartInCU() >> (cu->getDepth(0) << 1);
+        ::memset(cu->getTransformIdx(), 0, qpartnum * sizeof(UChar));
+        ::memset(cu->getCbf(TEXT_LUMA), 0, qpartnum * sizeof(UChar));
+        ::memset(cu->getCbf(TEXT_CHROMA_U), 0, qpartnum * sizeof(UChar));
+        ::memset(cu->getCbf(TEXT_CHROMA_V), 0, qpartnum * sizeof(UChar));
+        ::memset(cu->getCoeffY(), 0, width * height * sizeof(TCoeff));
+        ::memset(cu->getCoeffCb(), 0, width * height * sizeof(TCoeff) >> 2);
+        ::memset(cu->getCoeffCr(), 0, width * height * sizeof(TCoeff) >> 2);
+        cu->setTransformSkipSubParts(0, 0, 0, 0, cu->getDepth(0));
+        if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
+        {
+            cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
+        }
+        bits = zerobits;
+        outBestResiYuv->clear();
+        generateRecon(cu, predYuv, outBestResiYuv, outReconYuv, true);
+    }
+    else
+    {
+        xSetResidualQTData(cu, 0, 0, outBestResiYuv, cu->getDepth(0), true);
+        generateRecon(cu, predYuv, outBestResiYuv, outReconYuv, false);
+    }
+
+    int part = partitionFromSizes(width, height);
+    distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
+    part = partitionFromSizes(width >> 1, height >> 1);
+    distortion += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+    distortion += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+
+    cu->m_totalBits       = bits;
+    cu->m_totalDistortion = distortion;
+    cu->m_totalCost       = m_rdCost->calcRdCost(distortion, bits);
+}
+
+uint32_t TEncSearch::estimateZerobits(TComDataCU* cu)
+{
+    if (cu->isIntra(0))
+    {
+        return 0;
+    }
+
+    uint32_t zeroResiBits = 0;
+
+    uint32_t width  = cu->getWidth(0);
+    uint32_t height = cu->getHeight(0);
+
+    const uint32_t qpartnum = cu->getPic()->getNumPartInCU() >> (cu->getDepth(0) << 1);
+    ::memset(cu->getTransformIdx(), 0, qpartnum * sizeof(UChar));
+    ::memset(cu->getCbf(TEXT_LUMA), 0, qpartnum * sizeof(UChar));
+    ::memset(cu->getCbf(TEXT_CHROMA_U), 0, qpartnum * sizeof(UChar));
+    ::memset(cu->getCbf(TEXT_CHROMA_V), 0, qpartnum * sizeof(UChar));
+    ::memset(cu->getCoeffY(), 0, width * height * sizeof(TCoeff));
+    ::memset(cu->getCoeffCb(), 0, width * height * sizeof(TCoeff) >> 2);
+    ::memset(cu->getCoeffCr(), 0, width * height * sizeof(TCoeff) >> 2);
+    cu->setTransformSkipSubParts(0, 0, 0, 0, cu->getDepth(0));
+
+    m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
+    zeroResiBits = xSymbolBitsInter(cu);
+    // Reset skipflags to false which would have set to true by xSymbolBitsInter if merge-skip
+    cu->setSkipFlagSubParts(false, 0, cu->getDepth(0));
+    return zeroResiBits;
+}
+
+uint32_t TEncSearch::estimateZeroDist(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
+{
+    uint32_t distortion = 0;
+
+    uint32_t width  = cu->getWidth(0);
+    uint32_t height = cu->getHeight(0);
+
+    int part = partitionFromSizes(width, height);
+
+    distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), predYuv->getLumaAddr(), predYuv->getStride());
+    part = partitionFromSizes(width >> 1, height >> 1);
+    distortion += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), predYuv->getCbAddr(), predYuv->getCStride()));
+    distortion += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), predYuv->getCrAddr(), predYuv->getCStride()));
+    return distortion;
+}
+
+void TEncSearch::generateRecon(TComDataCU* cu, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, bool skipRes)
+{
+    if (skipRes)
+    {
+        predYuv->copyToPartYuv(reconYuv, 0);
+        return;
+    }
+    else
+    {
+        uint32_t width  = cu->getWidth(0);
+        xSetResidualQTData(cu, 0, 0, resiYuv, cu->getDepth(0), true);
+        reconYuv->addClip(predYuv, resiYuv, 0, width);
+    }
+}
+
+void TEncSearch::estimateBitsDist(TComDataCU* cu, TShortYUV* resiYuv, uint32_t& bits, uint32_t& distortion, bool curUseRDOQ)
+{
+    if (cu->isIntra(0))
+    {
+        return;
+    }
+
+    bits = 0;
+    distortion = 0;
+    uint64_t cost = 0;
+    uint32_t zeroDistortion = 0;
+    m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
+    xEstimateResidualQT(cu, 0, 0, resiYuv, cu->getDepth(0), cost, bits, distortion, &zeroDistortion, curUseRDOQ);
+
+    xSetResidualQTData(cu, 0, 0, NULL, cu->getDepth(0), false);
+    m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
+    bits = xSymbolBitsInter(cu);
+    m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
+}
+
 #if _MSC_VER
 #pragma warning(disable: 4701) // potentially uninitialized local variable
 #endif

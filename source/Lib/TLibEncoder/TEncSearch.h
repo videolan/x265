@@ -153,6 +153,17 @@ public:
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TShortYUV* bestResiYuv,
                                    TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ = true);
 
+    void estimateRDInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TShortYUV* bestResiYuv,
+                           TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ = true);
+
+    uint32_t estimateZerobits(TComDataCU* cu);
+
+    uint32_t estimateZeroDist(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv);
+
+    void generateRecon(TComDataCU* cu, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, bool skipRes);
+
+    void estimateBitsDist(TComDataCU* cu, TShortYUV* resiYuv, uint32_t& bits, uint32_t& distortion, bool curUseRDOQ);
+
     /// set ME search range
     void setAdaptiveSearchRange(int dir, int refIdx, int merange) { m_adaptiveRange[dir][refIdx] = merange; }
 
