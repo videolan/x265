@@ -41,15 +41,11 @@ using namespace std;
 
 Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
 {
-#if defined ENABLE_THREAD
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
         plane[i][2] = plane[i][1] = plane[i][0] = NULL;
     }
-
-#else
-    plane[0][2] = plane[0][1] = plane[0][0] = NULL;
-#endif
+    head = tail = 0;
 
     ifs = NULL;
     if (!strcmp(filename, "-"))
@@ -68,17 +64,10 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
         if (parseHeader())
         {
             threadActive = true;
-#if defined(ENABLE_THREAD)
-            head = 0;
-            tail = 0;
             for (uint32_t i = 0; i < QUEUE_SIZE; i++)
             {
                 pictureAlloc(i);
             }
-
-#else // if defined(ENABLE_THREAD)
-            pictureAlloc(0);
-#endif // if defined(ENABLE_THREAD)
         }
     }
     if (!threadActive && ifs && ifs != &cin)
@@ -92,7 +81,7 @@ Y4MInput::~Y4MInput()
 {
     if (ifs && ifs != &cin)
         delete ifs;
-#if defined(ENABLE_THREAD)
+
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
         for (int j = 0; j < x265_cli_csps[colorSpace].planes; j++)
@@ -100,14 +89,6 @@ Y4MInput::~Y4MInput()
             delete[] plane[i][j];
         }
     }
-
-#else
-    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
-        delete[] plane[0][i];
-    }
-
-#endif // if defined(ENABLE_THREAD)
 }
 
 void Y4MInput::pictureAlloc(int queueindex)
@@ -322,7 +303,6 @@ void Y4MInput::skipFrames(uint32_t numFrames)
     }
 }
 
-#if defined(ENABLE_THREAD)
 bool Y4MInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
@@ -351,10 +331,8 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
 void Y4MInput::startReader()
 {
-#if defined(ENABLE_THREAD)
     if (threadActive)
         start();
-#endif
 }
 
 void Y4MInput::threadMain()
@@ -410,51 +388,10 @@ bool Y4MInput::populateFrameQueue()
     return !ifs->fail();
 }
 
-#else // if defined(ENABLE_THREAD)
-bool Y4MInput::readPicture(x265_picture& pic)
-{
-    PPAStartCpuEventFunc(read_yuv);
-
-    /* strip off the FRAME header */
-    char hbuf[sizeof(header)];
-
-    if (!ifs)
-        return false;
-
-    ifs->read(hbuf, strlen(header));
-    if (!ifs || memcmp(hbuf, header, strlen(header)))
-    {
-        x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing\n");
-        return false;
-    }
-
-    /* consume bytes up to line feed */
-    int c = ifs->get();
-    while (c != '\n' && !ifs)
-    {
-        c = ifs->get();
-    }
-
-    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
-        ifs->read(plane[0][i], plane_size[i]);
-        pic.planes[i] = plane[0][i];
-        pic.stride[i] = plane_stride[i];
-    }
-
-    ifs->read(buf, count);
-    PPAStopCpuEventFunc(read_yuv);
-
-    return !ifs->fail();
-}
-
-#endif // if defined(ENABLE_THREAD)
 void Y4MInput::release()
 {
-#if defined(ENABLE_THREAD)
     threadActive = false;
     notFull.trigger();
     stop();
-#endif
     delete this;
 }

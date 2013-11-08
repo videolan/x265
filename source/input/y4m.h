@@ -25,21 +25,15 @@
 #define X265_Y4M_H
 
 #include "input.h"
+#include "threading.h"
 #include <fstream>
 
-#if defined(ENABLE_THREAD)
 #define QUEUE_SIZE 5
-#include "threading.h"
-#endif
 
 namespace x265 {
 // x265 private namespace
 
-#if defined(ENABLE_THREAD)
 class Y4MInput : public Input, public Thread
-#else
-class Y4MInput : public Input
-#endif
 {
 protected:
 
@@ -59,7 +53,6 @@ protected:
 
     bool threadActive;
 
-#if defined(ENABLE_THREAD)
     volatile int head;
 
     volatile int tail;
@@ -71,9 +64,7 @@ protected:
     Event notFull;
 
     Event notEmpty;
-#else // if defined(ENABLE_THREAD)
-    char *plane[1][3];
-#endif // if defined(ENABLE_THREAD)
+
     std::istream *ifs;
 
     bool parseHeader();
@@ -114,13 +105,9 @@ public:
 
     void pictureAlloc(int index);
 
-#if defined(ENABLE_THREAD)
-
     void threadMain();
 
     bool populateFrameQueue();
-
-#endif
 
     const char *getName() const   { return "y4m"; }
 };

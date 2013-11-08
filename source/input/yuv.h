@@ -25,21 +25,15 @@
 #define X265_YUV_H
 
 #include "input.h"
+#include "threading.h"
 #include <fstream>
 
-#if defined(ENABLE_THREAD)
 #define QUEUE_SIZE 5
-#include "threading.h"
-#endif
 
 namespace x265 {
 // private x265 namespace
 
-#if defined(ENABLE_THREAD)
 class YUVInput : public Input, public Thread
-#else
-class YUVInput : public Input
-#endif
 {
 protected:
 
@@ -57,7 +51,6 @@ protected:
 
     bool threadActive;
 
-#if defined(ENABLE_THREAD)
     volatile int head;
 
     volatile int tail;
@@ -69,9 +62,6 @@ protected:
     Event notFull;
 
     Event notEmpty;
-#else // if defined(ENABLE_THREAD)
-    char* buf;
-#endif // if defined(ENABLE_THREAD)
 
     std::istream *ifs;
 
@@ -109,13 +99,9 @@ public:
 
     bool readPicture(x265_picture&);
 
-#if defined(ENABLE_THREAD)
-
     void threadMain();
 
     bool populateFrameQueue();
-
-#endif
 
     const char *getName() const                   { return "yuv"; }
 };
