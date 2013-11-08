@@ -41,7 +41,6 @@ protected:
 
     int ipf_t_size;
 
-    bool check_IPFilter_primitive(ipfilter_pp_t ref, ipfilter_pp_t opt);
     bool check_IPFilter_primitive(ipfilter_ps_t ref, ipfilter_ps_t opt);
     bool check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t opt);
     bool check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_t opt);

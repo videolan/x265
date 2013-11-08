@@ -114,15 +114,6 @@ enum IDcts
     NUM_IDCTS
 };
 
-enum IPFilterConf_P_P
-{
-    FILTER_H_P_P_8,
-    FILTER_H_P_P_4,
-    FILTER_V_P_P_8,
-    FILTER_V_P_P_4,
-    NUM_IPFILTER_P_P
-};
-
 enum IPFilterConf_P_S
 {
     FILTER_H_P_S_8,
@@ -163,7 +154,6 @@ typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref,
 typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int32_t *res);
-typedef void (*ipfilter_pp_t)(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
 typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int16_t *coeff);
 typedef void (*ipfilter_sp_t)(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
 typedef void (*ipfilter_ss_t)(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
@@ -244,13 +234,11 @@ struct EncoderPrimitives
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
     copy_sp_t       chroma_copy_sp[NUM_CHROMA_PARTITIONS];
 
-    ipfilter_pp_t   ipfilter_pp[NUM_IPFILTER_P_P];
     ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
     ipfilter_sp_t   ipfilter_sp[NUM_IPFILTER_S_P];
     ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
     ipfilter_p2s_t  ipfilter_p2s;
     ipfilter_s2p_t  ipfilter_s2p;
-    extendCURowBorder_t extendRowBorder;
     filter_pp_t     chroma_hpp[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
     filter_ps_t     luma_hps[NUM_LUMA_PARTITIONS];
@@ -260,6 +248,7 @@ struct EncoderPrimitives
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
     filter_p2s_t    luma_p2s;
     filter_p2s_t    chroma_p2s;
+    extendCURowBorder_t extendRowBorder;
 
     intra_dc_t      intra_pred_dc;
     intra_planar_t  intra_pred_planar;
