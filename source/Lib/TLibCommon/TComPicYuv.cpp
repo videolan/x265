@@ -348,9 +348,9 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
     int height = m_picHeight - pady;
 
     /* internal pad to multiple of 16x16 blocks */
-    uint8_t rem = m_picWidth & 15;
+    uint8_t rem = width & 15;
     padx = rem ? 16 - rem : padx;
-    rem = m_picHeight & 15;
+    rem = width & 15;
     pady = rem ? 16 - rem : pady;
 
 #if HIGH_BIT_DEPTH
