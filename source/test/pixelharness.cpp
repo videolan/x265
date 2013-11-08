@@ -49,8 +49,9 @@ PixelHarness::PixelHarness()
 
     sbuf1 = (int16_t*)X265_MALLOC(int16_t, bufsize);
     sbuf2 = (int16_t*)X265_MALLOC(int16_t, bufsize);
+    sbuf3 = (int16_t*)X265_MALLOC(int16_t, bufsize);
 
-    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !ibuf1)
+    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !sbuf3 || !ibuf1)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -67,6 +68,8 @@ PixelHarness::PixelHarness()
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
+
+        sbuf3[i] = rand() % PIXEL_MAX; // for blockcopy only
     }
 }
 
@@ -78,6 +81,7 @@ PixelHarness::~PixelHarness()
     X265_FREE(pbuf4);
     X265_FREE(sbuf1);
     X265_FREE(sbuf2);
+    X265_FREE(sbuf3);
 }
 
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
@@ -224,8 +228,8 @@ bool PixelHarness::check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, 64, (int16_t*)pbuf2 + j, STRIDE);
-        ref(bx, by, ref_dest, 64, (int16_t*)pbuf2 + j, STRIDE);
+        opt(bx, by, opt_dest, 64, (int16_t*)sbuf3 + j, STRIDE);
+        ref(bx, by, ref_dest, 64, (int16_t*)sbuf3 + j, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -537,14 +541,14 @@ bool PixelHarness::check_block_copy_sp(copy_sp_t ref, copy_sp_t opt)
 
     // we don't know the partition size so we are checking the entire output buffer so
     // we must initialize the buffers
-    memset(ref_dest, 0, sizeof(ref_dest));
-    memset(opt_dest, 0, sizeof(opt_dest));
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
 
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(opt_dest, 64, sbuf1 + j, STRIDE);
-        ref(ref_dest, 64, sbuf1 + j, STRIDE);
+        opt(opt_dest, 64, sbuf3 + j, STRIDE);
+        ref(ref_dest, 64, sbuf3 + j, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -930,13 +934,13 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     if (opt.luma_copy_sp[part])
     {
         printf("lcpy_sp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_copy_sp[part], ref.luma_copy_sp[part], pbuf1, 64, sbuf1, 128);
+        REPORT_SPEEDUP(opt.luma_copy_sp[part], ref.luma_copy_sp[part], pbuf1, 64, sbuf3, 128);
     }
 
     if (opt.chroma_copy_sp[part])
     {
         printf("ccpy_sp[%s]", chromaPartStr[part]);
-        REPORT_SPEEDUP(opt.chroma_copy_sp[part], ref.chroma_copy_sp[part], pbuf1, 64, sbuf1, 128);
+        REPORT_SPEEDUP(opt.chroma_copy_sp[part], ref.chroma_copy_sp[part], pbuf1, 64, sbuf3, 128);
     }
 }
 
@@ -1010,13 +1014,13 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.blockcpy_ps)
     {
         printf("p_s   cpy");
-        REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (int16_t*)pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (int16_t*)sbuf3, STRIDE);
     }
 
     if (opt.blockcpy_sp)
     {
         printf("s_p   cpy");
-        REPORT_SPEEDUP(opt.blockcpy_sp, ref.blockcpy_sp, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_sp, ref.blockcpy_sp, 64, 64, (int16_t*)sbuf3, FENC_STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.weightpUniPixel)
