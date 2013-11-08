@@ -1557,12 +1557,9 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         //===== determine set of modes to be tested (using prediction signal only) =====
         int numModesAvailable = 35; //total number of Intra modes
         Pel* fenc   = fencYuv->getLumaAddr(pu, width);
-        Pel* pred   = predYuv->getLumaAddr(pu, width);
         uint32_t stride = predYuv->getStride();
         uint32_t rdModeList[FAST_UDI_MAX_RDMODE_NUM];
         int numModesForFullRD = g_intraModeNumFast[widthBit];
-        int log2SizeMinus2 = g_convertToBit[width];
-        pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
 
         bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)
@@ -1577,100 +1574,77 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             candNum = 0;
             uint32_t modeCosts[35];
 
-            Pel *pAbove0 = refAbove    + width - 1;
-            Pel *pAbove1 = refAboveFlt + width - 1;
-            Pel *pLeft0  = refLeft     + width - 1;
-            Pel *pLeft1  = refLeftFlt  + width - 1;
+            Pel *above         = refAbove    + width - 1;
+            Pel *aboveFiltered = refAboveFlt + width - 1;
+            Pel *left          = refLeft     + width - 1;
+            Pel *leftFiltered  = refLeftFlt  + width - 1;
 
             // 33 Angle modes once
             ALIGN_VAR_32(Pel, buf_trans[32 * 32]);
             ALIGN_VAR_32(Pel, tmp[33 * 32 * 32]);
+            int scaleWidth = width;
+            int scaleStride = stride;
+            int costMultiplier = 1;
 
-            if (width <= 32)
+            if (width > 32)
             {
-                // 1
-                primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, (width <= 16));
-                modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
-
-                // 0
-                Pel *above   = pAbove0;
-                Pel *left    = pLeft0;
-                if (width >= 8 && width <= 32)
-                {
-                    above = pAbove1;
-                    left  = pLeft1;
-                }
-                primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, pred, stride, width);
-                modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
-
-                // Transpose NxN
-                primitives.transpose[log2SizeMinus2](buf_trans, (pixel*)fenc, stride);
-
-                primitives.intra_pred_allangs[log2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (width <= 16));
-
-                // TODO: We need SATD_x4 here
-                for (uint32_t mode = 2; mode < numModesAvailable; mode++)
-                {
-                    bool modeHor = (mode < 18);
-                    Pel *cmp = (modeHor ? buf_trans : fenc);
-                    intptr_t srcStride = (modeHor ? width : stride);
-                    modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (width * width)], width);
-                }
-            }
-            else
-            {
-                // origin is 64x64, we scale to 32x32
-                // TODO: cli option to chose
-#if 1
-                ALIGN_VAR_32(Pel, buf_scale[32 * 32]);
-                primitives.scale2D_64to32(buf_scale, fenc, stride);
-                primitives.transpose[3](buf_trans, buf_scale, 32);
+                // origin is 64x64, we scale to 32x32 and setup required parameters
+                ALIGN_VAR_32(Pel, bufScale[32 * 32]);
+                primitives.scale2D_64to32(bufScale, fenc, stride);
+                fenc = bufScale;
 
                 // reserve space in case primitives need to store data in above
                 // or left buffers
                 Pel _above[4 * 32 + 1];
                 Pel _left[4 * 32 + 1];
-                Pel *const above = _above + 2 * 32;
-                Pel *const left = _left + 2 * 32;
+                Pel *aboveScale  = _above + 2 * 32;
+                Pel *leftScale   = _left + 2 * 32;
+                aboveScale[0] = leftScale[0] = above[0];
+                primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
+                primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
 
-                above[0] = left[0] = pAbove0[0];
-                primitives.scale1D_128to64(above + 1, pAbove0 + 1, 0);
-                primitives.scale1D_128to64(left + 1, pLeft0 + 1, 0);
+                scaleWidth = 32;
+                scaleStride = 32;
+                costMultiplier = 4;
 
-                // 1
-                primitives.intra_pred_dc(above + 1, left + 1, tmp, 32, 32, false);
-                modeCosts[DC_IDX] = 4 * primitives.sa8d[3](buf_scale, 32, tmp, 32);
+                // Filtered and Unfiltered refAbove and refLeft pointing to above and left.
+                above         = aboveScale;
+                left          = leftScale;
+                aboveFiltered = aboveScale; 
+                leftFiltered  = leftScale;
+            }
 
-                // 0
-                primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, tmp, 32, 32);
-                modeCosts[PLANAR_IDX] = 4 * primitives.sa8d[3](buf_scale, 32, tmp, 32);
+            int log2SizeMinus2 = g_convertToBit[scaleWidth];
+            pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
 
-                primitives.intra_pred_allangs[3](tmp, above, left, above, left, false);
+            // DC
+            primitives.intra_pred_dc(above + 1, left + 1, tmp, scaleStride, scaleWidth, (scaleWidth <= 16));
+            modeCosts[DC_IDX] = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
 
-                // TODO: I use 4 of SATD32x32 to replace real 64x64
-                for (uint32_t mode = 2; mode < numModesAvailable; mode++)
-                {
-                    bool modeHor = (mode < 18);
-                    Pel *cmp_buf = (modeHor ? buf_trans : buf_scale);
-                    modeCosts[mode] = 4 * primitives.sa8d[3]((pixel*)cmp_buf, 32, (pixel*)&tmp[(mode - 2) * (32 * 32)], 32);
-                }
+            Pel *abovePlanar   = above;
+            Pel *leftPlanar    = left;
 
-#else // if 1
-                // 1
-                primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, false);
-                modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
+            if (width >= 8 && width <= 32)
+            {
+                abovePlanar = aboveFiltered;
+                leftPlanar  = leftFiltered;
+            }
 
-                // 0
-                primitives.intra_pred_planar((pixel*)pAbove0 + 1, (pixel*)pLeft0 + 1, pred, stride, width);
-                modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
+            // PLANAR
+            primitives.intra_pred_planar(abovePlanar + 1, leftPlanar + 1, tmp, scaleStride, scaleWidth);
+            modeCosts[PLANAR_IDX] = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
 
-                for (uint32_t mode = 2; mode < numModesAvailable; mode++)
-                {
-                    predIntraLumaAng(mode, pred, stride, width);
-                    modeCosts[mode] = sa8d(fenc, stride, pred, stride);
-                }
+            // Transpose NxN
+            primitives.transpose[log2SizeMinus2](buf_trans, fenc, scaleStride);
 
-#endif // if 1
+            primitives.intra_pred_allangs[log2SizeMinus2](tmp, above, left, aboveFiltered, leftFiltered, (scaleWidth <= 16));
+
+            for (uint32_t mode = 2; mode < numModesAvailable; mode++)
+            {
+                bool modeHor = (mode < 18);
+                Pel *cmp = (modeHor ? buf_trans : fenc);
+                intptr_t srcStride = (modeHor ? scaleWidth : scaleStride);
+                modeCosts[mode] = costMultiplier * sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleWidth * scaleWidth)], scaleWidth);
             }
 
             // Find N least cost modes. N = numModesForFullRD
