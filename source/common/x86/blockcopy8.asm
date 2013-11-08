@@ -1323,51 +1323,38 @@ BLOCKCOPY_SP_W12_H4 12, 16
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_SP_W16_H4 2
 INIT_XMM sse2
-cglobal blockcopy_sp_%1x%2, 4, 7, 7, dest, destStride, src, srcStride
+cglobal blockcopy_sp_%1x%2, 4, 5, 8, dest, destStride, src, srcStride
 
-mov         r6d,    %2
+mov             r4d,     %2/4
 
-add        r3,      r3
-
-mova       m0,      [tab_Vm]
+add             r3,      r3
 
 .loop
-     movu       m1,      [r2]
-     movu       m2,      [r2 + 16]
-     movu       m3,      [r2 + r3]
-     movu       m4,      [r2 + r3 + 16]
-     movu       m5,      [r2 + 2 * r3]
-     movu       m6,      [r2 + 2 * r3 + 16]
+     movu       m0,      [r2]
+     movu       m1,      [r2 + 16]
+     movu       m2,      [r2 + r3]
+     movu       m3,      [r2 + r3 + 16]
+     movu       m4,      [r2 + 2 * r3]
+     movu       m5,      [r2 + 2 * r3 + 16]
+     lea        r2,      [r2 + 2 * r3]
+     movu       m6,      [r2 + r3]
+     movu       m7,      [r2 + r3 + 16]
 
-     pshufb     m1,      m0
-     pshufb     m2,      m0
-     pshufb     m3,      m0
-     pshufb     m4,      m0
-     pshufb     m5,      m0
-     pshufb     m6,      m0
+     packuswb   m0,      m1
+     packuswb   m2,      m3
+     packuswb   m4,      m5
+     packuswb   m6,      m7
 
-     movh       [r0],              m1
-     movh       [r0 + 8],          m2
-     movh       [r0 + r1],         m3
-     movh       [r0 + r1 + 8],     m4
-     movh       [r0 + 2 * r1],     m5
-     movh       [r0 + 2 * r1 + 8], m6
+     movu       [r0],              m0
+     movu       [r0 + r1],         m2
+     movu       [r0 + 2 * r1],     m4
+     lea        r0,                [r0 + 2 * r1]
+     movu       [r0 + r1],         m6
 
-     lea        r4,      [r2 + 2 * r3]
-     movu       m1,      [r4 + r3]
-     movu       m2,      [r4 + r3 + 16]
+     lea        r0,                [r0 + 2 * r1]
+     lea        r2,                [r2 + 2 * r3]
 
-     pshufb     m1,      m0
-     pshufb     m2,      m0
-
-     lea        r5,            [r0 + 2 * r1]
-     movh       [r5 + r1],     m1
-     movh       [r5 + r1 + 8], m2
-
-     lea        r0,              [r5 + 2 * r1]
-     lea        r2,              [r4 + 2 * r3]
-
-     sub        r6d,             4
+     dec        r4d
      jnz        .loop
 
 RET
