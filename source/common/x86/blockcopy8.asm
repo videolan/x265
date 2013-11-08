@@ -803,35 +803,31 @@ BLOCKCOPY_PP_W64_H2 64, 64
 ; void blockcopy_sp_2x4(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal blockcopy_sp_2x4, 4, 6, 5, dest, destStride, src, srcStride
+cglobal blockcopy_sp_2x4, 4, 5, 4, dest, destStride, src, srcStride
 
 add        r3,     r3
 
-mova       m0,     [tab_Vm]
+movd       m0,     [r2]
+movd       m1,     [r2 + r3]
+movd       m2,     [r2 + 2 * r3]
+lea        r2,     [r2 + 2 * r3]
+movd       m3,     [r2 + r3]
 
-movd       m1,     [r2]
-movd       m2,     [r2 + r3]
-movd       m3,     [r2 + 2 * r3]
-lea        r4,     [r2 + 2 * r3]
-movd       m4,     [r4 + r3]
+packuswb   m0,            m1
+packuswb   m2,            m3
 
-pshufb     m1,     m0
-pshufb     m2,     m0
-pshufb     m3,     m0
-pshufb     m4,     m0
+pextrw     r4,            m0,          0
+mov        [r0],          r4w
 
-pextrw     r5,            m1,          0
-mov        [r0],          r5w
+pextrw     r4,            m0,          4
+mov        [r0 + r1],     r4w
 
-pextrw     r5,            m2,          0
-mov        [r0 + r1],     r5w
+pextrw     r4,            m2,          0
+mov        [r0 + 2 * r1], r4w
 
-pextrw     r5,            m3,          0
-mov        [r0 + 2 * r1], r5w
-
-lea        r4,            [r0 + 2 * r1]
-pextrw     r5,            m4,          0
-mov        [r4 + r1],     r5w
+lea        r0,            [r0 + 2 * r1]
+pextrw     r4,            m2,          4
+mov        [r0 + r1],     r4w
 
 RET
 
