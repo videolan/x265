@@ -499,20 +499,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         this->input->setBitDepth(param->inputBitDepth);
     }
 
-    if (reconFileBitDepth > 0)
-    {
-        if (reconFileBitDepth != param->inputBitDepth)
-        {
-            x265_log(param, X265_LOG_ERROR, "Bit depth of the recon file should be the same as input bit depth\n");
-            /* TODO: Support recon files with bitdepth > input bit depth??*/
-            return true;
-        }
-    }
-    else
-    {
-        reconFileBitDepth = param->inputBitDepth;
-    }
-
     int guess = this->input->guessFrameCount();
     if (this->frameSkip)
     {
@@ -542,6 +528,11 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
     if (reconfn)
     {
+        if (reconFileBitDepth != param->inputBitDepth)
+        {
+            x265_log(param, X265_LOG_ERROR, "Bit depth of the recon file must be the same as input bit depth\n");
+            return true;
+        }
         this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->sourceCsp);
         if (this->recon->isFail())
         {
