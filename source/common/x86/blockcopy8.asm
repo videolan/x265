@@ -1539,46 +1539,35 @@ BLOCKCOPY_SP_W48_H2 48, 64
 INIT_XMM sse2
 cglobal blockcopy_sp_%1x%2, 4, 5, 8, dest, destStride, src, srcStride
 
-mov         r4d,    %2
+mov             r4d,       %2
 
-add         r3,     r3
-
-mova        m0,     [tab_Vm]
+add             r3,        r3
 
 .loop
-      movu       m1,     [r2]
-      movu       m2,     [r2 + 16]
-      movu       m3,     [r2 + 32]
-      movu       m4,     [r2 + 48]
-      movu       m5,     [r2 + 64]
-      movu       m6,     [r2 + 80]
-      movu       m7,     [r2 + 96]
+      movu      m0,        [r2]
+      movu      m1,        [r2 + 16]
+      movu      m2,        [r2 + 32]
+      movu      m3,        [r2 + 48]
+      movu      m4,        [r2 + 64]
+      movu      m5,        [r2 + 80]
+      movu      m6,        [r2 + 96]
+      movu      m7,        [r2 + 112]
 
-      pshufb     m1,     m0
-      pshufb     m2,     m0
-      pshufb     m3,     m0
-      pshufb     m4,     m0
-      pshufb     m5,     m0
-      pshufb     m6,     m0
-      pshufb     m7,     m0
+     packuswb   m0,        m1
+     packuswb   m2,        m3
+     packuswb   m4,        m5
+     packuswb   m6,        m7
 
-      movh       [r0],      m1
-      movh       [r0 + 8],  m2
-      movh       [r0 + 16], m3
-      movh       [r0 + 24], m4
-      movh       [r0 + 32], m5
-      movh       [r0 + 40], m6
-      movh       [r0 + 48], m7
+      movu      [r0],      m0
+      movu      [r0 + 16], m2
+      movu      [r0 + 32], m4
+      movu      [r0 + 48], m6
 
-      movu       m7,        [r2 + 112]
-      pshufb     m7,        m0
-      movh       [r0 + 56], m7
+      lea       r0,        [r0 + r1]
+      lea       r2,        [r2 + r3]
 
-      lea        r0,              [r0 + r1]
-      lea        r2,              [r2 + r3]
-
-      dec        r4d
-      jnz        .loop
+      dec       r4d
+      jnz       .loop
 
 RET
 %endmacro
