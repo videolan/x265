@@ -1121,28 +1121,24 @@ RET
 ; void blockcopy_sp_8x4(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_sp_8x4, 4, 5, 5, dest, destStride, src, srcStride
+cglobal blockcopy_sp_8x4, 4, 4, 4, dest, destStride, src, srcStride
 
 add        r3,     r3
 
-mova       m0,     [tab_Vm]
+movu       m0,     [r2]
+movu       m1,     [r2 + r3]
+movu       m2,     [r2 + 2 * r3]
+lea        r2,     [r2 + 2 * r3]
+movu       m3,     [r2 + r3]
 
-movu       m1,     [r2]
-movu       m2,     [r2 + r3]
-movu       m3,     [r2 + 2 * r3]
-lea        r4,     [r2 + 2 * r3]
-movu       m4,     [r4 + r3]
+packuswb   m0,            m1
+packuswb   m2,            m3
 
-pshufb     m1,     m0
-pshufb     m2,     m0
-pshufb     m3,     m0
-pshufb     m4,     m0
-
-movh       [r0],          m1
-movh       [r0 + r1],     m2
-movh       [r0 + 2 * r1], m3
-lea        r4,            [r0 + 2 * r1]
-movh       [r4 + r1],     m4
+movlps     [r0],          m0
+movhps     [r0 + r1],     m0
+movlps     [r0 + 2 * r1], m2
+lea        r0,            [r0 + 2 * r1]
+movhps     [r0 + r1],     m2
 
 RET
 
