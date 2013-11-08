@@ -54,6 +54,7 @@ YUVInput::YUVInput(const char *filename, uint32_t inputBitDepth)
 #endif
     width = height = 0;
     depth = inputBitDepth;
+    pixelbytes = inputBitDepth > 8 ? 2 : 1;
     threadActive = false;
     if (!strcmp(filename, "-"))
     {
@@ -133,7 +134,6 @@ void YUVInput::setDimensions(int w, int h)
 {
     width = w;
     height = h;
-    pixelbytes = depth > 8 ? 2 : 1;
     framesize = (width * height * 3 / 2) * pixelbytes;
     if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
         height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT)
