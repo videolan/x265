@@ -29,8 +29,8 @@
 #include <iostream>
 
 #if _WIN32
-#include "io.h"
-#include "fcntl.h"
+#include <io.h>
+#include <fcntl.h>
 #if defined(_MSC_VER)
 #pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
 #endif
