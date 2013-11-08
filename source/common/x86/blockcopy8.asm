@@ -1100,20 +1100,17 @@ BLOCKCOPY_SP_W6_H4 6, 8
 ; void blockcopy_sp_8x2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_sp_8x2, 4, 4, 3, dest, destStride, src, srcStride
+cglobal blockcopy_sp_8x2, 4, 4, 2, dest, destStride, src, srcStride
 
-add        r3,        r3
+add        r3,         r3
 
-mova       m0,        [tab_Vm]
+movu       m0,         [r2]
+movu       m1,         [r2 + r3]
 
-movu       m1,        [r2]
-movu       m2,        [r2 + r3]
+packuswb   m0,         m1
 
-pshufb     m1,        m0
-pshufb     m2,        m0
-
-movh       [r0],      m1
-movh       [r0 + r1], m2
+movlps     [r0],       m0
+movhps     [r0 + r1],  m0
 
 RET
 
