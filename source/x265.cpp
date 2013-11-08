@@ -59,13 +59,14 @@
 
 using namespace x265;
 
-static const char short_options[] = "o:p:f:F:r:i:b:s:t:q:m:hwV";
+static const char short_options[] = "o:p:f:F:r:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
 #if HIGH_BIT_DEPTH
     { "depth",          required_argument, NULL, 0 },
 #endif
     { "help",                 no_argument, NULL, 'h' },
+    { "version",              no_argument, NULL, 'V' },
     { "cpuid",          required_argument, NULL, 0 },
     { "threads",        required_argument, NULL, 0 },
     { "preset",         required_argument, NULL, 'p' },
@@ -362,7 +363,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         if (c == 't')
             tune = optarg;
         else if (c == '?')
-            return true;
+            showHelp(param);
     }
 
     if (x265_param_default_preset(param, preset, tune) < 0)
