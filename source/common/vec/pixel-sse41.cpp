@@ -433,6 +433,7 @@ int sse_sp12(int16_t* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFre
         sum0 = _mm_add_epi32(sum0, T13);
 
         T00 = _mm_loadu_si128((__m128i*)(fenc + 8));
+        sign = _mm_srai_epi16(T00, 15);
 
         T10 = _mm_unpacklo_epi16(T00, sign);
         T11 = _mm_unpackhi_epi8(T01, _mm_setzero_si128());
