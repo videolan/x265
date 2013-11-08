@@ -205,6 +205,9 @@ void x265_param_default(x265_param *param)
     param->rdPenalty = 0;
 
     /* Rate control options */
+    param->rc.vbvMaxBitrate = 0;
+    param->rc.vbvBufferSize = 0;
+    param->rc.vbvBufferInit = 0.9;
     param->rc.rfConstant = 28;
     param->rc.bitrate = 0;
     param->rc.rateTolerance = 1.0;
@@ -718,6 +721,9 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
+    OPT("vbv-maxrate") p->rc.vbvMaxBitrate = atoi(value);
+    OPT("vbv-bufsize") p->rc.vbvBufferSize = atoi(value);
+    OPT("vbv-init")    p->rc.vbvBufferInit = atof(value);
     OPT("crf")
     {
         p->rc.rfConstant = atof(value);

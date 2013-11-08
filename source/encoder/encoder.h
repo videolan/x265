@@ -134,6 +134,8 @@ public:
 
     int  extractNalData(NALUnitEBSP **nalunits);
 
+    void updateVbvPlan(RateControl* rc);
+
 protected:
 
     uint64_t calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits); // Returns total number of bits for encoded pic

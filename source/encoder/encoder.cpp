@@ -190,6 +190,24 @@ int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
     return m_frameEncoder->getStreamHeaders(nalunits);
 }
 
+void Encoder::updateVbvPlan(RateControl* rc) 
+{
+    int encIdx, curIdx;
+    curIdx = (m_curEncoder + param.frameNumThreads - 1) % param.frameNumThreads;
+    encIdx = (curIdx + 1) % param.frameNumThreads;
+    while (encIdx != curIdx)
+    {
+        FrameEncoder *encoder = &m_frameEncoder[encIdx];
+        double bits;
+        bits = encoder->m_rce.frameSizePlanned; 
+        rc->bufferFill -= bits;
+        rc->bufferFill = X265_MAX(rc->bufferFill, 0);
+        rc->bufferFill += encoder->m_rce.bufferRate;
+        rc->bufferFill = X265_MIN(rc->bufferFill, rc->bufferSize);
+        encIdx = (encIdx + 1) % param.frameNumThreads;
+    }
+}
+
 /**
  \param   flush               force encoder to encode a frame
  \param   pic_in              input original YUV picture or NULL
@@ -313,7 +331,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         m_dpb->prepareEncode(fenc);
 
         // set slice QP
-        m_rateControl->rateControlStart(fenc, m_lookahead, &(curEncoder->m_rce));
+        m_rateControl->rateControlStart(fenc, m_lookahead, &(curEncoder->m_rce),this); 
 
         // Allow FrameEncoder::compressFrame() to start in a worker thread
         curEncoder->m_enable.trigger();
