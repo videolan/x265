@@ -995,60 +995,56 @@ RET
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_SP_W4_H8 2
 INIT_XMM sse2
-cglobal blockcopy_sp_%1x%2, 4, 7, 8, dest, destStride, src, srcStride
+cglobal blockcopy_sp_%1x%2, 4, 5, 8, dest, destStride, src, srcStride
 
-mov         r6d,    %2
+mov         r4d,    %2/8
 
 add         r3,     r3
 
-mova        m0,     [tab_Vm]
-
 .loop
-      movh       m1,     [r2]
-      movh       m2,     [r2 + r3]
-      movh       m3,     [r2 + 2 * r3]
-      lea        r4,     [r2 + 2 * r3]
-      movh       m4,     [r4 + r3]
-      movh       m5,     [r4 + 2 * r3]
-      lea        r4,     [r4 + 2 * r3]
-      movh       m6,     [r4 + r3]
-      movh       m7,     [r4 + 2 * r3]
-      lea        r5,     [r4 + 2 * r3]
+     movh       m0,      [r2]
+     movh       m1,      [r2 + r3]
+     movh       m2,      [r2 + 2 * r3]
+     lea        r2,      [r2 + 2 * r3]
+     movh       m3,      [r2 + r3]
+     movh       m4,      [r2 + 2 * r3]
+     lea        r2,      [r2 + 2 * r3]
+     movh       m5,      [r2 + r3]
+     movh       m6,      [r2 + 2 * r3]
+     lea        r2,      [r2 + 2 * r3]
+     movh       m7,      [r2 + r3]
 
-      pshufb     m1,     m0
-      pshufb     m2,     m0
-      pshufb     m3,     m0
-      pshufb     m4,     m0
-      pshufb     m5,     m0
-      pshufb     m6,     m0
-      pshufb     m7,     m0
+     packuswb   m0,      m1
+     packuswb   m2,      m3
+     packuswb   m4,      m5
+     packuswb   m6,      m7
 
-      movd       [r0],            m1
-      movd       [r0 + r1],       m2
-      movd       [r0 + 2 * r1],   m3
-      lea        r4,              [r0 + 2 * r1]
-      movd       [r4 + r1],       m4
-      movd       [r4 + 2 * r1],   m5
-      lea        r4,              [r4 + 2 * r1]
-      movd       [r4 + r1],       m6
-      movd       [r4 + 2 * r1],   m7
+     movd       [r0],          m0
+     pshufd     m0,            m0,         2
+     movd       [r0 + r1],     m0
+     movd       [r0 + 2 * r1], m2
+     lea        r0,            [r0 + 2 * r1]
+     pshufd     m2,            m2,         2
+     movd       [r0 + r1],     m2
+     movd       [r0 + 2 * r1], m4
+     lea        r0,            [r0 + 2 * r1]
+     pshufd     m4,            m4,         2
+     movd       [r0 + r1],     m4
+     movd       [r0 + 2 * r1], m6
+     lea        r0,            [r0 + 2 * r1]
+     pshufd     m6,            m6,         2
+     movd       [r0 + r1],     m6
 
-      movh       m1,              [r5 + r3]
-      pshufb     m1,              m0
-      lea        r4,              [r4 + 2 * r1]
-      movd       [r4 + r1],       m1
+     lea        r0,            [r0 + 2 * r1]
+     lea        r2,            [r2 + 2 * r3]
 
-      lea        r0,              [r0 + 8 * r1]
-      lea        r2,              [r2 + 8 * r3]
-
-      sub        r6d,             8
-      jnz        .loop
+     dec        r4d
+     jnz        .loop
 
 RET
 %endmacro
 
 BLOCKCOPY_SP_W4_H8 4, 16
-
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_6x8(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
