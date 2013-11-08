@@ -147,15 +147,15 @@ void x265_param_default(x265_param *param)
 
     /* CU definitions */
     param->maxCUSize = 64;
-    param->tuQTMaxInterDepth = 3;
-    param->tuQTMaxIntraDepth = 3;
+    param->tuQTMaxInterDepth = 1;
+    param->tuQTMaxIntraDepth = 1;
 
     /* Coding Structure */
     param->decodingRefreshType = 1;
     param->keyframeMin = 0;
     param->keyframeMax = 250;
     param->bframes = 3;
-    param->lookaheadDepth = 10;
+    param->lookaheadDepth = 40;
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
 
@@ -166,17 +166,17 @@ void x265_param_default(x265_param *param)
     param->searchMethod = X265_STAR_SEARCH;
     param->subpelRefine = 5;
     param->searchRange = 60;
-    param->maxNumMergeCand = 5u;
+    param->maxNumMergeCand = 3;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
-    param->rdLevel = X265_FULL_RDO;
+    param->rdLevel = X265_NO_RDO_NO_RDOQ;
     param->bEnableRDO = 1;
     param->bEnableRDOQ = 1;
     param->bEnableRDOQTS = 1;
     param->bEnableSignHiding = 1;
-    param->bEnableTransformSkip = 1;
+    param->bEnableTransformSkip = 0;
     param->bEnableTSkipFast = 1;
-    param->maxNumReferences = 1;
+    param->maxNumReferences = 3;
 
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
@@ -343,14 +343,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "medium"))
         {
-            param->lookaheadDepth = 40;
-            param->tuQTMaxInterDepth = 1;
-            param->tuQTMaxIntraDepth = 1;
-            param->rdLevel = 0;
-            param->searchMethod = X265_HEX_SEARCH;
-            param->maxNumMergeCand = 3;
-            param->bEnableTransformSkip = 0;
-            param->maxNumReferences = 3;
+            /* defaults */
         }
         else if (!strcmp(preset, "slow"))
         {
