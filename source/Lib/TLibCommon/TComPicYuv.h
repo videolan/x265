@@ -166,15 +166,6 @@ public:
 
     uint32_t getCUHeight(int rowNum);
 
-    // ------------------------------------------------------------------------------------------------
-    //  Miscellaneous
-    // ------------------------------------------------------------------------------------------------
-
-    //  Copy function to picture
-    void  copyToPic(TComPicYuv* destYuv);
-    void  copyToPicLuma(TComPicYuv* destYuv);
-    void  copyToPicCb(TComPicYuv* destYuv);
-    void  copyToPicCr(TComPicYuv* destYuv);
     void  copyFromPicture(const x265_picture&, int32_t *pad);
 }; // END CLASS DEFINITION TComPicYuv
 

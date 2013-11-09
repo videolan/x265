@@ -194,40 +194,6 @@ uint32_t TComPicYuv::getCUHeight(int rowNum)
     return height;
 }
 
-void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
-{
-    assert(m_picWidth  == destPicYuv->getWidth());
-    assert(m_picHeight == destPicYuv->getHeight());
-
-    ::memcpy(destPicYuv->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
-    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
-    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
-}
-
-void  TComPicYuv::copyToPicLuma(TComPicYuv* destPicYuv)
-{
-    assert(m_picWidth  == destPicYuv->getWidth());
-    assert(m_picHeight == destPicYuv->getHeight());
-
-    ::memcpy(destPicYuv->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
-}
-
-void  TComPicYuv::copyToPicCb(TComPicYuv* destPicYuv)
-{
-    assert(m_picWidth  == destPicYuv->getWidth());
-    assert(m_picHeight == destPicYuv->getHeight());
-
-    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
-}
-
-void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
-{
-    assert(m_picWidth  == destPicYuv->getWidth());
-    assert(m_picHeight == destPicYuv->getHeight());
-
-    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
-}
-
 void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int marginX, int marginY)
 {
     int x, y;
