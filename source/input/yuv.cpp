@@ -185,7 +185,7 @@ bool YUVInput::readPicture(x265_picture& pic)
     pic.planes[0] = buf[head];
     pic.planes[1] = (char*)(pic.planes[0]) + width * height * pixelbytes;
     pic.planes[2] = (char*)(pic.planes[1]) + ((width * height * pixelbytes) >> 2);
-    pic.stride[0] = width * pixelbytes;
+    pic.stride[0] = width;
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
     head = (head + 1) % QUEUE_SIZE;
