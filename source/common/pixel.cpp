@@ -571,21 +571,6 @@ void pixeladd_ss_c(int bx, int by, int16_t *a, intptr_t dstride, int16_t *b0, in
     }
 }
 
-void pixeladd_pp_c(int bx, int by, pixel *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t sstride0, intptr_t sstride1)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            a[x] = (pixel)ClipY(b0[x] + b1[x]);
-        }
-
-        b0 += sstride0;
-        b1 += sstride1;
-        a += dstride;
-    }
-}
-
 template<int lx, int ly>
 void pixelavg_pp(pixel* dst, intptr_t dstride, pixel* src0, intptr_t sstride0, pixel* src1, intptr_t sstride1, int)
 {
@@ -951,7 +936,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.weightpUni = weightUnidir;
 
     p.pixelsub_ps = pixelsub_ps_c;
-    p.pixeladd_pp = pixeladd_pp_c;
     p.pixeladd_ss = pixeladd_ss_c;
 
     p.scale1D_128to64 = scale1D_128to64;

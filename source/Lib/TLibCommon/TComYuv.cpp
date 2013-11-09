@@ -379,29 +379,10 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
     }
 }
 
-void TComYuv::addClip(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
-{
-    addClipLuma(srcYuv0, srcYuv1, trUnitIdx, partSize);
-    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift);
-}
-
 void TComYuv::addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
 {
     addClipLuma(srcYuv0, srcYuv1, trUnitIdx, partSize);
     addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift);
-}
-
-void TComYuv::addClipLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
-{
-    Pel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
-    Pel* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    Pel* dst  = getLumaAddr(trUnitIdx, partSize);
-
-    uint32_t src0Stride = srcYuv0->getStride();
-    uint32_t src1Stride = srcYuv1->getStride();
-    uint32_t dststride = getStride();
-
-    primitives.pixeladd_pp(partSize, partSize, dst, dststride, src0, src1, src0Stride, src1Stride);
 }
 
 void TComYuv::addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
@@ -427,23 +408,6 @@ void TComYuv::addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitI
         src1 += src1Stride;
         dst  += dststride;
     }
-}
-
-void TComYuv::addClipChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
-{
-    Pel* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
-    Pel* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
-    Pel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
-    Pel* srcV1 = srcYuv1->getCrAddr(trUnitIdx, partSize);
-    Pel* dstU = getCbAddr(trUnitIdx, partSize);
-    Pel* dstV = getCrAddr(trUnitIdx, partSize);
-
-    uint32_t src0Stride = srcYuv0->getCStride();
-    uint32_t src1Stride = srcYuv1->getCStride();
-    uint32_t dststride  = getCStride();
-
-    primitives.pixeladd_pp(partSize, partSize, dstU, dststride, srcU0, srcU1, src0Stride, src1Stride);
-    primitives.pixeladd_pp(partSize, partSize, dstV, dststride, srcV0, srcV1, src0Stride, src1Stride);
 }
 
 void TComYuv::addClipChroma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)

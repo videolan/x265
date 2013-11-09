@@ -404,29 +404,6 @@ bool PixelHarness::check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt)
     return true;
 }
 
-bool PixelHarness::check_pixeladd_pp(pixeladd_pp_t ref, pixeladd_pp_t opt)
-{
-    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
-    int bx = 64;
-    int by = 64;
-    int j = 0;
-    for (int i = 0; i < ITERS; i++)
-    {
-        opt(bx, by, opt_dest, STRIDE, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
-        ref(bx, by, ref_dest, STRIDE, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
-
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
-            return false;
-
-        j += INCR;
-        bx = 4 * ((rand() & 15) + 1);
-        by = 4 * ((rand() & 15) + 1);
-    }
-
-    return true;
-}
-
 bool PixelHarness::check_downscale_t(downscale_t ref, downscale_t opt)
 {
     ALIGN_VAR_16(pixel, ref_destf[32 * 32]);
@@ -840,15 +817,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.pixeladd_pp)
-    {
-        if (!check_pixeladd_pp(ref.pixeladd_pp, opt.pixeladd_pp))
-        {
-            printf("pixel add clip failed!\n");
-            return false;
-        }
-    }
-
     if (opt.frame_init_lowres_core)
     {
         if (!check_downscale_t(ref.frame_init_lowres_core, opt.frame_init_lowres_core))
@@ -1045,12 +1013,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("pixel_ss add");
         REPORT_SPEEDUP(opt.pixeladd_ss, ref.pixeladd_ss, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, (int16_t*)pbuf2, (int16_t*)pbuf1, STRIDE, STRIDE);
-    }
-
-    if (opt.pixeladd_pp)
-    {
-        printf("pixel_pp add");
-        REPORT_SPEEDUP(opt.pixeladd_pp, ref.pixeladd_pp, 64, 64, pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 
     if (opt.frame_init_lowres_core)
