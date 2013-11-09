@@ -66,7 +66,6 @@ void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives&);
-void Setup_Vec_PixelPrimitives_avx2(EncoderPrimitives&);
 
 /* Use primitives for the best available vector architecture */
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
@@ -99,12 +98,6 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
         Setup_Vec_PixelPrimitives_sse41(p);
         Setup_Vec_IPFilterPrimitives_sse41(p);
         Setup_Vec_DCTPrimitives_sse41(p);
-    }
-#endif
-#ifdef HAVE_AVX2
-    if (cpuMask & X265_CPU_AVX2)
-    {
-        Setup_Vec_PixelPrimitives_avx2(p);
     }
 #endif
 }
