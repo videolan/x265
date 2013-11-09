@@ -228,32 +228,32 @@ void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> m_hChromaShift) + (m_chromaMarginX << 1)) * ((m_picHeight >> m_vChromaShift) + (m_chromaMarginY << 1)));
 }
 
-void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int iMarginX, int iMarginY)
+void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int marginX, int marginY)
 {
     int x, y;
 
     /* TODO: this should become a performance primitive */
     for (y = 0; y < height; y++)
     {
-        for (x = 0; x < iMarginX; x++)
+        for (x = 0; x < marginX; x++)
         {
-            recon[-iMarginX + x] = recon[0];
+            recon[-marginX + x] = recon[0];
             recon[width + x] = recon[width - 1];
         }
 
         recon += stride;
     }
 
-    recon -= (stride + iMarginX);
-    for (y = 0; y < iMarginY; y++)
+    recon -= (stride + marginX);
+    for (y = 0; y < marginY; y++)
     {
-        ::memcpy(recon + (y + 1) * stride, recon, sizeof(Pel) * (width + (iMarginX << 1)));
+        ::memcpy(recon + (y + 1) * stride, recon, sizeof(Pel) * (width + (marginX << 1)));
     }
 
     recon -= ((height - 1) * stride);
-    for (y = 0; y < iMarginY; y++)
+    for (y = 0; y < marginY; y++)
     {
-        ::memcpy(recon - (y + 1) * stride, recon, sizeof(Pel) * (width + (iMarginX << 1)));
+        ::memcpy(recon - (y + 1) * stride, recon, sizeof(Pel) * (width + (marginX << 1)));
     }
 }
 
