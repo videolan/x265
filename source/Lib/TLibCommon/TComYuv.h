@@ -33,8 +33,7 @@
 
 /** \file     TComYuv.h
     \brief    general YUV buffer class (header)
-    \todo     this should be merged with TComPicYuv \n
-              check usage of removeHighFreq function
+    \todo     this should be merged with TComPicYuv
 */
 
 #ifndef X265_TCOMYUV_H
@@ -162,9 +161,6 @@ public:
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
     void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
     void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
-
-    //   Remove High frequency
-    void    removeHighFreq(TComYuv* srcYuv, uint32_t partIdx, uint32_t width, uint32_t height);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Access function for YUV buffer
