@@ -82,15 +82,15 @@ void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
     m_stride = (m_numCuInWidth * g_maxCUWidth) + (m_lumaMarginX << 1);
 
-    m_chromaMarginX = m_lumaMarginX;       // keep 16-byte alignment for chroma CTUs
+    m_chromaMarginX = m_lumaMarginX;    // keep 16-byte alignment for chroma CTUs
     m_chromaMarginY = m_lumaMarginY >> m_vChromaShift;
 
     m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUHeight;
 
-    m_picBufY = (Pel*)X265_MALLOC(Pel, m_stride * (maxHeight + (m_lumaMarginY << 1)));
-    m_picBufU = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> 1) + (m_chromaMarginY << 1)));
-    m_picBufV = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> 1) + (m_chromaMarginY << 1)));
+    m_picBufY = (Pel*)X265_MALLOC(Pel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+    m_picBufU = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    m_picBufV = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
 
     m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
