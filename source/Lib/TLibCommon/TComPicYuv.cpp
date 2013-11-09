@@ -96,6 +96,7 @@ void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
     m_picOrgV = m_picBufV + m_chromaMarginY * getCStride() + m_chromaMarginX;
 
+    /* TODO: these four buffers are the same for every TComPicYuv in the encoder */
     m_cuOffsetY = new int[m_numCuInWidth * m_numCuInHeight];
     m_cuOffsetC = new int[m_numCuInWidth * m_numCuInHeight];
     for (int cuRow = 0; cuRow < m_numCuInHeight; cuRow++)
