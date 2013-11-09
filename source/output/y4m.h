@@ -52,7 +52,7 @@ protected:
 
 public:
 
-    Y4MOutput(const char *filename, int width, int height, int rate, int csp);
+    Y4MOutput(const char *filename, int width, int height, int rate, uint32_t depth, int csp);
 
     virtual ~Y4MOutput();
 

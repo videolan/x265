@@ -33,7 +33,7 @@ Output* Output::open(const char *fname, int width, int height, uint32_t bitdepth
     const char * s = strrchr(fname, '.');
 
     if (s && !strcmp(s, ".y4m"))
-        return new Y4MOutput(fname, width, height, rate, csp);
+        return new Y4MOutput(fname, width, height, rate, bitdepth, csp);
     else
         return new YUVOutput(fname, width, height, bitdepth, csp);
 }

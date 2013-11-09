@@ -58,6 +58,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
 #if HIGH_BIT_DEPTH
     if (depth == 8)
     {
+        int shift = pic.bitDepth - 8;
         ofs.seekp(pic.poc * frameSize);
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
@@ -66,7 +67,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             {
                 for (int w = 0; w < width >> x265_cli_csps[colorSpace].width[i]; w++)
                 {
-                    buf[w] = (char)src[w];
+                    buf[w] = (char)(src[w] >> shift);
                 }
 
                 ofs.write(buf, width >> x265_cli_csps[colorSpace].width[i]);

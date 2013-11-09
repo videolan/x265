@@ -30,7 +30,7 @@
 using namespace x265;
 using namespace std;
 
-Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate, int csp)
+Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate, uint32_t depth, int csp)
     : width(w)
     , height(h)
     , colorSpace(csp)
@@ -40,6 +40,13 @@ Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate, int csp)
     buf = new char[width];
 
     const char *cf = (csp >= X265_CSP_I444) ? "444" : (csp >= X265_CSP_I422) ? "422" : "420";
+
+#if HIGH_BIT_DEPTH
+    if (depth > 8)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "y4m: down-shifting reconstructed pixels to 8 bits\n");
+    }
+#endif
 
     if (ofs)
     {
@@ -67,13 +74,9 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
     ofs.seekp(outPicPos);
     ofs << "FRAME\n";
 
-#if HIGH_BIT_DEPTH    
+#if HIGH_BIT_DEPTH
     // encoder gave us short pixels, downshift, then write
     int shift = pic.bitDepth - 8;
-    if (pic.poc == 0 && shift)
-    {
-        x265_log(NULL, X265_LOG_WARNING, "y4m: down-shifting reconstructed pixels to 8 bits\n");
-    }
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
         uint16_t *src = (uint16_t*)pic.planes[i];
@@ -88,7 +91,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
             src += pic.stride[i];
         }
     }
-#else    
+#else
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
         char *src = (char*)pic.planes[i];

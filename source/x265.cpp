@@ -330,7 +330,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nReconstructed video options (debugging):\n");
     H0("-r/--recon                       Reconstructed raw image YUV or Y4M output file name\n");
-    H0("   --recon-depth                 Bit-depth of reconstructed raw image file. Default 8\n");
+    H0("   --recon-depth                 Bit-depth of reconstructed raw image file. Defaults to input bit depth\n");
     H0("\nSEI options:\n");
     H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
 #undef OPT
@@ -343,7 +343,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     int berror = 0;
     int help = 0;
     int cpuid = 0;
-    int reconFileBitDepth = 8;
+    int reconFileBitDepth = 0;
     const char *inputfn = NULL;
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
@@ -528,11 +528,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
     if (reconfn)
     {
-        if (reconFileBitDepth != param->inputBitDepth)
-        {
-            x265_log(param, X265_LOG_ERROR, "Bit depth of the recon file must be the same as input bit depth\n");
-            return true;
-        }
+        if (reconFileBitDepth == 0)
+            reconFileBitDepth = param->inputBitDepth;
         this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->sourceCsp);
         if (this->recon->isFail())
         {
