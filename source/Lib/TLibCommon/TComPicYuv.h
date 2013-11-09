@@ -176,9 +176,6 @@ public:
     void  copyToPicCb(TComPicYuv* destYuv);
     void  copyToPicCr(TComPicYuv* destYuv);
     void  copyFromPicture(const x265_picture&, int32_t *pad);
-
-    //  Dump picture
-    void  dump(char* pFileName, bool bAdd = false);
 }; // END CLASS DEFINITION TComPicYuv
 
 void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cu_Height);
