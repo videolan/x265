@@ -121,66 +121,24 @@ void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
 
 void TComPicYuv::destroy()
 {
-    m_picOrgY = NULL;
-    m_picOrgU = NULL;
-    m_picOrgV = NULL;
-
-    if (m_picBufY) { X265_FREE(m_picBufY); m_picBufY = NULL; }
-    if (m_picBufU) { X265_FREE(m_picBufU); m_picBufU = NULL; }
-    if (m_picBufV) { X265_FREE(m_picBufV); m_picBufV = NULL; }
-
+    X265_FREE(m_picBufY);
+    X265_FREE(m_picBufU);
+    X265_FREE(m_picBufV);
     delete[] m_cuOffsetY;
     delete[] m_cuOffsetC;
     delete[] m_buOffsetY;
     delete[] m_buOffsetC;
-}
 
-void TComPicYuv::createLuma(int picWidth, int picHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
-{
-    m_picWidth  = picWidth;
-    m_picHeight = picHeight;
-
-    m_cuWidth  = maxCUWidth;
-    m_cuHeight = maxCUHeight;
-
-    int numCuInWidth  = m_picWidth  / m_cuWidth  + (m_picWidth  % m_cuWidth  != 0);
-    int numCuInHeight = m_picHeight / m_cuHeight + (m_picHeight % m_cuHeight != 0);
-
-    m_lumaMarginX = g_maxCUWidth  + 16; // for 16-byte alignment
-    m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
-
-    m_picBufY = (Pel*)X265_MALLOC(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
-    m_picOrgY = m_picBufY + m_lumaMarginY * getStride() + m_lumaMarginX;
-
-    m_cuOffsetY = new int[numCuInWidth * numCuInHeight];
-    m_cuOffsetC = NULL;
-    for (int cuRow = 0; cuRow < numCuInHeight; cuRow++)
-    {
-        for (int cuCol = 0; cuCol < numCuInWidth; cuCol++)
-        {
-            m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
-        }
-    }
-
-    m_buOffsetY = new int[(size_t)1 << (2 * maxCUDepth)];
-    m_buOffsetC = NULL;
-    for (int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
-    {
-        for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
-        {
-            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
-        }
-    }
-}
-
-void TComPicYuv::destroyLuma()
-{
     m_picOrgY = NULL;
-
-    if (m_picBufY) { X265_FREE(m_picBufY); m_picBufY = NULL; }
-
-    delete[] m_cuOffsetY;
-    delete[] m_buOffsetY;
+    m_picOrgU = NULL;
+    m_picOrgV = NULL;
+    m_picBufY = NULL;
+    m_picBufU = NULL;
+    m_picBufV = NULL;
+    m_cuOffsetY = NULL;
+    m_cuOffsetC = NULL;
+    m_buOffsetY = NULL;
+    m_buOffsetC = NULL;
 }
 
 uint32_t TComPicYuv::getCUHeight(int rowNum)
