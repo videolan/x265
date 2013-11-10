@@ -73,6 +73,9 @@ int main(int argc, char *argv[])
             printf("Testing only harnesses that match name <%s>\n", testname);
         }
     }
+#if HIGH_BIT_DEPTH
+    g_bitDepth = 10;
+#endif
 
     int seed = (int)time(NULL);
     const char *bpp[] = { "8bpp", "16bpp" };
