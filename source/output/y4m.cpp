@@ -46,6 +46,11 @@ Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate, uint32_t dept
     {
         x265_log(NULL, X265_LOG_WARNING, "y4m: down-shifting reconstructed pixels to 8 bits\n");
     }
+#else
+    if (depth > 8)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "y4m: forcing reconstructed pixels to 8 bits\n");
+    }
 #endif
 
     if (ofs)
