@@ -460,6 +460,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         // review.
 
         p.chroma_copy_ps[CHROMA_2x4] = x265_blockcopy_ps_2x4_sse4;
+        p.chroma_copy_ps[CHROMA_2x8] = x265_blockcopy_ps_2x8_sse4;
         p.chroma_copy_ps[CHROMA_4x2] = x265_blockcopy_ps_4x2_sse4;
         p.chroma_copy_ps[CHROMA_4x4] = x265_blockcopy_ps_4x4_sse4;
         p.chroma_copy_ps[CHROMA_4x8] = x265_blockcopy_ps_4x8_sse4;
