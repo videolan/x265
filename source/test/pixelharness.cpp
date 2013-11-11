@@ -472,10 +472,13 @@ bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
 
     int j = 0;
 
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
     for (int i = 0; i < ITERS; i++)
     {
-        opt(opt_dest, STRIDE, pbuf1 + j, STRIDE, pbuf2 + j, STRIDE, 32);
         ref(ref_dest, STRIDE, pbuf1 + j, STRIDE, pbuf2 + j, STRIDE, 32);
+        opt(opt_dest, STRIDE, pbuf1 + j, STRIDE, pbuf2 + j, STRIDE, 32);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
