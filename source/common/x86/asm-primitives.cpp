@@ -462,6 +462,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.luma_copy_ps[LUMA_16x64] = x265_blockcopy_ps_16x64_sse4;
         p.luma_copy_ps[LUMA_32x64] = x265_blockcopy_ps_32x64_sse4;
+        p.luma_copy_ps[LUMA_48x64] = x265_blockcopy_ps_48x64_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
