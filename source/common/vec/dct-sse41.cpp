@@ -350,6 +350,8 @@ void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives &p)
 {
     p.quant = quant;
     p.dequant = dequant;
+#if !HIGH_BIT_DEPTH
     p.idct[IDST_4x4] = idst4;
+#endif
 }
 }
