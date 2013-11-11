@@ -1786,3 +1786,41 @@ RET
 BLOCKCOPY_PS_W8_H4  8,  8
 BLOCKCOPY_PS_W8_H4  8, 16
 BLOCKCOPY_PS_W8_H4  8, 32
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_16x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_ps_16x4, 4, 4, 3, dest, destStride, src, srcStride
+
+add        r1,      r1
+pxor       m0,      m0
+
+movu       m1,                 [r2]
+pmovzxbw   m2,                 m1
+movu       [r0],               m2
+punpckhbw  m1,                 m0
+movu       [r0 + 16],          m1
+
+movu       m1,                 [r2 + r3]
+pmovzxbw   m2,                 m1
+movu       [r0 + r1],          m2
+punpckhbw  m1,                 m0
+movu       [r0 + r1 + 16],     m1
+
+movu       m1,                 [r2 + 2 * r3]
+pmovzxbw   m2,                 m1
+movu       [r0 + 2 * r1],      m2
+punpckhbw  m1,                 m0
+movu       [r0 + 2 * r1 + 16], m1
+
+lea        r0,                 [r0 + 2 * r1]
+lea        r2,                 [r2 + 2 * r3]
+
+movu       m1,                 [r2 + r3]
+pmovzxbw   m2,                 m1
+movu       [r0 + r1],          m2
+punpckhbw  m1,                 m0
+movu       [r0 + r1 + 16],     m1
+
+RET
