@@ -236,6 +236,7 @@ INIT_MMX mmx2
 AVG_WEIGHT 4
 AVG_WEIGHT 8
 AVG_WEIGHT 16
+AVG_WEIGHT 32
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
 AVG_WEIGHT 4,  8
@@ -245,6 +246,7 @@ AVG_WEIGHT 16, 8
 INIT_XMM sse2
 AVG_WEIGHT 8,  7
 AVG_WEIGHT 16, 7
+AVG_WEIGHT 32, 7
 %define BIWEIGHT BIWEIGHT_SSSE3
 %define BIWEIGHT_START BIWEIGHT_START_SSSE3
 INIT_MMX ssse3
@@ -252,6 +254,7 @@ AVG_WEIGHT 4
 INIT_XMM ssse3
 AVG_WEIGHT 8,  7
 AVG_WEIGHT 16, 7
+AVG_WEIGHT 32, 7
 
 INIT_YMM avx2
 cglobal pixel_avg_weight_w16
@@ -632,7 +635,7 @@ cglobal pixel_avg_%1x%2
 %if cpuflag(avx2) && %1 == 16 ; all AVX2 machines can do fast 16-byte unaligned loads
     jmp pixel_avg_w%1_avx2
 %else
-%if mmsize == 16 && %1 == 16
+%if mmsize == 16 && (%1 % 16 == 0)
     test dword r4m, 15
     jz pixel_avg_w%1_sse2
 %endif
@@ -719,7 +722,12 @@ AVG_FUNC 16, movq, movq
 AVGH 16, 16
 AVGH 16, 8
 
+AVG_FUNC 32, movq, movq
+AVGH 32, 16
+
 INIT_XMM sse2
+AVG_FUNC 32, movdqu, movdqa
+AVGH 32, 16
 AVG_FUNC 16, movdqu, movdqa
 AVGH 16, 16
 AVGH 16,  8
@@ -727,6 +735,7 @@ AVGH  8, 16
 AVGH  8,  8
 AVGH  8,  4
 INIT_XMM ssse3
+AVGH 32, 16
 AVGH 16, 16
 AVGH 16,  8
 AVGH  8, 16
@@ -738,6 +747,9 @@ AVGH  4,  8
 AVGH  4,  4
 AVGH  4,  2
 INIT_XMM avx2
+; TODO: active AVX2 after debug
+;AVG_FUNC 32, movdqu, movdqa
+;AVGH 32, 16
 AVG_FUNC 16, movdqu, movdqa
 AVGH 16, 16
 AVGH 16,  8
