@@ -57,6 +57,7 @@ protected:
 
     bool check_block_copy_pp(copy_pp_t ref, copy_pp_t opt);
     bool check_block_copy_sp(copy_sp_t ref, copy_sp_t opt);
+    bool check_block_copy_ps(copy_ps_t ref, copy_ps_t opt);
 
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
 public:
