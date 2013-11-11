@@ -1838,19 +1838,19 @@ pxor       m0,      m0
 
 .loop
       movu       m1,                 [r2]
-      punpcklbw  m2,                 m1,            m0
+      pmovzxbw   m2,                 m1
       movu       [r0],               m2
       punpckhbw  m1,                 m0
       movu       [r0 + 16],          m1
 
       movu       m1,                 [r2 + r3]
-      punpcklbw  m2,                 m1,            m0
+      pmovzxbw   m2,                 m1
       movu       [r0 + r1],          m2
       punpckhbw  m1,                 m0
       movu       [r0 + r1 + 16],     m1
 
       movu       m1,                 [r2 + 2 * r3]
-      punpcklbw  m2,                 m1,            m0
+      pmovzxbw   m2,                 m1
       movu       [r0 + 2 * r1],      m2
       punpckhbw  m1,                 m0
       movu       [r0 + 2 * r1 + 16], m1
@@ -1859,7 +1859,7 @@ pxor       m0,      m0
       lea        r2,                 [r2 + 2 * r3]
 
       movu       m1,                 [r2 + r3]
-      punpcklbw  m2,                 m1,            m0
+      pmovzxbw   m2,                 m1
       movu       [r0 + r1],          m2
       punpckhbw  m1,                 m0
       movu       [r0 + r1 + 16],     m1
