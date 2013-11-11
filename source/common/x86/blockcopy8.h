@@ -94,6 +94,7 @@ LUMA_BLOCKCOPY_DEF(_sse2);
     void x265_blockcopy_ps_ ## W ## x ## H ## cpu(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
 
 #define CHROMA_BLOCKCOPY_DEF_SSE4(cpu) \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(4, 2, cpu); \
     SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 2, cpu); \
     SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 4, cpu); \
     SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 6, cpu); \
