@@ -1674,3 +1674,32 @@ pmovzxbw   m0,         m0
 movu       [r0 + r1],  m0
 
 RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_8x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal blockcopy_ps_8x4, 4, 4, 1, dest, destStride, src, srcStride
+
+add        r1,            r1
+
+movh       m0,            [r2]
+pmovzxbw   m0,            m0
+movu       [r0],          m0
+
+movh       m0,            [r2 + r3]
+pmovzxbw   m0,            m0
+movu       [r0 + r1],     m0
+
+movh       m0,            [r2 + 2 * r3]
+pmovzxbw   m0,            m0
+movu       [r0 + 2 * r1], m0
+
+lea        r2,            [r2 + 2 * r3]
+lea        r0,            [r0 + 2 * r1]
+
+movh       m0,            [r2 + r3]
+pmovzxbw   m0,            m0
+movu       [r0 + r1],     m0
+
+RET
