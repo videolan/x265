@@ -1787,6 +1787,42 @@ BLOCKCOPY_PS_W8_H4  8,  8
 BLOCKCOPY_PS_W8_H4  8, 16
 BLOCKCOPY_PS_W8_H4  8, 32
 
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_PS_W12_H2 2
+INIT_XMM sse4
+cglobal blockcopy_ps_%1x%2, 4, 5, 3, dest, destStride, src, srcStride
+
+add        r1,      r1
+mov        r4d,     %2/2
+pxor       m0,      m0
+
+.loop
+      movu       m1,             [r2]
+      pmovzxbw   m2,             m1
+      movu       [r0],           m2
+      punpckhbw  m1,             m0
+      movh       [r0 + 16],      m1
+
+      movu       m1,             [r2 + r3]
+      pmovzxbw   m2,             m1
+      movu       [r0 + r1],      m2
+      punpckhbw  m1,             m0
+      movh       [r0 + r1 + 16], m1
+
+      lea        r0,             [r0 + 2 * r1]
+      lea        r2,             [r2 + 2 * r3]
+
+      dec        r4d
+      jnz        .loop
+
+RET
+%endmacro
+
+BLOCKCOPY_PS_W12_H2 12, 16
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_16x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
