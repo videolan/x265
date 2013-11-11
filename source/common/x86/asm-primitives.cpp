@@ -455,6 +455,13 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
         p.chroma_copy_sp[CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
 
+        // This function pointer initialization is temporary will be removed
+        // later with macro definitions.  It is used to avoid linker errors
+        // until all partitions are coded and commit smaller patches, easier to
+        // review.
+
+        p.luma_copy_ps[LUMA_16x64] = x265_blockcopy_ps_16x64_sse4;
+
     }
     if (cpuMask & X265_CPU_AVX)
     {
