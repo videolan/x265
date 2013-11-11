@@ -1829,7 +1829,7 @@ RET
 %endmacro
 
 BLOCKCOPY_PS_W4_H4 4, 8
-
+BLOCKCOPY_PS_W4_H4 4, 16
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
