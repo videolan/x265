@@ -87,8 +87,40 @@
     SETUP_LUMA_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_FUNC_DEF(16, 64, cpu)
 
+#define SETUP_LUMA_SP_FUNC_DEF(W, H, cpu) \
+    void x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
+
+#define LUMA_SP_FILTERS(cpu) \
+    SETUP_LUMA_SP_FUNC_DEF(4,   4, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,   8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,   4, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(4,   8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16,  8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,  16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 12, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(12, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16,  4, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(4,  16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 24, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(24, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32,  8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,  32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 64, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 64, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 48, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(48, 64, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 64, cpu);
+
+
 CHROMA_FILTERS(_sse4);
 LUMA_FILTERS(_sse4);
+LUMA_SP_FILTERS(_ssse3);
 
 void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
 void x265_interp_8tap_v_sp_ssse3(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
@@ -98,6 +130,7 @@ void x265_chroma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int wid
 
 #undef SETUP_CHROMA_FUNC_DEF
 #undef SETUP_LUMA_FUNC_DEF
+#undef SETUP_LUMA_SP_FUNC_DEF
 #undef CHROMA_FILTERS
 #undef LUMA_FILTERS
 
