@@ -176,7 +176,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
 
         m_qtTempCoeffCb[i] = new TCoeff[(g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift)];
         m_qtTempCoeffCr[i] = new TCoeff[(g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift)];
-        m_qtTempTComYuv[i].create(g_maxCUWidth, g_maxCUHeight, cfg->getColorFormat());
+        m_qtTempTComYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->getColorFormat());
     }
 
     m_sharedPredTransformSkip[0] = new Pel[MAX_TS_WIDTH * MAX_TS_HEIGHT];
