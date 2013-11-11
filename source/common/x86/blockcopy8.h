@@ -90,6 +90,14 @@ void x265_cvt32to16_shr_sse2(int16_t *dst, int *src, intptr_t, int, int);
 CHROMA_BLOCKCOPY_DEF(_sse2);
 LUMA_BLOCKCOPY_DEF(_sse2);
 
+#define SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(W, H, cpu) \
+    void x265_blockcopy_ps_ ## W ## x ## H ## cpu(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
+
+#define CHROMA_BLOCKCOPY_DEF_SSE4(cpu) \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 2, cpu);
+
+CHROMA_BLOCKCOPY_DEF_SSE4(_sse4);
+
 void x265_blockcopy_sp_2x4_sse4(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
 void x265_blockcopy_sp_2x8_sse4(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
 void x265_blockcopy_sp_6x8_sse4(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb);
@@ -103,5 +111,8 @@ void x265_blockfill_s_32x32_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 #undef SETUP_LUMA_BLOCK_FUNC
 #undef CHROMA_BLOCKCOPY_DEF
 #undef LUMA_BLOCKCOPY_DEF
+
+#undef SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4
+#undef CHROMA_BLOCKCOPY_DEF_SSE4
 
 #endif // ifndef X265_I386_PIXEL_H
