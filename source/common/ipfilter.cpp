@@ -425,6 +425,49 @@ void interp_vert_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dst
     }
 }
 
+template<int N, int width, int height>
+void interp_vert_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+{
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    int shift = IF_FILTER_PREC + headRoom;
+    int offset = (1 << (shift - 1)) + (IF_INTERNAL_OFFS << IF_FILTER_PREC);
+    uint16_t maxVal = (1 << X265_DEPTH) - 1;
+    const int16_t *coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
+
+    src -= (N / 2 - 1) * srcStride;
+
+    int row, col;
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int sum;
+
+            sum  = src[col + 0 * srcStride] * coeff[0];
+            sum += src[col + 1 * srcStride] * coeff[1];
+            sum += src[col + 2 * srcStride] * coeff[2];
+            sum += src[col + 3 * srcStride] * coeff[3];
+            if (N == 8)
+            {
+                sum += src[col + 4 * srcStride] * coeff[4];
+                sum += src[col + 5 * srcStride] * coeff[5];
+                sum += src[col + 6 * srcStride] * coeff[6];
+                sum += src[col + 7 * srcStride] * coeff[7];
+            }
+
+            int16_t val = (int16_t)((sum + offset) >> shift);
+
+            val = (val < 0) ? 0 : val;
+            val = (val > maxVal) ? maxVal : val;
+
+            dst[col] = (pixel)val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
 typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, const short *coeff);
 typedef void (*ipfilter_sp_t)(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const short *coeff);
 
@@ -450,6 +493,7 @@ namespace x265 {
     p.luma_hps[LUMA_ ## W ## x ## H]     = interp_horiz_ps_c<8, W, H>;\
     p.luma_vpp[LUMA_ ## W ## x ## H]     = interp_vert_pp_c<8, W, H>; \
     p.luma_vps[LUMA_ ## W ## x ## H]     = interp_vert_ps_c<8, W, H>; \
+    p.luma_vsp[LUMA_ ## W ## x ## H]     = interp_vert_sp_c<8, W, H>; \
     p.luma_hvpp[LUMA_ ## W ## x ## H]    = interp_hv_pp_c<8, W, H>;
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
