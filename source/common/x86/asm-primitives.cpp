@@ -195,7 +195,8 @@ extern "C" {
     p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu; \
     p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu; \
-    p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu;
+    p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu; \
+    p.luma_copy_ps[LUMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu;
 
 #define SETUP_LUMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = x265_blockcopy_pp_ ## W ## x ## H ## cpu;
@@ -454,19 +455,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_copy_sp[CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;
         p.chroma_copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
         p.chroma_copy_sp[CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
-
-        // This function pointer initialization is temporary will be removed
-        // later with macro definitions.  It is used to avoid linker errors
-        // until all partitions are coded and commit smaller patches, easier to
-        // review.
-
-        p.luma_copy_ps[LUMA_16x64] = x265_blockcopy_ps_16x64_sse4;
-        p.luma_copy_ps[LUMA_32x64] = x265_blockcopy_ps_32x64_sse4;
-        p.luma_copy_ps[LUMA_48x64] = x265_blockcopy_ps_48x64_sse4;
-        p.luma_copy_ps[LUMA_64x16] = x265_blockcopy_ps_64x16_sse4;
-        p.luma_copy_ps[LUMA_64x32] = x265_blockcopy_ps_64x32_sse4;
-        p.luma_copy_ps[LUMA_64x48] = x265_blockcopy_ps_64x48_sse4;
-        p.luma_copy_ps[LUMA_64x64] = x265_blockcopy_ps_64x64_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
