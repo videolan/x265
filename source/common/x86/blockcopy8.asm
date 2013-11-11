@@ -2286,3 +2286,77 @@ RET
 %endmacro
 
 BLOCKCOPY_PS_W48_H2 48, 64
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_PS_W64_H2 2
+INIT_XMM sse4
+cglobal blockcopy_ps_%1x%2, 4, 5, 3, dest, destStride, src, srcStride
+
+add        r1,      r1
+mov        r4d,     %2/2
+pxor       m0,      m0
+
+.loop
+      movu       m1,             [r2]
+      pmovzxbw   m2,             m1
+      movu       [r0],           m2
+      punpckhbw  m1,             m0
+      movu       [r0 + 16],      m1
+
+      movu       m1,             [r2 + 16]
+      pmovzxbw   m2,             m1
+      movu       [r0 + 32],      m2
+      punpckhbw  m1,             m0
+      movu       [r0 + 48],      m1
+
+      movu       m1,             [r2 + 32]
+      pmovzxbw   m2,             m1
+      movu       [r0 + 64],      m2
+      punpckhbw  m1,             m0
+      movu       [r0 + 80],      m1
+
+      movu       m1,             [r2 + 48]
+      pmovzxbw   m2,             m1
+      movu       [r0 + 96],      m2
+      punpckhbw  m1,             m0
+      movu       [r0 + 112],     m1
+
+      movu       m1,             [r2 + r3]
+      pmovzxbw   m2,             m1
+      movu       [r0 + r1],      m2
+      punpckhbw  m1,             m0
+      movu       [r0 + r1 + 16], m1
+
+      movu       m1,             [r2 + r3 + 16]
+      pmovzxbw   m2,             m1
+      movu       [r0 + r1 + 32], m2
+      punpckhbw  m1,             m0
+      movu       [r0 + r1 + 48], m1
+
+      movu       m1,             [r2 + r3 + 32]
+      pmovzxbw   m2,             m1
+      movu       [r0 + r1 + 64], m2
+      punpckhbw  m1,             m0
+      movu       [r0 + r1 + 80], m1
+
+      movu       m1,              [r2 + r3 + 48]
+      pmovzxbw   m2,              m1
+      movu       [r0 + r1 + 96],  m2
+      punpckhbw  m1,              m0
+      movu       [r0 + r1 + 112], m1
+
+      lea        r0,              [r0 + 2 * r1]
+      lea        r2,              [r2 + 2 * r3]
+
+      dec        r4d
+      jnz        .loop
+
+RET
+%endmacro
+
+BLOCKCOPY_PS_W64_H2 64, 16
+BLOCKCOPY_PS_W64_H2 64, 32
+BLOCKCOPY_PS_W64_H2 64, 48
+BLOCKCOPY_PS_W64_H2 64, 64
