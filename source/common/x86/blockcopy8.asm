@@ -1658,6 +1658,36 @@ RET
 BLOCKFILL_S_W32_H4 32, 32
 
 
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_2x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal blockcopy_ps_2x4, 4, 4, 1, dest, destStride, src, srcStride
+
+add        r1,            r1
+
+movd       m0,            [r2]
+pmovzxbw   m0,            m0
+movd       [r0],          m0
+
+movd       m0,            [r2 + r3]
+pmovzxbw   m0,            m0
+movd       [r0 + r1],     m0
+
+movd       m0,            [r2 + 2 * r3]
+pmovzxbw   m0,            m0
+movd       [r0 + 2 * r1], m0
+
+lea        r2,            [r2 + 2 * r3]
+lea        r0,            [r0 + 2 * r1]
+
+movd       m0,            [r2 + r3]
+pmovzxbw   m0,            m0
+movd       [r0 + r1],     m0
+
+RET
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_4x2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
