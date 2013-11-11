@@ -8,7 +8,7 @@
 ;*          Laurent Aimar <fenrir@via.ecp.fr>
 ;*          Dylan Yudaken <dyudaken@gmail.com>
 ;*          Holger Lubitz <holger@lubitz.org>
-;*          Min Chen <chenm001.163.com>
+;*          Min Chen <chenm001@163.com>
 ;*          Oskar Arvidsson <oskar@irock.se>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
@@ -89,6 +89,9 @@ cextern deinterleave_shufd
     lea  t0, [t0+t1*2*SIZEOF_PIXEL]
     sub eax, 2
     jg .height_loop
+ %ifidn movu,movq ; detect MMX
+    EMMS
+ %endif
     RET
 %endmacro
 

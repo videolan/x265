@@ -119,12 +119,17 @@ extern "C" {
     p.sa8d_inter[LUMA_64x16] = cmp<64, 16, 16, 16, x265_pixel_sa8d_16x16_ ## cpu>; \
     p.sa8d_inter[LUMA_16x64] = cmp < 16, 64, 16, 16, x265_pixel_sa8d_16x16_ ## cpu >
 
-#define PIXEL_AVE(cpu) \
+#define PIXEL_AVG(cpu) \
     p.pixelavg_pp[LUMA_16x16] = x265_pixel_avg_16x16_ ## cpu; \
     p.pixelavg_pp[LUMA_16x8]  = x265_pixel_avg_16x8_ ## cpu; \
     p.pixelavg_pp[LUMA_8x16]  = x265_pixel_avg_8x16_ ## cpu; \
     p.pixelavg_pp[LUMA_8x8]   = x265_pixel_avg_8x8_ ## cpu; \
     p.pixelavg_pp[LUMA_8x4]   = x265_pixel_avg_8x4_ ## cpu;
+
+#define PIXEL_AVG_W4(cpu) \
+    p.pixelavg_pp[LUMA_4x4]  = x265_pixel_avg_4x4_ ## cpu; \
+    p.pixelavg_pp[LUMA_4x8]  = x265_pixel_avg_4x8_ ## cpu; \
+    p.pixelavg_pp[LUMA_4x16] = x265_pixel_avg_4x16_ ## cpu;
 
 #define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
     p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
@@ -293,10 +298,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_4x4] = x265_pixel_satd_4x4_mmx2;
         p.frame_init_lowres_core = x265_frame_init_lowres_core_mmx2;
 
-        //p.pixelavg_pp[LUMA_4x16] = x265_pixel_avg_4x16_mmx2;
-        //p.pixelavg_pp[LUMA_4x8]  = x265_pixel_avg_4x8_mmx2;
-        //p.pixelavg_pp[LUMA_4x4]  = x265_pixel_avg_4x4_mmx2;
-        //PIXEL_AVE(sse2);
+        PIXEL_AVG(sse2);
+        PIXEL_AVG_W4(mmx2);
 
         p.sad[LUMA_8x32]   = x265_pixel_sad_8x32_sse2;
         p.sad[LUMA_16x4]  = x265_pixel_sad_16x4_sse2;
@@ -391,7 +394,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(ssse3);
         p.sse_pp[LUMA_4x4] = x265_pixel_ssd_4x4_ssse3;
         ASSGN_SSE(ssse3);
-        //PIXEL_AVE(ssse3);
+        PIXEL_AVG(ssse3);
+        PIXEL_AVG_W4(ssse3);
 
         p.sad_x4[LUMA_8x4] = x265_pixel_sad_x4_8x4_ssse3;
         p.sad_x4[LUMA_8x8] = x265_pixel_sad_x4_8x8_ssse3;
