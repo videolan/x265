@@ -1790,7 +1790,7 @@ BLOCKCOPY_PS_W8_H4  8, 32
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_16x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal blockcopy_ps_16x4, 4, 4, 3, dest, destStride, src, srcStride
 
 add        r1,      r1
@@ -1829,7 +1829,7 @@ RET
 ; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PS_W16_H4 2
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal blockcopy_ps_%1x%2, 4, 5, 3, dest, destStride, src, srcStride
 
 add        r1,      r1

@@ -99,7 +99,12 @@ LUMA_BLOCKCOPY_DEF(_sse2);
     SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 6, cpu); \
     SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 8, cpu); \
     SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 32, cpu);
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(8, 32, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(16, 4, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(16, 8, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(16, 12, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(16, 16, cpu); \
+    SETUP_CHROMA_BLOCKCOPY_FUNC_SSE4(16, 32, cpu);
 
 CHROMA_BLOCKCOPY_DEF_SSE4(_sse4);
 
@@ -111,12 +116,6 @@ void x265_blockfill_s_4x4_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_8x8_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_16x16_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_32x32_sse2(int16_t *dst, intptr_t dstride, int16_t val);
-
-void x265_blockcopy_ps_16x4_sse2(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
-void x265_blockcopy_ps_16x8_sse2(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
-void x265_blockcopy_ps_16x12_sse2(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
-void x265_blockcopy_ps_16x16_sse2(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
-void x265_blockcopy_ps_16x32_sse2(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
 
 #undef SETUP_CHROMA_BLOCKCOPY_FUNC
 #undef SETUP_LUMA_BLOCK_FUNC
