@@ -1745,7 +1745,46 @@ cglobal pixel_satd_16x16, 4,6,12
     call pixel_satd_16x4_internal
     call pixel_satd_16x4_internal
     SATD_END_SSE2 m10
+
+cglobal pixel_satd_32x8, 4,8,8    ;if WIN64 && notcpuflag(avx)
+    SATD_START_SSE2 m10, m7
+    mov r6, r0
+    mov r7, r2
+%if vertical
+    mova m7, [pw_00ff]
+%endif
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    lea r0, [r6 + 16]
+    lea r2, [r7 + 16]
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    SATD_END_SSE2 m10
+
 %else
+
+cglobal pixel_satd_32x8, 4,6,8    ;if !WIN64
+    SATD_START_SSE2 m6, m7
+    BACKUP_POINTERS
+    call pixel_satd_8x8_internal
+    RESTORE_AND_INC_POINTERS
+    BACKUP_POINTERS
+    call pixel_satd_8x8_internal
+    RESTORE_AND_INC_POINTERS
+%if WIN64 == 0
+    add     r0, 8*SIZEOF_PIXEL
+    add     r2, 8*SIZEOF_PIXEL
+%endif
+    BACKUP_POINTERS
+    call pixel_satd_8x8_internal
+    RESTORE_AND_INC_POINTERS
+%if WIN64 == 0
+    add     r0, 16*SIZEOF_PIXEL
+    add     r2, 16*SIZEOF_PIXEL
+%endif
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6
+
 cglobal pixel_satd_16x8, 4,6,8
     SATD_START_SSE2 m6, m7
     BACKUP_POINTERS
