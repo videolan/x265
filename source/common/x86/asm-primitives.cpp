@@ -201,6 +201,9 @@ extern "C" {
     p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu;
 
+#define SETUP_LUMA_SP_FUNC_DEF(W, H, cpu) \
+    p.luma_vsp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu;
+
 #define SETUP_LUMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = x265_blockcopy_pp_ ## W ## x ## H ## cpu;
 
@@ -230,6 +233,33 @@ extern "C" {
     SETUP_LUMA_FUNC_DEF(48, 64, cpu); \
     SETUP_LUMA_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_FUNC_DEF(16, 64, cpu);
+
+#define LUMA_SP_FILTERS(cpu) \
+    SETUP_LUMA_SP_FUNC_DEF(4,   4, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,   8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,   4, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(4,   8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16,  8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,  16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 12, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(12, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16,  4, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(4,  16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 24, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(24, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32,  8, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(8,  32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 64, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 32, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(32, 64, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 48, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(48, 64, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(64, 16, cpu); \
+    SETUP_LUMA_SP_FUNC_DEF(16, 64, cpu);
 
 #define LUMA_BLOCKCOPY(cpu) \
     SETUP_LUMA_BLOCKCOPY_FUNC_DEF(4,   4, cpu); \
@@ -444,6 +474,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.ipfilter_sp[FILTER_V_S_P_8] = x265_interp_8tap_v_sp_ssse3;
         p.luma_p2s = x265_luma_p2s_ssse3;
         p.chroma_p2s = x265_chroma_p2s_ssse3;
+        LUMA_SP_FILTERS(_ssse3);
     }
     if (cpuMask & X265_CPU_SSE4)
     {
