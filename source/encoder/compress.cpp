@@ -99,7 +99,9 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     //===== init pattern for luma prediction =====
     cu->getPattern()->initPattern(cu, initTrDepth, partOffset);
     // Reference sample smoothing
-    cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_search->getPredicBuf(),  m_search->getPredicBufWidth(),  m_search->getPredicBufHeight(), m_search->refAbove, m_search->refLeft, m_search->refAboveFlt, m_search->refLeftFlt);
+    cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_search->getPredicBuf(), m_search->getPredicBufWidth(),
+                                     m_search->getPredicBufHeight(), m_search->refAbove, m_search->refLeft,
+                                     m_search->refAboveFlt, m_search->refLeftFlt);
 
     Pel* fenc   = m_origYuv[depth]->getLumaAddr(0, width);
     uint32_t stride = m_modePredYuv[5][depth]->getStride();
