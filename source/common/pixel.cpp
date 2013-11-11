@@ -763,6 +763,21 @@ void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
         b += strideb;
     }
 }
+
+template<int bx, int by>
+void blockcopy_ps_c(int16_t *a, intptr_t stridea, pixel *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = (int16_t)b[x];
+        }
+
+        a += stridea;
+        b += strideb;
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -805,10 +820,13 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
 #define CHROMA(W, H) \
     p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
-    p.chroma_copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>;
+    p.chroma_copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
+    p.chroma_copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>;
+
 #define LUMA(W, H) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
-    p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>;
+    p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
+    p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>;
 
     LUMA(4, 4);
     LUMA(8, 8);
