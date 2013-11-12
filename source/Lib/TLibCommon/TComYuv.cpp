@@ -281,7 +281,8 @@ void TComYuv::copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_
     uint32_t  srcstride = getStride();
     uint32_t  dststride = dstPicYuv->m_width;
 
-    primitives.blockcpy_sp(width, height, dst, dststride, src, srcstride);
+    int part = partitionFromSizes(width, height);
+    primitives.luma_copy_ps[part](dst, dststride, src, srcstride);
 }
 
 void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height)
