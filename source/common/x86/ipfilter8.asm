@@ -53,6 +53,30 @@ tab_ChromaCoeff: db  0, 64,  0,  0
                  db -2, 16, 54, -4
                  db -2, 10, 58, -2
 
+tab_ChromaCoeffV: times 4 dw 0, 64
+                  times 4 dw 0, 0
+
+                  times 4 dw -2, 58
+                  times 4 dw 10, -2
+
+                  times 4 dw -4, 54
+                  times 4 dw 16, -2
+
+                  times 4 dw -6, 46 
+                  times 4 dw 28, -4
+
+                  times 4 dw -4, 36
+                  times 4 dw 36, -4
+
+                  times 4 dw -4, 28
+                  times 4 dw 46, -6
+
+                  times 4 dw -2, 16
+                  times 4 dw 54, -4
+
+                  times 4 dw -2, 10
+                  times 4 dw 58, -2
+
 tab_LumaCoeff:   db   0, 0,  0,  64,  0,   0,  0,  0
                  db  -1, 4, -10, 58,  17, -5,  1,  0
                  db  -1, 4, -11, 40,  40, -11, 4, -1
@@ -2973,3 +2997,423 @@ cglobal interp_8tap_v_ss, 4, 7, 8, 0-2*4
     jnz         .loopH
 
     RET
+
+%macro PROCESS_CHROMA_SP_W4_4R 0
+    movq       m0, [r0]
+    movq       m1, [r0 + r1]
+    punpcklwd  m0, m1                          ;m0=[0 1]
+    pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1]  Row1
+
+    movq       m4, [r0 + 2 * r1]
+    punpcklwd  m1, m4                          ;m1=[1 2]
+    pmaddwd    m1, [r6 + 0 *16]                ;m1=[1+2]  Row2
+
+    lea        r0, [r0 + 2 * r1]
+    movq       m5, [r0 + r1]
+    punpcklwd  m4, m5                          ;m4=[2 3]
+    pmaddwd    m2, m4, [r6 + 0 *16]            ;m2=[2+3]  Row3
+    pmaddwd    m4, [r6 + 1 * 16]
+    paddd      m0, m4                          ;m0=[0+1+2+3]  Row1 done
+
+    movq       m4, [r0 + 2 * r1]
+    punpcklwd  m5, m4                          ;m5=[3 4]
+    pmaddwd    m3, m5, [r6 + 0 *16]            ;m3=[3+4]  Row4
+    pmaddwd    m5, [r6 + 1 * 16]
+    paddd      m1, m5                          ;m1 = [1+2+3+4]  Row2
+
+    lea        r0, [r0 + 2 * r1]
+    movq       m5, [r0 + r1]
+    punpcklwd  m4, m5                          ;m4=[4 5]
+    pmaddwd    m4, [r6 + 1 * 16]
+    paddd      m2, m4                          ;m2=[2+3+4+5]  Row3   
+
+    movq       m4, [r0 + 2 * r1]
+    punpcklwd  m5, m4                          ;m5=[5 6]
+    pmaddwd    m5, [r6 + 1 * 16]
+    paddd      m3, m5                          ;m3=[3+4+5+6]  Row4
+%endmacro
+
+;--------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_sp_%1x%2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;--------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_CHROMA_SP 2
+INIT_XMM ssse3
+cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
+
+    add       r1d, r1d
+    sub       r0, r1
+    shl       r4d, 5
+
+%ifdef PIC
+    lea       r5, [tab_ChromaCoeffV]
+    lea       r6, [r5 + r4]
+%else
+    lea       r6, [tab_ChromaCoeffV + r4]
+%endif
+
+    mova      m6, [tab_c_526336]
+
+    mov       byte [rsp], %2/4
+
+.loopH
+    mov       r4d, (%1/4)
+.loopW
+    PROCESS_CHROMA_SP_W4_4R
+
+    paddd     m0, m6
+    paddd     m1, m6
+    paddd     m2, m6
+    paddd     m3, m6
+
+    psrad     m0, 12
+    psrad     m1, 12
+    psrad     m2, 12
+    psrad     m3, 12
+
+    packssdw  m0, m1
+    packssdw  m2, m3
+
+    packuswb  m0, m0
+    packuswb  m2, m2
+
+    movd      [r2], m0
+    pshufd    m0, m0, 1
+    movd      [r2 + r3], m0
+    movd      [r2 + 2 * r3], m2
+    pshufd    m2, m2, 1
+    lea       r5, [r3 + 2 * r3]
+    movd      [r2 + r5], m2
+
+    lea       r5, [4 * r1 - 2 * 4]
+    sub       r0, r5
+    add       r2, 4
+
+    dec       r4d
+    jnz       .loopW
+
+    lea       r0, [r0 + 4 * r1 - 2 * %1]
+    lea       r2, [r2 + 4 * r3 - %1]
+
+    dec       byte [rsp]
+    jnz       .loopH
+
+    RET
+%endmacro
+
+    FILTER_VER_CHROMA_SP 4, 4
+    FILTER_VER_CHROMA_SP 4, 8
+    FILTER_VER_CHROMA_SP 16, 16
+    FILTER_VER_CHROMA_SP 16, 8
+    FILTER_VER_CHROMA_SP 16, 12
+    FILTER_VER_CHROMA_SP 12, 16
+    FILTER_VER_CHROMA_SP 16, 4
+    FILTER_VER_CHROMA_SP 4, 16
+    FILTER_VER_CHROMA_SP 32, 32
+    FILTER_VER_CHROMA_SP 32, 16
+    FILTER_VER_CHROMA_SP 16, 32
+    FILTER_VER_CHROMA_SP 32, 24
+    FILTER_VER_CHROMA_SP 24, 32
+    FILTER_VER_CHROMA_SP 32, 8
+
+
+%macro PROCESS_CHROMA_SP_W2_4R 0
+    movd       m0, [r0]
+    movd       m1, [r0 + r1]
+    punpcklwd  m0, m1                          ;m0=[0 1]
+
+    movd       m2, [r0 + 2 * r1]
+    punpcklwd  m1, m2                          ;m1=[1 2]
+    punpcklqdq m0, m1                          ;m0=[0 1 1 2]
+    pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1 1+2] Row 1-2
+
+    lea        r0, [r0 + 2 * r1]
+    movd       m1, [r0 + r1]
+    punpcklwd  m2, m1                          ;m2=[2 3]
+
+    movd       m3, [r0 + 2 * r1]
+    punpcklwd  m1, m3                          ;m2=[3 4]
+    punpcklqdq m2, m1                          ;m2=[2 3 3 4]
+
+    pmaddwd    m4, m2, [r6 + 1 * 16]           ;m4=[2+3 3+4] Row 1-2
+    pmaddwd    m2, [r6 + 0 * 16]               ;m2=[2+3 3+4] Row 3-4
+    paddd      m0, m4                          ;m0=[0+1+2+3 1+2+3+4] Row 1-2
+
+    lea        r0, [r0 + 2 * r1]
+    movd       m1, [r0 + r1]
+    punpcklwd  m3, m1                          ;m3=[4 5]
+
+    movd       m4, [r0 + 2 * r1]
+    punpcklwd  m1, m4                          ;m1=[5 6]
+    punpcklqdq m3, m1                          ;m2=[4 5 5 6]
+    pmaddwd    m3, [r6 + 1 * 16]               ;m3=[4+5 5+6] Row 3-4
+    paddd      m2, m3                          ;m2=[2+3+4+5 3+4+5+6] Row 3-4
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vertical_sp_%1x%2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_CHROMA_SP_W2_4R 2
+INIT_XMM ssse3
+cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 6
+
+    add       r1d, r1d
+    sub       r0, r1
+    shl       r4d, 5
+
+%ifdef PIC
+    lea       r5, [tab_ChromaCoeffV]
+    lea       r6, [r5 + r4]
+%else
+    lea       r6, [tab_ChromaCoeffV + r4]
+%endif
+
+    mova      m5, [tab_c_526336]
+
+    mov       r4d, (%2/4)
+
+.loopH
+    PROCESS_CHROMA_SP_W2_4R
+
+    paddd     m0, m5
+    paddd     m2, m5
+
+    psrad     m0, 12
+    psrad     m2, 12
+
+    packssdw  m0, m2
+    packuswb  m0, m0
+
+    pextrw    [r2], m0, 0
+    pextrw    [r2 + r3], m0, 1
+    pextrw    [r2 + 2 * r3], m0, 2
+    lea       r2, [r2 + 2 * r3]
+    pextrw    [r2 + r3], m0, 3
+
+    lea       r2, [r2 + 2 * r3]
+
+    dec       r4d
+    jnz       .loopH
+
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_SP_W2_4R 2, 4
+FILTER_VER_CHROMA_SP_W2_4R 2, 8
+
+;--------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_sp_4x2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;--------------------------------------------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal interp_4tap_vert_sp_4x2, 5, 6, 5
+
+    add        r1d, r1d
+    sub        r0, r1
+    shl        r4d, 5
+
+%ifdef PIC
+    lea        r5, [tab_ChromaCoeffV]
+    lea        r5, [r5 + r4]
+%else
+    lea        r5, [tab_ChromaCoeffV + r4]
+%endif
+
+    mova       m4, [tab_c_526336]
+
+    movq       m0, [r0]
+    movq       m1, [r0 + r1]
+    punpcklwd  m0, m1                          ;m0=[0 1]
+    pmaddwd    m0, [r5 + 0 *16]                ;m0=[0+1]  Row1
+
+    movq       m2, [r0 + 2 * r1]
+    punpcklwd  m1, m2                          ;m1=[1 2]
+    pmaddwd    m1, [r5 + 0 *16]                ;m1=[1+2]  Row2
+
+    lea        r0, [r0 + 2 * r1]
+    movq       m3, [r0 + r1]
+    punpcklwd  m2, m3                          ;m4=[2 3]
+    pmaddwd    m2, [r5 + 1 * 16]
+    paddd      m0, m2                          ;m0=[0+1+2+3]  Row1 done
+    paddd      m0, m4
+    psrad      m0, 12
+
+    movq       m2, [r0 + 2 * r1]
+    punpcklwd  m3, m2                          ;m5=[3 4]
+    pmaddwd    m3, [r5 + 1 * 16]
+    paddd      m1, m3                          ;m1 = [1+2+3+4]  Row2 done
+    paddd      m1, m4
+    psrad      m1, 12
+
+    packssdw   m0, m1
+    packuswb   m0, m0
+
+    movd       [r2], m0
+    pshufd     m0, m0, 1
+    movd       [r2 + r3], m0
+
+    RET
+
+;-------------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vertical_sp_6x8(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
+
+    add       r1d, r1d
+    sub       r0, r1
+    shl       r4d, 5
+
+%ifdef PIC
+    lea       r5, [tab_ChromaCoeffV]
+    lea       r6, [r5 + r4]
+%else
+    lea       r6, [tab_ChromaCoeffV + r4]
+%endif
+
+    mova      m6, [tab_c_526336]
+
+    mov       r4d, 8/4
+
+.loopH
+    PROCESS_CHROMA_SP_W4_4R
+
+    paddd     m0, m6
+    paddd     m1, m6
+    paddd     m2, m6
+    paddd     m3, m6
+
+    psrad     m0, 12
+    psrad     m1, 12
+    psrad     m2, 12
+    psrad     m3, 12
+
+    packssdw  m0, m1
+    packssdw  m2, m3
+
+    packuswb  m0, m0
+    packuswb  m2, m2
+
+    movd      [r2], m0
+    pshufd    m0, m0, 1
+    movd      [r2 + r3], m0
+    movd      [r2 + 2 * r3], m2
+    pshufd    m2, m2, 1
+    lea       r5, [r3 + 2 * r3]
+    movd      [r2 + r5], m2
+
+    lea       r5, [4 * r1 - 2 * 4]
+    sub       r0, r5
+    add       r2, 4
+
+    PROCESS_CHROMA_SP_W2_4R
+
+    paddd     m0, m6
+    paddd     m2, m6
+
+    psrad     m0, 12
+    psrad     m2, 12
+
+    packssdw  m0, m2
+    packuswb  m0, m0
+
+    pextrw    [r2], m0, 0
+    pextrw    [r2 + r3], m0, 1
+    pextrw    [r2 + 2 * r3], m0, 2
+    lea       r2, [r2 + 2 * r3]
+    pextrw    [r2 + r3], m0, 3
+
+    sub       r0, 2 * 4
+    lea       r2, [r2 + 2 * r3 - 4]
+
+    dec       r4d
+    jnz       .loopH
+
+    RET
+
+%macro PROCESS_CHROMA_SP_W8_2R 0
+    movu       m1, [r0]
+    movu       m3, [r0 + r1]
+    punpcklwd  m0, m1, m3
+    pmaddwd    m0, [r5 + 0 * 16]                ;m0 = [0l+1l]  Row1l
+    punpckhwd  m1, m3
+    pmaddwd    m1, [r5 + 0 * 16]                ;m1 = [0h+1h]  Row1h
+
+    movu       m4, [r0 + 2 * r1]
+    punpcklwd  m2, m3, m4
+    pmaddwd    m2, [r5 + 0 * 16]                ;m2 = [1l+2l]  Row2l
+    punpckhwd  m3, m4
+    pmaddwd    m3, [r5 + 0 * 16]                ;m3 = [1h+2h]  Row2h
+
+    lea        r0, [r0 + 2 * r1]
+    movu       m5, [r0 + r1]
+    punpcklwd  m6, m4, m5
+    pmaddwd    m6, [r5 + 1 * 16]                ;m6 = [2l+3l]  Row1l
+    paddd      m0, m6                           ;m0 = [0l+1l+2l+3l]  Row1l sum
+    punpckhwd  m4, m5
+    pmaddwd    m4, [r5 + 1 * 16]                ;m6 = [2h+3h]  Row1h
+    paddd      m1, m4                           ;m1 = [0h+1h+2h+3h]  Row1h sum
+
+    movu       m4, [r0 + 2 * r1]
+    punpcklwd  m6, m5, m4
+    pmaddwd    m6, [r5 + 1 * 16]                ;m6 = [3l+4l]  Row2l
+    paddd      m2, m6                           ;m2 = [1l+2l+3l+4l]  Row2l sum
+    punpckhwd  m5, m4
+    pmaddwd    m5, [r5 + 1 * 16]                ;m1 = [3h+4h]  Row2h
+    paddd      m3, m5                           ;m3 = [1h+2h+3h+4h]  Row2h sum
+%endmacro
+
+;--------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_sp_8x%2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;--------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_CHROMA_SP_W8_H2 2
+INIT_XMM ssse3
+cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 8
+
+    add       r1d, r1d
+    sub       r0, r1
+    shl       r4d, 5
+
+%ifdef PIC
+    lea       r5, [tab_ChromaCoeffV]
+    lea       r5, [r5 + r4]
+%else
+    lea       r5, [tab_ChromaCoeffV + r4]
+%endif
+
+    mova      m7, [tab_c_526336]
+
+    mov       r4d, %2/2
+.loopH
+    PROCESS_CHROMA_SP_W8_2R
+
+    paddd     m0, m7
+    paddd     m1, m7
+    paddd     m2, m7
+    paddd     m3, m7
+
+    psrad     m0, 12
+    psrad     m1, 12
+    psrad     m2, 12
+    psrad     m3, 12
+
+    packssdw  m0, m1
+    packssdw  m2, m3
+
+    packuswb  m0, m2
+
+    movlps    [r2], m0
+    movhps    [r2 + r3], m0
+
+    lea       r2, [r2 + 2 * r3]
+
+    dec r4d
+    jnz .loopH
+
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_SP_W8_H2 8, 2
+FILTER_VER_CHROMA_SP_W8_H2 8, 4
+FILTER_VER_CHROMA_SP_W8_H2 8, 6
+FILTER_VER_CHROMA_SP_W8_H2 8, 8
+FILTER_VER_CHROMA_SP_W8_H2 8, 16
+FILTER_VER_CHROMA_SP_W8_H2 8, 32
