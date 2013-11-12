@@ -1809,11 +1809,17 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 dststride   = cu->getPic()->getPicYuvRec()->getCStride();
                 src         = reconYuv->getCbAddr(partOffset);
                 srcstride   = reconYuv->getCStride();
-                primitives.chroma_copy_pp[part](dst, dststride, src, srcstride);
+                if (bChromaSame)
+                    primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
+                else
+                    primitives.chroma_copy_pp[part](dst, dststride, src, srcstride);
 
                 dst         = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
                 src         = reconYuv->getCrAddr(partOffset);
-                primitives.chroma_copy_pp[part](dst, dststride, src, srcstride);
+                if (bChromaSame)
+                    primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
+                else
+                    primitives.chroma_copy_pp[part](dst, dststride, src, srcstride);
             }
         }
 
