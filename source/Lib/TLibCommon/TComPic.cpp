@@ -69,14 +69,6 @@ TComPic::TComPic()
     m_ssimCnt = 0;
     m_frameTime = 0.0;
     m_elapsedCompressTime = 0.0;
-    m_avgCost[0] = 0;
-    m_avgCost[1] = 0;
-    m_avgCost[2] = 0;
-    m_avgCost[3] = 0;
-    m_count[0] = 0;
-    m_count[1] = 0;
-    m_count[2] = 0;
-    m_count[3] = 0;
 }
 
 TComPic::~TComPic()
