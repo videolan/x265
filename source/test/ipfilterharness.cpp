@@ -674,6 +674,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
+        if (opt.chroma_vps[value])
+        {
+            if (!check_IPFilterChroma_ps_primitive(ref.chroma_vps[value], opt.chroma_vps[value]))
+            {
+                printf("chroma_vps[%s]", chromaPartStr[value]);
+                return false;
+            }
+        }
         if (opt.chroma_vsp[value])
         {
             if (!check_IPFilterChroma_sp_primitive(ref.chroma_vsp[value], opt.chroma_vsp[value]))
@@ -837,6 +845,13 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             REPORT_SPEEDUP(opt.chroma_vpp[value], ref.chroma_vpp[value],
                            pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_p, dstStride, 1);
+        }
+        if (opt.chroma_vps[value])
+        {
+            printf("chroma_vps[%s]", chromaPartStr[value]);
+            REPORT_SPEEDUP(opt.chroma_vps[value], ref.chroma_vps[value],
+                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                           IPF_vec_output_s, dstStride, 1);
         }
         if (opt.chroma_vsp[value])
         {
