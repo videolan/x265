@@ -121,6 +121,7 @@ extern "C" {
     p.pixelavg_pp[LUMA_64x64] = x265_pixel_avg_64x64_ ## cpu; \
     p.pixelavg_pp[LUMA_64x48] = x265_pixel_avg_64x48_ ## cpu; \
     p.pixelavg_pp[LUMA_64x16] = x265_pixel_avg_64x16_ ## cpu; \
+    p.pixelavg_pp[LUMA_48x64] = x265_pixel_avg_48x64_ ## cpu; \
     p.pixelavg_pp[LUMA_32x64] = x265_pixel_avg_32x64_ ## cpu; \
     p.pixelavg_pp[LUMA_32x32] = x265_pixel_avg_32x32_ ## cpu; \
     p.pixelavg_pp[LUMA_32x24] = x265_pixel_avg_32x24_ ## cpu; \
@@ -133,6 +134,7 @@ extern "C" {
     p.pixelavg_pp[LUMA_16x12]  = x265_pixel_avg_16x12_ ## cpu; \
     p.pixelavg_pp[LUMA_16x8]  = x265_pixel_avg_16x8_ ## cpu; \
     p.pixelavg_pp[LUMA_16x4]  = x265_pixel_avg_16x4_ ## cpu; \
+    p.pixelavg_pp[LUMA_8x32]  = x265_pixel_avg_8x32_ ## cpu; \
     p.pixelavg_pp[LUMA_8x16]  = x265_pixel_avg_8x16_ ## cpu; \
     p.pixelavg_pp[LUMA_8x8]   = x265_pixel_avg_8x8_ ## cpu; \
     p.pixelavg_pp[LUMA_8x4]   = x265_pixel_avg_8x4_ ## cpu;
