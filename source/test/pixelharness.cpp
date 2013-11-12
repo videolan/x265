@@ -586,6 +586,29 @@ bool PixelHarness::check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt)
     return true;
 }
 
+bool PixelHarness::check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    for (int i = 0; i < 1; i++)
+    {
+        opt(opt_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
+        ref(ref_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -719,6 +742,24 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         if (!check_block_copy_ps(ref.chroma_copy_ps[part], opt.chroma_copy_ps[part]))
         {
             printf("chroma_copy_ps[%s] failed\n", chromaPartStr[part]);
+            return false;
+        }
+    }
+
+    if (opt.luma_sub_ps[part])
+    {
+        if (!check_pixel_sub_ps(ref.luma_sub_ps[part], opt.luma_sub_ps[part]))
+        {
+            printf("luma_sub_ps[%s] failed\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
+    if (opt.chroma_sub_ps[part])
+    {
+        if (!check_pixel_sub_ps(ref.chroma_sub_ps[part], opt.chroma_sub_ps[part]))
+        {
+            printf("chroma_sub_ps[%s] failed\n", chromaPartStr[part]);
             return false;
         }
     }
@@ -967,6 +1008,18 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         printf("ccpy_ps[%s]", chromaPartStr[part]);
         REPORT_SPEEDUP(opt.chroma_copy_ps[part], ref.chroma_copy_ps[part], sbuf1, 64, pbuf1, 128);
+    }
+
+    if (opt.luma_sub_ps[part])
+    {
+        printf("luma_sub_ps[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.luma_sub_ps[part], ref.luma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+    }
+
+    if (opt.chroma_sub_ps[part])
+    {
+        printf("chroma_sub_ps[%s]", chromaPartStr[part]);
+        REPORT_SPEEDUP(opt.chroma_sub_ps[part], ref.chroma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 }
 

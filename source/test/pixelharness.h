@@ -60,6 +60,8 @@ protected:
     bool check_block_copy_ps(copy_ps_t ref, copy_ps_t opt);
 
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
+
+    bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
 public:
 
     PixelHarness();

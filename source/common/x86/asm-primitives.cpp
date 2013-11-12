@@ -138,7 +138,8 @@ extern "C" {
 #define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
     p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
     p.chroma_vpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu; \
-    p.chroma_copy_ps[CHROMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu;
+    p.chroma_copy_ps[CHROMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu; \
+    p.chroma_sub_ps[CHROMA_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu;
 
 #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     p.chroma_vsp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu;
@@ -229,7 +230,8 @@ extern "C" {
     p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu; \
     p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu; \
-    p.luma_copy_ps[LUMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu;
+    p.luma_copy_ps[LUMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu; \
+    p.luma_sub_ps[LUMA_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu;
 
 #define SETUP_LUMA_SP_FUNC_DEF(W, H, cpu) \
     p.luma_vsp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu;

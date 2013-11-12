@@ -206,6 +206,8 @@ typedef void (*copy_pp_t)(pixel *dst, intptr_t dstride, pixel *src, intptr_t sst
 typedef void (*copy_sp_t)(pixel *dst, intptr_t dstStride, int16_t *src, intptr_t srcStride);
 typedef void (*copy_ps_t)(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
 
+typedef void (*pixel_sub_ps_t)(int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
+
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
  * a vectorized primitive, or a C function. */
@@ -235,6 +237,9 @@ struct EncoderPrimitives
     copy_sp_t       chroma_copy_sp[NUM_CHROMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
     copy_ps_t       chroma_copy_ps[NUM_CHROMA_PARTITIONS];
+
+    pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
+    pixel_sub_ps_t  chroma_sub_ps[NUM_CHROMA_PARTITIONS];
 
     ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
     ipfilter_sp_t   ipfilter_sp[NUM_IPFILTER_S_P];

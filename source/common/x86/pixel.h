@@ -282,11 +282,77 @@ DECL_ADS(4, avx2)
 DECL_ADS(2, avx2)
 DECL_ADS(1, avx2)
 
+#define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \
+    void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
+
+#define CHROMA_PIXELSUB_DEF(cpu) \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 4, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 2, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(2, 4, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 4, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 6, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(6, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 2, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(2, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 12, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(12, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 4, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 24, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(24, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 32, cpu);
+
+#define SETUP_LUMA_PIXELSUB_PS_FUNC(W, H, cpu) \
+    void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
+
+#define LUMA_PIXELSUB_DEF(cpu) \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(4,   4, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(8,   8, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(8,   4, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(4,   8, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(16, 16, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(16,  8, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(8,  16, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(16, 12, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(12, 16, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(16,  4, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(4,  16, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(32, 32, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(32, 16, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(16, 32, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(32, 24, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(24, 32, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(32,  8, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(8,  32, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(64, 64, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(64, 32, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(32, 64, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(64, 48, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(48, 64, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(64, 16, cpu); \
+    SETUP_LUMA_PIXELSUB_PS_FUNC(16, 64, cpu);
+
+CHROMA_PIXELSUB_DEF(_sse4);
+LUMA_PIXELSUB_DEF(_sse4);
+
 #undef DECL_PIXELS
 #undef DECL_SUF
 #undef DECL_HEVC_SSD
 #undef DECL_X1
 #undef DECL_X4
 #undef DECL_ADS
+#undef SETUP_CHROMA_PIXELSUB_PS_FUNC
+#undef SETUP_LUMA_PIXELSUB_PS_FUNC
+#undef CHROMA_PIXELSUB_DEF
+#undef LUMA_PIXELSUB_DEF
 
 #endif // ifndef X265_I386_PIXEL_H
