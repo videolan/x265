@@ -727,11 +727,19 @@ AVGH 16, 8
 AVGH 16, 4
 
 AVG_FUNC 32, movq, movq
+AVGH 32, 32
+AVGH 32, 24
 AVGH 32, 16
+AVGH 32, 8
 
 INIT_XMM sse2
 AVG_FUNC 32, movdqu, movdqa
+AVGH 32, 64
+AVGH 32, 32
+AVGH 32, 24
 AVGH 32, 16
+AVGH 32, 8
+
 AVG_FUNC 16, movdqu, movdqa
 AVGH 16, 64
 AVGH 16, 32
@@ -743,7 +751,12 @@ AVGH  8, 16
 AVGH  8,  8
 AVGH  8,  4
 INIT_XMM ssse3
+AVGH 32, 64
+AVGH 32, 32
+AVGH 32, 24
 AVGH 32, 16
+AVGH 32, 8
+
 AVGH 16, 64
 AVGH 16, 32
 AVGH 16, 16
@@ -761,7 +774,11 @@ AVGH  4,  2
 INIT_XMM avx2
 ; TODO: active AVX2 after debug
 ;AVG_FUNC 32, movdqu, movdqa
+;AVGH 32, 64
+;AVGH 32, 32
+;AVGH 32, 24
 ;AVGH 32, 16
+;AVGH 32, 8
 AVG_FUNC 16, movdqu, movdqa
 AVGH 16, 16
 AVGH 16,  8
