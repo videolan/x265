@@ -95,6 +95,8 @@ public:
     MD5Context            m_state[3];
     uint32_t              m_crc[3];
     uint32_t              m_checksum[3];
+    uint64_t              m_avgCost[4];
+    uint32_t              m_count[4];
 
     /* SSIM values per frame */
     double                m_ssim;

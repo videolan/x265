@@ -560,58 +560,47 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
     {
 #if EARLY_EXIT // turn ON this to enable early exit
-        // early exit when the RD cost of best mode at depth n is less than the avgerage of RD cost of the
-        // CU's(above, aboveleft, aboveright, left, colocated) at depth "n" of previosuly coded CU's
+        // early exit when the RD cost of best mode at depth n is less than the sum of avgerage of RD cost of the neighbour 
+        // CU's(above, aboveleft, aboveright, left, colocated) and all CU's at depth "n"  with weightage for each quantity
         if (outBestCU != 0)
         {
-            UInt64 costCU = 0, costCUAbove = 0, costCUAboveLeft = 0, costCUAboveRight = 0, costCULeft = 0, costCUColocated0 = 0, costCUColocated1 = 0, totalCost = 0, avgCost = 0;
-            UInt64 countCU = 0, countCUAbove = 0, countCUAboveLeft = 0, countCUAboveRight = 0, countCULeft = 0, countCUColocated0 = 0, countCUColocated1 = 0;
-            UInt64 totalCount = 0;
+            uint64_t totalCostNeigh = 0, totalCostAll = 0;
+            double avgCost = 0;
+            uint64_t totalCountNeigh = 0, totalCountAll = 0;
             TComDataCU* above = outTempCU->getCUAbove();
             TComDataCU* aboveLeft = outTempCU->getCUAboveLeft();
             TComDataCU* aboveRight = outTempCU->getCUAboveRight();
             TComDataCU* left = outTempCU->getCULeft();
-            TComDataCU* colocated0 = outTempCU->getCUColocated(REF_PIC_LIST_0);
-            TComDataCU* colocated1 = outTempCU->getCUColocated(REF_PIC_LIST_1);
+            TComDataCU* rootCU = outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr());
 
-            costCU = outTempCU->m_avgCost[depth] * outTempCU->m_count[depth];
-            countCU = outTempCU->m_count[depth];
+            totalCostNeigh += rootCU->m_avgCost[depth] * rootCU->m_count[depth];
+            totalCountNeigh += rootCU->m_count[depth];
             if (above)
             {
-                costCUAbove = above->m_avgCost[depth] * above->m_count[depth];
-                countCUAbove = above->m_count[depth];
+                totalCostNeigh += above->m_avgCost[depth] * above->m_count[depth];
+                totalCountNeigh += above->m_count[depth];
             }
             if (aboveLeft)
             {
-                costCUAboveLeft = aboveLeft->m_avgCost[depth] * aboveLeft->m_count[depth];
-                countCUAboveLeft = aboveLeft->m_count[depth];
+                totalCostNeigh += aboveLeft->m_avgCost[depth] * aboveLeft->m_count[depth];
+                totalCountNeigh += aboveLeft->m_count[depth];
             }
             if (aboveRight)
             {
-                costCUAboveRight = aboveRight->m_avgCost[depth] * aboveRight->m_count[depth];
-                countCUAboveRight = aboveRight->m_count[depth];
+                totalCostNeigh += aboveRight->m_avgCost[depth] * aboveRight->m_count[depth];
+                totalCountNeigh += aboveRight->m_count[depth];
             }
             if (left)
             {
-                costCULeft = left->m_avgCost[depth] * left->m_count[depth];
-                countCULeft = left->m_count[depth];
+                totalCostNeigh += left->m_avgCost[depth] * left->m_count[depth];
+                totalCountNeigh += left->m_count[depth];
             }
-            if (colocated0)
-            {
-                costCUColocated0 = colocated0->m_avgCost[depth] * colocated0->m_count[depth];
-                countCUColocated0 = colocated0->m_count[depth];
-            }
-            if (colocated1)
-            {
-                costCUColocated1 = colocated1->m_avgCost[depth] * colocated1->m_count[depth];
-                countCUColocated1 = colocated1->m_count[depth];
-            }
+            totalCostAll = (outTempCU->getPic()->m_avgCost[depth] * outTempCU->getPic()->m_count[depth]) - totalCostNeigh;
+            totalCountAll = outTempCU->getPic()->m_count[depth] - totalCountNeigh;
 
-            totalCost = costCU + costCUAbove + costCUAboveLeft + costCUAboveRight + costCULeft + costCUColocated0 + costCUColocated1;
-            totalCount = countCU + countCUAbove + countCUAboveLeft + countCUAboveRight + countCULeft + countCUColocated0 + countCUColocated1;
-            if (totalCount != 0)
-                avgCost = totalCost / totalCount;
-
+            //giving 60% weight to all CU's and 40% weight to neighbour CU's
+            if (totalCountAll)
+                avgCost = ((0.4 * totalCostAll) + (0.6 * totalCostNeigh)) / ((0.4 * totalCountAll) + (0.6 * totalCountNeigh));
             float lambda = 1.0f;
 
             if (outBestCU->m_totalCost < lambda * avgCost && avgCost != 0 && depth != 0)
@@ -651,22 +640,20 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 }
                 xCompressInterCU(subBestPartCU, subTempPartCU, outTempCU, nextDepth, nextDepth_partIndex);
 #if EARLY_EXIT
-                for (int k = 0; k < 4; k++)
-                {
-                    outTempCU->m_avgCost[k] = subTempPartCU->m_avgCost[k];
-                    outTempCU->m_count[k] = subTempPartCU->m_count[k];
-                }
-
                 if (subBestPartCU->getPredictionMode(0) != MODE_INTRA)
                 {
-                    UInt64 tempavgCost = subBestPartCU->m_totalCost;
-                    UInt64 temp = outTempCU->m_avgCost[depth + 1] * outTempCU->m_count[depth + 1];
-                    outTempCU->m_count[depth + 1] += 1;
-                    outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_count[depth + 1] += 1;
-                    outTempCU->m_avgCost[depth + 1] = (temp + tempavgCost) / outTempCU->m_count[depth + 1];
-                    outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_avgCost[depth + 1] = outTempCU->m_avgCost[depth + 1];
+                    uint64_t tempavgCost = subBestPartCU->m_totalCost;
+                    TComDataCU* rootCU = outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr());
+                    uint64_t temp = rootCU->m_avgCost[depth + 1] * rootCU->m_count[depth + 1];
+                    rootCU->m_count[depth + 1] += 1;
+                    rootCU->m_avgCost[depth + 1] = (temp + tempavgCost) / rootCU->m_count[depth + 1];
+
+
+                    temp = rootCU->getPic()->m_avgCost[depth + 1] * rootCU->getPic()->m_count[depth + 1];
+                    rootCU->getPic()->m_count[depth + 1] += 1;
+                    rootCU->getPic()->m_avgCost[depth + 1] = (temp + tempavgCost) / rootCU->getPic()->m_count[depth + 1];
                 }
-#endif // if EARLY_EXIT
+#endif
                 /* Adding costs from best SUbCUs */
                 outTempCU->copyPartFrom(subBestPartCU, nextDepth_partIndex, nextDepth, true); // Keep best part data to current temporary data.
                 xCopyYuv2Tmp(subBestPartCU->getTotalNumPart() * nextDepth_partIndex, nextDepth);
@@ -762,16 +749,21 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
          * Copy recon data from Temp structure to Best structure */
         if (outBestCU)
         {
+#if EARLY_EXIT
             if (depth == 0)
             {
-                UInt64 tempavgCost = outBestCU->m_totalCost;
-                UInt64 temp = outTempCU->m_avgCost[depth] * outTempCU->m_count[depth];
-                outTempCU->m_count[depth] += 1;
-                outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_count[depth] += 1;
+                uint64_t tempavgCost = outBestCU->m_totalCost;
+                TComDataCU* rootCU = outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr());
+                uint64_t temp = rootCU->m_avgCost[depth] * rootCU->m_count[depth];
+                rootCU->m_count[depth] += 1;
+                rootCU->m_avgCost[depth] = (temp + tempavgCost) / rootCU->m_count[depth];
 
-                outTempCU->m_avgCost[depth] = (temp + tempavgCost) / outTempCU->m_count[depth];
-                outTempCU->getPic()->getPicSym()->getCU(outTempCU->getAddr())->m_avgCost[depth] = outTempCU->m_avgCost[depth];
+
+                temp = rootCU->getPic()->m_avgCost[depth] * rootCU->getPic()->m_count[depth];
+                rootCU->getPic()->m_count[depth] += 1;
+                rootCU->getPic()->m_avgCost[depth] = (temp + tempavgCost) / rootCU->getPic()->m_count[depth];
             }
+#endif
             if (outTempCU->m_totalCost < outBestCU->m_totalCost)
             {
                 outBestCU = outTempCU;
