@@ -123,10 +123,6 @@ void TShortYUV::addClip(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trU
     addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift);
 }
 
-#if _MSC_VER
-#pragma warning (disable: 4244)
-#endif
-
 void TShortYUV::addClipLuma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
     int16_t* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
