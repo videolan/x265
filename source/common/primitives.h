@@ -125,7 +125,6 @@ enum IPFilterConf_P_S
 
 enum IPFilterConf_S_P
 {
-    FILTER_V_S_P_8,
     FILTER_V_S_P_4,
     NUM_IPFILTER_S_P
 };

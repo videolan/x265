@@ -550,7 +550,6 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 
     p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps_c<8>;
     p.ipfilter_ps[FILTER_V_P_S_8] = filterVertical_ps_c<8>;
-    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_sp_c<8>;
     p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps_c<4>;
     p.ipfilter_ps[FILTER_V_P_S_4] = filterVertical_ps_c<4>;
     p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_sp_c<4>;
