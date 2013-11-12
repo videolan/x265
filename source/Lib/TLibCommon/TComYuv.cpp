@@ -187,7 +187,8 @@ void TComYuv::copyToPartLuma(TComYuv* dstPicYuv, uint32_t uiDstPartIdx)
     uint32_t srcstride = getStride();
     uint32_t dststride = dstPicYuv->getStride();
 
-    primitives.blockcpy_pp(m_width, m_height, dst, dststride, src, srcstride);
+    int part = partitionFromSizes(m_width, m_height);
+    primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
 void TComYuv::copyToPartChroma(TComYuv* dstPicYuv, uint32_t uiDstPartIdx)
@@ -221,7 +222,8 @@ void TComYuv::copyPartToLuma(TComYuv* dstPicYuv, uint32_t partIdx)
     uint32_t height = dstPicYuv->getHeight();
     uint32_t width = dstPicYuv->getWidth();
 
-    primitives.blockcpy_pp(width, height, dst, dststride, src, srcstride);
+    int part = partitionFromSizes(width, height);
+    primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
 void TComYuv::copyPartToChroma(TComYuv* dstPicYuv, uint32_t partIdx)
@@ -267,7 +269,8 @@ void TComYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t 
     uint32_t srcstride = getStride();
     uint32_t dststride = dstPicYuv->getStride();
 
-    primitives.blockcpy_pp(width, height, dst, dststride, src, srcstride);
+    int part = partitionFromSizes(width, height);
+    primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
 void TComYuv::copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height)
