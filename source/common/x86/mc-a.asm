@@ -190,7 +190,13 @@ cextern deinterleave_shufd
     SWAP 0, 6
     BIWEIGHT [%2+mmsize/2], [%3+mmsize/2]
     packuswb   m6, m0
-    mova     [%1], m6
+%if %4 != 12
+    mova    [%1], m6
+%else ; !w12
+    movh    [%1], m6
+    movhlps m6, m6
+    movd    [%1+mmsize/2], m6
+%endif ; w12
 %endif
 %endmacro
 
@@ -222,8 +228,12 @@ cglobal pixel_avg_weight_w%1
 %else
 %assign x 0
 %rep (%1*SIZEOF_PIXEL+mmsize-1)/mmsize
-    BIWEIGHT_ROW   t0+x,                   t2+x,                   t4+x,                 %1
-    BIWEIGHT_ROW   t0+x+SIZEOF_PIXEL*t1,   t2+x+SIZEOF_PIXEL*t3,   t4+x+SIZEOF_PIXEL*t5, %1
+%assign y mmsize
+%if (%1 == 12) && (%1*SIZEOF_PIXEL-x < mmsize)
+%assign y (%1*SIZEOF_PIXEL-x)
+%endif
+    BIWEIGHT_ROW   t0+x,                   t2+x,                   t4+x,                 y
+    BIWEIGHT_ROW   t0+x+SIZEOF_PIXEL*t1,   t2+x+SIZEOF_PIXEL*t3,   t4+x+SIZEOF_PIXEL*t5, y
 %assign x x+mmsize
 %endrep
 %endif
@@ -235,6 +245,7 @@ cglobal pixel_avg_weight_w%1
 INIT_MMX mmx2
 AVG_WEIGHT 4
 AVG_WEIGHT 8
+AVG_WEIGHT 12
 AVG_WEIGHT 16
 AVG_WEIGHT 32
 AVG_WEIGHT 64
@@ -248,6 +259,7 @@ AVG_WEIGHT 16, 8
 %else ;!HIGH_BIT_DEPTH
 INIT_XMM sse2
 AVG_WEIGHT 8,  7
+AVG_WEIGHT 12, 7
 AVG_WEIGHT 16, 7
 AVG_WEIGHT 32, 7
 AVG_WEIGHT 64, 7
@@ -259,6 +271,7 @@ INIT_MMX ssse3
 AVG_WEIGHT 4
 INIT_XMM ssse3
 AVG_WEIGHT 8,  7
+AVG_WEIGHT 12, 7
 AVG_WEIGHT 16, 7
 AVG_WEIGHT 32, 7
 AVG_WEIGHT 64, 7
@@ -657,7 +670,7 @@ cglobal pixel_avg_%1x%2
 ;                    pixel *src2, intptr_t src2_stride, int height, int weight );
 ;-----------------------------------------------------------------------------
 
-%macro AVG_FUNC 3
+%macro AVG_FUNC 3-4
 cglobal pixel_avg_w%1
     AVG_START
 .height_loop:
@@ -672,8 +685,13 @@ cglobal pixel_avg_w%1
     pavgb  m0, [t4+x]
     pavgb  m1, [t4+x+SIZEOF_PIXEL*t5]
 %endif
+%if (%1 == 12) && (%1-x/SIZEOF_PIXEL < mmsize)
+    %4     [t0+x], m0
+    %4     [t0+x+SIZEOF_PIXEL*t1], m1
+%else
     %3     [t0+x], m0
     %3     [t0+x+SIZEOF_PIXEL*t1], m1
+%endif
 %assign x x+mmsize
 %endrep
     AVG_END
@@ -728,6 +746,9 @@ AVGH 8, 16
 AVGH 8,  8
 AVGH 8,  4
 
+AVG_FUNC 12, movq, movq, movd
+AVGH 12, 16
+
 AVG_FUNC 16, movq, movq
 AVGH 16, 64
 AVGH 16, 32
@@ -780,6 +801,9 @@ AVGH 16, 4
 AVG_FUNC 48, movdqu, movdqa
 AVGH 48, 64
 
+AVG_FUNC 12, movdqu, movdqa, movq
+AVGH 12, 16
+
 AVGH  8, 32
 AVGH  8, 16
 AVGH  8,  8
@@ -805,6 +829,8 @@ AVGH 16, 8
 AVGH 16, 4
 
 AVGH 48, 64
+
+AVGH 12, 16
 
 AVGH  8, 32
 AVGH  8, 16
