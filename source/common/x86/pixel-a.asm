@@ -1927,6 +1927,14 @@ cglobal pixel_satd_32x24, 4,6,8    ;if !WIN64
     SATD_END_SSE2 m6
 %endif
 
+cglobal pixel_satd_16x4, 4,6,8
+    SATD_START_SSE2 m6, m7
+    BACKUP_POINTERS
+    call %%pixel_satd_8x4_internal
+    RESTORE_AND_INC_POINTERS
+    call %%pixel_satd_8x4_internal
+    SATD_END_SSE2 m6
+
 cglobal pixel_satd_16x8, 4,6,8
     SATD_START_SSE2 m6, m7
     BACKUP_POINTERS

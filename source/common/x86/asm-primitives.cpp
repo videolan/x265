@@ -338,6 +338,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT8(satd, _mmx2);
         HEVC_SATD(mmx2);
         p.satd[LUMA_12x16] = cmp<12, 16, 4, 16, x265_pixel_satd_4x16_mmx2>;
+        p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
         p.satd[LUMA_16x12] = x265_pixel_satd_16x12_sse2;
         p.satd[LUMA_32x8]  = x265_pixel_satd_32x8_sse2;
         p.satd[LUMA_32x16] = x265_pixel_satd_32x16_sse2;
@@ -418,7 +419,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.blockfill_s[BLOCK_32x32] = x265_blockfill_s_32x32_sse2;
 #if X86_64
         p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
-        p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
         p.satd[LUMA_16x32] = x265_pixel_satd_16x32_sse2;
         p.satd[LUMA_16x64] = x265_pixel_satd_16x64_sse2;
 #endif
