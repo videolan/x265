@@ -246,6 +246,7 @@ DECL_SUF(x265_pixel_avg_32x32, (pixel *, intptr_t, pixel *, intptr_t, pixel *, i
 DECL_SUF(x265_pixel_avg_32x24, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_32x16, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_32x8,  (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_24x32, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_16x64, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_16x32, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_16x16, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))

@@ -126,6 +126,7 @@ extern "C" {
     p.pixelavg_pp[LUMA_32x24] = x265_pixel_avg_32x24_ ## cpu; \
     p.pixelavg_pp[LUMA_32x16] = x265_pixel_avg_32x16_ ## cpu; \
     p.pixelavg_pp[LUMA_32x8 ] = x265_pixel_avg_32x8_ ## cpu; \
+    p.pixelavg_pp[LUMA_24x32] = x265_pixel_avg_24x32_ ## cpu; \
     p.pixelavg_pp[LUMA_16x64] = x265_pixel_avg_16x64_ ## cpu; \
     p.pixelavg_pp[LUMA_16x32] = x265_pixel_avg_16x32_ ## cpu; \
     p.pixelavg_pp[LUMA_16x16] = x265_pixel_avg_16x16_ ## cpu; \
