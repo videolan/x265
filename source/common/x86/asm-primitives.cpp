@@ -329,7 +329,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT8(satd, _mmx2);
         HEVC_SATD(mmx2);
         p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
-        p.satd[LUMA_12x16] = cmp<12, 16, 4, 16, x265_pixel_satd_4x16_mmx2>;
+        p.satd[LUMA_12x16] = x265_pixel_satd_12x16_sse2;
         p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
         p.satd[LUMA_16x12] = x265_pixel_satd_16x12_sse2;
         p.satd[LUMA_16x32] = x265_pixel_satd_16x32_sse2;
@@ -477,7 +477,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_SSE4)
     {
         p.satd[LUMA_4x16]   = x265_pixel_satd_4x16_sse4;
-        p.satd[LUMA_12x16]  = cmp<12, 16, 4, 16, x265_pixel_satd_4x16_sse4>;
+        p.satd[LUMA_12x16]  = x265_pixel_satd_12x16_sse4;
         p.satd[LUMA_32x8] = x265_pixel_satd_32x8_sse4;
         p.satd[LUMA_32x16] = x265_pixel_satd_32x16_sse4;
         p.satd[LUMA_32x24] = x265_pixel_satd_32x24_sse4;
@@ -496,7 +496,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     {
         p.frame_init_lowres_core = x265_frame_init_lowres_core_avx;
         p.satd[LUMA_4x16]   = x265_pixel_satd_4x16_avx;
-        p.satd[LUMA_12x16]  = cmp<12, 16, 4, 16, x265_pixel_satd_4x16_avx>;
+        p.satd[LUMA_12x16]  = x265_pixel_satd_12x16_avx;
         p.satd[LUMA_32x8] = x265_pixel_satd_32x8_avx;
         p.satd[LUMA_32x16] = x265_pixel_satd_32x16_avx;
         p.satd[LUMA_32x24] = x265_pixel_satd_32x24_avx;

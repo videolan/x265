@@ -1993,6 +1993,64 @@ cglobal pixel_satd_16x64, 4,6,8
     SATD_END_SSE2 m6, m7
 %endif
 
+%if WIN64
+cglobal pixel_satd_12x16, 4,8,8
+    SATD_START_MMX
+    mov r6, r0
+    mov r7, r2
+%if vertical==0
+    mova m7, [hmul_4p]
+%endif
+    SATD_4x8_SSE vertical, 0, swap
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, add
+    lea r0, [r6 + 4]
+    lea r2, [r7 + 4]
+    SATD_4x8_SSE vertical, 1, add
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, add
+    lea r0, [r6 + 8]
+    lea r2, [r7 + 8]
+    SATD_4x8_SSE vertical, 1, add
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, add
+    HADDW m7, m1
+    movd eax, m7
+    RET
+%else
+cglobal pixel_satd_12x16, 4,6,8
+    SATD_START_MMX
+%if vertical==0
+    mova m7, [hmul_4p]
+%endif
+    SATD_4x8_SSE vertical, 0, swap
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, add
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 4
+    add r2, 4
+    SATD_4x8_SSE vertical, 1, add
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, add
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 8
+    add r2, 8
+    SATD_4x8_SSE vertical, 1, add
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, add
+    HADDW m7, m1
+    movd eax, m7
+    RET
+%endif
+
 cglobal pixel_satd_8x32, 4,6,8
     SATD_START_SSE2 m6, m7
 %if vertical
