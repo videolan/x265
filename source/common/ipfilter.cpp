@@ -486,6 +486,7 @@ namespace x265 {
 
 #define CHROMA(W, H) \
     p.chroma_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>; \
+    p.chroma_hps[CHROMA_ ## W ## x ## H] = interp_horiz_ps_c<4, W, H>; \
     p.chroma_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c < 4, W, H >; \
     p.chroma_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c < 4, W, H >
 
