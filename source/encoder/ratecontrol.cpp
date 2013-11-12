@@ -97,6 +97,11 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     /* Actual adaptive quantization */
     int maxCol = pic->getPicYuvOrg()->getWidth();
     int maxRow = pic->getPicYuvOrg()->getHeight();
+    for (int y = 0; y < 3; y++ )
+    {
+        pic->m_lowres.wp_ssd[y] = 0;
+        pic->m_lowres.wp_sum[y] = 0;
+    }
 
     /* Calculate Qp offset for each 16x16 block in the frame */
     int block_xy = 0;
