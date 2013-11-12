@@ -1935,6 +1935,17 @@ cglobal pixel_satd_16x8, 4,6,8
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6
 
+cglobal pixel_satd_16x12, 4,6,8
+    SATD_START_SSE2 m6, m7, 1
+    BACKUP_POINTERS
+    call pixel_satd_8x8_internal
+    call %%pixel_satd_8x4_internal
+    SATD_ACCUM m6, m0, m7
+    RESTORE_AND_INC_POINTERS
+    call pixel_satd_8x8_internal
+    call %%pixel_satd_8x4_internal
+    SATD_END_SSE2 m6, m7
+
 cglobal pixel_satd_16x16, 4,6,8
     SATD_START_SSE2 m6, m7, 1
     BACKUP_POINTERS
