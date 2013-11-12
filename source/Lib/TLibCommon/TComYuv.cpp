@@ -111,13 +111,15 @@ void TComYuv::copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t ab
     width  = m_width >> partDepth;
     height = m_height >> partDepth;
 
+    int part = partitionFromSizes(width, height);
+
     Pel* src = getLumaAddr(partIdx, width);
     Pel* dst = destPicYuv->getLumaAddr(cuAddr, absZOrderIdx);
 
     uint32_t srcstride = getStride();
     uint32_t dststride = destPicYuv->getStride();
 
-    primitives.blockcpy_pp(width, height, dst, dststride, src, srcstride);
+    primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
 void TComYuv::copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth, uint32_t partIdx)
