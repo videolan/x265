@@ -181,7 +181,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
 
     primitives.intra_pred_allangs[log2SizeMinus2](tmp, above, left, aboveFiltered, leftFiltered, (scaleWidth <= 16));
 
-    for (uint32_t mode = 2; mode < 35; mode++)
+    for (mode = 2; mode < 35; mode++)
     {
         bool modeHor = (mode < 18);
         Pel *cmp = (modeHor ? buf_trans : fenc);
