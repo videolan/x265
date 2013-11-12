@@ -428,6 +428,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     Pel*     pred         = predYuv->getLumaAddr(absPartIdx);
     int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
     Pel*     recon        = predYuv->getLumaAddr(absPartIdx);
+    int      part         = partitionFromSizes(width, height);
 
     uint32_t trSizeLog2     = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
     uint32_t qtLayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
@@ -453,12 +454,12 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
         // save prediction
         if (default0Save1Load2 == 1)
         {
-            primitives.blockcpy_pp(width, height, m_sharedPredTransformSkip[0], width, pred, stride);
+            primitives.luma_copy_pp[part](m_sharedPredTransformSkip[0], width, pred, stride);
         }
     }
     else
     {
-        primitives.blockcpy_pp(width, height, pred, stride, m_sharedPredTransformSkip[0], width);
+        primitives.luma_copy_pp[part](pred, stride, m_sharedPredTransformSkip[0], width);
     }
 
     //===== get residual signal =====
@@ -504,7 +505,6 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
 
     //===== update distortion =====
-    int part = partitionFromSizes(width, height);
     outDist += primitives.sse_pp[part](fenc, stride, recon, stride);
 }
 
@@ -554,6 +554,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     Pel*     reconIPred       = (chromaId > 0 ? cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder) : cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder));
     uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
     bool     useTransformSkipChroma = cu->getTransformSkip(absPartIdx, ttype);
+    int      part = partitionFromSizes(width, height);
 
     //===== update chroma mode =====
     if (chromaPredMode == DM_CHROMA_IDX)
@@ -576,14 +577,14 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         if (default0Save1Load2 == 1)
         {
             Pel* predbuf = m_sharedPredTransformSkip[1 + chromaId];
-            primitives.blockcpy_pp(width, height, predbuf, width, pred, stride);
+            primitives.luma_copy_pp[part](predbuf, width, pred, stride);
         }
     }
     else
     {
         // load prediction
         Pel* predbuf = m_sharedPredTransformSkip[1 + chromaId];
-        primitives.blockcpy_pp(width, height, pred, stride, predbuf, width);
+        primitives.luma_copy_pp[part](pred, stride, predbuf, width);
     }
 
     //===== get residual signal =====
@@ -638,7 +639,6 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
 
     //===== update distortion =====
-    int part = partitionFromSizes(width, height);
     uint32_t dist = primitives.sse_pp[part](fenc, stride, recon, stride);
     if (ttype == TEXT_CHROMA_U)
     {
@@ -1796,28 +1796,24 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             uint32_t compWidth   = cu->getWidth(0) >> initTrDepth;
             uint32_t compHeight  = cu->getHeight(0) >> initTrDepth;
             uint32_t zorder      = cu->getZorderIdxInCU() + partOffset;
+            int      part        = partitionFromSizes(compWidth, compHeight);
             Pel*     dst         = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
             uint32_t dststride   = cu->getPic()->getPicYuvRec()->getStride();
             Pel*     src         = reconYuv->getLumaAddr(partOffset);
             uint32_t srcstride   = reconYuv->getStride();
-            primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+            primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 
             if (!bLumaOnly && !bSkipChroma)
             {
-                if (!bChromaSame)
-                {
-                    compWidth   >>= 1;
-                    compHeight  >>= 1;
-                }
                 dst         = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
                 dststride   = cu->getPic()->getPicYuvRec()->getCStride();
                 src         = reconYuv->getCbAddr(partOffset);
                 srcstride   = reconYuv->getCStride();
-                primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+                primitives.chroma_copy_pp[part](dst, dststride, src, srcstride);
 
                 dst         = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
                 src         = reconYuv->getCrAddr(partOffset);
-                primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+                primitives.chroma_copy_pp[part](dst, dststride, src, srcstride);
             }
         }
 
@@ -1851,7 +1847,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     //===== set distortion (rate and r-d costs are determined later) =====
-    outDistC                 = overallDistC;
+    outDistC              = overallDistC;
     cu->m_totalDistortion = overallDistY + overallDistC;
 }
 

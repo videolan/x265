@@ -119,9 +119,6 @@ MotionEstimate::~MotionEstimate()
 
 void MotionEstimate::setSourcePU(int offset, int width, int height)
 {
-    /* copy PU block into cache */
-    primitives.blockcpy_pp(width, height, fenc, FENC_STRIDE, fencplane + offset, fencLumaStride);
-
     partEnum = partitionFromSizes(width, height);
     assert(LUMA_4x4 != partEnum);
     sad = primitives.sad[partEnum];
@@ -133,6 +130,9 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     blockwidth = width;
     blockheight = height;
     blockOffset = offset;
+
+    /* copy PU block into cache */
+    primitives.luma_copy_pp[partEnum](fenc, FENC_STRIDE, fencplane + offset, fencLumaStride);
 }
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */

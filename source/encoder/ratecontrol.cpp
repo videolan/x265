@@ -67,7 +67,7 @@ static inline uint32_t acEnergyPlane(TComPic *pic, pixel* src, int srcStride, in
     if (bChroma)
     {
         ALIGN_VAR_8(pixel, pix[8 * 8]);
-        primitives.blockcpy_pp(8, 8, pix, 8, src, srcStride);
+        primitives.luma_copy_pp[LUMA_8x8](pix, 8, src, srcStride);
         return acEnergyVar(pic, primitives.var[LUMA_8x8](pix, 8), 6, bChroma);
     }
     else
