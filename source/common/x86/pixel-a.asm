@@ -1654,17 +1654,6 @@ cglobal pixel_satd_8x8_internal
 ; These aren't any faster on AVX systems with fast movddup (Bulldozer, Sandy Bridge)
 %if HIGH_BIT_DEPTH == 0 && (WIN64 || UNIX64) && notcpuflag(avx)
 
-cglobal pixel_satd_8x32, 4,6,8
-    SATD_START_SSE2 m6, m7
-%if vertical
-    mova m7, [pw_00ff]
-%endif
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6
-
 cglobal pixel_satd_16x4_internal
     LOAD_SUMSUB_16x4P 0, 1, 2, 3, 4, 8, 5, 9, 6, 7, r0, r2, 11
     lea  r2, [r2+4*r3]
@@ -1964,7 +1953,56 @@ cglobal pixel_satd_16x16, 4,6,8
     call pixel_satd_8x8_internal
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6, m7
+
+cglobal pixel_satd_16x32, 4,6,8
+    SATD_START_SSE2 m6, m7, 1
+    BACKUP_POINTERS
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_ACCUM m6, m0, m7
+    RESTORE_AND_INC_POINTERS
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6, m7
+
+cglobal pixel_satd_16x64, 4,6,8
+    SATD_START_SSE2 m6, m7, 1
+    BACKUP_POINTERS
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_ACCUM m6, m0, m7
+    RESTORE_AND_INC_POINTERS
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6, m7
 %endif
+
+cglobal pixel_satd_8x32, 4,6,8
+    SATD_START_SSE2 m6, m7
+%if vertical
+    mova m7, [pw_00ff]
+%endif
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6
 
 cglobal pixel_satd_8x16, 4,6,8
     SATD_START_SSE2 m6, m7

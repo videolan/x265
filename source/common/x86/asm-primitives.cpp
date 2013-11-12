@@ -58,16 +58,7 @@ extern "C" {
 #define INIT7(name, cpu) INIT7_NAME(name, name, cpu)
 #define INIT8(name, cpu) INIT8_NAME(name, name, cpu)
 
-#if X86_64
-#define HEVC_X64_SATD(cpu)
-#else
-#define HEVC_X64_SATD(cpu) \
-    p.satd[LUMA_8x32] = cmp<8, 32, 8, 16, x265_pixel_satd_8x16_ ## cpu>; \
-    p.satd[LUMA_16x32] = cmp<16, 32, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
-    p.satd[LUMA_16x64] = cmp<16, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>;
-#endif
 #define HEVC_SATD(cpu) \
-    HEVC_X64_SATD(cpu) \
     p.satd[LUMA_32x32] = cmp<32, 32, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
     p.satd[LUMA_24x32] = cmp<24, 32, 8, 16, x265_pixel_satd_8x16_ ## cpu>; \
     p.satd[LUMA_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
@@ -337,9 +328,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT8(sad_x4, _mmx2);
         INIT8(satd, _mmx2);
         HEVC_SATD(mmx2);
+        p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
         p.satd[LUMA_12x16] = cmp<12, 16, 4, 16, x265_pixel_satd_4x16_mmx2>;
         p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
         p.satd[LUMA_16x12] = x265_pixel_satd_16x12_sse2;
+        p.satd[LUMA_16x32] = x265_pixel_satd_16x32_sse2;
+        p.satd[LUMA_16x64] = x265_pixel_satd_16x64_sse2;
         p.satd[LUMA_32x8]  = x265_pixel_satd_32x8_sse2;
         p.satd[LUMA_32x16] = x265_pixel_satd_32x16_sse2;
         p.satd[LUMA_32x24] = x265_pixel_satd_32x24_sse2;
@@ -417,11 +411,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.blockfill_s[BLOCK_8x8] = x265_blockfill_s_8x8_sse2;
         p.blockfill_s[BLOCK_16x16] = x265_blockfill_s_16x16_sse2;
         p.blockfill_s[BLOCK_32x32] = x265_blockfill_s_32x32_sse2;
-#if X86_64
-        p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
-        p.satd[LUMA_16x32] = x265_pixel_satd_16x32_sse2;
-        p.satd[LUMA_16x64] = x265_pixel_satd_16x64_sse2;
-#endif
 
         p.frame_init_lowres_core = x265_frame_init_lowres_core_sse2;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_sse2;
