@@ -3659,3 +3659,138 @@ FILTER_HORIZ_CHROMA_8xN 8, 6
 FILTER_HORIZ_CHROMA_8xN 8, 8
 FILTER_HORIZ_CHROMA_8xN 8, 16
 FILTER_HORIZ_CHROMA_8xN 8, 32
+
+%macro PROCESS_CHROMA_W16 4
+    movu        %1, [srcq]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    movu        %1, [srcq + 8]
+    pshufb      %4, %1, Tm0
+    pmaddubsw   %4, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %4, %1
+    psubw       %2, %3
+    psubw       %4, %3
+    movu        [dstq], %2
+    movu        [dstq + 16], %4
+%endmacro
+
+%macro PROCESS_CHROMA_W24 4
+    movu        %1, [srcq]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    movu        %1, [srcq + 8]
+    pshufb      %4, %1, Tm0
+    pmaddubsw   %4, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %4, %1
+    psubw       %2, %3
+    psubw       %4, %3
+    movu        [dstq], %2
+    movu        [dstq + 16], %4
+    movu        %1, [srcq + 16]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    psubw       %2, %3
+    movu        [dstq + 32], %2
+%endmacro
+
+%macro PROCESS_CHROMA_W32 4
+    movu        %1, [srcq]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    movu        %1, [srcq + 8]
+    pshufb      %4, %1, Tm0
+    pmaddubsw   %4, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %4, %1
+    psubw       %2, %3
+    psubw       %4, %3
+    movu        [dstq], %2
+    movu        [dstq + 16], %4
+    movu        %1, [srcq + 16]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    movu        %1, [srcq + 24]
+    pshufb      %4, %1, Tm0
+    pmaddubsw   %4, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %4, %1
+    psubw       %2, %3
+    psubw       %4, %3
+    movu        [dstq + 32], %2
+    movu        [dstq + 48], %4
+%endmacro
+
+;---------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_ps_%1x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;---------------------------------------------------------------------------------------------------------------
+%macro FILTER_HORIZ_CHROMA_WxN 2
+INIT_XMM sse4
+cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 7, src, srcstride, dst, dststride
+%define coef2    m6
+%define Tm0      m5
+%define Tm1      m4
+%define t3       m3
+%define t2       m2
+%define t1       m1
+%define t0       m0
+
+    dec     srcq
+    mov     r4d, r4m
+    add     dststrided, dststrided
+
+%ifdef PIC
+    lea     r5, [tab_ChromaCoeff]
+    movd    coef2, [r5 + r4 * 4]
+%else
+    movd    coef2, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    mov     r5d, %2
+
+    pshufd  coef2, coef2, 0
+    mova    t2, [tab_c_8192]
+    mova    Tm0, [tab_Tm]
+    mova    Tm1, [tab_Tm + 16]
+
+.loop
+    PROCESS_CHROMA_W%1   t0, t1, t2, t3
+    add     srcq, srcstrideq
+    add     dstq, dststrideq
+
+    dec     r5d
+    jnz     .loop
+
+    RET
+%endmacro
+
+FILTER_HORIZ_CHROMA_WxN 16, 4
+FILTER_HORIZ_CHROMA_WxN 16, 8
+FILTER_HORIZ_CHROMA_WxN 16, 12
+FILTER_HORIZ_CHROMA_WxN 16, 16
+FILTER_HORIZ_CHROMA_WxN 16, 32
+FILTER_HORIZ_CHROMA_WxN 24, 32
+FILTER_HORIZ_CHROMA_WxN 32,  8
+FILTER_HORIZ_CHROMA_WxN 32, 16
+FILTER_HORIZ_CHROMA_WxN 32, 24
+FILTER_HORIZ_CHROMA_WxN 32, 32
