@@ -1401,6 +1401,214 @@ FILTER_V4_W8_8x6 8, 6
 
 RET
 
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_ps_4x2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_4x2, 4, 6, 8
+
+mov         r4d, r4m
+sub         r0, r1
+add         r3d, r3d
+
+%ifdef PIC
+lea         r5, [tab_ChromaCoeff]
+movd        m0, [r5 + r4 * 4]
+%else
+movd        m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+pshufb      m0, [tab_Cm]
+
+mova        m1, [tab_c_8192]
+
+movd        m2, [r0]
+movd        m3, [r0 + r1]
+movd        m4, [r0 + 2 * r1]
+lea         r5, [r0 + 2 * r1]
+movd        m5, [r5 + r1]
+
+punpcklbw   m2, m3
+punpcklbw   m6, m4, m5
+punpcklbw   m2, m6
+
+pmaddubsw   m2, m0
+
+movd        m6, [r0 + 4 * r1]
+
+punpcklbw   m3, m4
+punpcklbw   m5, m6
+punpcklbw   m3, m5
+
+pmaddubsw   m3, m0
+
+phaddw      m2, m3
+
+psubw       m2, m1
+movlps      [r2], m2
+movhps      [r2 + r3], m2
+
+RET
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_ps_4x4(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_4x4, 4, 7, 8
+
+    mov        r4d, r4m
+    sub        r0, r1
+    add        r3d, r3d
+
+%ifdef PIC
+    lea        r5, [tab_ChromaCoeff]
+    movd       m0, [r5 + r4 * 4]
+%else
+    movd       m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    pshufb     m0, [tab_Cm]
+
+    mova       m1, [tab_c_8192]
+
+    movd       m2, [r0]
+    movd       m3, [r0 + r1]
+    movd       m4, [r0 + 2 * r1]
+    lea        r5, [r0 + 2 * r1]
+    movd       m5, [r5 + r1]
+
+    punpcklbw  m2, m3
+    punpcklbw  m6, m4, m5
+    punpcklbw  m2, m6
+
+    pmaddubsw  m2, m0
+
+    movd       m6, [r0 + 4 * r1]
+
+    punpcklbw  m3, m4
+    punpcklbw  m7, m5, m6
+    punpcklbw  m3, m7
+
+    pmaddubsw  m3, m0
+
+    phaddw     m2, m3
+
+    psubw      m2, m1
+    movlps     [r2], m2
+    movhps     [r2 + r3], m2
+
+    lea        r5, [r0 + 4 * r1]
+    movd       m2, [r5 + r1]
+
+    punpcklbw  m4, m5
+    punpcklbw  m3, m6, m2
+    punpcklbw  m4, m3
+
+    pmaddubsw  m4, m0
+
+    movd       m3, [r5 + 2 * r1]
+
+    punpcklbw  m5, m6
+    punpcklbw  m2, m3
+    punpcklbw  m5, m2
+
+    pmaddubsw  m5, m0
+
+    phaddw     m4, m5
+
+    psubw      m4, m1
+    movlps     [r2 + 2 * r3], m4
+    lea        r6, [r2 + 2 * r3]
+    movhps     [r6 + r3], m4
+
+    RET
+
+;---------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_ps_%1x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;---------------------------------------------------------------------------------------------------------------
+%macro FILTER_V_PS_W4_H4 2
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_%1x%2, 4, 7, 8
+
+    mov        r4d, r4m
+    sub        r0, r1
+    add        r3d, r3d
+
+%ifdef PIC
+    lea        r5, [tab_ChromaCoeff]
+    movd       m0, [r5 + r4 * 4]
+%else
+    movd       m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    pshufb     m0, [tab_Cm]
+
+    mova       m1, [tab_c_8192]
+
+    mov        r4d, %2/4
+
+.loop
+    movd       m2, [r0]
+    movd       m3, [r0 + r1]
+    movd       m4, [r0 + 2 * r1]
+    lea        r5, [r0 + 2 * r1]
+    movd       m5, [r5 + r1]
+
+    punpcklbw  m2, m3
+    punpcklbw  m6, m4, m5
+    punpcklbw  m2, m6
+
+    pmaddubsw  m2, m0
+
+    movd       m6, [r0 + 4 * r1]
+
+    punpcklbw  m3, m4
+    punpcklbw  m7, m5, m6
+    punpcklbw  m3, m7
+
+    pmaddubsw  m3, m0
+
+    phaddw     m2, m3
+
+    psubw      m2, m1
+    movlps     [r2], m2
+    movhps     [r2 + r3], m2
+
+    lea        r5, [r0 + 4 * r1]
+    movd       m2, [r5 + r1]
+
+    punpcklbw  m4, m5
+    punpcklbw  m3, m6, m2
+    punpcklbw  m4, m3
+
+    pmaddubsw  m4, m0
+
+    movd       m3, [r5 + 2 * r1]
+
+    punpcklbw  m5, m6
+    punpcklbw  m2, m3
+    punpcklbw  m5, m2
+
+    pmaddubsw  m5, m0
+
+    phaddw     m4, m5
+
+    psubw      m4, m1
+    movlps     [r2 + 2 * r3], m4
+    lea        r6, [r2 + 2 * r3]
+    movhps     [r6 + r3], m4
+
+    lea        r0, [r0 + 4 * r1]
+    lea        r2, [r2 + 4 * r3]
+
+    dec        r4d
+    jnz        .loop
+    RET
+%endmacro
+
+FILTER_V_PS_W4_H4 4, 8
+FILTER_V_PS_W4_H4 4, 16
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
