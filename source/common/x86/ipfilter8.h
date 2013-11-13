@@ -124,14 +124,11 @@
 #define CHROMA_SP_FILTERS(cpu) \
     SETUP_CHROMA_SP_FUNC_DEF(4, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(4, 2, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(2, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(4, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 6, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(6, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 2, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(2, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 16, cpu); \
@@ -157,6 +154,9 @@ void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * d
 void x265_interp_8tap_v_ss_sse2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coefIdx);
 void x265_luma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 void x265_chroma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
+void x265_interp_4tap_vert_sp_2x4_sse4(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_sp_2x8_sse4(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_sp_6x8_sse4(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
 #undef SETUP_CHROMA_FUNC_DEF
 #undef SETUP_CHROMA_SP_FUNC_DEF

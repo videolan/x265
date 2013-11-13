@@ -177,14 +177,11 @@ extern "C" {
 #define CHROMA_SP_FILTERS(cpu) \
     SETUP_CHROMA_SP_FUNC_DEF(4, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(4, 2, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(2, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(4, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 6, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(6, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 2, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(2, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 16, cpu); \
@@ -526,6 +523,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_copy_sp[CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;
         p.chroma_copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
         p.chroma_copy_sp[CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
+
+        p.chroma_vsp[CHROMA_2x4] = x265_interp_4tap_vert_sp_2x4_sse4;
+        p.chroma_vsp[CHROMA_2x8] = x265_interp_4tap_vert_sp_2x8_sse4;
+        p.chroma_vsp[CHROMA_6x8] = x265_interp_4tap_vert_sp_6x8_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
