@@ -2808,7 +2808,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     }
 
     //  Residual coding.
-    int     qp, qpBest = 0;
+    int      qp, qpBest = 0;
     uint64_t cost, bcost = MAX_INT64;
 
     uint32_t trLevel = 0;
