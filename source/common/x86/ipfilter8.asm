@@ -4662,3 +4662,161 @@ FILTER_HORIZ_CHROMA_WxN 32,  8
 FILTER_HORIZ_CHROMA_WxN 32, 16
 FILTER_HORIZ_CHROMA_WxN 32, 24
 FILTER_HORIZ_CHROMA_WxN 32, 32
+
+;------------------------------------------------------------------------------------------------------------
+;void interp_4tap_vert_ps_2x4(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
+
+    mov         r4d, r4m
+    sub         r0, r1
+    add         r3d, r3d
+
+%ifdef PIC
+    lea         r5, [tab_ChromaCoeff]
+    movd        m0, [r5 + r4 * 4]
+%else
+    movd        m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    pshufb      m0, [tab_Cm]
+
+    mova        m1, [tab_c_8192]
+
+    movd        m2, [r0]
+    movd        m3, [r0 + r1]
+    movd        m4, [r0 + 2 * r1]
+    lea         r5, [r0 + 2 * r1]
+    movd        m5, [r5 + r1]
+
+    punpcklbw   m2, m3
+    punpcklbw   m6, m4, m5
+    punpcklbw   m2, m6
+
+    pmaddubsw   m2, m0
+
+    movd        m6, [r0 + 4 * r1]
+
+    punpcklbw   m3, m4
+    punpcklbw   m7, m5, m6
+    punpcklbw   m3, m7
+
+    pmaddubsw   m3, m0
+    phaddw      m2, m3
+    psubw       m2, m1
+
+    movd        [r2], m2
+    pshufd      m2, m2 , 2
+    movd        [r2 + r3], m2
+
+    lea         r5, [r0 + 4 * r1]
+    movd        m2, [r5 + r1]
+
+    punpcklbw   m4, m5
+    punpcklbw   m3, m6, m2
+    punpcklbw   m4, m3
+
+    pmaddubsw   m4, m0
+
+    movd        m3, [r5 + 2 * r1]
+
+    punpcklbw   m5, m6
+    punpcklbw   m2, m3
+    punpcklbw   m5, m2
+
+    pmaddubsw   m5, m0
+    phaddw      m4, m5
+    psubw       m4, m1
+
+    movd        [r2 + 2 * r3], m4
+    pshufd      m4, m4, 2
+    lea         r6, [r2 + 2 * r3]
+    movd        [r6 + r3], m4
+
+    RET
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_ps_2x8(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
+
+    mov        r4d, r4m
+    sub        r0, r1
+    add        r3d, r3d
+
+%ifdef PIC
+    lea        r5, [tab_ChromaCoeff]
+    movd       m0, [r5 + r4 * 4]
+%else
+    movd       m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    pshufb     m0, [tab_Cm]
+
+    mova       m1, [tab_c_8192]
+
+    mov        r4d, 2
+.loop
+    movd       m2, [r0]
+    movd       m3, [r0 + r1]
+    movd       m4, [r0 + 2 * r1]
+    lea        r5, [r0 + 2 * r1]
+    movd       m5, [r5 + r1]
+
+    punpcklbw  m2, m3
+    punpcklbw  m6, m4, m5
+    punpcklbw  m2, m6
+
+    pmaddubsw  m2, m0
+
+    movd       m6, [r0 + 4 * r1]
+
+    punpcklbw  m3, m4
+    punpcklbw  m7, m5, m6
+    punpcklbw  m3, m7
+
+    pmaddubsw  m3, m0
+
+    phaddw     m2, m3
+    psubw      m2, m1
+
+
+    movd       [r2], m2
+    pshufd     m2, m2, 2
+    movd       [r2 + r3], m2
+
+    lea        r5, [r0 + 4 * r1]
+    movd       m2, [r5 + r1]
+
+    punpcklbw  m4, m5
+    punpcklbw  m3, m6, m2
+    punpcklbw  m4, m3
+
+    pmaddubsw  m4, m0
+
+    movd       m3, [r5 + 2 * r1]
+
+    punpcklbw  m5, m6
+    punpcklbw  m2, m3
+    punpcklbw  m5, m2
+
+    pmaddubsw   m5, m0
+
+    phaddw      m4, m5
+
+    psubw       m4, m1
+
+    movd        [r2 + 2 * r3], m4
+    lea         r6, [r2 + 2 * r3]
+    pshufd      m4 , m4 ,2
+    movd        [r6 + r3], m4
+
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+
+    dec         r4d
+    jnz        .loop
+
+RET
