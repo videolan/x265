@@ -3419,9 +3419,9 @@ FILTER_VER_CHROMA_SP_W8_H2 8, 16
 FILTER_VER_CHROMA_SP_W8_H2 8, 32
 
 %macro PROCESS_CHROMA_W2 3
-    movh        %2, [srcq - 1]
+    movh        %2, [srcq]
     pshufb      %2, %2, Tm0
-    movh        %1, [srcq + srcstrideq - 1]
+    movh        %1, [srcq + srcstrideq]
     pshufb      %1, %1, Tm0
     punpcklqdq  %2, %1
     pmaddubsw   %2, coef2
@@ -3432,93 +3432,94 @@ FILTER_VER_CHROMA_SP_W8_H2 8, 32
     movd        [dstq + dststrideq], %2
 %endmacro
 
-;-------------------------------------------------------------------------------------------------------------
+;---------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_2x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
-;-------------------------------------------------------------------------------------------------------------
+;---------------------------------------------------------------------------------------------------------------
 %macro FILTER_HORIZ_CHROMA_2xN 2
 INIT_XMM sse4
 cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
-%define t2          m2
-%define t1          m1
-%define t0          m0
+%define coef2    m5
+%define Tm0      m4
+%define Tm1      m3
+%define t2       m2
+%define t1       m1
+%define t0       m0
 
-mov         r4d, r4m
-add         dststrided, dststrided
+    dec     srcq
+    mov     r4d, r4m
+    add     dststrided, dststrided
 
 %ifdef PIC
-lea         r5, [tab_ChromaCoeff]
-movd        coef2, [r5 + r4 * 4]
+    lea     r5, [tab_ChromaCoeff]
+    movd    coef2, [r5 + r4 * 4]
 %else
-movd        coef2, [tab_ChromaCoeff + r4 * 4]
+    movd    coef2, [tab_ChromaCoeff + r4 * 4]
 %endif
 
-pshufd      coef2, coef2, 0
-mova        t2, [tab_c_8192]
-mova        Tm0, [tab_Tm]
+    pshufd  coef2, coef2, 0
+    mova    t2, [tab_c_8192]
+    mova    Tm0, [tab_Tm]
 
 %rep %2/2
-PROCESS_CHROMA_W2   t0, t1, t2
-lea         srcq, [srcq + srcstrideq * 2]
-lea         dstq, [dstq + dststrideq * 2]
+    PROCESS_CHROMA_W2  t0, t1, t2
+    lea     srcq, [srcq + srcstrideq * 2]
+    lea     dstq, [dstq + dststrideq * 2]
 %endrep
 
-RET
+    RET
 %endmacro
 
 FILTER_HORIZ_CHROMA_2xN 2, 4
 FILTER_HORIZ_CHROMA_2xN 2, 8
 
-
 %macro PROCESS_CHROMA_W4 3
-    movh        %2, [srcq - 1]
+    movh        %2, [srcq]
     pshufb      %2, %2, Tm0
     pmaddubsw   %2, coef2
-    movh        %1, [srcq + srcstrideq - 1]
+    movh        %1, [srcq + srcstrideq]
     pshufb      %1, %1, Tm0
     pmaddubsw   %1, coef2
     phaddw      %2, %1
     psubw       %2, %3
-    movlps        [dstq], %2
-    movhps        [dstq + dststrideq], %2
+    movlps      [dstq], %2
+    movhps      [dstq + dststrideq], %2
 %endmacro
 
-;-------------------------------------------------------------------------------------------------------------
+;---------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_4x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
-;-------------------------------------------------------------------------------------------------------------
+;---------------------------------------------------------------------------------------------------------------
 %macro FILTER_HORIZ_CHROMA_4xN 2
 INIT_XMM sse4
 cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
-%define t2          m2
-%define t1          m1
-%define t0          m0
+%define coef2    m5
+%define Tm0      m4
+%define Tm1      m3
+%define t2       m2
+%define t1       m1
+%define t0       m0
 
-mov         r4d, r4m
-add         dststrided, dststrided
+    dec     srcq
+    mov     r4d, r4m
+    add     dststrided, dststrided
 
 %ifdef PIC
-lea         r5, [tab_ChromaCoeff]
-movd        coef2, [r5 + r4 * 4]
+    lea     r5, [tab_ChromaCoeff]
+    movd    coef2, [r5 + r4 * 4]
 %else
-movd        coef2, [tab_ChromaCoeff + r4 * 4]
+    movd    coef2, [tab_ChromaCoeff + r4 * 4]
 %endif
 
-pshufd      coef2, coef2, 0
-mova        t2, [tab_c_8192]
-mova        Tm0, [tab_Tm]
+    pshufd  coef2, coef2, 0
+    mova    t2, [tab_c_8192]
+    mova    Tm0, [tab_Tm]
 
 %rep %2/2
-PROCESS_CHROMA_W4   t0, t1, t2
-lea         srcq, [srcq + srcstrideq * 2]
-lea         dstq, [dstq + dststrideq * 2]
+    PROCESS_CHROMA_W4  t0, t1, t2
+    lea     srcq, [srcq + srcstrideq * 2]
+    lea     dstq, [dstq + dststrideq * 2]
 %endrep
 
-RET
+    RET
 %endmacro
 
 FILTER_HORIZ_CHROMA_4xN 4, 2
@@ -3526,76 +3527,75 @@ FILTER_HORIZ_CHROMA_4xN 4, 4
 FILTER_HORIZ_CHROMA_4xN 4, 8
 FILTER_HORIZ_CHROMA_4xN 4, 16
 
-
 %macro PROCESS_CHROMA_W6 3
-    movu        %1, [srcq - 1]
-    pshufb      %2, %1, Tm0
-    pmaddubsw   %2, coef2
-    pshufb      %1, %1, Tm1
-    pmaddubsw   %1, coef2
-    phaddw      %2, %1
-    psubw       %2, %3
-    movh        [dstq], %2
-    pshufd      %2, %2, 2
-    movd        [dstq + 8], %2
+    movu       %1, [srcq]
+    pshufb     %2, %1, Tm0
+    pmaddubsw  %2, coef2
+    pshufb     %1, %1, Tm1
+    pmaddubsw  %1, coef2
+    phaddw     %2, %1
+    psubw      %2, %3
+    movh       [dstq], %2
+    pshufd     %2, %2, 2
+    movd       [dstq + 8], %2
 %endmacro
 
 %macro PROCESS_CHROMA_W12 3
-    movu        %1, [srcq - 1]
-    pshufb      %2, %1, Tm0
-    pmaddubsw   %2, coef2
-    pshufb      %1, %1, Tm1
-    pmaddubsw   %1, coef2
-    phaddw      %2, %1
-    psubw       %2, %3
-    movu        [dstq], %2
-    movu        %1, [srcq - 1 + 8]
-    pshufb      %1, %1, Tm0
-    pmaddubsw   %1, coef2
-    phaddw      %1, %1
-    psubw       %1, %3
+    movu       %1, [srcq]
+    pshufb     %2, %1, Tm0
+    pmaddubsw  %2, coef2
+    pshufb     %1, %1, Tm1
+    pmaddubsw  %1, coef2
+    phaddw     %2, %1
+    psubw      %2, %3
+    movu       [dstq], %2
+    movu       %1, [srcq + 8]
+    pshufb     %1, %1, Tm0
+    pmaddubsw  %1, coef2
+    phaddw     %1, %1
+    psubw      %1, %3
     movh       [dstq + 16], %1
 %endmacro
 
-;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_ps_6x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
+;---------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_ps_6x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;---------------------------------------------------------------------------------------------------------------
 %macro FILTER_HORIZ_CHROMA 2
 INIT_XMM sse4
 cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
-%define t2          m2
-%define t1          m1
-%define t0          m0
+%define coef2    m5
+%define Tm0      m4
+%define Tm1      m3
+%define t2       m2
+%define t1       m1
+%define t0       m0
 
-mov         r4d, r4m
-add         dststrided, dststrided
+    dec     srcq
+    mov     r4d, r4m
+    add     dststrided, dststrided
 
 %ifdef PIC
-lea         r5, [tab_ChromaCoeff]
-movd        coef2, [r5 + r4 * 4]
+    lea     r5, [tab_ChromaCoeff]
+    movd    coef2, [r5 + r4 * 4]
 %else
-movd        coef2, [tab_ChromaCoeff + r4 * 4]
+    movd    coef2, [tab_ChromaCoeff + r4 * 4]
 %endif
 
-mov           r5d, %2
+    pshufd  coef2, coef2, 0
+    mova    t2, [tab_c_8192]
+    mova    Tm0, [tab_Tm]
+    mova    Tm1, [tab_Tm + 16]
 
-pshufd      coef2, coef2, 0
-mova        t2, [tab_c_8192]
-mova        Tm0, [tab_Tm]
-mova        Tm1, [tab_Tm + 16]
-
+    mov     r5d, %2
 .loop
-PROCESS_CHROMA_W%1   t0, t1, t2
-add         srcq, srcstrideq
-add         dstq, dststrideq
+    PROCESS_CHROMA_W%1  t0, t1, t2
+    add     srcq, srcstrideq
+    add     dstq, dststrideq
 
-dec         r5d
-jnz        .loop
+    dec     r5d
+    jnz     .loop
 
-RET
+    RET
 %endmacro
 
 FILTER_HORIZ_CHROMA 6, 8
