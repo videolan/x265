@@ -2055,6 +2055,126 @@ FILTER_V_PS_W16 16, 12
 FILTER_V_PS_W16 16, 16
 FILTER_V_PS_W16 16, 32
 
+;--------------------------------------------------------------------------------------------------------------
+;void interp_4tap_vert_ps_24x32(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;--------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_24x32, 4, 6, 8
+
+    mov        r4d, r4m
+    sub        r0, r1
+    add        r3d, r3d
+
+%ifdef PIC
+    lea        r5, [tab_ChromaCoeff]
+    movd       m0, [r5 + r4 * 4]
+%else
+    movd       m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    pshufb     m1, m0, [tab_Vm]
+    pshufb     m0, [tab_Vm + 16]
+
+    mova       m7, [tab_c_8192]
+
+    mov        r4d, 32/2
+
+.loop
+    movu       m2, [r0]
+    movu       m3, [r0 + r1]
+
+    punpcklbw  m4, m2, m3,
+    punpckhbw  m2, m3,
+
+    pmaddubsw  m4, m1
+    pmaddubsw  m2, m1
+
+    movu       m5, [r0 + 2 * r1]
+    lea        r5, [r0 + 2 * r1]
+    movu       m3, [r5 + r1]
+
+    punpcklbw  m6, m5, m3,
+    punpckhbw  m5, m3
+
+    pmaddubsw  m6, m0
+    pmaddubsw  m5, m0
+
+    paddw      m4, m6
+    paddw      m2, m5
+
+    psubw      m4, m7
+    psubw      m2, m7
+
+    movu       [r2], m4
+    movu       [r2 + 16], m2
+
+    movq       m2, [r0 + 16]
+    movq       m3, [r0 + r1 + 16]
+    movq       m4, [r0 + 2 * r1 + 16]
+    movq       m5, [r5 + r1 + 16]
+
+    punpcklbw  m2, m3
+    punpcklbw  m4, m5
+
+    pmaddubsw  m2, m1
+    pmaddubsw  m4, m0
+
+    paddw      m2, m4
+    psubw      m2, m7
+
+    movu       [r2 + 32], m2
+
+    movu       m2, [r0 + r1]
+    movu       m3, [r0 + 2 * r1]
+
+    punpcklbw  m4, m2, m3,
+    punpckhbw  m2, m3,
+
+    pmaddubsw  m4, m1
+    pmaddubsw  m2, m1
+
+    lea        r5, [r0 + 2 * r1]
+    movu       m5, [r5 +  r1]
+    movu       m3, [r5 + 2 * r1]
+
+    punpcklbw  m6, m5, m3,
+    punpckhbw  m5, m3
+
+    pmaddubsw  m6, m0
+    pmaddubsw  m5, m0
+
+    paddw      m4, m6
+    paddw      m2, m5
+
+    psubw      m4, m7
+    psubw      m2, m7
+
+    movu       [r2 + r3], m4
+    movu       [r2 + r3 + 16], m2
+
+    movq       m2, [r0 + r1 + 16]
+    movq       m3, [r0 + 2 * r1 + 16]
+    movq       m4, [r5 + r1 + 16]
+    movq       m5, [r5 + 2 * r1 + 16]
+
+    punpcklbw  m2, m3
+    punpcklbw  m4, m5
+
+    pmaddubsw  m2, m1
+    pmaddubsw  m4, m0
+
+    paddw      m2, m4
+
+    psubw      m2,  m7
+    movu       [r2 + r3 + 32], m2
+
+    lea        r0, [r0 + 2 * r1]
+    lea        r2, [r2 + 2 * r3]
+
+    dec        r4d
+    jnz        .loop
+    RET
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
