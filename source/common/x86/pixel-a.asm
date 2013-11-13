@@ -1792,6 +1792,33 @@ cglobal pixel_satd_32x24, 4,8,8    ;if WIN64 && notcpuflag(avx)
     call pixel_satd_16x4_internal
     SATD_END_SSE2 m10
 
+cglobal pixel_satd_32x32, 4,8,8    ;if WIN64 && notcpuflag(avx)
+    SATD_START_SSE2 m10, m7
+    mov r6, r0
+    mov r7, r2
+%if vertical
+    mova m7, [pw_00ff]
+%endif
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    lea r0, [r6 + 16]
+    lea r2, [r7 + 16]
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    call pixel_satd_16x4_internal
+    SATD_END_SSE2 m10
+
 %else
 
 cglobal pixel_satd_32x8, 4,6,8    ;if !WIN64
@@ -1910,6 +1937,68 @@ cglobal pixel_satd_32x24, 4,6,8    ;if !WIN64
     mov r2, r2mp
     add r0, 24
     add r2, 24
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6
+%endif
+
+%if WIN64
+cglobal pixel_satd_32x32, 4,8,8    ;if WIN64 && cpuflag(avx)
+    SATD_START_SSE2 m6, m7
+    mov r6, r0
+    mov r7, r2
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    lea r0, [r6 + 8]
+    lea r2, [r7 + 8]
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    lea r0, [r6 + 16]
+    lea r2, [r7 + 16]
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    lea r0, [r6 + 24]
+    lea r2, [r7 + 24]
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6
+%else
+cglobal pixel_satd_32x32, 4,6,8    ;if !WIN64
+    SATD_START_SSE2 m6, m7
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 8
+    add r2, 8
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 16
+    add r2, 16
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 24
+    add r2, 24
+    call pixel_satd_8x8_internal
     call pixel_satd_8x8_internal
     call pixel_satd_8x8_internal
     call pixel_satd_8x8_internal

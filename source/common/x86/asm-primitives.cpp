@@ -59,7 +59,7 @@ extern "C" {
 #define INIT8(name, cpu) INIT8_NAME(name, name, cpu)
 
 #define HEVC_SATD(cpu) \
-    p.satd[LUMA_32x32] = cmp<32, 32, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
+    p.satd[LUMA_32x32] = x265_pixel_satd_32x32_ ## cpu; \
     p.satd[LUMA_24x32] = x265_pixel_satd_24x32_ ## cpu; \
     p.satd[LUMA_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
     p.satd[LUMA_64x32] = cmp<64, 32, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
@@ -538,6 +538,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_avx;
         SA8D_INTER_FROM_BLOCK(avx);
         ASSGN_SSE(avx);
+        HEVC_SATD(avx);
 
         p.sad_x3[LUMA_12x16] = x265_pixel_sad_x3_12x16_avx;
         p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_avx;
