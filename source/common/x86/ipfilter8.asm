@@ -1957,6 +1957,104 @@ cglobal interp_4tap_vert_ps_12x16, 4, 6, 8
     jnz        .loop
     RET
 
+;---------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_ps_16x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;---------------------------------------------------------------------------------------------------------------
+%macro FILTER_V_PS_W16 2
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
+
+    mov        r4d, r4m
+    sub        r0, r1
+    add        r3d, r3d
+
+%ifdef PIC
+    lea        r5, [tab_ChromaCoeff]
+    movd       m0, [r5 + r4 * 4]
+%else
+    movd       m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    pshufb     m1, m0, [tab_Vm]
+    pshufb     m0, [tab_Vm + 16]
+
+    mov        r4d, %2/2
+
+.loop
+    movu       m2, [r0]
+    movu       m3, [r0 + r1]
+
+    punpcklbw  m4, m2, m3
+    punpckhbw  m5, m2, m3
+
+    pmaddubsw  m4, m1
+    pmaddubsw  m5, m1
+
+    movu       m2, [r0 + 2 * r1]
+    lea        r5, [r0 + 2 * r1]
+    movu       m3, [r5 + r1]
+
+    punpcklbw  m6, m2, m3
+    punpckhbw  m7, m2, m3
+
+    pmaddubsw  m6, m0
+    pmaddubsw  m7, m0
+
+    paddw      m4, m6
+    paddw      m5, m7
+
+    mova       m6, [tab_c_8192]
+
+    psubw      m4, m6
+    psubw      m5, m6
+
+    movu       [r2], m4
+    movu       [r2 + 16], m5
+
+    movu       m2, [r0 + r1]
+    movu       m3, [r0 + 2 * r1]
+
+    punpcklbw  m4, m2, m3
+    punpckhbw  m5, m2, m3
+
+    pmaddubsw  m4, m1
+    pmaddubsw  m5, m1
+
+    lea        r5, [r0 + 2 * r1]
+    movu       m2, [r5 + r1]
+    movu       m3, [r5 + 2 * r1]
+
+    punpcklbw  m6, m2, m3,
+    punpckhbw  m7, m2, m3,
+
+    pmaddubsw  m6, m0
+    pmaddubsw  m7, m0
+
+    paddw      m4, m6
+    paddw      m5, m7
+
+    mova       m6, [tab_c_8192]
+
+    psubw      m4, m6
+    psubw      m5, m6
+
+    movu       [r2 + r3], m4
+    movu       [r2 + r3 + 16], m5
+
+    lea        r0, [r0 + 2 * r1]
+    lea        r2, [r2 + 2 * r3]
+
+    dec        r4d
+    jnz        .loop
+    RET
+%endmacro
+
+FILTER_V_PS_W16 16,  4
+FILTER_V_PS_W16 16,  8
+FILTER_V_PS_W16 16, 12
+FILTER_V_PS_W16 16, 16
+FILTER_V_PS_W16 16, 32
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
