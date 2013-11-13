@@ -2809,7 +2809,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     //  Residual coding.
     int     qp, qpBest = 0;
-    UInt64  cost, bcost = MAX_INT64;
+    uint64_t cost, bcost = MAX_INT64;
 
     uint32_t trLevel = 0;
     if ((cu->getWidth(0) > cu->getSlice()->getSPS()->getMaxTrSize()))
@@ -3042,7 +3042,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                                      uint32_t       absTUPartIdx,
                                      TShortYUV*     resiYuv,
                                      const uint32_t depth,
-                                     UInt64 &       rdCost,
+                                     uint64_t &       rdCost,
                                      uint32_t &     outBits,
                                      uint32_t &     outDist,
                                      uint32_t *     outZeroDist,
@@ -3634,7 +3634,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         }
         uint32_t subdivDist = 0;
         uint32_t subdivBits = 0;
-        UInt64 subDivCost = 0;
+        uint64_t subDivCost = 0;
 
         const uint32_t qPartNumSubdiv = cu->getPic()->getNumPartInCU() >> ((depth + 1) << 1);
         for (uint32_t i = 0; i < 4; ++i)
