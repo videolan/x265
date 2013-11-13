@@ -2051,6 +2051,54 @@ cglobal pixel_satd_12x16, 4,6,8
     RET
 %endif
 
+%if WIN64
+cglobal pixel_satd_24x32, 4,8,8
+    SATD_START_SSE2 m6, m7
+    mov r6, r0
+    mov r7, r2
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    lea r0, [r6 + 8]
+    lea r2, [r7 + 8]
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    lea r0, [r6 + 16]
+    lea r2, [r7 + 16]
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6
+%else
+cglobal pixel_satd_24x32, 4,6,8
+    SATD_START_SSE2 m6, m7
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 8
+    add r2, 8
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 16
+    add r2, 16
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6
+%endif    ;WIN64
+
 cglobal pixel_satd_8x32, 4,6,8
     SATD_START_SSE2 m6, m7
 %if vertical
