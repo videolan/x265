@@ -271,10 +271,10 @@ void Lookahead::weightsAnalyse(int b, int p0)
 
     /* epsilon is chosen to require at least a numerator of 127 (with denominator = 128) */
     const float epsilon = 1.f / 128.f;
-    float guess_scale, fenc_mean, ref_mean;
-    guess_scale = sqrtf((float)fenc->wp_ssd[0] / ref->wp_ssd[0]);
-    fenc_mean = (float)fenc->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
-    ref_mean  = (float)ref->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
+    float guessScale, fencMean, refMean;
+    guessScale = sqrtf((float)fenc->wp_ssd[0] / ref->wp_ssd[0]);
+    fencMean = (float)fenc->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
+    refMean  = (float)ref->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
 
     /* Don't check chroma in lookahead, or if there wasn't a luma weight. */
     int minoff = 0, minscale, mindenom;
@@ -282,10 +282,10 @@ void Lookahead::weightsAnalyse(int b, int p0)
     int found = 0;
 
     /* Early termination */
-    if (fabsf(ref_mean - fenc_mean) < 0.5f && fabsf(1.f - guess_scale) < epsilon)
+    if (fabsf(refMean - fencMean) < 0.5f && fabsf(1.f - guessScale) < epsilon)
         return;
 
-    w.setFromWeightAndOffset((int)(guess_scale * 128 + 0.5), 0);
+    w.setFromWeightAndOffset((int)(guessScale * 128 + 0.5), 0);
     mindenom = w.log2WeightDenom;
     minscale = w.inputWeight;
 
@@ -301,20 +301,20 @@ void Lookahead::weightsAnalyse(int b, int p0)
         return;
 
     unsigned int s = 0;
-    int cur_scale = minscale;
-    int cur_offset = (int)(fenc_mean - ref_mean * cur_scale / (1 << mindenom) + 0.5f);
-    if (cur_offset < -128 || cur_offset > 127)
+    int curScale = minscale;
+    int curOffset = (int)(fencMean - refMean * curScale / (1 << mindenom) + 0.5f);
+    if (curOffset < -128 || curOffset > 127)
     {
-        /* Rescale considering the constraints on cur_offset. We do it in this order
+        /* Rescale considering the constraints on curOffset. We do it in this order
             * because scale has a much wider range than offset (because of denom), so
             * it should almost never need to be clamped. */
-        cur_offset = Clip3(-128, 127, cur_offset);
-        cur_scale = (int)((1 << mindenom) * (fenc_mean - cur_offset) / ref_mean + 0.5f);
-        cur_scale = Clip3(0, 127, cur_scale);
+        curOffset = Clip3(-128, 127, curOffset);
+        curScale = (int)((1 << mindenom) * (fencMean - curOffset) / refMean + 0.5f);
+        curScale = Clip3(0, 127, curScale);
     }
-    SET_WEIGHT(w, 1, cur_scale, mindenom, cur_offset);
+    SET_WEIGHT(w, 1, curScale, mindenom, curOffset);
     s = weightCostLuma(b, mcbuf, &w);
-    COPY4_IF_LT(minscore, s, minscale, cur_scale, minoff, cur_offset, found, 1);
+    COPY4_IF_LT(minscore, s, minscale, curScale, minoff, curOffset, found, 1);
 
     /* Use a smaller denominator if possible */
     while (mindenom > 0 && !(minscale & 1))
