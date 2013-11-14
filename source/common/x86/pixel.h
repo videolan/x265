@@ -116,6 +116,7 @@ int x265_pixel_satd_16x4_sse2(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_satd_16x12_sse2(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_satd_16x32_sse2(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_satd_16x64_sse2(pixel *, intptr_t, pixel *, intptr_t);
+void x265_scale1D_128to64_ssse3(pixel *, pixel *, intptr_t);
 
 DECL_PIXELS(uint64_t, var, mmx2, (pixel * pix, intptr_t i_stride))
 DECL_PIXELS(uint64_t, var, sse2, (pixel * pix, intptr_t i_stride))

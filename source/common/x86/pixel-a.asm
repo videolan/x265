@@ -8168,3 +8168,65 @@ PIXELSUB_PS_W64_H2 64, 16
 PIXELSUB_PS_W64_H2 64, 32
 PIXELSUB_PS_W64_H2 64, 48
 PIXELSUB_PS_W64_H2 64, 64
+
+;-----------------------------------------------------------------
+; void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
+;-----------------------------------------------------------------
+INIT_XMM ssse3
+cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
+
+    mova        m7,      [deinterleave_shuf]
+
+    movu        m0,      [r1]
+    palignr     m1,      m0,    1
+    movu        m2,      [r1 + 16]
+    palignr     m3,      m2,    1
+    movu        m4,      [r1 + 32]
+    palignr     m5,      m4,    1
+    movu        m6,      [r1 + 48]
+
+    pavgb       m0,      m1
+
+    palignr     m1,      m6,    1
+
+    pavgb       m2,      m3
+    pavgb       m4,      m5
+    pavgb       m6,      m1
+
+    pshufb      m0,      m0,    m7
+    pshufb      m2,      m2,    m7
+    pshufb      m4,      m4,    m7
+    pshufb      m6,      m6,    m7
+
+    punpcklqdq    m0,           m2
+    movu          [r0],         m0
+    punpcklqdq    m4,           m6
+    movu          [r0 + 16],    m4
+
+    movu        m0,      [r1 + 64]
+    palignr     m1,      m0,    1
+    movu        m2,      [r1 + 80]
+    palignr     m3,      m2,    1
+    movu        m4,      [r1 + 96]
+    palignr     m5,      m4,    1
+    movu        m6,      [r1 + 112]
+
+    pavgb       m0,      m1
+
+    palignr     m1,      m6,    1
+
+    pavgb       m2,      m3
+    pavgb       m4,      m5
+    pavgb       m6,      m1
+
+    pshufb      m0,      m0,    m7
+    pshufb      m2,      m2,    m7
+    pshufb      m4,      m4,    m7
+    pshufb      m6,      m6,    m7
+
+    punpcklqdq    m0,           m2
+    movu          [r0 + 32],    m0
+    punpcklqdq    m4,           m6
+    movu          [r0 + 48],    m4
+
+RET
