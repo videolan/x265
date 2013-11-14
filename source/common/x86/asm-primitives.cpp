@@ -62,9 +62,9 @@ extern "C" {
     p.satd[LUMA_32x32] = x265_pixel_satd_32x32_ ## cpu; \
     p.satd[LUMA_24x32] = x265_pixel_satd_24x32_ ## cpu; \
     p.satd[LUMA_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
-    p.satd[LUMA_64x32] = cmp<64, 32, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
+    p.satd[LUMA_64x32] = x265_pixel_satd_64x32_ ## cpu; \
     p.satd[LUMA_32x64] = cmp<32, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
-    p.satd[LUMA_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
+    p.satd[LUMA_64x48] = x265_pixel_satd_64x48_ ## cpu; \
     p.satd[LUMA_48x64] = cmp<48, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
     p.satd[LUMA_64x16] = x265_pixel_satd_64x16_ ## cpu
 
@@ -519,7 +519,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_FILTERS(_sse4);
         LUMA_FILTERS(_sse4);
-
+        HEVC_SATD(sse4);
         p.chroma_copy_sp[CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;
         p.chroma_copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
         p.chroma_copy_sp[CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
