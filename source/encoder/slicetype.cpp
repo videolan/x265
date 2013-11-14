@@ -338,7 +338,6 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 {
     int score = 0;
     Lowres *fenc = frames[b];
-    weightedRef.isWeighted = false;
 
     if (fenc->costEst[b - p0][p1 - b] >= 0 && fenc->rowSatds[b - p0][p1 - b][0] != -1)
         score = fenc->costEst[b - p0][p1 - b];
@@ -347,16 +346,12 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         /* For each list, check to see whether we have lowres motion-searched this reference */
         bDoSearch[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
         bDoSearch[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
+        weightedRef.isWeighted = false;
 
         if (bDoSearch[0])
         {
             if (cfg->param.bEnableWeightedPred && b == p1)
-            {
                 weightsAnalyse(b, p0);
-            }
-
-            bDoSearch[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
-            bDoSearch[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
             fenc->lowresMvs[0][b - p0 - 1][0].x = 0;
         }
         if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
@@ -440,14 +435,9 @@ void LookaheadRow::init()
 
 void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2])
 {
-    Lowres *fref0 = frames[p0];
+    Lowres *fref0 = weightedRef->isWeighted ? weightedRef : frames[p0];
     Lowres *fref1 = frames[p1];
     Lowres *fenc  = frames[b];
-
-    if (weightedRef->isWeighted)
-    {
-        fref0 = weightedRef;
-    }
 
     const int bBidir = (b < p1);
     const int cuXY = cux + cuy * widthInCU;
