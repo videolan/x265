@@ -2035,6 +2035,92 @@ cglobal pixel_satd_64x48, 4,8,8    ;if WIN64 && notcpuflag(avx)
     movd    eax, m10
     RET
 
+cglobal pixel_satd_64x64, 4,8,8    ;if WIN64 && notcpuflag(avx)
+    SATD_START_SSE2 m10, m7
+    mov r6, r0
+    mov r7, r2
+%if vertical
+    mova m7, [pw_00ff]
+%endif
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    lea r0, [r6 + 16]
+    lea r2, [r7 + 16]
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    lea r0, [r6 + 32]
+    lea r2, [r7 + 32]
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    lea r0, [r6 + 48]
+    lea r2, [r7 + 48]
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+    call pixel_satd_16x4_internal2
+
+    pxor     m9, m9
+    movhlps  m9, m10
+    paddd   m10, m9
+    pshufd   m9, m10, 1
+    paddd   m10, m9
+    movd    eax, m10
+    RET
+
 %else
 
 cglobal pixel_satd_32x8, 4,6,8    ;if !WIN64
@@ -2584,6 +2670,200 @@ cglobal pixel_satd_64x48, 4,6,8    ;if !WIN64
     mov r2, r2mp
     add r0, 56
     add r2, 56
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
+%endif
+
+%if WIN64
+cglobal pixel_satd_64x64, 4,8,9    ;if WIN64 && cpuflag(avx)
+    SATD_START_SSE2 m6, m7
+    mov r6, r0
+    mov r7, r2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    lea r0, [r6 + 8]
+    lea r2, [r7 + 8]
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    lea r0, [r6 + 16]
+    lea r2, [r7 + 16]
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    lea r0, [r6 + 24]
+    lea r2, [r7 + 24]
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    lea r0, [r6 + 32]
+    lea r2, [r7 + 32]
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    lea r0, [r6 + 40]
+    lea r2, [r7 + 40]
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    lea r0, [r6 + 48]
+    lea r2, [r7 + 48]
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    lea r0, [r6 + 56]
+    lea r2, [r7 + 56]
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m8, m8
+    movhlps m8, m6
+    paddd   m6, m8
+    pshufd  m8, m6, 1
+    paddd   m6, m8
+    movd   eax, m6
+    RET
+%else
+cglobal pixel_satd_64x64, 4,6,8    ;if !WIN64
+    SATD_START_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 8
+    add r2, 8
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 16
+    add r2, 16
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 24
+    add r2, 24
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 32
+    add r2, 32
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 40
+    add r2, 40
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 48
+    add r2, 48
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    mov r0, r0mp
+    mov r2, r2mp
+    add r0, 56
+    add r2, 56
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     call pixel_satd_8x8_internal2
     call pixel_satd_8x8_internal2
     call pixel_satd_8x8_internal2
