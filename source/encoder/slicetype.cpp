@@ -263,14 +263,14 @@ uint32_t Lookahead::weightCostLuma(int b, pixel *src, wpScalingParam *w)
 
 void Lookahead::weightsAnalyse(int b, int p0)
 {
-    Lowres *fenc, *ref;
+    wpScalingParam w;
 
+    Lowres *fenc, *ref;
     fenc = frames[b];
     ref  = frames[p0];
+
     /* epsilon is chosen to require at least a numerator of 127 (with denominator = 128) */
     const float epsilon = 1.f / 128.f;
-    wpScalingParam w;
-    SET_WEIGHT(w, 0, 1, 0, 0);
     float guess_scale, fenc_mean, ref_mean;
     guess_scale = sqrtf((float)fenc->wp_ssd[0] / ref->wp_ssd[0]);
     fenc_mean = (float)fenc->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
@@ -283,13 +283,9 @@ void Lookahead::weightsAnalyse(int b, int p0)
 
     /* Early termination */
     if (fabsf(ref_mean - fenc_mean) < 0.5f && fabsf(1.f - guess_scale) < epsilon)
-    {
-        SET_WEIGHT(w, 0, 1, 0, 0);
         return;
-    }
 
     w.setFromWeightAndOffset((int)(guess_scale * 128 + 0.5), 0);
-
     mindenom = w.log2WeightDenom;
     minscale = w.inputWeight;
 
@@ -328,10 +324,7 @@ void Lookahead::weightsAnalyse(int b, int p0)
     }
 
     if (!found || (minscale == 1 << mindenom && minoff == 0) || (float)minscore / origscore > 0.998f)
-    {
-        SET_WEIGHT(w, 0, 1, 0, 0);
         return;
-    }
     else
     {
         SET_WEIGHT(w, 1, minscale, mindenom, minoff);
