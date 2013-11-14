@@ -52,6 +52,7 @@ struct LookaheadRow
     int widthInCU;
     int heightInCU;
     int merange;
+    Lowres *weightedRef;
 
     LookaheadRow()
     {
@@ -110,6 +111,10 @@ struct Lookahead : public WaveFront
     int slicetypePathCost(char *path, int threshold);
 
     void processRow(int row);
+
+    void weightsAnalyse(int b, int p0);
+    unsigned int weightCostLuma(int b, pixel *src, wpScalingParam *w);
+    pixel* weightCostInit(int b, int p0, pixel *dest);
 };
 }
 

@@ -42,6 +42,7 @@
 #include "TComRom.h"
 #include "x265.h"  // NAL type enums
 #include "piclist.h"
+#include "common.h"
 
 #include <cstring>
 #include <assert.h>
@@ -1256,6 +1257,20 @@ struct WpScalingParam
 
     // Weighted prediction scaling values built from above parameters (bitdepth scaled):
     int         w, o, offset, shift, round;
+
+    /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
+    void setFromWeightAndOffset(int weight, int offset)
+    {
+        inputOffset = offset;
+        log2WeightDenom = 7;
+        inputWeight = weight;
+        while (log2WeightDenom > 0 && (inputWeight > 127))
+        {
+            log2WeightDenom--;
+            inputWeight >>= 1;
+        }
+        inputWeight = X265_MIN(inputWeight, 127);
+    }
 };
 
 typedef WpScalingParam wpScalingParam;
