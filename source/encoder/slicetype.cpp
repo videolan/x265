@@ -132,7 +132,7 @@ void Lookahead::addPicture(TComPic *pic, int sliceType)
     pic->m_lowres.init(pic->getPicYuvOrg(), pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
     if (!weightedRef.buffer[0])
     {
-        // Just using width/height data from the pic to create a standalone Lowres object
+        // use first picture to allocate properly sized lowres weighted ref
         weightedRef.create(pic, cfg->param.bframes, &cfg->param.rc.aqMode);
     }
     inputQueue.pushBack(*pic);
@@ -232,13 +232,15 @@ uint32_t Lookahead::weightCostLuma(int b, pixel *src, wpScalingParam *w)
         }
         else
         {
-            round = shift = correction;
+            round = (1 << correction) - 1;
+            shift = correction;
         }
 
         for (int y = 0; y < lines; y += 8, pixoff = y * stride)
         {
             for (int x = 0; x < width; x += 8, mb++, pixoff += 8)
             {
+                // TODO: optimized 8x8 block primitive for weightp
                 primitives.weightpUniPixel(src + pixoff, buf, stride, 8, 8, 8, scale, round, shift, offset);
                 int satd = primitives.satd[LUMA_8x8](buf, 8, &fenc_plane[pixoff], stride);
                 cost += X265_MIN(satd, fenc->intraCost[mb]);
