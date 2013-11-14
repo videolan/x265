@@ -63,9 +63,9 @@ extern "C" {
     p.satd[LUMA_24x32] = x265_pixel_satd_24x32_ ## cpu; \
     p.satd[LUMA_64x64] = x265_pixel_satd_64x64_ ## cpu; \
     p.satd[LUMA_64x32] = x265_pixel_satd_64x32_ ## cpu; \
-    p.satd[LUMA_32x64] = cmp<32, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
+    p.satd[LUMA_32x64] = x265_pixel_satd_32x64_ ## cpu; \
     p.satd[LUMA_64x48] = x265_pixel_satd_64x48_ ## cpu; \
-    p.satd[LUMA_48x64] = cmp<48, 64, 16, 16, x265_pixel_satd_16x16_ ## cpu>; \
+    p.satd[LUMA_48x64] = x265_pixel_satd_48x64_ ## cpu; \
     p.satd[LUMA_64x16] = x265_pixel_satd_64x16_ ## cpu
 
 #define ASSGN_SSE(cpu) \
