@@ -79,12 +79,15 @@ Lookahead::Lookahead(TEncCfg *_cfg, ThreadPool* pool) : WaveFront(pool)
     widthInCU = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     heightInCU = ((cfg->param.sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
 
+    weightedRef.buffer[0] = NULL;
+
     lhrows = new LookaheadRow[heightInCU];
     for (int i = 0; i < heightInCU; i++)
     {
         lhrows[i].widthInCU = widthInCU;
         lhrows[i].heightInCU = heightInCU;
         lhrows[i].frames = frames;
+        lhrows[i].weightedRef = &weightedRef;
     }
 }
 
@@ -127,7 +130,11 @@ void Lookahead::destroy()
 void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
     pic->m_lowres.init(pic->getPicYuvOrg(), pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
-
+    if (!weightedRef.buffer[0])
+    {
+        // Just using width/height data from the pic to create a standalone Lowres object
+        weightedRef.create(pic, cfg->param.bframes, &cfg->param.rc.aqMode);
+    }
     inputQueue.pushBack(*pic);
     if (inputQueue.size() >= cfg->param.lookaheadDepth)
         slicetypeDecide();
@@ -330,6 +337,7 @@ void Lookahead::weightsAnalyse(int b, int p0)
     else
     {
         SET_WEIGHT(w, 1, minscale, mindenom, minoff);
+        weightedRef.initWeighted(frames[p0], &w);
     }
 }
 
@@ -339,6 +347,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
 {
     int score = 0;
     Lowres *fenc = frames[b];
+    weightedRef.isWeighted = false;
 
     if (fenc->costEst[b - p0][p1 - b] >= 0 && fenc->rowSatds[b - p0][p1 - b][0] != -1)
         score = fenc->costEst[b - p0][p1 - b];
@@ -443,6 +452,11 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
     Lowres *fref0 = frames[p0];
     Lowres *fref1 = frames[p1];
     Lowres *fenc  = frames[b];
+
+    if (weightedRef->isWeighted)
+    {
+        fref0 = weightedRef;
+    }
 
     const int bBidir = (b < p1);
     const int cuXY = cux + cuy * widthInCU;

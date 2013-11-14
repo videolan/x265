@@ -33,6 +33,7 @@ namespace x265 {
 
 class TComPic;
 class TComPicYuv;
+typedef struct WpScalingParam wpScalingParam;
 
 struct ReferencePlanes
 {
@@ -61,7 +62,7 @@ struct ReferencePlanes
 
             MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
             int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
-            
+
             pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * lumaStride;
             primitives.pixelavg_pp[LUMA_8x8](buf, outstride, frefA, lumaStride, frefB, lumaStride, 32);
             return buf;
@@ -100,6 +101,7 @@ struct ReferencePlanes
 struct Lowres : public ReferencePlanes
 {
     pixel *buffer[4];
+    int extHeight;
 
     int    frameNum;         // Presentation frame number
     int    sliceType;        // Slice type decided by lookahead
@@ -132,6 +134,7 @@ struct Lowres : public ReferencePlanes
     void create(TComPic *pic, int bframes, int32_t *aqMode);
     void destroy(int bframes);
     void init(TComPicYuv *orig, int poc, int sliceType, int bframes);
+    void initWeighted(Lowres *ref, wpScalingParam *w);
 };
 }
 

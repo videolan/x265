@@ -83,6 +83,8 @@ struct Lookahead : public WaveFront
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
 
+    Lowres weightedRef;
+
     PicList inputQueue;  // input pictures in order received
     PicList outputQueue; // pictures to be encoded, in encode order
 
