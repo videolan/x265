@@ -115,8 +115,7 @@ struct Lookahead : public WaveFront
     void processRow(int row);
 
     void weightsAnalyse(int b, int p0);
-    unsigned int weightCostLuma(int b, pixel *src, wpScalingParam *w);
-    pixel* weightCostInit(int b, int p0, pixel *dest);
+    uint32_t weightCostLuma(int b, pixel *src, wpScalingParam *w);
 };
 }
 

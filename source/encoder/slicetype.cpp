@@ -205,28 +205,10 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
     return pic->m_lowres.satdCost;
 }
 
-static void mcWeight(pixel *dst, intptr_t dstStride, pixel *src, intptr_t srcStride,
-                     const wpScalingParam *weight, int width, int height)
-{
-    int offset = weight->inputOffset << (X265_DEPTH - 8);
-    int scale = weight->inputWeight;
-    int denom = weight->log2WeightDenom;
-    int correction = (IF_INTERNAL_PREC - X265_DEPTH);
-
-    if (denom >= 1)
-    {
-        primitives.weightpUniPixel(src, dst, srcStride, dstStride, width, height, scale, (1 << (denom - 1 + correction)), (denom + correction), offset);
-    }
-    else
-    {
-        primitives.weightpUniPixel(src, dst, srcStride, dstStride, width, height, scale, 0 + correction, 0 + correction, offset);
-    }
-}
-
-unsigned int Lookahead::weightCostLuma(int b, pixel *src, wpScalingParam *w)
+uint32_t Lookahead::weightCostLuma(int b, pixel *src, wpScalingParam *w)
 {
     Lowres *fenc = frames[b];
-    unsigned int cost = 0;
+    uint32_t cost = 0;
     int stride = fenc->lumaStride;
     int lines = fenc->lines;
     int width = fenc->width;
@@ -238,26 +220,42 @@ unsigned int Lookahead::weightCostLuma(int b, pixel *src, wpScalingParam *w)
 
     if (w)
     {
+        int offset = w->inputOffset << (X265_DEPTH - 8);
+        int scale = w->inputWeight;
+        int denom = w->log2WeightDenom;
+        int correction = (IF_INTERNAL_PREC - X265_DEPTH);
+        int round, shift;
+        if (denom >= 1)
+        {
+            round = 1 << (denom + correction - 1);
+            shift = denom + correction;
+        }
+        else
+        {
+            round = shift = correction;
+        }
+
         for (int y = 0; y < lines; y += 8, pixoff = y * stride)
         {
             for (int x = 0; x < width; x += 8, mb++, pixoff += 8)
             {
-                // TO DO prepare full weighted plane
-                mcWeight(buf, 8, &src[pixoff], stride, w, 8, 8);
-                int cmp = primitives.satd[LUMA_8x8](buf, 8, &fenc_plane[pixoff], stride);
-                cost += X265_MIN(cmp, fenc->intraCost[mb]);
+                primitives.weightpUniPixel(src + pixoff, buf, stride, 8, 8, 8, scale, round, shift, offset);
+                int satd = primitives.satd[LUMA_8x8](buf, 8, &fenc_plane[pixoff], stride);
+                cost += X265_MIN(satd, fenc->intraCost[mb]);
             }
         }
     }
     else
+    {
         for (int y = 0; y < lines; y += 8, pixoff = y * stride)
         {
             for (int x = 0; x < width; x += 8, mb++, pixoff += 8)
             {
-                int cmp = primitives.satd[LUMA_8x8](&src[pixoff], stride, &fenc_plane[pixoff], stride);
-                cost += X265_MIN(cmp, fenc->intraCost[mb]);
+                int satd = primitives.satd[LUMA_8x8](&src[pixoff], stride, &fenc_plane[pixoff], stride);
+                cost += X265_MIN(satd, fenc->intraCost[mb]);
             }
         }
+    }
 
     x265_emms();
     return cost;
