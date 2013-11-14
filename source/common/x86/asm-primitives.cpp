@@ -448,6 +448,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
         p.ipfilter_ss[FILTER_V_S_S_8] = x265_interp_8tap_v_ss_sse2;
+        p.calcrecon[BLOCK_4x4] = x265_calcRecons4_sse2;
+        p.calcrecon[BLOCK_8x8] = x265_calcRecons8_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
@@ -529,6 +531,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_vsp[CHROMA_2x4] = x265_interp_4tap_vert_sp_2x4_sse4;
         p.chroma_vsp[CHROMA_2x8] = x265_interp_4tap_vert_sp_2x8_sse4;
         p.chroma_vsp[CHROMA_6x8] = x265_interp_4tap_vert_sp_6x8_sse4;
+
+        p.calcrecon[BLOCK_16x16] = x265_calcRecons16_sse4;
+        p.calcrecon[BLOCK_32x32] = x265_calcRecons32_sse4;
+        p.calcrecon[BLOCK_64x64] = x265_calcRecons64_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

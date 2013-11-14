@@ -356,4 +356,10 @@ LUMA_PIXELSUB_DEF(_sse4);
 #undef CHROMA_PIXELSUB_DEF
 #undef LUMA_PIXELSUB_DEF
 
+void x265_calcRecons4_sse2(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+void x265_calcRecons8_sse2(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+void x265_calcRecons16_sse4(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+void x265_calcRecons32_sse4(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+void x265_calcRecons64_sse4(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+
 #endif // ifndef X265_I386_PIXEL_H

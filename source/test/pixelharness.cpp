@@ -286,8 +286,8 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
     for (int i = 0; i < ITERS; i++)
     {
         int stride = STRIDE;
-        opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
         ref(pbuf1 + j, sbuf1 + j, ref_reco, ref_recq, ref_pred, stride, stride, stride);
+        opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
 
         if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
             return false;
