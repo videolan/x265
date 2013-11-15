@@ -145,6 +145,9 @@ extern "C" {
 #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     p.chroma_vsp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu;
 
+#define SETUP_CHROMA_SS_FUNC_DEF(W, H, cpu) \
+    p.chroma_vss[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu;
+
 #define SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
     p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = x265_blockcopy_pp_ ## W ## x ## H ## cpu;
 
@@ -196,6 +199,32 @@ extern "C" {
     SETUP_CHROMA_SP_FUNC_DEF(24, 32, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 32, cpu);
+
+#define CHROMA_SS_FILTERS(cpu) \
+    SETUP_CHROMA_SS_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(6, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(8, 32, cpu);
 
 #define CHROMA_BLOCKCOPY(cpu) \
     SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 4, cpu); \
@@ -402,6 +431,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_BLOCKCOPY(_sse2);
         LUMA_BLOCKCOPY(_sse2);
+
+        CHROMA_SS_FILTERS(_sse2);
 
         // This function pointer initialization is temporary will be removed
         // later with macro definitions.  It is used to avoid linker errors
