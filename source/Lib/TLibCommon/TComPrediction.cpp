@@ -555,8 +555,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
 
     if ((yFrac | xFrac) == 0)
     {
-        primitives.chroma_copy_pp[partEnum](dstCb, dstStride, refCb, refStride);
-        primitives.chroma_copy_pp[partEnum](dstCr, dstStride, refCr, refStride);
+        primitives.blockcpy_pp(cxWidth, cxHeight, dstCb, dstStride, refCb, refStride);
+        primitives.blockcpy_pp(cxWidth, cxHeight, dstCr, dstStride, refCr, refStride);
     }
     else if (yFrac == 0)
     {
