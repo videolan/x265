@@ -468,6 +468,41 @@ void interp_vert_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dst
     }
 }
 
+template<int N, int width, int height>
+void interp_vert_ss_c(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+{
+    const int16_t *const c = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
+    int shift = IF_FILTER_PREC;
+    int row, col;
+
+    src -= (N / 2 - 1) * srcStride;
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int sum;
+
+            sum  = src[col + 0 * srcStride] * c[0];
+            sum += src[col + 1 * srcStride] * c[1];
+            sum += src[col + 2 * srcStride] * c[2];
+            sum += src[col + 3 * srcStride] * c[3];
+            if (N == 8)
+            {
+                sum += src[col + 4 * srcStride] * c[4];
+                sum += src[col + 5 * srcStride] * c[5];
+                sum += src[col + 6 * srcStride] * c[6];
+                sum += src[col + 7 * srcStride] * c[7];
+            }
+
+            int16_t val = (int16_t)((sum) >> shift);
+            dst[col] = val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
 typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, const short *coeff);
 typedef void (*ipfilter_sp_t)(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const short *coeff);
 
@@ -489,7 +524,8 @@ namespace x265 {
     p.chroma_hps[CHROMA_ ## W ## x ## H] = interp_horiz_ps_c<4, W, H>; \
     p.chroma_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c < 4, W, H >; \
     p.chroma_vps[CHROMA_ ## W ## x ## H] = interp_vert_ps_c<4, W, H>; \
-    p.chroma_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c < 4, W, H >
+    p.chroma_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c < 4, W, H >; \
+    p.chroma_vss[CHROMA_ ## W ## x ## H] = interp_vert_ss_c < 4, W, H >;
 
 #define LUMA(W, H) \
     p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>; \
