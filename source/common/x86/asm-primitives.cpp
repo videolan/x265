@@ -263,6 +263,9 @@ extern "C" {
 #define SETUP_LUMA_SP_FUNC_DEF(W, H, cpu) \
     p.luma_vsp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu;
 
+#define SETUP_LUMA_SS_FUNC_DEF(W, H, cpu) \
+    p.luma_vss[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ss_ ## W ## x ## H ## cpu;
+
 #define SETUP_LUMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = x265_blockcopy_pp_ ## W ## x ## H ## cpu;
 
@@ -319,6 +322,33 @@ extern "C" {
     SETUP_LUMA_SP_FUNC_DEF(48, 64, cpu); \
     SETUP_LUMA_SP_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_SP_FUNC_DEF(16, 64, cpu);
+
+#define LUMA_SS_FILTERS(cpu) \
+    SETUP_LUMA_SS_FUNC_DEF(4,   4, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,   8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,   4, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(4,   8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16,  8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,  16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 12, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(12, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16,  4, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(4,  16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 24, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(24, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32,  8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,  32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 64, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 64, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 48, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(48, 64, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 64, cpu);
 
 #define LUMA_BLOCKCOPY(cpu) \
     SETUP_LUMA_BLOCKCOPY_FUNC_DEF(4,   4, cpu); \
@@ -433,6 +463,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         LUMA_BLOCKCOPY(_sse2);
 
         CHROMA_SS_FILTERS(_sse2);
+        LUMA_SS_FILTERS(_sse2);
 
         // This function pointer initialization is temporary will be removed
         // later with macro definitions.  It is used to avoid linker errors

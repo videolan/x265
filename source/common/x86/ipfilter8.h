@@ -118,6 +118,36 @@
     SETUP_LUMA_SP_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_SP_FUNC_DEF(16, 64, cpu);
 
+#define SETUP_LUMA_SS_FUNC_DEF(W, H, cpu) \
+    void x265_interp_8tap_vert_ss_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx);
+
+#define LUMA_SS_FILTERS(cpu) \
+    SETUP_LUMA_SS_FUNC_DEF(4,   4, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,   8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,   4, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(4,   8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16,  8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,  16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 12, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(12, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16,  4, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(4,  16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 24, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(24, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32,  8, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(8,  32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 64, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 32, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(32, 64, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 48, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(48, 64, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(64, 16, cpu); \
+    SETUP_LUMA_SS_FUNC_DEF(16, 64, cpu);
+
   #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     void x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
@@ -179,6 +209,7 @@ CHROMA_SP_FILTERS(_ssse3);
 CHROMA_SS_FILTERS(_sse2);
 LUMA_FILTERS(_sse4);
 LUMA_SP_FILTERS(_ssse3);
+LUMA_SS_FILTERS(_sse2);
 
 void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
 void x265_interp_8tap_v_ss_sse2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coefIdx);
@@ -193,10 +224,12 @@ void x265_interp_4tap_vert_sp_6x8_sse4(int16_t * src, intptr_t srcStride, pixel 
 #undef SETUP_CHROMA_SS_FUNC_DEF
 #undef SETUP_LUMA_FUNC_DEF
 #undef SETUP_LUMA_SP_FUNC_DEF
+#undef SETUP_LUMA_SS_FUNC_DEF
 #undef CHROMA_FILTERS
 #undef CHROMA_SP_FILTERS
 #undef CHROMA_SS_FILTERS
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
+#undef LUMA_SS_FILTERS
 
 #endif // ifndef X265_MC_H
