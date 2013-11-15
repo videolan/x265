@@ -208,11 +208,16 @@ void TComYuv::copyToPartChroma(TComYuv* dstPicYuv, uint32_t uiDstPartIdx)
 
 void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 {
-    copyPartToLuma(dstPicYuv, partIdx);
-    copyPartToChroma(dstPicYuv, partIdx);
+    uint32_t height = dstPicYuv->getHeight();
+    uint32_t width = dstPicYuv->getWidth();
+
+    int part = partitionFromSizes(width, height);
+
+    copyPartToLuma(dstPicYuv, partIdx, part);
+    copyPartToChroma(dstPicYuv, partIdx, part);
 }
 
-void TComYuv::copyPartToLuma(TComYuv* dstPicYuv, uint32_t partIdx)
+void TComYuv::copyPartToLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t part)
 {
     Pel* src = getLumaAddr(partIdx);
     Pel* dst = dstPicYuv->getLumaAddr(0);
@@ -220,14 +225,10 @@ void TComYuv::copyPartToLuma(TComYuv* dstPicYuv, uint32_t partIdx)
     uint32_t srcstride = getStride();
     uint32_t dststride = dstPicYuv->getStride();
 
-    uint32_t height = dstPicYuv->getHeight();
-    uint32_t width = dstPicYuv->getWidth();
-
-    int part = partitionFromSizes(width, height);
     primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
-void TComYuv::copyPartToChroma(TComYuv* dstPicYuv, uint32_t partIdx)
+void TComYuv::copyPartToChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t part)
 {
     Pel* srcU = getCbAddr(partIdx);
     Pel* srcV = getCrAddr(partIdx);
@@ -237,11 +238,8 @@ void TComYuv::copyPartToChroma(TComYuv* dstPicYuv, uint32_t partIdx)
     uint32_t srcstride = getCStride();
     uint32_t dststride = dstPicYuv->getCStride();
 
-    uint32_t uiCHeight = dstPicYuv->getCHeight();
-    uint32_t uiCWidth = dstPicYuv->getCWidth();
-
-    primitives.blockcpy_pp(uiCWidth, uiCHeight, dstU, dststride, srcU, srcstride);
-    primitives.blockcpy_pp(uiCWidth, uiCHeight, dstV, dststride, srcV, srcstride);
+    primitives.chroma_copy_pp[m_csp][part](dstU, dststride, srcU, srcstride);
+    primitives.chroma_copy_pp[m_csp][part](dstV, dststride, srcV, srcstride);
 }
 
 void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
