@@ -724,11 +724,11 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.chroma_copy_pp[part])
+    if (opt.chroma_copy_pp[CSP_I420][part])
     {
-        if (!check_block_copy_pp(ref.chroma_copy_pp[part], opt.chroma_copy_pp[part]))
+        if (!check_block_copy_pp(ref.chroma_copy_pp[CSP_I420][part], opt.chroma_copy_pp[CSP_I420][part]))
         {
-            printf("chroma_copy_pp[%s] failed\n", chromaPartStr[part]);
+            printf("chroma_copy_pp[%s][%s] failed\n", "CSP_I420", chromaPartStr[part]);
             return false;
         }
     }
@@ -1021,10 +1021,10 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.luma_copy_pp[part], ref.luma_copy_pp[part], pbuf1, 64, pbuf2, 128);
     }
 
-    if (opt.chroma_copy_pp[part])
+    if (opt.chroma_copy_pp[CSP_I420][part])
     {
-        printf("ccpy_pp[%s]", chromaPartStr[part]);
-        REPORT_SPEEDUP(opt.chroma_copy_pp[part], ref.chroma_copy_pp[part], pbuf1, 64, pbuf2, 128);
+        printf("ccpy_pp[%s][%s]", "CSP_I420", chromaPartStr[part]);
+        REPORT_SPEEDUP(opt.chroma_copy_pp[CSP_I420][part], ref.chroma_copy_pp[CSP_I420][part], pbuf1, 64, pbuf2, 128);
     }
 
     if (opt.luma_copy_sp[part])

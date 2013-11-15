@@ -80,6 +80,9 @@ private:
     int m_hChromaShift;
     int m_vChromaShift;
 
+    int m_csp;
+    int m_part;       // This will eliminate all calls to part = partitionFromSizes(m_width, m_height);
+
     static int getAddrOffset(uint32_t partUnitIdx, uint32_t width)
     {
         int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];

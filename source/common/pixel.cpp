@@ -835,7 +835,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_16x64] = satd8<16, 64>;
 
 #define CHROMA(W, H) \
-    p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
+    p.chroma_copy_pp[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma_copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma_copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>;\
     p.chroma_sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;

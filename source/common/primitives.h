@@ -136,6 +136,14 @@ enum IPFilterConf_S_S
     NUM_IPFILTER_S_S
 };
 
+// This enum maps it's members to actual csp values
+enum ColorspaceType
+{
+  CSP_NONE,
+  CSP_I420,
+  NUM_CSP
+};
+
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
 inline int partitionFromSizes(int width, int height)
 {
@@ -233,7 +241,7 @@ struct EncoderPrimitives
     cvt32to16_shr_t cvt32to16_shr;
 
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
-    copy_pp_t       chroma_copy_pp[NUM_CHROMA_PARTITIONS];
+    copy_pp_t       chroma_copy_pp[NUM_CSP][NUM_CHROMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
     copy_sp_t       chroma_copy_sp[NUM_CHROMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];

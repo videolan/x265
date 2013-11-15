@@ -148,9 +148,6 @@ extern "C" {
 #define SETUP_CHROMA_SS_FUNC_DEF(W, H, cpu) \
     p.chroma_vss[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu;
 
-#define SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
-    p.chroma_copy_pp[CHROMA_ ## W ## x ## H] = x265_blockcopy_pp_ ## W ## x ## H ## cpu;
-
 #define CHROMA_FILTERS(cpu) \
     SETUP_CHROMA_FUNC_DEF(4, 4, cpu); \
     SETUP_CHROMA_FUNC_DEF(4, 2, cpu); \
@@ -226,32 +223,6 @@ extern "C" {
     SETUP_CHROMA_SS_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 32, cpu);
 
-#define CHROMA_BLOCKCOPY(cpu) \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 2, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(2, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 6, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(6, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 2, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(2, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 12, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(12, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 4, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(4, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 32, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 16, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(16, 32, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 24, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(24, 32, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(32, 8, cpu); \
-    SETUP_CHROMA_BLOCKCOPY_FUNC_DEF(8, 32, cpu);
-
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu; \
     p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu; \
@@ -268,6 +239,36 @@ extern "C" {
 
 #define SETUP_LUMA_BLOCKCOPY_FUNC_DEF(W, H, cpu) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = x265_blockcopy_pp_ ## W ## x ## H ## cpu;
+
+#define SETUP_CHROMA_FROM_LUMA(W1, H1, W2, H2, cpu) \
+    p.chroma_copy_pp[X265_CSP_I420][LUMA_ ## W1 ## x ## H1] = x265_blockcopy_pp_ ## W2 ## x ## H2 ## cpu;
+
+// For X265_CSP_I420 chroma width and height will be half of luma width and height
+#define CHROMA_BLOCKCOPY(cpu) \
+    SETUP_CHROMA_FROM_LUMA(8,   8, 4,  4,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(8,   4, 4,  2,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(4,   8, 2,  4,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(16, 16, 8,  8,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(16,  8, 8,  4,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(8,  16, 4,  8,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(16, 12, 8,  6,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(12, 16, 6,  8,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(16,  4, 8,  2,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(4,  16, 2,  8,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(32, 32, 16, 16, cpu); \
+    SETUP_CHROMA_FROM_LUMA(32, 16, 16, 8,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(16, 32, 8,  16, cpu); \
+    SETUP_CHROMA_FROM_LUMA(32, 24, 16, 12, cpu); \
+    SETUP_CHROMA_FROM_LUMA(24, 32, 12, 16, cpu); \
+    SETUP_CHROMA_FROM_LUMA(32,  8, 16, 4,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(8,  32, 4,  16, cpu); \
+    SETUP_CHROMA_FROM_LUMA(64, 64, 32, 32, cpu); \
+    SETUP_CHROMA_FROM_LUMA(64, 32, 32, 16, cpu); \
+    SETUP_CHROMA_FROM_LUMA(32, 64, 16, 32, cpu); \
+    SETUP_CHROMA_FROM_LUMA(64, 48, 32, 24, cpu); \
+    SETUP_CHROMA_FROM_LUMA(48, 64, 24, 32, cpu); \
+    SETUP_CHROMA_FROM_LUMA(64, 16, 32, 8,  cpu); \
+    SETUP_CHROMA_FROM_LUMA(16, 64, 8,  32, cpu);
 
 #define LUMA_FILTERS(cpu) \
     SETUP_LUMA_FUNC_DEF(4,   4, cpu); \
