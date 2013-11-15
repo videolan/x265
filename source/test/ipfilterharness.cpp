@@ -528,6 +528,36 @@ bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp
     return true;
 }
 
+bool IPFilterHarness::check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss_t opt)
+{
+    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        rand_coeffIdx = rand() % 3;                // Random coeffIdex in the filter
+
+        rand_srcStride = rand() % 100;             // Randomly generated srcStride
+        rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
+
+        ref(short_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_C_output_s,
+            rand_dstStride,
+            rand_coeffIdx);
+
+        opt(short_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            IPF_vec_output_s,
+            rand_dstStride,
+            rand_coeffIdx);
+
+        if (memcmp(IPF_C_output_s, IPF_vec_output_s, ipf_t_size * sizeof(int16_t)))
+            return false;
+    }
+
+    return true;
+}
+
 bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_hv_pp_t opt)
 {
     int rand_srcStride, rand_dstStride, rand_coeffIdxX, rand_coeffIdxY;
@@ -673,6 +703,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
             if (!check_IPFilterLuma_sp_primitive(ref.luma_vsp[value], opt.luma_vsp[value]))
             {
                 printf("luma_vsp[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
+        if (opt.luma_vss[value])
+        {
+            if (!check_IPFilterLuma_ss_primitive(ref.luma_vss[value], opt.luma_vss[value]))
+            {
+                printf("luma_vss[%s]", lumaPartStr[value]);
                 return false;
             }
         }
@@ -853,6 +891,14 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             REPORT_SPEEDUP(opt.luma_vsp[value], ref.luma_vsp[value],
                            short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_p, dstStride, 1);
+        }
+
+        if (opt.luma_vss[value])
+        {
+            printf("luma_vss[%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.luma_vss[value], ref.luma_vss[value],
+                           short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                           IPF_vec_output_s, dstStride, 1);
         }
 
         if (opt.luma_hvpp[value])

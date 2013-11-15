@@ -54,6 +54,7 @@ protected:
     bool check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t opt);
     bool check_IPFilterLuma_ps_primitive(filter_ps_t ref, filter_ps_t opt);
     bool check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp_t opt);
+    bool check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss_t opt);
     bool check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_hv_pp_t opt);
 
 public:
