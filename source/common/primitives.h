@@ -144,6 +144,8 @@ enum ColorspaceType
   NUM_CSP
 };
 
+extern const char* colorSpaceNames[NUM_CSP];
+
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
 inline int partitionFromSizes(int width, int height)
 {
