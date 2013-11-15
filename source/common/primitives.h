@@ -258,6 +258,7 @@ struct EncoderPrimitives
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
     filter_ps_t     luma_vps[NUM_LUMA_PARTITIONS];
     filter_sp_t     luma_vsp[NUM_LUMA_PARTITIONS];
+    filter_ss_t     luma_vss[NUM_LUMA_PARTITIONS];
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
     filter_p2s_t    luma_p2s;
     filter_p2s_t    chroma_p2s;

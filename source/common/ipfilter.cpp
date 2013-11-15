@@ -533,6 +533,7 @@ namespace x265 {
     p.luma_vpp[LUMA_ ## W ## x ## H]     = interp_vert_pp_c<8, W, H>; \
     p.luma_vps[LUMA_ ## W ## x ## H]     = interp_vert_ps_c<8, W, H>; \
     p.luma_vsp[LUMA_ ## W ## x ## H]     = interp_vert_sp_c<8, W, H>; \
+    p.luma_vss[LUMA_ ## W ## x ## H]     = interp_vert_ss_c<8, W, H>; \
     p.luma_hvpp[LUMA_ ## W ## x ## H]    = interp_hv_pp_c<8, W, H>;
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
