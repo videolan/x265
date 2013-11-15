@@ -142,6 +142,10 @@ void x265_param_default(x265_param *param)
     param->logLevel = X265_LOG_INFO;
     param->bEnableWavefront = 1;
     param->frameNumThreads = 0;
+    param->poolNumThreads = 0;
+    param->csvfn = NULL;
+
+    /* Source specifications */
     param->inputBitDepth = 8;
     param->sourceCsp = X265_CSP_I420;
 
@@ -154,12 +158,14 @@ void x265_param_default(x265_param *param)
     param->decodingRefreshType = 1;
     param->keyframeMin = 0;
     param->keyframeMax = 250;
+    param->bOpenGOP = 0;
     param->bframes = 3;
     param->lookaheadDepth = 40;
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264*/
 
     /* Intra Coding Tools */
+    param->bEnableConstrainedIntra = 0;
     param->bEnableStrongIntraSmoothing = 1;
 
     /* Inter Coding tools */
@@ -167,23 +173,33 @@ void x265_param_default(x265_param *param)
     param->subpelRefine = 5;
     param->searchRange = 60;
     param->maxNumMergeCand = 3;
+    param->bEnableWeightedPred = 0;
+    param->bEnableWeightedBiPred = 0;
+    param->bEnableEarlySkip = 0;
+    param->bEnableCbfFastMode = 0;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
     param->rdLevel = X265_NO_RDO_NO_RDOQ;
-    param->bEnableRDO = 1;
-    param->bEnableRDOQ = 1;
+    param->bEnableRDO = 0;
+    param->bEnableRDOQ = 0;
     param->bEnableRDOQTS = 1;
     param->bEnableSignHiding = 1;
     param->bEnableTransformSkip = 0;
     param->bEnableTSkipFast = 1;
     param->maxNumReferences = 3;
-
+    
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
 
     /* SAO Loop Filter */
     param->bEnableSAO = 1;
+    param->saoLcuBoundary = 0;
     param->saoLcuBasedOptimization = 1;
+
+    /* Coding Quality */
+    param->cbQpOffset = 0;
+    param->crQpOffset = 0;
+    param->rdPenalty = 0;
 
     /* Rate control options */
     param->rc.rfConstant = 28;
@@ -261,9 +277,8 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bframes = 4;
             param->tuQTMaxInterDepth = 1;
             param->tuQTMaxIntraDepth = 1;
-            param->rdLevel = 0;
             param->subpelRefine = 0;
-            param->maxNumMergeCand = 1;
+            param->maxNumMergeCand = 2;
             param->searchMethod = X265_DIA_SEARCH;
             param->bEnableRectInter = 0;
             param->bEnableAMP = 0;
@@ -273,8 +288,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableLoopFilter = 0;
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
-            param->bEnableWeightedPred = 0;
-            param->rc.aqMode = X265_AQ_NONE;
+            param->maxNumReferences = 1;
         }
         else if (!strcmp(preset, "superfast"))
         {
@@ -284,10 +298,9 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bframes = 4;
             param->tuQTMaxInterDepth = 1;
             param->tuQTMaxIntraDepth = 1;
-            param->rdLevel = 0;
             param->subpelRefine = 1;
-            param->maxNumMergeCand = 1;
-            param->searchMethod = X265_DIA_SEARCH;
+            param->maxNumMergeCand = 2;
+            param->searchMethod = X265_HEX_SEARCH;
             param->bEnableRectInter = 0;
             param->bEnableAMP = 0;
             param->bEnableTransformSkip = 0;
@@ -295,7 +308,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableCbfFastMode = 1;
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
-            param->bEnableWeightedPred = 0;
+            param->maxNumReferences = 1;
         }
         else if (!strcmp(preset, "veryfast"))
         {
@@ -303,7 +316,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bFrameAdaptive = 1;
             param->tuQTMaxInterDepth = 1;
             param->tuQTMaxIntraDepth = 1;
-            param->rdLevel = 0;
             param->subpelRefine = 1;
             param->searchMethod = X265_HEX_SEARCH;
             param->maxNumMergeCand = 2;
@@ -312,6 +324,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableTransformSkip = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
+            param->maxNumReferences = 1;            
         }
         else if (!strcmp(preset, "faster"))
         {
@@ -319,7 +332,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bFrameAdaptive = 1;
             param->tuQTMaxInterDepth = 1;
             param->tuQTMaxIntraDepth = 1;
-            param->rdLevel = 0;
             param->subpelRefine = 2;
             param->searchMethod = X265_HEX_SEARCH;
             param->maxNumMergeCand = 2;
@@ -327,13 +339,15 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableAMP = 0;
             param->bEnableTransformSkip = 0;
             param->maxNumReferences = 2;
+            param->bEnableEarlySkip = 1;
+            param->bEnableCbfFastMode = 1;
         }
         else if (!strcmp(preset, "fast"))
         {
-            param->lookaheadDepth = 30;
+            param->lookaheadDepth = 20;
+            param->bFrameAdaptive = 1;
             param->tuQTMaxInterDepth = 1;
             param->tuQTMaxIntraDepth = 1;
-            param->rdLevel = 0;
             param->subpelRefine = 3;
             param->searchMethod = X265_HEX_SEARCH;
             param->maxNumMergeCand = 2;
@@ -353,7 +367,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->tuQTMaxInterDepth = 1;
             param->tuQTMaxIntraDepth = 1;
             param->rdLevel = 1;
-            param->maxNumMergeCand = 3;
+            param->maxNumMergeCand = 4;
             param->bEnableTransformSkip = 0;
             param->maxNumReferences = 3;
         }
@@ -364,7 +378,9 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bframes = 5;
             param->tuQTMaxInterDepth = 2;
             param->tuQTMaxIntraDepth = 2;
-            param->maxNumMergeCand = 4;
+            param->rdLevel = 2;
+            param->subpelRefine = 6;
+            param->maxNumMergeCand = 5;
             param->bEnableTransformSkip = 0;
             param->maxNumReferences = 3;
         }
@@ -372,17 +388,27 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->bFrameAdaptive = 2;
             param->lookaheadDepth = 60;
+            param->rdLevel = 2;
             param->bframes = 8;
+            param->subpelRefine = 6;
             param->maxNumReferences = 5;
+            param->maxNumMergeCand = 5;
+            param->tuQTMaxInterDepth = 3;
+            param->tuQTMaxIntraDepth = 3;
         }
         else if (!strcmp(preset, "placebo"))
         {
             param->bFrameAdaptive = 2;
             param->lookaheadDepth = 60;
             param->bframes = 16;
+            param->rdLevel = 2;
+            param->subpelRefine = 7;
             param->maxNumReferences = 16;
             param->searchRange = 124;
             param->bEnableTSkipFast = 0;
+            param->maxNumMergeCand = 5;
+            param->tuQTMaxInterDepth = 4;
+            param->tuQTMaxIntraDepth = 4;
             // TODO: optimized esa
         }
         else
