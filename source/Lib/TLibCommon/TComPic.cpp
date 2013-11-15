@@ -92,7 +92,7 @@ void TComPic::create(TEncCfg* cfg)
     m_defaultDisplayWindow = cfg->getDefaultDisplayWindow();
 
     /* configure lowres dimensions */
-    m_lowres.create(this, cfg->param.bframes, &cfg->param.rc.aqMode);
+    m_lowres.create(m_origPicYuv, cfg->param.bframes, &cfg->param.rc.aqMode);
 }
 
 void TComPic::destroy(int bframes)

@@ -31,7 +31,6 @@
 namespace x265 {
 // private namespace
 
-class TComPic;
 class TComPicYuv;
 typedef struct WpScalingParam wpScalingParam;
 
@@ -101,7 +100,6 @@ struct ReferencePlanes
 struct Lowres : public ReferencePlanes
 {
     pixel *buffer[4];
-    int extHeight;
 
     int    frameNum;         // Presentation frame number
     int    sliceType;        // Slice type decided by lookahead
@@ -122,19 +120,18 @@ struct Lowres : public ReferencePlanes
     int32_t*  intraCost;
     int       satdCost;
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
-    int32_t  *lowresMvCosts[2][X265_BFRAME_MAX + 1];
-    MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
+    int32_t*  lowresMvCosts[2][X265_BFRAME_MAX + 1];
+    MV*       lowresMvs[2][X265_BFRAME_MAX + 1];
 
     /* rate control / adaptive quant data */
-    double *qpAqOffset;      // qp Aq offset values for each Cu
-    int    *invQscaleFactor; // qScale values for qp Aq Offsets
-    uint64_t wp_ssd[3];      // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
-    uint64_t wp_sum[3];
+    double*   qpAqOffset;      // qp Aq offset values for each Cu
+    int*      invQscaleFactor; // qScale values for qp Aq Offsets
+    uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
+    uint64_t  wp_sum[3];
 
-    void create(TComPic *pic, int bframes, int32_t *aqMode);
+    void create(TComPicYuv *orig, int bframes, int32_t *aqMode);
     void destroy(int bframes);
     void init(TComPicYuv *orig, int poc, int sliceType, int bframes);
-    void initWeighted(Lowres *ref, wpScalingParam *w);
 };
 }
 

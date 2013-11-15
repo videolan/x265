@@ -48,11 +48,9 @@ struct LookaheadRow
     int                 costIntraAq;    // Estimated weighted Aq Intra cost for all CUs in a row
     int                 intraMbs;       // Number of Intra CUs
 
-    Lowres** frames;
-    int widthInCU;
-    int heightInCU;
-    int merange;
-    Lowres *weightedRef;
+    int                 widthInCU;
+    int                 heightInCU;
+    int                 merange;
 
     LookaheadRow()
     {
@@ -70,7 +68,7 @@ struct LookaheadRow
 
     void init();
 
-    void estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
+    void estimateCUCost(Lowres** frames, ReferencePlanes *wfref0, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
 };
 
 struct Lookahead : public WaveFront
@@ -83,7 +81,9 @@ struct Lookahead : public WaveFront
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
 
-    Lowres weightedRef;
+    ReferencePlanes  weightedRef;
+    pixel           *wbuffer[4];
+    int              paddedLines;
 
     PicList inputQueue;  // input pictures in order received
     PicList outputQueue; // pictures to be encoded, in encode order

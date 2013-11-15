@@ -78,16 +78,13 @@ Lookahead::Lookahead(TEncCfg *_cfg, ThreadPool* pool) : WaveFront(pool)
     lastNonB = NULL;
     widthInCU = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     heightInCU = ((cfg->param.sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-
-    weightedRef.buffer[0] = NULL;
+    wbuffer[0] = wbuffer[1] = wbuffer[2] = wbuffer[3] = 0;
 
     lhrows = new LookaheadRow[heightInCU];
     for (int i = 0; i < heightInCU; i++)
     {
         lhrows[i].widthInCU = widthInCU;
         lhrows[i].heightInCU = heightInCU;
-        lhrows[i].frames = frames;
-        lhrows[i].weightedRef = &weightedRef;
     }
 }
 
@@ -125,17 +122,35 @@ void Lookahead::destroy()
         pic->destroy(cfg->param.bframes);
         delete pic;
     }
+
+    for (int i = 0; i < 4; i++)
+    {
+        x265_free(wbuffer[i]);
+    }
 }
 
 void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
-    pic->m_lowres.init(pic->getPicYuvOrg(), pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
-    if (!weightedRef.buffer[0])
-    {
-        // use first picture to allocate properly sized lowres weighted ref
-        weightedRef.create(pic, cfg->param.bframes, &cfg->param.rc.aqMode);
-    }
+    TComPicYuv *orig = pic->getPicYuvOrg();
+    pic->m_lowres.init(orig, pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
     inputQueue.pushBack(*pic);
+
+    if (!wbuffer[0] && cfg->param.bEnableWeightedPred)
+    {
+        paddedLines = pic->m_lowres.lines + 2 * orig->getLumaMarginY();
+        int padoffset = pic->m_lowres.lumaStride * orig->getLumaMarginY() + orig->getLumaMarginX();
+
+        /* allocate weighted lowres buffers */
+        for (int i = 0; i < 4; i++)
+        {
+            wbuffer[i] = (pixel*)x265_malloc(sizeof(pixel) * (pic->m_lowres.lumaStride * paddedLines));
+            weightedRef.lowresPlane[i] = wbuffer[i] + padoffset;
+            weightedRef.lumaStride = pic->m_lowres.lumaStride;
+            weightedRef.isLowres = true;
+        }
+        weightedRef.fpelPlane = weightedRef.lowresPlane[0];
+        weightedRef.isWeighted = false;
+    }
     if (inputQueue.size() >= cfg->param.lookaheadDepth)
         slicetypeDecide();
 }
@@ -208,54 +223,31 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
 uint32_t Lookahead::weightCostLuma(int b, pixel *src, wpScalingParam *w)
 {
     Lowres *fenc = frames[b];
-    uint32_t cost = 0;
     int stride = fenc->lumaStride;
-    int lines = fenc->lines;
-    int width = fenc->width;
-    pixel *fenc_plane = fenc->lowresPlane[0];
-
-    ALIGN_VAR_16(pixel, buf[8 * 8]);
-    int pixoff = 0;
-    int mb = 0;
 
     if (w)
     {
         int offset = w->inputOffset << (X265_DEPTH - 8);
         int scale = w->inputWeight;
         int denom = w->log2WeightDenom;
-        int correction = (IF_INTERNAL_PREC - X265_DEPTH);
-        int round, shift;
-        if (denom >= 1)
-        {
-            round = 1 << (denom + correction - 1);
-            shift = denom + correction;
-        }
-        else
-        {
-            round = (1 << correction) - 1;
-            shift = correction;
-        }
+        int correction = IF_INTERNAL_PREC - X265_DEPTH;
 
-        for (int y = 0; y < lines; y += 8, pixoff = y * stride)
-        {
-            for (int x = 0; x < width; x += 8, mb++, pixoff += 8)
-            {
-                // TODO: optimized 8x8 block primitive for weightp
-                primitives.weightpUniPixel(src + pixoff, buf, stride, 8, 8, 8, scale, round, shift, offset);
-                int satd = primitives.satd[LUMA_8x8](buf, 8, &fenc_plane[pixoff], stride);
-                cost += X265_MIN(satd, fenc->intraCost[mb]);
-            }
-        }
+        // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
+        primitives.weightpUniPixel(src, weightedRef.fpelPlane, stride, stride, stride, fenc->lines,
+                                   scale, (1 << (denom - 1 + correction)), denom + correction, offset);
+        src = weightedRef.fpelPlane;
     }
-    else
+
+    uint32_t cost = 0;
+    int pixoff = 0;
+    int mb = 0;
+
+    for (int y = 0; y < fenc->lines; y += 8, pixoff = y * stride)
     {
-        for (int y = 0; y < lines; y += 8, pixoff = y * stride)
+        for (int x = 0; x < fenc->width; x += 8, mb++, pixoff += 8)
         {
-            for (int x = 0; x < width; x += 8, mb++, pixoff += 8)
-            {
-                int satd = primitives.satd[LUMA_8x8](&src[pixoff], stride, &fenc_plane[pixoff], stride);
-                cost += X265_MIN(satd, fenc->intraCost[mb]);
-            }
+            int satd = primitives.satd[LUMA_8x8](src + pixoff, stride, fenc->fpelPlane + pixoff, stride);
+            cost += X265_MIN(satd, fenc->intraCost[mb]);
         }
     }
 
@@ -291,12 +283,11 @@ void Lookahead::weightsAnalyse(int b, int p0)
     mindenom = w.log2WeightDenom;
     minscale = w.inputWeight;
 
-    pixel *mcbuf = NULL;
     if (!fenc->bIntraCalculated)
     {
         estimateFrameCost(b, b, b, 0);
     }
-    mcbuf = frames[p0]->lowresPlane[0];
+    pixel *mcbuf = frames[p0]->fpelPlane;
     origscore = minscore = weightCostLuma(b, mcbuf, NULL);
 
     if (!minscore)
@@ -330,7 +321,20 @@ void Lookahead::weightsAnalyse(int b, int p0)
     else
     {
         SET_WEIGHT(w, 1, minscale, mindenom, minoff);
-        weightedRef.initWeighted(frames[p0], &w);
+
+        int offset = w.inputOffset << (X265_DEPTH - 8);
+        int scale = w.inputWeight;
+        int denom = w.log2WeightDenom;
+        int correction = IF_INTERNAL_PREC - X265_DEPTH;
+        int stride = ref->lumaStride;
+
+        for (int i = 0; i < 4; i++)
+        {
+            // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
+            primitives.weightpUniPixel(ref->buffer[i], wbuffer[i], stride, stride, stride, paddedLines,
+                                       scale, (1 << (denom - 1 + correction)), denom + correction, offset);
+        }
+        weightedRef.isWeighted = true;
     }
 }
 
@@ -345,17 +349,15 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         score = fenc->costEst[b - p0][p1 - b];
     else
     {
+        weightedRef.isWeighted = false;
+        if (cfg->param.bEnableWeightedPred && b == p1 && b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF)
+            weightsAnalyse(b, p0);
+
         /* For each list, check to see whether we have lowres motion-searched this reference */
         bDoSearch[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
         bDoSearch[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
-        weightedRef.isWeighted = false;
 
-        if (bDoSearch[0])
-        {
-            if (cfg->param.bEnableWeightedPred && b == p1)
-                weightsAnalyse(b, p0);
-            fenc->lowresMvs[0][b - p0 - 1][0].x = 0;
-        }
+        if (bDoSearch[0]) fenc->lowresMvs[0][b - p0 - 1][0].x = 0;
         if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
 
         curb = b;
@@ -363,7 +365,6 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
         curp1 = p1;
         fenc->costEst[b - p0][p1 - b] = 0;
         fenc->costEstAq[b - p0][p1 - b] = 0;
-        // TODO: use lowres MVs as motion candidates in full-res search
 
         for (int i = 0; i < heightInCU; i++)
         {
@@ -435,9 +436,8 @@ void LookaheadRow::init()
     completed = 0;
 }
 
-void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2])
+void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2])
 {
-    Lowres *fref0 = weightedRef->isWeighted ? weightedRef : frames[p0];
     Lowres *fref1 = frames[p1];
     Lowres *fenc  = frames[b];
 
@@ -503,14 +503,14 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
                 median_mv(mvp, mvc[0], mvc[1], mvc[2]);
             }
 
-            *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
+            *fenc_costs[i] = me.motionEstimate(i ? fref1 : wfref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
             COPY2_IF_LT(bcost, *fenc_costs[i], listused, i + 1);
         }
         if (bBidir)
         {
             pixel subpelbuf0[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE], subpelbuf1[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
             intptr_t stride0 = X265_LOWRES_CU_SIZE, stride1 = X265_LOWRES_CU_SIZE;
-            pixel *src0 = fref0->lowresMC(pelOffset, *fenc_mvs[0], subpelbuf0, stride0);
+            pixel *src0 = wfref0->lowresMC(pelOffset, *fenc_mvs[0], subpelbuf0, stride0);
             pixel *src1 = fref1->lowresMC(pelOffset, *fenc_mvs[1], subpelbuf1, stride1);
 
             pixel ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
@@ -519,9 +519,9 @@ void LookaheadRow::estimateCUCost(int cux, int cuy, int p0, int p1, int b, bool 
             COPY2_IF_LT(bcost, bicost, listused, 3);
 
             // Try 0,0 candidates
-            src0 = fref0->lowresPlane[0] + pelOffset;
+            src0 = wfref0->lowresPlane[0] + pelOffset;
             src1 = fref1->lowresPlane[0] + pelOffset;
-            primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, fref0->lumaStride, src1, fref1->lumaStride, 0);
+            primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, wfref0->lumaStride, src1, fref1->lumaStride, 0);
             bicost = primitives.satd[LUMA_8x8](fenc->lowresPlane[0] + pelOffset, fenc->lumaStride, ref, X265_LOWRES_CU_SIZE);
             COPY2_IF_LT(bcost, bicost, listused, 3);
         }
@@ -1190,6 +1190,7 @@ void Lookahead::processRow(int row)
 {
     int realrow = heightInCU - 1 - row;
     Lowres *fenc = frames[curb];
+    ReferencePlanes *wfref0 = weightedRef.isWeighted ? &weightedRef : frames[curp0];
 
     if (!fenc->bIntraCalculated)
         fenc->rowSatds[0][0][realrow] = 0;
@@ -1200,7 +1201,8 @@ void Lookahead::processRow(int row)
      * prediction overall. */
     for (int i = widthInCU - 1 - lhrows[row].completed; i >= 0; i--)
     {
-        lhrows[row].estimateCUCost(i, realrow, curp0, curp1, curb, bDoSearch);
+        // TODO: use lowres MVs as motion candidates in full-res search
+        lhrows[row].estimateCUCost(frames, wfref0, i, realrow, curp0, curp1, curb, bDoSearch);
         lhrows[row].completed++;
 
         if (lhrows[row].completed >= 2 && row < heightInCU - 1)

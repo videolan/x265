@@ -27,10 +27,8 @@
 
 using namespace x265;
 
-void Lowres::create(TComPic *pic, int bframes, int32_t *aqMode)
+void Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
 {
-    TComPicYuv *orig = pic->getPicYuvOrg();
-
     isLowres = true;
     width = orig->getWidth() / 2;
     lines = orig->getHeight() / 2;
@@ -40,7 +38,6 @@ void Lowres::create(TComPic *pic, int bframes, int32_t *aqMode)
     int cuWidth = (width + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     int cuHeight = (lines + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     int cuCount = cuWidth * cuHeight;
-    extHeight = lines + 2 * orig->getLumaMarginY();
 
     /* rounding the width to multiple of lowres CU size */
     width = cuWidth * X265_LOWRES_CU_SIZE;
@@ -114,19 +111,6 @@ void Lowres::destroy(int bframes)
 
     X265_FREE(qpAqOffset);
     X265_FREE(invQscaleFactor);
-}
-
-void Lowres::initWeighted(Lowres *ref, wpScalingParam *w)
-{
-    isWeighted = true;
-    int correction = (IF_INTERNAL_PREC - X265_DEPTH);
-    for (int i = 0; i < 4; i++)
-    {
-        // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
-        primitives.weightpUniPixel(ref->buffer[i], this->buffer[i], lumaStride, lumaStride, lumaStride, extHeight, w->inputWeight, (1 << (w->log2WeightDenom - 1 + correction)), (w->log2WeightDenom + correction), w->inputOffset);
-    }
-
-    fpelPlane = lowresPlane[0];
 }
 
 // (re) initialize lowres state
