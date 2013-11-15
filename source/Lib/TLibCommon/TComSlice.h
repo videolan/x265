@@ -1251,7 +1251,7 @@ struct WpScalingParam
     // Explicit weighted prediction parameters parsed in slice header,
     // or Implicit weighted prediction parameters (8 bits depth values).
     bool        bPresentFlag;
-    uint32_t        log2WeightDenom;
+    uint32_t    log2WeightDenom;
     int         inputWeight;
     int         inputOffset;
 
@@ -1259,9 +1259,9 @@ struct WpScalingParam
     int         w, o, offset, shift, round;
 
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
-    void setFromWeightAndOffset(int weight, int offset)
+    void setFromWeightAndOffset(int weight, int _offset)
     {
-        inputOffset = offset;
+        inputOffset = _offset;
         log2WeightDenom = 7;
         inputWeight = weight;
         while (log2WeightDenom > 0 && (inputWeight > 127))
