@@ -231,79 +231,6 @@ void transpose32(pixel* dst, pixel* src, intptr_t srcstride)
     transpose16_dummy(dst + 16 * 32 + 16, 32, src + 16 * srcstride + 16, srcstride);
     transpose16_dummy(dst + 16,           32, src + 16 * srcstride,      srcstride);
 }
-
-void blockfill_s_4(int16_t *dst, intptr_t dstride, int16_t val)
-{
-    __m128i T00;
-
-    T00 = _mm_cvtsi32_si128(val);
-    T00 = _mm_shufflelo_epi16(T00, 0);
-
-    _mm_storel_epi64((__m128i*)&dst[0 * dstride], T00);
-    _mm_storel_epi64((__m128i*)&dst[1 * dstride], T00);
-    _mm_storel_epi64((__m128i*)&dst[2 * dstride], T00);
-    _mm_storel_epi64((__m128i*)&dst[3 * dstride], T00);
-}
-
-void blockfill_s_8(int16_t *dst, intptr_t dstride, int16_t val)
-{
-    __m128i T00;
-
-    T00 = _mm_cvtsi32_si128(val);
-    T00 = _mm_shufflelo_epi16(T00, 0);
-    T00 = _mm_shuffle_epi32(T00, 0);
-
-    _mm_storeu_si128((__m128i*)&dst[0 * dstride], T00);
-    _mm_storeu_si128((__m128i*)&dst[1 * dstride], T00);
-    _mm_storeu_si128((__m128i*)&dst[2 * dstride], T00);
-    _mm_storeu_si128((__m128i*)&dst[3 * dstride], T00);
-    _mm_storeu_si128((__m128i*)&dst[4 * dstride], T00);
-    _mm_storeu_si128((__m128i*)&dst[5 * dstride], T00);
-    _mm_storeu_si128((__m128i*)&dst[6 * dstride], T00);
-    _mm_storeu_si128((__m128i*)&dst[7 * dstride], T00);
-}
-
-void blockfill_s_16(int16_t *dst, intptr_t dstride, int16_t val)
-{
-    __m128i T00;
-
-    T00 = _mm_cvtsi32_si128(val);
-    T00 = _mm_shufflelo_epi16(T00, 0);
-    T00 = _mm_shuffle_epi32(T00, 0);
-
-    for (int i = 0; i < 16; i += 4)
-    {
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride + 8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride + 8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 2) * dstride], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 2) * dstride + 8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 3) * dstride], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 3) * dstride + 8], T00);
-    }
-}
-
-void blockfill_s_32(int16_t *dst, intptr_t dstride, int16_t val)
-{
-    __m128i T00;
-
-    T00 = _mm_cvtsi32_si128(val);
-    T00 = _mm_shufflelo_epi16(T00, 0);
-    T00 = _mm_shuffle_epi32(T00, 0);
-
-    for (int i = 0; i < 32; i += 2)
-    {
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride +  8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride + 16], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 0) * dstride + 24], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride +  8], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride + 16], T00);
-        _mm_storeu_si128((__m128i*)&dst[(i + 1) * dstride + 24], T00);
-    }
-}
 #endif // if !HIGH_BIT_DEPTH
 }
 
@@ -318,10 +245,6 @@ void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
     p.transpose[1] = transpose8;
     p.transpose[2] = transpose16;
     p.transpose[3] = transpose32;
-    p.blockfill_s[BLOCK_4x4]   = blockfill_s_4;
-    p.blockfill_s[BLOCK_8x8]   = blockfill_s_8;
-    p.blockfill_s[BLOCK_16x16] = blockfill_s_16;
-    p.blockfill_s[BLOCK_32x32] = blockfill_s_32;
 #endif /* if HIGH_BIT_DEPTH */
 }
 }
