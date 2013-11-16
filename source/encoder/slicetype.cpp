@@ -270,23 +270,19 @@ void Lookahead::weightsAnalyse(int b, int p0)
     fencMean = (float)fenc->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
     refMean  = (float)ref->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
 
+    /* Early termination */
+    if (fabsf(refMean - fencMean) < 0.5f && fabsf(1.f - guessScale) < epsilon)
+        return;
+
     /* Don't check chroma in lookahead, or if there wasn't a luma weight. */
     int minoff = 0, minscale, mindenom;
     unsigned int minscore = 0, origscore = 1;
     int found = 0;
 
-    /* Early termination */
-    if (fabsf(refMean - fencMean) < 0.5f && fabsf(1.f - guessScale) < epsilon)
-        return;
-
     w.setFromWeightAndOffset((int)(guessScale * 128 + 0.5), 0);
     mindenom = w.log2WeightDenom;
     minscale = w.inputWeight;
 
-    if (!fenc->bIntraCalculated)
-    {
-        estimateFrameCost(b, b, b, 0);
-    }
     pixel *mcbuf = frames[p0]->fpelPlane;
     origscore = minscore = weightCostLuma(b, mcbuf, NULL);
 
@@ -351,7 +347,13 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty)
     {
         weightedRef.isWeighted = false;
         if (cfg->param.bEnableWeightedPred && b == p1 && b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF)
+        {
+            if (!fenc->bIntraCalculated)
+            {
+                estimateFrameCost(b, b, b, 0);
+            }
             weightsAnalyse(b, p0);
+        }
 
         /* For each list, check to see whether we have lowres motion-searched this reference */
         bDoSearch[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
