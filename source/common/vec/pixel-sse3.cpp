@@ -484,19 +484,6 @@ void getResidual32(pixel *fenc, pixel *pred, int16_t *resi, int stride)
     }
 }
 
-void getResidual64(pixel *fenc, pixel *pred, int16_t *resi, int stride)
-{
-    __m128i T00, T01, T02, T03, T04;
-
-    for (int i = 0; i < 64; i += 2)
-    {
-        RESIDUAL_2x16(i, 0);
-        RESIDUAL_2x16(i, 16);
-        RESIDUAL_2x16(i, 32);
-        RESIDUAL_2x16(i, 48);
-    }
-}
-
 void calcRecons4(pixel* pred, int16_t* resi, pixel* reco, int16_t* recQt, pixel* recIPred, int stride, int recstride, int predstride)
 {
     for (int y = 0; y < 4; y++)
@@ -628,12 +615,12 @@ void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
     p.calcresidual[BLOCK_8x8] = getResidual8;
     p.calcresidual[BLOCK_16x16] = getResidual16;
     p.calcresidual[BLOCK_32x32] = getResidual32;
-    p.calcresidual[BLOCK_64x64] = getResidual64;
+    p.calcresidual[BLOCK_64x64] = NULL;
     p.calcrecon[BLOCK_4x4] = calcRecons4;
     p.calcrecon[BLOCK_8x8] = calcRecons8;
     p.calcrecon[BLOCK_16x16] = calcRecons<16>;
     p.calcrecon[BLOCK_32x32] = calcRecons<32>;
-    p.calcrecon[BLOCK_64x64] = calcRecons<64>;
+    p.calcrecon[BLOCK_64x64] = NULL;
     p.blockfill_s[BLOCK_4x4]   = blockfill_s_4;
     p.blockfill_s[BLOCK_8x8]   = blockfill_s_8;
     p.blockfill_s[BLOCK_16x16] = blockfill_s_16;

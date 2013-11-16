@@ -3,6 +3,7 @@
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -597,7 +598,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.calcrecon[BLOCK_16x16] = x265_calcRecons16_sse4;
         p.calcrecon[BLOCK_32x32] = x265_calcRecons32_sse4;
-        p.calcrecon[BLOCK_64x64] = x265_calcRecons64_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
