@@ -188,7 +188,7 @@ typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
 
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
-typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, int stride);
+typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
 typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);

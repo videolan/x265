@@ -357,3 +357,195 @@ cglobal calcRecons32
     dec         t8d
     jnz        .loop
     RET
+
+
+;-----------------------------------------------------------------------------
+; void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal getResidual4, 4,4,5
+    pxor        m0, m0
+
+    ; row 0-1
+    movd        m1, [r0]
+    movd        m2, [r0 + r3]
+    movd        m3, [r1]
+    movd        m4, [r1 + r3]
+    punpckldq   m1, m2
+    punpcklbw   m1, m0
+    punpckldq   m3, m4
+    punpcklbw   m3, m0
+    psubw       m1, m3
+    movlps      [r2], m1
+    movhps      [r2 + r3 * 2], m1
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 4]
+
+    ; row 2-3
+    movd        m1, [r0]
+    movd        m2, [r0 + r3]
+    movd        m3, [r1]
+    movd        m4, [r1 + r3]
+    punpckldq   m1, m2
+    punpcklbw   m1, m0
+    punpckldq   m3, m4
+    punpcklbw   m3, m0
+    psubw       m1, m3
+    movlps      [r2], m1
+    movhps      [r2 + r3 * 2], m1
+
+    RET
+
+
+INIT_XMM sse2
+cglobal getResidual8, 4,4,5
+    pxor        m0, m0
+
+%assign x 0
+%rep 8/2
+    ; row 0-1
+    movh        m1, [r0]
+    movh        m2, [r0 + r3]
+    movh        m3, [r1]
+    movh        m4, [r1 + r3]
+    punpcklbw   m1, m0
+    punpcklbw   m2, m0
+    punpcklbw   m3, m0
+    punpcklbw   m4, m0
+    psubw       m1, m3
+    psubw       m2, m4
+    movu        [r2], m1
+    movu        [r2 + r3 * 2], m2
+%assign x x+1
+%if (x != 4)
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 4]
+%endif
+%endrep
+    RET
+
+
+INIT_XMM sse4
+cglobal getResidual16, 4,5,8
+    mov         r4d, 16/4
+    pxor        m0, m0
+.loop:
+    ; row 0-1
+    movu        m1, [r0]
+    movu        m2, [r0 + r3]
+    movu        m3, [r1]
+    movu        m4, [r1 + r3]
+    pmovzxbw    m5, m1
+    punpckhbw   m1, m0
+    pmovzxbw    m6, m2
+    punpckhbw   m2, m0
+    pmovzxbw    m7, m3
+    punpckhbw   m3, m0
+    psubw       m5, m7
+    psubw       m1, m3
+    pmovzxbw    m7, m4
+    punpckhbw   m4, m0
+    psubw       m6, m7
+    psubw       m2, m4
+
+    movu        [r2], m5
+    movu        [r2 + 16], m1
+    movu        [r2 + r3 * 2], m6
+    movu        [r2 + r3 * 2 + 16], m2
+
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 4]
+
+    ; row 2-3
+    movu        m1, [r0]
+    movu        m2, [r0 + r3]
+    movu        m3, [r1]
+    movu        m4, [r1 + r3]
+    pmovzxbw    m5, m1
+    punpckhbw   m1, m0
+    pmovzxbw    m6, m2
+    punpckhbw   m2, m0
+    pmovzxbw    m7, m3
+    punpckhbw   m3, m0
+    psubw       m5, m7
+    psubw       m1, m3
+    pmovzxbw    m7, m4
+    punpckhbw   m4, m0
+    psubw       m6, m7
+    psubw       m2, m4
+
+    movu        [r2], m5
+    movu        [r2 + 16], m1
+    movu        [r2 + r3 * 2], m6
+    movu        [r2 + r3 * 2 + 16], m2
+
+    dec         r4d
+
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 4]
+
+    jnz        .loop
+    RET
+
+
+INIT_XMM sse4
+cglobal getResidual32, 4,5,7
+    mov         r4d, 32/2
+    pxor        m0, m0
+.loop:
+    movu        m1, [r0]
+    movu        m2, [r0 + 16]
+    movu        m3, [r1]
+    movu        m4, [r1 + 16]
+    pmovzxbw    m5, m1
+    punpckhbw   m1, m0
+    pmovzxbw    m6, m3
+    punpckhbw   m3, m0
+    psubw       m5, m6
+    psubw       m1, m3
+    movu        [r2 + 0 * 16], m5
+    movu        [r2 + 1 * 16], m1
+
+    pmovzxbw    m5, m2
+    punpckhbw   m2, m0
+    pmovzxbw    m6, m4
+    punpckhbw   m4, m0
+    psubw       m5, m6
+    psubw       m2, m4
+    movu        [r2 + 2 * 16], m5
+    movu        [r2 + 3 * 16], m2
+
+    movu        m1, [r0 + r3]
+    movu        m2, [r0 + r3 + 16]
+    movu        m3, [r1 + r3]
+    movu        m4, [r1 + r3 + 16]
+    pmovzxbw    m5, m1
+    punpckhbw   m1, m0
+    pmovzxbw    m6, m3
+    punpckhbw   m3, m0
+    psubw       m5, m6
+    psubw       m1, m3
+    movu        [r2 + r3 * 2 + 0 * 16], m5
+    movu        [r2 + r3 * 2 + 1 * 16], m1
+
+    pmovzxbw    m5, m2
+    punpckhbw   m2, m0
+    pmovzxbw    m6, m4
+    punpckhbw   m4, m0
+    psubw       m5, m6
+    psubw       m2, m4
+    movu        [r2 + r3 * 2 + 2 * 16], m5
+    movu        [r2 + r3 * 2 + 3 * 16], m2
+
+    dec         r4d
+
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 4]
+
+    jnz        .loop
+    RET

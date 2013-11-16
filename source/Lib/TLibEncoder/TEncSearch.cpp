@@ -463,7 +463,9 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     }
 
     //===== get residual signal =====
-
+    assert(!((uint32_t)fenc & (width - 1)));
+    assert(!((uint32_t)pred & (width - 1)));
+    assert(!((uint32_t)residual & (width - 1)));
     primitives.calcresidual[(int)g_convertToBit[width]](fenc, pred, residual, stride);
 
     //===== transform and quantization =====
@@ -590,6 +592,9 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     }
 
     //===== get residual signal =====
+    assert(!((uint32_t)fenc & (width - 1)));
+    assert(!((uint32_t)pred & (width - 1)));
+    assert(!((uint32_t)residual & (width - 1)));
     int size = g_convertToBit[width];
     primitives.calcresidual[size](fenc, pred, residual, stride);
 
