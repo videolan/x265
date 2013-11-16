@@ -768,8 +768,6 @@ char *x265_param2string(x265_param *p)
 
     BOOL(p->bEnableWavefront, "wpp");
     s += sprintf(s, " fps=%d", p->frameRate);
-    s += sprintf(s, " threads=%d", p->poolNumThreads);
-    s += sprintf(s, " frame-threads=%d", p->frameNumThreads);
     s += sprintf(s, " ctu=%d", p->maxCUSize);
     s += sprintf(s, " tu-intra-depth=%d", p->tuQTMaxIntraDepth);
     s += sprintf(s, " tu-inter-depth=%d", p->tuQTMaxInterDepth);
