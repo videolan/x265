@@ -73,7 +73,7 @@ if(INTEL_CXX AND UNIX)
 elseif(CLANG)
     # treat clang roughly like gcc
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Wshadow -mstackrealign -ffast-math)
+    add_definitions(-Wall -Wextra -Wshadow -ffast-math)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -Wextra -Wshadow -mstackrealign -ffast-math)
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
