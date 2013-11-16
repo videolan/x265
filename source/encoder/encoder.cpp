@@ -1063,7 +1063,7 @@ void Encoder::configure(x265_param *_param)
     {
         _param->keyframeMin = _param->keyframeMax;
     }
-    if (_param->keyframeMin == 1)
+    if (_param->keyframeMax <= 1)
     {
         // disable lookahead for all-intra encodes
         _param->bFrameAdaptive = 0;

@@ -784,7 +784,7 @@ void Lookahead::slicetypeDecide()
     }
 
     // Fixed GOP structures for when B-Adapt and/or lookahead are disabled
-    if (numDecided == 0 || cfg->param.keyframeMax == 1)
+    if (numDecided == 0 || cfg->param.keyframeMax <= 1)
     {
         TComPic *pic = inputQueue.popFront();
         pic->m_lowres.sliceType = X265_TYPE_I;
