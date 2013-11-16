@@ -239,10 +239,10 @@ INIT_XMM sse4
 cglobal calcRecons16
 %if ARCH_X86_64 == 1
     DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,5
+    PROLOGUE 6,9,3
 %else
     DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,5
+    PROLOGUE 6,7,3
     %define t6      r6m
     %define t6d     r6d
     %define t7      r7m
@@ -265,10 +265,8 @@ cglobal calcRecons16
     movu        m2, [t0]
     pmovzxbw    m1, m2
     punpckhbw   m2, m0
-    movu        m3, [t1]
-    movu        m4, [t1 + 16]
-    paddw       m1, m3
-    paddw       m2, m4
+    paddw       m1, [t1]
+    paddw       m2, [t1 + 16]
     packuswb    m1, m2
 
     ; store recon[] and recipred[]
@@ -296,10 +294,10 @@ INIT_XMM sse4
 cglobal calcRecons32
 %if ARCH_X86_64 == 1
     DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,7
+    PROLOGUE 6,9,5
 %else
     DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,7
+    PROLOGUE 6,7,5
     %define t6      r6m
     %define t6d     r6d
     %define t7      r7m
@@ -326,16 +324,12 @@ cglobal calcRecons32
     pmovzxbw    m3, m4
     punpckhbw   m4, m0
 
-    movu        m5, [t1 + 0 * 16]
-    movu        m6, [t1 + 1 * 16]
-    paddw       m1, m5
-    paddw       m2, m6
+    paddw       m1, [t1 + 0 * 16]
+    paddw       m2, [t1 + 1 * 16]
     packuswb    m1, m2
 
-    movu        m5, [t1 + 2 * 16]
-    movu        m6, [t1 + 3 * 16]
-    paddw       m3, m5
-    paddw       m4, m6
+    paddw       m3, [t1 + 2 * 16]
+    paddw       m4, [t1 + 3 * 16]
     packuswb    m3, m4
 
     ; store recon[] and recipred[]

@@ -502,6 +502,8 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     }
 
     //===== reconstruction =====
+    assert(((uint32_t)residual & (width - 1)) == 0);
+    assert(width <= 32);
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
 
     //===== update distortion =====
@@ -636,6 +638,8 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     }
 
     //===== reconstruction =====
+    assert(((uint32_t)residual & (width - 1)) == 0);
+    assert(width <= 32);
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, MAX_CU_SIZE / 2, reconIPredStride);
 
     //===== update distortion =====
