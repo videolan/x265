@@ -229,6 +229,8 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_CSP_VFLIP          0x1000  /* the csp is vertically flipped */
 #define X265_CSP_HIGH_DEPTH     0x2000  /* the csp has a depth of 16 bits per pixel component */
 
+static const char * const x265_source_csp_names[] = { "i420", "i422", "i444", 0 };
+
 typedef struct
 {
     const char *name;

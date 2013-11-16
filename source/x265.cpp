@@ -350,7 +350,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *inputRes = NULL;
     const char *preset = "medium";
     const char *tune = "psnr";
-    const char *inputCsp = NULL;
 
     /* Presets are applied before all other options. */
     for (optind = 0;; )
@@ -432,7 +431,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("input-depth") param->inputBitDepth = (uint32_t)atoi(optarg);
             OPT("recon-depth") reconFileBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
-            OPT("input-csp") inputCsp = optarg;
             OPT("y4m") bForceY4m = true;
             else
                 berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
@@ -481,8 +479,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
     else if (inputRes)
     {
-        if (inputCsp)
-            parseCspName(inputCsp, &param->sourceCsp);
         this->input->setColorSpace(param->sourceCsp);
         sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
         this->input->setDimensions(param->sourceWidth, param->sourceHeight);

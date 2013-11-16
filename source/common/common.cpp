@@ -52,6 +52,9 @@ int64_t x265_mdate(void)
 #endif
 }
 
+static int parseCspName(const char *arg, int& error);
+static int parseName(const char *arg, const char * const * names, int& error);
+
 using namespace x265;
 
 #define X265_ALIGNBYTES 32
@@ -693,7 +696,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);
     OPT("tu-intra-depth") p->tuQTMaxIntraDepth = (uint32_t)atoi(value);
     OPT("tu-inter-depth") p->tuQTMaxInterDepth = (uint32_t)atoi(value);
-    OPT("me") p->searchMethod = atoi(value);
     OPT("subme") p->subpelRefine = atoi(value);
     OPT("merange") p->searchRange = atoi(value);
     OPT("rect") p->bEnableRectInter = bvalue;
@@ -743,6 +745,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->rc.rateControlMode = X265_RC_CQP;
         p->rc.aqMode = X265_AQ_NONE;
     }
+    OPT("input-csp") p->sourceCsp = ::parseCspName(value, berror);
+    OPT("me")        p->searchMethod = ::parseName(value, x265_motion_est_names, berror);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -805,14 +809,6 @@ char *x265_param2string(x265_param *p)
     return buf;
 }
 
-const char * const source_csp_names[] =
-{
-    "i420",
-    "i422",
-    "i444",
-    0
-};
-
 const uint8_t source_csp_fix[] =
 {
     X265_CSP_I420,
@@ -820,17 +816,32 @@ const uint8_t source_csp_fix[] =
     X265_CSP_I444
 };
 
-void parseCspName(const char *arg, int *dst)
+static int parseCspName(const char *arg, int& error)
 {
-    int csp = 0;
-
-    for (int i = 0; source_csp_names[i]; i++)
+    for (int i = 0; x265_source_csp_names[i]; i++)
     {
-        if (!strcmp(arg, source_csp_names[i]))
+        if (!strcmp(arg, x265_source_csp_names[i]))
         {
-            csp = i;
+            return source_csp_fix[i];
         }
     }
 
-    *dst = source_csp_fix[csp];
+    error = 1;
+    return X265_CSP_I420;
+}
+
+static int parseName(const char *arg, const char * const * names, int& error)
+{
+    for (int i = 0; names[i]; i++)
+    {
+        if (!strcmp(arg, names[i]))
+        {
+            return i;
+        }
+    }
+
+    int a = atoi(arg);
+    if (a == 0 && strcmp(arg, "0"))
+        error = 1;
+    return a;
 }
