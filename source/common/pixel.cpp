@@ -457,7 +457,7 @@ void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, i
 }
 
 template<int blockSize>
-void getResidual(pixel *fenc, pixel *pred, int16_t *residual, int stride)
+void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 {
     for (int uiY = 0; uiY < blockSize; uiY++)
     {
