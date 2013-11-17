@@ -3586,7 +3586,7 @@ void intra_pred_planar8(pixel* above, pixel* left, pixel* dst, intptr_t dstStrid
 
 #define COMP_PRED_PLANAR_ROW(X) \
     v_horPred = permute8s<X, X, X, X, X, X, X, X>(v_horPred4); \
-    v_rightColumnN = permute8s<X, X, X, X, X, X, X, X>(v_rightColumn) * v_multi; \
+    v_rightColumnN = permute8s<X, X, X, X, X, X, X, X>(v_rightColumn) * Vec8s(v_multi); \
     v_horPred = _mm_add_epi16(v_horPred, v_rightColumnN); \
     v_topRow = _mm_add_epi16(v_topRow, v_bottomRow); \
     v_im4 = _mm_srai_epi16(_mm_add_epi16(v_horPred, v_topRow), (3 + 1)); \
