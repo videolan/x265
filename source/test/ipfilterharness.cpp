@@ -74,11 +74,11 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_ps_t ref, ipfilter_ps_t 
     int rand_width = rand() % 100;                  // Randomly generated Width
     int16_t rand_val, rand_srcStride, rand_dstStride;
 
+    memset(IPF_vec_output_s, 0, ipf_t_size);        // Initialize output buffer to zero
+    memset(IPF_C_output_s, 0, ipf_t_size);          // Initialize output buffer to zero
+
     for (int i = 0; i <= 100; i++)
     {
-        memset(IPF_vec_output_s, 0, ipf_t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output_s, 0, ipf_t_size);        // Initialize output buffer to zero
-
         rand_val = rand() % 4;                      // Random offset in the filter
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
@@ -107,17 +107,17 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
 {
     int rand_val, rand_srcStride, rand_dstStride;
 
+    memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
+    memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
+
     for (int i = 0; i <= 1000; i++)
     {
-        int rand_height = rand() % 100;                 // Randomly generated Height
-        int rand_width = rand() % 100;                  // Randomly generated Width
+        int rand_height = rand() % 100;           // Randomly generated Height
+        int rand_width = rand() % 100;            // Randomly generated Width
 
-        memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
-
-        rand_val = rand() % 4;                     // Random offset in the filter
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100;              // Randomly generated dstStride
+        rand_val = rand() % 4;                    // Random offset in the filter
+        rand_srcStride = rand() % 100;            // Randomly generated srcStride
+        rand_dstStride = rand() % 100;            // Randomly generated dstStride
 
         rand_width &= ~3;
         if (rand_width < 4)
@@ -155,10 +155,11 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_
     int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
     int16_t rand_srcStride, rand_dstStride;
 
+    memset(IPF_vec_output_s, 0, ipf_t_size);                     // Initialize output buffer to zero
+    memset(IPF_C_output_s, 0, ipf_t_size);                       // Initialize output buffer to zero
+
     for (int i = 0; i <= 100; i++)
     {
-        memset(IPF_vec_output_s, 0, ipf_t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output_s, 0, ipf_t_size);        // Initialize output buffer to zero
 
         rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
@@ -189,13 +190,13 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
     const int min_size = isChroma ? 2 : 4;
     const int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
 
+    memset(IPF_vec_output_s, 0, ipf_t_size);                     // Initialize output buffer to zero
+    memset(IPF_C_output_s, 0, ipf_t_size);                       // Initialize output buffer to zero
+
     for (int i = 0; i <= 1000; i++)
     {
         int rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
         int rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
-
-        memset(IPF_vec_output_s, 0, ipf_t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output_s, 0, ipf_t_size);        // Initialize output buffer to zero
 
         rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
         if (rand_srcStride < rand_width)
@@ -231,11 +232,11 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_
     int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
     int16_t rand_srcStride, rand_dstStride;
 
+    memset(IPF_vec_output_p, 0, ipf_t_size);                     // Initialize output buffer to zero
+    memset(IPF_C_output_p, 0, ipf_t_size);                       // Initialize output buffer to zero
+
     for (int i = 0; i <= 100; i++)
     {
-        memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
-
         rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
 
@@ -271,13 +272,13 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_ss_t ref, ipfilter_ss_t 
         short_buff[i] = rand() % (2 * max_filter_val) - max_filter_val;
     }
 
+    memset(IPF_vec_output_s, 0xCD, ipf_t_size);      // Initialize output buffer to zero
+    memset(IPF_C_output_s, 0xCD, ipf_t_size);        // Initialize output buffer to zero
+
     for (int i = 0; i <= 1000; i++)
     {
-        int rand_height = rand() % 100;                 // Randomly generated Height
-        int rand_width = rand() % 100;                  // Randomly generated Width
-
-        memset(IPF_vec_output_s, 0xCD, ipf_t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output_s, 0xCD, ipf_t_size);        // Initialize output buffer to zero
+        int rand_height = rand() % 100;             // Randomly generated Height
+        int rand_width = rand() % 100;              // Randomly generated Width
 
         rand_val = rand() % 4;                      // Random offset in the filter
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
@@ -598,7 +599,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipfilter_ps[value], opt.ipfilter_ps[value]))
             {
-                printf("ipfilter_ps %d failed\n", 8 / (value + 1));
+                printf("ipfilter_ps[%d] failed\n", value);
                 return false;
             }
         }
@@ -610,7 +611,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipfilter_sp[value], opt.ipfilter_sp[value]))
             {
-                printf("ipfilter_sp %d failed\n", 8 / (value + 1));
+                printf("ipfilter_sp[%d] failed\n", value);
                 return false;
             }
         }
@@ -622,7 +623,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipfilter_ss[value], opt.ipfilter_ss[value], (value == FILTER_V_S_S_4)))
             {
-                printf("ipfilter_ss %d failed\n", 8 / (value + 1));
+                printf("ipfilter_ss[%d] failed\n", value);
                 return false;
             }
         }
