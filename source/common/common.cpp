@@ -667,7 +667,8 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableWeightedPred, "weightp");
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
     TOOLOPT(param->rc.aqMode, "aq-mode");
-    fprintf(stderr, "aq-strength=%.2f ", param->rc.aqStrength);
+    if (param->rc.aqMode)
+        fprintf(stderr, "aq-strength=%.2f ", param->rc.aqStrength);
     fprintf(stderr, "\n");
     fflush(stderr);
 }
