@@ -64,6 +64,7 @@ protected:
     bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
 
     bool check_pixel_scale_pp(scale_t ref, scale_t opt);
+    bool check_transpose(transpose_t ref, transpose_t opt);
 public:
 
     PixelHarness();

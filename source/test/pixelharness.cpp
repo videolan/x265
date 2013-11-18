@@ -632,6 +632,29 @@ bool PixelHarness::check_pixel_scale_pp(scale_t ref, scale_t opt)
     return true;
 }
 
+bool PixelHarness::check_transpose(transpose_t ref, transpose_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0, sizeof(ref_dest));
+    memset(opt_dest, 0, sizeof(opt_dest));
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        opt(opt_dest, pbuf1 + j, STRIDE);
+        ref(ref_dest, pbuf1 + j, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -856,6 +879,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_blockfill_s(ref.blockfill_s[i], opt.blockfill_s[i]))
             {
                 printf("blockfill_s[%dx%d]: failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+        if (opt.transpose[i])
+        {
+            if (!check_transpose(ref.transpose[i], opt.transpose[i]))
+            {
+                printf("transpose[%dx%d] failed\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -1128,6 +1159,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("blkfill[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.blockfill_s[i], ref.blockfill_s[i], sbuf1, 64, SHORT_MAX);
+        }
+        if (opt.transpose[i])
+        {
+            printf("transpose[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.transpose[i], ref.transpose[i], pbuf1, pbuf2, STRIDE);
         }
     }
 
