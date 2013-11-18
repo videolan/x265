@@ -274,6 +274,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
 
         if (!strcmp(preset, "ultrafast"))
         {
+            param->lookaheadDepth = 10;
             param->maxCUSize = 32;
             param->searchRange = 24;
             param->bFrameAdaptive = 0;
@@ -295,6 +296,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "superfast"))
         {
+            param->lookaheadDepth = 10;
             param->maxCUSize = 32;
             param->searchRange = 24;
             param->bFrameAdaptive = 0;
