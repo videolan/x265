@@ -9943,3 +9943,113 @@ cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
     movu          [r0 + 48],    m4
 
 RET
+
+;-----------------------------------------------------------------
+; void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM ssse3
+cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
+
+    mova        m7,      [deinterleave_shuf]
+    mov         r3d,     32
+.loop
+
+    movu        m0,      [r1]                  ;i
+    movu        m1,      [r1 + 1]              ;j
+    movu        m2,      [r1 + r2]             ;k
+    movu        m3,      [r1 + r2 + 1]         ;l
+    movu        m4,      m0
+    movu        m5,      m2
+
+    pxor        m4,      m1                    ;i^j
+    pxor        m5,      m3                    ;k^l
+    por         m4,      m5                    ;ij|kl
+
+    pavgb       m0,      m1                    ;s
+    pavgb       m2,      m3                    ;t
+    movu        m5,      m0
+    pavgb       m0,      m2                    ;(s+t+1)/2
+    pxor        m5,      m2                    ;s^t
+    pand        m4,      m5                    ;(ij|kl)&st
+    pand        m4,      [hmul_16p]
+    psubb       m0,      m4                    ;Result
+
+    movu        m1,      [r1 + 16]             ;i
+    movu        m2,      [r1 + 16 + 1]         ;j
+    movu        m3,      [r1 + r2 + 16]        ;k
+    movu        m4,      [r1 + r2 + 16 + 1]    ;l
+    movu        m5,      m1
+    movu        m6,      m3
+
+    pxor        m5,      m2                    ;i^j
+    pxor        m6,      m4                    ;k^l
+    por         m5,      m6                    ;ij|kl
+
+    pavgb       m1,      m2                    ;s
+    pavgb       m3,      m4                    ;t
+    movu        m6,      m1
+    pavgb       m1,      m3                    ;(s+t+1)/2
+    pxor        m6,      m3                    ;s^t
+    pand        m5,      m6                    ;(ij|kl)&st
+    pand        m5,      [hmul_16p]
+    psubb       m1,      m5                    ;Result
+
+    pshufb      m0,      m0,    m7
+    pshufb      m1,      m1,    m7
+
+    punpcklqdq    m0,           m1
+    movu          [r0],         m0
+
+    movu        m0,      [r1 + 32]             ;i
+    movu        m1,      [r1 + 32 + 1]         ;j
+    movu        m2,      [r1 + r2 + 32]        ;k
+    movu        m3,      [r1 + r2 + 32 + 1]    ;l
+    movu        m4,      m0
+    movu        m5,      m2
+
+    pxor        m4,      m1                    ;i^j
+    pxor        m5,      m3                    ;k^l
+    por         m4,      m5                    ;ij|kl
+
+    pavgb       m0,      m1                    ;s
+    pavgb       m2,      m3                    ;t
+    movu        m5,      m0
+    pavgb       m0,      m2                    ;(s+t+1)/2
+    pxor        m5,      m2                    ;s^t
+    pand        m4,      m5                    ;(ij|kl)&st
+    pand        m4,      [hmul_16p]
+    psubb       m0,      m4                    ;Result
+
+    movu        m1,      [r1 + 48]             ;i
+    movu        m2,      [r1 + 48 + 1]         ;j
+    movu        m3,      [r1 + r2 + 48]        ;k
+    movu        m4,      [r1 + r2 + 48 + 1]    ;l
+    movu        m5,      m1
+    movu        m6,      m3
+
+    pxor        m5,      m2                    ;i^j
+    pxor        m6,      m4                    ;k^l
+    por         m5,      m6                    ;ij|kl
+
+    pavgb       m1,      m2                    ;s
+    pavgb       m3,      m4                    ;t
+    movu        m6,      m1
+    pavgb       m1,      m3                    ;(s+t+1)/2
+    pxor        m6,      m3                    ;s^t
+    pand        m5,      m6                    ;(ij|kl)&st
+    pand        m5,      [hmul_16p]
+    psubb       m1,      m5                    ;Result
+
+    pshufb      m0,      m0,    m7
+    pshufb      m1,      m1,    m7
+
+    punpcklqdq    m0,           m1
+    movu          [r0 + 16],    m0
+
+    lea    r0,    [r0 + 32]
+    lea    r1,    [r1 + 2 * r2]
+    dec    r3d
+
+    jnz    .loop
+
+RET

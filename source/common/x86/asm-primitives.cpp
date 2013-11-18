@@ -575,6 +575,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         PIXEL_AVG_W4(ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
+        p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
 
         p.sad_x4[LUMA_8x4] = x265_pixel_sad_x4_8x4_ssse3;
         p.sad_x4[LUMA_8x8] = x265_pixel_sad_x4_8x8_ssse3;
