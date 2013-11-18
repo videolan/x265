@@ -250,7 +250,7 @@ struct EncoderPrimitives
     copy_ps_t       chroma_copy_ps[NUM_CHROMA_PARTITIONS];
 
     pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
-    pixel_sub_ps_t  chroma_sub_ps[NUM_CHROMA_PARTITIONS];
+    pixel_sub_ps_t  chroma_sub_ps[NUM_CSP][NUM_CHROMA_PARTITIONS];
 
     ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
     ipfilter_sp_t   ipfilter_sp[NUM_IPFILTER_S_P];

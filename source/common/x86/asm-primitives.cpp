@@ -141,8 +141,7 @@ extern "C" {
     p.chroma_hps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.chroma_vpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu; \
     p.chroma_vps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu; \
-    p.chroma_copy_ps[CHROMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu; \
-    p.chroma_sub_ps[CHROMA_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu;
+    p.chroma_copy_ps[CHROMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu; 
 
 #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     p.chroma_vsp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu;
@@ -271,6 +270,35 @@ extern "C" {
     SETUP_CHROMA_FROM_LUMA(48, 64, 24, 32, cpu); \
     SETUP_CHROMA_FROM_LUMA(64, 16, 32, 8,  cpu); \
     SETUP_CHROMA_FROM_LUMA(16, 64, 8,  32, cpu);
+
+#define SETUP_CHROMA_LUMA(W1, H1, W2, H2, cpu) \
+    p.chroma_sub_ps[X265_CSP_I420][LUMA_ ## W1 ## x ## H1] = x265_pixel_sub_ps_ ## W2 ## x ## H2 ## cpu;
+
+#define CHROMA_PIXELSUB_PS(cpu) \
+    SETUP_CHROMA_LUMA(8,   8, 4,  4,  cpu); \
+    SETUP_CHROMA_LUMA(8,   4, 4,  2,  cpu); \
+    SETUP_CHROMA_LUMA(4,   8, 2,  4,  cpu); \
+    SETUP_CHROMA_LUMA(16, 16, 8,  8,  cpu); \
+    SETUP_CHROMA_LUMA(16,  8, 8,  4,  cpu); \
+    SETUP_CHROMA_LUMA(8,  16, 4,  8,  cpu); \
+    SETUP_CHROMA_LUMA(16, 12, 8,  6,  cpu); \
+    SETUP_CHROMA_LUMA(12, 16, 6,  8,  cpu); \
+    SETUP_CHROMA_LUMA(16,  4, 8,  2,  cpu); \
+    SETUP_CHROMA_LUMA(4,  16, 2,  8,  cpu); \
+    SETUP_CHROMA_LUMA(32, 32, 16, 16, cpu); \
+    SETUP_CHROMA_LUMA(32, 16, 16, 8,  cpu); \
+    SETUP_CHROMA_LUMA(16, 32, 8,  16, cpu); \
+    SETUP_CHROMA_LUMA(32, 24, 16, 12, cpu); \
+    SETUP_CHROMA_LUMA(24, 32, 12, 16, cpu); \
+    SETUP_CHROMA_LUMA(32,  8, 16, 4,  cpu); \
+    SETUP_CHROMA_LUMA(8,  32, 4,  16, cpu); \
+    SETUP_CHROMA_LUMA(64, 64, 32, 32, cpu); \
+    SETUP_CHROMA_LUMA(64, 32, 32, 16, cpu); \
+    SETUP_CHROMA_LUMA(32, 64, 16, 32, cpu); \
+    SETUP_CHROMA_LUMA(64, 48, 32, 24, cpu); \
+    SETUP_CHROMA_LUMA(48, 64, 24, 32, cpu); \
+    SETUP_CHROMA_LUMA(64, 16, 32, 8,  cpu); \
+    SETUP_CHROMA_LUMA(16, 64, 8,  32, cpu);
 
 #define LUMA_FILTERS(cpu) \
     SETUP_LUMA_FUNC_DEF(4,   4, cpu); \
@@ -587,6 +615,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_sse4;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse4;
         SA8D_INTER_FROM_BLOCK(sse4);
+
+        CHROMA_PIXELSUB_PS(_sse4);
 
         CHROMA_FILTERS(_sse4);
         LUMA_FILTERS(_sse4);

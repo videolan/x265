@@ -781,12 +781,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.chroma_sub_ps[part])
+    for(int i = 0; i < NUM_CSP; i++)
     {
-        if (!check_pixel_sub_ps(ref.chroma_sub_ps[part], opt.chroma_sub_ps[part]))
+        if (opt.chroma_sub_ps[i][part])
         {
-            printf("chroma_sub_ps[%s] failed\n", chromaPartStr[part]);
-            return false;
+            if (!check_pixel_sub_ps(ref.chroma_sub_ps[i][part], opt.chroma_sub_ps[i][part]))
+            {
+                 printf("chroma_sub_ps[%s][%s] failed\n", colorSpaceNames[i], chromaPartStr[part]);
+                 return false;
+            }
         }
     }
     return true;
@@ -1063,10 +1066,13 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.luma_sub_ps[part], ref.luma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 
-    if (opt.chroma_sub_ps[part])
+    for (int i = 0; i < NUM_CSP; i++)
     {
-        printf("chroma_sub_ps[%s]", chromaPartStr[part]);
-        REPORT_SPEEDUP(opt.chroma_sub_ps[part], ref.chroma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+        if (opt.chroma_sub_ps[i][part])
+        {
+            printf("chroma_sub_ps[%s][%s]", colorSpaceNames[i], chromaPartStr[part]);
+            REPORT_SPEEDUP(opt.chroma_sub_ps[i][part], ref.chroma_sub_ps[i][part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+        }
     }
 }
 
