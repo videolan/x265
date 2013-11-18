@@ -8222,3 +8222,25 @@ cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
     movu          [r0 + 48],    m4
 
 RET
+
+;-----------------------------------------------------------------
+; void transpose_4x4(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose4, 3, 3, 4, dest, src, stride
+
+    movd         m0,    [r1]
+    movd         m1,    [r1 + r2]
+    movd         m2,    [r1 + 2 * r2]
+
+    lea          r1,    [r1 + 2 * r2]
+
+    movd         m3,    [r1 + r2]
+
+    punpcklbw    m0,    m1
+    punpcklbw    m2,    m3
+    punpcklwd    m0,    m2
+
+    movu         [r0],    m0
+
+RET
