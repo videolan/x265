@@ -38,6 +38,11 @@
 #ifndef X265_TENCCU_H
 #define X265_TENCCU_H
 
+#define ANGULAR_MODE_ID 2
+#define AMP_ID 3
+#define INTER_MODES 4
+#define INTRA_MODES 3
+
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComPrediction.h"
@@ -51,6 +56,22 @@
 
 //! \ingroup TLibEncoder
 //! \{
+struct StatisticLog
+{
+    uint64_t cntInter[4];
+    uint64_t cntIntra[4];
+    uint64_t cntSplit[4];
+    uint64_t cuInterDistribution[4][INTER_MODES];
+    uint64_t cuIntraDistribution[4][INTRA_MODES];
+    uint64_t cntIntraNxN;
+    uint64_t cntSkipCu[4];
+    uint64_t cntTotalCu[4];
+
+    StatisticLog()
+    {
+         memset(this, 0, sizeof(StatisticLog));
+    }
+};
 
 namespace x265 {
 // private namespace
@@ -111,6 +132,8 @@ private:
 
 public:
 
+    StatisticLog  m_sliceTypeLog[3];
+    StatisticLog* m_log;
     TEncCu();
 
     void init(Encoder* top);

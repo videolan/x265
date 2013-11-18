@@ -46,11 +46,6 @@
 
 using namespace x265;
 
-#if CU_STAT_LOGFILE
-extern FILE *fp1;
-extern bool mergeFlag;
-UInt64      meCost;
-#endif
 DECLARE_CYCLE_COUNTER(ME);
 
 //! \ingroup TLibEncoder
@@ -2458,9 +2453,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
                 mebits = bits[1];
             }
-#if CU_STAT_LOGFILE
-            meCost += listCost[0];
-#endif
         } // end if bTestNormalMC
 
         if (cu->getPartitionSize(partAddr) != SIZE_2Nx2N)
@@ -2509,9 +2501,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                 cu->setMVPNumSubParts(-1, REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
                 cu->setMVPIdxSubParts(-1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
                 cu->setMVPNumSubParts(-1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
-#if CU_STAT_LOGFILE
-                meCost += mrgCost;
-#endif
                 totalmebits += mrgBits;
             }
             else
@@ -2523,9 +2512,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                     cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(meMvField[0], partSize, partAddr, 0, partIdx);
                     cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(meMvField[1], partSize, partAddr, 0, partIdx);
                 }
-#if CU_STAT_LOGFILE
-                meCost += meCost;
-#endif
                 totalmebits += mebits;
             }
         }

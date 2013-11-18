@@ -27,8 +27,6 @@
 #include <cstdlib>
 #include "x265.h"
 
-#define CU_STAT_LOGFILE 0
-
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define COPY1_IF_LT(x, y) if ((y) < (x)) (x) = (y);

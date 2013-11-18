@@ -159,6 +159,8 @@ public:
     Event                    m_done;
     bool                     m_threadActive;
 
+    int                      m_numRows;
+    CTURow*                  m_rows;
     SEIWriter                m_seiWriter;
     TComSPS                  m_sps;
     TComPPS                  m_pps;
@@ -184,9 +186,7 @@ protected:
     NALUnitEBSP*             m_nalList[MAX_NAL_UNITS];
     int                      m_nalCount;
 
-    int                      m_numRows;
     int                      m_filterRowDelay;
-    CTURow*                  m_rows;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
 };

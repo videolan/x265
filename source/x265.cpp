@@ -144,11 +144,6 @@ static const struct option long_options[] =
     { 0, 0, 0, 0 }
 };
 
-#if CU_STAT_LOGFILE
-FILE* fp = NULL;
-FILE * fp1 = NULL;
-#endif
-
 /* Ctrl-C handler */
 static volatile sig_atomic_t b_ctrl_c /* = 0 */;
 static void sigint_handler(int)
@@ -569,11 +564,6 @@ int main(int argc, char **argv)
 #endif
     PPA_INIT();
 
-#if CU_STAT_LOGFILE
-    fp = fopen("Log_CU_stats.txt", "w");
-    fp1 = fopen("LOG_CU_COST.txt", "w");
-#endif
-
     x265_param param;
     CLIOptions   cliopt;
 
@@ -693,10 +683,6 @@ int main(int argc, char **argv)
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
-#endif
-#if CU_STAT_LOGFILE
-    fclose(fp);
-    fclose(fp1);
 #endif
     return 0;
 }
