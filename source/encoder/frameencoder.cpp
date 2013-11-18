@@ -45,10 +45,10 @@ enum SCALING_LIST_PARAMETER
 FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
     , m_threadActive(true)
+    , m_rows(NULL)
     , m_top(NULL)
     , m_cfg(NULL)
     , m_pic(NULL)
-    , m_rows(NULL)
 {
     for (int i = 0; i < MAX_NAL_UNITS; i++)
     {
