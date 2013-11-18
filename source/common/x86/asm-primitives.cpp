@@ -138,6 +138,7 @@ extern "C" {
 
 #define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
     p.chroma_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
+    p.chroma_hps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.chroma_vpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu; \
     p.chroma_vps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu; \
     p.chroma_copy_ps[CHROMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu; \
