@@ -86,35 +86,12 @@ TComPrediction::~TComPrediction()
     if (m_immedVals)
         X265_FREE(m_immedVals);
 
-    int i, j;
-    for (i = 0; i < 4; i++)
-    {
-        for (j = 0; j < 4; j++)
-        {
-            m_filteredBlock[i][j].destroy();
-        }
-
-        m_filteredBlockTmp[i].destroy();
-    }
 }
 
 void TComPrediction::initTempBuff(int csp)
 {
     if (m_predBuf == NULL)
     {
-        int extWidth  = MAX_CU_SIZE + 16;
-        int extHeight = MAX_CU_SIZE + 1;
-        int i, j;
-        for (i = 0; i < 4; i++)
-        {
-            m_filteredBlockTmp[i].create(extWidth, extHeight + 7, csp);
-
-            for (j = 0; j < 4; j++)
-            {
-                m_filteredBlock[i][j].create(extWidth, extHeight, csp);
-            }
-        }
-
         m_predBufHeight  = ((MAX_CU_SIZE + 2) << 4);
         m_predBufStride = ((MAX_CU_SIZE  + 8) << 4);
         m_predBuf = new Pel[m_predBufStride * m_predBufHeight];
