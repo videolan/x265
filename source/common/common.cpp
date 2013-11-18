@@ -519,8 +519,10 @@ int x265_check_params(x265_param *param)
           "max consecutive bframe count must be 16 or smaller");
     CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
           "Lookahead depth must be less than 256");
-    CHECK(param->rc.aqMode<X265_AQ_NONE || param->rc.aqMode> X265_AQ_VARIANCE,
+    CHECK(param->rc.aqMode < X265_AQ_NONE || param->rc.aqMode > X265_AQ_VARIANCE,
           "Aq-Mode is out of range");
+    CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
+          "Aq-Strength is out of range");
 
     // max CU size should be power of 2
     uint32_t i = param->maxCUSize;
@@ -532,6 +534,16 @@ int x265_check_params(x265_param *param)
     }
 
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
+    if (param->rc.rateControlMode == X265_RC_CQP)
+    {
+        param->rc.aqMode = X265_AQ_NONE;
+        param->rc.bitrate = 0;
+    }
+    if (param->rc.aqStrength == 0)
+    {
+        x265_log(param, X265_LOG_WARNING, "Aq mode specified, but Aq strength is  0, ignored\n" );
+        param->rc.aqMode = 0;
+    }
 
     return check_failed;
 }
@@ -652,7 +664,8 @@ void x265_print_params(x265_param *param)
     }
     TOOLOPT(param->bEnableWeightedPred, "weightp");
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
-    TOOLOPT(param->rc.aqMode, "aq");
+    TOOLOPT(param->rc.aqMode, "aq-mode");
+    fprintf(stderr, "aq-strength=%.2f ", param->rc.aqStrength);
     fprintf(stderr, "\n");
     fflush(stderr);
 }
@@ -729,6 +742,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("psnr") p->bEnablePsnr = bvalue;
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
+    OPT("aq-strength") p->rc.aqStrength = atof(value);
     OPT("crf")
     {
         p->rc.rfConstant = atof(value);
@@ -794,6 +808,8 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableWeightedPred, "weightp");
     s += sprintf(s, " bitrate=%d", p->rc.bitrate);
     s += sprintf(s, " qp=%d", p->rc.qp);
+    s += sprintf(s, " aq-mode=%d", p->rc.aqMode);
+    s += sprintf(s, " aq-strength=%.2f", p->rc.aqStrength);
     s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
     s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
     s += sprintf(s, " rd=%d", p->rdLevel);
