@@ -1360,7 +1360,7 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits)
     for (; nalcount < num; nalcount++)
     {
         const NALUnitEBSP& nalu = *nalunits[nalcount];
-        uint32_t size = 0; /* size of annexB unit in bytes */
+        uint32_t size; /* size of annexB unit in bytes */
 
         static const char start_code_prefix[] = { 0, 0, 0, 1 };
         if (nalcount == 0 || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
@@ -1374,21 +1374,19 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits)
              *    7.4.1.2.3.
              */
             ::memcpy(m_packetData + memsize, start_code_prefix, 4);
-            size += 4;
+            size = 4;
         }
         else
         {
             ::memcpy(m_packetData + memsize, start_code_prefix + 1, 3);
-            size += 3;
+            size = 3;
         }
         memsize += size;
-        uint32_t nalSize = nalu.m_packetSize;
-        ::memcpy(m_packetData + memsize, nalu.m_nalUnitData, nalSize);
-        size += nalSize;
-        memsize += nalSize;
+        ::memcpy(m_packetData + memsize, nalu.m_nalUnitData, nalu.m_packetSize);
+        memsize += nalu.m_packetSize;
 
         m_nals[nalcount].type = nalu.m_nalUnitType;
-        m_nals[nalcount].sizeBytes = size;
+        m_nals[nalcount].sizeBytes = size + nalu.m_packetSize;
     }
 
     /* Setup payload pointers, now that we're done adding content to m_packetData */
