@@ -65,11 +65,11 @@ typedef enum
     NAL_UNIT_INVALID = 64,
 } NalUnitType;
 
-/* The data within the payload is already NAL-encapsulated; the type
- * is merely in the struct for easy access by the calling application.
- * All data returned in an x265_nal_t, including the data in p_payload, is no longer
- * valid after the next call to x265_encoder_encode.  Thus it must be used or copied
- * before calling x265_encoder_encode again. */
+/* The data within the payload is already NAL-encapsulated; the type is merely
+ * in the struct for easy access by the calling application.  All data returned
+ * in an x265_nal, including the data in payload, is no longer valid after the
+ * next call to x265_encoder_encode.  Thus it must be used or copied before
+ * calling x265_encoder_encode again. */
 typedef struct x265_nal
 {
     uint32_t type;        /* NalUnitType */
