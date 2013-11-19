@@ -140,9 +140,9 @@ public:
     void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
     void    copyPartToPartYuv(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
     void    copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t part);
-    void    copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void    copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part);
     void    copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t part);
-    void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part);
 
     void    copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId);
     void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId);

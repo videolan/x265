@@ -260,10 +260,12 @@ void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t w
 
 void TComYuv::copyPartToPartYuv(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
 {
+    int part = partitionFromSizes(width, height);
+
     if (bLuma)
-        copyPartToPartLuma(dstPicYuv, partIdx, width, height);
+        copyPartToPartLuma(dstPicYuv, partIdx, part);
     if (bChroma)
-        copyPartToPartChroma(dstPicYuv, partIdx, width >> m_hChromaShift, height >> m_vChromaShift);
+        copyPartToPartChroma(dstPicYuv, partIdx, part);
 }
 
 void TComYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t part)
@@ -279,7 +281,7 @@ void TComYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t 
     primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
-void TComYuv::copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height)
+void TComYuv::copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part)
 {
     Pel* src = getLumaAddr(partIdx);
     int16_t* dst = dstPicYuv->getLumaAddr(partIdx);
@@ -287,7 +289,6 @@ void TComYuv::copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_
     uint32_t  srcstride = getStride();
     uint32_t  dststride = dstPicYuv->m_width;
 
-    int part = partitionFromSizes(width, height);
     primitives.luma_copy_ps[part](dst, dststride, src, srcstride);
 }
 
@@ -307,7 +308,7 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_
     primitives.chroma_copy_pp[m_csp][part](dstV, dststride, srcV, srcstride);
 }
 
-void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height)
+void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part)
 {
     Pel*   srcU = getCbAddr(partIdx);
     Pel*   srcV = getCrAddr(partIdx);
@@ -317,8 +318,8 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
     uint32_t srcstride = getCStride();
     uint32_t dststride = dstPicYuv->m_cwidth;
 
-    primitives.blockcpy_sp(width, height, dstU, dststride, srcU, srcstride);
-    primitives.blockcpy_sp(width, height, dstV, dststride, srcV, srcstride);
+    primitives.chroma_copy_ps[m_csp][part](dstU, dststride, srcU, srcstride);
+    primitives.chroma_copy_ps[m_csp][part](dstV, dststride, srcV, srcstride);
 }
 
 void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId)

@@ -1125,13 +1125,13 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
         ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
     }
 
+    int part = partitionFromSizes(1 << trSizeLog2, 1 << trSizeLog2);
     //===== copy reconstruction =====
-    m_qtTempTransformSkipTComYuv.copyPartToPartLuma(&m_qtTempTComYuv[qtlayer], absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
+    m_qtTempTransformSkipTComYuv.copyPartToPartLuma(&m_qtTempTComYuv[qtlayer], absPartIdx, part);
 
     if (!bLumaOnly && !bSkipChroma)
     {
-        uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempTComYuv[qtlayer], absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempTComYuv[qtlayer], absPartIdx, part);
     }
 
     uint32_t   zOrder           = cu->getZorderIdxInCU() + absPartIdx;
