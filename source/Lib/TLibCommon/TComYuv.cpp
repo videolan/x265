@@ -103,8 +103,15 @@ void TComYuv::clear()
 
 void TComYuv::copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth, uint32_t partIdx)
 {
+    int width, height;
+
+    width  = m_width >> partDepth;
+    height = m_height >> partDepth;
+
+    int part = partitionFromSizes(width, height);
+
     copyToPicLuma(destPicYuv, cuAddr, absZOrderIdx, partDepth, partIdx);
-    copyToPicChroma(destPicYuv, cuAddr, absZOrderIdx, partDepth, partIdx);
+    copyToPicChroma(destPicYuv, cuAddr, absZOrderIdx, part, partDepth, partIdx);
 }
 
 void TComYuv::copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth, uint32_t partIdx)
@@ -125,12 +132,11 @@ void TComYuv::copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t ab
     primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
-void TComYuv::copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth, uint32_t partIdx)
+void TComYuv::copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t partDepth, uint32_t partIdx)
 {
-    int width, height;
+    int width;
 
     width  = m_cwidth >> partDepth;
-    height = m_cheight >> partDepth;
 
     Pel* srcU = getCbAddr(partIdx, width);
     Pel* srcV = getCrAddr(partIdx, width);
@@ -140,8 +146,8 @@ void TComYuv::copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t 
     uint32_t srcstride = getCStride();
     uint32_t dststride = destPicYuv->getCStride();
 
-    primitives.blockcpy_pp(width, height, dstU, dststride, srcU, srcstride);
-    primitives.blockcpy_pp(width, height, dstV, dststride, srcV, srcstride);
+    primitives.chroma_copy_pp[m_csp][part](dstU, dststride, srcU, srcstride);
+    primitives.chroma_copy_pp[m_csp][part](dstV, dststride, srcV, srcstride);
 }
 
 void TComYuv::copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx)

@@ -119,7 +119,7 @@ public:
     //  Copy YUV buffer to picture buffer
     void    copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
     void    copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
-    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
+    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t partDepth = 0, uint32_t partIdx = 0);
 
     //  Copy YUV buffer from picture buffer
     void    copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
