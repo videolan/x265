@@ -323,6 +323,8 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
 
 void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId)
 {
+    width, height;          // To avoid build error, can't eliminate overloaded version present
+
     if (chromaId == 0)
     {
         Pel* srcU = getCbAddr(partIdx);
@@ -330,7 +332,7 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_
         if (srcU == dstU) return;
         uint32_t srcstride = getCStride();
         uint32_t dststride = dstPicYuv->getCStride();
-        primitives.blockcpy_pp(width, height, dstU, dststride, srcU, srcstride);
+        primitives.chroma_copy_pp[m_csp][m_part](dstU, dststride, srcU, srcstride);
     }
     else if (chromaId == 1)
     {
@@ -339,7 +341,7 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_
         if (srcV == dstV) return;
         uint32_t srcstride = getCStride();
         uint32_t dststride = dstPicYuv->getCStride();
-        primitives.blockcpy_pp(width, height, dstV, dststride, srcV, srcstride);
+        primitives.chroma_copy_pp[m_csp][m_part](dstV, dststride, srcV, srcstride);
     }
     else
     {
@@ -350,8 +352,8 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_
         if (srcU == dstU && srcV == dstV) return;
         uint32_t srcstride = getCStride();
         uint32_t dststride = dstPicYuv->getCStride();
-        primitives.blockcpy_pp(width, height, dstU, dststride, srcU, srcstride);
-        primitives.blockcpy_pp(width, height, dstV, dststride, srcV, srcstride);
+        primitives.chroma_copy_pp[m_csp][m_part](dstU, dststride, srcU, srcstride);
+        primitives.chroma_copy_pp[m_csp][m_part](dstV, dststride, srcV, srcstride);
     }
 }
 
