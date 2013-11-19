@@ -475,6 +475,10 @@ int x265_check_params(x265_param *param)
           "Search Range must be more than 0");
     CHECK(param->searchRange >= 32768,
           "Search Range must be less than 32768");
+    CHECK(param->subpelRefine > X265_MAX_SUBPEL_LEVEL,
+          "subme must be less than or equal to X265_MAX_SUBPEL_LEVEL (7)");
+    CHECK(param->subpelRefine < 0,
+          "subme must be greater than or equal to 0");
     CHECK(param->keyframeMax < 0,
           "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
     CHECK(param->frameNumThreads < 0,
