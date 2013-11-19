@@ -305,7 +305,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --bframes                     Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
     H0("   --bframe-bias                 Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt                     0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
-    H0("   --b-pyramid                   Use B-frames as references 0: Disabled, 1: Enabled Default\n", param->bpyramid);
+    H0("   --b-pyramid                   Use B-frames as references 0: Disabled, 1: Enabled Default %s\n", OPT(param->bpyramid));
     H0("   --ref                         max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
     H0("\nQP, rate control and rate distortion options:\n");
