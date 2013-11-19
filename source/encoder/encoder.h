@@ -116,7 +116,7 @@ public:
 
     int getStreamHeaders(NALUnitEBSP **nalunits);
 
-    void fetchStats(x265_stats* stats);
+    void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
     void writeLog(int argc, char **argv);
 

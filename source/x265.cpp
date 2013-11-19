@@ -655,7 +655,7 @@ int main(int argc, char **argv)
     if (cliopt.bProgress)
         fprintf(stderr, "                                                                               \r");
 
-    x265_encoder_get_stats(encoder, &stats);
+    x265_encoder_get_stats(encoder, &stats, sizeof(stats));
     if (param.csvfn && !b_ctrl_c)
         x265_encoder_log(encoder, argc, argv);
     x265_encoder_close(encoder);

@@ -236,6 +236,8 @@ typedef struct x265_stats
     uint32_t  encodedPictureCount;  /* number of output pictures thus far */
     uint32_t  totalWPFrames;        /* number of uni-directional weighted frames used */
     uint64_t  accBits;              /* total bits output thus far */
+
+    /* new statistic member variables must be added below this line */
 } x265_stats;
 
 /* Input parameters to the encoder */
@@ -432,7 +434,7 @@ int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_n
 
 /* x265_encoder_get_stats:
  *       returns encoder statistics */
-void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *);
+void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
 
 /* x265_encoder_log:
  *       write a line to the configured CSV file.  If a CSV filename was not

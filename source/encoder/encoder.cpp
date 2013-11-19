@@ -478,29 +478,35 @@ void Encoder::printSummary()
     }
 }
 
-void Encoder::fetchStats(x265_stats *stats)
+void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
 {
-    stats->globalPsnrY = m_analyzeAll.m_psnrSumY;
-    stats->globalPsnrU = m_analyzeAll.m_psnrSumU;
-    stats->globalPsnrV = m_analyzeAll.m_psnrSumV;
-    stats->encodedPictureCount = m_analyzeAll.m_numPics;
-    stats->totalWPFrames = m_numWPFrames;
-    stats->accBits = m_analyzeAll.m_accBits;
-    stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
-    if (stats->encodedPictureCount > 0)
+    if (statsSizeBytes >= sizeof(stats))
     {
-        stats->globalSsim = m_analyzeAll.m_globalSsim / stats->encodedPictureCount;
-        stats->globalPsnr = (stats->globalPsnrY * 6 + stats->globalPsnrU + stats->globalPsnrV) / (8 * stats->encodedPictureCount);
-        stats->elapsedVideoTime = (double)stats->encodedPictureCount / param.frameRate;
-        stats->bitrate = (0.001f * stats->accBits) / stats->elapsedVideoTime;
+        stats->globalPsnrY = m_analyzeAll.m_psnrSumY;
+        stats->globalPsnrU = m_analyzeAll.m_psnrSumU;
+        stats->globalPsnrV = m_analyzeAll.m_psnrSumV;
+        stats->encodedPictureCount = m_analyzeAll.m_numPics;
+        stats->totalWPFrames = m_numWPFrames;
+        stats->accBits = m_analyzeAll.m_accBits;
+        stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
+        if (stats->encodedPictureCount > 0)
+        {
+            stats->globalSsim = m_analyzeAll.m_globalSsim / stats->encodedPictureCount;
+            stats->globalPsnr = (stats->globalPsnrY * 6 + stats->globalPsnrU + stats->globalPsnrV) / (8 * stats->encodedPictureCount);
+            stats->elapsedVideoTime = (double)stats->encodedPictureCount / param.frameRate;
+            stats->bitrate = (0.001f * stats->accBits) / stats->elapsedVideoTime;
+        }
+        else
+        {
+            stats->globalSsim = 0;
+            stats->globalPsnr = 0;
+            stats->bitrate = 0;
+            stats->elapsedVideoTime = 0;
+        }
     }
-    else
-    {
-        stats->globalSsim = 0;
-        stats->globalPsnr = 0;
-        stats->bitrate = 0;
-        stats->elapsedVideoTime = 0;
-    }
+    /* If new statistics are added to x265_stats, we must check here whether the
+     * structure provided by the user is the new structure or an older one (for
+     * future safety) */
 }
 
 void Encoder::writeLog(int argc, char **argv)
@@ -524,7 +530,7 @@ void Encoder::writeLog(int argc, char **argv)
         fprintf(m_csvfpt, ", %s, ", buffer);
 
         x265_stats stats;
-        fetchStats(&stats);
+        fetchStats(&stats, sizeof(stats));
 
         // elapsed time, fps, bitrate
         fprintf(m_csvfpt, "%.2f, %.2f, %.2f,",
@@ -1490,11 +1496,11 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
 EXTERN_CYCLE_COUNTER(ME);
 
 extern "C"
-void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats)
+void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t statsSizeBytes)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
 
-    encoder->fetchStats(outputStats);
+    encoder->fetchStats(outputStats, statsSizeBytes);
 }
 
 extern "C"
