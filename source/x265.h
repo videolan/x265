@@ -393,7 +393,7 @@ typedef struct x265_param
      * reference for the surrounding B frames.  This improves compression
      * efficiency for a performance penalty.  Referenced B frames are treated
      * somewhere between a B and a P frame by rate control.  Default is
-     * disabled. */
+     * enabled. */
     int       bpyramid;
 
     /* The number of frames that must be queued in the lookahead before it may
