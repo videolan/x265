@@ -6999,6 +6999,71 @@ cglobal transpose8, 3, 3, 8, dest, src, stride
 
     RET
 
+%macro transpose_8x8 0
+
+    movh         m0,    [r1]
+    movh         m1,    [r1 + r2]
+    movh         m2,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m3,    [r1 + r2]
+    movh         m4,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m5,    [r1 + r2]
+    movh         m6,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m7,    [r1 + r2]
+
+    punpcklbw    m0,    m1
+    punpcklbw    m2,    m3
+    punpcklbw    m4,    m5
+    punpcklbw    m6,    m7
+
+    punpckhwd    m1,    m0,    m2
+    punpcklwd    m0,    m2
+    punpckhwd    m5,    m4,    m6
+    punpcklwd    m4,    m6
+    punpckhdq    m2,    m0,    m4
+    punpckldq    m0,    m4
+    punpckhdq    m3,    m1,    m5
+    punpckldq    m1,    m5
+
+    movlps         [r0],             m0
+    movhps         [r0 + r3],        m0
+    movlps         [r0 + 2 * r3],    m2
+    lea            r0,               [r0 + 2 * r3]
+    movhps         [r0 + r3],        m2
+    movlps         [r0 + 2 * r3],    m1
+    lea            r0,               [r0 + 2 * r3]
+    movhps         [r0 + r3],        m1
+    movlps         [r0 + 2 * r3],    m3
+    lea            r0,               [r0 + 2 * r3]
+    movhps         [r0 + r3],        m3
+
+%endmacro
+
+
+;-----------------------------------------------------------------
+; void transpose_16x16(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose16, 3, 5, 8, dest, src, stride
+
+    mov    r4,    r0
+    mov    r5,    r1
+    mov    r3,    16
+    transpose_8x8
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r4 + 8]
+    transpose_8x8
+    lea    r1,    [r5 + 8]
+    lea    r0,    [r4 + r3 * 8]
+    transpose_8x8
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r4 + r3 * 8 +8]
+    transpose_8x8
+
+    RET
+
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_2x4(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
