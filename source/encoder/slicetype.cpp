@@ -643,21 +643,22 @@ void Lookahead::slicetypeDecide()
             Lowres& frm = list[bframes]->m_lowres;
 
             if (frm.sliceType == X265_TYPE_BREF
-                /* && h->param.i_bframe_pyramid < X264_B_PYRAMID_NORMAL && brefs == h->param.i_bframe_pyramid*/)
+                && cfg->param.bpyramid < X265_B_PYRAMID_NORMAL && brefs == cfg->param.bpyramid)
             {
                 frm.sliceType = X265_TYPE_B;
-                x265_log(&cfg->param, X265_LOG_WARNING, "B-ref is not yet supported\n");
+                x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid %s \n",
+                        frm.frameNum, x265_b_pyramid_names[cfg->param.bpyramid] );
             }
 
             /* pyramid with multiple B-refs needs a big enough dpb that the preceding P-frame stays available.
-               smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it.
-            else if (frm.sliceType == X265_TYPE_BREF && cfg->param.i_bframe_pyramid == X265_B_PYRAMID_NORMAL &&
-                     brefs && cfg->param.i_frame_reference <= (brefs+3))
+               smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it.*/
+            else if (frm.sliceType == X265_TYPE_BREF && cfg->param.bpyramid == X265_B_PYRAMID_NORMAL &&
+                     brefs && cfg->param.maxNumReferences <= (brefs+3))
             {
                 frm.sliceType = X265_TYPE_B;
                 x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid %s and %d reference frames\n",
-                          frm.sliceType, x264_b_pyramid_names[h->param.i_bframe_pyramid], h->param.i_frame_reference);
-            } */
+                        frm.sliceType, x265_b_pyramid_names[cfg->param.bpyramid], cfg->param.maxNumReferences);
+            }
 
             if (frm.sliceType == X265_TYPE_KEYFRAME)
                 frm.sliceType = cfg->param.bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR;
@@ -716,12 +717,12 @@ void Lookahead::slicetypeDecide()
         list[bframes]->m_lowres.leadingBframes = bframes;
         lastNonB = &list[bframes]->m_lowres;
 
-        /* insert a bref into the sequence
-        if (h->param.i_bframe_pyramid && bframes > 1 && !brefs)
+        /* insert a bref into the sequence */
+        if (cfg->param.bpyramid && bframes > 1 && !brefs)
         {
-            h->lookahead->next.list[bframes/2]->i_type = X264_TYPE_BREF;
+            list[bframes/2]->m_lowres.sliceType = X265_TYPE_BREF;
             brefs++;
-        } */
+        }
 
         /* calculate the frame costs ahead of time for x264_rc_analyse_slice while we still have lowres */
         if (cfg->param.rc.rateControlMode != X265_RC_CQP)
@@ -742,8 +743,7 @@ void Lookahead::slicetypeDecide()
 
             estimateFrameCost(p0, p1, b, 0);
 
-            /*
-            if ((p0 != p1 || bframes) && cfg->param.rc.i_vbv_buffer_size)
+            if ((p0 != p1 || bframes) /*&& cfg->param.rc.i_vbv_buffer_size*/ )
             {
                 // We need the intra costs for row SATDs
                 estimateFrameCost(b, b, b, 0);
@@ -752,7 +752,7 @@ void Lookahead::slicetypeDecide()
                 p0 = 0;
                 for (b = 1; b <= bframes; b++)
                 {
-                    if (frames[b]->i_type == X265_TYPE_B)
+                    if (frames[b]->sliceType == X265_TYPE_B)
                         for (p1 = b; frames[p1]->sliceType == X265_TYPE_B;)
                             p1++;
                     else
@@ -761,7 +761,7 @@ void Lookahead::slicetypeDecide()
                     if (frames[b]->sliceType == X265_TYPE_BREF)
                         p0 = b;
                 }
-            } */
+            }
         }
 
         /* dequeue all frames from inputQueue that are about to be enqueued
@@ -774,10 +774,23 @@ void Lookahead::slicetypeDecide()
 
         /* add non-B to output queue */
         outputQueue.pushBack(*list[bframes]);
+
+        /* Add B-ref frame next to P frame in output queue, the B-ref encode before non B-ref frame */
+        if (bframes > 1 && cfg->param.bpyramid)
+        {
+            for (int i = 0; i < bframes; i++)
+            {
+                if(list[i]->m_lowres.sliceType == X265_TYPE_BREF)
+                    outputQueue.pushBack(*list[i]);
+            }
+        }
+
         /* add B frames to output queue */
         for (int i = 0; i < bframes; i++)
         {
-            outputQueue.pushBack(*list[i]);
+            /* push all the B frames into output queue except B-ref, which already pushed into output queue*/
+            if (list[i]->m_lowres.sliceType != X265_TYPE_BREF)
+                outputQueue.pushBack(*list[i]);
         }
 
         return;
@@ -1155,11 +1168,7 @@ int Lookahead::slicetypePathCost(char *path, int threshold)
         if (cost > threshold)
             break;
 
-        /* Keep some B-frames as references: 0=off, 1=strict hierarchical, 2=normal */
-        //TODO Add this into param
-        int bframe_pyramid = 0;
-
-        if (bframe_pyramid && next_p - cur_p > 2)
+        if (cfg->param.bpyramid && next_p - cur_p > 2)
         {
             int middle = cur_p + (next_p - cur_p) / 2;
             cost += estimateFrameCost(cur_p, next_p, middle, 0);

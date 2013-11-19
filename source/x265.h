@@ -185,6 +185,7 @@ typedef enum
 #define X265_CPU_SLOW_PALIGNR    0x4000000  /* such as on the AMD Bobcat */
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
+static const char * const x265_b_pyramid_names[] = {"none", "normal", 0};
 
 #define X265_MAX_SUBPEL_LEVEL   7
 
@@ -204,6 +205,7 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_TYPE_I             0x0002
 #define X265_TYPE_P             0x0003
 #define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
+#define X265_B_PYRAMID_NORMAL   0x0001
 #define X265_TYPE_B             0x0005
 #define X265_TYPE_KEYFRAME      0x0006  /* IDR or I depending on b_open_gop option */
 #define X265_AQ_NONE                 0
@@ -315,6 +317,7 @@ typedef struct x265_param
     int       bframes;                         ///< Max number of consecutive B-frames
     int       lookaheadDepth;                  ///< Number of frames to use for lookahead, determines encoder latency
     int       bFrameAdaptive;                  ///< 0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling
+    int       bpyramid;                        ///< 0 - none, 1 - normal use B-frame reference
     int       bFrameBias;
     int       scenecutThreshold;               ///< how aggressively to insert extra I frames
 

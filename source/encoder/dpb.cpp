@@ -78,7 +78,17 @@ void DPB::prepareEncode(TComPic *pic)
         m_lastIDR = pocCurr;
     }
     slice->setLastIDR(m_lastIDR);
-    slice->setReferenced(slice->getSliceType() != B_SLICE);
+
+    if (slice->getSliceType() != B_SLICE)
+        slice->setReferenced(true);
+    else
+    {
+        if (pic->m_lowres.sliceType == X265_TYPE_BREF)
+            slice->setReferenced(true);
+        else
+            slice->setReferenced(false);
+    }
+
     slice->setTemporalLayerNonReferenceFlag(!slice->isReferenced());
     // Set the nal unit type
     slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR, pic));

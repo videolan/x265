@@ -1180,7 +1180,11 @@ void Encoder::configure(x265_param *_param)
     {
         _param->bEnableRDOQTS = 0;
     }
-
+    if (_param->bpyramid && !_param->bframes)
+    {
+        x265_log(_param, X265_LOG_WARNING,"b-pyramid enabled if bframes > 1\n");
+        _param->bpyramid = 0;
+    }
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
     switch (_param->rdLevel)
     {
@@ -1223,8 +1227,10 @@ void Encoder::configure(x265_param *_param)
     vps.setMaxLayers(1);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
-        m_numReorderPics[i] = 1;
-        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + 1);
+        /* Increase the DPB size and reorderpicture if enabled the bpyramid */
+        m_numReorderPics[i] = (_param->bpyramid && _param->bframes > 1) ? 2 : 1;
+        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + m_numReorderPics[i]);
+
         vps.setNumReorderPics(m_numReorderPics[i], i);
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     }
