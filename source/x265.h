@@ -185,7 +185,7 @@ typedef enum
 #define X265_CPU_SLOW_PALIGNR    0x4000000  /* such as on the AMD Bobcat */
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
-static const char * const x265_b_pyramid_names[] = {"none", "normal", 0};
+static const char * const x265_b_pyramid_names[] = { "none", "normal", 0 };
 
 #define X265_MAX_SUBPEL_LEVEL   7
 
