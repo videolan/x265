@@ -206,8 +206,8 @@ void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
     PPAScopeEvent(bitstream_write);
     for (uint32_t i = 0; i < nalcount; i++)
     {
-        bitstreamFile.write((const char*)nal->p_payload, nal->i_payload);
-        totalbytes += nal->i_payload;
+        bitstreamFile.write((const char*)nal->payload, nal->sizeBytes);
+        totalbytes += nal->sizeBytes;
         nal++;
     }
 }

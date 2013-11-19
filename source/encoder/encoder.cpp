@@ -1381,15 +1381,15 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits)
         size += nalSize;
         memsize += nalSize;
 
-        m_nals[nalcount].i_type = nalu.m_nalUnitType;
-        m_nals[nalcount].i_payload = size;
+        m_nals[nalcount].type = nalu.m_nalUnitType;
+        m_nals[nalcount].sizeBytes = size;
     }
 
     /* Setup payload pointers, now that we're done adding content to m_packetData */
     for (int i = 0; i < nalcount; i++)
     {
-        m_nals[i].p_payload = (uint8_t*)m_packetData + offset;
-        offset += m_nals[i].i_payload;
+        m_nals[i].payload = (uint8_t*)m_packetData + offset;
+        offset += m_nals[i].sizeBytes;
     }
 
 fail:

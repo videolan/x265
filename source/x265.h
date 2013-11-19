@@ -72,9 +72,9 @@ typedef enum
  * before calling x265_encoder_encode again. */
 typedef struct x265_nal
 {
-    uint32_t i_type;      /* NalUnitType */
-    uint32_t i_payload;   /* size in bytes */
-    uint8_t* p_payload;
+    uint32_t type;        /* NalUnitType */
+    uint32_t sizeBytes;   /* size in bytes */
+    uint8_t* payload;
 } x265_nal;
 
 typedef struct x265_picture
