@@ -6957,6 +6957,48 @@ ads_mvs_ssse3:
     movifnidn eax, r0d
     RET
 
+;-----------------------------------------------------------------
+; void transpose_8x8(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose8, 3, 3, 8, dest, src, stride
+
+    movh         m0,    [r1]
+    movh         m1,    [r1 + r2]
+    movh         m2,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m3,    [r1 + r2]
+    movh         m4,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m5,    [r1 + r2]
+    movh         m6,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m7,    [r1 + r2]
+
+    punpcklbw    m0,    m1
+    punpcklbw    m2,    m3
+    punpcklbw    m4,    m5
+    punpcklbw    m6,    m7
+    movu         m1,    m0
+    punpcklwd    m0,    m2
+    punpckhwd    m1,    m2
+    movu         m5,    m4
+    punpcklwd    m4,    m6
+    punpckhwd    m5,    m6
+    movu         m2,    m0
+    punpckldq    m0,    m4
+    punpckhdq    m2,    m4
+    movu         m3,    m1
+    punpckldq    m1,    m5
+    punpckhdq    m3,    m5
+
+    movu         [r0],         m0
+    movu         [r0 + 16],    m2
+    movu         [r0 + 32],    m1
+    movu         [r0 + 48],    m3
+
+    RET
+
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_2x4(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
