@@ -466,7 +466,7 @@ typedef struct x265_param
      * analysis in the main encoder which allows P reference samples to have a
      * weight function applied to them prior to using them for motion
      * compensation.  In video which has lighting changes, it can give a large
-     * improvement in compression efficiency. Default is disabled */
+     * improvement in compression efficiency. Default is enabled */
     int       bEnableWeightedPred;
 
     /* Enable weighted bi-prediction in B slices. This option currently has no

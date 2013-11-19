@@ -177,7 +177,7 @@ void x265_param_default(x265_param *param)
     param->subpelRefine = 5;
     param->searchRange = 60;
     param->maxNumMergeCand = 3;
-    param->bEnableWeightedPred = 0;
+    param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
     param->bEnableEarlySkip = 0;
     param->bEnableCbfFastMode = 0;
@@ -293,6 +293,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableLoopFilter = 0;
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
+            param->bEnableWeightedPred = 0;
             param->maxNumReferences = 1;
         }
         else if (!strcmp(preset, "superfast"))
