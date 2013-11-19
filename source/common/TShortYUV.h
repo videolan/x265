@@ -54,7 +54,7 @@ private:
     }
 
     int m_csp;
-
+    int m_part;
 public:
 
     int16_t* m_bufY;

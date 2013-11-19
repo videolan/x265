@@ -56,6 +56,8 @@ void TShortYUV::create(unsigned int width, unsigned int height, int csp)
     m_width  = width;
     m_height = height;
 
+    m_part = partitionFromSizes(m_width, m_height);
+
     m_cwidth  = width  >> m_hChromaShift;
     m_cheight = height >> m_vChromaShift;
     m_csp = csp;
@@ -192,7 +194,8 @@ void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, uns
     unsigned int srcStride = m_width;
     unsigned int dstStride = dstPicYuv->getStride();
 
-    primitives.blockcpy_ps(width, height, dst, dstStride, src, srcStride);
+    int part = partitionFromSizes(width, height);
+    primitives.luma_copy_sp[part](dst, dstStride, src, srcStride);
 }
 
 void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
@@ -287,13 +290,15 @@ void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx,
 
 void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId)
 {
+    width, height;
+
     if (chromaId == 0)
     {
         int16_t* srcU = getCbAddr(partIdx);
         Pel* dstU = dstPicYuv->getCbAddr(partIdx);
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        primitives.blockcpy_ps(width, height, dstU, dstStride, srcU, srcStride);
+        primitives.chroma_copy_sp[m_csp][m_part](dstU, dstStride, srcU, srcStride);
     }
     else if (chromaId == 1)
     {
@@ -301,7 +306,7 @@ void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
         Pel* dstV = dstPicYuv->getCrAddr(partIdx);
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        primitives.blockcpy_ps(width, height, dstV, dstStride, srcV, srcStride);
+        primitives.chroma_copy_sp[m_csp][m_part](dstV, dstStride, srcV, srcStride);
     }
     else
     {
@@ -312,7 +317,7 @@ void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
 
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        primitives.blockcpy_ps(width, height, dstU, dstStride, srcU, srcStride);
-        primitives.blockcpy_ps(width, height, dstV, dstStride, srcV, srcStride);
+        primitives.chroma_copy_sp[m_csp][m_part](dstU, dstStride, srcU, srcStride);
+        primitives.chroma_copy_sp[m_csp][m_part](dstV, dstStride, srcV, srcStride);
     }
 }
