@@ -500,27 +500,27 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         // until all partitions are coded and commit smaller patches, easier to
         // review.
 
-        p.chroma_copy_sp[CHROMA_4x2] = x265_blockcopy_sp_4x2_sse2;
-        p.chroma_copy_sp[CHROMA_4x4] = x265_blockcopy_sp_4x4_sse2;
-        p.chroma_copy_sp[CHROMA_4x8] = x265_blockcopy_sp_4x8_sse2;
-        p.chroma_copy_sp[CHROMA_4x16] = x265_blockcopy_sp_4x16_sse2;
-        p.chroma_copy_sp[CHROMA_8x2] = x265_blockcopy_sp_8x2_sse2;
-        p.chroma_copy_sp[CHROMA_8x4] = x265_blockcopy_sp_8x4_sse2;
-        p.chroma_copy_sp[CHROMA_8x6] = x265_blockcopy_sp_8x6_sse2;
-        p.chroma_copy_sp[CHROMA_8x8] = x265_blockcopy_sp_8x8_sse2;
-        p.chroma_copy_sp[CHROMA_8x16] = x265_blockcopy_sp_8x16_sse2;
-        p.chroma_copy_sp[CHROMA_12x16] = x265_blockcopy_sp_12x16_sse2;
-        p.chroma_copy_sp[CHROMA_16x4] = x265_blockcopy_sp_16x4_sse2;
-        p.chroma_copy_sp[CHROMA_16x8] = x265_blockcopy_sp_16x8_sse2;
-        p.chroma_copy_sp[CHROMA_16x12] = x265_blockcopy_sp_16x12_sse2;
-        p.chroma_copy_sp[CHROMA_16x16] = x265_blockcopy_sp_16x16_sse2;
-        p.chroma_copy_sp[CHROMA_16x32] = x265_blockcopy_sp_16x32_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_4x2] = x265_blockcopy_sp_4x2_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_4x4] = x265_blockcopy_sp_4x4_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_4x8] = x265_blockcopy_sp_4x8_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_4x16] = x265_blockcopy_sp_4x16_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_8x2] = x265_blockcopy_sp_8x2_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_8x4] = x265_blockcopy_sp_8x4_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_8x6] = x265_blockcopy_sp_8x6_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_8x8] = x265_blockcopy_sp_8x8_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_8x16] = x265_blockcopy_sp_8x16_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_12x16] = x265_blockcopy_sp_12x16_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_16x4] = x265_blockcopy_sp_16x4_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_16x8] = x265_blockcopy_sp_16x8_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_16x12] = x265_blockcopy_sp_16x12_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_16x16] = x265_blockcopy_sp_16x16_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_16x32] = x265_blockcopy_sp_16x32_sse2;
         p.luma_copy_sp[LUMA_16x64] = x265_blockcopy_sp_16x64_sse2;
-        p.chroma_copy_sp[CHROMA_24x32] = x265_blockcopy_sp_24x32_sse2;
-        p.chroma_copy_sp[CHROMA_32x8] = x265_blockcopy_sp_32x8_sse2;
-        p.chroma_copy_sp[CHROMA_32x16] = x265_blockcopy_sp_32x16_sse2;
-        p.chroma_copy_sp[CHROMA_32x24] = x265_blockcopy_sp_32x24_sse2;
-        p.chroma_copy_sp[CHROMA_32x32] = x265_blockcopy_sp_32x32_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_24x32] = x265_blockcopy_sp_24x32_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_32x8] = x265_blockcopy_sp_32x8_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_32x16] = x265_blockcopy_sp_32x16_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_32x24] = x265_blockcopy_sp_32x24_sse2;
+        p.chroma_copy_sp[CSP_I420][CHROMA_32x32] = x265_blockcopy_sp_32x32_sse2;
         p.luma_copy_sp[LUMA_32x64] = x265_blockcopy_sp_32x64_sse2;
         p.luma_copy_sp[LUMA_48x64] = x265_blockcopy_sp_48x64_sse2;
         p.luma_copy_sp[LUMA_64x16] = x265_blockcopy_sp_64x16_sse2;
@@ -623,9 +623,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         CHROMA_FILTERS(_sse4);
         LUMA_FILTERS(_sse4);
         HEVC_SATD(sse4);
-        p.chroma_copy_sp[CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;
-        p.chroma_copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
-        p.chroma_copy_sp[CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
+        p.chroma_copy_sp[CSP_I420][CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;
+        p.chroma_copy_sp[CSP_I420][CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
+        p.chroma_copy_sp[CSP_I420][CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
 
         p.chroma_vsp[CHROMA_2x4] = x265_interp_4tap_vert_sp_2x4_sse4;
         p.chroma_vsp[CHROMA_2x8] = x265_interp_4tap_vert_sp_2x8_sse4;

@@ -836,7 +836,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
 #define CHROMA(W, H) \
     p.chroma_copy_pp[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
-    p.chroma_copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
+    p.chroma_copy_sp[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma_copy_ps[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>;\
     p.chroma_sub_ps[CSP_I420][CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;
 
