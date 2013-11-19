@@ -786,12 +786,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.chroma_copy_ps[part])
+    for(int i = 0; i < NUM_CSP; i++)
     {
-        if (!check_block_copy_ps(ref.chroma_copy_ps[part], opt.chroma_copy_ps[part]))
+        if (opt.chroma_copy_ps[i][part])
         {
-            printf("chroma_copy_ps[%s] failed\n", chromaPartStr[part]);
-            return false;
+            if (!check_block_copy_ps(ref.chroma_copy_ps[i][part], opt.chroma_copy_ps[i][part]))
+            {
+                 printf("chroma_copy_ps[%s][%s] failed\n", colorSpaceNames[i], chromaPartStr[part]);
+                 return false;
+            }
         }
     }
 
@@ -1085,10 +1088,13 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.luma_copy_ps[part], ref.luma_copy_ps[part], sbuf1, 64, pbuf1, 128);
     }
 
-    if (opt.chroma_copy_ps[part])
+    for (int i = 0; i < NUM_CSP; i++)
     {
-        printf("ccpy_ps[%s]", chromaPartStr[part]);
-        REPORT_SPEEDUP(opt.chroma_copy_ps[part], ref.chroma_copy_ps[part], sbuf1, 64, pbuf1, 128);
+        if (opt.chroma_copy_ps[i][part])
+        {
+            printf("ccpy_ps[%s][%s]", colorSpaceNames[i], chromaPartStr[part]);
+            REPORT_SPEEDUP(opt.chroma_copy_ps[i][part], ref.chroma_copy_ps[i][part], sbuf1, 64, pbuf1, 128);
+        }
     }
 
     if (opt.luma_sub_ps[part])

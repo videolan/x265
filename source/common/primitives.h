@@ -247,7 +247,7 @@ struct EncoderPrimitives
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
     copy_sp_t       chroma_copy_sp[NUM_CHROMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
-    copy_ps_t       chroma_copy_ps[NUM_CHROMA_PARTITIONS];
+    copy_ps_t       chroma_copy_ps[NUM_CSP][NUM_CHROMA_PARTITIONS];
 
     pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
     pixel_sub_ps_t  chroma_sub_ps[NUM_CSP][NUM_CHROMA_PARTITIONS];
