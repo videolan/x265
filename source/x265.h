@@ -240,83 +240,338 @@ typedef struct x265_stats
     /* new statistic member variables must be added below this line */
 } x265_stats;
 
-/* Input parameters to the encoder */
+/* encoder input parameters */
 typedef struct x265_param
 {
+    /*== Encoder Environment ==*/
+
+    /* Enable wavefront parallel processing, greatly increases parallelism for
+     * less than 1% compression efficiency loss */
+    int       bEnableWavefront;
+
+    /* Number of threads to allocate for the process global thread pool, if no
+     * thread pool has yet been created. 0 implies auto-detection. By default
+     * x265 will try to allocate one worker thread per CPU core */
+    int       poolNumThreads;
+
+    /* Number of concurrently encoded frames, 0 implies auto-detection. By
+     * default x265 will use a number of frame threads emperically determined to
+     * be optimal for your CPU core count, between 2 and 6.  Using more than one
+     * frame thread causes motion search in the down direction to be clamped but
+     * otherwise encode behavior is unaffected. With CQP rate control the output
+     * bitstream is deterministic for all values of frameNumThreads greater than
+     * 1.  All other forms of rate-control can be negatively impacted by
+     * increases to the number of frame threads because the extra concurrency
+     * adds uncertainty to the bitrate estimations.  There is no limit to the
+     * number of frame threads you use for each encoder, but frame parallelism
+     * is generally limited by the the number of CU rows */
+    int       frameNumThreads;
+
+    /* The level of logging detail emitted by the encoder. X265_LOG_NONE to
+     * X265_LOG_DEBUG, default is X265_LOG_INFO */
     int       logLevel;
-    int       bEnableWavefront;                ///< enable wavefront parallel processing
-    int       poolNumThreads;                  ///< number of threads to allocate for thread pool, 0 implies auto-detection (default)
-    int       frameNumThreads;                 ///< number of concurrently encoded frames, 0 implies auto-detection (default)
-    const char *csvfn;                         ///< csv log filename. logLevel >= 3 is frame logging, else one line per run
 
-    // source specification
-    int       inputBitDepth;                   ///< source pixel bit depth (and internal encoder bit depth)
-    int       frameRate;                       ///< source frame-rate in Hz
-    int       sourceWidth;                     ///< source width in pixels
-    int       sourceHeight;                    ///< source height in pixels
-    int       sourceCsp;                       ///< source Color Space Parameter
-
-    // coding unit (CU) definition
-    uint32_t  maxCUSize;                       ///< max. CU width and height in pixels
-    uint32_t  tuQTMaxInterDepth;               ///< amount the TU is allow to recurse beyond the inter PU depth
-    uint32_t  tuQTMaxIntraDepth;               ///< amount the TU is allow to recurse beyond the intra PU depth
-
-    // coding structure
-    int       decodingRefreshType;             ///< Intra refresh type (0:none, 1:CDR, 2:IDR) default: 1
-    int       keyframeMin;                     ///< Minimum intra period in frames
-    int       keyframeMax;                     ///< Maximum intra period in frames
-    int       bOpenGOP;                        ///< Enable Open GOP referencing
-    int       bframes;                         ///< Max number of consecutive B-frames
-    int       lookaheadDepth;                  ///< Number of frames to use for lookahead, determines encoder latency
-    int       bFrameAdaptive;                  ///< 0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling
-    int       bpyramid;                        ///< 0 - none, 1 - normal use B-frame reference
-    int       bFrameBias;
-    int       scenecutThreshold;               ///< how aggressively to insert extra I frames
-
-    // Intra coding tools
-    int       bEnableConstrainedIntra;         ///< enable constrained intra prediction (ignore inter predicted reference samples)
-    int       bEnableStrongIntraSmoothing;     ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
-
-    // Inter coding tools
-    int       searchMethod;                    ///< ME search method (DIA, HEX, UMH, STAR, FULL)
-    int       subpelRefine;                    ///< amount of subpel work to perform (0 .. X265_MAX_SUBPEL_LEVEL)
-    int       searchRange;                     ///< ME search range
-    uint32_t  maxNumMergeCand;                 ///< Max number of merge candidates
-    int       bEnableWeightedPred;             ///< enable weighted prediction in P slices
-    int       bEnableWeightedBiPred;           ///< enable bi-directional weighted prediction in B slices
-
-    int       bEnableAMP;                      ///< enable asymmetrical motion predictions
-    int       bEnableRectInter;                ///< enable rectangular inter modes 2NxN, Nx2N
-    int       bEnableCbfFastMode;              ///< enable use of Cbf flags for fast mode decision
-    int       bEnableEarlySkip;                ///< enable early skip (merge) detection
-    int       rdLevel;                         ///< Configure RDO work level
-    int       bEnableRDO;
-    int       bEnableRDOQ;
-    int       bEnableSignHiding;               ///< enable hiding one sign bit per TU via implicit signaling
-    int       bEnableTransformSkip;            ///< enable intra transform skipping
-    int       bEnableTSkipFast;                ///< enable fast intra transform skipping
-    int       bEnableRDOQTS;                   ///< enable RD optimized quantization when transform skip is selected
-    int       maxNumReferences;                ///< maximum number of references a frame can have in L0
-
-    // loop filter
-    int       bEnableLoopFilter;               ///< enable Loop Filter
-
-    // SAO loop filter
-    int       bEnableSAO;                      ///< enable SAO filter
-    int       saoLcuBoundary;                  ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-    int       saoLcuBasedOptimization;         ///< SAO LCU-based optimization
-
-    // coding quality
-    int       cbQpOffset;                      ///< Chroma Cb QP Offset (0:default)
-    int       crQpOffset;                      ///< Chroma Cr QP Offset (0:default)
-    int       rdPenalty;                       ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
-
-    // debugging
-    int       decodedPictureHashSEI;           ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
-
-    // quality metrics
+    /* Enable the measurement and reporting of PSNR. Default is enabled */
     int       bEnablePsnr;
+    
+    /* Enable the measurement and reporting of SSIM. Default is disabled */
     int       bEnableSsim;
+
+    /* filename of CSV log. If logLevel is X265_LOG_DEBUG, the encoder will emit
+     * per-slice statistics to this log file in encode order. Otherwise the
+     * encoder will emit per-stream statistics into the log file when
+     * x265_encoder_log is called (presumably at the end of the encode) */
+    const char *csvfn;
+
+    /* Enable the generation of SEI messages for each encoded frame containing
+     * the hashes of the three reconstructed picture planes. Most decoders will
+     * validate those hashes against the reconstructed images it generates and
+     * report any mismatches. This is essentially a debugging feature.  Hash
+     * types are MD5(1), CRC(2), Checksum(3).  Default is 0, none */
+    int       decodedPictureHashSEI;
+
+
+    /*== Source Picture Specification ==*/
+
+    /* source pixel bit depth (and internal encoder bit depth). If x265 was
+     * compiled to use 8bit pixels (HIGH_BIT_DEPTH=0), this field must be 8 and
+     * x265_picture.bitDepth must also be 8. x265_max_bit_depth can be consulted
+     * at runtime to determine the maximum bit depth supported by your build of
+     * x265. A high bit depth build of x265 will support input bit depths of 8,
+     * 10, or 12 */
+    int       inputBitDepth;
+
+    /* Frame rate of source pictures */
+    int       frameRate;
+
+    /* Width (in pixels) of the source pictures. If this width is not an even
+     * multiple of 4, the encoder will pad the pictures internally to meet this
+     * minimum requirement. All valid HEVC widths are supported */
+    int       sourceWidth;
+
+    /* Height (in pixels) of the source pictures. If this height is not an even
+     * multiple of 4, the encoder will pad the pictures internally to meet this
+     * minimum requirement. All valid HEVC heights are supported */
+    int       sourceHeight;
+
+    /* Color space of input pictures. Only X265_CSP_I420 is supported */
+    int       sourceCsp;
+
+
+    /*== Coding Unit (CU) definitions ==*/
+
+    /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.
+     * The higher the size, the more efficiently x265 can encode areas of low
+     * complexity, greatly improving compression efficiency at large
+     * resolutions.  The smaller the size, the more effective wavefront and
+     * frame parallelism will become because of the increase in rows. default 64 */
+    uint32_t  maxCUSize;
+
+    /* The additional depth the residual quadtree is allowed to recurse beyond
+     * the coding quadtree, for inter coded blocks. This must be between 1 and
+     * 3. The higher the value the more efficiently the residual can be
+     * compressed by the DCT transforms, at the expense of much more compute */
+    uint32_t  tuQTMaxInterDepth;
+
+    /* The additional depth the residual quadtree is allowed to recurse beyond
+     * the coding quadtree, for intra coded blocks. This must be between 1 and
+     * 3. The higher the value the more efficiently the residual can be
+     * compressed by the DCT transforms, at the expense of much more compute */
+    uint32_t  tuQTMaxIntraDepth;
+
+
+    /*== GOP Structure and Lokoahead ==*/
+
+    /* Determine the intra refresh style your decoder will use. (0:none, 1:CDR,
+     * 2:IDR). Defaults to CDR */
+    int       decodingRefreshType;
+
+    /* Enable open GOP - meaning I slices are not necessariy IDR and thus frames
+     * encoded after an I slice may reference frames encoded prior to the I
+     * frame which have remained in the decoded picture buffer.  Open GOP
+     * generally has better compression efficiency and negligable encoder
+     * performance impact, but the use case may preclude it.  Default false */
+    int       bOpenGOP;
+
+    /* Minimum keyframe distance or intra period in number of frames. Can be
+     * between 1 and keyframeMax. When the lookahead is between the min and max
+     * thresholds, it will use an I slice if a scene cut is detected, or a
+     * P slice otherwise */
+    int       keyframeMin;
+
+    /* Maximum keyframe distance or intra period in number of frames. If 0 or
+     * 1, all frames are I frames. -1 is casted to MAX_UINT internally which
+     * effectively makes frame 0 the only I frame. Default is 250 */
+    int       keyframeMax;
+
+    /* The maximum number of L0 references a P or B slice may use. This
+     * influences the size of the decoded picture buffer. The higher this
+     * number, the more reference frames there will be available for motion
+     * search, improving compression efficiency of most video at a cost of
+     * performance. Value must be between 1 and 16, default is 3 */
+    int       maxNumReferences;
+
+    /* Sets the operating mode of the lookahead.  With b-adapt 0, the GOP
+     * structure is fixed based on the values of keyframeMax and bframes.
+     * With b-adapt 1 a light lookahead is used to chose B frame placement.
+     * With b-adapt 2 (trellis) a viterbi B path selection is performed */
+    int       bFrameAdaptive;
+
+    /* Maximum consecutive B frames that can be emitted by the lookehead. When
+     * b-adapt is 0 and keyframMax is greater than bframes, the lookahead emits
+     * a fixed pattern of `bframes` B frames between each P.  With b-adapt 1 the
+     * lookahead ignores the value of bframes for the most part.  With b-adapt 2
+     * the value of bframes determines the search (POC) distance performeed in
+     * both directions, quadradically increasing the compute load of the
+     * lookahead.  The higher the value, the more B frames the lookahead may
+     * possibly use consecutively, usually improving compression. Default is 3,
+     * maximum is 16 */
+    int       bframes;
+
+    /* 0 - none, 1 - normal.  When enabled, the encoder will use the B frame
+     * in the middle of each mini-GOP larger than 2 B frames as a motion
+     * reference for the surrounding B frames.  This improves compression
+     * efficiency for a performance penalty.  Referenced B frames are treated
+     * somewhere between a B and a P frame by rate control.  Default is
+     * disabled. */
+    int       bpyramid;
+
+    /* The number of frames that must be queued in the lookahead before it may
+     * make slice decisions. Increasing this value directly increases the encode
+     * latency. The longer the queue the more optimally the lookahead may make
+     * slice decisions, particularly with b-adapt 2. When mb-tree is enabled,
+     * the length of the queue linearly increases the effectiveness of the
+     * mb-tree analysis. Default is 40 frames, maximum is 250 */
+    int       lookaheadDepth;
+    
+    /* A value which is added to the cost estimate of B frames in the lookahead.
+     * It may be a positive value (making B frames appear more expensive, which
+     * causes the lookahead to chose more P frames) or negative, which makes the
+     * lookahead chose more B frames. Default is 0, there are no limits */
+    int       bFrameBias;
+
+    /* An arbitrary threshold which determines how agressively the lookahead
+     * should detect scene cuts. The default (40) is recommended. */
+    int       scenecutThreshold;
+
+
+    /*== Intra Coding Tools ==*/
+
+    /* Enable constrained intra prediction. This causes intra prediction to
+     * input samples that were inter predicted. For some use cases this is
+     * believed to me more robust to stream errors, but it has a compression
+     * penalty on P and (particularly) B slices. Defaults to diabled */
+    int       bEnableConstrainedIntra;
+
+    /* Enable strong intra smoothing for 32x32 blocks where the reference
+     * samples are flat. It may or may not improve compression efficiency,
+     * depending on your source material. Defaults to disabled */
+    int       bEnableStrongIntraSmoothing;
+
+
+    /*== Inter Coding Tools ==*/
+
+    /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
+     * (methods) are sorted in increasing complexity, with diamond being the
+     * simplest and fastest and full being the slowest.  DIA, HEX, and UMH were
+     * adapted from x264 directly. STAR is an adaption of the HEVC reference
+     * encoder's three step search, while full is a naive exhaustive search. The
+     * default is the star search, it has a good balance of performance and
+     * compression efficiecy */
+    int       searchMethod;
+
+    /* A value between 0 and X265_MAX_SUBPEL_LEVEL which adjusts the amount of
+     * effort performed during subpel refine. Default is 5 */
+    int       subpelRefine;
+
+    /* The maximum distance from the motion prediction that the full pel motion
+     * search is allowed to progress before terminating. This value can have an
+     * effect on frame parallelism, as referenced frames must be at least this
+     * many rows of reconstructed pixels ahead of the referencee at all times.
+     * (When considering reference lag, the motion prediction must be ignored
+     * because it cannot be known ahead of time).  Default is 60, which is the
+     * default max CU size (64) minus the luma HPEL half-filter length (4). If a
+     * smaller CU size is used, the search range should be similarly reduced */
+    int       searchRange;
+
+    /* The maximum number of merge candidates that are considered during inter
+     * analysis.  This number (between 1 and 5) is signaled in the stream
+     * headers and determines the number of bits required to signal a merge so
+     * it can have significant trade-offs. The smaller this number the higher
+     * the performance but the less compression efficiency. Default is 3 */
+    uint32_t  maxNumMergeCand;
+
+    /* Enable weighted prediction in P slices.  This enables weighting analysis
+     * in the lookahead, which influences slice decitions, and enables weighting
+     * analysis in the main encoder which allows P reference samples to have a
+     * weight function applied to them prior to using them for motion
+     * compensation.  In video which has lighting changes, it can give a large
+     * improvement in compression efficiency. Default is disabled */
+    int       bEnableWeightedPred;
+
+    /* Enable weighted bi-prediction in B slices. This option currently has no
+     * effect */
+    int       bEnableWeightedBiPred;
+
+
+    /*== Analysis tools ==*/
+
+    /* Enable asymmetrical motion predictions.  At CU depths 64, 32, and 16, it
+     * is possible to use 25%/75% split partitions in the up, down, right, left
+     * directions. For some material this can improve compression efficiency at
+     * the cost of extra analysis. bEnableRectInter must be enabled for this
+     * feature to be used. Default enabled */
+    int       bEnableAMP;
+
+    /* Enable rectangular motion prediction partitions (vertical and
+     * horizontal), available at all CU depths from 64x64 to 8x8. Default is
+     * enabled */
+    int       bEnableRectInter;
+
+    /* Enable the use of `coded block flags` (flags set to true when a residual
+     * has been coded for a given block) to avoid intra analysis in likely skip
+     * blocks. Default is disabled */
+    int       bEnableCbfFastMode;
+
+    /* Enable early skip decisions to avoid intra and inter analysis in likely
+     * skip blocks. Default is disabled */
+    int       bEnableEarlySkip;
+
+    /* Apply an optional penalty to the estimated cost of 32x32 intra blocks in
+     * non-intra slices. 0 is disabled, 1 enables a small penalty, and 2 enables
+     * a full penalty. This favors inter-coding and its low bitrate over
+     * potential increases in distortion, but usually improves performance.
+     * Default is 0 */
+    int       rdPenalty;
+
+    /* A value betwen X265_NO_RDO_NO_RDOQ and X265_RDO_LEVEL which determines
+     * the level of rate distortion optimizations to perform during mode
+     * decisions and quantization. The more RDO the better the compression
+     * efficiency at a major cost of performance. Default is no RDO (0) */
+    int       rdLevel;
+
+    int       bEnableRDO;    // obsolete
+    int       bEnableRDOQ;   // obsolete
+    int       bEnableRDOQTS; // obsolete
+
+
+    /*== Coding tools ==*/
+
+    /* Enable the implicit signaling of the sign bit of the last coefficient of
+     * each transform unit. This saves one bit per TU at the expense of figuring
+     * out which coefficient can be toggled with the least distortion.
+     * Default is enabled */
+    int       bEnableSignHiding;
+
+    /* Allow intra coded blocks to be encoded directly as residual without the
+     * DCT transform, when this improves efficiency. Checking whether the block
+     * will benefit from this option incurs a performance penalty. Default is
+     * enabled */
+    int       bEnableTransformSkip;
+
+    /* Enable a faster determination of whether skippig the DCT transform will
+     * be beneficial. Slight performance gain for some compression loss. Default
+     * is enabled */
+    int       bEnableTSkipFast;
+
+    /* Enable the deblocking loop filter, which improves visual quality by
+     * reducing blocking effects at block edges, particularly at lower bitrates
+     * or higher QP. When enabled it adds another CU row of reference lag,
+     * reducing frame parallelism effectiveness.  Default is enabled */
+    int       bEnableLoopFilter;
+
+    /* Enable the Sample Adaptive Offset loop filter, which reduces distortion
+     * effects by adjusting reconstructed sample values based on histogram
+     * analysis to better approximate the original samples. When enabled it adds
+     * a CU row of reference lag, reducing frame parallelism effectiveness.
+     * Default is enabled */
+    int       bEnableSAO;
+
+    /* Note: when deblocking and SAO are both enabled, the loop filter CU lag is
+     * only one row, as they operate in series o the same row. */
+
+    /* Select the method in which SAO deals with deblocking boundary pixels.  If
+     * 0 the right and bottom boundary areas are skipped. If 1, non-deblocked
+     * pixels are used entirely. Default is 0 */
+    int       saoLcuBoundary;
+
+    /* Select the scope of the SAO optimization. If 0 SAO is performed over the
+     * entire output picture at once, this can severly restrict frame
+     * parallelism so it is not recommended for many-core machines.  If 1 SAO is
+     * performed on LCUs in series. Default is 1 */
+    int       saoLcuBasedOptimization;
+
+    /* Generally a small signed integer which offsets the QP given for enxoding
+     * the Cb chroma residual.  Default is 0, which is recommended */
+    int       cbQpOffset;
+
+    /* Generally a small signed integer which offsets the QP given for enxoding
+     * the Cr chroma residual.  Default is 0, which is recommended */
+    int       crQpOffset;
+
+
+    /*== Rate Control ==*/
+
     struct
     {
         int       bitrate;
