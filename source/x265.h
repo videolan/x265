@@ -561,12 +561,14 @@ typedef struct x265_param
      * performed on LCUs in series. Default is 1 */
     int       saoLcuBasedOptimization;
 
-    /* Generally a small signed integer which offsets the QP given for enxoding
-     * the Cb chroma residual.  Default is 0, which is recommended */
+    /* Generally a small signed integer which offsets the QP used to quantize
+     * the Cb chroma residual (delta from luma QP specified by rate-control).
+     * Default is 0, which is recommended */
     int       cbQpOffset;
 
-    /* Generally a small signed integer which offsets the QP given for enxoding
-     * the Cr chroma residual.  Default is 0, which is recommended */
+    /* Generally a small signed integer which offsets the QP used to quantize
+     * the Cr chroma residual (delta from luma QP specified by rate-control).
+     * Default is 0, which is recommended */
     int       crQpOffset;
 
 
