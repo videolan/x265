@@ -34,6 +34,7 @@
 using namespace x265;
 
 namespace {
+#if !HIGH_BIT_DEPTH
 const int angAP[17][64] =
 {
     {
@@ -91,7 +92,6 @@ const int angAP[17][64] =
 
 #define GETAP(X, Y) angAP[8 - (X)][(Y)]
 
-#if !HIGH_BIT_DEPTH
 #define PRED_INTRA_ANGLE_4_START() \
     __m128i row11, row12, row21, row22, row31, row32, row41, row42; \
     __m128i tmp16_1, tmp16_2, tmp2, deltaFract; \
@@ -3203,7 +3203,6 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
         return;
     }
 }
-
 #endif // !HIGH_BIT_DEPTH
 }
 
@@ -3212,7 +3211,6 @@ void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFil
 #if defined(_MSC_VER)
 #define ALWAYSINLINE  __forceinline
 #endif
-
 #define INSTRSET 3
 #include "vectorclass.h"
 
@@ -3269,41 +3267,6 @@ inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstS
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 24]);
         break;
-
-    //case 64:
-    default:
-        im2.load(&above[1]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1]);
-
-        im2.load(&above[1 + 8]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 8]);
-
-        im2.load(&above[1 + 16]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 16]);
-
-        im2.load(&above[1 + 24]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 24]);
-
-        im2.load(&above[1 + 32]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 32]);
-
-        im2.load(&above[1 + 40]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 40]);
-
-        im2.load(&above[1 + 48]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 48]);
-
-        im2.load(&above[1 + 56]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 56]);
-        break;
     }
 
     for (y = 1; y < width; y++)
@@ -3313,7 +3276,8 @@ inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstS
     }
 }
 
-void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int filter)
+template<int width>
+void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
 {
     int sum;
     int logSize = g_convertToBit[width] + 2;
@@ -3328,12 +3292,14 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         sumLeft  = load_partial(const_int(8), left);
         sumAbove = load_partial(const_int(8), above);
         break;
+
     case 8:
         m0.load(left);
         sumLeft = m0;
         m0.load(above);
         sumAbove = m0;
         break;
+
     case 16:
         m0.load(left);
         sumLeft  = m0;
@@ -3345,6 +3311,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         m0.load(above + 8);
         sumAbove += m0;
         break;
+
     case 32:
         m0.load(left);
         sumLeft  = m0;
@@ -3362,43 +3329,6 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
         m0.load(above + 16);
         sumAbove += m0;
         m0.load(above + 24);
-        sumAbove += m0;
-        break;
-    //case 64:
-    default:
-        // CHECK_ME: the max support bit_depth is 13-bits
-        m0.load(left);
-        sumLeft  = m0;
-        m0.load(left + 8);
-        sumLeft += m0;
-        m0.load(left + 16);
-        sumLeft += m0;
-        m0.load(left + 24);
-        sumLeft += m0;
-        m0.load(left + 32);
-        sumLeft += m0;
-        m0.load(left + 40);
-        sumLeft += m0;
-        m0.load(left + 48);
-        sumLeft += m0;
-        m0.load(left + 56);
-        sumLeft += m0;
-
-        m0.load(above);
-        sumAbove  = m0;
-        m0.load(above + 8);
-        sumAbove += m0;
-        m0.load(above + 16);
-        sumAbove += m0;
-        m0.load(above + 24);
-        sumAbove += m0;
-        m0.load(above + 32);
-        sumAbove += m0;
-        m0.load(above + 40);
-        sumAbove += m0;
-        m0.load(above + 48);
-        sumAbove += m0;
-        m0.load(above + 56);
         sumAbove += m0;
         break;
     }
@@ -3465,471 +3395,12 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
             dcValN.store(dst1 + 24);
             dst1 += dstStride;
         }
-
-        break;
-
-    //case 64:
-    default:
-        for (k = 0; k < 64; k++)
-        {
-            dcValN.store(dst1);
-            dcValN.store(dst1 +  8);
-            dcValN.store(dst1 + 16);
-            dcValN.store(dst1 + 24);
-            dcValN.store(dst1 + 32);
-            dcValN.store(dst1 + 40);
-            dcValN.store(dst1 + 48);
-            dcValN.store(dst1 + 56);
-            dst1 += dstStride;
-        }
-
         break;
     }
 
     if (filter)
     {
         predDCFiltering(above, left, dst, dstStride, width);
-    }
-}
-
-// CHECK_ME: I am not sure the v_rightColumnN will be overflow when input is 12bpp
-void intra_pred_planar4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-{
-    int bottomLeft, topRight;
-    // NOTE: I use 16-bits is enough here, because we have least than 13-bits as input, and shift left by 2, it is 15-bits
-
-    // Get left and above reference column and row
-    Vec8s v_topRow = (Vec8s)load_partial(const_int(8), above); // topRow
-
-    Vec8s v_leftColumn = (Vec8s)load_partial(const_int(8), left);   // leftColumn
-
-    // Prepare intermediate variables used in interpolation
-    bottomLeft = left[4];
-    topRight   = above[4];
-
-    Vec8s v_bottomLeft(bottomLeft);
-    Vec8s v_topRight(topRight);
-
-    Vec8s v_bottomRow = v_bottomLeft - v_topRow;
-    Vec8s v_rightColumn = v_topRight - v_leftColumn;
-
-    v_topRow = v_topRow << const_int(2);
-    v_leftColumn = v_leftColumn << const_int(2);
-
-    // Generate prediction signal
-    Vec8s v_horPred4 = v_leftColumn + Vec8s(4);
-    const Vec8s v_multi(1, 2, 3, 4, 5, 6, 7, 8);
-    Vec8s v_horPred, v_rightColumnN;
-    Vec8s v_im4;
-    Vec16uc v_im5;
-
-    // line0
-    v_horPred = broadcast(const_int(0), v_horPred4);
-    v_rightColumnN = broadcast(const_int(0), v_rightColumn) * v_multi;
-    v_horPred = v_horPred + v_rightColumnN;
-    v_topRow = v_topRow + v_bottomRow;
-    // CHECK_ME: the HM don't clip the pixel, so I assume there is biggest 12+3=15(bits)
-    v_im4 = (Vec8s)(v_horPred + v_topRow) >> const_int(3);
-    store_partial(const_int(8), &dst[0 * dstStride], v_im4);
-
-    // line1
-    v_horPred = broadcast(const_int(1), v_horPred4);
-    v_rightColumnN = broadcast(const_int(1), v_rightColumn) * v_multi;
-    v_horPred = v_horPred + v_rightColumnN;
-    v_topRow = v_topRow + v_bottomRow;
-    v_im4 = (Vec8s)(v_horPred + v_topRow) >> const_int(3);
-    store_partial(const_int(8), &dst[1 * dstStride], v_im4);
-
-    // line2
-    v_horPred = broadcast(const_int(2), v_horPred4);
-    v_rightColumnN = broadcast(const_int(2), v_rightColumn) * v_multi;
-    v_horPred = v_horPred + v_rightColumnN;
-    v_topRow = v_topRow + v_bottomRow;
-    v_im4 = (Vec8s)(v_horPred + v_topRow) >> const_int(3);
-    store_partial(const_int(8), &dst[2 * dstStride], v_im4);
-
-    // line3
-    v_horPred = broadcast(const_int(3), v_horPred4);
-    v_rightColumnN = broadcast(const_int(3), v_rightColumn) * v_multi;
-    v_horPred = v_horPred + v_rightColumnN;
-    v_topRow = v_topRow + v_bottomRow;
-    v_im4 = (Vec8s)(v_horPred + v_topRow) >> const_int(3);
-    store_partial(const_int(8), &dst[3 * dstStride], v_im4);
-}
-
-void intra_pred_planar8(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-{
-    int bottomLeft, topRight;
-
-    // Get left and above reference column and row
-    __m128i v_topRow = _mm_loadu_si128((__m128i*)above); // topRow
-    __m128i v_leftColumn = _mm_loadu_si128((__m128i*)left); // leftColumn
-
-    // Prepare intermediate variables used in interpolation
-    bottomLeft = left[8];
-    topRight   = above[8];
-
-    __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
-    __m128i v_topRight = _mm_set1_epi16(topRight);
-
-    __m128i v_bottomRow = _mm_sub_epi16(v_bottomLeft, v_topRow);
-    __m128i v_rightColumn = _mm_sub_epi16(v_topRight, v_leftColumn);
-
-    v_topRow = _mm_slli_epi16(v_topRow, (2 + 1));
-    v_leftColumn = _mm_slli_epi16(v_leftColumn, (2 + 1));
-
-    // Generate prediction signal
-    __m128i v_horPred4 = _mm_add_epi16(v_leftColumn, _mm_set1_epi16(8));
-    const __m128i v_multi = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
-    __m128i v_horPred, v_rightColumnN;
-    __m128i v_im4;
-
-#define COMP_PRED_PLANAR_ROW(X) \
-    v_horPred = permute8s<X, X, X, X, X, X, X, X>(v_horPred4); \
-    v_rightColumnN = permute8s<X, X, X, X, X, X, X, X>(v_rightColumn) * Vec8s(v_multi); \
-    v_horPred = _mm_add_epi16(v_horPred, v_rightColumnN); \
-    v_topRow = _mm_add_epi16(v_topRow, v_bottomRow); \
-    v_im4 = _mm_srai_epi16(_mm_add_epi16(v_horPred, v_topRow), (3 + 1)); \
-    _mm_storeu_si128((__m128i*)&dst[X * dstStride], v_im4);
-
-    COMP_PRED_PLANAR_ROW(0);     // row 0
-    COMP_PRED_PLANAR_ROW(1);
-    COMP_PRED_PLANAR_ROW(2);
-    COMP_PRED_PLANAR_ROW(3);
-    COMP_PRED_PLANAR_ROW(4);
-    COMP_PRED_PLANAR_ROW(5);
-    COMP_PRED_PLANAR_ROW(6);
-    COMP_PRED_PLANAR_ROW(7);     // row 7
-#undef COMP_PRED_PLANAR_ROW
-}
-
-void intra_pred_planar16(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-{
-    pixel bottomLeft, topRight;
-
-    // Get left and above reference column and row
-    Vec8s v_topRow_lo, v_topRow_hi;
-
-    v_topRow_lo.load(&above[0]);
-    v_topRow_hi.load(&above[8]);
-
-    Vec8s v_leftColumn;
-    v_leftColumn.load(left);   // leftColumn
-
-    // Prepare intermediate variables used in interpolation
-    bottomLeft = left[16];
-    topRight   = above[16];
-
-    Vec8s v_bottomLeft(bottomLeft);
-    Vec8s v_topRight(topRight);
-
-    Vec8s v_bottomRow_lo = v_bottomLeft - v_topRow_lo;
-    Vec8s v_bottomRow_hi = v_bottomLeft - v_topRow_hi;
-    Vec8s v_rightColumn = v_topRight - v_leftColumn;
-
-    int shift = g_convertToBit[16];         // Using value corresponding to width = 8
-    v_topRow_lo = v_topRow_lo << (2 + shift);
-    v_topRow_hi = v_topRow_hi << (2 + shift);
-    v_leftColumn = v_leftColumn << (2 + shift);
-
-    Vec8s v_horPred4 = v_leftColumn + Vec8s(16);
-    const Vec8s v_multi_lo(1, 2, 3, 4, 5, 6, 7, 8);
-    const Vec8s v_multi_hi(9, 10, 11, 12, 13, 14, 15, 16);
-    Vec8s v_horPred_lo, v_horPred_hi, v_rightColumnN_lo, v_rightColumnN_hi;
-    Vec8s v_im4_lo, v_im4_hi;
-    Vec16uc v_im5;
-
-#define COMP_PRED_PLANAR_ROW(X) \
-    v_horPred_lo = permute8s<X, X, X, X, X, X, X, X>(v_horPred4); \
-    v_horPred_hi = v_horPred_lo; \
-    v_rightColumnN_lo = permute8s<X, X, X, X, X, X, X, X>(v_rightColumn); \
-    v_rightColumnN_hi = v_rightColumnN_lo; \
-    v_rightColumnN_lo *= v_multi_lo; \
-    v_rightColumnN_hi *= v_multi_hi; \
-    v_horPred_lo = v_horPred_lo + v_rightColumnN_lo; \
-    v_horPred_hi = v_horPred_hi + v_rightColumnN_hi; \
-    v_topRow_lo = v_topRow_lo + v_bottomRow_lo; \
-    v_topRow_hi = v_topRow_hi + v_bottomRow_hi; \
-    v_im4_lo = (Vec8s)(v_horPred_lo + v_topRow_lo) >> (3 + shift); \
-    v_im4_hi = (Vec8s)(v_horPred_hi + v_topRow_hi) >> (3 + shift); \
-    v_im4_lo.store(&dst[X * dstStride]); \
-    v_im4_hi.store(&dst[X * dstStride + 8])
-
-    COMP_PRED_PLANAR_ROW(0);     // row 0
-    COMP_PRED_PLANAR_ROW(1);
-    COMP_PRED_PLANAR_ROW(2);
-    COMP_PRED_PLANAR_ROW(3);
-    COMP_PRED_PLANAR_ROW(4);
-    COMP_PRED_PLANAR_ROW(5);
-    COMP_PRED_PLANAR_ROW(6);
-    COMP_PRED_PLANAR_ROW(7);     // row 7
-
-    v_leftColumn.load(left + 8);   // leftColumn lower 8 rows
-    v_rightColumn = v_topRight - v_leftColumn;
-    v_leftColumn = v_leftColumn << (2 + shift);
-    v_horPred4 = v_leftColumn + Vec8s(16);
-
-    COMP_PRED_PLANAR_ROW(8);     // row 0
-    COMP_PRED_PLANAR_ROW(9);
-    COMP_PRED_PLANAR_ROW(10);
-    COMP_PRED_PLANAR_ROW(11);
-    COMP_PRED_PLANAR_ROW(12);
-    COMP_PRED_PLANAR_ROW(13);
-    COMP_PRED_PLANAR_ROW(14);
-    COMP_PRED_PLANAR_ROW(15);
-#undef COMP_PRED_PLANAR_ROW
-}
-
-typedef void intra_pred_planar_t (pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
-intra_pred_planar_t *intraPlanarN[] =
-{
-    intra_pred_planar4,
-    intra_pred_planar8,
-    intra_pred_planar16,
-};
-
-void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
-{
-    int nLog2Size = g_convertToBit[width] + 2;
-
-    int k, l, bottomLeft, topRight;
-    int horPred;
-    // OPT_ME: when width is 64, the shift1D is 8, then the dynamic range is [-65280, 65280], so we have to use 32 bits here
-    int32_t leftColumn[MAX_CU_SIZE], topRow[MAX_CU_SIZE];
-    // CHECK_ME: dynamic range is 9 bits or 15 bits(I assume max input bit_depth is 14 bits)
-    int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
-    int blkSize = width;
-    int offset2D = width;
-    int shift1D = nLog2Size;
-    int shift2D = shift1D + 1;
-
-    if (width < 32)
-    {
-        intraPlanarN[nLog2Size - 2](above, left, dst, dstStride);
-        return;
-    }
-
-    // Get left and above reference column and row
-    for (k = 0; k < blkSize; k++)
-    {
-        topRow[k] = above[k];
-        leftColumn[k] = left[k];
-    }
-
-    // Prepare intermediate variables used in interpolation
-    bottomLeft = left[blkSize];
-    topRight   = above[blkSize];
-    for (k = 0; k < blkSize; k++)
-    {
-        bottomRow[k]   = bottomLeft - topRow[k];
-        rightColumn[k] = topRight   - leftColumn[k];
-        topRow[k]      <<= shift1D;
-        leftColumn[k]  <<= shift1D;
-    }
-
-    // Generate prediction signal
-    for (k = 0; k < blkSize; k++)
-    {
-        horPred = leftColumn[k] + offset2D;
-        for (l = 0; l < blkSize; l++)
-        {
-            horPred += rightColumn[k];
-            topRow[l] += bottomRow[l];
-            dst[k * dstStride + l] = ((horPred + topRow[l]) >> shift2D);
-        }
-    }
-}
-
-void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
-{
-    int blkSize        = width;
-
-    // Map the mode index to main prediction direction and angle
-    assert(dirMode > 1); //no planar and dc
-    bool modeHor       = (dirMode < 18);
-    bool modeVer       = !modeHor;
-    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
-    int lookIdx = intraPredAngle;
-    int absAng         = abs(intraPredAngle);
-    int signAng        = intraPredAngle < 0 ? -1 : 1;
-
-    // Set bitshifts and scale the angle parameter to block size
-    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
-    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
-    int invAngle       = invAngTable[absAng];
-    absAng             = angTable[absAng];
-    intraPredAngle     = signAng * absAng;
-
-    // Do angular predictions
-
-    pixel* refMain;
-    pixel* refSide;
-
-    // Initialize the Main and Left reference array.
-    if (intraPredAngle < 0)
-    {
-        refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
-        refSide = (modeVer ? refLeft : refAbove);     // + (blkSize - 1);
-
-        // Extend the Main reference to the left.
-        int invAngleSum    = 128;     // rounding for (shift by 8)
-        for (int k = -1; k > blkSize * intraPredAngle >> 5; k--)
-        {
-            invAngleSum += invAngle;
-            refMain[k] = refSide[invAngleSum >> 8];
-        }
-    }
-    else
-    {
-        refMain = modeVer ? refAbove : refLeft;
-        refSide = modeVer ? refLeft  : refAbove;
-    }
-
-    // bfilter will always be true for blocksize 4
-    if (intraPredAngle == 0)  // Exactly horizontal/vertical angles
-    {
-        if (modeHor)
-        {
-            Vec8s v_temp;
-            Vec8s v_side_0; // refSide[0] value in a vector
-            v_temp.load((void*)refSide);
-            v_side_0 = broadcast(const_int(0), (Vec8s)v_temp);
-
-            Vec8s v_side;
-            v_side.load(refSide + 1);
-
-            Vec8s v_main;
-            v_main = load_partial(const_int(8), (void*)(refMain + 1));
-
-            Vec8s tmp1, tmp2;
-            tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(v_main, v_main);
-            tmp2 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(tmp1, tmp1);
-            tmp1 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(tmp1, tmp1);
-
-            Vec8s row0;
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row0 = tmp2 + v_side;
-            row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
-
-            store_partial(const_int(8), dst, row0);                //row0
-            store_partial(const_int(8), dst + (2 * dstStride), tmp1); //row2
-
-            tmp2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(tmp2, tmp2);
-            tmp1 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(tmp1, tmp1);
-
-            store_partial(const_int(8), dst + (3 * dstStride), tmp1); //row3
-            store_partial(const_int(8), dst + (dstStride), tmp2);    //row1
-        }
-        else
-        {
-            Vec16uc v_main;
-            v_main = load_partial(const_int(8), refMain + 1);
-            store_partial(const_int(8), dst, v_main);
-            store_partial(const_int(8), dst + dstStride, v_main);
-            store_partial(const_int(8), dst + (2 * dstStride), v_main);
-            store_partial(const_int(8), dst + (3 * dstStride), v_main);
-
-            for (int k = 0; k < 4; k++)
-            {
-                dst[k * dstStride] = (pixel)Clip3((int16_t)0, (int16_t)((1 << X265_DEPTH) - 1), static_cast<int16_t>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
-            }
-        }
-    }
-    else if (intraPredAngle == -32)
-    {
-        Vec8s tmp;
-        tmp = load_partial(const_int(8), refMain);        //-1,0,1,2
-        store_partial(const_int(8), dst, tmp);
-        tmp = load_partial(const_int(8), refMain - 1);     //-2,-1,0,1
-        store_partial(const_int(8), dst + dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 2);
-        store_partial(const_int(8), dst + 2 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 3);
-        store_partial(const_int(8), dst + 3 * dstStride, tmp);
-        return;
-    }
-    else if (intraPredAngle == 32)
-    {
-        Vec8s tmp;
-        tmp = load_partial(const_int(8), refMain + 2);        //-1,0,1,2
-        store_partial(const_int(8), dst, tmp);
-        tmp = load_partial(const_int(8), refMain + 3);     //-2,-1,0,1
-        store_partial(const_int(8), dst + dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 4);
-        store_partial(const_int(8), dst + 2 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 5);
-        store_partial(const_int(8), dst + 3 * dstStride, tmp);
-        return;
-    }
-    else
-    {
-        Vec8s row11, row12, row21, row22, row31, row32, row41, row42;
-        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-
-        row11 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 0));
-        row12 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 0) + 1);
-
-        row21 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 1));
-        row22 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 1) + 1);
-
-        row31 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 2));
-        row32 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 2) + 1);
-
-        row41 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 3));
-        row42 = (Vec8s)load_partial(const_int(8), refMain + 1 + GETAP(lookIdx, 3) + 1);
-
-        v_deltaPos = v_ipAngle = intraPredAngle;
-
-        //row1
-        v_deltaFract = v_deltaPos & thirty1;
-        row11 = ((thirty2 - v_deltaFract) * row11 + (v_deltaFract * row12) + 16) >> 5;
-
-        //row2
-        v_deltaPos += v_ipAngle;
-        v_deltaFract = v_deltaPos & thirty1;
-        row21 = ((thirty2 - v_deltaFract) * row21 + (v_deltaFract * row22) + 16) >> 5;
-
-        //row3
-        v_deltaPos += v_ipAngle;
-        v_deltaFract = v_deltaPos & thirty1;
-        row31 = ((thirty2 - v_deltaFract) * row31 + (v_deltaFract * row32) + 16) >> 5;
-
-        //row4
-        v_deltaPos += v_ipAngle;
-        v_deltaFract = v_deltaPos & thirty1;
-        row41 = ((thirty2 - v_deltaFract) * row41 + (v_deltaFract * row42) + 16) >> 5;
-
-        // Flip the block
-
-        if (modeHor)
-        {
-            Vec8s tmp1, tmp2, tmp3, tmp4;
-
-            tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(row11, row31);
-            tmp2 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(row21, row41);
-
-            tmp3 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(tmp1, tmp2);
-            tmp4 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(tmp1, tmp2);
-
-            //tmp16_1 = compress(tmp3, tmp3);
-            store_partial(const_int(8), dst, tmp3);
-
-            store_partial(const_int(8), dst + (2 * dstStride), tmp4);  //row2
-
-            tmp3 = blend2q<1, 3>((Vec2q)tmp3, (Vec2q)tmp3);
-            tmp4 = blend2q<1, 3>((Vec2q)tmp4, (Vec2q)tmp4);
-
-            store_partial(const_int(8), dst + (3 * dstStride), tmp4);   //row3
-            store_partial(const_int(8), dst + (dstStride), tmp3);       //row1
-        }
-        else
-        {
-            store_partial(const_int(8), dst, row11);
-            store_partial(const_int(8), dst + (dstStride), row21);
-            store_partial(const_int(8), dst + (2 * dstStride), row31);
-            store_partial(const_int(8), dst + (3 * dstStride), row41);
-        }
     }
 }
 }
@@ -3939,7 +3410,10 @@ namespace x265 {
 void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 {
 #if HIGH_BIT_DEPTH
-    p.intra_pred_dc = intra_pred_dc;
+    p.intra_pred_dc[BLOCK_4x4] = intra_pred_dc<4>;
+    p.intra_pred_dc[BLOCK_8x8] = intra_pred_dc<8>;
+    p.intra_pred_dc[BLOCK_16x16] = intra_pred_dc<16>;
+    p.intra_pred_dc[BLOCK_32x32] = intra_pred_dc<32>;
 #else
     p.intra_pred_ang = intra_pred_ang;
 #endif

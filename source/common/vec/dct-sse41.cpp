@@ -159,6 +159,7 @@ void dequant(const int32_t* quantCoef, int32_t* coef, int width, int height, int
     }
 }
 
+#if !HIGH_BIT_DEPTH
 ALIGN_VAR_32(static const int16_t, tab_idst_4x4[8][8]) =
 {
     {   29, +84, 29,  +84,  29, +84,  29, +84 },
@@ -266,6 +267,7 @@ void idst4(int32_t *src, int16_t *dst, intptr_t stride)
     _mm_storel_epi64((__m128i*)&dst[2 * stride], m128iBD);
     _mm_storeh_pi((__m64*)&dst[3 * stride], _mm_castsi128_ps(m128iBD));
 }
+#endif
 }
 
 namespace x265 {
@@ -273,7 +275,7 @@ void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives &p)
 {
     p.dequant = dequant;
 #if !HIGH_BIT_DEPTH
-    p.idct[IDST_4x4] = idst4;
+    p.idct[IDST_4x4] = idst4; // fails with 10bit inputs
 #endif
 }
 }

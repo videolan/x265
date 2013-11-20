@@ -122,8 +122,6 @@ void dct4(int16_t *src, int32_t *dst, intptr_t stride)
     _mm_storeu_si128((__m128i*)&dst[3 * 4], T73);
 }
 
-#endif // if !HIGH_BIT_DEPTH
-
 ALIGN_VAR_32(static const int16_t, tab_idct_4x4[4][8]) =
 {
     { 64,  64, 64,  64, 64,  64, 64,  64 },
@@ -1731,6 +1729,7 @@ void idct32(int32_t *src, int16_t *dst, intptr_t stride)
 #undef STORE_LINE
     }
 }
+#endif
 }
 
 namespace x265 {

@@ -620,8 +620,6 @@ void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride
     intraPlanarN[nLog2Size - 2](above, left, dst, dstStride);
 }
 
-#endif // if !HIGH_BIT_DEPTH
-
 ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
 {
     { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 },         //  0
@@ -8698,6 +8696,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef HALF
 #undef N
 }
+#endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {

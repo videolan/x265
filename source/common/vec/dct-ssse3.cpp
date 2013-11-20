@@ -39,6 +39,7 @@
 
 using namespace x265;
 
+#if !HIGH_BIT_DEPTH
 namespace {
 ALIGN_VAR_32(static const int16_t, tab_dst_4[][8]) =
 {
@@ -1340,6 +1341,7 @@ void dct32(int16_t *src, int32_t *dst, intptr_t stride)
     }
 }
 }
+#endif
 
 namespace x265 {
 void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives &p)
