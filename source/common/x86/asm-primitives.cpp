@@ -629,6 +629,13 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_copy_sp[CSP_I420][CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
         p.chroma_copy_sp[CSP_I420][CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
 
+        // This function pointer initialization is temporary will be removed
+        // later with macro definitions.  It is used to avoid linker errors
+        // until all partitions are coded and commit smaller patches, easier to
+        // review.
+
+        p.chroma_add_ps[X265_CSP_I420][CHROMA_4x4] = x265_pixel_add_ps_4x4_sse4;
+
         p.chroma_vsp[CHROMA_2x4] = x265_interp_4tap_vert_sp_2x4_sse4;
         p.chroma_vsp[CHROMA_2x8] = x265_interp_4tap_vert_sp_2x8_sse4;
         p.chroma_vsp[CHROMA_6x8] = x265_interp_4tap_vert_sp_6x8_sse4;
