@@ -3498,6 +3498,16 @@ cglobal pixel_satd_8x4, 4,6,8
     paddd  m12, m0
 %endmacro
 
+%macro AVG_16x16 0
+    paddusw m0, [esp+48]
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    add r4d, dword [esp+36]
+    mov dword [esp+36], r4d
+%endmacro
+
 %macro SA8D 0
 ; sse2 doesn't seem to like the horizontal way of doing things
 %define vertical ((notcpuflag(ssse3) || cpuflag(atom)) || HIGH_BIT_DEPTH)
@@ -3593,6 +3603,135 @@ cglobal pixel_sa8d_32x32, 4,8,12
     SA8D_16x16
     lea r0, [r0+8*r1]
     lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    sub  r2, 16
+    sub  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    movd eax, m12
+    RET
+
+cglobal pixel_sa8d_64x64, 4,8,12
+    FIX_STRIDES r1, r3
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    pxor m12, m12
+%if vertical == 0
+    mova m7, [hmul_8p]
+%endif
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    add  r2, 16
+    add  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    add  r2, 16
+    add  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    add  r2, 16
+    add  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    sub  r2, 16
+    sub  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    sub  r2, 16
+    sub  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    sub  r2, 16
+    sub  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    add  r2, 16
+    add  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    add  r2, 16
+    add  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    add  r2, 16
+    add  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    sub  r2, 16
+    sub  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    sub  r2, 16
+    sub  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
@@ -3865,6 +4004,373 @@ cglobal pixel_sa8d_32x32, 4,7,8
     lea  r2, [r2 + r3*8]
     add  r0, 24*SIZEOF_PIXEL
     add  r2, 24*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    paddusw m0, [esp+48]
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    add r4d, dword [esp+36]
+    mov eax, r4d
+    mov esp, r6
+    RET
+
+cglobal pixel_sa8d_64x64, 4,7,8
+    FIX_STRIDES r1, r3
+    mov  r6, esp
+    and  esp, ~15
+    sub  esp, 64
+
+    lea  r4, [r1 + 2*r1]
+    lea  r5, [r3 + 2*r3]
+    call pixel_sa8d_8x8_internal2
+    mova [rsp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 8*SIZEOF_PIXEL
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    paddusw m0, [esp+48]
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    mov dword [esp+36], r4d
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 16*SIZEOF_PIXEL
+    add  r2, 16*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 24*SIZEOF_PIXEL
+    add  r2, 24*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 32*SIZEOF_PIXEL
+    add  r2, 32*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 40*SIZEOF_PIXEL
+    add  r2, 40*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 48*SIZEOF_PIXEL
+    add  r2, 48*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 56*SIZEOF_PIXEL
+    add  r2, 56*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    mov  [r6+20], r0
+    mov  [r6+28], r2
+
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 8*SIZEOF_PIXEL
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 16*SIZEOF_PIXEL
+    add  r2, 16*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 24*SIZEOF_PIXEL
+    add  r2, 24*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 32*SIZEOF_PIXEL
+    add  r2, 32*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 40*SIZEOF_PIXEL
+    add  r2, 40*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 48*SIZEOF_PIXEL
+    add  r2, 48*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 56*SIZEOF_PIXEL
+    add  r2, 56*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    mov  [r6+20], r0
+    mov  [r6+28], r2
+
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 8*SIZEOF_PIXEL
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 16*SIZEOF_PIXEL
+    add  r2, 16*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 24*SIZEOF_PIXEL
+    add  r2, 24*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 32*SIZEOF_PIXEL
+    add  r2, 32*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 40*SIZEOF_PIXEL
+    add  r2, 40*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 48*SIZEOF_PIXEL
+    add  r2, 48*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 56*SIZEOF_PIXEL
+    add  r2, 56*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    mov  [r6+20], r0
+    mov  [r6+28], r2
+
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 8*SIZEOF_PIXEL
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 16*SIZEOF_PIXEL
+    add  r2, 16*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 24*SIZEOF_PIXEL
+    add  r2, 24*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 32*SIZEOF_PIXEL
+    add  r2, 32*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 40*SIZEOF_PIXEL
+    add  r2, 40*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    AVG_16x16
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 48*SIZEOF_PIXEL
+    add  r2, 48*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 56*SIZEOF_PIXEL
+    add  r2, 56*SIZEOF_PIXEL
     call pixel_sa8d_8x8_internal2
     SA8D_INTER
     mova [esp+64-mmsize], m0
