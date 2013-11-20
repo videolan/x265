@@ -635,6 +635,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         // review.
 
         p.chroma_add_ps[X265_CSP_I420][CHROMA_4x4] = x265_pixel_add_ps_4x4_sse4;
+        p.chroma_add_ps[X265_CSP_I420][CHROMA_4x8] = x265_pixel_add_ps_4x8_sse4;
+        p.chroma_add_ps[X265_CSP_I420][CHROMA_4x16] = x265_pixel_add_ps_4x16_sse4;
 
         p.chroma_vsp[CHROMA_2x4] = x265_interp_4tap_vert_sp_2x4_sse4;
         p.chroma_vsp[CHROMA_2x8] = x265_interp_4tap_vert_sp_2x8_sse4;
