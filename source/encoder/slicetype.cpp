@@ -566,7 +566,7 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
         int predsize = cuSize * cuSize;
 
         // generate 35 intra predictions into tmp
-        primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, predictions, cuSize, cuSize, (cuSize <= 16));
+        primitives.intra_pred_dc[nLog2SizeMinus2](pAbove0 + 1, pLeft0 + 1, predictions, cuSize, (cuSize <= 16));
         pixel *above = (cuSize >= 8) ? pAbove1 : pAbove0;
         pixel *left  = (cuSize >= 8) ? pLeft1 : pLeft0;
         primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, predictions + predsize, cuSize, cuSize);

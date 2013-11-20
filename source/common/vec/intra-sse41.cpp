@@ -102,7 +102,8 @@ inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstS
     }
 }
 
-void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int filter)
+template<int width>
+void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
 {
     int sum;
     int logSize = g_convertToBit[width] + 2;
@@ -8708,7 +8709,10 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
     initFileStaticVars();
 
     p.intra_pred_planar = intra_pred_planar;
-    p.intra_pred_dc = intra_pred_dc;
+    p.intra_pred_dc[BLOCK_4x4] = intra_pred_dc<4>;
+    p.intra_pred_dc[BLOCK_8x8] = intra_pred_dc<8>;
+    p.intra_pred_dc[BLOCK_16x16] = intra_pred_dc<16>;
+    p.intra_pred_dc[BLOCK_32x32] = intra_pred_dc<32>;
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
     p.intra_pred_allangs[0] = predIntraAngs4;

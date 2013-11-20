@@ -177,7 +177,7 @@ typedef void (*pixeladd_ss_t)(int bx, int by, int16_t *dst, intptr_t dstride, in
 typedef void (*pixelavg_pp_t)(pixel *dst, intptr_t dstride, pixel *src0, intptr_t sstride0, pixel *src1, intptr_t sstride1, int weight);
 typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
 
-typedef void (*intra_dc_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int bFilter);
+typedef void (*intra_dc_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bFilter);
 typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width);
 typedef void (*intra_ang_t)(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
@@ -273,7 +273,7 @@ struct EncoderPrimitives
     filter_p2s_t    chroma_p2s;
     extendCURowBorder_t extendRowBorder;
 
-    intra_dc_t      intra_pred_dc;
+    intra_dc_t      intra_pred_dc[NUM_SQUARE_BLOCKS];
     intra_planar_t  intra_pred_planar;
     intra_ang_t     intra_pred_ang;
     intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];

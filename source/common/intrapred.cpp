@@ -80,7 +80,8 @@ void DCPredFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dststride, 
     }
 }
 
-void PredIntraDC(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int bFilter)
+template<int width>
+void PredIntraDC(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bFilter)
 {
     int k, l;
     int blkSize = width;
@@ -300,7 +301,10 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred_dc = PredIntraDC;
+    p.intra_pred_dc[BLOCK_4x4] = PredIntraDC<4>;
+    p.intra_pred_dc[BLOCK_8x8] = PredIntraDC<8>;
+    p.intra_pred_dc[BLOCK_16x16] = PredIntraDC<16>;
+    p.intra_pred_dc[BLOCK_32x32] = PredIntraDC<32>;
     p.intra_pred_planar = PredIntraPlanar;
     p.intra_pred_ang = PredIntraAngBufRef;
     p.intra_pred_allangs[0] = PredIntraAngs_C<4>;

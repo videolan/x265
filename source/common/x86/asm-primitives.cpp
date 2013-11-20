@@ -31,6 +31,7 @@ extern "C" {
 #include "mc.h"
 #include "ipfilter8.h"
 #include "blockcopy8.h"
+#include "intrapred.h"
 }
 
 #define INIT2_NAME(name1, name2, cpu) \
@@ -637,6 +638,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.calcresidual[BLOCK_16x16] = x265_getResidual16_sse4;
         p.calcresidual[BLOCK_32x32] = x265_getResidual32_sse4;
         p.quant = x265_quant_sse4;
+        p.intra_pred_dc[BLOCK_4x4] = x265_intra_pred_dc4_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

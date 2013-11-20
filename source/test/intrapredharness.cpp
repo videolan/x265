@@ -68,17 +68,16 @@ IntraPredHarness::~IntraPredHarness()
     X265_FREE(pixel_out_33_vec);
 }
 
-bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt)
+bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt, int width)
 {
     int j = ADI_BUF_STRIDE;
 
     for (int i = 0; i <= 100; i++)
     {
-        int rand_width = 1 << ((rand() % 4) + 2);                  // Randomly generated Width
         int rand_filter = rand() & 1;
 
         pixel left[MAX_CU_SIZE * 2 + 1];
-        for (int k = 0; k < rand_width * 2 + 1; k++)
+        for (int k = 0; k < width * 2 + 1; k++)
         {
             left[k] = pixel_buff[j - 1 + k * ADI_BUF_STRIDE];
         }
@@ -87,17 +86,16 @@ bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt)
         memset(pixel_out_vec, 0xCD, out_size);
         memset(pixel_out_c, 0xCD, out_size);
 #endif
+        ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_filter);
+        opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_filter);
 
-        ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
-        opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
-
-        for (int k = 0; k < rand_width; k++)
+        for (int k = 0; k < width; k++)
         {
-            if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, rand_width))
+            if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
             {
 #if _DEBUG
-                ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
-                opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
+                ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_filter);
+                opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_filter);
 #endif
                 return false;
             }
@@ -245,12 +243,16 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], cons
 
 bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    if (opt.intra_pred_dc)
+    for(int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        if (!check_dc_primitive(ref.intra_pred_dc, opt.intra_pred_dc))
+        if (opt.intra_pred_dc[i])
         {
-            printf("intra_dc failed\n");
-            return false;
+            const int size = (1 << (i + 2));
+            if (!check_dc_primitive(ref.intra_pred_dc[i], opt.intra_pred_dc[i], size))
+            {
+                printf("intra_dc %dx%d failed\n", size, size);
+                return false;
+            }
         }
     }
     if (opt.intra_pred_planar)
@@ -286,14 +288,18 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     int width = 64;
     uint16_t srcStride = 96;
 
-    if (opt.intra_pred_dc)
+    for(int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        printf("intra_dc[filter=0]");
-        REPORT_SPEEDUP(opt.intra_pred_dc, ref.intra_pred_dc,
-                       pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, width, 0);
-        printf("intra_dc[filter=1]");
-        REPORT_SPEEDUP(opt.intra_pred_dc, ref.intra_pred_dc,
-                       pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, width, 1);
+        if (opt.intra_pred_dc[i])
+        {
+            const int size = (1 << (i + 2));
+            printf("intra_dc_%dx%d[filter=0]", size, size);
+            REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
+                           pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 0);
+            printf("intra_dc_%dx%d[filter=1]", size, size);
+            REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
+                           pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 1);
+        }
     }
     if (opt.intra_pred_planar)
     {

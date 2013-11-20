@@ -130,7 +130,7 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t strid
     assert(g_convertToBit[size] >= 0);   //   4x  4
     assert(g_convertToBit[size] <= 5);   // 128x128
 
-    char log2BlkSize = g_convertToBit[size] + 2;
+    int log2BlkSize = g_convertToBit[size] + 2;
 
     Pel *src = m_predBuf;
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
@@ -164,7 +164,7 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t strid
     }
     else if (dirMode == DC_IDX)
     {
-        primitives.intra_pred_dc((pixel*)refAbv + 1, (pixel*)refLft + 1, (pixel*)dst, stride, size, bFilter);
+        primitives.intra_pred_dc[log2BlkSize - 2](refAbv + 1, refLft + 1, dst, stride, bFilter);
     }
     else
     {
@@ -175,6 +175,8 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t strid
 // Angular chroma
 void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, uint32_t stride, int width)
 {
+    int log2BlkSize = g_convertToBit[width];
+
     // Create the prediction
     Pel refAbv[3 * MAX_CU_SIZE];
     Pel refLft[3 * MAX_CU_SIZE];
@@ -193,7 +195,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, ui
     }
     else if (dirMode == DC_IDX)
     {
-        primitives.intra_pred_dc(refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride, width, false);
+        primitives.intra_pred_dc[log2BlkSize](refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride, false);
     }
     else
     {
