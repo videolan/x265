@@ -51,45 +51,11 @@ void convert16to32_shl(int32_t *dst, int16_t *org, intptr_t stride, int shift, i
         }
     }
 }
-
-void convert16to16_shl(int16_t *dst, int16_t *org, int width, int height, intptr_t stride, int shift)
-{
-    int i, j;
-
-    if (width == 4)
-    {
-        for (i = 0; i < height; i += 2)
-        {
-            __m128i T00, T01;
-
-            T00 = _mm_loadl_epi64((__m128i*)&org[(i) * stride]);
-            T01 = _mm_loadl_epi64((__m128i*)&org[(i + 1) * stride]);
-            T00 = _mm_unpacklo_epi64(T00, T01);
-            T00 = _mm_slli_epi16(T00, shift);
-            _mm_storeu_si128((__m128i*)&dst[i * 4], T00);
-        }
-    }
-    else
-    {
-        for (i = 0; i < height; i++)
-        {
-            for (j = 0; j < width; j += 8)
-            {
-                __m128i T00;
-
-                T00 = _mm_loadu_si128((__m128i*)&org[i * stride + j]);
-                T00 = _mm_slli_epi16(T00, shift);
-                _mm_storeu_si128((__m128i*)&dst[i * width + j], T00);
-            }
-        }
-    }
-}
 }
 
 namespace x265 {
 void Setup_Vec_PixelPrimitives_sse3(EncoderPrimitives &p)
 {
     p.cvt16to32_shl = convert16to32_shl;
-    p.cvt16to16_shl = convert16to16_shl;
 }
 }
