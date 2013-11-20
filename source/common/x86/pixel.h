@@ -285,7 +285,7 @@ DECL_ADS(1, avx2)
 
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);\
-    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel *dest, int destride, pixel *src0, int16_t *scr1, int srcStride0, int srcStride1);
+    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1);
 
 #define CHROMA_PIXELSUB_DEF(cpu) \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 4, cpu); \
@@ -315,7 +315,7 @@ DECL_ADS(1, avx2)
 
 #define SETUP_LUMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);\
-    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel *dest, int destride, pixel *src0, int16_t *scr1, int srcStride0, int srcStride1);
+    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1);
 
 #define LUMA_PIXELSUB_DEF(cpu) \
     SETUP_LUMA_PIXELSUB_PS_FUNC(4,   4, cpu); \
