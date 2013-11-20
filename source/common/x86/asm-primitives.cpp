@@ -100,7 +100,7 @@ extern "C" {
     p.sa8d[BLOCK_64x64] = x265_pixel_sa8d_64x64_ ## cpu; \
     p.sa8d_inter[LUMA_32x32] = x265_pixel_sa8d_32x32_ ## cpu; \
     p.sa8d_inter[LUMA_32x16] = x265_pixel_sa8d_32x16_ ## cpu; \
-    p.sa8d_inter[LUMA_16x32] = cmp<16, 32, 16, 16, x265_pixel_sa8d_16x16_ ## cpu>; \
+    p.sa8d_inter[LUMA_16x32] = x265_pixel_sa8d_16x32_ ## cpu; \
     p.sa8d_inter[LUMA_64x64] = x265_pixel_sa8d_64x64_ ## cpu; \
     p.sa8d_inter[LUMA_64x32] = cmp<64, 32, 16, 16, x265_pixel_sa8d_16x16_ ## cpu>; \
     p.sa8d_inter[LUMA_32x64] = cmp<32, 64, 16, 16, x265_pixel_sa8d_16x16_ ## cpu>; \
