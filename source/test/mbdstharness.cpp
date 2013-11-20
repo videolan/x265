@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 using namespace x265;
+#define ITERS  100
 
 struct DctConf_t
 {
@@ -245,7 +246,7 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         mintbuf2[i] = rand() & PIXEL_MAX;
     }
 
-    for (int i = 0; i <= 5; i++)
+    for (int i = 0; i <= ITERS; i++)
     {
         int width = (rand() % 4 + 1) * 4;
 
@@ -282,10 +283,10 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         j += 16;
 
 #if _DEBUG
-        memset(mintbuf3, 0, mem_cmp_size);
-        memset(mintbuf4, 0, mem_cmp_size);
-        memset(mintbuf5, 0, mem_cmp_size);
-        memset(mintbuf6, 0, mem_cmp_size);
+        memset(mintbuf3, 0xCD, mem_cmp_size);
+        memset(mintbuf4, 0xCD, mem_cmp_size);
+        memset(mintbuf5, 0xCD, mem_cmp_size);
+        memset(mintbuf6, 0xCD, mem_cmp_size);
 #endif
     }
 

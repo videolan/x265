@@ -636,6 +636,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.calcrecon[BLOCK_32x32] = x265_calcRecons32_sse4;
         p.calcresidual[BLOCK_16x16] = x265_getResidual16_sse4;
         p.calcresidual[BLOCK_32x32] = x265_getResidual32_sse4;
+        p.quant = x265_quant_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

@@ -26,8 +26,11 @@
 
 SECTION_RODATA 32
 
-SECTION .text
+c_d_4:          dd 4, 4, 4, 4
+c_d_1234:       dd 1, 2, 3, 4
 
+
+SECTION .text
 
 ;-----------------------------------------------------------------------------
 ; void cvt32to16_shr(short *dst, int *src, intptr_t stride, int shift, int size)
@@ -548,4 +551,122 @@ cglobal getResidual32, 4,5,7
     lea         r2, [r2 + r3 * 4]
 
     jnz        .loop
+    RET
+
+
+;-----------------------------------------------------------------------------
+; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+%if ARCH_X86_64 == 1
+cglobal quant, 5,6,11
+  %define addVec    m8
+  %define qbits     m9
+  %define qbits8    m10
+%else
+cglobal quant, 5,6,8, 0-(3*mmsize)
+  %define addVec    [rsp + 0 * mmsize]
+  %define qbits     [rsp + 1 * mmsize]
+  %define qbits8    [rsp + 2 * mmsize]
+%endif
+
+    ; fill qbits-8
+    movd        m0, r4d
+    mova        qbits, m0
+
+    ; fill qbits-8
+    sub         r4d, 8
+    movd        m0, r4d
+    mova        qbits8, m0
+
+    ; fill offset
+    mov         r4d, r5m
+    movd        m0, r4d
+    pshufd      m0, m0, 0
+    mova        addVec, m0
+
+    mov         r4d, r6m
+    shr         r4d, 3
+    pxor        m7, m7          ; m7 = acSum4
+    mova        m6, [c_d_1234]  ; m6 = last4
+    pxor        m5, m5          ; m5 = count
+    mova        m4, [c_d_4]     ; m4 = [4 4 4 4]
+.loop:
+    ; 4 coeff
+    movu        m0, [r0]        ; m1 = level
+    pxor        m1, m1
+    pcmpgtd     m1, m0          ; m2 = sign
+    movu        m2, [r1]        ; m3 = qcoeff
+    pabsd       m0, m0
+    pmulld      m0, m2          ; m1 = tmpLevel1
+    paddd       m2, m0, addVec
+    psrad       m2, qbits       ; m3 = level1
+    paddd       m7, m2
+    pslld       m3, m2, qbits
+    psubd       m0, m3
+    psrad       m0, qbits8      ; m1 = deltaU1
+    movu        [r2], m0
+
+    pxor        m0, m0
+    pcmpeqd     m0, m2          ; m0 = mask4
+    pand        m5, m0
+    pandn       m0, m6
+    por         m5, m0
+    paddd       m6, m4
+
+    pxor        m2, m1
+    psubd       m2, m1
+    packssdw    m2, m2
+    pmovsxwd    m2, m2
+    movu        [r3], m2
+
+    ; 4 coeff
+    movu        m0, [r0 + 16]   ; m1 = level
+    pxor        m1, m1
+    pcmpgtd     m1, m0          ; m2 = sign
+    movu        m2, [r1 + 16]   ; m3 = qcoeff
+    pabsd       m0, m0
+    pmulld      m0, m2          ; m1 = tmpLevel1
+    paddd       m2, m0, addVec
+    psrad       m2, qbits       ; m3 = level1
+    paddd       m7, m2
+    pslld       m3, m2, qbits
+    psubd       m0, m3
+    psrad       m0, qbits8      ; m1 = deltaU1
+    movu        [r2 + 16], m0
+
+    pxor        m0, m0
+    pcmpeqd     m0, m2          ; m0 = mask4
+    pand        m5, m0
+    pandn       m0, m6
+    por         m5, m0
+    paddd       m6, m4
+
+    pxor        m2, m1
+    psubd       m2, m1
+    packssdw    m2, m2
+    pmovsxwd    m2, m2
+    movu        [r3 + 16], m2
+
+    add         r0, 32
+    add         r1, 32
+    add         r2, 32
+    add         r3, 32
+
+    dec         r4d
+    jnz        .loop
+
+    movhlps     m4, m5
+    pmaxud      m4, m5
+    pshufd      m5, m4, 1
+    pmaxud      m4, m5
+
+    mov         r4, r7m
+    movd        [r4], m4
+    dec         dword [r4]
+
+    phaddd      m7, m7
+    phaddd      m7, m7
+    movd        eax, m7
+
     RET
