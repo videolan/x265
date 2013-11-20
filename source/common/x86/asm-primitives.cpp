@@ -634,6 +634,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         // until all partitions are coded and commit smaller patches, easier to
         // review.
 
+        p.chroma_add_ps[X265_CSP_I420][CHROMA_4x2] = x265_pixel_add_ps_4x2_sse4;
         p.chroma_add_ps[X265_CSP_I420][CHROMA_4x4] = x265_pixel_add_ps_4x4_sse4;
         p.chroma_add_ps[X265_CSP_I420][CHROMA_4x8] = x265_pixel_add_ps_4x8_sse4;
         p.chroma_add_ps[X265_CSP_I420][CHROMA_4x16] = x265_pixel_add_ps_4x16_sse4;
