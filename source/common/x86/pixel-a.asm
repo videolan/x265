@@ -6958,6 +6958,25 @@ ads_mvs_ssse3:
     RET
 
 ;-----------------------------------------------------------------
+; void transpose_4x4(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose4, 3, 3, 4, dest, src, stride
+
+    movd         m0,    [r1]
+    movd         m1,    [r1 + r2]
+    movd         m2,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movd         m3,    [r1 + r2]
+
+    punpcklbw    m0,    m1
+    punpcklbw    m2,    m3
+    punpcklwd    m0,    m2
+    movu         [r0],    m0
+
+    RET
+
+;-----------------------------------------------------------------
 ; void transpose_8x8(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
 INIT_XMM sse2
@@ -6979,18 +6998,15 @@ cglobal transpose8, 3, 3, 8, dest, src, stride
     punpcklbw    m2,    m3
     punpcklbw    m4,    m5
     punpcklbw    m6,    m7
-    movu         m1,    m0
+
+    punpckhwd    m1,    m0,    m2
     punpcklwd    m0,    m2
-    punpckhwd    m1,    m2
-    movu         m5,    m4
+    punpckhwd    m5,    m4,    m6
     punpcklwd    m4,    m6
-    punpckhwd    m5,    m6
-    movu         m2,    m0
+    punpckhdq    m2,    m0,    m4
     punpckldq    m0,    m4
-    punpckhdq    m2,    m4
-    movu         m3,    m1
+    punpckhdq    m3,    m1,    m5
     punpckldq    m1,    m5
-    punpckhdq    m3,    m5
 
     movu         [r0],         m0
     movu         [r0 + 16],    m2
@@ -6999,7 +7015,7 @@ cglobal transpose8, 3, 3, 8, dest, src, stride
 
     RET
 
-%macro transpose_8x8 0
+%macro TRANSPOSE_8x8 1
 
     movh         m0,    [r1]
     movh         m1,    [r1 + r2]
@@ -7028,16 +7044,16 @@ cglobal transpose8, 3, 3, 8, dest, src, stride
     punpckldq    m1,    m5
 
     movlps         [r0],             m0
-    movhps         [r0 + r3],        m0
-    movlps         [r0 + 2 * r3],    m2
-    lea            r0,               [r0 + 2 * r3]
-    movhps         [r0 + r3],        m2
-    movlps         [r0 + 2 * r3],    m1
-    lea            r0,               [r0 + 2 * r3]
-    movhps         [r0 + r3],        m1
-    movlps         [r0 + 2 * r3],    m3
-    lea            r0,               [r0 + 2 * r3]
-    movhps         [r0 + r3],        m3
+    movhps         [r0 + %1],        m0
+    movlps         [r0 + 2 * %1],    m2
+    lea            r0,               [r0 + 2 * %1]
+    movhps         [r0 + %1],        m2
+    movlps         [r0 + 2 * %1],    m1
+    lea            r0,               [r0 + 2 * %1]
+    movhps         [r0 + %1],        m1
+    movlps         [r0 + 2 * %1],    m3
+    lea            r0,               [r0 + 2 * %1]
+    movhps         [r0 + %1],        m3
 
 %endmacro
 
@@ -7048,19 +7064,18 @@ cglobal transpose8, 3, 3, 8, dest, src, stride
 INIT_XMM sse2
 cglobal transpose16, 3, 5, 8, dest, src, stride
 
-    mov    r4,    r0
-    mov    r5,    r1
-    mov    r3,    16
-    transpose_8x8
+    mov    r3,    r0
+    mov    r4,    r1
+    TRANSPOSE_8x8 16
     lea    r1,    [r1 + 2 * r2]
-    lea    r0,    [r4 + 8]
-    transpose_8x8
-    lea    r1,    [r5 + 8]
-    lea    r0,    [r4 + r3 * 8]
-    transpose_8x8
+    lea    r0,    [r3 + 8]
+    TRANSPOSE_8x8 16
+    lea    r1,    [r4 + 8]
+    lea    r0,    [r3 + 8 * 16]
+    TRANSPOSE_8x8 16
     lea    r1,    [r1 + 2 * r2]
-    lea    r0,    [r4 + r3 * 8 +8]
-    transpose_8x8
+    lea    r0,    [r3 + 8 * 16 + 8]
+    TRANSPOSE_8x8 16
 
     RET
 
@@ -8327,27 +8342,5 @@ cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
     movu          [r0 + 32],    m0
     punpcklqdq    m4,           m6
     movu          [r0 + 48],    m4
-
-RET
-
-;-----------------------------------------------------------------
-; void transpose_4x4(pixel *dst, pixel *src, intptr_t stride)
-;-----------------------------------------------------------------
-INIT_XMM sse2
-cglobal transpose4, 3, 3, 4, dest, src, stride
-
-    movd         m0,    [r1]
-    movd         m1,    [r1 + r2]
-    movd         m2,    [r1 + 2 * r2]
-
-    lea          r1,    [r1 + 2 * r2]
-
-    movd         m3,    [r1 + r2]
-
-    punpcklbw    m0,    m1
-    punpcklbw    m2,    m3
-    punpcklwd    m0,    m2
-
-    movu         [r0],    m0
 
 RET
