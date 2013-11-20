@@ -90,8 +90,7 @@ add         r5,            r5
 mov         r6d,           %2/4
 
 .loop
-      movd        m0,            [r2]
-      pmovzxbw    m0,            m0
+      pmovzxbw    m0,            [r2]
       movh        m1,            [r3]
 
       paddw       m0,            m1
@@ -99,8 +98,7 @@ mov         r6d,           %2/4
 
       movd        [r0],          m0
 
-      movd        m0,            [r2 + r4]
-      pmovzxbw    m0,            m0
+      pmovzxbw    m0,            [r2 + r4]
       movh        m1,            [r3 + r5]
 
       paddw       m0,            m1
@@ -108,8 +106,7 @@ mov         r6d,           %2/4
 
       movd        [r0 + r1],     m0
 
-      movd        m0,            [r2 + 2 * r4]
-      pmovzxbw    m0,            m0
+      pmovzxbw    m0,            [r2 + 2 * r4]
       movh        m1,            [r3 + 2 * r5]
 
       paddw       m0,            m1
@@ -121,8 +118,7 @@ mov         r6d,           %2/4
       lea         r2,            [r2 + 2 * r4]
       lea         r3,            [r3 + 2 * r5]
 
-      movd        m0,            [r2 + r4]
-      pmovzxbw    m0,            m0
+      pmovzxbw    m0,            [r2 + r4]
       movh        m1,            [r3 + r5]
 
       paddw       m0,            m1
