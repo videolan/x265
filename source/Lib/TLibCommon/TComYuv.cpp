@@ -322,10 +322,8 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
     primitives.chroma_copy_ps[m_csp][part](dstV, dststride, srcV, srcstride);
 }
 
-void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId)
+void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t, uint32_t, uint32_t chromaId)
 {
-    width, height;          // To avoid build error, can't eliminate overloaded version present
-
     if (chromaId == 0)
     {
         Pel* srcU = getCbAddr(partIdx);
@@ -358,10 +356,8 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_
     }
 }
 
-void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId)
+void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t, uint32_t, uint32_t chromaId)
 {
-    width, height;          // To avoid build error, can't eliminate overloaded version present
-
     if (chromaId == 0)
     {
         Pel*   srcU = getCbAddr(partIdx);

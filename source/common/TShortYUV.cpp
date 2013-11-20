@@ -288,10 +288,8 @@ void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx,
     }
 }
 
-void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId)
+void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int, unsigned int, unsigned int chromaId)
 {
-    width, height;
-
     if (chromaId == 0)
     {
         int16_t* srcU = getCbAddr(partIdx);
