@@ -187,3 +187,49 @@ packuswb    m0,            m0
 movh        [r0 + r1],     m0
 
 RET
+
+;-----------------------------------------------------------------------------
+; void pixel_add_ps_8x4(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_add_ps_8x4, 6, 6, 2, dest, destride, src0, scr1, srcStride0, srcStride1
+
+add         r5,            r5
+
+pmovzxbw    m0,            [r2]
+movu        m1,            [r3]
+
+paddw       m0,            m1
+packuswb    m0,            m0
+
+movh        [r0],          m0
+
+pmovzxbw    m0,            [r2 + r4]
+movu        m1,            [r3 + r5]
+
+paddw       m0,            m1
+packuswb    m0,            m0
+
+movh        [r0 + r1],     m0
+
+pmovzxbw    m0,            [r2 + 2 * r4]
+movu        m1,            [r3 + 2 * r5]
+
+paddw       m0,            m1
+packuswb    m0,            m0
+
+movh        [r0 + 2 * r1], m0
+
+lea         r0,            [r0 + 2 * r1]
+lea         r2,            [r2 + 2 * r4]
+lea         r3,            [r3 + 2 * r5]
+
+pmovzxbw    m0,            [r2 + r4]
+movu        m1,            [r3 + r5]
+
+paddw       m0,            m1
+packuswb    m0,            m0
+
+movh        [r0 + r1],     m0
+
+RET
