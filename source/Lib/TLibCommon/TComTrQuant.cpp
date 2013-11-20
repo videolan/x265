@@ -603,7 +603,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             int Q = qCoef[blkPos];
             double scaleFactor = errScale[blkPos];
             int levelDouble    = srcCoeff[blkPos];
-            levelDouble        = (int)std::min<Int64>((Int64)abs((int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
+            levelDouble        = (int)std::min<int64_t>((int64_t)abs((int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
 
             uint32_t maxAbsLevel = (levelDouble + (1 << (qbits - 1))) >> qbits;
 
@@ -883,7 +883,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
 
     if (cu->getSlice()->getPPS()->getSignHideFlag() && absSum >= 2)
     {
-        Int64 rdFactor = (Int64)(
+        int64_t rdFactor = (int64_t)(
                 g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))
                 / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)))
                 + 0.5);
@@ -931,7 +931,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 if (signbit != (tmpSum & 0x1)) // hide but need tune
                 {
                     // calculate the cost
-                    Int64 minCostInc = MAX_INT64, curCost = MAX_INT64;
+                    int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
                     int minPos = -1, finalChange = 0, curChange = 0;
 
                     for (n = (lastCG == 1 ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
@@ -939,8 +939,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                         uint32_t blkPos   = scan[n + subPos];
                         if (dstCoeff[blkPos] != 0)
                         {
-                            Int64 costUp   = rdFactor * (-deltaU[blkPos]) + rateIncUp[blkPos];
-                            Int64 costDown = rdFactor * (deltaU[blkPos]) + rateIncDown[blkPos] -
+                            int64_t costUp   = rdFactor * (-deltaU[blkPos]) + rateIncUp[blkPos];
+                            int64_t costDown = rdFactor * (deltaU[blkPos]) + rateIncDown[blkPos] -
                                 (abs(dstCoeff[blkPos]) == 1 ? ((1 << 15) + sigRateDelta[blkPos]) : 0);
 
                             if (lastCG == 1 && lastNZPosInCG == n && abs(dstCoeff[blkPos]) == 1)

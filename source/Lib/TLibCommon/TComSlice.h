@@ -1277,8 +1277,8 @@ typedef WpScalingParam wpScalingParam;
 
 typedef struct
 {
-    Int64 ac;
-    Int64 dc;
+    int64_t ac;
+    int64_t dc;
 } wpACDCParam;
 
 /// slice header class

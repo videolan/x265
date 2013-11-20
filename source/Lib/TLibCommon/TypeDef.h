@@ -58,10 +58,8 @@ typedef unsigned char  UChar;
 // ====================================================================================================================
 
 #ifdef _MSC_VER
-typedef __int64             Int64;
 typedef unsigned __int64    UInt64;
 #else
-typedef long long           Int64;
 typedef unsigned long long  UInt64;
 #endif // ifdef _MSC_VER
 

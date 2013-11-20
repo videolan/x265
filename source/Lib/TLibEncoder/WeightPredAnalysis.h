@@ -49,15 +49,15 @@ class WeightPredAnalysis
     bool m_weighted_bipred_flag;
     wpScalingParam  m_wp[2][MAX_NUM_REF][3];
 
-    Int64   xCalcDCValueSlice(TComSlice *slice, Pel *pels, int32_t *sample);
-    Int64   xCalcACValueSlice(TComSlice *slice, Pel *pels, Int64 dc);
-    Int64   xCalcDCValueUVSlice(TComSlice *slice, Pel *pels, int32_t *sample);
-    Int64   xCalcACValueUVSlice(TComSlice *slice, Pel *pels, Int64 dc);
-    Int64   xCalcSADvalueWPSlice(TComSlice *slice, Pel *orgPel, Pel *refPel, int denom, int inputWeight, int inputOffset);
+    int64_t xCalcDCValueSlice(TComSlice *slice, Pel *pels, int32_t *sample);
+    int64_t xCalcACValueSlice(TComSlice *slice, Pel *pels, int64_t dc);
+    int64_t xCalcDCValueUVSlice(TComSlice *slice, Pel *pels, int32_t *sample);
+    int64_t xCalcACValueUVSlice(TComSlice *slice, Pel *pels, int64_t dc);
+    int64_t xCalcSADvalueWPSlice(TComSlice *slice, Pel *orgPel, Pel *refPel, int denom, int inputWeight, int inputOffset);
 
-    Int64   xCalcDCValue(Pel *pels, int width, int height, int stride);
-    Int64   xCalcACValue(Pel *pels, int width, int height, int stride, Int64 iDC);
-    Int64   xCalcSADvalueWP(int bitDepth, Pel *orgPel, Pel *refPel, int width, int height, int orgStride, int refStride, int denom, int inputWeight, int inputOffset);
+    int64_t xCalcDCValue(Pel *pels, int width, int height, int stride);
+    int64_t xCalcACValue(Pel *pels, int width, int height, int stride, int64_t iDC);
+    int64_t xCalcSADvalueWP(int bitDepth, Pel *orgPel, Pel *refPel, int width, int height, int orgStride, int refStride, int denom, int inputWeight, int inputOffset);
     bool    xSelectWP(TComSlice * slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], int denom);
     bool    xUpdatingWPParameters(TComSlice* slice, int log2Denom);
 

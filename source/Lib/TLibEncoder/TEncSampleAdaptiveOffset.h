@@ -65,16 +65,16 @@ private:
     TEncSbac*         m_rdGoOnSbacCoder;
     TEncBinCABAC***   m_binCoderCABAC;          ///< temporal CABAC state storage for RD computation
 
-    Int64  ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    Int64  ***m_offset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    Int64  ***m_offsetOrg; //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
-    Int64(*m_countPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];    //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    Int64(*m_offsetOrgPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]; //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    Int64  **m_rate;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
-    Int64  **m_dist;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
+    int64_t  ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    int64_t  ***m_offset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    int64_t  ***m_offsetOrg; //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
+    int64_t(*m_countPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];    //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    int64_t(*m_offsetOrgPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]; //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    int64_t  **m_rate;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
+    int64_t  **m_dist;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     double **m_cost;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     double *m_costPartBest; //[MAX_NUM_SAO_PART];
-    Int64  *m_distOrg;    //[MAX_NUM_SAO_PART];
+    int64_t  *m_distOrg;    //[MAX_NUM_SAO_PART];
     int    *m_typePartBest; //[MAX_NUM_SAO_PART];
     int     m_offsetThY;
     int     m_offsetThC;
@@ -101,7 +101,7 @@ public:
     void disablePartTree(SAOQTPart *psQTPart, int partIdx);
     void getSaoStats(SAOQTPart *psQTPart, int yCbCr);
     void calcSaoStatsCu(int addr, int partIdx, int yCbCr);
-    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, Int64** stats, Int64** counts, uint32_t width, uint32_t height, bool* bBorderAvail, int yCbCr);
+    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, int64_t** stats, int64_t** counts, uint32_t width, uint32_t height, bool* bBorderAvail, int yCbCr);
     void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int idxY);
     void destroyEncBuffer();
     void createEncBuffer();
@@ -109,9 +109,9 @@ public:
     void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, int dir);
     void saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int yCbCr, double lambda, SaoLcuParam *compSaoParam, double *distortion);
     void sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion);
-    inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, int shift);
-    inline Int64 estIterOffset(int typeIdx, int classIdx, double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, int shift, int bitIncrease, int32_t *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh);
-    inline Int64 estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int32_t *currentDistortionTableBo, double *currentRdCostTableBo);
+    inline int64_t estSaoDist(int64_t count, int64_t offset, int64_t offsetOrg, int shift);
+    inline int64_t estIterOffset(int typeIdx, int classIdx, double lambda, int64_t offsetInput, int64_t count, int64_t offsetOrg, int shift, int bitIncrease, int32_t *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh);
+    inline int64_t estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int32_t *currentDistortionTableBo, double *currentRdCostTableBo);
     void setMaxNumOffsetsPerPic(int val) { m_maxNumOffsetsPerPic = val; }
 
     int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
