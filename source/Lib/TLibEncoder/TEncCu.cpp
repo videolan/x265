@@ -367,7 +367,7 @@ void TEncCu::compressCU(TComDataCU* cu)
 
             /* At the start of analysis, the best CU is a null pointer
             On return, it points to the CU encode with best chosen mode*/
-            xCompressInterCU(outBestCU, m_tempCU[0], cu, 0, 0);
+            xCompressInterCU(outBestCU, m_tempCU[0], cu, 0, 0, 4);
         }
         else
             xCompressCU(m_bestCU[0], m_tempCU[0], 0);
