@@ -29,7 +29,7 @@ SECTION_RODATA 32
 SECTION .text
 
 ;-----------------------------------------------------------------------------
-; void pixel_add_ps_4x4(pixel *dest, int destride, pixel *src0, int16_t *scr1, int srcStride0, int srcStride1)
+; void pixel_add_ps_4x4(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal pixel_add_ps_4x4, 6, 6, 2, dest, destride, src0, scr1, srcStride0, srcStride1
@@ -79,7 +79,7 @@ movd        [r0 + r1],     m0
 RET
 
 ;-----------------------------------------------------------------------------
-; void pixel_add_ps_%1x%2(pixel *dest, int destride, pixel *src0, int16_t *scr1, int srcStride0, int srcStride1)
+; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
 ;-----------------------------------------------------------------------------
 %macro PIXEL_ADD_PS_W4_H4 2
 INIT_XMM sse4
