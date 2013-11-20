@@ -36,8 +36,7 @@ cglobal pixel_add_ps_4x4, 6, 6, 2, dest, destride, src0, scr1, srcStride0, srcSt
 
 add         r5,            r5
 
-movd        m0,            [r2]
-pmovzxbw    m0,            m0
+pmovzxbw    m0,            [r2]
 movh        m1,            [r3]
 
 paddw       m0,            m1
@@ -45,8 +44,7 @@ packuswb    m0,            m0
 
 movd        [r0],          m0
 
-movd        m0,            [r2 + r4]
-pmovzxbw    m0,            m0
+pmovzxbw    m0,            [r2 + r4]
 movh        m1,            [r3 + r5]
 
 paddw       m0,            m1
@@ -54,8 +52,7 @@ packuswb    m0,            m0
 
 movd        [r0 + r1],     m0
 
-movd        m0,            [r2 + 2 * r4]
-pmovzxbw    m0,            m0
+pmovzxbw    m0,            [r2 + 2 * r4]
 movh        m1,            [r3 + 2 * r5]
 
 paddw       m0,            m1
@@ -67,8 +64,7 @@ lea         r0,            [r0 + 2 * r1]
 lea         r2,            [r2 + 2 * r4]
 lea         r3,            [r3 + 2 * r5]
 
-movd        m0,            [r2 + r4]
-pmovzxbw    m0,            m0
+pmovzxbw    m0,            [r2 + r4]
 movh        m1,            [r3 + r5]
 
 paddw       m0,            m1
