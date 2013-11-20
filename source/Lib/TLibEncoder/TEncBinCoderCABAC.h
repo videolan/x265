@@ -71,8 +71,8 @@ public:
     uint32_t getNumWrittenBits()
     {
         // NOTE: the HM go here only in Counter mode
-        assert(!bIsCounter || (m_bitIf->getNumberOfWrittenBits() == 0));
-        assert(bIsCounter);
+        assert(!m_bIsCounter || (m_bitIf->getNumberOfWrittenBits() == 0));
+        assert(m_bIsCounter);
         return uint32_t(m_fracBits >> 15);
 
         // NOTE: I keep the old code, so someone may active if they want
@@ -98,7 +98,7 @@ public:
     int        m_numBufferedBytes;
     int        m_bitsLeft;
     uint64_t   m_fracBits;
-    bool       bIsCounter;
+    bool       m_bIsCounter;
 };
 }
 //! \}

@@ -46,7 +46,7 @@ using namespace x265;
 TEncBinCABAC::TEncBinCABAC(bool isCounter)
     : m_bitIf(0)
     , m_fracBits(0)
-    , bIsCounter(isCounter)
+    , m_bIsCounter(isCounter)
 {}
 
 TEncBinCABAC::~TEncBinCABAC()
@@ -73,7 +73,7 @@ void TEncBinCABAC::start()
 
 void TEncBinCABAC::finish()
 {
-    if (bIsCounter)
+    if (m_bIsCounter)
     {
         // TODO: why write 0 bits?
         m_bitIf->write(0, uint32_t(m_fracBits >> 15));
@@ -187,7 +187,7 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 
     ctxModel.m_state = sbacNext(ctxModel.m_state, binValue);
 
-    if (bIsCounter)
+    if (m_bIsCounter)
     {
         m_fracBits += sbacGetEntropyBits(mstate, binValue);
         return;
@@ -233,7 +233,7 @@ void TEncBinCABAC::encodeBinEP(uint32_t binValue)
         DTRACE_CABAC_V(binValue)
         DTRACE_CABAC_T("\n")
     }
-    if (bIsCounter)
+    if (m_bIsCounter)
     {
         m_fracBits += 32768;
         return;
@@ -256,7 +256,7 @@ void TEncBinCABAC::encodeBinEP(uint32_t binValue)
  */
 void TEncBinCABAC::encodeBinsEP(uint32_t binValues, int numBins)
 {
-    if (bIsCounter)
+    if (m_bIsCounter)
     {
         m_fracBits += 32768 * numBins;
         return;
@@ -296,7 +296,7 @@ void TEncBinCABAC::encodeBinsEP(uint32_t binValues, int numBins)
  */
 void TEncBinCABAC::encodeBinTrm(uint32_t binValue)
 {
-    if (bIsCounter)
+    if (m_bIsCounter)
     {
         m_fracBits += sbacGetEntropyBitsTrm(binValue);
         return;
