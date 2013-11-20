@@ -794,6 +794,22 @@ void pixel_sub_ps_c(int16_t *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t
         a += dstride;
     }
 }
+
+template<int bx, int by>
+void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1)
+  {
+    for (int y = 0; y < by; y++)
+    {
+      for (int x = 0; x < bx; x++)
+      {
+        a[x] = (pixel)ClipY(b0[x] + b1[x]);
+      }
+
+      b0 += sstride0;
+      b1 += sstride1;
+      a += dstride;
+    }
+  }
 }  // end anonymous namespace
 
 namespace x265 {
@@ -837,14 +853,16 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 #define CHROMA(W, H) \
     p.chroma_copy_pp[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma_copy_sp[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
-    p.chroma_copy_ps[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>;\
-    p.chroma_sub_ps[CSP_I420][CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;
+    p.chroma_copy_ps[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.chroma_sub_ps[CSP_I420][CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma_add_ps[CSP_I420][CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
 #define LUMA(W, H) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
-    p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>;\
-    p.luma_sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;
+    p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.luma_sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.luma_add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
     LUMA(4, 4);
     LUMA(8, 8);
