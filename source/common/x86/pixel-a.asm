@@ -3471,6 +3471,33 @@ cglobal pixel_satd_8x4, 4,6,8
 %endif ; HIGH_BIT_DEPTH
 %endmacro
 
+%macro SA8D_16x16 0
+    call pixel_sa8d_8x8_internal ; pix[0]
+    add  r2, 8*SIZEOF_PIXEL
+    add  r0, 8*SIZEOF_PIXEL
+%if HIGH_BIT_DEPTH
+    HADDUW m0, m1
+%endif
+    mova m10, m0
+    call pixel_sa8d_8x8_internal ; pix[8]
+    lea  r2, [r2+8*r3]
+    lea  r0, [r0+8*r1]
+    SA8D_INTER
+    call pixel_sa8d_8x8_internal ; pix[8*stride+8]
+    sub  r2, 8*SIZEOF_PIXEL
+    sub  r0, 8*SIZEOF_PIXEL
+    SA8D_INTER
+    call pixel_sa8d_8x8_internal ; pix[8*stride]
+    SA8D_INTER
+    SWAP 0, 10
+%if HIGH_BIT_DEPTH == 0
+    HADDUW m0, m1
+%endif
+    paddd  m0, [pd_1]
+    psrld  m0, 1
+    paddd  m12, m0
+%endmacro
+
 %macro SA8D 0
 ; sse2 doesn't seem to like the horizontal way of doing things
 %define vertical ((notcpuflag(ssse3) || cpuflag(atom)) || HIGH_BIT_DEPTH)
@@ -3546,6 +3573,39 @@ cglobal pixel_sa8d_16x16, 4,8,12
     shr  eax, 1
     RET
 
+cglobal pixel_sa8d_32x32, 4,8,12
+    FIX_STRIDES r1, r3
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    pxor m12, m12
+%if vertical == 0
+    mova m7, [hmul_8p]
+%endif
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    add  r2, 16
+    add  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r2, r4
+    sub  r0, r5
+    sub  r2, 16
+    sub  r0, 16
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    movd eax, m12
+    RET
+
 %else ; ARCH_X86_32
 %if mmsize == 16
 cglobal pixel_sa8d_8x8_internal
@@ -3598,6 +3658,22 @@ cglobal pixel_sa8d_8x8_internal
     SAVE_MM_PERMUTATION
     ret
 %endif ; ifndef mmx2
+
+cglobal pixel_sa8d_8x8_internal2
+    %define spill0 [esp+4]
+    LOAD_DIFF_8x4P 0, 1, 2, 3, 4, 5, 6, r0, r2, 1
+    HADAMARD4_2D 0, 1, 2, 3, 4
+    movdqa spill0, m3
+    LOAD_DIFF_8x4P 4, 5, 6, 7, 3, 3, 2, r0, r2, 1
+    HADAMARD4_2D 4, 5, 6, 7, 3
+    HADAMARD2_2D 0, 4, 1, 5, 3, qdq, amax
+    movdqa m3, spill0
+    paddw m0, m1
+    HADAMARD2_2D 2, 6, 3, 7, 5, qdq, amax
+    paddw m0, m2
+    paddw m0, m3
+    SAVE_MM_PERMUTATION
+    ret
 
 cglobal pixel_sa8d_8x8, 4,7
     FIX_STRIDES r1, r3
@@ -3675,6 +3751,132 @@ cglobal pixel_sa8d_16x16, 4,7
     add  eax, 1
     shr  eax, 1
     mov  esp, r6
+    RET
+
+cglobal pixel_sa8d_32x32, 4,7,8
+    FIX_STRIDES r1, r3
+    mov  r6, esp
+    and  esp, ~15
+    sub  esp, 64
+
+    lea  r4, [r1 + 2*r1]
+    lea  r5, [r3 + 2*r3]
+    call pixel_sa8d_8x8_internal2
+    mova [rsp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 8*SIZEOF_PIXEL
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    paddusw m0, [esp+48]
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    mov dword [esp+36], r4d
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 16*SIZEOF_PIXEL
+    add  r2, 16*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 24*SIZEOF_PIXEL
+    add  r2, 24*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    paddusw m0, [esp+48]
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    add r4d, dword [esp+36]
+    mov dword [esp+36], r4d
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    add  r0, 8*SIZEOF_PIXEL
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    paddusw m0, [esp+48]
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    add r4d, dword [esp+36]
+    mov dword [esp+36], r4d
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    add  r0, 16*SIZEOF_PIXEL
+    add  r2, 16*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    mova [esp+48], m0
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+48], m0
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    add  r0, 24*SIZEOF_PIXEL
+    add  r2, 24*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal2
+    SA8D_INTER
+    mova [esp+64-mmsize], m0
+    call pixel_sa8d_8x8_internal2
+    paddusw m0, [esp+48]
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    add r4d, dword [esp+36]
+    mov eax, r4d
+    mov esp, r6
     RET
 %endif ; !ARCH_X86_64
 %endmacro ; SA8D
@@ -5933,7 +6135,7 @@ cglobal pixel_hadamard_ac_%1x%2, 2,4,11
 %if ARCH_X86_64 == 0
 cextern pixel_sa8d_8x8_internal_mmx2
 INIT_MMX mmx2
-SA8D
+;SA8D
 %endif
 
 %define TRANS TRANS_SSE2
