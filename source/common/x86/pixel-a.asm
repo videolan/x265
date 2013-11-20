@@ -7079,6 +7079,48 @@ cglobal transpose16, 3, 5, 8, dest, src, stride
 
     RET
 
+%macro TRANSPOSE_16x16 1
+    TRANSPOSE_8x8 %1
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r5 + 8]
+    TRANSPOSE_8x8 %1
+    lea    r1,    [r6 + 8]
+    lea    r0,    [r5 + 8 * %1]
+    TRANSPOSE_8x8 %1
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r5 + 8 * %1 + 8]
+    TRANSPOSE_8x8 %1
+%endmacro
+
+;-----------------------------------------------------------------
+; void transpose_32x32(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose32, 3, 7, 8, dest, src, stride
+
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    r0
+    mov    r6,    r1
+    TRANSPOSE_16x16 32
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16]
+    mov    r5,    r0
+    mov    r6,    r1
+    TRANSPOSE_16x16 32
+    lea    r1,    [r4 + 16]
+    lea    r0,    [r3 + 16 * 32]
+    mov    r5,    r0
+    mov    r6,    r1
+    TRANSPOSE_16x16 32
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 32 + 16]
+    mov    r5,    r0
+    mov    r6,    r1
+    TRANSPOSE_16x16 32
+
+    RET
+
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_2x4(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
