@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
         }
     }
 #if HIGH_BIT_DEPTH
-    g_bitDepth = 10;
+    g_bitDepth = 12;
 #endif
 
     int seed = (int)time(NULL);
