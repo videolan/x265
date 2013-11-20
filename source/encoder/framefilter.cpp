@@ -29,7 +29,7 @@
 
 using namespace x265;
 
-static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
+static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int32_t *cnt);
 
 // **************************************************************************
@@ -288,14 +288,14 @@ void FrameFilter::processRowPost(int row)
         else
             height = g_maxCUHeight;
 
-        UInt64 ssdY = computeSSD(orig->getLumaAddr(cuAddr), recon->getLumaAddr(cuAddr), stride, width, height);
+        uint64_t ssdY = computeSSD(orig->getLumaAddr(cuAddr), recon->getLumaAddr(cuAddr), stride, width, height);
 
         height >>= 1;
         width  >>= 1;
         stride = recon->getCStride();
 
-        UInt64 ssdU = computeSSD(orig->getCbAddr(cuAddr), recon->getCbAddr(cuAddr), stride, width, height);
-        UInt64 ssdV = computeSSD(orig->getCrAddr(cuAddr), recon->getCrAddr(cuAddr), stride, width, height);
+        uint64_t ssdU = computeSSD(orig->getCbAddr(cuAddr), recon->getCbAddr(cuAddr), stride, width, height);
+        uint64_t ssdV = computeSSD(orig->getCrAddr(cuAddr), recon->getCrAddr(cuAddr), stride, width, height);
 
         m_pic->m_SSDY += ssdY;
         m_pic->m_SSDU += ssdU;
@@ -383,9 +383,9 @@ void FrameFilter::processRowPost(int row)
     }
 }
 
-static UInt64 computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height)
+static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height)
 {
-    UInt64 ssd = 0;
+    uint64_t ssd = 0;
 
     if ((width | height) & 3)
     {

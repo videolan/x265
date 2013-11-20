@@ -190,10 +190,10 @@ extern bool   g_bJustDoIt;
 extern const bool g_bEncDecTraceEnable;
 extern const bool g_bEncDecTraceDisable;
 extern bool   g_HLSTraceEnable;
-extern UInt64 g_nSymbolCounter;
+extern uint64_t g_nSymbolCounter;
 
 #define COUNTER_START    1
-#define COUNTER_END      0 //( UInt64(1) << 63 )
+#define COUNTER_END      0 //( uint64_t(1) << 63 )
 
 #define DTRACE_CABAC_F(x)     if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, "%f", x);
 #define DTRACE_CABAC_V(x)     if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, "%d", x);

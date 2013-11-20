@@ -317,7 +317,7 @@ const bool g_bEncDecTraceEnable  = true;
 const bool g_bEncDecTraceDisable = false;
 bool   g_HLSTraceEnable = true;
 bool   g_bJustDoIt = false;
-UInt64 g_nSymbolCounter = 0;
+uint64_t g_nSymbolCounter = 0;
 #endif
 
 // ====================================================================================================================

@@ -54,17 +54,17 @@ class TComRdCost
 {
 private:
 
-    double                  m_lambda2;
+    double    m_lambda2;
 
-    double                  m_lambda;
+    double    m_lambda;
 
-    UInt64                  m_lambdaMotionSSE;  // m_lambda2 w/ 16 bits of fraction
+    uint64_t  m_lambdaMotionSSE;  // m_lambda2 w/ 16 bits of fraction
 
-    UInt64                  m_lambdaMotionSAD;  // m_lambda w/ 16 bits of fraction
+    uint64_t  m_lambdaMotionSAD;  // m_lambda w/ 16 bits of fraction
 
-    uint32_t                    m_cbDistortionWeight;
+    uint32_t  m_cbDistortionWeight;
 
-    uint32_t                    m_crDistortionWeight;
+    uint32_t  m_crDistortionWeight;
 
 public:
 
@@ -72,8 +72,8 @@ public:
     {
         m_lambda2         = lambda;
         m_lambda          = sqrt(m_lambda2);
-        m_lambdaMotionSAD = (UInt64)floor(65536.0 * m_lambda);
-        m_lambdaMotionSSE = (UInt64)floor(65536.0 * m_lambda2);
+        m_lambdaMotionSAD = (uint64_t)floor(65536.0 * m_lambda);
+        m_lambdaMotionSSE = (uint64_t)floor(65536.0 * m_lambda2);
     }
 
     void setCbDistortionWeight(double cbDistortionWeight)
@@ -86,17 +86,17 @@ public:
         m_crDistortionWeight = (uint32_t)floor(256.0 * crDistortionWeight);
     }
 
-    inline UInt64  calcRdCost(uint32_t distortion, uint32_t bits) { return distortion + ((bits * m_lambdaMotionSSE + 32768) >> 16); }
+    inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits) { return distortion + ((bits * m_lambdaMotionSSE + 32768) >> 16); }
 
-    inline UInt64  calcRdSADCost(uint32_t sadCost, uint32_t bits) { return sadCost + ((bits * m_lambdaMotionSAD + 32768) >> 16); }
+    inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) { return sadCost + ((bits * m_lambdaMotionSAD + 32768) >> 16); }
 
-    inline uint32_t    getCost(uint32_t bits)                     { return (uint32_t)((bits * m_lambdaMotionSAD + 32768) >> 16); }
+    inline uint32_t getCost(uint32_t bits)                     { return (uint32_t)((bits * m_lambdaMotionSAD + 32768) >> 16); }
 
-    inline uint32_t    scaleChromaDistCb(uint32_t dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
+    inline uint32_t scaleChromaDistCb(uint32_t dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
 
-    inline uint32_t    scaleChromaDistCr(uint32_t dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
+    inline uint32_t scaleChromaDistCr(uint32_t dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
 
-    inline double  getSADLambda() const                   { return m_lambda; }
+    inline double   getSADLambda() const                       { return m_lambda; }
 };
 }
 //! \}

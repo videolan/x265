@@ -32,7 +32,7 @@ using namespace x265;
 
 void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  TShortYUV* outResiYuv, TComYuv* outReconYuv)
 {
-    UInt64 puCost = 0;
+    uint64_t puCost = 0;
     uint32_t puDistY = 0;
     uint32_t puDistC = 0;
     uint32_t depth = cu->getDepth(0);
@@ -104,7 +104,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     Pel *leftFiltered  = m_search->refLeftFlt  + width - 1;
     int sad;
     uint32_t bits, mode, bmode;
-    UInt64 cost, bcost;
+    uint64_t cost, bcost;
 
     // 33 Angle modes once
     ALIGN_VAR_32(Pel, buf_trans[32 * 32]);

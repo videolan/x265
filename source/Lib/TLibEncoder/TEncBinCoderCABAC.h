@@ -91,14 +91,14 @@ protected:
 
 public:
 
-    TComBitIf*          m_bitIf;
-    uint32_t                m_low;
-    uint32_t                m_range;
-    uint32_t                m_bufferedByte;
-    int                 m_numBufferedBytes;
-    int                 m_bitsLeft;
-    UInt64              m_fracBits;
-    bool                bIsCounter;
+    TComBitIf* m_bitIf;
+    uint32_t   m_low;
+    uint32_t   m_range;
+    uint32_t   m_bufferedByte;
+    int        m_numBufferedBytes;
+    int        m_bitsLeft;
+    uint64_t   m_fracBits;
+    bool       bIsCounter;
 };
 }
 //! \}

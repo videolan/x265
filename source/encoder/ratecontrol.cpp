@@ -125,7 +125,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     {
         for (int i = 0; i < 3; i++)
         {
-            UInt64 sum, ssd;
+            uint64_t sum, ssd;
             sum = pic->m_lowres.wp_sum[i];
             ssd = pic->m_lowres.wp_ssd[i];
             pic->m_lowres.wp_ssd[i] = ssd - (sum * sum + (block_x * block_y) / 2) / (block_x * block_y);

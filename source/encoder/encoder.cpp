@@ -632,7 +632,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
     int maxvalC = 255 << (X265_DEPTH - 8);
     double refValueY = (double)maxvalY * maxvalY * size;
     double refValueC = (double)maxvalC * maxvalC * size / 4.0;
-    UInt64 ssdY, ssdU, ssdV;
+    uint64_t ssdY, ssdU, ssdV;
 
     ssdY = pic->m_SSDY;
     ssdU = pic->m_SSDU;

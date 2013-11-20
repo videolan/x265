@@ -87,9 +87,9 @@ public:
 
     TComPic*              m_next;
     TComPic*              m_prev;
-    UInt64                m_SSDY;
-    UInt64                m_SSDU;
-    UInt64                m_SSDV;
+    uint64_t              m_SSDY;
+    uint64_t              m_SSDU;
+    uint64_t              m_SSDV;
     double                m_elapsedCompressTime;
     double                m_frameTime;
     MD5Context            m_state[3];
