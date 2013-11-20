@@ -859,13 +859,29 @@ void Lookahead::slicetypeDecide()
             pic->m_lowres.sliceType = X265_TYPE_P;
         outputQueue.pushBack(*pic);
         numDecided++;
+
+        if (cfg->param.bpyramid && bframes > 1)
+        {
+            int bref = bframes / 2;
+            if (list[bref - 1]->m_lowres.sliceType == X265_TYPE_AUTO)
+            {
+                list[bref - 1]->m_lowres.sliceType = X265_TYPE_BREF;
+                outputQueue.pushBack(*list[bref - 1]);
+                numDecided++;
+            }
+        }
+
         for (int i = 0; i < bframes; i++)
         {
             pic = list[i];
             if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
                 pic->m_lowres.sliceType = X265_TYPE_B;
-            outputQueue.pushBack(*pic);
-            numDecided++;
+
+            if (pic->m_lowres.sliceType != X265_TYPE_BREF)
+            {
+                outputQueue.pushBack(*pic);
+                numDecided++;
+            }
         }
     }
 }
