@@ -604,7 +604,7 @@ cglobal pixel_add_ps_16x4, 6, 6, 4, dest, destride, src0, scr1, srcStride0, srcS
 ;-----------------------------------------------------------------------------
 %macro PIXEL_ADD_PS_W16_H4 2
 INIT_XMM sse4
-cglobal pixel_add_ps_%1x%2, 6, 7, 4, dest, destride, src0, scr1, srcStride0, srcStride1
+cglobal pixel_add_ps_%1x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
 
 add         r5,            r5
 
