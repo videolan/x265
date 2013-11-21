@@ -412,30 +412,6 @@ extern "C" {
     SETUP_LUMA_BLOCKCOPY_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16, 64, cpu);
 
-using namespace x265;
-
-namespace {
-// file private anonymous namespace
-
-/* template for building arbitrary partition sizes from full optimized primitives */
-template<int lx, int ly, int dx, int dy, pixelcmp_t compare>
-int cmp(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
-{
-    int sum = 0;
-
-    for (int row = 0; row < ly; row += dy)
-    {
-        for (int col = 0; col < lx; col += dx)
-        {
-            sum += compare(piOrg + row * strideOrg + col, strideOrg,
-                           piCur + row * strideCur + col, strideCur);
-        }
-    }
-
-    return sum;
-}
-}
-
 namespace x265 {
 // private x265 namespace
 
@@ -745,21 +721,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT4(satd, _avx2);
         INIT2_NAME(sse_pp, ssd, _avx2);
         p.sa8d[BLOCK_8x8] = x265_pixel_sa8d_8x8_avx2;
-        p.sa8d_inter[LUMA_16x8]  = cmp<16, 8, 8, 8, x265_pixel_sa8d_8x8_avx2>;
-        p.sa8d_inter[LUMA_8x16]  = cmp<8, 16, 8, 8, x265_pixel_sa8d_8x8_avx2>;
-        p.sa8d_inter[LUMA_32x24] = cmp<32, 24, 8, 8, x265_pixel_sa8d_8x8_avx2>;
-        p.sa8d_inter[LUMA_24x32] = cmp<24, 32, 8, 8, x265_pixel_sa8d_8x8_avx2>;
-        p.sa8d_inter[LUMA_32x8]  = cmp<32, 8, 8, 8, x265_pixel_sa8d_8x8_avx2>;
-        p.sa8d_inter[LUMA_8x32]  = cmp<8, 32, 8, 8, x265_pixel_sa8d_8x8_avx2>;
-        p.satd[LUMA_32x32] = cmp<32, 32, 16, 16, x265_pixel_satd_16x16_avx2>;
-        p.satd[LUMA_24x32] = cmp<24, 32, 8, 16, x265_pixel_satd_8x16_avx2>;
-        p.satd[LUMA_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_avx2>;
-        p.satd[LUMA_64x32] = cmp<64, 32, 16, 16, x265_pixel_satd_16x16_avx2>;
-        p.satd[LUMA_32x64] = cmp<32, 64, 16, 16, x265_pixel_satd_16x16_avx2>;
-        p.satd[LUMA_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_avx2>;
-        p.satd[LUMA_48x64] = cmp<48, 64, 16, 16, x265_pixel_satd_16x16_avx2>;
-        p.satd[LUMA_64x16] = cmp<64, 16, 16, 16, x265_pixel_satd_16x16_avx2>;
-
         p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_avx2;
         p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx2;
     }
