@@ -848,7 +848,7 @@ void Lookahead::slicetypeDecide()
             }
         }
 
-        int bframes = j - 1;
+        int bframes = X265_MAX(0, j - 1); // max not necessary, but prevents gcc compile error
         if (bframes)
             list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
         list[bframes]->m_lowres.leadingBframes = bframes;
