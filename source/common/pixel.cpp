@@ -491,7 +491,7 @@ void transpose(pixel* dst, pixel* src, intptr_t stride)
     }
 }
 
-void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
@@ -509,7 +509,7 @@ void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStri
     }
 }
 
-void weightUnidirPix(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
@@ -957,8 +957,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.transpose[3] = transpose<32>;
     p.transpose[4] = transpose<64>;
 
-    p.weightpUniPixel = weightUnidirPix;
-    p.weightpUni = weightUnidir;
+    p.weight_pp = weight_pp_c;
+    p.weight_sp = weight_sp_c;
 
     p.pixeladd_ss = pixeladd_ss_c;
 

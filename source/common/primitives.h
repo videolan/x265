@@ -181,8 +181,8 @@ typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU,
 typedef void (*dequant_t)(const int32_t* src, int32_t* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
                           unsigned int trSizeLog2, int32_t *dequantCoef);
 
-typedef void (*weightpUniPixel_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
-typedef void (*weightpUni_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*weightp_pp_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*weightp_sp_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
@@ -246,8 +246,8 @@ struct EncoderPrimitives
     filter_p2s_t    chroma_p2s;
     ipfilter_sp_t   chroma_vsp;
 
-    weightpUni_t    weightpUni;
-    weightpUniPixel_t weightpUniPixel;
+    weightp_sp_t    weight_sp;
+    weightp_pp_t    weight_pp;
     pixeladd_ss_t   pixeladd_ss;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
 

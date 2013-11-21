@@ -279,7 +279,7 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
     return true;
 }
 
-bool PixelHarness::check_weightpUni(weightpUni_t ref, weightpUni_t opt)
+bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -307,7 +307,7 @@ bool PixelHarness::check_weightpUni(weightpUni_t ref, weightpUni_t opt)
     return true;
 }
 
-bool PixelHarness::check_weightpUni(weightpUniPixel_t ref, weightpUniPixel_t opt)
+bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -907,20 +907,20 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.weightpUniPixel)
+    if (opt.weight_pp)
     {
-        if (!check_weightpUni(ref.weightpUniPixel, opt.weightpUniPixel))
+        if (!check_weightp(ref.weight_pp, opt.weight_pp))
         {
-            printf("Weighted Prediction for Unidir (Pixel) failed!\n");
+            printf("Weighted Prediction (pixel) failed!\n");
             return false;
         }
     }
 
-    if (opt.weightpUni)
+    if (opt.weight_sp)
     {
-        if (!check_weightpUni(ref.weightpUni, opt.weightpUni))
+        if (!check_weightp(ref.weight_sp, opt.weight_sp))
         {
-            printf("Weighted Prediction for Unidir (int16_t) failed!\n");
+            printf("Weighted Prediction (short) failed!\n");
             return false;
         }
     }
@@ -1159,16 +1159,16 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (int16_t*)sbuf3, STRIDE);
     }
 
-    if (opt.weightpUniPixel)
+    if (opt.weight_pp)
     {
-        printf("Weightp 8bpp");
-        REPORT_SPEEDUP(opt.weightpUniPixel, ref.weightpUniPixel, pbuf1, pbuf2, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
+        printf("weight_pp");
+        REPORT_SPEEDUP(opt.weight_pp, ref.weight_pp, pbuf1, pbuf2, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
-    if (opt.weightpUni)
+    if (opt.weight_sp)
     {
-        printf("Weightp16bpp");
-        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
+        printf("weight_sp");
+        REPORT_SPEEDUP(opt.weight_sp, ref.weight_sp, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
     if (opt.pixeladd_ss)

@@ -233,8 +233,8 @@ uint32_t Lookahead::weightCostLuma(int b, pixel *src, wpScalingParam *w)
         int correction = IF_INTERNAL_PREC - X265_DEPTH;
 
         // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
-        primitives.weightpUniPixel(src, weightedRef.fpelPlane, stride, stride, stride, fenc->lines,
-                                   scale, (1 << (denom - 1 + correction)), denom + correction, offset);
+        primitives.weight_pp(src, weightedRef.fpelPlane, stride, stride, stride, fenc->lines,
+                             scale, (1 << (denom - 1 + correction)), denom + correction, offset);
         src = weightedRef.fpelPlane;
     }
 
@@ -327,8 +327,8 @@ void Lookahead::weightsAnalyse(int b, int p0)
         for (int i = 0; i < 4; i++)
         {
             // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
-            primitives.weightpUniPixel(ref->buffer[i], wbuffer[i], stride, stride, stride, paddedLines,
-                                       scale, (1 << (denom - 1 + correction)), denom + correction, offset);
+            primitives.weight_pp(ref->buffer[i], wbuffer[i], stride, stride, stride, paddedLines,
+                                 scale, (1 << (denom - 1 + correction)), denom + correction, offset);
         }
         weightedRef.isWeighted = true;
     }

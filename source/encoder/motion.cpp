@@ -1147,12 +1147,12 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             if (yFrac == 0)
             {
                 primitives.ipfilter_ps[FILTER_H_P_S_8](fref, ref->lumaStride, immedVal, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[xFrac]);
-                primitives.weightpUni(immedVal, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, blockheight, ref->weight, round, shift, ref->offset);
+                primitives.weight_sp(immedVal, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, blockheight, ref->weight, round, shift, ref->offset);
             }
             else if (xFrac == 0)
             {
                 primitives.ipfilter_ps[FILTER_V_P_S_8](fref, ref->lumaStride, immedVal, FENC_STRIDE, blockwidth, blockheight, g_lumaFilter[yFrac]);
-                primitives.weightpUni(immedVal, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, blockheight, ref->weight, round, shift, ref->offset);
+                primitives.weight_sp(immedVal, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, blockheight, ref->weight, round, shift, ref->offset);
             }
             else
             {
@@ -1160,7 +1160,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
                 int halfFilterSize = (filterSize >> 1);
                 primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride, immedVal, blockwidth, blockwidth, blockheight + filterSize - 1, g_lumaFilter[xFrac]);
                 primitives.ipfilter_ss[FILTER_V_S_S_8](immedVal + (halfFilterSize - 1) * blockwidth, blockwidth, immedVal2, FENC_STRIDE, blockwidth, blockheight, yFrac);
-                primitives.weightpUni(immedVal2, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, blockheight, ref->weight, round, shift, ref->offset);
+                primitives.weight_sp(immedVal2, subpelbuf, FENC_STRIDE, FENC_STRIDE, blockwidth, blockheight, ref->weight, round, shift, ref->offset);
             }
         }
         else

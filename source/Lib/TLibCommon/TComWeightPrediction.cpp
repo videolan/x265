@@ -454,7 +454,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, uint32_t partUnitIdx
         srcStride = srcYuv0->m_width;
         dstStride  = outDstYuv->getStride();
 
-        primitives.weightpUni((int16_t*)srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
+        primitives.weight_sp(srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
     }
 
     if (bChroma)
@@ -472,7 +472,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, uint32_t partUnitIdx
         width  >>= 1;
         height >>= 1;
 
-        primitives.weightpUni((int16_t*)srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset);
+        primitives.weight_sp(srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset);
 
         // Chroma V : --------------------------------------------
         w0      = wp0[2].w;
@@ -480,7 +480,7 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, uint32_t partUnitIdx
         shift   = wp0[2].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
 
-        primitives.weightpUni((int16_t*)srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset);
+        primitives.weight_sp(srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset);
     }
 }
 

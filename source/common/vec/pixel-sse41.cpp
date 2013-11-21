@@ -244,7 +244,7 @@ int sse_pp_64(pixel* fenc, intptr_t strideFenc, pixel* fref, intptr_t strideFref
     return _mm_cvtsi128_si32(sum);
 }
 
-void weightUnidir(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     __m128i w00, roundoff, ofs, fs, tmpsrc, tmpdst, tmp, sign;
     int x, y;
@@ -997,8 +997,8 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
     p.sse_pp[LUMA_64x48] = sse_pp_64<48>;
     p.sse_pp[LUMA_64x16] = sse_pp_64<16>;
 
-    p.weightpUniPixel = weightUnidirPixel;
-    p.weightpUni = weightUnidir;
+    p.weight_pp = weightUnidirPixel;
+    p.weight_sp = weight_sp_c;
 #endif /* !HIGH_BIT_DEPTH */
 }
 }
