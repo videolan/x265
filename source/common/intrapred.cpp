@@ -103,7 +103,8 @@ void PredIntraDC(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int 
     }
 }
 
-void PredIntraPlanar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
+template<int width>
+void PredIntraPlanar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     //assert(width == height);
 
@@ -305,7 +306,13 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.intra_pred_dc[BLOCK_8x8] = PredIntraDC<8>;
     p.intra_pred_dc[BLOCK_16x16] = PredIntraDC<16>;
     p.intra_pred_dc[BLOCK_32x32] = PredIntraDC<32>;
-    p.intra_pred_planar = PredIntraPlanar;
+
+    p.intra_pred_planar[BLOCK_4x4] = PredIntraPlanar<4>;
+    p.intra_pred_planar[BLOCK_8x8] = PredIntraPlanar<8>;
+    p.intra_pred_planar[BLOCK_16x16] = PredIntraPlanar<16>;
+    p.intra_pred_planar[BLOCK_32x32] = PredIntraPlanar<32>;
+    p.intra_pred_planar[BLOCK_64x64] = PredIntraPlanar<64>;
+
     p.intra_pred_ang = PredIntraAngBufRef;
     p.intra_pred_allangs[0] = PredIntraAngs_C<4>;
     p.intra_pred_allangs[1] = PredIntraAngs_C<8>;

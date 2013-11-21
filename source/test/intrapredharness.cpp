@@ -127,16 +127,16 @@ bool IntraPredHarness::check_planar_primitive(intra_planar_t ref, intra_planar_t
             memset(pixel_out_vec, 0xCD, out_size);
             memset(pixel_out_c, 0xCD, out_size);
 #endif
-            ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, width);
-            opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, width);
+            ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE);
+            opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE);
 
             for (int k = 0; k < width; k++)
             {
                 if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
                 {
 #if _DEBUG
-                    ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, width);
-                    opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, width);
+                    ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE);
+                    opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE);
 #endif
                     return false;
                 }
@@ -257,12 +257,16 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
             }
         }
     }
-    if (opt.intra_pred_planar)
+    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        if (!check_planar_primitive(ref.intra_pred_planar, opt.intra_pred_planar))
+        if (opt.intra_pred_planar[i])
         {
-            printf("intra_planar failed\n");
-            return false;
+            const int size = (1 << (i + 2));
+            if (!check_planar_primitive(ref.intra_pred_planar[i], opt.intra_pred_planar[i]))
+            {
+                printf("intra_planar %dx%d failed\n", size, size);
+                return false;
+            }
         }
     }
     if (opt.intra_pred_ang)
@@ -306,14 +310,14 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             }
         }
     }
-    if (opt.intra_pred_planar)
+    for(int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        for (int ii = 4; ii <= 64; ii <<= 1)
+        if (opt.intra_pred_planar[i])
         {
-            width = ii;
-            printf("intra_planar%2dx%d", ii, ii);
-            REPORT_SPEEDUP(opt.intra_pred_planar, ref.intra_pred_planar,
-                           pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, width);
+            const int size = (1 << (i + 2));
+            printf("intra_planar %2dx%d", size, size);
+            REPORT_SPEEDUP(opt.intra_pred_planar[i], ref.intra_pred_planar[i],
+                        pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE);
         }
     }
     if (opt.intra_pred_ang)

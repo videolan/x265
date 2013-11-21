@@ -603,23 +603,6 @@ void intra_pred_planar64_sse4(pixel* above, pixel* left, pixel* dst, intptr_t ds
 #undef COMP_PRED_PLANAR_ROW
 }
 
-typedef void intra_pred_planar_t (pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
-intra_pred_planar_t *intraPlanarN[] =
-{
-    intra_pred_planar4_sse4,
-    intra_pred_planar8_sse4,
-    intra_pred_planar16_sse4,
-    intra_pred_planar32_sse4,
-    intra_pred_planar64_sse4,
-};
-
-void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
-{
-    int nLog2Size = g_convertToBit[width] + 2;
-
-    intraPlanarN[nLog2Size - 2](above, left, dst, dstStride);
-}
-
 ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
 {
     { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 },         //  0
@@ -8707,7 +8690,12 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
 #else
     initFileStaticVars();
 
-    p.intra_pred_planar = intra_pred_planar;
+    p.intra_pred_planar[BLOCK_4x4]   = intra_pred_planar4_sse4;
+    p.intra_pred_planar[BLOCK_8x8]   = intra_pred_planar8_sse4;
+    p.intra_pred_planar[BLOCK_16x16] = intra_pred_planar16_sse4;
+    p.intra_pred_planar[BLOCK_32x32] = intra_pred_planar32_sse4;
+    p.intra_pred_planar[BLOCK_64x64] = intra_pred_planar64_sse4;
+
     p.intra_pred_dc[BLOCK_4x4] = intra_pred_dc<4>;
     p.intra_pred_dc[BLOCK_8x8] = intra_pred_dc<8>;
     p.intra_pred_dc[BLOCK_16x16] = intra_pred_dc<16>;

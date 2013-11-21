@@ -161,7 +161,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     }
 
     // PLANAR
-    primitives.intra_pred_planar(abovePlanar + 1, leftPlanar + 1, tmp, scaleStride, scaleWidth);
+    primitives.intra_pred_planar[log2SizeMinus2](abovePlanar + 1, leftPlanar + 1, tmp, scaleStride);
     sad = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
     mode = PLANAR_IDX;
     bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
