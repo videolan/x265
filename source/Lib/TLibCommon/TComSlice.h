@@ -779,17 +779,17 @@ private:
     int         m_VPSId;
     int         m_chromaFormatIdc;
 
-    uint32_t        m_maxTLayers;         // maximum number of temporal layers
+    uint32_t    m_maxTLayers;         // maximum number of temporal layers
 
     // Structure
-    uint32_t        m_picWidthInLumaSamples;
-    uint32_t        m_picHeightInLumaSamples;
+    uint32_t    m_picWidthInLumaSamples;
+    uint32_t    m_picHeightInLumaSamples;
 
     int         m_log2MinCodingBlockSize;
     int         m_log2DiffMaxMinCodingBlockSize;
-    uint32_t        m_maxCUWidth;
-    uint32_t        m_maxCUHeight;
-    uint32_t        m_maxCUDepth;
+    uint32_t    m_maxCUWidth;
+    uint32_t    m_maxCUHeight;
+    uint32_t    m_maxCUDepth;
 
     Window      m_conformanceWindow;
 
@@ -799,13 +799,13 @@ private:
     int         m_numReorderPics[MAX_TLAYER];
 
     // Tool list
-    uint32_t        m_quadtreeTULog2MaxSize;
-    uint32_t        m_quadtreeTULog2MinSize;
-    uint32_t        m_quadtreeTUMaxDepthInter;
-    uint32_t        m_quadtreeTUMaxDepthIntra;
+    uint32_t    m_quadtreeTULog2MaxSize;
+    uint32_t    m_quadtreeTULog2MinSize;
+    uint32_t    m_quadtreeTUMaxDepthInter;
+    uint32_t    m_quadtreeTUMaxDepthIntra;
     bool        m_usePCM;
-    uint32_t        m_pcmLog2MaxSize;
-    uint32_t        m_pcmLog2MinSize;
+    uint32_t    m_pcmLog2MaxSize;
+    uint32_t    m_pcmLog2MinSize;
     bool        m_useAMP;
 
     // Parameter
@@ -816,17 +816,17 @@ private:
 
     bool        m_useLossless;
 
-    uint32_t        m_pcmBitDepthLuma;
-    uint32_t        m_pcmBitDepthChroma;
+    uint32_t    m_pcmBitDepthLuma;
+    uint32_t    m_pcmBitDepthChroma;
     bool        m_bPCMFilterDisableFlag;
 
-    uint32_t        m_bitsForPOC;
-    uint32_t        m_numLongTermRefPicSPS;
-    uint32_t        m_ltRefPicPocLsbSps[33];
+    uint32_t    m_bitsForPOC;
+    uint32_t    m_numLongTermRefPicSPS;
+    uint32_t    m_ltRefPicPocLsbSps[33];
     bool        m_usedByCurrPicLtSPSFlag[33];
 
     // Max physical transform size
-    uint32_t        m_maxTrSize;
+    uint32_t    m_maxTrSize;
 
     int m_iAMPAcc[MAX_CU_DEPTH];
     bool        m_bUseSAO;
@@ -836,8 +836,8 @@ private:
     bool        m_scalingListEnabledFlag;
     bool        m_scalingListPresentFlag;
     TComScalingList* m_scalingList; //!< ScalingList class pointer
-    uint32_t        m_maxDecPicBuffering[MAX_TLAYER];
-    uint32_t        m_maxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
+    uint32_t    m_maxDecPicBuffering[MAX_TLAYER];
+    uint32_t   m_maxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
 
     bool        m_useDF;
     bool        m_useStrongIntraSmoothing;
