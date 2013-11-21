@@ -532,45 +532,45 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
     {
         int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
 
-        pixel _above0[X265_LOWRES_CU_SIZE * 4 + 1], *const pAbove0 = _above0 + 2 * X265_LOWRES_CU_SIZE;
-        pixel _above1[X265_LOWRES_CU_SIZE * 4 + 1], *const pAbove1 = _above1 + 2 * X265_LOWRES_CU_SIZE;
-        pixel _left0[X265_LOWRES_CU_SIZE * 4 + 1], *const pLeft0 = _left0 + 2 * X265_LOWRES_CU_SIZE;
-        pixel _left1[X265_LOWRES_CU_SIZE * 4 + 1], *const pLeft1 = _left1 + 2 * X265_LOWRES_CU_SIZE;
+        pixel _above0[X265_LOWRES_CU_SIZE * 4 + 1], *const above0 = _above0 + 2 * X265_LOWRES_CU_SIZE;
+        pixel _above1[X265_LOWRES_CU_SIZE * 4 + 1], *const above1 = _above1 + 2 * X265_LOWRES_CU_SIZE;
+        pixel _left0[X265_LOWRES_CU_SIZE * 4 + 1], *const left0 = _left0 + 2 * X265_LOWRES_CU_SIZE;
+        pixel _left1[X265_LOWRES_CU_SIZE * 4 + 1], *const left1 = _left1 + 2 * X265_LOWRES_CU_SIZE;
 
         pixel *pix_cur = fenc->lowresPlane[0] + pelOffset;
 
         // Copy Above
-        memcpy(pAbove0, pix_cur - 1 - fenc->lumaStride, cuSize + 1);
+        memcpy(above0, pix_cur - 1 - fenc->lumaStride, cuSize + 1);
 
         // Copy Left
         for (int i = 0; i < cuSize + 1; i++)
         {
-            pLeft0[i] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
+            left0[i] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
         }
 
-        memset(pAbove0 + cuSize + 1, pAbove0[cuSize], cuSize);
-        memset(pLeft0 + cuSize + 1, pLeft0[cuSize], cuSize);
+        memset(above0 + cuSize + 1, above0[cuSize], cuSize);
+        memset(left0 + cuSize + 1, left0[cuSize], cuSize);
 
         // filtering with [1 2 1]
         // assume getUseStrongIntraSmoothing() is disabled
-        pAbove1[0] = pAbove0[0];
-        pAbove1[2 * cuSize] = pAbove0[2 * cuSize];
-        pLeft1[0] = pLeft0[0];
-        pLeft1[2 * cuSize] = pLeft0[2 * cuSize];
+        above1[0] = above0[0];
+        above1[2 * cuSize] = above0[2 * cuSize];
+        left1[0] = left0[0];
+        left1[2 * cuSize] = left0[2 * cuSize];
         for (int i = 1; i < 2 * cuSize; i++)
         {
-            pAbove1[i] = (pAbove0[i - 1] + 2 * pAbove0[i] + pAbove0[i + 1] + 2) >> 2;
-            pLeft1[i] = (pLeft0[i - 1] + 2 * pLeft0[i] + pLeft0[i + 1] + 2) >> 2;
+            above1[i] = (above0[i - 1] + 2 * above0[i] + above0[i + 1] + 2) >> 2;
+            left1[i] = (left0[i - 1] + 2 * left0[i] + left0[i + 1] + 2) >> 2;
         }
 
         int predsize = cuSize * cuSize;
 
         // generate 35 intra predictions into tmp
-        primitives.intra_pred_dc[nLog2SizeMinus2](pAbove0 + 1, pLeft0 + 1, predictions, cuSize, (cuSize <= 16));
-        pixel *above = (cuSize >= 8) ? pAbove1 : pAbove0;
-        pixel *left  = (cuSize >= 8) ? pLeft1 : pLeft0;
-        primitives.intra_pred_planar[nLog2SizeMinus2]((pixel*)above + 1, (pixel*)left + 1, predictions + predsize, cuSize);
-        primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cuSize <= 16));
+        primitives.intra_pred_dc[nLog2SizeMinus2](above0 + 1, left0 + 1, predictions, cuSize, (cuSize <= 16));
+        pixel *above = (cuSize >= 8) ? above1 : above0;
+        pixel *left  = (cuSize >= 8) ? left1 : left0;
+        primitives.intra_pred_planar[nLog2SizeMinus2](above + 1, left + 1, predictions + predsize, cuSize);
+        primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
 
         // calculate 35 satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
