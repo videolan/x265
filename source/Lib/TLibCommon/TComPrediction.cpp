@@ -160,7 +160,7 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t strid
     // Create the prediction
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar[log2BlkSize - 2]((pixel*)refAbv + 1, (pixel*)refLft + 1, (pixel*)dst, stride);
+        primitives.intra_pred_planar[log2BlkSize - 2](refAbv + 1, refLft + 1, dst, stride);
     }
     else if (dirMode == DC_IDX)
     {
@@ -191,7 +191,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, ui
     // get starting pixel in block
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar[log2BlkSize - 2]((pixel*)refAbv + width - 1 + 1, (pixel*)refLft + width - 1 + 1, (pixel*)dst, stride);
+        primitives.intra_pred_planar[log2BlkSize - 2](refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride);
     }
     else if (dirMode == DC_IDX)
     {
@@ -468,7 +468,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
 {
     int refStride = refPic->getStride();
     int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
-    pixel *ref    =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    pixel *ref    = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     int dstStride = dstPic->m_width;
     int16_t *dst    = dstPic->getLumaAddr(partAddr);
