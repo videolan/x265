@@ -8686,7 +8686,7 @@ namespace x265 {
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
 {
 #if HIGH_BIT_DEPTH
-    p.intra_pred_planar = p.intra_pred_planar;
+    p.intra_pred_planar[0] = p.intra_pred_planar[0];
 #else
     initFileStaticVars();
 
