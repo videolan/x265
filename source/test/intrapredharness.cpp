@@ -75,6 +75,8 @@ bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt, int wi
     for (int i = 0; i <= 100; i++)
     {
         int rand_filter = rand() & 1;
+        if (width > 16)
+            rand_filter = 0;
 
         pixel left[MAX_CU_SIZE * 2 + 1];
         for (int k = 0; k < width * 2 + 1; k++)
@@ -296,9 +298,12 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             printf("intra_dc_%dx%d[filter=0]", size, size);
             REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
                            pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 0);
-            printf("intra_dc_%dx%d[filter=1]", size, size);
-            REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
+            if (size <= 16)
+            {
+                printf("intra_dc_%dx%d[filter=1]", size, size);
+                REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
                            pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 1);
+            }
         }
     }
     if (opt.intra_pred_planar)

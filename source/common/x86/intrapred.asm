@@ -289,3 +289,76 @@ cglobal intra_pred_dc16, 5, 7, 4, above, left, dst, dstStride, filter
 
 .end
     RET
+
+;-------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
+;-------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc32, 4, 5, 5, above, left, dst, dstStride, filter
+
+    pxor            m0,            m0
+    movu            m1,            [r0]
+    movu            m2,            [r0 + 16]
+    movu            m3,            [r1]
+    movu            m4,            [r1 + 16]
+    psadbw          m1,            m0
+    psadbw          m2,            m0
+    psadbw          m3,            m0
+    psadbw          m4,            m0
+    paddw           m1,            m2
+    paddw           m3,            m4
+    paddw           m1,            m3
+    pshufd          m2,            m1, 2
+    paddw           m1,            m2
+
+    movd            r4d,           m1
+    add             r4d,           32
+    shr             r4d,           6     ; sum = sum / 64
+    movd            m1,            r4d
+    pshufb          m1,            m0    ; m1 = byte [dc_val ...]
+
+%rep 2
+    ; store DC 16x16
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+    movu            [r2],          m1
+    movu            [r2 + r3],     m1
+    movu            [r2 + 16],     m1
+    movu            [r2 + r3 + 16],m1
+    lea             r2,            [r2 + 2 * r3]
+%endrep
+
+    RET
