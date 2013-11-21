@@ -42,7 +42,7 @@ unsigned char IntraFilterType[][35] =
 using namespace x265;
 
 namespace {
-pixel predIntraGetPredValDC(pixel* above, pixel* left, intptr_t width)
+pixel dcPredValue(pixel* above, pixel* left, intptr_t width)
 {
     int w, sum = 0;
     pixel pDcVal;
@@ -62,36 +62,34 @@ pixel predIntraGetPredValDC(pixel* above, pixel* left, intptr_t width)
     return pDcVal;
 }
 
-void DCPredFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int width, int height)
+void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int size)
 {
-    intptr_t x, y, dstride2;
-
     // boundary pixels processing
     dst[0] = (pixel)((above[0] + left[0] + 2 * dst[0] + 2) >> 2);
 
-    for (x = 1; x < width; x++)
+    for (int x = 1; x < size; x++)
     {
         dst[x] = (pixel)((above[x] +  3 * dst[x] + 2) >> 2);
     }
 
-    for (y = 1, dstride2 = dststride; y < height; y++, dstride2 += dststride)
+    dst += dststride;
+    for (int y = 1; y < size; y++)
     {
-        dst[dstride2] = (pixel)((left[y] + 3 * dst[dstride2] + 2) >> 2);
+        *dst = (pixel)((left[y] + 3 * *dst + 2) >> 2);
+        dst += dststride;
     }
 }
 
 template<int width>
-void PredIntraDC(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bFilter)
+void dc_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bFilter)
 {
     int k, l;
-    int blkSize = width;
 
-    // Do the DC prediction
-    pixel dcval = (pixel)predIntraGetPredValDC(above, left, width);
+    pixel dcval = dcPredValue(above, left, width);
 
-    for (k = 0; k < blkSize; k++)
+    for (k = 0; k < width; k++)
     {
-        for (l = 0; l < blkSize; l++)
+        for (l = 0; l < width; l++)
         {
             dst[k * dstStride + l] = dcval;
         }
@@ -99,19 +97,16 @@ void PredIntraDC(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int 
 
     if (bFilter)
     {
-        DCPredFiltering(above, left, dst, dstStride, width, width);
+        dcPredFilter(above, left, dst, dstStride, width);
     }
 }
 
 template<int width>
-void PredIntraPlanar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
+void planad_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
-    //assert(width == height);
-
     int k, l;
     pixel bottomLeft, topRight;
     int horPred;
-    // OPT_ME: when width is 64, the shift1D is 8, then the dynamic range is 17 bits or [-65280, 65280], so we have to use 32 bits here
     int32_t leftColumn[MAX_CU_SIZE + 1], topRow[MAX_CU_SIZE + 1];
     // CHECK_ME: dynamic range is 9 bits or 15 bits(I assume max input bit_depth is 14 bits)
     int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
@@ -151,13 +146,10 @@ void PredIntraPlanar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
     }
 }
 
-void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void ang_pred_c(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
-    int k, l;
-    int blkSize  = width;
-
     // Map the mode index to main prediction direction and angle
-    assert(dirMode > 1); //no planar and dc
+    int k, l;
     bool modeHor       = (dirMode < 18);
     bool modeVer       = !modeHor;
     int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
@@ -168,6 +160,7 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
     int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
     int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
     int invAngle       = invAngTable[absAng];
+
     absAng             = angTable[absAng];
     intraPredAngle     = signAng * absAng;
 
@@ -179,12 +172,12 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
         // Initialise the Main and Left reference array.
         if (intraPredAngle < 0)
         {
-            refMain = (modeVer ? refAbove : refLeft); // + (blkSize - 1);
-            refSide = (modeVer ? refLeft : refAbove); // + (blkSize - 1);
+            refMain = (modeVer ? refAbove : refLeft); // + (width - 1);
+            refSide = (modeVer ? refLeft : refAbove); // + (width - 1);
 
             // Extend the Main reference to the left.
             int invAngleSum    = 128; // rounding for (shift by 8)
-            for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+            for (k = -1; k > width * intraPredAngle >> 5; k--)
             {
                 invAngleSum += invAngle;
                 refMain[k] = refSide[invAngleSum >> 8];
@@ -198,9 +191,9 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
 
         if (intraPredAngle == 0)
         {
-            for (k = 0; k < blkSize; k++)
+            for (k = 0; k < width; k++)
             {
-                for (l = 0; l < blkSize; l++)
+                for (l = 0; l < width; l++)
                 {
                     dst[k * dstStride + l] = refMain[l + 1];
                 }
@@ -208,7 +201,7 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
 
             if (bFilter)
             {
-                for (k = 0; k < blkSize; k++)
+                for (k = 0; k < width; k++)
                 {
                     dst[k * dstStride] = (pixel)Clip3((int16_t)0, (int16_t)((1 << X265_DEPTH) - 1), static_cast<int16_t>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
                 }
@@ -221,7 +214,7 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
             int deltaFract;
             int refMainIndex;
 
-            for (k = 0; k < blkSize; k++)
+            for (k = 0; k < width; k++)
             {
                 deltaPos += intraPredAngle;
                 deltaInt   = deltaPos >> 5;
@@ -230,16 +223,16 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
                 if (deltaFract)
                 {
                     // Do linear filtering
-                    for (l = 0; l < blkSize; l++)
+                    for (l = 0; l < width; l++)
                     {
-                        refMainIndex        = l + deltaInt + 1;
+                        refMainIndex = l + deltaInt + 1;
                         dst[k * dstStride + l] = (pixel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
                     }
                 }
                 else
                 {
                     // Just copy the integer samples
-                    for (l = 0; l < blkSize; l++)
+                    for (l = 0; l < width; l++)
                     {
                         dst[k * dstStride + l] = refMain[l + deltaInt + 1];
                     }
@@ -250,12 +243,11 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
         // Flip the block if this is the horizontal mode
         if (modeHor)
         {
-            pixel  tmp;
-            for (k = 0; k < blkSize - 1; k++)
+            for (k = 0; k < width - 1; k++)
             {
-                for (l = k + 1; l < blkSize; l++)
+                for (l = k + 1; l < width; l++)
                 {
-                    tmp                 = dst[k * dstStride + l];
+                    pixel tmp              = dst[k * dstStride + l];
                     dst[k * dstStride + l] = dst[l * dstStride + k];
                     dst[l * dstStride + k] = tmp;
                 }
@@ -265,31 +257,29 @@ void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool 
 }
 
 template<int size>
-void PredIntraAngs_C(pixel *Dst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
+void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
 {
-    int iMode;
-
-    for (iMode = 2; iMode <= 34; iMode++)
+    for (int mode = 2; mode <= 34; mode++)
     {
-        pixel *pLeft = (IntraFilterType[(int)g_convertToBit[size]][iMode] ? pLeft1 : pLeft0);
-        pixel *pAbove = (IntraFilterType[(int)g_convertToBit[size]][iMode] ? pAbove1 : pAbove0);
-        pixel *dst = Dst0 + (iMode - 2) * (size * size);
+        pixel *left = (IntraFilterType[(int)g_convertToBit[size]][mode] ? left1 : left0);
+        pixel *above = (IntraFilterType[(int)g_convertToBit[size]][mode] ? above1 : above0);
+        pixel *out = dest + (mode - 2) * (size * size);
 
-        PredIntraAngBufRef(dst, size, size, iMode, bLuma, pLeft, pAbove);
+        ang_pred_c(out, size, size, mode, bLuma, left, above);
 
         // Optimize code don't flip buffer
-        bool modeHor = (iMode < 18);
-        // Flip the block if this is the horizontal mode
+        bool modeHor = (mode < 18);
+
+        // transpose the block if this is a horizontal mode
         if (modeHor)
         {
-            pixel  tmp;
             for (int k = 0; k < size - 1; k++)
             {
                 for (int l = k + 1; l < size; l++)
                 {
-                    tmp                = dst[k * size + l];
-                    dst[k * size + l] = dst[l * size + k];
-                    dst[l * size + k] = tmp;
+                    pixel tmp         = out[k * size + l];
+                    out[k * size + l] = out[l * size + k];
+                    out[l * size + k] = tmp;
                 }
             }
         }
@@ -302,22 +292,22 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred_dc[BLOCK_4x4] = PredIntraDC<4>;
-    p.intra_pred_dc[BLOCK_8x8] = PredIntraDC<8>;
-    p.intra_pred_dc[BLOCK_16x16] = PredIntraDC<16>;
-    p.intra_pred_dc[BLOCK_32x32] = PredIntraDC<32>;
+    p.intra_pred_dc[BLOCK_4x4] = dc_pred_c<4>;
+    p.intra_pred_dc[BLOCK_8x8] = dc_pred_c<8>;
+    p.intra_pred_dc[BLOCK_16x16] = dc_pred_c<16>;
+    p.intra_pred_dc[BLOCK_32x32] = dc_pred_c<32>;
 
-    p.intra_pred_planar[BLOCK_4x4] = PredIntraPlanar<4>;
-    p.intra_pred_planar[BLOCK_8x8] = PredIntraPlanar<8>;
-    p.intra_pred_planar[BLOCK_16x16] = PredIntraPlanar<16>;
-    p.intra_pred_planar[BLOCK_32x32] = PredIntraPlanar<32>;
-    p.intra_pred_planar[BLOCK_64x64] = PredIntraPlanar<64>;
+    p.intra_pred_planar[BLOCK_4x4] = planad_pred_c<4>;
+    p.intra_pred_planar[BLOCK_8x8] = planad_pred_c<8>;
+    p.intra_pred_planar[BLOCK_16x16] = planad_pred_c<16>;
+    p.intra_pred_planar[BLOCK_32x32] = planad_pred_c<32>;
+    p.intra_pred_planar[BLOCK_64x64] = planad_pred_c<64>;
 
-    p.intra_pred_ang = PredIntraAngBufRef;
-    p.intra_pred_allangs[0] = PredIntraAngs_C<4>;
-    p.intra_pred_allangs[1] = PredIntraAngs_C<8>;
-    p.intra_pred_allangs[2] = PredIntraAngs_C<16>;
-    p.intra_pred_allangs[3] = PredIntraAngs_C<32>;
-    p.intra_pred_allangs[4] = PredIntraAngs_C<64>;
+    p.intra_pred_ang = ang_pred_c;
+    p.intra_pred_allangs[0] = all_angs_pred_c<4>;
+    p.intra_pred_allangs[1] = all_angs_pred_c<8>;
+    p.intra_pred_allangs[2] = all_angs_pred_c<16>;
+    p.intra_pred_allangs[3] = all_angs_pred_c<32>;
+    p.intra_pred_allangs[4] = all_angs_pred_c<64>;
 }
 }
