@@ -42,28 +42,25 @@ protected:
     bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt);
     bool check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt);
-    bool check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt);
-    bool check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt);
-    bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
-    bool check_calcrecon(calcrecon_t ref, calcrecon_t opt);
-    bool check_weightp(weightp_pp_t ref, weightp_pp_t opt);
-    bool check_weightp(weightp_sp_t ref, weightp_sp_t opt);
-    bool check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt);
-    bool check_downscale_t(downscale_t ref, downscale_t opt);
-    bool check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t opt);
+    bool check_blockcopy_pp(blockcpy_pp_t ref, blockcpy_pp_t opt);
+    bool check_blockcopy_ps(blockcpy_ps_t ref, blockcpy_ps_t opt);
+    bool check_copy_pp(copy_pp_t ref, copy_pp_t opt);
+    bool check_copy_sp(copy_sp_t ref, copy_sp_t opt);
+    bool check_copy_ps(copy_ps_t ref, copy_ps_t opt);
     bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
-
-    bool check_block_copy_pp(copy_pp_t ref, copy_pp_t opt);
-    bool check_block_copy_sp(copy_sp_t ref, copy_sp_t opt);
-    bool check_block_copy_ps(copy_ps_t ref, copy_ps_t opt);
-
-    bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
-
     bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
     bool check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt);
-
-    bool check_pixel_scale_pp(scale_t ref, scale_t opt);
+    bool check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt);
+    bool check_scale_pp(scale_t ref, scale_t opt);
+    bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
+    bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
+    bool check_calcrecon(calcrecon_t ref, calcrecon_t opt);
     bool check_transpose(transpose_t ref, transpose_t opt);
+    bool check_weightp(weightp_pp_t ref, weightp_pp_t opt);
+    bool check_weightp(weightp_sp_t ref, weightp_sp_t opt);
+    bool check_downscale_t(downscale_t ref, downscale_t opt);
+    bool check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t opt);
+
 public:
 
     PixelHarness();

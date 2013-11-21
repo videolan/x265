@@ -173,7 +173,7 @@ bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt)
+bool PixelHarness::check_blockcopy_pp(blockcpy_pp_t ref, blockcpy_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -196,7 +196,7 @@ bool PixelHarness::check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt)
+bool PixelHarness::check_blockcopy_ps(blockcpy_ps_t ref, blockcpy_ps_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -443,7 +443,7 @@ bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy_pp(copy_pp_t ref, copy_pp_t opt)
+bool PixelHarness::check_copy_pp(copy_pp_t ref, copy_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -468,7 +468,7 @@ bool PixelHarness::check_block_copy_pp(copy_pp_t ref, copy_pp_t opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy_sp(copy_sp_t ref, copy_sp_t opt)
+bool PixelHarness::check_copy_sp(copy_sp_t ref, copy_sp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -493,7 +493,7 @@ bool PixelHarness::check_block_copy_sp(copy_sp_t ref, copy_sp_t opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy_ps(copy_ps_t ref, copy_ps_t opt)
+bool PixelHarness::check_copy_ps(copy_ps_t ref, copy_ps_t opt)
 {
     ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
     ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
@@ -563,7 +563,7 @@ bool PixelHarness::check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt)
     return true;
 }
 
-bool PixelHarness::check_pixel_scale_pp(scale_t ref, scale_t opt)
+bool PixelHarness::check_scale_pp(scale_t ref, scale_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -717,7 +717,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     if (opt.luma_copy_pp[part])
     {
-        if (!check_block_copy_pp(ref.luma_copy_pp[part], opt.luma_copy_pp[part]))
+        if (!check_copy_pp(ref.luma_copy_pp[part], opt.luma_copy_pp[part]))
         {
             printf("luma_copy_pp[%s] failed\n", lumaPartStr[part]);
             return false;
@@ -726,7 +726,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     if (opt.luma_copy_sp[part])
     {
-        if (!check_block_copy_sp(ref.luma_copy_sp[part], opt.luma_copy_sp[part]))
+        if (!check_copy_sp(ref.luma_copy_sp[part], opt.luma_copy_sp[part]))
         {
             printf("luma_copy_sp[%s] failed\n", lumaPartStr[part]);
             return false;
@@ -735,7 +735,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     if (opt.luma_copy_ps[part])
     {
-        if (!check_block_copy_ps(ref.luma_copy_ps[part], opt.luma_copy_ps[part]))
+        if (!check_copy_ps(ref.luma_copy_ps[part], opt.luma_copy_ps[part]))
         {
             printf("luma_copy_ps[%s] failed\n", lumaPartStr[part]);
             return false;
@@ -763,7 +763,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
     {
         if (opt.chroma[i].copy_pp[part])
         {
-            if (!check_block_copy_pp(ref.chroma[i].copy_pp[part], opt.chroma[i].copy_pp[part]))
+            if (!check_copy_pp(ref.chroma[i].copy_pp[part], opt.chroma[i].copy_pp[part]))
             {
                 printf("chroma_copy_pp[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
@@ -771,7 +771,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
         if (opt.chroma[i].copy_sp[part])
         {
-            if (!check_block_copy_sp(ref.chroma[i].copy_sp[part], opt.chroma[i].copy_sp[part]))
+            if (!check_copy_sp(ref.chroma[i].copy_sp[part], opt.chroma[i].copy_sp[part]))
             {
                 printf("chroma_copy_sp[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
@@ -779,7 +779,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
         if (opt.chroma[i].copy_ps[part])
         {
-            if (!check_block_copy_ps(ref.chroma[i].copy_ps[part], opt.chroma[i].copy_ps[part]))
+            if (!check_copy_ps(ref.chroma[i].copy_ps[part], opt.chroma[i].copy_ps[part]))
             {
                 printf("chroma_copy_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
@@ -891,7 +891,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.blockcpy_pp)
     {
-        if (!check_block_copy(ref.blockcpy_pp, opt.blockcpy_pp))
+        if (!check_blockcopy_pp(ref.blockcpy_pp, opt.blockcpy_pp))
         {
             printf("block copy failed!\n");
             return false;
@@ -900,7 +900,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.blockcpy_ps)
     {
-        if (!check_block_copy_p_s(ref.blockcpy_ps, opt.blockcpy_ps))
+        if (!check_blockcopy_ps(ref.blockcpy_ps, opt.blockcpy_ps))
         {
             printf("block copy pixel_short failed!\n");
             return false;
@@ -945,7 +945,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.scale1D_128to64)
     {
-        if (!check_pixel_scale_pp(ref.scale1D_128to64, opt.scale1D_128to64))
+        if (!check_scale_pp(ref.scale1D_128to64, opt.scale1D_128to64))
         {
             printf("scale1D_128to64 failed!\n");
             return false;
@@ -954,7 +954,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.scale2D_64to32)
     {
-        if (!check_pixel_scale_pp(ref.scale2D_64to32, opt.scale2D_64to32))
+        if (!check_scale_pp(ref.scale2D_64to32, opt.scale2D_64to32))
         {
             printf("scale2D_64to32 failed!\n");
             return false;
