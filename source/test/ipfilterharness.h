@@ -44,7 +44,6 @@ protected:
     bool check_IPFilter_primitive(ipfilter_ps_t ref, ipfilter_ps_t opt);
     bool check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t opt);
     bool check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma);
-    bool check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt);
     bool check_IPFilter_primitive(ipfilter_ss_t ref, ipfilter_ss_t opt, int isChroma);
     bool check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt);
     bool check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_ps_t opt);

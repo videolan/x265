@@ -37,12 +37,8 @@
 using namespace x265;
 
 #if !HIGH_BIT_DEPTH
-namespace {
-ALIGN_VAR_32(const uint16_t, c_512[16]) =
-{
-    512, 512, 512, 512, 512, 512, 512, 512
-};
 
+namespace {
 template<int N>
 void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int coeffIdx)
 {
@@ -249,129 +245,8 @@ void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t ds
         dst += dstStride;
     }
 }
-
-/*
-    Please refer Fig 7 in HEVC Overview document to familiarize with variables' naming convention
-    Input: Subpel from the Horizontal filter - 'src'
-    Output: All planes in the corresponding column - 'dst<A|E|I|P>'
-*/
-
-#define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
-        a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-        exp1 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a1, _mm_cvtsi32_si128(2)), a0), _mm_mullo_epi32(a2, _mm_set1_epi32(10))); \
-        exp2 = _mm_mullo_epi32(a3, _mm_set1_epi32(40)); \
-        exp3 = _mm_mullo_epi32(a3, _mm_set1_epi32(17)); \
-        exp4 = _mm_mullo_epi32(a4, _mm_set1_epi32(17)); \
-        exp5 = _mm_mullo_epi32(a4, _mm_set1_epi32(40)); \
-        exp6 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a6, _mm_cvtsi32_si128(2)), a7), _mm_mullo_epi32(a5, _mm_set1_epi32(10))); \
-        sume = _mm_add_epi32(exp1, _mm_add_epi32(_mm_add_epi32(exp2, exp3), \
-                                                 _mm_add_epi32(_mm_add_epi32(a3, exp4), \
-                                                               _mm_add_epi32(_mm_mullo_epi32(a5, _mm_set1_epi32(-5)), \
-                                                                             a6) \
-                                                               ) \
-                                                 ) \
-                             ); \
-        sumi = _mm_sub_epi32(_mm_add_epi32(_mm_add_epi32(exp1, exp2), _mm_add_epi32(exp5, exp6)), \
-                             _mm_add_epi32(a2, a5)); \
-        sump = _mm_add_epi32(a1, _mm_add_epi32(_mm_add_epi32(exp3, exp4), \
-                                               _mm_add_epi32(_mm_add_epi32(exp5, exp6), \
-                                                             _mm_add_epi32(_mm_mullo_epi32(a2, _mm_set1_epi32(-5)), \
-                                                                           a4) \
-                                                             ) \
-                                               ) \
-                             ); \
-        /* store results */ \
-        sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-        tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
-        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
-        sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-        tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
-        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
-        sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-        tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
-        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
 
-#define EXTENDCOL(X, Y) { /*X=0 for leftmost column, X=block_width+marginX for rightmost column*/ \
-        tmp16e = _mm_shuffle_epi8(sume, _mm_set1_epi8(Y)); \
-        tmp16i = _mm_shuffle_epi8(sumi, _mm_set1_epi8(Y)); \
-        tmp16p = _mm_shuffle_epi8(sump, _mm_set1_epi8(Y)); \
-        for (int i = -marginX; i < -16; i += 16) \
-        { \
-            _mm_storeu_si128((__m128i*)(dstE + row * dstStride + X + i), tmp16e); \
-            _mm_storeu_si128((__m128i*)(dstI + row * dstStride + X + i), tmp16i); \
-            _mm_storeu_si128((__m128i*)(dstP + row * dstStride + X + i), tmp16p); \
-        } \
-        _mm_storeu_si128((__m128i*)(dstE + row * dstStride + X - 16), tmp16e); /*Assuming marginX > 16*/ \
-        _mm_storeu_si128((__m128i*)(dstI + row * dstStride + X - 16), tmp16i); \
-        _mm_storeu_si128((__m128i*)(dstP + row * dstStride + X - 16), tmp16p); \
-}
-
-#define PROCESSROWWGHTD(a0, a1, a2, a3, a4, a5, a6, a7) { \
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
-        a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-        exp1 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a1, _mm_cvtsi32_si128(2)), a0), _mm_mullo_epi32(a2, _mm_set1_epi32(10))); \
-        exp2 = _mm_mullo_epi32(a3, _mm_set1_epi32(40)); \
-        exp3 = _mm_mullo_epi32(a3, _mm_set1_epi32(17)); \
-        exp4 = _mm_mullo_epi32(a4, _mm_set1_epi32(17)); \
-        exp5 = _mm_mullo_epi32(a4, _mm_set1_epi32(40)); \
-        exp6 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a6, _mm_cvtsi32_si128(2)), a7), _mm_mullo_epi32(a5, _mm_set1_epi32(10))); \
-        sume = _mm_add_epi32(exp1, _mm_add_epi32(_mm_add_epi32(exp2, exp3), \
-                                                 _mm_add_epi32(_mm_add_epi32(a3, exp4), \
-                                                               _mm_add_epi32(_mm_mullo_epi32(a5, _mm_set1_epi32(-5)), \
-                                                                             a6) \
-                                                               ) \
-                                                 ) \
-                             ); \
-        sumi = _mm_sub_epi32(_mm_add_epi32(_mm_add_epi32(exp1, exp2), _mm_add_epi32(exp5, exp6)), \
-                             _mm_add_epi32(a2, a5)); \
-        sump = _mm_add_epi32(a1, _mm_add_epi32(_mm_add_epi32(exp3, exp4), \
-                                               _mm_add_epi32(_mm_add_epi32(exp5, exp6), \
-                                                             _mm_add_epi32(_mm_mullo_epi32(a2, _mm_set1_epi32(-5)), \
-                                                                           a4) \
-                                                             ) \
-                                               ) \
-                             ); \
-        /* store results */ \
-        sumi = _mm_srai_epi32(sumi, IF_FILTER_PREC); \
-        tmp =  _mm_packus_epi32(_mm_and_si128(sumi, _mm_set1_epi32(0x0000FFFF)), _mm_set1_epi32(0)); \
-        sumi = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-        /*Apply weight*/    \
-        sumi = _mm_mullo_epi32(sumi, vscale);   \
-        sumi = _mm_add_epi32(sumi, vround); \
-        sumi = _mm_srai_epi32(sumi, wshift); \
-        sumi = _mm_add_epi32(sumi, ofs);    \
-        tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
-        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
-        sume = _mm_srai_epi32(sume, IF_FILTER_PREC); \
-        tmp =  _mm_packus_epi32(_mm_and_si128(sume, _mm_set1_epi32(0x0000FFFF)), _mm_set1_epi32(0)); \
-        sume = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-        /*Apply weight*/    \
-        sume = _mm_mullo_epi32(sume, vscale);   \
-        sume = _mm_add_epi32(sume, vround); \
-        sume = _mm_srai_epi32(sume, wshift); \
-        sume = _mm_add_epi32(sume, ofs);    \
-        tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
-        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
-        sump = _mm_srai_epi32(sump, IF_FILTER_PREC); \
-        tmp =  _mm_packus_epi32(_mm_and_si128(sump, _mm_set1_epi32(0x0000FFFF)), _mm_set1_epi32(0)); \
-        sump = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-        /*Apply weight*/    \
-        sump = _mm_mullo_epi32(sump, vscale);   \
-        sump = _mm_add_epi32(sump, vround); \
-        sump = _mm_srai_epi32(sump, wshift); \
-        sump = _mm_add_epi32(sump, ofs);    \
-        tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
-        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
-}
-}
 #else // if !HIGH_BIT_DEPTH
 
 #define INSTRSET 5
@@ -573,149 +448,6 @@ void filterVertical_sp(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t ds
         dst += dstStride;
     }
 }
-
-template<int N>
-void filterHorizontal_ps(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int block_width, int block_height, const int16_t *coeff)
-{
-    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift = IF_FILTER_PREC - headRoom;
-    int offset = -IF_INTERNAL_OFFS << shift;
-    int row, col;
-
-    src -= (N / 2) - 1;
-
-    Vec4i vec_sum_low, vec_sum_high;
-    Vec8s vec_src0, vec_sum, vec_c;
-    Vec8s vec_c0(coeff[0]), vec_c1(coeff[1]), vec_c2(coeff[2]), vec_c3(coeff[3]), vec_c4(coeff[4]), vec_c5(coeff[5]),
-          vec_c6(coeff[6]), vec_c7(coeff[7]);
-    Vec4i vec_offset(offset);
-
-    vec_c.load(coeff);
-    for (row = 0; row < block_height; row++)
-    {
-        col = 0;
-        for (; col < (block_width - 7); col += 8)               // Iterations multiple of 8
-        {
-            vec_src0.load(src + col);                           // Load the 8 elements
-            vec_src0 = vec_src0 * vec_c0;                       // Multiply by c[0]
-            vec_sum_low = extend_low(vec_src0);                 // Convert to integer lower bits
-            vec_sum_high = extend_high(vec_src0);               // Convert to integer higher bits
-
-            vec_src0.load(src + col + 1);                       // Load the 8 elements
-            vec_src0 = vec_src0 * vec_c1;                       // Multiply by c[1]
-            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
-            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
-
-            vec_src0.load(src + col + 2);                       // Load the 8 elements
-            vec_src0 = vec_src0 * vec_c2;                       // Multiply by c[2]
-            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
-            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
-
-            vec_src0.load(src + col + 3);                       // Load the 8 elements
-            vec_src0 = vec_src0 * vec_c3;                       // Multiply by c[2]
-            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
-            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
-
-            if (N == 8)
-            {
-                vec_src0.load(src + col + 4);                   // Load the 8 elements
-                vec_src0 = vec_src0 * vec_c4;                   // Multiply by c[2]
-                vec_sum_low += extend_low(vec_src0);            // Add integer lower bits to sum_low bits
-                vec_sum_high += extend_high(vec_src0);          // Add integer higer bits to sum_high bits
-
-                vec_src0.load(src + col + 5);                   // Load the 8 elements
-                vec_src0 = vec_src0 * vec_c5;                   // Multiply by c[2]
-                vec_sum_low += extend_low(vec_src0);            // Add integer lower bits to sum_low bits
-                vec_sum_high += extend_high(vec_src0);          // Add integer higer bits to sum_high bits
-
-                vec_src0.load(src + col + 6);                   // Load the 8 elements
-                vec_src0 = vec_src0 * vec_c6;                   // Multiply by c[2]
-                vec_sum_low += extend_low(vec_src0);            // Add integer lower bits to sum_low bits
-                vec_sum_high += extend_high(vec_src0);          // Add integer higer bits to sum_high bits
-
-                vec_src0.load(src + col + 7);                   // Load the 8 elements
-                vec_src0 = vec_src0 * vec_c7;                   // Multiply by c[2]
-                vec_sum_low += extend_low(vec_src0);            // Add integer lower bits to sum_low bits
-                vec_sum_high += extend_high(vec_src0);          // Add integer higer bits to sum_high bits
-            }
-
-            vec_sum_low = (vec_sum_low + vec_offset);           // Add offset(value copied into all integer vector elements) to sum_low
-            vec_sum_high = (vec_sum_high + vec_offset);         // Add offset(value copied into all integer vector elements) to sum_high
-
-            vec_sum = compress(vec_sum_low, vec_sum_high);      // Save two integer vectors(Vec4i) to single short vector(Vec8s)
-            vec_sum = vec_sum >> shift;                         // This shift must be done after saving integer(two vec4i) data to short(Vec8s)
-
-            vec_sum.store(dst + col);                           // Store vector
-        }
-
-        for (; col < block_width; col++)                        // Remaining iterations
-        {
-            if (N == 8)
-            {
-                vec_src0.load(src + col);
-            }
-            else
-            {
-                vec_src0 = load_partial(const_int(8), (src + col));
-            }
-
-            vec_src0 = vec_src0 * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
-            int sum = horizontal_add(vec_src0);
-            int16_t val = (int16_t)(sum + offset) >> shift;
-
-            dst[col] = val;
-        }
-
-        src += srcStride;
-        dst += dstStride;
-    }
-}
-
-void filterConvertShortToPel(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
-{
-    int16_t* srcOrg = src;
-    pixel* dstOrg = dst;
-    int shift = IF_INTERNAL_PREC - X265_DEPTH;
-    int16_t offset = IF_INTERNAL_OFFS;
-
-    offset += shift ? (1 << (shift - 1)) : 0;
-    int16_t maxVal = (1 << X265_DEPTH) - 1;
-    Vec8s minVal(0);
-    int row, col;
-    Vec8s src_c, val_c;
-    for (row = 0; row < height; row++)
-    {
-        for (col = 0; col < width - 7; col += 8)
-        {
-            src_c.load(src + col);
-            val_c = add_saturated(src_c, offset) >> shift;
-            val_c = max(val_c, minVal);
-            val_c = min(val_c, maxVal);
-            val_c.store(dst + col);
-        }
-
-        src += srcStride;
-        dst += dstStride;
-    }
-
-    if (width % 8 != 0)
-    {
-        src = srcOrg;
-        dst = dstOrg;
-        col = width - (width % 8);
-        for (row = 0; row < height; row++)
-        {
-            src_c.load(src + col);
-            val_c = add_saturated(src_c, offset) >> shift;
-            val_c = max(val_c, minVal);
-            val_c = min(val_c, maxVal);
-            val_c.store_partial(width - col, dst + col);
-
-            src += srcStride;
-            dst += dstStride;
-        }
-    }
-}
 }
 #endif // if !HIGH_BIT_DEPTH
 
@@ -723,12 +455,5 @@ namespace x265 {
 void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives& p)
 {
     p.chroma_vsp = filterVertical_sp<4>;
-
-#if HIGH_BIT_DEPTH
-    //p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps<4>;
-    //p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps<8>;
-
-    p.ipfilter_s2p = filterConvertShortToPel;
-#endif
 }
 }

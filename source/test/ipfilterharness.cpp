@@ -191,40 +191,6 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
     return true;
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(ipfilter_s2p_t ref, ipfilter_s2p_t opt)
-{
-    int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
-    int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
-    int16_t rand_srcStride, rand_dstStride;
-
-    memset(IPF_vec_output_p, 0, ipf_t_size);                     // Initialize output buffer to zero
-    memset(IPF_C_output_p, 0, ipf_t_size);                       // Initialize output buffer to zero
-
-    for (int i = 0; i <= 100; i++)
-    {
-        rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
-
-        opt(short_buff,
-            rand_srcStride,
-            IPF_vec_output_p,
-            rand_dstStride,
-            rand_width,
-            rand_height);
-        ref(short_buff,
-            rand_srcStride,
-            IPF_C_output_p,
-            rand_dstStride,
-            rand_width,
-            rand_height);
-
-        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
-            return false;
-    }
-
-    return true;
-}
-
 bool IPFilterHarness::check_IPFilter_primitive(ipfilter_ss_t ref, ipfilter_ss_t opt, int isChroma)
 {
     int rand_val, rand_srcStride, rand_dstStride;
@@ -600,15 +566,6 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
-    if (opt.ipfilter_s2p)
-    {
-        if (!check_IPFilter_primitive(ref.ipfilter_s2p, opt.ipfilter_s2p))
-        {
-            printf("filterConvertShorttoPel failed\n");
-            return false;
-        }
-    }
-
     for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
     {
         if (opt.luma_hpp[value])
@@ -779,13 +736,6 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         printf("luma_p2s\t");
         REPORT_SPEEDUP(opt.luma_p2s, ref.luma_p2s,
                        pixel_buff, srcStride, IPF_vec_output_s, width, height);
-    }
-
-    if (opt.ipfilter_s2p)
-    {
-        printf("ipfilter_s2p\t");
-        REPORT_SPEEDUP(opt.ipfilter_s2p, ref.ipfilter_s2p,
-                       short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
     }
 
     for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)

@@ -129,111 +129,6 @@ void filterHorizontal_ps(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t 
         dst += dstStride;
     }
 }
-
-void filterConvertShortToPel(int16_t *source, intptr_t sourceStride, pixel *dest, intptr_t destStride, int width, int height)
-{
-    int16_t* src = source;
-    pixel* dst = dest;
-    int shift = IF_INTERNAL_PREC - X265_DEPTH;
-    int16_t offset = IF_INTERNAL_OFFS;
-
-    offset += shift ? (1 << (shift - 1)) : 0;
-    int16_t maxval = (1 << X265_DEPTH) - 1;
-    int row, col;
-
-    __m128i minval  = _mm_setzero_si128();
-    __m128i zeroval = _mm_setzero_si128();
-    __m128i val1, val2, val3;
-
-    for (row = 0; row < height; row++)
-    {
-        for (col = 0; col < width - 7; col += 8)
-        {
-            val1 = _mm_loadu_si128((__m128i const*)(source + col));
-            val2 = _mm_sra_epi16(_mm_adds_epi16(val1, _mm_set1_epi16(offset)), _mm_cvtsi32_si128(shift));
-            val2 = _mm_max_epi16(val2, minval);
-            val2 = _mm_min_epi16(val2, _mm_set1_epi16(maxval));
-
-            __m128i mask  = _mm_set1_epi32(0x00FF00FF);           // mask for low bytes
-            __m128i lowm  = _mm_and_si128(val2, mask);            // bytes of low
-            __m128i highm = _mm_and_si128(zeroval, mask);         // bytes of high
-            val3 = _mm_packus_epi16(lowm, highm);                 // unsigned pack
-
-            union
-            {
-                int8_t  c[16];
-                int64_t q[2];
-            } u;
-
-            _mm_storeu_si128((__m128i*)u.c, val3);
-            *(int64_t*)(dest + col) = u.q[0];
-        }
-
-        source += sourceStride;
-        dest += destStride;
-    }
-
-    if (width % 8 != 0)
-    {
-        source = src;
-        dest = dst;
-        col = width - (width % 8);
-        for (row = 0; row < height; row++)
-        {
-            val1 = _mm_loadu_si128((__m128i const*)(source + col));
-            val2 = _mm_sra_epi16(_mm_adds_epi16(val1, _mm_set1_epi16(offset)), _mm_cvtsi32_si128(shift));
-            val2 = _mm_max_epi16(val2, minval);
-            val2 = _mm_min_epi16(val2, _mm_set1_epi16(maxval));
-
-            __m128i mask  = _mm_set1_epi32(0x00FF00FF);           // mask for low bytes
-            __m128i lowm  = _mm_and_si128(val2, mask);            // bytes of low
-            __m128i highm = _mm_and_si128(zeroval, mask);         // bytes of high
-            val3 = _mm_packus_epi16(lowm, highm);                 // unsigned pack
-
-            int n = width - col;
-            if (n >= 16)
-            {
-                _mm_storeu_si128((__m128i*)(dest + col), val3);
-            }
-            else if (n <= 0)
-                ; // do nothing if value of is n less than 0
-            else
-            {
-                union
-                {
-                    int8_t  c[16];
-                    int16_t s[8];
-                    int32_t i[4];
-                    int64_t q[2];
-                } u;
-
-                _mm_storeu_si128((__m128i*)u.c, val3);
-                int j = 0;
-                if (n & 8)    // n == (8,9,10,11,12,13,14,15)
-                {
-                    *(int64_t*)(dest + col) = u.q[0];
-                    j += 8;
-                }
-                if (n & 4)    // n == (4,5,6,7,12,13,14,15)
-                {
-                    ((int32_t*)(dest + col))[j / 4] = u.i[j / 4];
-                    j += 4;
-                }
-                if (n & 2)    // n == (2,3,6,7,10,11,14,15)
-                {
-                    ((int16_t*)(dest + col))[j / 2] = u.s[j / 2];
-                    j += 2;
-                }
-                if (n & 1)    // n == (1,3,5,7,9,11,13,15)
-                {
-                    ((int8_t*)(dest + col))[j] = u.c[j];
-                }
-            }
-            source += sourceStride;
-            dest += destStride;
-        }
-    }
-}
 }
 #endif // if !HIGH_BIT_DEPTH
 
@@ -245,8 +140,6 @@ void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives& p)
 #else
     p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps<4>;
     p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps<8>;
-
-    p.ipfilter_s2p = filterConvertShortToPel;
 #endif
 }
 }
