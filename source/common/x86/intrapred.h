@@ -27,5 +27,6 @@
 #define X265_INTRAPRED_H
 
 void x265_intra_pred_dc4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter);
+void x265_intra_pred_dc8_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter);
 
 #endif // ifndef X265_INTRAPRED_H
