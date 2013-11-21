@@ -43,7 +43,6 @@ protected:
     bool check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt);
     bool check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt);
     bool check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt);
-    bool check_block_copy_s_p(blockcpy_sp_t ref, blockcpy_sp_t opt);
     bool check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt);
     bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
     bool check_calcrecon(calcrecon_t ref, calcrecon_t opt);

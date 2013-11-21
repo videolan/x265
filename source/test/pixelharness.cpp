@@ -196,29 +196,6 @@ bool PixelHarness::check_block_copy(blockcpy_pp_t ref, blockcpy_pp_t opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy_s_p(blockcpy_sp_t ref, blockcpy_sp_t opt)
-{
-    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
-    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
-    int bx = 64;
-    int by = 64;
-    int j = 0;
-    for (int i = 0; i < ITERS; i++)
-    {
-        opt(bx, by, opt_dest, 64, pbuf2 + j, 128);
-        ref(bx, by, ref_dest, 64, pbuf2 + j, 128);
-
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
-            return false;
-
-        j += 4;
-        bx = 4 * ((rand() & 15) + 1);
-        by = 4 * ((rand() & 15) + 1);
-    }
-
-    return true;
-}
-
 bool PixelHarness::check_block_copy_p_s(blockcpy_ps_t ref, blockcpy_ps_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -930,15 +907,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.blockcpy_sp)
-    {
-        if (!check_block_copy_s_p(ref.blockcpy_sp, opt.blockcpy_sp))
-        {
-            printf("block copy short_pixel failed!\n");
-            return false;
-        }
-    }
-
     if (opt.weightpUniPixel)
     {
         if (!check_weightpUni(ref.weightpUniPixel, opt.weightpUniPixel))
@@ -1189,12 +1157,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("p_s   cpy");
         REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (int16_t*)sbuf3, STRIDE);
-    }
-
-    if (opt.blockcpy_sp)
-    {
-        printf("s_p   cpy");
-        REPORT_SPEEDUP(opt.blockcpy_sp, ref.blockcpy_sp, 64, 64, (int16_t*)sbuf3, FENC_STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.weightpUniPixel)

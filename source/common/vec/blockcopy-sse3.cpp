@@ -130,44 +130,6 @@ void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, in
         }
     }
 }
-
-void blockcopy_sp(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
-{
-    size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
-
-    if (!(aligncheck & 15))
-    {
-        // fast path, multiples of 16 pixel wide blocks
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x += 16)
-            {
-                __m128i word0 = _mm_load_si128((__m128i const*)(src + x));        // load block of 16 byte from src
-                __m128i word1 = _mm_unpacklo_epi8(word0, _mm_setzero_si128());    // interleave with zero extensions
-                _mm_store_si128((__m128i*)&dst[x], word1);                        // store block into dst
-                __m128i word2 = _mm_unpackhi_epi8(word0, _mm_setzero_si128());    // interleave with zero extensions
-                _mm_store_si128((__m128i*)&dst[x + 8], word2);                    // store block into dst
-            }
-
-            src += sstride;
-            dst += dstride;
-        }
-    }
-    else
-    {
-        // slow path, irregular memory alignments or sizes
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x++)
-            {
-                dst[x] = (int16_t)src[x];
-            }
-
-            src += sstride;
-            dst += dstride;
-        }
-    }
-}
 #endif /* if HIGH_BIT_DEPTH */
 
 void pixeladd_ss(int bx, int by, int16_t *dst, intptr_t dstride, int16_t *src0, int16_t *src1, intptr_t sstride0, intptr_t sstride1)
@@ -256,13 +218,11 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
 #if HIGH_BIT_DEPTH
     p.blockcpy_pp = blockcopy_pp;
     p.blockcpy_ps = (blockcpy_ps_t)blockcopy_pp;
-    p.blockcpy_sp = (blockcpy_sp_t)blockcopy_pp;
     // At high bit depth, a pixel is a short
     p.pixeladd_ss = pixeladd_ss;
 #else
     p.blockcpy_pp = blockcopy_pp;
     p.blockcpy_ps = blockcopy_ps;
-    p.blockcpy_sp = blockcopy_sp;
     p.pixeladd_ss = pixeladd_ss;
 #endif // if HIGH_BIT_DEPTH
 }
