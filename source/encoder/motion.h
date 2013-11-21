@@ -52,9 +52,6 @@ protected:
     int subpelRefine;
 
     /* subpel generation buffers */
-    pixel *subpelbuf;
-    int16_t *immedVal;
-    int16_t *immedVal2;
     int blockwidth;
     int blockheight;
 
