@@ -967,87 +967,89 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 {
     ALIGN_VAR_16(int, cres[16]);
     pixel *fref = pbuf2 + 2 * INCR;
+    char header[20];
+#define HEADER(str, ...) sprintf(header, str, __VA_ARGS__); printf("%22s", header);
 
     if (opt.satd[part])
     {
-        printf("  satd[%s]", lumaPartStr[part]);
+        HEADER("satd[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.satd[part], ref.satd[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.pixelavg_pp[part])
     {
-        printf("avg_pp[%s]", lumaPartStr[part]);
+        HEADER("avg_pp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.pixelavg_pp[part], ref.pixelavg_pp[part], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 0);
     }
 
     if (opt.sa8d_inter[part])
     {
-        printf("  sa8d[%s]", lumaPartStr[part]);
+        HEADER("sa8d[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sa8d_inter[part], ref.sa8d_inter[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sad[part])
     {
-        printf("   sad[%s]", lumaPartStr[part]);
+        HEADER("sad[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sad[part], ref.sad[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sad_x3[part])
     {
-        printf("sad_x3[%s]", lumaPartStr[part]);
+        HEADER("sad_x3[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sad_x3[part], ref.sad_x3[part], pbuf1, fref, fref + 1, fref - 1, FENC_STRIDE + 5, &cres[0]);
     }
 
     if (opt.sad_x4[part])
     {
-        printf("sad_x4[%s]", lumaPartStr[part]);
+        HEADER("sad_x4[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sad_x4[part], ref.sad_x4[part], pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
     }
 
     if (opt.sse_pp[part])
     {
-        printf("sse_pp[%s]", lumaPartStr[part]);
+        HEADER("sse_pp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sse_pp[part], ref.sse_pp[part], pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sse_sp[part])
     {
-        printf("sse_sp[%s]", lumaPartStr[part]);
+        HEADER("sse_sp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sse_sp[part], ref.sse_sp[part], (int16_t*)pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.sse_ss[part])
     {
-        printf("sse_ss[%s]", lumaPartStr[part]);
+        HEADER("sse_ss[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.sse_ss[part], ref.sse_ss[part], (int16_t*)pbuf1, STRIDE, (int16_t*)fref, STRIDE);
     }
 
     if (opt.luma_copy_pp[part])
     {
-        printf("lcpy_pp[%s]", lumaPartStr[part]);
+        HEADER("luma_copy_pp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_copy_pp[part], ref.luma_copy_pp[part], pbuf1, 64, pbuf2, 128);
     }
 
     if (opt.luma_copy_sp[part])
     {
-        printf("lcpy_sp[%s]", lumaPartStr[part]);
+        HEADER("luma_copy_sp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_copy_sp[part], ref.luma_copy_sp[part], pbuf1, 64, sbuf3, 128);
     }
 
     if (opt.luma_copy_ps[part])
     {
-        printf("lcpy_ps[%s]", lumaPartStr[part]);
+        HEADER("luma_copy_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_copy_ps[part], ref.luma_copy_ps[part], sbuf1, 64, pbuf1, 128);
     }
     if (opt.luma_sub_ps[part])
     {
-        printf("luma_sub_ps[%s]", lumaPartStr[part]);
+        HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_sub_ps[part], ref.luma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 
     if (opt.luma_add_ps[part])
     {
-        printf("luma_add_ps[%s]", lumaPartStr[part]);
+        HEADER("luma_add_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
     }
 
@@ -1055,34 +1057,39 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         if (opt.chroma[i].copy_pp[part])
         {
-            printf("ccpy_pp[%s][%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            HEADER("[%s] copy_pp[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].copy_pp[part], ref.chroma[i].copy_pp[part], pbuf1, 64, pbuf2, 128);
         }
         if (opt.chroma[i].copy_sp[part])
         {
-            printf("ccpy_sp[%s][%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            HEADER("[%s] copy_sp[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].copy_sp[part], ref.chroma[i].copy_sp[part], pbuf1, 64, sbuf3, 128);
         }
         if (opt.chroma[i].copy_ps[part])
         {
-            printf("ccpy_ps[%s][%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            HEADER("[%s] copy_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].copy_ps[part], ref.chroma[i].copy_ps[part], sbuf1, 64, pbuf1, 128);
         }
         if (opt.chroma[i].sub_ps[part])
         {
-            printf("chroma_sub_ps[%s][%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            HEADER("[%s]  sub_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].sub_ps[part], ref.chroma[i].sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
         }
         if (opt.chroma[i].add_ps[part])
         {
-            printf("chroma_add_ps[%s][%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].add_ps[part], ref.chroma[i].add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
     }
+#undef HEADER
 }
 
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
+    char header[20];
+#define HEADER(str, ...) sprintf(header, str, __VA_ARGS__); printf("%22s", header);
+#define HEADER0(str) printf("%22s", str);
+
     for (int size = 4; size <= 64; size *= 2)
     {
         int part = partitionFromSizes(size, size); // 2Nx2N
@@ -1114,84 +1121,84 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         if (opt.sa8d[i])
         {
-            printf("sa8d[%dx%d]", 4 << i, 4 << i);
+            HEADER("sa8d[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.sa8d[i], ref.sa8d[i], pbuf1, STRIDE, pbuf2, STRIDE);
         }
         if (opt.calcresidual[i])
         {
-            printf("residual[%dx%d]", 4 << i, 4 << i);
+            HEADER("residual[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.calcresidual[i], ref.calcresidual[i], pbuf1, pbuf2, sbuf1, 64);
         }
 
         if (opt.calcrecon[i])
         {
-            printf("recon[%dx%d]", 4 << i, 4 << i);
+            HEADER("recon[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
         }
 
         if (opt.blockfill_s[i])
         {
-            printf("blkfill[%dx%d]", 4 << i, 4 << i);
+            HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.blockfill_s[i], ref.blockfill_s[i], sbuf1, 64, SHORT_MAX);
         }
         if (opt.transpose[i])
         {
-            printf("transpose[%dx%d]", 4 << i, 4 << i);
+            HEADER("transpose[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.transpose[i], ref.transpose[i], pbuf1, pbuf2, STRIDE);
         }
     }
 
     if (opt.cvt32to16_shr)
     {
-        printf("cvt32to16_shr");
+        HEADER0("cvt32to16_shr");
         REPORT_SPEEDUP(opt.cvt32to16_shr, ref.cvt32to16_shr, sbuf1, ibuf1, 64, 5, 64);
     }
 
     if (opt.blockcpy_pp)
     {
-        printf("block cpy");
+        HEADER0("blockcpy_pp");
         REPORT_SPEEDUP(opt.blockcpy_pp, ref.blockcpy_pp, 64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.blockcpy_ps)
     {
-        printf("p_s   cpy");
+        HEADER0("blockcpy_ps");
         REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (int16_t*)sbuf3, STRIDE);
     }
 
     if (opt.weight_pp)
     {
-        printf("weight_pp");
+        HEADER0("weight_pp");
         REPORT_SPEEDUP(opt.weight_pp, ref.weight_pp, pbuf1, pbuf2, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
     if (opt.weight_sp)
     {
-        printf("weight_sp");
+        HEADER0("weight_sp");
         REPORT_SPEEDUP(opt.weight_sp, ref.weight_sp, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
     if (opt.pixeladd_ss)
     {
-        printf("pixel_ss add");
+        HEADER0("pixeladd_ss");
         REPORT_SPEEDUP(opt.pixeladd_ss, ref.pixeladd_ss, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, (int16_t*)pbuf2, (int16_t*)pbuf1, STRIDE, STRIDE);
     }
 
     if (opt.frame_init_lowres_core)
     {
-        printf("downscale");
+        HEADER0("downscale");
         REPORT_SPEEDUP(opt.frame_init_lowres_core, ref.frame_init_lowres_core, pbuf2, pbuf1, pbuf2, pbuf3, pbuf4, 64, 64, 64, 64);
     }
 
     if (opt.scale1D_128to64)
     {
-        printf("scale1D_128to64");
+        HEADER0("scale1D_128to64");
         REPORT_SPEEDUP(opt.scale1D_128to64, ref.scale1D_128to64, pbuf2, pbuf1, 64);
     }
 
     if (opt.scale2D_64to32)
     {
-        printf("scale2D_64to32");
+        HEADER0("scale2D_64to32");
         REPORT_SPEEDUP(opt.scale2D_64to32, ref.scale2D_64to32, pbuf2, pbuf1, 64);
     }
 }

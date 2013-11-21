@@ -299,12 +299,12 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
         if (opt.intra_pred_dc[i])
         {
             const int size = (1 << (i + 2));
-            printf("intra_dc_%dx%d[filter=0]", size, size);
+            printf("intra_dc_%dx%d[f=0]", size, size);
             REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
                            pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 0);
             if (size <= 16)
             {
-                printf("intra_dc_%dx%d[filter=1]", size, size);
+                printf("intra_dc_%dx%d[f=1]", size, size);
                 REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
                            pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 1);
             }

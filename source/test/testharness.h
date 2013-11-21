@@ -105,7 +105,7 @@ static inline uint32_t __rdtsc(void)
         float optperf = (10.0f * cycles / runs) / 4; \
         float refperf = (10.0f * refcycles / refruns) / 4; \
         printf("\t%3.2fx ", refperf / optperf); \
-        printf("\t %-4.2lf \t %-4.2lf\n", optperf, refperf); \
+        printf("\t %-8.2lf \t %-8.2lf\n", optperf, refperf); \
     }
 
 #endif // ifndef _TESTHARNESS_H_
