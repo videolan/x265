@@ -243,7 +243,6 @@ struct EncoderPrimitives
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
     ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
     ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
-    ipfilter_p2s_t  ipfilter_p2s;
     ipfilter_s2p_t  ipfilter_s2p;
     filter_p2s_t    luma_p2s;
     filter_p2s_t    chroma_p2s;

@@ -149,41 +149,6 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_sp_t ref, ipfilter_sp_t 
     return true;
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(ipfilter_p2s_t ref, ipfilter_p2s_t opt)
-{
-    int16_t rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
-    int16_t rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
-    int16_t rand_srcStride, rand_dstStride;
-
-    memset(IPF_vec_output_s, 0, ipf_t_size);                     // Initialize output buffer to zero
-    memset(IPF_C_output_s, 0, ipf_t_size);                       // Initialize output buffer to zero
-
-    for (int i = 0; i <= 100; i++)
-    {
-
-        rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
-
-        opt(pixel_buff,
-            rand_srcStride,
-            IPF_vec_output_s,
-            rand_dstStride,
-            rand_width,
-            rand_height);
-        ref(pixel_buff,
-            rand_srcStride,
-            IPF_C_output_s,
-            rand_dstStride,
-            rand_width,
-            rand_height);
-
-        if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size))
-            return false;
-    }
-
-    return true;
-}
-
 bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma)
 {
     intptr_t rand_srcStride;
@@ -626,20 +591,11 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
-    if (opt.ipfilter_p2s)
-    {
-        if (!check_IPFilter_primitive(ref.ipfilter_p2s, opt.ipfilter_p2s))
-        {
-            printf("ipfilter_p2s failed\n");
-            return false;
-        }
-    }
-
     if (opt.luma_p2s)
     {
         if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s, 0))
         {
-            printf("ipfilter_p2s failed\n");
+            printf("luma_p2s failed\n");
             return false;
         }
     }
@@ -816,13 +772,6 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                            short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_s, dstStride, width, height, val);
         }
-    }
-
-    if (opt.ipfilter_p2s)
-    {
-        printf("ipfilter_p2s\t");
-        REPORT_SPEEDUP(opt.ipfilter_p2s, ref.ipfilter_p2s,
-                       pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
     }
 
     if (opt.luma_p2s)

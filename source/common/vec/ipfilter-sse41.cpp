@@ -671,46 +671,6 @@ void filterHorizontal_ps(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t 
     }
 }
 
-void filterConvertPelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height)
-{
-    pixel* srcOrg = src;
-    int16_t* dstOrg = dst;
-    int shift = IF_INTERNAL_PREC - X265_DEPTH;
-    int row, col;
-    Vec8s src_v, dst_v, val_v;
-
-    for (row = 0; row < height; row++)
-    {
-        for (col = 0; col < width - 7; col += 8)
-        {
-            src_v.load(src + col);
-            val_v = src_v << shift;
-            dst_v = val_v - IF_INTERNAL_OFFS;
-            dst_v.store(dst + col);
-        }
-
-        src += srcStride;
-        dst += dstStride;
-    }
-
-    if (width % 8 != 0)
-    {
-        src = srcOrg;
-        dst = dstOrg;
-        col = width - (width % 8);
-        for (row = 0; row < height; row++)
-        {
-            src_v.load(src + col);
-            val_v = src_v << shift;
-            dst_v = val_v - IF_INTERNAL_OFFS;
-            dst_v.store_partial(width - col, dst + col);
-
-            src += srcStride;
-            dst += dstStride;
-        }
-    }
-}
-
 void filterConvertShortToPel(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height)
 {
     int16_t* srcOrg = src;
@@ -768,7 +728,6 @@ void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives& p)
     //p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps<4>;
     //p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps<8>;
 
-    p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;
 #endif
 }
