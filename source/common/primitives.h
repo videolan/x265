@@ -221,9 +221,9 @@ struct EncoderPrimitives
     pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
     pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
 
+    blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     blockcpy_pp_t   blockcpy_pp;                     // block copy pixel from pixel
     blockcpy_ps_t   blockcpy_ps;                     // block copy pixel from short
-    blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     cvt16to32_shl_t cvt16to32_shl;
     cvt32to16_shr_t cvt32to16_shr;
 
@@ -246,8 +246,6 @@ struct EncoderPrimitives
     filter_p2s_t    chroma_p2s;
     ipfilter_sp_t   chroma_vsp;
 
-    extendCURowBorder_t extendRowBorder;
-
     weightpUni_t    weightpUni;
     weightpUniPixel_t weightpUniPixel;
     pixeladd_ss_t   pixeladd_ss;
@@ -269,11 +267,13 @@ struct EncoderPrimitives
     calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];
     transpose_t     transpose[NUM_SQUARE_BLOCKS];
 
-    downscale_t     frame_init_lowres_core;
-    ssim_end4_t     ssim_end_4;
     var_t           var[NUM_LUMA_PARTITIONS];
     ssim_4x4x2_core_t ssim_4x4x2_core;
+    ssim_end4_t     ssim_end_4;
+
+    downscale_t     frame_init_lowres_core;
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
+    extendCURowBorder_t extendRowBorder;
 
     struct {
         filter_pp_t     filter_vpp[NUM_LUMA_PARTITIONS];
