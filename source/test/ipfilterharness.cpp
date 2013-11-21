@@ -49,6 +49,9 @@ IPFilterHarness::IPFilterHarness()
         exit(-1);
     }
 
+    memset(IPF_C_output_p, 0xCD, ipf_t_size);
+    memset(IPF_vec_output_p, 0xCD, ipf_t_size);
+
     for (int i = 0; i < ipf_t_size; i++)                         // Initialize input buffer
     {
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
