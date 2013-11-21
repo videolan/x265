@@ -3471,6 +3471,18 @@ cglobal pixel_satd_8x4, 4,6,8
 %endif ; HIGH_BIT_DEPTH
 %endmacro
 
+%macro SA8D_8x8 0
+    call pixel_sa8d_8x8_internal
+%if HIGH_BIT_DEPTH
+    HADDUW m0, m1
+%else
+    HADDW m0, m1
+%endif ; HIGH_BIT_DEPTH
+    paddd  m0, [pd_1]
+    psrld  m0, 1
+    paddd  m12, m0
+%endmacro
+
 %macro SA8D_16x16 0
     call pixel_sa8d_8x8_internal ; pix[0]
     add  r2, 8*SIZEOF_PIXEL
@@ -3581,6 +3593,36 @@ cglobal pixel_sa8d_16x16, 4,8,12
     movd eax, m0
     add  eax, 1
     shr  eax, 1
+    RET
+
+cglobal pixel_sa8d_8x16, 4,8,12
+    FIX_STRIDES r1, r3
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    pxor m12, m12
+%if vertical == 0
+    mova m7, [hmul_8p]
+%endif
+    SA8D_8x8
+    lea r0, [r0 + 8*r1]
+    lea r2, [r2 + 8*r3]
+    SA8D_8x8
+    movd eax, m12
+    RET
+
+cglobal pixel_sa8d_16x8, 4,8,12
+    FIX_STRIDES r1, r3
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    pxor m12, m12
+%if vertical == 0
+    mova m7, [hmul_8p]
+%endif
+    SA8D_8x8
+    add r0, 8
+    add r2, 8
+    SA8D_8x8
+    movd eax, m12
     RET
 
 cglobal pixel_sa8d_16x32, 4,8,12
@@ -4304,6 +4346,66 @@ cglobal pixel_sa8d_16x16, 4,7
     add  eax, 1
     shr  eax, 1
     mov  esp, r6
+    RET
+
+cglobal pixel_sa8d_8x16, 4,7,8
+    FIX_STRIDES r1, r3
+    mov  r6, esp
+    and  esp, ~15
+    sub  esp, 64
+
+    lea  r4, [r1 + 2*r1]
+    lea  r5, [r3 + 2*r3]
+    call pixel_sa8d_8x8_internal2
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    mov dword [esp+36], r4d
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    lea  r0, [r0 + r1*8]
+    lea  r2, [r2 + r3*8]
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    add r4d, dword [esp+36]
+    mov eax, r4d
+    mov esp, r6
+    RET
+
+cglobal pixel_sa8d_16x8, 4,7,8
+    FIX_STRIDES r1, r3
+    mov  r6, esp
+    and  esp, ~15
+    sub  esp, 64
+
+    lea  r4, [r1 + 2*r1]
+    lea  r5, [r3 + 2*r3]
+    call pixel_sa8d_8x8_internal2
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    mov dword [esp+36], r4d
+
+    mov  r0, [r6+20]
+    mov  r2, [r6+28]
+    add  r0, 8*SIZEOF_PIXEL
+    add  r2, 8*SIZEOF_PIXEL
+    lea  r4, [r1 + 2*r1]
+    call pixel_sa8d_8x8_internal2
+    HADDUW m0, m1
+    movd r4d, m0
+    add  r4d, 1
+    shr  r4d, 1
+    add r4d, dword [esp+36]
+    mov eax, r4d
+    mov esp, r6
     RET
 
 cglobal pixel_sa8d_16x32, 4,7,8

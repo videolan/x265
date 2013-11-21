@@ -87,17 +87,15 @@ extern "C" {
     p.sse_pp[LUMA_32x64] = x265_pixel_ssd_32x64_ ## cpu; \
     p.sse_pp[LUMA_16x64] = x265_pixel_ssd_16x64_ ## cpu
 
-#define SA8D_INTER_FROM_BLOCK8(cpu) \
-    p.sa8d_inter[LUMA_16x8]  = cmp<16, 8, 8, 8, x265_pixel_sa8d_8x8_ ## cpu>; \
-    p.sa8d_inter[LUMA_8x16]  = cmp<8, 16, 8, 8, x265_pixel_sa8d_8x8_ ## cpu>; \
+#define SA8D_INTER_FROM_BLOCK(cpu) \
+    p.sa8d[BLOCK_32x32] = x265_pixel_sa8d_32x32_ ## cpu; \
+    p.sa8d[BLOCK_64x64] = x265_pixel_sa8d_64x64_ ## cpu; \
+    p.sa8d_inter[LUMA_16x8]  = x265_pixel_sa8d_16x8_ ## cpu; \
+    p.sa8d_inter[LUMA_8x16]  = x265_pixel_sa8d_8x16_ ## cpu; \
     p.sa8d_inter[LUMA_32x24] = cmp<32, 24, 8, 8, x265_pixel_sa8d_8x8_ ## cpu>; \
     p.sa8d_inter[LUMA_24x32] = cmp<24, 32, 8, 8, x265_pixel_sa8d_8x8_ ## cpu>; \
     p.sa8d_inter[LUMA_32x8]  = cmp<32, 8, 8, 8, x265_pixel_sa8d_8x8_ ## cpu>; \
-    p.sa8d_inter[LUMA_8x32]  = cmp<8, 32, 8, 8, x265_pixel_sa8d_8x8_ ## cpu>
-#define SA8D_INTER_FROM_BLOCK(cpu) \
-    SA8D_INTER_FROM_BLOCK8(cpu); \
-    p.sa8d[BLOCK_32x32] = x265_pixel_sa8d_32x32_ ## cpu; \
-    p.sa8d[BLOCK_64x64] = x265_pixel_sa8d_64x64_ ## cpu; \
+    p.sa8d_inter[LUMA_8x32]  = cmp<8, 32, 8, 8, x265_pixel_sa8d_8x8_ ## cpu>; \
     p.sa8d_inter[LUMA_32x32] = x265_pixel_sa8d_32x32_ ## cpu; \
     p.sa8d_inter[LUMA_32x16] = x265_pixel_sa8d_32x16_ ## cpu; \
     p.sa8d_inter[LUMA_16x32] = x265_pixel_sa8d_16x32_ ## cpu; \
@@ -724,7 +722,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT4(satd, _avx2);
         INIT2_NAME(sse_pp, ssd, _avx2);
         p.sa8d[BLOCK_8x8] = x265_pixel_sa8d_8x8_avx2;
-        SA8D_INTER_FROM_BLOCK8(avx2);
+        p.sa8d_inter[LUMA_16x8]  = cmp<16, 8, 8, 8, x265_pixel_sa8d_8x8_avx2>;
+        p.sa8d_inter[LUMA_8x16]  = cmp<8, 16, 8, 8, x265_pixel_sa8d_8x8_avx2>;
+        p.sa8d_inter[LUMA_32x24] = cmp<32, 24, 8, 8, x265_pixel_sa8d_8x8_avx2>;
+        p.sa8d_inter[LUMA_24x32] = cmp<24, 32, 8, 8, x265_pixel_sa8d_8x8_avx2>;
+        p.sa8d_inter[LUMA_32x8]  = cmp<32, 8, 8, 8, x265_pixel_sa8d_8x8_avx2>;
+        p.sa8d_inter[LUMA_8x32]  = cmp<8, 32, 8, 8, x265_pixel_sa8d_8x8_avx2>;
         p.satd[LUMA_32x32] = cmp<32, 32, 16, 16, x265_pixel_satd_16x16_avx2>;
         p.satd[LUMA_24x32] = cmp<24, 32, 8, 16, x265_pixel_satd_8x16_avx2>;
         p.satd[LUMA_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_avx2>;
