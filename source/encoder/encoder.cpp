@@ -336,21 +336,20 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
 {
     double fps = (double)param.frameRate;
     double scale = fps / 1000 / (double)stat.m_numPics;
+
     int len = sprintf(buffer, "%-6d ", stat.m_numPics);
-
-    sprintf(buffer + len, "kb/s: %-8.2lf", stat.m_accBits * scale);
-
+    len += sprintf(buffer + len, "kb/s: %-8.2lf", stat.m_accBits * scale);
     if (param.bEnablePsnr)
     {
-        len = sprintf(buffer + len, " PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf",
-                      stat.m_psnrSumY / (double)stat.m_numPics,
-                      stat.m_psnrSumU / (double)stat.m_numPics,
-                      stat.m_psnrSumV / (double)stat.m_numPics);
+        len += sprintf(buffer + len, " PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf",
+                       stat.m_psnrSumY / (double)stat.m_numPics,
+                       stat.m_psnrSumU / (double)stat.m_numPics,
+                       stat.m_psnrSumV / (double)stat.m_numPics);
     }
     if (param.bEnableSsim)
     {
-        sprintf(buffer + len, " SSIM Mean: %.3lf",
-                stat.m_globalSsim / (double)stat.m_numPics);
+        len += sprintf(buffer + len, " SSIM Mean: %.3lf",
+                       stat.m_globalSsim / (double)stat.m_numPics);
     }
     return buffer;
 }
