@@ -542,21 +542,6 @@ void weightUnidirPix(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStr
     }
 }
 
-void pixelsub_ps_c(int bx, int by, int16_t *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t sstride0, intptr_t sstride1)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            a[x] = (int16_t)(b0[x] - b1[x]);
-        }
-
-        b0 += sstride0;
-        b1 += sstride1;
-        a += dstride;
-    }
-}
-
 void pixeladd_ss_c(int bx, int by, int16_t *a, intptr_t dstride, int16_t *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1)
 {
     for (int y = 0; y < by; y++)
@@ -990,7 +975,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.weightpUniPixel = weightUnidirPix;
     p.weightpUni = weightUnidir;
 
-    p.pixelsub_ps = pixelsub_ps_c;
     p.pixeladd_ss = pixeladd_ss_c;
 
     p.scale1D_128to64 = scale1D_128to64;

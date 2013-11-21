@@ -168,55 +168,6 @@ void blockcopy_sp(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src, 
         }
     }
 }
-
-void pixelsub_ps(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src0, uint8_t *src1, intptr_t sstride0, intptr_t sstride1)
-{
-    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | sstride1 | dstride;
-
-    if (!(aligncheck & 15))
-    {
-        // fast path, multiples of 16 pixel wide blocks
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x += 16)
-            {
-                __m128i word0, word1;
-                __m128i word3, word4;
-                __m128i mask = _mm_setzero_si128();
-
-                word0 = _mm_load_si128((__m128i const*)(src0 + x));    // load 16 bytes from src1
-                word1 = _mm_load_si128((__m128i const*)(src1 + x));    // load 16 bytes from src2
-
-                word3 = _mm_unpacklo_epi8(word0, mask);    // interleave with zero extensions
-                word4 = _mm_unpacklo_epi8(word1, mask);
-                _mm_store_si128((__m128i*)&dst[x], _mm_subs_epi16(word3, word4));    // store block into dst
-
-                word3 = _mm_unpackhi_epi8(word0, mask);    // interleave with zero extensions
-                word4 = _mm_unpackhi_epi8(word1, mask);
-                _mm_store_si128((__m128i*)&dst[x + 8], _mm_subs_epi16(word3, word4));    // store block into dst
-            }
-
-            src0 += sstride0;
-            src1 += sstride1;
-            dst += dstride;
-        }
-    }
-    else
-    {
-        // slow path, irregular memory alignments or sizes
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x++)
-            {
-                dst[x] = (int16_t)(src0[x] - src1[x]);
-            }
-
-            src0 += sstride0;
-            src1 += sstride1;
-            dst += dstride;
-        }
-    }
-}
 #endif /* if HIGH_BIT_DEPTH */
 
 void pixeladd_ss(int bx, int by, int16_t *dst, intptr_t dstride, int16_t *src0, int16_t *src1, intptr_t sstride0, intptr_t sstride1)
@@ -312,7 +263,6 @@ void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives &p)
     p.blockcpy_pp = blockcopy_pp;
     p.blockcpy_ps = blockcopy_ps;
     p.blockcpy_sp = blockcopy_sp;
-    p.pixelsub_ps = pixelsub_ps;
     p.pixeladd_ss = pixeladd_ss;
 #endif // if HIGH_BIT_DEPTH
 }

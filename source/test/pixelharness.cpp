@@ -358,29 +358,6 @@ bool PixelHarness::check_weightpUni(weightpUniPixel_t ref, weightpUniPixel_t opt
     return true;
 }
 
-bool PixelHarness::check_pixelsub_sp(pixelsub_ps_t ref, pixelsub_ps_t opt)
-{
-    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
-    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
-    int bx = 64;
-    int by = 64;
-    int j = 0;
-    for (int i = 0; i < ITERS; i++)
-    {
-        opt(bx, by, opt_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
-        ref(bx, by, ref_dest, 64, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
-
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
-            return false;
-
-        j += INCR;
-        bx = 4 * ((rand() & 15) + 1);
-        by = 4 * ((rand() & 15) + 1);
-    }
-
-    return true;
-}
-
 bool PixelHarness::check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt)
 {
     ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
@@ -980,15 +957,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.pixelsub_ps)
-    {
-        if (!check_pixelsub_sp(ref.pixelsub_ps, opt.pixelsub_ps))
-        {
-            printf("Luma Substract failed!\n");
-            return false;
-        }
-    }
-
     if (opt.pixeladd_ss)
     {
         if (!check_pixeladd_ss(ref.pixeladd_ss, opt.pixeladd_ss))
@@ -1239,12 +1207,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("Weightp16bpp");
         REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
-    }
-
-    if (opt.pixelsub_ps)
-    {
-        printf("Pixel Sub");
-        REPORT_SPEEDUP(opt.pixelsub_ps, ref.pixelsub_ps, 64, 64, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 
     if (opt.pixeladd_ss)

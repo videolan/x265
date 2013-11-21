@@ -251,7 +251,6 @@ struct EncoderPrimitives
 
     weightpUni_t    weightpUni;
     weightpUniPixel_t weightpUniPixel;
-    pixelsub_ps_t   pixelsub_ps;
     pixeladd_ss_t   pixeladd_ss;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
 
