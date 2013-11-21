@@ -90,6 +90,12 @@ extern "C" {
 #define SA8D_INTER_FROM_BLOCK(cpu) \
     p.sa8d[BLOCK_32x32] = x265_pixel_sa8d_32x32_ ## cpu; \
     p.sa8d[BLOCK_64x64] = x265_pixel_sa8d_64x64_ ## cpu; \
+    p.sa8d_inter[LUMA_4x8]  = x265_pixel_satd_4x8_ ## cpu; \
+    p.sa8d_inter[LUMA_8x4]  = x265_pixel_satd_8x4_ ## cpu; \
+    p.sa8d_inter[LUMA_4x16]  = x265_pixel_satd_4x16_ ## cpu; \
+    p.sa8d_inter[LUMA_16x4]  = x265_pixel_satd_16x4_ ## cpu; \
+    p.sa8d_inter[LUMA_12x16]  = x265_pixel_satd_12x16_ ## cpu; \
+    p.sa8d_inter[LUMA_16x12]  = x265_pixel_satd_16x12_ ## cpu; \
     p.sa8d_inter[LUMA_16x8]  = x265_pixel_sa8d_16x8_ ## cpu; \
     p.sa8d_inter[LUMA_8x16]  = x265_pixel_sa8d_8x16_ ## cpu; \
     p.sa8d_inter[LUMA_32x24] = x265_pixel_sa8d_32x24_ ## cpu; \
@@ -445,6 +451,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT8(sad_x3, _mmx2);
         INIT8(sad_x4, _mmx2);
         INIT8(satd, _mmx2);
+        p.sa8d_inter[LUMA_4x4]  = x265_pixel_satd_4x4_mmx2;
         p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
         p.satd[LUMA_12x16] = x265_pixel_satd_12x16_sse2;
         p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
