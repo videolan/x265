@@ -548,6 +548,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.transpose[BLOCK_8x8] = x265_transpose8_sse2;
         p.transpose[BLOCK_16x16] = x265_transpose16_sse2;
         p.transpose[BLOCK_32x32] = x265_transpose32_sse2;
+        p.transpose[BLOCK_64x64] = x265_transpose64_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

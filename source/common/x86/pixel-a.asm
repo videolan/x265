@@ -10212,6 +10212,83 @@ cglobal transpose32, 3, 7, 8, dest, src, stride
 
     RET
 
+;-----------------------------------------------------------------
+; void transpose_64x64(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose64, 3, 7, 8, dest, src, stride
+
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    r0
+    mov    r6,    64
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    lea    r1,    [r4 + 16]
+    lea    r0,    [r3 + 16 * 64]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 64 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 64 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 64 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    lea    r1,    [r4 + 32]
+    lea    r0,    [r3 + 32 * 64]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32 * 64 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32 * 64 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32 * 64 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    lea    r1,    [r4 + 48]
+    lea    r0,    [r3 + 48 * 64]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48 * 64 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48 * 64 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48 * 64 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    RET
+
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_2x4(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
