@@ -72,8 +72,10 @@ enum LumaPartitions
     NUM_LUMA_PARTITIONS
 };
 
-// 4:2:0 chroma partition sizes
-enum ChromaPartions
+// 4:2:0 chroma partition sizes. These enums are just a convenience for indexing into the
+// chroma primitive arrays when instantiating templates. The function tables should always
+// be indexed by the luma partition enum
+enum Chroma420Partions
 {
     CHROMA_2x2, // never used by HEVC
     CHROMA_4x4,   CHROMA_4x2,   CHROMA_2x4,
@@ -123,28 +125,12 @@ enum IPFilterConf_P_S
     NUM_IPFILTER_P_S
 };
 
-enum IPFilterConf_S_P
-{
-    FILTER_V_S_P_4,
-    NUM_IPFILTER_S_P
-};
-
 enum IPFilterConf_S_S
 {
     FILTER_V_S_S_8,
     FILTER_V_S_S_4,
     NUM_IPFILTER_S_S
 };
-
-// This enum maps it's members to actual csp values
-enum ColorspaceType
-{
-  CSP_NONE,
-  CSP_I420,
-  NUM_CSP
-};
-
-extern const char* colorSpaceNames[NUM_CSP];
 
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
 inline int partitionFromSizes(int width, int height)
@@ -235,51 +221,48 @@ struct EncoderPrimitives
     pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
     pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
 
-    blockcpy_pp_t   blockcpy_pp;                // block copy pixel from pixel
-    blockcpy_ps_t   blockcpy_ps;                // block copy pixel from short
-    blockcpy_sp_t   blockcpy_sp;                // block copy short from pixel
+    blockcpy_pp_t   blockcpy_pp;                     // block copy pixel from pixel
+    blockcpy_ps_t   blockcpy_ps;                     // block copy pixel from short
+    blockcpy_sp_t   blockcpy_sp;                     // block copy short from pixel
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     cvt16to32_shl_t cvt16to32_shl;
     cvt32to16_shr_t cvt32to16_shr;
 
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
-    copy_pp_t       chroma_copy_pp[NUM_CSP][NUM_CHROMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
-    copy_sp_t       chroma_copy_sp[NUM_CSP][NUM_CHROMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
-    copy_ps_t       chroma_copy_ps[NUM_CSP][NUM_CHROMA_PARTITIONS];
-
     pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
-    pixel_sub_ps_t  chroma_sub_ps[NUM_CSP][NUM_CHROMA_PARTITIONS];
     pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
-    pixel_add_ps_t  chroma_add_ps[NUM_CSP][NUM_CHROMA_PARTITIONS];
 
-    ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
-    ipfilter_sp_t   ipfilter_sp[NUM_IPFILTER_S_P];
-    ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
-    ipfilter_p2s_t  ipfilter_p2s;
-    ipfilter_s2p_t  ipfilter_s2p;
-    filter_pp_t     chroma_hpp[NUM_CHROMA_PARTITIONS];
-    filter_ps_t     chroma_hps[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
     filter_ps_t     luma_hps[NUM_LUMA_PARTITIONS];
-    filter_pp_t     chroma_vpp[NUM_CHROMA_PARTITIONS];
-    filter_ps_t     chroma_vps[NUM_CHROMA_PARTITIONS];
-    filter_sp_t     chroma_vsp[NUM_CHROMA_PARTITIONS];
-    filter_ss_t     chroma_vss[NUM_CHROMA_PARTITIONS];
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
     filter_ps_t     luma_vps[NUM_LUMA_PARTITIONS];
     filter_sp_t     luma_vsp[NUM_LUMA_PARTITIONS];
     filter_ss_t     luma_vss[NUM_LUMA_PARTITIONS];
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
+    ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
+    ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
+    ipfilter_p2s_t  ipfilter_p2s;
+    ipfilter_s2p_t  ipfilter_s2p;
     filter_p2s_t    luma_p2s;
     filter_p2s_t    chroma_p2s;
+    ipfilter_sp_t   chroma_vsp;
+
     extendCURowBorder_t extendRowBorder;
+
+    weightpUni_t    weightpUni;
+    weightpUniPixel_t weightpUniPixel;
+    pixelsub_ps_t   pixelsub_ps;
+    pixeladd_ss_t   pixeladd_ss;
+    pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
 
     intra_dc_t      intra_pred_dc[NUM_SQUARE_BLOCKS];
     intra_planar_t  intra_pred_planar;
     intra_ang_t     intra_pred_ang;
     intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
+    scale_t         scale1D_128to64;
+    scale_t         scale2D_64to32;
 
     dct_t           dct[NUM_DCTS];
     idct_t          idct[NUM_IDCTS];
@@ -290,19 +273,25 @@ struct EncoderPrimitives
     calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];
     transpose_t     transpose[NUM_SQUARE_BLOCKS];
 
-    weightpUni_t    weightpUni;
-    weightpUniPixel_t weightpUniPixel;
-    pixelsub_ps_t   pixelsub_ps;
-    pixeladd_ss_t   pixeladd_ss;
-    pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
-
-    scale_t         scale1D_128to64;
-    scale_t         scale2D_64to32;
     downscale_t     frame_init_lowres_core;
     ssim_end4_t     ssim_end_4;
     var_t           var[NUM_LUMA_PARTITIONS];
     ssim_4x4x2_core_t ssim_4x4x2_core;
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
+
+    struct {
+        filter_pp_t     filter_vpp[NUM_LUMA_PARTITIONS];
+        filter_ps_t     filter_vps[NUM_LUMA_PARTITIONS];
+        filter_sp_t     filter_vsp[NUM_LUMA_PARTITIONS];
+        filter_ss_t     filter_vss[NUM_LUMA_PARTITIONS];
+        filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
+        filter_ps_t     filter_hps[NUM_LUMA_PARTITIONS];
+        copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
+        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
+        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
+        pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
+        pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];
+    } chroma[4]; // X265_CSP_COUNT - do not want to include x265.h here
 };
 
 /* This copy of the table is what gets used by the encoder.

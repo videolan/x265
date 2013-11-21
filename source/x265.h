@@ -84,6 +84,7 @@ typedef struct x265_picture
     int     bitDepth;
     int     sliceType;
     int     poc;
+    int     colorSpace;
     int64_t pts;
     void*   userData;
 } x265_picture;
@@ -163,47 +164,43 @@ static const char * const x265_b_pyramid_names[] = { "none", "normal", 0 };
 #define IS_X265_TYPE_I(x) ((x) == X265_TYPE_I || (x) == X265_TYPE_IDR)
 #define IS_X265_TYPE_B(x) ((x) == X265_TYPE_B || (x) == X265_TYPE_BREF)
 
-/* Colorspace type */
-#define X265_CSP_MASK           0x00ff  /* */
-#define X265_CSP_NONE           0x0000  /* Invalid mode     */
-#define X265_CSP_I420           0x0001  /* yuv 4:2:0 planar */
-#define X265_CSP_YV12           0x0002  /* yvu 4:2:0 planar */
-#define X265_CSP_NV12           0x0003  /* yuv 4:2:0, with one y plane and one packed u+v */
-#define X265_CSP_I422           0x0004  /* yuv 4:2:2 planar */
-#define X265_CSP_YV16           0x0005  /* yvu 4:2:2 planar */
-#define X265_CSP_NV16           0x0006  /* yuv 4:2:2, with one y plane and one packed u+v */
-#define X265_CSP_I444           0x0007  /* yuv 4:4:4 planar */
-#define X265_CSP_YV24           0x0008  /* yvu 4:4:4 planar */
-#define X265_CSP_BGR            0x0009  /* packed bgr 24bits   */
-#define X265_CSP_BGRA           0x000a  /* packed bgr 32bits   */
-#define X265_CSP_RGB            0x000b  /* packed rgb 24bits   */
-#define X265_CSP_MAX            0x000c  /* end of list */
-#define X265_CSP_VFLIP          0x1000  /* the csp is vertically flipped */
-#define X265_CSP_HIGH_DEPTH     0x2000  /* the csp has a depth of 16 bits per pixel component */
+/* NOTE! For this release only X265_CSP_I420 is supported */
 
-static const char * const x265_source_csp_names[] = { "i420", "i422", "i444", 0 };
+/* Supported internal color space types (according to semantics of chroma_format_idc) */
+#define X265_CSP_I400           0  /* yuv 4:0:0 planar */
+#define X265_CSP_I420           1  /* yuv 4:2:0 planar */
+#define X265_CSP_I422           2  /* yuv 4:2:2 planar */
+#define X265_CSP_I444           3  /* yuv 4:4:4 planar */
+#define X265_CSP_COUNT          4  /* Number of supported internal color spaces */
+
+/* These color spaces will eventually be supported as input pictures. The pictures will
+ * be converted to the appropriate planar color spaces at ingest */
+#define X265_CSP_NV12           4  /* yuv 4:2:0, with one y plane and one packed u+v */
+#define X265_CSP_NV16           5  /* yuv 4:2:2, with one y plane and one packed u+v */
+
+/* Interleaved color-spaces may eventually be supported as input pictures */
+#define X265_CSP_BGR            6  /* packed bgr 24bits   */
+#define X265_CSP_BGRA           7  /* packed bgr 32bits   */
+#define X265_CSP_RGB            8  /* packed rgb 24bits   */
+#define X265_CSP_MAX            9  /* end of list */
+
+static const char * const x265_source_csp_names[] = { "i400", "i420", "i422", "i444", "nv12", "nv16", 0 };
 
 typedef struct
 {
-    const char *name;
     int planes;
     int width[3];
     int height[3];
-    int mod_width;
-    int mod_height;
-} x265_cli_csp_t;
+} x265_cli_csp;
 
-const x265_cli_csp_t x265_cli_csps[] =
+const x265_cli_csp x265_cli_csps[] =
 {
-    { "none", 0, { 0, 0, 0 },   { 0, 0, 0 },   0, 0 },
-    { "i420", 3, { 0, 1, 1 },   { 0, 1, 1 },   2, 2 },
-    { "yv12", 3, { 0, 1, 1 },   { 0, 1, 1 },   2, 2 },
-    { "nv12", 2, { 0,  0 },     { 0, 1 },      2, 2 },
-    { "i422", 3, { 0, 1, 1 },   { 0,  0,  0 }, 2, 1 },
-    { "yv16", 3, { 0, 1, 1 },   { 0,  0,  0 }, 2, 1 },
-    { "nv16", 2, { 0,  0 },     { 0,  0 },     2, 1 },
-    { "i444", 3, { 0,  0,  0 }, { 0,  0,  0 }, 1, 1 },
-    { "yv24", 3, { 0,  0,  0 }, { 0,  0,  0 }, 1, 1 },
+    { 1, { 0, 0, 0 }, { 0, 0, 0 } }, /* i400 */
+    { 3, { 0, 1, 1 }, { 0, 1, 1 } }, /* i420 */
+    { 3, { 0, 1, 1 }, { 0, 0, 0 } }, /* i422 */
+    { 3, { 0, 0, 0 }, { 0, 0, 0 } }, /* i444 */
+    { 2, { 0, 0 },    { 0, 1 } },    /* nv12 */
+    { 2, { 0, 0 },    { 0, 0 } },    /* nv16 */
 };
 
 /* rate tolerance method */
@@ -301,6 +298,11 @@ typedef struct x265_param
      * 10, or 12 */
     int       inputBitDepth;
 
+    /* Color space of internal pictures. Only X265_CSP_I420 is currently supported.
+     * Eventually, i422 and i444 will be supported as internal color spaces and other
+     * packed formats will be supported in x265_picture.colorSpace */
+    int       internalCsp;
+
     /* Frame rate of source pictures */
     int       frameRate;
 
@@ -313,9 +315,6 @@ typedef struct x265_param
      * multiple of 4, the encoder will pad the pictures internally to meet this
      * minimum requirement. All valid HEVC heights are supported */
     int       sourceHeight;
-
-    /* Color space of input pictures. Only X265_CSP_I420 is supported */
-    int       sourceCsp;
 
 
     /*== Coding Unit (CU) definitions ==*/

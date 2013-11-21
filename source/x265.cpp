@@ -471,14 +471,14 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (this->input->getWidth())
     {
         /* parse the width, height, frame rate from the y4m file */
-        param->sourceCsp = this->input->getColorSpace();
+        param->internalCsp = this->input->getColorSpace();
         param->sourceWidth = this->input->getWidth();
         param->sourceHeight = this->input->getHeight();
         param->frameRate = (int)this->input->getRate();
     }
     else if (inputRes)
     {
-        this->input->setColorSpace(param->sourceCsp);
+        this->input->setColorSpace(param->internalCsp);
         sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
         this->input->setDimensions(param->sourceWidth, param->sourceHeight);
         this->input->setBitDepth(param->inputBitDepth);
@@ -511,11 +511,11 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         if (this->framesToBeEncoded == 0)
             fprintf(stderr, "%s  [info]: %dx%d %dHz %s, unknown frame count\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate,
-                    (param->sourceCsp >= X265_CSP_I444) ? "C444" : (param->sourceCsp >= X265_CSP_I422) ? "C422" : "C420");
+                    (param->internalCsp >= X265_CSP_I444) ? "C444" : (param->internalCsp >= X265_CSP_I422) ? "C422" : "C420");
         else
             fprintf(stderr, "%s  [info]: %dx%d %dHz %s, frames %u - %d of %d\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate,
-                    (param->sourceCsp >= X265_CSP_I444) ? "C444" : (param->sourceCsp >= X265_CSP_I422) ? "C422" : "C420",
+                    (param->internalCsp >= X265_CSP_I444) ? "C444" : (param->internalCsp >= X265_CSP_I422) ? "C422" : "C420",
                     this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, fileFrameCount);
     }
 
@@ -525,7 +525,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     {
         if (reconFileBitDepth == 0)
             reconFileBitDepth = param->inputBitDepth;
-        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->sourceCsp);
+        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->internalCsp);
         if (this->recon->isFail())
         {
             x265_log(param, X265_LOG_WARNING, "unable to write reconstruction file\n");

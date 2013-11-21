@@ -103,7 +103,7 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
 
     m_origYuv = new TComYuv*[m_totalDepth - 1];
 
-    int csp = m_cfg->getColorFormat();
+    int csp = m_cfg->param.internalCsp;
 
     for (int i = 0; i < m_totalDepth - 1; i++)
     {

@@ -762,7 +762,7 @@ void filterConvertShortToPel(int16_t *src, intptr_t srcStride, pixel *dst, intpt
 namespace x265 {
 void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives& p)
 {
-    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_sp<4>;
+    p.chroma_vsp = filterVertical_sp<4>;
 
 #if HIGH_BIT_DEPTH
     //p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps<4>;

@@ -25,6 +25,7 @@
 #include "TLibCommon/TComYuv.h"
 #include "TShortYUV.h"
 #include "primitives.h"
+#include "x265.h"
 
 #include <cstdlib>
 #include <memory.h>
@@ -113,8 +114,8 @@ void TShortYUV::subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int 
     int src1Stride = srcYuv1->getCStride();
     int dstStride  = m_cwidth;
 
-    primitives.chroma_sub_ps[m_csp][part](dstU, dstStride, srcU0, srcU1, src0Stride, src1Stride);
-    primitives.chroma_sub_ps[m_csp][part](dstV, dstStride, srcV0, srcV1, src0Stride, src1Stride);
+    primitives.chroma[m_csp].sub_ps[part](dstU, dstStride, srcU0, srcU1, src0Stride, src1Stride);
+    primitives.chroma[m_csp].sub_ps[part](dstV, dstStride, srcV0, srcV1, src0Stride, src1Stride);
 }
 
 void TShortYUV::addClip(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
@@ -296,7 +297,7 @@ void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
         Pel* dstU = dstPicYuv->getCbAddr(partIdx);
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        primitives.chroma_copy_sp[m_csp][m_part](dstU, dstStride, srcU, srcStride);
+        primitives.chroma[m_csp].copy_sp[m_part](dstU, dstStride, srcU, srcStride);
     }
     else if (chromaId == 1)
     {
@@ -304,7 +305,7 @@ void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
         Pel* dstV = dstPicYuv->getCrAddr(partIdx);
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        primitives.chroma_copy_sp[m_csp][m_part](dstV, dstStride, srcV, srcStride);
+        primitives.chroma[m_csp].copy_sp[m_part](dstV, dstStride, srcV, srcStride);
     }
     else
     {
@@ -315,7 +316,7 @@ void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
 
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        primitives.chroma_copy_sp[m_csp][m_part](dstU, dstStride, srcU, srcStride);
-        primitives.chroma_copy_sp[m_csp][m_part](dstV, dstStride, srcV, srcStride);
+        primitives.chroma[m_csp].copy_sp[m_part](dstU, dstStride, srcU, srcStride);
+        primitives.chroma[m_csp].copy_sp[m_part](dstV, dstStride, srcV, srcStride);
     }
 }

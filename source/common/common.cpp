@@ -52,7 +52,6 @@ int64_t x265_mdate(void)
 #endif
 }
 
-static int parseCspName(const char *arg, int& error);
 static int parseName(const char *arg, const char * const * names, int& error);
 
 using namespace x265;
@@ -150,7 +149,7 @@ void x265_param_default(x265_param *param)
 
     /* Source specifications */
     param->inputBitDepth = 8;
-    param->sourceCsp = X265_CSP_I420;
+    param->internalCsp = X265_CSP_I420;
 
     /* CU definitions */
     param->maxCUSize = 64;
@@ -512,11 +511,11 @@ int x265_check_params(x265_param *param)
     CHECK(param->maxNumReferences < 1, "maxNumReferences must be 1 or greater.");
     CHECK(param->maxNumReferences > MAX_NUM_REF, "maxNumReferences must be 16 or smaller.");
 
-    // TODO: ChromaFmt assumes 4:2:0 below
-    CHECK(param->sourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0,
+    CHECK(param->sourceWidth  % TComSPS::getWinUnitX(param->internalCsp) != 0,
           "Picture width must be an integer multiple of the specified chroma subsampling");
-    CHECK(param->sourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0,
+    CHECK(param->sourceHeight % TComSPS::getWinUnitY(param->internalCsp) != 0,
           "Picture height must be an integer multiple of the specified chroma subsampling");
+
     CHECK(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
           "Rate control mode is out of range");
     CHECK(param->rdLevel<X265_NO_RDO_NO_RDOQ || param->rdLevel> X265_FULL_RDO,
@@ -767,9 +766,9 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->rc.rateControlMode = X265_RC_CQP;
         p->rc.aqMode = X265_AQ_NONE;
     }
-    OPT("input-csp") p->sourceCsp = ::parseCspName(value, berror);
-    OPT("me")        p->searchMethod = ::parseName(value, x265_motion_est_names, berror);
-    OPT("b-pyramid") p->bpyramid = ::parseName(value, x265_b_pyramid_names, berror);
+    OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, berror);
+    OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, berror);
+    OPT("b-pyramid") p->bpyramid = parseName(value, x265_b_pyramid_names, berror);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -831,27 +830,6 @@ char *x265_param2string(x265_param *p)
 #undef BOOL
 
     return buf;
-}
-
-const uint8_t source_csp_fix[] =
-{
-    X265_CSP_I420,
-    X265_CSP_I422,
-    X265_CSP_I444
-};
-
-static int parseCspName(const char *arg, int& error)
-{
-    for (int i = 0; x265_source_csp_names[i]; i++)
-    {
-        if (!strcmp(arg, x265_source_csp_names[i]))
-        {
-            return source_csp_fix[i];
-        }
-    }
-
-    error = 1;
-    return X265_CSP_I420;
 }
 
 static int parseName(const char *arg, const char * const * names, int& error)

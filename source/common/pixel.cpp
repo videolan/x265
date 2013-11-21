@@ -26,6 +26,7 @@
 
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
+#include "x265.h"
 
 #include <cstdlib> // abs()
 
@@ -851,11 +852,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_16x64] = satd8<16, 64>;
 
 #define CHROMA(W, H) \
-    p.chroma_copy_pp[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
-    p.chroma_copy_sp[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
-    p.chroma_copy_ps[CSP_I420][CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma_sub_ps[CSP_I420][CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
-    p.chroma_add_ps[CSP_I420][CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
+    p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
+    p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
 #define LUMA(W, H) \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \

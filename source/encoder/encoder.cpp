@@ -842,6 +842,7 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setPicWidthInLumaSamples(param.sourceWidth);
     sps->setPicHeightInLumaSamples(param.sourceHeight);
     sps->setConformanceWindow(m_conformanceWindow);
+    sps->setChromaFormatIdc(param.internalCsp);
     sps->setMaxCUWidth(g_maxCUWidth);
     sps->setMaxCUHeight(g_maxCUHeight);
     sps->setMaxCUDepth(g_maxCUDepth);
@@ -1207,12 +1208,6 @@ void Encoder::configure(x265_param *_param)
     }
 
     //====== Coding Tools ========
-
-    if (_param->sourceCsp != X265_CSP_NONE)
-    {
-        m_csp = _param->sourceCsp >= X265_CSP_I444 ? CHROMA_444 :
-            _param->sourceCsp >= X265_CSP_I422 ? CHROMA_422 : CHROMA_420;
-    }
 
     uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;

@@ -113,8 +113,6 @@ protected:
     int       m_gradualDecodingRefreshInfoEnabled;
     int       m_decodingUnitInfoSEIEnabled;
 
-    int       m_csp;
-
     //====== Weighted Prediction ========
 
     uint32_t  m_log2ParallelMergeLevelMinus2;                 ///< Parallel merge estimation region
@@ -253,8 +251,6 @@ public:
     bool getVideoSignalTypePresentFlag() { return m_videoSignalTypePresentFlag; }
 
     int getVideoFormat() { return m_videoFormat; }
-
-    int getColorFormat() { return m_csp; }
 
     bool getVideoFullRangeFlag() { return m_videoFullRangeFlag; }
 

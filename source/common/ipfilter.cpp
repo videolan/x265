@@ -25,6 +25,7 @@
 
 #include "primitives.h"
 #include "TLibCommon/TComRom.h"
+#include "x265.h"
 
 #include <cstring>
 #include <assert.h>
@@ -520,12 +521,12 @@ namespace x265 {
 // x265 private namespace
 
 #define CHROMA(W, H) \
-    p.chroma_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>; \
-    p.chroma_hps[CHROMA_ ## W ## x ## H] = interp_horiz_ps_c<4, W, H>; \
-    p.chroma_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c < 4, W, H >; \
-    p.chroma_vps[CHROMA_ ## W ## x ## H] = interp_vert_ps_c<4, W, H>; \
-    p.chroma_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c < 4, W, H >; \
-    p.chroma_vss[CHROMA_ ## W ## x ## H] = interp_vert_ss_c < 4, W, H >;
+    p.chroma[X265_CSP_I420].filter_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>; \
+    p.chroma[X265_CSP_I420].filter_hps[CHROMA_ ## W ## x ## H] = interp_horiz_ps_c<4, W, H>; \
+    p.chroma[X265_CSP_I420].filter_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c < 4, W, H >; \
+    p.chroma[X265_CSP_I420].filter_vps[CHROMA_ ## W ## x ## H] = interp_vert_ps_c<4, W, H>; \
+    p.chroma[X265_CSP_I420].filter_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c < 4, W, H >; \
+    p.chroma[X265_CSP_I420].filter_vss[CHROMA_ ## W ## x ## H] = interp_vert_ss_c < 4, W, H >;
 
 #define LUMA(W, H) \
     p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>; \
@@ -592,10 +593,10 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipfilter_ps[FILTER_V_P_S_8] = filterVertical_ps_c<8>;
     p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps_c<4>;
     p.ipfilter_ps[FILTER_V_P_S_4] = filterVertical_ps_c<4>;
-    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_sp_c<4>;
     p.ipfilter_ss[FILTER_V_S_S_8] = filterVertical_ss_c<8>;
     p.ipfilter_ss[FILTER_V_S_S_4] = filterVertical_ss_c<4>;
 
+    p.chroma_vsp = filterVertical_sp_c<4>;
     p.ipfilter_p2s = filterConvertPelToShort_c;
     p.ipfilter_s2p = filterConvertShortToPel_c;
     p.luma_p2s = filterConvertPelToShort_c<MAX_CU_SIZE>;

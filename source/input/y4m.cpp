@@ -257,7 +257,7 @@ bool Y4MInput::parseHeader()
     if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
         height < MIN_FRAME_HEIGHT || width > MAX_FRAME_HEIGHT ||
         (rateNum / rateDenom) < 1 || (rateNum / rateDenom) > MAX_FRAME_RATE ||
-        colorSpace <= X265_CSP_NONE || colorSpace >= X265_CSP_MAX)
+        colorSpace <= X265_CSP_I400 || colorSpace >= X265_CSP_COUNT)
         return false;
 
     return true;

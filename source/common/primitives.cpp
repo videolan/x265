@@ -56,11 +56,6 @@ uint8_t lumaPartitioneMapTable[] =
     255,        255,      255,        LUMA_64x16, 255, 255,        255, LUMA_64x32, 255, 255, 255, LUMA_64x48, 255, 255, 255, LUMA_64x64  // 64
 };
 
-const char* colorSpaceNames[NUM_CSP] = 
-{
-    "CSP_NONE", "CSP_I420",
-};
-
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 
