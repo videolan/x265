@@ -106,7 +106,7 @@ extern "C" {
     p.sa8d_inter[LUMA_32x64] = x265_pixel_sa8d_32x64_ ## cpu; \
     p.sa8d_inter[LUMA_64x48] = x265_pixel_sa8d_64x48_ ## cpu; \
     p.sa8d_inter[LUMA_48x64] = x265_pixel_sa8d_48x64_ ## cpu; \
-    p.sa8d_inter[LUMA_64x16] = cmp<64, 16, 16, 16, x265_pixel_sa8d_16x16_ ## cpu>; \
+    p.sa8d_inter[LUMA_64x16] = x265_pixel_sa8d_64x16_ ## cpu; \
     p.sa8d_inter[LUMA_16x64] = cmp<16, 64, 16, 16, x265_pixel_sa8d_16x16_ ## cpu>
 
 #define PIXEL_AVG(cpu) \
