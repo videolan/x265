@@ -291,12 +291,27 @@ uint32_t cpu_detect(void)
 }
 
 #if !ENABLE_ASM_PRIMITIVES
+
+#if defined(_MSC_VER)
 #include <intrin.h>
+#endif
+
 extern "C" {
 int x265_cpu_cpuid_test(void)
 {
     return 0;
 }
+
+#if defined(_MSC_VER)
+#pragma warning(disable: 4100)
+#elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
+#define __cpuidex(regsArray, level, index)\
+            __asm__ __volatile__ ("cpuid"\
+            : "=a" ((regsArray)[0]), "=b" ((regsArray)[1]), "=c" ((regsArray)[2]), "=d" ((regsArray)[3])\
+            : "0" (level), "2" (index));
+#else
+#error "compiler not supported"
+#endif
 
 void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
 {
@@ -309,27 +324,24 @@ void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, ui
     *edx = output[3];
 }
 
-#if defined(_MSC_VER)
-#pragma warning(disable: 4100)
-#endif
 void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
 {
+    uint64_t out = 0;
+
 #if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
 
     // MSVC 2010 SP1 or later, or similar Intel release
-    uint64_t out = _xgetbv(op);
+    out = _xgetbv(op);
 
-#elif defined(__GNUC__)    // use inline assembly, Gnu/AT&T syntax
+#elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
 
     uint32_t a, d;
-    __asm("xgetbv" : "=a" (a), "=d" (d) : "c" (ctr) :);
+    __asm("xgetbv" : "=a" (a), "=d" (d) : "c" (op) :);
     *eax = a;
     *edx = d;
     return;
 
 #elif defined(_WIN64)      // On x64 with older compilers, this is impossible
-
-    uint64_t out = 0;
 
 #endif // if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
 
