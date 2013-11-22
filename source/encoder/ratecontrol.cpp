@@ -190,7 +190,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     pbOffset = 6.0 * X265_LOG2(cfg->param.rc.pbFactor);
     for (int i = 0; i < 3; i++)
     {
-        lastQScaleFor[i] = qp2qScale(ABR_INIT_QP_MIN);
+        lastQScaleFor[i] = qp2qScale(cfg->param.rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN);
         lmin[i] = qp2qScale(MIN_QP);
         lmax[i] = qp2qScale(MAX_QP);
     }
@@ -362,6 +362,10 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
 
                 q = Clip3(lqmin, lqmax, q);
             }
+        }
+        else if (cfg->param.rc.rateControlMode == X265_RC_CRF && cfg->param.rc.qCompress != 1)
+        {
+            q = qp2qScale(ABR_INIT_QP) / fabs(cfg->param.rc.ipFactor);
         }
 
         double lmin1 = lmin[sliceType];
