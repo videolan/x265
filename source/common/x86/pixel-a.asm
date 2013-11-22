@@ -537,6 +537,82 @@ SSD 16,  8
 %endif ; !HIGH_BIT_DEPTH
 
 ;-----------------------------------------------------------------------------
+; int pixel_ssd_12x16( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_12x16, 4, 5, 7, src1, stride1, src2, stride2
+
+    pxor        m6,     m6
+    mov         r4d,    4
+
+.loop
+    movu        m0,    [r0]
+    movu        m1,    [r2]
+    movu        m2,    [r0 + r1]
+    movu        m3,    [r2 + r3]
+
+    punpckhdq   m4,    m0,    m2
+    punpckhdq   m5,    m1,    m3
+
+    pmovzxbw    m0,    m0
+    pmovzxbw    m1,    m1
+    pmovzxbw    m2,    m2
+    pmovzxbw    m3,    m3
+    pmovzxbw    m4,    m4
+    pmovzxbw    m5,    m5
+
+    psubw       m0,    m1
+    psubw       m2,    m3
+    psubw       m4,    m5
+
+    pmaddwd     m0,    m0
+    pmaddwd     m2,    m2
+    pmaddwd     m4,    m4
+
+    paddd       m0,    m2
+    paddd       m6,    m4
+    paddd       m6,    m0
+
+    movu        m0,    [r0 + 2 * r1]
+    movu        m1,    [r2 + 2 * r3]
+    lea         r0,    [r0 + 2 * r1]
+    lea         r2,    [r2 + 2 * r3]
+    movu        m2,    [r0 + r1]
+    movu        m3,    [r2 + r3]
+
+    punpckhdq   m4,    m0,    m2
+    punpckhdq   m5,    m1,    m3
+
+    pmovzxbw    m0,    m0
+    pmovzxbw    m1,    m1
+    pmovzxbw    m2,    m2
+    pmovzxbw    m3,    m3
+    pmovzxbw    m4,    m4
+    pmovzxbw    m5,    m5
+
+    psubw       m0,    m1
+    psubw       m2,    m3
+    psubw       m4,    m5
+
+    pmaddwd     m0,    m0
+    pmaddwd     m2,    m2
+    pmaddwd     m4,    m4
+
+    paddd       m0,    m2
+    paddd       m6,    m4
+    paddd       m6,    m0
+
+    dec    r4d
+    lea       r0,                    [r0 + 2 * r1]
+    lea       r2,                    [r2 + 2 * r3]
+    jnz    .loop
+
+    HADDD   m6, m1
+    movd   eax, m6
+
+    RET
+
+;-----------------------------------------------------------------------------
 ; void pixel_ssd_nv12_core( uint16_t *pixuv1, intptr_t stride1, uint16_t *pixuv2, intptr_t stride2,
 ;                           int width, int height, uint64_t *ssd_u, uint64_t *ssd_v )
 ;
