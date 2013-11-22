@@ -516,14 +516,14 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
             pixel *src1 = fref1->lowresMC(pelOffset, *fenc_mvs[1], subpelbuf1, stride1);
 
             pixel ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
-            primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 0);
+            primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 32);
             int bicost = primitives.satd[LUMA_8x8](fenc->lowresPlane[0] + pelOffset, fenc->lumaStride, ref, X265_LOWRES_CU_SIZE);
             COPY2_IF_LT(bcost, bicost, listused, 3);
 
             // Try 0,0 candidates
             src0 = wfref0->lowresPlane[0] + pelOffset;
             src1 = fref1->lowresPlane[0] + pelOffset;
-            primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, wfref0->lumaStride, src1, fref1->lumaStride, 0);
+            primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, wfref0->lumaStride, src1, fref1->lumaStride, 32);
             bicost = primitives.satd[LUMA_8x8](fenc->lowresPlane[0] + pelOffset, fenc->lumaStride, ref, X265_LOWRES_CU_SIZE);
             COPY2_IF_LT(bcost, bicost, listused, 3);
         }
