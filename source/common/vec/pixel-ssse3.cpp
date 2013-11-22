@@ -29,6 +29,27 @@
 using namespace x265;
 
 namespace {
+void convert16to32_shl(int32_t *dst, int16_t *org, intptr_t stride, int shift, int size)
+{
+    int i, j;
+
+    for (i = 0; i < size; i++)
+    {
+        for (j = 0; j < size; j += 4)
+        {
+            __m128i im16;
+            __m128i im32;
+
+            im16 = _mm_loadl_epi64((__m128i*)&org[i * stride + j]);
+            im32 = _mm_srai_epi32(_mm_unpacklo_epi16(im16, im16), 16);
+            im32 = _mm_slli_epi32(im32, shift);
+            _mm_storeu_si128((__m128i*)dst, im32);
+
+            dst += 4;
+        }
+    }
+}
+
 #if !HIGH_BIT_DEPTH
 void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
 {
@@ -65,16 +86,15 @@ void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
         _mm_storeu_si128((__m128i*)&dst[(i >> 1) * 32 + 16], _mm_packus_epi16(S22, S23));
     }
 }
-
 #endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {
 void Setup_Vec_PixelPrimitives_ssse3(EncoderPrimitives &p)
 {
+    p.cvt16to32_shl = convert16to32_shl;
+
 #if !HIGH_BIT_DEPTH
-    p.scale2D_64to32 = p.scale2D_64to32;
-#else
     p.scale2D_64to32 = scale2D_64to32;
 #endif
 }
