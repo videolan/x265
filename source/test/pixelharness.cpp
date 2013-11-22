@@ -1086,7 +1086,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    char header[20];
+    char header[128];
 #define HEADER(str, ...) sprintf(header, str, __VA_ARGS__); printf("%22s", header);
 #define HEADER0(str) printf("%22s", str);
 
