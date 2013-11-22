@@ -5,6 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)
         "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel."
         FORCE)
 endif()
+cmake_policy(SET CMP0025 OLD) # CMAKE_CXX_COMPILER_ID is Clang on Mac OS X (not AppleClang)
 
 project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
@@ -151,14 +152,27 @@ include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-if(MSVC_IDE AND ENABLE_PRIMITIVES_ASM)
+if((MSVC_IDE OR XCODE) AND ENABLE_PRIMITIVES_ASM)
     # this is horrible. ugly, and hacky, and it reproduces logic found
     # in the yasm CMake modules, but this is required because of this cmake bug
     # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
     if (X64)
-        set(FLAGS -f win64 -m amd64 -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
+        if(APPLE)
+            set(FLAGS -f macho64 -m amd64 -DPREFIX -DPIC -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
+        else()
+            set(FLAGS -f win64 -m amd64 -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
+        endif()
     else()
-        set(FLAGS -f win32 -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
+        if(APPLE)
+            set(FLAGS -f macho -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
+        else()
+            set(FLAGS -f win32 -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
+        endif()
+    endif()
+    if(WIN32)
+        set(SUFFIX obj)
+    else()
+        set(SUFFIX o)
     endif()
     if (HIGH_BIT_DEPTH)
         set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=1 -DBIT_DEPTH=10)
@@ -168,10 +182,10 @@ if(MSVC_IDE AND ENABLE_PRIMITIVES_ASM)
     foreach(ASM ${MSVC_ASMS})
         set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
         set(YASM_SRCS ${YASM_SRCS} ${YASM_SRC})
-        set(YASM_OBJS ${YASM_OBJS} ${ASM}.obj)
+        set(YASM_OBJS ${YASM_OBJS} ${ASM}.${SUFFIX})
         add_custom_command(
-            OUTPUT ${ASM}.obj
-            COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${YASM_SRC} -o ${ASM}.obj
+            OUTPUT ${ASM}.${SUFFIX}
+            COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
             DEPENDS ${YASM_SRC})
     endforeach()
 endif()

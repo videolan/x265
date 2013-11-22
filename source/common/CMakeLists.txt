@@ -119,7 +119,7 @@ if(ENABLE_PRIMITIVES_ASM)
         set(A_SRCS ${A_SRCS} pixel-32.asm)
     endif()
 
-    if(MSVC_IDE)
+    if(MSVC_IDE OR XCODE)
         # MSVC requires custom build rules in the main cmake script for yasm
         set(MSVC_ASMS "${A_SRCS}" CACHE INTERNAL "yasm sources")
         set(A_SRCS)
