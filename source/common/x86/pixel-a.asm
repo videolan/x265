@@ -832,6 +832,162 @@ cglobal pixel_ssd_64x16, 4, 7, 8, src1, stride1, src2, stride2
     RET
 
 ;-----------------------------------------------------------------------------
+; int pixel_ssd_64x32( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_64x32, 4, 7, 8, src1, stride1, src2, stride2
+
+    pxor    m7,    m7
+    pxor    m6,    m6
+    mov     r4,    r0
+    mov     r5,    r2
+    lea     r6,    [r1 * 2]
+
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 16]
+    lea     r2,    [r5 + 16]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 32]
+    lea     r2,    [r5 + 32]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 48]
+    lea     r2,    [r5 + 48]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+
+    HADDD    m7,     m1
+    movd     eax,    m7
+
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_64x48( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_64x48, 4, 7, 8, src1, stride1, src2, stride2
+
+    pxor    m7,    m7
+    pxor    m6,    m6
+    mov     r4,    r0
+    mov     r5,    r2
+    lea     r6,    [r1 * 2]
+
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 16]
+    lea     r2,    [r5 + 16]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 32]
+    lea     r2,    [r5 + 32]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 48]
+    lea     r2,    [r5 + 48]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+
+    HADDD    m7,     m1
+    movd     eax,    m7
+
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_64x64( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_64x64, 4, 7, 8, src1, stride1, src2, stride2
+
+    pxor    m7,    m7
+    pxor    m6,    m6
+    mov     r4,    r0
+    mov     r5,    r2
+    lea     r6,    [r1 * 2]
+
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 16]
+    lea     r2,    [r5 + 16]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 32]
+    lea     r2,    [r5 + 32]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r4 + 48]
+    lea     r2,    [r5 + 48]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+    lea     r0,    [r0 + r6]
+    lea     r2,    [r2 + 2 * r3]
+    call    pixel_ssd_16x16_internal
+
+    HADDD    m7,     m1
+    movd     eax,    m7
+
+    RET
+
+;-----------------------------------------------------------------------------
 ; void pixel_ssd_nv12_core( uint16_t *pixuv1, intptr_t stride1, uint16_t *pixuv2, intptr_t stride2,
 ;                           int width, int height, uint64_t *ssd_u, uint64_t *ssd_v )
 ;
