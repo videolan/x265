@@ -5,7 +5,6 @@ if(NOT CMAKE_BUILD_TYPE)
         "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel."
         FORCE)
 endif()
-cmake_policy(SET CMP0025 OLD) # CMAKE_CXX_COMPILER_ID is Clang on Mac OS X (not AppleClang)
 
 project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
