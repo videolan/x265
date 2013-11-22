@@ -650,6 +650,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I420].filter_vsp[CHROMA_2x8] = x265_interp_4tap_vert_sp_2x8_sse4;
         p.chroma[X265_CSP_I420].filter_vsp[CHROMA_6x8] = x265_interp_4tap_vert_sp_6x8_sse4;
 
+        p.luma_add_ps[LUMA_48x64] = x265_pixel_add_ps_48x64_sse4;
+
         p.calcrecon[BLOCK_16x16] = x265_calcRecons16_sse4;
         p.calcrecon[BLOCK_32x32] = x265_calcRecons32_sse4;
         p.calcresidual[BLOCK_16x16] = x265_getResidual16_sse4;

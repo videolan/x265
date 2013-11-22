@@ -899,3 +899,95 @@ PIXEL_ADD_PS_W32_H2 32, 16
 PIXEL_ADD_PS_W32_H2 32, 24
 PIXEL_ADD_PS_W32_H2 32, 32
 PIXEL_ADD_PS_W32_H2 32, 64
+
+;-----------------------------------------------------------------------------
+; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
+;-----------------------------------------------------------------------------
+%macro PIXEL_ADD_PS_W48_H2 2
+INIT_XMM sse4
+cglobal pixel_add_ps_%1x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
+
+add         r5,            r5
+
+mov         r6d,           %2/2
+
+.loop
+      pmovzxbw    m0,             [r2]
+      pmovzxbw    m1,             [r2 + 8]
+      pmovzxbw    m2,             [r2 + 16]
+      pmovzxbw    m3,             [r2 + 24]
+
+      movu        m4,             [r3]
+      movu        m5,             [r3 + 16]
+      movu        m6,             [r3 + 32]
+      movu        m7,             [r3 + 48]
+
+      paddw       m0,             m4
+      paddw       m1,             m5
+      paddw       m2,             m6
+      paddw       m3,             m7
+
+      packuswb    m0,             m1
+      packuswb    m2,             m3
+
+      movu        [r0],           m0
+      movu        [r0 + 16],      m2
+
+      pmovzxbw    m0,             [r2 + 32]
+      pmovzxbw    m1,             [r2 + 40]
+
+      movu        m2,             [r3 + 64]
+      movu        m3,             [r3 + 80]
+
+      paddw       m0,             m2
+      paddw       m1,             m3
+
+      packuswb    m0,             m1
+
+      movu        [r0 + 32],      m0
+
+      pmovzxbw    m0,             [r2 + r4]
+      pmovzxbw    m1,             [r2 + r4 + 8]
+      pmovzxbw    m2,             [r2 + r4 + 16]
+      pmovzxbw    m3,             [r2 + r4 + 24]
+
+      movu        m4,             [r3 + r5]
+      movu        m5,             [r3 + r5 + 16]
+      movu        m6,             [r3 + r5 + 32]
+      movu        m7,             [r3 + r5 + 48]
+
+      paddw       m0,             m4
+      paddw       m1,             m5
+      paddw       m2,             m6
+      paddw       m3,             m7
+
+      packuswb    m0,             m1
+      packuswb    m2,             m3
+
+      movu        [r0 + r1],      m0
+      movu        [r0 + r1 + 16], m2
+
+      pmovzxbw    m0,             [r2 + r4 + 32]
+      pmovzxbw    m1,             [r2 + r4 + 40]
+
+      movu        m2,             [r3 + r5 + 64]
+      movu        m3,             [r3 + r5 + 80]
+
+      paddw       m0,             m2
+      paddw       m1,             m3
+
+      packuswb    m0,             m1
+
+      movu        [r0 + r1 + 32], m0
+
+      lea         r0,             [r0 + 2 * r1]
+      lea         r2,             [r2 + 2 * r4]
+      lea         r3,             [r3 + 2 * r5]
+
+      dec         r6d
+      jnz         .loop
+
+RET
+%endmacro
+
+PIXEL_ADD_PS_W48_H2 48, 64
