@@ -145,7 +145,8 @@ extern "C" {
     p.chroma[X265_CSP_I420].filter_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
     p.chroma[X265_CSP_I420].filter_hps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.chroma[X265_CSP_I420].filter_vpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu; \
-    p.chroma[X265_CSP_I420].filter_vps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu;
+    p.chroma[X265_CSP_I420].filter_vps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu; \
+    p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
 
 #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     p.chroma[X265_CSP_I420].filter_vsp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu;
@@ -234,7 +235,8 @@ extern "C" {
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu; \
     p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu; \
-    p.luma_sub_ps[LUMA_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu;
+    p.luma_sub_ps[LUMA_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
+    p.luma_add_ps[LUMA_ ## W ## x ## H] = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
 
 #define SETUP_LUMA_SP_FUNC_DEF(W, H, cpu) \
     p.luma_vsp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu;
@@ -476,40 +478,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_SS_FILTERS(_sse2);
         LUMA_SS_FILTERS(_sse2);
-
-        // This function pointer initialization is temporary will be removed
-        // later with macro definitions.  It is used to avoid linker errors
-        // until all partitions are coded and commit smaller patches, easier to
-        // review.
-
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_4x2] = x265_blockcopy_sp_4x2_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_4x4] = x265_blockcopy_sp_4x4_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_4x8] = x265_blockcopy_sp_4x8_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_4x16] = x265_blockcopy_sp_4x16_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_8x2] = x265_blockcopy_sp_8x2_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_8x4] = x265_blockcopy_sp_8x4_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_8x6] = x265_blockcopy_sp_8x6_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_8x8] = x265_blockcopy_sp_8x8_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_8x16] = x265_blockcopy_sp_8x16_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_12x16] = x265_blockcopy_sp_12x16_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_16x4] = x265_blockcopy_sp_16x4_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_16x8] = x265_blockcopy_sp_16x8_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_16x12] = x265_blockcopy_sp_16x12_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_16x16] = x265_blockcopy_sp_16x16_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_16x32] = x265_blockcopy_sp_16x32_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_24x32] = x265_blockcopy_sp_24x32_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_32x8] = x265_blockcopy_sp_32x8_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_32x16] = x265_blockcopy_sp_32x16_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_32x24] = x265_blockcopy_sp_32x24_sse2;
-        p.chroma[X265_CSP_I420].copy_sp[CHROMA_32x32] = x265_blockcopy_sp_32x32_sse2;
-
-        p.luma_copy_sp[LUMA_32x64] = x265_blockcopy_sp_32x64_sse2;
-        p.luma_copy_sp[LUMA_16x64] = x265_blockcopy_sp_16x64_sse2;
-        p.luma_copy_sp[LUMA_48x64] = x265_blockcopy_sp_48x64_sse2;
-        p.luma_copy_sp[LUMA_64x16] = x265_blockcopy_sp_64x16_sse2;
-        p.luma_copy_sp[LUMA_64x32] = x265_blockcopy_sp_64x32_sse2;
-        p.luma_copy_sp[LUMA_64x48] = x265_blockcopy_sp_64x48_sse2;
-        p.luma_copy_sp[LUMA_64x64] = x265_blockcopy_sp_64x64_sse2;
 
         p.blockfill_s[BLOCK_4x4] = x265_blockfill_s_4x4_sse2;
         p.blockfill_s[BLOCK_8x8] = x265_blockfill_s_8x8_sse2;
