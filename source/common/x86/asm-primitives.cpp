@@ -572,6 +572,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(sse4);
 
         p.sse_pp[LUMA_12x16] = x265_pixel_ssd_12x16_sse4;
+        p.sse_pp[LUMA_24x32] = x265_pixel_ssd_24x32_sse4;
 
         CHROMA_PIXELSUB_PS(_sse4);
 

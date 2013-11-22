@@ -482,7 +482,6 @@ SSD 16, 32
 SSD 32, 8
 SSD 8,  32
 SSD 32, 24
-SSD 24, 32
 SSD 24, 24 ; not used, but resolves x265_pixel_ssd_24x24_sse2.startloop symbol
 SSD 8,  4
 SSD 8,  8
@@ -609,6 +608,69 @@ cglobal pixel_ssd_12x16, 4, 5, 7, src1, stride1, src2, stride2
 
     HADDD   m6, m1
     movd   eax, m6
+
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_24x32( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_24x32, 4, 5, 8, src1, stride1, src2, stride2
+
+    pxor    m7,     m7
+    pxor    m6,     m6
+    mov     r4d,    16
+
+.loop
+    movu         m1,    [r0]
+    pmovzxbw     m0,    m1
+    punpckhbw    m1,    m6
+    pmovzxbw     m2,    [r0 + 16]
+    movu         m4,    [r2]
+    pmovzxbw     m3,    m4
+    punpckhbw    m4,    m6
+    pmovzxbw     m5,    [r2 + 16]
+
+    psubw        m0,    m3
+    psubw        m1,    m4
+    psubw        m2,    m5
+
+    pmaddwd      m0,    m0
+    pmaddwd      m1,    m1
+    pmaddwd      m2,    m2
+
+    paddd        m0,    m1
+    paddd        m7,    m2
+    paddd        m7,    m0
+
+    movu         m1,    [r0 + r1]
+    pmovzxbw     m0,    m1
+    punpckhbw    m1,    m6
+    pmovzxbw     m2,    [r0 + r1 + 16]
+    movu         m4,    [r2 + r3]
+    pmovzxbw     m3,    m4
+    punpckhbw    m4,    m6
+    pmovzxbw     m5,    [r2 + r3 + 16]
+
+    psubw        m0,    m3
+    psubw        m1,    m4
+    psubw        m2,    m5
+
+    pmaddwd      m0,    m0
+    pmaddwd      m1,    m1
+    pmaddwd      m2,    m2
+
+    paddd        m0,    m1
+    paddd        m7,    m2
+    paddd        m7,    m0
+
+    dec    r4d
+    lea    r0,    [r0 + 2 * r1]
+    lea    r2,    [r2 + 2 * r3]
+    jnz    .loop
+
+    HADDD   m7, m1
+    movd   eax, m7
 
     RET
 
