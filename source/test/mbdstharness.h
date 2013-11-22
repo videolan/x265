@@ -40,7 +40,8 @@ protected:
     static const int mb_t_size = 6400;
     static const int mem_cmp_size = 32 * 32;
 
-    bool check_dequant_primitive(dequant_t ref, dequant_t opt);
+    bool check_dequant_primitive(dequant_scaling_t ref, dequant_scaling_t opt);
+    bool check_dequant_primitive(dequant_normal_t ref, dequant_normal_t opt);
     bool check_quant_primitive(quant_t ref, quant_t opt);
     bool check_dct_primitive(dct_t ref, dct_t opt, int width);
     bool check_idct_primitive(idct_t ref, idct_t opt, int width);

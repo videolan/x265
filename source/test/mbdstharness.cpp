@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include "mbdstharness.h"
+#include "TLibCommon/TComRom.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -195,40 +196,71 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
     return true;
 }
 
-bool MBDstHarness::check_dequant_primitive(dequant_t ref, dequant_t opt)
+bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_t opt)
 {
     int j = 0;
 
     for (int i = 0; i <= 5; i++)
     {
-        int width = (rand() % 4 + 1) * 4;
+        int log2TrSize = (rand() % 4) + 2;
 
-        if (width == 12)
-        {
-            width = 32;
-        }
+        int width = (1 << log2TrSize);
         int height = width;
 
-        int scale = rand() % 58;
-        int per = scale / 6;
-        int rem = scale % 6;
-
-        bool useScalingList = (scale % 2 == 0) ? false : true;
-
-        uint32_t log2TrSize = (rand() % 4) + 2;
+        int qp = rand() % 52;
+        int per = qp / 6;
+        int rem = qp % 6;
+        static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
+        int scale = invQuantScales[rem] << per;
+        int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+        int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
         int cmp_size = sizeof(int) * height * width;
 
-        opt(mintbuf1 + j, mintbuf3, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
-        ref(mintbuf1 + j, mintbuf4, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
+        ref(mintbuf1 + j, mintbuf3, width * height, scale, shift);
+        opt(mintbuf1 + j, mintbuf4, width * height, scale, shift);
 
         if (memcmp(mintbuf3, mintbuf4, cmp_size))
             return false;
 
         j += 16;
 #if _DEBUG
-        memset(mintbuf3, 0, mem_cmp_size);
-        memset(mintbuf4, 0, mem_cmp_size);
+        memset(mintbuf3, 0xCD, mem_cmp_size);
+        memset(mintbuf4, 0xCD, mem_cmp_size);
+#endif
+    }
+
+    return true;
+}
+
+bool MBDstHarness::check_dequant_primitive(dequant_scaling_t ref, dequant_scaling_t opt)
+{
+    int j = 0;
+
+    for (int i = 0; i <= 5; i++)
+    {
+        int log2TrSize = (rand() % 4) + 2;
+
+        int width = (1 << log2TrSize);
+        int height = width;
+
+        int qp = rand() % 52;
+        int per = qp / 6;
+        int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+        int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
+
+        int cmp_size = sizeof(int) * height * width;
+
+        ref(mintbuf1 + j, mintbuf3, mintbuf2 + j, width * height, per, shift);
+        opt(mintbuf1 + j, mintbuf4, mintbuf2 + j, width * height, per, shift);
+
+        if (memcmp(mintbuf3, mintbuf4, cmp_size))
+            return false;
+
+        j += 16;
+#if _DEBUG
+        memset(mintbuf3, 0xCD, mem_cmp_size);
+        memset(mintbuf4, 0xCD, mem_cmp_size);
 #endif
     }
 
@@ -319,9 +351,9 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.dequant)
+    if (opt.dequant_normal)
     {
-        if (!check_dequant_primitive(ref.dequant, opt.dequant))
+        if (!check_dequant_primitive(ref.dequant_normal, opt.dequant_normal))
         {
             printf("dequant: Failed!\n");
             return false;
@@ -360,10 +392,16 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    if (opt.dequant)
+    if (opt.dequant_normal)
     {
-        printf("dequant\t\t");
-        REPORT_SPEEDUP(opt.dequant, ref.dequant, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
+        printf("dequant_normal\t");
+        REPORT_SPEEDUP(opt.dequant_normal, ref.dequant_normal, mintbuf1, mintbuf3, 32 * 32, 70, 1);
+    }
+
+    if (opt.dequant_scaling)
+    {
+        printf("dequant_scaling\t");
+        REPORT_SPEEDUP(opt.dequant_scaling, ref.dequant_scaling, mintbuf1, mintbuf3, mintbuf2, 32 * 32, 5, 1);
     }
 
     if (opt.quant)

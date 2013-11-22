@@ -718,57 +718,52 @@ void idct32_c(int32_t *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void dequant_c(const int32_t* quantCoef, int32_t* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int32_t *dequantCoef)
+void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 {
-    int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
-
-    if (width > 32)
-    {
-        width  = 32;
-        height = 32;
-    }
+    static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
+    assert(num <= 32 * 32);
 
     int add, coeffQ;
-    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
-    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
     int clipQCoef;
 
-    if (useScalingList)
+    add = 1 << (shift - 1);
+
+    for (int n = 0; n < num; n++)
     {
-        shift += 4;
+        clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
+        coeffQ = (clipQCoef * scale + add) >> shift;
+        coef[n] = Clip3(-32768, 32767, coeffQ);
+    }
+}
 
-        if (shift > per)
-        {
-            add = 1 << (shift - per - 1);
+void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
+{
+    assert(num <= 32 * 32);
 
-            for (int n = 0; n < width * height; n++)
-            {
-                clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-                coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift - per);
-                coef[n] = Clip3(-32768, 32767, coeffQ);
-            }
-        }
-        else
+    int add, coeffQ;
+    int clipQCoef;
+
+    shift += 4;
+
+    if (shift > per)
+    {
+        add = 1 << (shift - per - 1);
+
+        for (int n = 0; n < num; n++)
         {
-            for (int n = 0; n < width * height; n++)
-            {
-                clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-                coeffQ   = Clip3(-32768, 32767, clipQCoef * dequantCoef[n]);
-                coef[n] = Clip3(-32768, 32767, coeffQ << (per - shift));
-            }
+            clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
+            coeffQ = ((clipQCoef * deQuantCoef[n]) + add) >> (shift - per);
+            coef[n] = Clip3(-32768, 32767, coeffQ);
         }
     }
     else
     {
-        add = 1 << (shift - 1);
-        int scale = invQuantScales[rem] << per;
-
-        for (int n = 0; n < width * height; n++)
+        for (int n = 0; n < num; n++)
         {
             clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-            coeffQ = (clipQCoef * scale + add) >> shift;
-            coef[n] = Clip3(-32768, 32767, coeffQ);
+            coeffQ   = Clip3(-32768, 32767, clipQCoef * deQuantCoef[n]);
+            coef[n] = Clip3(-32768, 32767, coeffQ << (per - shift));
         }
     }
 }
@@ -804,7 +799,8 @@ namespace x265 {
 
 void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
-    p.dequant = dequant_c;
+    p.dequant_scaling = dequant_scaling_c;
+    p.dequant_normal = dequant_normal_c;
     p.quant = quant_c;
     p.dct[DST_4x4] = dst4_c;
     p.dct[DCT_4x4] = dct4_c;

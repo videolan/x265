@@ -178,8 +178,8 @@ typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intp
 typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
 typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);
-typedef void (*dequant_t)(const int32_t* src, int32_t* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
-                          unsigned int trSizeLog2, int32_t *dequantCoef);
+typedef void (*dequant_scaling_t)(const int32_t* src, const int32_t *dequantCoef, int32_t* dst, int num, int mcqp_miper, int shift);
+typedef void (*dequant_normal_t)(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift);
 
 typedef void (*weightp_pp_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
@@ -261,7 +261,8 @@ struct EncoderPrimitives
     dct_t           dct[NUM_DCTS];
     idct_t          idct[NUM_IDCTS];
     quant_t         quant;
-    dequant_t       dequant;
+    dequant_scaling_t dequant_scaling;
+    dequant_normal_t dequant_normal;
 
     calcresidual_t  calcresidual[NUM_SQUARE_BLOCKS];
     calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];

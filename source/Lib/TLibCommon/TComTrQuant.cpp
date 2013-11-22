@@ -409,8 +409,21 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
     int rem = m_qpParam.m_rem;
     bool useScalingList = getUseScalingList();
     uint32_t log2TrSize = g_convertToBit[width] + 2;
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int32_t *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
-    primitives.dequant(coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
+
+    if (!useScalingList)
+    {
+        static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
+        int scale = invQuantScales[rem] << per;
+        primitives.dequant_normal(coeff, m_tmpCoeff, width * height, scale, shift);
+    }
+    else
+    {
+        // CHECK_ME: the code is not verify since this is DEAD path
+        primitives.dequant_scaling(coeff, dequantCoef, m_tmpCoeff, width * height, per, shift);
+    }
 
     if (useTransformSkip == true)
     {

@@ -40,114 +40,103 @@
 using namespace x265;
 
 namespace {
-void dequant(const int32_t* quantCoef, int32_t* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int32_t *deQuantCoef)
+// TODO: normal and 8bpp dequant have only 16-bits dynamic rang, we can reduce 32-bits multiplication later
+void dequant_normal(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 {
-    int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
+    int valueToAdd = 1 << (shift - 1);
+    __m128i vScale = _mm_set1_epi32(scale);
+    __m128i vAdd = _mm_set1_epi32(valueToAdd);
 
-    if (width > 32)
+    for (int n = 0; n < num; n = n + 8)
     {
-        width  = 32;
-        height = 32;
+        __m128i quantCoef1, quantCoef2, quantCoef12, sign;
+
+        quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+        quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+
+        quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+        sign = _mm_srai_epi16(quantCoef12, 15);
+        quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+        quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+
+        quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, vScale), vAdd), _mm_cvtsi32_si128(shift));
+        quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, vScale), vAdd), _mm_cvtsi32_si128(shift));
+
+        quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+        sign = _mm_srai_epi16(quantCoef12, 15);
+        quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+        _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+        quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+        _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
     }
+}
+
+void dequant_scaling(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
+{
+    assert(num <= 32 * 32);
 
     int valueToAdd;
-    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
-    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
-    if (useScalingList)
+    shift += 4;
+
+    if (shift > per)
     {
-        shift += 4;
+        valueToAdd = 1 << (shift - per - 1);
+        __m128i IAdd = _mm_set1_epi32(valueToAdd);
 
-        if (shift > per)
+        for (int n = 0; n < num; n = n + 8)
         {
-            valueToAdd = 1 << (shift - per - 1);
-            __m128i IAdd = _mm_set1_epi32(valueToAdd);
-
-            for (int n = 0; n < width * height; n = n + 8)
-            {
-                __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
-
-                quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
-                quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
-
-                deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
-                deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
-
-                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
-                sign = _mm_srai_epi16(quantCoef12, 15);
-                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
-                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
-
-                quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, deQuantCoef1), IAdd), _mm_cvtsi32_si128(shift - per));
-                quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, deQuantCoef2), IAdd), _mm_cvtsi32_si128(shift - per));
-
-                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
-                sign = _mm_srai_epi16(quantCoef12, 15);
-                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
-                _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
-                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
-                _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
-            }
-        }
-        else
-        {
-            for (int n = 0; n < width * height; n = n + 8)
-            {
-                __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
-
-                quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
-                quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
-
-                deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
-                deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
-
-                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
-                sign = _mm_srai_epi16(quantCoef12, 15);
-                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
-                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
-
-                quantCoef1 = _mm_mullo_epi32(quantCoef1, deQuantCoef1);
-                quantCoef2 = _mm_mullo_epi32(quantCoef2, deQuantCoef2);
-
-                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
-                sign = _mm_srai_epi16(quantCoef12, 15);
-                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
-                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
-
-                quantCoef1 = _mm_sll_epi32(quantCoef1, _mm_cvtsi32_si128(per - shift));
-                quantCoef2 = _mm_sll_epi32(quantCoef2, _mm_cvtsi32_si128(per - shift));
-
-                quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
-                sign = _mm_srai_epi16(quantCoef12, 15);
-                quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
-                _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
-                quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
-                _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
-            }
-        }
-    }
-    else
-    {
-        valueToAdd = 1 << (shift - 1);
-        int scale = invQuantScales[rem] << per;
-
-        __m128i vScale = _mm_set1_epi32(scale);
-        __m128i vAdd = _mm_set1_epi32(valueToAdd);
-
-        for (int n = 0; n < width * height; n = n + 8)
-        {
-            __m128i quantCoef1, quantCoef2, quantCoef12, sign;
+            __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
 
             quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
             quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+
+            deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
+            deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
 
             quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
             sign = _mm_srai_epi16(quantCoef12, 15);
             quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
             quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
 
-            quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, vScale), vAdd), _mm_cvtsi32_si128(shift));
-            quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, vScale), vAdd), _mm_cvtsi32_si128(shift));
+            quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, deQuantCoef1), IAdd), _mm_cvtsi32_si128(shift - per));
+            quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, deQuantCoef2), IAdd), _mm_cvtsi32_si128(shift - per));
+
+            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+            sign = _mm_srai_epi16(quantCoef12, 15);
+            quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+            _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
+            quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+            _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
+        }
+    }
+    else
+    {
+        for (int n = 0; n < num; n = n + 8)
+        {
+            __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
+
+            quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
+            quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+
+            deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
+            deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
+
+            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+            sign = _mm_srai_epi16(quantCoef12, 15);
+            quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+            quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+
+            quantCoef1 = _mm_mullo_epi32(quantCoef1, deQuantCoef1);
+            quantCoef2 = _mm_mullo_epi32(quantCoef2, deQuantCoef2);
+
+            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
+            sign = _mm_srai_epi16(quantCoef12, 15);
+            quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
+            quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
+
+            quantCoef1 = _mm_sll_epi32(quantCoef1, _mm_cvtsi32_si128(per - shift));
+            quantCoef2 = _mm_sll_epi32(quantCoef2, _mm_cvtsi32_si128(per - shift));
 
             quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
             sign = _mm_srai_epi16(quantCoef12, 15);
@@ -273,7 +262,8 @@ void idst4(int32_t *src, int16_t *dst, intptr_t stride)
 namespace x265 {
 void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives &p)
 {
-    p.dequant = dequant;
+    p.dequant_scaling = dequant_scaling;
+    p.dequant_normal = dequant_normal;
 #if !HIGH_BIT_DEPTH
     p.idct[IDST_4x4] = idst4; // fails with 10bit inputs
 #endif
