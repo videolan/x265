@@ -374,5 +374,7 @@ void x265_transpose32_sse2(pixel *dest, pixel *src, intptr_t stride);
 void x265_transpose64_sse2(pixel *dest, pixel *src, intptr_t stride);
 int x265_pixel_ssd_12x16_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_24x32_sse4(pixel *, intptr_t, pixel *, intptr_t);
+int x265_pixel_ssd_48x64_sse4(pixel *, intptr_t, pixel *, intptr_t);
+int x265_pixel_ssd_64x16_sse4(pixel *, intptr_t, pixel *, intptr_t);
 
 #endif // ifndef X265_I386_PIXEL_H
