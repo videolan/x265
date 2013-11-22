@@ -33,7 +33,7 @@ using namespace x265;
 
 namespace {
 #if !HIGH_BIT_DEPTH
-void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weight_sp(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     __m128i w00, roundoff, ofs, fs, tmpsrc, tmpdst, tmp, sign;
     int x, y;
@@ -74,11 +74,11 @@ void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStrid
     }
 }
 
-void weightUnidirPixel(pixel *source, pixel *dest, intptr_t sourceStride, intptr_t destStride, int width, int height, int w0, int arg_round, int shift, int offset)
+void weight_pp(pixel *source, pixel *dest, intptr_t sourceStride, intptr_t destStride, int width, int height, int w0, int arg_round, int shift, int offset)
 {
     int x, y;
     __m128i temp;
-    __m128i vw0    = _mm_set1_epi32(w0);                // broadcast (32-bit integer) w0 to all elements of vw0
+    __m128i vw0    = _mm_set1_epi32(w0); // broadcast (32-bit integer) w0 to all elements of vw0
     __m128i ofs    = _mm_set1_epi32(offset);
     __m128i round  = _mm_set1_epi32(arg_round);
     __m128i src, dst, val;
@@ -777,8 +777,8 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
 #if HIGH_BIT_DEPTH
     Setup_Vec_Pixel16Primitives_sse41(p);
 #else
-    p.weight_pp = weightUnidirPixel;
-    p.weight_sp = weight_sp_c;
+    p.weight_pp = weight_pp;
+    p.weight_sp = weight_sp;
 #endif /* !HIGH_BIT_DEPTH */
 }
 }
