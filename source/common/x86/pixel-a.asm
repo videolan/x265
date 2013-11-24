@@ -40,9 +40,6 @@ hmul_8p:   times 8 db 1
            times 4 db 1, -1
 mask_ff:   times 16 db 0xff
            times 16 db 0
-mask_ac4:  times 2 dw 0, -1, -1, -1, 0, -1, -1, -1
-mask_ac4b: times 2 dw 0, -1, 0, -1, -1, -1, -1, -1
-mask_ac8:  times 2 dw 0, -1, -1, -1, -1, -1, -1, -1
 %if BIT_DEPTH == 10
 ssim_c1:   times 4 dd 6697.7856    ; .01*.01*1023*1023*64
 ssim_c2:   times 4 dd 3797644.4352 ; .03*.03*1023*1023*64*63
@@ -58,13 +55,9 @@ ssim_c2:   times 4 dd 235963       ; .03*.03*255*255*64*63
 hmul_4p:   times 2 db 1, 1, 1, 1, 1, -1, 1, -1
 mask_10:   times 4 dw 0, -1
 mask_1100: times 2 dd 0, -1
-pb_pppm:   times 4 db 1,1,1,-1
 deinterleave_shuf: db 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
 
 ALIGN 32
-pw_s00112233:  dw 0x8000,0x8000,0x8001,0x8001,0x8002,0x8002,0x8003,0x8003
-pw_s00001111:  dw 0x8000,0x8000,0x8000,0x8000,0x8001,0x8001,0x8001,0x8001
-
 transd_shuf1: SHUFFLE_MASK_W 0, 8, 2, 10, 4, 12, 6, 14
 transd_shuf2: SHUFFLE_MASK_W 1, 9, 3, 11, 5, 13, 7, 15
 
