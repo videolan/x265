@@ -25,6 +25,7 @@
 
 #include "primitives.h"
 #include "x265.h"
+#include "cpu.h"
 
 extern "C" {
 #include "pixel.h"
