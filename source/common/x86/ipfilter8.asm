@@ -41,7 +41,6 @@ tab_Vm:    db 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
 tab_Cm:    db 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
 
 tab_c_512:      times 8 dw 512
-tab_c_8192:     times 8 dw 8192
 tab_c_526336:   times 4 dd 8192*64+2048
 
 tab_ChromaCoeff: db  0, 64,  0,  0
@@ -127,6 +126,8 @@ tab_c_64_n64:   times 8 db 64, -64
 
 
 SECTION .text
+
+cextern pw_2000
 
 %macro FILTER_H4_w2_2 3
     movh        %2, [srcq - 1]
@@ -641,7 +642,7 @@ punpcklqdq  m3, m3
 %ifidn %3, pp 
     mova    m2, [tab_c_512]
 %else
-    mova    m2, [tab_c_8192]
+    mova    m2, [pw_2000]
 %endif
 
 mov         r4, %2
@@ -817,7 +818,7 @@ cglobal interp_8tap_hv_pp_8x8, 4, 7, 8, 0-15*16
 
 .loopH:
     FILTER_H8_W8 m0, m1, m2, m3, coef, [tab_c_512], [r0 - 3]
-    psubw       m1,         [tab_c_8192]
+    psubw       m1,         [pw_2000]
     mova        [r4],       m1
 
     add         r0,         r1
@@ -1420,7 +1421,7 @@ movd        m0, [tab_ChromaCoeff + r4 * 4]
 
 pshufb      m0, [tab_Cm]
 
-mova        m1, [tab_c_8192]
+mova        m1, [pw_2000]
 
 movd        m2, [r0]
 movd        m3, [r0 + r1]
@@ -1469,7 +1470,7 @@ cglobal interp_4tap_vert_ps_4x4, 4, 7, 8
 
     pshufb     m0, [tab_Cm]
 
-    mova       m1, [tab_c_8192]
+    mova       m1, [pw_2000]
 
     movd       m2, [r0]
     movd       m3, [r0 + r1]
@@ -1543,7 +1544,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 7, 8
 
     pshufb     m0, [tab_Cm]
 
-    mova       m1, [tab_c_8192]
+    mova       m1, [pw_2000]
 
     mov        r4d, %2/4
 
@@ -1629,7 +1630,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 7, 8
 
     pshufb     m6, m5, [tab_Vm]
     pshufb     m5, [tab_Vm + 16]
-    mova       m4, [tab_c_8192]
+    mova       m4, [pw_2000]
 
     mov        r4d, %2/2
 
@@ -1697,7 +1698,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 7, 8
 
     pshufb     m6, m5, [tab_Vm]
     pshufb     m5, [tab_Vm + 16]
-    mova       m4, [tab_c_8192]
+    mova       m4, [pw_2000]
 
     mov        r4d, %2/4
 
@@ -1791,7 +1792,7 @@ cglobal interp_4tap_vert_ps_6x8, 4, 7, 8
 
     pshufb     m6, m5, [tab_Vm]
     pshufb     m5, [tab_Vm + 16]
-    mova       m4, [tab_c_8192]
+    mova       m4, [pw_2000]
 
     mov        r4d, 2
 
@@ -1889,7 +1890,7 @@ cglobal interp_4tap_vert_ps_12x16, 4, 6, 8
     pshufb     m1, m0, [tab_Vm]
     pshufb     m0, [tab_Vm + 16]
 
-    mova       m7, [tab_c_8192]
+    mova       m7, [pw_2000]
 
     mov        r4d, 16/2
 
@@ -2003,7 +2004,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     paddw      m4, m6
     paddw      m5, m7
 
-    mova       m6, [tab_c_8192]
+    mova       m6, [pw_2000]
 
     psubw      m4, m6
     psubw      m5, m6
@@ -2033,7 +2034,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     paddw      m4, m6
     paddw      m5, m7
 
-    mova       m6, [tab_c_8192]
+    mova       m6, [pw_2000]
 
     psubw      m4, m6
     psubw      m5, m6
@@ -2075,7 +2076,7 @@ cglobal interp_4tap_vert_ps_24x32, 4, 6, 8
     pshufb     m1, m0, [tab_Vm]
     pshufb     m0, [tab_Vm + 16]
 
-    mova       m7, [tab_c_8192]
+    mova       m7, [pw_2000]
 
     mov        r4d, 32/2
 
@@ -2196,7 +2197,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     pshufb     m1, m0, [tab_Vm]
     pshufb     m0, [tab_Vm + 16]
 
-    mova       m7, [tab_c_8192]
+    mova       m7, [pw_2000]
 
     mov        r4d, %2
 
@@ -3088,7 +3089,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 6
 %ifidn %3,pp
     mova      m3, [tab_c_512]
 %else
-    mova      m3, [tab_c_8192]
+    mova      m3, [pw_2000]
 %endif
 
     mov       r4d, %2/4
@@ -3185,7 +3186,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
  %ifidn %3,pp
     mova      m3, [tab_c_512]
 %else
-    mova      m3, [tab_c_8192]
+    mova      m3, [pw_2000]
 %endif
 
     mov       r4d, %2/4
@@ -3293,7 +3294,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
  %ifidn %3,pp
     mova      m3, [tab_c_512]
 %else
-    mova      m3, [tab_c_8192]
+    mova      m3, [pw_2000]
 %endif
 
     mov       r4d, %2/4
@@ -3410,7 +3411,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
 %ifidn %3,pp
     mova      m3, [tab_c_512]
 %else
-    mova      m3, [tab_c_8192]
+    mova      m3, [pw_2000]
 %endif
     mov       byte [rsp], %2/4
 
@@ -4325,7 +4326,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 6, src, srcstride, dst, dststride
 %endif
 
     pshufd  coef2, coef2, 0
-    mova    t2, [tab_c_8192]
+    mova    t2, [pw_2000]
     mova    Tm0, [tab_Tm]
 
 %rep %2/2
@@ -4378,7 +4379,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 6, src, srcstride, dst, dststride
 %endif
 
     pshufd  coef2, coef2, 0
-    mova    t2, [tab_c_8192]
+    mova    t2, [pw_2000]
     mova    Tm0, [tab_Tm]
 
 %rep %2/2
@@ -4450,7 +4451,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 6, src, srcstride, dst, dststride
 %endif
 
     pshufd  coef2, coef2, 0
-    mova    t2, [tab_c_8192]
+    mova    t2, [pw_2000]
     mova    Tm0, [tab_Tm]
     mova    Tm1, [tab_Tm + 16]
 
@@ -4505,7 +4506,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 6, src, srcstride, dst, dststride
 %endif
 
     pshufd  coef2, coef2, 0
-    mova    t2, [tab_c_8192]
+    mova    t2, [pw_2000]
     mova    Tm0, [tab_Tm]
     mova    Tm1, [tab_Tm + 16]
 
@@ -4637,7 +4638,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 6, 7, src, srcstride, dst, dststride
     mov     r5d, %2
 
     pshufd  coef2, coef2, 0
-    mova    t2, [tab_c_8192]
+    mova    t2, [pw_2000]
     mova    Tm0, [tab_Tm]
     mova    Tm1, [tab_Tm + 16]
 
@@ -4682,7 +4683,7 @@ cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
 
     pshufb      m0, [tab_Cm]
 
-    mova        m1, [tab_c_8192]
+    mova        m1, [pw_2000]
 
     movd        m2, [r0]
     movd        m3, [r0 + r1]
@@ -4755,7 +4756,7 @@ cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
 
     pshufb     m0, [tab_Cm]
 
-    mova       m1, [tab_c_8192]
+    mova       m1, [pw_2000]
 
     mov        r4d, 2
 .loop
