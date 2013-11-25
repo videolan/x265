@@ -2,6 +2,7 @@
 ;* Copyright (C) 2013 x265 project
 ;*
 ;* Authors: Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
+;*          Nabajit Deka <nabajit@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -717,4 +718,82 @@ cglobal dequant_normal, 2,5,8
 
     sub         r2d, 8
     jnz        .loop
+    RET
+
+;-----------------------------------------------------------------------------------------------------------------------------------------------
+;void weight_pp(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+;-----------------------------------------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal weight_pp, 6, 7, 6
+
+    mov         r6d, r6m
+    shl         r6d, 6
+    movd        m0, r6d         ; m0 = [w0<<6]
+
+    movd        m1, r7m         ; m1 = [round]
+    punpcklwd   m0, m1          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
+    pshufd      m0, m0, 0       ; m0 = [w0<<6 round]
+
+    movd        m1, r8m
+
+    movd        m2, r9m
+    pshufd      m2, m2, 0
+
+    mova        m5, [pw_1]
+
+    sub         r2d, r4d
+    sub         r3d, r4d
+
+.loopH
+    mov         r6d, r4d
+    shr         r6d, 4
+.loopW:
+    movh        m4, [r0]
+    pmovzxbw    m4, m4
+
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, m1
+    paddd       m3, m2
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, m1
+    paddd       m4, m2
+
+    packssdw    m3, m4
+    packuswb    m3, m3
+
+    movh        [r1], m3
+
+    movh        m4, [r0 + 8]
+    pmovzxbw    m4, m4
+
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, m1
+    paddd       m3, m2
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, m1
+    paddd       m4, m2
+
+    packssdw    m3, m4
+    packuswb    m3, m3
+
+    movh        [r1 + 8], m3
+
+    add         r0, 16
+    add         r1, 16
+
+    dec         r6d
+    jnz         .loopW
+
+    lea         r0, [r0 + r2]
+    lea         r1, [r1 + r3]
+
+    dec         r5d
+    jnz         .loopH
+
     RET
