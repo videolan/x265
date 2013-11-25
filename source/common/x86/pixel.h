@@ -379,5 +379,6 @@ int x265_pixel_ssd_64x16_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x32_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x48_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x64_sse4(pixel *, intptr_t, pixel *, intptr_t);
+void x265_dequant_normal_sse4(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift);
 
 #endif // ifndef X265_I386_PIXEL_H

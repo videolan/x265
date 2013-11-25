@@ -720,8 +720,11 @@ void idct32_c(int32_t *src, int16_t *dst, intptr_t stride)
 
 void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 {
-    static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
     assert(num <= 32 * 32);
+    // NOTE: maximum of scale is (72 * 256)
+    assert(scale < 32768);
+    assert((num % 8) == 0);
+    assert(shift <= 6);
 
     int add, coeffQ;
 
