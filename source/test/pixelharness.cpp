@@ -315,10 +315,10 @@ bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
     memset(ref_dest, 0, 64 * 64 * sizeof(pixel));
     memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
     int j = 0;
-    int width = (2 * rand()) % 64;
+    int width = 16 * (rand() % 4 + 1);
     int height = 8;
-    int w0 = rand() % 256;
-    int shift = rand() % 12;
+    int w0 = rand() % 128;
+    int shift = rand() % 15;
     int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
     for (int i = 0; i < ITERS; i++)
