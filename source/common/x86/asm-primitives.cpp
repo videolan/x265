@@ -102,6 +102,11 @@ extern "C" {
     p.sse_ss[LUMA_16x16]   = x265_pixel_ssd_ss_16x16_ ## cpu; \
     p.sse_ss[LUMA_16x32]   = x265_pixel_ssd_ss_16x32_ ## cpu; \
     p.sse_ss[LUMA_16x64]   = x265_pixel_ssd_ss_16x64_ ## cpu; \
+    p.sse_ss[LUMA_32x8]   = x265_pixel_ssd_ss_32x8_ ## cpu; \
+    p.sse_ss[LUMA_32x16]   = x265_pixel_ssd_ss_32x16_ ## cpu; \
+    p.sse_ss[LUMA_32x24]   = x265_pixel_ssd_ss_32x24_ ## cpu; \
+    p.sse_ss[LUMA_32x32]   = x265_pixel_ssd_ss_32x32_ ## cpu; \
+    p.sse_ss[LUMA_32x64]   = x265_pixel_ssd_ss_32x64_ ## cpu;
 
 #define SA8D_INTER_FROM_BLOCK(cpu) \
     p.sa8d_inter[LUMA_4x8]  = x265_pixel_satd_4x8_ ## cpu; \
