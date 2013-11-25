@@ -612,47 +612,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
 
-        // This function pointer initialization is temporary will be removed
-        // later with macro definitions.  It is used to avoid linker errors
-        // until all partitions are coded and commit smaller patches, easier to
-        // review.
-
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_2x8] = x265_pixel_add_ps_2x8_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_2x4] = x265_pixel_add_ps_2x4_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_4x2] = x265_pixel_add_ps_4x2_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_4x4] = x265_pixel_add_ps_4x4_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_4x8] = x265_pixel_add_ps_4x8_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_4x16] = x265_pixel_add_ps_4x16_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_6x8] = x265_pixel_add_ps_6x8_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_8x2] = x265_pixel_add_ps_8x2_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_8x4] = x265_pixel_add_ps_8x4_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_8x6] = x265_pixel_add_ps_8x6_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_8x8] = x265_pixel_add_ps_8x8_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_8x16] = x265_pixel_add_ps_8x16_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_8x32] = x265_pixel_add_ps_8x32_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_12x16] = x265_pixel_add_ps_12x16_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_16x4] = x265_pixel_add_ps_16x4_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_16x8] = x265_pixel_add_ps_16x8_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_16x12] = x265_pixel_add_ps_16x12_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_16x16] = x265_pixel_add_ps_16x16_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_16x32] = x265_pixel_add_ps_16x32_sse4;
-        p.luma_add_ps[LUMA_16x64] = x265_pixel_add_ps_16x64_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_24x32] = x265_pixel_add_ps_24x32_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_32x8] = x265_pixel_add_ps_32x8_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_32x16] = x265_pixel_add_ps_32x16_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_32x24] = x265_pixel_add_ps_32x24_sse4;
-        p.chroma[X265_CSP_I420].add_ps[CHROMA_32x32] = x265_pixel_add_ps_32x32_sse4;
-        p.luma_add_ps[LUMA_32x64] = x265_pixel_add_ps_32x64_sse4;
-
         p.chroma[X265_CSP_I420].filter_vsp[CHROMA_2x4] = x265_interp_4tap_vert_sp_2x4_sse4;
         p.chroma[X265_CSP_I420].filter_vsp[CHROMA_2x8] = x265_interp_4tap_vert_sp_2x8_sse4;
         p.chroma[X265_CSP_I420].filter_vsp[CHROMA_6x8] = x265_interp_4tap_vert_sp_6x8_sse4;
-
-        p.luma_add_ps[LUMA_48x64] = x265_pixel_add_ps_48x64_sse4;
-        p.luma_add_ps[LUMA_64x16] = x265_pixel_add_ps_64x16_sse4;
-        p.luma_add_ps[LUMA_64x32] = x265_pixel_add_ps_64x32_sse4;
-        p.luma_add_ps[LUMA_64x48] = x265_pixel_add_ps_64x48_sse4;
-        p.luma_add_ps[LUMA_64x64] = x265_pixel_add_ps_64x64_sse4;
 
         p.calcrecon[BLOCK_16x16] = x265_calcRecons16_sse4;
         p.calcrecon[BLOCK_32x32] = x265_calcRecons32_sse4;
