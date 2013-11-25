@@ -972,6 +972,12 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.var[LUMA_8x8] = pixel_var<8, 8>;
     p.var[LUMA_8x16] = pixel_var<8, 16>;
     p.var[LUMA_8x32] = pixel_var<8, 32>;
+    p.var[LUMA_16x4] = pixel_var<16, 4>;
+    p.var[LUMA_16x8] = pixel_var<16, 8>;
+    p.var[LUMA_16x12] = pixel_var<16, 12>;
+    p.var[LUMA_16x16] = pixel_var<16, 16>;
+    p.var[LUMA_16x32] = pixel_var<16, 32>;
+    p.var[LUMA_16x64] = pixel_var<16, 64>;
 
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }

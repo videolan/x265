@@ -1626,18 +1626,201 @@ cglobal pixel_var_8x32, 2,4,8
     jnz    .loop
     VAR_END 8, 32
 
+cglobal pixel_var_16x4, 2,3,8
+    VAR_START 1
+    lea       r2,    [r1 * 3]
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    VAR_END 16, 4
+
+cglobal pixel_var_16x8, 2,3,8
+    VAR_START 1
+    lea       r2,    [r1 * 3]
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    VAR_END 16, 8
+
+cglobal pixel_var_16x12, 2,3,8
+    VAR_START 1
+    lea       r2,    [r1 * 3]
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    VAR_END 16, 12
+
 cglobal pixel_var_16x16, 2,3,8
     VAR_START 1
-    mov      r2d, 8
-.loop:
-    mova      m0, [r0]
-    mova      m3, [r0+r1]
+    lea       r2,    [r1 * 3]
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
     DEINTB    1, 0, 4, 3, 7
-    lea       r0, [r0+r1*2]
     VAR_CORE
-    dec r2d
-    jg .loop
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
     VAR_END 16, 16
+
+cglobal pixel_var_16x32, 2,4,8
+    VAR_START 1
+    mov       r2d,   2
+    lea       r3,    [r1 * 3]
+.loop:
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    dec    r2d
+    jg    .loop
+    VAR_END 16, 32
+
+cglobal pixel_var_16x64, 2,4,8
+    VAR_START 1
+    mov       r2d,   4
+    lea       r3,    [r1 * 3]
+.loop:
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    dec    r2d
+    jg    .loop
+    VAR_END 16, 64
 %endmacro ; VAR
 
 INIT_XMM sse2
