@@ -968,8 +968,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.ssim_4x4x2_core = ssim_4x4x2_core;
     p.ssim_end_4 = ssim_end_4;
 
-    p.var[LUMA_16x16] = pixel_var<16, 16>;
+    p.var[LUMA_8x4] = pixel_var<8, 4>;
     p.var[LUMA_8x8] = pixel_var<8, 8>;
+    p.var[LUMA_8x16] = pixel_var<8, 16>;
+    p.var[LUMA_8x32] = pixel_var<8, 32>;
+
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }
 }

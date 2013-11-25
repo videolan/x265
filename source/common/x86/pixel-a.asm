@@ -1417,6 +1417,106 @@ VAR
 
 %if HIGH_BIT_DEPTH == 0
 %macro VAR 0
+cglobal pixel_var_8x4, 2,3,8
+    VAR_START 1
+    lea       r2,    [r1 * 3]
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    VAR_END 8, 4
+
+cglobal pixel_var_8x8, 2,3,8
+    VAR_START 1
+    lea       r2,    [r1 * 3]
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    VAR_END 8, 8
+
+
+cglobal pixel_var_8x16, 2,4,8
+    VAR_START 1
+    lea       r2,    [r1 * 3]
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    VAR_END 8, 16
+
+cglobal pixel_var_8x32, 2,4,8
+    VAR_START 1
+    mov       r2d,   2
+    lea       r3,    [r1 * 3]
+.loop:
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r3]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    dec    r2d
+    jnz    .loop
+    VAR_END 8, 32
+
 cglobal pixel_var_16x16, 2,3,8
     VAR_START 1
     mov      r2d, 8
@@ -1429,38 +1529,6 @@ cglobal pixel_var_16x16, 2,3,8
     dec r2d
     jg .loop
     VAR_END 16, 16
-
-cglobal pixel_var_8x8, 2,4,8
-    VAR_START 1
-    mov      r2d, 2
-    lea       r3, [r1*3]
-.loop:
-    movh      m0, [r0]
-    movh      m3, [r0+r1]
-    movhps    m0, [r0+r1*2]
-    movhps    m3, [r0+r3]
-    DEINTB    1, 0, 4, 3, 7
-    lea       r0, [r0+r1*4]
-    VAR_CORE
-    dec r2d
-    jg .loop
-    VAR_END 8, 8
-
-cglobal pixel_var_8x16, 2,4,8
-    VAR_START 1
-    mov      r2d, 4
-    lea       r3, [r1*3]
-.loop:
-    movh      m0, [r0]
-    movh      m3, [r0+r1]
-    movhps    m0, [r0+r1*2]
-    movhps    m3, [r0+r3]
-    DEINTB    1, 0, 4, 3, 7
-    lea       r0, [r0+r1*4]
-    VAR_CORE
-    dec r2d
-    jg .loop
-    VAR_END 8, 16
 %endmacro ; VAR
 
 INIT_XMM sse2

@@ -428,6 +428,15 @@ extern "C" {
     SETUP_LUMA_BLOCKCOPY_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16, 64, cpu);
 
+#define SETUP_PIXEL_VAR_DEF(W, H, cpu) \
+    p.var[LUMA_ ## W ## x ## H] = x265_pixel_var_ ## W ## x ## H ## cpu;
+
+#define LUMA_VAR(cpu) \
+    SETUP_PIXEL_VAR_DEF(8,   4, cpu); \
+    SETUP_PIXEL_VAR_DEF(8,   8, cpu); \
+    SETUP_PIXEL_VAR_DEF(8,  16, cpu); \
+    SETUP_PIXEL_VAR_DEF(8,  32, cpu);
+
 namespace x265 {
 // private x265 namespace
 
@@ -457,6 +466,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         PIXEL_AVG(sse2);
         PIXEL_AVG_W4(mmx2);
+
+        LUMA_VAR(_sse2);
 
         p.sad[LUMA_8x32]  = x265_pixel_sad_8x32_sse2;
         p.sad[LUMA_16x4]  = x265_pixel_sad_16x4_sse2;

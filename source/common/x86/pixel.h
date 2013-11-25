@@ -359,6 +359,17 @@ DECL_ADS(1, avx2)
 CHROMA_PIXELSUB_DEF(_sse4);
 LUMA_PIXELSUB_DEF(_sse4);
 
+#define SETUP_LUMA_PIXELVAR_FUNC(W, H, cpu) \
+    uint64_t x265_pixel_var_ ## W ## x ## H ## cpu(pixel *pix, intptr_t pixstride);
+
+#define LUMA_PIXELVAR_DEF(cpu) \
+    SETUP_LUMA_PIXELVAR_FUNC(8,   4, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(8,   8, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(8,  16, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(8,  32, cpu);
+
+LUMA_PIXELVAR_DEF(_sse2);
+
 #undef DECL_PIXELS
 #undef DECL_SUF
 #undef DECL_HEVC_SSD
@@ -369,6 +380,8 @@ LUMA_PIXELSUB_DEF(_sse4);
 #undef SETUP_LUMA_PIXELSUB_PS_FUNC
 #undef CHROMA_PIXELSUB_DEF
 #undef LUMA_PIXELSUB_DEF
+#undef LUMA_PIXELVAR_DEF
+#undef SETUP_LUMA_PIXELVAR_FUNC
 
 void x265_calcRecons4_sse2(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 void x265_calcRecons8_sse2(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
