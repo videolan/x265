@@ -356,31 +356,14 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
 
 void Encoder::printSummary()
 {
-    if (param.logLevel >= X265_LOG_INFO)
-    {
-        char buffer[200];
-        if (m_analyzeI.m_numPics)
-            x265_log(&param, X265_LOG_INFO, "frame I: %s\n", statsString(m_analyzeI, buffer));
-        if (m_analyzeP.m_numPics)
-            x265_log(&param, X265_LOG_INFO, "frame P: %s\n", statsString(m_analyzeP, buffer));
-        if (m_analyzeB.m_numPics)
-            x265_log(&param, X265_LOG_INFO, "frame B: %s\n", statsString(m_analyzeB, buffer));
-        if (m_analyzeAll.m_numPics)
-            x265_log(&param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
-        if (param.bEnableWeightedPred)
-        {
-            x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
-                     m_numWPFrames, m_analyzeP.m_numPics, (float)100.0 * m_numWPFrames / m_analyzeP.m_numPics);
-        }
-    }
     for (int sliceType = 2; sliceType >= 0; sliceType--)
     {
         StatisticLog finalLog;
+        uint64_t cntIntraNxN = 0, cntIntra[4];
         for (int depth = 0; depth < (int)g_maxCUDepth; depth++)
         {
-            double cntInter, cntIntra, cntSplit, cntSkipCu;
-            double cuInterDistribution[INTER_MODES], cuIntraDistribution[INTRA_MODES];
-            double cntIntraNxN = 0.0;
+            uint64_t cntInter, cntSplit, cntSkipCu;
+            uint64_t cuInterDistribution[INTER_MODES], cuIntraDistribution[INTRA_MODES];
             for (int j = 0; j < param.frameNumThreads; j++)
             {
                 for (int row = 0; row < m_frameEncoder[0].m_numRows; row++)
@@ -401,9 +384,9 @@ void Encoder::printSummary()
                             }
                             finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
                         }
-                        if (depth == (int)g_maxCUDepth - 1)
-                            finalLog.cntIntraNxN += enclog.cntIntraNxN;
                     }
+                    if (depth == (int)g_maxCUDepth - 1)
+                        finalLog.cntIntraNxN += enclog.cntIntraNxN;
                 }
             }
             // check for 0/0, if true assign 0 else calculate percentage
@@ -412,7 +395,7 @@ void Encoder::printSummary()
                 if (finalLog.cntInter[depth] == 0)
                     cuInterDistribution[n] = 0;
                 else
-                    cuInterDistribution[n] = (double)(finalLog.cuInterDistribution[depth][n] * 100) / (double)finalLog.cntInter[depth];
+                    cuInterDistribution[n] = (finalLog.cuInterDistribution[depth][n] * 100) / finalLog.cntInter[depth];
                 if (n < INTRA_MODES)
                 {
                     if (finalLog.cntIntra[depth] == 0)
@@ -422,57 +405,88 @@ void Encoder::printSummary()
                     }
                     else
                     {
-                        cntIntraNxN = (double)(finalLog.cntIntraNxN * 100) / (double)finalLog.cntIntra[depth];
-                        cuIntraDistribution[n] = (double)(finalLog.cuIntraDistribution[depth][n] * 100) / (double)finalLog.cntIntra[depth];
+                        cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.cntIntra[depth];
+                        cuIntraDistribution[n] = (finalLog.cuIntraDistribution[depth][n] * 100) / finalLog.cntIntra[depth];
                     }
                 }
             }
             if (finalLog.cntTotalCu[depth] == 0)
             {
                 cntInter = 0;
-                cntIntra = 0;
+                cntIntra[depth] = 0;
                 cntSplit = 0;
                 cntSkipCu = 0;
             }
             else
             {
-                cntInter = (double)(finalLog.cntInter[depth] * 100) / (double)finalLog.cntTotalCu[depth];
-                cntIntra = (double)(finalLog.cntIntra[depth] * 100) / (double)finalLog.cntTotalCu[depth];
-                cntSplit = (double)(finalLog.cntSplit[depth] * 100) / (double)finalLog.cntTotalCu[depth];
-                cntSkipCu = (double)(finalLog.cntSkipCu[depth] * 100) / (double)finalLog.cntTotalCu[depth];
+                cntInter = (finalLog.cntInter[depth] * 100) / finalLog.cntTotalCu[depth];
+                cntIntra[depth] = (finalLog.cntIntra[depth] * 100) / finalLog.cntTotalCu[depth];
+                cntSplit = (finalLog.cntSplit[depth] * 100) / finalLog.cntTotalCu[depth];
+                cntSkipCu = (finalLog.cntSkipCu[depth] * 100) / finalLog.cntTotalCu[depth];
+                if (sliceType == I_SLICE)
+                    cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.cntTotalCu[depth];
             }
             // print statistics
-            if (sliceType == I_SLICE)
-                x265_log(&param, X265_LOG_INFO, "Intra I%d   %.2f%%\n", g_maxCUWidth >> depth, cntIntra);
-            else
+            if (sliceType != I_SLICE)
             {
+                int cuSize = g_maxCUWidth >> depth;
                 if (depth < (int)g_maxCUDepth - 1)
                 {
                     if (sliceType == P_SLICE)
-                        x265_log(&param, X265_LOG_INFO, "Inter P%d   Inter %.2f%% (2Nx2N %.2f%%  Nx2N %.2f%%  2NxN %.2f%%  AMP %.2f%%)  "
-                                "Intra %.2f%% (DC %.2f%%  Planar %.2f%%  Ang %.2f%% )  Split %.2f%%  Skipped %.2f%% \n", g_maxCUWidth >> depth,
-                                cntInter, cuInterDistribution[0], cuInterDistribution[2], cuInterDistribution[1], cuInterDistribution[3],
-                                cntIntra, cuIntraDistribution[0], cuIntraDistribution[1], cuIntraDistribution[2], cntSplit, cntSkipCu);
+                        x265_log(&param, X265_LOG_INFO, "Inter P%d:Split %I64d%% Skip %I64d%% Inter %I64d%%(%dx%d %I64d%% %dx%d %I64d%%"
+                                " %dx%d %I64d%% AMP %I64d%%) Intra %I64d%%(DC %I64d%% Planar %I64d%% Ang %I64d%%)\n", cuSize, cntSplit, cntSkipCu,
+                                cntInter, cuSize, cuSize, cuInterDistribution[0], cuSize/2, cuSize, cuInterDistribution[2], cuSize, cuSize/2, cuInterDistribution[1],
+                                cuInterDistribution[3], cntIntra[depth], cuIntraDistribution[0], cuIntraDistribution[1], cuIntraDistribution[2]);
                     else
-                        x265_log(&param, X265_LOG_INFO, "Inter B%d   Inter %.2f%% (2Nx2N %.2f%%  Nx2N %.2f%%  2NxN %.2f%%  AMP %.2f%%)  "
-                                "Intra %.2f%% (DC %.2f%%  Planar %.2f%%  Ang %.2f%% )  Split %.2f%%  Skipped %.2f%% \n", g_maxCUWidth >> depth,
-                                cntInter, cuInterDistribution[0], cuInterDistribution[2], cuInterDistribution[1], cuInterDistribution[3],
-                                cntIntra, cuIntraDistribution[0], cuIntraDistribution[1], cuIntraDistribution[2], cntSplit, cntSkipCu);
+                        x265_log(&param, X265_LOG_INFO, "Inter B%d:Split %I64d%% Skip %I64d%% Inter %I64d%%(%dx%d %I64d%% %dx%d %I64d%%"
+                                " %dx%d %I64d%% AMP %I64d%%) Intra %I64d%%(DC %I64d%% Planar %I64d%% Ang %I64d%%)\n", cuSize, cntSplit, cntSkipCu,
+                                cntInter, cuSize, cuSize, cuInterDistribution[0], cuSize/2, cuSize, cuInterDistribution[2], cuSize, cuSize/2, cuInterDistribution[1],
+                                cuInterDistribution[3], cntIntra[depth], cuIntraDistribution[0], cuIntraDistribution[1], cuIntraDistribution[2]);
                 }
                 else
                 {
                     if (sliceType == P_SLICE)
-                        x265_log(&param, X265_LOG_INFO, "Inter P%d    Inter %.2f%% (2Nx2N %.2f%%  Nx2N %.2f%%  2NxN %.2f%%  AMP %.2f%%)  "
-                                "Intra %.2f%% (DC %.2f%%  Planar %.2f%%  Ang %.2f%%  NXN %.2f%%)  Skipped %.2f%% \n", g_maxCUWidth >> depth,
-                                cntInter, cuInterDistribution[0], cuInterDistribution[2], cuInterDistribution[1], cuInterDistribution[3],
-                                cntIntra, cuIntraDistribution[0], cuIntraDistribution[1], cuIntraDistribution[2], cntIntraNxN, cntSkipCu);
+                        x265_log(&param, X265_LOG_INFO, "Inter P%-2d:Skip %I64d%% Inter %I64d%%(%dx%d %I64d%% %dx%d %I64d%%"
+                                " %dx%d %I64d%% AMP %I64d%%) Intra %I64d%%(DC %I64d%% Planar %I64d%% Ang %I64d%% %dx%d %I64d%%)\n", cuSize,
+                                cntSkipCu, cntInter, cuSize, cuSize, cuInterDistribution[0], cuSize/2, cuSize, cuInterDistribution[2], cuSize,
+                                cuSize/2, cuInterDistribution[1], cuInterDistribution[3], cntIntra[depth], cuIntraDistribution[0],
+                                cuIntraDistribution[1], cuIntraDistribution[2], cuSize/2, cuSize/2, cntIntraNxN);
                     else
-                        x265_log(&param, X265_LOG_INFO, "Inter B%d    Inter %.2f%% (2Nx2N %.2f%%  Nx2N %.2f%%  2NxN %.2f%%  AMP %.2f%%)  "
-                                "Intra %.2f%% (DC %.2f%%  Planar %.2f%%  Ang %.2f%%  NXN %.2f%%)  Skipped %.2f%% \n", g_maxCUWidth >> depth,
-                                cntInter, cuInterDistribution[0], cuInterDistribution[2], cuInterDistribution[1], cuInterDistribution[3],
-                                cntIntra, cuIntraDistribution[0], cuIntraDistribution[1], cuIntraDistribution[2], cntIntraNxN, cntSkipCu);
+                        x265_log(&param, X265_LOG_INFO, "Inter B%-2d:Skip %I64d%% Inter %I64d%%(%dx%d %I64d%% %dx%d %I64d%%"
+                                " %dx%d %I64d%% AMP %I64d%%) Intra %I64d%%(DC %I64d%% Planar %I64d%% Ang %I64d%% %dx%d %I64d%%)\n", cuSize,
+                                cntSkipCu, cntInter, cuSize, cuSize, cuInterDistribution[0], cuSize/2, cuSize, cuInterDistribution[2], cuSize,
+                                cuSize/2, cuInterDistribution[1], cuInterDistribution[3], cntIntra[depth], cuIntraDistribution[0],
+                                cuIntraDistribution[1], cuIntraDistribution[2], cuSize/2, cuSize/2, cntIntraNxN);
                 }
             }
+        }
+        if (sliceType == I_SLICE)
+        {
+            char stats[50];
+            if (g_maxCUDepth == 4)
+                sprintf(stats, "%I64d%%  %I64d%%  %I64d%%  %I64d%%  %I64d%%", cntIntra[0], cntIntra[1], cntIntra[2], cntIntra[3], cntIntraNxN);
+            else if (g_maxCUDepth == 3)
+                sprintf(stats, "%I64d%%  %I64d%%  %I64d%%  %I64d%%", cntIntra[0], cntIntra[1], cntIntra[2], cntIntraNxN);
+            else
+                sprintf(stats, "%I64d%%  %I64d%%  %I64d%%", cntIntra[0], cntIntra[1], cntIntraNxN);
+            x265_log(&param, X265_LOG_INFO, "I-frame %d..4:  %s\n", g_maxCUWidth, stats);
+        }
+    }
+    if (param.logLevel >= X265_LOG_INFO)
+    {
+        char buffer[200];
+        if (m_analyzeI.m_numPics)
+            x265_log(&param, X265_LOG_INFO, "frame I: %s\n", statsString(m_analyzeI, buffer));
+        if (m_analyzeP.m_numPics)
+            x265_log(&param, X265_LOG_INFO, "frame P: %s\n", statsString(m_analyzeP, buffer));
+        if (m_analyzeB.m_numPics)
+            x265_log(&param, X265_LOG_INFO, "frame B: %s\n", statsString(m_analyzeB, buffer));
+        if (m_analyzeAll.m_numPics)
+            x265_log(&param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
+        if (param.bEnableWeightedPred)
+        {
+            x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
+                     m_numWPFrames, m_analyzeP.m_numPics, (float)100.0 * m_numWPFrames / m_analyzeP.m_numPics);
         }
     }
 }

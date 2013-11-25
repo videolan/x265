@@ -636,14 +636,26 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
         if (outBestCU->m_totalCost < outTempCU->m_totalCost)
         {
             m_log->cntIntra[depth]++;
-            m_log->cntIntra[depth + 1] = m_log->cntIntra[depth + 1] - 4 + boundaryCu;
+            for (int i = 0; i < 4; i++)
+            {
+                if (outTempCU->getPartitionSize(i) != SIZE_NxN)
+                    m_log->cntIntra[depth + 1]--;
+                else
+                    m_log->cntIntraNxN--;
+            }
+            m_log->cntIntra[depth + 1] += boundaryCu;
         }
         xCheckBestMode(outBestCU, outTempCU, depth); // RD compare current prediction with split prediction.
     }
 
     if (depth == g_maxCUDepth - 1 && bSubBranch)
     {
-        m_log->cntIntra[depth]++;
+        if (outBestCU->getPartitionSize(0) == SIZE_NxN)
+        {
+            m_log->cntIntraNxN++;
+        }
+        else
+            m_log->cntIntra[depth]++;
     }
     outBestCU->copyToPic(depth); // Copy Best data to Picture for next partition prediction.
 

@@ -350,7 +350,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
 void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, uint32_t PartitionIndex, UChar minDepth)
 {
-    m_log->cntTotalCu[depth]++;
     m_abortFlag = false;
 
     TComPic* pic = outTempCU->getPic();
@@ -424,6 +423,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     if (!(depth < minDepth)) //topskip
 #endif
     {
+        m_log->cntTotalCu[depth]++;
         if (!bSliceEnd && bInsidePicture)
         {
             // variables for fast encoder decision
