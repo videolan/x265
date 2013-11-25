@@ -59,6 +59,9 @@
 #define DECL_X1(name, suffix) \
     DECL_PIXELS(int, name, suffix, (pixel *, intptr_t, pixel *, intptr_t))
 
+#define DECL_X1_SS(name, suffix) \
+    DECL_PIXELS(int, name, suffix, (int16_t *, intptr_t, int16_t *, intptr_t))
+
 #define DECL_X4(name, suffix) \
     DECL_PIXELS(void, name ## _x3, suffix, (pixel *, pixel *, pixel *, pixel *, intptr_t, int *)) \
     DECL_PIXELS(void, name ## _x4, suffix, (pixel *, pixel *, pixel *, pixel *, pixel *, intptr_t, int *))
@@ -86,6 +89,15 @@ DECL_X1(ssd, ssse3)
 DECL_X1(ssd, avx)
 DECL_X1(ssd, xop)
 DECL_X1(ssd, avx2)
+DECL_X1_SS(ssd_ss, mmx)
+DECL_X1_SS(ssd_ss, mmx2)
+DECL_X1_SS(ssd_ss, sse2slow)
+DECL_X1_SS(ssd_ss, sse2)
+DECL_X1_SS(ssd_ss, ssse3)
+DECL_X1_SS(ssd_ss, sse4)
+DECL_X1_SS(ssd_ss, avx)
+DECL_X1_SS(ssd_ss, xop)
+DECL_X1_SS(ssd_ss, avx2)
 DECL_X1(satd, mmx2)
 DECL_X1(satd, sse2)
 DECL_X1(satd, ssse3)

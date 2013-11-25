@@ -195,6 +195,134 @@ SSD_ONE    16,  8
 SSD_ONE    16, 16
 %endif ; HIGH_BIT_DEPTH
 
+;-----------------------------------------------------------------------------
+; int pixel_ssd_WxH( uint16_t *, intptr_t, uint16_t *, intptr_t )
+;-----------------------------------------------------------------------------
+%if HIGH_BIT_DEPTH == 0
+%macro SSD_SS 2
+cglobal pixel_ssd_ss_%1x%2, 4,7,6
+    FIX_STRIDES r1, r3
+%if mmsize == %1*4
+    %define offset0_1 r1*2
+    %define offset0_2 r1*4
+    %define offset0_3 r5
+    %define offset1_1 r3*2
+    %define offset1_2 r3*4
+    %define offset1_3 r6
+    lea     r5, [4*r1]
+    lea     r6, [4*r3]
+    lea     r5, [r5 + 2*r1]
+    lea     r6, [r6 + 2*r3]
+%elif mmsize == %1*2
+    %define offset0_1 8
+    %define offset0_2 r1*2
+    %define offset0_3 r1*2+8
+    %define offset1_1 8
+    %define offset1_2 r3*2
+    %define offset1_3 r3*2+8
+%elif mmsize == %1
+    %define offset0_1 8
+    %define offset0_2 16
+    %define offset0_3 24
+    %define offset1_1 8
+    %define offset1_2 16
+    %define offset1_3 24
+%endif
+%if %1 == 4
+    %assign %%n %2/(mmsize/%1)
+%else
+    %assign %%n %2/(2*mmsize/%1)
+%endif
+%if %%n > 1
+    mov    r4d, %%n
+%endif
+    pxor    m0, m0
+.loop
+    pmovsxwd  m1, [r0]
+    pmovsxwd  m2, [r2]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+    pmovsxwd  m1, [r0 + offset0_1]
+    pmovsxwd  m2, [r2 + offset1_1]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+    pmovsxwd  m1, [r0 + offset0_2]
+    pmovsxwd  m2, [r2 + offset1_2]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+    pmovsxwd  m1, [r0 + offset0_3]
+    pmovsxwd  m2, [r2 + offset1_3]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+%if %1 > 4
+    %assign %%m 4/(%1/8)
+    lea       r0, [r0+r1*%%m]
+    lea       r2, [r2+r3*%%m]
+    pmovsxwd  m1, [r0]
+    pmovsxwd  m2, [r2]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+    pmovsxwd  m1, [r0 + offset0_1]
+    pmovsxwd  m2, [r2 + offset1_1]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+    pmovsxwd  m1, [r0 + offset0_2]
+    pmovsxwd  m2, [r2 + offset1_2]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+    pmovsxwd  m1, [r0 + offset0_3]
+    pmovsxwd  m2, [r2 + offset1_3]
+    psubd     m1, m2
+    pmulld    m1, m1
+    paddd     m0, m1
+%endif
+%if %1 == 4
+    lea       r0, [r0+r1*(%2/%%n)*2]
+    lea       r2, [r2+r3*(%2/%%n)*2]
+%else
+    lea       r0, [r0+r1*(%2/%%n)]
+    lea       r2, [r2+r3*(%2/%%n)]
+%endif
+%if %%n > 1
+    dec    r4d
+    jg .loop
+%endif
+    phaddd    m0, m0
+    phaddd    m0, m0
+    movd     eax, m0
+    RET
+%endmacro
+%macro SSD_SS_ONE 0
+SSD_SS     4,  4
+SSD_SS     4,  8
+SSD_SS     4, 16
+SSD_SS     8,  4
+SSD_SS     8,  8
+SSD_SS     8, 16
+SSD_SS     8, 32
+SSD_SS    16,  4
+SSD_SS    16,  8
+SSD_SS    16, 12
+SSD_SS    16, 16
+SSD_SS    16, 32
+SSD_SS    16, 64
+%endmacro
+
+INIT_XMM sse2
+SSD_SS_ONE
+INIT_XMM sse4
+SSD_SS_ONE
+INIT_XMM avx
+SSD_SS_ONE
+%endif ; !HIGH_BIT_DEPTH
+
 %if HIGH_BIT_DEPTH == 0
 %macro SSD_LOAD_FULL 5
     mova      m1, [t0+%1]

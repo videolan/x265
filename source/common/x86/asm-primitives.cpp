@@ -87,6 +87,21 @@ extern "C" {
     p.sse_pp[LUMA_32x64] = x265_pixel_ssd_32x64_ ## cpu; \
     p.sse_pp[LUMA_16x64] = x265_pixel_ssd_16x64_ ## cpu
 
+#define ASSGN_SSE_SS(cpu) \
+    p.sse_ss[LUMA_4x4]   = x265_pixel_ssd_ss_4x4_ ## cpu; \
+    p.sse_ss[LUMA_4x8]   = x265_pixel_ssd_ss_4x8_ ## cpu; \
+    p.sse_ss[LUMA_4x16]   = x265_pixel_ssd_ss_4x16_ ## cpu; \
+    p.sse_ss[LUMA_8x4]   = x265_pixel_ssd_ss_8x4_ ## cpu; \
+    p.sse_ss[LUMA_8x8]   = x265_pixel_ssd_ss_8x8_ ## cpu; \
+    p.sse_ss[LUMA_8x16]   = x265_pixel_ssd_ss_8x16_ ## cpu; \
+    p.sse_ss[LUMA_8x32]   = x265_pixel_ssd_ss_8x32_ ## cpu; \
+    p.sse_ss[LUMA_16x4]   = x265_pixel_ssd_ss_16x4_ ## cpu; \
+    p.sse_ss[LUMA_16x8]   = x265_pixel_ssd_ss_16x8_ ## cpu; \
+    p.sse_ss[LUMA_16x12]   = x265_pixel_ssd_ss_16x12_ ## cpu; \
+    p.sse_ss[LUMA_16x16]   = x265_pixel_ssd_ss_16x16_ ## cpu; \
+    p.sse_ss[LUMA_16x32]   = x265_pixel_ssd_ss_16x32_ ## cpu; \
+    p.sse_ss[LUMA_16x64]   = x265_pixel_ssd_ss_16x64_ ## cpu; \
+
 #define SA8D_INTER_FROM_BLOCK(cpu) \
     p.sa8d_inter[LUMA_4x8]  = x265_pixel_satd_4x8_ ## cpu; \
     p.sa8d_inter[LUMA_8x4]  = x265_pixel_satd_8x4_ ## cpu; \
@@ -464,6 +479,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad[LUMA_12x16] = x265_pixel_sad_12x16_sse2;
 
         ASSGN_SSE(sse2);
+        ASSGN_SSE_SS(sse2);
         INIT2(sad, _sse2);
         INIT2(sad_x3, _sse2);
         INIT2(sad_x4, _sse2);
@@ -608,6 +624,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         CHROMA_FILTERS(_sse4);
         LUMA_FILTERS(_sse4);
         HEVC_SATD(sse4);
+        ASSGN_SSE_SS(sse4);
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_6x8] = x265_blockcopy_sp_6x8_sse4;
@@ -640,6 +657,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(avx);
         ASSGN_SSE(avx);
         HEVC_SATD(avx);
+        ASSGN_SSE_SS(avx);
 
         p.sad_x3[LUMA_12x16] = x265_pixel_sad_x3_12x16_avx;
         p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_avx;
