@@ -724,7 +724,7 @@ void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scal
     // NOTE: maximum of scale is (72 * 256)
     assert(scale < 32768);
     assert((num % 8) == 0);
-    assert(shift <= 6);
+    assert(shift <= 10);
 
     int add, coeffQ;
 
