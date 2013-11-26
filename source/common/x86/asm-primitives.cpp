@@ -671,6 +671,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.weight_pp = x265_weight_pp_sse4;
         p.weight_sp = x265_weight_sp_sse4;
         p.intra_pred_planar[BLOCK_4x4] = x265_intra_pred_planar4_sse4;
+        p.intra_pred_planar[BLOCK_8x8] = x265_intra_pred_planar8_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
