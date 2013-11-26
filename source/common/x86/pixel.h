@@ -356,16 +356,8 @@ LUMA_PIXELSUB_DEF(_sse4);
     uint64_t x265_pixel_var_ ## W ## x ## H ## cpu(pixel *pix, intptr_t pixstride);
 
 #define LUMA_PIXELVAR_DEF(cpu) \
-    SETUP_LUMA_PIXELVAR_FUNC(8,   4, cpu); \
     SETUP_LUMA_PIXELVAR_FUNC(8,   8, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(8,  16, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(8,  32, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(16,  4, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(16,  8, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(16, 12, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(16, 16, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(16, 32, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(16, 48, cpu);
+    SETUP_LUMA_PIXELVAR_FUNC(16, 16, cpu);
 
 LUMA_PIXELVAR_DEF(_sse2);
 

@@ -266,7 +266,7 @@ struct EncoderPrimitives
     calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];
     transpose_t     transpose[NUM_SQUARE_BLOCKS];
 
-    var_t           var[NUM_LUMA_PARTITIONS];
+    var_t           var[NUM_SQUARE_BLOCKS];
     ssim_4x4x2_core_t ssim_4x4x2_core;
     ssim_end4_t     ssim_end_4;
 

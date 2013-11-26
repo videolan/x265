@@ -688,14 +688,14 @@ float ssim_end_4(int sum0[5][4], int sum1[5][4], int width)
     return ssim;
 }
 
-template<int w, int h>
+template<int size>
 uint64_t pixel_var(pixel *pix, intptr_t i_stride)
 {
     uint32_t sum = 0, sqr = 0;
 
-    for (int y = 0; y < h; y++)
+    for (int y = 0; y < size; y++)
     {
-        for (int x = 0; x < w; x++)
+        for (int x = 0; x < size; x++)
         {
             sum += pix[x];
             sqr += pix[x] * pix[x];
@@ -983,17 +983,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.ssim_4x4x2_core = ssim_4x4x2_core;
     p.ssim_end_4 = ssim_end_4;
 
-    p.var[LUMA_8x4] = pixel_var<8, 4>;
-    p.var[LUMA_8x8] = pixel_var<8, 8>;
-    p.var[LUMA_8x16] = pixel_var<8, 16>;
-    p.var[LUMA_8x32] = pixel_var<8, 32>;
-    p.var[LUMA_16x4] = pixel_var<16, 4>;
-    p.var[LUMA_16x8] = pixel_var<16, 8>;
-    p.var[LUMA_16x12] = pixel_var<16, 12>;
-    p.var[LUMA_16x16] = pixel_var<16, 16>;
-    p.var[LUMA_16x32] = pixel_var<16, 32>;
-    p.var[LUMA_16x64] = pixel_var<16, 64>;
-
+    p.var[BLOCK_8x8] = pixel_var<8>;
+    p.var[BLOCK_16x16] = pixel_var<16>;
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }
 }

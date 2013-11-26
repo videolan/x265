@@ -68,10 +68,10 @@ static inline uint32_t acEnergyPlane(TComPic *pic, pixel* src, int srcStride, in
     {
         ALIGN_VAR_8(pixel, pix[8 * 8]);
         primitives.luma_copy_pp[LUMA_8x8](pix, 8, src, srcStride);
-        return acEnergyVar(pic, primitives.var[LUMA_8x8](pix, 8), 6, bChroma);
+        return acEnergyVar(pic, primitives.var[BLOCK_8x8](pix, 8), 6, bChroma);
     }
     else
-        return acEnergyVar(pic, primitives.var[LUMA_16x16](src, srcStride), 8, bChroma);
+        return acEnergyVar(pic, primitives.var[BLOCK_16x16](src, srcStride), 8, bChroma);
 }
 
 /* Find the total AC energy of each block in all planes */

@@ -435,19 +435,11 @@ extern "C" {
     SETUP_LUMA_BLOCKCOPY_FUNC_DEF(16, 64, cpu);
 
 #define SETUP_PIXEL_VAR_DEF(W, H, cpu) \
-    p.var[LUMA_ ## W ## x ## H] = x265_pixel_var_ ## W ## x ## H ## cpu;
+    p.var[BLOCK_ ## W ## x ## H] = x265_pixel_var_ ## W ## x ## H ## cpu;
 
 #define LUMA_VAR(cpu) \
-    SETUP_PIXEL_VAR_DEF(8,   4, cpu); \
     SETUP_PIXEL_VAR_DEF(8,   8, cpu); \
-    SETUP_PIXEL_VAR_DEF(8,  16, cpu); \
-    SETUP_PIXEL_VAR_DEF(8,  32, cpu); \
-    SETUP_PIXEL_VAR_DEF(16,  4, cpu); \
-    SETUP_PIXEL_VAR_DEF(16,  8, cpu); \
-    SETUP_PIXEL_VAR_DEF(16, 12, cpu); \
-    SETUP_PIXEL_VAR_DEF(16, 16, cpu); \
-    SETUP_PIXEL_VAR_DEF(16, 32, cpu); \
-    SETUP_PIXEL_VAR_DEF(16, 64, cpu);
+    SETUP_PIXEL_VAR_DEF(16, 16, cpu);
 
 namespace x265 {
 // private x265 namespace

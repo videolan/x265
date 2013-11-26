@@ -823,15 +823,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.var[part])
-    {
-        if (!check_pixel_var(ref.var[part], opt.var[part]))
-        {
-            printf("var[%s]: failed!\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     for(int i = 0; i < X265_CSP_COUNT; i++)
     {
         if (opt.chroma[i].copy_pp[part])
@@ -951,6 +942,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 return false;
             }
         }
+
+    if (opt.var[i])
+    {
+        if (!check_pixel_var(ref.var[i], opt.var[i]))
+        {
+            printf("var[%dx%d] failed\n", 4 << i, 4 << i);
+            return false;
+        }
+    }
     }
 
     if (opt.cvt32to16_shr)
@@ -1145,12 +1145,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
     }
 
-    if (opt.var[part])
-    {
-        HEADER("var[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.var[part], ref.var[part], pbuf1, STRIDE);
-    }
-
     for (int i = 0; i < X265_CSP_COUNT; i++)
     {
         if (opt.chroma[i].copy_pp[part])
@@ -1243,6 +1237,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("transpose[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.transpose[i], ref.transpose[i], pbuf1, pbuf2, STRIDE);
+        }
+
+        if (opt.var[i])
+        {
+            HEADER("var[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.var[i], ref.var[i], pbuf1, STRIDE);
         }
     }
 
