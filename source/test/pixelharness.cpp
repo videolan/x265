@@ -287,10 +287,10 @@ bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
     memset(ref_dest, 0, 64 * 64 * sizeof(pixel));
     memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
     int j = 0;
-    int width = (2 * rand()) % 64;
+    int width = 2 * (rand() % 32 + 1);
     int height = 8;
-    int w0 = rand() % 256;
-    int shift = rand() % 12;
+    int w0 = rand() % 128;
+    int shift = rand() % 15;
     int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
     for (int i = 0; i < ITERS; i++)
@@ -315,10 +315,10 @@ bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
     memset(ref_dest, 0, 64 * 64 * sizeof(pixel));
     memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
     int j = 0;
-    int width = (2 * rand()) % 64;
+    int width = 16 * (rand() % 4 + 1);
     int height = 8;
-    int w0 = rand() % 256;
-    int shift = rand() % 12;
+    int w0 = rand() % 128;
+    int shift = rand() % 15;
     int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
     for (int i = 0; i < ITERS; i++)
@@ -632,6 +632,23 @@ bool PixelHarness::check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt)
     return true;
 }
 
+bool PixelHarness::check_pixel_var(var_t ref, var_t opt)
+{
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        uint64_t vres = opt(pbuf1, STRIDE);
+        uint64_t cres = ref(pbuf1, STRIDE);
+        if (vres != cres)
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -759,6 +776,16 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
             return false;
         }
     }
+
+    if (opt.var[part])
+    {
+        if (!check_pixel_var(ref.var[part], opt.var[part]))
+        {
+            printf("var[%s]: failed!\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
     for(int i = 0; i < X265_CSP_COUNT; i++)
     {
         if (opt.chroma[i].copy_pp[part])
@@ -1051,6 +1078,12 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         HEADER("luma_add_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+    }
+
+    if (opt.var[part])
+    {
+        HEADER("var[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.var[part], ref.var[part], pbuf1, STRIDE);
     }
 
     for (int i = 0; i < X265_CSP_COUNT; i++)

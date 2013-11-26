@@ -26,7 +26,7 @@
 
 SECTION_RODATA 32
 
-
+multi_2Row: dw 1, 2, 3, 4, 1, 2, 3, 4
 
 SECTION .text
 
@@ -360,5 +360,65 @@ cglobal intra_pred_dc32, 4, 5, 5, above, left, dst, dstStride, filter
     movu            [r2 + r3 + 16],m1
     lea             r2,            [r2 + 2 * r3]
 %endrep
+
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_planar4, 4,7,5, above, left, dst, dstStride
+
+    pmovzxbw        m0,         [r0]      ; topRow[i] = above[i];
+    punpcklqdq      m0,         m0
+
+    pxor            m1,         m1
+    movd            m2,         [r1 + 4]  ; bottomLeft = left[4]
+    movzx           r6d, byte   [r0 + 4]  ; topRight   = above[4];
+    pshufb          m2,         m1
+    punpcklbw       m2,         m1
+    psubw           m2,         m0        ; bottomRow[i] = bottomLeft - topRow[i]
+    psllw           m0,         2
+    punpcklqdq      m3,         m2, m1
+    psubw           m0,         m3
+    paddw           m2,         m2
+
+%macro COMP_PRED_PLANAR_2ROW 1
+    movzx           r4d, byte   [r1 + %1]
+    lea             r4d,        [r4d * 4 + 4]
+    movd            m3,         r4d
+    pshuflw         m3,         m3, 0
+
+    movzx           r4d, byte   [r1 + %1 + 1]
+    lea             r4d,        [r4d * 4 + 4]
+    movd            m4,         r4d
+    pshuflw         m4,         m4, 0
+    punpcklqdq      m3,         m4        ; horPred
+
+    movzx           r4d, byte   [r1 + %1]
+    mov             r5d,        r6d
+    sub             r5d,        r4d
+    movd            m4,         r5d
+    pshuflw         m4,         m4, 0
+
+    movzx           r4d, byte   [r1 + %1 + 1]
+    mov             r5d,        r6d
+    sub             r5d,        r4d
+    movd            m1,         r5d
+    pshuflw         m1,         m1, 0
+    punpcklqdq      m4,         m1        ; rightColumnN
+
+    pmullw          m4,         [multi_2Row]
+    paddw           m3,         m4
+    paddw           m0,         m2
+    paddw           m3,         m0
+    psraw           m3,         3
+    packuswb        m3,         m3
+
+    movd            [r2],       m3
+    pshufd          m3,         m3, 0x55
+    movd            [r2 + r3],  m3
+    lea             r2,         [r2 + 2 * r3]
+%endmacro
+
+    COMP_PRED_PLANAR_2ROW 0
+    COMP_PRED_PLANAR_2ROW 2
 
     RET

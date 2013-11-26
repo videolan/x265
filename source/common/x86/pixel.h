@@ -59,6 +59,9 @@
 #define DECL_X1(name, suffix) \
     DECL_PIXELS(int, name, suffix, (pixel *, intptr_t, pixel *, intptr_t))
 
+#define DECL_X1_SS(name, suffix) \
+    DECL_PIXELS(int, name, suffix, (int16_t *, intptr_t, int16_t *, intptr_t))
+
 #define DECL_X4(name, suffix) \
     DECL_PIXELS(void, name ## _x3, suffix, (pixel *, pixel *, pixel *, pixel *, intptr_t, int *)) \
     DECL_PIXELS(void, name ## _x4, suffix, (pixel *, pixel *, pixel *, pixel *, pixel *, intptr_t, int *))
@@ -86,6 +89,15 @@ DECL_X1(ssd, ssse3)
 DECL_X1(ssd, avx)
 DECL_X1(ssd, xop)
 DECL_X1(ssd, avx2)
+DECL_X1_SS(ssd_ss, mmx)
+DECL_X1_SS(ssd_ss, mmx2)
+DECL_X1_SS(ssd_ss, sse2slow)
+DECL_X1_SS(ssd_ss, sse2)
+DECL_X1_SS(ssd_ss, ssse3)
+DECL_X1_SS(ssd_ss, sse4)
+DECL_X1_SS(ssd_ss, avx)
+DECL_X1_SS(ssd_ss, xop)
+DECL_X1_SS(ssd_ss, avx2)
 DECL_X1(satd, mmx2)
 DECL_X1(satd, sse2)
 DECL_X1(satd, ssse3)
@@ -347,6 +359,23 @@ DECL_ADS(1, avx2)
 CHROMA_PIXELSUB_DEF(_sse4);
 LUMA_PIXELSUB_DEF(_sse4);
 
+#define SETUP_LUMA_PIXELVAR_FUNC(W, H, cpu) \
+    uint64_t x265_pixel_var_ ## W ## x ## H ## cpu(pixel *pix, intptr_t pixstride);
+
+#define LUMA_PIXELVAR_DEF(cpu) \
+    SETUP_LUMA_PIXELVAR_FUNC(8,   4, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(8,   8, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(8,  16, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(8,  32, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(16,  4, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(16,  8, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(16, 12, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(16, 16, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(16, 32, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(16, 48, cpu);
+
+LUMA_PIXELVAR_DEF(_sse2);
+
 #undef DECL_PIXELS
 #undef DECL_SUF
 #undef DECL_HEVC_SSD
@@ -357,6 +386,8 @@ LUMA_PIXELSUB_DEF(_sse4);
 #undef SETUP_LUMA_PIXELSUB_PS_FUNC
 #undef CHROMA_PIXELSUB_DEF
 #undef LUMA_PIXELSUB_DEF
+#undef LUMA_PIXELVAR_DEF
+#undef SETUP_LUMA_PIXELVAR_FUNC
 
 void x265_calcRecons4_sse2(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 void x265_calcRecons8_sse2(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
@@ -379,5 +410,8 @@ int x265_pixel_ssd_64x16_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x32_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x48_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x64_sse4(pixel *, intptr_t, pixel *, intptr_t);
+void x265_dequant_normal_sse4(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift);
+void x265_weight_pp_sse4(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+void x265_weight_sp_sse4(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 
 #endif // ifndef X265_I386_PIXEL_H
