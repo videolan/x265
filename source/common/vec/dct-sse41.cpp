@@ -40,37 +40,6 @@
 using namespace x265;
 
 namespace {
-// TODO: normal and 8bpp dequant have only 16-bits dynamic rang, we can reduce 32-bits multiplication later
-void dequant_normal(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
-{
-    int valueToAdd = 1 << (shift - 1);
-    __m128i vScale = _mm_set1_epi32(scale);
-    __m128i vAdd = _mm_set1_epi32(valueToAdd);
-
-    for (int n = 0; n < num; n = n + 8)
-    {
-        __m128i quantCoef1, quantCoef2, quantCoef12, sign;
-
-        quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
-        quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
-
-        quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
-        sign = _mm_srai_epi16(quantCoef12, 15);
-        quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
-        quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
-
-        quantCoef1 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef1, vScale), vAdd), _mm_cvtsi32_si128(shift));
-        quantCoef2 = _mm_sra_epi32(_mm_add_epi32(_mm_mullo_epi32(quantCoef2, vScale), vAdd), _mm_cvtsi32_si128(shift));
-
-        quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
-        sign = _mm_srai_epi16(quantCoef12, 15);
-        quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
-        _mm_storeu_si128((__m128i*)(coef + n), quantCoef1);
-        quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
-        _mm_storeu_si128((__m128i*)(coef + n + 4), quantCoef2);
-    }
-}
-
 void dequant_scaling(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
 {
     assert(num <= 32 * 32);
@@ -263,7 +232,7 @@ namespace x265 {
 void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives &p)
 {
     p.dequant_scaling = dequant_scaling;
-    p.dequant_normal = dequant_normal;
+
 #if !HIGH_BIT_DEPTH
     p.idct[IDST_4x4] = idst4; // fails with 10bit inputs
 #endif
