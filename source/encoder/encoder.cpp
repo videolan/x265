@@ -460,7 +460,7 @@ void Encoder::printSummary()
 
                 if (cntIntra[depth])
                 {
-                    len += sprintf(stats + len, " Intra "LL"%%(DC "LL"%% Planar "LL"%% Ang "LL"%%",
+                    len += sprintf(stats + len, " Intra "LL"%%(DC "LL"%% P "LL"%% Ang "LL"%%",
                                    cntIntra[depth], cuIntraDistribution[0],
                                    cuIntraDistribution[1], cuIntraDistribution[2]);
                     if (depth == (int)g_maxCUDepth - 1)
