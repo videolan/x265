@@ -1213,7 +1213,6 @@ void Encoder::configure(x265_param *_param)
     }
     if (_param->bpyramid && !_param->bframes)
     {
-        x265_log(_param, X265_LOG_WARNING,"b-pyramid enabled if bframes > 1\n");
         _param->bpyramid = 0;
     }
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
