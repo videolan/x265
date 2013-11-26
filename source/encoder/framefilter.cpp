@@ -82,7 +82,7 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
     }
 
     if (m_cfg->param.bEnableSsim)
-        m_ssimBuf = (ssim_t*)x265_malloc(sizeof(ssim_t) * 8 * (m_cfg->param.sourceWidth / 4 + 3));
+        m_ssimBuf = (int*)x265_malloc(sizeof(int) * 8 * (m_cfg->param.sourceWidth / 4 + 3));
 }
 
 void FrameFilter::start(TComPic *pic)
@@ -490,8 +490,8 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     int z = 0;
     float ssim = 0.0;
 
-    ssim_t(*sum0)[4] = (ssim_t(*)[4])buf;
-    ssim_t(*sum1)[4] = sum0 + (width >> 2) + 3;
+    int(*sum0)[4] = (int(*)[4])buf;
+    int(*sum1)[4] = sum0 + (width >> 2) + 3;
     width >>= 2;
     height >>= 2;
 
@@ -501,7 +501,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
         {
             void* swap = sum0;
             sum0 = sum1;
-            sum1 = (ssim_t(*)[4])swap;
+            sum1 = (int(*)[4])swap;
             for (int x = 0; x < width; x += 2)
             {
                 primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
