@@ -803,11 +803,11 @@ cglobal weight_pp, 6, 7, 6
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
 %if ARCH_X86_64
-cglobal weight_sp, 6, 7+2, 6
+cglobal weight_sp, 6, 7+2, 7
     %define tmp_r0      r7
     %define tmp_r1      r8
 %else ; ARCH_X86_64 = 0
-cglobal weight_sp, 6, 7, 6, 0-(2*4)
+cglobal weight_sp, 6, 7, 7, 0-(2*4)
     %define tmp_r0      [(rsp + 0 * 4)]
     %define tmp_r1      [(rsp + 1 * 4)]
 %endif ; ARCH_X86_64
