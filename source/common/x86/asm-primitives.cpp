@@ -637,6 +637,13 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_pp[LUMA_64x48] = x265_pixel_ssd_64x48_sse4;
         p.sse_pp[LUMA_64x64] = x265_pixel_ssd_64x64_sse4;
 
+        p.sse_sp[LUMA_16x4] = x265_pixel_ssd_sp_16x4_sse4;
+        p.sse_sp[LUMA_16x8] = x265_pixel_ssd_sp_16x8_sse4;
+        p.sse_sp[LUMA_16x12] = x265_pixel_ssd_sp_16x12_sse4;
+        p.sse_sp[LUMA_16x16] = x265_pixel_ssd_sp_16x16_sse4;
+        p.sse_sp[LUMA_16x32] = x265_pixel_ssd_sp_16x32_sse4;
+        p.sse_sp[LUMA_16x64] = x265_pixel_ssd_sp_16x64_sse4;
+
         CHROMA_PIXELSUB_PS(_sse4);
 
         CHROMA_FILTERS(_sse4);
