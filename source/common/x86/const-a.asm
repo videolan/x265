@@ -65,6 +65,7 @@ const pw_pmpmpmpm, dw 1,-1,1,-1,1,-1,1,-1
 const pw_pmmpzzzz, dw 1,-1,-1,1,0,0,0,0
 
 const pd_32,       times 4 dd 32
+const pd_128,      times 4 dd 128
 const pd_1024,     times 4 dd 1024
 const pd_ffff,     times 4 dd 0xffff
 const pw_ff00,     times 8 dw 0xff00
