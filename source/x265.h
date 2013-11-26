@@ -575,15 +575,26 @@ typedef struct x265_param
 
     struct
     {
+        /* Explicit mode of rate-control, necessary for API users. It must
+         * be one of the X265_RC_METHODS enum values. */
+        int       rateControlMode;
+
+        /* Base QP to use for Constant QP rate control. Adaptive QP may alter
+         * the QP used for each block. If a QP is specified on the command line
+         * CQP rate control is implied. Default: 32 */
+        int       qp;
+
+        /* target bitrate for Average BitRate (ABR) rate control. If a non- zero
+         * bitrate is specified on the command line, ABR is implied. Default 0 */
         int       bitrate;
+
         double    rateTolerance;
         double    qCompress;
         double    ipFactor;
         double    pbFactor;
         int       qpStep;
-        int       rateControlMode;             ///<Values corresponding to RcMethod
-        int       qp;                          ///< Constant QP base value
         double    rfConstant;                  ///< Constant rate factor (CRF)
+
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
     } rc;
