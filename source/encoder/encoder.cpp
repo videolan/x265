@@ -261,7 +261,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             switch (out->getSlice()->getSliceType())
             {
             case I_SLICE:
-                pic_out->sliceType = X265_TYPE_I;
+                pic_out->sliceType = out->m_lowres.bKeyframe ? X265_TYPE_IDR : X265_TYPE_I;
                 break;
             case P_SLICE:
                 pic_out->sliceType = X265_TYPE_P;
