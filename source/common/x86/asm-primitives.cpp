@@ -33,6 +33,7 @@ extern "C" {
 #include "ipfilter8.h"
 #include "blockcopy8.h"
 #include "intrapred.h"
+#include "dct8.h"
 }
 
 #define INIT2_NAME(name1, name2, cpu) \
@@ -562,6 +563,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.transpose[BLOCK_64x64] = x265_transpose64_sse2;
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
         p.ssim_end_4 = x265_pixel_ssim_end4_sse2;
+        p.dct[DCT_4x4] = x265_dct4_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

@@ -1737,7 +1737,6 @@ namespace x265 {
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
 {
 #if !HIGH_BIT_DEPTH
-    p.dct[DCT_4x4] = dct4;
     p.idct[IDCT_4x4] = idct4;
     p.idct[IDCT_8x8] = idct8;
     p.idct[IDCT_16x16] = idct16;
