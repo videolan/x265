@@ -691,7 +691,6 @@ cglobal dequant_normal, 2,5,8
     punpcklwd   m1, m2
     pshufd      m1, m1, 0           ; m1 = dword [add scale]
     mova        m2, [pw_1]
-    mov         r1, r1m
     mov         r2d, r2m
 
     ; m0 = shift
