@@ -571,6 +571,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
         p.ssim_end_4 = x265_pixel_ssim_end4_sse2;
         p.dct[DCT_4x4] = x265_dct4_sse2;
+        p.idct[IDCT_4x4] = x265_idct4_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
