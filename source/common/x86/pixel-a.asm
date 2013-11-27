@@ -1499,6 +1499,56 @@ cglobal pixel_ssd_sp_32x64, 4, 7, 8, src1, stride1, src2, stride2
     RET
 
 ;-----------------------------------------------------------------------------
+; int pixel_ssd_48x64( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_sp_48x64, 4, 7, 8, src1, stride1, src2, stride2
+
+    pxor     m7,     m7
+    pxor     m6,     m6
+    mov      r5,     r0
+    mov      r6,     r2
+    add      r1,     r1
+    lea      r4,     [r1 * 2]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r5 + 32]
+    lea      r2,     [r6 + 16]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r5 + 64]
+    lea      r2,     [r6 + 32]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    lea      r0,     [r0 + r4]
+    lea      r2,     [r2 + 2 * r3]
+    call     pixel_ssd_sp_16x16_internal
+    HADDD    m7,     m1
+    movd     eax,    m7
+    RET
+
+;-----------------------------------------------------------------------------
 ; void pixel_ssd_nv12_core( uint16_t *pixuv1, intptr_t stride1, uint16_t *pixuv2, intptr_t stride2,
 ;                           int width, int height, uint64_t *ssd_u, uint64_t *ssd_v )
 ;
