@@ -46,6 +46,13 @@
 #include <string.h>
 #include <time.h>
 
+#if HAVE_INT_TYPES_H
+#include <inttypes.h>
+#define LL "%I64d"
+#else
+#define LL "%lld"
+#endif
+
 using namespace x265;
 
 Encoder::Encoder()
@@ -431,11 +438,6 @@ void Encoder::printSummary()
                 if (sliceType == I_SLICE)
                     cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.cntTotalCu[depth];
             }
-#if defined(_MSC_VER)
-#define LL "%I64d"
-#else
-#define LL "%lld"
-#endif
             // print statistics
             if (sliceType != I_SLICE)
             {
