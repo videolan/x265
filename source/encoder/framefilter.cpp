@@ -309,8 +309,8 @@ void FrameFilter::processRowPost(int row)
         int stride2 = m_pic->getPicYuvRec()->getStride();
         int bEnd = ((row + 1) == (this->m_numRows - 1));
         int bStart = (row == 0);
-        int minPixY = row * 64 - 4 * !bStart;
-        int maxPixY = (row + 1) * 64 - 4 * !bEnd;
+        int minPixY = row * g_maxCUHeight - 4 * !bStart;
+        int maxPixY = (row + 1) * g_maxCUHeight - 4 * !bEnd;
         int ssim_cnt;
         x265_emms();
 
