@@ -49,53 +49,11 @@ void convert16to32_shl(int32_t *dst, int16_t *org, intptr_t stride, int shift, i
         }
     }
 }
-
-#if !HIGH_BIT_DEPTH
-void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
-{
-    int i;
-    const __m128i c8_1 = _mm_set1_epi32(0x01010101);
-    const __m128i c16_2 = _mm_set1_epi32(0x00020002);
-
-    for (i = 0; i < 64; i += 2)
-    {
-        __m128i T00 = _mm_loadu_si128((__m128i*)&src[(i + 0) *  stride +  0]);
-        __m128i T01 = _mm_loadu_si128((__m128i*)&src[(i + 0) *  stride + 16]);
-        __m128i T02 = _mm_loadu_si128((__m128i*)&src[(i + 0) *  stride + 32]);
-        __m128i T03 = _mm_loadu_si128((__m128i*)&src[(i + 0) *  stride + 48]);
-        __m128i T10 = _mm_loadu_si128((__m128i*)&src[(i + 1) *  stride +  0]);
-        __m128i T11 = _mm_loadu_si128((__m128i*)&src[(i + 1) *  stride + 16]);
-        __m128i T12 = _mm_loadu_si128((__m128i*)&src[(i + 1) *  stride + 32]);
-        __m128i T13 = _mm_loadu_si128((__m128i*)&src[(i + 1) *  stride + 48]);
-
-        __m128i S00 = _mm_maddubs_epi16(T00, c8_1);
-        __m128i S01 = _mm_maddubs_epi16(T01, c8_1);
-        __m128i S02 = _mm_maddubs_epi16(T02, c8_1);
-        __m128i S03 = _mm_maddubs_epi16(T03, c8_1);
-        __m128i S10 = _mm_maddubs_epi16(T10, c8_1);
-        __m128i S11 = _mm_maddubs_epi16(T11, c8_1);
-        __m128i S12 = _mm_maddubs_epi16(T12, c8_1);
-        __m128i S13 = _mm_maddubs_epi16(T13, c8_1);
-
-        __m128i S20 = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(S00, S10), c16_2), 2);
-        __m128i S21 = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(S01, S11), c16_2), 2);
-        __m128i S22 = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(S02, S12), c16_2), 2);
-        __m128i S23 = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(S03, S13), c16_2), 2);
-
-        _mm_storeu_si128((__m128i*)&dst[(i >> 1) * 32 +  0], _mm_packus_epi16(S20, S21));
-        _mm_storeu_si128((__m128i*)&dst[(i >> 1) * 32 + 16], _mm_packus_epi16(S22, S23));
-    }
-}
-#endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {
 void Setup_Vec_PixelPrimitives_ssse3(EncoderPrimitives &p)
 {
     p.cvt16to32_shl = convert16to32_shl;
-
-#if !HIGH_BIT_DEPTH
-    p.scale2D_64to32 = scale2D_64to32;
-#endif
 }
 }
