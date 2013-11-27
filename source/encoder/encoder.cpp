@@ -494,7 +494,7 @@ void Encoder::printSummary()
             x265_log(&param, X265_LOG_INFO, "frame B: %s\n", statsString(m_analyzeB, buffer));
         if (m_analyzeAll.m_numPics)
             x265_log(&param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
-        if (param.bEnableWeightedPred)
+        if (param.bEnableWeightedPred && m_analyzeP.m_numPics)
         {
             x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
                      m_numWPFrames, m_analyzeP.m_numPics, (float)100.0 * m_numWPFrames / m_analyzeP.m_numPics);
