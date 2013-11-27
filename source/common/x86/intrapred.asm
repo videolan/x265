@@ -28,6 +28,7 @@ SECTION_RODATA 32
 
 multi_2Row: dw 1, 2, 3, 4, 1, 2, 3, 4
 multiL:     dw 1, 2, 3, 4, 5, 6, 7, 8
+multiH:     dw 9, 10, 11, 12, 13, 14, 15, 16
 
 SECTION .text
 
@@ -488,5 +489,78 @@ cglobal intra_pred_planar8, 4,4,7, above, left, dst, dstStride
     COMP_PRED_PLANAR_ROW 5
     COMP_PRED_PLANAR_ROW 6
     COMP_PRED_PLANAR_ROW 7
+
+    RET
+
+
+;----------------------------------------------------------------------------------------
+; void intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
+;----------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
+
+    pxor            m0,         m0
+    pmovzxbw        m1,         [r0]       ; topRow[0-7]
+    pmovzxbw        m2,         [r0 + 8]   ; topRow[8-15]
+
+    movd            m3,         [r1 + 16]
+    pshufb          m3,         m0
+    punpcklbw       m3,         m0         ; v_bottomLeft = left[16]
+    movzx           r4d, byte   [r0 + 16]  ; topRight     = above[16]
+
+    psubw           m4,         m3, m1     ; v_bottomRow[0]
+    psubw           m5,         m3, m2     ; v_bottomRow[1]
+
+    psllw           m1,         4
+    psllw           m2,         4
+
+%macro COMP_PRED_PLANAR_ROW 1
+    movzx           r5d, byte   [r1 + %1]
+    add             r5d,        r5d
+    lea             r5d,        [r5d * 8 + 16]
+    movd            m3,         r5d
+    pshuflw         m3,         m3, 0
+    pshufd          m3,         m3, 0      ; horPred
+
+    movzx           r5d, byte   [r1 + %1]
+    mov             r0d,        r4d
+    sub             r0d,        r5d
+    movd            m6,         r0d
+    pshuflw         m6,         m6, 0
+    pshufd          m6,         m6, 0
+
+    pmullw          m7,         m6, [multiL]
+    paddw           m7,         m3
+    paddw           m1,         m4
+    paddw           m7,         m1
+    psraw           m7,         5
+
+    pmullw          m6,         m6, [multiH]
+    paddw           m3,         m6
+    paddw           m2,         m5
+    paddw           m3,         m2
+    psraw           m3,         5
+
+    packuswb        m7,         m3
+    movu            [r2],       m7
+    lea             r2,         [r2 + r3]
+%endmacro
+
+    COMP_PRED_PLANAR_ROW 0
+    COMP_PRED_PLANAR_ROW 1
+    COMP_PRED_PLANAR_ROW 2
+    COMP_PRED_PLANAR_ROW 3
+    COMP_PRED_PLANAR_ROW 4
+    COMP_PRED_PLANAR_ROW 5
+    COMP_PRED_PLANAR_ROW 6
+    COMP_PRED_PLANAR_ROW 7
+    COMP_PRED_PLANAR_ROW 8
+    COMP_PRED_PLANAR_ROW 9
+    COMP_PRED_PLANAR_ROW 10
+    COMP_PRED_PLANAR_ROW 11
+    COMP_PRED_PLANAR_ROW 12
+    COMP_PRED_PLANAR_ROW 13
+    COMP_PRED_PLANAR_ROW 14
+    COMP_PRED_PLANAR_ROW 15
 
     RET
