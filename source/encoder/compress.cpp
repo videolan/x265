@@ -138,7 +138,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
         // Filtered and Unfiltered refAbove and refLeft pointing to above and left.
         above         = aboveScale;
         left          = leftScale;
-        aboveFiltered = aboveScale; 
+        aboveFiltered = aboveScale;
         leftFiltered  = leftScale;
     }
 
@@ -232,15 +232,22 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+    outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
+    outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
+    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    outTempCU->setMergeFlagSubParts(true, 0, 0, depth);
+
+    outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
+    outBestCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
+    outBestCU->setPredModeSubParts(MODE_INTER, 0, depth);
+    outBestCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
+    outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    outBestCU->setMergeFlagSubParts(true, 0, 0, depth);
 
     int bestMergeCand = 0;
     for (int mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
     {
         // set MC parameters, interprets depth relative to LCU level
-        outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
-        outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
-        outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-        outTempCU->setMergeFlagSubParts(true, 0, 0, depth);
         outTempCU->setMergeIndexSubParts(mergeCand, 0, 0, depth);
         outTempCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
         outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
@@ -252,9 +259,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         outTempCU->m_totalCost = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                          m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
-
-        int orgQP = outTempCU->getQP(0);
-
         if (outTempCU->m_totalCost < outBestCU->m_totalCost)
         {
             bestMergeCand = mergeCand;
@@ -266,8 +270,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             bestPredYuv = m_tmpPredYuv[depth];
             m_tmpPredYuv[depth] = yuv;
         }
-
-        outTempCU->initEstData(depth, orgQP);
     }
 
     //calculate the motion compensation for chroma for the best mode selected
@@ -381,14 +383,14 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     char currentQP = outTempCU->getQP(0);
     char previousQP = colocated0->getQP(0);
     UChar delta = 0, minDepth0 = 4, minDepth1 = 4;
-     if(depth == 0)
-     {
+    if (depth == 0)
+    {
         double sum0 = 0;
         double sum1 = 0;
         double avgDepth0 = 0;
         double avgDepth1 = 0;
         double avgDepth = 0;
-        for (uint32_t i = 0; i < outTempCU->getTotalNumPart(); i = i+4)
+        for (uint32_t i = 0; i < outTempCU->getTotalNumPart(); i = i + 4)
         {
             if (colocated0 && colocated0->getDepth(i) < minDepth0)
                 minDepth0 = colocated0->getDepth(i);
@@ -399,6 +401,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             if (colocated1)
                 sum1 += (colocated1->getDepth(i) * 4);
         }
+
         avgDepth0 = sum0 / outTempCU->getTotalNumPart();
         avgDepth1 = sum1 / outTempCU->getTotalNumPart();
         avgDepth = (avgDepth0 + avgDepth1) / 2;
@@ -415,7 +418,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         if (minDepth > 0)
             minDepth = minDepth - delta;
     }
-#endif
+#endif // if TOPSKIP
 #if TOPSKIP
     if (!(depth < minDepth)) //topskip
 #endif
@@ -503,7 +506,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_search->estimateRDInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
                                             m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
 
-
                 if (m_bestMergeCU[depth]->m_totalCost < outBestCU->m_totalCost)
                 {
                     outBestCU = m_bestMergeCU[depth];
@@ -588,10 +590,10 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
     {
 #if EARLY_EXIT // turn ON this to enable early exit
-        // early exit when the RD cost of best mode at depth n is less than the sum of avgerage of RD cost of the neighbour 
+        // early exit when the RD cost of best mode at depth n is less than the sum of avgerage of RD cost of the neighbour
         // CU's(above, aboveleft, aboveright, left, colocated) and avg cost of that CU at depth "n"  with weightage for each quantity
 #if TOPSKIP
-        if (outBestCU != 0 && !(depth < minDepth))//topskip
+        if (outBestCU != 0 && !(depth < minDepth)) //topskip
 #else
         if (outBestCU != 0)
 #endif
