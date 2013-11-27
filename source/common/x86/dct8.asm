@@ -21,6 +21,8 @@
 ;* For more information, contact us at licensing@multicorewareinc.com.
 ;*****************************************************************************/
 
+;TO-DO : Further optimize the routines.
+
 %include "x86inc.asm"
 %include "x86util.asm"
 
@@ -34,7 +36,9 @@ tab_dct4:       times 4 dw 64, 64
 SECTION .text
 
 cextern pd_1
+cextern pd_64
 cextern pd_128
+cextern pd_2048
 
 ;------------------------------------------------------
 ;void dct4(int16_t *src, int32_t *dst, intptr_t stride)
@@ -126,5 +130,92 @@ cglobal dct4, 3, 4, 8
     paddd       m2, m7
     psrad       m2, 8
     movu        [r1 + 3 * 16], m2
+
+    RET
+
+;-------------------------------------------------------
+;void idct4(int32_t *src, int16_t *dst, intptr_t stride)
+;-------------------------------------------------------
+INIT_XMM sse2
+cglobal idct4, 3, 4, 7
+
+    add         r2d, r2d
+    lea         r3, [tab_dct4]
+
+    mova        m6, [pd_64]
+
+    movu        m0, [r0 + 0 * 16]
+    movu        m1, [r0 + 1 * 16]
+    packssdw    m0, m1
+
+    movu        m1, [r0 + 2 * 16]
+    movu        m2, [r0 + 3 * 16]
+    packssdw    m1, m2
+
+    punpcklwd   m2, m0, m1
+    pmaddwd     m3, m2, [r3 + 0 * 16]       ; m3 = E1
+    paddd       m3, m6
+
+    pmaddwd     m2, [r3 + 2 * 16]           ; m2 = E2
+    paddd       m2, m6
+
+    punpckhwd   m0, m1
+    pmaddwd     m1, m0, [r3 + 1 * 16]       ; m1 = O1
+    pmaddwd     m0, [r3 + 3 * 16]           ; m0 = O2
+
+    paddd       m4, m3, m1
+    psrad       m4, 7                       ; m4 = m128iA
+    paddd       m5, m2, m0
+    psrad       m5, 7
+    packssdw    m4, m5                      ; m4 = m128iA
+
+    psubd       m2, m0
+    psrad       m2, 7
+    psubd       m3, m1
+    psrad       m3, 7
+    packssdw    m2, m3                      ; m2 = m128iD
+
+    punpcklwd   m1, m4, m2                  ; m1 = S0
+    punpckhwd   m4, m2                      ; m4 = S8
+
+    punpcklwd   m0, m1, m4                  ; m0 = m128iA
+    punpckhwd   m1, m4                      ; m1 = m128iD
+
+    mova        m6, [pd_2048]
+
+    punpcklwd   m2, m0, m1
+    pmaddwd     m3, m2, [r3 + 0 * 16]
+    paddd       m3, m6                      ; m3 = E1
+
+    pmaddwd     m2, [r3 + 2 * 16]
+    paddd       m2, m6                      ; m2 = E2
+
+    punpckhwd   m0, m1
+    pmaddwd     m1, m0, [r3 + 1 * 16]       ; m1 = O1
+    pmaddwd     m0, [r3 + 3 * 16]           ; m0 = O2
+
+    paddd       m4, m3, m1
+    psrad       m4, 12                      ; m4 = m128iA
+    paddd       m5, m2, m0
+    psrad       m5, 12
+    packssdw    m4, m5                      ; m4 = m128iA
+
+    psubd       m2, m0
+    psrad       m2, 12
+    psubd       m3, m1
+    psrad       m3, 12
+    packssdw    m2, m3                      ; m2 = m128iD
+
+    punpcklwd   m1, m4, m2
+    punpckhwd   m4, m2
+
+    punpcklwd   m0, m1, m4
+    movlps      [r1 + 0 * r2], m0
+    movhps      [r1 + 1 * r2], m0
+
+    punpckhwd   m1, m4
+    movlps      [r1 + 2 * r2], m1
+    lea         r1, [r1 + 2 * r2]
+    movhps      [r1 + r2], m1
 
     RET
