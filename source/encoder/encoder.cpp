@@ -443,7 +443,7 @@ void Encoder::printSummary()
                 int len;
 
                 int cuSize = g_maxCUWidth >> depth;
-                len = sprintf(stats, "Split "LL"%% Skip "LL"%% Inter "LL"%%",
+                len = sprintf(stats, "Split "LL"%% Merge "LL"%% Inter "LL"%%",
                               cntSplit, cntSkipCu, cntInter);
 
                 if (param.bEnableAMP)
