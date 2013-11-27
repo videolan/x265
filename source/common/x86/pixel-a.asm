@@ -1556,7 +1556,13 @@ SSD_NV12
     HADDW   m5, m2
 %endif
 %else ; !HIGH_BIT_DEPTH
+%if %1 == 64
+    HADDW     m5,    m2
+    movd      m7,    r4d
+    paddd     m5,    m7
+%else
     HADDW   m5, m2
+%endif
 %endif ; HIGH_BIT_DEPTH
     HADDD   m6, m1
 %if ARCH_X86_64
@@ -1682,45 +1688,110 @@ cglobal pixel_var_8x8, 2,3,8
     VAR_CORE
     VAR_END 8, 8
 
+cglobal pixel_var_16x16_internal
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    ret
+
 cglobal pixel_var_16x16, 2,3,8
     VAR_START 1
-    lea       r2,    [r1 * 3]
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
-    DEINTB    1, 0, 4, 3, 7
-    VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
-    DEINTB    1, 0, 4, 3, 7
-    lea       r0,    [r0 + r1 * 4]
-    VAR_CORE
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
-    DEINTB    1, 0, 4, 3, 7
-    VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
-    DEINTB    1, 0, 4, 3, 7
-    lea       r0,    [r0 + r1 * 4]
-    VAR_CORE
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
-    DEINTB    1, 0, 4, 3, 7
-    VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
-    DEINTB    1, 0, 4, 3, 7
-    lea       r0,    [r0 + r1 * 4]
-    VAR_CORE
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
-    DEINTB    1, 0, 4, 3, 7
-    VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
-    DEINTB    1, 0, 4, 3, 7
-    VAR_CORE
+    lea     r2,    [r1 * 3]
+    call    pixel_var_16x16_internal
     VAR_END 16, 16
+
+cglobal pixel_var_32x32, 2,4,8
+    VAR_START 1
+    lea     r2,    [r1 * 3]
+    mov     r3,    r0
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r3 + 16]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    VAR_END 32, 32
+
+cglobal pixel_var_64x64, 2,6,8
+    VAR_START 1
+    lea     r2,    [r1 * 3]
+    mov     r3,    r0
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    HADDW     m5,    m2
+    movd      r4d,   m5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 16]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 32]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r3 + 48]
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    VAR_END 64, 64
 %endmacro ; VAR
 
 INIT_XMM sse2
