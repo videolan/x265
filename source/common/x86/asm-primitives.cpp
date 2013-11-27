@@ -496,7 +496,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad[LUMA_12x16] = x265_pixel_sad_12x16_sse2;
 
         ASSGN_SSE(sse2);
-        ASSGN_SSE_SS(sse2);
         INIT2(sad, _sse2);
         INIT2(sad_x3, _sse2);
         INIT2(sad_x4, _sse2);

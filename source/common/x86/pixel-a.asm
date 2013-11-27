@@ -202,7 +202,7 @@ SSD_ONE    16, 16
 %macro SSD_SS 2
 cglobal pixel_ssd_ss_%1x%2, 4,7,6
     FIX_STRIDES r1, r3
-%if mmsize == %1*4
+%if mmsize == %1*4 || mmsize == %1*2
     %define offset0_1 r1*2
     %define offset0_2 r1*4
     %define offset0_3 r5
@@ -213,20 +213,13 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,6
     lea     r6, [4*r3]
     lea     r5, [r5 + 2*r1]
     lea     r6, [r6 + 2*r3]
-%elif mmsize == %1*2
-    %define offset0_1 8
-    %define offset0_2 r1*2
-    %define offset0_3 r1*2+8
-    %define offset1_1 8
-    %define offset1_2 r3*2
-    %define offset1_3 r3*2+8
 %elif mmsize == %1
-    %define offset0_1 8
-    %define offset0_2 16
-    %define offset0_3 24
-    %define offset1_1 8
-    %define offset1_2 16
-    %define offset1_3 24
+    %define offset0_1 16
+    %define offset0_2 r1*2
+    %define offset0_3 r1*2+16
+    %define offset1_1 16
+    %define offset1_2 r3*2
+    %define offset1_3 r3*2+16
 %endif
 %if %1 == 4
     %assign %%n %2/(mmsize/%1)
@@ -238,64 +231,61 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,6
 %endif
     pxor    m0, m0
 .loop
-    pmovsxwd  m1, [r0]
-    pmovsxwd  m2, [r2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + offset0_1]
-    pmovsxwd  m2, [r2 + offset1_1]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + offset0_2]
-    pmovsxwd  m2, [r2 + offset1_2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + offset0_3]
-    pmovsxwd  m2, [r2 + offset1_3]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-%if %1 > 4
-    %assign %%m 4/(%1/8)
-    lea       r0, [r0+r1*%%m]
-    lea       r2, [r2+r3*%%m]
-    pmovsxwd  m1, [r0]
-    pmovsxwd  m2, [r2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + offset0_1]
-    pmovsxwd  m2, [r2 + offset1_1]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + offset0_2]
-    pmovsxwd  m2, [r2 + offset1_2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + offset0_3]
-    pmovsxwd  m2, [r2 + offset1_3]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-%endif
 %if %1 == 4
+    movh    m1, [r0]
+    movh    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movh    m1, [r0 + offset0_1]
+    movh    m2, [r2 + offset1_1]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movh    m1, [r0 + offset0_2]
+    movh    m2, [r2 + offset1_2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movh    m1, [r0 + offset0_3]
+    movh    m2, [r2 + offset1_3]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+%else
+    movu    m1, [r0]
+    movu    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + offset0_1]
+    movu    m2, [r2 + offset1_1]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + offset0_2]
+    movu    m2, [r2 + offset1_2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + offset0_3]
+    movu    m2, [r2 + offset1_3]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+%endif
     lea       r0, [r0+r1*(%2/%%n)*2]
     lea       r2, [r2+r3*(%2/%%n)*2]
-%else
-    lea       r0, [r0+r1*(%2/%%n)]
-    lea       r2, [r2+r3*(%2/%%n)]
-%endif
 %if %%n > 1
     dec    r4d
     jg .loop
 %endif
+%if %1 == 4
+    phaddd    m0, m0
+%else
     phaddd    m0, m0
     phaddd    m0, m0
+%endif
     movd     eax, m0
     RET
 %endmacro
@@ -321,38 +311,32 @@ cglobal pixel_ssd_ss_12x16, 4,7,6
     mov    r4d, 8
     pxor    m0, m0
 .loop
-    pmovsxwd  m1, [r0]
-    pmovsxwd  m2, [r2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 8]
-    pmovsxwd  m2, [r2 + 8]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 16]
-    pmovsxwd  m2, [r2 + 16]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
+    movu    m1, [r0]
+    movu    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 16]
+    movu    m2, [r2 + 16]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    pslldq  m1, 8
+    psrldq  m1, 8
+    paddd   m0, m1
     lea       r0, [r0 + 2*r1]
     lea       r2, [r2 + 2*r3]
-    pmovsxwd  m1, [r0]
-    pmovsxwd  m2, [r2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 8]
-    pmovsxwd  m2, [r2 + 8]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 16]
-    pmovsxwd  m2, [r2 + 16]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
+    movu    m1, [r0]
+    movu    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 16]
+    movu    m2, [r2 + 16]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    pslldq  m1, 8
+    psrldq  m1, 8
+    paddd   m0, m1
     lea       r0, [r0 + 2*r1]
     lea       r2, [r2 + 2*r3]
     dec      r4d
@@ -369,88 +353,48 @@ cglobal pixel_ssd_ss_32x%1, 4,7,6
     mov    r4d, %1/2
     pxor    m0, m0
 .loop
-    pmovsxwd  m1, [r0]
-    pmovsxwd  m2, [r2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 8]
-    pmovsxwd  m2, [r2 + 8]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 16]
-    pmovsxwd  m2, [r2 + 16]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 24]
-    pmovsxwd  m2, [r2 + 24]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 32]
-    pmovsxwd  m2, [r2 + 32]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 40]
-    pmovsxwd  m2, [r2 + 40]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 48]
-    pmovsxwd  m2, [r2 + 48]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 56]
-    pmovsxwd  m2, [r2 + 56]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
+    movu    m1, [r0]
+    movu    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 16]
+    movu    m2, [r2 + 16]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 32]
+    movu    m2, [r2 + 32]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 48]
+    movu    m2, [r2 + 48]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
     lea       r0, [r0 + 2*r1]
     lea       r2, [r2 + 2*r3]
-    pmovsxwd  m1, [r0]
-    pmovsxwd  m2, [r2]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 8]
-    pmovsxwd  m2, [r2 + 8]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 16]
-    pmovsxwd  m2, [r2 + 16]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 24]
-    pmovsxwd  m2, [r2 + 24]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 32]
-    pmovsxwd  m2, [r2 + 32]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 40]
-    pmovsxwd  m2, [r2 + 40]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 48]
-    pmovsxwd  m2, [r2 + 48]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
-    pmovsxwd  m1, [r0 + 56]
-    pmovsxwd  m2, [r2 + 56]
-    psubd     m1, m2
-    pmulld    m1, m1
-    paddd     m0, m1
+    movu    m1, [r0]
+    movu    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 16]
+    movu    m2, [r2 + 16]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 32]
+    movu    m2, [r2 + 32]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 48]
+    movu    m2, [r2 + 48]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
     lea       r0, [r0 + 2*r1]
     lea       r2, [r2 + 2*r3]
     dec      r4d
