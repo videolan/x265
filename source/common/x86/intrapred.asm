@@ -456,7 +456,7 @@ cglobal intra_pred_planar8, 4,4,7, above, left, dst, dstStride
 
     paddw           m6,     m2, [pw_8]
 
-%macro COMP_PRED_PLANAR_ROW 1
+%macro PRED_PLANAR_ROW8 1
     %if (%1 < 4)
         pshuflw     m5,     m6, 0x55 * %1
         pshufd      m5,     m5, 0
@@ -481,14 +481,14 @@ cglobal intra_pred_planar8, 4,4,7, above, left, dst, dstStride
 
 %endmacro
 
-    COMP_PRED_PLANAR_ROW 0
-    COMP_PRED_PLANAR_ROW 1
-    COMP_PRED_PLANAR_ROW 2
-    COMP_PRED_PLANAR_ROW 3
-    COMP_PRED_PLANAR_ROW 4
-    COMP_PRED_PLANAR_ROW 5
-    COMP_PRED_PLANAR_ROW 6
-    COMP_PRED_PLANAR_ROW 7
+    PRED_PLANAR_ROW8 0
+    PRED_PLANAR_ROW8 1
+    PRED_PLANAR_ROW8 2
+    PRED_PLANAR_ROW8 3
+    PRED_PLANAR_ROW8 4
+    PRED_PLANAR_ROW8 5
+    PRED_PLANAR_ROW8 6
+    PRED_PLANAR_ROW8 7
 
     RET
 
@@ -514,7 +514,7 @@ cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
     psllw           m1,         4
     psllw           m2,         4
 
-%macro COMP_PRED_PLANAR_ROW 1
+%macro PRED_PLANAR_ROW16 1
     movzx           r5d, byte   [r1 + %1]
     add             r5d,        r5d
     lea             r5d,        [r5d * 8 + 16]
@@ -546,21 +546,21 @@ cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
     lea             r2,         [r2 + r3]
 %endmacro
 
-    COMP_PRED_PLANAR_ROW 0
-    COMP_PRED_PLANAR_ROW 1
-    COMP_PRED_PLANAR_ROW 2
-    COMP_PRED_PLANAR_ROW 3
-    COMP_PRED_PLANAR_ROW 4
-    COMP_PRED_PLANAR_ROW 5
-    COMP_PRED_PLANAR_ROW 6
-    COMP_PRED_PLANAR_ROW 7
-    COMP_PRED_PLANAR_ROW 8
-    COMP_PRED_PLANAR_ROW 9
-    COMP_PRED_PLANAR_ROW 10
-    COMP_PRED_PLANAR_ROW 11
-    COMP_PRED_PLANAR_ROW 12
-    COMP_PRED_PLANAR_ROW 13
-    COMP_PRED_PLANAR_ROW 14
-    COMP_PRED_PLANAR_ROW 15
+    PRED_PLANAR_ROW16 0
+    PRED_PLANAR_ROW16 1
+    PRED_PLANAR_ROW16 2
+    PRED_PLANAR_ROW16 3
+    PRED_PLANAR_ROW16 4
+    PRED_PLANAR_ROW16 5
+    PRED_PLANAR_ROW16 6
+    PRED_PLANAR_ROW16 7
+    PRED_PLANAR_ROW16 8
+    PRED_PLANAR_ROW16 9
+    PRED_PLANAR_ROW16 10
+    PRED_PLANAR_ROW16 11
+    PRED_PLANAR_ROW16 12
+    PRED_PLANAR_ROW16 13
+    PRED_PLANAR_ROW16 14
+    PRED_PLANAR_ROW16 15
 
     RET
