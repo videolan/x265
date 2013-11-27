@@ -1400,6 +1400,127 @@ cglobal pixel_ssd_64x64, 4, 7, 8, src1, stride1, src2, stride2
 ; int pixel_ssd_sp ( int16_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
 
+cglobal pixel_ssd_sp_8x4_internal
+    movu         m0,    [r0]
+    movu         m1,    [r0 + r1]
+    movh         m2,    [r2]
+    movh         m3,    [r2 + r3]
+    pmovzxbw     m2,    m2
+    pmovzxbw     m3,    m3
+
+    psubw        m0,    m2
+    psubw        m1,    m3
+
+    movu         m4,    [r0 + 2 * r1]
+    movu         m5,    [r0 + r4]
+    movh         m2,    [r2 + 2 * r3]
+    movh         m3,    [r2 + r5]
+    pmovzxbw     m2,    m2
+    pmovzxbw     m3,    m3
+
+    psubw        m4,    m2
+    psubw        m5,    m3
+
+    pmaddwd      m0,    m0
+    pmaddwd      m1,    m1
+    pmaddwd      m4,    m4
+    pmaddwd      m5,    m5
+
+    paddd        m0,    m1
+    paddd        m4,    m5
+    paddd        m4,    m0
+    paddd        m7,    m4
+    ret
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_sp_8x4( int16_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_sp_8x4, 4, 6, 8, src1, stride1, src2, stride2
+    pxor     m7,     m7
+    add      r1,     r1
+    lea      r4,     [r1 * 3]
+    lea      r5,     [r3 * 3]
+    call     pixel_ssd_sp_8x4_internal
+    HADDD    m7,     m1
+    movd     eax,    m7
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_sp_8x8( int16_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_sp_8x8, 4, 6, 8, src1, stride1, src2, stride2
+    pxor     m7,     m7
+    add      r1,     r1
+    lea      r4,     [r1 * 3]
+    lea      r5,     [r3 * 3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    HADDD    m7,     m1
+    movd     eax,    m7
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_sp_8x16( int16_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_sp_8x16, 4, 6, 8, src1, stride1, src2, stride2
+    pxor     m7,     m7
+    add      r1,     r1
+    lea      r4,     [r1 * 3]
+    lea      r5,     [r3 * 3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    HADDD    m7,     m1
+    movd     eax,    m7
+    RET
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_sp_8x32( int16_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal pixel_ssd_sp_8x32, 4, 6, 8, src1, stride1, src2, stride2
+    pxor     m7,     m7
+    add      r1,     r1
+    lea      r4,     [r1 * 3]
+    lea      r5,     [r3 * 3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    lea      r0,     [r0 + 4 * r1]
+    lea      r2,     [r2 + 4 * r3]
+    call     pixel_ssd_sp_8x4_internal
+    HADDD    m7,     m1
+    movd     eax,    m7
+    RET
+
 %macro PIXEL_SSD_SP_16x4 0
     movu         m0,    [r0]
     movu         m1,    [r0 + 16]
