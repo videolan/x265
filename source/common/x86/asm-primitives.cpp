@@ -104,6 +104,7 @@ extern "C" {
     p.sse_ss[LUMA_16x16]   = x265_pixel_ssd_ss_16x16_ ## cpu; \
     p.sse_ss[LUMA_16x32]   = x265_pixel_ssd_ss_16x32_ ## cpu; \
     p.sse_ss[LUMA_16x64]   = x265_pixel_ssd_ss_16x64_ ## cpu; \
+    p.sse_ss[LUMA_24x32]   = x265_pixel_ssd_ss_24x32_ ## cpu; \
     p.sse_ss[LUMA_32x8]   = x265_pixel_ssd_ss_32x8_ ## cpu; \
     p.sse_ss[LUMA_32x16]   = x265_pixel_ssd_ss_32x16_ ## cpu; \
     p.sse_ss[LUMA_32x24]   = x265_pixel_ssd_ss_32x24_ ## cpu; \

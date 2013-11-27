@@ -413,17 +413,69 @@ SSD_SS_32 32
 SSD_SS_32 64
 %endmacro
 
+%macro SSD_SS_24 0
+cglobal pixel_ssd_ss_24x32, 4,7,6
+    FIX_STRIDES r1, r3
+    mov    r4d, 16
+    pxor    m0, m0
+.loop
+    movu    m1, [r0]
+    movu    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 16]
+    movu    m2, [r2 + 16]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 32]
+    movu    m2, [r2 + 32]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    lea       r0, [r0 + 2*r1]
+    lea       r2, [r2 + 2*r3]
+    movu    m1, [r0]
+    movu    m2, [r2]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 16]
+    movu    m2, [r2 + 16]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    movu    m1, [r0 + 32]
+    movu    m2, [r2 + 32]
+    psubw   m1, m2
+    pmaddwd m1, m1
+    paddd   m0, m1
+    lea       r0, [r0 + 2*r1]
+    lea       r2, [r2 + 2*r3]
+    dec      r4d
+    jnz .loop
+    phaddd    m0, m0
+    phaddd    m0, m0
+    movd     eax, m0
+    RET
+%endmacro
+
+
 INIT_XMM sse2
 SSD_SS_ONE
 SSD_SS_12x16
+SSD_SS_24
 SSD_SS_32xN
 INIT_XMM sse4
 SSD_SS_ONE
 SSD_SS_12x16
+SSD_SS_24
 SSD_SS_32xN
 INIT_XMM avx
 SSD_SS_ONE
 SSD_SS_12x16
+SSD_SS_24
 SSD_SS_32xN
 %endif ; !HIGH_BIT_DEPTH
 
