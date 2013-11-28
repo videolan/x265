@@ -47,8 +47,9 @@
 #include <time.h>
 
 #if HAVE_INT_TYPES_H
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#define LL "%I64d"
+#define LL "%"PRIu64
 #else
 #define LL "%lld"
 #endif
