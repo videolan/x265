@@ -402,6 +402,9 @@ void x265_dequant_normal_sse4(const int32_t* quantCoef, int32_t* coef, int num, 
 void x265_weight_pp_sse4(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 void x265_weight_sp_sse4(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 
+int x265_pixel_ssd_sp_4x4_sse4(int16_t *, intptr_t, pixel *, intptr_t);
+int x265_pixel_ssd_sp_4x8_sse4(int16_t *, intptr_t, pixel *, intptr_t);
+int x265_pixel_ssd_sp_4x16_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_8x4_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_8x8_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_8x16_sse4(int16_t *, intptr_t, pixel *, intptr_t);
