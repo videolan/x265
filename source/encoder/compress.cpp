@@ -211,12 +211,9 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     outTempCU->m_totalBits = 0;
     m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
     int part = partitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-    uint32_t distortion = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+    uint32_t distortion = primitives.satd[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                   outPredYuv->getLumaAddr(), outPredYuv->getStride());
-    m_rdGoOnSbacCoder->load(m_rdSbacCoders[outTempCU->getDepth(0)][CI_CURR_BEST]);
-    outTempCU->m_totalBits = m_search->xSymbolBitsInter(outTempCU);
-
-    outTempCU->m_totalCost = m_rdCost->calcRdCost(distortion, outTempCU->m_totalBits);
+    outTempCU->m_totalCost = m_rdCost->calcRdSADCost(distortion, outTempCU->m_totalBits);
 }
 
 void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool* earlyDetectionSkip, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
