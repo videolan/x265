@@ -216,7 +216,7 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     outTempCU->m_totalCost = m_rdCost->calcRdSADCost(distortion, outTempCU->m_totalBits);
 }
 
-void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool* earlyDetectionSkip, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
+void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
 {
     assert(outTempCU->getSlice()->getSliceType() != I_SLICE);
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
@@ -311,34 +311,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         yuvReconBest = m_tmpRecoYuv[depth];
         m_tmpRecoYuv[depth] = yuv;
     }
-
-    if (m_cfg->param.bEnableEarlySkip)
-    {
-        if (outBestCU->getQtRootCbf(0) == 0)
-        {
-            if (outBestCU->getMergeFlag(0))
-            {
-                *earlyDetectionSkip = true;
-            }
-            else
-            {
-                bool allZero = true;
-                for (uint32_t list = 0; list < 2; list++)
-                {
-                    if (outBestCU->getSlice()->getNumRefIdx(list) > 0)
-                    {
-                        allZero &= !outBestCU->getCUMvField(list)->getMvd(0).word;
-                    }
-                }
-
-                if (allZero)
-                {
-                    *earlyDetectionSkip = true;
-                }
-            }
-        }
-    }
-
     m_tmpResiYuv[depth]->clear();
     x265_emms();
 }
@@ -446,10 +418,9 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
 
             /* Compute  Merge Cost */
-            bool earlyDetectionSkip = false;
-            xComputeCostMerge2Nx2N(m_bestMergeCU[depth], m_mergeCU[depth], &earlyDetectionSkip, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
+            xComputeCostMerge2Nx2N(m_bestMergeCU[depth], m_mergeCU[depth], m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
 
-            if (!earlyDetectionSkip)
+            if (!m_bestMergeCU[depth]->isSkipped(0))
             {
                 /*Compute 2Nx2N mode costs*/
                 {
