@@ -450,6 +450,36 @@ extern "C" {
     SETUP_PIXEL_VAR_DEF(32, 32, cpu); \
     SETUP_PIXEL_VAR_DEF(64, 64, cpu);
 
+#define SETUP_PIXEL_SSE_SP_DEF(W, H, cpu) \
+    p.sse_sp[LUMA_ ## W ## x ## H] = x265_pixel_ssd_sp_ ## W ## x ## H ## cpu;
+
+#define LUMA_SSE_SP(cpu) \
+    SETUP_PIXEL_SSE_SP_DEF(4,   4, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(8,   8, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(8,   4, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(4,   8, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(16, 16, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(16,  8, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(8,  16, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(16, 12, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(12, 16, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(16,  4, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(4,  16, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(32, 32, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(32, 16, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(16, 32, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(32, 24, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(24, 32, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(32,  8, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(8,  32, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(64, 64, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(64, 32, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(32, 64, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(64, 48, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(48, 64, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(64, 16, cpu); \
+    SETUP_PIXEL_SSE_SP_DEF(16, 64, cpu);
+
 namespace x265 {
 // private x265 namespace
 
@@ -648,31 +678,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_pp[LUMA_64x48] = x265_pixel_ssd_64x48_sse4;
         p.sse_pp[LUMA_64x64] = x265_pixel_ssd_64x64_sse4;
 
-        p.sse_sp[LUMA_4x4] = x265_pixel_ssd_sp_4x4_sse4;
-        p.sse_sp[LUMA_4x8] = x265_pixel_ssd_sp_4x8_sse4;
-        p.sse_sp[LUMA_4x16] = x265_pixel_ssd_sp_4x16_sse4;
-        p.sse_sp[LUMA_8x4] = x265_pixel_ssd_sp_8x4_sse4;
-        p.sse_sp[LUMA_8x8] = x265_pixel_ssd_sp_8x8_sse4;
-        p.sse_sp[LUMA_8x16] = x265_pixel_ssd_sp_8x16_sse4;
-        p.sse_sp[LUMA_8x32] = x265_pixel_ssd_sp_8x32_sse4;
-        p.sse_sp[LUMA_12x16] = x265_pixel_ssd_sp_12x16_sse4;
-        p.sse_sp[LUMA_16x4] = x265_pixel_ssd_sp_16x4_sse4;
-        p.sse_sp[LUMA_16x8] = x265_pixel_ssd_sp_16x8_sse4;
-        p.sse_sp[LUMA_16x12] = x265_pixel_ssd_sp_16x12_sse4;
-        p.sse_sp[LUMA_16x16] = x265_pixel_ssd_sp_16x16_sse4;
-        p.sse_sp[LUMA_16x32] = x265_pixel_ssd_sp_16x32_sse4;
-        p.sse_sp[LUMA_16x64] = x265_pixel_ssd_sp_16x64_sse4;
-        p.sse_sp[LUMA_24x32] = x265_pixel_ssd_sp_24x32_sse4;
-        p.sse_sp[LUMA_32x8] = x265_pixel_ssd_sp_32x8_sse4;
-        p.sse_sp[LUMA_32x16] = x265_pixel_ssd_sp_32x16_sse4;
-        p.sse_sp[LUMA_32x24] = x265_pixel_ssd_sp_32x24_sse4;
-        p.sse_sp[LUMA_32x32] = x265_pixel_ssd_sp_32x32_sse4;
-        p.sse_sp[LUMA_32x64] = x265_pixel_ssd_sp_32x64_sse4;
-        p.sse_sp[LUMA_48x64] = x265_pixel_ssd_sp_48x64_sse4;
-        p.sse_sp[LUMA_64x16] = x265_pixel_ssd_sp_64x16_sse4;
-        p.sse_sp[LUMA_64x32] = x265_pixel_ssd_sp_64x32_sse4;
-        p.sse_sp[LUMA_64x48] = x265_pixel_ssd_sp_64x48_sse4;
-        p.sse_sp[LUMA_64x64] = x265_pixel_ssd_sp_64x64_sse4;
+       LUMA_SSE_SP(_sse4);
 
         CHROMA_PIXELSUB_PS(_sse4);
 
