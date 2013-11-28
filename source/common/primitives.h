@@ -167,7 +167,6 @@ typedef void (*intra_ang_t)(pixel* dst, int dstStride, int width, int dirMode, b
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 
 typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
-typedef void (*cvt16to16_shl_t)(int16_t *dst, int16_t *src, int, int, intptr_t, int);
 typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
 
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
