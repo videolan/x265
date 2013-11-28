@@ -33,6 +33,11 @@ tab_dct4:       times 4 dw 64, 64
                 times 4 dw 64, -64
                 times 4 dw 36, -83
 
+tab_dst4:       times 2 dw 29, 55, 74, 84
+                times 2 dw 74, 74,  0, -74
+                times 2 dw 84, -29, -74, 55
+                times 2 dw 55, -84, 74, -29
+
 SECTION .text
 
 cextern pd_1
@@ -217,5 +222,104 @@ cglobal idct4, 3, 4, 7
     movlps      [r1 + 2 * r2], m1
     lea         r1, [r1 + 2 * r2]
     movhps      [r1 + r2], m1
+
+    RET
+
+;------------------------------------------------------
+;void dst4(int16_t *src, int32_t *dst, intptr_t stride)
+;------------------------------------------------------
+INIT_XMM ssse3
+%if ARCH_X86_64
+cglobal dst4, 3, 4, 8+2
+%else ; ARCH_X86_64 = 0
+cglobal dst4, 3, 4, 8
+%endif ; ARCH_X86_64
+
+    %define coef0   m6
+    %define coef1   m7
+%if ARCH_X86_64
+    %define coef2   m8
+    %define coef3   m9
+%else
+    %define coef2   [r3 + 2 * 16]
+    %define coef3   [r3 + 3 * 16]
+%endif
+
+    add         r2d, r2d
+    lea         r3, [tab_dst4]
+
+    mova        m5, [pd_1]
+
+    mova        coef0, [r3 + 0 * 16]
+    mova        coef1, [r3 + 1 * 16]
+%if ARCH_X86_64
+    mova        coef2, [r3 + 2 * 16]
+    mova        coef3, [r3 + 3 * 16]
+%endif
+
+    movh        m0, [r0 + 0 * r2]            ;load
+    movh        m1, [r0 + 1 * r2]
+    punpcklqdq  m0, m1
+
+    lea         r0, [r0 + 2 * r2]
+    movh        m1, [r0]
+    movh        m2, [r0 + r2]
+    punpcklqdq  m1, m2
+
+    pmaddwd     m2, m0, coef0                ;DST1
+    pmaddwd     m3, m1, coef0
+    phaddd      m2, m3
+    paddd       m2, m5
+    psrad       m2, 1
+
+    pmaddwd     m3, m0, coef1
+    pmaddwd     m4, m1, coef1
+    phaddd      m3, m4
+    paddd       m3, m5
+    psrad       m3, 1
+    packssdw    m2, m3                       ; m2 = T70
+
+    pmaddwd     m3, m0, coef2
+    pmaddwd     m4, m1, coef2
+    phaddd      m3, m4
+    paddd       m3, m5
+    psrad       m3, 1
+
+    pmaddwd     m0, coef3
+    pmaddwd     m1, coef3
+    phaddd      m0, m1
+    paddd       m0, m5
+    psrad       m0, 1
+    packssdw    m3, m0                       ; m3 = T71
+
+    mova        m5, [pd_128]
+
+    pmaddwd     m0, m2, coef0                ; DST2
+    pmaddwd     m1, m3, coef0
+    phaddd      m0, m1
+    paddd       m0, m5
+    psrad       m0, 8
+    movu        [r1 + 0 * 16], m0
+
+    pmaddwd     m0, m2, coef1
+    pmaddwd     m1, m3, coef1
+    phaddd      m0, m1
+    paddd       m0, m5
+    psrad       m0, 8
+    movu        [r1 + 1 * 16], m0
+
+    pmaddwd     m0, m2, coef2
+    pmaddwd     m1, m3, coef2
+    phaddd      m0, m1
+    paddd       m0, m5
+    psrad       m0, 8
+    movu        [r1 + 2 * 16], m0
+
+    pmaddwd     m2, coef3
+    pmaddwd     m3, coef3
+    phaddd      m2, m3
+    paddd       m2, m5
+    psrad       m2, 8
+    movu        [r1 + 3 * 16], m2
 
     RET

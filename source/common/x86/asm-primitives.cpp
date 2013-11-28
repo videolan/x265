@@ -661,6 +661,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         CHROMA_SP_FILTERS(_ssse3);
         LUMA_SP_FILTERS(_ssse3);
 
+        p.dct[DST_4x4] = x265_dst4_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
