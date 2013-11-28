@@ -281,11 +281,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     TComDataCU* tmp;
     TComYuv *yuv;
-
-    outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
-    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-    outTempCU->setMergeFlagSubParts(true, 0, 0, depth);
+        
     outTempCU->setMergeIndexSubParts(bestMergeCand, 0, 0, depth);
     outTempCU->setInterDirSubParts(interDirNeighbours[bestMergeCand], 0, 0, depth);
     outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
