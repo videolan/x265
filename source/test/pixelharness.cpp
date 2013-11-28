@@ -420,6 +420,28 @@ bool PixelHarness::check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t op
     return true;
 }
 
+bool PixelHarness::check_cvt16to32_shl_t(cvt16to32_shl_t ref, cvt16to32_shl_t opt)
+{
+    ALIGN_VAR_16(int32_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int32_t, opt_dest[64 * 64]);
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int shift = (rand() % 7 + 1);
+
+        opt(opt_dest, sbuf1 + j, STRIDE, shift, STRIDE);
+        ref(ref_dest, sbuf1 + j, STRIDE, shift, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int32_t)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -962,6 +984,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.cvt16to32_shl)
+    {
+        if (!check_cvt16to32_shl_t(ref.cvt16to32_shl, opt.cvt16to32_shl))
+        {
+            printf("cvt16to32 failed!\n");
+            return false;
+        }
+    }
+
     if (opt.blockcpy_pp)
     {
         if (!check_blockcopy_pp(ref.blockcpy_pp, opt.blockcpy_pp))
@@ -1250,6 +1281,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("cvt32to16_shr");
         REPORT_SPEEDUP(opt.cvt32to16_shr, ref.cvt32to16_shr, sbuf1, ibuf1, 64, 5, 64);
+    }
+
+    if (opt.cvt16to32_shl)
+    {
+        HEADER0("cvt16to32_shl");
+        REPORT_SPEEDUP(opt.cvt16to32_shl, ref.cvt16to32_shl, ibuf1, sbuf1, 64, 5, 64);
     }
 
     if (opt.blockcpy_pp)
