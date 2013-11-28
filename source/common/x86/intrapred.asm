@@ -29,6 +29,8 @@ SECTION_RODATA 32
 multi_2Row: dw 1, 2, 3, 4, 1, 2, 3, 4
 multiL:     dw 1, 2, 3, 4, 5, 6, 7, 8
 multiH:     dw 9, 10, 11, 12, 13, 14, 15, 16
+multiH2:    dw 17, 18, 19, 20, 21, 22, 23, 24
+multiH3:    dw 25, 26, 27, 28, 29, 30, 31, 32
 
 SECTION .text
 
@@ -562,5 +564,113 @@ cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
     PRED_PLANAR_ROW16 13
     PRED_PLANAR_ROW16 14
     PRED_PLANAR_ROW16 15
+
+    RET
+
+
+;----------------------------------------------------------------------------------------
+; void intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
+;----------------------------------------------------------------------------------------
+INIT_XMM sse4
+%if ARCH_X86_64 == 1
+cglobal intra_pred_planar32, 4,7,12
+  %define bottomRow0    m8
+  %define bottomRow1    m9
+  %define bottomRow2    m10
+  %define bottomRow3    m11
+%else
+cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
+  %define bottomRow0    [rsp + 0 * mmsize]
+  %define bottomRow1    [rsp + 1 * mmsize]
+  %define bottomRow2    [rsp + 2 * mmsize]
+  %define bottomRow3    [rsp + 3 * mmsize]
+%endif
+
+    pxor            m3,         m3
+    movd            m0,         [r1 + 32]
+    pshufb          m0,         m3
+    punpcklbw       m0,         m3          ; v_bottomLeft = left[32]
+    movzx           r4d, byte   [r0 + 32]   ; topRight     = above[32]
+
+    pmovzxbw        m1,         [r0 + 0]    ; topRow[0]
+    pmovzxbw        m2,         [r0 + 8]    ; topRow[1]
+    pmovzxbw        m3,         [r0 +16]    ; topRow[2]
+    pmovzxbw        m4,         [r0 +24]    ; topRow[3]
+
+    psubw           m5,         m0, m1      ; v_bottomRow[0]
+    psubw           m6,         m0, m2      ; v_bottomRow[1]
+    psubw           m7,         m0, m3      ; v_bottomRow[2]
+    psubw           m0,         m4          ; v_bottomRow[3]
+
+    mova            bottomRow0, m5
+    mova            bottomRow1, m6
+    mova            bottomRow2, m7
+    mova            bottomRow3, m0
+
+    psllw           m1,         5
+    psllw           m2,         5
+    psllw           m3,         5
+    psllw           m4,         5
+
+%macro COMP_PRED_PLANAR_ROW 1
+    movzx           r5d,   byte [r1]
+    shl             r5d,        5
+    add             r5d,        32
+    movd            m5,         r5d
+    pshuflw         m5,         m5, 0
+    pshufd          m5,         m5, 0      ; horPred
+
+    movzx           r5d,   byte [r1]
+    mov             r6d,        r4d
+    sub             r6d,        r5d
+    movd            m6,         r6d
+    pshuflw         m6,         m6, 0
+    pshufd          m6,         m6, 0
+
+%if (%1 == 0)
+    pmullw          m7,         m6, [multiL]
+%else
+    pmullw          m7,         m6, [multiH2]
+%endif
+
+    paddw           m7,         m5
+%if (%1 == 0)
+    paddw           m1,         bottomRow0
+    paddw           m7,         m1
+%else
+    paddw           m3,         bottomRow2
+    paddw           m7,         m3
+%endif
+    psraw           m7,         6
+
+%if (%1 == 0)
+    pmullw          m6,        [multiH]
+%else
+    pmullw          m6,        [multiH3]
+%endif
+    paddw           m6,         m5
+%if (%1 == 0)
+    paddw           m2,         bottomRow1
+    paddw           m6,         m2
+%else
+    paddw           m4,         bottomRow3
+    paddw           m6,         m4
+%endif
+    psraw           m6,         6
+
+    packuswb        m7,         m6
+    movu            [r2 + %1],  m7
+%endmacro
+
+    mov r0,         32
+.loop
+    COMP_PRED_PLANAR_ROW 0
+    COMP_PRED_PLANAR_ROW 16
+    inc             r1
+    lea             r2,         [r2 + r3]
+
+    dec             r0
+    jnz .loop
+%undef COMP_PRED_PLANAR_ROW
 
     RET
