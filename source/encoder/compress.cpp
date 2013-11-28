@@ -244,7 +244,9 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     outBestCU->setMergeFlagSubParts(true, 0, 0, depth);
 
+    int part = g_convertToBit[outTempCU->getWidth(0)];
     int bestMergeCand = 0;
+    uint32_t bitsCand = 0;
     for (int mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
     {
         // set MC parameters, interprets depth relative to LCU level
@@ -255,10 +257,16 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         // do MC only for Luma part
         m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, -1, true, false);
-        int part = g_convertToBit[outTempCU->getWidth(0)];
-
-        outTempCU->m_totalCost = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+        bitsCand = mergeCand + 1;
+        if (mergeCand == (int)m_cfg->param.maxNumMergeCand - 1)
+        {
+            bitsCand--;
+        }
+        outTempCU->m_totalBits = bitsCand;
+        outTempCU->m_totalDistortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                          m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
+        outTempCU->m_totalCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+
         if (outTempCU->m_totalCost < outBestCU->m_totalCost)
         {
             bestMergeCand = mergeCand;
