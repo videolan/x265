@@ -210,8 +210,8 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     //do motion compensation only for Luma since luma cost alone is calculated
     outTempCU->m_totalBits = 0;
     m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
-    int part = partitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-    uint32_t distortion = primitives.satd[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+    int part = g_convertToBit[outTempCU->getWidth(0)];
+    uint32_t distortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                   outPredYuv->getLumaAddr(), outPredYuv->getStride());
     outTempCU->m_totalCost = m_rdCost->calcRdSADCost(distortion, outTempCU->m_totalBits);
 }
@@ -248,9 +248,9 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         // do MC only for Luma part
         m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, -1, true, false);
-        int part = partitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
+        int part = g_convertToBit[outTempCU->getWidth(0)];
 
-        outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+        outTempCU->m_totalCost = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                          m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
 
         int orgQP = outTempCU->getQP(0);
