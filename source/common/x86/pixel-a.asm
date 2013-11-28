@@ -111,7 +111,7 @@ cextern popcnt_table
 ; int pixel_ssd_WxH( uint16_t *, intptr_t, uint16_t *, intptr_t )
 ;-----------------------------------------------------------------------------
 %macro SSD_ONE 2
-cglobal pixel_ssd_%1x%2, 4,7,6
+cglobal pixel_ssd_ss_%1x%2, 4,7,6
     FIX_STRIDES r1, r3
 %if mmsize == %1*2
     %define offset0_1 r1

@@ -486,7 +486,36 @@ namespace x265 {
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #if HIGH_BIT_DEPTH
-    if (cpuMask & X265_CPU_SSE2) p.sa8d[0] = p.sa8d[0];
+    if (cpuMask & X265_CPU_SSE2)
+    {
+        INIT6(satd, _sse2);
+        p.satd[LUMA_4x16] = x265_pixel_satd_4x16_sse2;
+        p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
+        p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
+        p.satd[LUMA_16x12] = x265_pixel_satd_16x12_sse2;
+        p.satd[LUMA_16x32] = x265_pixel_satd_16x32_sse2;
+        p.satd[LUMA_16x64] = x265_pixel_satd_16x64_sse2;
+
+        p.sa8d_inter[LUMA_8x8]  = x265_pixel_sa8d_8x8_sse2;
+        p.sa8d_inter[LUMA_16x16]  = x265_pixel_sa8d_16x16_sse2;
+
+        p.sse_ss[LUMA_4x4]   = x265_pixel_ssd_ss_4x4_mmx2;
+        p.sse_ss[LUMA_4x8]   = x265_pixel_ssd_ss_4x8_mmx2;
+        p.sse_ss[LUMA_4x16]   = x265_pixel_ssd_ss_4x16_mmx2;
+        p.sse_ss[LUMA_8x4]   = x265_pixel_ssd_ss_8x4_sse2;
+        p.sse_ss[LUMA_8x8]   = x265_pixel_ssd_ss_8x8_sse2;
+        p.sse_ss[LUMA_8x16]   = x265_pixel_ssd_ss_8x16_sse2;
+        p.sse_ss[LUMA_16x8]   = x265_pixel_ssd_ss_16x8_sse2;
+        p.sse_ss[LUMA_16x16]   = x265_pixel_ssd_ss_16x16_sse2;
+
+        p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
+        PIXEL_AVG_W4(sse2);
+        p.pixelavg_pp[LUMA_8x16]  = x265_pixel_avg_8x16_sse2;
+        p.pixelavg_pp[LUMA_8x8]   = x265_pixel_avg_8x8_sse2;
+        p.pixelavg_pp[LUMA_8x4]   = x265_pixel_avg_8x4_sse2;
+        p.pixelavg_pp[LUMA_16x16] = x265_pixel_avg_16x16_sse2;
+        p.pixelavg_pp[LUMA_16x8]  = x265_pixel_avg_16x8_sse2;
+    }
 #else
     if (cpuMask & X265_CPU_SSE2)
     {
