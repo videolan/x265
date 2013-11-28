@@ -406,6 +406,7 @@ int x265_pixel_ssd_sp_8x4_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_8x8_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_8x16_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_8x32_sse4(int16_t *, intptr_t, pixel *, intptr_t);
+int x265_pixel_ssd_sp_12x16_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_16x4_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_16x8_sse4(int16_t *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_sp_16x12_sse4(int16_t *, intptr_t, pixel *, intptr_t);
