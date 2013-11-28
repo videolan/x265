@@ -76,7 +76,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
         Setup_Vec_BlockCopyPrimitives_sse3(p);
     }
 #else
-	if (cpuMask) p.sad[0] = p.sad[0]; // prevent compiler warnings
+    if (cpuMask) p.sad[0] = p.sad[0]; // prevent compiler warnings
 #endif
 #ifdef HAVE_SSSE3
     if (cpuMask & X265_CPU_SSSE3)
