@@ -47,8 +47,9 @@
 #include <time.h>
 
 #if HAVE_INT_TYPES_H
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#define LL "%I64d"
+#define LL "%"PRIu64
 #else
 #define LL "%lld"
 #endif
@@ -1169,8 +1170,8 @@ void Encoder::configure(x265_param *_param)
             _param->frameNumThreads = 6;  // dual-socket 10-core IvyBridge or higher
         else if (poolThreadCount >= 16)
             _param->frameNumThreads = 5;  // 8 HT cores, or dual socket
-        else if (poolThreadCount >= 12)
-            _param->frameNumThreads = 3;  // 6 HT cores
+        else if (poolThreadCount >= 8)
+            _param->frameNumThreads = 3;  // 4 HT cores
         else if (poolThreadCount >= 4)
             _param->frameNumThreads = 2;  // Dual or Quad core
         else

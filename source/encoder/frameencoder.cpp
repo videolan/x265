@@ -461,10 +461,10 @@ void FrameEncoder::compressFrame()
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
     {
-        wpScalingParam *w = NULL;
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            if ((slice->isInterP() && slice->getPPS()->getUseWP()))
+            wpScalingParam *w = NULL;
+            if ((slice->isInterP() && slice->getPPS()->getUseWP() && slice->m_weightPredTable[l][ref]->bPresentFlag))
             {
                 w = slice->m_weightPredTable[l][ref];
                 slice->m_numWPRefs++;
@@ -959,7 +959,7 @@ void FrameEncoder::compressCTURows()
                         refpic->m_reconRowWait.wait();
                     }
 
-                    if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
+                    if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
                     {
                         m_mref[l][ref].applyWeight(row + refLagRows, m_numRows);
                     }
@@ -996,7 +996,7 @@ void FrameEncoder::compressCTURows()
                             refpic->m_reconRowWait.wait();
                         }
 
-                        if (slice->getPPS()->getUseWP() && (slice->getSliceType() == P_SLICE))
+                        if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
                         {
                             m_mref[list][ref].applyWeight(i + refLagRows, m_numRows);
                         }
@@ -1105,12 +1105,14 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
         double qp_offset = 0;
         int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
         int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
-        int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * 4;
-        int block_x = (cuAddr * 4) - block_y * pic->getPicSym()->getFrameWidthInCU();
+        int noOfBlocks = g_maxCUWidth / 16;
+        int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
+        int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
         int cnt = 0;
-        for (int h = 0; h < 4 && block_y < maxBlockRows; h++, block_y++)
+
+        for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
         {
-            for (int w = 0; w < 4 && (block_x + w) < maxBlockCols; w++)
+            for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
             {
                 qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
                 cnt++;
