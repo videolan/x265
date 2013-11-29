@@ -217,6 +217,7 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     int part =  g_convertToBit[outTempCU->getWidth(0)];
     uint32_t distortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                   outPredYuv->getLumaAddr(), outPredYuv->getStride());
+    outTempCU->m_totalDistortion = distortion;
     outTempCU->m_totalCost = m_rdCost->calcRdSADCost(distortion, outTempCU->m_totalBits);
 }
 
