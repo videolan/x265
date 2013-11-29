@@ -146,7 +146,8 @@ void planad_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
     }
 }
 
-void ang_pred_c(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+template<int width>
+void intra_pred_ang_c(pixel* dst, int dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     // Map the mode index to main prediction direction and angle
     int k, l;
@@ -265,7 +266,7 @@ void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pi
         pixel *above = (IntraFilterType[(int)g_convertToBit[size]][mode] ? above1 : above0);
         pixel *out = dest + (mode - 2) * (size * size);
 
-        ang_pred_c(out, size, size, mode, bLuma, left, above);
+        intra_pred_ang_c<size>(out, size, left, above, mode, bLuma);
 
         // Optimize code don't flip buffer
         bool modeHor = (mode < 18);
@@ -303,7 +304,12 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.intra_pred_planar[BLOCK_32x32] = planad_pred_c<32>;
     p.intra_pred_planar[BLOCK_64x64] = planad_pred_c<64>;
 
-    p.intra_pred_ang = ang_pred_c;
+    p.intra_pred_ang[0] = intra_pred_ang_c<4>;
+    p.intra_pred_ang[1] = intra_pred_ang_c<8>;
+    p.intra_pred_ang[2] = intra_pred_ang_c<16>;
+    p.intra_pred_ang[3] = intra_pred_ang_c<32>;
+    p.intra_pred_ang[4] = NULL;
+
     p.intra_pred_allangs[0] = all_angs_pred_c<4>;
     p.intra_pred_allangs[1] = all_angs_pred_c<8>;
     p.intra_pred_allangs[2] = all_angs_pred_c<16>;

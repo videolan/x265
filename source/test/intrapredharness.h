@@ -45,7 +45,7 @@ protected:
 
     bool check_dc_primitive(intra_dc_t ref, intra_dc_t opt, int width);
     bool check_planar_primitive(intra_planar_t ref, intra_planar_t opt);
-    bool check_angular_primitive(intra_ang_t ref, intra_ang_t opt);
+    bool check_angular_primitive(const intra_ang_t ref[], const intra_ang_t opt[]);
     bool check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[]);
 
 public:

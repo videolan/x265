@@ -163,7 +163,7 @@ typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
 
 typedef void (*intra_dc_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bFilter);
 typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
-typedef void (*intra_ang_t)(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
+typedef void (*intra_ang_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int width, int bFilter);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 
 typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
@@ -250,7 +250,7 @@ struct EncoderPrimitives
 
     intra_dc_t      intra_pred_dc[NUM_SQUARE_BLOCKS];
     intra_planar_t  intra_pred_planar[NUM_SQUARE_BLOCKS];
-    intra_ang_t     intra_pred_ang;
+    intra_ang_t     intra_pred_ang[NUM_SQUARE_BLOCKS];
     intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;

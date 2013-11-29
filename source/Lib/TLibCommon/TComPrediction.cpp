@@ -125,7 +125,7 @@ void TComPrediction::initTempBuff(int csp)
 // Public member functions
 // ====================================================================================================================
 
-void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t stride, int size)
+void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t stride, int size)
 {
     assert(g_convertToBit[size] >= 0);   //   4x  4
     assert(g_convertToBit[size] <= 5);   // 128x128
@@ -168,12 +168,12 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t strid
     }
     else
     {
-        primitives.intra_pred_ang(dst, stride, size, dirMode, bFilter, refLft, refAbv);
+        primitives.intra_pred_ang[log2BlkSize - 2](dst, stride, refLft, refAbv, dirMode, bFilter);
     }
 }
 
 // Angular chroma
-void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, uint32_t stride, int width)
+void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, intptr_t stride, int width)
 {
     int log2BlkSize = g_convertToBit[width];
 
@@ -199,7 +199,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, ui
     }
     else
     {
-        primitives.intra_pred_ang(dst, stride, width, dirMode, false, refLft + width - 1, refAbv + width - 1);
+        primitives.intra_pred_ang[log2BlkSize](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
     }
 }
 

@@ -108,8 +108,8 @@ public:
     void getMvPredAMVP(TComDataCU* cu, uint32_t partIdx, uint32_t partAddr, int picList, MV& mvPred);
 
     // Angular Intra
-    void predIntraLumaAng(uint32_t dirMode, Pel* pred, uint32_t stride, int width);
-    void predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* pred, uint32_t stride, int width);
+    void predIntraLumaAng(uint32_t dirMode, Pel* pred, intptr_t stride, int width);
+    void predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* pred, intptr_t stride, int width);
 
     Pel* getPredicBuf()             { return m_predBuf; }
 
