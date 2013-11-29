@@ -515,6 +515,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.pixelavg_pp[LUMA_8x4]   = x265_pixel_avg_8x4_sse2;
         p.pixelavg_pp[LUMA_16x16] = x265_pixel_avg_16x16_sse2;
         p.pixelavg_pp[LUMA_16x8]  = x265_pixel_avg_16x8_sse2;
+        LUMA_VAR(_sse2);
     }
 #else
     if (cpuMask & X265_CPU_SSE2)

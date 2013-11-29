@@ -2439,7 +2439,13 @@ SSD_NV12
 %if mmsize == 8 && %1*%2 == 256
     HADDUW  m5, m2
 %else
+%if %1 >= 32
+    HADDW     m5,    m2
+    movd      m7,    r4d
+    paddd     m5,    m7
+%else
     HADDW   m5, m2
+%endif
 %endif
 %else ; !HIGH_BIT_DEPTH
 %if %1 == 64
@@ -2476,14 +2482,14 @@ SSD_NV12
     paddd     m6, m4
 %endmacro
 
-%macro VAR_2ROW 2
+%macro VAR_2ROW 3
     mov      r2d, %2
-.loop:
+.loop%3:
 %if HIGH_BIT_DEPTH
-    mova      m0, [r0]
-    mova      m1, [r0+mmsize]
-    mova      m3, [r0+%1]
-    mova      m4, [r0+%1+mmsize]
+    movu      m0, [r0]
+    movu      m1, [r0+mmsize]
+    movu      m3, [r0+%1]
+    movu      m4, [r0+%1+mmsize]
 %else ; !HIGH_BIT_DEPTH
     mova      m0, [r0]
     punpckhbw m1, m0, m7
@@ -2502,7 +2508,7 @@ SSD_NV12
 %endif ; !HIGH_BIT_DEPTH
     VAR_CORE
     dec r2d
-    jg .loop
+    jg .loop%3
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -2512,13 +2518,13 @@ INIT_MMX mmx2
 cglobal pixel_var_16x16, 2,3
     FIX_STRIDES r1
     VAR_START 0
-    VAR_2ROW 8*SIZEOF_PIXEL, 16
+    VAR_2ROW 8*SIZEOF_PIXEL, 16, 1
     VAR_END 16, 16
 
 cglobal pixel_var_8x8, 2,3
     FIX_STRIDES r1
     VAR_START 0
-    VAR_2ROW r1, 4
+    VAR_2ROW r1, 4, 1
     VAR_END 8, 8
 
 %if HIGH_BIT_DEPTH
@@ -2526,24 +2532,130 @@ cglobal pixel_var_8x8, 2,3
 cglobal pixel_var_16x16, 2,3,8
     FIX_STRIDES r1
     VAR_START 0
-    VAR_2ROW r1, 8
+    VAR_2ROW r1, 8, 1
     VAR_END 16, 16
 
 cglobal pixel_var_8x8, 2,3,8
     lea       r2, [r1*3]
     VAR_START 0
-    mova      m0, [r0]
-    mova      m1, [r0+r1*2]
-    mova      m3, [r0+r1*4]
-    mova      m4, [r0+r2*2]
+    movu      m0, [r0]
+    movu      m1, [r0+r1*2]
+    movu      m3, [r0+r1*4]
+    movu      m4, [r0+r2*2]
     lea       r0, [r0+r1*8]
     VAR_CORE
-    mova      m0, [r0]
-    mova      m1, [r0+r1*2]
-    mova      m3, [r0+r1*4]
-    mova      m4, [r0+r2*2]
+    movu      m0, [r0]
+    movu      m1, [r0+r1*2]
+    movu      m3, [r0+r1*4]
+    movu      m4, [r0+r2*2]
     VAR_CORE
     VAR_END 8, 8
+
+cglobal pixel_var_32x32, 2,6,8
+    FIX_STRIDES r1
+    mov       r3,    r0
+    VAR_START 0
+    VAR_2ROW  r1,    8, 1
+    HADDW      m5,    m2
+    movd       r4d,   m5
+    pxor       m5,    m5
+    VAR_2ROW  r1,    8, 2
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 32]
+    VAR_2ROW  r1,    8, 3
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 4
+    VAR_END   32,    32
+
+cglobal pixel_var_64x64, 2,6,8
+    FIX_STRIDES r1
+    mov       r3,    r0
+    VAR_START 0
+    VAR_2ROW  r1,    8, 1
+    HADDW      m5,    m2
+    movd       r4d,   m5
+    pxor       m5,    m5
+    VAR_2ROW  r1,    8, 2
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 3
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 4
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 32]
+    VAR_2ROW  r1,    8, 5
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 6
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 7
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 8
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 64]
+    VAR_2ROW  r1,    8, 9
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 10
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 11
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 12
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 96]
+    VAR_2ROW  r1,    8, 13
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 14
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 15
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 16
+    VAR_END   64,    64
 %endmacro ; VAR
 
 INIT_XMM sse2
