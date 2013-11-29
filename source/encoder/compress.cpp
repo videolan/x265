@@ -26,8 +26,8 @@
 
 /* Lambda Partition Select adjusts the threshold value for Early Exit in No-RDO flow */
 #define LAMBDA_PARTITION_SELECT     0.9
-#define EARLY_EXIT                  1
-#define TOPSKIP                     1
+#define EARLY_EXIT                  0
+#define TOPSKIP                     0
 
 using namespace x265;
 
