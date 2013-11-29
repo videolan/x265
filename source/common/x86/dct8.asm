@@ -38,6 +38,15 @@ tab_dst4:       times 2 dw 29, 55, 74, 84
                 times 2 dw 84, -29, -74, 55
                 times 2 dw 55, -84, 74, -29
 
+tab_idst4:      times 4 dw 29, +84
+                times 4 dw +74, +55
+                times 4 dw 55, -29
+                times 4 dw +74, -84
+                times 4 dw 74, -74
+                times 4 dw 0, +74
+                times 4 dw 84, +55
+                times 4 dw -74, -29
+
 SECTION .text
 
 cextern pd_1
@@ -321,5 +330,104 @@ cglobal dst4, 3, 4, 8
     paddd       m2, m5
     psrad       m2, 8
     movu        [r1 + 3 * 16], m2
+
+    RET
+
+;-------------------------------------------------------
+;void idst4(int32_t *src, int16_t *dst, intptr_t stride)
+;-------------------------------------------------------
+INIT_XMM sse2
+cglobal idst4, 3, 4, 6
+
+    add         r2d, r2d
+    lea         r3, [tab_idst4]
+
+    mova        m5, [pd_64]
+
+    movu        m0, [r0 + 0 * 16]
+    movu        m1, [r0 + 1 * 16]
+    packssdw    m0, m1
+
+    movu        m1, [r0 + 2 * 16]
+    movu        m2, [r0 + 3 * 16]
+    packssdw    m1, m2
+
+    punpcklwd   m2, m0, m1                  ; m2 = m128iAC
+    punpckhwd   m0, m1                      ; m0 = m128iBD
+
+    pmaddwd     m1, m2, [r3 + 0 * 16]
+    pmaddwd     m3, m0, [r3 + 1 * 16]
+    paddd       m1, m3
+    paddd       m1, m5
+    psrad       m1, 7                       ; m1 = S0
+
+    pmaddwd     m3, m2, [r3 + 2 * 16]
+    pmaddwd     m4, m0, [r3 + 3 * 16]
+    paddd       m3, m4
+    paddd       m3, m5
+    psrad       m3, 7                       ; m3 = S8
+    packssdw    m1, m3                      ; m1 = m128iA
+
+    pmaddwd     m3, m2, [r3 + 4 * 16]
+    pmaddwd     m4, m0, [r3 + 5 * 16]
+    paddd       m3, m4
+    paddd       m3, m5
+    psrad       m3, 7                       ; m3 = S0
+
+    pmaddwd     m2, [r3 + 6 * 16]
+    pmaddwd     m0, [r3 + 7 * 16]
+    paddd       m2, m0
+    paddd       m2, m5
+    psrad       m2, 7                       ; m2 = S8
+    packssdw    m3, m2                      ; m3 = m128iD
+
+    punpcklwd   m0, m1, m3
+    punpckhwd   m1, m3
+
+    punpcklwd   m2, m0, m1
+    punpckhwd   m0, m1
+
+    mova        m5, [pd_2048]
+
+    punpcklwd   m1, m2, m0
+    punpckhwd   m2, m0
+
+    pmaddwd     m0, m1, [r3 + 0 * 16]
+    pmaddwd     m3, m2, [r3 + 1 * 16]
+    paddd       m0, m3
+    paddd       m0, m5
+    psrad       m0, 12                      ; m1 = S0
+
+    pmaddwd     m3, m1, [r3 + 2 * 16]
+    pmaddwd     m4, m2, [r3 + 3 * 16]
+    paddd       m3, m4
+    paddd       m3, m5
+    psrad       m3, 12                      ; m3 = S8
+    packssdw    m0, m3                      ; m0 = m128iA
+
+    pmaddwd     m3, m1, [r3 + 4 * 16]
+    pmaddwd     m4, m2, [r3 + 5 * 16]
+    paddd       m3, m4
+    paddd       m3, m5
+    psrad       m3, 12                      ; m3 = S0
+
+    pmaddwd     m1, [r3 + 6 * 16]
+    pmaddwd     m2, [r3 + 7 * 16]
+    paddd       m1, m2
+    paddd       m1, m5
+    psrad       m1, 12                      ; m1 = S8
+    packssdw    m3, m1                      ; m3 = m128iD
+
+    punpcklwd   m1, m0, m3
+    punpckhwd   m0, m3
+
+    punpcklwd   m2, m1, m0
+    movlps      [r1 + 0 * r2], m2
+    movhps      [r1 + 1 * r2], m2
+
+    punpckhwd   m1, m0
+    movlps      [r1 + 2 * r2], m1
+    lea         r1, [r1 + 2 * r2]
+    movhps      [r1 + r2], m1
 
     RET
