@@ -345,7 +345,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         else if (!strcmp(preset, "slow"))
         {
             param->lookaheadDepth = 25;
-            param->bframes = 8;
+            param->bframes = 4;
             param->bpyramid = 1;
             param->rdLevel = 1;
             param->subpelRefine = 3;
