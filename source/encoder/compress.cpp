@@ -557,14 +557,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             m_addSADDepth++;
         }
     }
-#if CU_STAT_LOGFILE
-    if (outBestCU)
-    {
-        fprintf(fp1, "Inter 2Nx2N_Merge : %d , Intra : %d",  m_bestMergeCU[depth]->m_totalCost, m_intraInInterCU[depth]->m_totalCost);
-        if (outBestCU != m_bestMergeCU[depth] && outBestCU != m_intraInInterCU[depth])
-            fprintf(fp1, " , Best  Part Mode chosen :%d, Pred Mode : %d",  outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
-    }
-#endif
 
     // further split
     if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
