@@ -103,8 +103,8 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     Pel *aboveFiltered = m_search->refAboveFlt + width - 1;
     Pel *left          = m_search->refLeft     + width - 1;
     Pel *leftFiltered  = m_search->refLeftFlt  + width - 1;
-    int sad;
-    uint32_t bits, mode, bmode;
+    int sad, bsad;
+    uint32_t bits, bbits, mode, bmode;
     uint64_t cost, bcost;
 
     // 33 Angle modes once
@@ -147,10 +147,10 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
 
     // DC
     primitives.intra_pred_dc[log2SizeMinus2](above + 1, left + 1, tmp, scaleStride, (scaleWidth <= 16));
-    sad = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
+    bsad = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
     bmode = mode = DC_IDX;
-    bits  = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
-    bcost = m_rdCost->calcRdSADCost(sad, bits);
+    bbits  = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
+    bcost = m_rdCost->calcRdSADCost(bsad, bbits);
 
     Pel *abovePlanar   = above;
     Pel *leftPlanar    = left;
@@ -167,7 +167,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     mode = PLANAR_IDX;
     bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
     cost = m_rdCost->calcRdSADCost(sad, bits);
-    COPY2_IF_LT(bcost, cost, bmode, mode);
+    COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
     // Transpose NxN
     primitives.transpose[log2SizeMinus2](buf_trans, fenc, scaleStride);
@@ -182,8 +182,12 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
         sad  = costMultiplier * sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleWidth * scaleWidth)], scaleWidth);
         bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
         cost = m_rdCost->calcRdSADCost(sad, bits);
-        COPY2_IF_LT(bcost, cost, bmode, mode);
+        COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
     }
+
+    cu->m_totalBits = bbits;
+    cu->m_totalDistortion = bsad;
+    cu->m_totalCost = bcost;
 
     // generate predYuv for the best mode
     cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
