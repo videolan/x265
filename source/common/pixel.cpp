@@ -985,6 +985,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.var[BLOCK_8x8] = pixel_var<8>;
     p.var[BLOCK_16x16] = pixel_var<16>;
+    p.var[BLOCK_32x32] = pixel_var<32>;
+    p.var[BLOCK_64x64] = pixel_var<64>;
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }
 }

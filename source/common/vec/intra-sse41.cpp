@@ -54,73 +54,6 @@ static void initFileStaticVars()
     v_multi_2Row = _mm_setr_epi16(1, 2, 3, 4, 1, 2, 3, 4);
 }
 
-void intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-{
-    pixel bottomLeft, topRight;
-    __m128i v_topRow[2];
-    __m128i v_bottomRow[2];
-
-    // Get left and above reference column and row
-    __m128i im0 = _mm_loadu_si128((__m128i*)above); // topRow
-
-    v_topRow[0] = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
-    v_topRow[1] = _mm_unpackhi_epi8(im0, _mm_setzero_si128());
-
-    // Prepare intermediate variables used in interpolation
-    bottomLeft = left[16];
-    topRight   = above[16];
-
-    __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
-
-    v_bottomRow[0] = _mm_sub_epi16(v_bottomLeft, v_topRow[0]);
-    v_bottomRow[1] = _mm_sub_epi16(v_bottomLeft, v_topRow[1]);
-
-    v_topRow[0] = _mm_slli_epi16(v_topRow[0], 4);
-    v_topRow[1] = _mm_slli_epi16(v_topRow[1], 4);
-
-    __m128i v_horPred, v_horPredN[2], v_rightColumnN[2];
-    __m128i v_im4L, v_im4H;
-    __m128i v_im5;
-
-#define COMP_PRED_PLANAR_ROW(Y) { \
-        v_horPred = _mm_cvtsi32_si128((left[(Y)] << 4) + 16); \
-        v_horPred = _mm_shufflelo_epi16(v_horPred, 0); \
-        v_horPred = _mm_shuffle_epi32(v_horPred, 0); \
-        __m128i _tmp = _mm_cvtsi32_si128(topRight - left[(Y)]); \
-        _tmp = _mm_shufflelo_epi16(_tmp, 0); \
-        _tmp = _mm_shuffle_epi32(_tmp, 0); \
-        v_rightColumnN[0] = _mm_mullo_epi16(_tmp, v_multiL); \
-        v_rightColumnN[1] = _mm_mullo_epi16(_tmp, v_multiH); \
-        v_horPredN[0] = _mm_add_epi16(v_horPred, v_rightColumnN[0]); \
-        v_horPredN[1] = _mm_add_epi16(v_horPred, v_rightColumnN[1]); \
-        v_topRow[0] = _mm_add_epi16(v_topRow[0], v_bottomRow[0]); \
-        v_topRow[1] = _mm_add_epi16(v_topRow[1], v_bottomRow[1]); \
-        v_im4L = _mm_srai_epi16(_mm_add_epi16(v_horPredN[0], v_topRow[0]), 5); \
-        v_im4H = _mm_srai_epi16(_mm_add_epi16(v_horPredN[1], v_topRow[1]), 5); \
-        v_im5 = _mm_packus_epi16(v_im4L, v_im4H); \
-        _mm_storeu_si128((__m128i*)&dst[(Y)*dstStride], v_im5); \
-}
-
-    COMP_PRED_PLANAR_ROW(0)
-    COMP_PRED_PLANAR_ROW(1)
-    COMP_PRED_PLANAR_ROW(2)
-    COMP_PRED_PLANAR_ROW(3)
-    COMP_PRED_PLANAR_ROW(4)
-    COMP_PRED_PLANAR_ROW(5)
-    COMP_PRED_PLANAR_ROW(6)
-    COMP_PRED_PLANAR_ROW(7)
-    COMP_PRED_PLANAR_ROW(8)
-    COMP_PRED_PLANAR_ROW(9)
-    COMP_PRED_PLANAR_ROW(10)
-    COMP_PRED_PLANAR_ROW(11)
-    COMP_PRED_PLANAR_ROW(12)
-    COMP_PRED_PLANAR_ROW(13)
-    COMP_PRED_PLANAR_ROW(14)
-    COMP_PRED_PLANAR_ROW(15)
-
-#undef COMP_PRED_PLANAR_ROW
-}
-
 void intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -8390,7 +8323,6 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
 #else
     initFileStaticVars();
 
-    p.intra_pred_planar[BLOCK_16x16] = intra_pred_planar16_sse4;
     p.intra_pred_planar[BLOCK_32x32] = intra_pred_planar32_sse4;
     p.intra_pred_planar[BLOCK_64x64] = intra_pred_planar64_sse4;
 
