@@ -570,7 +570,7 @@ void Encoder::writeLog(int argc, char **argv)
         else
             fprintf(m_csvfpt, " -, -, -, -,");
         if (param.bEnableSsim)
-            fprintf(m_csvfpt, " %.2f,", stats.globalSsim);
+            fprintf(m_csvfpt, " %.3f,", stats.globalSsim);
         else
             fprintf(m_csvfpt, " -,");
 
