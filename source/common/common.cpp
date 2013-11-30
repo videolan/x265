@@ -164,7 +164,7 @@ void x265_param_default(x265_param *param)
     param->bframes = 4;
     param->lookaheadDepth = 20;
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
-    param->bpyramid = 2;
+    param->bpyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
 
     /* Intra Coding Tools */
@@ -278,7 +278,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->maxCUSize = 32;
             param->searchRange = 28;
             param->bFrameAdaptive = 0;
-            param->bpyramid = 1;
             param->subpelRefine = 0;
             param->maxNumMergeCand = 2;
             param->searchMethod = X265_DIA_SEARCH;
@@ -298,7 +297,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->maxCUSize = 32;
             param->searchRange = 44;
             param->bFrameAdaptive = 0;
-            param->bpyramid = 1;
             param->subpelRefine = 1;
             param->bEnableRectInter = 0;
             param->bEnableAMP = 0;
@@ -312,7 +310,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->lookaheadDepth = 15;
             param->maxCUSize = 32;
             param->bFrameAdaptive = 0;
-            param->bpyramid = 1;
             param->subpelRefine = 1;
             param->bEnableRectInter = 0;
             param->bEnableAMP = 0;
@@ -324,7 +321,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
-            param->bpyramid = 1;
             param->bEnableRectInter = 0;
             param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
@@ -334,7 +330,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         else if (!strcmp(preset, "fast"))
         {
             param->lookaheadDepth = 15;
-            param->bpyramid = 1;
             param->bEnableRectInter = 0;
             param->bEnableAMP = 0;
         }
@@ -346,7 +341,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->lookaheadDepth = 25;
             param->bframes = 4;
-            param->bpyramid = 1;
             param->rdLevel = 1;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
