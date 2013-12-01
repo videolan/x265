@@ -136,7 +136,6 @@ typedef enum
 #define X265_CPU_SLOW_PALIGNR    0x4000000  /* such as on the AMD Bobcat */
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
-static const char * const x265_b_pyramid_names[] = { "none", "normal", 0 };
 
 #define X265_MAX_SUBPEL_LEVEL   7
 
@@ -156,7 +155,6 @@ static const char * const x265_b_pyramid_names[] = { "none", "normal", 0 };
 #define X265_TYPE_I             0x0002
 #define X265_TYPE_P             0x0003
 #define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
-#define X265_B_PYRAMID_NORMAL   0x0001
 #define X265_TYPE_B             0x0005
 #define X265_TYPE_KEYFRAME      0x0006  /* IDR or I depending on b_open_gop option */
 #define X265_AQ_NONE                 0
@@ -387,13 +385,12 @@ typedef struct x265_param
      * maximum is 16 */
     int       bframes;
 
-    /* 0 - none, 1 - normal.  When enabled, the encoder will use the B frame
-     * in the middle of each mini-GOP larger than 2 B frames as a motion
-     * reference for the surrounding B frames.  This improves compression
-     * efficiency for a performance penalty.  Referenced B frames are treated
-     * somewhere between a B and a P frame by rate control.  Default is
-     * enabled. */
-    int       bpyramid;
+    /* When enabled, the encoder will use the B frame in the middle of each
+     * mini-GOP larger than 2 B frames as a motion reference for the surrounding
+     * B frames.  This improves compression efficiency for a small performance
+     * penalty.  Referenced B frames are treated somewhere between a B and a P
+     * frame by rate control.  Default is enabled. */
+    int       bBPyramid;
 
     /* The number of frames that must be queued in the lookahead before it may
      * make slice decisions. Increasing this value directly increases the encode

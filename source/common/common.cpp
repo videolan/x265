@@ -164,7 +164,7 @@ void x265_param_default(x265_param *param)
     param->bframes = 4;
     param->lookaheadDepth = 20;
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
-    param->bpyramid = 1;
+    param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
 
     /* Intra Coding Tools */
@@ -607,7 +607,7 @@ void x265_print_params(x265_param *param)
         x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
     x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
-    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / ref    : %d / %d / %d\n", param->bpyramid, param->bEnableWeightedPred, param->maxNumReferences);
+    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / refs   : %d / %d / %d\n", param->bBPyramid, param->bEnableWeightedPred, param->maxNumReferences);
     x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
@@ -716,6 +716,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("ssim") p->bEnableSsim = bvalue;
     OPT("psnr") p->bEnablePsnr = bvalue;
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
+    OPT("b-pyramid") p->bBPyramid = bvalue;
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
     OPT("crf")
@@ -736,7 +737,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     }
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, berror);
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, berror);
-    OPT("b-pyramid") p->bpyramid = parseName(value, x265_b_pyramid_names, berror);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -794,7 +794,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableSAO, "sao");
     s += sprintf(s, " sao-lcu-bounds=%d", p->saoLcuBoundary);
     s += sprintf(s, " sao-lcu-opt=%d", p->saoLcuBasedOptimization);
-    s += sprintf(s, " b-pyramid=%d", p->bpyramid);
+    s += sprintf(s, " b-pyramid=%d", p->bBPyramid);
 #undef BOOL
 
     return buf;
