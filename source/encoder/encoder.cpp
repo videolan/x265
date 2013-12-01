@@ -1434,6 +1434,18 @@ void x265_param_free(x265_param *p)
 }
 
 extern "C"
+x265_picture *x265_picture_alloc()
+{
+    return (x265_picture*)x265_malloc(sizeof(x265_picture));
+}
+
+extern "C"
+void x265_picture_free(x265_picture *p)
+{
+    return x265_free(p);
+}
+
+extern "C"
 x265_encoder *x265_encoder_open(x265_param *param)
 {
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized

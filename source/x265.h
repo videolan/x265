@@ -87,6 +87,9 @@ typedef struct x265_picture
     int     colorSpace;
     int64_t pts;
     void*   userData;
+
+    /* new data members to this structure must be added to the end so that
+     * users of x265_picture_alloc/free() can be assured of future safety */
 } x265_picture;
 
 typedef enum
@@ -665,6 +668,18 @@ static const char * const x265_tune_names[] = { "psnr", "ssim", "zero-latency", 
 
 /*      returns 0 on success, negative on failure (e.g. invalid preset/tune name). */
 int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
+
+/* x265_picture_alloc:
+ *  Allocates an x265_picture instance. The returned picture structure is not
+ *  special in any way, but using this method together with x265_picture_free()
+ *  and x265_picture_init() allows some version safety. New picture fields will
+ *  always be added to the end of x265_picture */
+x265_picture *x265_picture_alloc();
+
+/* x265_picture_free:
+ *  Use x265_picture_free() to release storage for an x265_picture instance
+ *  allocated by x26_picture_alloc() */
+void x265_picture_free(x265_picture *);
 
 /***
  * Initialize an x265_picture structure to default values

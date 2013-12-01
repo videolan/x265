@@ -7,6 +7,8 @@ x265_param_parse
 x265_param_alloc
 x265_param_free
 x265_picture_init
+x265_picture_alloc
+x265_picture_free
 x265_param_apply_profile
 x265_max_bit_depth
 x265_version_str
