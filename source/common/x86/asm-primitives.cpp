@@ -149,7 +149,7 @@ extern "C" {
     p.pixelavg_pp[LUMA_32x32] = x265_pixel_avg_32x32_ ## cpu; \
     p.pixelavg_pp[LUMA_32x24] = x265_pixel_avg_32x24_ ## cpu; \
     p.pixelavg_pp[LUMA_32x16] = x265_pixel_avg_32x16_ ## cpu; \
-    p.pixelavg_pp[LUMA_32x8 ] = x265_pixel_avg_32x8_ ## cpu; \
+    p.pixelavg_pp[LUMA_32x8] = x265_pixel_avg_32x8_ ## cpu; \
     p.pixelavg_pp[LUMA_24x32] = x265_pixel_avg_24x32_ ## cpu; \
     p.pixelavg_pp[LUMA_16x64] = x265_pixel_avg_16x64_ ## cpu; \
     p.pixelavg_pp[LUMA_16x32] = x265_pixel_avg_16x32_ ## cpu; \
@@ -536,7 +536,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_pp[i] = sse_ss[i];
         p.sse_sp[i] = sse_ss[i];
     }
-#else
+
+#else // if HIGH_BIT_DEPTH
     if (cpuMask & X265_CPU_SSE2)
     {
         INIT8_NAME(sse_pp, ssd, _mmx);
@@ -707,7 +708,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.luma_hvpp[LUMA_8x8] = x265_interp_8tap_hv_pp_8x8_ssse3;
         p.luma_p2s = x265_luma_p2s_ssse3;
         p.chroma_p2s = x265_chroma_p2s_ssse3;
-        
+
         CHROMA_SP_FILTERS(_ssse3);
         LUMA_SP_FILTERS(_ssse3);
 
@@ -730,7 +731,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_pp[LUMA_64x48] = x265_pixel_ssd_64x48_sse4;
         p.sse_pp[LUMA_64x64] = x265_pixel_ssd_64x64_sse4;
 
-       LUMA_SSE_SP(_sse4);
+        LUMA_SSE_SP(_sse4);
 
         CHROMA_PIXELSUB_PS(_sse4);
 

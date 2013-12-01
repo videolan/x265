@@ -1557,11 +1557,11 @@ void idct32(int32_t *src, int16_t *dst, intptr_t stride)
 #undef STORE_LINE
     }
 }
-#endif
+
+#endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {
-
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
 {
 #if !HIGH_BIT_DEPTH
@@ -1570,6 +1570,6 @@ void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
     p.idct[IDCT_32x32] = idct32;
 #else
     (void)p; //Ugly Hack to avoid unreferenced formal parameter errors
-#endif    
+#endif
 }
 }

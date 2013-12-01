@@ -1060,6 +1060,7 @@ me_hex2:
             cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
+
         bmv += square1[bdir] * 2;
         bcost = ref->lowresQPelCost(fenc, blockOffset, bmv, satd) + mvcost(bmv);
 
@@ -1070,6 +1071,7 @@ me_hex2:
             cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
+
         bmv += square1[bdir];
     }
     else
@@ -1096,6 +1098,7 @@ me_hex2:
 
             bmv += square1[bdir] * 2;
         }
+
         /* if HPEL search used SAD, remeasure with SATD before QPEL */
         if (!wl.hpel_satd)
             bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);

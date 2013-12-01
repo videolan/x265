@@ -239,7 +239,7 @@ typedef struct x265_stats
 } x265_stats;
 
 /* x265 input parameters
- * 
+ *
  * For version safety you may use x265_param_alloc/free() to manage the
  * allocation of x265_param instances, and x265_param_parse() to assign values
  * by name.  By never dereferencing param fields in your own code you can treat
@@ -276,7 +276,7 @@ typedef struct x265_param
 
     /* Enable the measurement and reporting of PSNR. Default is enabled */
     int       bEnablePsnr;
-    
+
     /* Enable the measurement and reporting of SSIM. Default is disabled */
     int       bEnableSsim;
 
@@ -292,7 +292,6 @@ typedef struct x265_param
      * report any mismatches. This is essentially a debugging feature.  Hash
      * types are MD5(1), CRC(2), Checksum(3).  Default is 0, none */
     int       decodedPictureHashSEI;
-
 
     /*== Source Picture Specification ==*/
 
@@ -322,7 +321,6 @@ typedef struct x265_param
      * minimum requirement. All valid HEVC heights are supported */
     int       sourceHeight;
 
-
     /*== Coding Unit (CU) definitions ==*/
 
     /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.
@@ -343,7 +341,6 @@ typedef struct x265_param
      * 3. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
-
 
     /*== GOP Structure and Lokoahead ==*/
 
@@ -407,7 +404,7 @@ typedef struct x265_param
      * the length of the queue linearly increases the effectiveness of the
      * mb-tree analysis. Default is 40 frames, maximum is 250 */
     int       lookaheadDepth;
-    
+
     /* A value which is added to the cost estimate of B frames in the lookahead.
      * It may be a positive value (making B frames appear more expensive, which
      * causes the lookahead to chose more P frames) or negative, which makes the
@@ -417,7 +414,6 @@ typedef struct x265_param
     /* An arbitrary threshold which determines how agressively the lookahead
      * should detect scene cuts. The default (40) is recommended. */
     int       scenecutThreshold;
-
 
     /*== Intra Coding Tools ==*/
 
@@ -431,7 +427,6 @@ typedef struct x265_param
      * samples are flat. It may or may not improve compression efficiency,
      * depending on your source material. Defaults to disabled */
     int       bEnableStrongIntraSmoothing;
-
 
     /*== Inter Coding Tools ==*/
 
@@ -477,7 +472,6 @@ typedef struct x265_param
      * effect */
     int       bEnableWeightedBiPred;
 
-
     /*== Analysis tools ==*/
 
     /* Enable asymmetrical motion predictions.  At CU depths 64, 32, and 16, it
@@ -517,7 +511,6 @@ typedef struct x265_param
     int       bEnableRDO;    // obsolete
     int       bEnableRDOQ;   // obsolete
     int       bEnableRDOQTS; // obsolete
-
 
     /*== Coding tools ==*/
 
@@ -575,7 +568,6 @@ typedef struct x265_param
      * Default is 0, which is recommended */
     int       crQpOffset;
 
-
     /*== Rate Control ==*/
 
     struct
@@ -602,7 +594,7 @@ typedef struct x265_param
 
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
-        int       vbvMaxBitrate; 
+        int       vbvMaxBitrate;
         int       vbvBufferSize;
         double    vbvBufferInit;
     } rc;

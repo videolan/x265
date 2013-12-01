@@ -149,7 +149,7 @@
     SETUP_LUMA_SS_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_SS_FUNC_DEF(16, 64, cpu);
 
-  #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
+#define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     void x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
 #define CHROMA_SP_FILTERS(cpu) \
@@ -175,7 +175,7 @@
     SETUP_CHROMA_SP_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 32, cpu);
 
-  #define SETUP_CHROMA_SS_FUNC_DEF(W, H, cpu) \
+#define SETUP_CHROMA_SS_FUNC_DEF(W, H, cpu) \
     void x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx);
 
 #define CHROMA_SS_FILTERS(cpu) \
@@ -203,7 +203,6 @@
     SETUP_CHROMA_SS_FUNC_DEF(24, 32, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 32, cpu)
-
 
 CHROMA_FILTERS(_sse4);
 CHROMA_SP_FILTERS(_ssse3);

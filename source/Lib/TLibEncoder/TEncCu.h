@@ -69,7 +69,7 @@ struct StatisticLog
 
     StatisticLog()
     {
-         memset(this, 0, sizeof(StatisticLog));
+        memset(this, 0, sizeof(StatisticLog));
     }
 };
 

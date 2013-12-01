@@ -276,6 +276,7 @@ void interp_horiz_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t ds
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
     int offset = -IF_INTERNAL_OFFS << shift;
+
     src -= N / 2 - 1;
 
     int row, col;
@@ -482,14 +483,14 @@ namespace x265 {
 #define CHROMA(W, H) \
     p.chroma[X265_CSP_I420].filter_hpp[CHROMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>; \
     p.chroma[X265_CSP_I420].filter_hps[CHROMA_ ## W ## x ## H] = interp_horiz_ps_c<4, W, H>; \
-    p.chroma[X265_CSP_I420].filter_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c < 4, W, H >; \
+    p.chroma[X265_CSP_I420].filter_vpp[CHROMA_ ## W ## x ## H] = interp_vert_pp_c<4, W, H>; \
     p.chroma[X265_CSP_I420].filter_vps[CHROMA_ ## W ## x ## H] = interp_vert_ps_c<4, W, H>; \
-    p.chroma[X265_CSP_I420].filter_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c < 4, W, H >; \
-    p.chroma[X265_CSP_I420].filter_vss[CHROMA_ ## W ## x ## H] = interp_vert_ss_c < 4, W, H >;
+    p.chroma[X265_CSP_I420].filter_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c<4, W, H>; \
+    p.chroma[X265_CSP_I420].filter_vss[CHROMA_ ## W ## x ## H] = interp_vert_ss_c<4, W, H>;
 
 #define LUMA(W, H) \
     p.luma_hpp[LUMA_ ## W ## x ## H]     = interp_horiz_pp_c<8, W, H>; \
-    p.luma_hps[LUMA_ ## W ## x ## H]     = interp_horiz_ps_c<8, W, H>;\
+    p.luma_hps[LUMA_ ## W ## x ## H]     = interp_horiz_ps_c<8, W, H>; \
     p.luma_vpp[LUMA_ ## W ## x ## H]     = interp_vert_pp_c<8, W, H>; \
     p.luma_vps[LUMA_ ## W ## x ## H]     = interp_vert_ps_c<8, W, H>; \
     p.luma_vsp[LUMA_ ## W ## x ## H]     = interp_vert_sp_c<8, W, H>; \

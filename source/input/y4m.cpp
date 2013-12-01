@@ -45,6 +45,7 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
     {
         plane[i][2] = plane[i][1] = plane[i][0] = NULL;
     }
+
     head = tail = 0;
 
     ifs = NULL;

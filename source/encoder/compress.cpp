@@ -216,7 +216,7 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
     int part =  g_convertToBit[outTempCU->getWidth(0)];
     uint32_t distortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                                  outPredYuv->getLumaAddr(), outPredYuv->getStride());
+                                                outPredYuv->getLumaAddr(), outPredYuv->getStride());
     outTempCU->m_totalDistortion = distortion;
     outTempCU->m_totalCost = m_rdCost->calcRdSADCost(distortion, outTempCU->m_totalBits);
 }
@@ -269,7 +269,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         }
         outTempCU->m_totalBits = bitsCand;
         outTempCU->m_totalDistortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                                         m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
+                                                             m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
         outTempCU->m_totalCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
         if (outTempCU->m_totalCost < outBestCU->m_totalCost)
@@ -294,7 +294,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     TComDataCU* tmp;
     TComYuv *yuv;
-        
+
     outTempCU->setMergeIndexSubParts(bestMergeCand, 0, 0, depth);
     outTempCU->setInterDirSubParts(interDirNeighbours[bestMergeCand], 0, 0, depth);
     outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);

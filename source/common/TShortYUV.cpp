@@ -84,6 +84,7 @@ void TShortYUV::clear()
 void TShortYUV::subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
     int part = partitionFromSizes(partSize, partSize);
+
     subtractLuma(srcYuv0, srcYuv1, trUnitIdx, partSize, part);
     subtractChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift, part);
 }
@@ -196,6 +197,7 @@ void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, uns
     unsigned int dstStride = dstPicYuv->getStride();
 
     int part = partitionFromSizes(width, height);
+
     primitives.luma_copy_sp[part](dst, dstStride, src, srcStride);
 }
 

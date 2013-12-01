@@ -65,7 +65,7 @@ PixelHarness::PixelHarness()
         pbuf3[i] = rand() & PIXEL_MAX;
         pbuf4[i] = rand() & PIXEL_MAX;
 
-#define SMAX (1<<12)
+#define SMAX (1 << 12)
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
@@ -698,19 +698,20 @@ bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
 
     for (int i = 0; i < ITERS; i++)
     {
-        for(int j = 0; j < 5; j++)
+        for (int j = 0; j < 5; j++)
         {
-            for(int k = 0; k < 4; k++)
+            for (int k = 0; k < 4; k++)
             {
                 sum0[j][k] = rand() % (1 << 12);
                 sum1[j][k] = rand() % (1 << 12);
             }
         }
+
         width = (rand() % 4) + 1;   // range[1-4]
 
         float cres = ref(sum0, sum1, width);
         float vres = opt(sum0, sum1, width);
-        if ( fabs(vres - cres) > 0.00001)
+        if (fabs(vres - cres) > 0.00001)
             return false;
     }
 
@@ -845,7 +846,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    for(int i = 0; i < X265_CSP_COUNT; i++)
+    for (int i = 0; i < X265_CSP_COUNT; i++)
     {
         if (opt.chroma[i].copy_pp[part])
         {
@@ -965,14 +966,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
-    if (opt.var[i])
-    {
-        if (!check_pixel_var(ref.var[i], opt.var[i]))
+        if (opt.var[i])
         {
-            printf("var[%dx%d] failed\n", 4 << i, 4 << i);
-            return false;
+            if (!check_pixel_var(ref.var[i], opt.var[i]))
+            {
+                printf("var[%dx%d] failed\n", 4 << i, 4 << i);
+                return false;
+            }
         }
-    }
     }
 
     if (opt.cvt32to16_shr)
@@ -1204,12 +1205,14 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             REPORT_SPEEDUP(opt.chroma[i].add_ps[part], ref.chroma[i].add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
     }
+
 #undef HEADER
 }
 
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     char header[128];
+
 #define HEADER(str, ...) sprintf(header, str, __VA_ARGS__); printf("%22s", header);
 #define HEADER0(str) printf("%22s", str);
 
@@ -1264,6 +1267,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.blockfill_s[i], ref.blockfill_s[i], sbuf1, 64, SHORT_MAX);
         }
+
         if (opt.transpose[i])
         {
             HEADER("transpose[%dx%d]", 4 << i, 4 << i);
@@ -1340,7 +1344,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.ssim_4x4x2_core)
     {
         HEADER0("ssim_4x4x2_core");
-        REPORT_SPEEDUP(opt.ssim_4x4x2_core, ref.ssim_4x4x2_core, pbuf1, 64, pbuf2, 64, (int (*)[4])sbuf1);
+        REPORT_SPEEDUP(opt.ssim_4x4x2_core, ref.ssim_4x4x2_core, pbuf1, 64, pbuf2, 64, (int(*)[4])sbuf1);
     }
 
     if (opt.ssim_end_4)

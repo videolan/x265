@@ -68,7 +68,7 @@ struct LookaheadRow
 
     void init();
 
-    void estimateCUCost(Lowres** frames, ReferencePlanes *wfref0, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
+    void estimateCUCost(Lowres * *frames, ReferencePlanes * wfref0, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
 };
 
 struct Lookahead : public WaveFront

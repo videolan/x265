@@ -85,7 +85,6 @@ TComPrediction::~TComPrediction()
 
     if (m_immedVals)
         X265_FREE(m_immedVals);
-
 }
 
 void TComPrediction::initTempBuff(int csp)

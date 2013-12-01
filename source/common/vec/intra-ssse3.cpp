@@ -3377,6 +3377,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
             dcValN.store(dst1 + 24);
             dst1 += dstStride;
         }
+
         break;
     }
 

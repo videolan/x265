@@ -431,6 +431,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     TCoeff*  coeff          = m_qtTempCoeffY[qtLayer] + numCoeffPerInc * absPartIdx;
 
     int16_t* reconQt        = m_qtTempTComYuv[qtLayer].getLumaAddr(absPartIdx);
+
     assert(m_qtTempTComYuv[qtLayer].m_width == MAX_CU_SIZE);
 
     uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;

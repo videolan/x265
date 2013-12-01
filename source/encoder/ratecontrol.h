@@ -46,8 +46,8 @@ struct RateControlEntry
     double qRceq;
 
     int lastSatd;
-    bool bLastMiniGopBFrame; 
-    double frameSizePlanned; 
+    bool bLastMiniGopBFrame;
+    double frameSizePlanned;
     double bufferRate;
     int bframes;
     int poc;
@@ -121,11 +121,11 @@ protected:
     void accumPQpUpdate();
     double acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y);
 
-    void updateVbv(int64_t bits, RateControlEntry* rce); 
-    void updatePredictor(Predictor *p, double q, double var, double bits); 
-    double clipQscale(double q); 
-    void updateVbvPlan(Encoder* enc); 
-    double predictSize( Predictor *p, double q, double var);
+    void updateVbv(int64_t bits, RateControlEntry* rce);
+    void updatePredictor(Predictor *p, double q, double var, double bits);
+    double clipQscale(double q);
+    void updateVbvPlan(Encoder* enc);
+    double predictSize(Predictor *p, double q, double var);
 };
 }
 

@@ -190,7 +190,7 @@ void x265_param_default(x265_param *param)
     param->bEnableTransformSkip = 0;
     param->bEnableTSkipFast = 0;
     param->maxNumReferences = 3;
-    
+
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
 
@@ -318,7 +318,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
-            param->maxNumReferences = 1;            
+            param->maxNumReferences = 1;
         }
         else if (!strcmp(preset, "faster"))
         {
@@ -365,7 +365,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->lookaheadDepth = 40;
             param->bframes = 8;
             param->tuQTMaxInterDepth = 3;
-            param->tuQTMaxIntraDepth = 3;			
+            param->tuQTMaxIntraDepth = 3;
             param->rdLevel = 2;
             param->subpelRefine = 4;
             param->maxNumMergeCand = 4;
@@ -519,7 +519,7 @@ int x265_check_params(x265_param *param)
     }
     if (param->rc.aqStrength == 0)
     {
-        x265_log(param, X265_LOG_WARNING, "Aq mode specified, but Aq strength is  0, ignored\n" );
+        x265_log(param, X265_LOG_WARNING, "Aq mode specified, but Aq strength is  0, ignored\n");
         param->rc.aqMode = 0;
     }
 

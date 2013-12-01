@@ -273,7 +273,8 @@ struct EncoderPrimitives
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
     extendCURowBorder_t extendRowBorder;
 
-    struct {
+    struct
+    {
         filter_pp_t     filter_vpp[NUM_LUMA_PARTITIONS];
         filter_ps_t     filter_vps[NUM_LUMA_PARTITIONS];
         filter_sp_t     filter_vsp[NUM_LUMA_PARTITIONS];

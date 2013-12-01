@@ -643,6 +643,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
                 else
                     m_log->cntIntraNxN--;
             }
+
             m_log->cntIntra[depth + 1] += boundaryCu;
         }
         xCheckBestMode(outBestCU, outTempCU, depth); // RD compare current prediction with split prediction.

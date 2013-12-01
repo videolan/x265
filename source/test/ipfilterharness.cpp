@@ -201,6 +201,7 @@ bool IPFilterHarness::check_IPFilter_primitive(ipfilter_ss_t ref, ipfilter_ss_t 
 
     // NOTE: refill data to avoid overflow
     const int max_filter_val = 64 * (1 << 8);
+
     for (int i = 0; i < ipf_t_size; i++)
     {
         short_buff[i] = rand() % (2 * max_filter_val) - max_filter_val;
@@ -629,7 +630,6 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
-
     if (opt.chroma_p2s)
     {
         if (!check_IPFilter_primitive(ref.chroma_p2s, opt.chroma_p2s, 1))
@@ -693,6 +693,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
             }
         }
     }
+
     return true;
 }
 
@@ -814,41 +815,41 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             {
                 printf("chroma_hpp[%s]", chromaPartStr[value]);
                 REPORT_SPEEDUP(opt.chroma[csp].filter_hpp[value], ref.chroma[csp].filter_hpp[value],
-                    pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+                               pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
             }
             if (opt.chroma[csp].filter_hps[value])
             {
                 printf("chroma_hps[%s]", chromaPartStr[value]);
                 REPORT_SPEEDUP(opt.chroma[csp].filter_hps[value], ref.chroma[csp].filter_hps[value],
-                    pixel_buff + srcStride, srcStride, IPF_vec_output_s, dstStride, 1);
+                               pixel_buff + srcStride, srcStride, IPF_vec_output_s, dstStride, 1);
             }
             if (opt.chroma[csp].filter_vpp[value])
             {
                 printf("chroma_vpp[%s]", chromaPartStr[value]);
                 REPORT_SPEEDUP(opt.chroma[csp].filter_vpp[value], ref.chroma[csp].filter_vpp[value],
-                    pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                    IPF_vec_output_p, dstStride, 1);
+                               pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                               IPF_vec_output_p, dstStride, 1);
             }
             if (opt.chroma[csp].filter_vps[value])
             {
                 printf("chroma_vps[%s]", chromaPartStr[value]);
                 REPORT_SPEEDUP(opt.chroma[csp].filter_vps[value], ref.chroma[csp].filter_vps[value],
-                    pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                    IPF_vec_output_s, dstStride, 1);
+                               pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                               IPF_vec_output_s, dstStride, 1);
             }
             if (opt.chroma[csp].filter_vsp[value])
             {
                 printf("chroma_vsp[%s]", chromaPartStr[value]);
                 REPORT_SPEEDUP(opt.chroma[csp].filter_vsp[value], ref.chroma[csp].filter_vsp[value],
-                    short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                    IPF_vec_output_p, dstStride, 1);
+                               short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                               IPF_vec_output_p, dstStride, 1);
             }
             if (opt.chroma[csp].filter_vss[value])
             {
                 printf("chroma_vss[%s]", chromaPartStr[value]);
                 REPORT_SPEEDUP(opt.chroma[csp].filter_vss[value], ref.chroma[csp].filter_vss[value],
-                    short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                    IPF_vec_output_s, dstStride, 1);
+                               short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                               IPF_vec_output_s, dstStride, 1);
             }
         }
     }

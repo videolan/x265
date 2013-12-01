@@ -264,7 +264,9 @@ void FrameEncoder::initSlice(TComPic* pic)
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
     for (int i = 0; i < m_numRows; i++)
+    {
         m_rows[i].m_cuCoder.m_log = &m_rows[i].m_cuCoder.m_sliceTypeLog[sliceType];
+    }
 
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {

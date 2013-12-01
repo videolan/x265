@@ -132,6 +132,7 @@ void Lookahead::destroy()
 void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
+
     pic->m_lowres.init(orig, pic->getSlice()->getPOC(), sliceType, cfg->param.bframes);
     inputQueue.pushBack(*pic);
 
@@ -148,6 +149,7 @@ void Lookahead::addPicture(TComPic *pic, int sliceType)
             weightedRef.lumaStride = pic->m_lowres.lumaStride;
             weightedRef.isLowres = true;
         }
+
         weightedRef.fpelPlane = weightedRef.lowresPlane[0];
         weightedRef.isWeighted = false;
     }
@@ -260,6 +262,7 @@ void Lookahead::weightsAnalyse(int b, int p0)
     wpScalingParam w;
 
     Lowres *fenc, *ref;
+
     fenc = frames[b];
     ref  = frames[p0];
 
@@ -330,6 +333,7 @@ void Lookahead::weightsAnalyse(int b, int p0)
             primitives.weight_pp(ref->buffer[i], wbuffer[i], stride, stride, stride, paddedLines,
                                  scale, (1 << (denom - 1 + correction)), denom + correction, offset);
         }
+
         weightedRef.isWeighted = true;
     }
 }
@@ -646,17 +650,17 @@ void Lookahead::slicetypeDecide()
             {
                 frm.sliceType = X265_TYPE_B;
                 x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid\n",
-                        frm.frameNum);
+                         frm.frameNum);
             }
 
             /* pyramid with multiple B-refs needs a big enough dpb that the preceding P-frame stays available.
                smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it.*/
             else if (frm.sliceType == X265_TYPE_BREF && cfg->param.bBPyramid && brefs &&
-                     cfg->param.maxNumReferences <= (brefs+3))
+                     cfg->param.maxNumReferences <= (brefs + 3))
             {
                 frm.sliceType = X265_TYPE_B;
                 x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid and %d reference frames\n",
-                        frm.sliceType, cfg->param.maxNumReferences);
+                         frm.sliceType, cfg->param.maxNumReferences);
             }
 
             if (frm.sliceType == X265_TYPE_KEYFRAME)
@@ -719,7 +723,7 @@ void Lookahead::slicetypeDecide()
         /* insert a bref into the sequence */
         if (cfg->param.bBPyramid && bframes > 1 && !brefs)
         {
-            list[bframes/2]->m_lowres.sliceType = X265_TYPE_BREF;
+            list[bframes / 2]->m_lowres.sliceType = X265_TYPE_BREF;
             brefs++;
         }
 
@@ -742,7 +746,7 @@ void Lookahead::slicetypeDecide()
 
             estimateFrameCost(p0, p1, b, 0);
 
-            if ((p0 != p1 || bframes) /*&& cfg->param.rc.i_vbv_buffer_size*/ )
+            if ((p0 != p1 || bframes) /*&& cfg->param.rc.i_vbv_buffer_size*/)
             {
                 // We need the intra costs for row SATDs
                 estimateFrameCost(b, b, b, 0);
@@ -752,11 +756,14 @@ void Lookahead::slicetypeDecide()
                 for (b = 1; b <= bframes; b++)
                 {
                     if (frames[b]->sliceType == X265_TYPE_B)
-                        for (p1 = b; frames[p1]->sliceType == X265_TYPE_B;)
+                        for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; )
+                        {
                             p1++;
+                        }
+
                     else
                         p1 = bframes + 1;
-                    estimateFrameCost( p0, p1, b, 0 );
+                    estimateFrameCost(p0, p1, b, 0);
                     if (frames[b]->sliceType == X265_TYPE_BREF)
                         p0 = b;
                 }
@@ -779,7 +786,7 @@ void Lookahead::slicetypeDecide()
         {
             for (int i = 0; i < bframes; i++)
             {
-                if(list[i]->m_lowres.sliceType == X265_TYPE_BREF)
+                if (list[i]->m_lowres.sliceType == X265_TYPE_BREF)
                     outputQueue.pushBack(*list[i]);
             }
         }
