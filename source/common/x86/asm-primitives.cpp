@@ -517,6 +517,25 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.pixelavg_pp[LUMA_16x8]  = x265_pixel_avg_16x8_sse2;
         LUMA_VAR(_sse2);
     }
+    if (cpuMask & X265_CPU_SSSE3)
+    {
+    }
+    if (cpuMask & X265_CPU_SSE4)
+    {
+    }
+    if (cpuMask & X265_CPU_XOP)
+    {
+    }
+    if (cpuMask & X265_CPU_AVX2)
+    {
+    }
+
+    /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
+    for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
+    {
+        p.sse_pp[i] = sse_ss[i];
+        p.sse_sp[i] = sse_ss[i];
+    }
 #else
     if (cpuMask & X265_CPU_SSE2)
     {
