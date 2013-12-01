@@ -313,7 +313,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             REPORT_SPEEDUP(opt.intra_pred_planar[i], ref.intra_pred_planar[i],
                         pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE);
         }
-        if (opt.intra_pred_allangs[size])
+        if (opt.intra_pred_allangs[i])
         {
             bool bFilter = (size <= 16);
             pixel * refAbove = pixel_buff + srcStride;
