@@ -25,6 +25,7 @@
 #define X265_BLOCKCOPY8_H
 
 void x265_cvt32to16_shr_sse2(int16_t *dst, int *src, intptr_t, int, int);
+void x265_cvt16to32_shl_sse2(int32_t* dst, int16_t *src, intptr_t, int32_t, int32_t);
 
 #define SETUP_CHROMA_BLOCKCOPY_FUNC(W, H, cpu) \
     void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb); \

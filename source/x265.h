@@ -602,6 +602,9 @@ typedef struct x265_param
 
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
+        int       vbvMaxBitrate; 
+        int       vbvBufferSize;
+        double    vbvBufferInit;
     } rc;
 } x265_param;
 

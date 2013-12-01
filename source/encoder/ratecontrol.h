@@ -3,6 +3,7 @@
  *
  * Authors: Sumalatha Polureddy <sumalatha@multicorewareinc.com>
  *          Aarthi Priya Thirumalai <aarthi@multicorewareinc.com>
+ *          Xun Xu, PPLive Corporation <xunxu@pptv.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +32,7 @@ namespace x265 {
 // encoder namespace
 
 struct Lookahead;
+class Encoder;
 class TComPic;
 class TEncCfg;
 
@@ -42,6 +44,21 @@ struct RateControlEntry
     double blurredComplexity;
     double qpaRc;
     double qRceq;
+
+    int lastSatd;
+    bool bLastMiniGopBFrame; 
+    double frameSizePlanned; 
+    double bufferRate;
+    int bframes;
+    int poc;
+};
+
+struct Predictor
+{
+    double coeff;
+    double count;
+    double decay;
+    double offset;
 };
 
 struct RateControl
@@ -57,6 +74,20 @@ struct RateControl
     double bitrate;
     double rateFactorConstant;
     bool   isAbr;
+
+    double bufferSize;
+    double bufferFillFinal;  /* real buffer as of the last finished frame */
+    double bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
+    double bufferRate;       /* # of bits added to buffer_fill after each frame */
+    double vbvMaxRate;       /* in kbps */
+    bool singleFrameVbv;
+    bool isVbv;
+    double fps;
+    Predictor pred[5];
+    Predictor predBfromP;
+    int bframes;
+    int bframeBits;
+    double leadingNoBSatd;
 
     int    lastSatd;
     int    qpConstant[3];
@@ -79,7 +110,7 @@ struct RateControl
     RateControl(TEncCfg * _cfg);
 
     // to be called for each frame to process RateControl and set QP
-    void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce);
+    void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(TComPic *pic);
     int rateControlEnd(int64_t bits, RateControlEntry* rce);
 
@@ -89,6 +120,12 @@ protected:
     double rateEstimateQscale(RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
     double acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y);
+
+    void updateVbv(int64_t bits, RateControlEntry* rce); 
+    void updatePredictor(Predictor *p, double q, double var, double bits); 
+    double clipQscale(double q); 
+    void updateVbvPlan(Encoder* enc); 
+    double predictSize( Predictor *p, double q, double var);
 };
 }
 

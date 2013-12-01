@@ -660,7 +660,7 @@ predIntraAng4x4_func predIntraAng4[] =
     predIntraAng4_32
 };
 
-void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng4x4(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     assert(dirMode > 1); //no planar and dc
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
@@ -678,7 +678,7 @@ void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     // Initialize the Main and Left reference array.
     if (intraPredAngle < 0)
     {
-        int blkSize = width;
+        int blkSize = 4;
         refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
         refSide = (modeVer ? refLeft : refAbove);     // + (blkSize - 1);
 
@@ -1334,10 +1334,10 @@ predIntraAng8x8_func predIntraAng8[] =
     predIntraAng8_32
 };
 
-void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng8x8(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     int k;
-    int blkSize = width;
+    int blkSize = 8;
 
     assert(dirMode > 1); // not planar or dc
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
@@ -1560,10 +1560,10 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     BLND2_4(R3, R7); \
     BLND2_4(R4, R8);
 
-void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng16x16(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     int k;
-    int blkSize        = width;
+    int blkSize        = 16;
 
     // Map the mode index to main prediction direction and angle
     assert(dirMode > 1); //no planar and dc
@@ -2153,10 +2153,10 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
     PREDANG_CALCROW_HOR_MODE2(R6) \
     PREDANG_CALCROW_HOR_MODE2(R7) \
 
-void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void intraPredAng32x32(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int)
 {
     int k;
-    int blkSize = width;
+    int blkSize = 32;
 
     // Map the mode index to main prediction direction and angle
     assert(dirMode > 1); //no planar and dc
@@ -3185,24 +3185,6 @@ void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel 
 #undef MB4
 #undef CALC_BLND_8ROWS
 
-void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
-{
-    switch (width)
-    {
-    case 4:
-        intraPredAng4x4(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
-        return;
-    case 8:
-        intraPredAng8x8(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
-        return;
-    case 16:
-        intraPredAng16x16(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
-        return;
-    case 32:
-        intraPredAng32x32(dst, dstStride, width, dirMode, refLeft, refAbove);
-        return;
-    }
-}
 #endif // !HIGH_BIT_DEPTH
 }
 
@@ -3415,7 +3397,10 @@ void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
     p.intra_pred_dc[BLOCK_16x16] = intra_pred_dc<16>;
     p.intra_pred_dc[BLOCK_32x32] = intra_pred_dc<32>;
 #else
-    p.intra_pred_ang = intra_pred_ang;
+    p.intra_pred_ang[0] = intraPredAng4x4;
+    p.intra_pred_ang[1] = intraPredAng8x8;
+    p.intra_pred_ang[2] = intraPredAng16x16;
+    p.intra_pred_ang[3] = intraPredAng32x32;
 #endif
 }
 }

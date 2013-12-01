@@ -57,6 +57,7 @@ FrameEncoder::FrameEncoder()
 
     m_nalCount = 0;
     m_totalTime = 0;
+    memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
 void FrameEncoder::setThreadPool(ThreadPool *p)
