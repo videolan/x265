@@ -1422,6 +1422,18 @@ fail:
 }
 
 extern "C"
+x265_param *x265_param_alloc()
+{
+    return (x265_param*)x265_malloc(sizeof(x265_param));
+}
+
+extern "C"
+void x265_param_free(x265_param *p)
+{
+    return x265_free(p);
+}
+
+extern "C"
 x265_encoder *x265_encoder_open(x265_param *param)
 {
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized

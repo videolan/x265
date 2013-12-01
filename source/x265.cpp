@@ -569,19 +569,19 @@ int main(int argc, char **argv)
 #endif
     PPA_INIT();
 
-    x265_param param;
-    CLIOptions   cliopt;
+    x265_param *param = x265_param_alloc();
+    CLIOptions cliopt;
 
-    if (cliopt.parse(argc, argv, &param))
+    if (cliopt.parse(argc, argv, param))
     {
         cliopt.destroy();
         exit(1);
     }
 
-    x265_encoder *encoder = x265_encoder_open(&param);
+    x265_encoder *encoder = x265_encoder_open(param);
     if (!encoder)
     {
-        x265_log(&param, X265_LOG_ERROR, "failed to open encoder\n");
+        x265_log(param, X265_LOG_ERROR, "failed to open encoder\n");
         cliopt.destroy();
         x265_cleanup();
         exit(1);
@@ -589,7 +589,7 @@ int main(int argc, char **argv)
 
     /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
-        x265_log(&param, X265_LOG_ERROR, "Unable to register CTRL+C handler: %s\n", strerror(errno));
+        x265_log(param, X265_LOG_ERROR, "Unable to register CTRL+C handler: %s\n", strerror(errno));
 
     x265_picture pic_orig, pic_out;
     x265_picture *pic_in = &pic_orig;
@@ -603,7 +603,7 @@ int main(int argc, char **argv)
         cliopt.writeNALs(p_nal, nal);
     }
 
-    x265_picture_init(&param, pic_in);
+    x265_picture_init(param, pic_in);
 
     // main encoder loop
     uint32_t inFrameCount = 0;
@@ -630,7 +630,7 @@ int main(int argc, char **argv)
             cliopt.writeNALs(p_nal, nal);
 
         // Because x265_encoder_encode() lazily encodes entire GOPs, updates are per-GOP
-        cliopt.printStatus(outFrameCount, &param);
+        cliopt.printStatus(outFrameCount, param);
     }
 
     /* Flush the encoder */
@@ -646,7 +646,7 @@ int main(int argc, char **argv)
         if (nal)
             cliopt.writeNALs(p_nal, nal);
 
-        cliopt.printStatus(outFrameCount, &param);
+        cliopt.printStatus(outFrameCount, param);
 
         if (!numEncoded)
             break;
@@ -657,7 +657,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "                                                                               \r");
 
     x265_encoder_get_stats(encoder, &stats, sizeof(stats));
-    if (param.csvfn && !b_ctrl_c)
+    if (param->csvfn && !b_ctrl_c)
         x265_encoder_log(encoder, argc, argv);
     x265_encoder_close(encoder);
     cliopt.bitstreamFile.close();
@@ -671,10 +671,10 @@ int main(int argc, char **argv)
         printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
                stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
-        if (param.bEnablePsnr)
+        if (param->bEnablePsnr)
             printf("Global PSNR: %.3f\n", stats.globalPsnr);
 
-        if (param.bEnableSsim)
+        if (param->bEnableSsim)
             printf("Global SSIM: %.3f\n", stats.globalSsim);
     }
     else
@@ -685,6 +685,8 @@ int main(int argc, char **argv)
     x265_cleanup(); /* Free library singletons */
 
     cliopt.destroy();
+
+    x265_param_free(param);
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);

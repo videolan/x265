@@ -235,7 +235,12 @@ typedef struct x265_stats
     /* new statistic member variables must be added below this line */
 } x265_stats;
 
-/* encoder input parameters */
+/* x265 input parameters
+ * 
+ * For version safety you may use x265_param_alloc/free() to manage the
+ * allocation of x265_param instances, and x265_param_parse() to assign values
+ * by name.  By never dereferencing param fields in your own code you can treat
+ * x265_param as an opaque data structure */
 typedef struct x265_param
 {
     /*== Encoder Environment ==*/
@@ -601,6 +606,18 @@ typedef struct x265_param
  * If not called, first encoder allocated will auto-detect the CPU and
  * initialize performance primitives, which are process global */
 void x265_setup_primitives(x265_param *param, int cpu);
+
+/* x265_param_alloc:
+ *  Allocates an x265_param instance. The returned param structure is not
+ *  special in any way, but using this method together with x265_param_free()
+ *  and x265_param_parse() to set values by name allows the application to treat
+ *  x265_param as an opaque data struct for version safety */
+x265_param *x265_param_alloc();
+
+/* x265_param_free:
+ *  Use x265_param_free() to release storage for an x265_param instance
+ *  allocated by x26_param_alloc() */
+void x265_param_free(x265_param *);
 
 /***
  * Initialize an x265_param_t structure to default values
