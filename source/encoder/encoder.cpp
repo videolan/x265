@@ -331,7 +331,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         m_dpb->prepareEncode(fenc);
 
         // set slice QP
-        m_rateControl->rateControlStart(fenc, m_lookahead, &(curEncoder->m_rce),this); 
+        m_rateControl->rateControlStart(fenc, m_lookahead, &curEncoder->m_rce, this); 
 
         // Allow FrameEncoder::compressFrame() to start in a worker thread
         curEncoder->m_enable.trigger();
