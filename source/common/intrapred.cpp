@@ -302,18 +302,15 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.intra_pred_planar[BLOCK_8x8] = planad_pred_c<8>;
     p.intra_pred_planar[BLOCK_16x16] = planad_pred_c<16>;
     p.intra_pred_planar[BLOCK_32x32] = planad_pred_c<32>;
-    p.intra_pred_planar[BLOCK_64x64] = planad_pred_c<64>;
 
-    p.intra_pred_ang[0] = intra_pred_ang_c<4>;
-    p.intra_pred_ang[1] = intra_pred_ang_c<8>;
-    p.intra_pred_ang[2] = intra_pred_ang_c<16>;
-    p.intra_pred_ang[3] = intra_pred_ang_c<32>;
-    p.intra_pred_ang[4] = NULL;
+    p.intra_pred_ang[BLOCK_4x4] = intra_pred_ang_c<4>;
+    p.intra_pred_ang[BLOCK_8x8] = intra_pred_ang_c<8>;
+    p.intra_pred_ang[BLOCK_16x16] = intra_pred_ang_c<16>;
+    p.intra_pred_ang[BLOCK_32x32] = intra_pred_ang_c<32>;
 
-    p.intra_pred_allangs[0] = all_angs_pred_c<4>;
-    p.intra_pred_allangs[1] = all_angs_pred_c<8>;
-    p.intra_pred_allangs[2] = all_angs_pred_c<16>;
-    p.intra_pred_allangs[3] = all_angs_pred_c<32>;
-    p.intra_pred_allangs[4] = all_angs_pred_c<64>;
+    p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<4>;
+    p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<8>;
+    p.intra_pred_allangs[BLOCK_16x16] = all_angs_pred_c<16>;
+    p.intra_pred_allangs[BLOCK_32x32] = all_angs_pred_c<32>;
 }
 }
