@@ -147,7 +147,7 @@ void planad_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 }
 
 template<int width>
-void intra_pred_ang_c(pixel* dst, int dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     // Map the mode index to main prediction direction and angle
     int k, l;
