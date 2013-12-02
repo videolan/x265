@@ -162,23 +162,9 @@ int x265_pixel_ssd_64x32_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x48_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x64_sse4(pixel *, intptr_t, pixel *, intptr_t);
 
-#define SETUP_LUMA_PIXELVAR_FUNC(W, H, cpu) \
-    uint64_t x265_pixel_var_ ## W ## x ## H ## cpu(pixel * pix, intptr_t pixstride);
-
-#define LUMA_PIXELVAR_DEF(cpu) \
-    SETUP_LUMA_PIXELVAR_FUNC(8,   8, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(16, 16, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(32, 32, cpu); \
-    SETUP_LUMA_PIXELVAR_FUNC(64, 64, cpu);
-
-LUMA_PIXELVAR_DEF(_sse2);
-
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD
 #undef DECL_X1
 #undef DECL_X4
-#undef LUMA_PIXELSUB_DEF
-#undef LUMA_PIXELVAR_DEF
-#undef SETUP_LUMA_PIXELVAR_FUNC
 
 #endif // ifndef X265_I386_PIXEL_H

@@ -122,8 +122,22 @@ void x265_scale2D_64to32_ssse3(pixel *, pixel *, intptr_t);
 CHROMA_PIXELSUB_DEF(_sse4);
 LUMA_PIXELSUB_DEF(_sse4);
 
+#define SETUP_LUMA_PIXELVAR_FUNC(W, H, cpu) \
+    uint64_t x265_pixel_var_ ## W ## x ## H ## cpu(pixel * pix, intptr_t pixstride);
+
+#define LUMA_PIXELVAR_DEF(cpu) \
+    SETUP_LUMA_PIXELVAR_FUNC(8,   8, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(16, 16, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(32, 32, cpu); \
+    SETUP_LUMA_PIXELVAR_FUNC(64, 64, cpu);
+
+LUMA_PIXELVAR_DEF(_sse2);
+
+#undef CHROMA_PIXELSUB_DEF
+#undef LUMA_PIXELSUB_DEF
+#undef LUMA_PIXELVAR_DEF
 #undef SETUP_CHROMA_PIXELSUB_PS_FUNC
 #undef SETUP_LUMA_PIXELSUB_PS_FUNC
-#undef CHROMA_PIXELSUB_DEF
+#undef SETUP_LUMA_PIXELVAR_FUNC
 
 #endif // ifndef X265_PIXEL_UTIL_H

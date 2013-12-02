@@ -50,6 +50,7 @@ hmul_16p:  times 16 db 1
 SECTION .text
 
 cextern pw_1
+cextern pw_00ff
 cextern pw_2000
 
 ;-----------------------------------------------------------------------------
@@ -2607,4 +2608,427 @@ PIXELSUB_PS_W64_H2 64, 16
 PIXELSUB_PS_W64_H2 64, 32
 PIXELSUB_PS_W64_H2 64, 48
 PIXELSUB_PS_W64_H2 64, 64
+
+;=============================================================================
+; variance
+;=============================================================================
+
+%macro VAR_START 1
+    pxor  m5, m5    ; sum
+    pxor  m6, m6    ; sum squared
+%if HIGH_BIT_DEPTH == 0
+%if %1
+    mova  m7, [pw_00ff]
+%elif mmsize < 32
+    pxor  m7, m7    ; zero
+%endif
+%endif ; !HIGH_BIT_DEPTH
+%endmacro
+
+%macro VAR_END 2
+%if HIGH_BIT_DEPTH
+%if mmsize == 8 && %1*%2 == 256
+    HADDUW  m5, m2
+%else
+%if %1 >= 32
+    HADDW     m5,    m2
+    movd      m7,    r4d
+    paddd     m5,    m7
+%else
+    HADDW   m5, m2
+%endif
+%endif
+%else ; !HIGH_BIT_DEPTH
+%if %1 == 64
+    HADDW     m5,    m2
+    movd      m7,    r4d
+    paddd     m5,    m7
+%else
+    HADDW   m5, m2
+%endif
+%endif ; HIGH_BIT_DEPTH
+    HADDD   m6, m1
+%if ARCH_X86_64
+    punpckldq m5, m6
+    movq   rax, m5
+%else
+    movd   eax, m5
+    movd   edx, m6
+%endif
+    RET
+%endmacro
+
+%macro VAR_CORE 0
+    paddw     m5, m0
+    paddw     m5, m3
+    paddw     m5, m1
+    paddw     m5, m4
+    pmaddwd   m0, m0
+    pmaddwd   m3, m3
+    pmaddwd   m1, m1
+    pmaddwd   m4, m4
+    paddd     m6, m0
+    paddd     m6, m3
+    paddd     m6, m1
+    paddd     m6, m4
+%endmacro
+
+%macro VAR_2ROW 3
+    mov      r2d, %2
+.loop%3:
+%if HIGH_BIT_DEPTH
+    movu      m0, [r0]
+    movu      m1, [r0+mmsize]
+    movu      m3, [r0+%1]
+    movu      m4, [r0+%1+mmsize]
+%else ; !HIGH_BIT_DEPTH
+    mova      m0, [r0]
+    punpckhbw m1, m0, m7
+    mova      m3, [r0+%1]
+    mova      m4, m3
+    punpcklbw m0, m7
+%endif ; HIGH_BIT_DEPTH
+%ifidn %1, r1
+    lea       r0, [r0+%1*2]
+%else
+    add       r0, r1
+%endif
+%if HIGH_BIT_DEPTH == 0
+    punpcklbw m3, m7
+    punpckhbw m4, m7
+%endif ; !HIGH_BIT_DEPTH
+    VAR_CORE
+    dec r2d
+    jg .loop%3
+%endmacro
+
+;-----------------------------------------------------------------------------
+; int pixel_var_wxh( uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_MMX mmx2
+cglobal pixel_var_16x16, 2,3
+    FIX_STRIDES r1
+    VAR_START 0
+    VAR_2ROW 8*SIZEOF_PIXEL, 16, 1
+    VAR_END 16, 16
+
+cglobal pixel_var_8x8, 2,3
+    FIX_STRIDES r1
+    VAR_START 0
+    VAR_2ROW r1, 4, 1
+    VAR_END 8, 8
+
+%if HIGH_BIT_DEPTH
+%macro VAR 0
+cglobal pixel_var_16x16, 2,3,8
+    FIX_STRIDES r1
+    VAR_START 0
+    VAR_2ROW r1, 8, 1
+    VAR_END 16, 16
+
+cglobal pixel_var_8x8, 2,3,8
+    lea       r2, [r1*3]
+    VAR_START 0
+    movu      m0, [r0]
+    movu      m1, [r0+r1*2]
+    movu      m3, [r0+r1*4]
+    movu      m4, [r0+r2*2]
+    lea       r0, [r0+r1*8]
+    VAR_CORE
+    movu      m0, [r0]
+    movu      m1, [r0+r1*2]
+    movu      m3, [r0+r1*4]
+    movu      m4, [r0+r2*2]
+    VAR_CORE
+    VAR_END 8, 8
+
+cglobal pixel_var_32x32, 2,6,8
+    FIX_STRIDES r1
+    mov       r3,    r0
+    VAR_START 0
+    VAR_2ROW  r1,    8, 1
+    HADDW      m5,    m2
+    movd       r4d,   m5
+    pxor       m5,    m5
+    VAR_2ROW  r1,    8, 2
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 32]
+    VAR_2ROW  r1,    8, 3
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 4
+    VAR_END   32,    32
+
+cglobal pixel_var_64x64, 2,6,8
+    FIX_STRIDES r1
+    mov       r3,    r0
+    VAR_START 0
+    VAR_2ROW  r1,    8, 1
+    HADDW      m5,    m2
+    movd       r4d,   m5
+    pxor       m5,    m5
+    VAR_2ROW  r1,    8, 2
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 3
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 4
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 32]
+    VAR_2ROW  r1,    8, 5
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 6
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 7
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 8
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 64]
+    VAR_2ROW  r1,    8, 9
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 10
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 11
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 12
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 96]
+    VAR_2ROW  r1,    8, 13
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 14
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 15
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    VAR_2ROW  r1,    8, 16
+    VAR_END   64,    64
+%endmacro ; VAR
+
+INIT_XMM sse2
+VAR
+INIT_XMM avx
+VAR
+INIT_XMM xop
+VAR
+%endif ; HIGH_BIT_DEPTH
+
+%if HIGH_BIT_DEPTH == 0
+%macro VAR 0
+cglobal pixel_var_8x8, 2,3,8
+    VAR_START 1
+    lea       r2,    [r1 * 3]
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movh      m0,    [r0]
+    movh      m3,    [r0 + r1]
+    movhps    m0,    [r0 + r1 * 2]
+    movhps    m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    VAR_END 8, 8
+
+cglobal pixel_var_16x16_internal
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    mova      m0,    [r0]
+    mova      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    mova      m0,    [r0 + 2 * r1]
+    mova      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    ret
+
+cglobal pixel_var_16x16, 2,3,8
+    VAR_START 1
+    lea     r2,    [r1 * 3]
+    call    pixel_var_16x16_internal
+    VAR_END 16, 16
+
+cglobal pixel_var_32x32, 2,4,8
+    VAR_START 1
+    lea     r2,    [r1 * 3]
+    mov     r3,    r0
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r3 + 16]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    VAR_END 32, 32
+
+cglobal pixel_var_64x64, 2,6,8
+    VAR_START 1
+    lea     r2,    [r1 * 3]
+    mov     r3,    r0
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    HADDW     m5,    m2
+    movd      r4d,   m5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 16]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    lea       r0,    [r3 + 32]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r3 + 48]
+    HADDW     m5,    m2
+    movd      r5d,   m5
+    add       r4,    r5
+    pxor      m5,    m5
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    lea       r0,    [r0 + r1 * 4]
+    call    pixel_var_16x16_internal
+    VAR_END 64, 64
+%endmacro ; VAR
+
+INIT_XMM sse2
+VAR
+INIT_XMM avx
+VAR
+INIT_XMM xop
+VAR
+
+INIT_YMM avx2
+cglobal pixel_var_16x16, 2,4,7
+    VAR_START 0
+    mov      r2d, 4
+    lea       r3, [r1*3]
+.loop:
+    pmovzxbw  m0, [r0]
+    pmovzxbw  m3, [r0+r1]
+    pmovzxbw  m1, [r0+r1*2]
+    pmovzxbw  m4, [r0+r3]
+    lea       r0, [r0+r1*4]
+    VAR_CORE
+    dec r2d
+    jg .loop
+    vextracti128 xm0, m5, 1
+    vextracti128 xm1, m6, 1
+    paddw  xm5, xm0
+    paddd  xm6, xm1
+    HADDW  xm5, xm2
+    HADDD  xm6, xm1
+%if ARCH_X86_64
+    punpckldq xm5, xm6
+    movq   rax, xm5
+%else
+    movd   eax, xm5
+    movd   edx, xm6
+%endif
+    RET
+%endif ; !HIGH_BIT_DEPTH
+
+%macro VAR2_END 3
+    HADDW   %2, xm1
+    movd   r1d, %2
+    imul   r1d, r1d
+    HADDD   %3, xm1
+    shr    r1d, %1
+    movd   eax, %3
+    movd  [r4], %3
+    sub    eax, r1d  ; sqr - (sum * sum >> shift)
+    RET
+%endmacro
 
