@@ -32,14 +32,6 @@
 
 using namespace x265;
 
-#define BASE_FRAME_DURATION 0.04
-
-/* Arbitrary limitations as a sanity check. */
-#define MAX_FRAME_DURATION 1.00
-#define MIN_FRAME_DURATION 0.01
-
-#define CLIP_DURATION(f) Clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
-
 /* The qscale - qp conversion is specified in the standards.
  * Approx qscale increases by 12%  with every qp increment */
 static inline double qScale2qp(double qScale)

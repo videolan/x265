@@ -1111,17 +1111,14 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
         int noOfBlocks = g_maxCUWidth / 16;
         int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
         int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
-        int cnt = 0;
 
+        double *qpoffs = (pic->getSlice()->isReferenced() && m_cfg->param.rc.cuTree) ? pic->m_lowres.qpOffset : pic->m_lowres.qpAqOffset;
+        int cnt = 0;
         for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
         {
             for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
             {
-                qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
-                if (pic->getSlice()->isReferenced() && m_cfg->param.rc.cuTree && m_cfg->param.rc.aqMode)
-                    qp_offset += pic->m_lowres.qpOffset[block_x + w + (block_y * maxBlockCols)];
-                else
-                    qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
+                qp_offset += qpoffs[block_x + w + (block_y * maxBlockCols)];
                 cnt++;
             }
         }
