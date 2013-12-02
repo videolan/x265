@@ -119,10 +119,10 @@ struct Lookahead : public WaveFront
     void weightsAnalyse(int b, int p0);
     uint32_t weightCostLuma(int b, pixel *src, wpScalingParam *w);
 
-    void cuTree(Lowres **frames, int numframes, bool bintra);
-    void estimateCUPropagate(Lowres **frames, double average_duration, int p0, int p1, int b, int referenced);
+    void cuTree(Lowres **Frames, int numframes, bool bintra);
+    void estimateCUPropagate(Lowres **Frames, double average_duration, int p0, int p1, int b, int referenced);
     void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts, int32_t *invQscales, double *fpsFactor, int len);
-    void cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
+    void cuTreeFinish(Lowres *Frame, double averageDuration, int ref0Distance);
 };
 }
 

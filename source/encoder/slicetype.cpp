@@ -1273,7 +1273,7 @@ void Lookahead::processRow(int row)
     }
 }
 
-void Lookahead::cuTree(Lowres **frames, int numframes, bool bintra)
+void Lookahead::cuTree(Lowres **Frames, int numframes, bool bintra)
 {
     int idx = !bintra;
     int lastnonb, curnonb = 1;
@@ -1291,7 +1291,7 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bintra)
     if (bintra)
         estimateFrameCost(0, 0, 0, 0);
 
-    while (i > 0 && frames[i]->sliceType == X265_TYPE_B)
+    while (i > 0 && Frames[i]->sliceType == X265_TYPE_B)
         i--;
     lastnonb = i;
 
@@ -1302,36 +1302,36 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bintra)
     {
         if (bintra)
         {
-            memset(frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
-            memcpy(frames[0]->qpOffset, frames[0]->qpAqOffset, cuCount * sizeof(double));
+            memset(Frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
+            memcpy(Frames[0]->qpOffset, Frames[0]->qpAqOffset, cuCount * sizeof(double));
             return;
         }
-        std::swap(frames[lastnonb]->propagateCost, frames[0]->propagateCost);
-        memset(frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
+        std::swap(Frames[lastnonb]->propagateCost, Frames[0]->propagateCost);
+        memset(Frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
     }
     else
     {
         if (lastnonb < idx)
             return;
-        memset(frames[lastnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
+        memset(Frames[lastnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
     }
 
     while (i-- > idx)
     {
         curnonb = i;
-        while (frames[curnonb]->sliceType == X265_TYPE_B && curnonb > 0)
+        while (Frames[curnonb]->sliceType == X265_TYPE_B && curnonb > 0)
             curnonb--;
         if (curnonb < idx)
             break;
 
         estimateFrameCost(curnonb, lastnonb, lastnonb, 0);
-        memset(frames[curnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
+        memset(Frames[curnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
         bframes = lastnonb - curnonb - 1;
         if (cfg->param.bBPyramid && bframes > 1)
         {
             int middle = (bframes + 1) / 2 + curnonb;
             estimateFrameCost(curnonb, lastnonb, middle, 0);
-            memset(frames[middle]->propagateCost, 0, cuCount * sizeof(uint16_t));
+            memset(Frames[middle]->propagateCost, 0, cuCount * sizeof(uint16_t));
             while (i > curnonb)
             {
                 int p0 = i > middle ? middle : curnonb;
@@ -1339,54 +1339,54 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bintra)
                 if (i != middle)
                 {
                     estimateFrameCost(p0, p1, i, 0);
-                    estimateCUPropagate(frames, averageDuration, p0, p1, i, 0);
+                    estimateCUPropagate(Frames, averageDuration, p0, p1, i, 0);
                 }
                 i--;
             }
-            estimateCUPropagate(frames, averageDuration, curnonb, lastnonb, middle, 1);
+            estimateCUPropagate(Frames, averageDuration, curnonb, lastnonb, middle, 1);
         }
         else
         {
             while (i > curnonb)
             {
                 estimateFrameCost(curnonb, lastnonb, i, 0);
-                estimateCUPropagate(frames, averageDuration, curnonb, lastnonb, i, 0);
+                estimateCUPropagate(Frames, averageDuration, curnonb, lastnonb, i, 0);
                 i--;
             }
         }
-        estimateCUPropagate(frames, averageDuration, curnonb, lastnonb, lastnonb, 1);
+        estimateCUPropagate(Frames, averageDuration, curnonb, lastnonb, lastnonb, 1);
         lastnonb = curnonb;
     }
 
     if (!cfg->param.lookaheadDepth)
     {
         estimateFrameCost(0, lastnonb, lastnonb, 0);
-        estimateCUPropagate(frames, averageDuration, 0, lastnonb, lastnonb, 1);
-        std::swap(frames[lastnonb]->propagateCost, frames[0]->propagateCost);
+        estimateCUPropagate(Frames, averageDuration, 0, lastnonb, lastnonb, 1);
+        std::swap(Frames[lastnonb]->propagateCost, Frames[0]->propagateCost);
     }
 
-    cuTreeFinish(frames[lastnonb], averageDuration, lastnonb);
+    cuTreeFinish(Frames[lastnonb], averageDuration, lastnonb);
     if (cfg->param.bBPyramid && bframes > 1 /* && !h->param.rc.i_vbv_buffer_size */)
-        cuTreeFinish(frames[lastnonb + (bframes + 1) / 2], averageDuration, 0);
+        cuTreeFinish(Frames[lastnonb + (bframes + 1) / 2], averageDuration, 0);
 }
 
-void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int p0, int p1, int b, int referenced)
+void Lookahead::estimateCUPropagate(Lowres **Frames, double averageDuration, int p0, int p1, int b, int referenced)
 {
-    uint16_t *refCosts[2] = {frames[p0]->propagateCost, frames[p1]->propagateCost};
+    uint16_t *refCosts[2] = {Frames[p0]->propagateCost, Frames[p1]->propagateCost};
     int distScaleFactor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
     int bipredWeight = cfg->param.bEnableWeightedBiPred ? 64 - (distScaleFactor >> 2) : 32;
-    MV *mvs[2] = {frames[b]->lowresMvs[0][b - p0 -1], frames[b]->lowresMvs[1][p1 - b - 1]};
+    MV *mvs[2] = {Frames[b]->lowresMvs[0][b - p0 -1], Frames[b]->lowresMvs[1][p1 - b - 1]};
     int bipredWeights[2] = {bipredWeight, 64 - bipredWeight};
     memset(scratch, 0, widthInCU * sizeof(int));
 
-    uint16_t *propagate_cost = frames[b]->propagateCost;
+    uint16_t *propagate_cost = Frames[b]->propagateCost;
 
     x265_emms();
     double fpsFactor = CLIP_DURATION(1.0 / cfg->param.frameRate) / CLIP_DURATION(averageDuration);
 
     /* For non-refferd frames the source costs are always zero, so just memset one row and re-use it. */
     if (!referenced)
-        memset(frames[b]->propagateCost, 0, widthInCU * sizeof(uint16_t));
+        memset(Frames[b]->propagateCost, 0, widthInCU * sizeof(uint16_t));
 
     uint16_t StrideInCU = (uint16_t)widthInCU;
     for (uint16_t block_y = 0; block_y < heightInCU; block_y += 16)
@@ -1394,8 +1394,8 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
         int cuIndex = block_y * StrideInCU;
         /* TODO This function go into ASM */
         estimateCUPropagateCost(scratch, propagate_cost,
-            frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
-            frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
+            Frames[b]->intraCost + cuIndex, Frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
+            Frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
 
         if (referenced)
             propagate_cost += widthInCU;
@@ -1406,7 +1406,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
             if (propagate_amount > 0)
             {
                 /* Access width-2 bitfield. */
-                int lists_used = frames[b]->lowresCosts[b - p0][p1 - b][cuIndex] >> LOWRES_COST_SHIFT;
+                int lists_used = Frames[b]->lowresCosts[b - p0][p1 - b][cuIndex] >> LOWRES_COST_SHIFT;
                 /* Follow the MVs to the previous frame(s). */
                 for (uint16_t list = 0; list < 2; list++)
                     if ((lists_used >> list) & 1)
@@ -1426,12 +1426,12 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
 
                         uint16_t x = mvs[list]->x;
                         uint16_t y = mvs[list]->y;
-                        uint16_t cux = (x >> 5) + block_x;
-                        uint16_t cuy = (y >> 5) + block_y;
-                        uint16_t idx0 = cux + cuy * StrideInCU;
-                        uint16_t idx1 = idx0 + 1;
-                        uint16_t idx2 = idx0 + StrideInCU;
-                        uint16_t idx3 = idx0 + StrideInCU + 1;
+                        int cux = (x >> 5) + block_x;
+                        int cuy = (y >> 5) + block_y;
+                        int idx0 = cux + cuy * StrideInCU;
+                        int idx1 = idx0 + 1;
+                        int idx2 = idx0 + StrideInCU;
+                        int idx3 = idx0 + StrideInCU + 1;
                         x &= 31;
                         y &= 31;
                         uint16_t idx0weight = (uint16_t) (32 - y) * (32 - x);
@@ -1465,17 +1465,17 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     }
 
     if(/*h->param.rc.i_vbv_buffer_size &&*/ cfg->param.logLevel && referenced)
-        cuTreeFinish(frames[b], averageDuration, b == p1 ? b - p0 : 0);
+        cuTreeFinish(Frames[b], averageDuration, b == p1 ? b - p0 : 0);
 
 }
 
-void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance)
+void Lookahead::cuTreeFinish(Lowres *Frame, double averageDuration, int ref0Distance)
 {
     int fpsFactor = (int)(CLIP_DURATION(averageDuration) / CLIP_DURATION(1.0 / cfg->param.frameRate) * 256);
     double weightdelta = 0.0;
 
-    if (ref0Distance && frame->weightedCostDelta[ref0Distance - 1] > 0)
-        weightdelta = (1.0 - frame->weightedCostDelta[ref0Distance - 1]);
+    if (ref0Distance && Frame->weightedCostDelta[ref0Distance - 1] > 0)
+        weightdelta = (1.0 - Frame->weightedCostDelta[ref0Distance - 1]);
 
     /* Allow the strength to be adjusted via qcompress, since the two
      * concepts are very similar. */
@@ -1484,12 +1484,12 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
     double strength = 5.0f * (1.0f - cfg->param.rc.qCompress);
     for (int cuIndex = 0; cuIndex < cuCount; cuIndex++)
     {
-        int intracost = (frame->intraCost[cuIndex] * frame->invQscaleFactor[cuIndex] + 128) >> 8;
+        int intracost = (Frame->intraCost[cuIndex] * Frame->invQscaleFactor[cuIndex] + 128) >> 8;
         if (intracost)
         {
-            int propagate_cost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
+            int propagate_cost = (Frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
             double log2_ratio = X265_LOG2(intracost + propagate_cost) - X265_LOG2(intracost) + weightdelta;
-            frame->qpOffset[cuIndex] = frame->qpAqOffset[cuIndex] - strength * log2_ratio;
+            Frame->qpOffset[cuIndex] = Frame->qpAqOffset[cuIndex] - strength * log2_ratio;
         }
     }
 }
