@@ -69,6 +69,7 @@
     DECL_PIXELS(void, name ## _x3, suffix, (pixel *, pixel *, pixel *, pixel *, intptr_t, int *)) \
     DECL_PIXELS(void, name ## _x4, suffix, (pixel *, pixel *, pixel *, pixel *, pixel *, intptr_t, int *))
 
+/* sad-a.asm */
 DECL_X1(sad, mmx2)
 DECL_X1(sad, sse2)
 DECL_X4(sad, sse2_misalign)
@@ -84,6 +85,40 @@ DECL_X4(sad, sse3)
 DECL_X4(sad, ssse3)
 DECL_X4(sad, avx)
 DECL_X4(sad, avx2)
+DECL_X1(sad, cache32_mmx2);
+DECL_X1(sad, cache64_mmx2);
+DECL_X1(sad, cache64_sse2);
+DECL_X1(sad, cache64_ssse3);
+DECL_X4(sad, cache32_mmx2);
+DECL_X4(sad, cache64_mmx2);
+DECL_X4(sad, cache64_sse2);
+DECL_X4(sad, cache64_ssse3);
+
+/* pixel-a.asm */
+DECL_X1(satd, mmx2)
+DECL_X1(satd, sse2)
+DECL_X1(satd, ssse3)
+DECL_X1(satd, ssse3_atom)
+DECL_X1(satd, sse4)
+DECL_X1(satd, avx)
+DECL_X1(satd, xop)
+DECL_X1(satd, avx2)
+int x265_pixel_satd_8x32_sse2(pixel *, intptr_t, pixel *, intptr_t);
+int x265_pixel_satd_16x4_sse2(pixel *, intptr_t, pixel *, intptr_t);
+int x265_pixel_satd_16x12_sse2(pixel *, intptr_t, pixel *, intptr_t);
+int x265_pixel_satd_16x32_sse2(pixel *, intptr_t, pixel *, intptr_t);
+int x265_pixel_satd_16x64_sse2(pixel *, intptr_t, pixel *, intptr_t);
+
+DECL_X1(sa8d, mmx2)
+DECL_X1(sa8d, sse2)
+DECL_X1(sa8d, ssse3)
+DECL_X1(sa8d, ssse3_atom)
+DECL_X1(sa8d, sse4)
+DECL_X1(sa8d, avx)
+DECL_X1(sa8d, xop)
+DECL_X1(sa8d, avx2)
+
+/* ssd-a.asm */
 DECL_X1(ssd, mmx)
 DECL_X1(ssd, mmx2)
 DECL_X1(ssd, sse2slow)
@@ -102,37 +137,6 @@ DECL_X1_SS(ssd_ss, avx)
 DECL_X1_SS(ssd_ss, xop)
 DECL_X1_SS(ssd_ss, avx2)
 DECL_X1_SP(ssd_sp, sse4)
-DECL_X1(satd, mmx2)
-DECL_X1(satd, sse2)
-DECL_X1(satd, ssse3)
-DECL_X1(satd, ssse3_atom)
-DECL_X1(satd, sse4)
-DECL_X1(satd, avx)
-DECL_X1(satd, xop)
-DECL_X1(satd, avx2)
-DECL_X1(sa8d, mmx2)
-DECL_X1(sa8d, sse2)
-DECL_X1(sa8d, ssse3)
-DECL_X1(sa8d, ssse3_atom)
-DECL_X1(sa8d, sse4)
-DECL_X1(sa8d, avx)
-DECL_X1(sa8d, xop)
-DECL_X1(sa8d, avx2)
-DECL_X1(sad, cache32_mmx2);
-DECL_X1(sad, cache64_mmx2);
-DECL_X1(sad, cache64_sse2);
-DECL_X1(sad, cache64_ssse3);
-DECL_X4(sad, cache32_mmx2);
-DECL_X4(sad, cache64_mmx2);
-DECL_X4(sad, cache64_sse2);
-DECL_X4(sad, cache64_ssse3);
-
-int x265_pixel_satd_8x32_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_16x4_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_16x12_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_16x32_sse2(pixel *, intptr_t, pixel *, intptr_t);
-int x265_pixel_satd_16x64_sse2(pixel *, intptr_t, pixel *, intptr_t);
-
 #define DECL_HEVC_SSD(suffix) \
     int x265_pixel_ssd_32x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
     int x265_pixel_ssd_16x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
