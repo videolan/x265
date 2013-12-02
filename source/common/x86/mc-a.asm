@@ -836,6 +836,7 @@ INIT_XMM sse2
 AVG_FUNC 64, movdqu, movdqa
 AVGH 64, 64
 AVGH 64, 48
+AVGH 64, 32
 AVGH 64, 16
 
 AVG_FUNC 32, movdqu, movdqa
@@ -871,6 +872,7 @@ AVGH 24, 32
 
 AVGH 64, 64
 AVGH 64, 48
+AVGH 64, 32
 AVGH 64, 16
 
 AVGH 32, 64
