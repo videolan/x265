@@ -281,6 +281,7 @@ bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
     int height = pic->getHeight();
     int defaultWeight = ((int)1 << denom);
     int numPredDir = slice->isInterP() ? 1 : 2;
+    int numWeighted = 0;
 
     for (int list = 0; list < numPredDir; list++)
     {
@@ -313,7 +314,7 @@ bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
             SADnoWP += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, orgStride, refStride, denom, defaultWeight, 0);
 
             double dRatio = ((double)SADWP / (double)SADnoWP);
-            if (dRatio >= (double)DTHRESH)
+            if (dRatio >= (double)DTHRESH || numWeighted >= 8)
             {
                 for (int comp = 0; comp < 3; comp++)
                 {
@@ -322,6 +323,10 @@ bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
                     weightPredTable[list][refIdxTmp][comp].inputWeight = (int)defaultWeight;
                     weightPredTable[list][refIdxTmp][comp].log2WeightDenom = (int)denom;
                 }
+            }
+            else
+            {
+                numWeighted++;
             }
         }
     }
