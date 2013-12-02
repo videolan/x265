@@ -110,6 +110,45 @@ cglobal cvt32to16_shr, 5, 7, 1, dst, src, stride
     RET
 
 
+;--------------------------------------------------------------------------------------
+; void cvt16to32_shl(int32_t *dst, int16_t *src, intptr_t stride, int shift, int size);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
+%define shift       m6
+
+    ; make shift
+    mov             r5d,      r3m
+    movd            shift,    r5d
+
+    ; register alloc
+    ; r0 - dst
+    ; r1 - src
+    ; r2 - stride
+    ; r3 - shift
+    ; r4 - size
+
+    mov             r5d,      r4d
+    shr             r4d,      2
+.loop_row
+    mov             r6d,      r4d
+
+.loop_col
+    pmovsxwd        m0,       [r1]
+    pslld           m0,       shift
+    movu            [r0],     m0
+
+    add             r1,       8
+    add             r0,       16
+
+    dec             r6d
+    jnz             .loop_col
+
+    dec             r5d
+    jnz             .loop_row
+
+    RET
+
 ;-----------------------------------------------------------------------------
 ; void calcrecon(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred)
 ;-----------------------------------------------------------------------------

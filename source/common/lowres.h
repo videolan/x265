@@ -126,8 +126,12 @@ struct Lowres : public ReferencePlanes
     /* rate control / adaptive quant data */
     double*   qpAqOffset;      // qp Aq offset values for each Cu
     int*      invQscaleFactor; // qScale values for qp Aq Offsets
+    double*   qpOffset;
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
+
+    uint16_t* propagateCost;
+    double    weightedCostDelta[X265_BFRAME_MAX+2];
 
     void create(TComPicYuv *orig, int bframes, int32_t *aqMode);
     void destroy(int bframes);

@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
             printf("Testing only harnesses that match name <%s>\n", testname);
         }
     }
+
 #if HIGH_BIT_DEPTH
     g_bitDepth = 12;
 #endif

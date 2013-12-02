@@ -1855,9 +1855,6 @@ void Setup_Vec_Pixel16Primitives_sse41(EncoderPrimitives &p)
 
     SETUP_PARTITION(4, 4);
     /* 4x4 is too small for any sub partitions */
-
-#else // if HIGH_BIT_DEPTH
-    p.sad[0] = p.sad[0];
 #endif // if HIGH_BIT_DEPTH
 }
 }

@@ -1269,6 +1269,7 @@ struct WpScalingParam
             log2WeightDenom--;
             inputWeight >>= 1;
         }
+
         inputWeight = X265_MIN(inputWeight, 127);
     }
 };

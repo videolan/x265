@@ -190,7 +190,7 @@ void x265_param_default(x265_param *param)
     param->bEnableTransformSkip = 0;
     param->bEnableTSkipFast = 0;
     param->maxNumReferences = 3;
-    
+
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
 
@@ -205,6 +205,9 @@ void x265_param_default(x265_param *param)
     param->rdPenalty = 0;
 
     /* Rate control options */
+    param->rc.vbvMaxBitrate = 0;
+    param->rc.vbvBufferSize = 0;
+    param->rc.vbvBufferInit = 0.9;
     param->rc.rfConstant = 28;
     param->rc.bitrate = 0;
     param->rc.rateTolerance = 1.0;
@@ -216,6 +219,7 @@ void x265_param_default(x265_param *param)
     param->rc.qp = 32;
     param->rc.aqMode = X265_AQ_NONE;
     param->rc.aqStrength = 1.0;
+    param->rc.cuTree = 0;
 
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 1;
@@ -315,7 +319,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
-            param->maxNumReferences = 1;            
+            param->maxNumReferences = 1;
         }
         else if (!strcmp(preset, "faster"))
         {
@@ -362,7 +366,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->lookaheadDepth = 40;
             param->bframes = 8;
             param->tuQTMaxInterDepth = 3;
-            param->tuQTMaxIntraDepth = 3;			
+            param->tuQTMaxIntraDepth = 3;
             param->rdLevel = 2;
             param->subpelRefine = 4;
             param->maxNumMergeCand = 4;
@@ -516,7 +520,7 @@ int x265_check_params(x265_param *param)
     }
     if (param->rc.aqStrength == 0)
     {
-        x265_log(param, X265_LOG_WARNING, "Aq mode specified, but Aq strength is  0, ignored\n" );
+        x265_log(param, X265_LOG_WARNING, "Aq mode specified, but Aq strength is  0, ignored\n");
         param->rc.aqMode = 0;
     }
 
@@ -719,6 +723,9 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("b-pyramid") p->bBPyramid = bvalue;
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
+    OPT("vbv-maxrate") p->rc.vbvMaxBitrate = atoi(value);
+    OPT("vbv-bufsize") p->rc.vbvBufferSize = atoi(value);
+    OPT("vbv-init")    p->rc.vbvBufferInit = atof(value);
     OPT("crf")
     {
         p->rc.rfConstant = atof(value);

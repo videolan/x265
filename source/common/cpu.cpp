@@ -305,10 +305,10 @@ int x265_cpu_cpuid_test(void)
 #if defined(_MSC_VER)
 #pragma warning(disable: 4100)
 #elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
-#define __cpuidex(regsArray, level, index)\
-            __asm__ __volatile__ ("cpuid"\
-            : "=a" ((regsArray)[0]), "=b" ((regsArray)[1]), "=c" ((regsArray)[2]), "=d" ((regsArray)[3])\
-            : "0" (level), "2" (index));
+#define __cpuidex(regsArray, level, index) \
+    __asm__ __volatile__ ("cpuid" \
+                          : "=a" ((regsArray)[0]), "=b" ((regsArray)[1]), "=c" ((regsArray)[2]), "=d" ((regsArray)[3]) \
+                          : "0" (level), "2" (index));
 #else
 #error "compiler not supported"
 #endif

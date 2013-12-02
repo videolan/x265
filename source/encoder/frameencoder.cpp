@@ -57,6 +57,7 @@ FrameEncoder::FrameEncoder()
 
     m_nalCount = 0;
     m_totalTime = 0;
+    memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
 void FrameEncoder::setThreadPool(ThreadPool *p)
@@ -263,7 +264,9 @@ void FrameEncoder::initSlice(TComPic* pic)
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
     for (int i = 0; i < m_numRows; i++)
+    {
         m_rows[i].m_cuCoder.m_log = &m_rows[i].m_cuCoder.m_sliceTypeLog[sliceType];
+    }
 
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
@@ -1115,6 +1118,10 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
             for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
             {
                 qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
+                if (pic->getSlice()->isReferenced() && m_cfg->param.rc.cuTree && m_cfg->param.rc.aqMode)
+                    qp_offset += pic->m_lowres.qpOffset[block_x + w + (block_y * maxBlockCols)];
+                else
+                    qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
                 cnt++;
             }
         }

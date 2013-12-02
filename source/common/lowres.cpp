@@ -47,9 +47,11 @@ void Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
     {
         qpAqOffset = (double*)x265_malloc(sizeof(double) * cuCount);
         invQscaleFactor = (int*)x265_malloc(sizeof(int) * cuCount);
-        if (!qpAqOffset || !invQscaleFactor)
+        qpOffset = (double*)x265_malloc(sizeof(double) * cuCount);
+        if (!qpAqOffset || !invQscaleFactor || !qpOffset)
             *aqMode = 0;
     }
+    propagateCost = (uint16_t*)x265_malloc(sizeof(uint16_t) * cuCount);
 
     /* allocate lowres buffers */
     for (int i = 0; i < 4; i++)
@@ -111,6 +113,8 @@ void Lowres::destroy(int bframes)
 
     X265_FREE(qpAqOffset);
     X265_FREE(invQscaleFactor);
+    X265_FREE(qpOffset);
+    X265_FREE(propagateCost);
 }
 
 // (re) initialize lowres state

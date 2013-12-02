@@ -73,13 +73,16 @@ if(ENABLE_PRIMITIVES_VEC)
         include_directories(../VectorClass)
     endif()
     set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
-    set(SSSE3 vec/pixel-ssse3.cpp vec/dct-ssse3.cpp vec/ipfilter-ssse3.cpp vec/intra-ssse3.cpp)
-    set(SSE41 vec/pixel-sse41.cpp vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp)
+    set(SSSE3 vec/dct-ssse3.cpp vec/ipfilter-ssse3.cpp vec/intra-ssse3.cpp)
+    set(SSE41 vec/pixel-sse41.cpp vec/dct-sse41.cpp vec/ipfilter-sse41.cpp
+              vec/intra-sse41.cpp vec/pixel16-sse41.cpp)
 
     if (MSVC)
-        add_definitions(/wd4127) # conditional expression is constant
-        add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
         set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
+        # wd4127 conditional expression is constant
+        # wd4244 'argument' : conversion from 'int' to 'char', possible loss of data
+        # wd4100 unreferenced formal parameter
+        set(WARNDISABLE "/wd4244 /wd4127 /wd4100")
         if (INTEL_CXX)
             add_definitions(/Qwd111) # statement is unreachable
             add_definitions(/Qwd128) # loop is unreachable
@@ -87,23 +90,26 @@ if(ENABLE_PRIMITIVES_VEC)
             add_definitions(/Qwd185) # dynamic initialization in unreachable code
             add_definitions(/Qwd280) # conditional expression is constant
         endif()
-        if (NOT X64)
+        if (X64)
             # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
-            set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS /arch:SSE2)
+            set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} /arch:SSE2")
+        else()
+            set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE}")
         endif()
     endif()
     if(GCC)
         if(CLANG)
-            # llvm intrinsic headers trigger this warning
-            add_definitions(-Wno-shadow)
-            # llvm reports these warnings for the vector class headers
-            add_definitions(-Wno-shift-overflow -Wno-uninitialized)
+            # llvm intrinsic headers trigger these warning
+            # the middle two are for the vector class headers only
+            set(WARNDISABLE "-Wno-shadow -Wno-shift-overflow -Wno-uninitialized -Wno-unused-parameter")
+        else()
+            set(WARNDISABLE "-Wno-unused-parameter")
         endif()
         if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.3))
             set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
-            set_source_files_properties(${SSE3}  PROPERTIES COMPILE_FLAGS "-msse3")
-            set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "-mssse3")
-            set_source_files_properties(${SSE41} PROPERTIES COMPILE_FLAGS "-msse4.1")
+            set_source_files_properties(${SSE3}  PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -msse3")
+            set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -mssse3")
+            set_source_files_properties(${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -msse4.1")
         endif()
     endif(GCC)
 
@@ -113,8 +119,9 @@ endif(ENABLE_PRIMITIVES_VEC)
 
 if(ENABLE_PRIMITIVES_ASM)
     set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h)
-    set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm mc-a.asm mc-a2.asm ipfilter8.asm pixel-util.asm
-               blockcopy8.asm intrapred.asm pixeladd8.asm dct8.asm)
+    set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm mc-a.asm mc-a2.asm
+               ipfilter8.asm pixel-util8.asm blockcopy8.asm intrapred8.asm
+               pixeladd8.asm dct8.asm)
     if (NOT X64)
         set(A_SRCS ${A_SRCS} pixel-32.asm)
     endif()
