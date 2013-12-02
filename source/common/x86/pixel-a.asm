@@ -51,25 +51,6 @@ pd_f0:     times 4 dd 0xffff0000
 
 pw_76543210: dw 0, 1, 2, 3, 4, 5, 6, 7
 
-ads_mvs_shuffle:
-%macro ADS_MVS_SHUFFLE 8
-    %assign y x
-    %rep 8
-        %rep 7
-            %rotate (~y)&1
-            %assign y y>>((~y)&1)
-        %endrep
-        db %1*2, %1*2+1
-        %rotate 1
-        %assign y y>>1
-    %endrep
-%endmacro
-%assign x 0
-%rep 256
-    ADS_MVS_SHUFFLE 0, 1, 2, 3, 4, 5, 6, 7
-%assign x x+1
-%endrep
-
 SECTION .text
 
 cextern pb_0
