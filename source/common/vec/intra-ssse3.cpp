@@ -33,6 +33,49 @@
 
 using namespace x265;
 
+// NOTE: I will remove below wrapper code after all of IntraAng mode finished
+extern "C" {
+#include "x86/intrapred.h"
+}
+intra_ang_t intra_ang4[NUM_INTRA_MODE - 1] =
+{
+    NULL,                               // Mode 0
+    NULL,                               // Mode 1
+    x265_intra_pred_ang4_2_ssse3,       // Mode 2
+    NULL,                               // Mode 3
+    NULL,                               // Mode 4
+    NULL,                               // Mode 5
+    NULL,                               // Mode 6
+    NULL,                               // Mode 7
+    NULL,                               // Mode 8
+    NULL,                               // Mode 9
+    NULL,                               // Mode 10
+    NULL,                               // Mode 11
+    NULL,                               // Mode 12
+    NULL,                               // Mode 13
+    NULL,                               // Mode 14
+    NULL,                               // Mode 15
+    NULL,                               // Mode 16
+    NULL,                               // Mode 17
+    NULL,                               // Mode 18
+    NULL,                               // Mode 19
+    NULL,                               // Mode 20
+    NULL,                               // Mode 21
+    NULL,                               // Mode 22
+    NULL,                               // Mode 23
+    NULL,                               // Mode 24
+    NULL,                               // Mode 25
+    NULL,                               // Mode 26
+    NULL,                               // Mode 27
+    NULL,                               // Mode 28
+    NULL,                               // Mode 29
+    NULL,                               // Mode 30
+    NULL,                               // Mode 31
+    NULL,                               // Mode 32
+    NULL,                               // Mode 33
+    NULL,                               // Mode 34
+};
+
 namespace {
 #if !HIGH_BIT_DEPTH
 const int angAP[17][64] =
@@ -660,9 +703,17 @@ predIntraAng4x4_func predIntraAng4[] =
     predIntraAng4_32
 };
 
+
 void intraPredAng4x4(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     assert(dirMode > 1); //no planar and dc
+
+    if (intra_ang4[dirMode])
+    {
+        intra_ang4[dirMode](dst, dstStride, refLeft, refAbove, dirMode, bFilter);
+        return;
+    }
+
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
     static const int mode_to_invAng_table[] = { 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256 };
     int intraPredAngle = mode_to_angle_table[dirMode - 2];

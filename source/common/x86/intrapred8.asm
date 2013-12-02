@@ -674,3 +674,21 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
 %undef COMP_PRED_PLANAR_ROW
 
     RET
+
+
+;-----------------------------------------------------------------------------
+; void intraPredAng(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal intra_pred_ang4_2, 3,3,4
+    movh        m0, [r2 + 2]
+    movd        [r0], m0
+    palignr     m1, m0, 1
+    movd        [r0 + r1], m1
+    palignr     m2, m0, 2
+    movd        [r0 + r1 * 2], m2
+    lea         r1, [r1 * 3]
+    palignr     m3, m0, 3
+    movd        [r0 + r1], m3
+    RET
+

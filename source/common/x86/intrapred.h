@@ -36,4 +36,6 @@ void x265_intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_
 void x265_intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 void x265_intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 
+void x265_intra_pred_ang4_2_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
+
 #endif // ifndef X265_INTRAPRED_H
