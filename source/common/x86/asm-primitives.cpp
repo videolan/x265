@@ -144,6 +144,7 @@ extern "C" {
 #define PIXEL_AVG(cpu) \
     p.pixelavg_pp[LUMA_64x64] = x265_pixel_avg_64x64_ ## cpu; \
     p.pixelavg_pp[LUMA_64x48] = x265_pixel_avg_64x48_ ## cpu; \
+    p.pixelavg_pp[LUMA_64x32] = x265_pixel_avg_64x32_ ## cpu; \
     p.pixelavg_pp[LUMA_64x16] = x265_pixel_avg_64x16_ ## cpu; \
     p.pixelavg_pp[LUMA_48x64] = x265_pixel_avg_48x64_ ## cpu; \
     p.pixelavg_pp[LUMA_32x64] = x265_pixel_avg_32x64_ ## cpu; \
@@ -510,12 +511,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_ss[LUMA_16x16] = x265_pixel_ssd_ss_16x16_sse2;
 
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
-        PIXEL_AVG_W4(sse2);
-        p.pixelavg_pp[LUMA_8x16]  = x265_pixel_avg_8x16_sse2;
-        p.pixelavg_pp[LUMA_8x8]   = x265_pixel_avg_8x8_sse2;
-        p.pixelavg_pp[LUMA_8x4]   = x265_pixel_avg_8x4_sse2;
-        p.pixelavg_pp[LUMA_16x16] = x265_pixel_avg_16x16_sse2;
-        p.pixelavg_pp[LUMA_16x8]  = x265_pixel_avg_16x8_sse2;
+        PIXEL_AVG(sse2);
+        PIXEL_AVG_W4(mmx2);
         LUMA_VAR(_sse2);
     }
     if (cpuMask & X265_CPU_SSSE3)
