@@ -31,6 +31,7 @@
 #include "slicetype.h"
 #include "motion.h"
 #include "mv.h"
+#include "ratecontrol.h"
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
@@ -86,6 +87,8 @@ Lookahead::Lookahead(TEncCfg *_cfg, ThreadPool* pool) : WaveFront(pool)
         lhrows[i].widthInCU = widthInCU;
         lhrows[i].heightInCU = heightInCU;
     }
+
+    scratch = (int*)x265_malloc(widthInCU * sizeof(int));
 }
 
 Lookahead::~Lookahead()
@@ -127,6 +130,7 @@ void Lookahead::destroy()
     {
         x265_free(wbuffer[i]);
     }
+    X265_FREE(scratch);
 }
 
 void Lookahead::addPicture(TComPic *pic, int sliceType)
@@ -265,6 +269,7 @@ void Lookahead::weightsAnalyse(int b, int p0)
 
     fenc = frames[b];
     ref  = frames[p0];
+    int deltaIndex = fenc->frameNum - ref->frameNum;
 
     /* epsilon is chosen to require at least a numerator of 127 (with denominator = 128) */
     const float epsilon = 1.f / 128.f;
@@ -320,6 +325,8 @@ void Lookahead::weightsAnalyse(int b, int p0)
     else
     {
         SET_WEIGHT(w, 1, minscale, mindenom, minoff);
+        // set weighted delta cost
+        fenc->weightedCostDelta[deltaIndex] = minscore / origscore;
 
         int offset = w.inputOffset << (X265_DEPTH - 8);
         int scale = w.inputWeight;
@@ -912,7 +919,8 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
 
     if (!framecnt)
     {
-        // TODO: mb-tree
+        if (cfg->param.rc.cuTree && cfg->param.rc.aqMode)
+            cuTree(frames, 0, bKeyframe);
         return;
     }
 
@@ -1045,7 +1053,9 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
         num_bframes = 0;
     }
 
-    // TODO if rc.b_mb_tree Enabled the need to call  x264_macroblock_tree currently Ignored the call
+    if (cfg->param.rc.cuTree && cfg->param.rc.aqMode)
+        cuTree(frames, X265_MIN(num_frames, cfg->param.keyframeMax), bKeyframe);
+
     // if (!cfg->param.bIntraRefresh)
     for (int j = keyint_limit + 1; j <= num_frames; j += cfg->param.keyframeMax)
     {
@@ -1260,5 +1270,241 @@ void Lookahead::processRow(int row)
     if (row == heightInCU - 1)
     {
         rowsCompleted = true;
+    }
+}
+
+void Lookahead::cuTree(Lowres **frames, int numframes, bool bintra)
+{
+    int idx = !bintra;
+    int lastnonb, curnonb = 1;
+    int bframes = 0;
+
+    x265_emms();
+    double totalDuration = 0.0;
+    for (int j = 0; j <= numframes; j++)
+        totalDuration += 1.0 / cfg->param.frameRate;
+    double averageDuration = totalDuration / (numframes + 1);
+
+    int i = numframes;
+    int cuCount = widthInCU * heightInCU;
+
+    if (bintra)
+        estimateFrameCost(0, 0, 0, 0);
+
+    while (i > 0 && frames[i]->sliceType == X265_TYPE_B)
+        i--;
+    lastnonb = i;
+
+    /* Lookaheadless MB-tree is not a theoretically distinct case; the same extrapolation could
+     * be applied to the end of a lookahead buffer of any size.  However, it's most needed when
+     * lookahead=0, so that's what's currently implemented. */
+    if (!cfg->param.lookaheadDepth)
+    {
+        if (bintra)
+        {
+            memset(frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
+            memcpy(frames[0]->qpOffset, frames[0]->qpAqOffset, cuCount * sizeof(double));
+            return;
+        }
+        std::swap(frames[lastnonb]->propagateCost, frames[0]->propagateCost);
+        memset(frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
+    }
+    else
+    {
+        if (lastnonb < idx)
+            return;
+        memset(frames[lastnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
+    }
+
+    while (i-- > idx)
+    {
+        curnonb = i;
+        while (frames[curnonb]->sliceType == X265_TYPE_B && curnonb > 0)
+            curnonb--;
+        if (curnonb < idx)
+            break;
+
+        estimateFrameCost(curnonb, lastnonb, lastnonb, 0);
+        memset(frames[curnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
+        bframes = lastnonb - curnonb - 1;
+        if (cfg->param.bBPyramid && bframes > 1)
+        {
+            int middle = (bframes + 1) / 2 + curnonb;
+            estimateFrameCost(curnonb, lastnonb, middle, 0);
+            memset(frames[middle]->propagateCost, 0, cuCount * sizeof(uint16_t));
+            while (i > curnonb)
+            {
+                int p0 = i > middle ? middle : curnonb;
+                int p1 = i < middle ? middle : lastnonb;
+                if (i != middle)
+                {
+                    estimateFrameCost(p0, p1, i, 0);
+                    estimateCUPropagate(frames, averageDuration, p0, p1, i, 0);
+                }
+                i--;
+            }
+            estimateCUPropagate(frames, averageDuration, curnonb, lastnonb, middle, 1);
+        }
+        else
+        {
+            while (i > curnonb)
+            {
+                estimateFrameCost(curnonb, lastnonb, i, 0);
+                estimateCUPropagate(frames, averageDuration, curnonb, lastnonb, i, 0);
+                i--;
+            }
+        }
+        estimateCUPropagate(frames, averageDuration, curnonb, lastnonb, lastnonb, 1);
+        lastnonb = curnonb;
+    }
+
+    if (!cfg->param.lookaheadDepth)
+    {
+        estimateFrameCost(0, lastnonb, lastnonb, 0);
+        estimateCUPropagate(frames, averageDuration, 0, lastnonb, lastnonb, 1);
+        std::swap(frames[lastnonb]->propagateCost, frames[0]->propagateCost);
+    }
+
+    cuTreeFinish(frames[lastnonb], averageDuration, lastnonb);
+    if (cfg->param.bBPyramid && bframes > 1 /* && !h->param.rc.i_vbv_buffer_size */)
+        cuTreeFinish(frames[lastnonb + (bframes + 1) / 2], averageDuration, 0);
+}
+
+void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int p0, int p1, int b, int referenced)
+{
+    uint16_t *refCosts[2] = {frames[p0]->propagateCost, frames[p1]->propagateCost};
+    int distScaleFactor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
+    int bipredWeight = cfg->param.bEnableWeightedBiPred ? 64 - (distScaleFactor >> 2) : 32;
+    MV *mvs[2] = {frames[b]->lowresMvs[0][b - p0 -1], frames[b]->lowresMvs[1][p1 - b - 1]};
+    int bipredWeights[2] = {bipredWeight, 64 - bipredWeight};
+    memset(scratch, 0, widthInCU * sizeof(int));
+
+    uint16_t *propagate_cost = frames[b]->propagateCost;
+
+    x265_emms();
+    double fpsFactor = CLIP_DURATION(1.0 / cfg->param.frameRate) / CLIP_DURATION(averageDuration);
+
+    /* For non-refferd frames the source costs are always zero, so just memset one row and re-use it. */
+    if (!referenced)
+        memset(frames[b]->propagateCost, 0, widthInCU * sizeof(uint16_t));
+
+    uint16_t StrideInCU = (uint16_t)widthInCU;
+    for (uint16_t block_y = 0; block_y < heightInCU; block_y += 16)
+    {
+        int cuIndex = block_y * StrideInCU;
+        /* TODO This function go into ASM */
+        estimateCUPropagateCost(scratch, propagate_cost,
+            frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
+            frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
+
+        if (referenced)
+            propagate_cost += widthInCU;
+        for (uint16_t block_x = 0; block_x < widthInCU; block_x += 16, cuIndex++)
+        {
+            int propagate_amount = scratch[block_x];
+            /* Don't propagate for an intra block. */
+            if (propagate_amount > 0)
+            {
+                /* Access width-2 bitfield. */
+                int lists_used = frames[b]->lowresCosts[b - p0][p1 - b][cuIndex] >> LOWRES_COST_SHIFT;
+                /* Follow the MVs to the previous frame(s). */
+                for (uint16_t list = 0; list < 2; list++)
+                    if ((lists_used >> list) & 1)
+                    {
+#define CLIP_ADD(s, x) (s) = X265_MIN((s) + (x),(1 << 16) - 1)
+                        uint16_t listamount = (uint16_t)propagate_amount;
+                        /* Apply bipred weighting. */
+                        if (lists_used == 3)
+                            listamount = (uint16_t)(listamount * bipredWeights[list] + 32) >> 6;
+
+                        /* Early termination for simple case of mv0. */
+                        if (mvs[list]->notZero())
+                        {
+                            CLIP_ADD(refCosts[list][cuIndex], listamount);
+                            continue;
+                        }
+
+                        uint16_t x = mvs[list]->x;
+                        uint16_t y = mvs[list]->y;
+                        uint16_t cux = (x >> 5) + block_x;
+                        uint16_t cuy = (y >> 5) + block_y;
+                        uint16_t idx0 = cux + cuy * StrideInCU;
+                        uint16_t idx1 = idx0 + 1;
+                        uint16_t idx2 = idx0 + StrideInCU;
+                        uint16_t idx3 = idx0 + StrideInCU + 1;
+                        x &= 31;
+                        y &= 31;
+                        uint16_t idx0weight = (uint16_t) (32 - y) * (32 - x);
+                        uint16_t idx1weight = (uint16_t) (32 - y) * x;
+                        uint16_t idx2weight = (uint16_t) y * (32 - x);
+                        uint16_t idx3weight = (uint16_t) y * x;
+
+                        /* We could just clip the MVs, but pixels that lie outside the frame probably shouldn't
+                         * be counted. */
+                        if (cux < widthInCU - 1 && cuy < heightInCU - 1 && cux >= 0 && cuy >= 0)
+                        {
+                            CLIP_ADD(refCosts[list][idx0], (listamount * idx0weight + 512) >> 10);
+                            CLIP_ADD(refCosts[list][idx1], (listamount * idx1weight + 512) >> 10);
+                            CLIP_ADD(refCosts[list][idx2], (listamount * idx2weight + 512) >> 10);
+                            CLIP_ADD(refCosts[list][idx3], (listamount * idx3weight + 512) >> 10);
+                        }
+                        else /* Check offsets individually */
+                        {
+                            if (cux < widthInCU && cuy < heightInCU && cux >= 0 && cuy >= 0)
+                                CLIP_ADD(refCosts[list][idx0], (listamount * idx0weight + 512) >> 10);
+                            if (cux + 1 < widthInCU && cuy < heightInCU && cux + 1 >= 0 && cuy >= 0)
+                                CLIP_ADD(refCosts[list][idx1], (listamount * idx1weight + 512) >> 10);
+                            if (cux < widthInCU && cuy + 1 < heightInCU && cux >= 0 && cuy + 1 >= 0)
+                                CLIP_ADD(refCosts[list][idx2], (listamount * idx2weight + 512) >> 10);
+                            if (cux + 1 < widthInCU && cuy + 1 < heightInCU && cux + 1 >= 0 && cuy + 1 >= 0)
+                                CLIP_ADD(refCosts[list][idx3], (listamount * idx3weight + 512) >> 10);
+                        }
+                    }
+            }
+        }
+    }
+
+    if(/*h->param.rc.i_vbv_buffer_size &&*/ cfg->param.logLevel && referenced)
+        cuTreeFinish(frames[b], averageDuration, b == p1 ? b - p0 : 0);
+
+}
+
+void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance)
+{
+    int fpsFactor = (int)(CLIP_DURATION(averageDuration) / CLIP_DURATION(1.0 / cfg->param.frameRate) * 256);
+    double weightdelta = 0.0;
+
+    if (ref0Distance && frame->weightedCostDelta[ref0Distance - 1] > 0)
+        weightdelta = (1.0 - frame->weightedCostDelta[ref0Distance - 1]);
+
+    /* Allow the strength to be adjusted via qcompress, since the two
+     * concepts are very similar. */
+
+    int cuCount = widthInCU * heightInCU;
+    double strength = 5.0f * (1.0f - cfg->param.rc.qCompress);
+    for (int cuIndex = 0; cuIndex < cuCount; cuIndex++)
+    {
+        int intracost = (frame->intraCost[cuIndex] * frame->invQscaleFactor[cuIndex] + 128) >> 8;
+        if (intracost)
+        {
+            int propagate_cost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
+            double log2_ratio = X265_LOG2(intracost + propagate_cost) - X265_LOG2(intracost) + weightdelta;
+            frame->qpOffset[cuIndex] = frame->qpAqOffset[cuIndex] - strength * log2_ratio;
+        }
+    }
+}
+
+/* Estimate the total amount of influence on future quality that could be had if we
+ * were to improve the reference samples used to inter predict any given macroblock. */
+void Lookahead::estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts, int32_t *invQscales, double *fpsFactor, int len)
+{
+    double fps = *fpsFactor / 256;
+    for(int i = 0; i < len; i++)
+    {
+        double intraCost       = intraCosts[i] * invQscales[i];
+        double propagateAmount = (double)propagateIn[i] + intraCost * fps;
+        double propagateNum    = (double)intraCosts[i] - (interCosts[i] & LOWRES_COST_MASK);
+        double propagateDenom  = (double)intraCosts[i];
+        dst[i] = (int)(propagateAmount * propagateNum / propagateDenom + 0.5);
     }
 }

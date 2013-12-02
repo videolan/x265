@@ -219,6 +219,7 @@ void x265_param_default(x265_param *param)
     param->rc.qp = 32;
     param->rc.aqMode = X265_AQ_NONE;
     param->rc.aqStrength = 1.0;
+    param->rc.cuTree = 0;
 
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 1;

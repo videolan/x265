@@ -597,6 +597,7 @@ typedef struct x265_param
         int       vbvMaxBitrate;
         int       vbvBufferSize;
         double    vbvBufferInit;
+        int       cuTree;
     } rc;
 } x265_param;
 

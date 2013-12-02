@@ -1118,6 +1118,10 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
             for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
             {
                 qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
+                if (pic->getSlice()->isReferenced() && m_cfg->param.rc.cuTree && m_cfg->param.rc.aqMode)
+                    qp_offset += pic->m_lowres.qpOffset[block_x + w + (block_y * maxBlockCols)];
+                else
+                    qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
                 cnt++;
             }
         }
