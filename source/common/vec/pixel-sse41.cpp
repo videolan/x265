@@ -317,7 +317,6 @@ void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives &p)
 
 #if HIGH_BIT_DEPTH
     Setup_Vec_Pixel16Primitives_sse41(p);
-#else
 #endif /* !HIGH_BIT_DEPTH */
 }
 }

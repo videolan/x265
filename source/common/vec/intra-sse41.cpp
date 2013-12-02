@@ -8118,9 +8118,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 namespace x265 {
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
 {
-#if HIGH_BIT_DEPTH
-    p.intra_pred_planar[0] = p.intra_pred_planar[0];
-#else
+#if !HIGH_BIT_DEPTH
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;

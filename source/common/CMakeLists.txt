@@ -77,9 +77,11 @@ if(ENABLE_PRIMITIVES_VEC)
     set(SSE41 vec/pixel-sse41.cpp vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp)
 
     if (MSVC)
-        add_definitions(/wd4127) # conditional expression is constant
-        add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
         set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
+        # wd4127 conditional expression is constant
+        # wd4244 'argument' : conversion from 'int' to 'char', possible loss of data
+        # wd4100 unreferenced formal parameter
+        set(WARNDISABLE "/wd4244 /wd4127 /wd4100")
         if (INTEL_CXX)
             add_definitions(/Qwd111) # statement is unreachable
             add_definitions(/Qwd128) # loop is unreachable
@@ -87,9 +89,11 @@ if(ENABLE_PRIMITIVES_VEC)
             add_definitions(/Qwd185) # dynamic initialization in unreachable code
             add_definitions(/Qwd280) # conditional expression is constant
         endif()
-        if (NOT X64)
+        if (X64)
             # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
-            set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS /arch:SSE2)
+            set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} /arch:SSE2")
+        else()
+            set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE}")
         endif()
     endif()
     if(GCC)
