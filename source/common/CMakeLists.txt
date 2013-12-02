@@ -119,8 +119,8 @@ endif(ENABLE_PRIMITIVES_VEC)
 
 if(ENABLE_PRIMITIVES_ASM)
     set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h)
-    set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm mc-a.asm mc-a2.asm
-               ipfilter8.asm pixel-util8.asm blockcopy8.asm intrapred8.asm
+    set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm ssd-a.asm mc-a.asm
+               mc-a2.asm ipfilter8.asm pixel-util8.asm blockcopy8.asm intrapred8.asm
                pixeladd8.asm dct8.asm)
     if (NOT X64)
         set(A_SRCS ${A_SRCS} pixel-32.asm)
