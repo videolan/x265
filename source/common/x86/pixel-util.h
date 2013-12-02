@@ -46,4 +46,13 @@ void x265_dequant_normal_sse4(const int32_t* quantCoef, int32_t* coef, int num, 
 void x265_weight_pp_sse4(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 void x265_weight_sp_sse4(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 
+void x265_pixel_ssim_4x4x2_core_mmx2(const uint8_t * pix1, intptr_t stride1,
+                                     const uint8_t * pix2, intptr_t stride2, int sums[2][4]);
+void x265_pixel_ssim_4x4x2_core_sse2(const pixel * pix1, intptr_t stride1,
+                                     const pixel * pix2, intptr_t stride2, int sums[2][4]);
+void x265_pixel_ssim_4x4x2_core_avx(const pixel * pix1, intptr_t stride1,
+                                    const pixel * pix2, intptr_t stride2, int sums[2][4]);
+float x265_pixel_ssim_end4_sse2(int sum0[5][4], int sum1[5][4], int width);
+float x265_pixel_ssim_end4_avx(int sum0[5][4], int sum1[5][4], int width);
+
 #endif // ifndef X265_PIXEL_UTIL_H

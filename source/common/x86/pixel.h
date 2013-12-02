@@ -135,15 +135,6 @@ int x265_pixel_satd_16x64_sse2(pixel *, intptr_t, pixel *, intptr_t);
 void x265_scale1D_128to64_ssse3(pixel *, pixel *, intptr_t);
 void x265_scale2D_64to32_ssse3(pixel *, pixel *, intptr_t);
 
-void x265_pixel_ssim_4x4x2_core_mmx2(const uint8_t * pix1, intptr_t stride1,
-                                     const uint8_t * pix2, intptr_t stride2, int sums[2][4]);
-void x265_pixel_ssim_4x4x2_core_sse2(const pixel * pix1, intptr_t stride1,
-                                     const pixel * pix2, intptr_t stride2, int sums[2][4]);
-void x265_pixel_ssim_4x4x2_core_avx(const pixel * pix1, intptr_t stride1,
-                                    const pixel * pix2, intptr_t stride2, int sums[2][4]);
-float x265_pixel_ssim_end4_sse2(int sum0[5][4], int sum1[5][4], int width);
-float x265_pixel_ssim_end4_avx(int sum0[5][4], int sum1[5][4], int width);
-
 #define DECL_HEVC_SSD(suffix) \
     int x265_pixel_ssd_32x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
     int x265_pixel_ssd_16x64_ ## suffix(pixel *, intptr_t, pixel *, intptr_t); \
