@@ -807,3 +807,246 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
     jnz         .loopH
 
     RET
+
+;-----------------------------------------------------------------
+; void transpose_4x4(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose4, 3, 3, 4, dest, src, stride
+
+    movd         m0,    [r1]
+    movd         m1,    [r1 + r2]
+    movd         m2,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movd         m3,    [r1 + r2]
+
+    punpcklbw    m0,    m1
+    punpcklbw    m2,    m3
+    punpcklwd    m0,    m2
+    movu         [r0],    m0
+
+    RET
+
+;-----------------------------------------------------------------
+; void transpose_8x8(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose8, 3, 3, 8, dest, src, stride
+
+    movh         m0,    [r1]
+    movh         m1,    [r1 + r2]
+    movh         m2,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m3,    [r1 + r2]
+    movh         m4,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m5,    [r1 + r2]
+    movh         m6,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m7,    [r1 + r2]
+
+    punpcklbw    m0,    m1
+    punpcklbw    m2,    m3
+    punpcklbw    m4,    m5
+    punpcklbw    m6,    m7
+
+    punpckhwd    m1,    m0,    m2
+    punpcklwd    m0,    m2
+    punpckhwd    m5,    m4,    m6
+    punpcklwd    m4,    m6
+    punpckhdq    m2,    m0,    m4
+    punpckldq    m0,    m4
+    punpckhdq    m3,    m1,    m5
+    punpckldq    m1,    m5
+
+    movu         [r0],         m0
+    movu         [r0 + 16],    m2
+    movu         [r0 + 32],    m1
+    movu         [r0 + 48],    m3
+
+    RET
+
+%macro TRANSPOSE_8x8 1
+
+    movh         m0,    [r1]
+    movh         m1,    [r1 + r2]
+    movh         m2,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m3,    [r1 + r2]
+    movh         m4,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m5,    [r1 + r2]
+    movh         m6,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m7,    [r1 + r2]
+
+    punpcklbw    m0,    m1
+    punpcklbw    m2,    m3
+    punpcklbw    m4,    m5
+    punpcklbw    m6,    m7
+
+    punpckhwd    m1,    m0,    m2
+    punpcklwd    m0,    m2
+    punpckhwd    m5,    m4,    m6
+    punpcklwd    m4,    m6
+    punpckhdq    m2,    m0,    m4
+    punpckldq    m0,    m4
+    punpckhdq    m3,    m1,    m5
+    punpckldq    m1,    m5
+
+    movlps         [r0],             m0
+    movhps         [r0 + %1],        m0
+    movlps         [r0 + 2 * %1],    m2
+    lea            r0,               [r0 + 2 * %1]
+    movhps         [r0 + %1],        m2
+    movlps         [r0 + 2 * %1],    m1
+    lea            r0,               [r0 + 2 * %1]
+    movhps         [r0 + %1],        m1
+    movlps         [r0 + 2 * %1],    m3
+    lea            r0,               [r0 + 2 * %1]
+    movhps         [r0 + %1],        m3
+
+%endmacro
+
+
+;-----------------------------------------------------------------
+; void transpose_16x16(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose16, 3, 5, 8, dest, src, stride
+
+    mov    r3,    r0
+    mov    r4,    r1
+    TRANSPOSE_8x8 16
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r3 + 8]
+    TRANSPOSE_8x8 16
+    lea    r1,    [r4 + 8]
+    lea    r0,    [r3 + 8 * 16]
+    TRANSPOSE_8x8 16
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r3 + 8 * 16 + 8]
+    TRANSPOSE_8x8 16
+
+    RET
+
+cglobal transpose16_internal
+    TRANSPOSE_8x8 r6
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r5 + 8]
+    TRANSPOSE_8x8 r6
+    lea    r1,    [r1 + 2 * r2]
+    neg    r2
+    lea    r1,    [r1 + r2 * 8]
+    lea    r1,    [r1 + r2 * 8 + 8]
+    neg    r2
+    lea    r0,    [r5 + 8 * r6]
+    TRANSPOSE_8x8 r6
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r5 + 8 * r6 + 8]
+    TRANSPOSE_8x8 r6
+    ret
+
+;-----------------------------------------------------------------
+; void transpose_32x32(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose32, 3, 7, 8, dest, src, stride
+
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    r0
+    mov    r6,    32
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r4 + 16]
+    lea    r0,    [r3 + 16 * 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 32 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    RET
+
+;-----------------------------------------------------------------
+; void transpose_64x64(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+INIT_XMM sse2
+cglobal transpose64, 3, 7, 8, dest, src, stride
+
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    r0
+    mov    r6,    64
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    lea    r1,    [r4 + 16]
+    lea    r0,    [r3 + 16 * 64]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 64 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 64 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 16 * 64 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    lea    r1,    [r4 + 32]
+    lea    r0,    [r3 + 32 * 64]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32 * 64 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32 * 64 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 32 * 64 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    lea    r1,    [r4 + 48]
+    lea    r0,    [r3 + 48 * 64]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48 * 64 + 16]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48 * 64 + 32]
+    mov    r5,    r0
+    call   transpose16_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r3 + 48 * 64 + 48]
+    mov    r5,    r0
+    call   transpose16_internal
+
+    RET
+

@@ -29,6 +29,7 @@
 
 extern "C" {
 #include "pixel.h"
+#include "pixel-util.h"
 #include "mc.h"
 #include "ipfilter8.h"
 #include "blockcopy8.h"
