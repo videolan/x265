@@ -1366,7 +1366,7 @@ void Lookahead::cuTree(Lowres **Frames, int numframes, bool bintra)
     }
 
     cuTreeFinish(Frames[lastnonb], averageDuration, lastnonb);
-    if (cfg->param.bBPyramid && bframes > 1 /* && !h->param.rc.i_vbv_buffer_size */)
+    if (cfg->param.bBPyramid && bframes > 1 && !cfg->param.rc.vbvBufferSize)
         cuTreeFinish(Frames[lastnonb + (bframes + 1) / 2], averageDuration, 0);
 }
 
@@ -1464,7 +1464,7 @@ void Lookahead::estimateCUPropagate(Lowres **Frames, double averageDuration, int
         }
     }
 
-    if(/*h->param.rc.i_vbv_buffer_size &&*/ cfg->param.logLevel && referenced)
+    if(cfg->param.rc.vbvBufferSize && cfg->param.logLevel && referenced)
         cuTreeFinish(Frames[b], averageDuration, b == p1 ? b - p0 : 0);
 
 }
@@ -1481,7 +1481,8 @@ void Lookahead::cuTreeFinish(Lowres *Frame, double averageDuration, int ref0Dist
      * concepts are very similar. */
 
     int cuCount = widthInCU * heightInCU;
-    double strength = 5.0f * (1.0f - cfg->param.rc.qCompress);
+    double strength = 5.0 * (1.0 - cfg->param.rc.qCompress);
+
     for (int cuIndex = 0; cuIndex < cuCount; cuIndex++)
     {
         int intracost = (Frame->intraCost[cuIndex] * Frame->invQscaleFactor[cuIndex] + 128) >> 8;

@@ -110,6 +110,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             if (cfg->param.rc.aqMode)
             {
                 pic->m_lowres.qpAqOffset[block_xy] = qp_adj;
+                pic->m_lowres.qpOffset[block_xy] = qp_adj;
                 pic->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
                 block_xy++;
             }
@@ -133,6 +134,14 @@ RateControl::RateControl(TEncCfg * _cfg)
     this->cfg = _cfg;
     ncu = (int)((cfg->param.sourceHeight * cfg->param.sourceWidth) / pow((int)16, 2.0));
 
+    if (cfg->param.rc.cuTree)
+    {
+        qCompress = 1;
+        cfg->param.rc.pbFactor = 1;
+    }
+    else
+        qCompress = cfg->param.rc.qCompress;
+
     // validate for cfg->param.rc, maybe it is need to add a function like x265_parameters_valiate()
     cfg->param.rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, cfg->param.rc.rfConstant);
     if (cfg->param.rc.rateControlMode == X265_RC_CRF)
@@ -141,8 +150,8 @@ RateControl::RateControl(TEncCfg * _cfg)
         cfg->param.rc.bitrate = 0;
 
         double baseCplx = ncu * (cfg->param.bframes ? 120 : 80);
-        double mbtree_offset = 0; // added later
-        rateFactorConstant = pow(baseCplx, 1 - cfg->param.rc.qCompress) /
+        double mbtree_offset = cfg->param.rc.cuTree ? (1.0 - cfg->param.rc.qCompress) * 13.5 : 0;
+        rateFactorConstant = pow(baseCplx, 1 - qCompress) /
             qp2qScale(cfg->param.rc.rfConstant + mbtree_offset + QP_BD_OFFSET);
     }
 
@@ -240,7 +249,7 @@ RateControl::RateControl(TEncCfg * _cfg)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, cfg->param.rc.qCompress) * pow(ncu, 0.5);
+        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
     }
     else if (cfg->param.rc.rateControlMode == X265_RC_CRF)
@@ -249,7 +258,7 @@ RateControl::RateControl(TEncCfg * _cfg)
         accumPNorm = .01;
         accumPQp = ABR_INIT_QP * accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, cfg->param.rc.qCompress) * pow(ncu, 0.5);
+        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
         wantedBitsWindow = bitrate * frameDuration;
     }
 
@@ -343,9 +352,9 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         double q0 = prevRefSlice->getSliceQp();
         double q1 = nextRefSlice->getSliceQp();
 
-        if (prevRefSlice->getSliceType() == B_SLICE && prevRefSlice->isReferenced())
+        if (prevRefSlice->getSliceType() == X265_TYPE_BREF && prevRefSlice->isReferenced())
             q0 -= pbOffset / 2;
-        if (nextRefSlice->getSliceType() == B_SLICE && nextRefSlice->isReferenced())
+        if (nextRefSlice->getSliceType() == X265_TYPE_BREF && nextRefSlice->isReferenced())
             q1 -= pbOffset / 2;
         if (i0 && i1)
             q = (q0 + q1) / 2 + ipOffset;
@@ -445,7 +454,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
                 q = Clip3(lqmin, lqmax, q);
             }
         }
-        else if (cfg->param.rc.rateControlMode == X265_RC_CRF && cfg->param.rc.qCompress != 1)
+        else if (cfg->param.rc.rateControlMode == X265_RC_CRF && qCompress != 1)
         {
             q = qp2qScale(ABR_INIT_QP) / fabs(cfg->param.rc.ipFactor);
         }
@@ -557,7 +566,15 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 {
     double q;
 
-    q = pow(rce->blurredComplexity, 1 - cfg->param.rc.qCompress);
+    if (cfg->param.rc.cuTree)
+    {
+        double scale = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
+        double units = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick();
+        double timescale = units / scale;
+        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * timescale), 1 - cfg->param.rc.qCompress);
+    }
+    else
+        q = pow(rce->blurredComplexity, 1 - cfg->param.rc.qCompress);
 
     // avoid NaN's in the rc_eq
     if (rce->texBits + rce->mvBits == 0)

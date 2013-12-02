@@ -115,6 +115,7 @@ struct RateControl
     int64_t totalBits;        /* totalbits used for already encoded frames */
     double lastRceq;
     int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
+    double qCompress;
     RateControl(TEncCfg * _cfg);
 
     // to be called for each frame to process RateControl and set QP

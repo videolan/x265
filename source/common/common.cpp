@@ -398,6 +398,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             //currently the default
             param->rc.aqMode = X265_AQ_NONE;
+            param->rc.cuTree = 0;
         }
         else if (!strcmp(tune, "ssim"))
         {
