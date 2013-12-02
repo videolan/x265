@@ -99,16 +99,17 @@ if(ENABLE_PRIMITIVES_VEC)
     endif()
     if(GCC)
         if(CLANG)
-            # llvm intrinsic headers trigger this warning
-            add_definitions(-Wno-shadow)
-            # llvm reports these warnings for the vector class headers
-            add_definitions(-Wno-shift-overflow -Wno-uninitialized)
+            # llvm intrinsic headers trigger these warning
+            # the middle two are for the vector class headers only
+            set(WARNDISABLE "-Wno-shadow -Wno-shift-overflow -Wno-uninitialized -Wno-unreferenced-parameter")
+        else()
+            set(WARNDISABLE "-Wno-unreferenced-parameter")
         endif()
         if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.3))
             set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
-            set_source_files_properties(${SSE3}  PROPERTIES COMPILE_FLAGS "-msse3")
-            set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "-mssse3")
-            set_source_files_properties(${SSE41} PROPERTIES COMPILE_FLAGS "-msse4.1")
+            set_source_files_properties(${SSE3}  PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -msse3")
+            set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -mssse3")
+            set_source_files_properties(${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -msse4.1")
         endif()
     endif(GCC)
 
