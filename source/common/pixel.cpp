@@ -901,16 +901,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     LUMA(16, 64);
     CHROMA(8, 32);
 
-    //sse
-#if HIGH_BIT_DEPTH
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp_t, int16_t, int16_t)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, int16_t, int16_t)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, int16_t, int16_t)
-#else
     SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp_t, pixel, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, int16_t, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, int16_t, int16_t)
-#endif
+
     p.blockcpy_pp = blockcopy_p_p;
     p.blockcpy_ps = blockcopy_p_s;
 
