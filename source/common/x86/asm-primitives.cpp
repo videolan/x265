@@ -533,8 +533,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
     {
-        p.sse_pp[i] = sse_ss[i];
-        p.sse_sp[i] = sse_ss[i];
+        p.sse_pp[i] = (pixelcmp_t)p.sse_ss[i];
+        p.sse_sp[i] = (pixelcmp_sp_t)p.sse_ss[i];
     }
 
 #else // if HIGH_BIT_DEPTH
