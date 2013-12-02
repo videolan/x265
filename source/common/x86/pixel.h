@@ -135,13 +135,6 @@ int x265_pixel_satd_16x64_sse2(pixel *, intptr_t, pixel *, intptr_t);
 void x265_scale1D_128to64_ssse3(pixel *, pixel *, intptr_t);
 void x265_scale2D_64to32_ssse3(pixel *, pixel *, intptr_t);
 
-DECL_PIXELS(uint64_t, hadamard_ac, mmx2,  (pixel * pix, intptr_t i_stride))
-DECL_PIXELS(uint64_t, hadamard_ac, sse2,  (pixel * pix, intptr_t i_stride))
-DECL_PIXELS(uint64_t, hadamard_ac, ssse3, (pixel * pix, intptr_t i_stride))
-DECL_PIXELS(uint64_t, hadamard_ac, ssse3_atom, (pixel * pix, intptr_t i_stride))
-DECL_PIXELS(uint64_t, hadamard_ac, sse4,  (pixel * pix, intptr_t i_stride))
-DECL_PIXELS(uint64_t, hadamard_ac, avx,   (pixel * pix, intptr_t i_stride))
-DECL_PIXELS(uint64_t, hadamard_ac, xop,   (pixel * pix, intptr_t i_stride))
 DECL_PIXELS(uint64_t, hadamard_ac, avx2,  (pixel * pix, intptr_t i_stride))
 
 void x265_pixel_ssim_4x4x2_core_mmx2(const uint8_t * pix1, intptr_t stride1,
@@ -202,25 +195,6 @@ DECL_SUF(x265_pixel_avg_8x4,   (pixel *, intptr_t, pixel *, intptr_t, pixel *, i
 DECL_SUF(x265_pixel_avg_4x16,  (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_4x8,   (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_4x4,   (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
-
-#define DECL_ADS(size, suffix) \
-    int x265_pixel_ads ## size ## _ ## suffix(int enc_dc[size], uint16_t * sums, int delta, \
-                                              uint16_t * cost_mvx, int16_t * mvs, int width, int thresh);
-DECL_ADS(4, mmx2)
-DECL_ADS(2, mmx2)
-DECL_ADS(1, mmx2)
-DECL_ADS(4, sse2)
-DECL_ADS(2, sse2)
-DECL_ADS(1, sse2)
-DECL_ADS(4, ssse3)
-DECL_ADS(2, ssse3)
-DECL_ADS(1, ssse3)
-DECL_ADS(4, avx)
-DECL_ADS(2, avx)
-DECL_ADS(1, avx)
-DECL_ADS(4, avx2)
-DECL_ADS(2, avx2)
-DECL_ADS(1, avx2)
 
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t * dest, intptr_t destride, pixel * src0, pixel * src1, intptr_t srcstride0, intptr_t srcstride1); \
@@ -302,7 +276,6 @@ LUMA_PIXELVAR_DEF(_sse2);
 #undef DECL_HEVC_SSD
 #undef DECL_X1
 #undef DECL_X4
-#undef DECL_ADS
 #undef SETUP_CHROMA_PIXELSUB_PS_FUNC
 #undef SETUP_LUMA_PIXELSUB_PS_FUNC
 #undef CHROMA_PIXELSUB_DEF
