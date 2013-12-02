@@ -661,12 +661,12 @@ float ssim_end_1(int s1, int s2, int ss, int s12)
     static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5);
     static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5);
 #endif
-    type fs1 = s1;
-    type fs2 = s2;
-    type fss = ss;
-    type fs12 = s12;
-    type vars = fss * 64 - fs1 * fs1 - fs2 * fs2;
-    type covar = fs12 * 64 - fs1 * fs2;
+    type fs1 = (type)s1;
+    type fs2 = (type)s2;
+    type fss = (type)ss;
+    type fs12 = (type)s12;
+    type vars = (type)(fss * 64 - fs1 * fs1 - fs2 * fs2);
+    type covar = (type)(fs12 * 64 - fs1 * fs2);
     return (float)(2 * fs1 * fs2 + ssim_c1) * (float)(2 * covar + ssim_c2)
            / ((float)(fs1 * fs1 + fs2 * fs2 + ssim_c1) * (float)(vars + ssim_c2));
 #undef type
