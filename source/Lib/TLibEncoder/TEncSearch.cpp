@@ -1289,7 +1289,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
 
     if (trMode == trDepth)
     {
-        bool checkTransformSkip = cu->getSlice()->getPPS()->getUseTransformSkip();
+        bool checkTransformSkip = false; //cu->getSlice()->getPPS()->getUseTransformSkip();
         uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
 
         uint32_t actualTrDepth = trDepth;
