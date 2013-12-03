@@ -2,6 +2,8 @@
 ;* Copyright (C) 2013 x265 project
 ;*
 ;* Authors: Nabajit Deka <nabajit@multicorewareinc.com>
+;*          Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
+;*          Li Cao <li@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -52,6 +54,7 @@ SECTION .text
 cextern pd_1
 cextern pd_64
 cextern pd_128
+cextern pd_512
 cextern pd_2048
 
 ;------------------------------------------------------
@@ -152,7 +155,15 @@ cglobal dct4, 3, 4, 8
 ;-------------------------------------------------------
 INIT_XMM sse2
 cglobal idct4, 3, 4, 7
-
+%if BIT_DEPTH == 8
+  %define IDCT4_OFFSET  [pd_2048]
+  %define IDCT4_SHIFT   12
+%elif BIT_DEPTH == 10
+  %define IDCT4_OFFSET  [pd_512]
+  %define IDCT4_SHIFT   10
+%else
+  %error Unsupport BIT_DEPTH!
+%endif
     add         r2d, r2d
     lea         r3, [tab_dct4]
 
@@ -195,7 +206,7 @@ cglobal idct4, 3, 4, 7
     punpcklwd   m0, m1, m4                  ; m0 = m128iA
     punpckhwd   m1, m4                      ; m1 = m128iD
 
-    mova        m6, [pd_2048]
+    mova        m6, IDCT4_OFFSET
 
     punpcklwd   m2, m0, m1
     pmaddwd     m3, m2, [r3 + 0 * 16]
@@ -209,15 +220,15 @@ cglobal idct4, 3, 4, 7
     pmaddwd     m0, [r3 + 3 * 16]           ; m0 = O2
 
     paddd       m4, m3, m1
-    psrad       m4, 12                      ; m4 = m128iA
+    psrad       m4, IDCT4_SHIFT             ; m4 = m128iA
     paddd       m5, m2, m0
-    psrad       m5, 12
+    psrad       m5, IDCT4_SHIFT
     packssdw    m4, m5                      ; m4 = m128iA
 
     psubd       m2, m0
-    psrad       m2, 12
+    psrad       m2, IDCT4_SHIFT
     psubd       m3, m1
-    psrad       m3, 12
+    psrad       m3, IDCT4_SHIFT
     packssdw    m2, m3                      ; m2 = m128iD
 
     punpcklwd   m1, m4, m2

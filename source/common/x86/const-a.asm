@@ -67,6 +67,7 @@ const pw_pmmpzzzz, dw 1,-1,-1,1,0,0,0,0
 const pd_32,       times 4 dd 32
 const pd_64,       times 4 dd 64
 const pd_128,      times 4 dd 128
+const pd_512,      times 4 dd 512
 const pd_1024,     times 4 dd 1024
 const pd_2048,     times 4 dd 2048
 const pd_ffff,     times 4 dd 0xffff
