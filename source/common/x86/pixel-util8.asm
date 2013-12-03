@@ -830,7 +830,20 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
 ;-----------------------------------------------------------------
 INIT_XMM sse2
 cglobal transpose4, 3, 3, 4, dest, src, stride
-
+%if HIGH_BIT_DEPTH
+    add          r2,    r2
+    movh         m0,    [r1]
+    movh         m1,    [r1 + r2]
+    movh         m2,    [r1 + 2 * r2]
+    lea          r1,    [r1 + 2 * r2]
+    movh         m3,    [r1 + r2]
+    punpcklwd    m0,    m1
+    punpcklwd    m2,    m3
+    punpckhdq    m1,    m0,    m2
+    punpckldq    m0,    m2
+    movu         [r0],       m0
+    movu         [r0 + 16],  m1
+%else
     movd         m0,    [r1]
     movd         m1,    [r1 + r2]
     movd         m2,    [r1 + 2 * r2]
@@ -841,26 +854,61 @@ cglobal transpose4, 3, 3, 4, dest, src, stride
     punpcklbw    m2,    m3
     punpcklwd    m0,    m2
     movu         [r0],    m0
-
+%endif
     RET
 
 ;-----------------------------------------------------------------
 ; void transpose_8x8(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
 INIT_XMM sse2
-cglobal transpose8, 3, 3, 8, dest, src, stride
-
+%if HIGH_BIT_DEPTH
+%macro TRANSPOSE_4x4 1
     movh         m0,    [r1]
     movh         m1,    [r1 + r2]
     movh         m2,    [r1 + 2 * r2]
     lea          r1,    [r1 + 2 * r2]
     movh         m3,    [r1 + r2]
-    movh         m4,    [r1 + 2 * r2]
-    lea          r1,    [r1 + 2 * r2]
+    punpcklwd    m0,    m1
+    punpcklwd    m2,    m3
+    punpckhdq    m1,    m0,    m2
+    punpckldq    m0,    m2
+    movlps         [r0],             m0
+    movhps         [r0 + %1],        m0
+    movlps         [r0 + 2 * %1],    m1
+    lea            r0,               [r0 + 2 * %1]
+    movhps         [r0 + %1],        m1
+%endmacro
+cglobal transpose8_internal
+    TRANSPOSE_4x4 r5
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r3 + 8]
+    TRANSPOSE_4x4 r5
+    lea    r1,    [r4 + 8]
+    lea    r0,    [r3 + 4 * r5]
+    TRANSPOSE_4x4 r5
+    lea    r1,    [r1 + 2 * r2]
+    lea    r0,    [r3 + 8 + 4 * r5]
+    TRANSPOSE_4x4 r5
+    ret
+cglobal transpose8, 3, 6, 4, dest, src, stride
+    add    r2,    r2
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    16
+    call   transpose8_internal
+%else
+cglobal transpose8, 3, 5, 8, dest, src, stride
+    lea          r3,    [2 * r2]
+    lea          r4,    [3 * r2]
+    movh         m0,    [r1]
+    movh         m1,    [r1 + r2]
+    movh         m2,    [r1 + r3]
+    movh         m3,    [r1 + r4]
+    movh         m4,    [r1 + 4 * r2]
+    lea          r1,    [r1 + 4 * r2]
     movh         m5,    [r1 + r2]
-    movh         m6,    [r1 + 2 * r2]
-    lea          r1,    [r1 + 2 * r2]
-    movh         m7,    [r1 + r2]
+    movh         m6,    [r1 + r3]
+    movh         m7,    [r1 + r4]
 
     punpcklbw    m0,    m1
     punpcklbw    m2,    m3
@@ -880,7 +928,7 @@ cglobal transpose8, 3, 3, 8, dest, src, stride
     movu         [r0 + 16],    m2
     movu         [r0 + 32],    m1
     movu         [r0 + 48],    m3
-
+%endif
     RET
 
 %macro TRANSPOSE_8x8 1

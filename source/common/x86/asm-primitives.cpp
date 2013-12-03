@@ -526,6 +526,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_ss[LUMA_32x32] = x265_pixel_ssd_ss_32x32_sse2;
         p.sse_ss[LUMA_32x64] = x265_pixel_ssd_ss_32x64_sse2;
 
+        p.transpose[BLOCK_4x4] = x265_transpose4_sse2;
+        p.transpose[BLOCK_8x8] = x265_transpose8_sse2;
+
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
         PIXEL_AVG(sse2);
         PIXEL_AVG_W4(mmx2);
