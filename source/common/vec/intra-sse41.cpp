@@ -8141,8 +8141,7 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
      * functions this large.  Even Win64 cannot handle 16x16 and 32x32 */
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;
-#else
-    (void)p;          //Do Nothing
+
 #endif // if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
 #endif /* !HIGH_BIT_DEPTH */
 }
