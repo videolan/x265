@@ -32,9 +32,19 @@ multiH:     dw 9, 10, 11, 12, 13, 14, 15, 16
 multiH2:    dw 17, 18, 19, 20, 21, 22, 23, 24
 multiH3:    dw 25, 26, 27, 28, 29, 30, 31, 32
 
+c_trans_4x4 db 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15
+
+const ang_table
+%assign x 0
+%rep 32
+    times 8 db (32-x), x
+%assign x x+1
+%endrep
+
 SECTION .text
 
 cextern pw_8
+cextern pw_1024
 
 ;-----------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
@@ -675,7 +685,6 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
 
     RET
 
-
 ;-----------------------------------------------------------------------------
 ; void intraPredAng(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------
@@ -692,4 +701,52 @@ cglobal intra_pred_ang4_2, 3,3,4
     lea         r1, [r1 * 3]
     psrldq      m0, 3
     movd        [r0 + r1], m0
+    RET
+
+
+INIT_XMM ssse3
+cglobal intra_pred_ang4_3, 3,4,4
+    cmp         r4m, byte 33
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 20 * 16]
+    movh        m0, [r2 + 1]    ; [8 7 6 5 4 3 2 1]
+    palignr     m1, m0, 1       ; [x 8 7 6 5 4 3 2]
+    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    palignr     m1, m0, 2       ; [x x x x x x x x 6 5 5 4 4 3 3 2]
+    palignr     m2, m0, 4       ; [x x x x x x x x 7 6 6 5 5 4 4 3]
+    palignr     m3, m0, 6       ; [x x x x x x x x 8 7 7 6 6 5 5 4]
+    punpcklqdq  m0, m1
+    punpcklqdq  m2, m3
+
+    mova        m1, [pw_1024]
+
+    movh        m3, [r3 + 6 * 16]   ; [26]
+    movhps      m3, [r3]            ; [20]
+    pmaddubsw   m0, m3
+    pmulhrsw    m0, m1
+
+    movh        m3, [r3 - 6 * 16]   ; [14]
+    movhps      m3, [r3 - 12 * 16]  ; [ 8]
+    pmaddubsw   m2, m3
+    pmulhrsw    m2, m1
+
+    packuswb    m0, m2
+
+    ; NOTE: mode 33 doesn't reorde, UNSAFE but I don't use any instruction that affect eflag register before
+    jz         .store
+
+    ; transpose 4x4
+    pshufb      m0, [c_trans_4x4]
+
+.store:
+    pshufd      m1, m0, 1
+    movhlps     m2, m0
+    pshufd      m3, m0, 3
+
+    ; TODO: use pextrd here after intrinsic ssse3 removed
+    movd        [r0], m0
+    movd        [r0 + r1], m1
+    movd        [r0 + r1 * 2], m2
+    lea         r1, [r1 * 3]
+    movd        [r0 + r1], m3
     RET
