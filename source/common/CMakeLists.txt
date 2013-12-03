@@ -74,8 +74,7 @@ if(ENABLE_PRIMITIVES_VEC)
     endif()
     set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
     set(SSSE3 vec/dct-ssse3.cpp vec/ipfilter-ssse3.cpp vec/intra-ssse3.cpp)
-    set(SSE41 vec/pixel-sse41.cpp vec/dct-sse41.cpp vec/ipfilter-sse41.cpp
-              vec/intra-sse41.cpp vec/pixel16-sse41.cpp)
+    set(SSE41 vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp)
 
     if (MSVC)
         set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
