@@ -47,6 +47,7 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
     }
 
     head = tail = 0;
+    colorSpace = X265_CSP_I420;
 
     ifs = NULL;
     if (!strcmp(filename, "-"))

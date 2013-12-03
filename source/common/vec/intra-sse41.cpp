@@ -5540,6 +5540,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef N
 }
 
+#if !defined(__clang__)
 // See doc/intra/T32.TXT for algorithm details
 void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool /*bLuma*/)
 {
@@ -8114,12 +8115,20 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
 #endif // if !HIGH_BIT_DEPTH
 }
+#endif
 
 namespace x265 {
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
 {
 #if !HIGH_BIT_DEPTH
-#if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
+#if defined(__clang__)
+
+    p.intra_pred_allangs[0] = predIntraAngs4;
+    p.intra_pred_allangs[1] = predIntraAngs8;
+    p.intra_pred_allangs[2] = predIntraAngs16;
+
+#elif defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
+
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;
     p.intra_pred_allangs[2] = predIntraAngs16;
@@ -8132,6 +8141,7 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
      * functions this large.  Even Win64 cannot handle 16x16 and 32x32 */
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;
+
 #endif // if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
 #endif /* !HIGH_BIT_DEPTH */
 }

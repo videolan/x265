@@ -54,7 +54,7 @@ private:
     }
 
     int m_csp;
-    int m_part;
+
 
 public:
 
