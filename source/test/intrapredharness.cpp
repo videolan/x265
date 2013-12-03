@@ -174,13 +174,15 @@ bool IntraPredHarness::check_angular_primitive(const intra_ang_t ref[], const in
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
 
-                opt[size - 2](pixel_out_vec, FENC_STRIDE, refAbove, refLeft, pmode, bFilter);
-                ref[size - 2](pixel_out_c, FENC_STRIDE, refAbove, refLeft, pmode, bFilter);
+                ref[size - 2](pixel_out_c, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
+                opt[size - 2](pixel_out_vec, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
 
                 for (int k = 0; k < width; k++)
                 {
                     if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
                     {
+                        ref[size - 2](pixel_out_c, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
+                        opt[size - 2](pixel_out_vec, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
                         printf("\nFailed for width %d mode %d bfilter %d row %d \t", width, p, bFilter, k);
                         return false;
                     }

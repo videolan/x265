@@ -39,6 +39,7 @@ LOWRES(xop)
     void func ## _ssse3 args;
 DECL_SUF(x265_pixel_avg_64x64, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_64x48, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
+DECL_SUF(x265_pixel_avg_64x32, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_64x16, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_48x64, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))
 DECL_SUF(x265_pixel_avg_32x64, (pixel *, intptr_t, pixel *, intptr_t, pixel *, intptr_t, int))

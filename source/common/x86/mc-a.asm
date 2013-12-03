@@ -255,7 +255,12 @@ AVG_WEIGHT 48
 INIT_XMM sse2
 AVG_WEIGHT 4,  8
 AVG_WEIGHT 8,  8
+AVG_WEIGHT 12, 8
 AVG_WEIGHT 16, 8
+AVG_WEIGHT 24, 8
+AVG_WEIGHT 32, 8
+AVG_WEIGHT 48, 8
+AVG_WEIGHT 64, 8
 %else ;!HIGH_BIT_DEPTH
 INIT_XMM sse2
 AVG_WEIGHT 8,  7
@@ -707,13 +712,39 @@ AVGH 4, 4
 AVGH 4, 2
 
 AVG_FUNC 8, movq, movq
+AVGH 8, 32
 AVGH 8, 16
 AVGH 8,  8
 AVGH 8,  4
 
 AVG_FUNC 16, movq, movq
+AVGH 16, 64
+AVGH 16, 32
 AVGH 16, 16
+AVGH 16, 12
 AVGH 16,  8
+AVGH 16,  4
+
+AVG_FUNC 24, movq, movq
+AVGH 24, 32
+
+AVG_FUNC 32, movq, movq
+AVGH 32, 32
+AVGH 32, 24
+AVGH 32, 16
+AVGH 32, 8
+
+AVG_FUNC 48, movq, movq
+AVGH 48, 64
+
+AVG_FUNC 64, movq, movq
+AVGH 64, 64
+AVGH 64, 48
+AVGH 64, 32
+AVGH 64, 16
+
+AVG_FUNC 12, movq, movq, movq
+AVGH 12, 16
 
 INIT_XMM sse2
 AVG_FUNC 4, movq, movq
@@ -723,13 +754,40 @@ AVGH  4, 4
 AVGH  4, 2
 
 AVG_FUNC 8, movdqu, movdqa
+AVGH  8, 32
 AVGH  8, 16
 AVGH  8,  8
 AVGH  8,  4
 
 AVG_FUNC 16, movdqu, movdqa
+AVGH  16, 64
+AVGH  16, 32
 AVGH  16, 16
+AVGH  16, 12
 AVGH  16,  8
+AVGH  16,  4
+
+AVG_FUNC 24, movdqu, movdqa
+AVGH 24, 32
+
+AVG_FUNC 32, movdqu, movdqa
+AVGH 32, 64
+AVGH 32, 32
+AVGH 32, 24
+AVGH 32, 16
+AVGH 32, 8
+
+AVG_FUNC 48, movdqu, movdqa
+AVGH 48, 64
+
+AVG_FUNC 64, movdqu, movdqa
+AVGH 64, 64
+AVGH 64, 48
+AVGH 64, 32
+AVGH 64, 16
+
+AVG_FUNC 12, movdqu, movdqa, movq
+AVGH 12, 16
 
 %else ;!HIGH_BIT_DEPTH
 
@@ -778,6 +836,7 @@ INIT_XMM sse2
 AVG_FUNC 64, movdqu, movdqa
 AVGH 64, 64
 AVGH 64, 48
+AVGH 64, 32
 AVGH 64, 16
 
 AVG_FUNC 32, movdqu, movdqa
@@ -813,6 +872,7 @@ AVGH 24, 32
 
 AVGH 64, 64
 AVGH 64, 48
+AVGH 64, 32
 AVGH 64, 16
 
 AVGH 32, 64

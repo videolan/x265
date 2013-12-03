@@ -37,7 +37,7 @@ using namespace x265;
 PixelHarness::PixelHarness()
 {
     int maxheight = 64;
-    int padrows = 16;
+    int padrows = 64;
     int bufsize = STRIDE * (maxheight + padrows) + INCR * ITERS;
 
     /* 64 pixels wide, 2k deep */

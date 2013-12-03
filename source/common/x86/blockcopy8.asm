@@ -2440,7 +2440,7 @@ cglobal cvt32to16_shr, 5, 7, 1, dst, src, stride
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
-%define shift       m6
+%define shift       m1
 
     ; make shift
     mov             r5d,      r3m
