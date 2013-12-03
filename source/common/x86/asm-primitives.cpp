@@ -500,6 +500,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.satd[LUMA_12x16] = x265_pixel_satd_12x16_sse2;
         p.satd[LUMA_24x32] = x265_pixel_satd_24x32_sse2;
         p.satd[LUMA_48x64] = x265_pixel_satd_48x64_sse2;
+        p.satd[LUMA_64x16] = x265_pixel_satd_64x16_sse2;
+        p.satd[LUMA_64x32] = x265_pixel_satd_64x32_sse2;
+        p.satd[LUMA_64x48] = x265_pixel_satd_64x48_sse2;
+        p.satd[LUMA_64x64] = x265_pixel_satd_64x64_sse2;
 
         p.sa8d_inter[LUMA_8x8] = x265_pixel_sa8d_8x8_sse2;
         p.sa8d_inter[LUMA_16x16] = x265_pixel_sa8d_16x16_sse2;
