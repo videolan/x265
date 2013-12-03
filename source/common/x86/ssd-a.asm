@@ -77,10 +77,10 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,6
 %endif
     pxor    m0, m0
 .loop
-    mova    m1, [r0]
-    mova    m2, [r0+offset0_1]
-    mova    m3, [r0+offset0_2]
-    mova    m4, [r0+offset0_3]
+    movu    m1, [r0]
+    movu    m2, [r0+offset0_1]
+    movu    m3, [r0+offset0_2]
+    movu    m4, [r0+offset0_3]
     psubw   m1, [r2]
     psubw   m2, [r2+offset1_1]
     psubw   m3, [r2+offset1_2]
@@ -122,8 +122,18 @@ INIT_XMM sse2
 SSD_ONE     8,  4
 SSD_ONE     8,  8
 SSD_ONE     8, 16
+SSD_ONE     8, 32
+SSD_ONE    16,  4
 SSD_ONE    16,  8
+SSD_ONE    16, 12
 SSD_ONE    16, 16
+SSD_ONE    16, 32
+SSD_ONE    16, 64
+SSD_ONE    32,  8
+SSD_ONE    32, 16
+SSD_ONE    32, 24
+SSD_ONE    32, 32
+SSD_ONE    32, 64
 INIT_YMM avx2
 SSD_ONE    16,  8
 SSD_ONE    16, 16
