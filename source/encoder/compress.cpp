@@ -74,6 +74,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 
     cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     cu->m_totalCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+    xCheckDQP(cu);
 }
 
 void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
@@ -294,6 +295,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     //No-residue mode
     m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
+    xCheckDQP(outTempCU);
 
     tmp = outTempCU;
     outTempCU = outBestCU;
@@ -305,6 +307,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     //Encode with residue
     m_search->estimateRDInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false);
+    xCheckDQP(outTempCU);
 
     if (outTempCU->m_totalCost < outBestCU->m_totalCost)    //Choose best from no-residue mode and residue mode
     {
@@ -505,6 +508,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
                 m_search->estimateRDInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
                                             m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
+                xCheckDQP(outBestCU);
 
 
                 if (m_bestMergeCU[depth]->m_totalCost < outBestCU->m_totalCost)
