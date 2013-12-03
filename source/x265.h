@@ -508,10 +508,6 @@ typedef struct x265_param
      * efficiency at a major cost of performance. Default is no RDO (0) */
     int       rdLevel;
 
-    int       bEnableRDO;    // obsolete
-    int       bEnableRDOQ;   // obsolete
-    int       bEnableRDOQTS; // obsolete
-
     /*== Coding tools ==*/
 
     /* Enable the implicit signaling of the sign bit of the last coefficient of

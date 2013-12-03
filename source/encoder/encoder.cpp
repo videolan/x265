@@ -1241,21 +1241,32 @@ void Encoder::configure(x265_param *_param)
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
     switch (_param->rdLevel)
     {
-    case X265_NO_RDO_NO_RDOQ:
-        _param->bEnableRDO = _param->bEnableRDOQ = 0;
+    case 6:
+        bEnableRDOQ = bEnableRDOQTS = 1;
         break;
-    case X265_NO_RDO:
-        _param->bEnableRDO = 0;
-        _param->bEnableRDOQ = 1;
+    case 5:
+        bEnableRDOQ = bEnableRDOQTS = 1;
         break;
-    case X265_FULL_RDO:
-        _param->bEnableRDO = _param->bEnableRDOQ = 1;
+    case 4:
+        bEnableRDOQ = bEnableRDOQTS = 1;   
+        break;
+    case 3:
+        bEnableRDOQ = bEnableRDOQTS = 0;
+        break; 
+    case 2:
+        bEnableRDOQ = bEnableRDOQTS = 0;
+        break; 
+    case 1:
+        bEnableRDOQ = bEnableRDOQTS = 0;
+        break; 
+    case 0:
+        bEnableRDOQ = bEnableRDOQTS = 0;
         break;
     }
 
-    if (!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
+    if (!(bEnableRDOQ && _param->bEnableTransformSkip))
     {
-        _param->bEnableRDOQTS = 0;
+        bEnableRDOQTS = 0;
     }
 
     //====== Coding Tools ========

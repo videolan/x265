@@ -323,7 +323,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --aq-strength                 Reduces blocking and blurring in flat and textured areas.(0 to 3.0)<double> . Default %f\n", param->rc.aqStrength);
     H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
-    H0("   --rd                          Level of RD in mode decision 0:least....2:full RDO. Default %d\n", param->rdLevel);
+    H0("   --rd                          Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
     H0("\nLoop filter:\n");
     H0("   --[no-]lft                    Enable Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));

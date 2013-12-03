@@ -182,10 +182,7 @@ void x265_param_default(x265_param *param)
     param->bEnableCbfFastMode = 0;
     param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
-    param->rdLevel = X265_NO_RDO_NO_RDOQ;
-    param->bEnableRDO = 0;
-    param->bEnableRDOQ = 0;
-    param->bEnableRDOQTS = 0;
+    param->rdLevel = 3;
     param->bEnableSignHiding = 1;
     param->bEnableTransformSkip = 0;
     param->bEnableTSkipFast = 0;
@@ -345,7 +342,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->lookaheadDepth = 25;
             param->bframes = 4;
-            param->rdLevel = 1;
+            param->rdLevel = 4;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
@@ -356,7 +353,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bframes = 8;
             param->tuQTMaxInterDepth = 2;
             param->tuQTMaxIntraDepth = 2;
-            param->rdLevel = 2;
+            param->rdLevel = 6;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
@@ -367,7 +364,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bframes = 8;
             param->tuQTMaxInterDepth = 3;
             param->tuQTMaxIntraDepth = 3;
-            param->rdLevel = 2;
+            param->rdLevel = 6;
             param->subpelRefine = 4;
             param->maxNumMergeCand = 4;
             param->searchMethod = X265_STAR_SEARCH;
@@ -380,12 +377,11 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bframes = 8;
             param->tuQTMaxInterDepth = 4;
             param->tuQTMaxIntraDepth = 4;
-            param->rdLevel = 2;
+            param->rdLevel = 6;
             param->subpelRefine = 5;
             param->maxNumMergeCand = 5;
             param->searchMethod = X265_STAR_SEARCH;
             param->bEnableTransformSkip = 1;
-            param->bEnableRDOQTS = 1;
             param->maxNumReferences = 5;
             // TODO: optimized esa
         }
@@ -491,7 +487,7 @@ int x265_check_params(x265_param *param)
 
     CHECK(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
           "Rate control mode is out of range");
-    CHECK(param->rdLevel<X265_NO_RDO_NO_RDOQ || param->rdLevel> X265_FULL_RDO,
+    CHECK(param->rdLevel < 0 || param->rdLevel > 6,
           "RD Level is out of range");
     CHECK(param->bframes > param->lookaheadDepth,
           "Lookahead depth must be greater than the max consecutive bframe count");
@@ -633,12 +629,8 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableSignHiding, "sign-hide");
     if (param->bEnableTransformSkip)
     {
-        if (param->bEnableTSkipFast && param->bEnableRDOQTS)
-            fprintf(stderr, "tskip(fast+rdo) ");
-        else if (param->bEnableTSkipFast)
+        if (param->bEnableTSkipFast)
             fprintf(stderr, "tskip(fast) ");
-        else if (param->bEnableRDOQTS)
-            fprintf(stderr, "tskip(rdo) ");
         else
             fprintf(stderr, "tskip ");
     }
