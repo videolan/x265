@@ -8122,24 +8122,24 @@ void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
 #if !HIGH_BIT_DEPTH
 #if defined(__clang__)
 
-    p.intra_pred_allangs[0] = predIntraAngs4;
-    p.intra_pred_allangs[1] = predIntraAngs8;
-    p.intra_pred_allangs[2] = predIntraAngs16;
+    p.intra_pred_allangs[BLOCK_4x4] = predIntraAngs4;
+    p.intra_pred_allangs[BLOCK_8x8] = predIntraAngs8;
+    p.intra_pred_allangs[BLOCK_16x16] = predIntraAngs16;
 
 #elif defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
 
-    p.intra_pred_allangs[0] = predIntraAngs4;
-    p.intra_pred_allangs[1] = predIntraAngs8;
-    p.intra_pred_allangs[2] = predIntraAngs16;
-    p.intra_pred_allangs[3] = predIntraAngs32;
+    p.intra_pred_allangs[BLOCK_4x4] = predIntraAngs4;
+    p.intra_pred_allangs[BLOCK_8x8] = predIntraAngs8;
+    p.intra_pred_allangs[BLOCK_16x16] = predIntraAngs16;
+    p.intra_pred_allangs[BLOCK_32x32] = predIntraAngs32;
 
 #elif defined(_MSC_VER) && defined(X86_64)
 
     /* VC10 and VC11 both generate bad Win32 code for all these functions.
      * They apparently can't deal with register allocation for intrinsic
      * functions this large.  Even Win64 cannot handle 16x16 and 32x32 */
-    p.intra_pred_allangs[0] = predIntraAngs4;
-    p.intra_pred_allangs[1] = predIntraAngs8;
+    p.intra_pred_allangs[BLOCK_4x4] = predIntraAngs4;
+    p.intra_pred_allangs[BLOCK_8x8] = predIntraAngs8;
 
 #endif // if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
 #endif /* !HIGH_BIT_DEPTH */

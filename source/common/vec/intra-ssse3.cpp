@@ -3449,10 +3449,10 @@ void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
     p.intra_pred_dc[BLOCK_16x16] = intra_pred_dc<16>;
     p.intra_pred_dc[BLOCK_32x32] = intra_pred_dc<32>;
 #else
-    p.intra_pred_ang[0] = intraPredAng4x4;
-    p.intra_pred_ang[1] = intraPredAng8x8;
-    p.intra_pred_ang[2] = intraPredAng16x16;
-    p.intra_pred_ang[3] = intraPredAng32x32;
+    p.intra_pred_ang[BLOCK_4x4] = intraPredAng4x4;
+    p.intra_pred_ang[BLOCK_8x8] = intraPredAng8x8;
+    p.intra_pred_ang[BLOCK_16x16] = intraPredAng16x16;
+    p.intra_pred_ang[BLOCK_32x32] = intraPredAng32x32;
 #endif
 }
 }
