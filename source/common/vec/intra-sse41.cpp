@@ -8112,10 +8112,9 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef HALF
 #undef N
 }
-
+#endif
 #endif // if !HIGH_BIT_DEPTH
 }
-#endif
 
 namespace x265 {
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives& p)
