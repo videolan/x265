@@ -73,7 +73,7 @@ intra_ang_t intra_ang4[NUM_INTRA_MODE - 1] =
     NULL,                               // Mode 31
     NULL,                               // Mode 32
     NULL,                               // Mode 33
-    NULL,                               // Mode 34
+    x265_intra_pred_ang4_2_ssse3,       // Mode 34
 };
 
 namespace {

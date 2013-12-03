@@ -681,6 +681,8 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
 cglobal intra_pred_ang4_2, 3,3,4
+    cmp         r4m, byte 34
+    cmove       r2, r3mp
     movh        m0, [r2 + 2]
     movd        [r0], m0
     palignr     m1, m0, 1
@@ -688,7 +690,6 @@ cglobal intra_pred_ang4_2, 3,3,4
     palignr     m2, m0, 2
     movd        [r0 + r1 * 2], m2
     lea         r1, [r1 * 3]
-    palignr     m3, m0, 3
-    movd        [r0 + r1], m3
+    psrldq      m0, 3
+    movd        [r0 + r1], m0
     RET
-
