@@ -1234,11 +1234,6 @@ void Encoder::configure(x265_param *_param)
     {
         _param->bEnableAMP = false;
     }
-
-    if (!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
-    {
-        _param->bEnableRDOQTS = 0;
-    }
     if (_param->bBPyramid && !_param->bframes)
     {
         _param->bBPyramid = 0;
@@ -1256,6 +1251,11 @@ void Encoder::configure(x265_param *_param)
     case X265_FULL_RDO:
         _param->bEnableRDO = _param->bEnableRDOQ = 1;
         break;
+    }
+
+    if (!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
+    {
+        _param->bEnableRDOQTS = 0;
     }
 
     //====== Coding Tools ========
