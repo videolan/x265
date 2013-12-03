@@ -352,9 +352,9 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         double q0 = prevRefSlice->getSliceQp();
         double q1 = nextRefSlice->getSliceQp();
 
-        if (prevRefSlice->getSliceType() == X265_TYPE_BREF && prevRefSlice->isReferenced())
+        if (prevRefSlice->getSliceType() == B_SLICE && prevRefSlice->isReferenced())
             q0 -= pbOffset / 2;
-        if (nextRefSlice->getSliceType() == X265_TYPE_BREF && nextRefSlice->isReferenced())
+        if (nextRefSlice->getSliceType() == B_SLICE && nextRefSlice->isReferenced())
             q1 -= pbOffset / 2;
         if (i0 && i1)
             q = (q0 + q1) / 2 + ipOffset;
