@@ -862,7 +862,7 @@ int __intel_cpu_indicator = 0;
 // CPU dispatcher function
 void x265_intel_cpu_indicator_init(void)
 {
-    unsigned int cpu = cpu_detect();
+    uint32_t cpu = x265::cpu_detect();
 
     if (cpu & X265_CPU_AVX)
         __intel_cpu_indicator = 0x20000;
