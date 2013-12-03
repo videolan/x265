@@ -510,7 +510,6 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
  * \param width    Width of block
  * \param height   Height of block
  * \param dstPic   Pointer to destination picture
- * \param bi       Flag indicating whether bipred is used
  */
 void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic)
 {
