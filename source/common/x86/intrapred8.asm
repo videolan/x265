@@ -33,6 +33,8 @@ multiH2:    dw 17, 18, 19, 20, 21, 22, 23, 24
 multiH3:    dw 25, 26, 27, 28, 29, 30, 31, 32
 
 c_trans_4x4 db 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15
+pb_0_8          times 8 db 0, 8
+pb_unpackbw1    times 2 db 1, 8, 2, 8, 3, 8, 4, 8
 
 const ang_table
 %assign x 0
@@ -45,6 +47,7 @@ SECTION .text
 
 cextern pw_8
 cextern pw_1024
+cextern pb_unpackbd1
 
 ;-----------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
@@ -860,3 +863,35 @@ cglobal intra_pred_ang4_9, 3,4,5
     movh        m4, [r3 +  2 * 16]  ; [ 6]
     movhps      m4, [r3 +  4 * 16]  ; [ 8]
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_10, 3,3,4
+    movd        m0, [r2 + 1]            ; [8 7 6 5 4 3 2 1]
+    pshufb      m0, [pb_unpackbd1]
+
+    pshufd      m1, m0, 1
+    movhlps     m2, m0
+    pshufd      m3, m0, 3
+    movd        [r0 + r1], m1
+    movd        [r0 + r1 * 2], m2
+    lea         r1, [r1 * 3]
+    movd        [r0 + r1], m3
+
+    cmp         r5m, byte 0
+    jz         .quit
+
+    ; filter
+    mov         r2, r3mp
+    pxor        m1, m1
+    punpcklbw   m0, m1                  ; [-1 -1 -1 -1]
+    movh        m1, [r2]                ; [4 3 2 1 0]
+    pshufb      m2, m1, [pb_0_8]        ; [0 0 0 0]
+    pshufb      m1, [pb_unpackbw1]      ; [4 3 2 1]
+    psubw       m1, m2
+    psraw       m1, 1
+    paddw       m0, m1
+    packuswb    m0, m0
+
+.quit:
+    movd        [r0], m0
+    RET

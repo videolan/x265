@@ -49,7 +49,7 @@ intra_ang_t intra_ang4[NUM_INTRA_MODE - 1] =
     x265_intra_pred_ang4_7_ssse3,       // Mode 7
     x265_intra_pred_ang4_8_ssse3,       // Mode 8
     x265_intra_pred_ang4_9_ssse3,       // Mode 9
-    NULL,                               // Mode 10
+    x265_intra_pred_ang4_10_ssse3,      // Mode 10
     NULL,                               // Mode 11
     NULL,                               // Mode 12
     NULL,                               // Mode 13

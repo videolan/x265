@@ -44,5 +44,6 @@ void x265_intra_pred_ang4_6_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft
 void x265_intra_pred_ang4_7_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
 void x265_intra_pred_ang4_8_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
 void x265_intra_pred_ang4_9_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
+void x265_intra_pred_ang4_10_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
 
 #endif // ifndef X265_INTRAPRED_H
