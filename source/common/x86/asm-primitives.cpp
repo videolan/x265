@@ -547,6 +547,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.transpose[BLOCK_64x64] = x265_transpose64_sse2;
 
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
+        p.ssim_end_4 = x265_pixel_ssim_end4_sse2;
         PIXEL_AVG(sse2);
         PIXEL_AVG_W4(mmx2);
         LUMA_VAR(_sse2);
