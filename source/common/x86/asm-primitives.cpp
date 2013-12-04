@@ -566,6 +566,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
+        p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
