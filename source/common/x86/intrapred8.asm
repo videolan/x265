@@ -895,3 +895,40 @@ cglobal intra_pred_ang4_10, 3,3,4
 .quit:
     movd        [r0], m0
     RET
+
+
+cglobal intra_pred_ang4_26, 4,4,3
+    movd        m0, [r3 + 1]            ; [8 7 6 5 4 3 2 1]
+
+    ; store
+    movd        [r0], m0
+    movd        [r0 + r1], m0
+    movd        [r0 + r1 * 2], m0
+    lea         r3, [r1 * 3]
+    movd        [r0 + r3], m0
+
+    ; filter
+    cmp         r5m, byte 0
+    jz         .quit
+
+    pshufb      m0, [pb_0_8]            ; [ 1  1  1  1]
+    movh        m1, [r2]                ; [-4 -3 -2 -1 0]
+    pshufb      m2, m1, [pb_0_8]        ; [0 0 0 0]
+    pshufb      m1, [pb_unpackbw1]      ; [-4 -3 -2 -1]
+    psubw       m1, m2
+    psraw       m1, 1
+    paddw       m0, m1
+    packuswb    m0, m0
+
+    ; TODO: use SSE4 pextrb
+    movd        r2d, m0
+    mov         [r0], r2b
+    shr         r2d, 8
+    mov         [r0 + r1], r2b
+    shr         r2d, 8
+    mov         [r0 + r1 * 2], r2b
+    shr         r2d, 8
+    mov         [r0 + r3], r2b
+
+.quit:
+    RET
