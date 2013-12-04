@@ -1039,8 +1039,76 @@ cglobal transpose16_internal
 ; void transpose_32x32(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
 INIT_XMM sse2
+%if HIGH_BIT_DEPTH
+cglobal transpose32, 3, 7, 4, dest, src, stride
+    add    r2,    r2
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    64
+    mov    r6,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r4 + 16]
+    lea    r0,    [r6 + 8 * 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 64 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 64 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 64 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r4 + 32]
+    lea    r0,    [r6 + 16 * 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 64 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 64 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 64 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r4 + 48]
+    lea    r0,    [r6 + 24 * 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 64 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 64 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 64 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+%else
 cglobal transpose32, 3, 7, 8, dest, src, stride
-
     mov    r3,    r0
     mov    r4,    r1
     mov    r5,    r0
@@ -1058,7 +1126,7 @@ cglobal transpose32, 3, 7, 8, dest, src, stride
     lea    r0,    [r3 + 16 * 32 + 16]
     mov    r5,    r0
     call   transpose16_internal
-
+%endif
     RET
 
 ;-----------------------------------------------------------------
