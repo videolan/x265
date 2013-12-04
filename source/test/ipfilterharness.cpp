@@ -742,7 +742,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                        pixel_buff, srcStride, IPF_vec_output_s, width, height);
     }
 
-    for (int value = X265_CSP_I420; value < NUM_LUMA_PARTITIONS; value++)
+    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
     {
         if (opt.luma_hpp[value])
         {
@@ -806,7 +806,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                        pixel_buff, srcStride, IPF_vec_output_s, width, height);
     }
 
-    for (int csp = 0; csp < X265_CSP_COUNT; csp++)
+    for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
     {
         printf("= Color Space %s =\n", x265_source_csp_names[csp]);
         for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
