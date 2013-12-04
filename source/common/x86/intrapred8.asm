@@ -724,6 +724,7 @@ cglobal intra_pred_ang4_3, 3,4,5
     movhps      m4, [r3 - 12 * 16]  ; [ 8]
 
     ; NOTE: share path, input is m0=[1 0], m2=[3 2], m3,m4=coef, flag_z=no_transpose
+ALIGN 16
 .do_filter4x4:
     mova        m1, [pw_1024]
 
