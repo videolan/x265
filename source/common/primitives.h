@@ -192,6 +192,7 @@ typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
 typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
 
 typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+typedef void (*filter_hps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt);
 typedef void (*filter_ps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_sp_t) (int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_ss_t) (int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx);
@@ -233,7 +234,7 @@ struct EncoderPrimitives
     pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
 
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
-    filter_ps_t     luma_hps[NUM_LUMA_PARTITIONS];
+    filter_hps_t    luma_hps[NUM_LUMA_PARTITIONS];
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
     filter_ps_t     luma_vps[NUM_LUMA_PARTITIONS];
     filter_sp_t     luma_vsp[NUM_LUMA_PARTITIONS];
@@ -282,7 +283,7 @@ struct EncoderPrimitives
         filter_sp_t     filter_vsp[NUM_LUMA_PARTITIONS];
         filter_ss_t     filter_vss[NUM_LUMA_PARTITIONS];
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
-        filter_ps_t     filter_hps[NUM_LUMA_PARTITIONS];
+        filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
         copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
         copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
