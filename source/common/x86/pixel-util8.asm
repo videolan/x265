@@ -1133,8 +1133,275 @@ cglobal transpose32, 3, 7, 8, dest, src, stride
 ; void transpose_64x64(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
 INIT_XMM sse2
-cglobal transpose64, 3, 7, 8, dest, src, stride
+%if HIGH_BIT_DEPTH
+cglobal transpose64, 3, 7, 4, dest, src, stride
+    add    r2,    r2
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    128
+    mov    r6,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
 
+    lea    r1,    [r4 + 16]
+    lea    r0,    [r6 + 8 * 128]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 128 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 128 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 128 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 128 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 128 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 128 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * 128 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
+
+    lea    r1,    [r4 + 32]
+    lea    r0,    [r6 + 16 * 128]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 128 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 128 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 128 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 128 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 128 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 128 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16 * 128 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
+
+    lea    r1,    [r4 + 48]
+    lea    r0,    [r6 + 24 * 128]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 128 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 128 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 128 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 128 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 128 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 128 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 24 * 128 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
+
+    lea    r1,    [r4 + 64]
+    lea    r0,    [r6 + 32 * 128]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32 * 128 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32 * 128 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32 * 128 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32 * 128 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32 * 128 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32 * 128 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 32 * 128 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
+
+    lea    r1,    [r4 + 80]
+    lea    r0,    [r6 + 40 * 128]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 40 * 128 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 40 * 128 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 40 * 128 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 40 * 128 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 40 * 128 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 40 * 128 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 40 * 128 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
+
+    lea    r1,    [r4 + 96]
+    lea    r0,    [r6 + 48 * 128]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48 * 128 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48 * 128 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48 * 128 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48 * 128 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48 * 128 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48 * 128 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 48 * 128 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
+
+    lea    r1,    [r4 + 112]
+    lea    r0,    [r6 + 56 * 128]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 56 * 128 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 56 * 128 + 32]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 56 * 128 + 48]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 56 * 128 + 64]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 56 * 128 + 80]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 56 * 128 + 96]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 56 * 128 + 112]
+    mov    r3,    r0
+    call   transpose8_internal
+%else
+cglobal transpose64, 3, 7, 8, dest, src, stride
     mov    r3,    r0
     mov    r4,    r1
     mov    r5,    r0
@@ -1203,7 +1470,7 @@ cglobal transpose64, 3, 7, 8, dest, src, stride
     lea    r0,    [r3 + 48 * 64 + 48]
     mov    r5,    r0
     call   transpose16_internal
-
+%endif
     RET
 
 ;=============================================================================
