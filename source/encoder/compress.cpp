@@ -515,6 +515,11 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         bdoIntra = (outBestCU->getCbf(0, TEXT_LUMA) ||  outBestCU->getCbf(0, TEXT_CHROMA_U) ||
                                     outBestCU->getCbf(0, TEXT_CHROMA_V));
                     }
+                    else
+                    {
+                        uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
+                        bdoIntra = (outBestCU->m_totalDistortion > threshold[depth]);
+                    }
                     if (bdoIntra)
                     {
                         xComputeCostIntraInInter(m_intraInInterCU[depth], SIZE_2Nx2N);
