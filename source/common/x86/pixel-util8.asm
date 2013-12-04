@@ -883,7 +883,10 @@ cglobal transpose8_internal
     lea    r1,    [r1 + 2 * r2]
     lea    r0,    [r3 + 8]
     TRANSPOSE_4x4 r5
-    lea    r1,    [r4 + 8]
+    lea    r1,    [r1 + 2 * r2]
+    neg    r2
+    lea    r1,    [r1 + r2 * 8 + 8]
+    neg    r2
     lea    r0,    [r3 + 4 * r5]
     TRANSPOSE_4x4 r5
     lea    r1,    [r1 + 2 * r2]
@@ -893,7 +896,6 @@ cglobal transpose8_internal
 cglobal transpose8, 3, 6, 4, dest, src, stride
     add    r2,    r2
     mov    r3,    r0
-    mov    r4,    r1
     mov    r5,    16
     call   transpose8_internal
 %else
@@ -978,8 +980,29 @@ cglobal transpose8, 3, 5, 8, dest, src, stride
 ; void transpose_16x16(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
 INIT_XMM sse2
-cglobal transpose16, 3, 5, 8, dest, src, stride
+%if HIGH_BIT_DEPTH
+cglobal transpose16, 3, 7, 4, dest, src, stride
+    add    r2,    r2
+    mov    r3,    r0
+    mov    r4,    r1
+    mov    r5,    32
+    mov    r6,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r4 + 16]
+    lea    r0,    [r6 + 8 * r5]
+    mov    r3,    r0
+    call   transpose8_internal
+    lea    r1,    [r1 - 8 + 2 * r2]
+    lea    r0,    [r6 + 8 * r5 + 16]
+    mov    r3,    r0
+    call   transpose8_internal
 
+%else
+cglobal transpose16, 3, 5, 8, dest, src, stride
     mov    r3,    r0
     mov    r4,    r1
     TRANSPOSE_8x8 16
@@ -992,7 +1015,7 @@ cglobal transpose16, 3, 5, 8, dest, src, stride
     lea    r1,    [r1 + 2 * r2]
     lea    r0,    [r3 + 8 * 16 + 8]
     TRANSPOSE_8x8 16
-
+%endif
     RET
 
 cglobal transpose16_internal
