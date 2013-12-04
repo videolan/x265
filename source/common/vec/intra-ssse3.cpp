@@ -43,13 +43,13 @@ intra_ang_t intra_ang4[NUM_INTRA_MODE - 1] =
     NULL,                               // Mode 1
     x265_intra_pred_ang4_2_ssse3,       // Mode 2
     x265_intra_pred_ang4_3_ssse3,       // Mode 3
-    NULL,                               // Mode 4
-    NULL,                               // Mode 5
-    NULL,                               // Mode 6
-    NULL,                               // Mode 7
-    NULL,                               // Mode 8
-    NULL,                               // Mode 9
-    NULL,                               // Mode 10
+    x265_intra_pred_ang4_4_ssse3,       // Mode 4
+    x265_intra_pred_ang4_5_ssse3,       // Mode 5
+    x265_intra_pred_ang4_6_ssse3,       // Mode 6
+    x265_intra_pred_ang4_7_ssse3,       // Mode 7
+    x265_intra_pred_ang4_8_ssse3,       // Mode 8
+    x265_intra_pred_ang4_9_ssse3,       // Mode 9
+    x265_intra_pred_ang4_10_ssse3,      // Mode 10
     NULL,                               // Mode 11
     NULL,                               // Mode 12
     NULL,                               // Mode 13
@@ -65,13 +65,13 @@ intra_ang_t intra_ang4[NUM_INTRA_MODE - 1] =
     NULL,                               // Mode 23
     NULL,                               // Mode 24
     NULL,                               // Mode 25
-    NULL,                               // Mode 26
-    NULL,                               // Mode 27
-    NULL,                               // Mode 28
-    NULL,                               // Mode 29
-    NULL,                               // Mode 30
-    NULL,                               // Mode 31
-    NULL,                               // Mode 32
+    x265_intra_pred_ang4_26_ssse3,      // Mode 26
+    x265_intra_pred_ang4_9_ssse3,       // Mode 27
+    x265_intra_pred_ang4_8_ssse3,       // Mode 28
+    x265_intra_pred_ang4_7_ssse3,       // Mode 29
+    x265_intra_pred_ang4_6_ssse3,       // Mode 30
+    x265_intra_pred_ang4_5_ssse3,       // Mode 31
+    x265_intra_pred_ang4_4_ssse3,       // Mode 32
     x265_intra_pred_ang4_3_ssse3,       // Mode 33
     x265_intra_pred_ang4_2_ssse3,       // Mode 34
 };

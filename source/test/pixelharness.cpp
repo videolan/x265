@@ -695,6 +695,10 @@ bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
     ALIGN_VAR_32(int, sum0[5][4]);
     ALIGN_VAR_32(int, sum1[5][4]);
     int width;
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -712,9 +716,17 @@ bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
         float cres = ref(sum0, sum1, width);
         float vres = opt(sum0, sum1, width);
         if (fabs(vres - cres) > 0.00001)
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
     }
 
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
     return true;
 }
 
@@ -1349,7 +1361,14 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     if (opt.ssim_end_4)
     {
+#if HIGH_BIT_DEPTH
+        int old_depth = X265_DEPTH;
+        X265_DEPTH = 10;
+#endif
         HEADER0("ssim_end_4");
         REPORT_SPEEDUP(opt.ssim_end_4, ref.ssim_end_4, (int(*)[4])pbuf2, (int(*)[4])pbuf1, 4);
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
     }
 }

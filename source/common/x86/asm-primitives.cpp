@@ -504,6 +504,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.satd[LUMA_32x16] = x265_pixel_satd_32x16_sse2;
         p.satd[LUMA_32x24] = x265_pixel_satd_32x24_sse2;
 
+        p.sa8d_inter[LUMA_4x4]  = x265_pixel_satd_4x4_mmx2;
+        SA8D_INTER_FROM_BLOCK(sse2);
         p.sa8d_inter[LUMA_8x8] = x265_pixel_sa8d_8x8_sse2;
         p.sa8d_inter[LUMA_16x16] = x265_pixel_sa8d_16x16_sse2;
 
@@ -528,14 +530,43 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.transpose[BLOCK_4x4] = x265_transpose4_sse2;
         p.transpose[BLOCK_8x8] = x265_transpose8_sse2;
+        p.transpose[BLOCK_16x16] = x265_transpose16_sse2;
+        p.transpose[BLOCK_32x32] = x265_transpose32_sse2;
+        p.transpose[BLOCK_64x64] = x265_transpose64_sse2;
 
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
+        p.ssim_end_4 = x265_pixel_ssim_end4_sse2;
         PIXEL_AVG(sse2);
         PIXEL_AVG_W4(mmx2);
         LUMA_VAR(_sse2);
+
+        INIT8(sad, _mmx2);
+        p.sad[LUMA_8x32]  = x265_pixel_sad_8x32_sse2;
+        p.sad[LUMA_16x4]  = x265_pixel_sad_16x4_sse2;
+        p.sad[LUMA_16x12] = x265_pixel_sad_16x12_sse2;
+        p.sad[LUMA_16x32] = x265_pixel_sad_16x32_sse2;
+
+        p.sad[LUMA_32x8]  = x265_pixel_sad_32x8_sse2;
+        p.sad[LUMA_32x16] = x265_pixel_sad_32x16_sse2;
+        p.sad[LUMA_32x24] = x265_pixel_sad_32x24_sse2;
+        p.sad[LUMA_32x32] = x265_pixel_sad_32x32_sse2;
+        p.sad[LUMA_32x64] = x265_pixel_sad_32x64_sse2;
+
+        p.sad[LUMA_64x16] = x265_pixel_sad_64x16_sse2;
+        p.sad[LUMA_64x32] = x265_pixel_sad_64x32_sse2;
+        p.sad[LUMA_64x48] = x265_pixel_sad_64x48_sse2;
+        p.sad[LUMA_64x64] = x265_pixel_sad_64x64_sse2;
+
+        p.sad[LUMA_48x64] = x265_pixel_sad_48x64_sse2;
+        p.sad[LUMA_24x32] = x265_pixel_sad_24x32_sse2;
+        p.sad[LUMA_12x16] = x265_pixel_sad_12x16_sse2;
+
+        p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
+        p.cvt16to32_shl = x265_cvt16to32_shl_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
+        p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
