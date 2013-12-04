@@ -518,6 +518,11 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sa8d_inter[LUMA_16x64]  = x265_pixel_sa8d_16x64_sse2;
         p.sa8d_inter[LUMA_24x32]  = x265_pixel_sa8d_24x32_sse2;
         p.sa8d_inter[LUMA_48x64]  = x265_pixel_sa8d_48x64_sse2;
+        p.sa8d_inter[LUMA_32x8]  = x265_pixel_sa8d_32x8_sse2;
+        p.sa8d_inter[LUMA_32x16]  = x265_pixel_sa8d_32x16_sse2;
+        p.sa8d_inter[LUMA_32x24]  = x265_pixel_sa8d_32x24_sse2;
+        p.sa8d_inter[LUMA_32x32]  = x265_pixel_sa8d_32x32_sse2;
+        p.sa8d_inter[LUMA_32x64]  = x265_pixel_sa8d_32x64_sse2;
         p.sa8d_inter[LUMA_8x8] = x265_pixel_sa8d_8x8_sse2;
         p.sa8d_inter[LUMA_16x16] = x265_pixel_sa8d_16x16_sse2;
 
