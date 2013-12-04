@@ -126,6 +126,9 @@
 #define OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX   (OFF_TRANSFORMSKIP_FLAG_CTX + 2 * NUM_TRANSFORMSKIP_FLAG_CTX)
 #define MAX_OFF_CTX_MOD                     (OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX + NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX)
 
+namespace x265 {
+// private namespace
+
 // ====================================================================================================================
 // Sbac interface
 // ====================================================================================================================
@@ -139,8 +142,8 @@ extern const uint8_t g_nextStateMPS[128];
 extern const uint8_t g_nextStateLPS[128];
 extern const int     g_entropyBits[128];
 extern       uint8_t g_nextState[128][2];
-extern void buildNextStateTable();
-extern uint8_t sbacInit(int qp, int initValue);   ///< initialize state with initial probability
+void buildNextStateTable();
+uint8_t sbacInit(int qp, int initValue);   ///< initialize state with initial probability
 
 #define sbacGetMps(S)               ((S) & 1)
 #define sbacGetState(S)             ((S) >> 1)
@@ -154,8 +157,6 @@ extern uint8_t sbacInit(int qp, int initValue);   ///< initialize state with ini
 // Tables
 // ====================================================================================================================
 
-namespace x265 {
-// private namespace
 
 // initial probability for cu_transquant_bypass flag
 static const uint8_t

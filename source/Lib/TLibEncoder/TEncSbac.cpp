@@ -37,7 +37,8 @@
 
 #include "TEncSbac.h"
 
-using namespace x265;
+namespace x265
+{
 
 //! \ingroup TLibEncoder
 //! \{
@@ -2631,6 +2632,8 @@ void TEncSbac::xCopyContextsFrom(TEncSbac* src)
 void  TEncSbac::loadContexts(TEncSbac* src)
 {
     this->xCopyContextsFrom(src);
+}
+
 }
 
 //! \}
