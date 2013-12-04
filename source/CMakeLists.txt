@@ -83,12 +83,6 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
         add_definitions(-mstackrealign)
     endif()
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-    if(NOT GCC_VERSION VERSION_LESS 4.7)
-        # this is necessary to avoid name conflicts in vector class
-        # library.  if vector classes are removed/replaced this can
-        # likely be removed as well.
-        add_definitions(-fabi-version=6)
-    endif()
 endif()
 if (GCC)
     option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)

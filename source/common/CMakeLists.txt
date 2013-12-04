@@ -69,12 +69,9 @@ if(MSVC)
 endif(MSVC)
 
 if(ENABLE_PRIMITIVES_VEC)
-    if(HIGH_BIT_DEPTH)
-        include_directories(../VectorClass)
-    endif()
     set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
     set(SSSE3 vec/dct-ssse3.cpp vec/ipfilter-ssse3.cpp vec/intra-ssse3.cpp)
-    set(SSE41 vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp vec/pixel16-sse41.cpp)
+    set(SSE41 vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp)
 
     if (MSVC)
         set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
@@ -92,15 +89,14 @@ if(ENABLE_PRIMITIVES_VEC)
         if (X64)
             set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE}")
         else()
-            # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
+            # x64 implies SSE4, so only add /arch:SSE2 if building for Win32
             set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} /arch:SSE2")
         endif()
     endif()
     if(GCC)
         if(CLANG)
-            # llvm intrinsic headers trigger these warning
-            # the middle two are for the vector class headers only
-            set(WARNDISABLE "-Wno-shadow -Wno-shift-overflow -Wno-uninitialized -Wno-unused-parameter")
+            # llvm intrinsic headers cause shadow warnings
+            set(WARNDISABLE "-Wno-shadow -Wno-unused-parameter")
         else()
             set(WARNDISABLE "-Wno-unused-parameter")
         endif()
