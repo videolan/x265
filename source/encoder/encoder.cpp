@@ -1248,7 +1248,7 @@ void Encoder::configure(x265_param *_param)
         bEnableRDOQ = bEnableRDOQTS = 1;
         break;
     case 4:
-        bEnableRDOQ = bEnableRDOQTS = 1;   
+        bEnableRDOQ = bEnableRDOQTS = 1;
         break;
     case 3:
         bEnableRDOQ = bEnableRDOQTS = 0;
