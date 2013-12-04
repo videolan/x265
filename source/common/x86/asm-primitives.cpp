@@ -505,24 +505,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.satd[LUMA_32x24] = x265_pixel_satd_32x24_sse2;
 
         p.sa8d_inter[LUMA_4x4]  = x265_pixel_satd_4x4_mmx2;
-        p.sa8d_inter[LUMA_4x8]  = x265_pixel_satd_4x8_sse2;
-        p.sa8d_inter[LUMA_4x16]  = x265_pixel_satd_4x16_sse2;
-        p.sa8d_inter[LUMA_8x4]  = x265_pixel_satd_8x4_sse2;
-        p.sa8d_inter[LUMA_8x16] = x265_pixel_sa8d_8x16_sse2;
-        p.sa8d_inter[LUMA_8x32] = x265_pixel_sa8d_8x32_sse2;
-        p.sa8d_inter[LUMA_12x16]  = x265_pixel_satd_12x16_sse2;
-        p.sa8d_inter[LUMA_16x4]  = x265_pixel_satd_16x4_sse2;
-        p.sa8d_inter[LUMA_16x8]  = x265_pixel_sa8d_16x8_sse2;
-        p.sa8d_inter[LUMA_16x12]  = x265_pixel_satd_16x12_sse2;
-        p.sa8d_inter[LUMA_16x32]  = x265_pixel_sa8d_16x32_sse2;
-        p.sa8d_inter[LUMA_16x64]  = x265_pixel_sa8d_16x64_sse2;
-        p.sa8d_inter[LUMA_24x32]  = x265_pixel_sa8d_24x32_sse2;
-        p.sa8d_inter[LUMA_48x64]  = x265_pixel_sa8d_48x64_sse2;
-        p.sa8d_inter[LUMA_32x8]  = x265_pixel_sa8d_32x8_sse2;
-        p.sa8d_inter[LUMA_32x16]  = x265_pixel_sa8d_32x16_sse2;
-        p.sa8d_inter[LUMA_32x24]  = x265_pixel_sa8d_32x24_sse2;
-        p.sa8d_inter[LUMA_32x32]  = x265_pixel_sa8d_32x32_sse2;
-        p.sa8d_inter[LUMA_32x64]  = x265_pixel_sa8d_32x64_sse2;
+        SA8D_INTER_FROM_BLOCK(sse2);
         p.sa8d_inter[LUMA_8x8] = x265_pixel_sa8d_8x8_sse2;
         p.sa8d_inter[LUMA_16x16] = x265_pixel_sa8d_16x16_sse2;
 
