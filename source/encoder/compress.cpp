@@ -286,6 +286,10 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         }
     }
 
+    outTempCU->setMergeIndexSubParts(bestMergeCand, 0, 0, depth);
+    outTempCU->setInterDirSubParts(interDirNeighbours[bestMergeCand], 0, 0, depth);
+    outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
+    outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
     if (m_cfg->param.rdLevel > 2)
     {
         //calculate the motion compensation for chroma for the best mode selected
@@ -297,11 +301,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         TComDataCU* tmp;
         TComYuv *yuv;
-
-        outTempCU->setMergeIndexSubParts(bestMergeCand, 0, 0, depth);
-        outTempCU->setInterDirSubParts(interDirNeighbours[bestMergeCand], 0, 0, depth);
-        outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
-        outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
 
         //No-residue mode
         m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
@@ -436,7 +435,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
             /* Compute  Merge Cost */
             xComputeCostMerge2Nx2N(m_bestMergeCU[depth], m_mergeCU[depth], m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
-
+            TComYuv* bestMergePred;
+            bestMergePred = m_modePredYuv[3][depth];
             if (!(m_cfg->param.bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0)))
             {
                 /*Compute 2Nx2N mode costs*/
@@ -565,6 +565,30 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 else
                 {
                     xEncodeIntraInInter(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],  m_bestRecoYuv[depth]);
+                }
+                //Check Merge-skip
+                if (!(outBestCU->getPredictionMode(0) == MODE_INTER && outBestCU->getPartitionSize(0) == SIZE_2Nx2N && outBestCU->getMergeFlag(0)))
+                {
+                    int numPart = m_mergeCU[depth]->getNumPartInter();
+                    for (int partIdx = 0; partIdx < numPart; partIdx++)
+                    {
+                        m_search->motionCompensation(m_mergeCU[depth], bestMergePred, REF_PIC_LIST_X, partIdx, false, true);
+                    }
+                }
+
+                m_search->encodeResAndCalcRdInterCU(m_mergeCU[depth], m_origYuv[depth], bestMergePred, m_tmpResiYuv[depth],
+                                                    m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
+
+                if (m_mergeCU[depth]->m_totalCost < outBestCU->m_totalCost)
+                {
+                    outBestCU = m_mergeCU[depth];
+                    tempYuv = m_bestRecoYuv[depth];
+                    m_bestRecoYuv[depth] = m_tmpRecoYuv[depth];
+                    m_tmpRecoYuv[depth] = tempYuv;
+                    if (bestMergePred != m_bestPredYuv[depth])
+                    {
+                        bestMergePred->copyPartToPartYuv(m_bestPredYuv[depth], 0, outBestCU->getWidth(0), outBestCU->getHeight(0));
+                    }
                 }
             }
             /* Disable recursive analysis for whole CUs temporarily */
