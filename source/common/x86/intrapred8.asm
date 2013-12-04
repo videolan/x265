@@ -705,7 +705,7 @@ cglobal intra_pred_ang4_2, 3,3,4
 
 
 INIT_XMM ssse3
-cglobal intra_pred_ang4_3, 3,4,4
+cglobal intra_pred_ang4_3, 3,4,5
     cmp         r4m, byte 33
     cmove       r2, r3mp
     lea         r3, [ang_table + 20 * 16]
@@ -718,18 +718,19 @@ cglobal intra_pred_ang4_3, 3,4,4
     punpcklqdq  m0, m1
     punpcklqdq  m2, m3
 
-    mova        m1, [pw_1024]
-
     movh        m3, [r3 + 6 * 16]   ; [26]
     movhps      m3, [r3]            ; [20]
+    movh        m4, [r3 - 6 * 16]   ; [14]
+    movhps      m4, [r3 - 12 * 16]  ; [ 8]
+
+    ; NOTE: share path, input is m0=[1 0], m2=[3 2], m3,m4=coef, flag_z=no_transpose
+.do_filter4x4:
+    mova        m1, [pw_1024]
+
     pmaddubsw   m0, m3
     pmulhrsw    m0, m1
-
-    movh        m3, [r3 - 6 * 16]   ; [14]
-    movhps      m3, [r3 - 12 * 16]  ; [ 8]
-    pmaddubsw   m2, m3
+    pmaddubsw   m2, m4
     pmulhrsw    m2, m1
-
     packuswb    m0, m2
 
     ; NOTE: mode 33 doesn't reorde, UNSAFE but I don't use any instruction that affect eflag register before
@@ -750,3 +751,23 @@ cglobal intra_pred_ang4_3, 3,4,4
     lea         r1, [r1 * 3]
     movd        [r0 + r1], m3
     RET
+
+
+cglobal intra_pred_ang4_4, 3,4,5
+    cmp         r4m, byte 32
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 18 * 16]
+    movh        m0, [r2 + 1]    ; [8 7 6 5 4 3 2 1]
+    palignr     m1, m0, 1       ; [x 8 7 6 5 4 3 2]
+    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    palignr     m1, m0, 2       ; [x x x x x x x x 6 5 5 4 4 3 3 2]
+    palignr     m3, m0, 4       ; [x x x x x x x x 7 6 6 5 5 4 4 3]
+    punpcklqdq  m0, m1
+    punpcklqdq  m2, m1, m3
+
+    movh        m3, [r3 +  3 * 16]  ; [21]
+    movhps      m3, [r3 -  8 * 16]  ; [10]
+    movh        m4, [r3 + 13 * 16]  ; [31]
+    movhps      m4, [r3 +  2 * 16]  ; [20]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
