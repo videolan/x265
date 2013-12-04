@@ -26,12 +26,6 @@
 
 SECTION_RODATA 32
 
-multi_2Row: dw 1, 2, 3, 4, 1, 2, 3, 4
-multiL:     dw 1, 2, 3, 4, 5, 6, 7, 8
-multiH:     dw 9, 10, 11, 12, 13, 14, 15, 16
-multiH2:    dw 17, 18, 19, 20, 21, 22, 23, 24
-multiH3:    dw 25, 26, 27, 28, 29, 30, 31, 32
-
 c_trans_4x4 db 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15
 pb_0_8          times 8 db 0, 8
 pb_unpackbw1    times 2 db 1, 8, 2, 8, 3, 8, 4, 8
@@ -48,6 +42,11 @@ SECTION .text
 cextern pw_8
 cextern pw_1024
 cextern pb_unpackbd1
+cextern multiL
+cextern multiH
+cextern multiH2
+cextern multiH3
+cextern multi_2Row
 
 ;-----------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)

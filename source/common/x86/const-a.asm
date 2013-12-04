@@ -74,6 +74,12 @@ const pd_2048,     times 4 dd 2048
 const pd_ffff,     times 4 dd 0xffff
 const pw_ff00,     times 8 dw 0xff00
 
+const multi_2Row,  dw 1, 2, 3, 4, 1, 2, 3, 4
+const multiL,      dw 1, 2, 3, 4, 5, 6, 7, 8
+const multiH,      dw 9, 10, 11, 12, 13, 14, 15, 16
+const multiH2,     dw 17, 18, 19, 20, 21, 22, 23, 24
+const multiH3,     dw 25, 26, 27, 28, 29, 30, 31, 32
+
 const popcnt_table
 %assign x 0
 %rep 256
