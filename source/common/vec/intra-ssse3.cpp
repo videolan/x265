@@ -3196,10 +3196,10 @@ void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 #if !HIGH_BIT_DEPTH
     for (int i = 2; i < NUM_INTRA_MODE - 1; i++)
     {
-        p.intra_pred_ang[BLOCK_4x4][i] = intraPredAng4x4;
-        p.intra_pred_ang[BLOCK_8x8][i] = intraPredAng8x8;
-        p.intra_pred_ang[BLOCK_16x16][i] = intraPredAng16x16;
-        p.intra_pred_ang[BLOCK_32x32][i] = intraPredAng32x32;
+        p.intra_pred[BLOCK_4x4][i] = intraPredAng4x4;
+        p.intra_pred[BLOCK_8x8][i] = intraPredAng8x8;
+        p.intra_pred[BLOCK_16x16][i] = intraPredAng16x16;
+        p.intra_pred[BLOCK_32x32][i] = intraPredAng32x32;
     }
 #endif
 }

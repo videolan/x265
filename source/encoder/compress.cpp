@@ -147,7 +147,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
 
     // DC
-    primitives.intra_pred_dc[log2SizeMinus2](above + 1, left + 1, tmp, scaleStride, (scaleWidth <= 16));
+    primitives.intra_pred[log2SizeMinus2][DC_IDX](tmp, scaleStride, left, above, 0, (scaleWidth <= 16));
     bsad = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
     bmode = mode = DC_IDX;
     bbits  = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
