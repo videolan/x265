@@ -211,7 +211,7 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], cons
 
         for (int i = 0; i <= 100; i++)
         {
-            isLuma = (width <= 16) && (rand() % 2);
+            isLuma = (width <= 16) ? true : false;  // bFilter is true for 4x4, 8x8, 16x16 and false for 32x32
 
             pixel * refAbove0 = pixel_buff + j;
             pixel * refLeft0 = refAbove0 + 3 * width;
