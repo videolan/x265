@@ -674,14 +674,16 @@ int main(int argc, char **argv)
 
     if (stats.encodedPictureCount)
     {
-        printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
+        printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s", stats.encodedPictureCount,
                stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
         if (param->bEnablePsnr)
-            printf("Global PSNR: %.3f\n", stats.globalPsnr);
+            printf(", Global PSNR: %.3f", stats.globalPsnr);
 
         if (param->bEnableSsim)
-            printf("Global SSIM: %.3f\n", stats.globalSsim);
+            printf(", Global SSIM: %.3f", stats.globalSsim);
+
+        printf("\n");
     }
     else
     {
