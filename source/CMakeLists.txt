@@ -252,8 +252,13 @@ if(ENABLE_CLI)
         set(GETOPT compat/getopt/getopt.c compat/getopt/getopt.h)
     endif(NOT HAVE_GETOPT_H)
 
+if(XCODE)
+    add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h
+                       $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
+else()
     add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h)
     target_link_libraries(cli x265-static ${PLATFORM_LIBS})
+endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 
     install(TARGETS cli DESTINATION bin)
