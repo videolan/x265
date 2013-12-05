@@ -35,6 +35,8 @@
 
 #define FENC_STRIDE 64
 
+#define NUM_INTRA_MODE 36   // copy from CommonDef.h
+
 #if defined(__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
@@ -161,9 +163,8 @@ typedef void (*pixeladd_ss_t)(int bx, int by, int16_t *dst, intptr_t dstride, in
 typedef void (*pixelavg_pp_t)(pixel *dst, intptr_t dstride, pixel *src0, intptr_t sstride0, pixel *src1, intptr_t sstride1, int weight);
 typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
 
-typedef void (*intra_dc_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bFilter);
 typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
-typedef void (*intra_ang_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
+typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 
 typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
@@ -190,6 +191,7 @@ typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
 typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
 
 typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+typedef void (*filter_hps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt);
 typedef void (*filter_ps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_sp_t) (int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_ss_t) (int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx);
@@ -231,7 +233,7 @@ struct EncoderPrimitives
     pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
 
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
-    filter_ps_t     luma_hps[NUM_LUMA_PARTITIONS];
+    filter_hps_t    luma_hps[NUM_LUMA_PARTITIONS];
     filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
     filter_ps_t     luma_vps[NUM_LUMA_PARTITIONS];
     filter_sp_t     luma_vsp[NUM_LUMA_PARTITIONS];
@@ -248,9 +250,8 @@ struct EncoderPrimitives
     pixeladd_ss_t   pixeladd_ss;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
 
-    intra_dc_t      intra_pred_dc[NUM_SQUARE_BLOCKS];
     intra_planar_t  intra_pred_planar[NUM_SQUARE_BLOCKS];
-    intra_ang_t     intra_pred_ang[NUM_SQUARE_BLOCKS];
+    intra_pred_t    intra_pred[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE - 1];  // No 64x64 and DM mode
     intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
@@ -280,7 +281,7 @@ struct EncoderPrimitives
         filter_sp_t     filter_vsp[NUM_LUMA_PARTITIONS];
         filter_ss_t     filter_vss[NUM_LUMA_PARTITIONS];
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
-        filter_ps_t     filter_hps[NUM_LUMA_PARTITIONS];
+        filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
         copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
         copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];

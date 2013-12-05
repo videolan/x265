@@ -49,13 +49,16 @@ cextern multiH3
 cextern multi_2Row
 
 ;-----------------------------------------------------------------------------
-; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc4, 5,6,3
+cglobal intra_pred_dc4, 4,6,3
+    mov         r4d, r5m
+    inc         r2
+    inc         r3
     pxor        m0, m0
-    movd        m1, [r0]
-    movd        m2, [r1]
+    movd        m1, [r2]
+    movd        m2, [r3]
     punpckldq   m1, m2
     psadbw      m1, m0              ; m1 = sum
 
@@ -68,11 +71,11 @@ cglobal intra_pred_dc4, 5,6,3
     pshufb      m1, m0              ; m1 = byte [dc_val ...]
 
     ; store DC 4x4
-    lea         r5, [r3 * 3]
-    movd        [r2], m1
-    movd        [r2 + r3], m1
-    movd        [r2 + r3 * 2], m1
-    movd        [r2 + r5], m1
+    lea         r5, [r1 * 3]
+    movd        [r0], m1
+    movd        [r0 + r1], m1
+    movd        [r0 + r1 * 2], m1
+    movd        [r0 + r5], m1
 
     ; do DC filter
     jz         .end
@@ -82,47 +85,45 @@ cglobal intra_pred_dc4, 5,6,3
     pshuflw     m1, m1, 0           ; m1 = pixDCx3
 
     ; filter top
-    pmovzxbw    m2, [r0]
+    pmovzxbw    m2, [r3]
     paddw       m2, m1
     psraw       m2, 2
     packuswb    m2, m2
-    movd        [r2], m2            ; overwrite top-left pixel, we will update it later
+    movd        [r0], m2            ; overwrite top-left pixel, we will update it later
 
     ; filter top-left
-    movzx       r0d, byte [r0]
-    add         r5d, r0d
-    movzx       r0d, byte [r1]
-    add         r0d, r5d
-    shr         r0d, 2
-    mov         [r2], r0b
+    movzx       r3d, byte [r3]
+    add         r5d, r3d
+    movzx       r3d, byte [r2]
+    add         r3d, r5d
+    shr         r3d, 2
+    mov         [r0], r3b
 
     ; filter left
-    add         r2, r3
-    pmovzxbw    m2, [r1 + 1]
+    add         r0, r1
+    pmovzxbw    m2, [r2 + 1]
     paddw       m2, m1
     psraw       m2, 2
     packuswb    m2, m2
-    movd        r0d, m2
-    mov         [r2], r0b
-    shr         r0d, 8
-    mov         [r2 + r3], r0b
-    shr         r0d, 8
-    mov         [r2 + r3 * 2], r0b
+    pextrb      [r0], m2, 0
+    pextrb      [r0 + r1], m2, 1
+    pextrb      [r0 + r1 * 2], m2, 2
 
 .end:
-
     RET
 
 
 ;-------------------------------------------------------------------------------------------
-; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc8, 5, 7, 3, above, left, dst, dstStride, filter
-
+cglobal intra_pred_dc8, 4, 7, 3
+    mov             r4d,           r5m
+    inc             r2
+    inc             r3
     pxor            m0,            m0
-    movh            m1,            [r0]
-    movh            m2,            [r1]
+    movh            m1,            [r2]
+    movh            m2,            [r3]
     punpcklqdq      m1,            m2
     psadbw          m1,            m0
     pshufd          m2,            m1, 2
@@ -137,18 +138,18 @@ cglobal intra_pred_dc8, 5, 7, 3, above, left, dst, dstStride, filter
     test            r4d,           r4d
 
     ; store DC 8x8
-    mov             r6,            r2
-    movh            [r2],          m1
-    movh            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movh            [r2],          m1
-    movh            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movh            [r2],          m1
-    movh            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movh            [r2],          m1
-    movh            [r2 + r3],     m1
+    mov             r6,            r0
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
 
     ; Do DC Filter
     jz              .end
@@ -159,48 +160,50 @@ cglobal intra_pred_dc8, 5, 7, 3, above, left, dst, dstStride, filter
     pshufd          m1,            m1, 0
 
     ; filter top
-    pmovzxbw        m2,            [r0]
+    pmovzxbw        m2,            [r3]
     paddw           m2,            m1
     psraw           m2,            2
     packuswb        m2,            m2
     movh            [r6],          m2
 
     ; filter top-left
-    movzx           r0d, byte      [r0]
-    add             r4d,           r0d
-    movzx           r0d, byte      [r1]
-    add             r0d,           r4d
-    shr             r0d,           2
-    mov             [r6],          r0b
+    movzx           r3d, byte      [r3]
+    add             r4d,           r3d
+    movzx           r3d, byte      [r2]
+    add             r3d,           r4d
+    shr             r3d,           2
+    mov             [r6],          r3b
 
     ; filter left
-    add             r6,            r3
-    pmovzxbw        m2,            [r1 + 1]
+    add             r6,            r1
+    pmovzxbw        m2,            [r2 + 1]
     paddw           m2,            m1
     psraw           m2,            2
     packuswb        m2,            m2
     pextrb          [r6],          m2, 0
-    pextrb          [r6 + r3],     m2, 1
-    pextrb          [r6 + 2 * r3], m2, 2
-    lea             r6,            [r6 + r3 * 2]
-    pextrb          [r6 + r3],     m2, 3
-    pextrb          [r6 + 2 * r3], m2, 4
-    pextrb          [r6 + 4 * r3], m2, 6
-    lea             r3,            [r3 * 3]
-    pextrb          [r6 + r3],     m2, 5
+    pextrb          [r6 + r1],     m2, 1
+    pextrb          [r6 + 2 * r1], m2, 2
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 3
+    pextrb          [r6 + r1 * 2], m2, 4
+    pextrb          [r6 + r1 * 4], m2, 6
+    lea             r1,            [r1 * 3]
+    pextrb          [r6 + r1],     m2, 5
 
 .end
     RET
 
 ;-------------------------------------------------------------------------------------------
-; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc16, 5, 7, 4, above, left, dst, dstStride, filter
-
+cglobal intra_pred_dc16, 5, 7, 4
+    mov             r4d,           r5m
+    inc             r2
+    inc             r3
     pxor            m0,            m0
-    movu            m1,            [r0]
-    movu            m2,            [r1]
+    movu            m1,            [r2]
+    movu            m2,            [r3]
     psadbw          m1,            m0
     psadbw          m2,            m0
     paddw           m1,            m2
@@ -216,30 +219,30 @@ cglobal intra_pred_dc16, 5, 7, 4, above, left, dst, dstStride, filter
     test            r4d,           r4d
 
     ; store DC 16x16
-    mov             r6,            r2
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
+    mov             r6,            r0
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
 
     ; Do DC Filter
     jz              .end
@@ -250,75 +253,73 @@ cglobal intra_pred_dc16, 5, 7, 4, above, left, dst, dstStride, filter
     pshufd          m1,            m1, 0
 
     ; filter top
-    pmovzxbw        m2,            [r0]
+    pmovzxbw        m2,            [r3]
     paddw           m2,            m1
     psraw           m2,            2
     packuswb        m2,            m2
     movh            [r6],          m2
-    pmovzxbw        m3,            [r0 + 8]
+    pmovzxbw        m3,            [r3 + 8]
     paddw           m3,            m1
     psraw           m3,            2
     packuswb        m3,            m3
     movh            [r6 + 8],      m3
 
     ; filter top-left
-    movzx           r0d, byte      [r0]
-    add             r4d,           r0d
-    movzx           r0d, byte      [r1]
-    add             r0d,           r4d
-    shr             r0d,           2
-    mov             [r6],          r0b
+    movzx           r3d, byte      [r3]
+    add             r4d,           r3d
+    movzx           r3d, byte      [r2]
+    add             r3d,           r4d
+    shr             r3d,           2
+    mov             [r6],          r3b
 
     ; filter left
-    add             r6,            r3
-    pmovzxbw        m2,            [r1 + 1]
+    add             r6,            r1
+    pmovzxbw        m2,            [r2 + 1]
     paddw           m2,            m1
     psraw           m2,            2
     packuswb        m2,            m2
     pextrb          [r6],          m2, 0
-    pextrb          [r6 + r3],     m2, 1
-    pextrb          [r6 + r3 * 2], m2, 2
-    lea             r6,            [r6 + r3 * 2]
-    add             r6,            r3
-    pextrb          [r6],          m2, 3
-    add             r6,            r3
-    pextrb          [r6],          m2, 4
-    pextrb          [r6 + r3],     m2, 5
-    pextrb          [r6 + r3 * 2], m2, 6
-    lea             r6,            [r6 + r3 * 2]
-    add             r6,            r3
-    pextrb          [r6],          m2, 7
+    pextrb          [r6 + r1],     m2, 1
+    pextrb          [r6 + r1 * 2], m2, 2
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 3
+    pextrb          [r6 + r1 * 2], m2, 4
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 5
+    pextrb          [r6 + r1 * 2], m2, 6
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 7
 
-    add             r6,            r3
-    pmovzxbw        m3,            [r1 + 9]
+    pmovzxbw        m3,            [r2 + 9]
     paddw           m3,            m1
     psraw           m3,            2
     packuswb        m3,            m3
-    pextrb          [r6],          m3, 0
-    pextrb          [r6 + r3],     m3, 1
-    pextrb          [r6 + r3 * 2], m3, 2
-    lea             r6,            [r6 + r3 * 2]
-    add             r6,            r3
-    pextrb          [r6],          m3, 3
-    add             r6,            r3
-    pextrb          [r6],          m3, 4
-    pextrb          [r6 + r3],     m3, 5
-    pextrb          [r6 + r3 * 2], m3, 6
+    pextrb          [r6 + r1 * 2], m3, 0
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m3, 1
+    pextrb          [r6 + r1 * 2], m3, 2
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m3, 3
+    pextrb          [r6 + r1 * 2], m3, 4
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m3, 5
+    pextrb          [r6 + r1 * 2], m3, 6
 
 .end
     RET
 
 ;-------------------------------------------------------------------------------------------
-; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc32, 4, 5, 5, above, left, dst, dstStride, filter
-
+cglobal intra_pred_dc32, 4, 5, 5
+    inc             r2
+    inc             r3
     pxor            m0,            m0
-    movu            m1,            [r0]
-    movu            m2,            [r0 + 16]
-    movu            m3,            [r1]
-    movu            m4,            [r1 + 16]
+    movu            m1,            [r2]
+    movu            m2,            [r2 + 16]
+    movu            m3,            [r3]
+    movu            m4,            [r3 + 16]
     psadbw          m1,            m0
     psadbw          m2,            m0
     psadbw          m3,            m0
@@ -337,46 +338,46 @@ cglobal intra_pred_dc32, 4, 5, 5, above, left, dst, dstStride, filter
 
 %rep 2
     ; store DC 16x16
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
-    movu            [r2],          m1
-    movu            [r2 + r3],     m1
-    movu            [r2 + 16],     m1
-    movu            [r2 + r3 + 16],m1
-    lea             r2,            [r2 + 2 * r3]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
 %endrep
 
     RET
@@ -706,7 +707,7 @@ cglobal intra_pred_ang4_2, 3,3,4
     RET
 
 
-INIT_XMM ssse3
+INIT_XMM sse4
 cglobal intra_pred_ang4_3, 3,4,5
     cmp         r4m, byte 33
     cmove       r2, r3mp
@@ -743,16 +744,12 @@ ALIGN 16
     pshufb      m0, [c_trans_4x4]
 
 .store:
-    pshufd      m1, m0, 1
-    movhlps     m2, m0
-    pshufd      m3, m0, 3
-
     ; TODO: use pextrd here after intrinsic ssse3 removed
-    movd        [r0], m0
-    movd        [r0 + r1], m1
-    movd        [r0 + r1 * 2], m2
+    pextrd      [r0], m0, 0
+    pextrd      [r0 + r1], m0, 1
+    pextrd      [r0 + r1 * 2], m0, 2
     lea         r1, [r1 * 3]
-    movd        [r0 + r1], m3
+    pextrd      [r0 + r1], m0, 3
     RET
 
 
@@ -881,8 +878,7 @@ cglobal intra_pred_ang4_10, 3,3,4
 
     ; filter
     mov         r2, r3mp
-    pxor        m1, m1
-    punpcklbw   m0, m1                  ; [-1 -1 -1 -1]
+    pmovzxbw    m0, m0                  ; [-1 -1 -1 -1]
     movh        m1, [r2]                ; [4 3 2 1 0]
     pshufb      m2, m1, [pb_0_8]        ; [0 0 0 0]
     pshufb      m1, [pb_unpackbw1]      ; [4 3 2 1]
@@ -896,6 +892,7 @@ cglobal intra_pred_ang4_10, 3,3,4
     RET
 
 
+INIT_XMM sse4
 cglobal intra_pred_ang4_26, 4,4,3
     movd        m0, [r3 + 1]            ; [8 7 6 5 4 3 2 1]
 
@@ -919,15 +916,977 @@ cglobal intra_pred_ang4_26, 4,4,3
     paddw       m0, m1
     packuswb    m0, m0
 
-    ; TODO: use SSE4 pextrb
-    movd        r2d, m0
-    mov         [r0], r2b
-    shr         r2d, 8
-    mov         [r0 + r1], r2b
-    shr         r2d, 8
-    mov         [r0 + r1 * 2], r2b
-    shr         r2d, 8
-    mov         [r0 + r3], r2b
+    pextrb      [r0], m0, 0
+    pextrb      [r0 + r1], m0, 1
+    pextrb      [r0 + r1 * 2], m0, 2
+    pextrb      [r0 + r3], m0, 3
 
 .quit:
     RET
+
+
+cglobal intra_pred_ang4_11, 3,4,5
+    cmp         r4m, byte 25
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 24 * 16]
+    movh        m0, [r2]        ; [x x x 4 3 2 1 0]
+    palignr     m1, m0, 1       ; [x x x x 4 3 2 1]
+    punpcklbw   m0, m1          ; [x x x x x x x x 4 3 3 2 2 1 1 0]
+    punpcklqdq  m0, m0
+    mova        m2, m0
+
+    movh        m3, [r3 +  6 * 16]  ; [24]
+    movhps      m3, [r3 +  4 * 16]  ; [26]
+    movh        m4, [r3 +  2 * 16]  ; [28]
+    movhps      m4, [r3 +  0 * 16]  ; [30]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_12, 3,4,5
+    cmp         r4m, byte 24
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 20 * 16]
+    movh        m0, [r2]        ; [x x x 4 3 2 1 0]
+    palignr     m1, m0, 1       ; [x x x x 4 3 2 1]
+    punpcklbw   m0, m1          ; [x x x x x x x x 4 3 3 2 2 1 1 0]
+    punpcklqdq  m0, m0
+    mova        m2, m0
+
+    movh        m3, [r3 +  7 * 16]  ; [27]
+    movhps      m3, [r3 +  2 * 16]  ; [22]
+    movh        m4, [r3 -  3 * 16]  ; [17]
+    movhps      m4, [r3 -  8 * 16]  ; [12]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_13, 4,4,5
+    cmp         r4m, byte 23
+    jnz        .load
+    xchg        r2, r3
+.load
+    movh        m1, [r2 - 1]    ; [x x 4 3 2 1 0 x]
+    palignr     m0, m1, 1       ; [x x x 4 3 2 1 0]
+    palignr     m2, m1, 2       ; [x x x x 4 3 2 1]
+    pinsrb      m1, [r3 + 4], 0
+    punpcklbw   m1, m0          ; [3 2 2 1 1 0 0 x]
+    punpcklbw   m0, m2          ; [4 3 3 2 2 1 1 0]
+    punpcklqdq  m2, m0, m1
+    punpcklqdq  m0, m0
+
+    lea         r3, [ang_table + 21 * 16]
+    movh        m3, [r3 +  2 * 16]  ; [23]
+    movhps      m3, [r3 -  7 * 16]  ; [14]
+    movh        m4, [r3 - 16 * 16]  ; [ 5]
+    movhps      m4, [r3 +  7 * 16]  ; [28]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_14, 4,4,5
+    cmp         r4m, byte 22
+    jnz        .load
+    xchg        r2, r3
+.load
+    movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
+    palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
+    palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
+    pinsrb      m2, [r3 + 2], 0
+    punpcklbw   m2, m0          ; [3 2 2 1 1 0 0 x]
+    punpcklbw   m0, m1          ; [4 3 3 2 2 1 1 0]
+    punpcklqdq  m0, m0
+    punpcklqdq  m2, m2
+
+    lea         r3, [ang_table + 19 * 16]
+    movh        m3, [r3 +  0 * 16]  ; [19]
+    movhps      m3, [r3 - 13 * 16]  ; [ 6]
+    movh        m4, [r3 +  6 * 16]  ; [25]
+    movhps      m4, [r3 -  7 * 16]  ; [12]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_15, 4,4,5
+    cmp         r4m, byte 21
+    jnz        .load
+    xchg        r2, r3
+.load
+    movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
+    palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
+    palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
+    pinsrb      m2, [r3 + 2], 0
+    pslldq      m3, m2, 1       ; [x 4 3 2 1 0 x y]
+    pinsrb      m3, [r3 + 4], 0
+    punpcklbw   m4, m3, m2      ; [2 1 1 0 0 x x y]
+    punpcklbw   m2, m0          ; [3 2 2 1 1 0 0 x]
+    punpcklbw   m0, m1          ; [4 3 3 2 2 1 1 0]
+    punpcklqdq  m0, m2
+    punpcklqdq  m2, m4
+
+    lea         r3, [ang_table + 23 * 16]
+    movh        m3, [r3 -  8 * 16]  ; [15]
+    movhps      m3, [r3 +  7 * 16]  ; [30]
+    movh        m4, [r3 - 10 * 16]  ; [13]
+    movhps      m4, [r3 +  5 * 16]  ; [28]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_16, 4,4,5
+    cmp         r4m, byte 20
+    jnz        .load
+    xchg        r2, r3
+.load
+    movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
+    palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
+    palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
+    pinsrb      m2, [r3 + 2], 0
+    pslldq      m3, m2, 1       ; [x 4 3 2 1 0 x y]
+    pinsrb      m3, [r3 + 3], 0
+    punpcklbw   m4, m3, m2      ; [2 1 1 0 0 x x y]
+    punpcklbw   m2, m0          ; [3 2 2 1 1 0 0 x]
+    punpcklbw   m0, m1          ; [4 3 3 2 2 1 1 0]
+    punpcklqdq  m0, m2
+    punpcklqdq  m2, m4
+
+    lea         r3, [ang_table + 19 * 16]
+    movh        m3, [r3 -  8 * 16]  ; [11]
+    movhps      m3, [r3 +  3 * 16]  ; [22]
+    movh        m4, [r3 - 18 * 16]  ; [ 1]
+    movhps      m4, [r3 -  7 * 16]  ; [12]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_17, 4,4,5
+    cmp         r4m, byte 19
+    jnz        .load
+    xchg        r2, r3
+.load
+    movh        m3, [r2 - 1]    ; [- - 4 3 2 1 0 x]
+    palignr     m0, m3, 1       ; [- - - 4 3 2 1 0]
+    palignr     m1, m3, 2       ; [- - - - 4 3 2 1]
+    mova        m4, m0
+    punpcklbw   m0, m1          ; [4 3 3 2 2 1 1 0]
+
+    pinsrb      m3, [r3 + 1], 0
+    punpcklbw   m1, m3, m4      ; [3 2 2 1 1 0 0 x]
+    punpcklqdq  m0, m1
+
+    pslldq      m2, m3, 1       ; [- 4 3 2 1 0 x y]
+    pinsrb      m2, [r3 + 2], 0
+    pslldq      m1, m2, 1       ; [4 3 2 1 0 x y z]
+    pinsrb      m1, [r3 + 4], 0
+    punpcklbw   m1, m2          ; [1 0 0 x x y y z]
+    punpcklbw   m2, m3          ; [2 1 1 0 0 x x y]
+    punpcklqdq  m2, m1
+
+    lea         r3, [ang_table + 14 * 16]
+    movh        m3, [r3 -  8 * 16]  ; [ 6]
+    movhps      m3, [r3 -  2 * 16]  ; [12]
+    movh        m4, [r3 +  4 * 16]  ; [18]
+    movhps      m4, [r3 + 10 * 16]  ; [24]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_18, 4,4,1
+    mov         r2d, [r2]
+    bswap       r2d
+    movd        m0, r2d
+    pinsrd      m0, [r3 + 1], 1     ; [- 3 2 1 0 -1 -2 -3]
+    lea         r2, [r1 * 3]
+    movd        [r0 + r2], m0
+    psrldq      m0, 1
+    movd        [r0 + r1 * 2], m0
+    psrldq      m0, 1
+    movd        [r0 + r1], m0
+    psrldq      m0, 1
+    movd        [r0], m0
+    RET
+
+;-----------------------------------------------------------------------------
+; void all_angs_pred_4x4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal all_angs_pred_4x4, 6, 6, 8 dest, above0, left0, above1, left1, bLuma
+
+; mode 2
+
+movh      m0,         [r2 + 2]
+movd      [r0],       m0
+
+palignr   m1,         m0,      1
+movd      [r0 + 4],   m1
+
+palignr   m1,         m0,      2
+movd      [r0 + 8],   m1
+
+psrldq     m0,        3
+movd      [r0 + 12],  m0
+
+; mode 3
+
+mova          m0,        [pw_1024]
+
+movh          m1,        [r2 + 1]
+
+palignr       m2,        m1,        1
+punpcklbw     m1,        m2
+
+lea           r5,        [ang_table]
+
+pmaddubsw     m5,        m1,        [r5 + 26 * 16]
+pmulhrsw      m5,        m0
+packuswb      m5,        m5
+movd          [r0 + 16], m5
+
+palignr       m2,        m1,        2
+
+mova          m7,        [r5 + 20 * 16]
+
+pmaddubsw     m6,        m2,        m7
+pmulhrsw      m6,        m0
+packuswb      m6,        m6
+movd          [r0 + 20], m6
+
+palignr        m3,        m1,       4
+
+pmaddubsw     m4,        m3,        [r5 + 14 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 24], m4
+
+palignr       m4,        m1,        6
+
+pmaddubsw     m4,        [r5 + 8 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 28], m4
+
+; mode 4
+
+pmaddubsw     m4,        m1,        [r5 + 21 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 32], m4
+
+pmaddubsw     m4,        m2,        [r5 + 10 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 36], m4
+
+pmaddubsw     m4,        m2,        [r5 + 31 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 40], m4
+
+pmaddubsw     m4,        m3,        m7
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 44], m4
+
+; mode 5
+
+pmaddubsw     m4,        m1,        [r5 + 17 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 48], m4
+
+pmaddubsw     m4,        m2,        [r5 + 2 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 52], m4
+
+pmaddubsw     m4,        m2,        [r5 + 19 * 16]
+pmulhrsw      m4,        m0
+packuswb      m4,        m4
+movd          [r0 + 56], m4
+
+pmaddubsw     m3,        [r5 + 4 * 16]
+pmulhrsw      m3,        m0
+packuswb      m3,        m3
+movd          [r0 + 60], m3
+
+; mode 6
+
+pmaddubsw     m3,        m1,        [r5 + 13 * 16]
+pmulhrsw      m3,        m0
+packuswb      m3,        m3
+movd          [r0 + 64], m3
+
+movd          [r0 + 68], m5
+
+pmaddubsw     m3,        m2,        [r5 + 7 * 16]
+pmulhrsw      m3,        m0
+packuswb      m3,        m3
+movd          [r0 + 72], m3
+
+movd          [r0 + 76], m6
+
+; mode 7
+
+pmaddubsw     m3,        m1,        [r5 + 9 * 16]
+pmulhrsw      m3,        m0
+packuswb      m3,        m3
+movd          [r0 + 80], m3
+
+pmaddubsw     m3,        m1,        [r5 + 18 * 16]
+pmulhrsw      m3,        m0
+packuswb      m3,        m3
+movd          [r0 + 84], m3
+
+pmaddubsw     m3,        m1,        [r5 + 27 * 16]
+pmulhrsw      m3,        m0
+packuswb      m3,        m3
+movd          [r0 + 88], m3
+
+pmaddubsw     m2,        [r5 + 4 * 16]
+pmulhrsw      m2,        m0
+packuswb      m2,        m2
+movd          [r0 + 92], m2
+
+; mode 8
+
+pmaddubsw     m2,         m1,       [r5 + 5 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 96],  m2
+
+pmaddubsw     m2,         m1,       [r5 + 10 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 100], m2
+
+pmaddubsw     m2,         m1,       [r5 + 15 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 104], m2
+
+pmaddubsw     m2,         m1,       m7
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 108], m2
+
+; mode 9
+
+pmaddubsw     m2,         m1,       [r5 + 2 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 112], m2
+
+pmaddubsw     m2,         m1,       [r5 + 4 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 116], m2
+
+pmaddubsw     m2,         m1,       [r5 + 6 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 120], m2
+
+pmaddubsw     m1,         [r5 + 8 * 16]
+pmulhrsw      m1,         m0
+packuswb      m1,         m1
+movd          [r0 + 124], m1
+
+; mode 10
+
+movh         m1,         [r2]
+palignr      m2,         m1,        1
+pshufd       m3,         m2,        0
+movu         [r0 + 128], m3
+
+pxor         m3,          m3
+
+pshufb       m4,          m2,       m3
+punpcklbw    m4,          m3
+
+movh         m5,          [r1]
+
+pshufb       m6,          m5,       m3
+punpcklbw    m6,          m3
+
+psrldq       m5,          1
+punpcklbw    m5,          m3
+
+psubw        m5,          m6
+psraw        m5,          1
+
+paddw        m4,          m5
+
+packuswb     m4,          m3
+
+pextrb       [r0 + 128],  m4,    0
+pextrb       [r0 + 132],  m4,    1
+pextrb       [r0 + 136],  m4,    2
+pextrb       [r0 + 140],  m4,    3
+
+; mode 11
+
+palignr       m2,         m1,        1
+punpcklbw     m1,         m2
+
+pmaddubsw     m2,         m1,        [r5 + 30 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 144], m2
+
+pmaddubsw     m2,         m1,        [r5 + 28 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 148], m2
+
+pmaddubsw     m2,         m1,        [r5 + 26 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 152], m2
+
+pmaddubsw     m2,         m1,        [r5 + 24 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 156], m2
+
+; mode 12
+
+pmaddubsw     m2,         m1,        [r5 + 27 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 160], m2
+
+pmaddubsw     m2,         m1,        [r5 + 22 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 164], m2
+
+pmaddubsw     m2,         m1,        [r5 + 17 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 168], m2
+
+pmaddubsw     m2,         m1,        [r5 + 12 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 172], m2
+
+; mode 13
+
+pmaddubsw     m2,         m1,        [r5 + 23 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 176], m2
+
+pmaddubsw     m2,         m1,        [r5 + 14 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 180], m2
+
+pmaddubsw     m2,         m1,        [r5 + 5 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 184], m2
+
+pslldq        m2,         m1,         2
+pinsrb        m2,         [r1 + 0],   1
+pinsrb        m2,         [r1 + 4],   0
+
+pmaddubsw     m3,         m2,         [r5 + 28 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 188], m3
+
+; mode 14
+
+pmaddubsw     m3,         m1,        [r5 + 19 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 192], m3
+
+pmaddubsw     m5,         m1,        [r5 + 6 * 16]
+pmulhrsw      m5,         m0
+packuswb      m5,         m5
+movd          [r0 + 196], m5
+
+pinsrb        m2,         [r1 + 2],  0
+
+pmaddubsw     m3,         m2,        [r5 + 25 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 200], m3
+
+pmaddubsw     m3,         m2,        [r5 + 12 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 204], m3
+
+; mode 15
+
+pmaddubsw     m3,         m1,        [r5 + 15 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 208], m3
+
+pmaddubsw     m3,         m2,        [r5 + 30 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 212], m3
+
+pmaddubsw     m3,         m2,        [r5 + 13 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 216], m3
+
+pslldq        m3,         m2,         2
+pinsrb        m3,         [r1 + 2],   1
+pinsrb        m3,         [r1 + 4],   0
+
+pmaddubsw     m4,         m3,         [r5 + 28 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 220], m4
+
+; mode 16
+
+pmaddubsw     m4,         m1,        [r5 + 11 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 224], m4
+
+pmaddubsw     m4,         m2,        [r5 + 22 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 228], m4
+
+pmaddubsw     m4,         m2,        [r5 + 1 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 232], m4
+
+pinsrb        m3,         [r1 + 3],  0
+
+pmaddubsw     m3,         [r5 + 12 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 236], m3
+
+; mode 17
+
+movd          [r0 + 240],  m5
+
+pslldq        m1,         2
+pinsrb        m1,         [r1 + 1],  0
+pinsrb        m1,         [r1 + 0],  1
+
+pmaddubsw     m2,         m1,        [r5 + 12 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 244], m2
+
+pslldq        m1,         2
+pinsrb        m1,         [r1 + 2],  0
+pinsrb        m1,         [r1 + 1],  1
+
+pmaddubsw     m2,         m1,        [r5 + 18 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 248], m2
+
+pslldq        m1,         2
+pinsrb        m1,         [r1 + 4],  0
+pinsrb        m1,         [r1 + 2],  1
+
+pmaddubsw     m1,         [r5 + 24 * 16]
+pmulhrsw      m1,         m0
+packuswb      m1,         m1
+movd          [r0 + 252], m1
+
+; mode 18
+
+movh          m1,         [r1]
+movd          [r0 + 256], m1
+
+pslldq        m2,         m1,         1
+pinsrb        m2,         [r2 + 1],   0
+movd          [r0 + 260], m2
+
+pslldq        m3,         m2,         1
+pinsrb        m3,         [r2 + 2],   0
+movd          [r0 + 264], m3
+
+pslldq        m4,         m3,         1
+pinsrb        m4,         [r2 + 3],   0
+movd          [r0 + 268], m4
+
+; mode 19
+
+palignr       m4,         m1,        1
+punpcklbw     m1,         m4
+
+pmaddubsw     m5,         m1,        [r5 + 6 * 16]
+pmulhrsw      m5,         m0
+packuswb      m5,         m5
+movd          [r0 + 272], m5
+
+pslldq        m2,         m1,         2
+pinsrb        m2,         [r2 + 1],   0
+pinsrb        m2,         [r2],       1
+
+pmaddubsw     m3,         m2,         [r5 + 12 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 276], m3
+
+pslldq        m3,         m2,         2
+pinsrb        m3,         [r2 + 1],   1
+pinsrb        m3,         [r2 + 2],   0
+
+pmaddubsw     m4,         m3,         [r5 + 18 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 280], m4
+
+pslldq        m3,         2
+pinsrb        m3,         [r2 + 2],   1
+pinsrb        m3,         [r2 + 4],   0
+
+pmaddubsw     m3,         [r5 + 24 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 284], m3
+
+; mode 20
+
+pmaddubsw     m3,         m1,        [r5 + 11 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 288], m3
+
+pinsrb        m2,         [r2 + 2],  0
+
+pmaddubsw     m3,         m2,        [r5 + 22 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 292], m3
+
+pmaddubsw     m3,         m2,        [r5 + 1 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 296], m3
+
+pslldq        m3,         m2,        2
+pinsrb        m3,         [r2 + 2],  1
+pinsrb        m3,         [r2 + 3],  0
+
+pmaddubsw     m4,         m3,        [r5 + 12 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 300], m4
+
+; mode 21
+
+pmaddubsw     m4,         m1,         [r5 + 15 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 304], m4
+
+pmaddubsw     m4,         m2,         [r5 + 30 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 308], m4
+
+pmaddubsw     m4,         m2,         [r5 + 13 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 312], m4
+
+pinsrb        m3,         [r2 + 4],   0
+
+pmaddubsw     m3,         [r5 + 28 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 316], m3
+
+; mode 22
+
+pmaddubsw     m3,         m1,         [r5 + 19 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 320], m3
+
+movd          [r0 + 324], m5
+
+pmaddubsw     m3,         m2,         [r5 + 25 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 328], m3
+
+pmaddubsw     m3,         m2,         [r5 + 12 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 332], m3
+
+; mode 23
+
+pmaddubsw     m3,         m1,         [r5 + 23 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 336], m3
+
+pmaddubsw     m3,         m1,         [r5 + 14 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 340], m3
+
+pmaddubsw     m3,         m1,         [r5 + 5 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 344], m3
+
+pinsrb         m2,        [r2 + 4],   0
+
+pmaddubsw     m2,         [r5 + 28 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 348], m2
+
+; mode 24
+
+pmaddubsw     m2,         m1,         [r5 + 27 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 352], m2
+
+pmaddubsw     m2,         m1,         [r5 + 22 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 356], m2
+
+pmaddubsw     m2,         m1,         [r5 + 17 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 360], m2
+
+pmaddubsw     m2,         m1,         [r5 + 12 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 364], m2
+
+; mode 25
+
+pmaddubsw     m2,         m1,         [r5 + 30 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 368], m2
+
+pmaddubsw     m2,         m1,         [r5 + 28 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 372], m2
+
+pmaddubsw     m2,         m1,         [r5 + 26 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 376], m2
+
+pmaddubsw     m2,         m1,         [r5 + 24 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 380], m2
+
+; mode 26
+
+movh         m1,         [r1 + 1]
+pshufd       m2,         m1,        0
+movu         [r0 + 384], m2
+
+pxor         m2,         m2
+
+pshufb       m3,          m1,       m2
+punpcklbw    m3,          m2
+
+movh         m4,          [r2]
+
+pshufb       m5,          m4,       m2
+punpcklbw    m5,          m2
+
+psrldq       m4,          1
+punpcklbw    m4,          m2
+
+psubw        m4,          m5
+psraw        m4,          1
+
+paddw        m3,          m4
+
+packuswb     m3,          m2
+
+pextrb       [r0 + 384],  m3,    0
+pextrb       [r0 + 388],  m3,    1
+pextrb       [r0 + 392],  m3,    2
+pextrb       [r0 + 396],  m3,    3
+
+; mode 27
+
+palignr       m2,         m1,     1
+punpcklbw     m1,         m2
+
+pmaddubsw     m2,         m1,     [r5 + 2 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 400], m2
+
+pmaddubsw     m2,         m1,     [r5 + 4 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 404], m2
+
+pmaddubsw     m2,         m1,     [r5 + 6 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 408], m2
+
+pmaddubsw     m2,         m1,     [r5 + 8 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 412], m2
+
+; mode 28
+
+pmaddubsw     m2,         m1,     [r5 + 5 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 416], m2
+
+pmaddubsw     m2,         m1,     [r5 + 10 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 420], m2
+
+pmaddubsw     m2,         m1,     [r5 + 15 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 424], m2
+
+pmaddubsw     m2,         m1,     m7
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 428], m2
+
+; mode 29
+
+pmaddubsw     m2,         m1,     [r5 + 9 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 432], m2
+
+pmaddubsw     m2,         m1,     [r5 + 18 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 436], m2
+
+pmaddubsw     m2,         m1,     [r5 + 27 * 16]
+pmulhrsw      m2,         m0
+packuswb      m2,         m2
+movd          [r0 + 440], m2
+
+palignr       m2,         m1,     2
+
+pmaddubsw     m3,         m2,     [r5 + 4 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 444], m3
+
+; mode 30
+
+pmaddubsw     m3,         m1,     [r5 + 13 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 448], m3
+
+pmaddubsw     m6,         m1,     [r5 + 26 * 16]
+pmulhrsw      m6,         m0
+packuswb      m6,         m6
+movd          [r0 + 452], m6
+
+pmaddubsw     m3,         m2,     [r5 + 7 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 456], m3
+
+pmaddubsw     m5,         m2,     m7
+pmulhrsw      m5,         m0
+packuswb      m5,         m5
+movd          [r0 + 460], m5
+
+; mode 31
+
+pmaddubsw     m3,         m1,     [r5 + 17 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 464], m3
+
+pmaddubsw     m3,         m2,     [r5 + 2 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 468], m3
+
+pmaddubsw     m3,         m2,     [r5 + 19 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 472], m3
+
+palignr       m3,         m2,     2
+
+pmaddubsw     m4,         m3,     [r5 + 4 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 476], m4
+
+; mode 32
+
+pmaddubsw     m4,         m1,     [r5 + 21 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 480], m4
+
+pmaddubsw     m4,         m2,     [r5 + 10 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 484], m4
+
+pmaddubsw     m4,         m2,     [r5 + 31 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 488], m4
+
+pmaddubsw     m4,         m3,     m7
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 492], m4
+
+; mode 33
+
+movd          [r0 + 496], m6
+
+movd          [r0 + 500], m5
+
+pmaddubsw     m4,         m3,         [r5 + 14 * 16]
+pmulhrsw      m4,         m0
+packuswb      m4,         m4
+movd          [r0 + 504], m4
+
+psrldq        m3,         2
+
+pmaddubsw     m3,         [r5 + 8 * 16]
+pmulhrsw      m3,         m0
+packuswb      m3,         m3
+movd          [r0 + 508], m3
+
+; mode 34
+
+movh      m0,             [r1 + 2]
+movd      [r0 + 512],     m0
+
+palignr   m1,             m0,      1
+movd      [r0 + 516],     m1
+
+palignr   m1,             m0,      2
+movd      [r0 + 520],     m1
+
+palignr   m1,             m0,      3
+movd      [r0 + 524],     m1
+
+RET

@@ -68,7 +68,7 @@ IntraPredHarness::~IntraPredHarness()
     X265_FREE(pixel_out_33_vec);
 }
 
-bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt, int width)
+bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width)
 {
     int j = ADI_BUF_STRIDE;
 
@@ -88,16 +88,16 @@ bool IntraPredHarness::check_dc_primitive(intra_dc_t ref, intra_dc_t opt, int wi
         memset(pixel_out_vec, 0xCD, out_size);
         memset(pixel_out_c, 0xCD, out_size);
 #endif
-        ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_filter);
-        opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_filter);
+        ref(pixel_out_c,   FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, rand_filter);
+        opt(pixel_out_vec, FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, rand_filter);
 
         for (int k = 0; k < width; k++)
         {
             if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
             {
 #if _DEBUG
-                ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_filter);
-                opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_filter);
+                ref(pixel_out_c,   FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, rand_filter);
+                opt(pixel_out_vec, FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, rand_filter);
 #endif
                 return false;
             }
@@ -149,7 +149,7 @@ bool IntraPredHarness::check_planar_primitive(intra_planar_t ref, intra_planar_t
     return true;
 }
 
-bool IntraPredHarness::check_angular_primitive(const intra_ang_t ref[], const intra_ang_t opt[])
+bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_INTRA_MODE - 1], const intra_pred_t opt[][NUM_INTRA_MODE - 1])
 {
     int j = ADI_BUF_STRIDE;
 
@@ -165,7 +165,8 @@ bool IntraPredHarness::check_angular_primitive(const intra_ang_t ref[], const in
             for (int p = 2; p <= 34; p++)
             {
                 pmode = p;
-
+                if (!opt[size - 2][pmode])
+                    continue;
 #if _DEBUG
                 memset(pixel_out_vec, 0xCD, out_size);
                 memset(pixel_out_c, 0xCD, out_size);
@@ -174,15 +175,15 @@ bool IntraPredHarness::check_angular_primitive(const intra_ang_t ref[], const in
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
 
-                ref[size - 2](pixel_out_c, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
-                opt[size - 2](pixel_out_vec, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
+                opt[size - 2][pmode](pixel_out_vec, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
+                ref[size - 2][pmode](pixel_out_c, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
 
                 for (int k = 0; k < width; k++)
                 {
                     if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
                     {
-                        ref[size - 2](pixel_out_c, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
-                        opt[size - 2](pixel_out_vec, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
+                        ref[size - 2][pmode](pixel_out_c, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
+                        opt[size - 2][pmode](pixel_out_vec, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
                         printf("\nFailed for width %d mode %d bfilter %d row %d \t", width, p, bFilter, k);
                         return false;
                     }
@@ -210,7 +211,7 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], cons
 
         for (int i = 0; i <= 100; i++)
         {
-            isLuma = (width <= 16) && (rand() % 2);
+            isLuma = (width <= 16) ? true : false;  // bFilter is true for 4x4, 8x8, 16x16 and false for 32x32
 
             pixel * refAbove0 = pixel_buff + j;
             pixel * refLeft0 = refAbove0 + 3 * width;
@@ -250,10 +251,10 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
 {
     for (int i = 0; i <= BLOCK_32x32; i++)
     {
-        if (opt.intra_pred_dc[i])
+        if (opt.intra_pred[i][1])
         {
             const int size = (1 << (i + 2));
-            if (!check_dc_primitive(ref.intra_pred_dc[i], opt.intra_pred_dc[i], size))
+            if (!check_dc_primitive(ref.intra_pred[i][1], opt.intra_pred[i][1], size))
             {
                 printf("intra_dc %dx%d failed\n", size, size);
                 return false;
@@ -270,14 +271,13 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
         }
     }
 
-    if (opt.intra_pred_ang[0])
+    // NOTE: always call since this function have check pointer in loop
+    if (!check_angular_primitive(ref.intra_pred, opt.intra_pred))
     {
-        if (!check_angular_primitive(ref.intra_pred_ang, opt.intra_pred_ang))
-        {
-            printf("intra_angular failed\n");
-            return false;
-        }
+        printf("intra_angular failed\n");
+        return false;
     }
+
     if (opt.intra_pred_allangs[0])
     {
         if (!check_allangs_primitive(ref.intra_pred_allangs, opt.intra_pred_allangs))
@@ -298,16 +298,16 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     for (int i = 0; i <= BLOCK_32x32; i++)
     {
         const int size = (1 << (i + 2));
-        if (opt.intra_pred_dc[i])
+        if (opt.intra_pred[i][1])
         {
             printf("intra_dc_%dx%d[f=0]", size, size);
-            REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
-                           pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 0);
+            REPORT_SPEEDUP(opt.intra_pred[i][1], ref.intra_pred[i][1],
+                           pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pixel_buff, 0, 0);
             if (size <= 16)
             {
                 printf("intra_dc_%dx%d[f=1]", size, size);
-                REPORT_SPEEDUP(opt.intra_pred_dc[i], ref.intra_pred_dc[i],
-                               pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, 1);
+                REPORT_SPEEDUP(opt.intra_pred[i][1], ref.intra_pred[i][1],
+                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pixel_buff, 0, 1);
             }
         }
         if (opt.intra_pred_planar[i])
@@ -330,18 +330,18 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
 
     for (int ii = 2; ii <= 5; ii++)
     {
-        if (opt.intra_pred_ang[ii])
+        for (int p = 2; p <= 34; p += 1)
         {
-            for (int p = 2; p <= 34; p += 1)
+            int pmode = p;  //(rand()%33)+2;
+            if (opt.intra_pred[ii - 2][pmode])
             {
                 width = (1 << ii);
                 bool bFilter = (width <= 16);
                 pixel * refAbove = pixel_buff + srcStride;
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
-                int pmode = p;  //(rand()%33)+2;
                 printf("intra_ang%dx%d[%2d]", width, width, pmode);
-                REPORT_SPEEDUP(opt.intra_pred_ang[ii - 2], ref.intra_pred_ang[ii - 2],
+                REPORT_SPEEDUP(opt.intra_pred[ii - 2][pmode], ref.intra_pred[ii - 2][pmode],
                                pixel_out_vec, FENC_STRIDE, refAbove, refLeft, pmode, bFilter);
             }
         }
