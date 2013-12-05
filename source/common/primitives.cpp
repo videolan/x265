@@ -122,10 +122,8 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     }
 
     Setup_C_Primitives(primitives);
-
-#if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(primitives, cpuid);
-#endif
+
 #if ENABLE_ASM_PRIMITIVES
     Setup_Assembly_Primitives(primitives, cpuid);
 #endif
@@ -145,14 +143,8 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     primitives.sa8d_inter[LUMA_16x12] = primitives.satd[LUMA_16x12];
     primitives.sa8d_inter[LUMA_12x16] = primitives.satd[LUMA_12x16];
 
-#if ENABLE_VECTOR_PRIMITIVES && ENABLE_ASM_PRIMITIVES
-    /* no logging if full optimizations are enabled */
-#elif ENABLE_ASM_PRIMITIVES
-    x265_log(param, X265_LOG_INFO, "performance primitives: only assembly\n");
-#elif ENABLE_VECTOR_PRIMITIVES
-    x265_log(param, X265_LOG_INFO, "performance primitives: only intrinsics\n");
-#else
-    x265_log(param, X265_LOG_INFO, "performance primitives: none\n");
+#if !ENABLE_ASM_PRIMITIVES
+    x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
 #endif
 }
 
@@ -160,5 +152,4 @@ void x265_setup_primitives(x265_param *param, int cpuid)
 // the intrinsic primitives will not use MMX instructions, so if assembly
 // is disabled there should be no reason to use EMMS.
 extern "C" void x265_cpu_emms(void) {}
-
 #endif
