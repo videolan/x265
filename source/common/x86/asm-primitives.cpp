@@ -483,7 +483,7 @@ extern "C" {
     SETUP_PIXEL_SSE_SP_DEF(16, 64, cpu);
 
 #define SETUP_INTRA_ANG4(mode, fno, cpu) \
-    p.intra_pred_ang[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
+    p.intra_pred[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
 
 namespace x265 {
 // private x265 namespace
@@ -807,10 +807,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.calcresidual[BLOCK_16x16] = x265_getResidual16_sse4;
         p.calcresidual[BLOCK_32x32] = x265_getResidual32_sse4;
         p.quant = x265_quant_sse4;
-        p.intra_pred_dc[BLOCK_4x4] = x265_intra_pred_dc4_sse4;
-        p.intra_pred_dc[BLOCK_8x8] = x265_intra_pred_dc8_sse4;
-        p.intra_pred_dc[BLOCK_16x16] = x265_intra_pred_dc16_sse4;
-        p.intra_pred_dc[BLOCK_32x32] = x265_intra_pred_dc32_sse4;
         p.dequant_normal = x265_dequant_normal_sse4;
         p.weight_pp = x265_weight_pp_sse4;
         p.weight_sp = x265_weight_sp_sse4;
@@ -819,6 +815,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred_planar[BLOCK_16x16] = x265_intra_pred_planar16_sse4;
         p.intra_pred_planar[BLOCK_32x32] = x265_intra_pred_planar32_sse4;
 
+        p.intra_pred[BLOCK_4x4][1] = x265_intra_pred_dc4_sse4;
+        p.intra_pred[BLOCK_8x8][1] = x265_intra_pred_dc8_sse4;
+        p.intra_pred[BLOCK_16x16][1] = x265_intra_pred_dc16_sse4;
+        p.intra_pred[BLOCK_32x32][1] = x265_intra_pred_dc32_sse4;
         SETUP_INTRA_ANG4(3, 3, sse4);
         SETUP_INTRA_ANG4(4, 4, sse4);
         SETUP_INTRA_ANG4(5, 5, sse4);
