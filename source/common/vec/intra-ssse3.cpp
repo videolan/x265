@@ -33,49 +33,6 @@
 
 using namespace x265;
 
-// NOTE: I will remove below wrapper code after all of IntraAng mode finished
-extern "C" {
-#include "x86/intrapred.h"
-}
-intra_ang_t intra_ang4[NUM_INTRA_MODE - 1] =
-{
-    NULL,                               // Mode 0
-    NULL,                               // Mode 1
-    x265_intra_pred_ang4_2_ssse3,       // Mode 2
-    x265_intra_pred_ang4_3_ssse3,       // Mode 3
-    x265_intra_pred_ang4_4_ssse3,       // Mode 4
-    x265_intra_pred_ang4_5_ssse3,       // Mode 5
-    x265_intra_pred_ang4_6_ssse3,       // Mode 6
-    x265_intra_pred_ang4_7_ssse3,       // Mode 7
-    x265_intra_pred_ang4_8_ssse3,       // Mode 8
-    x265_intra_pred_ang4_9_ssse3,       // Mode 9
-    x265_intra_pred_ang4_10_ssse3,      // Mode 10
-    NULL,                               // Mode 11
-    NULL,                               // Mode 12
-    NULL,                               // Mode 13
-    NULL,                               // Mode 14
-    NULL,                               // Mode 15
-    NULL,                               // Mode 16
-    NULL,                               // Mode 17
-    NULL,                               // Mode 18
-    NULL,                               // Mode 19
-    NULL,                               // Mode 20
-    NULL,                               // Mode 21
-    NULL,                               // Mode 22
-    NULL,                               // Mode 23
-    NULL,                               // Mode 24
-    NULL,                               // Mode 25
-    x265_intra_pred_ang4_26_ssse3,      // Mode 26
-    x265_intra_pred_ang4_9_ssse3,       // Mode 27
-    x265_intra_pred_ang4_8_ssse3,       // Mode 28
-    x265_intra_pred_ang4_7_ssse3,       // Mode 29
-    x265_intra_pred_ang4_6_ssse3,       // Mode 30
-    x265_intra_pred_ang4_5_ssse3,       // Mode 31
-    x265_intra_pred_ang4_4_ssse3,       // Mode 32
-    x265_intra_pred_ang4_3_ssse3,       // Mode 33
-    x265_intra_pred_ang4_2_ssse3,       // Mode 34
-};
-
 namespace {
 #if !HIGH_BIT_DEPTH
 const int angAP[17][64] =
