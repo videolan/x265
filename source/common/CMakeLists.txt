@@ -138,6 +138,7 @@ if(ENABLE_PRIMITIVES_ASM)
     foreach(SRC ${A_SRCS} ${C_SRCS})
         set(ASM_PRIMITIVES ${ASM_PRIMITIVES} x86/${SRC})
     endforeach()
+    source_group(Assembly FILES ${ASM_PRIMITIVES})
 endif(ENABLE_PRIMITIVES_ASM)
 
 if(GCC)
