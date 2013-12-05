@@ -290,7 +290,7 @@ uint32_t cpu_detect(void)
 }
 }
 
-#if !ENABLE_ASM_PRIMITIVES
+#if !ENABLE_ASSEMBLY
 
 #if defined(_MSC_VER)
 #include <intrin.h>
@@ -349,4 +349,4 @@ void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
     *edx = (uint32_t)(out >> 32);
 }
 }
-#endif // if !ENABLE_ASM_PRIMITIVES
+#endif // if !ENABLE_ASSEMBLY
