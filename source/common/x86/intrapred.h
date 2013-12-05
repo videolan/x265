@@ -37,18 +37,18 @@ void x265_intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr
 void x265_intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 
 #define DECL_ANG(bsize, mode, cpu) \
-    void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
+    void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel * dst, intptr_t dstStride, pixel * refLeft, pixel * refAbove, int dirMode, int bFilter);
 
 DECL_ANG(4, 2, ssse3);
-DECL_ANG(4, 3, ssse3);
-DECL_ANG(4, 4, ssse3);
-DECL_ANG(4, 5, ssse3);
-DECL_ANG(4, 6, ssse3);
-DECL_ANG(4, 7, ssse3);
-DECL_ANG(4, 8, ssse3);
-DECL_ANG(4, 9, ssse3);
-DECL_ANG(4,10, ssse3);
-DECL_ANG(4,26, ssse3);
+DECL_ANG(4, 3, sse4);
+DECL_ANG(4, 4, sse4);
+DECL_ANG(4, 5, sse4);
+DECL_ANG(4, 6, sse4);
+DECL_ANG(4, 7, sse4);
+DECL_ANG(4, 8, sse4);
+DECL_ANG(4, 9, sse4);
+DECL_ANG(4, 10, sse4);
+DECL_ANG(4, 26, sse4);
 
 #undef DECL_ANG
 
