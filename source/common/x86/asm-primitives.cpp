@@ -602,6 +602,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
         p.cvt16to32_shl = x265_cvt16to32_shl_sse2;
+
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_4x8] = x265_pixel_sub_ps_2x4_sse2;
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_4x16] = x265_pixel_sub_ps_2x8_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

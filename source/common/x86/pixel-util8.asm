@@ -2072,6 +2072,33 @@ RET
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_2x4(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
+%if HIGH_BIT_DEPTH
+INIT_XMM sse2
+cglobal pixel_sub_ps_2x4, 6, 6, 8, dest, deststride, src0, src1, srcstride0, srcstride1
+    add      r1,    r1
+    add      r4,    r4
+    add      r5,    r5
+    movd     m0,    [r2]
+    movd     m1,    [r3]
+    movd     m2,    [r2 + r4]
+    movd     m3,    [r3 + r5]
+    movd     m4,    [r2 + 2 * r4]
+    movd     m5,    [r3 + 2 * r5]
+    lea      r2,    [r2 + 2 * r4]
+    lea      r3,    [r3 + 2 * r5]
+    movd     m6,    [r2 + r4]
+    movd     m7,    [r3 + r5]
+    psubw    m0,    m1
+    psubw    m2,    m3
+    psubw    m4,    m5
+    psubw    m6,    m7
+
+    movd     [r0],           m0
+    movd     [r0 + r1],      m2
+    movd     [r0 + 2 * r1],  m4
+    lea      r0,             [r0 + 2 * r1]
+    movd     [r0 + r1],      m6
+%else
 INIT_XMM sse4
 %if ARCH_X86_64
     cglobal pixel_sub_ps_2x4, 6, 8, 0
@@ -2156,12 +2183,63 @@ movzx    t1d,      byte [r3 + r5 + 1]
 sub      t0d,      t1d
 
 mov      [r0 + 2], t0w
-
+%endif
 RET
 
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_2x8(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
+%if HIGH_BIT_DEPTH
+INIT_XMM sse2
+cglobal pixel_sub_ps_2x8, 6, 6, 8, dest, deststride, src0, src1, srcstride0, srcstride1
+    add      r1,    r1
+    add      r4,    r4
+    add      r5,    r5
+    movd     m0,    [r2]
+    movd     m1,    [r3]
+    movd     m2,    [r2 + r4]
+    movd     m3,    [r3 + r5]
+    movd     m4,    [r2 + 2 * r4]
+    movd     m5,    [r3 + 2 * r5]
+    lea      r2,    [r2 + 2 * r4]
+    lea      r3,    [r3 + 2 * r5]
+    movd     m6,    [r2 + r4]
+    movd     m7,    [r3 + r5]
+    psubw    m0,    m1
+    psubw    m2,    m3
+    psubw    m4,    m5
+    psubw    m6,    m7
+
+    movd     [r0],           m0
+    movd     [r0 + r1],      m2
+    movd     [r0 + 2 * r1],  m4
+    lea      r0,             [r0 + 2 * r1]
+    movd     [r0 + r1],      m6
+
+    movd     m0,    [r2 + 2 * r4]
+    movd     m1,    [r3 + 2 * r5]
+    lea      r2,    [r2 + 2 * r4]
+    lea      r3,    [r3 + 2 * r5]
+    movd     m2,    [r2 + r4]
+    movd     m3,    [r3 + r5]
+    movd     m4,    [r2 + 2 * r4]
+    movd     m5,    [r3 + 2 * r5]
+    lea      r2,    [r2 + 2 * r4]
+    lea      r3,    [r3 + 2 * r5]
+    movd     m6,    [r2 + r4]
+    movd     m7,    [r3 + r5]
+    psubw    m0,    m1
+    psubw    m2,    m3
+    psubw    m4,    m5
+    psubw    m6,    m7
+
+    movd     [r0 + 2 * r1],  m0
+    lea      r0,             [r0 + 2 * r1]
+    movd     [r0 + r1],      m2
+    movd     [r0 + 2 * r1],  m4
+    lea      r0,             [r0 + 2 * r1]
+    movd     [r0 + r1],      m6
+%else
 INIT_XMM sse4
 %if ARCH_X86_64
     cglobal pixel_sub_ps_2x8, 6, 8, 0
@@ -2308,7 +2386,7 @@ INIT_XMM sse4
     sub      t0d,      t1d
 
     mov      [r0 + 2], t0w
-
+%endif
 RET
 
 ;-----------------------------------------------------------------------------
