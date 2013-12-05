@@ -1201,7 +1201,7 @@ cglobal pixel_satd_32x8, 4,8,8    ;if WIN64 && cpuflag(avx)
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6
 %else
-cglobal pixel_satd_32x8, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_32x8, 4,7,8,0-gprsize    ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -1242,7 +1242,7 @@ cglobal pixel_satd_32x16, 4,8,8    ;if WIN64 && cpuflag(avx)
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6
 %else
-cglobal pixel_satd_32x16, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_32x16, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -1294,7 +1294,7 @@ cglobal pixel_satd_32x24, 4,8,8    ;if WIN64 && cpuflag(avx)
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6, m7
 %else
-cglobal pixel_satd_32x24, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_32x24, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -1360,7 +1360,7 @@ cglobal pixel_satd_32x32, 4,8,8    ;if WIN64 && cpuflag(avx)
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6, m7
 %else
-cglobal pixel_satd_32x32, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_32x32, 4,7,8,0-gprsize   ;if !WIN64
 
     SATD_START_SSE2 m6, m7
     mov r6, r0
@@ -1451,7 +1451,7 @@ cglobal pixel_satd_32x64, 4,8,8    ;if WIN64 && cpuflag(avx)
     movd   eax, m6
     RET
 %else
-cglobal pixel_satd_32x64, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_32x64, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -1576,7 +1576,7 @@ cglobal pixel_satd_48x64, 4,8,8    ;if WIN64 && cpuflag(avx)
     movd   eax, m6
     RET
 %else
-cglobal pixel_satd_48x64, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_48x64, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -1697,7 +1697,7 @@ cglobal pixel_satd_64x16, 4,8,8    ;if WIN64 && cpuflag(avx)
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6, m7
 %else
-cglobal pixel_satd_64x16, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_64x16, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -1810,7 +1810,7 @@ cglobal pixel_satd_64x32, 4,8,9    ;if WIN64 && cpuflag(avx)
     movd   eax, m6
     RET
 %else
-cglobal pixel_satd_64x32, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_64x32, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -1951,7 +1951,7 @@ cglobal pixel_satd_64x48, 4,8,9    ;if WIN64 && cpuflag(avx)
     movd   eax, m6
     RET
 %else
-cglobal pixel_satd_64x48, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_64x48, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -2124,7 +2124,7 @@ cglobal pixel_satd_64x64, 4,8,9    ;if WIN64 && cpuflag(avx)
     movd   eax, m6
     RET
 %else
-cglobal pixel_satd_64x64, 4,7,8,0-4    ;if !WIN64
+cglobal pixel_satd_64x64, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
@@ -2327,7 +2327,7 @@ cglobal pixel_satd_12x16, 4,8,8
     movd eax, m7
     RET
 %else
-cglobal pixel_satd_12x16, 4,7,8,0-4
+cglobal pixel_satd_12x16, 4,7,8,0-gprsize
     SATD_START_MMX
     mov r6, r0
     mov [rsp], r2
@@ -2382,7 +2382,7 @@ cglobal pixel_satd_24x32, 4,8,8
     call pixel_satd_8x8_internal
     SATD_END_SSE2 m6, m7
 %else
-cglobal pixel_satd_24x32, 4,7,8,0-4
+cglobal pixel_satd_24x32, 4,7,8,0-gprsize
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
