@@ -3194,7 +3194,7 @@ namespace x265 {
 void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 {
 #if !HIGH_BIT_DEPTH
-    for (int i = 2; i < NUM_INTRA_MODE - 1; i++)
+    for (int i = 2; i < NUM_INTRA_MODE; i++)
     {
         p.intra_pred[BLOCK_4x4][i] = intraPredAng4x4;
         p.intra_pred[BLOCK_8x8][i] = intraPredAng8x8;

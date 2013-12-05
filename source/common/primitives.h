@@ -35,7 +35,7 @@
 
 #define FENC_STRIDE 64
 
-#define NUM_INTRA_MODE 36   // copy from CommonDef.h
+#define NUM_INTRA_MODE 35
 
 #if defined(__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
@@ -250,9 +250,9 @@ struct EncoderPrimitives
     pixeladd_ss_t   pixeladd_ss;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
 
-    intra_planar_t  intra_pred_planar[NUM_SQUARE_BLOCKS];
-    intra_pred_t    intra_pred[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE - 1];  // No 64x64 and DM mode
-    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
+    intra_planar_t  intra_pred_planar[NUM_SQUARE_BLOCKS-1]; // no 64x64 intra predictions
+    intra_pred_t    intra_pred[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE];
+    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS-1];
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
 

@@ -98,8 +98,6 @@
 
 #define FAST_UDI_MAX_RDMODE_NUM     35 ///< maximum number of RD comparison in fast-UDI estimation loop
 
-#define NUM_INTRA_MODE 36
-
 #define PLANAR_IDX                  0
 #define VER_IDX                     26 // index for intra VERTICAL   mode
 #define HOR_IDX                     10 // index for intra HORIZONTAL mode

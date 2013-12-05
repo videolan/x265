@@ -306,7 +306,7 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.intra_pred[BLOCK_8x8][1] = intra_pred_dc_c<8>;
     p.intra_pred[BLOCK_16x16][1] = intra_pred_dc_c<16>;
     p.intra_pred[BLOCK_32x32][1] = intra_pred_dc_c<32>;
-    for (int i = 2; i < NUM_INTRA_MODE - 1; i++)
+    for (int i = 2; i < NUM_INTRA_MODE; i++)
     {
         p.intra_pred[BLOCK_4x4][i] = intra_pred_ang_c<4>;
         p.intra_pred[BLOCK_8x8][i] = intra_pred_ang_c<8>;
