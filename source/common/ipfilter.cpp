@@ -270,17 +270,24 @@ void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 }
 
 template<int N, int width, int height>
-void interp_horiz_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+void interp_horiz_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 {
     int16_t const * coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
     int offset = -IF_INTERNAL_OFFS << shift;
+    int blkheight = height;
 
     src -= N / 2 - 1;
 
+    if (isRowExt)
+    {
+        src -= (N / 2 - 1) * srcStride;
+        blkheight += N - 1;
+    }
+
     int row, col;
-    for (row = 0; row < height; row++)
+    for (row = 0; row < blkheight; row++)
     {
         for (col = 0; col < width; col++)
         {
