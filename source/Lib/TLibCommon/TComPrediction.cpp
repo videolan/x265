@@ -167,7 +167,7 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t strid
     }
     else
     {
-        primitives.intra_pred_ang[log2BlkSize - 2](dst, stride, refLft, refAbv, dirMode, bFilter);
+        primitives.intra_pred_ang[log2BlkSize - 2][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
     }
 }
 
@@ -198,7 +198,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
     }
     else
     {
-        primitives.intra_pred_ang[log2BlkSize](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
+        primitives.intra_pred_ang[log2BlkSize][dirMode](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
     }
 }
 

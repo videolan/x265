@@ -482,6 +482,9 @@ extern "C" {
     SETUP_PIXEL_SSE_SP_DEF(64, 16, cpu); \
     SETUP_PIXEL_SSE_SP_DEF(16, 64, cpu);
 
+#define SETUP_INTRA_ANG4(mode, fno, cpu) \
+    p.intra_pred_ang[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
+
 namespace x265 {
 // private x265 namespace
 
@@ -711,6 +714,25 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         ASSGN_SSE(ssse3);
         PIXEL_AVG(ssse3);
         PIXEL_AVG_W4(ssse3);
+
+        SETUP_INTRA_ANG4(2, 2, ssse3);
+        SETUP_INTRA_ANG4(3, 3, ssse3);
+        SETUP_INTRA_ANG4(4, 4, ssse3);
+        SETUP_INTRA_ANG4(5, 5, ssse3);
+        SETUP_INTRA_ANG4(6, 6, ssse3);
+        SETUP_INTRA_ANG4(7, 7, ssse3);
+        SETUP_INTRA_ANG4(8, 8, ssse3);
+        SETUP_INTRA_ANG4(9, 9, ssse3);
+        SETUP_INTRA_ANG4(10, 10, ssse3);
+        SETUP_INTRA_ANG4(26, 26, ssse3);
+        SETUP_INTRA_ANG4(27, 9, ssse3);
+        SETUP_INTRA_ANG4(28, 8, ssse3);
+        SETUP_INTRA_ANG4(29, 7, ssse3);
+        SETUP_INTRA_ANG4(30, 6, ssse3);
+        SETUP_INTRA_ANG4(31, 5, ssse3);
+        SETUP_INTRA_ANG4(32, 4, ssse3);
+        SETUP_INTRA_ANG4(33, 3, ssse3);
+        SETUP_INTRA_ANG4(34, 2, ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;

@@ -35,6 +35,8 @@
 
 #define FENC_STRIDE 64
 
+#define NUM_INTRA_MODE 36   // copy from CommonDef.h
+
 #if defined(__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
@@ -250,7 +252,7 @@ struct EncoderPrimitives
 
     intra_dc_t      intra_pred_dc[NUM_SQUARE_BLOCKS];
     intra_planar_t  intra_pred_planar[NUM_SQUARE_BLOCKS];
-    intra_ang_t     intra_pred_ang[NUM_SQUARE_BLOCKS];
+    intra_ang_t     intra_pred_ang[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE - 1];  // No 64x64 and DM mode
     intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
