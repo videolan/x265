@@ -2821,31 +2821,67 @@ PIXELSUB_PS_W8_H4 8, 32
 ; void pixel_sub_ps_c_%1x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
 %macro PIXELSUB_PS_W12_H4 2
-INIT_XMM sse4
-cglobal pixel_sub_ps_%1x%2, 6, 7, 6, dest, deststride, src0, src1, srcstride0, srcstride1
-
-add    r1,     r1
-mov    r6d,    %2/4
-
+cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, srcstride1
+    add    r1,     r1
+    mov    r6d,    %2/4
+%if HIGH_BIT_DEPTH
+    add     r4,    r4
+    add     r5,    r5
 .loop
+    movu     m0,    [r2]
+    movu     m1,    [r3]
+    movh     m2,    [r2 + 16]
+    movh     m3,    [r3 + 16]
+    movu     m4,    [r2 + r4]
+    movu     m5,    [r3 + r5]
+    movh     m6,    [r2 + r4 + 16]
+    movh     m7,    [r3 + r5 + 16]
+    psubw    m0,    m1
+    psubw    m2,    m3
+    psubw    m4,    m5
+    psubw    m6,    m7
+    lea      r2,    [r2 + 2 * r4]
+    lea      r3,    [r3 + 2 * r5]
 
+    movu    [r0],              m0
+    movh    [r0 + 16],         m2
+    movu    [r0 + r1],         m4
+    movh    [r0 + r1 + 16],    m6
+
+    movu     m0,    [r2]
+    movu     m1,    [r3]
+    movh     m2,    [r2 + 16]
+    movh     m3,    [r3 + 16]
+    movu     m4,    [r2 + r4]
+    movu     m5,    [r3 + r5]
+    movh     m6,    [r2 + r4 + 16]
+    movh     m7,    [r3 + r5 + 16]
+    psubw    m0,    m1
+    psubw    m2,    m3
+    psubw    m4,    m5
+    psubw    m6,    m7
+    lea     r0,     [r0 + 2 * r1]
+
+    movu    [r0],              m0
+    movh    [r0 + 16],         m2
+    movu    [r0 + r1],         m4
+    movh    [r0 + r1 + 16],    m6
+%else
+.loop
     movu        m0,    [r2]
     movu        m1,    [r3]
     movu        m2,    [r2 + r4]
     movu        m3,    [r3 + r5]
-
     mova        m4,    m0
     mova        m5,    m1
     punpckhdq   m4,    m2
     punpckhdq   m5,    m3
-
     pmovzxbw    m0,    m0
     pmovzxbw    m1,    m1
     pmovzxbw    m2,    m2
     pmovzxbw    m3,    m3
     pmovzxbw    m4,    m4
     pmovzxbw    m5,    m5
-
     psubw       m0,    m1
     psubw       m2,    m3
     psubw       m4,    m5
@@ -2854,52 +2890,48 @@ mov    r6d,    %2/4
     movlps    [r0 + 16],         m4
     movu      [r0 + r1],         m2
     movhps    [r0 + r1 + 16],    m4
-
     movu      m0,    [r2 + 2 * r4]
     movu      m1,    [r3 + 2 * r5]
-
     lea       r2,    [r2 + 2 * r4]
     lea       r3,    [r3 + 2 * r5]
 
-    movu      m2,    [r2 + r4]
-    movu      m3,    [r3 + r5]
-
+    movu         m2,    [r2 + r4]
+    movu         m3,    [r3 + r5]
     mova         m4,    m0
     mova         m5,    m1
     punpckhdq    m4,    m2
     punpckhdq    m5,    m3
-
     pmovzxbw     m0,    m0
     pmovzxbw     m1,    m1
     pmovzxbw     m2,    m2
     pmovzxbw     m3,    m3
     pmovzxbw     m4,    m4
     pmovzxbw     m5,    m5
-
     psubw        m0,    m1
     psubw        m2,    m3
     psubw        m4,    m5
 
     movu      [r0 + 2 * r1],         m0
     movlps    [r0 + 2 * r1 + 16],    m4
-
     lea       r0,                    [r0 + 2 * r1]
-
     movu      [r0 + r1],             m2
     movhps    [r0 + r1 + 16],        m4
-
-    lea       r2,                    [r2 + 2 * r4]
-    lea       r3,                    [r3 + 2 * r5]
-    lea       r0,                    [r0 + 2 * r1]
-
+%endif
     dec    r6d
-
-jnz    .loop
-
-RET
+    lea    r2,    [r2 + 2 * r4]
+    lea    r3,    [r3 + 2 * r5]
+    lea    r0,    [r0 + 2 * r1]
+    jnz    .loop
+    RET
 %endmacro
 
+%if HIGH_BIT_DEPTH
+INIT_XMM sse2
 PIXELSUB_PS_W12_H4 12, 16
+%else
+INIT_XMM sse4
+PIXELSUB_PS_W12_H4 12, 16
+%endif
 
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_%1x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
