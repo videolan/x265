@@ -60,4 +60,6 @@ DECL_ANG(4, 26, sse4);
 
 #undef DECL_ANG
 
+void x265_all_angs_pred_4x4_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
+
 #endif // ifndef X265_INTRAPRED_H
