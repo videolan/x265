@@ -130,10 +130,11 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     Setup_Assembly_Primitives(primitives, cpuid);
 #endif
 
-    primitives.sa8d_inter[LUMA_8x8] = primitives.sa8d[BLOCK_8x8];
-    primitives.sa8d_inter[LUMA_16x16] = primitives.sa8d[BLOCK_16x16];
-    primitives.sa8d_inter[LUMA_32x32] = primitives.sa8d[BLOCK_32x32];
-    primitives.sa8d_inter[LUMA_64x64] = primitives.sa8d[BLOCK_64x64];
+    primitives.sa8d[BLOCK_4x4] = primitives.sa8d_inter[LUMA_4x4];
+    primitives.sa8d[BLOCK_8x8] = primitives.sa8d_inter[LUMA_8x8];
+    primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
+    primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
+    primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
 
     // SA8D devolves to SATD for blocks not even multiples of 8x8
     primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];

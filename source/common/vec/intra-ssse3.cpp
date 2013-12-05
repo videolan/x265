@@ -33,49 +33,6 @@
 
 using namespace x265;
 
-// NOTE: I will remove below wrapper code after all of IntraAng mode finished
-extern "C" {
-#include "x86/intrapred.h"
-}
-intra_ang_t intra_ang4[NUM_INTRA_MODE - 1] =
-{
-    NULL,                               // Mode 0
-    NULL,                               // Mode 1
-    x265_intra_pred_ang4_2_ssse3,       // Mode 2
-    x265_intra_pred_ang4_3_ssse3,       // Mode 3
-    x265_intra_pred_ang4_4_ssse3,       // Mode 4
-    x265_intra_pred_ang4_5_ssse3,       // Mode 5
-    x265_intra_pred_ang4_6_ssse3,       // Mode 6
-    x265_intra_pred_ang4_7_ssse3,       // Mode 7
-    x265_intra_pred_ang4_8_ssse3,       // Mode 8
-    x265_intra_pred_ang4_9_ssse3,       // Mode 9
-    x265_intra_pred_ang4_10_ssse3,      // Mode 10
-    NULL,                               // Mode 11
-    NULL,                               // Mode 12
-    NULL,                               // Mode 13
-    NULL,                               // Mode 14
-    NULL,                               // Mode 15
-    NULL,                               // Mode 16
-    NULL,                               // Mode 17
-    NULL,                               // Mode 18
-    NULL,                               // Mode 19
-    NULL,                               // Mode 20
-    NULL,                               // Mode 21
-    NULL,                               // Mode 22
-    NULL,                               // Mode 23
-    NULL,                               // Mode 24
-    NULL,                               // Mode 25
-    x265_intra_pred_ang4_26_ssse3,      // Mode 26
-    x265_intra_pred_ang4_9_ssse3,       // Mode 27
-    x265_intra_pred_ang4_8_ssse3,       // Mode 28
-    x265_intra_pred_ang4_7_ssse3,       // Mode 29
-    x265_intra_pred_ang4_6_ssse3,       // Mode 30
-    x265_intra_pred_ang4_5_ssse3,       // Mode 31
-    x265_intra_pred_ang4_4_ssse3,       // Mode 32
-    x265_intra_pred_ang4_3_ssse3,       // Mode 33
-    x265_intra_pred_ang4_2_ssse3,       // Mode 34
-};
-
 namespace {
 #if !HIGH_BIT_DEPTH
 const int angAP[17][64] =
@@ -707,12 +664,6 @@ predIntraAng4x4_func predIntraAng4[] =
 void intraPredAng4x4(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     assert(dirMode > 1); //no planar and dc
-
-    if (intra_ang4[dirMode])
-    {
-        intra_ang4[dirMode](dst, dstStride, refLeft, refAbove, dirMode, bFilter);
-        return;
-    }
 
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
     static const int mode_to_invAng_table[] = { 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256 };
@@ -3243,10 +3194,13 @@ namespace x265 {
 void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 {
 #if !HIGH_BIT_DEPTH
-    p.intra_pred_ang[BLOCK_4x4] = intraPredAng4x4;
-    p.intra_pred_ang[BLOCK_8x8] = intraPredAng8x8;
-    p.intra_pred_ang[BLOCK_16x16] = intraPredAng16x16;
-    p.intra_pred_ang[BLOCK_32x32] = intraPredAng32x32;
+    for (int i = 2; i < NUM_INTRA_MODE - 1; i++)
+    {
+        p.intra_pred[BLOCK_4x4][i] = intraPredAng4x4;
+        p.intra_pred[BLOCK_8x8][i] = intraPredAng8x8;
+        p.intra_pred[BLOCK_16x16][i] = intraPredAng16x16;
+        p.intra_pred[BLOCK_32x32][i] = intraPredAng32x32;
+    }
 #endif
 }
 }

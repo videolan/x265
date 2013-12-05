@@ -161,13 +161,9 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t strid
     {
         primitives.intra_pred_planar[log2BlkSize - 2](refAbv + 1, refLft + 1, dst, stride);
     }
-    else if (dirMode == DC_IDX)
-    {
-        primitives.intra_pred_dc[log2BlkSize - 2](refAbv + 1, refLft + 1, dst, stride, bFilter);
-    }
     else
     {
-        primitives.intra_pred_ang[log2BlkSize - 2](dst, stride, refLft, refAbv, dirMode, bFilter);
+        primitives.intra_pred[log2BlkSize - 2][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
     }
 }
 
@@ -192,13 +188,9 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
     {
         primitives.intra_pred_planar[log2BlkSize](refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride);
     }
-    else if (dirMode == DC_IDX)
-    {
-        primitives.intra_pred_dc[log2BlkSize](refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride, false);
-    }
     else
     {
-        primitives.intra_pred_ang[log2BlkSize](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
+        primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
     }
 }
 
