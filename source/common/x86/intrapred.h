@@ -49,6 +49,7 @@ DECL_ANG(4, 8, sse4);
 DECL_ANG(4, 9, sse4);
 DECL_ANG(4, 10, sse4);
 DECL_ANG(4, 11, sse4);
+DECL_ANG(4, 12, sse4);
 DECL_ANG(4, 26, sse4);
 
 #undef DECL_ANG
