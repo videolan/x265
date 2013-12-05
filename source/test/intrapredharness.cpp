@@ -149,7 +149,7 @@ bool IntraPredHarness::check_planar_primitive(intra_planar_t ref, intra_planar_t
     return true;
 }
 
-bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_INTRA_MODE - 1], const intra_pred_t opt[][NUM_INTRA_MODE - 1])
+bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_INTRA_MODE], const intra_pred_t opt[][NUM_INTRA_MODE])
 {
     int j = ADI_BUF_STRIDE;
 
@@ -249,7 +249,7 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], cons
 
 bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int i = 0; i <= BLOCK_32x32; i++)
+    for (int i = BLOCK_4x4; i <= BLOCK_32x32; i++)
     {
         if (opt.intra_pred[i][1])
         {
@@ -295,7 +295,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     int width = 64;
     uint16_t srcStride = 96;
 
-    for (int i = 0; i <= BLOCK_32x32; i++)
+    for (int i = BLOCK_4x4; i <= BLOCK_32x32; i++)
     {
         const int size = (1 << (i + 2));
         if (opt.intra_pred[i][1])
