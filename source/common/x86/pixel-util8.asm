@@ -47,6 +47,8 @@ deinterleave_shuf: db 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
 deinterleave_word_shuf: db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 15, 15
 hmul_16p:  times 16 db 1
            times 8 db 1, -1
+hmulw_16p:  times 8 dw 1
+            times 4 dw 1, -1
 
 SECTION .text
 
@@ -1797,9 +1799,173 @@ RET
 ;-----------------------------------------------------------------
 INIT_XMM ssse3
 cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
+    mov       r3d,    32
+%if HIGH_BIT_DEPTH
+    mova      m7,    [deinterleave_word_shuf]
+    add       r2,    r2
+.loop
+    movu      m0,    [r1]                  ;i
+    movu      m1,    [r1 + 2]              ;j
+    movu      m2,    [r1 + r2]             ;k
+    movu      m3,    [r1 + r2 + 2]         ;l
+    movu      m4,    m0
+    movu      m5,    m2
+    pxor      m4,    m1                    ;i^j
+    pxor      m5,    m3                    ;k^l
+    por       m4,    m5                    ;ij|kl
+    pavgw     m0,    m1                    ;s
+    pavgw     m2,    m3                    ;t
+    movu      m5,    m0
+    pavgw     m0,    m2                    ;(s+t+1)/2
+    pxor      m5,    m2                    ;s^t
+    pand      m4,    m5                    ;(ij|kl)&st
+    pand      m4,    [hmulw_16p]
+    psubw     m0,    m4                    ;Result
+    movu      m1,    [r1 + 16]             ;i
+    movu      m2,    [r1 + 16 + 2]         ;j
+    movu      m3,    [r1 + r2 + 16]        ;k
+    movu      m4,    [r1 + r2 + 16 + 2]    ;l
+    movu      m5,    m1
+    movu      m6,    m3
+    pxor      m5,    m2                    ;i^j
+    pxor      m6,    m4                    ;k^l
+    por       m5,    m6                    ;ij|kl
+    pavgw     m1,    m2                    ;s
+    pavgw     m3,    m4                    ;t
+    movu      m6,    m1
+    pavgw     m1,    m3                    ;(s+t+1)/2
+    pxor      m6,    m3                    ;s^t
+    pand      m5,    m6                    ;(ij|kl)&st
+    pand      m5,    [hmulw_16p]
+    psubw     m1,    m5                    ;Result
+    pshufb    m0,    m7
+    pshufb    m1,    m7
 
+    punpcklqdq    m0,       m1
+    movu          [r0],     m0
+
+    movu      m0,    [r1 + 32]             ;i
+    movu      m1,    [r1 + 32 + 2]         ;j
+    movu      m2,    [r1 + r2 + 32]        ;k
+    movu      m3,    [r1 + r2 + 32 + 2]    ;l
+    movu      m4,    m0
+    movu      m5,    m2
+    pxor      m4,    m1                    ;i^j
+    pxor      m5,    m3                    ;k^l
+    por       m4,    m5                    ;ij|kl
+    pavgw     m0,    m1                    ;s
+    pavgw     m2,    m3                    ;t
+    movu      m5,    m0
+    pavgw     m0,    m2                    ;(s+t+1)/2
+    pxor      m5,    m2                    ;s^t
+    pand      m4,    m5                    ;(ij|kl)&st
+    pand      m4,    [hmulw_16p]
+    psubw     m0,    m4                    ;Result
+    movu      m1,    [r1 + 48]             ;i
+    movu      m2,    [r1 + 48 + 2]         ;j
+    movu      m3,    [r1 + r2 + 48]        ;k
+    movu      m4,    [r1 + r2 + 48 + 2]    ;l
+    movu      m5,    m1
+    movu      m6,    m3
+    pxor      m5,    m2                    ;i^j
+    pxor      m6,    m4                    ;k^l
+    por       m5,    m6                    ;ij|kl
+    pavgw     m1,    m2                    ;s
+    pavgw     m3,    m4                    ;t
+    movu      m6,    m1
+    pavgw     m1,    m3                    ;(s+t+1)/2
+    pxor      m6,    m3                    ;s^t
+    pand      m5,    m6                    ;(ij|kl)&st
+    pand      m5,    [hmulw_16p]
+    psubw     m1,    m5                    ;Result
+    pshufb    m0,    m7
+    pshufb    m1,    m7
+
+    punpcklqdq    m0,           m1
+    movu          [r0 + 16],    m0
+
+    movu      m0,    [r1 + 64]             ;i
+    movu      m1,    [r1 + 64 + 2]         ;j
+    movu      m2,    [r1 + r2 + 64]        ;k
+    movu      m3,    [r1 + r2 + 64 + 2]    ;l
+    movu      m4,    m0
+    movu      m5,    m2
+    pxor      m4,    m1                    ;i^j
+    pxor      m5,    m3                    ;k^l
+    por       m4,    m5                    ;ij|kl
+    pavgw     m0,    m1                    ;s
+    pavgw     m2,    m3                    ;t
+    movu      m5,    m0
+    pavgw     m0,    m2                    ;(s+t+1)/2
+    pxor      m5,    m2                    ;s^t
+    pand      m4,    m5                    ;(ij|kl)&st
+    pand      m4,    [hmulw_16p]
+    psubw     m0,    m4                    ;Result
+    movu      m1,    [r1 + 80]             ;i
+    movu      m2,    [r1 + 80 + 2]         ;j
+    movu      m3,    [r1 + r2 + 80]        ;k
+    movu      m4,    [r1 + r2 + 80 + 2]    ;l
+    movu      m5,    m1
+    movu      m6,    m3
+    pxor      m5,    m2                    ;i^j
+    pxor      m6,    m4                    ;k^l
+    por       m5,    m6                    ;ij|kl
+    pavgw     m1,    m2                    ;s
+    pavgw     m3,    m4                    ;t
+    movu      m6,    m1
+    pavgw     m1,    m3                    ;(s+t+1)/2
+    pxor      m6,    m3                    ;s^t
+    pand      m5,    m6                    ;(ij|kl)&st
+    pand      m5,    [hmulw_16p]
+    psubw     m1,    m5                    ;Result
+    pshufb    m0,    m7
+    pshufb    m1,    m7
+
+    punpcklqdq    m0,           m1
+    movu          [r0 + 32],    m0
+
+    movu      m0,    [r1 + 96]             ;i
+    movu      m1,    [r1 + 96 + 2]         ;j
+    movu      m2,    [r1 + r2 + 96]        ;k
+    movu      m3,    [r1 + r2 + 96 + 2]    ;l
+    movu      m4,    m0
+    movu      m5,    m2
+    pxor      m4,    m1                    ;i^j
+    pxor      m5,    m3                    ;k^l
+    por       m4,    m5                    ;ij|kl
+    pavgw     m0,    m1                    ;s
+    pavgw     m2,    m3                    ;t
+    movu      m5,    m0
+    pavgw     m0,    m2                    ;(s+t+1)/2
+    pxor      m5,    m2                    ;s^t
+    pand      m4,    m5                    ;(ij|kl)&st
+    pand      m4,    [hmulw_16p]
+    psubw     m0,    m4                    ;Result
+    movu      m1,    [r1 + 112]             ;i
+    movu      m2,    [r1 + 112 + 2]         ;j
+    movu      m3,    [r1 + r2 + 112]        ;k
+    movu      m4,    [r1 + r2 + 112 + 2]    ;l
+    movu      m5,    m1
+    movu      m6,    m3
+    pxor      m5,    m2                    ;i^j
+    pxor      m6,    m4                    ;k^l
+    por       m5,    m6                    ;ij|kl
+    pavgw     m1,    m2                    ;s
+    pavgw     m3,    m4                    ;t
+    movu      m6,    m1
+    pavgw     m1,    m3                    ;(s+t+1)/2
+    pxor      m6,    m3                    ;s^t
+    pand      m5,    m6                    ;(ij|kl)&st
+    pand      m5,    [hmulw_16p]
+    psubw     m1,    m5                    ;Result
+    pshufb    m0,    m7
+    pshufb    m1,    m7
+
+    punpcklqdq    m0,           m1
+    movu          [r0 + 48],    m0
+    lea    r0,    [r0 + 64]
+%else
     mova        m7,      [deinterleave_shuf]
-    mov         r3d,     32
 .loop
 
     movu        m0,      [r1]                  ;i
@@ -1895,9 +2061,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     movu          [r0 + 16],    m0
 
     lea    r0,    [r0 + 32]
+%endif
     lea    r1,    [r1 + 2 * r2]
     dec    r3d
-
     jnz    .loop
 
 RET
