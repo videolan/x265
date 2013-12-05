@@ -105,10 +105,10 @@ find_package(Yasm)
 if(YASM_FOUND)
     if (YASM_VERSION_STRING VERSION_LESS "1.2.0")
         message(STATUS "Yasm version ${YASM_VERSION_STRING} is too old. 1.2.0 or later required")
-        option(ENABLE_PRIMITIVES_ASM "Enable use of assembly coded primitives" OFF)
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
     else()
         message(STATUS "Found Yasm ${YASM_VERSION_STRING} to build assembly primitives")
-        option(ENABLE_PRIMITIVES_ASM "Enable use of assembly coded primitives" ON)
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
     endif()
 endif(YASM_FOUND)
 
@@ -150,7 +150,7 @@ include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-if((MSVC_IDE OR XCODE) AND ENABLE_PRIMITIVES_ASM)
+if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     # this is horrible. ugly, and hacky, and it reproduces logic found
     # in the yasm CMake modules, but this is required because of this cmake bug
     # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
@@ -266,8 +266,8 @@ endif(ENABLE_CLI)
 # Test applications
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
 if(ENABLE_TESTS)
-    if(ENABLE_PRIMITIVES_ASM)
-        add_definitions(-DENABLE_ASM_PRIMITIVES=1)
-    endif(ENABLE_PRIMITIVES_ASM)
+    if(ENABLE_ASSEMBLY)
+        add_definitions(-DENABLE_ASSEMBLY=1)
+    endif(ENABLE_ASSEMBLY)
     add_subdirectory(test)
 endif(ENABLE_TESTS)
