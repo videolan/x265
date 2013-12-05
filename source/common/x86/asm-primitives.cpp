@@ -717,22 +717,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         PIXEL_AVG_W4(ssse3);
 
         SETUP_INTRA_ANG4(2, 2, ssse3);
-        SETUP_INTRA_ANG4(3, 3, ssse3);
-        SETUP_INTRA_ANG4(4, 4, ssse3);
-        SETUP_INTRA_ANG4(5, 5, ssse3);
-        SETUP_INTRA_ANG4(6, 6, ssse3);
-        SETUP_INTRA_ANG4(7, 7, ssse3);
-        SETUP_INTRA_ANG4(8, 8, ssse3);
-        SETUP_INTRA_ANG4(9, 9, ssse3);
-        SETUP_INTRA_ANG4(10, 10, ssse3);
-        SETUP_INTRA_ANG4(26, 26, ssse3);
-        SETUP_INTRA_ANG4(27, 9, ssse3);
-        SETUP_INTRA_ANG4(28, 8, ssse3);
-        SETUP_INTRA_ANG4(29, 7, ssse3);
-        SETUP_INTRA_ANG4(30, 6, ssse3);
-        SETUP_INTRA_ANG4(31, 5, ssse3);
-        SETUP_INTRA_ANG4(32, 4, ssse3);
-        SETUP_INTRA_ANG4(33, 3, ssse3);
         SETUP_INTRA_ANG4(34, 2, ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
@@ -834,6 +818,23 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred_planar[BLOCK_8x8] = x265_intra_pred_planar8_sse4;
         p.intra_pred_planar[BLOCK_16x16] = x265_intra_pred_planar16_sse4;
         p.intra_pred_planar[BLOCK_32x32] = x265_intra_pred_planar32_sse4;
+
+        SETUP_INTRA_ANG4(3, 3, sse4);
+        SETUP_INTRA_ANG4(4, 4, sse4);
+        SETUP_INTRA_ANG4(5, 5, sse4);
+        SETUP_INTRA_ANG4(6, 6, sse4);
+        SETUP_INTRA_ANG4(7, 7, sse4);
+        SETUP_INTRA_ANG4(8, 8, sse4);
+        SETUP_INTRA_ANG4(9, 9, sse4);
+        SETUP_INTRA_ANG4(10, 10, sse4);
+        SETUP_INTRA_ANG4(26, 26, sse4);
+        SETUP_INTRA_ANG4(27, 9, sse4);
+        SETUP_INTRA_ANG4(28, 8, sse4);
+        SETUP_INTRA_ANG4(29, 7, sse4);
+        SETUP_INTRA_ANG4(30, 6, sse4);
+        SETUP_INTRA_ANG4(31, 5, sse4);
+        SETUP_INTRA_ANG4(32, 4, sse4);
+        SETUP_INTRA_ANG4(33, 3, sse4);
     }
     if (cpuMask & X265_CPU_AVX)
     {

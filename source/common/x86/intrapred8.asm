@@ -706,7 +706,7 @@ cglobal intra_pred_ang4_2, 3,3,4
     RET
 
 
-INIT_XMM ssse3
+INIT_XMM sse4
 cglobal intra_pred_ang4_3, 3,4,5
     cmp         r4m, byte 33
     cmove       r2, r3mp
@@ -743,16 +743,12 @@ ALIGN 16
     pshufb      m0, [c_trans_4x4]
 
 .store:
-    pshufd      m1, m0, 1
-    movhlps     m2, m0
-    pshufd      m3, m0, 3
-
     ; TODO: use pextrd here after intrinsic ssse3 removed
-    movd        [r0], m0
-    movd        [r0 + r1], m1
-    movd        [r0 + r1 * 2], m2
+    pextrd      [r0], m0, 0
+    pextrd      [r0 + r1], m0, 1
+    pextrd      [r0 + r1 * 2], m0, 2
     lea         r1, [r1 * 3]
-    movd        [r0 + r1], m3
+    pextrd      [r0 + r1], m0, 3
     RET
 
 
@@ -881,8 +877,7 @@ cglobal intra_pred_ang4_10, 3,3,4
 
     ; filter
     mov         r2, r3mp
-    pxor        m1, m1
-    punpcklbw   m0, m1                  ; [-1 -1 -1 -1]
+    pmovzxbw    m0, m0                  ; [-1 -1 -1 -1]
     movh        m1, [r2]                ; [4 3 2 1 0]
     pshufb      m2, m1, [pb_0_8]        ; [0 0 0 0]
     pshufb      m1, [pb_unpackbw1]      ; [4 3 2 1]
@@ -896,6 +891,7 @@ cglobal intra_pred_ang4_10, 3,3,4
     RET
 
 
+INIT_XMM sse4
 cglobal intra_pred_ang4_26, 4,4,3
     movd        m0, [r3 + 1]            ; [8 7 6 5 4 3 2 1]
 
@@ -919,15 +915,10 @@ cglobal intra_pred_ang4_26, 4,4,3
     paddw       m0, m1
     packuswb    m0, m0
 
-    ; TODO: use SSE4 pextrb
-    movd        r2d, m0
-    mov         [r0], r2b
-    shr         r2d, 8
-    mov         [r0 + r1], r2b
-    shr         r2d, 8
-    mov         [r0 + r1 * 2], r2b
-    shr         r2d, 8
-    mov         [r0 + r3], r2b
+    pextrb      [r0], m0, 0
+    pextrb      [r0 + r1], m0, 1
+    pextrb      [r0 + r1 * 2], m0, 2
+    pextrb      [r0 + r3], m0, 3
 
 .quit:
     RET

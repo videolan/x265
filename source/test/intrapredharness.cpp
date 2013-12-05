@@ -271,14 +271,13 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
         }
     }
 
-    if (opt.intra_pred_ang[0][2])
+    // NOTE: always call since this function have check pointer in loop
+    if (!check_angular_primitive(ref.intra_pred_ang, opt.intra_pred_ang))
     {
-        if (!check_angular_primitive(ref.intra_pred_ang, opt.intra_pred_ang))
-        {
-            printf("intra_angular failed\n");
-            return false;
-        }
+        printf("intra_angular failed\n");
+        return false;
     }
+
     if (opt.intra_pred_allangs[0])
     {
         if (!check_allangs_primitive(ref.intra_pred_allangs, opt.intra_pred_allangs))
