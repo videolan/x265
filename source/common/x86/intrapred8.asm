@@ -1081,3 +1081,19 @@ cglobal intra_pred_ang4_17, 4,4,5
     movh        m4, [r3 +  4 * 16]  ; [18]
     movhps      m4, [r3 + 10 * 16]  ; [24]
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_18, 4,4,1
+    mov         r2d, [r2]
+    bswap       r2d
+    movd        m0, r2d
+    pinsrd      m0, [r3 + 1], 1     ; [- 3 2 1 0 -1 -2 -3]
+    lea         r2, [r1 * 3]
+    movd        [r0 + r2], m0
+    psrldq      m0, 1
+    movd        [r0 + r1 * 2], m0
+    psrldq      m0, 1
+    movd        [r0 + r1], m0
+    psrldq      m0, 1
+    movd        [r0], m0
+    RET
