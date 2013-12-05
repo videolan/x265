@@ -922,3 +922,20 @@ cglobal intra_pred_ang4_26, 4,4,3
 
 .quit:
     RET
+
+
+cglobal intra_pred_ang4_11, 3,4,5
+    cmp         r4m, byte 25
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 24 * 16]
+    movh        m0, [r2]        ; [x x x 4 3 2 1 0]
+    palignr     m1, m0, 1       ; [x x x x 4 3 2 1]
+    punpcklbw   m0, m1          ; [x x x x x x x x 4 3 3 2 2 1 1 0]
+    punpcklqdq  m0, m0
+    mova        m2, m0
+
+    movh        m3, [r3 +  6 * 16]  ; [24]
+    movhps      m3, [r3 +  4 * 16]  ; [26]
+    movh        m4, [r3 +  2 * 16]  ; [28]
+    movhps      m4, [r3 +  0 * 16]  ; [30]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
