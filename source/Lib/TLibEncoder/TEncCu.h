@@ -60,12 +60,12 @@ struct StatisticLog
 {
     uint64_t cntInter[4];
     uint64_t cntIntra[4];
-    uint64_t cntSplit[4];
     uint64_t cuInterDistribution[4][INTER_MODES];
     uint64_t cuIntraDistribution[4][INTRA_MODES];
     uint64_t cntIntraNxN;
     uint64_t cntSkipCu[4];
     uint64_t cntTotalCu[4];
+    uint64_t TotalCu;
 
     StatisticLog()
     {

@@ -407,7 +407,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     if (!(depth < minDepth)) //topskip
 #endif
     {
-        m_log->cntTotalCu[depth]++;
         if (!bSliceEnd && bInsidePicture)
         {
             // variables for fast encoder decision
@@ -541,14 +540,9 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
             /* Disable recursive analysis for whole CUs temporarily */
             if ((outBestCU != 0) && (outBestCU->isSkipped(0)))
-            {
-                m_log->cntSkipCu[depth]++;
                 bSubBranch = false;
-            }
             else
-            {
                 bSubBranch = true;
-            }
 
             m_entropyCoder->resetBits();
             m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
@@ -623,7 +617,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
                 /* Copy Yuv data to picture Yuv */
                 xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpely);
-                m_log->cntTotalCu[depth]--;
                 return;
             }
         }
@@ -708,41 +701,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
         m_rdSbacCoders[nextDepth][CI_NEXT_BEST]->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
-        if (outBestCU != 0)
-        {
-            if (outBestCU->m_totalCost < outTempCU->m_totalCost)
-            {
-                if (outBestCU->getPredictionMode(0) == MODE_INTER)
-                {
-                    m_log->cntInter[depth]++;
-                    if (outBestCU->getPartitionSize(0) < AMP_ID)
-                    {
-                        m_log->cuInterDistribution[depth][outBestCU->getPartitionSize(0)]++;
-                    }
-                    else
-                    {
-                        m_log->cuInterDistribution[depth][AMP_ID]++;
-                    }
-                }
-                else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
-                {
-                    m_log->cntIntra[depth]++;
-                    if (outBestCU->getLumaIntraDir()[0] > 1)
-                    {
-                        m_log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
-                    }
-                    else
-                    {
-                        m_log->cuIntraDistribution[depth][outBestCU->getLumaIntraDir()[0]]++;
-                    }
-                }
-            }
-            else
-            {
-                m_log->cntSplit[depth]++;
-            }
-        }
-
         /* If Best Mode is not NULL; then compare costs. Else assign best mode to Sub-CU costs
          * Copy recon data from Temp structure to Best structure */
         if (outBestCU)
@@ -774,43 +732,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         }
     }
 
-    if (depth == g_maxCUDepth - 1)
-    {
-        if (!outBestCU->isSkipped(0))
-        {
-            if (outBestCU->getPredictionMode(0) == MODE_INTER)
-            {
-                m_log->cntInter[depth]++;
-                if (outBestCU->getPartitionSize(0) < AMP_ID)
-                {
-                    m_log->cuInterDistribution[depth][outBestCU->getPartitionSize(0)]++;
-                }
-                else
-                {
-                    m_log->cuInterDistribution[depth][AMP_ID]++;
-                }
-            }
-            else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
-            {
-                m_log->cntIntra[depth]++;
-                if (outBestCU->getPartitionSize(0) == SIZE_2Nx2N)
-                {
-                    if (outBestCU->getLumaIntraDir()[0] > 1)
-                    {
-                        m_log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
-                    }
-                    else
-                    {
-                        m_log->cuIntraDistribution[depth][outBestCU->getLumaIntraDir()[0]]++;
-                    }
-                }
-                else if (outBestCU->getPartitionSize(0) == SIZE_NxN)
-                {
-                    m_log->cntIntraNxN++;
-                }
-            }
-        }
-    }
 
     /* Copy Best data to Picture for next partition prediction. */
     outBestCU->copyToPic((UChar)depth);
@@ -818,11 +739,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     /* Copy Yuv data to picture Yuv */
     xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpely);
 
-    if (bBoundary || (bSliceEnd && bInsidePicture))
-    {
-        m_log->cntTotalCu[depth]--;
-        return;
-    }
+    if (bBoundary || (bSliceEnd && bInsidePicture)) return;
 
     /* Assert if Best prediction mode is NONE
      Selected mode's RD-cost must be not MAX_DOUBLE.*/
