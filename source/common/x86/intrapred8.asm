@@ -282,29 +282,26 @@ cglobal intra_pred_dc16, 5, 7, 4
     pextrb          [r6 + r1],     m2, 1
     pextrb          [r6 + r1 * 2], m2, 2
     lea             r6,            [r6 + r1 * 2]
-    add             r6,            r1
-    pextrb          [r6],          m2, 3
-    add             r6,            r1
-    pextrb          [r6],          m2, 4
+    pextrb          [r6 + r1],     m2, 3
+    pextrb          [r6 + r1 * 2], m2, 4
+    lea             r6,            [r6 + r1 * 2]
     pextrb          [r6 + r1],     m2, 5
     pextrb          [r6 + r1 * 2], m2, 6
     lea             r6,            [r6 + r1 * 2]
-    add             r6,            r1
-    pextrb          [r6],          m2, 7
+    pextrb          [r6 + r1],     m2, 7
 
-    add             r6,            r1
     pmovzxbw        m3,            [r2 + 9]
     paddw           m3,            m1
     psraw           m3,            2
     packuswb        m3,            m3
-    pextrb          [r6],          m3, 0
+    pextrb          [r6 + r1 * 2], m3, 0
+    lea             r6,            [r6 + r1 * 2]
     pextrb          [r6 + r1],     m3, 1
     pextrb          [r6 + r1 * 2], m3, 2
     lea             r6,            [r6 + r1 * 2]
-    add             r6,            r1
-    pextrb          [r6],          m3, 3
-    add             r6,            r1
-    pextrb          [r6],          m3, 4
+    pextrb          [r6 + r1],     m3, 3
+    pextrb          [r6 + r1 * 2], m3, 4
+    lea             r6,            [r6 + r1 * 2]
     pextrb          [r6 + r1],     m3, 5
     pextrb          [r6 + r1 * 2], m3, 6
 
