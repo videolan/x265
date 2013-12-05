@@ -639,6 +639,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I420].sub_ps[LUMA_8x16] = x265_pixel_sub_ps_4x8_sse2;
         p.chroma[X265_CSP_I420].sub_ps[LUMA_8x32] = x265_pixel_sub_ps_4x16_sse2;
         p.chroma[X265_CSP_I420].sub_ps[LUMA_12x16] = x265_pixel_sub_ps_6x8_sse2;
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_16x4] = x265_pixel_sub_ps_8x2_sse2;
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_16x8] = x265_pixel_sub_ps_8x4_sse2;
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_16x12] = x265_pixel_sub_ps_8x6_sse2;
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_16x16] = x265_pixel_sub_ps_8x8_sse2;
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_16x32] = x265_pixel_sub_ps_8x16_sse2;
+        p.chroma[X265_CSP_I420].sub_ps[LUMA_16x64] = x265_pixel_sub_ps_8x32_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
