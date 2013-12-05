@@ -394,8 +394,6 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (int depth = 0; depth < (int)g_maxCUDepth; depth++)
         {
-            uint64_t cntInter, cntSkipCu, cntIntra, cntIntraNxN, encCu;
-            uint64_t cuInterDistribution[INTER_MODES], cuIntraDistribution[INTRA_MODES];
             for (int j = 0; j < param.frameNumThreads; j++)
             {
                 for (int row = 0; row < m_frameEncoder[0].m_numRows; row++)
@@ -422,6 +420,9 @@ void Encoder::printSummary()
                     }
                 }
             }
+
+            uint64_t cntInter, cntSkipCu, cntIntra = 0, cntIntraNxN = 0, encCu = 0;
+            uint64_t cuInterDistribution[INTER_MODES], cuIntraDistribution[INTRA_MODES];
 
             // check for 0/0, if true assign 0 else calculate percentage
             for (int n = 0; n < INTER_MODES; n++)
