@@ -126,7 +126,6 @@ int main(int argc, char *argv[])
         if (cpuid_user == i)
             break;
 
-#if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
         Setup_Vector_Primitives(vecprim, test_arch[i].flag);
@@ -140,8 +139,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-
-#endif // if ENABLE_VECTOR_PRIMITIVES
 
 #if ENABLE_ASM_PRIMITIVES
         EncoderPrimitives asmprim;
@@ -166,9 +163,7 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
-#if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(optprim, cpuid);
-#endif
 #if ENABLE_ASM_PRIMITIVES
     Setup_Assembly_Primitives(optprim, cpuid);
 #endif
