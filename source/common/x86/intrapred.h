@@ -36,15 +36,20 @@ void x265_intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_
 void x265_intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 void x265_intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 
-void x265_intra_pred_ang4_2_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_3_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_4_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_5_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_6_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_7_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_8_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_9_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_10_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-void x265_intra_pred_ang4_26_ssse3(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
+#define DECL_ANG(bsize, mode, cpu) \
+    void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
+
+DECL_ANG(4, 2, ssse3);
+DECL_ANG(4, 3, ssse3);
+DECL_ANG(4, 4, ssse3);
+DECL_ANG(4, 5, ssse3);
+DECL_ANG(4, 6, ssse3);
+DECL_ANG(4, 7, ssse3);
+DECL_ANG(4, 8, ssse3);
+DECL_ANG(4, 9, ssse3);
+DECL_ANG(4,10, ssse3);
+DECL_ANG(4,26, ssse3);
+
+#undef DECL_ANG
 
 #endif // ifndef X265_INTRAPRED_H

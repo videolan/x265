@@ -708,12 +708,6 @@ void intraPredAng4x4(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refA
 {
     assert(dirMode > 1); //no planar and dc
 
-    if (intra_ang4[dirMode])
-    {
-        intra_ang4[dirMode](dst, dstStride, refLeft, refAbove, dirMode, bFilter);
-        return;
-    }
-
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
     static const int mode_to_invAng_table[] = { 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256 };
     int intraPredAngle = mode_to_angle_table[dirMode - 2];
@@ -3243,10 +3237,13 @@ namespace x265 {
 void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 {
 #if !HIGH_BIT_DEPTH
-    p.intra_pred_ang[BLOCK_4x4] = intraPredAng4x4;
-    p.intra_pred_ang[BLOCK_8x8] = intraPredAng8x8;
-    p.intra_pred_ang[BLOCK_16x16] = intraPredAng16x16;
-    p.intra_pred_ang[BLOCK_32x32] = intraPredAng32x32;
+    for (int i = 2; i < NUM_INTRA_MODE - 1; i++)
+    {
+        p.intra_pred_ang[BLOCK_4x4][i] = intraPredAng4x4;
+        p.intra_pred_ang[BLOCK_8x8][i] = intraPredAng8x8;
+        p.intra_pred_ang[BLOCK_16x16][i] = intraPredAng16x16;
+        p.intra_pred_ang[BLOCK_32x32][i] = intraPredAng32x32;
+    }
 #endif
 }
 }

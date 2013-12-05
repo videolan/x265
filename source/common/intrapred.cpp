@@ -303,10 +303,16 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.intra_pred_planar[BLOCK_16x16] = planad_pred_c<16>;
     p.intra_pred_planar[BLOCK_32x32] = planad_pred_c<32>;
 
-    p.intra_pred_ang[BLOCK_4x4] = intra_pred_ang_c<4>;
-    p.intra_pred_ang[BLOCK_8x8] = intra_pred_ang_c<8>;
-    p.intra_pred_ang[BLOCK_16x16] = intra_pred_ang_c<16>;
-    p.intra_pred_ang[BLOCK_32x32] = intra_pred_ang_c<32>;
+    // TODO: Fill DC and Planar mode
+    p.intra_pred_ang[BLOCK_4x4][0] = NULL;
+    p.intra_pred_ang[BLOCK_4x4][1] = NULL;
+    for (int i = 2; i < NUM_INTRA_MODE - 1; i++)
+    {
+        p.intra_pred_ang[BLOCK_4x4][i] = intra_pred_ang_c<4>;
+        p.intra_pred_ang[BLOCK_8x8][i] = intra_pred_ang_c<8>;
+        p.intra_pred_ang[BLOCK_16x16][i] = intra_pred_ang_c<16>;
+        p.intra_pred_ang[BLOCK_32x32][i] = intra_pred_ang_c<32>;
+    }
 
     p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<4>;
     p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<8>;
