@@ -470,6 +470,9 @@ SAD_12  12, 16
     psubw   m2, m3
     ABSW2   m0, m1, m0, m1, m4, m5
     ABSW    m2, m2, m6
+    pmaddwd m0, [pw_1]
+    pmaddwd m1, [pw_1]
+    pmaddwd m2, [pw_1]
 %endmacro
 
 %macro SAD_X3_ONE 2
@@ -482,9 +485,12 @@ SAD_12  12, 16
     psubw   m5, m6
     ABSW2   m3, m4, m3, m4, m7, m6
     ABSW    m5, m5, m6
-    paddw   m0, m3
-    paddw   m1, m4
-    paddw   m2, m5
+    pmaddwd m3, [pw_1]
+    pmaddwd m4, [pw_1]
+    pmaddwd m5, [pw_1]
+    paddd   m0, m3
+    paddd   m1, m4
+    paddd   m2, m5
 %endmacro
 
 %macro SAD_X3_END 2
@@ -493,9 +499,9 @@ SAD_12  12, 16
     HADDUW   m1, m4
     HADDUW   m2, m5
 %else
-    HADDW    m0, m3
-    HADDW    m1, m4
-    HADDW    m2, m5
+    HADDD    m0, m3
+    HADDD    m1, m4
+    HADDD    m2, m5
 %endif
 %if UNIX64
     movd [r5+0], xm0
@@ -719,9 +725,11 @@ INIT_MMX mmx2
 %define XMM_REGS 0
 SAD_X 3, 16, 16
 SAD_X 3, 16,  8
+SAD_X 3, 12, 16
 SAD_X 3,  8, 16
 SAD_X 3,  8,  8
 SAD_X 3,  8,  4
+SAD_X 3,  4, 16
 SAD_X 3,  4,  8
 SAD_X 3,  4,  4
 SAD_X 4, 16, 16
@@ -751,8 +759,24 @@ SAD_X 4,  8,  8
 SAD_X 4,  8,  4
 INIT_XMM sse2
 %define XMM_REGS 8
+SAD_X 3, 64, 64
+SAD_X 3, 64, 48
+SAD_X 3, 64, 32
+SAD_X 3, 64, 16
+SAD_X 3, 48, 64
+SAD_X 3, 32, 64
+SAD_X 3, 32, 32
+SAD_X 3, 32, 24
+SAD_X 3, 32, 16
+SAD_X 3, 32,  8
+SAD_X 3, 24, 32
+SAD_X 3, 16, 64
+SAD_X 3, 16, 32
 SAD_X 3, 16, 16
+SAD_X 3, 16, 12
 SAD_X 3, 16,  8
+SAD_X 3, 16,  4
+SAD_X 3,  8, 32
 SAD_X 3,  8, 16
 SAD_X 3,  8,  8
 SAD_X 3,  8,  4
