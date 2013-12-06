@@ -29,6 +29,7 @@ SECTION_RODATA 32
 SECTION .text
 
 cextern pw_1
+cextern pd_32
 cextern pw_4096
 
 
@@ -317,3 +318,83 @@ cglobal intra_pred_dc16, 4, 7, 4
 .end
     RET
 
+
+;-------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
+;-------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc32, 4, 5, 6
+    mov             r4d,                 r5m
+    add             r2,                  2
+    add             r3,                  2
+    add             r1,                  r1
+    movu            m0,                  [r3]
+    movu            m1,                  [r3 + 16]
+    movu            m2,                  [r3 + 32]
+    movu            m3,                  [r3 + 48]
+    paddw           m0,                  m1
+    paddw           m2,                  m3
+    paddw           m0,                  m2
+    movu            m1,                  [r2]
+    movu            m3,                  [r2 + 16]
+    movu            m4,                  [r2 + 32]
+    movu            m5,                  [r2 + 48]
+    paddw           m1,                  m3
+    paddw           m4,                  m5
+    paddw           m1,                  m4
+    paddw           m0,                  m1
+    movhlps         m1,                  m0
+    paddw           m0,                  m1
+    phaddw          m0,                  m0
+    pmaddwd         m0,                  [pw_1]
+
+    paddd           m0,                  [pd_32]     ; sum = sum + 32
+    psrld           m0,                  6           ; sum = sum / 64
+    pshuflw         m0,                  m0, 0
+    pshufd          m0,                  m0, 0
+
+%rep 4
+    ; store DC 16x16
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+    movu            [r0 +  0],           m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + 32],           m0
+    movu            [r0 + 48],           m0
+    add             r0,                  r1
+%endrep
+
+    RET
