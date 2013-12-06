@@ -1103,7 +1103,7 @@ cglobal intra_pred_ang4_18, 4,4,1
 ; void all_angs_pred_4x4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal all_angs_pred_4x4, 6, 6, 8 dest, above0, left0, above1, left1, bLuma
+cglobal all_angs_pred_4x4, 6, 6, 8
 
 ; mode 2
 
