@@ -44,7 +44,7 @@ protected:
     static const int out_size_33 = 33 * 64 * FENC_STRIDE;
 
     bool check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width);
-    bool check_planar_primitive(intra_planar_t ref, intra_planar_t opt);
+    bool check_planar_primitive(intra_pred_t ref, intra_pred_t opt);
     bool check_angular_primitive(const intra_pred_t ref[][NUM_INTRA_MODE], const intra_pred_t opt[][NUM_INTRA_MODE]);
     bool check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[]);
 

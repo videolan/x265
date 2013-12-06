@@ -102,8 +102,10 @@ void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, 
 }
 
 template<int width>
-void planad_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
+void planad_pred_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int /*bFilter*/)
 {
+    above += 1;
+    left  += 1;
     int k, l;
     pixel bottomLeft, topRight;
     int horPred;
@@ -293,13 +295,10 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred_planar[BLOCK_4x4] = planad_pred_c<4>;
-    p.intra_pred_planar[BLOCK_8x8] = planad_pred_c<8>;
-    p.intra_pred_planar[BLOCK_16x16] = planad_pred_c<16>;
-    p.intra_pred_planar[BLOCK_32x32] = planad_pred_c<32>;
-
-    // TODO: Fill Planar mode
-    p.intra_pred[BLOCK_4x4][0] = NULL;
+    p.intra_pred[BLOCK_4x4][0] = planad_pred_c<4>;
+    p.intra_pred[BLOCK_8x8][0] = planad_pred_c<8>;
+    p.intra_pred[BLOCK_16x16][0] = planad_pred_c<16>;
+    p.intra_pred[BLOCK_32x32][0] = planad_pred_c<32>;
 
     // Intra Prediction DC
     p.intra_pred[BLOCK_4x4][1] = intra_pred_dc_c<4>;

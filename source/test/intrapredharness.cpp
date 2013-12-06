@@ -109,7 +109,7 @@ bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, in
     return true;
 }
 
-bool IntraPredHarness::check_planar_primitive(intra_planar_t ref, intra_planar_t opt)
+bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt)
 {
     int j = ADI_BUF_STRIDE;
 
@@ -127,16 +127,16 @@ bool IntraPredHarness::check_planar_primitive(intra_planar_t ref, intra_planar_t
             memset(pixel_out_vec, 0xCD, out_size);
             memset(pixel_out_c, 0xCD, out_size);
 #endif
-            ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE);
-            opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE);
+            ref(pixel_out_c,   FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, 0);
+            opt(pixel_out_vec, FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, 0);
 
             for (int k = 0; k < width; k++)
             {
                 if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
                 {
 #if _DEBUG
-                    ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE);
-                    opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE);
+                    ref(pixel_out_c,   FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, 0);
+                    opt(pixel_out_vec, FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, 0);
 #endif
                     return false;
                 }
@@ -260,10 +260,10 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
                 return false;
             }
         }
-        if (opt.intra_pred_planar[i])
+        if (opt.intra_pred[i][0])
         {
             const int size = (1 << (i + 2));
-            if (!check_planar_primitive(ref.intra_pred_planar[i], opt.intra_pred_planar[i]))
+            if (!check_planar_primitive(ref.intra_pred[i][0], opt.intra_pred[i][0]))
             {
                 printf("intra_planar %dx%d failed\n", size, size);
                 return false;
@@ -307,14 +307,14 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             {
                 printf("intra_dc_%dx%d[f=1]", size, size);
                 REPORT_SPEEDUP(opt.intra_pred[i][1], ref.intra_pred[i][1],
-                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pixel_buff, 0, 1);
+                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pixel_buff, 0, 0);
             }
         }
-        if (opt.intra_pred_planar[i])
+        if (opt.intra_pred[i][0])
         {
             printf("intra_planar %2dx%d", size, size);
-            REPORT_SPEEDUP(opt.intra_pred_planar[i], ref.intra_pred_planar[i],
-                           pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE);
+            REPORT_SPEEDUP(opt.intra_pred[i][0], ref.intra_pred[i][0],
+                           pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pixel_buff, 0, 0);
         }
         if (opt.intra_pred_allangs[i])
         {

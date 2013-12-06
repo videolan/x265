@@ -382,18 +382,19 @@ cglobal intra_pred_dc32, 4, 5, 5
 
     RET
 
-;----------------------------------------------------------------------------------------
-; void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-;----------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_planar4, 4,7,5, above, left, dst, dstStride
-
-    pmovzxbw        m0,         [r0]      ; topRow[i] = above[i];
+cglobal intra_pred_planar4, 4,7,5
+    inc             r2
+    inc             r3
+    pmovzxbw        m0,         [r3]      ; topRow[i] = above[i];
     punpcklqdq      m0,         m0
 
     pxor            m1,         m1
-    movd            m2,         [r1 + 4]  ; bottomLeft = left[4]
-    movzx           r6d, byte   [r0 + 4]  ; topRight   = above[4];
+    movd            m2,         [r2 + 4]  ; bottomLeft = left[4]
+    movzx           r6d, byte   [r3 + 4]  ; topRight   = above[4];
     pshufb          m2,         m1
     punpcklbw       m2,         m1
     psubw           m2,         m0        ; bottomRow[i] = bottomLeft - topRow[i]
@@ -403,24 +404,24 @@ cglobal intra_pred_planar4, 4,7,5, above, left, dst, dstStride
     paddw           m2,         m2
 
 %macro COMP_PRED_PLANAR_2ROW 1
-    movzx           r4d, byte   [r1 + %1]
+    movzx           r4d, byte   [r2 + %1]
     lea             r4d,        [r4d * 4 + 4]
     movd            m3,         r4d
     pshuflw         m3,         m3, 0
 
-    movzx           r4d, byte   [r1 + %1 + 1]
+    movzx           r4d, byte   [r2 + %1 + 1]
     lea             r4d,        [r4d * 4 + 4]
     movd            m4,         r4d
     pshuflw         m4,         m4, 0
     punpcklqdq      m3,         m4        ; horPred
 
-    movzx           r4d, byte   [r1 + %1]
+    movzx           r4d, byte   [r2 + %1]
     mov             r5d,        r6d
     sub             r5d,        r4d
     movd            m4,         r5d
     pshuflw         m4,         m4, 0
 
-    movzx           r4d, byte   [r1 + %1 + 1]
+    movzx           r4d, byte   [r2 + %1 + 1]
     mov             r5d,        r6d
     sub             r5d,        r4d
     movd            m1,         r5d
@@ -434,10 +435,10 @@ cglobal intra_pred_planar4, 4,7,5, above, left, dst, dstStride
     psraw           m3,         3
     packuswb        m3,         m3
 
-    movd            [r2],       m3
+    movd            [r0],       m3
     pshufd          m3,         m3, 0x55
-    movd            [r2 + r3],  m3
-    lea             r2,         [r2 + 2 * r3]
+    movd            [r0 + r1],  m3
+    lea             r0,         [r0 + 2 * r1]
 %endmacro
 
     COMP_PRED_PLANAR_2ROW 0
@@ -445,18 +446,19 @@ cglobal intra_pred_planar4, 4,7,5, above, left, dst, dstStride
 
     RET
 
-;----------------------------------------------------------------------------------------
-; void intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-;----------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_planar8, 4,4,7, above, left, dst, dstStride
-
+cglobal intra_pred_planar8, 4,4,7
+    inc             r2
+    inc             r3
     pxor            m0,     m0
-    pmovzxbw        m1,     [r0]     ; v_topRow
-    pmovzxbw        m2,     [r1]     ; v_leftColumn
+    pmovzxbw        m1,     [r3]     ; v_topRow
+    pmovzxbw        m2,     [r2]     ; v_leftColumn
 
-    movd            m3,     [r0 + 8] ; topRight   = above[8];
-    movd            m4,     [r1 + 8] ; bottomLeft = left[8];
+    movd            m3,     [r3 + 8] ; topRight   = above[8];
+    movd            m4,     [r2 + 8] ; bottomLeft = left[8];
 
     pshufb          m3,     m0
     pshufb          m4,     m0
@@ -491,8 +493,8 @@ cglobal intra_pred_planar8, 4,4,7, above, left, dst, dstStride
     psraw           m5,     4
     packuswb        m5,     m5
 
-    movh            [r2],   m5
-    lea             r2,     [r2 + r3]
+    movh            [r0],   m5
+    lea             r0,     [r0 + r1]
 
 %endmacro
 
@@ -508,20 +510,21 @@ cglobal intra_pred_planar8, 4,4,7, above, left, dst, dstStride
     RET
 
 
-;----------------------------------------------------------------------------------------
-; void intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-;----------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
-
+cglobal intra_pred_planar16, 4,6,8
+    inc             r2
+    inc             r3
     pxor            m0,         m0
-    pmovzxbw        m1,         [r0]       ; topRow[0-7]
-    pmovzxbw        m2,         [r0 + 8]   ; topRow[8-15]
+    pmovzxbw        m1,         [r3]       ; topRow[0-7]
+    pmovzxbw        m2,         [r3 + 8]   ; topRow[8-15]
 
-    movd            m3,         [r1 + 16]
+    movd            m3,         [r2 + 16]
     pshufb          m3,         m0
     punpcklbw       m3,         m0         ; v_bottomLeft = left[16]
-    movzx           r4d, byte   [r0 + 16]  ; topRight     = above[16]
+    movzx           r4d, byte   [r3 + 16]  ; topRight     = above[16]
 
     psubw           m4,         m3, m1     ; v_bottomRow[0]
     psubw           m5,         m3, m2     ; v_bottomRow[1]
@@ -530,17 +533,17 @@ cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
     psllw           m2,         4
 
 %macro PRED_PLANAR_ROW16 1
-    movzx           r5d, byte   [r1 + %1]
+    movzx           r5d, byte   [r2 + %1]
     add             r5d,        r5d
     lea             r5d,        [r5d * 8 + 16]
     movd            m3,         r5d
     pshuflw         m3,         m3, 0
     pshufd          m3,         m3, 0      ; horPred
 
-    movzx           r5d, byte   [r1 + %1]
-    mov             r0d,        r4d
-    sub             r0d,        r5d
-    movd            m6,         r0d
+    movzx           r5d, byte   [r2 + %1]
+    mov             r3d,        r4d
+    sub             r3d,        r5d
+    movd            m6,         r3d
     pshuflw         m6,         m6, 0
     pshufd          m6,         m6, 0
 
@@ -557,8 +560,8 @@ cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
     psraw           m3,         5
 
     packuswb        m7,         m3
-    movu            [r2],       m7
-    lea             r2,         [r2 + r3]
+    movu            [r0],       m7
+    lea             r0,         [r0 + r1]
 %endmacro
 
     PRED_PLANAR_ROW16 0
@@ -581,9 +584,9 @@ cglobal intra_pred_planar16, 4,6,8, above, left, dst, dstStride
     RET
 
 
-;----------------------------------------------------------------------------------------
-; void intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
-;----------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
 %if ARCH_X86_64 == 1
 cglobal intra_pred_planar32, 4,7,12
@@ -598,17 +601,18 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
   %define bottomRow2    [rsp + 2 * mmsize]
   %define bottomRow3    [rsp + 3 * mmsize]
 %endif
-
+    inc             r2
+    inc             r3
     pxor            m3,         m3
-    movd            m0,         [r1 + 32]
+    movd            m0,         [r2 + 32]
     pshufb          m0,         m3
     punpcklbw       m0,         m3          ; v_bottomLeft = left[32]
-    movzx           r4d, byte   [r0 + 32]   ; topRight     = above[32]
+    movzx           r4d, byte   [r3 + 32]   ; topRight     = above[32]
 
-    pmovzxbw        m1,         [r0 + 0]    ; topRow[0]
-    pmovzxbw        m2,         [r0 + 8]    ; topRow[1]
-    pmovzxbw        m3,         [r0 +16]    ; topRow[2]
-    pmovzxbw        m4,         [r0 +24]    ; topRow[3]
+    pmovzxbw        m1,         [r3 + 0]    ; topRow[0]
+    pmovzxbw        m2,         [r3 + 8]    ; topRow[1]
+    pmovzxbw        m3,         [r3 +16]    ; topRow[2]
+    pmovzxbw        m4,         [r3 +24]    ; topRow[3]
 
     psubw           m5,         m0, m1      ; v_bottomRow[0]
     psubw           m6,         m0, m2      ; v_bottomRow[1]
@@ -626,14 +630,14 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
     psllw           m4,         5
 
 %macro COMP_PRED_PLANAR_ROW 1
-    movzx           r5d,   byte [r1]
+    movzx           r5d,   byte [r2]
     shl             r5d,        5
     add             r5d,        32
     movd            m5,         r5d
     pshuflw         m5,         m5, 0
     pshufd          m5,         m5, 0      ; horPred
 
-    movzx           r5d,   byte [r1]
+    movzx           r5d,   byte [r2]
     mov             r6d,        r4d
     sub             r6d,        r5d
     movd            m6,         r6d
@@ -672,17 +676,17 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
     psraw           m6,         6
 
     packuswb        m7,         m6
-    movu            [r2 + %1],  m7
+    movu            [r0 + %1],  m7
 %endmacro
 
-    mov r0,         32
+    mov r3,         32
 .loop
     COMP_PRED_PLANAR_ROW 0
     COMP_PRED_PLANAR_ROW 16
-    inc             r1
-    lea             r2,         [r2 + r3]
+    inc             r2
+    lea             r0,         [r0 + r1]
 
-    dec             r0
+    dec             r3
     jnz .loop
 %undef COMP_PRED_PLANAR_ROW
 
@@ -1103,7 +1107,7 @@ cglobal intra_pred_ang4_18, 4,4,1
 ; void all_angs_pred_4x4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal all_angs_pred_4x4, 6, 6, 8 dest, above0, left0, above1, left1, bLuma
+cglobal all_angs_pred_4x4, 6, 6, 8
 
 ; mode 2
 
