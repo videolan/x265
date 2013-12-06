@@ -582,6 +582,9 @@ typedef struct x265_param
         int       bitrate;
 
         double    rateTolerance;
+        /* qComp sets the quantizer curve compression factor. It weights the frame 
+         * quantizer based on the complexity of residual (measured by lookahead). 
+         * Default value is 0.6. Increasing it to 1 will effectively generate CQP */
         double    qCompress;
         double    ipFactor;
         double    pbFactor;
