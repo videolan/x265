@@ -65,7 +65,7 @@ struct StatisticLog
     uint64_t cntIntraNxN;
     uint64_t cntSkipCu[4];
     uint64_t cntTotalCu[4];
-    uint64_t TotalCu;
+    uint64_t totalCu;
 
     StatisticLog()
     {

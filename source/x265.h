@@ -212,14 +212,6 @@ typedef enum
     X265_RC_CRF
 } X265_RC_METHODS;
 
-/*Level of Rate Distortion Optimization Allowed */
-typedef enum
-{
-    X265_NO_RDO_NO_RDOQ, /* Partial RDO during mode decision (only at each depth/mode), no RDO in quantization */
-    X265_NO_RDO,         /* Partial RDO during mode decision (only at each depth/mode), quantization RDO enabled */
-    X265_FULL_RDO        /* Full RD-based mode decision */
-} X265_RDO_LEVEL;
-
 /* Output statistics from encoder */
 typedef struct x265_stats
 {
@@ -581,12 +573,26 @@ typedef struct x265_param
          * bitrate is specified on the command line, ABR is implied. Default 0 */
         int       bitrate;
 
+        /* The degree of rate fluctuation that x265 tolerates. Rate tolerance is used 
+         * alongwith overflow (difference between actual and target bitrate), to adjust
+           qp. Default is 1.0 */
         double    rateTolerance;
+        
+        /* qComp sets the quantizer curve compression factor. It weights the frame 
+         * quantizer based on the complexity of residual (measured by lookahead). 
+         * Default value is 0.6. Increasing it to 1 will effectively generate CQP */
         double    qCompress;
+
+        /* QP offset between I/P and P/B frames */
         double    ipFactor;
         double    pbFactor;
+
+        /* Max QP difference between frames */
         int       qpStep;
-        double    rfConstant;                  ///< Constant rate factor (CRF)
+
+        /* Ratefactor constant: targets a certain constant "quality". 
+         * Acceptable values between 0 and 51 */
+        double    rfConstant;                  
 
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
