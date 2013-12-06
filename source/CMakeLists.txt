@@ -189,42 +189,42 @@ if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
 endif()
 
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
-add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
-                               $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
-target_link_libraries(x265-shared ${PLATFORM_LIBS})
-set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
-endif()
-if(UNIX AND NOT APPLE)
-    set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
-endif()
-# WIN32 builds static: x265-static.lib  shared: x265.dll + x265.lib (shim loader)
-# MINGW builds static: libx265-static.a shared: libx265.dll + libx265.dll.a
-# *NIX  builds static: libx265.a        shared: libx265.so
-
-if(X265_LATEST_TAG)
-    # shared library is not installed if a tag is not found
-    set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG} SOVERSION ${X265_BUILD})
-    install(TARGETS x265-shared
-            RUNTIME DESTINATION bin
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib)
-
-    # convert lists of link libraries into -lstdc++ -lm etc..
-    foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
-        set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
-    endforeach()
-    # Produce a pkg-config file for linking against the shared lib
-    configure_file("x265.pc.in" "x265.pc" @ONLY)
-    install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
 endif()
 install(TARGETS x265-static
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
+
+option(ENABLE_SHARED "Build shared library" ON)
+if(ENABLE_SHARED)
+    add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
+                                   $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+    target_link_libraries(x265-shared ${PLATFORM_LIBS})
+    set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
+    if(UNIX AND NOT APPLE)
+        set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
+    endif()
+    if(X265_LATEST_TAG)
+        # shared library is not installed if a tag is not found
+        set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG} SOVERSION ${X265_BUILD})
+        install(TARGETS x265-shared
+                RUNTIME DESTINATION bin
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib)
+
+        # convert lists of link libraries into -lstdc++ -lm etc..
+        foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
+            set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
+        endforeach()
+        # Produce a pkg-config file for linking against the shared lib
+        configure_file("x265.pc.in" "x265.pc" @ONLY)
+        install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
+                DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
+    endif()
+endif()
 
 if(NOT WIN32)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
@@ -251,13 +251,13 @@ if(ENABLE_CLI)
         set(GETOPT compat/getopt/getopt.c compat/getopt/getopt.h)
     endif(NOT HAVE_GETOPT_H)
 
-if(XCODE)
-    add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h
-                       $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
-else()
-    add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h)
-    target_link_libraries(cli x265-static ${PLATFORM_LIBS})
-endif()
+    if(XCODE)
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h
+                           $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
+    else()
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h)
+        target_link_libraries(cli x265-static ${PLATFORM_LIBS})
+    endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 
     install(TARGETS cli DESTINATION bin)
@@ -265,9 +265,9 @@ endif(ENABLE_CLI)
 
 # Test applications
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
-if(ENABLE_TESTS)
+if(ENABLE_TESTS AND NOT XCODE)
     if(ENABLE_ASSEMBLY)
         add_definitions(-DENABLE_ASSEMBLY=1)
     endif(ENABLE_ASSEMBLY)
     add_subdirectory(test)
-endif(ENABLE_TESTS)
+endif()
