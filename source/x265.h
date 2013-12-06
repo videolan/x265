@@ -590,10 +590,17 @@ typedef struct x265_param
          * quantizer based on the complexity of residual (measured by lookahead). 
          * Default value is 0.6. Increasing it to 1 will effectively generate CQP */
         double    qCompress;
+
+        /* QP offset between I/P and P/B frames */
         double    ipFactor;
         double    pbFactor;
+
+        /* Max QP difference between frames */
         int       qpStep;
-        double    rfConstant;                  ///< Constant rate factor (CRF)
+
+        /* Ratefactor constant: targets a certain constant "quality". 
+         * Acceptable values between 0 and 51 */
+        double    rfConstant;                  
 
         int       aqMode;                      ///< Adaptive QP (AQ)
         double    aqStrength;
