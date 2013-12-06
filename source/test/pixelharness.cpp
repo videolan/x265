@@ -640,6 +640,11 @@ bool PixelHarness::check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt)
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
 
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
+
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
@@ -647,11 +652,18 @@ bool PixelHarness::check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt)
         ref(ref_dest, 64, pbuf1 + j, sbuf1 + j, STRIDE, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
-
+        }
         j += INCR;
     }
 
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
     return true;
 }
 
@@ -1185,8 +1197,15 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 
     if (opt.luma_add_ps[part])
     {
+#if HIGH_BIT_DEPTH
+        int old_depth = X265_DEPTH;
+        X265_DEPTH = 10;
+#endif
         HEADER("luma_add_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
     }
 
     for (int i = 0; i < X265_CSP_COUNT; i++)
