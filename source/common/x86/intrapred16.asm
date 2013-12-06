@@ -28,6 +28,7 @@ SECTION_RODATA 32
 
 SECTION .text
 
+cextern pw_1
 cextern pw_4096
 
 
@@ -96,5 +97,86 @@ cglobal intra_pred_dc4, 4,6,2
 
 .end:
 
+    RET
+
+;-------------------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc8, 4, 7, 2
+    mov             r4d,           r5m
+    add             r2,            2
+    add             r3,            2
+    add             r1,            r1
+    movu            m0,            [r3]
+    movu            m1,            [r2]
+
+    paddw           m0,            m1
+    movhlps         m1,            m0
+    paddw           m0,            m1
+    phaddw          m0,            m0
+    pmaddwd         m0,            [pw_1]
+
+    movd            r5d,           m0
+    add             r5d,           8
+    shr             r5d,           4              ; sum = sum / 16
+    movd            m1,            r5d
+    pshuflw         m1,            m1, 0          ; m1 = word [dc_val ...]
+    pshufd          m1,            m1, 0
+
+    test            r4d,           r4d
+
+    ; store DC 8x8
+    mov             r6,            r0
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + r1 * 2], m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0 + r1],     m1
+    movu            [r0 + r1 * 2], m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0 + r1],     m1
+    movu            [r0 + r1 * 2], m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0 + r1],     m1
+
+    ; Do DC Filter
+    jz              .end
+    lea             r4d,           [r5d * 2 + 2]  ; r4d = DC * 2 + 2
+    add             r5d,           r4d            ; r5d = DC * 3 + 2
+    movd            m1,            r5d
+    pshuflw         m1,            m1, 0          ; m1 = pixDCx3
+    pshufd          m1,            m1, 0
+
+    ; filter top
+    movu            m0,            [r3]
+    paddw           m0,            m1
+    psraw           m0,            2
+    movu            [r6],          m0
+
+    ; filter top-left
+    movzx           r3d, word      [r3]
+    add             r4d,           r3d
+    movzx           r3d, word      [r2]
+    add             r3d,           r4d
+    shr             r3d,           2
+    mov             [r6],          r3w
+
+    ; filter left
+    add             r6,            r1
+    movu            m0,            [r2 + 2]
+    paddw           m0,            m1
+    psraw           m0,            2
+    pextrw          [r6],          m0, 0
+    pextrw          [r6 + r1],     m0, 1
+    pextrw          [r6 + r1 * 2], m0, 2
+    lea             r6,            [r6 + r1 * 2]
+    pextrw          [r6 + r1],     m0, 3
+    pextrw          [r6 + r1 * 2], m0, 4
+    lea             r6,            [r6 + r1 * 2]
+    pextrw          [r6 + r1],     m0, 5
+    pextrw          [r6 + r1 * 2], m0, 6
+
+.end
     RET
 
