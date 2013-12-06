@@ -889,10 +889,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.dequant_normal = x265_dequant_normal_sse4;
         p.weight_pp = x265_weight_pp_sse4;
         p.weight_sp = x265_weight_sp_sse4;
-        p.intra_pred_planar[BLOCK_4x4] = x265_intra_pred_planar4_sse4;
-        p.intra_pred_planar[BLOCK_8x8] = x265_intra_pred_planar8_sse4;
-        p.intra_pred_planar[BLOCK_16x16] = x265_intra_pred_planar16_sse4;
-        p.intra_pred_planar[BLOCK_32x32] = x265_intra_pred_planar32_sse4;
+        p.intra_pred[BLOCK_4x4][0] = x265_intra_pred_planar4_sse4;
+        p.intra_pred[BLOCK_8x8][0] = x265_intra_pred_planar8_sse4;
+        p.intra_pred[BLOCK_16x16][0] = x265_intra_pred_planar16_sse4;
+        p.intra_pred[BLOCK_32x32][0] = x265_intra_pred_planar32_sse4;
 
         p.intra_pred_allangs[BLOCK_4x4] = x265_all_angs_pred_4x4_sse4;
 

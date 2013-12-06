@@ -159,7 +159,7 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t strid
     // Create the prediction
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar[log2BlkSize - 2](refAbv + 1, refLft + 1, dst, stride);
+        primitives.intra_pred[log2BlkSize - 2][PLANAR_IDX](dst, stride, refLft, refAbv, dirMode, 0);
     }
     else
     {
@@ -186,7 +186,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
     // get starting pixel in block
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar[log2BlkSize](refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride);
+        primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
     }
     else
     {

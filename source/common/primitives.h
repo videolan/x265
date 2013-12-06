@@ -250,7 +250,6 @@ struct EncoderPrimitives
     pixeladd_ss_t   pixeladd_ss;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
 
-    intra_planar_t  intra_pred_planar[NUM_SQUARE_BLOCKS-1]; // no 64x64 intra predictions
     intra_pred_t    intra_pred[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE];
     intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS-1];
     scale_t         scale1D_128to64;
