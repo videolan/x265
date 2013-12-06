@@ -580,7 +580,7 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
         primitives.intra_pred[nLog2SizeMinus2][DC_IDX](predictions, cuSize, left0, above0, 0, (cuSize <= 16));
         pixel *above = (cuSize >= 8) ? above1 : above0;
         pixel *left  = (cuSize >= 8) ? left1 : left0;
-        primitives.intra_pred_planar[nLog2SizeMinus2](above + 1, left + 1, predictions + predsize, cuSize);
+        primitives.intra_pred[nLog2SizeMinus2][PLANAR_IDX](predictions + predsize, cuSize, left, above, 0, 0);
         primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
 
         // calculate 35 satd costs, keep least cost
