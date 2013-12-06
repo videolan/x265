@@ -109,12 +109,12 @@ source_group(Intrinsics FILES ${VEC_PRIMITIVES})
 if(ENABLE_ASSEMBLY)
     set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h)
     set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm ssd-a.asm mc-a.asm
-               mc-a2.asm ipfilter8.asm pixel-util8.asm blockcopy8.asm intrapred8.asm
+               mc-a2.asm ipfilter8.asm pixel-util8.asm blockcopy8.asm
                pixeladd8.asm dct8.asm)
     if(HIGH_BIT_DEPTH)
-        set(A_SRCS ${A_SRCS} sad16-a.asm)
+        set(A_SRCS ${A_SRCS} sad16-a.asm intrapred16.asm)
     else()
-        set(A_SRCS ${A_SRCS} sad-a.asm)
+        set(A_SRCS ${A_SRCS} sad-a.asm intrapred8.asm)
     endif()
 
     if (NOT X64)
