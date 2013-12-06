@@ -364,7 +364,7 @@ void TEncCu::compressCU(TComDataCU* cu)
         part = m_bestCU[0]->getDepth(i);
         do
         {
-            m_log->TotalCu++;
+            m_log->totalCu++;
             int next = m_bestCU[0]->getTotalNumPart() >> (part * 2);
             if (part == g_maxCUDepth - 1 && m_bestCU[0]->getPartitionSize(i) != SIZE_2Nx2N)
             {
@@ -407,7 +407,7 @@ void TEncCu::compressCU(TComDataCU* cu)
             }
             else
             {
-                m_log->TotalCu++;
+                m_log->totalCu++;
                 if (cu->getPredictionMode(0) == MODE_INTER)
                 {
                     m_log->cntInter[part]++;

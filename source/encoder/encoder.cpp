@@ -400,7 +400,7 @@ void Encoder::printSummary()
                 {
                     StatisticLog& enclog = m_frameEncoder[j].m_rows[row].m_cuCoder.m_sliceTypeLog[sliceType];
                     if (depth == 0)
-                        finalLog.TotalCu += enclog.TotalCu;
+                        finalLog.totalCu += enclog.totalCu;
                     finalLog.cntIntra[depth] += enclog.cntIntra[depth];
                     for (int m = 0; m < INTER_MODES; m++)
                     {
@@ -446,7 +446,7 @@ void Encoder::printSummary()
                 }
             }
 
-            if (finalLog.TotalCu == 0)
+            if (finalLog.totalCu == 0)
             {
                 encCu = 0;
             }
@@ -454,12 +454,12 @@ void Encoder::printSummary()
             {
                 if (sliceType == I_SLICE)
                 {
-                    cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.TotalCu;
-                    cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.TotalCu;
+                    cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.totalCu;
+                    cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.totalCu;
                 }
                 else
                 {
-                    encCu = ((finalLog.cntIntra[depth] + finalLog.cntInter[depth]) * 100) / finalLog.TotalCu;
+                    encCu = ((finalLog.cntIntra[depth] + finalLog.cntInter[depth]) * 100) / finalLog.totalCu;
                 }
             }
             if (sliceType == I_SLICE)
