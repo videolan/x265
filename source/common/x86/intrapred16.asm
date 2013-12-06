@@ -180,3 +180,140 @@ cglobal intra_pred_dc8, 4, 7, 2
 .end
     RET
 
+
+;-------------------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc16, 4, 7, 4
+    mov             r4d,                 r5m
+    add             r2,                  2
+    add             r3,                  2
+    add             r1,                  r1
+    movu            m0,                  [r3]
+    movu            m1,                  [r3 + 16]
+    movu            m2,                  [r2]
+    movu            m3,                  [r2 + 16]
+
+    paddw           m0,                  m1
+    paddw           m2,                  m3
+    paddw           m0,                  m2
+    movhlps         m1,                  m0
+    paddw           m0,                  m1
+    phaddw          m0,                  m0
+    pmaddwd         m0,                  [pw_1]
+
+    movd            r5d,                 m0
+    add             r5d,                 16
+    shr             r5d,                 5     ; sum = sum / 16
+    movd            m1,                  r5d
+    pshuflw         m1,                  m1, 0 ; m1 = word [dc_val ...]
+    pshufd          m1,                  m1, 0
+
+    test            r4d,                 r4d
+
+    ; store DC 16x16
+    mov             r6,                  r0
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+    lea             r0,                  [r0 + r1 * 2]
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+    lea             r0,                  [r0 + r1 * 2]
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+    lea             r0,                  [r0 + r1 * 2]
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+    lea             r0,                  [r0 + r1 * 2]
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+    lea             r0,                  [r0 + r1 * 2]
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+    lea             r0,                  [r0 + r1 * 2]
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+    lea             r0,                  [r0 + r1 * 2]
+    movu            [r0],                m1
+    movu            [r0 + 16],           m1
+    movu            [r0 + r1],           m1
+    movu            [r0 + 16 + r1],      m1
+
+    ; Do DC Filter
+    jz              .end
+    lea             r4d,                 [r5d * 2 + 2]  ; r4d = DC * 2 + 2
+    add             r5d,                 r4d            ; r5d = DC * 3 + 2
+    movd            m1,                  r5d
+    pshuflw         m1,                  m1, 0          ; m1 = pixDCx3
+    pshufd          m1,                  m1, 0
+
+    ; filter top
+    movu            m2,                  [r3]
+    paddw           m2,                  m1
+    psraw           m2,                  2
+    movu            [r6],                m2
+    movu            m3,                  [r3 + 16]
+    paddw           m3,                  m1
+    psraw           m3,                  2
+    movu            [r6 + 16],           m3
+
+    ; filter top-left
+    movzx           r3d, word            [r3]
+    add             r4d,                 r3d
+    movzx           r3d, word            [r2]
+    add             r3d,                 r4d
+    shr             r3d,                 2
+    mov             [r6],                r3w
+
+    ; filter left
+    add             r6,                  r1
+    movu            m2,                  [r2 + 2]
+    paddw           m2,                  m1
+    psraw           m2,                  2
+
+    pextrw          [r6],                m2, 0
+    pextrw          [r6 + r1],           m2, 1
+    lea             r6,                  [r6 + r1 * 2]
+    pextrw          [r6],                m2, 2
+    pextrw          [r6 + r1],           m2, 3
+    lea             r6,                  [r6 + r1 * 2]
+    pextrw          [r6],                m2, 4
+    pextrw          [r6 + r1],           m2, 5
+    lea             r6,                  [r6 + r1 * 2]
+    pextrw          [r6],                m2, 6
+    pextrw          [r6 + r1],           m2, 7
+
+    lea             r6,                  [r6 + r1 * 2]
+    movu            m3,                  [r2 + 18]
+    paddw           m3,                  m1
+    psraw           m3,                  2
+
+    pextrw          [r6],                m3, 0
+    pextrw          [r6 + r1],           m3, 1
+    lea             r6,                  [r6 + r1 * 2]
+    pextrw          [r6],                m3, 2
+    pextrw          [r6 + r1],           m3, 3
+    lea             r6,                  [r6 + r1 * 2]
+    pextrw          [r6],                m3, 4
+    pextrw          [r6 + r1],           m3, 5
+    lea             r6,                  [r6 + r1 * 2]
+    pextrw          [r6],                m3, 6
+
+.end
+    RET
+
