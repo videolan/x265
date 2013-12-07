@@ -1,8 +1,4 @@
 # vim: syntax=cmake
-if(ENABLE_ASSEMBLY)
-    add_definitions(-DENABLE_ASSEMBLY=1)
-endif(ENABLE_ASSEMBLY)
-
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/ContextTables.h
@@ -107,6 +103,7 @@ set(VEC_PRIMITIVES vec/vec-primitives.cpp ${PRIMITIVES})
 source_group(Intrinsics FILES ${VEC_PRIMITIVES})
 
 if(ENABLE_ASSEMBLY)
+    set_source_files_properties(primitives.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
     set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h)
     set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm ssd-a.asm mc-a.asm
                mc-a2.asm ipfilter8.asm pixel-util8.asm blockcopy8.asm

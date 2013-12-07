@@ -140,7 +140,6 @@ int main(int argc, char *argv[])
             }
         }
 
-#if ENABLE_ASSEMBLY
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, test_arch[i].flag);
@@ -155,8 +154,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-
-#endif // if ENABLE_ASSEMBLY
     }
 
     /******************* Cycle count for all primitives **********************/
@@ -164,9 +161,7 @@ int main(int argc, char *argv[])
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
     Setup_Instrinsic_Primitives(optprim, cpuid);
-#if ENABLE_ASSEMBLY
     Setup_Assembly_Primitives(optprim, cpuid);
-#endif
 
     printf("\nTest performance improvement with full optimizations\n");
 
