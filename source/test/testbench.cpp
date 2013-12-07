@@ -126,10 +126,9 @@ int main(int argc, char *argv[])
         if (cpuid_user == i)
             break;
 
-#if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
-        Setup_Vector_Primitives(vecprim, test_arch[i].flag);
+        Setup_Instrinsic_Primitives(vecprim, test_arch[i].flag);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -141,9 +140,7 @@ int main(int argc, char *argv[])
             }
         }
 
-#endif // if ENABLE_VECTOR_PRIMITIVES
-
-#if ENABLE_ASM_PRIMITIVES
+#if ENABLE_ASSEMBLY
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, test_arch[i].flag);
@@ -159,17 +156,15 @@ int main(int argc, char *argv[])
             }
         }
 
-#endif // if ENABLE_ASM_PRIMITIVES
+#endif // if ENABLE_ASSEMBLY
     }
 
     /******************* Cycle count for all primitives **********************/
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
-#if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(optprim, cpuid);
-#endif
-#if ENABLE_ASM_PRIMITIVES
+    Setup_Instrinsic_Primitives(optprim, cpuid);
+#if ENABLE_ASSEMBLY
     Setup_Assembly_Primitives(optprim, cpuid);
 #endif
 
