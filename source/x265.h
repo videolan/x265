@@ -583,22 +583,43 @@ typedef struct x265_param
          * Default value is 0.6. Increasing it to 1 will effectively generate CQP */
         double    qCompress;
 
-        /* QP offset between I/P and P/B frames */
+        /* QP offset between I/P and P/B frames. Default ipfactor: 1.4
+         *  Default pbFactor: 1.3 */
         double    ipFactor;
         double    pbFactor;
 
-        /* Max QP difference between frames */
+        /* Max QP difference between frames. Default: 4 */
         int       qpStep;
 
         /* Ratefactor constant: targets a certain constant "quality". 
-         * Acceptable values between 0 and 51 */
+         * Acceptable values between 0 and 51. Default value: 28 */
         double    rfConstant;                  
 
-        int       aqMode;                      ///< Adaptive QP (AQ)
+        /* Enable adaptive quantization. This mode distributes available bits between all 
+         * macroblocks of a frame, assigning more bits to low complexity areas. Turning 
+         * this ON will usually affect PSNR negatively, however SSIM and visual quality
+         * generally improves. Default: OFF (0) */
+        int       aqMode;
+
+        /* Sets the strength of AQ bias towards low detail macroblocks. Valid only if
+         * AQ is enabled. Default value: 1.0. Acceptable values between 0.0 and 3.0 */
         double    aqStrength;
+
+        /* Sets the maximum rate the VBV buffer should be assumed to refill at 
+         * Default is zero */
         int       vbvMaxBitrate;
+
+        /* Sets the size of the VBV buffer in kilobits. Default is zero */
         int       vbvBufferSize;
+
+        /* Sets how full the VBV buffer must be before playback starts. If it is less than 
+         * 1, then the initial fill is vbv-init * vbvBufferSize. Otherwise, it is 
+         * interpreted as the initial fill in kbits. Default is 0.9 */
         double    vbvBufferInit;
+
+        /* Enable CUTree ratecontrol. This keeps track of the CUs that propagate temporally 
+         * across frames and assigns more bits to these CUs. Improves encode efficiency.
+         * Default: OFF (0) */
         int       cuTree;
     } rc;
 } x265_param;
