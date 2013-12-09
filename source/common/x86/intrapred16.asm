@@ -41,6 +41,7 @@ cextern pw_1
 cextern pd_16
 cextern pd_32
 cextern pw_4096
+cextern multi_2Row
 
 
 ;-------------------------------------------------------------------------------------------------------
@@ -109,6 +110,8 @@ cglobal intra_pred_dc4, 4,6,2
 .end:
 
     RET
+
+
 
 ;-------------------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
@@ -406,7 +409,71 @@ cglobal intra_pred_dc32, 4, 5, 6
     movu            [r0 + 48],           m0
     add             r0,                  r1
 %endrep
+    RET
 
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_planar4, 4,7,5
+    add             r2,         2
+    add             r3,         2
+    add             r1,         r1
+    movh            m0,         [r3]      ; topRow[i] = above[i];
+    punpcklqdq      m0,         m0
+
+    pxor            m1,         m1
+    movd            m2,         [r2 + 8]  ; bottomLeft = left[4]
+    movzx           r6d, word   [r3 + 8]  ; topRight   = above[4];
+    pshuflw         m2,         m2, 0
+    pshufd          m2,         m2, 0
+
+    psubw           m2,         m0        ; bottomRow[i] = bottomLeft - topRow[i]
+    psllw           m0,         2
+    punpcklqdq      m3,         m2, m1
+    psubw           m0,         m3
+    paddw           m2,         m2
+
+%macro COMP_PRED_PLANAR_2ROW 1
+    movzx           r4d, word   [r2 + %1]
+    lea             r4d,        [r4d * 4 + 4]
+    movd            m3,         r4d
+    pshuflw         m3,         m3, 0
+
+    movzx           r4d, word   [r2 + %1 + 2]
+    lea             r4d,        [r4d * 4 + 4]
+    movd            m4,         r4d
+    pshuflw         m4,         m4, 0
+    punpcklqdq      m3,         m4        ; horPred
+
+    movzx           r4d, word   [r2 + %1]
+    mov             r5d,        r6d
+    sub             r5d,        r4d
+    movd            m4,         r5d
+    pshuflw         m4,         m4, 0
+
+    movzx           r4d, word   [r2 + %1 + 2]
+    mov             r5d,        r6d
+    sub             r5d,        r4d
+    movd            m1,         r5d
+    pshuflw         m1,         m1, 0
+    punpcklqdq      m4,         m1        ; rightColumnN
+
+    pmullw          m4,         [multi_2Row]
+    paddw           m3,         m4
+    paddw           m0,         m2
+    paddw           m3,         m0
+    psraw           m3,         3
+
+    movh            [r0],       m3
+    pshufd          m3,         m3, 0xAE
+    movh            [r0 + r1],  m3
+    lea             r0,         [r0 + 2 * r1]
+%endmacro
+
+    COMP_PRED_PLANAR_2ROW 0
+    COMP_PRED_PLANAR_2ROW 4
+%undef COMP_PRED_PLANAR_2ROW
     RET
 
 ;-----------------------------------------------------------------------------
