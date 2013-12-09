@@ -1634,7 +1634,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             }
 
             // PLANAR
-            primitives.intra_pred[log2SizeMinus2][PLANAR_IDX](tmp, scaleStride,leftPlanar, abovePlanar, 0, 0);
+            primitives.intra_pred[log2SizeMinus2][PLANAR_IDX](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
             modeCosts[PLANAR_IDX] = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
 
             // Transpose NxN
