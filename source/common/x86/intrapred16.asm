@@ -2,6 +2,7 @@
 ;* Copyright (C) 2013 x265 project
 ;*
 ;* Authors: Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>
+;*          Yuvaraj Venkatesh <yuvaraj@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -26,9 +27,18 @@
 
 SECTION_RODATA 32
 
+const ang_table
+%assign x 0
+%rep 32
+    times 8 dw (32-x), x
+%assign x x+1
+%endrep
+
+
 SECTION .text
 
 cextern pw_1
+cextern pd_16
 cextern pd_32
 cextern pw_4096
 
@@ -397,4 +407,23 @@ cglobal intra_pred_dc32, 4, 5, 6
     add             r0,                  r1
 %endrep
 
+    RET
+
+;-----------------------------------------------------------------------------
+; void intraPredAng(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal intra_pred_ang4_2, 3,3,4
+    cmp         r4m,           byte 34
+    cmove       r2,            r3mp
+    add         r1,            r1
+    movu        m0,            [r2 + 4]
+    movh        [r0],          m0
+    palignr     m1,            m0, 2
+    movh        [r0 + r1],     m1
+    palignr     m2,            m0, 4
+    movh        [r0 + r1 * 2], m2
+    lea         r1,            [r1 * 3]
+    psrldq      m0,            6
+    movh        [r0 + r1],     m0
     RET
