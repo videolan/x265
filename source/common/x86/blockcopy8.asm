@@ -36,19 +36,33 @@ SECTION .text
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal blockcopy_pp_2x4, 4, 7, 0, dest, deststride, src, srcstride
+%if HIGH_BIT_DEPTH
+    add    r1,     r1
+    add    r3,     r3
+    mov    r4d,    [r2]
+    mov    r5d,    [r2 + r3]
+    lea    r2,     [r2 + r3 * 2]
+    mov    r6d,    [r2]
+    mov    r3d,    [r2 + r3]
 
-mov     r4w,     [r2]
-mov     r5w,     [r2 + r3]
-mov     r6w,     [r2 + 2 * r3]
-lea      r3,     [r3 + r3 * 2]
-mov      r3w,    [r2 + r3]
+    mov    [r0],         r4d
+    mov    [r0 + r1],    r5d
+    lea    r0,           [r0 + 2 * r1]
+    mov    [r0],         r6d
+    mov    [r0 + r1],    r3d
+%else
+    mov    r4w,    [r2]
+    mov    r5w,    [r2 + r3]
+    lea    r2,     [r2 + r3 * 2]
+    mov    r6w,    [r2]
+    mov    r3w,    [r2 + r3]
 
-mov     [r0],            r4w
-mov     [r0 + r1],       r5w
-mov     [r0 + 2 * r1],   r6w
-lea      r1,              [r1 + 2 * r1]
-mov     [r0 + r1],       r3w
-
+    mov    [r0],         r4w
+    mov    [r0 + r1],    r5w
+    lea    r0,           [r0 + 2 * r1]
+    mov    [r0],         r6w
+    mov    [r0 + r1],    r3w
+%endif
 RET
 
 ;-----------------------------------------------------------------------------
@@ -56,233 +70,344 @@ RET
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal blockcopy_pp_2x8, 4, 7, 0, dest, deststride, src, srcstride
+%if HIGH_BIT_DEPTH
+    add    r1,     r1
+    add    r3,     r3
+    mov    r4d,    [r2]
+    mov    r5d,    [r2 + r3]
+    lea    r2,     [r2 + r3 * 2]
+    mov    r6d,    [r2]
 
-mov     r4w,     [r2]
-mov     r5w,     [r2 + r3]
-mov     r6w,     [r2 + 2 * r3]
+    mov    [r0],         r4d
+    mov    [r0 + r1],    r5d
+    lea    r0,           [r0 + 2 * r1]
+    mov    [r0],         r6d
+    mov    r4d,          [r2 + r3]
+    mov    [r0 + r1],    r4d
 
-mov     [r0],            r4w
-mov     [r0 + r1],       r5w
-mov     [r0 + 2 * r1],   r6w
+    lea    r2,     [r2 + r3 * 2]
+    lea    r0,     [r0 + 2 * r1]
+    mov    r4d,    [r2]
+    mov    r5d,    [r2 + r3]
+    lea    r2,     [r2 + r3 * 2]
+    mov    r6d,    [r2]
+    mov    r3d,    [r2 + r3]
 
-lea     r0,             [r0 + 2 * r1]
-lea     r2,             [r2 + 2 * r3]
+    mov    [r0],         r4d
+    mov    [r0 + r1],    r5d
+    lea    r0,           [r0 + 2 * r1]
+    mov    [r0],         r6d
+    mov    [r0 + r1],    r3d
+%else
+    mov     r4w,     [r2]
+    mov     r5w,     [r2 + r3]
+    mov     r6w,     [r2 + 2 * r3]
 
-mov     r4w,             [r2 + r3]
-mov     r5w,             [r2 + 2 * r3]
+    mov     [r0],            r4w
+    mov     [r0 + r1],       r5w
+    mov     [r0 + 2 * r1],   r6w
 
-mov     [r0 + r1],       r4w
-mov     [r0 + 2 * r1],   r5w
+    lea     r0,             [r0 + 2 * r1]
+    lea     r2,             [r2 + 2 * r3]
 
-lea     r0,              [r0 + 2 * r1]
-lea     r2,              [r2 + 2 * r3]
+    mov     r4w,             [r2 + r3]
+    mov     r5w,             [r2 + 2 * r3]
 
-mov     r4w,             [r2 + r3]
-mov     r5w,             [r2 + 2 * r3]
+    mov     [r0 + r1],       r4w
+    mov     [r0 + 2 * r1],   r5w
 
-mov     [r0 + r1],       r4w
-mov     [r0 + 2 * r1],   r5w
+    lea     r0,              [r0 + 2 * r1]
+    lea     r2,              [r2 + 2 * r3]
 
-lea     r0,              [r0 + 2 * r1]
-lea     r2,              [r2 + 2 * r3]
+    mov     r4w,             [r2 + r3]
+    mov     r5w,             [r2 + 2 * r3]
 
-mov     r4w,             [r2 + r3]
-mov     [r0 + r1],       r4w
-RET
+    mov     [r0 + r1],       r4w
+    mov     [r0 + 2 * r1],   r5w
+
+    lea     r0,              [r0 + 2 * r1]
+    lea     r2,              [r2 + 2 * r3]
+
+    mov     r4w,             [r2 + r3]
+    mov     [r0 + r1],       r4w
+%endif
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_4x2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_4x2, 4, 6, 2, dest, deststride, src, srcstride
+%if HIGH_BIT_DEPTH
+cglobal blockcopy_pp_4x2, 4, 4, 2, dest, deststride, src, srcstride
+    add     r1,           r1
+    add     r3,           r3
+    movh    m0,           [r2]
+    movh    m1,           [r2 + r3]
+    movh    [r0],         m0
+    movh    [r0 + r1],    m1
+%else
+cglobal blockcopy_pp_4x2, 4, 6, 0, dest, deststride, src, srcstride
+    mov     r4d,     [r2]
+    mov     r5d,     [r2 + r3]
 
-mov     r4d,     [r2]
-mov     r5d,     [r2 + r3]
-
-mov     [r0],            r4d
-mov     [r0 + r1],       r5d
-
-RET
+    mov     [r0],            r4d
+    mov     [r0 + r1],       r5d
+%endif
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_4x4(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal blockcopy_pp_4x4, 4, 4, 4, dest, deststride, src, srcstride
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
+    movh    m0,    [r2]
+    movh    m1,    [r2 + r3]
+    lea     r2,    [r2 + r3 * 2]
+    movh    m2,    [r2]
+    movh    m3,    [r2 + r3]
 
-movd     m0,     [r2]
-movd     m1,     [r2 + r3]
-movd     m2,     [r2 + 2 * r3]
-lea      r3,     [r3 + r3 * 2]
-movd     m3,     [r2 + r3]
+    movh    [r0],         m0
+    movh    [r0 + r1],    m1
+    lea     r0,           [r0 + 2 * r1]
+    movh    [r0],         m2
+    movh    [r0 + r1],    m3
+%else
+    movd     m0,     [r2]
+    movd     m1,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    lea      r3,     [r3 + r3 * 2]
+    movd     m3,     [r2 + r3]
 
-movd     [r0],            m0
-movd     [r0 + r1],       m1
-movd     [r0 + 2 * r1],   m2
-lea      r1,              [r1 + 2 * r1]
-movd     [r0 + r1],       m3
-
-RET
-
-;-----------------------------------------------------------------------------
-; void blockcopy_pp_4x8(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
-;-----------------------------------------------------------------------------
-INIT_XMM sse2
-cglobal blockcopy_pp_4x8, 4, 6, 8, dest, deststride, src, srcstride
-
-movd     m0,     [r2]
-movd     m1,     [r2 + r3]
-movd     m2,     [r2 + 2 * r3]
-lea      r4,     [r2 + 2 * r3]
-movd     m3,     [r4 + r3]
-
-movd     m4,     [r4 + 2 * r3]
-lea      r4,     [r4 + 2 * r3]
-movd     m5,     [r4 + r3]
-movd     m6,     [r4 + 2 * r3]
-lea      r4,     [r4 + 2 * r3]
-movd     m7,     [r4 + r3]
-
-movd     [r0],                m0
-movd     [r0 + r1],           m1
-movd     [r0 + 2 * r1],       m2
-lea      r5,                  [r0 + 2 * r1]
-movd     [r5 + r1],           m3
-
-movd     [r5 + 2 * r1],        m4
-lea      r5,                   [r5 + 2 * r1]
-movd     [r5 + r1],            m5
-movd     [r5 + 2 * r1],        m6
-lea      r5,                   [r5 + 2 * r1]
-movd     [r5 + r1],            m7
-
-RET
+    movd     [r0],            m0
+    movd     [r0 + r1],       m1
+    movd     [r0 + 2 * r1],   m2
+    lea      r1,              [r1 + 2 * r1]
+    movd     [r0 + r1],       m3
+%endif
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W4_H8 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 7, 8, dest, deststride, src, srcstride
+cglobal blockcopy_pp_%1x%2, 4, 5, 4, dest, deststride, src, srcstride
+    mov    r4d,    %2/8
 
-
-mov         r4d,       %2
-
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
 .loop
-     movd     m0,     [r2]
-     movd     m1,     [r2 + r3]
-     movd     m2,     [r2 + 2 * r3]
-     lea      r5,     [r2 + 2 * r3]
-     movd     m3,     [r5 + r3]
+    movh    m0,    [r2]
+    movh    m1,    [r2 + r3]
+    lea     r2,    [r2 + r3 * 2]
+    movh    m2,    [r2]
+    movh    m3,    [r2 + r3]
 
-     movd     m4,     [r5 + 2 * r3]
-     lea      r5,     [r5 + 2 * r3]
-     movd     m5,     [r5 + r3]
-     movd     m6,     [r5 + 2 * r3]
-     lea      r5,     [r5 + 2 * r3]
-     movd     m7,     [r5 + r3]
+    movh    [r0],         m0
+    movh    [r0 + r1],    m1
+    lea     r0,           [r0 + 2 * r1]
+    movh    [r0],         m2
+    movh    [r0 + r1],    m3
 
-     movd     [r0],                m0
-     movd     [r0 + r1],           m1
-     movd     [r0 + 2 * r1],       m2
-     lea      r6,                  [r0 + 2 * r1]
-     movd     [r6 + r1],           m3
+    lea     r0,    [r0 + 2 * r1]
+    lea     r2,    [r2 + 2 * r3]
+    movh    m0,    [r2]
+    movh    m1,    [r2 + r3]
+    lea     r2,    [r2 + r3 * 2]
+    movh    m2,    [r2]
+    movh    m3,    [r2 + r3]
 
-     movd     [r6 + 2 * r1],       m4
-     lea      r6,                  [r6 + 2 * r1]
-     movd     [r6 + r1],           m5
-     movd     [r6 + 2 * r1],       m6
-     lea      r6,                  [r6 + 2 * r1]
-     movd     [r6 + r1],           m7
+    movh    [r0],         m0
+    movh    [r0 + r1],    m1
+    lea     r0,           [r0 + 2 * r1]
+    movh    [r0],         m2
+    movh    [r0 + r1],    m3
+    lea     r0,           [r0 + 2 * r1]
+    lea     r2,           [r2 + 2 * r3]
 
-    lea         r0,           [r0 + 8 * r1]
-    lea         r2,           [r2 + 8 * r3]
+    dec     r4d
+    jnz     .loop
+%else
+.loop
+    movd     m0,     [r2]
+    movd     m1,     [r2 + r3]
+    lea      r2,     [r2 + 2 * r3]
+    movd     m2,     [r2]
+    movd     m3,     [r2 + r3]
 
-    sub         r4d,           8
-    jnz        .loop
+    movd     [r0],                m0
+    movd     [r0 + r1],           m1
+    lea      r0,                  [r0 + 2 * r1]
+    movd     [r0],                m2
+    movd     [r0 + r1],           m3
 
-RET
+    lea       r0,     [r0 + 2 * r1]
+    lea       r2,     [r2 + 2 * r3]
+    movd     m0,     [r2]
+    movd     m1,     [r2 + r3]
+    lea      r2,     [r2 + 2 * r3]
+    movd     m2,     [r2]
+    movd     m3,     [r2 + r3]
+
+    movd     [r0],                m0
+    movd     [r0 + r1],           m1
+    lea      r0,                  [r0 + 2 * r1]
+    movd     [r0],                m2
+    movd     [r0 + r1],           m3
+
+    lea       r0,                  [r0 + 2 * r1]
+    lea       r2,                  [r2 + 2 * r3]
+
+    dec       r4d
+    jnz       .loop
+%endif
+    RET
 %endmacro
 
+BLOCKCOPY_PP_W4_H8 4, 8
 BLOCKCOPY_PP_W4_H8 4, 16
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_6x8(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
+%if HIGH_BIT_DEPTH
+cglobal blockcopy_pp_6x8, 4, 4, 8, dest, deststride, src, srcstride
+    add       r1,    r1
+    add       r3,    r3
+    movu      m0,    [r2]
+    movu      m1,    [r2 + r1]
+
+    pshufd    m2,      m0,      2
+    pshufd    m3,      m1,      2
+    movh      [r0],             m0
+    movd      [r0 + 8],         m2
+    movh      [r0 + r1],        m1
+    movd      [r0 + r1 + 8],    m3
+
+    lea       r0,    [r0 + 2 * r1]
+    lea       r2,    [r2 + 2 * r3]
+    movu      m0,    [r2]
+    movu      m1,    [r2 + r1]
+
+    pshufd    m2,      m0,      2
+    pshufd    m3,      m1,      2
+    movh      [r0],             m0
+    movd      [r0 + 8],         m2
+    movh      [r0 + r1],        m1
+    movd      [r0 + r1 + 8],    m3
+
+    lea       r0,    [r0 + 2 * r1]
+    lea       r2,    [r2 + 2 * r3]
+    movu      m0,    [r2]
+    movu      m1,    [r2 + r1]
+
+    pshufd    m2,      m0,      2
+    pshufd    m3,      m1,      2
+    movh      [r0],             m0
+    movd      [r0 + 8],         m2
+    movh      [r0 + r1],        m1
+    movd      [r0 + r1 + 8],    m3
+
+    lea       r0,    [r0 + 2 * r1]
+    lea       r2,    [r2 + 2 * r3]
+    movu      m0,    [r2]
+    movu      m1,    [r2 + r1]
+
+    pshufd    m2,      m0,      2
+    pshufd    m3,      m1,      2
+    movh      [r0],             m0
+    movd      [r0 + 8],         m2
+    movh      [r0 + r1],        m1
+    movd      [r0 + r1 + 8],    m3
+    RET
+%else
 cglobal blockcopy_pp_6x8, 4, 7, 8, dest, deststride, src, srcstride
 
-movd     m0,     [r2]
-movd     m1,     [r2 + r3]
-movd     m2,     [r2 + 2 * r3]
-lea      r5,     [r2 + 2 * r3]
-movd     m3,     [r5 + r3]
+    movd     m0,     [r2]
+    movd     m1,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    lea      r5,     [r2 + 2 * r3]
+    movd     m3,     [r5 + r3]
 
-movd     m4,     [r5 + 2 * r3]
-lea      r5,     [r5 + 2 * r3]
-movd     m5,     [r5 + r3]
-movd     m6,     [r5 + 2 * r3]
-lea      r5,     [r5 + 2 * r3]
-movd     m7,     [r5 + r3]
+    movd     m4,     [r5 + 2 * r3]
+    lea      r5,     [r5 + 2 * r3]
+    movd     m5,     [r5 + r3]
+    movd     m6,     [r5 + 2 * r3]
+    lea      r5,     [r5 + 2 * r3]
+    movd     m7,     [r5 + r3]
 
-movd     [r0],                m0
-movd     [r0 + r1],           m1
-movd     [r0 + 2 * r1],       m2
-lea      r6,                  [r0 + 2 * r1]
-movd     [r6 + r1],           m3
+    movd     [r0],                m0
+    movd     [r0 + r1],           m1
+    movd     [r0 + 2 * r1],       m2
+    lea      r6,                  [r0 + 2 * r1]
+    movd     [r6 + r1],           m3
 
-movd     [r6 + 2 * r1],        m4
-lea      r6,                   [r6 + 2 * r1]
-movd     [r6 + r1],            m5
-movd     [r6 + 2 * r1],        m6
-lea      r6,                   [r6 + 2 * r1]
-movd     [r6 + r1],            m7
+    movd     [r6 + 2 * r1],        m4
+    lea      r6,                   [r6 + 2 * r1]
+    movd     [r6 + r1],            m5
+    movd     [r6 + 2 * r1],        m6
+    lea      r6,                   [r6 + 2 * r1]
+    movd     [r6 + r1],            m7
 
-mov     r4w,     [r2 + 4]
-mov     r5w,     [r2 + r3 + 4]
-mov     r6w,     [r2 + 2 * r3 + 4]
+    mov     r4w,     [r2 + 4]
+    mov     r5w,     [r2 + r3 + 4]
+    mov     r6w,     [r2 + 2 * r3 + 4]
 
-mov     [r0 + 4],            r4w
-mov     [r0 + r1 + 4],       r5w
-mov     [r0 + 2 * r1 + 4],   r6w
+    mov     [r0 + 4],            r4w
+    mov     [r0 + r1 + 4],       r5w
+    mov     [r0 + 2 * r1 + 4],   r6w
 
-lea     r0,              [r0 + 2 * r1]
-lea     r2,              [r2 + 2 * r3]
+    lea     r0,              [r0 + 2 * r1]
+    lea     r2,              [r2 + 2 * r3]
 
-mov     r4w,             [r2 + r3 + 4]
-mov     r5w,             [r2 + 2 * r3 + 4]
+    mov     r4w,             [r2 + r3 + 4]
+    mov     r5w,             [r2 + 2 * r3 + 4]
 
-mov     [r0 + r1 + 4],       r4w
-mov     [r0 + 2 * r1 + 4],   r5w
+    mov     [r0 + r1 + 4],       r4w
+    mov     [r0 + 2 * r1 + 4],   r5w
 
-lea     r0,              [r0 + 2 * r1]
-lea     r2,              [r2 + 2 * r3]
+    lea     r0,              [r0 + 2 * r1]
+    lea     r2,              [r2 + 2 * r3]
 
-mov     r4w,             [r2 + r3 + 4]
-mov     r5w,             [r2 + 2 * r3 + 4]
+    mov     r4w,             [r2 + r3 + 4]
+    mov     r5w,             [r2 + 2 * r3 + 4]
 
-mov     [r0 + r1 + 4],       r4w
-mov     [r0 + 2 * r1 + 4],   r5w
+    mov     [r0 + r1 + 4],       r4w
+    mov     [r0 + 2 * r1 + 4],   r5w
 
-lea     r0,              [r0 + 2 * r1]
-lea     r2,              [r2 + 2 * r3]
+    lea     r0,              [r0 + 2 * r1]
+    lea     r2,              [r2 + 2 * r3]
 
-mov     r4w,             [r2 + r3 + 4]
-mov     [r0 + r1 + 4],       r4w
-RET
+    mov     r4w,             [r2 + r3 + 4]
+    mov     [r0 + r1 + 4],       r4w
+    RET
+%endif
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_8x2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal blockcopy_pp_8x2, 4, 4, 2, dest, deststride, src, srcstride
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
+    movu    m0,    [r2]
+    movu    m1,    [r2 + r1]
 
-movh     m0,        [r2]
-movh     m1,        [r2 + r3]
+    movu    [r0],       m0
+    movu    [r0 + r1],  m1
+%else
+    movh     m0,        [r2]
+    movh     m1,        [r2 + r3]
 
-movh     [r0],       m0
-movh     [r0 + r1],  m1
-
+    movh     [r0],       m0
+    movh     [r0 + r1],  m1
+%endif
 RET
 
 ;-----------------------------------------------------------------------------
@@ -290,127 +415,161 @@ RET
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal blockcopy_pp_8x4, 4, 4, 4, dest, deststride, src, srcstride
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
+    movu    m0,    [r2]
+    movu    m1,    [r2 + r1]
+    lea     r2,    [r2 + r3 * 2]
+    movu    m2,    [r2]
+    movu    m3,    [r2 + r1]
 
-movh     m0,     [r2]
-movh     m1,     [r2 + r3]
-movh     m2,     [r2 + 2 * r3]
-lea      r3,     [r3 + r3 * 2]
-movh     m3,     [r2 + r3]
+    movu    [r0],            m0
+    movu    [r0 + r1],       m1
+    lea     r0,              [r0 + 2 * r1]
+    movu    [r0],            m2
+    movu    [r0 + r1],       m3
+%else
+    movh     m0,     [r2]
+    movh     m1,     [r2 + r3]
+    movh     m2,     [r2 + 2 * r3]
+    lea      r3,     [r3 + r3 * 2]
+    movh     m3,     [r2 + r3]
 
-movh     [r0],            m0
-movh     [r0 + r1],       m1
-movh     [r0 + 2 * r1],   m2
-lea      r1,              [r1 + 2 * r1]
-movh     [r0 + r1],       m3
-
-RET
+    movh     [r0],            m0
+    movh     [r0 + r1],       m1
+    movh     [r0 + 2 * r1],   m2
+    lea      r1,              [r1 + 2 * r1]
+    movh     [r0 + r1],       m3
+%endif
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_8x6(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal blockcopy_pp_8x6, 4, 7, 6, dest, deststride, src, srcstride
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
+    movu    m0,    [r2]
+    movu    m1,    [r2 + r1]
+    lea     r2,    [r2 + r3 * 2]
+    movu    m2,    [r2]
+    movu    m3,    [r2 + r1]
+    lea     r2,    [r2 + r3 * 2]
+    movu    m4,    [r2]
+    movu    m5,    [r2 + r1]
 
-movh     m0,     [r2]
-movh     m1,     [r2 + r3]
-movh     m2,     [r2 + 2 * r3]
-lea      r5,     [r2 + 2 * r3]
-movh     m3,     [r5 + r3]
-movh     m4,     [r5 + 2 * r3]
-lea      r5,     [r5 + 2 * r3]
-movh     m5,     [r5 + r3]
+    movu    [r0],            m0
+    movu    [r0 + r1],       m1
+    lea     r0,              [r0 + 2 * r1]
+    movu    [r0],            m2
+    movu    [r0 + r1],       m3
+    lea     r0,              [r0 + 2 * r1]
+    movu    [r0],            m4
+    movu    [r0 + r1],       m5
+%else
+    movh     m0,     [r2]
+    movh     m1,     [r2 + r3]
+    movh     m2,     [r2 + 2 * r3]
+    lea      r5,     [r2 + 2 * r3]
+    movh     m3,     [r5 + r3]
+    movh     m4,     [r5 + 2 * r3]
+    lea      r5,     [r5 + 2 * r3]
+    movh     m5,     [r5 + r3]
 
-movh     [r0],            m0
-movh     [r0 + r1],       m1
-movh     [r0 + 2 * r1],   m2
-lea      r6,              [r0 + 2 * r1]
-movh     [r6 + r1],       m3
-movh     [r6 + 2 * r1],   m4
-lea      r6,              [r6 + 2 * r1]
-movh     [r6 + r1],       m5
-
-RET
-
-;-----------------------------------------------------------------------------
-; void blockcopy_pp_8x8(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
-;-----------------------------------------------------------------------------
-INIT_XMM sse2
-cglobal blockcopy_pp_8x8, 4, 7, 8, dest, deststride, src, srcstride
-
-movh     m0,     [r2]
-movh     m1,     [r2 + r3]
-movh     m2,     [r2 + 2 * r3]
-lea      r5,     [r2 + 2 * r3]
-movh     m3,     [r5 + r3]
-
-movh     m4,     [r5 + 2 * r3]
-lea      r5,     [r5 + 2 * r3]
-movh     m5,     [r5 + r3]
-movh     m6,     [r5 + 2 * r3]
-lea      r5,     [r5 + 2 * r3]
-movh     m7,     [r5 + r3]
-
-movh     [r0],                m0
-movh     [r0 + r1],           m1
-movh     [r0 + 2 * r1],       m2
-lea      r6,                  [r0 + 2 * r1]
-movh     [r6 + r1],           m3
-
-movh     [r6 + 2 * r1],        m4
-lea      r6,                   [r6 + 2 * r1]
-movh     [r6 + r1],            m5
-movh     [r6 + 2 * r1],        m6
-lea      r6,                   [r6 + 2 * r1]
-movh     [r6 + r1],            m7
-
-RET
+    movh     [r0],            m0
+    movh     [r0 + r1],       m1
+    movh     [r0 + 2 * r1],   m2
+    lea      r6,              [r0 + 2 * r1]
+    movh     [r6 + r1],       m3
+    movh     [r6 + 2 * r1],   m4
+    lea      r6,              [r6 + 2 * r1]
+    movh     [r6 + r1],       m5
+%endif
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W8_H8 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 7, 8, dest, deststride, src, srcstride
-
-
-mov         r4d,       %2
-
+cglobal blockcopy_pp_%1x%2, 4, 5, 6, dest, deststride, src, srcstride
+    mov         r4d,       %2/8
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
 .loop
-     movh     m0,     [r2]
-     movh     m1,     [r2 + r3]
-     movh     m2,     [r2 + 2 * r3]
-     lea      r5,     [r2 + 2 * r3]
-     movh     m3,     [r5 + r3]
+    movu    m0,    [r2]
+    movu    m1,    [r2 + r3]
+    lea     r2,   [r2 + 2 * r3]
 
-     movh     m4,     [r5 + 2 * r3]
-     lea      r5,     [r5 + 2 * r3]
-     movh     m5,     [r5 + r3]
-     movh     m6,     [r5 + 2 * r3]
-     lea      r5,     [r5 + 2 * r3]
-     movh     m7,     [r5 + r3]
+    movu    m2,    [r2]
+    movu    m3,    [r2 + r3]
+    lea     r2,    [r2 + 2 * r3]
 
-     movh     [r0],                m0
-     movh     [r0 + r1],           m1
-     movh     [r0 + 2 * r1],       m2
-     lea      r6,                  [r0 + 2 * r1]
-     movh     [r6 + r1],           m3
+    movu    m4,    [r2]
+    movu    m5,    [r2 + r3]
 
-     movh     [r6 + 2 * r1],        m4
-     lea      r6,                   [r6 + 2 * r1]
-     movh     [r6 + r1],            m5
-     movh     [r6 + 2 * r1],        m6
-     lea      r6,                   [r6 + 2 * r1]
-     movh     [r6 + r1],            m7
+    movu    [r0],            m0
+    movu    [r0 + r1],       m1
+    lea     r0,              [r0 + 2 * r1]
+    movu    [r0],            m2
+    movu    [r0 + r1],       m3
+    lea     r0,              [r0 + 2 * r1]
 
-     lea         r0,           [r0 + 8 * r1]
-     lea         r2,           [r2 + 8 * r3]
+    movu    [r0],            m4
+    movu    [r0 + r1],       m5
 
-     sub         r4d,           8
-     jnz        .loop
+    lea     r2,    [r2 + 2 * r3]
+    movu    m4,    [r2]
+    movu    m5,    [r2 + r3]
 
+    lea     r0,              [r0 + 2 * r1]
+    movu    [r0],            m4
+    movu    [r0 + r1],       m5
+
+    dec     r4d
+    lea     r0,           [r0 + 2 * r1]
+    lea     r2,           [r2 + 2 * r3]
+    jnz    .loop
+%else
+.loop
+     movh    m0,     [r2]
+     movh    m1,     [r2 + r3]
+     lea     r2,     [r2 + 2 * r3]
+     movh    m2,     [r2]
+     movh    m3,     [r2 + r3]
+     lea     r2,     [r2 + 2 * r3]
+     movh    m4,     [r2]
+     movh    m5,     [r2 + r3]
+
+     movh    [r0],         m0
+     movh    [r0 + r1],    m1
+     lea     r0,           [r0 + 2 * r1]
+     movh    [r0],         m2
+     movh    [r0 + r1],    m3
+     lea     r0,           [r0 + 2 * r1]
+     movh    [r0],         m4
+     movh    [r0 + r1],    m5
+
+     lea     r2,           [r2 + 2 * r3]
+     movh    m4,           [r2]
+     movh    m5,           [r2 + r3]
+     lea     r0,           [r0 + 2 * r1]
+     movh    [r0],         m4
+     movh    [r0 + r1],    m5
+
+     dec     r4d
+     lea     r0,           [r0 + 2 * r1]
+     lea     r2,           [r2 + 2 * r3]
+     jnz    .loop
+%endif
 RET
 %endmacro
 
+BLOCKCOPY_PP_W8_H8 8, 8
 BLOCKCOPY_PP_W8_H8 8, 16
 BLOCKCOPY_PP_W8_H8 8, 32
 

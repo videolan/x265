@@ -694,6 +694,20 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.luma_add_ps[LUMA_64x32] = x265_pixel_add_ps_64x32_sse2;
         p.luma_add_ps[LUMA_64x48] = x265_pixel_add_ps_64x48_sse2;
         p.luma_add_ps[LUMA_64x64] = x265_pixel_add_ps_64x64_sse2;
+
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_4x8] = x265_blockcopy_pp_2x4_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_4x16] = x265_blockcopy_pp_2x8_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_8x4] = x265_blockcopy_pp_4x2_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_8x8] = x265_blockcopy_pp_4x4_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_8x16] = x265_blockcopy_pp_4x8_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_8x32] = x265_blockcopy_pp_4x16_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_12x16] = x265_blockcopy_pp_6x8_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_16x4] = x265_blockcopy_pp_8x2_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_16x8] = x265_blockcopy_pp_8x4_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_16x12] = x265_blockcopy_pp_8x6_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_16x16] = x265_blockcopy_pp_8x8_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_16x32] = x265_blockcopy_pp_8x16_sse2;
+        p.chroma[X265_CSP_I420].copy_pp[LUMA_16x64] = x265_blockcopy_pp_8x32_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
