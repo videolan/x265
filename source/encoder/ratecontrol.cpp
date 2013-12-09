@@ -117,10 +117,13 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
         }
     }
 
-    int width[3]  = { maxCol, maxCol >> 1, maxCol >> 1 };
-    int height[3] = { maxRow, maxRow >> 1, maxRow >> 1 };
     if (cfg->param.bEnableWeightedPred)
     {
+        int hShift = CHROMA_H_SHIFT(cfg->param.internalCsp);
+        int vShift = CHROMA_V_SHIFT(cfg->param.internalCsp);
+        int width[3]  = { maxCol, maxCol >> hShift, maxCol >> hShift };
+        int height[3] = { maxRow, maxRow >> vShift, maxRow >> vShift };
+
         for (int i = 0; i < 3; i++)
         {
             uint64_t sum, ssd;
