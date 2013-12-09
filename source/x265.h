@@ -590,10 +590,7 @@ typedef struct x265_param
 
         /* Max QP difference between frames. Default: 4 */
         int       qpStep;
-        /* Ratefactor constant: targets a certain constant "quality". 
-         * Acceptable values between 0 and 51 */
-        double    rfConstant;                  
-
+        
         /* Ratefactor constant: targets a certain constant "quality". 
          * Acceptable values between 0 and 51. Default value: 28 */
         double    rfConstant;                  
