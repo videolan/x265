@@ -448,7 +448,6 @@ cglobal intra_pred_ang4_3, 3,4,8
     mova        m6, [r3 - 6 * 16]   ; [14]
     mova        m7, [r3 - 12 * 16]  ; [ 8]
 
-ALIGN 32
 .do_filter4x4:
     pmaddwd m2, m0
     paddd   m2, [pd_16]
@@ -484,3 +483,22 @@ ALIGN 32
     lea         r1, [r1 * 3]
     movhps      [r0 + r1], m4
     RET
+
+cglobal intra_pred_ang4_4, 3,4,8
+    cmp         r4m, byte 32
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 18 * 16]
+    movu        m0, [r2 + 2]    ; [8 7 6 5 4 3 2 1]
+    palignr     m1, m0, 2       ; [x 8 7 6 5 4 3 2]
+    punpcklwd   m2, m0, m1      ; [5 4 4 3 3 2 2 1]
+    palignr     m6, m0, 4       ; [x x 8 7 6 5 4 3]
+    punpcklwd   m3, m1, m6      ; [6 5 5 4 4 3 3 2]
+    mova        m4, m3
+    palignr     m7, m0, 6       ; [x x x 8 7 6 5 4]
+    punpcklwd   m5, m6, m7      ; [7 6 6 5 5 4 4 3]
+
+    mova        m0, [r3 +  3 * 16]  ; [21]
+    mova        m1, [r3 -  8 * 16]  ; [10]
+    mova        m6, [r3 + 13 * 16]  ; [31]
+    mova        m7, [r3 +  2 * 16]  ; [20]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)

@@ -711,6 +711,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred[BLOCK_32x32][1] = x265_intra_pred_dc32_sse4;
 
         SETUP_INTRA_ANG4(3, 3, sse4);
+        SETUP_INTRA_ANG4(4, 4, sse4);
+        SETUP_INTRA_ANG4(32, 4, sse4);
         SETUP_INTRA_ANG4(33, 3, sse4);
     }
     if (cpuMask & X265_CPU_XOP)
