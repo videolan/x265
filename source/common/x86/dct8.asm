@@ -49,13 +49,30 @@ tab_idst4:      times 4 dw 29, +84
                 times 4 dw 84, +55
                 times 4 dw -74, -29
 
+tab_dct8_1:     times 2 dw 89, 50, 75, 18
+                times 2 dw 75, -89, -18, -50
+                times 2 dw 50, 18, -89, 75
+                times 2 dw 18, 75, -50, -89
+
+tab_dct8_2:     times 2 dd 83, 36
+                times 2 dd 36, 83
+                times 1 dd 89, 75, 50, 18
+                times 1 dd 75, -18, -89, -50
+                times 1 dd 50, -89, 18, 75
+                times 1 dd 18, -50, 75, -89
+
+pb_unpackhlw1:  db 0,1,8,9,2,3,10,11,4,5,12,13,6,7,14,15
+
 SECTION .text
 
 cextern pd_1
+cextern pd_2
 cextern pd_64
 cextern pd_128
+cextern pd_256
 cextern pd_512
 cextern pd_2048
+cextern pw_ppppmmmm
 
 ;------------------------------------------------------
 ;void dct4(int16_t *src, int32_t *dst, intptr_t stride)
@@ -440,5 +457,214 @@ cglobal idst4, 3, 4, 6
     movlps      [r1 + 2 * r2], m1
     lea         r1, [r1 + 2 * r2]
     movhps      [r1 + r2], m1
+    RET
 
+
+;-------------------------------------------------------
+; void dct8(int16_t *src, int32_t *dst, intptr_t stride)
+;-------------------------------------------------------
+INIT_XMM sse4
+cglobal dct8, 3,6,7,0-16*mmsize
+    ;------------------------
+    ; Stack Mapping(dword)
+    ;------------------------
+    ; Row0[0-3] Row1[0-3]
+    ; ...
+    ; Row6[0-3] Row7[0-3]
+    ; Row0[0-3] Row7[0-3]
+    ; ...
+    ; Row6[4-7] Row7[4-7]
+    ;------------------------
+
+    add         r2, r2
+    lea         r3, [r2 * 3]
+    mov         r5, rsp
+
+    mova        m6, [pd_2]
+%assign x 0
+%rep 2
+    movu        m0, [r0]
+    movu        m1, [r0 + r2]
+    movu        m2, [r0 + r2 * 2]
+    movu        m3, [r0 + r3]
+
+    punpcklwd   m4, m0, m1
+    punpckhwd   m0, m1
+    punpcklwd   m5, m2, m3
+    punpckhwd   m2, m3
+    punpckldq   m1, m4, m5          ; m1 = [1 0]
+    punpckhdq   m4, m5              ; m4 = [3 2]
+    punpckldq   m3, m0, m2
+    punpckhdq   m0, m2
+    pshufd      m2, m3, 0x4E        ; m2 = [4 5]
+    pshufd      m0, m0, 0x4E        ; m0 = [6 7]
+
+    paddw       m3, m1, m0
+    psubw       m1, m0              ; m1 = [d1 d0]
+    paddw       m0, m4, m2
+    psubw       m4, m2              ; m4 = [d3 d2]
+    punpcklqdq  m2, m3, m0          ; m2 = [s2 s0]
+    punpckhqdq  m3, m0
+    pshufd      m3, m3, 0x4E        ; m3 = [s1 s3]
+
+    punpcklwd   m0, m1, m4          ; m0 = [d2/d0]
+    punpckhwd   m1, m4              ; m1 = [d3/d1]
+    punpckldq   m4, m0, m1          ; m4 = [d3 d1 d2 d0]
+    punpckhdq   m0, m1              ; m0 = [d3 d1 d2 d0]
+
+    ; odd
+    lea         r4, [tab_dct8_1]
+    pmaddwd     m1, m4, [r4 + 0*16]
+    pmaddwd     m5, m0, [r4 + 0*16]
+    phaddd      m1, m5
+    paddd       m1, m6
+    psrad       m1, 2
+  %if x == 1
+    pshufd      m1, m1, 0x1B
+  %endif
+    mova        [r5 + 1*2*mmsize], m1 ; Row 1
+
+    pmaddwd     m1, m4, [r4 + 1*16]
+    pmaddwd     m5, m0, [r4 + 1*16]
+    phaddd      m1, m5
+    paddd       m1, m6
+    psrad       m1, 2
+  %if x == 1
+    pshufd      m1, m1, 0x1B
+  %endif
+    mova        [r5 + 3*2*mmsize], m1 ; Row 3
+
+    pmaddwd     m1, m4, [r4 + 2*16]
+    pmaddwd     m5, m0, [r4 + 2*16]
+    phaddd      m1, m5
+    paddd       m1, m6
+    psrad       m1, 2
+  %if x == 1
+    pshufd      m1, m1, 0x1B
+  %endif
+    mova        [r5 + 5*2*mmsize], m1 ; Row 5
+
+    pmaddwd     m4, [r4 + 3*16]
+    pmaddwd     m0, [r4 + 3*16]
+    phaddd      m4, m0
+    paddd       m4, m6
+    psrad       m4, 2
+  %if x == 1
+    pshufd      m4, m4, 0x1B
+  %endif
+    mova        [r5 + 7*2*mmsize], m4; Row 7
+
+    ; even
+    lea         r4, [tab_dct4]
+    paddw       m0, m2, m3          ; m0 = [EE1 EE0]
+    pshufb      m0, [pb_unpackhlw1]
+    psubw       m2, m3              ; m2 = [EO1 EO0]
+    psignw      m2, [pw_ppppmmmm]
+    pshufb      m2, [pb_unpackhlw1]
+
+    pmaddwd     m3, m0, [r4 + 0*16]
+    paddd       m3, m6
+    psrad       m3, 2
+  %if x == 1
+    pshufd      m3, m3, 0x1B
+  %endif
+    mova        [r5 + 0*2*mmsize], m3 ; Row 0
+
+    pmaddwd     m0, [r4 + 2*16]
+    paddd       m0, m6
+    psrad       m0, 2
+  %if x == 1
+    pshufd      m0, m0, 0x1B
+  %endif
+    mova        [r5 + 4*2*mmsize], m0 ; Row 4
+
+    pmaddwd     m3, m2, [r4 + 1*16]
+    paddd       m3, m6
+    psrad       m3, 2
+  %if x == 1
+    pshufd      m3, m3, 0x1B
+  %endif
+    mova        [r5 + 2*2*mmsize], m3 ; Row 2
+
+    pmaddwd     m2, [r4 + 3*16]
+    paddd       m2, m6
+    psrad       m2, 2
+  %if x == 1
+    pshufd      m2, m2, 0x1B
+  %endif
+    mova        [r5 + 6*2*mmsize], m2 ; Row 6
+
+  %if x != 1
+    lea         r0, [r0 + r2 * 4]
+    add         r5, mmsize
+  %endif
+%assign x x+1
+%endrep
+
+    mov         r2, 2
+    mov         r0, rsp                 ; r0 = pointer to Low Part
+    lea         r4, [tab_dct8_2]
+    mova        m6, [pd_256]
+
+.pass2:
+%rep 2
+    mova        m0, [r0 + 0*2*mmsize]     ; [3 2 1 0]
+    mova        m1, [r0 + 1*2*mmsize]
+    paddd       m2, m0, [r0 + (0*2+1)*mmsize]
+    pshufd      m2, m2, 0x9C            ; m2 = [s2 s1 s3 s0]
+    paddd       m3, m1, [r0 + (1*2+1)*mmsize]
+    pshufd      m3, m3, 0x9C            ; m3 = ^^
+    psubd       m0, [r0 + (0*2+1)*mmsize]     ; m0 = [d3 d2 d1 d0]
+    psubd       m1, [r0 + (1*2+1)*mmsize]     ; m1 = ^^
+
+    ; even
+    phaddd      m4, m2, m3              ; m4 = [EE1 EE0 EE1 EE0]
+    phsubd      m2, m3                  ; m2 = [EO1 EO0 EO1 EO0]
+
+    pslld       m4, 6                   ; m4 = [64*EE1 64*EE0]
+    pmulld      m5, m2, [r4 + 0*16]     ; m5 = [36*EO1 83*EO0]
+    pmulld      m2, [r4 + 1*16]         ; m2 = [83*EO1 36*EO0]
+
+    phaddd      m3, m4, m5              ; m3 = [Row2 Row0]
+    paddd       m3, m6
+    psrad       m3, 9
+    phsubd      m4, m2                  ; m4 = [Row6 Row4]
+    paddd       m4, m6
+    psrad       m4, 9
+    movh        [r1 + 0*2*mmsize], m3
+    movhps      [r1 + 2*2*mmsize], m3
+    movh        [r1 + 4*2*mmsize], m4
+    movhps      [r1 + 6*2*mmsize], m4
+
+    ; odd
+    pmulld      m2, m0, [r4 + 2*16]
+    pmulld      m3, m1, [r4 + 2*16]
+    pmulld      m4, m0, [r4 + 3*16]
+    pmulld      m5, m1, [r4 + 3*16]
+    phaddd      m2, m3
+    phaddd      m4, m5
+    phaddd      m2, m4                  ; m2 = [Row3 Row1]
+    paddd       m2, m6
+    psrad       m2, 9
+    movh        [r1 + 1*2*mmsize], m2
+    movhps      [r1 + 3*2*mmsize], m2
+
+    pmulld      m2, m0, [r4 + 4*16]
+    pmulld      m3, m1, [r4 + 4*16]
+    pmulld      m4, m0, [r4 + 5*16]
+    pmulld      m5, m1, [r4 + 5*16]
+    phaddd      m2, m3
+    phaddd      m4, m5
+    phaddd      m2, m4                  ; m2 = [Row7 Row5]
+    paddd       m2, m6
+    psrad       m2, 9
+    movh        [r1 + 5*2*mmsize], m2
+    movhps      [r1 + 7*2*mmsize], m2
+
+    add         r1, mmsize/2
+    add         r0, 2*2*mmsize
+%endrep
+
+    dec         r2
+    jnz        .pass2
     RET
