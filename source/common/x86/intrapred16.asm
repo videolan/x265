@@ -30,7 +30,7 @@ SECTION_RODATA 32
 const ang_table
 %assign x 0
 %rep 32
-    times 8 dw (32-x), x
+    times 4 dw (32-x), x
 %assign x x+1
 %endrep
 
@@ -426,4 +426,61 @@ cglobal intra_pred_ang4_2, 3,3,4
     lea         r1,            [r1 * 3]
     psrldq      m0,            6
     movh        [r0 + r1],     m0
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang4_3, 3,4,8
+    cmp         r4m, byte 33
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 20 * 16]
+    movu        m0, [r2 + 2]    ; [8 7 6 5 4 3 2 1]
+    palignr     m1, m0, 2       ; [x 8 7 6 5 4 3 2]
+    punpcklwd   m2, m0, m1      ; [5 4 4 3 3 2 2 1]
+    palignr     m5, m0, 4       ; [x x 8 7 6 5 4 3]
+    punpcklwd   m3, m1, m5      ; [6 5 5 4 4 3 3 2]
+    palignr     m1, m0, 6       ; [x x x 8 7 6 5 4]
+    punpcklwd   m4, m5 ,m1      ; [7 6 6 5 5 4 4 3]
+    movhlps     m0, m0          ; [x x x x 8 7 6 5]
+    punpcklwd   m5, m1, m0      ; [8 7 7 6 6 5 5 4]
+
+    mova        m0, [r3 + 6 * 16]   ; [26]
+    mova        m1, [r3]            ; [20]
+    mova        m6, [r3 - 6 * 16]   ; [14]
+    mova        m7, [r3 - 12 * 16]  ; [ 8]
+
+ALIGN 32
+.do_filter4x4:
+    pmaddwd m2, m0
+    paddd   m2, [pd_16]
+    psrld   m2, 5
+
+    pmaddwd m3, m1
+    paddd   m3, [pd_16]
+    psrld   m3, 5
+    packusdw m2, m3
+
+    pmaddwd m4, m6
+    paddd   m4, [pd_16]
+    psrld   m4, 5
+
+    pmaddwd m5, m7
+    paddd   m5, [pd_16]
+    psrld   m5, 5
+    packusdw m4, m5
+
+    jz         .store
+
+    ; transpose 4x4
+    punpckhwd    m0, m2, m4
+    punpcklwd    m2, m4
+    punpckhwd    m4, m2, m0
+    punpcklwd    m2, m0
+
+.store:
+    add         r1, r1
+    movh        [r0], m2
+    movhps      [r0 + r1], m2
+    movh        [r0 + r1 * 2], m4
+    lea         r1, [r1 * 3]
+    movhps      [r0 + r1], m4
     RET
