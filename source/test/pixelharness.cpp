@@ -1127,7 +1127,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     if (opt.pixelavg_pp[part])
     {
         HEADER("avg_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pixelavg_pp[part], ref.pixelavg_pp[part], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 0);
+        REPORT_SPEEDUP(opt.pixelavg_pp[part], ref.pixelavg_pp[part], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
     }
 
     if (opt.sa8d_inter[part])
