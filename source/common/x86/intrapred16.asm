@@ -654,3 +654,21 @@ cglobal intra_pred_ang4_5, 3,4,8
     mova        m6, [r3 +  9 * 16]  ; [19]
     mova        m7, [r3 -  6 * 16]  ; [ 4]
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+cglobal intra_pred_ang4_6, 3,4,8
+    cmp         r4m, byte 30
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 19 * 16]
+    movu        m0, [r2 + 2]    ; [8 7 6 5 4 3 2 1]
+    palignr     m1, m0, 2       ; [x 8 7 6 5 4 3 2]
+    punpcklwd   m2, m0, m1      ; [5 4 4 3 3 2 2 1]
+    mova        m3, m2
+    palignr     m6, m0, 4       ; [x x 8 7 6 5 4 3]
+    punpcklwd   m4, m1, m6      ; [6 5 5 4 4 3 3 2]
+    mova        m5, m4
+
+    mova        m0, [r3 -  6 * 16]  ; [13]
+    mova        m1, [r3 +  7 * 16]  ; [26]
+    mova        m6, [r3 - 12 * 16]  ; [ 7]
+    mova        m7, [r3 +  1 * 16]  ; [20]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)

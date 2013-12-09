@@ -716,6 +716,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG4(3, 3, sse4);
         SETUP_INTRA_ANG4(4, 4, sse4);
         SETUP_INTRA_ANG4(5, 5, sse4);
+        SETUP_INTRA_ANG4(6, 6, sse4);
+        SETUP_INTRA_ANG4(30, 6, sse4);
         SETUP_INTRA_ANG4(31, 5, sse4);
         SETUP_INTRA_ANG4(32, 4, sse4);
         SETUP_INTRA_ANG4(33, 3, sse4);
