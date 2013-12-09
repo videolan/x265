@@ -38,9 +38,11 @@ const ang_table
 SECTION .text
 
 cextern pw_1
+cextern pw_8
 cextern pd_16
 cextern pd_32
 cextern pw_4096
+cextern multiL
 cextern multi_2Row
 
 
@@ -475,6 +477,70 @@ cglobal intra_pred_planar4, 4,7,5
     COMP_PRED_PLANAR_2ROW 4
 %undef COMP_PRED_PLANAR_2ROW
     RET
+
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_planar8, 4,4,7
+    add             r2,     2
+    add             r3,     2
+    add             r1,     r1
+    movu            m1,     [r3]      ; v_topRow
+    movu            m2,     [r2]      ; v_leftColumn
+
+    movd            m3,     [r3 + 16] ; topRight   = above[8];
+    movd            m4,     [r2 + 16] ; bottomLeft = left[8];
+
+    pshuflw         m3,     m3, 0
+    pshufd          m3,     m3, 0
+    pshuflw         m4,     m4, 0
+    pshufd          m4,     m4, 0
+
+    psubw           m4,     m1        ; v_bottomRow
+    psubw           m3,     m2        ; v_rightColumn
+
+    psllw           m1,     3         ; v_topRow
+    psllw           m2,     3         ; v_leftColumn
+
+    paddw           m6,     m2, [pw_8]
+
+%macro PRED_PLANAR_ROW8 1
+    %if (%1 < 4)
+        pshuflw     m5,     m6, 0x55 * %1
+        pshufd      m5,     m5, 0
+        pshuflw     m2,     m3, 0x55 * %1
+        pshufd      m2,     m2, 0
+    %else
+        pshufhw     m5,     m6, 0x55 * (%1 - 4)
+        pshufd      m5,     m5, 0xAA
+        pshufhw     m2,     m3, 0x55 * (%1 - 4)
+        pshufd      m2,     m2, 0xAA
+    %endif
+
+    pmullw          m2,     [multiL]
+    paddw           m5,     m2
+    paddw           m1,     m4
+    paddw           m5,     m1
+    psraw           m5,     4
+
+    movu            [r0],   m5
+    add             r0,     r1
+
+%endmacro
+
+    PRED_PLANAR_ROW8 0
+    PRED_PLANAR_ROW8 1
+    PRED_PLANAR_ROW8 2
+    PRED_PLANAR_ROW8 3
+    PRED_PLANAR_ROW8 4
+    PRED_PLANAR_ROW8 5
+    PRED_PLANAR_ROW8 6
+    PRED_PLANAR_ROW8 7
+
+%undef PRED_PLANAR_ROW8
+    RET
+
 
 ;-----------------------------------------------------------------------------
 ; void intraPredAng(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
