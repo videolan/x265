@@ -729,6 +729,7 @@ cglobal intra_pred_ang4_3, 3,4,5
     movhps      m3, [r3]            ; [20]
     movh        m4, [r3 - 6 * 16]   ; [14]
     movhps      m4, [r3 - 12 * 16]  ; [ 8]
+    jmp        .do_filter4x4
 
     ; NOTE: share path, input is m0=[1 0], m2=[3 2], m3,m4=coef, flag_z=no_transpose
 ALIGN 16
@@ -749,7 +750,7 @@ ALIGN 16
 
 .store:
     ; TODO: use pextrd here after intrinsic ssse3 removed
-    pextrd      [r0], m0, 0
+    movd        [r0], m0
     pextrd      [r0 + r1], m0, 1
     pextrd      [r0 + r1 * 2], m0, 2
     lea         r1, [r1 * 3]
