@@ -3,6 +3,7 @@
 ;*
 ;* Authors: Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>
 ;*          Yuvaraj Venkatesh <yuvaraj@multicorewareinc.com>
+;*          Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -34,6 +35,7 @@ const ang_table
 %assign x x+1
 %endrep
 
+const pw_unpack0wd, times 4 db 0,1,8,8
 
 SECTION .text
 
@@ -536,6 +538,113 @@ cglobal intra_pred_planar8, 4,4,7
     PRED_PLANAR_ROW8 7
 
 %undef PRED_PLANAR_ROW8
+    RET
+
+
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+%if ARCH_X86_64 == 1
+cglobal intra_pred_planar16, 4,7,8+3
+%define bottomRow0  m7
+%define bottomRow1  m8
+%define bottomRow2  m9
+%define bottomRow3  m10
+%else
+%endif
+cglobal intra_pred_planar16, 4,7,8, 0-3*mmsize
+%define bottomRow0  [rsp + 0*mmsize]
+%define bottomRow1  [rsp + 1*mmsize]
+%define bottomRow2  [rsp + 2*mmsize]
+%define bottomRow3  m7
+
+    add             r2, 2
+    add             r3, 2
+    add             r1, r1
+
+    pxor            m0, m0
+
+    ; bottomRow
+    movzx           r4d, word [r2 + 16*2]
+    movd            m1, r4d
+    pshufd          m1, m1, 0               ; m1 = bottomLeft
+    movu            m2, [r3]
+    pmovzxwd        m3, m2
+    punpckhwd       m2, m0
+    psubd           m4, m1, m3
+    mova            bottomRow0, m4
+    psubd           m4, m1, m2
+    mova            bottomRow1, m4
+    movu            m2, [r3 + 16]
+    pmovzxwd        m3, m2
+    punpckhwd       m2, m0
+    psubd           m4, m1, m3
+    mova            bottomRow2, m4
+    psubd           m1, m2
+    mova            bottomRow3, m1
+
+    ; topRow
+    pmovzxwd        m0, [r3 + 0*8]
+    pslld           m0, 4
+    pmovzxwd        m1, [r3 + 1*8]
+    pslld           m1, 4
+    pmovzxwd        m2, [r3 + 2*8]
+    pslld           m2, 4
+    pmovzxwd        m3, [r3 + 3*8]
+    pslld           m3, 4
+
+    xor             r6, r6
+.loopH:
+    movzx           r4d, word [r2 + r6*2]
+    movzx           r5d, word [r3 + 16*2]       ; r5 = topRight
+    sub             r5d, r4d
+    movd            m5, r5d
+    pshuflw         m5, m5, 0
+    pmullw          m5, [multiL]
+    pmovsxwd        m5, m5                      ; m5 = rightCol
+    add             r4d, r4d
+    lea             r4d, [r4d * 8 + 16]
+    movd            m4, r4d
+    pshufd          m4, m4, 0                   ; m4 = horPred
+    paddd           m4, m5
+    pshufd          m6, m5, 0xFF                ; m6 = [4 4 4 4]
+
+    ; 0-3
+    paddd           m0, bottomRow0
+    paddd           m5, m0, m4
+    psrad           m5, 5
+    packusdw        m5, m5
+    movh            [r0 + 0*8], m5
+
+    ; 4-7
+    paddd           m4, m6
+    paddd           m1, bottomRow1
+    paddd           m5, m1, m4
+    psrad           m5, 5
+    packusdw        m5, m5
+    movh            [r0 + 1*8], m5
+
+    ; 8-11
+    paddd           m4, m6
+    paddd           m2, bottomRow2
+    paddd           m5, m2, m4
+    psrad           m5, 5
+    packusdw        m5, m5
+    movh            [r0 + 2*8], m5
+
+    ; 12-15
+    paddd           m4, m6
+    paddd           m3, bottomRow3
+    paddd           m5, m3, m4
+    psrad           m5, 5
+    packusdw        m5, m5
+    movh            [r0 + 3*8], m5
+
+    add             r0, r1
+    inc             r6d
+    cmp             r6d, 16
+    jnz            .loopH
     RET
 
 

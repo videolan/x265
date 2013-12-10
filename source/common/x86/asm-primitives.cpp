@@ -721,6 +721,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     {
         p.intra_pred[BLOCK_4x4][0] = x265_intra_pred_planar4_sse4;
         p.intra_pred[BLOCK_8x8][0] = x265_intra_pred_planar8_sse4;
+        p.intra_pred[BLOCK_16x16][0] = x265_intra_pred_planar16_sse4;
 
         p.intra_pred[BLOCK_4x4][1] = x265_intra_pred_dc4_sse4;
         p.intra_pred[BLOCK_8x8][1] = x265_intra_pred_dc8_sse4;
