@@ -45,6 +45,7 @@ cextern pd_16
 cextern pd_32
 cextern pw_4096
 cextern multiL
+cextern multiH
 cextern multi_2Row
 cextern pw_swap
 cextern pb_unpackwq1
@@ -547,7 +548,9 @@ cglobal intra_pred_planar8, 4,4,7
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-----------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-%if ARCH_X86_64 == 1
+%if (BIT_DEPTH == 12)
+
+%if (ARCH_X86_64 == 1)
 cglobal intra_pred_planar16, 4,7,8+3
 %define bottomRow0  m7
 %define bottomRow1  m8
@@ -648,6 +651,79 @@ cglobal intra_pred_planar16, 4,7,8, 0-3*mmsize
     cmp             r6d, 16
     jnz            .loopH
     RET
+
+%else ; BIT_DEPTH == 10
+INIT_XMM sse4
+cglobal intra_pred_planar16, 4,6,7
+    add             r2,         2
+    add             r3,         2
+    add             r1,         r1
+
+    movu            m1,         [r3]        ; topRow[0-7]
+    movu            m2,         [r3 + 16]   ; topRow[8-15]
+
+    movd            m3,         [r2 + 32]
+    pshuflw         m3,         m3, 0
+    pshufd          m3,         m3, 0
+    movzx           r4d, word   [r3 + 32]   ; topRight = above[16]
+
+    psubw           m4,         m3, m1      ; v_bottomRow[0]
+    psubw           m3,         m2          ; v_bottomRow[1]
+
+    psllw           m1,         4
+    psllw           m2,         4
+
+%macro PRED_PLANAR_ROW16 1
+    movzx           r5d, word   [r2 + %1 * 2]
+    add             r5d,        r5d
+    lea             r5d,        [r5d * 8 + 16]
+    movd            m5,         r5d
+    pshuflw         m5,         m5, 0
+    pshufd          m5,         m5, 0       ; horPred
+
+    movzx           r5d, word   [r2 + %1 * 2]
+    mov             r3d,        r4d
+    sub             r3d,        r5d
+    movd            m0,         r3d
+    pshuflw         m0,         m0, 0
+    pshufd          m0,         m0, 0
+
+    pmullw          m6,         m0, [multiL]
+    paddw           m6,         m5
+    paddw           m1,         m4
+    paddw           m6,         m1
+    psraw           m6,         5
+
+    pmullw          m0,         m0, [multiH]
+    paddw           m5,         m0
+    paddw           m2,         m3
+    paddw           m5,         m2
+    psraw           m5,         5
+
+    movu            [r0],       m6
+    movu            [r0 + 16],  m5
+    add             r0,         r1
+%endmacro
+
+    PRED_PLANAR_ROW16 0
+    PRED_PLANAR_ROW16 1
+    PRED_PLANAR_ROW16 2
+    PRED_PLANAR_ROW16 3
+    PRED_PLANAR_ROW16 4
+    PRED_PLANAR_ROW16 5
+    PRED_PLANAR_ROW16 6
+    PRED_PLANAR_ROW16 7
+    PRED_PLANAR_ROW16 8
+    PRED_PLANAR_ROW16 9
+    PRED_PLANAR_ROW16 10
+    PRED_PLANAR_ROW16 11
+    PRED_PLANAR_ROW16 12
+    PRED_PLANAR_ROW16 13
+    PRED_PLANAR_ROW16 14
+    PRED_PLANAR_ROW16 15
+%undef PRED_PLANAR_ROW16
+    RET
+%endif
 
 
 ;-----------------------------------------------------------------------------
