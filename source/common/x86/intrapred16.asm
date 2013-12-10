@@ -46,6 +46,7 @@ cextern pd_32
 cextern pw_4096
 cextern multiL
 cextern multi_2Row
+cextern pw_swap
 cextern pb_unpackwq1
 cextern pb_unpackwq2
 
@@ -1022,3 +1023,47 @@ cglobal intra_pred_ang4_16, 4,4,8
     mova        m6, [r3 - 18 * 16]  ; [ 1]
     mova        m7, [r3 -  7 * 16]  ; [12]
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+cglobal intra_pred_ang4_17, 4,4,8
+    cmp         r4m, byte 19
+    jnz        .load
+    xchg        r2, r3
+.load
+    movu        m6, [r2 - 2]    ; [- - 4 3 2 1 0 x]
+    palignr     m2, m6, 2       ; [- - - 4 3 2 1 0]
+    palignr     m1, m6, 4       ; [- - - - 4 3 2 1]
+    mova        m4, m2
+    punpcklwd   m2, m1          ; [4 3 3 2 2 1 1 0]
+
+    pinsrw      m6, [r3 + 2], 0
+    punpcklwd   m3, m6, m4      ; [3 2 2 1 1 0 0 x]
+
+    pslldq      m4, m6, 2       ; [- 4 3 2 1 0 x y]
+    pinsrw      m4, [r3 + 4], 0
+    pslldq      m5, m4, 2       ; [4 3 2 1 0 x y z]
+    pinsrw      m5, [r3 + 8], 0
+    punpcklwd   m5, m4          ; [1 0 0 x x y y z]
+    punpcklwd   m4, m3          ; [2 1 1 0 0 x x y]
+
+    lea         r3, [ang_table + 14 * 16]
+    mova        m0, [r3 -  8 * 16]  ; [ 6]
+    mova        m1, [r3 -  2 * 16]  ; [12]
+    mova        m6, [r3 +  4 * 16]  ; [18]
+    mova        m7, [r3 + 10 * 16]  ; [24]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_18, 4,4,1
+    movh        m0, [r2]
+    pshufb      m0, [pw_swap]
+    movhps      m0, [r3 + 2]
+    add         r1, r1
+    lea         r2, [r1 * 3]
+    movh        [r0 + r2], m0
+    psrldq      m0, 2
+    movh        [r0 + r1 * 2], m0
+    psrldq      m0, 2
+    movh        [r0 + r1], m0
+    psrldq      m0, 2
+    movh        [r0], m0
+    RET
