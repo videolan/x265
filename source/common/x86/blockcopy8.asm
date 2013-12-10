@@ -889,46 +889,88 @@ BLOCKCOPY_PP_W24_H4 24, 32
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W32_H4 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 7, 8, dest, deststride, src, srcstride
-
-mov         r4d,       %2
-
+cglobal blockcopy_pp_%1x%2, 4, 5, 4, dest, deststride, src, srcstride
+    mov    r4d,    %2/4
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
 .loop
-      movu     m0,     [r2]
-      movu     m1,     [r2 + 16]
+    movu    m0,    [r2]
+    movu    m1,    [r2 + 16]
+    movu    m2,    [r2 + 32]
+    movu    m3,    [r2 + 48]
 
-      movu     m2,     [r2 + r3]
-      movu     m3,     [r2 + r3 + 16]
+    movu    [r0],         m0
+    movu    [r0 + 16],    m1
+    movu    [r0 + 32],    m2
+    movu    [r0 + 48],    m3
 
-      movu     m4,     [r2 + 2 * r3]
-      movu     m5,     [r2 + 2 * r3 + 16]
+    movu    m0,    [r2 + r3]
+    movu    m1,    [r2 + r3 + 16]
+    movu    m2,    [r2 + r3 + 32]
+    movu    m3,    [r2 + r3 + 48]
+    lea     r2,    [r2 + 2 * r3]
 
-      lea      r5,     [r2 + 2 * r3]
+    movu    [r0 + r1],         m0
+    movu    [r0 + r1 + 16],    m1
+    movu    [r0 + r1 + 32],    m2
+    movu    [r0 + r1 + 48],    m3
 
-      movu     m6,     [r5 + r3]
-      movu     m7,     [r5 + r3 + 16]
+    lea     r0,    [r0 + 2 * r1]
+    movu    m0,    [r2]
+    movu    m1,    [r2 + 16]
+    movu    m2,    [r2 + 32]
+    movu    m3,    [r2 + 48]
 
-      movu     [r0],                 m0
-      movu     [r0 + 16],            m1
+    movu    [r0],         m0
+    movu    [r0 + 16],    m1
+    movu    [r0 + 32],    m2
+    movu    [r0 + 48],    m3
 
-      movu     [r0 + r1],            m2
-      movu     [r0 + r1 + 16],       m3
+    movu    m0,    [r2 + r3]
+    movu    m1,    [r2 + r3 + 16]
+    movu    m2,    [r2 + r3 + 32]
+    movu    m3,    [r2 + r3 + 48]
 
-      movu     [r0 + 2 * r1],        m4
-      movu     [r0 + 2 * r1 + 16],   m5
+    movu    [r0 + r1],         m0
+    movu    [r0 + r1 + 16],    m1
+    movu    [r0 + r1 + 32],    m2
+    movu    [r0 + r1 + 48],    m3
 
-      lea      r6,                   [r0 + 2 * r1]
+    dec     r4d
+    lea     r0,    [r0 + 2 * r1]
+    lea     r2,    [r2 + 2 * r3]
+    jnz     .loop
+%else
+.loop
+    movu    m0,    [r2]
+    movu    m1,    [r2 + 16]
+    movu    m2,    [r2 + r3]
+    movu    m3,    [r2 + r3 + 16]
+    lea     r2,    [r2 + 2 * r3]
 
-      movu     [r6 + r1],            m6
-      movu     [r6 + r1 + 16],       m7
+    movu    [r0],              m0
+    movu    [r0 + 16],         m1
+    movu    [r0 + r1],         m2
+    movu    [r0 + r1 + 16],    m3
+    lea     r0,                [r0 + 2 * r1]
 
-      lea      r0,                   [r0 + 4 * r1]
-      lea      r2,                   [r2 + 4 * r3]
+    movu    m0,    [r2]
+    movu    m1,    [r2 + 16]
+    movu    m2,    [r2 + r3]
+    movu    m3,    [r2 + r3 + 16]
 
-      sub      r4d,                  4
-      jnz      .loop
+    movu    [r0],              m0
+    movu    [r0 + 16],         m1
+    movu    [r0 + r1],         m2
+    movu    [r0 + r1 + 16],    m3
 
-RET
+    dec    r4d
+    lea    r0,    [r0 + 2 * r1]
+    lea    r2,    [r2 + 2 * r3]
+    jnz    .loop
+%endif
+    RET
 %endmacro
 
 BLOCKCOPY_PP_W32_H4 32, 8
