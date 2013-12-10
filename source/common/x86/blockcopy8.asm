@@ -419,10 +419,10 @@ cglobal blockcopy_pp_8x4, 4, 4, 4, dest, deststride, src, srcstride
     add     r1,    r1
     add     r3,    r3
     movu    m0,    [r2]
-    movu    m1,    [r2 + r1]
-    lea     r2,    [r2 + r3 * 2]
+    movu    m1,    [r2 + r3]
+    lea     r2,    [r2 + 2 * r3]
     movu    m2,    [r2]
-    movu    m3,    [r2 + r1]
+    movu    m3,    [r2 + r3]
 
     movu    [r0],            m0
     movu    [r0 + r1],       m1
@@ -453,13 +453,13 @@ cglobal blockcopy_pp_8x6, 4, 7, 6, dest, deststride, src, srcstride
     add     r1,    r1
     add     r3,    r3
     movu    m0,    [r2]
-    movu    m1,    [r2 + r1]
+    movu    m1,    [r2 + r3]
     lea     r2,    [r2 + r3 * 2]
     movu    m2,    [r2]
-    movu    m3,    [r2 + r1]
+    movu    m3,    [r2 + r3]
     lea     r2,    [r2 + r3 * 2]
     movu    m4,    [r2]
-    movu    m5,    [r2 + r1]
+    movu    m5,    [r2 + r3]
 
     movu    [r0],            m0
     movu    [r0 + r1],       m1
