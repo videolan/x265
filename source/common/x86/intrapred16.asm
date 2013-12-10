@@ -896,3 +896,60 @@ cglobal intra_pred_ang4_26, 4,4,3
 
 .quit:
     RET
+
+cglobal intra_pred_ang4_11, 3,4,8
+    cmp         r4m, byte 25
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 24 * 16]
+    movu        m2, [r2]        ; [x x x 4 3 2 1 0]
+    palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
+    punpcklwd   m2, m1          ; [4 3 3 2 2 1 1 0]
+    mova        m3, m2
+    mova        m4, m2
+    mova        m5, m2
+
+    mova        m0, [r3 +  6 * 16]  ; [24]
+    mova        m1, [r3 +  4 * 16]  ; [26]
+    mova        m6, [r3 +  2 * 16]  ; [28]
+    mova        m7, [r3 +  0 * 16]  ; [30]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_12, 3,4,8
+    cmp         r4m, byte 24
+    cmove       r2, r3mp
+    lea         r3, [ang_table + 20 * 16]
+    movu        m2, [r2]        ; [x x x 4 3 2 1 0]
+    palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
+    punpcklwd   m2, m1          ; [4 3 3 2 2 1 1 0]
+    mova        m3, m2
+    mova        m4, m2
+    mova        m5, m2
+
+    mova        m0, [r3 +  7 * 16]  ; [27]
+    mova        m1, [r3 +  2 * 16]  ; [22]
+    mova        m6, [r3 -  3 * 16]  ; [17]
+    mova        m7, [r3 -  8 * 16]  ; [12]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+
+cglobal intra_pred_ang4_13, 4,4,8
+    cmp         r4m, byte 23
+    jnz        .load
+    xchg        r2, r3
+.load
+    movu        m5, [r2 - 2]    ; [x x 4 3 2 1 0 x]
+    palignr     m2, m5, 2       ; [x x x 4 3 2 1 0]
+    palignr     m0, m5, 4       ; [x x x x 4 3 2 1]
+    pinsrw      m5, [r3 + 8], 0
+    punpcklwd   m5, m2          ; [3 2 2 1 1 0 0 x]
+    punpcklwd   m2, m0          ; [4 3 3 2 2 1 1 0]
+    mova        m3, m2
+    mova        m4, m2
+
+    lea         r3, [ang_table + 21 * 16]
+    mova        m0, [r3 +  2 * 16]  ; [23]
+    mova        m1, [r3 -  7 * 16]  ; [14]
+    mova        m6, [r3 - 16 * 16]  ; [ 5]
+    mova        m7, [r3 +  7 * 16]  ; [28]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
