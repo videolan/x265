@@ -690,6 +690,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I420].copy_pp[LUMA_64x48] = x265_blockcopy_pp_32x24_sse2;
         p.chroma[X265_CSP_I420].copy_pp[LUMA_64x64] = x265_blockcopy_pp_32x32_sse2;
         p.luma_copy_pp[LUMA_32x64] = x265_blockcopy_pp_32x64_sse2;
+        p.luma_copy_pp[LUMA_48x64] = x265_blockcopy_pp_48x64_sse2;
 
         p.blockfill_s[BLOCK_4x4] = x265_blockfill_s_4x4_sse2;
         p.blockfill_s[BLOCK_8x8] = x265_blockfill_s_8x8_sse2;
