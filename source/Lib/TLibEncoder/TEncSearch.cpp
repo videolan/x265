@@ -3259,6 +3259,38 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     cu->setQPSubParts(qpBest, 0, cu->getDepth(0));
 }
 
+void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, bool skipRes)
+{
+    if (skipRes && cu->getPredictionMode(0) == MODE_INTER && cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
+    {
+        predYuv->copyToPartYuv(reconYuv, 0);
+        cu->setCbfSubParts(0, TEXT_LUMA, 0, 0, cu->getDepth(0));
+        cu->setCbfSubParts(0, TEXT_CHROMA_U, 0, 0, cu->getDepth(0));
+        cu->setCbfSubParts(0, TEXT_CHROMA_V, 0, 0, cu->getDepth(0));
+        return;
+    }
+    if (cu->getPredictionMode(0) == MODE_INTER)
+    {
+        residualTransformQuantInter(cu, 0, 0, resiYuv, cu->getDepth(0), true);
+        xSetResidualQTData(cu, 0, 0, NULL, cu->getDepth(0), false);
+        uint32_t width  = cu->getWidth(0);
+        xSetResidualQTData(cu, 0, 0, resiYuv, cu->getDepth(0), true);
+        reconYuv->addClip(predYuv, resiYuv, 0, width);
+
+        if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && cu->getQtRootCbf(0) == 0)
+        {
+            cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
+        }
+    }
+    else if (cu->getPredictionMode(0) == MODE_INTRA)
+    {
+        uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
+        residualTransformQuantIntra(cu, initTrDepth, 0, true, fencYuv, predYuv, resiYuv, reconYuv);
+        getBestIntraModeChroma(cu, fencYuv, predYuv);
+        residualQTIntrachroma(cu, 0, 0, fencYuv, predYuv, resiYuv, reconYuv);
+    }
+}
+
 #if _MSC_VER
 #pragma warning(disable: 4701) // potentially uninitialized local variable
 #endif
