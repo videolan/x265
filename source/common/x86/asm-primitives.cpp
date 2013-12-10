@@ -728,6 +728,18 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_sp[i] = (pixelcmp_sp_t)p.sse_ss[i];
     }
 
+  for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
+    {
+        p.luma_copy_ps[i] = (copy_ps_t)p.luma_copy_pp[i];
+        p.luma_copy_sp[i] = (copy_sp_t)p.luma_copy_pp[i];
+    }
+
+    for (int i = 0; i < NUM_CHROMA_PARTITIONS; i++)
+    {
+        p.chroma[X265_CSP_I420].copy_ps[i] = (copy_ps_t)p.chroma[X265_CSP_I420].copy_pp[i];
+        p.chroma[X265_CSP_I420].copy_sp[i] = (copy_sp_t)p.chroma[X265_CSP_I420].copy_pp[i];
+    }
+
 #else // if HIGH_BIT_DEPTH
     if (cpuMask & X265_CPU_SSE2)
     {
