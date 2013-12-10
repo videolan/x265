@@ -368,49 +368,46 @@ cglobal intra_pred_dc32, 4, 5, 6
     pshuflw         m0,                  m0, 0
     pshufd          m0,                  m0, 0
 
-%rep 4
-    ; store DC 16x16
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-    movu            [r0 +  0],           m0
-    movu            [r0 + 16],           m0
-    movu            [r0 + 32],           m0
-    movu            [r0 + 48],           m0
-    add             r0,                  r1
-%endrep
+    lea             r2,                 [r1 * 3]
+    mov             r3d,                4
+.loop:
+    ; store DC 32x32
+    movu            [r0 +  0],          m0
+    movu            [r0 + 16],          m0
+    movu            [r0 + 32],          m0
+    movu            [r0 + 48],          m0
+    movu            [r0 + r1 +  0],     m0
+    movu            [r0 + r1 + 16],     m0
+    movu            [r0 + r1 + 32],     m0
+    movu            [r0 + r1 + 48],     m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + 16], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    movu            [r0 + r1 * 2 + 48], m0
+    movu            [r0 + r2 +  0],     m0
+    movu            [r0 + r2 + 16],     m0
+    movu            [r0 + r2 + 32],     m0
+    movu            [r0 + r2 + 48],     m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 +  0],          m0
+    movu            [r0 + 16],          m0
+    movu            [r0 + 32],          m0
+    movu            [r0 + 48],          m0
+    movu            [r0 + r1 +  0],     m0
+    movu            [r0 + r1 + 16],     m0
+    movu            [r0 + r1 + 32],     m0
+    movu            [r0 + r1 + 48],     m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + 16], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    movu            [r0 + r1 * 2 + 48], m0
+    movu            [r0 + r2 +  0],     m0
+    movu            [r0 + r2 + 16],     m0
+    movu            [r0 + r2 + 32],     m0
+    movu            [r0 + r2 + 48],     m0
+    lea             r0, [r0 + r1 * 4]
+    dec             r3d
+    jnz            .loop
     RET
 
 ;-----------------------------------------------------------------------------------------------------------
