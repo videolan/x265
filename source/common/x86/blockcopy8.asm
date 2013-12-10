@@ -578,46 +578,69 @@ BLOCKCOPY_PP_W8_H8 8, 32
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W12_H4 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 7, 8, dest, deststride, src, srcstride
+cglobal blockcopy_pp_%1x%2, 4, 5, 4, dest, deststride, src, srcstride
 
-mov         r4d,       %2
-
+    mov         r4d,       %2/4
+%if HIGH_BIT_DEPTH
+    add     r1,    r1
+    add     r3,    r3
 .loop
-      movh     m0,     [r2]
-      movd     m1,     [r2 + 8]
+    movu    m0,    [r2]
+    movh    m1,    [r2 + 16]
+    movu    m2,    [r2 + r3]
+    movh    m3,    [r2 + r3 + 16]
+    lea     r2,    [r2 + 2 * r3]
 
-      movh     m2,     [r2 + r3]
-      movd     m3,     [r2 + r3 + 8]
+    movu    [r0],              m0
+    movh    [r0 + 16],         m1
+    movu    [r0 + r1],         m2
+    movh    [r0 + r1 + 16],    m3
 
-      movh     m4,     [r2 + 2 * r3]
-      movd     m5,     [r2 + 2 * r3 + 8]
+    lea     r0,    [r0 + 2 * r1]
+    movu    m0,    [r2]
+    movh    m1,    [r2 + 16]
+    movu    m2,    [r2 + r3]
+    movh    m3,    [r2 + r3 + 16]
 
-      lea      r5,     [r2 + 2 * r3]
+    movu    [r0],              m0
+    movh    [r0 + 16],         m1
+    movu    [r0 + r1],         m2
+    movh    [r0 + r1 + 16],    m3
 
-      movh     m6,     [r5 + r3]
-      movd     m7,     [r5 + r3 + 8]
+    dec     r4d
+    lea     r0,    [r0 + 2 * r1]
+    lea     r2,    [r2 + 2 * r3]
+    jnz     .loop
+%else
+.loop
+    movh    m0,     [r2]
+    movd    m1,     [r2 + 8]
+    movh    m2,     [r2 + r3]
+    movd    m3,     [r2 + r3 + 8]
+    lea     r2,     [r2 + 2 * r3]
 
-      movh     [r0],                 m0
-      movd     [r0 + 8],             m1
+    movh    [r0],             m0
+    movd    [r0 + 8],         m1
+    movh    [r0 + r1],        m2
+    movd    [r0 + r1 + 8],    m3
+    lea     r0,               [r0 + 2 * r1]
 
-      movh     [r0 + r1],            m2
-      movd     [r0 + r1 + 8],        m3
+    movh    m0,     [r2]
+    movd    m1,     [r2 + 8]
+    movh    m2,     [r2 + r3]
+    movd    m3,     [r2 + r3 + 8]
 
-      movh     [r0 + 2 * r1],        m4
-      movd     [r0 + 2 * r1 + 8],    m5
+    movh    [r0],             m0
+    movd    [r0 + 8],         m1
+    movh    [r0 + r1],        m2
+    movd    [r0 + r1 + 8],    m3
 
-      lea      r6,                   [r0 + 2 * r1]
-
-      movh     [r6 + r1],            m6
-      movd     [r6 + r1 + 8],        m7
-
-      lea      r0,                   [r0 + 4 * r1]
-      lea      r2,                   [r2 + 4 * r3]
-
-      sub      r4d,                   4
-      jnz      .loop
-
-RET
+    dec     r4d
+    lea     r0,               [r0 + 2 * r1]
+    lea     r2,               [r2 + 2 * r3]
+    jnz     .loop
+%endif
+    RET
 %endmacro
 
 BLOCKCOPY_PP_W12_H4 12, 16
