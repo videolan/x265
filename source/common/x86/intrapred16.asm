@@ -580,7 +580,9 @@ cglobal intra_pred_ang4_3, 3,4,8
     mova        m1, [r3]            ; [20]
     mova        m6, [r3 - 6 * 16]   ; [14]
     mova        m7, [r3 - 12 * 16]  ; [ 8]
+    jmp        .do_filter4x4
 
+ALIGN 16
 .do_filter4x4:
     pmaddwd m2, m0
     paddd   m2, [pd_16]
