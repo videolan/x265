@@ -554,12 +554,12 @@ cglobal intra_pred_planar16, 4,7,8+3
 %define bottomRow2  m9
 %define bottomRow3  m10
 %else
-%endif
 cglobal intra_pred_planar16, 4,7,8, 0-3*mmsize
 %define bottomRow0  [rsp + 0*mmsize]
 %define bottomRow1  [rsp + 1*mmsize]
 %define bottomRow2  [rsp + 2*mmsize]
 %define bottomRow3  m7
+%endif
 
     add             r2, 2
     add             r3, 2
