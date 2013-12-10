@@ -1155,10 +1155,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
 
             int filterSize = NTAPS_LUMA;
             int halfFilterSize = filterSize >> 1;
-            primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride,
-                                                   immed, blockwidth,
-                                                   blockwidth, blockheight + filterSize - 1,
-                                                   g_lumaFilter[xFrac]);
+            primitives.luma_hps[partEnum](fref, ref->lumaStride,immed, blockwidth, xFrac, 1);
             primitives.luma_vsp[partEnum](immed + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, yFrac);
         }
         return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
