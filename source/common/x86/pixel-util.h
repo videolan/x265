@@ -31,7 +31,9 @@ void x265_calcRecons32_sse4(pixel* pred, int16_t* residual, pixel* recon, int16_
 
 void x265_getResidual4_sse2(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 void x265_getResidual8_sse2(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
+void x265_getResidual16_sse2(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 void x265_getResidual16_sse4(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
+void x265_getResidual32_sse2(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 void x265_getResidual32_sse4(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 
 void x265_transpose4_sse2(pixel *dest, pixel *src, intptr_t stride);

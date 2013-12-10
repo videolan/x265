@@ -323,7 +323,8 @@ bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filte
     for (int i = 0; i <= 100; i++)
     {
         rand_coeffIdx = rand() % 8;                 // Random coeffIdex in the filter
-        rand_isRowExt = rand() % 2;
+        rand_isRowExt = rand() % 2;                 // 0 : Interpolate W x H
+                                                    // 1 : Interpolate W x (H + 3)
 
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
@@ -474,7 +475,8 @@ bool IPFilterHarness::check_IPFilterLuma_hps_primitive(filter_hps_t ref, filter_
     for (int i = 0; i <= 1000; i++)
     {
         rand_coeffIdx = rand() % 3;                // Random coeffIdex in the filter
-        rand_isRowExt = rand() % 2;
+        rand_isRowExt = rand() % 2;                // 0 : Interpolate W x H
+                                                   // 1 : Interpolate W x (H + 7)
 
         rand_srcStride = rand() % 100;             // Randomly generated srcStride
         rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride

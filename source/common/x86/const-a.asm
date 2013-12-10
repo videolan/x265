@@ -41,6 +41,9 @@ const pw_pixel_max,times 16 dw ((1 << BIT_DEPTH)-1)
 const deinterleave_shufd, dd 0,4,1,5,2,6,3,7
 const pb_unpackbd1, times 2 db 0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3
 const pb_unpackbd2, times 2 db 4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7
+const pb_unpackwq1, db 0,1,0,1,0,1,0,1,2,3,2,3,2,3,2,3
+const pb_unpackwq2, db 4,5,4,5,4,5,4,5,6,7,6,7,6,7,6,7
+const pw_swap,      times 2 db 6,7,4,5,2,3,0,1
 
 const pb_01,       times  8 db 0,1
 const pb_0,        times 16 db 0

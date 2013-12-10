@@ -305,7 +305,7 @@ void interp_horiz_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t ds
                 sum += src[col + 7] * coeff[7];
             }
 
-            int16_t val = (int16_t)(sum + offset) >> shift;
+            int16_t val = (int16_t)((sum + offset) >> shift);
             dst[col] = val;
         }
 
