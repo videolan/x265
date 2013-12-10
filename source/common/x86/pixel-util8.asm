@@ -434,6 +434,61 @@ cglobal getResidual8, 4,4,5
 %endif
     RET
 
+%if HIGH_BIT_DEPTH
+INIT_XMM sse2
+cglobal getResidual16, 4,5,6
+    add         r3, r3
+    mov         r4d, 16/4
+.loop:
+    ; row 0-1
+    movu        m0, [r0]
+    movu        m1, [r0 + 16]
+    movu        m2, [r0 + r3]
+    movu        m3, [r0 + r3 + 16]
+    movu        m4, [r1]
+    movu        m5, [r1 + 16]
+    psubw       m0, m4
+    psubw       m1, m5
+    movu        m4, [r1 + r3]
+    movu        m5, [r1 + r3 + 16]
+    psubw       m2, m4
+    psubw       m3, m5
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+
+    movu        [r2], m0
+    movu        [r2 + 16], m1
+    movu        [r2 + r3], m2
+    movu        [r2 + r3 + 16], m3
+    lea         r2, [r2 + r3 * 2]
+
+    ; row 2-3
+    movu        m0, [r0]
+    movu        m1, [r0 + 16]
+    movu        m2, [r0 + r3]
+    movu        m3, [r0 + r3 + 16]
+    movu        m4, [r1]
+    movu        m5, [r1 + 16]
+    psubw       m0, m4
+    psubw       m1, m5
+    movu        m4, [r1 + r3]
+    movu        m5, [r1 + r3 + 16]
+    psubw       m2, m4
+    psubw       m3, m5
+
+    movu        [r2], m0
+    movu        [r2 + 16], m1
+    movu        [r2 + r3], m2
+    movu        [r2 + r3 + 16], m3
+
+    dec         r4d
+
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 2]
+
+    jnz        .loop
+%else
 
 INIT_XMM sse4
 cglobal getResidual16, 4,5,8
@@ -497,9 +552,63 @@ cglobal getResidual16, 4,5,8
     lea         r2, [r2 + r3 * 4]
 
     jnz        .loop
+%endif
+
     RET
 
+%if HIGH_BIT_DEPTH
+INIT_XMM sse2
+cglobal getResidual32, 4,5,6
+    add         r3, r3
+    mov         r4d, 32/2
+.loop:
+    ; row 0
+    movu        m0, [r0]
+    movu        m1, [r0 + 16]
+    movu        m2, [r0 + 32]
+    movu        m3, [r0 + 48]
+    movu        m4, [r1]
+    movu        m5, [r1 + 16]
+    psubw       m0, m4
+    psubw       m1, m5
+    movu        m4, [r1 + 32]
+    movu        m5, [r1 + 48]
+    psubw       m2, m4
+    psubw       m3, m5
 
+    movu        [r2], m0
+    movu        [r2 + 16], m1
+    movu        [r2 + 32], m2
+    movu        [r2 + 48], m3
+
+    ; row 1
+    movu        m0, [r0 + r3]
+    movu        m1, [r0 + r3 + 16]
+    movu        m2, [r0 + r3 + 32]
+    movu        m3, [r0 + r3 + 48]
+    movu        m4, [r1 + r3]
+    movu        m5, [r1 + r3 + 16]
+    psubw       m0, m4
+    psubw       m1, m5
+    movu        m4, [r1 + r3 + 32]
+    movu        m5, [r1 + r3 + 48]
+    psubw       m2, m4
+    psubw       m3, m5
+
+    movu        [r2 + r3], m0
+    movu        [r2 + r3 + 16], m1
+    movu        [r2 + r3 + 32], m2
+    movu        [r2 + r3 + 48], m3
+
+    dec         r4d
+
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 2]
+
+    jnz        .loop
+
+%else
 INIT_XMM sse4
 cglobal getResidual32, 4,5,7
     mov         r4d, 32/2
@@ -556,6 +665,7 @@ cglobal getResidual32, 4,5,7
     lea         r2, [r2 + r3 * 4]
 
     jnz        .loop
+%endif
     RET
 
 
