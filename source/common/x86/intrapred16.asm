@@ -725,6 +725,196 @@ cglobal intra_pred_planar16, 4,6,7
     RET
 %endif
 
+;-----------------------------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-----------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+%if (ARCH_X86_64 == 1)
+cglobal intra_pred_planar32, 4,7,8+8, 0-4*mmsize
+    %define bottomRow0  m8
+    %define bottomRow1  m9
+    %define bottomRow2  m10
+    %define bottomRow3  m11
+    %define bottomRow4  m12
+    %define bottomRow5  m13
+    %define bottomRow6  m14
+    %define bottomRow7  m15
+    %define tmp0        [rsp + 0*mmsize]
+    %define tmp1        [rsp + 1*mmsize]
+    %define tmp2        [rsp + 2*mmsize]
+    %define tmp3        [rsp + 3*mmsize]
+%else
+cglobal intra_pred_planar32, 4,7,8, 0-12*mmsize
+    %define bottomRow0  [rsp + 0*mmsize]
+    %define bottomRow1  [rsp + 1*mmsize]
+    %define bottomRow2  [rsp + 2*mmsize]
+    %define bottomRow3  [rsp + 3*mmsize]
+    %define bottomRow4  [rsp + 4*mmsize]
+    %define bottomRow5  [rsp + 5*mmsize]
+    %define bottomRow6  [rsp + 6*mmsize]
+    %define bottomRow7  [rsp + 7*mmsize]
+    %define tmp0        [rsp + 8*mmsize]
+    %define tmp1        [rsp + 9*mmsize]
+    %define tmp2        [rsp + 10*mmsize]
+    %define tmp3        [rsp + 11*mmsize]
+%endif
+
+    add             r2, 2
+    add             r3, 2
+    add             r1, r1
+
+    pxor            m0, m0
+
+    ; bottomRow
+    movzx           r4d, word [r2 + 32*2]
+    movd            m1, r4d
+    pshufd          m1, m1, 0               ; m1 = bottomLeft
+    movu            m2, [r3]
+    pmovzxwd        m3, m2
+    punpckhwd       m2, m0
+    psubd           m4, m1, m3
+    mova            bottomRow0, m4
+    psubd           m4, m1, m2
+    mova            bottomRow1, m4
+    movu            m2, [r3 + 16]
+    pmovzxwd        m3, m2
+    punpckhwd       m2, m0
+    psubd           m4, m1, m3
+    mova            bottomRow2, m4
+    psubd           m4, m1, m2
+    mova            bottomRow3, m4
+
+    movu            m2, [r3 + 32]
+    pmovzxwd        m3, m2
+    punpckhwd       m2, m0
+    psubd           m4, m1, m3
+    mova            bottomRow4, m4
+    psubd           m4, m1, m2
+    mova            bottomRow5, m4
+    movu            m2, [r3 + 48]
+    pmovzxwd        m3, m2
+    punpckhwd       m2, m0
+    psubd           m4, m1, m3
+    mova            bottomRow6, m4
+    psubd           m1, m2
+    mova            bottomRow7, m1
+
+    ; topRow
+    pmovzxwd        m0, [r3 + 0*8]
+    pslld           m0, 5
+    pmovzxwd        m1, [r3 + 1*8]
+    pslld           m1, 5
+    pmovzxwd        m2, [r3 + 2*8]
+    pslld           m2, 5
+    pmovzxwd        m3, [r3 + 3*8]
+    pslld           m3, 5
+
+    pmovzxwd        m4, [r3 + 4*8]
+    pslld           m4, 5
+    mova            tmp0, m4
+    pmovzxwd        m4, [r3 + 5*8]
+    pslld           m4, 5
+    mova            tmp1, m4
+    pmovzxwd        m4, [r3 + 6*8]
+    pslld           m4, 5
+    mova            tmp2, m4
+    pmovzxwd        m4, [r3 + 7*8]
+    pslld           m4, 5
+    mova            tmp3, m4
+
+    xor             r6, r6
+.loopH:
+    movzx           r4d, word [r2 + r6*2]
+    movzx           r5d, word [r3 + 32*2]       ; r5 = topRight
+    sub             r5d, r4d
+    movd            m5, r5d
+    pshuflw         m5, m5, 0
+    pmullw          m5, [multiL]
+    pmovsxwd        m5, m5                      ; m5 = rightCol
+    shl             r4d, 5
+    add             r4d, 32
+    movd            m4, r4d
+    pshufd          m4, m4, 0                   ; m4 = horPred
+    paddd           m4, m5
+    pshufd          m6, m5, 0xFF                ; m6 = [4 4 4 4]
+
+    ; 0-3
+    paddd           m0, bottomRow0
+    paddd           m5, m0, m4
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 0*8], m5
+
+    ; 4-7
+    paddd           m4, m6
+    paddd           m1, bottomRow1
+    paddd           m5, m1, m4
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 1*8], m5
+
+    ; 8-11
+    paddd           m4, m6
+    paddd           m2, bottomRow2
+    paddd           m5, m2, m4
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 2*8], m5
+
+    ; 12-15
+    paddd           m4, m6
+    paddd           m3, bottomRow3
+    paddd           m5, m3, m4
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 3*8], m5
+
+    ; 16-19
+    paddd           m4, m6
+    mova            m7, tmp0
+    paddd           m7, bottomRow4
+    paddd           m5, m7, m4
+    mova            tmp0, m7
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 4*8], m5
+
+    ; 20-23
+    paddd           m4, m6
+    mova            m7, tmp1
+    paddd           m7, bottomRow5
+    paddd           m5, m7, m4
+    mova            tmp1, m7
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 5*8], m5
+
+    ; 24-27
+    paddd           m4, m6
+    mova            m7, tmp2
+    paddd           m7, bottomRow6
+    paddd           m5, m7, m4
+    mova            tmp2, m7
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 5*8], m5
+
+    ; 28-31
+    paddd           m4, m6
+    mova            m7, tmp3
+    paddd           m7, bottomRow7
+    paddd           m5, m7, m4
+    mova            tmp3, m7
+    psrad           m5, 6
+    packusdw        m5, m5
+    movh            [r0 + 5*8], m5
+
+    add             r0, r1
+    inc             r6d
+    cmp             r6d, 32
+    jnz            .loopH
+
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void intraPredAng(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
