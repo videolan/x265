@@ -671,6 +671,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.blockfill_s[BLOCK_8x8] = x265_blockfill_s_8x8_sse2;
         p.blockfill_s[BLOCK_16x16] = x265_blockfill_s_16x16_sse2;
         p.blockfill_s[BLOCK_32x32] = x265_blockfill_s_32x32_sse2;
+
+        p.calcresidual[BLOCK_4x4] = x265_getResidual4_sse2;
+        p.calcresidual[BLOCK_8x8] = x265_getResidual8_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

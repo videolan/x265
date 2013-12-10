@@ -316,6 +316,37 @@ cglobal calcRecons32
 ; void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
+%if HIGH_BIT_DEPTH
+cglobal getResidual4, 4,4,4
+    add      r3,    r3
+
+    ; row 0-1
+    movh         m0, [r0]
+    movh         m1, [r0 + r3]
+    movh         m2, [r1]
+    movh         m3, [r1 + r3]
+    punpcklqdq   m0, m1
+    punpcklqdq   m2, m3
+    psubw        m0, m2
+
+    movh         [r2], m0
+    movhps       [r2 + r3], m0
+    lea          r0, [r0 + r3 * 2]
+    lea          r1, [r1 + r3 * 2]
+    lea          r2, [r2 + r3 * 2]
+
+    ; row 2-3
+    movh         m0, [r0]
+    movh         m1, [r0 + r3]
+    movh         m2, [r1]
+    movh         m3, [r1 + r3]
+    punpcklqdq   m0, m1
+    punpcklqdq   m2, m3
+    psubw        m0, m2
+
+    movh        [r2], m0
+    movhps      [r2 + r3], m0
+%else
 cglobal getResidual4, 4,4,5
     pxor        m0, m0
 
@@ -347,11 +378,34 @@ cglobal getResidual4, 4,4,5
     psubw       m1, m3
     movlps      [r2], m1
     movhps      [r2 + r3 * 2], m1
-
+%endif
     RET
 
 
 INIT_XMM sse2
+%if HIGH_BIT_DEPTH
+cglobal getResidual8, 4,4,4
+    add      r3,    r3
+
+%assign x 0
+%rep 8/2
+    ; row 0-1
+    movu        m1, [r0]
+    movu        m2, [r0 + r3]
+    movu        m3, [r1]
+    movu        m4, [r1 + r3]
+    psubw       m1, m3
+    psubw       m2, m4
+    movu        [r2], m1
+    movu        [r2 + r3], m2
+%assign x x+1
+%if (x != 4)
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 2]
+%endif
+%endrep
+%else
 cglobal getResidual8, 4,4,5
     pxor        m0, m0
 
@@ -377,6 +431,7 @@ cglobal getResidual8, 4,4,5
     lea         r2, [r2 + r3 * 4]
 %endif
 %endrep
+%endif
     RET
 
 
