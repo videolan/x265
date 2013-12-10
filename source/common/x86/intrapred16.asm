@@ -46,7 +46,8 @@ cextern pd_32
 cextern pw_4096
 cextern multiL
 cextern multi_2Row
-
+cextern pb_unpackwq1
+cextern pb_unpackwq2
 
 ;-------------------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
@@ -833,3 +834,33 @@ cglobal intra_pred_ang4_9, 3,4,8
     mova        m6, [r3 +  2 * 16]  ; [ 6]
     mova        m7, [r3 +  4 * 16]  ; [ 8]
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
+cglobal intra_pred_ang4_10, 3,3,4
+    movh        m0,             [r2 + 2]            ; [4 3 2 1]
+    pshufb      m2,             m0, [pb_unpackwq2]  ; [4 4 4 4 3 3 3 3]
+    pshufb      m0,             [pb_unpackwq1]      ; [2 2 2 2 1 1 1 1]
+    add         r1,             r1
+    movhlps     m1,             m0                  ; [2 2 2 2]
+    movhlps     m3,             m2                  ; [4 4 4 4]
+    movh        [r0 + r1],      m1
+    movh        [r0 + r1 * 2],  m2
+    lea         r1,             [r1 * 3]
+    movh        [r0 + r1],      m3
+
+    cmp         r5m,            byte 0
+    jz         .quit
+
+    ; filter
+    mov         r2,             r3mp
+    movu        m1,             [r2]                ; [7 6 5 4 3 2 1 0]
+    pshufb      m2,             m1, [pb_unpackwq1]  ; [0 0 0 0]
+    palignr     m1,             m1, 2               ; [4 3 2 1]
+    psubw       m1,             m2
+    psraw       m1,             1
+    paddw       m0,             m1
+    pmovsxwd    m0,             m0
+    packusdw    m0,             m0
+
+.quit:
+    movh        [r0],           m0
+    RET
