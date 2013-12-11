@@ -93,7 +93,7 @@ bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, in
 
         for (int k = 0; k < width; k++)
         {
-            if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
+            if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
             {
 #if _DEBUG
                 ref(pixel_out_c,   FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, rand_filter);
@@ -130,7 +130,7 @@ bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt
 
         for (int k = 0; k < width; k++)
         {
-            if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
+            if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
             {
 #if _DEBUG
                 ref(pixel_out_c,   FENC_STRIDE, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, 0);
@@ -178,7 +178,7 @@ bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_INTR
 
                 for (int k = 0; k < width; k++)
                 {
-                    if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
+                    if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
                     {
                         ref[size - 2][pmode](pixel_out_c, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
                         opt[size - 2][pmode](pixel_out_vec, FENC_STRIDE, refLeft, refAbove, pmode, bFilter);
@@ -229,7 +229,7 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], cons
             {
                 for (int k = 0; k < width; k++)
                 {
-                    if (memcmp(pixel_out_33_c + p * (width * width) + k * width, pixel_out_33_vec + p * (width * width) + k * width, width))
+                    if (memcmp(pixel_out_33_c + p * (width * width) + k * width, pixel_out_33_vec + p * (width * width) + k * width, width * sizeof(pixel)))
                     {
                         printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p + 2, k, isLuma);
                         opt[size - 2](pixel_out_33_vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
