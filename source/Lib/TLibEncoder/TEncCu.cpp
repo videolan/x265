@@ -356,17 +356,20 @@ void TEncCu::compressCU(TComDataCU* cu)
     m_temporalSAD      = 0;
 
     // analysis of CU
+#if LOG_CU_STATISTICS
+    int numPartition = cu->getTotalNumPart();
+#endif
 
     if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
     {
         xCompressIntraCU(m_bestCU[0], m_tempCU[0], 0);
 #if LOG_CU_STATISTICS
         int i = 0, part;
-        part = cu->getDepth(i);
         do
         {
             m_log->totalCu++;
-            int next = cu->getTotalNumPart() >> (part * 2);
+            part = cu->getDepth(i);
+            int next = numPartition >> (part * 2);
             if (part == g_maxCUDepth - 1 && cu->getPartitionSize(i) != SIZE_2Nx2N)
             {
                 m_log->cntIntraNxN++;
@@ -380,9 +383,8 @@ void TEncCu::compressCU(TComDataCU* cu)
                     m_log->cuIntraDistribution[part][cu->getLumaIntraDir()[i]]++;
             }
             i += next;
-            part = cu->getDepth(i);
         }
-        while (part < g_maxCUDepth);
+        while (i < numPartition);
 #endif
     }
     else
@@ -399,11 +401,11 @@ void TEncCu::compressCU(TComDataCU* cu)
             xCompressCU(m_bestCU[0], m_tempCU[0], 0);
 #if LOG_CU_STATISTICS
         int i = 0, part;
-        part = cu->getDepth(i);
         do
         {
+            part = cu->getDepth(i);
             m_log->cntTotalCu[part]++;
-            int next = cu->getTotalNumPart() >> (part * 2);
+            int next = numPartition >> (part * 2);
             if (cu->isSkipped(i))
             {
                 m_log->cntSkipCu[part]++;
@@ -436,9 +438,8 @@ void TEncCu::compressCU(TComDataCU* cu)
                 }
             }
             i = i + next;
-            part = cu->getDepth(i);
         }
-        while (part < g_maxCUDepth);
+        while (i < numPartition);
 #endif
     }
 }
