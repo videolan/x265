@@ -107,8 +107,8 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
 %endif
     HADDD   m0, m5
     movd   eax, xm0
-%if (cpuflags == cpuflags_mmx)
-    emms
+%ifidn movu,movq ; detect MMX
+    EMMS
 %endif
     RET
 %endmacro
