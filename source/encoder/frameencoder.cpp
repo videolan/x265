@@ -263,11 +263,12 @@ void FrameEncoder::initSlice(TComPic* pic)
     slice->setReferenced(true);
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
+#if LOG_CU_STATISTICS
     for (int i = 0; i < m_numRows; i++)
     {
         m_rows[i].m_cuCoder.m_log = &m_rows[i].m_cuCoder.m_sliceTypeLog[sliceType];
     }
-
+#endif
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
         slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());

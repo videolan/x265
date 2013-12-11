@@ -101,6 +101,13 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
 
+option(LOG_CU_STATISTICS "Log Mode Decision Statistics at the CU Level" OFF)
+if(LOG_CU_STATISTICS)
+    add_definitions(-DLOG_CU_STATISTICS=1)
+else(LOG_CU_STATISTICS)
+    add_definitions(-DLOG_CU_STATISTICS=0)
+endif(LOG_CU_STATISTICS)
+
 find_package(Yasm)
 if(YASM_FOUND)
     if (YASM_VERSION_STRING VERSION_LESS "1.2.0")

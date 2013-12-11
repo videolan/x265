@@ -384,6 +384,7 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
 
 void Encoder::printSummary()
 {
+#if LOG_CU_STATISTICS
     for (int sliceType = 2; sliceType >= 0; sliceType--)
     {
         if (sliceType == P_SLICE && !m_analyzeP.m_numPics)
@@ -527,7 +528,7 @@ void Encoder::printSummary()
                 x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", sliceType == P_SLICE ? 'P' : sliceType == B_SLICE ? 'B' : 'I', cuSize, stats);
         }
     }
-
+#endif
     if (param.logLevel >= X265_LOG_INFO)
     {
         char buffer[200];

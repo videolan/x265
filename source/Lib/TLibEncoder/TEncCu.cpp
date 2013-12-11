@@ -360,6 +360,7 @@ void TEncCu::compressCU(TComDataCU* cu)
     if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
     {
         xCompressIntraCU(m_bestCU[0], m_tempCU[0], 0);
+#if LOG_CU_STATISTICS
         int i = 0, part;
         part = cu->getDepth(i);
         do
@@ -382,6 +383,7 @@ void TEncCu::compressCU(TComDataCU* cu)
             part = cu->getDepth(i);
         }
         while (part < g_maxCUDepth);
+#endif
     }
     else
     {
@@ -395,6 +397,7 @@ void TEncCu::compressCU(TComDataCU* cu)
         }
         else
             xCompressCU(m_bestCU[0], m_tempCU[0], 0);
+#if LOG_CU_STATISTICS
         int i = 0, part;
         part = cu->getDepth(i);
         do
@@ -436,6 +439,7 @@ void TEncCu::compressCU(TComDataCU* cu)
             part = cu->getDepth(i);
         }
         while (part < g_maxCUDepth);
+#endif
     }
 }
 
