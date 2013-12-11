@@ -37,7 +37,7 @@ using namespace x265;
 PixelHarness::PixelHarness()
 {
     int maxheight = 64;
-    int padrows = 16;
+    int padrows = 64;
     int bufsize = STRIDE * (maxheight + padrows) + INCR * ITERS;
 
     /* 64 pixels wide, 2k deep */
@@ -65,7 +65,7 @@ PixelHarness::PixelHarness()
         pbuf3[i] = rand() & PIXEL_MAX;
         pbuf4[i] = rand() & PIXEL_MAX;
 
-#define SMAX (1<<12)
+#define SMAX (1 << 12)
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
@@ -259,6 +259,10 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
     memset(opt_reco, 0, 64 * 64 * sizeof(pixel));
     memset(ref_pred, 0, 64 * 64 * sizeof(pixel));
     memset(opt_pred, 0, 64 * 64 * sizeof(pixel));
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
 
     int j = 0;
     for (int i = 0; i < ITERS; i++)
@@ -268,15 +272,32 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
         opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
 
         if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
         if (memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
         if (memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
 
         j += INCR;
     }
-
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
     return true;
 }
 
@@ -412,6 +433,28 @@ bool PixelHarness::check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t op
         ref(ref_dest, ibuf1 + j, STRIDE, shift, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_cvt16to32_shl_t(cvt16to32_shl_t ref, cvt16to32_shl_t opt)
+{
+    ALIGN_VAR_16(int32_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int32_t, opt_dest[64 * 64]);
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int shift = (rand() % 7 + 1);
+
+        opt(opt_dest, sbuf1 + j, STRIDE, shift, STRIDE);
+        ref(ref_dest, sbuf1 + j, STRIDE, shift, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int32_t)))
             return false;
 
         j += INCR;
@@ -618,6 +661,11 @@ bool PixelHarness::check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt)
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
 
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
+
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
@@ -625,11 +673,18 @@ bool PixelHarness::check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt)
         ref(ref_dest, 64, pbuf1 + j, sbuf1 + j, STRIDE, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
-
+        }
         j += INCR;
     }
 
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
     return true;
 }
 
@@ -673,25 +728,38 @@ bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
     ALIGN_VAR_32(int, sum0[5][4]);
     ALIGN_VAR_32(int, sum1[5][4]);
     int width;
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
 
     for (int i = 0; i < ITERS; i++)
     {
-        for(int j = 0; j < 5; j++)
+        for (int j = 0; j < 5; j++)
         {
-            for(int k = 0; k < 4; k++)
+            for (int k = 0; k < 4; k++)
             {
                 sum0[j][k] = rand() % (1 << 12);
                 sum1[j][k] = rand() % (1 << 12);
             }
         }
+
         width = (rand() % 4) + 1;   // range[1-4]
 
         float cres = ref(sum0, sum1, width);
         float vres = opt(sum0, sum1, width);
-        if ( fabs(vres - cres) > 0.00001)
+        if (fabs(vres - cres) > 0.00001)
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
     }
 
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
     return true;
 }
 
@@ -823,7 +891,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    for(int i = 0; i < X265_CSP_COUNT; i++)
+    for (int i = 0; i < X265_CSP_COUNT; i++)
     {
         if (opt.chroma[i].copy_pp[part])
         {
@@ -943,14 +1011,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
-    if (opt.var[i])
-    {
-        if (!check_pixel_var(ref.var[i], opt.var[i]))
+        if (opt.var[i])
         {
-            printf("var[%dx%d] failed\n", 4 << i, 4 << i);
-            return false;
+            if (!check_pixel_var(ref.var[i], opt.var[i]))
+            {
+                printf("var[%dx%d] failed\n", 4 << i, 4 << i);
+                return false;
+            }
         }
-    }
     }
 
     if (opt.cvt32to16_shr)
@@ -958,6 +1026,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_cvt32to16_shr_t(ref.cvt32to16_shr, opt.cvt32to16_shr))
         {
             printf("cvt32to16 failed!\n");
+            return false;
+        }
+    }
+
+    if (opt.cvt16to32_shl)
+    {
+        if (!check_cvt16to32_shl_t(ref.cvt16to32_shl, opt.cvt16to32_shl))
+        {
+            printf("cvt16to32 failed!\n");
             return false;
         }
     }
@@ -1071,7 +1148,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     if (opt.pixelavg_pp[part])
     {
         HEADER("avg_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pixelavg_pp[part], ref.pixelavg_pp[part], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 0);
+        REPORT_SPEEDUP(opt.pixelavg_pp[part], ref.pixelavg_pp[part], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
     }
 
     if (opt.sa8d_inter[part])
@@ -1141,8 +1218,15 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 
     if (opt.luma_add_ps[part])
     {
+#if HIGH_BIT_DEPTH
+        int old_depth = X265_DEPTH;
+        X265_DEPTH = 10;
+#endif
         HEADER("luma_add_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
     }
 
     for (int i = 0; i < X265_CSP_COUNT; i++)
@@ -1173,12 +1257,14 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             REPORT_SPEEDUP(opt.chroma[i].add_ps[part], ref.chroma[i].add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
     }
+
 #undef HEADER
 }
 
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     char header[128];
+
 #define HEADER(str, ...) sprintf(header, str, __VA_ARGS__); printf("%22s", header);
 #define HEADER0(str) printf("%22s", str);
 
@@ -1224,8 +1310,15 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
         if (opt.calcrecon[i])
         {
+#if HIGH_BIT_DEPTH
+        int old_depth = X265_DEPTH;
+        X265_DEPTH = 10;
+#endif
             HEADER("recon[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
         }
 
         if (opt.blockfill_s[i])
@@ -1233,6 +1326,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.blockfill_s[i], ref.blockfill_s[i], sbuf1, 64, SHORT_MAX);
         }
+
         if (opt.transpose[i])
         {
             HEADER("transpose[%dx%d]", 4 << i, 4 << i);
@@ -1250,6 +1344,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("cvt32to16_shr");
         REPORT_SPEEDUP(opt.cvt32to16_shr, ref.cvt32to16_shr, sbuf1, ibuf1, 64, 5, 64);
+    }
+
+    if (opt.cvt16to32_shl)
+    {
+        HEADER0("cvt16to32_shl");
+        REPORT_SPEEDUP(opt.cvt16to32_shl, ref.cvt16to32_shl, ibuf1, sbuf1, 64, 5, 64);
     }
 
     if (opt.blockcpy_pp)
@@ -1303,12 +1403,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.ssim_4x4x2_core)
     {
         HEADER0("ssim_4x4x2_core");
-        REPORT_SPEEDUP(opt.ssim_4x4x2_core, ref.ssim_4x4x2_core, pbuf1, 64, pbuf2, 64, (int (*)[4])sbuf1);
+        REPORT_SPEEDUP(opt.ssim_4x4x2_core, ref.ssim_4x4x2_core, pbuf1, 64, pbuf2, 64, (int(*)[4])sbuf1);
     }
 
     if (opt.ssim_end_4)
     {
+#if HIGH_BIT_DEPTH
+        int old_depth = X265_DEPTH;
+        X265_DEPTH = 10;
+#endif
         HEADER0("ssim_end_4");
         REPORT_SPEEDUP(opt.ssim_end_4, ref.ssim_end_4, (int(*)[4])pbuf2, (int(*)[4])pbuf1, 4);
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
     }
 }

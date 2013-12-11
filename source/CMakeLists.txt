@@ -13,7 +13,7 @@ include(CheckFunctionExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 3)
+set(X265_BUILD 4)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -83,12 +83,6 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
         add_definitions(-mstackrealign)
     endif()
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-    if(NOT GCC_VERSION VERSION_LESS 4.7)
-        # this is necessary to avoid name conflicts in vector class
-        # library.  if vector classes are removed/replaced this can
-        # likely be removed as well.
-        add_definitions(-fabi-version=6)
-    endif()
 endif()
 if (GCC)
     option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
@@ -107,15 +101,21 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
 
-option(ENABLE_PRIMITIVES_VEC "Enable use of SIMD vector class primitives" ON)
+option(LOG_CU_STATISTICS "Log Mode Decision Statistics at the CU Level" OFF)
+if(LOG_CU_STATISTICS)
+    add_definitions(-DLOG_CU_STATISTICS=1)
+else(LOG_CU_STATISTICS)
+    add_definitions(-DLOG_CU_STATISTICS=0)
+endif(LOG_CU_STATISTICS)
+
 find_package(Yasm)
 if(YASM_FOUND)
     if (YASM_VERSION_STRING VERSION_LESS "1.2.0")
         message(STATUS "Yasm version ${YASM_VERSION_STRING} is too old. 1.2.0 or later required")
-        option(ENABLE_PRIMITIVES_ASM "Enable use of assembly coded primitives" OFF)
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
     else()
         message(STATUS "Found Yasm ${YASM_VERSION_STRING} to build assembly primitives")
-        option(ENABLE_PRIMITIVES_ASM "Enable use of assembly coded primitives" ON)
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
     endif()
 endif(YASM_FOUND)
 
@@ -157,19 +157,19 @@ include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(common)
 add_subdirectory(encoder)
 
-if((MSVC_IDE OR XCODE) AND ENABLE_PRIMITIVES_ASM)
+if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     # this is horrible. ugly, and hacky, and it reproduces logic found
     # in the yasm CMake modules, but this is required because of this cmake bug
     # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
     if (X64)
         if(APPLE)
-            set(FLAGS -f macho64 -m amd64 -DPREFIX -DPIC -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
+            set(FLAGS -f macho64 -m amd64 -DPREFIX -DPIC -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=1)
         else()
             set(FLAGS -f win64 -m amd64 -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
         endif()
     else()
         if(APPLE)
-            set(FLAGS -f macho -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
+            set(FLAGS -f macho -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=1 -DPREFIX)
         else()
             set(FLAGS -f win32 -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
         endif()
@@ -196,42 +196,42 @@ if((MSVC_IDE OR XCODE) AND ENABLE_PRIMITIVES_ASM)
 endif()
 
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
-add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
-                               $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
-target_link_libraries(x265-shared ${PLATFORM_LIBS})
-set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
-endif()
-if(UNIX AND NOT APPLE)
-    set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
-endif()
-# WIN32 builds static: x265-static.lib  shared: x265.dll + x265.lib (shim loader)
-# MINGW builds static: libx265-static.a shared: libx265.dll + libx265.dll.a
-# *NIX  builds static: libx265.a        shared: libx265.so
-
-if(X265_LATEST_TAG)
-    # shared library is not installed if a tag is not found
-    set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG} SOVERSION ${X265_BUILD})
-    install(TARGETS x265-shared
-            RUNTIME DESTINATION bin
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib)
-
-    # convert lists of link libraries into -lstdc++ -lm etc..
-    foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
-        set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
-    endforeach()
-    # Produce a pkg-config file for linking against the shared lib
-    configure_file("x265.pc.in" "x265.pc" @ONLY)
-    install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
 endif()
 install(TARGETS x265-static
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
+
+option(ENABLE_SHARED "Build shared library" ON)
+if(ENABLE_SHARED)
+    add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
+                                   $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+    target_link_libraries(x265-shared ${PLATFORM_LIBS})
+    set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
+    if(UNIX AND NOT APPLE)
+        set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
+    endif()
+    if(X265_LATEST_TAG)
+        # shared library is not installed if a tag is not found
+        set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG} SOVERSION ${X265_BUILD})
+        install(TARGETS x265-shared
+                RUNTIME DESTINATION bin
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib)
+
+        # convert lists of link libraries into -lstdc++ -lm etc..
+        foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
+            set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
+        endforeach()
+        # Produce a pkg-config file for linking against the shared lib
+        configure_file("x265.pc.in" "x265.pc" @ONLY)
+        install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
+                DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
+    endif()
+endif()
 
 if(NOT WIN32)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
@@ -258,21 +258,21 @@ if(ENABLE_CLI)
         set(GETOPT compat/getopt/getopt.c compat/getopt/getopt.h)
     endif(NOT HAVE_GETOPT_H)
 
-    add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h)
-    target_link_libraries(cli x265-static ${PLATFORM_LIBS})
+    if(XCODE)
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h
+                           $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
+    else()
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h)
+        target_link_libraries(cli x265-static ${PLATFORM_LIBS})
+    endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 
     install(TARGETS cli DESTINATION bin)
 endif(ENABLE_CLI)
 
-# Test applications
-option(ENABLE_TESTS "Enable Unit Tests" OFF)
-if(ENABLE_TESTS)
-    if(ENABLE_PRIMITIVES_VEC)
-        add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
-    endif(ENABLE_PRIMITIVES_VEC)
-    if(ENABLE_PRIMITIVES_ASM)
-        add_definitions(-DENABLE_ASM_PRIMITIVES=1)
-    endif(ENABLE_PRIMITIVES_ASM)
-    add_subdirectory(test)
-endif(ENABLE_TESTS)
+if(ENABLE_ASSEMBLY AND NOT XCODE)
+    option(ENABLE_TESTS "Enable Unit Tests" OFF)
+    if(ENABLE_TESTS)
+        add_subdirectory(test)
+    endif()
+endif()

@@ -135,9 +135,7 @@ void filterHorizontal_ps(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t 
 namespace x265 {
 void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives& p)
 {
-#if HIGH_BIT_DEPTH
-    p.sad[0] = p.sad[0];
-#else
+#if !HIGH_BIT_DEPTH
     p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps<4>;
     p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps<8>;
 #endif

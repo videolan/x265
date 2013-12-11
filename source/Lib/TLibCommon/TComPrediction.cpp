@@ -85,7 +85,6 @@ TComPrediction::~TComPrediction()
 
     if (m_immedVals)
         X265_FREE(m_immedVals);
-
 }
 
 void TComPrediction::initTempBuff(int csp)
@@ -125,7 +124,7 @@ void TComPrediction::initTempBuff(int csp)
 // Public member functions
 // ====================================================================================================================
 
-void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t stride, int size)
+void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t stride, int size)
 {
     assert(g_convertToBit[size] >= 0);   //   4x  4
     assert(g_convertToBit[size] <= 5);   // 128x128
@@ -160,20 +159,16 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, uint32_t strid
     // Create the prediction
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar[log2BlkSize - 2](refAbv + 1, refLft + 1, dst, stride);
-    }
-    else if (dirMode == DC_IDX)
-    {
-        primitives.intra_pred_dc[log2BlkSize - 2](refAbv + 1, refLft + 1, dst, stride, bFilter);
+        primitives.intra_pred[log2BlkSize - 2][PLANAR_IDX](dst, stride, refLft, refAbv, dirMode, 0);
     }
     else
     {
-        primitives.intra_pred_ang(dst, stride, size, dirMode, bFilter, refLft, refAbv);
+        primitives.intra_pred[log2BlkSize - 2][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
     }
 }
 
 // Angular chroma
-void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, uint32_t stride, int width)
+void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, intptr_t stride, int width)
 {
     int log2BlkSize = g_convertToBit[width];
 
@@ -191,15 +186,11 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, ui
     // get starting pixel in block
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar[log2BlkSize](refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride);
-    }
-    else if (dirMode == DC_IDX)
-    {
-        primitives.intra_pred_dc[log2BlkSize](refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride, false);
+        primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
     }
     else
     {
-        primitives.intra_pred_ang(dst, stride, width, dirMode, false, refLft + width - 1, refAbv + width - 1);
+        primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
     }
 }
 
@@ -458,7 +449,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
         int tmpStride = width;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
-        primitives.ipfilter_ps[FILTER_H_P_S_8](src - (halfFilterSize - 1) * srcStride,  srcStride, m_immedVals, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.luma_hps[partEnum](src, srcStride, m_immedVals, tmpStride, xFrac, 1);
         primitives.luma_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, yFrac);
     }
 }
@@ -476,6 +467,8 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
 
+    int partEnum = partitionFromSizes(width, height);
+
     assert((width % 4) + (height % 4) == 0);
     assert(dstStride == MAX_CU_SIZE);
 
@@ -485,7 +478,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
     }
     else if (yFrac == 0)
     {
-        primitives.ipfilter_ps[FILTER_H_P_S_8](ref, refStride, dst, dstStride, width, height, g_lumaFilter[xFrac]);
+        primitives.luma_hps[partEnum](ref, refStride, dst, dstStride, xFrac, 0);
     }
     else if (xFrac == 0)
     {
@@ -496,7 +489,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
         int tmpStride = width;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
-        primitives.ipfilter_ps[FILTER_H_P_S_8](ref - (halfFilterSize - 1) * refStride, refStride, m_immedVals, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
+        primitives.luma_hps[partEnum](ref, refStride, m_immedVals, tmpStride, xFrac, 1);
         primitives.ipfilter_ss[FILTER_V_S_S_8](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, yFrac);
     }
 }
@@ -511,7 +504,6 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
  * \param width    Width of block
  * \param height   Height of block
  * \param dstPic   Pointer to destination picture
- * \param bi       Flag indicating whether bipred is used
  */
 void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic)
 {
@@ -556,10 +548,10 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
 
-        primitives.ipfilter_ps[FILTER_H_P_S_4](refCb - (halfFilterSize - 1) * refStride, refStride, m_immedVals, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
+        primitives.chroma[csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride,  xFrac, 1);
         primitives.chroma_vsp(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, yFrac);
 
-        primitives.ipfilter_ps[FILTER_H_P_S_4](refCr - (halfFilterSize - 1) * refStride, refStride, m_immedVals, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
+        primitives.chroma[csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac, 1);
         primitives.chroma_vsp(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac);
     }
 }
@@ -580,6 +572,10 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
 
     int xFrac = mv->x & 0x7;
     int yFrac = mv->y & 0x7;
+
+    int partEnum = partitionFromSizes(width, height);
+    int csp = X265_CSP_I420;
+
     uint32_t cxWidth = width >> 1;
     uint32_t cxHeight = height >> 1;
 
@@ -593,8 +589,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
     }
     else if (yFrac == 0)
     {
-        primitives.ipfilter_ps[FILTER_H_P_S_4](refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, g_chromaFilter[xFrac]);
-        primitives.ipfilter_ps[FILTER_H_P_S_4](refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, g_chromaFilter[xFrac]);
+        primitives.chroma[csp].filter_hps[partEnum](refCb, refStride, dstCb, dstStride, xFrac, 0);
+        primitives.chroma[csp].filter_hps[partEnum](refCr, refStride, dstCr, dstStride, xFrac, 0);
     }
     else if (xFrac == 0)
     {
@@ -606,9 +602,9 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
         int extStride = cxWidth;
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
-        primitives.ipfilter_ps[FILTER_H_P_S_4](refCb - (halfFilterSize - 1) * refStride, refStride, m_immedVals, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
+        primitives.chroma[csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac, 1);
         primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, yFrac);
-        primitives.ipfilter_ps[FILTER_H_P_S_4](refCr - (halfFilterSize - 1) * refStride, refStride, m_immedVals, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
+        primitives.chroma[csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac, 1);
         primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac);
     }
 }

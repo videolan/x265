@@ -660,9 +660,11 @@ predIntraAng4x4_func predIntraAng4[] =
     predIntraAng4_32
 };
 
-void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+
+void intraPredAng4x4(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     assert(dirMode > 1); //no planar and dc
+
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
     static const int mode_to_invAng_table[] = { 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256 };
     int intraPredAngle = mode_to_angle_table[dirMode - 2];
@@ -678,7 +680,7 @@ void intraPredAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     // Initialize the Main and Left reference array.
     if (intraPredAngle < 0)
     {
-        int blkSize = width;
+        int blkSize = 4;
         refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
         refSide = (modeVer ? refLeft : refAbove);     // + (blkSize - 1);
 
@@ -1334,10 +1336,10 @@ predIntraAng8x8_func predIntraAng8[] =
     predIntraAng8_32
 };
 
-void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng8x8(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     int k;
-    int blkSize = width;
+    int blkSize = 8;
 
     assert(dirMode > 1); // not planar or dc
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
@@ -1560,10 +1562,10 @@ void intraPredAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *r
     BLND2_4(R3, R7); \
     BLND2_4(R4, R8);
 
-void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void intraPredAng16x16(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     int k;
-    int blkSize        = width;
+    int blkSize        = 16;
 
     // Map the mode index to main prediction direction and angle
     assert(dirMode > 1); //no planar and dc
@@ -2153,10 +2155,10 @@ void intraPredAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel 
     PREDANG_CALCROW_HOR_MODE2(R6) \
     PREDANG_CALCROW_HOR_MODE2(R7) \
 
-void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void intraPredAng32x32(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int)
 {
     int k;
-    int blkSize = width;
+    int blkSize = 32;
 
     // Map the mode index to main prediction direction and angle
     assert(dirMode > 1); //no planar and dc
@@ -3185,237 +3187,20 @@ void intraPredAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel 
 #undef MB4
 #undef CALC_BLND_8ROWS
 
-void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
-{
-    switch (width)
-    {
-    case 4:
-        intraPredAng4x4(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
-        return;
-    case 8:
-        intraPredAng8x8(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
-        return;
-    case 16:
-        intraPredAng16x16(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
-        return;
-    case 32:
-        intraPredAng32x32(dst, dstStride, width, dirMode, refLeft, refAbove);
-        return;
-    }
-}
 #endif // !HIGH_BIT_DEPTH
 }
-
-#if HIGH_BIT_DEPTH
-
-#if defined(_MSC_VER)
-#define ALWAYSINLINE  __forceinline
-#endif
-#define INSTRSET 3
-#include "vectorclass.h"
-
-namespace {
-inline void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
-{
-    int y;
-    pixel pixDC = *dst;
-    int pixDCx3 = pixDC * 3 + 2;
-
-    // boundary pixels processing
-    dst[0] = (pixel)((above[0] + left[0] + 2 * pixDC + 2) >> 2);
-
-    Vec8us im1(pixDCx3);
-    Vec8us im2, im3;
-    switch (width)
-    {
-    case 4:
-        im2 = load_partial(const_int(8), &above[1]);
-        im2 = (im1 + im2) >> const_int(2);
-        store_partial(const_int(8), &dst[1], im2);
-        break;
-
-    case 8:
-        im2.load(&above[1]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1]);
-        break;
-
-    case 16:
-        im2.load(&above[1]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1]);
-
-        im2.load(&above[1 + 8]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 8]);
-        break;
-
-    case 32:
-        im2.load(&above[1]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1]);
-
-        im2.load(&above[1 + 8]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 8]);
-
-        im2.load(&above[1 + 16]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 16]);
-
-        im2.load(&above[1 + 24]);
-        im2 = (im1 + im2) >> const_int(2);
-        im2.store(&dst[1 + 24]);
-        break;
-    }
-
-    for (y = 1; y < width; y++)
-    {
-        dst[dstStride] = (pixel)((left[y] + pixDCx3) >> 2);
-        dst += dstStride;
-    }
-}
-
-template<int width>
-void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
-{
-    int sum;
-    int logSize = g_convertToBit[width] + 2;
-
-    Vec8s sumLeft(0);
-    Vec8s sumAbove(0);
-    Vec8s m0;
-
-    switch (width)
-    {
-    case 4:
-        sumLeft  = load_partial(const_int(8), left);
-        sumAbove = load_partial(const_int(8), above);
-        break;
-
-    case 8:
-        m0.load(left);
-        sumLeft = m0;
-        m0.load(above);
-        sumAbove = m0;
-        break;
-
-    case 16:
-        m0.load(left);
-        sumLeft  = m0;
-        m0.load(left + 8);
-        sumLeft += m0;
-
-        m0.load(above);
-        sumAbove  = m0;
-        m0.load(above + 8);
-        sumAbove += m0;
-        break;
-
-    case 32:
-        m0.load(left);
-        sumLeft  = m0;
-        m0.load(left + 8);
-        sumLeft += m0;
-        m0.load(left + 16);
-        sumLeft += m0;
-        m0.load(left + 24);
-        sumLeft += m0;
-
-        m0.load(above);
-        sumAbove  = m0;
-        m0.load(above + 8);
-        sumAbove += m0;
-        m0.load(above + 16);
-        sumAbove += m0;
-        m0.load(above + 24);
-        sumAbove += m0;
-        break;
-    }
-
-    sum = horizontal_add_x(sumAbove) + horizontal_add_x(sumLeft);
-
-    logSize += 1;
-    pixel dcVal = (sum + (1 << (logSize - 1))) >> logSize;
-    Vec8us dcValN(dcVal);
-    int k;
-
-    pixel *dst1 = dst;
-    switch (width)
-    {
-    case 4:
-        store_partial(const_int(8), dst1, dcValN);
-        dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
-        dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
-        dst1 += dstStride;
-        store_partial(const_int(8), dst1, dcValN);
-        dst1 += dstStride;
-        break;
-
-    case 8:
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        dcValN.store(dst1);
-        dst1 += dstStride;
-        break;
-
-    case 16:
-        for (k = 0; k < 16; k += 2)
-        {
-            dcValN.store(dst1);
-            dcValN.store(dst1 + 8);
-            dst1 += dstStride;
-            dcValN.store(dst1);
-            dcValN.store(dst1 + 8);
-            dst1 += dstStride;
-        }
-
-        break;
-
-    case 32:
-        for (k = 0; k < 32; k++)
-        {
-            dcValN.store(dst1);
-            dcValN.store(dst1 +  8);
-            dcValN.store(dst1 + 16);
-            dcValN.store(dst1 + 24);
-            dst1 += dstStride;
-        }
-        break;
-    }
-
-    if (filter)
-    {
-        predDCFiltering(above, left, dst, dstStride, width);
-    }
-}
-}
-#endif // if HIGH_BIT_DEPTH
 
 namespace x265 {
 void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
 {
-#if HIGH_BIT_DEPTH
-    p.intra_pred_dc[BLOCK_4x4] = intra_pred_dc<4>;
-    p.intra_pred_dc[BLOCK_8x8] = intra_pred_dc<8>;
-    p.intra_pred_dc[BLOCK_16x16] = intra_pred_dc<16>;
-    p.intra_pred_dc[BLOCK_32x32] = intra_pred_dc<32>;
-#else
-    p.intra_pred_ang = intra_pred_ang;
+#if !HIGH_BIT_DEPTH
+    for (int i = 2; i < NUM_INTRA_MODE; i++)
+    {
+        p.intra_pred[BLOCK_4x4][i] = intraPredAng4x4;
+        p.intra_pred[BLOCK_8x8][i] = intraPredAng8x8;
+        p.intra_pred[BLOCK_16x16][i] = intraPredAng16x16;
+        p.intra_pred[BLOCK_32x32][i] = intraPredAng32x32;
+    }
 #endif
 }
 }

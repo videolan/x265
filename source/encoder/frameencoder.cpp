@@ -57,6 +57,7 @@ FrameEncoder::FrameEncoder()
 
     m_nalCount = 0;
     m_totalTime = 0;
+    memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
 void FrameEncoder::setThreadPool(ThreadPool *p)
@@ -262,9 +263,12 @@ void FrameEncoder::initSlice(TComPic* pic)
     slice->setReferenced(true);
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
+#if LOG_CU_STATISTICS
     for (int i = 0; i < m_numRows; i++)
+    {
         m_rows[i].m_cuCoder.m_log = &m_rows[i].m_cuCoder.m_sliceTypeLog[sliceType];
-
+    }
+#endif
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
         slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());
@@ -1108,13 +1112,14 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
         int noOfBlocks = g_maxCUWidth / 16;
         int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
         int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
-        int cnt = 0;
 
+        double *qpoffs = (pic->getSlice()->isReferenced() && m_cfg->param.rc.cuTree) ? pic->m_lowres.qpOffset : pic->m_lowres.qpAqOffset;
+        int cnt = 0;
         for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
         {
             for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
             {
-                qp_offset += pic->m_lowres.qpAqOffset[block_x + w + (block_y * maxBlockCols)];
+                qp_offset += qpoffs[block_x + w + (block_y * maxBlockCols)];
                 cnt++;
             }
         }

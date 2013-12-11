@@ -88,7 +88,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             }
         }
     }
-#else
+#else // if HIGH_BIT_DEPTH
     ofs.seekp(pic.poc * frameSize);
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
@@ -99,7 +99,8 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             src += pic.stride[i];
         }
     }
-#endif
+
+#endif // if HIGH_BIT_DEPTH
 
     PPAStopCpuEventFunc(write_yuv);
     return true;

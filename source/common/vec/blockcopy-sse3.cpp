@@ -130,6 +130,7 @@ void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, in
         }
     }
 }
+
 #endif /* if HIGH_BIT_DEPTH */
 
 void pixeladd_ss(int bx, int by, int16_t *dst, intptr_t dstride, int16_t *src0, int16_t *src1, intptr_t sstride0, intptr_t sstride1)

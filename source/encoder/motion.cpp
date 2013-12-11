@@ -1060,6 +1060,7 @@ me_hex2:
             cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
+
         bmv += square1[bdir] * 2;
         bcost = ref->lowresQPelCost(fenc, blockOffset, bmv, satd) + mvcost(bmv);
 
@@ -1070,6 +1071,7 @@ me_hex2:
             cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
+
         bmv += square1[bdir];
     }
     else
@@ -1096,6 +1098,7 @@ me_hex2:
 
             bmv += square1[bdir] * 2;
         }
+
         /* if HPEL search used SAD, remeasure with SATD before QPEL */
         if (!wl.hpel_satd)
             bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
@@ -1152,10 +1155,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
 
             int filterSize = NTAPS_LUMA;
             int halfFilterSize = filterSize >> 1;
-            primitives.ipfilter_ps[FILTER_H_P_S_8](fref - (halfFilterSize - 1) * ref->lumaStride, ref->lumaStride,
-                                                   immed, blockwidth,
-                                                   blockwidth, blockheight + filterSize - 1,
-                                                   g_lumaFilter[xFrac]);
+            primitives.luma_hps[partEnum](fref, ref->lumaStride, immed, blockwidth, xFrac, 1);
             primitives.luma_vsp[partEnum](immed + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, yFrac);
         }
         return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
