@@ -1309,7 +1309,7 @@ cglobal intra_pred_ang4_17, 4,4,8
     pslldq      m5, m4, 2       ; [4 3 2 1 0 x y z]
     pinsrw      m5, [r3 + 8], 0
     punpcklwd   m5, m4          ; [1 0 0 x x y y z]
-    punpcklwd   m4, m3          ; [2 1 1 0 0 x x y]
+    punpcklwd   m4, m6          ; [2 1 1 0 0 x x y]
 
     lea         r3, [ang_table + 14 * 16]
     mova        m0, [r3 -  8 * 16]  ; [ 6]
