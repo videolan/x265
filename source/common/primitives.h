@@ -118,8 +118,6 @@ enum IDcts
 
 enum IPFilterConf_P_S
 {
-    FILTER_H_P_S_8,
-    FILTER_H_P_S_4,
     FILTER_V_P_S_8,
     FILTER_V_P_S_4,
     NUM_IPFILTER_P_S

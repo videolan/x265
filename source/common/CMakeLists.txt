@@ -62,7 +62,7 @@ if(MSVC)
 endif(MSVC)
 
 set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
-set(SSSE3 vec/dct-ssse3.cpp vec/ipfilter-ssse3.cpp vec/intra-ssse3.cpp)
+set(SSSE3 vec/dct-ssse3.cpp vec/intra-ssse3.cpp)
 set(SSE41 vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp)
 
 if (MSVC)

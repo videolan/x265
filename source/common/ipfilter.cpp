@@ -152,43 +152,6 @@ void filterVertical_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t 
     }
 }
 
-template<int N>
-void filterHorizontal_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, int16_t const *coeff)
-{
-    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift = IF_FILTER_PREC - headRoom;
-    int offset = -IF_INTERNAL_OFFS << shift;
-
-    src -= N / 2 - 1;
-
-    int row, col;
-    for (row = 0; row < height; row++)
-    {
-        for (col = 0; col < width; col++)
-        {
-            int sum;
-
-            sum  = src[col + 0] * coeff[0];
-            sum += src[col + 1] * coeff[1];
-            sum += src[col + 2] * coeff[2];
-            sum += src[col + 3] * coeff[3];
-            if (N == 8)
-            {
-                sum += src[col + 4] * coeff[4];
-                sum += src[col + 5] * coeff[5];
-                sum += src[col + 6] * coeff[6];
-                sum += src[col + 7] * coeff[7];
-            }
-
-            int16_t val = (int16_t)((sum + offset) >> shift);
-            dst[col] = val;
-        }
-
-        src += srcStride;
-        dst += dstStride;
-    }
-}
-
 template<int dstStride>
 void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height)
 {
@@ -477,10 +440,9 @@ typedef void (*ipfilter_sp_t)(short *src, intptr_t srcStride, pixel *dst, intptr
 template<int N, int width, int height>
 void interp_hv_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY)
 {
-    short m_immedVals[(64 + 8) * (64 + 8)];
-
-    filterHorizontal_ps_c<N>(src - 3 * srcStride, srcStride, m_immedVals, width, width, height + 7, g_lumaFilter[idxX]);
-    filterVertical_sp_c<N>(m_immedVals + 3 * width, width, dst, dstStride, width, height, idxY);
+    short immedVals[(64 + 8) * (64 + 8)];
+    interp_horiz_ps_c<N, width, height>(src, srcStride, immedVals, width, idxX, 1);
+    filterVertical_sp_c<N>(immedVals + 3 * width, width, dst, dstStride, width, height, idxY);
 }
 }
 
@@ -556,9 +518,7 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     LUMA(16, 64);
     CHROMA(8, 32);
 
-    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_ps_c<8>;
     p.ipfilter_ps[FILTER_V_P_S_8] = filterVertical_ps_c<8>;
-    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_ps_c<4>;
     p.ipfilter_ps[FILTER_V_P_S_4] = filterVertical_ps_c<4>;
     p.ipfilter_ss[FILTER_V_S_S_8] = filterVertical_ss_c<8>;
     p.ipfilter_ss[FILTER_V_S_S_4] = filterVertical_ss_c<4>;
