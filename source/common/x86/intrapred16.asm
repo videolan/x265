@@ -897,7 +897,7 @@ cglobal intra_pred_planar32, 4,7,8, 0-12*mmsize
     mova            tmp2, m7
     psrad           m5, 6
     packusdw        m5, m5
-    movh            [r0 + 5*8], m5
+    movh            [r0 + 6*8], m5
 
     ; 28-31
     paddd           m4, m6
@@ -907,7 +907,7 @@ cglobal intra_pred_planar32, 4,7,8, 0-12*mmsize
     mova            tmp3, m7
     psrad           m5, 6
     packusdw        m5, m5
-    movh            [r0 + 5*8], m5
+    movh            [r0 + 7*8], m5
 
     add             r0, r1
     inc             r6d
