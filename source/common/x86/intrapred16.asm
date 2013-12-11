@@ -873,41 +873,41 @@ cglobal intra_pred_planar32, 4,7,8, 0-12*mmsize
     paddd           m4, m6
     mova            m7, tmp0
     paddd           m7, bottomRow4
-    paddd           m5, m7, m4
     mova            tmp0, m7
-    psrad           m5, 6
-    packusdw        m5, m5
-    movh            [r0 + 4*8], m5
+    paddd           m7, m4
+    psrad           m7, 6
+    packusdw        m7, m7
+    movh            [r0 + 4*8], m7
 
     ; 20-23
     paddd           m4, m6
     mova            m7, tmp1
     paddd           m7, bottomRow5
-    paddd           m5, m7, m4
     mova            tmp1, m7
-    psrad           m5, 6
-    packusdw        m5, m5
-    movh            [r0 + 5*8], m5
+    paddd           m7, m4
+    psrad           m7, 6
+    packusdw        m7, m7
+    movh            [r0 + 5*8], m7
 
     ; 24-27
     paddd           m4, m6
     mova            m7, tmp2
     paddd           m7, bottomRow6
-    paddd           m5, m7, m4
     mova            tmp2, m7
-    psrad           m5, 6
-    packusdw        m5, m5
-    movh            [r0 + 6*8], m5
+    paddd           m7, m4
+    psrad           m7, 6
+    packusdw        m7, m7
+    movh            [r0 + 6*8], m7
 
     ; 28-31
     paddd           m4, m6
     mova            m7, tmp3
     paddd           m7, bottomRow7
-    paddd           m5, m7, m4
     mova            tmp3, m7
-    psrad           m5, 6
-    packusdw        m5, m5
-    movh            [r0 + 7*8], m5
+    paddd           m7, m4
+    psrad           m7, 6
+    packusdw        m7, m7
+    movh            [r0 + 7*8], m7
 
     add             r0, r1
     inc             r6d
