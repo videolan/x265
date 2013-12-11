@@ -259,6 +259,10 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
     memset(opt_reco, 0, 64 * 64 * sizeof(pixel));
     memset(ref_pred, 0, 64 * 64 * sizeof(pixel));
     memset(opt_pred, 0, 64 * 64 * sizeof(pixel));
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
 
     int j = 0;
     for (int i = 0; i < ITERS; i++)
@@ -268,15 +272,32 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
         opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
 
         if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
         if (memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
         if (memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
+        {
+#if HIGH_BIT_DEPTH
+            X265_DEPTH = old_depth;
+#endif
             return false;
+        }
 
         j += INCR;
     }
-
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
     return true;
 }
 
@@ -1289,8 +1310,15 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
         if (opt.calcrecon[i])
         {
+#if HIGH_BIT_DEPTH
+        int old_depth = X265_DEPTH;
+        X265_DEPTH = 10;
+#endif
             HEADER("recon[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
+#if HIGH_BIT_DEPTH
+        X265_DEPTH = old_depth;
+#endif
         }
 
         if (opt.blockfill_s[i])
