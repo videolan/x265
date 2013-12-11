@@ -273,42 +273,6 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int w
 
         int deltaU[32 * 32];
 
-        QpParam cQpBase;
-        int qpbase = cu->getSlice()->getSliceQpBase();
-
-        int qpScaled;
-        int qpBDOffset = (ttype == TEXT_LUMA) ? cu->getSlice()->getSPS()->getQpBDOffsetY() : cu->getSlice()->getSPS()->getQpBDOffsetC();
-
-        if (ttype == TEXT_LUMA)
-        {
-            qpScaled = qpbase + qpBDOffset;
-        }
-        else
-        {
-            int chromaQPOffset;
-            if (ttype == TEXT_CHROMA_U)
-            {
-                chromaQPOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
-            }
-            else
-            {
-                chromaQPOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-            }
-            qpbase = qpbase + chromaQPOffset;
-
-            qpScaled = Clip3(-qpBDOffset, 57, qpbase);
-
-            if (qpScaled < 0)
-            {
-                qpScaled = qpScaled +  qpBDOffset;
-            }
-            else
-            {
-                qpScaled = g_chromaScale[qpScaled] + qpBDOffset;
-            }
-        }
-        cQpBase.setQpParam(qpScaled);
-
         uint32_t log2TrSize = g_convertToBit[width] + 2;
         int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(int)ttype];
         assert(scalingListType < 6);
@@ -317,7 +281,7 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int w
 
         int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
-        int qbits = QUANT_SHIFT + cQpBase.m_per + transformShift;
+        int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
 
         int numCoeff = width * height;
