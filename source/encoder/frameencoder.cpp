@@ -329,11 +329,11 @@ void FrameEncoder::setLambda(int qp, int row)
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    int qpc = Clip3(0, 57, qp + chromaQPOffset);
+    int qpc = Clip3(0, 70, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
 
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    qpc = Clip3(0, 70, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
 
@@ -370,10 +370,10 @@ void FrameEncoder::compressFrame()
     // instead we weight the distortion of chroma.
     int qpc;
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    qpc = Clip3(0, 70, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, 57, qp + chromaQPOffset);
+    qpc = Clip3(0, 70, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
 
@@ -389,7 +389,7 @@ void FrameEncoder::compressFrame()
 
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
-
+    
     switch (slice->getSliceType())
     {
     case I_SLICE:
@@ -402,7 +402,13 @@ void FrameEncoder::compressFrame()
         m_frameFilter.m_sao.depth = 2 + !slice->isReferenced();
         break;
     }
-
+    /* Clip qps back to 0-51 range before encoding */
+    if(qp > MAX_QP)
+    {
+        qp = MAX_QP;
+        slice->setSliceQp(qp);
+        slice->setSliceQpBase(qp);
+    }
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
@@ -1045,8 +1051,11 @@ void FrameEncoder::processRowEncoder(int row)
         if (m_cfg->param.rc.aqMode)
         {
             int qp = calcQpForCu(m_pic, cuAddr);
-            cu->setQP(0, (char)qp);
             setLambda(qp, row);
+            if (qp > MAX_QP)
+                qp = MAX_QP;
+            cu->setQP(0, (char)qp);
+
         }
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
@@ -1102,7 +1111,7 @@ void FrameEncoder::processRowEncoder(int row)
 int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
 {
     x265_emms();
-    double qp = pic->getSlice()->getSliceQp();
+    double qp = pic->getSlice()->m_avgQpRc;
     if (m_cfg->param.rc.aqMode)
     {
         /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
@@ -1127,7 +1136,7 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
         qp_offset /= cnt;
         qp += qp_offset;
     }
-    return Clip3(MIN_QP, MAX_QP, (int)(qp + 0.5));
+    return Clip3(MIN_QP, MAX_MAX_QP, (int)(qp + 0.5));
 }
 
 TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)
