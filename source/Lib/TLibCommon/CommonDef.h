@@ -133,6 +133,7 @@
 
 #define MIN_QP                      0
 #define MAX_QP                      51
+#define MAX_MAX_QP                  69
 
 #define NOT_VALID                  -1
 
