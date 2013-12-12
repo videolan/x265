@@ -519,7 +519,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     else
                     {
                         uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
-                        bdoIntra = (outBestCU->m_totalDistortion > threshold[depth]);
+                        int index = 4 - g_convertToBit[outBestCU->getWidth(0)];
+                        bdoIntra = (outBestCU->m_totalDistortion > threshold[index]);
                     }
                     if (bdoIntra)
                     {
@@ -616,7 +617,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     else if (m_cfg->param.rdLevel <= 1)
                     {
                         uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
-                        if (m_mergeCU[depth]->m_totalDistortion < threshold[depth])
+                        int index = 4 - g_convertToBit[outBestCU->getWidth(0)];
+                        if (m_mergeCU[depth]->m_totalDistortion < threshold[index])
                         {
                             m_mergeCU[depth]->setSkipFlagSubParts(true, 0, depth);
                             m_search->generateCoeffRecon(m_mergeCU[depth], m_origYuv[depth], bestMergePred, m_tmpResiYuv[depth], m_bestRecoYuv[depth], true);
