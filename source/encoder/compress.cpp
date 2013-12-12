@@ -702,10 +702,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
             if (outBestCU->m_totalCost < lambda * avgCost && avgCost != 0 && depth != 0)
             {
-                m_entropyCoder->resetBits();
-                m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
-                outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits();        // split bits
-                outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
                 /* Copy Best data to Picture for next partition prediction. */
                 outBestCU->copyToPic((UChar)depth);
 
