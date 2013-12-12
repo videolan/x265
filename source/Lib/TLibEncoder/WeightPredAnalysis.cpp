@@ -254,7 +254,7 @@ bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, int log2Denom)
                 // Weighting factor limitation
                 int defaultWeight = (1 << log2Denom);
                 int deltaWeight = (defaultWeight - weight);
-                if (deltaWeight > 127 || deltaWeight < -128)
+                if (deltaWeight > 127 || deltaWeight <= -128)
                     return false;
 
                 m_wp[list][refIdxTemp][comp].bPresentFlag = true;
