@@ -755,10 +755,15 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
         if (!bBoundary)
         {
-            m_entropyCoder->resetBits();
-            m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth, true);
-
-            outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
+            if(m_cfg->param.rdLevel > 1)
+            {
+                m_entropyCoder->resetBits();
+                m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth, true);
+                outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
+                outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+            }
+            else
+                outTempCU->m_totalCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
         }
 
         outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
