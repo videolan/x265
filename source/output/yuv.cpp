@@ -55,11 +55,13 @@ bool YUVOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
 
+    uint64_t fileOffset = pic.poc;
+    fileOffset *= frameSize;
 #if HIGH_BIT_DEPTH
     if (depth == 8)
     {
         int shift = pic.bitDepth - 8;
-        ofs.seekp(pic.poc * frameSize);
+        ofs.seekp(fileOffset);
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
             uint16_t *src = (uint16_t*)pic.planes[i];
@@ -77,7 +79,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
     }
     else
     {
-        ofs.seekp(pic.poc * frameSize * 2);
+        ofs.seekp(fileOffset * 2);
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
             uint16_t *src = (uint16_t*)pic.planes[i];
@@ -89,7 +91,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
         }
     }
 #else
-    ofs.seekp(pic.poc * frameSize);
+    ofs.seekp(fileOffset);
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
         char *src = (char*)pic.planes[i];
