@@ -75,7 +75,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
     std::ofstream::pos_type outPicPos = header;
-    outPicPos += pic.poc * (6 + frameSize);
+    outPicPos += (uint64_t)pic.poc * (6 + frameSize);
     ofs.seekp(outPicPos);
     ofs << "FRAME\n";
 
