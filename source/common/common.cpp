@@ -520,6 +520,11 @@ int x265_check_params(x265_param *param)
         x265_log(param, X265_LOG_WARNING, "Aq mode specified, but Aq strength is  0, ignored\n");
         param->rc.aqMode = 0;
     }
+    if (param->rc.aqMode == 0 && param->rc.cuTree)
+    {
+        param->rc.aqMode = X265_AQ_VARIANCE;
+        param->rc.aqStrength = 0;
+    }
 
     return check_failed;
 }

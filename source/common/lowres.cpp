@@ -50,12 +50,6 @@ void Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
         qpOffset = (double*)x265_malloc(sizeof(double) * cuCount);
         if (!qpAqOffset || !invQscaleFactor || !qpOffset)
             *aqMode = 0;
-        else
-        {
-            ::memset(qpAqOffset, 0, sizeof(double) * cuCount);
-            ::memset(invQscaleFactor, 0, sizeof(int) * cuCount);
-            ::memset(qpOffset, 0, sizeof(double) * cuCount);
-        }
     }
     propagateCost = (uint16_t*)x265_malloc(sizeof(uint16_t) * cuCount);
 

@@ -102,17 +102,35 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     int block_xy = 0;
     int block_x = 0, block_y = 0;
 
-    for (block_y = 0; block_y < maxRow; block_y += 16)
+    if (cfg->param.rc.aqMode == X265_AQ_NONE || cfg->param.rc.aqStrength == 0)
     {
-        for (block_x = 0; block_x < maxCol; block_x += 16)
+        /* Need to init it anyways for MB tree */
+        int cuWidth = ((maxCol / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+        int cuHeight = ((maxRow / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+        int cuCount = cuWidth * cuHeight;
+
+        if(cfg->param.rc.aqMode && cfg->param.rc.aqStrength == 0 )
         {
-            double qp_adj = acEnergyCu(pic, block_x, block_y);
-            if (cfg->param.rc.aqMode)
+            memset(pic->m_lowres.qpOffset, 0, cuCount * sizeof(double));
+            memset(pic->m_lowres.qpAqOffset, 0, cuCount * sizeof(double) );
+            for (int cuxy = 0; cuxy < cuCount; cuxy++ )
+                pic->m_lowres.invQscaleFactor[cuxy] = 256;
+        }
+    }
+    else
+    {
+        for (block_y = 0; block_y < maxRow; block_y += 16)
+        {
+            for (block_x = 0; block_x < maxCol; block_x += 16)
             {
-                pic->m_lowres.qpAqOffset[block_xy] = qp_adj;
-                pic->m_lowres.qpOffset[block_xy] = qp_adj;
-                pic->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
-                block_xy++;
+                double qp_adj = acEnergyCu(pic, block_x, block_y);
+                if (cfg->param.rc.aqMode)
+                {
+                    pic->m_lowres.qpAqOffset[block_xy] = qp_adj;
+                    pic->m_lowres.qpOffset[block_xy] = qp_adj;
+                    pic->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
+                    block_xy++;
+                }
             }
         }
     }
