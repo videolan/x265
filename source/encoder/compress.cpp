@@ -300,19 +300,12 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         {
             m_search->motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, partIdx, false, true);
         }
-
-        TComDataCU* tmp;
-        TComYuv *yuv;
-
+        
         //No-residue mode
-        m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
+        m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
         xCheckDQP(outTempCU);
 
-        tmp = outTempCU;
-        outTempCU = outBestCU;
-        outBestCU = tmp;
-
-        yuv = yuvReconBest;
+        TComYuv* yuv = yuvReconBest;
         yuvReconBest = m_tmpRecoYuv[depth];
         m_tmpRecoYuv[depth] = yuv;
 
@@ -322,7 +315,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         if (outTempCU->m_totalCost < outBestCU->m_totalCost)    //Choose best from no-residue mode and residue mode
         {
-            tmp = outTempCU;
+            TComDataCU* tmp = outTempCU;
             outTempCU = outBestCU;
             outBestCU = tmp;
 
