@@ -218,7 +218,14 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
         return -1;
     }
 
+    if (cfg->param.rc.cuTree)
+    {
+        pic->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
+        return pic->m_lowres.satdCost;
+    }
+
     estimateFrameCost(p0, p1, b, false);
+
     if (cfg->param.rc.aqMode)
         pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
     else
@@ -919,7 +926,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
 
     if (!framecnt)
     {
-        if (cfg->param.rc.cuTree && cfg->param.rc.aqMode)
+        if (cfg->param.rc.cuTree)
             cuTree(frames, 0, bKeyframe);
         return;
     }
@@ -1053,7 +1060,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
         num_bframes = 0;
     }
 
-    if (cfg->param.rc.cuTree && cfg->param.rc.aqMode)
+    if (cfg->param.rc.cuTree)
         cuTree(frames, X265_MIN(num_frames, cfg->param.keyframeMax), bKeyframe);
 
     // if (!cfg->param.bIntraRefresh)
@@ -1508,4 +1515,33 @@ void Lookahead::estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t
         double propagateDenom  = (double)intraCosts[i];
         dst[i] = (int)(propagateAmount * propagateNum / propagateDenom + 0.5);
     }
+}
+
+/* If MB-tree changes the quantizers, we need to recalculate the frame cost without
+ * re-running lookahead. */
+int Lookahead::frameCostRecalculate(Lowres** Frames, int p0, int p1, int b)
+{
+    int score = 0;
+    int *row_satd = Frames[b]->rowSatds[b-p0][p1-b]; 
+    double *qp_offset = (Frames[0]->sliceType == X265_TYPE_B) ? Frames[b]->qpAqOffset : Frames[b]->qpOffset;
+    x265_emms();
+    for (int cuy = heightInCU - 1; cuy >= 0; cuy--)
+    {
+        row_satd[cuy] = 0;
+        for (int cux = widthInCU - 1; cux >= 0; cux-- )
+        {
+            int cuxy = cux + cuy * widthInCU;
+            int cuCost = Frames[b]->lowresCosts[b-p0][p1-b][cuxy] & LOWRES_COST_MASK;
+            double qp_adj = qp_offset[cuxy];
+            cuCost = (cuCost * x265_exp2fix8(qp_adj) + 128) >> 8;
+            row_satd[cuy ] += cuCost;
+            if( (cuy > 0 && cuy < heightInCU - 1 &&
+                 cux > 0 && cux < widthInCU - 1) ||
+                 widthInCU <= 2 || heightInCU <= 2 )
+            {
+                score += cuCost;
+            }
+        }
+    }
+    return score;
 }
