@@ -171,6 +171,13 @@ public:
     void xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, bool bLumaOnly, TComYuv* reconYuv);
 
     void generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, bool skipRes);
+
+    void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth,
+                             uint64_t &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist, bool curUseRDOQ = true);
+    void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth, bool bSpatial);
+
+    void residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth, bool curUseRDOQ = true);
+
     // -------------------------------------------------------------------------------------------------------------------
     // compute symbol bits
     // -------------------------------------------------------------------------------------------------------------------
@@ -245,11 +252,7 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     void xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype);
-    void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth,
-                             uint64_t &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist, bool curUseRDOQ = true);
-    void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth, bool bSpatial);
-    void residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth, bool curUseRDOQ = true);
-
+    
     void setWpScalingDistParam(TComDataCU* cu, int refIdx, int picList);
 };
 }

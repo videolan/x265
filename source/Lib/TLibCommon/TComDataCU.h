@@ -195,10 +195,12 @@ public:
     void          initEstData(uint32_t depth, int qp);
     void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp);
 
+    void          copyToSubCU(TComDataCU* lcu, uint32_t partUnitIdx, uint32_t depth);
     void          copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(UChar depth);
     void          copyToPic(UChar depth, uint32_t partIdx, uint32_t partDepth);
+    void          copyCodedToPic(UChar depth);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU description

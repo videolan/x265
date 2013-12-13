@@ -825,3 +825,136 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     assert(outBestCU->getPredictionMode(0) != MODE_NONE);
     assert(outBestCU->m_totalCost != MAX_DOUBLE);
 }
+
+void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, UChar depth, uint32_t partIndex)
+{
+    UChar nextDepth = (UChar)(depth + 1);
+    TComDataCU* subTempPartCU = m_tempCU[nextDepth];
+    TComPic* pic = cu->getPic();
+    TComSlice* slice = cu->getPic()->getSlice();
+
+    if (depth != 0)
+    {
+        if (0 == partIndex) //initialize RD with previous depth buffer
+        {
+            m_rdSbacCoders[depth][CI_CURR_BEST]->load(m_rdSbacCoders[depth - 1][CI_CURR_BEST]);
+        }
+        else
+        {
+            m_rdSbacCoders[depth][CI_CURR_BEST]->load(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+        }
+    }
+
+    if (((depth < lcu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth))))
+    {
+        uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
+        {
+            uint32_t lpelx = lcu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
+            uint32_t tpely = lcu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
+            bool bInSlice = lcu->getSCUAddr() + absPartIdx < slice->getSliceCurEndCUAddr();
+            if (bInSlice && (lpelx < slice->getSPS()->getPicWidthInLumaSamples()) && (tpely < slice->getSPS()->getPicHeightInLumaSamples()))
+            {
+                subTempPartCU->copyToSubCU(cu, partUnitIdx, depth + 1);
+                encodeResidue(lcu, subTempPartCU, absPartIdx, depth + 1, partUnitIdx);
+            }
+        }
+
+        return;
+    }
+    if (lcu->getPredictionMode(absPartIdx) == MODE_INTER)
+    {
+        if (!lcu->getSkipFlag(absPartIdx))
+        {
+            //Calculate Residue
+            Pel* src2 = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
+            Pel* src1 = m_origYuv[0]->getLumaAddr(absPartIdx);
+            int16_t* dst = m_tmpResiYuv[depth]->getLumaAddr(0);
+            uint32_t src2stride = m_bestPredYuv[0]->getStride();
+            uint32_t src1stride = m_origYuv[0]->getStride();
+            uint32_t dststride = m_tmpResiYuv[depth]->m_width;
+            int part = partitionFromSizes(cu->getWidth(0), cu->getWidth(0));
+            primitives.luma_sub_ps[part](dst, dststride, src1, src2, src1stride, src2stride);
+
+            src2 = m_bestPredYuv[0]->getCbAddr(absPartIdx);
+            src1 = m_origYuv[0]->getCbAddr(absPartIdx);
+            dst = m_tmpResiYuv[depth]->getCbAddr(0);
+            src2stride = m_bestPredYuv[0]->getCStride();
+            src1stride = m_origYuv[0]->getCStride();
+            dststride = m_tmpResiYuv[depth]->m_cwidth;
+            primitives.chroma[m_cfg->param.internalCsp].sub_ps[part](dst, dststride, src1, src2, src1stride, src2stride);
+
+            src2 = m_bestPredYuv[0]->getCrAddr(absPartIdx);
+            src1 = m_origYuv[0]->getCrAddr(absPartIdx);
+            dst = m_tmpResiYuv[depth]->getCrAddr(0);
+            dststride = m_tmpResiYuv[depth]->m_cwidth;
+            primitives.chroma[m_cfg->param.internalCsp].sub_ps[part](dst, dststride, src1, src2, src1stride, src2stride);
+
+            //Residual encoding
+            m_search->residualTransformQuantInter(cu, 0, 0, m_tmpResiYuv[depth], cu->getDepth(0), true);
+            m_search->xSetResidualQTData(cu, 0, 0, NULL, cu->getDepth(0), false);
+
+            if (lcu->getMergeFlag(absPartIdx) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
+            {
+                cu->setSkipFlagSubParts(true, 0, depth);
+                cu->copyCodedToPic(depth);
+            }
+            else
+            {
+                cu->copyCodedToPic(depth);
+                m_search->xSetResidualQTData(cu, 0, 0, m_tmpResiYuv[depth], cu->getDepth(0), true);
+
+                //Generate Recon
+                Pel* pred = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
+                int16_t* res = m_tmpResiYuv[depth]->getLumaAddr(0);
+                Pel* reco = m_bestRecoYuv[0]->getLumaAddr(absPartIdx);
+                dststride = m_bestRecoYuv[0]->getStride();
+                src1stride = m_bestPredYuv[0]->getStride();
+                src2stride = m_tmpResiYuv[depth]->m_width;
+                primitives.luma_add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
+
+                pred = m_bestPredYuv[0]->getCbAddr(absPartIdx);
+                res = m_tmpResiYuv[depth]->getCbAddr(0);
+                reco = m_bestRecoYuv[0]->getCbAddr(absPartIdx);
+                dststride = m_bestRecoYuv[0]->getCStride();
+                src1stride = m_bestPredYuv[0]->getCStride();
+                src2stride = m_tmpResiYuv[depth]->m_cwidth;
+                primitives.chroma[m_cfg->param.internalCsp].add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
+
+                pred = m_bestPredYuv[0]->getCrAddr(absPartIdx);
+                res = m_tmpResiYuv[depth]->getCrAddr(0);
+                reco = m_bestRecoYuv[0]->getCrAddr(absPartIdx);
+                primitives.chroma[m_cfg->param.internalCsp].add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
+                m_bestRecoYuv[0]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), 0);
+                return;
+            }
+        }
+
+        //Generate Recon
+        int part = partitionFromSizes(cu->getWidth(0), cu->getWidth(0));
+        Pel* src = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
+        Pel* dst = m_bestRecoYuv[0]->getLumaAddr(absPartIdx);
+        uint32_t srcstride = m_bestPredYuv[0]->getStride();
+        uint32_t dststride = m_bestRecoYuv[0]->getStride();
+        primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
+
+        src = m_bestPredYuv[0]->getCbAddr(absPartIdx);
+        dst = m_bestRecoYuv[0]->getCbAddr(absPartIdx);
+        srcstride = m_bestPredYuv[0]->getCStride();
+        dststride = m_bestRecoYuv[0]->getCStride();
+        primitives.chroma[m_cfg->param.internalCsp].copy_pp[part](dst, dststride, src, srcstride);
+
+        src = m_bestPredYuv[0]->getCrAddr(absPartIdx);
+        dst = m_bestRecoYuv[0]->getCrAddr(absPartIdx);
+        primitives.chroma[m_cfg->param.internalCsp].copy_pp[part](dst, dststride, src, srcstride);
+        m_bestRecoYuv[0]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), 0);
+    }
+    else
+    {
+        m_origYuv[0]->copyPartToYuv(m_origYuv[depth], absPartIdx);
+        m_search->generateCoeffRecon(cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth], false);
+        m_tmpRecoYuv[depth]->copyToPicYuv(cu->getPic()->getPicYuvRec(), lcu->getAddr(), absPartIdx);
+        m_tmpRecoYuv[depth]->copyToPartYuv(m_bestRecoYuv[0], absPartIdx);
+        cu->copyCodedToPic(depth);
+    }
+}
