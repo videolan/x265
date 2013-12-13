@@ -61,7 +61,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
     if (depth == 8)
     {
         int shift = pic.bitDepth - 8;
-        ofs.seekp(fileOffset);
+        ofs.seekp((std::streamoff)fileOffset);
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
             uint16_t *src = (uint16_t*)pic.planes[i];
