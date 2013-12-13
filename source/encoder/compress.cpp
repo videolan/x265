@@ -365,11 +365,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     UChar delta = 0, minDepth0 = 4, minDepth1 = 4;
     if (depth == 0)
     {
-        double sum0 = 0;
-        double sum1 = 0;
-        double avgDepth0 = 0;
-        double avgDepth1 = 0;
-        double avgDepth = 0;
+        double sum0 = 0, sum1 = 0, avgDepth0 = 0, avgDepth1 = 0, avgDepth = 0;
         for (uint32_t i = 0; i < outTempCU->getTotalNumPart(); i = i + 4)
         {
             if (colocated0 && colocated0->getDepth(i) < minDepth0)
@@ -386,11 +382,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         avgDepth1 = sum1 / outTempCU->getTotalNumPart();
         avgDepth = (avgDepth0 + avgDepth1) / 2;
 
-        if (minDepth1 < minDepth0)
-            minDepth = minDepth1;
-        else
-            minDepth = minDepth0;
-
+        minDepth = X265_MIN(minDepth0, minDepth1);
         if (((currentQP - previousQP) < 0) || (((currentQP - previousQP) >= 0) && ((avgDepth - minDepth) > 0.5)))
             delta = 0;
         else
@@ -398,8 +390,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         if (minDepth > 0)
             minDepth = minDepth - delta;
     }
-#endif // if TOPSKIP
-#if TOPSKIP
     if (!(depth < minDepth)) //topskip
 #endif
     {
