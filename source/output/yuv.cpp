@@ -79,7 +79,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
     }
     else
     {
-        ofs.seekp(fileOffset * 2);
+        ofs.seekp((std::streamoff)(fileOffset * 2));
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
             uint16_t *src = (uint16_t*)pic.planes[i];
@@ -91,7 +91,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
         }
     }
 #else
-    ofs.seekp(fileOffset);
+    ofs.seekp((std::streamoff)fileOffset);
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
         char *src = (char*)pic.planes[i];
