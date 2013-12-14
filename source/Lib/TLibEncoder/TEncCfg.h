@@ -156,6 +156,9 @@ public:
     /* copy of parameters used to create encoder */
     x265_param param;
 
+    int       bEnableRDOQ;
+    int       bEnableRDOQTS;
+
     int       m_pad[2];
     Window    m_conformanceWindow;
 

@@ -122,6 +122,9 @@ static const struct option long_options[] =
     { "no-weightp",           no_argument, NULL, 0 },
     { "weightp",              no_argument, NULL, 'w' },
     { "crf",            required_argument, NULL, 0 },
+    { "vbv-maxrate",    required_argument, NULL, 0 },
+    { "vbv-bufsize",    required_argument, NULL, 0 },
+    { "vbv-init",       required_argument, NULL, 0 },
     { "bitrate",        required_argument, NULL, 0 },
     { "qp",             required_argument, NULL, 'q' },
     { "aq-mode",        required_argument, NULL, 0 },
@@ -312,12 +315,15 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nQP, rate control and rate distortion options:\n");
     H0("   --bitrate                     Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
     H0("   --crf                         Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
+    H0("   --vbv-maxrate                 Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
+    H0("   --vbv-bufsize                 Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
+    H0("   --vbv-init                    Initial VBV buffer occupancy. Default %f\n", param->rc.vbvBufferInit);
     H0("-q/--qp                          Base QP for CQP mode. Default %d\n", param->rc.qp);
     H0("   --aq-mode                     Mode for Adaptive Quantization - 0:none 1:aqVariance Default %d\n", param->rc.aqMode);
     H0("   --aq-strength                 Reduces blocking and blurring in flat and textured areas.(0 to 3.0)<double> . Default %f\n", param->rc.aqStrength);
     H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
-    H0("   --rd                          Level of RD in mode decision 0:least....2:full RDO. Default %d\n", param->rdLevel);
+    H0("   --rd                          Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
     H0("\nLoop filter:\n");
     H0("   --[no-]lft                    Enable Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));
@@ -668,14 +674,16 @@ int main(int argc, char **argv)
 
     if (stats.encodedPictureCount)
     {
-        printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, ", stats.encodedPictureCount,
+        printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s", stats.encodedPictureCount,
                stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
         if (param->bEnablePsnr)
-            printf("Global PSNR: %.3f\n", stats.globalPsnr);
+            printf(", Global PSNR: %.3f", stats.globalPsnr);
 
         if (param->bEnableSsim)
-            printf("Global SSIM: %.3f\n", stats.globalSsim);
+            printf(", Global SSIM: %.3f", stats.globalSsim);
+
+        printf("\n");
     }
     else
     {

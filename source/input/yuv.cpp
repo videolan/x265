@@ -178,6 +178,7 @@ bool YUVInput::readPicture(x265_picture& pic)
         if (!threadActive)
             return false;
     }
+
     if (!frameStat[head])
         return false;
 

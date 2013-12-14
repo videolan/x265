@@ -81,11 +81,11 @@ void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int
 }
 
 template<int width>
-void dc_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bFilter)
+void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int bFilter)
 {
     int k, l;
 
-    pixel dcval = dcPredValue(above, left, width);
+    pixel dcval = dcPredValue(above+1, left+1, width);
 
     for (k = 0; k < width; k++)
     {
@@ -97,13 +97,15 @@ void dc_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int bF
 
     if (bFilter)
     {
-        dcPredFilter(above, left, dst, dstStride, width);
+        dcPredFilter(above+1, left+1, dst, dstStride, width);
     }
 }
 
 template<int width>
-void planad_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
+void planad_pred_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int /*bFilter*/)
 {
+    above += 1;
+    left  += 1;
     int k, l;
     pixel bottomLeft, topRight;
     int horPred;
@@ -146,7 +148,8 @@ void planad_pred_c(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
     }
 }
 
-void ang_pred_c(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+template<int width>
+void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     // Map the mode index to main prediction direction and angle
     int k, l;
@@ -265,7 +268,7 @@ void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pi
         pixel *above = (IntraFilterType[(int)g_convertToBit[size]][mode] ? above1 : above0);
         pixel *out = dest + (mode - 2) * (size * size);
 
-        ang_pred_c(out, size, size, mode, bLuma, left, above);
+        intra_pred_ang_c<size>(out, size, left, above, mode, bLuma);
 
         // Optimize code don't flip buffer
         bool modeHor = (mode < 18);
@@ -292,22 +295,27 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred_dc[BLOCK_4x4] = dc_pred_c<4>;
-    p.intra_pred_dc[BLOCK_8x8] = dc_pred_c<8>;
-    p.intra_pred_dc[BLOCK_16x16] = dc_pred_c<16>;
-    p.intra_pred_dc[BLOCK_32x32] = dc_pred_c<32>;
+    p.intra_pred[BLOCK_4x4][0] = planad_pred_c<4>;
+    p.intra_pred[BLOCK_8x8][0] = planad_pred_c<8>;
+    p.intra_pred[BLOCK_16x16][0] = planad_pred_c<16>;
+    p.intra_pred[BLOCK_32x32][0] = planad_pred_c<32>;
 
-    p.intra_pred_planar[BLOCK_4x4] = planad_pred_c<4>;
-    p.intra_pred_planar[BLOCK_8x8] = planad_pred_c<8>;
-    p.intra_pred_planar[BLOCK_16x16] = planad_pred_c<16>;
-    p.intra_pred_planar[BLOCK_32x32] = planad_pred_c<32>;
-    p.intra_pred_planar[BLOCK_64x64] = planad_pred_c<64>;
+    // Intra Prediction DC
+    p.intra_pred[BLOCK_4x4][1] = intra_pred_dc_c<4>;
+    p.intra_pred[BLOCK_8x8][1] = intra_pred_dc_c<8>;
+    p.intra_pred[BLOCK_16x16][1] = intra_pred_dc_c<16>;
+    p.intra_pred[BLOCK_32x32][1] = intra_pred_dc_c<32>;
+    for (int i = 2; i < NUM_INTRA_MODE; i++)
+    {
+        p.intra_pred[BLOCK_4x4][i] = intra_pred_ang_c<4>;
+        p.intra_pred[BLOCK_8x8][i] = intra_pred_ang_c<8>;
+        p.intra_pred[BLOCK_16x16][i] = intra_pred_ang_c<16>;
+        p.intra_pred[BLOCK_32x32][i] = intra_pred_ang_c<32>;
+    }
 
-    p.intra_pred_ang = ang_pred_c;
-    p.intra_pred_allangs[0] = all_angs_pred_c<4>;
-    p.intra_pred_allangs[1] = all_angs_pred_c<8>;
-    p.intra_pred_allangs[2] = all_angs_pred_c<16>;
-    p.intra_pred_allangs[3] = all_angs_pred_c<32>;
-    p.intra_pred_allangs[4] = all_angs_pred_c<64>;
+    p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<4>;
+    p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<8>;
+    p.intra_pred_allangs[BLOCK_16x16] = all_angs_pred_c<16>;
+    p.intra_pred_allangs[BLOCK_32x32] = all_angs_pred_c<32>;
 }
 }

@@ -60,14 +60,10 @@ void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
 void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives&);
 
-void Setup_Vec_IPFilterPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives&);
 
-void Setup_Vec_PixelPrimitives_ssse3(EncoderPrimitives&);
-void Setup_Vec_PixelPrimitives_sse41(EncoderPrimitives&);
-
 /* Use primitives for the best available vector architecture */
-void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
+void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #ifdef HAVE_SSE3
     if (cpuMask & X265_CPU_SSE3)
@@ -75,15 +71,11 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
         Setup_Vec_DCTPrimitives_sse3(p);
         Setup_Vec_BlockCopyPrimitives_sse3(p);
     }
-#else
-    if (cpuMask) p.sad[0] = p.sad[0]; // prevent compiler warnings
 #endif
 #ifdef HAVE_SSSE3
     if (cpuMask & X265_CPU_SSSE3)
     {
         Setup_Vec_IPredPrimitives_ssse3(p);
-        Setup_Vec_PixelPrimitives_ssse3(p);
-        Setup_Vec_IPFilterPrimitives_ssse3(p);
         Setup_Vec_DCTPrimitives_ssse3(p);
     }
 #endif
@@ -91,7 +83,6 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_SSE4)
     {
         Setup_Vec_IPredPrimitives_sse41(p);
-        Setup_Vec_PixelPrimitives_sse41(p);
         Setup_Vec_IPFilterPrimitives_sse41(p);
         Setup_Vec_DCTPrimitives_sse41(p);
     }

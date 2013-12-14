@@ -49,7 +49,7 @@
 #if HAVE_INT_TYPES_H
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#define LL "%"PRIu64
+#define LL "%" PRIu64
 #else
 #define LL "%lld"
 #endif
@@ -190,6 +190,25 @@ int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
     return m_frameEncoder->getStreamHeaders(nalunits);
 }
 
+void Encoder::updateVbvPlan(RateControl* rc)
+{
+    int encIdx, curIdx;
+
+    curIdx = (m_curEncoder + param.frameNumThreads - 1) % param.frameNumThreads;
+    encIdx = (curIdx + 1) % param.frameNumThreads;
+    while (encIdx != curIdx)
+    {
+        FrameEncoder *encoder = &m_frameEncoder[encIdx];
+        double bits;
+        bits = encoder->m_rce.frameSizePlanned;
+        rc->bufferFill -= bits;
+        rc->bufferFill = X265_MAX(rc->bufferFill, 0);
+        rc->bufferFill += encoder->m_rce.bufferRate;
+        rc->bufferFill = X265_MIN(rc->bufferFill, rc->bufferSize);
+        encIdx = (encIdx + 1) % param.frameNumThreads;
+    }
+}
+
 /**
  \param   flush               force encoder to encode a frame
  \param   pic_in              input original YUV picture or NULL
@@ -313,7 +332,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         m_dpb->prepareEncode(fenc);
 
         // set slice QP
-        m_rateControl->rateControlStart(fenc, m_lookahead, &(curEncoder->m_rce));
+        m_rateControl->rateControlStart(fenc, m_lookahead, &curEncoder->m_rce, this);
 
         // Allow FrameEncoder::compressFrame() to start in a worker thread
         curEncoder->m_enable.trigger();
@@ -346,6 +365,7 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
     double scale = fps / 1000 / (double)stat.m_numPics;
 
     int len = sprintf(buffer, "%-6d ", stat.m_numPics);
+
     len += sprintf(buffer + len, "kb/s: %-8.2lf", stat.m_accBits * scale);
     if (param.bEnablePsnr)
     {
@@ -364,6 +384,7 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
 
 void Encoder::printSummary()
 {
+#if LOG_CU_STATISTICS
     for (int sliceType = 2; sliceType >= 0; sliceType--)
     {
         if (sliceType == P_SLICE && !m_analyzeP.m_numPics)
@@ -372,36 +393,38 @@ void Encoder::printSummary()
             continue;
 
         StatisticLog finalLog;
-        uint64_t cntIntraNxN = 0, cntIntra[4];
         for (int depth = 0; depth < (int)g_maxCUDepth; depth++)
         {
-            uint64_t cntInter, cntSplit, cntSkipCu;
-            uint64_t cuInterDistribution[INTER_MODES], cuIntraDistribution[INTRA_MODES];
             for (int j = 0; j < param.frameNumThreads; j++)
             {
                 for (int row = 0; row < m_frameEncoder[0].m_numRows; row++)
                 {
                     StatisticLog& enclog = m_frameEncoder[j].m_rows[row].m_cuCoder.m_sliceTypeLog[sliceType];
+                    if (depth == 0)
+                        finalLog.totalCu += enclog.totalCu;
                     finalLog.cntIntra[depth] += enclog.cntIntra[depth];
-                    finalLog.cntTotalCu[depth] += enclog.cntTotalCu[depth];
-                    if (sliceType != I_SLICE)
+                    for (int m = 0; m < INTER_MODES; m++)
                     {
-                        finalLog.cntInter[depth] += enclog.cntInter[depth];
-                        finalLog.cntSkipCu[depth] += enclog.cntSkipCu[depth];
-                        finalLog.cntSplit[depth] += enclog.cntSplit[depth];
-                        for (int m = 0; m < INTER_MODES; m++)
+                        if (m < INTRA_MODES)
                         {
-                            if (m < INTRA_MODES)
-                            {
-                                finalLog.cuIntraDistribution[depth][m] += enclog.cuIntraDistribution[depth][m];
-                            }
-                            finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
+                            finalLog.cuIntraDistribution[depth][m] += enclog.cuIntraDistribution[depth][m];
                         }
+                        finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
                     }
                     if (depth == (int)g_maxCUDepth - 1)
                         finalLog.cntIntraNxN += enclog.cntIntraNxN;
+                    if (sliceType != I_SLICE)
+                    {
+                        finalLog.cntTotalCu[depth] += enclog.cntTotalCu[depth];
+                        finalLog.cntInter[depth] += enclog.cntInter[depth];
+                        finalLog.cntSkipCu[depth] += enclog.cntSkipCu[depth];
+                    }
                 }
             }
+
+            uint64_t cntInter, cntSkipCu, cntIntra = 0, cntIntraNxN = 0, encCu = 0;
+            uint64_t cuInterDistribution[INTER_MODES], cuIntraDistribution[INTRA_MODES];
+
             // check for 0/0, if true assign 0 else calculate percentage
             for (int n = 0; n < INTER_MODES; n++)
             {
@@ -423,69 +446,89 @@ void Encoder::printSummary()
                     }
                 }
             }
-            if (finalLog.cntTotalCu[depth] == 0)
+
+            if (finalLog.totalCu == 0)
+            {
+                encCu = 0;
+            }
+            else
+            {
+                if (sliceType == I_SLICE)
+                {
+                    cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.totalCu;
+                    cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.totalCu;
+                }
+                else
+                {
+                    encCu = ((finalLog.cntIntra[depth] + finalLog.cntInter[depth]) * 100) / finalLog.totalCu;
+                }
+            }
+            if (sliceType == I_SLICE)
             {
                 cntInter = 0;
-                cntIntra[depth] = 0;
-                cntSplit = 0;
                 cntSkipCu = 0;
             }
             else
             {
-                cntInter = (finalLog.cntInter[depth] * 100) / finalLog.cntTotalCu[depth];
-                cntIntra[depth] = (finalLog.cntIntra[depth] * 100) / finalLog.cntTotalCu[depth];
-                cntSplit = (finalLog.cntSplit[depth] * 100) / finalLog.cntTotalCu[depth];
-                cntSkipCu = (finalLog.cntSkipCu[depth] * 100) / finalLog.cntTotalCu[depth];
-                if (sliceType == I_SLICE)
-                    cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.cntTotalCu[depth];
+                if (finalLog.cntTotalCu[depth] == 0)
+                {
+                    cntInter = 0;
+                    cntIntra = 0;
+                    cntSkipCu = 0;
+                }
+                else
+                {
+                    cntInter = (finalLog.cntInter[depth] * 100) / finalLog.cntTotalCu[depth];
+                    cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.cntTotalCu[depth];
+                    cntSkipCu = (finalLog.cntSkipCu[depth] * 100) / finalLog.cntTotalCu[depth];
+                }
             }
             // print statistics
+            int cuSize = g_maxCUWidth >> depth;
+            char stats[256] = {0};
+            int len = 0;
             if (sliceType != I_SLICE)
             {
-                char stats[256];
-                int len;
-
-                int cuSize = g_maxCUWidth >> depth;
-                len = sprintf(stats, "Split "LL"%% Merge "LL"%% Inter "LL"%%",
-                              cntSplit, cntSkipCu, cntInter);
-
+                len += sprintf(stats + len, "EncCU "LL"%% Merge "LL"%%", encCu, cntSkipCu);
+            }
+            if (cntInter)
+            {
+                len += sprintf(stats + len, " Inter "LL"%%", cntInter);
                 if (param.bEnableAMP)
-                    len += sprintf(stats + len, "(%dx%d "LL"%% %dx%d "LL"%% %dx%d "LL"%% AMP "LL"%%)",
+                    len += sprintf(stats + len, "(%dx%d "LL "%% %dx%d "LL "%% %dx%d "LL "%% AMP "LL "%%)",
                                    cuSize, cuSize, cuInterDistribution[0],
-                                   cuSize/2, cuSize, cuInterDistribution[2],
-                                   cuSize, cuSize/2, cuInterDistribution[1],
+                                   cuSize / 2, cuSize, cuInterDistribution[2],
+                                   cuSize, cuSize / 2, cuInterDistribution[1],
                                    cuInterDistribution[3]);
                 else if (param.bEnableRectInter)
-                    len += sprintf(stats + len, "(%dx%d "LL"%% %dx%d "LL"%% %dx%d "LL"%%)",
+                    len += sprintf(stats + len, "(%dx%d "LL "%% %dx%d "LL "%% %dx%d "LL "%%)",
                                    cuSize, cuSize, cuInterDistribution[0],
-                                   cuSize/2, cuSize, cuInterDistribution[2],
-                                   cuSize, cuSize/2, cuInterDistribution[1]);
-
-                if (cntIntra[depth])
+                                   cuSize / 2, cuSize, cuInterDistribution[2],
+                                   cuSize, cuSize / 2, cuInterDistribution[1]);
+            }
+            if (cntIntra)
+            {
+                len += sprintf(stats + len, " Intra "LL"%%(DC "LL"%% P "LL"%% Ang "LL"%%",
+                                cntIntra, cuIntraDistribution[0],
+                                cuIntraDistribution[1], cuIntraDistribution[2]);
+                if (sliceType != I_SLICE)
                 {
-                    len += sprintf(stats + len, " Intra "LL"%%(DC "LL"%% P "LL"%% Ang "LL"%%",
-                                   cntIntra[depth], cuIntraDistribution[0],
-                                   cuIntraDistribution[1], cuIntraDistribution[2]);
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d "LL"%%", cuSize/2, cuSize/2, cntIntraNxN);
-                    len += sprintf(stats + len, ")");
+                        len += sprintf(stats + len, " %dx%d "LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
 
-                x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", sliceType == P_SLICE ? 'P' : 'B', cuSize, stats);
+                len += sprintf(stats + len, ")");
+                if (sliceType == I_SLICE)
+                {
+                    if (depth == (int)g_maxCUDepth - 1)
+                        len += sprintf(stats + len, " %dx%d: "LL"%%", cuSize/2, cuSize/2, cntIntraNxN);
+                }
             }
-        }
-        if (sliceType == I_SLICE)
-        {
-            char stats[50];
-            if (g_maxCUDepth == 4)
-                sprintf(stats, LL"%%  "LL"%%  "LL"%%  "LL"%%  "LL"%%", cntIntra[0], cntIntra[1], cntIntra[2], cntIntra[3], cntIntraNxN);
-            else if (g_maxCUDepth == 3)
-                sprintf(stats, LL"%%  "LL"%%  "LL"%%  "LL"%%", cntIntra[0], cntIntra[1], cntIntra[2], cntIntraNxN);
-            else
-                sprintf(stats, LL"%%  "LL"%%  "LL"%%", cntIntra[0], cntIntra[1], cntIntraNxN);
-            x265_log(&param, X265_LOG_INFO, "I-frame %d..4:  %s\n", g_maxCUWidth, stats);
+            if (stats[0])
+                x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", sliceType == P_SLICE ? 'P' : sliceType == B_SLICE ? 'B' : 'I', cuSize, stats);
         }
     }
+#endif
     if (param.logLevel >= X265_LOG_INFO)
     {
         char buffer[200];
@@ -531,6 +574,7 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
             stats->elapsedVideoTime = 0;
         }
     }
+
     /* If new statistics are added to x265_stats, we must check here whether the
      * structure provided by the user is the new structure or an older one (for
      * future safety) */
@@ -1167,13 +1211,13 @@ void Encoder::configure(x265_param *_param)
     {
         // auto-detect frame threads
         if (poolThreadCount > 32)
-            _param->frameNumThreads = 6;  // dual-socket 10-core IvyBridge or higher
+            _param->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
         else if (poolThreadCount >= 16)
-            _param->frameNumThreads = 5;  // 8 HT cores, or dual socket
+            _param->frameNumThreads = 5; // 8 HT cores, or dual socket
         else if (poolThreadCount >= 8)
-            _param->frameNumThreads = 3;  // 4 HT cores
+            _param->frameNumThreads = 3; // 4 HT cores
         else if (poolThreadCount >= 4)
-            _param->frameNumThreads = 2;  // Dual or Quad core
+            _param->frameNumThreads = 2; // Dual or Quad core
         else
             _param->frameNumThreads = 1;
     }
@@ -1209,11 +1253,6 @@ void Encoder::configure(x265_param *_param)
     {
         _param->bEnableAMP = false;
     }
-
-    if (!(_param->bEnableRDOQ && _param->bEnableTransformSkip))
-    {
-        _param->bEnableRDOQTS = 0;
-    }
     if (_param->bBPyramid && !_param->bframes)
     {
         _param->bBPyramid = 0;
@@ -1221,16 +1260,32 @@ void Encoder::configure(x265_param *_param)
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
     switch (_param->rdLevel)
     {
-    case X265_NO_RDO_NO_RDOQ:
-        _param->bEnableRDO = _param->bEnableRDOQ = 0;
+    case 6:
+        bEnableRDOQ = bEnableRDOQTS = 1;
         break;
-    case X265_NO_RDO:
-        _param->bEnableRDO = 0;
-        _param->bEnableRDOQ = 1;
+    case 5:
+        bEnableRDOQ = bEnableRDOQTS = 1;
         break;
-    case X265_FULL_RDO:
-        _param->bEnableRDO = _param->bEnableRDOQ = 1;
+    case 4:
+        bEnableRDOQ = bEnableRDOQTS = 1;
         break;
+    case 3:
+        bEnableRDOQ = bEnableRDOQTS = 0;
+        break; 
+    case 2:
+        bEnableRDOQ = bEnableRDOQTS = 0;
+        break; 
+    case 1:
+        bEnableRDOQ = bEnableRDOQTS = 0;
+        break; 
+    case 0:
+        bEnableRDOQ = bEnableRDOQTS = 0;
+        break;
+    }
+
+    if (!(bEnableRDOQ && _param->bEnableTransformSkip))
+    {
+        bEnableRDOQTS = 0;
     }
 
     //====== Coding Tools ========

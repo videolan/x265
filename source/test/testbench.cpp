@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
             printf("Testing only harnesses that match name <%s>\n", testname);
         }
     }
+
 #if HIGH_BIT_DEPTH
     g_bitDepth = 12;
 #endif
@@ -125,10 +126,9 @@ int main(int argc, char *argv[])
         if (cpuid_user == i)
             break;
 
-#if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
-        Setup_Vector_Primitives(vecprim, test_arch[i].flag);
+        Setup_Instrinsic_Primitives(vecprim, test_arch[i].flag);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -140,9 +140,6 @@ int main(int argc, char *argv[])
             }
         }
 
-#endif // if ENABLE_VECTOR_PRIMITIVES
-
-#if ENABLE_ASM_PRIMITIVES
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, test_arch[i].flag);
@@ -150,27 +147,20 @@ int main(int argc, char *argv[])
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
                 continue;
-            /* Here it should be asmprim and not vecprim. Right? */
             if (!harness[h]->testCorrectness(cprim, asmprim))
             {
                 fprintf(stderr, "\nx265: asm primitive has failed. Go and fix that Right Now!\n");
                 return -1;
             }
         }
-
-#endif // if ENABLE_ASM_PRIMITIVES
     }
 
     /******************* Cycle count for all primitives **********************/
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
-#if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(optprim, cpuid);
-#endif
-#if ENABLE_ASM_PRIMITIVES
+    Setup_Instrinsic_Primitives(optprim, cpuid);
     Setup_Assembly_Primitives(optprim, cpuid);
-#endif
 
     printf("\nTest performance improvement with full optimizations\n");
 

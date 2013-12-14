@@ -374,7 +374,8 @@ SAD  4,  4
     paddd   m3,  m4
     paddd   m0,  m1
     paddd   m0,  m3
-
+    lea     r2,  [r2 + r3]
+    lea     r0,  [r0 + r1]
 %endmacro
 
 %macro SAD_W16 0
@@ -660,20 +661,8 @@ cglobal pixel_sad_64x16, 4,4,5
     pxor  m0,  m0
 
     PROCESS_SAD_64x4
-
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
     PROCESS_SAD_64x4
-
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
     PROCESS_SAD_64x4
-
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
     PROCESS_SAD_64x4
 
     movhlps m1,  m0
@@ -686,25 +675,14 @@ cglobal pixel_sad_64x16, 4,4,5
 ;-----------------------------------------------------------------------------
 cglobal pixel_sad_64x32, 4,5,5
     pxor  m0,  m0
-    mov   r4,  32
+    mov   r4,  4
 
 .loop
     PROCESS_SAD_64x4
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
     PROCESS_SAD_64x4
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
 
-    sub   r4,  8
-    cmp   r4,  8
-
-jnz .loop
-    PROCESS_SAD_64x4
-    lea   r2,  [r2 + r3]
-    lea   r0,  [r0 + r1]
-    PROCESS_SAD_64x4
+    dec   r4
+    jnz   .loop
 
     movhlps m1,  m0
     paddd   m0,  m1
@@ -716,25 +694,13 @@ jnz .loop
 ;-----------------------------------------------------------------------------
 cglobal pixel_sad_64x48, 4,5,5
     pxor  m0,  m0
-    mov   r4,  48
+    mov   r4,  6
 
 .loop
     PROCESS_SAD_64x4
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
     PROCESS_SAD_64x4
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
-    sub   r4,  8
-    cmp   r4,  8
-
-jnz .loop
-    PROCESS_SAD_64x4
-    lea   r2,  [r2 + r3]
-    lea   r0,  [r0 + r1]
-    PROCESS_SAD_64x4
+    dec     r4d
+    jnz     .loop
 
     movhlps m1,  m0
     paddd   m0,  m1
@@ -746,25 +712,13 @@ jnz .loop
 ;-----------------------------------------------------------------------------
 cglobal pixel_sad_64x64, 4,5,5
     pxor  m0,  m0
-    mov   r4,  64
+    mov   r4,  8
 
 .loop
     PROCESS_SAD_64x4
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
     PROCESS_SAD_64x4
-    lea     r2,  [r2 + r3]
-    lea     r0,  [r0 + r1]
-
-    sub   r4,  8
-    cmp   r4,  8
-
-jnz .loop
-    PROCESS_SAD_64x4
-    lea   r2,  [r2 + r3]
-    lea   r0,  [r0 + r1]
-    PROCESS_SAD_64x4
+    dec   r4
+    jnz   .loop
 
     movhlps m1,  m0
     paddd   m0,  m1
@@ -887,502 +841,6 @@ cglobal pixel_sad_8x16_sse2, 4,4
     SAD_INC_4x8P_SSE 1
     SAD_INC_4x8P_SSE 1
     SAD_END_SSE2
-    RET
-
-;-----------------------------------------------------------------------------
-; void pixel_vsad( pixel *src, intptr_t stride );
-;-----------------------------------------------------------------------------
-
-%if ARCH_X86_64 == 0
-INIT_MMX
-cglobal pixel_vsad_mmx2, 3,3
-    mova      m0, [r0]
-    mova      m1, [r0+8]
-    mova      m2, [r0+r1]
-    mova      m3, [r0+r1+8]
-    lea       r0, [r0+r1*2]
-    psadbw    m0, m2
-    psadbw    m1, m3
-    paddw     m0, m1
-    sub      r2d, 2
-    je .end
-.loop:
-    mova      m4, [r0]
-    mova      m5, [r0+8]
-    mova      m6, [r0+r1]
-    mova      m7, [r0+r1+8]
-    lea       r0, [r0+r1*2]
-    psadbw    m2, m4
-    psadbw    m3, m5
-    psadbw    m4, m6
-    psadbw    m5, m7
-    ;max sum: 31*16*255(pixel_max)=126480
-    paddd     m0, m2
-    paddd     m0, m3
-    paddd     m0, m4
-    paddd     m0, m5
-    mova      m2, m6
-    mova      m3, m7
-    sub      r2d, 2
-    jg .loop
-.end:
-    movd     eax, m0
-    RET
-%endif
-
-INIT_XMM
-cglobal pixel_vsad_sse2, 3,3
-    mova      m0, [r0]
-    mova      m1, [r0+r1]
-    lea       r0, [r0+r1*2]
-    psadbw    m0, m1
-    sub      r2d, 2
-    je .end
-.loop:
-    mova      m2, [r0]
-    mova      m3, [r0+r1]
-    lea       r0, [r0+r1*2]
-    psadbw    m1, m2
-    psadbw    m2, m3
-    paddw     m0, m1
-    paddw     m0, m2
-    mova      m1, m3
-    sub      r2d, 2
-    jg .loop
-.end:
-    movhlps   m1, m0
-    ;max sum: 31*16*255(pixel_max)=126480
-    paddd     m0, m1
-    movd     eax, m0
-    RET
-
-;-----------------------------------------------------------------------------
-; void intra_sad_x3_4x4( uint8_t *fenc, uint8_t *fdec, int res[3] );
-;-----------------------------------------------------------------------------
-
-cglobal intra_sad_x3_4x4_mmx2, 3,3
-    pxor      mm7, mm7
-    movd      mm0, [r1-FDEC_STRIDE]
-    movd      mm1, [r0+FENC_STRIDE*0]
-    movd      mm2, [r0+FENC_STRIDE*2]
-    punpckldq mm0, mm0
-    punpckldq mm1, [r0+FENC_STRIDE*1]
-    punpckldq mm2, [r0+FENC_STRIDE*3]
-    movq      mm6, mm0
-    movq      mm3, mm1
-    psadbw    mm3, mm0
-    psadbw    mm0, mm2
-    paddw     mm0, mm3
-    movd     [r2], mm0 ;V prediction cost
-    movd      mm3, [r1+FDEC_STRIDE*0-4]
-    movd      mm0, [r1+FDEC_STRIDE*1-4]
-    movd      mm4, [r1+FDEC_STRIDE*2-4]
-    movd      mm5, [r1+FDEC_STRIDE*3-4]
-    punpcklbw mm3, mm0
-    punpcklbw mm4, mm5
-    movq      mm5, mm3
-    punpckhwd mm5, mm4
-    punpckhdq mm5, mm6
-    psadbw    mm5, mm7
-    punpckhbw mm3, mm3
-    punpckhbw mm4, mm4
-    punpckhwd mm3, mm3
-    punpckhwd mm4, mm4
-    psraw     mm5, 2
-    pavgw     mm5, mm7
-    punpcklbw mm5, mm5
-    pshufw    mm5, mm5, 0 ;DC prediction
-    movq      mm6, mm5
-    psadbw    mm5, mm1
-    psadbw    mm6, mm2
-    psadbw    mm1, mm3
-    psadbw    mm2, mm4
-    paddw     mm5, mm6
-    paddw     mm1, mm2
-    movd   [r2+8], mm5 ;DC prediction cost
-    movd   [r2+4], mm1 ;H prediction cost
-    RET
-
-;-----------------------------------------------------------------------------
-; void intra_sad_x3_8x8( uint8_t *fenc, uint8_t edge[36], int res[3]);
-;-----------------------------------------------------------------------------
-
-;m0 = DC
-;m6 = V
-;m7 = H
-;m1 = DC score
-;m2 = V score
-;m3 = H score
-;m5 = pixel row
-;m4 = temp
-
-%macro INTRA_SAD_HVDC_ITER 2
-    movq      m5, [r0+FENC_STRIDE*%1]
-    movq      m4, m5
-    psadbw    m4, m0
-    ACCUM  paddw, 1, 4, %1
-    movq      m4, m5
-    psadbw    m4, m6
-    ACCUM  paddw, 2, 4, %1
-    pshufw    m4, m7, %2
-    psadbw    m5, m4
-    ACCUM  paddw, 3, 5, %1
-%endmacro
-
-INIT_MMX
-cglobal intra_sad_x3_8x8_mmx2, 3,3
-    movq      m7, [r1+7]
-    pxor      m0, m0
-    movq      m6, [r1+16]  ;V prediction
-    pxor      m1, m1
-    psadbw    m0, m7
-    psadbw    m1, m6
-    paddw     m0, m1
-    paddw     m0, [pw_8]
-    psrlw     m0, 4
-    punpcklbw m0, m0
-    pshufw    m0, m0, q0000 ;DC prediction
-    punpckhbw m7, m7
-    INTRA_SAD_HVDC_ITER 0, q3333
-    INTRA_SAD_HVDC_ITER 1, q2222
-    INTRA_SAD_HVDC_ITER 2, q1111
-    INTRA_SAD_HVDC_ITER 3, q0000
-    movq      m7, [r1+7]
-    punpcklbw m7, m7
-    INTRA_SAD_HVDC_ITER 4, q3333
-    INTRA_SAD_HVDC_ITER 5, q2222
-    INTRA_SAD_HVDC_ITER 6, q1111
-    INTRA_SAD_HVDC_ITER 7, q0000
-    movd  [r2+0], m2
-    movd  [r2+4], m3
-    movd  [r2+8], m1
-    RET
-
-;-----------------------------------------------------------------------------
-; void intra_sad_x3_8x8c( uint8_t *fenc, uint8_t *fdec, int res[3] );
-;-----------------------------------------------------------------------------
-
-%macro INTRA_SAD_HV_ITER 1
-%if cpuflag(ssse3)
-    movd        m1, [r1 + FDEC_STRIDE*(%1-4) - 4]
-    movd        m3, [r1 + FDEC_STRIDE*(%1-3) - 4]
-    pshufb      m1, m7
-    pshufb      m3, m7
-%else
-    movq        m1, [r1 + FDEC_STRIDE*(%1-4) - 8]
-    movq        m3, [r1 + FDEC_STRIDE*(%1-3) - 8]
-    punpckhbw   m1, m1
-    punpckhbw   m3, m3
-    pshufw      m1, m1, q3333
-    pshufw      m3, m3, q3333
-%endif
-    movq        m4, [r0 + FENC_STRIDE*(%1+0)]
-    movq        m5, [r0 + FENC_STRIDE*(%1+1)]
-    psadbw      m1, m4
-    psadbw      m3, m5
-    psadbw      m4, m6
-    psadbw      m5, m6
-    paddw       m1, m3
-    paddw       m4, m5
-    ACCUM    paddw, 0, 1, %1
-    ACCUM    paddw, 2, 4, %1
-%endmacro
-
-%macro INTRA_SAD_8x8C 0
-cglobal intra_sad_x3_8x8c, 3,3
-    movq        m6, [r1 - FDEC_STRIDE]
-    add         r1, FDEC_STRIDE*4
-%if cpuflag(ssse3)
-    movq        m7, [pb_3]
-%endif
-    INTRA_SAD_HV_ITER 0
-    INTRA_SAD_HV_ITER 2
-    INTRA_SAD_HV_ITER 4
-    INTRA_SAD_HV_ITER 6
-    movd    [r2+4], m0
-    movd    [r2+8], m2
-    pxor        m7, m7
-    movq        m2, [r1 + FDEC_STRIDE*-4 - 8]
-    movq        m4, [r1 + FDEC_STRIDE*-2 - 8]
-    movq        m3, [r1 + FDEC_STRIDE* 0 - 8]
-    movq        m5, [r1 + FDEC_STRIDE* 2 - 8]
-    punpckhbw   m2, [r1 + FDEC_STRIDE*-3 - 8]
-    punpckhbw   m4, [r1 + FDEC_STRIDE*-1 - 8]
-    punpckhbw   m3, [r1 + FDEC_STRIDE* 1 - 8]
-    punpckhbw   m5, [r1 + FDEC_STRIDE* 3 - 8]
-    punpckhbw   m2, m4
-    punpckhbw   m3, m5
-    psrlq       m2, 32
-    psrlq       m3, 32
-    psadbw      m2, m7 ; s2
-    psadbw      m3, m7 ; s3
-    movq        m1, m6
-    SWAP        0, 6
-    punpckldq   m0, m7
-    punpckhdq   m1, m7
-    psadbw      m0, m7 ; s0
-    psadbw      m1, m7 ; s1
-    punpcklwd   m0, m1
-    punpcklwd   m2, m3
-    punpckldq   m0, m2 ;s0 s1 s2 s3
-    pshufw      m3, m0, q3312 ;s2,s1,s3,s3
-    pshufw      m0, m0, q1310 ;s0,s1,s3,s1
-    paddw       m0, m3
-    psrlw       m0, 2
-    pavgw       m0, m7 ; s0+s2, s1, s3, s1+s3
-%if cpuflag(ssse3)
-    movq2dq   xmm0, m0
-    pshufb    xmm0, [pb_shuf8x8c]
-    movq      xmm1, [r0+FENC_STRIDE*0]
-    movq      xmm2, [r0+FENC_STRIDE*1]
-    movq      xmm3, [r0+FENC_STRIDE*2]
-    movq      xmm4, [r0+FENC_STRIDE*3]
-    movhps    xmm1, [r0+FENC_STRIDE*4]
-    movhps    xmm2, [r0+FENC_STRIDE*5]
-    movhps    xmm3, [r0+FENC_STRIDE*6]
-    movhps    xmm4, [r0+FENC_STRIDE*7]
-    psadbw    xmm1, xmm0
-    psadbw    xmm2, xmm0
-    psadbw    xmm3, xmm0
-    psadbw    xmm4, xmm0
-    paddw     xmm1, xmm2
-    paddw     xmm1, xmm3
-    paddw     xmm1, xmm4
-    movhlps   xmm0, xmm1
-    paddw     xmm1, xmm0
-    movd      [r2], xmm1
-%else
-    packuswb    m0, m0
-    punpcklbw   m0, m0
-    movq        m1, m0
-    punpcklbw   m0, m0 ; 4x dc0 4x dc1
-    punpckhbw   m1, m1 ; 4x dc2 4x dc3
-    movq        m2, [r0+FENC_STRIDE*0]
-    movq        m3, [r0+FENC_STRIDE*1]
-    movq        m4, [r0+FENC_STRIDE*2]
-    movq        m5, [r0+FENC_STRIDE*3]
-    movq        m6, [r0+FENC_STRIDE*4]
-    movq        m7, [r0+FENC_STRIDE*5]
-    psadbw      m2, m0
-    psadbw      m3, m0
-    psadbw      m4, m0
-    psadbw      m5, m0
-    movq        m0, [r0+FENC_STRIDE*6]
-    psadbw      m6, m1
-    psadbw      m7, m1
-    psadbw      m0, m1
-    psadbw      m1, [r0+FENC_STRIDE*7]
-    paddw       m2, m3
-    paddw       m4, m5
-    paddw       m6, m7
-    paddw       m0, m1
-    paddw       m2, m4
-    paddw       m6, m0
-    paddw       m2, m6
-    movd      [r2], m2
-%endif
-    RET
-%endmacro
-
-INIT_MMX mmx2
-INTRA_SAD_8x8C
-INIT_MMX ssse3
-INTRA_SAD_8x8C
-
-INIT_YMM avx2
-cglobal intra_sad_x3_8x8c, 3,3,7
-    vpbroadcastq m2, [r1 - FDEC_STRIDE]         ; V pred
-    add          r1, FDEC_STRIDE*4-1
-    pxor        xm5, xm5
-    punpckldq   xm3, xm2, xm5                   ; V0 _ V1 _
-    movd        xm0, [r1 + FDEC_STRIDE*-1 - 3]
-    movd        xm1, [r1 + FDEC_STRIDE* 3 - 3]
-    pinsrb      xm0, [r1 + FDEC_STRIDE*-4], 0
-    pinsrb      xm1, [r1 + FDEC_STRIDE* 0], 0
-    pinsrb      xm0, [r1 + FDEC_STRIDE*-3], 1
-    pinsrb      xm1, [r1 + FDEC_STRIDE* 1], 1
-    pinsrb      xm0, [r1 + FDEC_STRIDE*-2], 2
-    pinsrb      xm1, [r1 + FDEC_STRIDE* 2], 2
-    punpcklqdq  xm0, xm1                        ; H0 _ H1 _
-    vinserti128  m3, m3, xm0, 1                 ; V0 V1 H0 H1
-    pshufb      xm0, [hpred_shuf]               ; H00224466 H11335577
-    psadbw       m3, m5                         ; s0 s1 s2 s3
-    vpermq       m4, m3, q3312                  ; s2 s1 s3 s3
-    vpermq       m3, m3, q1310                  ; s0 s1 s3 s1
-    paddw        m3, m4
-    psrlw        m3, 2
-    pavgw        m3, m5                         ; s0+s2 s1 s3 s1+s3
-    pshufb       m3, [pb_shuf8x8c2]             ; DC0 _ DC1 _
-    vpblendd     m3, m3, m2, 11001100b          ; DC0 V DC1 V
-    vinserti128  m1, m3, xm3, 1                 ; DC0 V DC0 V
-    vperm2i128   m6, m3, m3, q0101              ; DC1 V DC1 V
-    vpermq       m0, m0, q3120                  ; H00224466 _ H11335577 _
-    movddup      m2, [r0+FENC_STRIDE*0]
-    movddup      m4, [r0+FENC_STRIDE*2]
-    pshuflw      m3, m0, q0000
-    psadbw       m3, m2
-    psadbw       m2, m1
-    pshuflw      m5, m0, q1111
-    psadbw       m5, m4
-    psadbw       m4, m1
-    paddw        m2, m4
-    paddw        m3, m5
-    movddup      m4, [r0+FENC_STRIDE*4]
-    pshuflw      m5, m0, q2222
-    psadbw       m5, m4
-    psadbw       m4, m6
-    paddw        m2, m4
-    paddw        m3, m5
-    movddup      m4, [r0+FENC_STRIDE*6]
-    pshuflw      m5, m0, q3333
-    psadbw       m5, m4
-    psadbw       m4, m6
-    paddw        m2, m4
-    paddw        m3, m5
-    vextracti128 xm0, m2, 1
-    vextracti128 xm1, m3, 1
-    paddw       xm2, xm0 ; DC V
-    paddw       xm3, xm1 ; H
-    pextrd   [r2+8], xm2, 2 ; V
-    movd     [r2+4], xm3    ; H
-    movd     [r2+0], xm2    ; DC
-    RET
-
-
-;-----------------------------------------------------------------------------
-; void intra_sad_x3_16x16( uint8_t *fenc, uint8_t *fdec, int res[3] );
-;-----------------------------------------------------------------------------
-
-;xmm7: DC prediction    xmm6: H prediction  xmm5: V prediction
-;xmm4: DC pred score    xmm3: H pred score  xmm2: V pred score
-%macro INTRA_SAD16 0
-cglobal intra_sad_x3_16x16, 3,5,8
-    pxor    mm0, mm0
-    pxor    mm1, mm1
-    psadbw  mm0, [r1-FDEC_STRIDE+0]
-    psadbw  mm1, [r1-FDEC_STRIDE+8]
-    paddw   mm0, mm1
-    movd    r3d, mm0
-%if cpuflag(ssse3)
-    mova  m1, [pb_3]
-%endif
-%assign x 0
-%rep 16
-    movzx   r4d, byte [r1-1+FDEC_STRIDE*(x&3)]
-%if (x&3)==3 && x!=15
-    add      r1, FDEC_STRIDE*4
-%endif
-    add     r3d, r4d
-%assign x x+1
-%endrep
-    sub      r1, FDEC_STRIDE*12
-    add     r3d, 16
-    shr     r3d, 5
-    imul    r3d, 0x01010101
-    movd    m7, r3d
-    mova    m5, [r1-FDEC_STRIDE]
-%if mmsize==16
-    pshufd  m7, m7, 0
-%else
-    mova    m1, [r1-FDEC_STRIDE+8]
-    punpckldq m7, m7
-%endif
-    pxor    m4, m4
-    pxor    m3, m3
-    pxor    m2, m2
-    mov     r3d, 15*FENC_STRIDE
-.vloop:
-    SPLATB_LOAD m6, r1+r3*2-1, m1
-    mova    m0, [r0+r3]
-    psadbw  m0, m7
-    paddw   m4, m0
-    mova    m0, [r0+r3]
-    psadbw  m0, m5
-    paddw   m2, m0
-%if mmsize==8
-    mova    m0, [r0+r3]
-    psadbw  m0, m6
-    paddw   m3, m0
-    mova    m0, [r0+r3+8]
-    psadbw  m0, m7
-    paddw   m4, m0
-    mova    m0, [r0+r3+8]
-    psadbw  m0, m1
-    paddw   m2, m0
-    psadbw  m6, [r0+r3+8]
-    paddw   m3, m6
-%else
-    psadbw  m6, [r0+r3]
-    paddw   m3, m6
-%endif
-    add     r3d, -FENC_STRIDE
-    jge .vloop
-%if mmsize==16
-    pslldq  m3, 4
-    por     m3, m2
-    movhlps m1, m3
-    paddw   m3, m1
-    movq  [r2+0], m3
-    movhlps m1, m4
-    paddw   m4, m1
-%else
-    movd  [r2+0], m2
-    movd  [r2+4], m3
-%endif
-    movd  [r2+8], m4
-    RET
-%endmacro
-
-INIT_MMX mmx2
-INTRA_SAD16
-INIT_XMM sse2
-INTRA_SAD16
-INIT_XMM ssse3
-INTRA_SAD16
-
-INIT_YMM avx2
-cglobal intra_sad_x3_16x16, 3,5,6
-    pxor   xm0, xm0
-    psadbw xm0, [r1-FDEC_STRIDE]
-    movhlps xm1, xm0
-    paddw  xm0, xm1
-    movd   r3d, xm0
-%assign x 0
-%rep 16
-    movzx  r4d, byte [r1-1+FDEC_STRIDE*(x&3)]
-%if (x&3)==3 && x!=15
-    add     r1, FDEC_STRIDE*4
-%endif
-    add    r3d, r4d
-%assign x x+1
-%endrep
-    sub     r1, FDEC_STRIDE*12
-    add    r3d, 16
-    shr    r3d, 5
-    movd   xm5, r3d
-    vpbroadcastb xm5, xm5
-    vinserti128 m5, m5, [r1-FDEC_STRIDE], 1 ; m5 contains DC and V prediction
-
-    pxor    m4, m4  ; DC / V accumulator
-    pxor   xm3, xm3 ; H accumulator
-    mov    r3d, 15*FENC_STRIDE
-.vloop:
-    vpbroadcastb  xm2, [r1+r3*2-1]
-    vbroadcasti128 m0, [r0+r3]
-    psadbw  m1, m0, m5
-    psadbw xm0, xm2
-    paddw   m4, m1
-    paddw  xm3, xm0
-    add    r3d, -FENC_STRIDE
-    jge .vloop
-    punpckhqdq m5, m4, m4
-    movhlps xm2, xm3
-    paddw   m4, m5      ; DC / V
-    paddw  xm3, xm2     ; H
-    vextracti128 xm2, m4, 1
-    movd  [r2+0], xm2
-    movd  [r2+4], xm3
-    movd  [r2+8], xm4
     RET
 
 ;=============================================================================

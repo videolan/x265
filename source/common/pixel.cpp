@@ -651,24 +651,27 @@ float ssim_end_1(int s1, int s2, int ss, int s12)
 /* Maximum value for 10-bit is: ss*64 = (2^10-1)^2*16*4*64 = 4286582784, which will overflow in some cases.
  * s1*s1, s2*s2, and s1*s2 also obtain this value for edge cases: ((2^10-1)*16*4)^2 = 4286582784.
  * Maximum value for 9-bit is: ss*64 = (2^9-1)^2*16*4*64 = 1069551616, which will not overflow. */
+
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 #if HIGH_BIT_DEPTH
+assert(X265_DEPTH == 10);
 #define type float
-    static const float ssim_c1 = (float)(.01*.01*PIXEL_MAX*PIXEL_MAX*64);
-    static const float ssim_c2 = (float)(.03*.03*PIXEL_MAX*PIXEL_MAX*64*63);
+    static const float ssim_c1 = (float)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64);
+    static const float ssim_c2 = (float)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63);
 #else
+assert(X265_DEPTH == 8);
 #define type int
-    static const int ssim_c1 = (int)(.01*.01*PIXEL_MAX*PIXEL_MAX*64 + .5);
-    static const int ssim_c2 = (int)(.03*.03*PIXEL_MAX*PIXEL_MAX*64*63 + .5);
+    static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5);
+    static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5);
 #endif
-    type fs1 = s1;
-    type fs2 = s2;
-    type fss = ss;
-    type fs12 = s12;
-    type vars = fss*64 - fs1*fs1 - fs2*fs2;
-    type covar = fs12*64 - fs1*fs2;
-    return (float)(2*fs1*fs2 + ssim_c1) * (float)(2*covar + ssim_c2)
-         / ((float)(fs1*fs1 + fs2*fs2 + ssim_c1) * (float)(vars + ssim_c2));
+    type fs1 = (type)s1;
+    type fs2 = (type)s2;
+    type fss = (type)ss;
+    type fs12 = (type)s12;
+    type vars = (type)(fss * 64 - fs1 * fs1 - fs2 * fs2);
+    type covar = (type)(fs12 * 64 - fs1 * fs2);
+    return (float)(2 * fs1 * fs2 + ssim_c1) * (float)(2 * covar + ssim_c2)
+           / ((float)(fs1 * fs1 + fs2 * fs2 + ssim_c1) * (float)(vars + ssim_c2));
 #undef type
 #undef PIXEL_MAX
 }
@@ -784,19 +787,19 @@ void pixel_sub_ps_c(int16_t *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t
 
 template<int bx, int by>
 void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1)
-  {
+{
     for (int y = 0; y < by; y++)
     {
-      for (int x = 0; x < bx; x++)
-      {
-        a[x] = (pixel)ClipY(b0[x] + b1[x]);
-      }
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = (pixel)ClipY(b0[x] + b1[x]);
+        }
 
-      b0 += sstride0;
-      b1 += sstride1;
-      a += dstride;
+        b0 += sstride0;
+        b1 += sstride1;
+        a += dstride;
     }
-  }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -901,16 +904,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     LUMA(16, 64);
     CHROMA(8, 32);
 
-    //sse
-#if HIGH_BIT_DEPTH
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp_t, int16_t, int16_t)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, int16_t, int16_t)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, int16_t, int16_t)
-#else
     SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp_t, pixel, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, int16_t, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, int16_t, int16_t)
-#endif
+
     p.blockcpy_pp = blockcopy_p_p;
     p.blockcpy_ps = blockcopy_p_s;
 
@@ -985,6 +982,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.var[BLOCK_8x8] = pixel_var<8>;
     p.var[BLOCK_16x16] = pixel_var<16>;
+    p.var[BLOCK_32x32] = pixel_var<32>;
+    p.var[BLOCK_64x64] = pixel_var<64>;
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
 }
 }
