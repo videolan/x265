@@ -1000,14 +1000,8 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
     int maxTuSize = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
     int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
 
-    // don't check split if TU size is less or equal to max TU size
-    bool noSplitIntraMaxTuSize = bCheckFull;
-
     if (m_cfg->param.rdPenalty && !isIntraSlice)
     {
-        // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
-        noSplitIntraMaxTuSize = (trSizeLog2 <= X265_MIN(maxTuSize, 4));
-
         // if maximum RD-penalty don't check TU size 32x32
         if (m_cfg->param.rdPenalty == 2)
         {
@@ -1020,7 +1014,6 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         //----- code luma block with given intra prediction mode and store Cbf-----
         uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
-        uint32_t fullDepth    = cu->getDepth(0)  + trDepth;
         uint32_t width        = cu->getWidth(0) >> trDepth;
         uint32_t height       = cu->getHeight(0) >> trDepth;
         uint32_t stride       = fencYuv->getStride();
@@ -1029,7 +1022,6 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
         Pel*     recon        = reconYuv->getLumaAddr(absPartIdx);
 
-        uint32_t trSizeLog2     = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
         uint32_t qtLayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
         uint32_t numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         TCoeff*  coeff          = m_qtTempCoeffY[qtLayer] + numCoeffPerInc * absPartIdx;
@@ -1621,7 +1613,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                                        TComYuv*    predYuv,
                                        TShortYUV*  resiYuv,
                                        TComYuv*    reconYuv)
-{    
+{
     bool bChromaSame = false;
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t trMode    = cu->getTransformIdx(absPartIdx);
