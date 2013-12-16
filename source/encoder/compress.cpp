@@ -928,7 +928,6 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
 
             //Residual encoding
             m_search->residualTransformQuantInter(cu, 0, 0, m_tmpResiYuv[depth], cu->getDepth(0), true);
-            m_search->xSetResidualQTData(cu, 0, 0, NULL, cu->getDepth(0), false);
 
             if (lcu->getMergeFlag(absPartIdx) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
             {
@@ -938,7 +937,6 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
             else
             {
                 cu->copyCodedToPic(depth);
-                m_search->xSetResidualQTData(cu, 0, 0, m_tmpResiYuv[depth], cu->getDepth(0), true);
 
                 //Generate Recon
                 Pel* pred = m_bestPredYuv[0]->getLumaAddr(absPartIdx);

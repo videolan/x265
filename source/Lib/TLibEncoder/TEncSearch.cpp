@@ -3266,9 +3266,7 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
     if (cu->getPredictionMode(0) == MODE_INTER)
     {
         residualTransformQuantInter(cu, 0, 0, resiYuv, cu->getDepth(0), true);
-        xSetResidualQTData(cu, 0, 0, NULL, cu->getDepth(0), false);
         uint32_t width  = cu->getWidth(0);
-        xSetResidualQTData(cu, 0, 0, resiYuv, cu->getDepth(0), true);
         reconYuv->addClip(predYuv, resiYuv, 0, width);
 
         if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && cu->getQtRootCbf(0) == 0)
@@ -3322,10 +3320,10 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
     if (bCheckFull)
     {
         const uint32_t numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
-        const uint32_t qtlayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
-        TCoeff *coeffCurY = m_qtTempCoeffY[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx);
-        TCoeff *coeffCurU = m_qtTempCoeffCb[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-        TCoeff *coeffCurV = m_qtTempCoeffCr[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+
+        TCoeff *coeffCurY = cu->getCoeffY() + (numCoeffPerAbsPartIdxIncrement * absPartIdx);
+        TCoeff *coeffCurU = cu->getCoeffCb() + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+        TCoeff *coeffCurV = cu->getCoeffCr() + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
 
         int trWidth = 0, trHeight = 0, trWidthC = 0, trHeightC = 0;
         uint32_t absTUPartIdxC = absPartIdx;
@@ -3370,64 +3368,55 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
         if (absSumY)
         {
-            int16_t *curResiY = m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
+            int16_t *curResiY = resiYuv->getLumaAddr(absTUPartIdx);
 
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
             int scalingListType = 3 + g_eTTable[(int)TEXT_LUMA];
             assert(scalingListType < 6);
-            assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, MAX_CU_SIZE,  coeffCurY, trWidth, trHeight, scalingListType, false, lastPosY); //this is for inter mode only
+            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, resiYuv->m_width,  coeffCurY, trWidth, trHeight, scalingListType, false, lastPosY); //this is for inter mode only
         }
         else
         {
-            int16_t *ptr =  m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
-            assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
-
+            int16_t *ptr =  resiYuv->getLumaAddr(absTUPartIdx);
             assert(trWidth == trHeight);
-            primitives.blockfill_s[(int)g_convertToBit[trWidth]](ptr, MAX_CU_SIZE, 0);
+            primitives.blockfill_s[(int)g_convertToBit[trWidth]](ptr, resiYuv->m_width, 0);
         }
 
         if (bCodeChroma)
         {
             if (absSumU)
             {
-                int16_t *pcResiCurrU = m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
+                int16_t *pcResiCurrU = resiYuv->getCbAddr(absTUPartIdxC);
 
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
                 int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_U];
                 assert(scalingListType < 6);
-                assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, MAX_CU_SIZE / 2, coeffCurU, trWidthC, trHeightC, scalingListType, false, lastPosU);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, resiYuv->m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, false, lastPosU);
             }
             else
             {
-                int16_t *ptr = m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
-                assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
-
+                int16_t *ptr = resiYuv->getCbAddr(absTUPartIdxC);
                 assert(trWidthC == trHeightC);
-                primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, MAX_CU_SIZE / 2, 0);
+                primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, resiYuv->m_cwidth, 0);
             }
             if (absSumV)
             {
-                int16_t *curResiV = m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
+                int16_t *curResiV = resiYuv->getCrAddr(absTUPartIdxC);
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
                 int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_V];
                 assert(scalingListType < 6);
-                assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, MAX_CU_SIZE / 2, coeffCurV, trWidthC, trHeightC, scalingListType, false, lastPosV);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, resiYuv->m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, false, lastPosV);
             }
             else
             {
-                int16_t *ptr =  m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
-                assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
-
+                int16_t *ptr =  resiYuv->getCrAddr(absTUPartIdxC);
                 assert(trWidthC == trHeightC);
-                primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, MAX_CU_SIZE / 2, 0);
+                primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, resiYuv->m_cwidth, 0);
             }
         }
         cu->setCbfSubParts(absSumY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
