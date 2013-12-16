@@ -337,9 +337,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
-    bool bTrySplit = true;
     bool bSubBranch = true;
-    bool bTrySplitDQP = true;
     bool bBoundary = false;
     uint32_t lpelx = outTempCU->getCUPelX();
     uint32_t rpelx = lpelx + outTempCU->getWidth(0)  - 1;
@@ -395,9 +393,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     {
         if (!bSliceEnd && bInsidePicture)
         {
-            // variables for fast encoder decision
-            bTrySplit = true;
-
             /* Initialise all Mode-CUs based on parentCU */
             if (depth == 0)
             {
@@ -432,14 +427,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     tempYuv = m_modePredYuv[0][depth];
                     m_modePredYuv[0][depth] = m_bestPredYuv[depth];
                     m_bestPredYuv[depth] = tempYuv;
-                }
-
-                bTrySplitDQP = bTrySplit;
-
-                if ((int)depth <= m_addSADDepth)
-                {
-                    m_LCUPredictionSAD += m_temporalSAD;
-                    m_addSADDepth = depth;
                 }
 
                 /*Compute Rect costs*/
@@ -652,12 +639,11 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         else if (!(bSliceEnd && bInsidePicture))
         {
             bBoundary = true;
-            m_addSADDepth++;
         }
     }
 
     // further split
-    if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
+    if (bSubBranch && depth < g_maxCUDepth - g_addCUDepth)
     {
 #if EARLY_EXIT // turn ON this to enable early exit
         // early exit when the RD cost of best mode at depth n is less than the sum of avgerage of RD cost of the neighbour
@@ -668,9 +654,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         if (outBestCU != 0)
 #endif
         {
-            uint64_t totalCostNeigh = 0, totalCostCU = 0, totalCountCU = 0;
+            uint64_t totalCostNeigh = 0, totalCostCU = 0, totalCountNeigh = 0, totalCountCU = 0;
             double avgCost = 0;
-            uint64_t totalCountNeigh = 0;
             TComDataCU* above = outTempCU->getCUAbove();
             TComDataCU* aboveLeft = outTempCU->getCUAboveLeft();
             TComDataCU* aboveRight = outTempCU->getCUAboveRight();
