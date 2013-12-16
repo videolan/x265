@@ -131,9 +131,10 @@ private:
     bool         m_abortFlag; // aborts recursion when the child CU costs more than parent CU
 
 public:
-
+#if LOG_CU_STATISTICS
     StatisticLog  m_sliceTypeLog[3];
     StatisticLog* m_log;
+#endif
     TEncCu();
 
     void init(Encoder* top);
