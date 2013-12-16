@@ -499,11 +499,9 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
     memcpy(m_height, rpcCU->getHeight() + m_absIdxInLCU, iSizeInUchar);
 
     uint32_t tmp = (g_maxCUWidth * g_maxCUHeight) >> (depth << 1);
-    uint32_t tmp2 = m_absIdxInLCU * m_pic->getMinCUWidth() * m_pic->getMinCUHeight();
     memset(m_trCoeffY, 0, sizeof(TCoeff) * tmp);
 
     tmp  = ((g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_hChromaShift)) >> (depth << 1);
-    tmp2 = m_absIdxInLCU * (m_pic->getMinCUWidth() >> m_hChromaShift) * (m_pic->getMinCUHeight() >> m_vChromaShift);
     memset(m_trCoeffCb, 0, sizeof(TCoeff) * tmp);
     memset(m_trCoeffCr, 0, sizeof(TCoeff) * tmp);
 }
