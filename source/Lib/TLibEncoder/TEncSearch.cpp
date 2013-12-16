@@ -1026,7 +1026,6 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         uint32_t numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         TCoeff*  coeff          = m_qtTempCoeffY[qtLayer] + numCoeffPerInc * absPartIdx;
 
-        int16_t* reconQt        = m_qtTempTComYuv[qtLayer].getLumaAddr(absPartIdx);
         assert(m_qtTempTComYuv[qtLayer].m_width == MAX_CU_SIZE);
 
         uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
@@ -1077,7 +1076,9 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         //Generate Recon
         assert(width <= 32);
-        primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
+        int part = partitionFromSizes(width, height);
+        primitives.luma_add_ps[part](recon, stride, pred, residual, stride, stride);
+        primitives.blockcpy_pp(width, height, reconIPred, reconIPredStride, recon, stride);
     }
 
     if (bCheckSplit && !bCheckFull)
@@ -1652,7 +1653,6 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
             Pel*     recon          = (chromaId > 0 ? reconYuv->getCrAddr(absPartIdx) : reconYuv->getCbAddr(absPartIdx));
             uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> 2;
             TCoeff*  coeff          = (chromaId > 0 ? m_qtTempCoeffCr[qtlayer] : m_qtTempCoeffCb[qtlayer]) + numCoeffPerInc * absPartIdx;
-            int16_t* reconQt        = (chromaId > 0 ? m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx) : m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx));
             assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
 
             uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
@@ -1718,7 +1718,9 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
             //===== reconstruction =====
             assert(((uint32_t)(size_t)residual & (width - 1)) == 0);
             assert(width <= 32);
-            primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, MAX_CU_SIZE / 2, reconIPredStride);
+            int part = partitionFromSizes(cu->getWidth(0) >> (trDepth), cu->getHeight(0) >> (trDepth));
+            primitives.chroma[m_cfg->param.internalCsp].add_ps[part](recon, stride, pred, residual, stride, stride);
+            primitives.chroma[m_cfg->param.internalCsp].copy_pp[part](reconIPred, reconIPredStride, recon, stride);
         }
 
         //===== copy transform coefficients =====
