@@ -116,6 +116,15 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             for (int cuxy = 0; cuxy < cuCount; cuxy++ )
                 pic->m_lowres.invQscaleFactor[cuxy] = 256;
         }
+
+         /* Need variance data for weighted prediction */
+        if (cfg->param.bEnableWeightedPred)
+        {
+            for (int cuy = 0; cuy < maxRow; cuy++ )
+                for (int cux = 0; cux < maxCol; cux++ )
+                    acEnergyCu(pic, cux, cuy);
+        }
+
     }
     else
     {
