@@ -120,9 +120,9 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
          /* Need variance data for weighted prediction */
         if (cfg->param.bEnableWeightedPred)
         {
-            for (int cuy = 0; cuy < maxRow; cuy++ )
-                for (int cux = 0; cux < maxCol; cux++ )
-                    acEnergyCu(pic, cux, cuy);
+            for (block_y = 0; block_y < maxRow; block_y += 16)
+                for (block_x = 0; block_x < maxCol; block_x += 16)
+                    acEnergyCu(pic, block_x, block_y);
         }
 
     }
@@ -601,10 +601,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 
     if (cfg->param.rc.cuTree)
     {
-        double scale = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
-        double units = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick();
-        double timescale = units / scale;
-        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * timescale), 1 - cfg->param.rc.qCompress);
+        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * frameDuration), 1 - cfg->param.rc.qCompress);
     }
     else
         q = pow(rce->blurredComplexity, 1 - cfg->param.rc.qCompress);
