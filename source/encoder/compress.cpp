@@ -80,7 +80,6 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
 {
     uint32_t depth = cu->getDepth(0);
 
-    cu->setSkipFlagSubParts(false, 0, depth);
     cu->setPartSizeSubParts(partSize, 0, depth);
     cu->setPredModeSubParts(MODE_INTRA, 0, depth);
     cu->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
@@ -202,7 +201,6 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     UChar depth = outTempCU->getDepth(0);
 
     outTempCU->setDepthSubParts(depth, 0);
-    outTempCU->setSkipFlagSubParts(false, 0, depth);
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
