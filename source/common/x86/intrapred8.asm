@@ -1902,7 +1902,7 @@ RET
 ; void all_angs_pred_8x8(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal all_angs_pred_8x8, 6, 6, 8 dest, above0, left0, above1, left1, bLuma
+cglobal all_angs_pred_8x8, 6, 6, 8, dest, above0, left0, above1, left1, bLuma
 
 ; mode 2
 
