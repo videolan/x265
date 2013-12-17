@@ -87,5 +87,7 @@ void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask)
         Setup_Vec_DCTPrimitives_sse41(p);
     }
 #endif
+    (void) p;
+    (void) cpuMask;
 }
 }
