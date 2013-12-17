@@ -4452,39 +4452,39 @@ cglobal pixel_var_8x8, 2,3,8
     VAR_END 8, 8
 
 cglobal pixel_var_16x16_internal
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
+    movu      m0,    [r0]
+    movu      m3,    [r0 + r1]
     DEINTB    1, 0, 4, 3, 7
     VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
-    DEINTB    1, 0, 4, 3, 7
-    lea       r0,    [r0 + r1 * 4]
-    VAR_CORE
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
-    DEINTB    1, 0, 4, 3, 7
-    VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
+    movu      m0,    [r0 + 2 * r1]
+    movu      m3,    [r0 + r2]
     DEINTB    1, 0, 4, 3, 7
     lea       r0,    [r0 + r1 * 4]
     VAR_CORE
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
+    movu      m0,    [r0]
+    movu      m3,    [r0 + r1]
     DEINTB    1, 0, 4, 3, 7
     VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
+    movu      m0,    [r0 + 2 * r1]
+    movu      m3,    [r0 + r2]
     DEINTB    1, 0, 4, 3, 7
     lea       r0,    [r0 + r1 * 4]
     VAR_CORE
-    mova      m0,    [r0]
-    mova      m3,    [r0 + r1]
+    movu      m0,    [r0]
+    movu      m3,    [r0 + r1]
     DEINTB    1, 0, 4, 3, 7
     VAR_CORE
-    mova      m0,    [r0 + 2 * r1]
-    mova      m3,    [r0 + r2]
+    movu      m0,    [r0 + 2 * r1]
+    movu      m3,    [r0 + r2]
+    DEINTB    1, 0, 4, 3, 7
+    lea       r0,    [r0 + r1 * 4]
+    VAR_CORE
+    movu      m0,    [r0]
+    movu      m3,    [r0 + r1]
+    DEINTB    1, 0, 4, 3, 7
+    VAR_CORE
+    movu      m0,    [r0 + 2 * r1]
+    movu      m3,    [r0 + r2]
     DEINTB    1, 0, 4, 3, 7
     VAR_CORE
     ret
