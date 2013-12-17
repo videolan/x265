@@ -1058,7 +1058,7 @@ void Lookahead::slicetypeAnalyse(bool bKeyframe)
     // if (!cfg->param.bIntraRefresh)
     for (int j = keyint_limit + 1; j <= num_frames; j += cfg->param.keyframeMax)
     {
-        frames[j]->sliceType = X265_TYPE_I;
+        frames[j]->sliceType = X265_TYPE_KEYFRAME;
         reset_start = X265_MIN(reset_start, j + 1);
     }
 

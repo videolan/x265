@@ -157,10 +157,9 @@ void x265_param_default(x265_param *param)
     param->tuQTMaxIntraDepth = 1;
 
     /* Coding Structure */
-    param->decodingRefreshType = 1;
     param->keyframeMin = 0;
     param->keyframeMax = 250;
-    param->bOpenGOP = 0;
+    param->bOpenGOP = 1;
     param->bframes = 4;
     param->lookaheadDepth = 20;
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
@@ -712,7 +711,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("tskip-fast") p->bEnableTSkipFast = bvalue;
     OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = bvalue;
     OPT("constrained-intra") p->bEnableConstrainedIntra = bvalue;
-    OPT("refresh") p->decodingRefreshType = atoi(value);
+    OPT("open-gop") p->bOpenGOP = bvalue;
     OPT("keyint") p->keyframeMax = atoi(value);
     OPT("rc-lookahead") p->lookaheadDepth = atoi(value);
     OPT("bframes") p->bframes = atoi(value);
@@ -794,7 +793,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableTSkipFast, "tskip-fast");
     BOOL(p->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
-    s += sprintf(s, " refresh=%d", p->decodingRefreshType);
+    BOOL(p->bOpenGOP, "open-gop");
     s += sprintf(s, " keyint=%d", p->keyframeMax);
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " bframes=%d", p->bframes);

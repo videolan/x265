@@ -110,7 +110,8 @@ static const struct option long_options[] =
     { "tskip-fast",           no_argument, NULL, 0 },
     { "no-constrained-intra", no_argument, NULL, 0 },
     { "constrained-intra",    no_argument, NULL, 0 },
-    { "refresh",        required_argument, NULL, 0 },
+    { "no-open-gop",          no_argument, NULL, 0 },
+    { "open-gop",             no_argument, NULL, 0 },
     { "keyint",         required_argument, NULL, 'i' },
     { "rc-lookahead",   required_argument, NULL, 0 },
     { "bframes",        required_argument, NULL, 'b' },
@@ -305,7 +306,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
     H0("\nSlice decision options:\n");
-    H0("   --refresh                     Intra refresh type - 0:none, 1:CDR, 2:IDR (default: CDR) Default %d\n", param->decodingRefreshType);
+    H0("   --[no-]open-gop               Enable openGOP, allows I slice to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
     H0("-i/--keyint                      Max intra period in frames. Default %d\n", param->keyframeMax);
     H0("   --rc-lookahead                Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
     H0("   --bframes                     Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);

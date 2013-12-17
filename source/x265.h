@@ -337,15 +337,11 @@ typedef struct x265_param
 
     /*== GOP Structure and Lokoahead ==*/
 
-    /* Determine the intra refresh style your decoder will use. (0:none, 1:CDR,
-     * 2:IDR). Defaults to CDR */
-    int       decodingRefreshType;
-
     /* Enable open GOP - meaning I slices are not necessariy IDR and thus frames
      * encoded after an I slice may reference frames encoded prior to the I
      * frame which have remained in the decoded picture buffer.  Open GOP
      * generally has better compression efficiency and negligable encoder
-     * performance impact, but the use case may preclude it.  Default false */
+     * performance impact, but the use case may preclude it.  Default true */
     int       bOpenGOP;
 
     /* Minimum keyframe distance or intra period in number of frames. Can be
