@@ -283,6 +283,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
     outTempCU->m_totalBits = outBestCU->m_totalBits;
     outTempCU->m_totalDistortion = outBestCU->m_totalDistortion;
+    outTempCU->m_totalCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
     if (m_cfg->param.rdLevel > 2)
     {
         //calculate the motion compensation for chroma for the best mode selected
