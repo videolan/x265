@@ -2147,7 +2147,9 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
         for (int chromaId = 0; chromaId < 2; chromaId++)
         {
             int sad = 0;
-            uint32_t chromaPredMode = mode;
+            uint32_t chromaPredMode = modeList[mode];
+            if (chromaPredMode == DM_CHROMA_IDX)
+                chromaPredMode = cu->getLumaIntraDir(0);
             Pel*     fenc           = (chromaId > 0 ? fencYuv->getCrAddr(absPartIdx) : fencYuv->getCbAddr(absPartIdx));
             Pel*     pred           = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
 
