@@ -74,7 +74,6 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 
     cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     cu->m_totalCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
-    xCheckDQP(cu);
 }
 
 void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
@@ -303,7 +302,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         //No-residue mode
         m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
-        xCheckDQP(outTempCU);
 
         TComYuv* yuv = yuvReconBest;
         yuvReconBest = m_tmpRecoYuv[depth];
@@ -311,7 +309,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
         //Encode with residue
         m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false);
-        xCheckDQP(outTempCU);
 
         if (outTempCU->m_totalCost < outBestCU->m_totalCost)    //Choose best from no-residue mode and residue mode
         {
@@ -621,7 +618,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 }
             }
 
-            xCheckDQP(outBestCU);
+            if (m_cfg->param.rdLevel > 0) //checkDQP can be done only after residual encoding is done
+                xCheckDQP(outBestCU);
             /* Disable recursive analysis for whole CUs temporarily */
             if ((outBestCU != 0) && (outBestCU->isSkipped(0)))
                 bSubBranch = false;
@@ -933,6 +931,7 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
                 reco = m_bestRecoYuv[0]->getCrAddr(absPartIdx);
                 primitives.chroma[m_cfg->param.internalCsp].add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
                 m_bestRecoYuv[0]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), 0);
+                xCheckDQP(cu);
                 return;
             }
         }
@@ -964,4 +963,5 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
         m_tmpRecoYuv[depth]->copyToPartYuv(m_bestRecoYuv[0], absPartIdx);
         cu->copyCodedToPic(depth);
     }
+    xCheckDQP(cu);
 }
