@@ -174,7 +174,7 @@ protected:
     void xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYUV, PartSize partSize, bool bUseMRG = false);
     void xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
     void xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv, TComYuv* outReconYuv);
-    void encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, UChar depth, uint32_t partIndex);
+    void encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, UChar depth);
     void xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     void xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     void xCheckDQP(TComDataCU* cu);

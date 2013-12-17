@@ -830,7 +830,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
     if (m_cfg->param.rdLevel == 0 && depth == 0)
     {
-        encodeResidue(outBestCU, outBestCU, 0, 0, 0);
+        encodeResidue(outBestCU, outBestCU, 0, 0);
     }
     else
     {
@@ -847,24 +847,12 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     assert(outBestCU->m_totalCost != MAX_DOUBLE);
 }
 
-void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, UChar depth, uint32_t partIndex)
+void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, UChar depth)
 {
     UChar nextDepth = (UChar)(depth + 1);
     TComDataCU* subTempPartCU = m_tempCU[nextDepth];
     TComPic* pic = cu->getPic();
     TComSlice* slice = cu->getPic()->getSlice();
-
-    if (depth != 0)
-    {
-        if (0 == partIndex) //initialize RD with previous depth buffer
-        {
-            m_rdSbacCoders[depth][CI_CURR_BEST]->load(m_rdSbacCoders[depth - 1][CI_CURR_BEST]);
-        }
-        else
-        {
-            m_rdSbacCoders[depth][CI_CURR_BEST]->load(m_rdSbacCoders[depth][CI_NEXT_BEST]);
-        }
-    }
 
     if (((depth < lcu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth))))
     {
@@ -877,7 +865,7 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
             if (bInSlice && (lpelx < slice->getSPS()->getPicWidthInLumaSamples()) && (tpely < slice->getSPS()->getPicHeightInLumaSamples()))
             {
                 subTempPartCU->copyToSubCU(cu, partUnitIdx, depth + 1);
-                encodeResidue(lcu, subTempPartCU, absPartIdx, depth + 1, partUnitIdx);
+                encodeResidue(lcu, subTempPartCU, absPartIdx, depth + 1);
             }
         }
 
