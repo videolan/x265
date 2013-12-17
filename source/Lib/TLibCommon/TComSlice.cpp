@@ -64,7 +64,6 @@ TComSlice::TComSlice()
     , m_sliceQpDeltaCb(0)
     , m_sliceQpDeltaCr(0)
     , m_bReferenced(false)
-    ,m_avgQpRc(0)
     , m_sps(NULL)
     , m_pps(NULL)
     , m_pic(NULL)
@@ -82,6 +81,7 @@ TComSlice::TComSlice()
     , m_numEntryPointOffsets(0)
     , m_temporalLayerNonReferenceFlag(false)
     , m_enableTMVPFlag(true)
+    , m_avgQpRc(0)
 {
     m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
