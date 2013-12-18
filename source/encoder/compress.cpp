@@ -914,47 +914,47 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
                 //Generate Recon
                 Pel* pred = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
                 int16_t* res = m_tmpResiYuv[depth]->getLumaAddr(0);
-                Pel* reco = m_bestRecoYuv[0]->getLumaAddr(absPartIdx);
-                dststride = m_bestRecoYuv[0]->getStride();
+                Pel* reco = m_bestRecoYuv[depth]->getLumaAddr(0);
+                dststride = m_bestRecoYuv[depth]->getStride();
                 src1stride = m_bestPredYuv[0]->getStride();
                 src2stride = m_tmpResiYuv[depth]->m_width;
                 primitives.luma_add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
 
                 pred = m_bestPredYuv[0]->getCbAddr(absPartIdx);
                 res = m_tmpResiYuv[depth]->getCbAddr(0);
-                reco = m_bestRecoYuv[0]->getCbAddr(absPartIdx);
-                dststride = m_bestRecoYuv[0]->getCStride();
+                reco = m_bestRecoYuv[depth]->getCbAddr(0);
+                dststride = m_bestRecoYuv[depth]->getCStride();
                 src1stride = m_bestPredYuv[0]->getCStride();
                 src2stride = m_tmpResiYuv[depth]->m_cwidth;
                 primitives.chroma[m_cfg->param.internalCsp].add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
 
                 pred = m_bestPredYuv[0]->getCrAddr(absPartIdx);
                 res = m_tmpResiYuv[depth]->getCrAddr(0);
-                reco = m_bestRecoYuv[0]->getCrAddr(absPartIdx);
+                reco = m_bestRecoYuv[depth]->getCrAddr(0);
                 primitives.chroma[m_cfg->param.internalCsp].add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
-                m_bestRecoYuv[0]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), 0);
+                m_bestRecoYuv[depth]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), absPartIdx);
                 return;
             }
         }
 
         //Generate Recon
+        TComPicYuv* rec = lcu->getPic()->getPicYuvRec();
         int part = partitionFromSizes(cu->getWidth(0), cu->getWidth(0));
         Pel* src = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
-        Pel* dst = m_bestRecoYuv[0]->getLumaAddr(absPartIdx);
+        Pel* dst = rec->getLumaAddr(cu->getAddr(), absPartIdx);
         uint32_t srcstride = m_bestPredYuv[0]->getStride();
-        uint32_t dststride = m_bestRecoYuv[0]->getStride();
+        uint32_t dststride = rec->getStride();
         primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 
         src = m_bestPredYuv[0]->getCbAddr(absPartIdx);
-        dst = m_bestRecoYuv[0]->getCbAddr(absPartIdx);
+        dst = rec->getCbAddr(cu->getAddr(), absPartIdx);
         srcstride = m_bestPredYuv[0]->getCStride();
-        dststride = m_bestRecoYuv[0]->getCStride();
+        dststride = rec->getCStride();
         primitives.chroma[m_cfg->param.internalCsp].copy_pp[part](dst, dststride, src, srcstride);
 
         src = m_bestPredYuv[0]->getCrAddr(absPartIdx);
-        dst = m_bestRecoYuv[0]->getCrAddr(absPartIdx);
+        dst = rec->getCrAddr(cu->getAddr(), absPartIdx);
         primitives.chroma[m_cfg->param.internalCsp].copy_pp[part](dst, dststride, src, srcstride);
-        m_bestRecoYuv[0]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), 0);
     }
     else
     {
@@ -962,7 +962,6 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
         m_search->generateCoeffRecon(cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth], false);
         xCheckDQP(cu);
         m_tmpRecoYuv[depth]->copyToPicYuv(cu->getPic()->getPicYuvRec(), lcu->getAddr(), absPartIdx);
-        m_tmpRecoYuv[depth]->copyToPartYuv(m_bestRecoYuv[0], absPartIdx);
         cu->copyCodedToPic(depth);
     }
 }
