@@ -601,7 +601,10 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 
     if (cfg->param.rc.cuTree)
     {
-        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * frameDuration), 1 - cfg->param.rc.qCompress);
+        double scale = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
+        double units = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick();
+        double timescale = units / scale;
+        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(frameDuration * timescale), 1 - cfg->param.rc.qCompress);
     }
     else
         q = pow(rce->blurredComplexity, 1 - cfg->param.rc.qCompress);

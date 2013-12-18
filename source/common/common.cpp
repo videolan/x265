@@ -399,7 +399,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         else if (!strcmp(tune, "ssim"))
         {
             param->rc.aqMode = X265_AQ_VARIANCE;
-            // not yet supported
+            param->rc.cuTree = 1;
         }
         else if (!strcmp(tune, "zero-latency"))
         {
@@ -514,11 +514,13 @@ int x265_check_params(x265_param *param)
     {
         param->rc.aqMode = X265_AQ_NONE;
         param->rc.bitrate = 0;
+        param->rc.cuTree = 0;
     }
     if (param->rc.aqStrength == 0)
     {
         x265_log(param, X265_LOG_WARNING, "Aq mode specified, but Aq strength is  0, ignored\n");
         param->rc.aqMode = 0;
+        param->rc.cuTree = 0;
     }
     if (param->rc.aqMode == 0 && param->rc.cuTree)
     {
@@ -641,6 +643,7 @@ void x265_print_params(x265_param *param)
     }
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
     TOOLOPT(param->rc.aqMode, "aq-mode");
+    TOOLOPT(param->rc.cuTree, "cutree");
     if (param->rc.aqMode)
         fprintf(stderr, "aq-strength=%.2f ", param->rc.aqStrength);
     fprintf(stderr, "\n");
@@ -742,6 +745,9 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     }
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, berror);
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, berror);
+    OPT("cutree")    p->rc.cuTree = bvalue;
+    OPT("no-cutree") p->rc.cuTree = bvalue;
+
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -800,6 +806,7 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " sao-lcu-bounds=%d", p->saoLcuBoundary);
     s += sprintf(s, " sao-lcu-opt=%d", p->saoLcuBasedOptimization);
     s += sprintf(s, " b-pyramid=%d", p->bBPyramid);
+    BOOL(p->rc.cuTree, "cutree");
 #undef BOOL
 
     return buf;

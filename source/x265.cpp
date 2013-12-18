@@ -147,6 +147,8 @@ static const struct option long_options[] =
     { "hash",           required_argument, NULL, 0 },
     { "no-strong-intra-smoothing", no_argument, NULL, 0 },
     { "strong-intra-smoothing",    no_argument, NULL, 0 },
+    { "no-cutree",                 no_argument, NULL, 0 },
+    { "cutree",                    no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -339,6 +341,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --recon-depth                 Bit-depth of reconstructed raw image file. Defaults to input bit depth\n");
     H0("\nSEI options:\n");
     H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
+    H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %d\n", param->rc.cuTree);
 #undef OPT
 #undef H0
     exit(0);

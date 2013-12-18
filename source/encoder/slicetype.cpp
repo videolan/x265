@@ -218,14 +218,12 @@ int Lookahead::getEstimatedPictureCost(TComPic *pic)
         return -1;
     }
 
+    estimateFrameCost(p0, p1, b, false);
     if (cfg->param.rc.cuTree)
     {
         pic->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
         return pic->m_lowres.satdCost;
     }
-
-    estimateFrameCost(p0, p1, b, false);
-
     if (cfg->param.rc.aqMode)
         pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
     else
@@ -1523,7 +1521,7 @@ int Lookahead::frameCostRecalculate(Lowres** Frames, int p0, int p1, int b)
 {
     int score = 0;
     int *row_satd = Frames[b]->rowSatds[b-p0][p1-b]; 
-    double *qp_offset = (Frames[0]->sliceType == X265_TYPE_B) ? Frames[b]->qpAqOffset : Frames[b]->qpOffset;
+    double *qp_offset = IS_X265_TYPE_B(Frames[0]->sliceType) ? Frames[b]->qpAqOffset : Frames[b]->qpOffset;
     x265_emms();
     for (int cuy = heightInCU - 1; cuy >= 0; cuy--)
     {
