@@ -609,8 +609,8 @@ void x265_print_params(x265_param *param)
     {
         x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
-    x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
-    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / refs   : %d / %d / %d\n", param->bBPyramid, param->bEnableWeightedPred, param->maxNumReferences);
+    x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
+    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / refs          : %d / %d / %d\n", param->bBPyramid, param->bEnableWeightedPred, param->maxNumReferences);
     x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
