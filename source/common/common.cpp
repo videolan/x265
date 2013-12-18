@@ -214,8 +214,8 @@ void x265_param_default(x265_param *param)
     param->rc.qpStep = 4;
     param->rc.rateControlMode = X265_RC_CQP;
     param->rc.qp = 32;
-    param->rc.aqMode = X265_AQ_NONE;
-    param->rc.aqStrength = 1.0;
+    param->rc.aqMode = X265_AQ_VARIANCE;
+    param->rc.aqStrength = 0.0;
     param->rc.cuTree = 1;
 
     /* Quality Measurement Metrics */
@@ -577,24 +577,27 @@ void x265_print_params(x265_param *param)
     if (param->logLevel < X265_LOG_INFO)
         return;
 #if HIGH_BIT_DEPTH
-    x265_log(param, X265_LOG_INFO, "Input bit depth              : %d\n", param->inputBitDepth);
+    x265_log(param, X265_LOG_INFO, "Input bit depth                     : %d\n", param->inputBitDepth);
 #endif
-    x265_log(param, X265_LOG_INFO, "CU size                      : %d\n", param->maxCUSize);
-    x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
+    x265_log(param, X265_LOG_INFO, "CU size                             : %d\n", param->maxCUSize);
+    x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra         : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
-    x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge  : %s / %d / %d / %d\n",
+    x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
-    x265_log(param, X265_LOG_INFO, "Keyframe min / max           : %d / %d\n", param->keyframeMin, param->keyframeMax);
+    x265_log(param, X265_LOG_INFO, "Keyframe min / max                  : %d / %d\n", param->keyframeMin, param->keyframeMax);
     switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
-        x265_log(param, X265_LOG_INFO, "Rate Control                 : ABR-%d kbps\n", param->rc.bitrate);
+        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : ABR-%d kbps / %0.1f / %d\n", param->rc.bitrate, 
+            param->rc.aqStrength, param->rc.cuTree);
         break;
     case X265_RC_CQP:
-        x265_log(param, X265_LOG_INFO, "Rate Control                 : CQP-%d\n", param->rc.qp);
+        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : CQP-%d / %0.1f / %d\n", param->rc.qp, param->rc.aqStrength,
+            param->rc.cuTree);
         break;
     case X265_RC_CRF:
-        x265_log(param, X265_LOG_INFO, "Rate Control                 : CRF-%f\n", param->rc.rfConstant);
+        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : CRF-%0.1f / %0.1f / %d\n", param->rc.rfConstant, 
+            param->rc.aqStrength, param->rc.cuTree);
         break;
     }
 
@@ -634,10 +637,6 @@ void x265_print_params(x265_param *param)
             fprintf(stderr, "tskip ");
     }
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
-    TOOLOPT(param->rc.aqMode, "aq-mode");
-    TOOLOPT(param->rc.cuTree, "cutree");
-    if (param->rc.aqMode)
-        fprintf(stderr, "aq-strength=%.2f ", param->rc.aqStrength);
     fprintf(stderr, "\n");
     fflush(stderr);
 }
