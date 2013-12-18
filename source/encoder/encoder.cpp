@@ -1627,3 +1627,14 @@ void x265_cleanup(void)
     destroyROM();
     BitCost::destroy();
 }
+
+extern "C"
+double x265_ssim(double ssim)
+{
+    double inv_ssim = 1 - ssim;
+    if (inv_ssim <= 0.0000000001) /* Max 100dB */
+        return 100;
+
+    return -10.0 * log10(inv_ssim);
+}
+
