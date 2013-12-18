@@ -376,7 +376,7 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
     }
     if (param.bEnableSsim)
     {
-        len += sprintf(buffer + len, " SSIM Mean: %.3lf",
+        len += sprintf(buffer + len, " SSIM Mean: %.6lf",
                        stat.m_globalSsim / (double)stat.m_numPics);
     }
     return buffer;
