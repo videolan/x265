@@ -732,8 +732,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("qp")
     {
         p->rc.qp = atoi(value);
-        p->rc.rateControlMode = X265_RC_CQP;
-        p->rc.aqMode = X265_AQ_NONE;
+        p->rc.rateControlMode = X265_RC_CQP;        
     }
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, berror);
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, berror);
