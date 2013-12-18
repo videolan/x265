@@ -580,7 +580,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         }
                     }
                     //Check Merge-skip
-                    if (m_cfg->param.rdLevel <= 2)
+                    if (m_cfg->param.rdLevel == 2)
                     {
                         if (!(outBestCU->getPredictionMode(0) == MODE_INTER && outBestCU->getPartitionSize(0) == SIZE_2Nx2N && outBestCU->getMergeFlag(0)))
                         {
