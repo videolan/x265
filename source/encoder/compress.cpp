@@ -343,6 +343,10 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     bool bInsidePicture = (rpelx < outTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) &&
         (bpely < outTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
+    if(depth == 0 && m_cfg->param.rdLevel == 0)
+    {
+        m_origYuv[depth]->copyToPicYuv(cu->getPic()->getPicYuvRec(), cu->getAddr(), 0);
+    }
     // We need to split, so don't try these modes.
     TComYuv* tempYuv = NULL;
 #if TOPSKIP
@@ -441,7 +445,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     }
 
                     xCheckDQP(m_bestMergeCU[depth]);
-                    m_origYuv[depth]->copyPartToPartYuv(m_bestMergeRecoYuv[depth], 0, m_bestMergeCU[depth]->getWidth(0), m_bestMergeCU[depth]->getHeight(0), true, true);
                     earlyskip = true;
                 }
             }
@@ -561,10 +564,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                             m_tmpResiYuv[depth]->subtract(m_origYuv[depth], m_bestPredYuv[depth], 0, outBestCU->getWidth(0));
                             m_search->generateCoeffRecon(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth], false);
                         }
-                        else if (m_cfg->param.rdLevel == 0)
-                        {
-                            m_origYuv[depth]->copyPartToPartYuv(m_bestRecoYuv[depth], 0, outBestCU->getWidth(0), outBestCU->getHeight(0), true, true);
-                        }
                     }
                     else
                     {
@@ -573,10 +572,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         else if (m_cfg->param.rdLevel == 1)
                         {
                             m_search->generateCoeffRecon(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth], false);
-                        }
-                        else if (m_cfg->param.rdLevel == 0)
-                        {
-                            m_origYuv[depth]->copyPartToPartYuv(m_bestRecoYuv[depth], 0, outBestCU->getWidth(0), outBestCU->getHeight(0), true, true);
                         }
                     }
                     //Check Merge-skip
@@ -696,7 +691,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 outBestCU->copyToPic((UChar)depth);
 
                 /* Copy Yuv data to picture Yuv */
-                xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpely);
+                if(m_cfg->param.rdLevel != 0)
+                    xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpely);
                 return;
             }
         }
@@ -734,7 +730,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #endif // if EARLY_EXIT
                 /* Adding costs from best SUbCUs */
                 outTempCU->copyPartFrom(subBestPartCU, nextDepth_partIndex, nextDepth, true); // Keep best part data to current temporary data.
-                xCopyYuv2Tmp(subBestPartCU->getTotalNumPart() * nextDepth_partIndex, nextDepth);
+                if(m_cfg->param.rdLevel != 0)
+                    xCopyYuv2Tmp(subBestPartCU->getTotalNumPart() * nextDepth_partIndex, nextDepth);
                 if (m_cfg->param.rdLevel == 0)
                     m_bestPredYuv[nextDepth]->copyToPartYuv(m_tmpPredYuv[depth], subBestPartCU->getTotalNumPart() * nextDepth_partIndex);
             }
@@ -831,7 +828,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     {
         encodeResidue(outBestCU, outBestCU, 0, 0);
     }
-    else
+    else if(m_cfg->param.rdLevel != 0)
     {
         /* Copy Yuv data to picture Yuv */
         xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpely);
