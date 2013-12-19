@@ -148,6 +148,8 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     {
         int hShift = CHROMA_H_SHIFT(cfg->param.internalCsp);
         int vShift = CHROMA_V_SHIFT(cfg->param.internalCsp);
+        maxCol = ((maxCol + 8) >> 4) << 4;
+        maxRow = ((maxRow + 8) >> 4) << 4;
         int width[3]  = { maxCol, maxCol >> hShift, maxCol >> hShift };
         int height[3] = { maxRow, maxRow >> vShift, maxRow >> vShift };
 
