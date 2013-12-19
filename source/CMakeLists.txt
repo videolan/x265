@@ -221,16 +221,18 @@ if(ENABLE_SHARED)
                 RUNTIME DESTINATION bin
                 LIBRARY DESTINATION lib
                 ARCHIVE DESTINATION lib)
-
-        # convert lists of link libraries into -lstdc++ -lm etc..
-        foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
-            set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
-        endforeach()
-        # Produce a pkg-config file for linking against the shared lib
-        configure_file("x265.pc.in" "x265.pc" @ONLY)
-        install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
-                DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
     endif()
+endif()
+
+if(X265_LATEST_TAG)
+    # convert lists of link libraries into -lstdc++ -lm etc..
+    foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
+        set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
+    endforeach()
+    # Produce a pkg-config file
+    configure_file("x265.pc.in" "x265.pc" @ONLY)
+    install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
+            DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
 endif()
 
 if(NOT WIN32)
