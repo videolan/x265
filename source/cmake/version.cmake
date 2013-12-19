@@ -29,7 +29,7 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
     endif()
 elseif(DEFINED ENV{X265_VERSION})
     set(X265_VERSION $ENV{X265_REVISION})
-elseif(HG_EXECUTABLE)
+elseif(HG_EXECUTABLE AND EXISTS ${CMAKE_SOURCE_DIR}/../.hg)
     execute_process(COMMAND
         ${HG_EXECUTABLE} log -r. --template "{latesttag}"
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
