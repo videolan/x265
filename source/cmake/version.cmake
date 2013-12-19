@@ -1,4 +1,5 @@
 find_program(HG_EXECUTABLE hg)
+find_program(GIT_EXECUTABLE git)
 
 if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
     # read the lines of the archive summary file to extract the version
@@ -71,6 +72,24 @@ elseif(HG_EXECUTABLE AND EXISTS ${CMAKE_SOURCE_DIR}/../.hg)
     endif()
 
     set(X265_VERSION ${HG_REVISION})
+elseif(GIT_EXECUTABLE AND EXISTS ${CMAKE_SOURCE_DIR}/../.git)
+    execute_process(
+        COMMAND
+        ${GIT_EXECUTABLE} describe --tags --abbrev=0
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_VARIABLE X265_LATEST_TAG
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+    execute_process(
+        COMMAND
+        ${GIT_EXECUTABLE} describe --tags
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_VARIABLE X265_VERSION
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
 else()
     set(X265_VERSION "unknown")
 endif()
