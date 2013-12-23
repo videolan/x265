@@ -212,15 +212,15 @@ void x265_param_default(x265_param *param)
     param->rc.ipFactor = 1.4f;
     param->rc.pbFactor = 1.3f;
     param->rc.qpStep = 4;
-    param->rc.rateControlMode = X265_RC_CQP;
+    param->rc.rateControlMode = X265_RC_CRF;
     param->rc.qp = 32;
     param->rc.aqMode = X265_AQ_VARIANCE;
-    param->rc.aqStrength = 0.0;
+    param->rc.aqStrength = 1.0;
     param->rc.cuTree = 1;
 
     /* Quality Measurement Metrics */
-    param->bEnablePsnr = 1;
-    param->bEnableSsim = 0;
+    param->bEnablePsnr = 0;
+    param->bEnableSsim = 1;
 }
 
 extern "C"
