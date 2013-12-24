@@ -125,7 +125,7 @@ void Encoder::create()
                 if (param.logLevel >= X265_LOG_DEBUG)
                     fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, Encoding time, Elapsed time, List 0, List 1\n");
                 else
-                    fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, Global SSIM, Version\n");
+                    fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
             }
         }
     }
@@ -614,7 +614,7 @@ void Encoder::writeLog(int argc, char **argv)
         else
             fprintf(m_csvfpt, " -, -, -, -,");
         if (param.bEnableSsim)
-            fprintf(m_csvfpt, " %.6f, %6.3fdb,", stats.globalSsim, x265_ssim(stats.globalSsim));
+            fprintf(m_csvfpt, " %.6f, %6.3f dB,", stats.globalSsim, x265_ssim(stats.globalSsim));
         else
             fprintf(m_csvfpt, " -, -,");
 
