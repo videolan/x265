@@ -162,6 +162,7 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_TYPE_KEYFRAME      0x0006  /* IDR or I depending on b_open_gop option */
 #define X265_AQ_NONE                 0
 #define X265_AQ_VARIANCE             1
+#define X265_AQ_AUTO_VARIANCE        2
 #define IS_X265_TYPE_I(x) ((x) == X265_TYPE_I || (x) == X265_TYPE_IDR)
 #define IS_X265_TYPE_B(x) ((x) == X265_TYPE_B || (x) == X265_TYPE_BREF)
 
