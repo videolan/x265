@@ -358,7 +358,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *bitstreamfn = NULL;
     const char *inputRes = NULL;
     const char *preset = "medium";
-    const char *tune = "psnr";
+    const char *tune = "ssim";
 
     /* Presets are applied before all other options. */
     for (optind = 0;; )
