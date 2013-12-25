@@ -614,7 +614,7 @@ void Encoder::writeLog(int argc, char **argv)
         else
             fprintf(m_csvfpt, " -, -, -, -,");
         if (param.bEnableSsim)
-            fprintf(m_csvfpt, " %.6f, %6.3f dB,", stats.globalSsim, x265_ssim(stats.globalSsim));
+            fprintf(m_csvfpt, " %.6f, %6.3f,", stats.globalSsim, x265_ssim(stats.globalSsim));
         else
             fprintf(m_csvfpt, " -, -,");
 
