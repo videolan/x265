@@ -280,7 +280,7 @@ cglobal blockcopy_pp_6x8, 4, 4, 8, dest, deststride, src, srcstride
     add       r1,    r1
     add       r3,    r3
     movu      m0,    [r2]
-    movu      m1,    [r2 + r1]
+    movu      m1,    [r2 + r3]
 
     pshufd    m2,      m0,      2
     pshufd    m3,      m1,      2
@@ -292,7 +292,7 @@ cglobal blockcopy_pp_6x8, 4, 4, 8, dest, deststride, src, srcstride
     lea       r0,    [r0 + 2 * r1]
     lea       r2,    [r2 + 2 * r3]
     movu      m0,    [r2]
-    movu      m1,    [r2 + r1]
+    movu      m1,    [r2 + r3]
 
     pshufd    m2,      m0,      2
     pshufd    m3,      m1,      2
@@ -304,7 +304,7 @@ cglobal blockcopy_pp_6x8, 4, 4, 8, dest, deststride, src, srcstride
     lea       r0,    [r0 + 2 * r1]
     lea       r2,    [r2 + 2 * r3]
     movu      m0,    [r2]
-    movu      m1,    [r2 + r1]
+    movu      m1,    [r2 + r3]
 
     pshufd    m2,      m0,      2
     pshufd    m3,      m1,      2
@@ -316,7 +316,7 @@ cglobal blockcopy_pp_6x8, 4, 4, 8, dest, deststride, src, srcstride
     lea       r0,    [r0 + 2 * r1]
     lea       r2,    [r2 + 2 * r3]
     movu      m0,    [r2]
-    movu      m1,    [r2 + r1]
+    movu      m1,    [r2 + r3]
 
     pshufd    m2,      m0,      2
     pshufd    m3,      m1,      2
@@ -397,7 +397,7 @@ cglobal blockcopy_pp_8x2, 4, 4, 2, dest, deststride, src, srcstride
     add     r1,    r1
     add     r3,    r3
     movu    m0,    [r2]
-    movu    m1,    [r2 + r1]
+    movu    m1,    [r2 + r3]
 
     movu    [r0],       m0
     movu    [r0 + r1],  m1
@@ -420,7 +420,7 @@ cglobal blockcopy_pp_8x4, 4, 4, 4, dest, deststride, src, srcstride
     add     r3,    r3
     movu    m0,    [r2]
     movu    m1,    [r2 + r3]
-    lea     r2,    [r2 + 2 * r3]
+    lea     r2,    [r2 + r3 * 2]
     movu    m2,    [r2]
     movu    m3,    [r2 + r3]
 
