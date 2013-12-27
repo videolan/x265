@@ -1394,7 +1394,7 @@ void Lookahead::estimateCUPropagate(Lowres **Frames, double averageDuration, int
         memset(Frames[b]->propagateCost, 0, widthInCU * sizeof(uint16_t));
 
     uint16_t StrideInCU = (uint16_t)widthInCU;
-    for (uint16_t block_y = 0; block_y < heightInCU; block_y += 16)
+    for (uint16_t block_y = 0; block_y < heightInCU; block_y++)
     {
         int cuIndex = block_y * StrideInCU;
         /* TODO This function go into ASM */
@@ -1404,7 +1404,7 @@ void Lookahead::estimateCUPropagate(Lowres **Frames, double averageDuration, int
 
         if (referenced)
             propagate_cost += widthInCU;
-        for (uint16_t block_x = 0; block_x < widthInCU; block_x += 16, cuIndex++)
+        for (uint16_t block_x = 0; block_x < widthInCU; block_x++, cuIndex++)
         {
             int propagate_amount = scratch[block_x];
             /* Don't propagate for an intra block. */

@@ -633,10 +633,11 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 
     if (cfg->param.rc.cuTree)
     {
-        double scale = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
-        double units = curSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick();
-        double timescale = units / scale;
-        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(frameDuration * timescale), 1 - cfg->param.rc.qCompress);
+        // Scale and units are obtained from rateNum and rateDenom for videos with fixed frame rates. 
+        double scale = cfg->param.frameRate * 2;
+        double numTicks = 1;
+        double timescale = numTicks / scale;
+        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * timescale), 1 - cfg->param.rc.qCompress);
     }
     else
         q = pow(rce->blurredComplexity, 1 - cfg->param.rc.qCompress);
