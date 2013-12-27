@@ -292,6 +292,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableWeightedPred = 0;
             param->maxNumReferences = 1;
             param->rc.aqStrength = 0.0;
+            param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
         }
         else if (!strcmp(preset, "superfast"))
@@ -308,6 +309,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableWeightedPred = 0;
             param->maxNumReferences = 1;
             param->rc.aqStrength = 0.0;
+            param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
         }
         else if (!strcmp(preset, "veryfast"))
@@ -531,6 +533,12 @@ int x265_check_params(x265_param *param)
         x265_log(NULL, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
         param->rc.cuTree = 0;
     }
+
+    if (param->rc.aqStrength == 0 && param->rc.cuTree == 0)
+    {
+        param->rc.aqMode = X265_AQ_NONE;        
+    }
+
     return check_failed;
 }
 
