@@ -553,10 +553,7 @@ void TEncEntropy::encodeQP(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
         absPartIdx = 0;
     }
 
-    if (cu->getSlice()->getPPS()->getUseDQP())
-    {
-        m_entropyCoderIf->codeDeltaQP(cu, absPartIdx);
-    }
+    m_entropyCoderIf->codeDeltaQP(cu, absPartIdx);
 }
 
 // texture
