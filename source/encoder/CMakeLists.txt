@@ -69,4 +69,5 @@ add_library(encoder OBJECT ../x265.h
     ratecontrol.cpp ratecontrol.h
     compress.cpp
     reference.cpp reference.h
-    encoder.cpp encoder.h)
+    encoder.cpp encoder.h
+    weightPrediction.cpp weightPrediction.h)
