@@ -31,6 +31,8 @@
 #include "frameencoder.h"
 #include "cturow.h"
 #include "common.h"
+#include "slicetype.h"
+#include "weightPrediction.h"
 
 #include <math.h>
 
@@ -268,6 +270,7 @@ void FrameEncoder::initSlice(TComPic* pic)
     {
         m_rows[i].m_cuCoder.m_log = &m_rows[i].m_cuCoder.m_sliceTypeLog[sliceType];
     }
+
 #endif
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
@@ -389,7 +392,7 @@ void FrameEncoder::compressFrame()
 
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
-    
+
     switch (slice->getSliceType())
     {
     case I_SLICE:
@@ -402,8 +405,9 @@ void FrameEncoder::compressFrame()
         m_frameFilter.m_sao.depth = 2 + !slice->isReferenced();
         break;
     }
+
     /* Clip qps back to 0-51 range before encoding */
-    if(qp > MAX_QP)
+    if (qp > MAX_QP)
     {
         qp = MAX_QP;
         slice->setSliceQp(qp);
@@ -460,11 +464,9 @@ void FrameEncoder::compressFrame()
         //------------------------------------------------------------------------------
         //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
         //------------------------------------------------------------------------------
-        m_wp.xEstimateWPParamSlice(slice);
-        slice->initWpScaling();
 
-        // check WP on/off
-        m_wp.xCheckWPEnable(slice);
+        WeightPrediction wp(slice);
+        wp.weightAnalyseEnc();
     }
 
     // Generate motion references
@@ -474,7 +476,7 @@ void FrameEncoder::compressFrame()
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
             wpScalingParam *w = NULL;
-            if ((slice->isInterP() && slice->getPPS()->getUseWP() && slice->m_weightPredTable[l][ref]->bPresentFlag))
+            if ((slice->isInterP() && slice->getPPS()->getUseWP() && slice->m_weightPredTable[l][ref][0].bPresentFlag))
             {
                 w = slice->m_weightPredTable[l][ref];
                 slice->m_numWPRefs++;
@@ -1055,7 +1057,6 @@ void FrameEncoder::processRowEncoder(int row)
             if (qp > MAX_QP)
                 qp = MAX_QP;
             cu->setQP(0, (char)qp);
-
         }
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
