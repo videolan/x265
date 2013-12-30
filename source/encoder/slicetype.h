@@ -35,6 +35,14 @@ struct Lowres;
 class TComPic;
 class TEncCfg;
 
+#define SET_WEIGHT(w, b, s, d, o) \
+    { \
+        (w).inputWeight = (s); \
+        (w).log2WeightDenom = (d); \
+        (w).inputOffset = (o); \
+        (w).bPresentFlag = b; \
+    }
+
 struct LookaheadRow
 {
     Lock                lock;

@@ -46,14 +46,6 @@
 
 using namespace x265;
 
-#define SET_WEIGHT(w, b, s, d, o) \
-    { \
-        (w).inputWeight = (s); \
-        (w).log2WeightDenom = (d); \
-        (w).inputOffset = (o); \
-        (w).bPresentFlag = b; \
-    }
-
 static inline int16_t median(int16_t a, int16_t b, int16_t c)
 {
     int16_t t = (a - b) & ((a - b) >> 31);
