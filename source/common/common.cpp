@@ -404,7 +404,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(tune, "ssim"))
         {
-            /* Current Default: Do nothing */
+            param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
         }
         else if (!strcmp(tune, "zero-latency"))
         {
