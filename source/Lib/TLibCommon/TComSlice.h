@@ -1059,38 +1059,38 @@ class TComPPS
 {
 private:
 
-    int         m_PPSId;                  // pic_parameter_set_id
-    int         m_SPSId;                  // seq_parameter_set_id
-    int         m_picInitQPMinus26;
-    bool        m_useDQP;
-    bool        m_bConstrainedIntraPred;  // constrained_intra_pred_flag
-    bool        m_bSliceChromaQpFlag;     // slicelevel_chroma_qp_flag
+    int      m_PPSId;                  // pic_parameter_set_id
+    int      m_SPSId;                  // seq_parameter_set_id
+    int      m_picInitQPMinus26;
+    bool     m_useDQP;
+    bool     m_bConstrainedIntraPred;  // constrained_intra_pred_flag
+    bool     m_bSliceChromaQpFlag;     // slicelevel_chroma_qp_flag
 
     // access channel
-    TComSPS*    m_sps;
-    uint32_t        m_maxCuDQPDepth;
-    uint32_t        m_minCuDQPSize;
+    TComSPS* m_sps;
+    uint32_t m_maxCuDQPDepth;
+    uint32_t m_minCuDQPSize;
 
-    int         m_chromaCbQpOffset;
-    int         m_chromaCrQpOffset;
+    int      m_chromaCbQpOffset;
+    int      m_chromaCrQpOffset;
 
-    uint32_t        m_numRefIdxL0DefaultActive;
-    uint32_t        m_numRefIdxL1DefaultActive;
+    uint32_t m_numRefIdxL0DefaultActive;
+    uint32_t m_numRefIdxL1DefaultActive;
 
-    bool        m_bUseWeightPred;         // Use of Weighting Prediction (P_SLICE)
-    bool        m_useWeightedBiPred;      // Use of Weighting Bi-Prediction (B_SLICE)
-    bool        m_outputFlagPresentFlag; // Indicates the presence of output_flag in slice header
+    bool     m_bUseWeightPred;         // Use of Weighting Prediction (P_SLICE)
+    bool     m_useWeightedBiPred;      // Use of Weighting Bi-Prediction (B_SLICE)
+    bool     m_outputFlagPresentFlag; // Indicates the presence of output_flag in slice header
 
-    bool        m_transquantBypassEnableFlag; // Indicates presence of cu_transquant_bypass_flag in CUs.
-    bool        m_useTransformSkip;
-    bool        m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
+    bool     m_transquantBypassEnableFlag; // Indicates presence of cu_transquant_bypass_flag in CUs.
+    bool     m_useTransformSkip;
+    bool     m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
 
     bool     m_loopFilterAcrossTilesEnabledFlag;
 
     int      m_signHideFlag;
 
     bool     m_cabacInitPresentFlag;
-    uint32_t     m_encCABACTableIdx;         // Used to transmit table selection across slices
+    uint32_t m_encCABACTableIdx;         // Used to transmit table selection across slices
 
     bool     m_sliceHeaderExtensionPresentFlag;
     bool     m_deblockingFilterControlPresentFlag;
@@ -1100,9 +1100,10 @@ private:
     int      m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
     bool     m_scalingListPresentFlag;
     TComScalingList* m_scalingList; //!< ScalingList class pointer
-    bool m_listsModificationPresentFlag;
+
+    bool     m_listsModificationPresentFlag;
     uint32_t m_log2ParallelMergeLevelMinus2;
-    int m_numExtraSliceHeaderBits;
+    int      m_numExtraSliceHeaderBits;
 
 public:
 
@@ -1139,11 +1140,11 @@ public:
 
     void      setMaxCuDQPDepth(uint32_t u) { m_maxCuDQPDepth = u; }
 
-    uint32_t      getMaxCuDQPDepth() const { return m_maxCuDQPDepth; }
+    uint32_t  getMaxCuDQPDepth() const { return m_maxCuDQPDepth; }
 
     void      setMinCuDQPSize(uint32_t u) { m_minCuDQPSize = u; }
 
-    uint32_t      getMinCuDQPSize() const { return m_minCuDQPSize; }
+    uint32_t  getMinCuDQPSize() const { return m_minCuDQPSize; }
 
     void      setChromaCbQpOffset(int i) { m_chromaCbQpOffset = i; }
 
@@ -1327,22 +1328,22 @@ private:
     TComPPS*    m_pps;
     TComVPS*    m_vps;
     TComPic*    m_pic;
-    uint32_t        m_colFromL0Flag; // collocated picture from List0 flag
+    uint32_t    m_colFromL0Flag; // collocated picture from List0 flag
 
-    uint32_t        m_colRefIdx;
-    uint32_t        m_maxNumMergeCand;
+    uint32_t    m_colRefIdx;
+    uint32_t    m_maxNumMergeCand;
 
-    uint32_t        m_sliceCurEndCUAddr;
+    uint32_t    m_sliceCurEndCUAddr;
     bool        m_nextSlice;
-    uint32_t        m_sliceBits;
-    uint32_t        m_sliceSegmentBits;
+    uint32_t    m_sliceBits;
+    uint32_t    m_sliceSegmentBits;
     bool        m_bFinalized;
 
-    wpACDCParam     m_weightACDCParam[3];                 // [0:Y, 1:U, 2:V]
+    wpACDCParam m_weightACDCParam[3];                 // [0:Y, 1:U, 2:V]
 
-    uint32_t        m_tileOffstForMultES;
+    uint32_t    m_tileOffstForMultES;
 
-    uint32_t*       m_substreamSizes;
+    uint32_t*   m_substreamSizes;
     TComScalingList* m_scalingList; //!< pointer of quantization matrix
     bool        m_cabacInitFlag;
 
@@ -1438,9 +1439,9 @@ public:
 
     int       getRefPOC(int e, int refIdx) { return m_refPOCList[e][refIdx]; }
 
-    uint32_t      getColFromL0Flag()                  { return m_colFromL0Flag; }
+    uint32_t  getColFromL0Flag()                  { return m_colFromL0Flag; }
 
-    uint32_t      getColRefIdx()                      { return m_colRefIdx; }
+    uint32_t  getColRefIdx()                      { return m_colRefIdx; }
 
     bool      getIsUsedAsLongTerm(int i, int j)   { return m_bIsUsedAsLongTerm[i][j]; }
 
@@ -1531,13 +1532,13 @@ public:
 
     bool isNextSlice()                         { return m_nextSlice; }
 
-    void setSliceBits(uint32_t val)                { m_sliceBits = val; }
+    void setSliceBits(uint32_t val)            { m_sliceBits = val; }
 
-    uint32_t getSliceBits()                        { return m_sliceBits; }
+    uint32_t getSliceBits()                    { return m_sliceBits; }
 
-    void setSliceSegmentBits(uint32_t val)         { m_sliceSegmentBits = val; }
+    void setSliceSegmentBits(uint32_t val)     { m_sliceSegmentBits = val; }
 
-    uint32_t getSliceSegmentBits()                 { return m_sliceSegmentBits; }
+    uint32_t getSliceSegmentBits()             { return m_sliceSegmentBits; }
 
     void setFinalized(bool val)                { m_bFinalized = val; }
 
@@ -1556,16 +1557,16 @@ public:
     void  getWpAcDcParam(wpACDCParam *&wp);
     void  initWpAcDcParam();
 
-    void setTileOffstForMultES(uint32_t offset)      { m_tileOffstForMultES = offset; }
+    void setTileOffstForMultES(uint32_t offset){ m_tileOffstForMultES = offset; }
 
-    uint32_t getTileOffstForMultES()                 { return m_tileOffstForMultES; }
+    uint32_t getTileOffstForMultES()           { return m_tileOffstForMultES; }
 
     void allocSubstreamSizes(uint32_t uiNumSubstreams);
-    uint32_t* getSubstreamSizes()                    { return m_substreamSizes; }
+    uint32_t* getSubstreamSizes()              { return m_substreamSizes; }
 
     void  setScalingList(TComScalingList* scalingList) { m_scalingList = scalingList; }
 
-    TComScalingList*   getScalingList()          { return m_scalingList; }
+    TComScalingList*   getScalingList()        { return m_scalingList; }
 
     void  setDefaultScalingList();
     bool  checkDefaultScalingList();
