@@ -144,16 +144,17 @@ void WeightPrediction::weightAnalyseEnc()
 {
     wpScalingParam w, *fw;
     Lowres *fenc, *ref;
-
-    fenc = &m_slice->getPic()->m_lowres;
     int numPredDir = m_slice->isInterP() ? 1 : 2;
     int curPoc, refPoc, difPoc;
-    curPoc = m_slice->getPOC();
     int check;
     int fullCheck = 0;
     int lumaDenom = 0;
-    int numWeighted = 0;       // number of weighted references for each m_slice must be less than 8 as per HEVC standard
+    int numWeighted = 0;     // number of weighted references for each m_slice must be less than 8 as per HEVC standard
     int width[3], height[3];
+
+    fenc = &m_slice->getPic()->m_lowres;
+    curPoc = m_slice->getPOC();
+
     // Rounding the width, height to 16
     width[0]  = ((m_slice->getPic()->getPicYuvOrg()->getWidth() + 8) >> 4) << 4;
     height[0] = ((m_slice->getPic()->getPicYuvOrg()->getHeight() + 8) >> 4) << 4;
@@ -298,8 +299,8 @@ void WeightPrediction::weightAnalyseEnc()
                     if (curOffset < -128 || curOffset > 127)
                     {
                         /* Rescale considering the constraints on curOffset. We do it in this order
-                            * because scale has a much wider range than offset (because of denom), so
-                            * it should almost never need to be clamped. */
+                         * because scale has a much wider range than offset (because of denom), so
+                         * it should almost never need to be clamped. */
                         curOffset = Clip3(-128, 127, curOffset);
                         curScale = (int)((1 << mindenom) * (fencMean[yuv] - curOffset) / refMean[yuv] + 0.5f);
                         curScale = Clip3(0, 127, curScale);
