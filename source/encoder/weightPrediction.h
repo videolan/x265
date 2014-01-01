@@ -36,22 +36,19 @@ private:
     int m_csp, m_csp444;
     int blockSize, frmHeight, frmWidth;
     int m_refStride, m_dstStride;
-    int weightType;
     int32_t *m_mvCost;
     TComSlice *slice;
     wpScalingParam  m_wp[2][MAX_NUM_REF][3];
 
-
-    pixel *refBuf, *mcbuf, *inbuf, *buf;
-    uint16_t *lowresCosts;
+    pixel *mcbuf, *inbuf, *buf;
     int32_t *m_intraCost;
     MV *mvs;
 
 public:
 
-    WeightPrediction(TComSlice *slice)
+    WeightPrediction(TComSlice *_slice)
     {
-        this->slice = slice;
+        this->slice = _slice;
         m_csp = slice->getPic()->getPicYuvOrg()->m_picCsp;
         m_csp444 = (m_csp == X265_CSP_I444) ? 1: 0;
         blockSize = 8 << m_csp444;
