@@ -35,6 +35,7 @@ void WeightPrediction::mcChroma()
     int pixoff = 0;
     int cu = 0;
     int partEnum = CHROMA_8x8;
+    int16_t *immedVal = (int16_t*)X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
     pixel *temp;
 
     for (int y = 0; y < m_frmHeight; y += m_blockSize, pixoff = y * m_refStride)
@@ -66,15 +67,12 @@ void WeightPrediction::mcChroma()
                 {
                     uint32_t cxWidth = m_blockSize;
                     uint32_t cxHeight = m_blockSize;
-                    int16_t *immedVal = (int16_t*)X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
                     int extStride = cxWidth;
                     int filterSize = NTAPS_CHROMA;
                     int halfFilterSize = (filterSize >> 1);
 
                     primitives.chroma[m_csp].filter_hps[partEnum](temp, strd, immedVal, extStride, xFrac, 1);
                     primitives.chroma_vsp(immedVal + (halfFilterSize - 1) * extStride, extStride, m_buf + pixoff, m_refStride, cxWidth, cxHeight, yFrac);
-
-                    X265_FREE(immedVal);
                 }
             }
             else
@@ -84,6 +82,7 @@ void WeightPrediction::mcChroma()
         }
     }
 
+    X265_FREE(immedVal);
     m_mcbuf = m_buf;
 }
 
