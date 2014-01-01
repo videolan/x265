@@ -348,14 +348,13 @@ void WeightPrediction::weightAnalyseEnc()
                     fw[0].log2WeightDenom--;
                 }
 
-                int maxlog = fw[0].log2WeightDenom > fw[1].log2WeightDenom ? (fw[0].log2WeightDenom > fw[2].log2WeightDenom ? fw[0].log2WeightDenom : fw[2].log2WeightDenom) :
-                    (fw[1].log2WeightDenom > fw[2].log2WeightDenom ? fw[1].log2WeightDenom : fw[2].log2WeightDenom);
-                fw[0].inputWeight <<= (maxlog - fw[0].log2WeightDenom);
-                fw[0].log2WeightDenom += (maxlog - fw[0].log2WeightDenom);
-                fw[1].inputWeight <<= (maxlog - fw[1].log2WeightDenom);
-                fw[1].log2WeightDenom += (maxlog - fw[1].log2WeightDenom);
-                fw[2].inputWeight <<= (maxlog - fw[2].log2WeightDenom);
-                fw[2].log2WeightDenom += (maxlog - fw[2].log2WeightDenom);
+                int maxdenom = X265_MAX(fw[0].log2WeightDenom, X265_MAX(fw[1].log2WeightDenom, fw[2].log2WeightDenom));
+                fw[0].inputWeight <<= (maxdenom - fw[0].log2WeightDenom);
+                fw[0].log2WeightDenom += (maxdenom - fw[0].log2WeightDenom);
+                fw[1].inputWeight <<= (maxdenom - fw[1].log2WeightDenom);
+                fw[1].log2WeightDenom += (maxdenom - fw[1].log2WeightDenom);
+                fw[2].inputWeight <<= (maxdenom - fw[2].log2WeightDenom);
+                fw[2].log2WeightDenom += (maxdenom - fw[2].log2WeightDenom);
                 fw[1].bPresentFlag = true;
                 fw[2].bPresentFlag = true;
 
