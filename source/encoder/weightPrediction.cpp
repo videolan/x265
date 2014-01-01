@@ -31,68 +31,66 @@ using namespace x265;
 
 void WeightPrediction::mcChroma()
 {
-    intptr_t strd = 8;
-
-    strd = m_refStride;
+    intptr_t strd = m_refStride;
     int pixoff = 0;
     int cu = 0;
-    pixel *temp;
     int partEnum = CHROMA_8x8;
+    pixel *temp;
 
-    for (int y = 0; y < frmHeight; y += blockSize, pixoff = y * m_refStride)
+    for (int y = 0; y < m_frmHeight; y += m_blockSize, pixoff = y * m_refStride)
     {
-        for (int x = 0; x < frmWidth; x += blockSize, pixoff += blockSize, cu++)
+        for (int x = 0; x < m_frmWidth; x += m_blockSize, pixoff += m_blockSize, cu++)
         {
             if (m_mvCost[cu] < m_intraCost[cu])
             {
-                MV mv(mvs[cu]);
+                MV mv(m_mvs[cu]);
                 int refOffset = (mv.x >> (3 - m_csp444)) + (mv.y >> (3 - m_csp444)) * (int)m_refStride;
-                temp = mcbuf + refOffset + pixoff;
+                temp = m_mcbuf + refOffset + pixoff;
 
                 int xFrac = mv.x & 0x7;
                 int yFrac = mv.y & 0x7;
 
                 if ((yFrac | xFrac) == 0)
                 {
-                    primitives.chroma[m_csp].copy_pp[partEnum](buf + pixoff, m_refStride, temp, strd);
+                    primitives.chroma[m_csp].copy_pp[partEnum](m_buf + pixoff, m_refStride, temp, strd);
                 }
                 else if (yFrac == 0)
                 {
-                    primitives.chroma[m_csp].filter_hpp[partEnum](temp, strd, buf + pixoff, m_refStride, xFrac);
+                    primitives.chroma[m_csp].filter_hpp[partEnum](temp, strd, m_buf + pixoff, m_refStride, xFrac);
                 }
                 else if (xFrac == 0)
                 {
-                    primitives.chroma[m_csp].filter_vpp[partEnum](temp, strd, buf + pixoff, m_refStride, yFrac);
+                    primitives.chroma[m_csp].filter_vpp[partEnum](temp, strd, m_buf + pixoff, m_refStride, yFrac);
                 }
                 else
                 {
-                    uint32_t cxWidth = blockSize;
-                    uint32_t cxHeight = blockSize;
+                    uint32_t cxWidth = m_blockSize;
+                    uint32_t cxHeight = m_blockSize;
                     int16_t *immedVal = (int16_t*)X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
                     int extStride = cxWidth;
                     int filterSize = NTAPS_CHROMA;
                     int halfFilterSize = (filterSize >> 1);
 
                     primitives.chroma[m_csp].filter_hps[partEnum](temp, strd, immedVal, extStride, xFrac, 1);
-                    primitives.chroma_vsp(immedVal + (halfFilterSize - 1) * extStride, extStride, buf + pixoff, m_refStride, cxWidth, cxHeight, yFrac);
+                    primitives.chroma_vsp(immedVal + (halfFilterSize - 1) * extStride, extStride, m_buf + pixoff, m_refStride, cxWidth, cxHeight, yFrac);
 
                     X265_FREE(immedVal);
                 }
             }
             else
             {
-                primitives.chroma[m_csp].copy_pp[partEnum](buf + pixoff, m_refStride, mcbuf + pixoff, m_refStride);
+                primitives.chroma[m_csp].copy_pp[partEnum](m_buf + pixoff, m_refStride, m_mcbuf + pixoff, m_refStride);
             }
         }
     }
 
-    mcbuf = buf;
+    m_mcbuf = m_buf;
 }
 
 uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
 {
     int stride = m_refStride;
-    pixel *temp = (pixel*)X265_MALLOC(pixel, frmWidth * frmHeight);
+    pixel *temp = (pixel*)X265_MALLOC(pixel, m_frmWidth * m_frmHeight);
     bool nonBorderCU;
 
     if (w)
@@ -103,7 +101,7 @@ uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
         int correction = IF_INTERNAL_PREC - X265_DEPTH;
 
         // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
-        primitives.weight_pp(ref, temp, m_refStride, m_dstStride, frmWidth, frmHeight,
+        primitives.weight_pp(ref, temp, m_refStride, m_dstStride, m_frmWidth, m_frmHeight,
                              scale, (1 << (denom - 1 + correction)), denom + correction, offset);
         ref = temp;
         stride = m_dstStride;
@@ -113,14 +111,14 @@ uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
     int pixoff = 0;
     int mb = 0;
     int count = 0;
-    for (int y = 0; y < frmHeight; y += 8, pixoff = y * m_refStride)
+    for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
     {
-        for (int x = 0; x < frmWidth; x += 8, mb++, pixoff += 8)
+        for (int x = 0; x < m_frmWidth; x += 8, mb++, pixoff += 8)
         {
-            nonBorderCU = (x > 0) && (x < frmWidth - 8 - 1) && (y > 0) && (y < frmHeight - 8 - 1);
+            nonBorderCU = (x > 0) && (x < m_frmWidth - 8 - 1) && (y > 0) && (y < m_frmHeight - 8 - 1);
             if (nonBorderCU)
             {
-                if (mvs)
+                if (m_mvs)
                 {
                     if (m_mvCost[mb] < m_intraCost[mb])
                     {
@@ -148,32 +146,32 @@ void WeightPrediction::weightAnalyseEnc()
     wpScalingParam w, *fw;
     Lowres *fenc, *ref;
 
-    fenc = &slice->getPic()->m_lowres;
-    int numPredDir = slice->isInterP() ? 1 : 2;
+    fenc = &m_slice->getPic()->m_lowres;
+    int numPredDir = m_slice->isInterP() ? 1 : 2;
     int curPoc, refPoc, difPoc;
-    curPoc = slice->getPOC();
+    curPoc = m_slice->getPOC();
     int check;
     int fullCheck = 0;
     int lumaDenom = 0;
-    int numWeighted = 0;                     // number of weighted references for each slice must be less than 8 as per HEVC standard
+    int numWeighted = 0;       // number of weighted references for each m_slice must be less than 8 as per HEVC standard
     int width[3], height[3];
     // Rounding the width, height to 16
-    width[0]  = ((slice->getPic()->getPicYuvOrg()->getWidth() + 8) >> 4) << 4;
-    height[0] = ((slice->getPic()->getPicYuvOrg()->getHeight() + 8) >> 4) << 4;
+    width[0]  = ((m_slice->getPic()->getPicYuvOrg()->getWidth() + 8) >> 4) << 4;
+    height[0] = ((m_slice->getPic()->getPicYuvOrg()->getHeight() + 8) >> 4) << 4;
     width[2] = width[1] = width[0] >> 1;
     height[2] = height[1] = height[0] >> 1;
 
     for (int list = 0; list < numPredDir; list++)
     {
-        for (int refIdxTemp = 0; (refIdxTemp < slice->getNumRefIdx(list)) && (numWeighted < 8); refIdxTemp++)
+        for (int refIdxTemp = 0; (refIdxTemp < m_slice->getNumRefIdx(list)) && (numWeighted < 8); refIdxTemp++)
         {
             check = 0;
             fw = m_wp[list][refIdxTemp];
-            ref  = &slice->getRefPic(list, refIdxTemp)->m_lowres;
-            refPoc = slice->getRefPic(list, refIdxTemp)->getPOC();
+            ref  = &m_slice->getRefPic(list, refIdxTemp)->m_lowres;
+            refPoc = m_slice->getRefPic(list, refIdxTemp)->getPOC();
             difPoc = abs(curPoc - refPoc);
-            mvs = fenc->lowresMvs[list][difPoc - 1];
-            if (mvs) m_mvCost = fenc->lowresMvCosts[0][difPoc - 1];
+            m_mvs = fenc->lowresMvs[list][difPoc - 1];
+            if (m_mvs) m_mvCost = fenc->lowresMvCosts[0][difPoc - 1];
             const float epsilon = 1.f / 128.f;
             float guessScale[3], fencMean[3], refMean[3];
 
@@ -233,55 +231,55 @@ void WeightPrediction::weightAnalyseEnc()
                 {
                 case 0:
 
-                    mcbuf = ref->fpelPlane;
-                    inbuf = fenc->lowresPlane[0];
-                    if (mvs)
+                    m_mcbuf = ref->fpelPlane;
+                    m_inbuf = fenc->lowresPlane[0];
+                    if (m_mvs)
                     {
-                        pixel *tempBuf;
-                        pixel buf8[8 * 8];
+                        pixel *tempm_buf;
+                        pixel m_buf8[8 * 8];
                         int pixoff = 0, cu = 0;
                         intptr_t strd;
-                        for (int y = 0; y < frmHeight; y += 8, pixoff = y * m_refStride)
+                        for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
                         {
-                            for (int x = 0; x < frmWidth; x += 8, pixoff += 8, cu++)
+                            for (int x = 0; x < m_frmWidth; x += 8, pixoff += 8, cu++)
                             {
                                 if (fenc->lowresMvCosts[0][difPoc - 1][cu] > fenc->intraCost[cu])
                                 {
                                     strd = m_refStride;
-                                    tempBuf = inbuf + pixoff;
+                                    tempm_buf = m_inbuf + pixoff;
                                 }
                                 else
                                 {
                                     strd = 8;
-                                    tempBuf = ref->lowresMC(pixoff, mvs[cu], buf8, strd);
+                                    tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], m_buf8, strd);
                                     ic++;
                                 }
-                                primitives.blockcpy_pp(8, 8, buf + (y * m_refStride) + x, m_refStride, tempBuf, strd);
+                                primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
                             }
                         }
 
-                        mcbuf = buf;
+                        m_mcbuf = m_buf;
                     }
                     break;
 
                 case 1:
 
-                    mcbuf = slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCbAddr();
-                    inbuf = slice->getPic()->getPicYuvOrg()->getCbAddr();
-                    blockSize = 8;
-                    if (mvs) mcChroma();
+                    m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCbAddr();
+                    m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCbAddr();
+                    m_blockSize = 8;
+                    if (m_mvs) mcChroma();
                     break;
 
                 case 2:
 
-                    mcbuf = slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCrAddr();
-                    inbuf = slice->getPic()->getPicYuvOrg()->getCrAddr();
-                    blockSize = 8;
-                    if (mvs) mcChroma();
+                    m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCrAddr();
+                    m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCrAddr();
+                    m_blockSize = 8;
+                    if (m_mvs) mcChroma();
                     break;
                 }
 
-                origscore = minscore = weightCost(inbuf, mcbuf, NULL);
+                origscore = minscore = weightCost(m_inbuf, m_mcbuf, NULL);
 
                 if (!minscore)
                     continue;
@@ -323,7 +321,7 @@ void WeightPrediction::weightAnalyseEnc()
 
                         s = 0;
                         SET_WEIGHT(w, 1, is, mindenom, ioff);
-                        s = weightCost(inbuf, mcbuf, &w);
+                        s = weightCost(m_inbuf, m_mcbuf, &w);
                         COPY4_IF_LT(minscore, s, minscale, is, minoff, ioff, found, 1);
                         if (minoff == curOffset - oD && ioff != curOffset - oD)
                             break;
@@ -381,6 +379,6 @@ void WeightPrediction::weightAnalyseEnc()
         }
     }
 
-    slice->setWpScaling(m_wp);
-    slice->getPPS()->setUseWP((fullCheck > 0) ? true : false);
+    m_slice->setWpScaling(m_wp);
+    m_slice->getPPS()->setUseWP((fullCheck > 0) ? true : false);
 }

@@ -34,38 +34,38 @@ class WeightPrediction
 private:
 
     int m_csp, m_csp444;
-    int blockSize, frmHeight, frmWidth;
+    int m_blockSize, m_frmHeight, m_frmWidth;
     int m_refStride, m_dstStride;
     int32_t *m_mvCost;
-    TComSlice *slice;
-    wpScalingParam  m_wp[2][MAX_NUM_REF][3];
+    TComSlice *m_slice;
+    wpScalingParam m_wp[2][MAX_NUM_REF][3];
 
-    pixel *mcbuf, *inbuf, *buf;
+    pixel *m_mcbuf, *m_inbuf, *m_buf;
     int32_t *m_intraCost;
-    MV *mvs;
+    MV *m_mvs;
 
 public:
 
-    WeightPrediction(TComSlice *_slice)
+    WeightPrediction(TComSlice *slice)
     {
-        this->slice = _slice;
-        m_csp = slice->getPic()->getPicYuvOrg()->m_picCsp;
+        this->m_slice = slice;
+        m_csp = m_slice->getPic()->getPicYuvOrg()->m_picCsp;
         m_csp444 = (m_csp == X265_CSP_I444) ? 1: 0;
-        blockSize = 8 << m_csp444;
-        frmHeight = slice->getPic()->m_lowres.lines << m_csp444;
-        frmWidth  = slice->getPic()->m_lowres.width << m_csp444;
-        m_dstStride = frmWidth;
-        m_refStride = slice->getPic()->m_lowres.lumaStride;
-        m_intraCost = slice->getPic()->m_lowres.intraCost;
+        m_blockSize = 8 << m_csp444;
+        m_frmHeight = m_slice->getPic()->m_lowres.lines << m_csp444;
+        m_frmWidth  = m_slice->getPic()->m_lowres.width << m_csp444;
+        m_dstStride = m_frmWidth;
+        m_refStride = m_slice->getPic()->m_lowres.lumaStride;
+        m_intraCost = m_slice->getPic()->m_lowres.intraCost;
 
-        mcbuf = NULL;
-        inbuf = NULL;
-        buf = (pixel *) X265_MALLOC(pixel, frmHeight * m_refStride);
+        m_mcbuf = NULL;
+        m_inbuf = NULL;
+        m_buf = (pixel *) X265_MALLOC(pixel, m_frmHeight * m_refStride);
 
-        int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+        int numPredDir = m_slice->isInterP() ? 1 : m_slice->isInterB() ? 2 : 0;
         for (int list = 0; list < numPredDir; list++)
         {
-            for (int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(list); refIdxTemp++)
+            for (int refIdxTemp = 0; refIdxTemp < m_slice->getNumRefIdx(list); refIdxTemp++)
             {
                 for (int yuv = 0; yuv < 3; yuv++)
                 {
@@ -73,12 +73,11 @@ public:
                 }
             }
         }
-
     }
 
     ~WeightPrediction()
     {
-        X265_FREE(buf);
+        X265_FREE(m_buf);
     }
 
     void mcChroma();
