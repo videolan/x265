@@ -48,7 +48,6 @@ namespace x265 {
 
 class ThreadPool;
 class Encoder;
-class WeightPrediction;
 
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public Thread
