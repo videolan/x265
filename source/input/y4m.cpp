@@ -292,16 +292,15 @@ int Y4MInput::guessFrameCount()
 
 void Y4MInput::skipFrames(uint32_t numFrames)
 {
-    int frameSize = 0;
-
-    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
-        frameSize += (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
-    }
-
     if (ifs && numFrames)
     {
-        ifs->ignore((frameSize + strlen(header) + 1) * numFrames);
+        size_t frameSize = strlen(header) + 1;
+
+        for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+            frameSize += (size_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
+
+        for (uint32_t i = 0; i < numFrames; i++)
+            ifs->ignore(frameSize);
     }
 }
 
