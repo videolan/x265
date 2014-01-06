@@ -342,8 +342,6 @@ void FrameEncoder::setLambda(int qp, int row)
     m_rows[row].m_rdCost.setLambda(lambda);
     m_rows[row].m_rdCost.setCbDistortionWeight(cbWeight);
     m_rows[row].m_rdCost.setCrDistortionWeight(crWeight);
-    m_frameFilter.m_sao.lumaLambda = lambda;
-    m_frameFilter.m_sao.chromaLambda = chromaLambda;
 }
 
 void FrameEncoder::compressFrame()
@@ -376,6 +374,10 @@ void FrameEncoder::compressFrame()
     qpc = Clip3(0, 70, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
+
+    // NOTE: set SAO lambda every Frame
+    m_frameFilter.m_sao.lumaLambda = lambda;
+    m_frameFilter.m_sao.chromaLambda = chromaLambda;
 
     TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
     for (int i = 0; i < m_numRows; i++)
