@@ -188,7 +188,7 @@ int TComOutputBitstream::countStartCodeEmulations()
     uint8_t *rbsp = getFIFO();
     uint32_t fsize = getByteStreamLength();
 
-    for (uint32_t i = 0; i < fsize; i++)
+    for (uint32_t i = 0; i + 2 < fsize; i++)
     {
         if (!rbsp[i] && !rbsp[i + 1] && rbsp[i + 2] <= 3)
         {
