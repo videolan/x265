@@ -184,21 +184,21 @@ void TComOutputBitstream::writeByteAlignment()
 
 int TComOutputBitstream::countStartCodeEmulations()
 {
-    uint32_t cnt = 0;
+    int numStartCodes = 0;
     uint8_t *rbsp = getFIFO();
     uint32_t fsize = getByteStreamLength();
 
-    for (uint32_t count = 0; count < fsize; count++)
+    for (uint32_t i = 0; i < fsize; i++)
     {
-        if ((rbsp[count + 2] == 0x00 || rbsp[count + 2] == 0x01 || rbsp[count + 2] == 0x02 || rbsp[count + 2] == 0x03)
-            && rbsp[count + 1] == 0x00 && rbsp[count] == 0x00)
+        if ((rbsp[i + 2] == 0x00 || rbsp[i + 2] == 0x01 || rbsp[i + 2] == 0x02 || rbsp[i + 2] == 0x03)
+            && rbsp[i + 1] == 0x00 && rbsp[i] == 0x00)
         {
-            cnt++;
-            count = count + 1;
+            numStartCodes++;
+            i++;
         }
     }
 
-    return cnt;
+    return numStartCodes;
 }
 
 void TComOutputBitstream::push_back(uint8_t val)
