@@ -1051,7 +1051,11 @@ me_hex2:
 
     SubpelWorkload& wl = workload[this->subpelRefine];
 
-    if (ref->isLowres)
+    if (!bcost)
+    {
+        /* subpel refine isn't going to improve this */
+    }
+    else if (ref->isLowres)
     {
         int bdir = 0, cost;
         for (int i = 1; i <= wl.hpel_dirs; i++)
