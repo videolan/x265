@@ -685,7 +685,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_SSSE3)
     {
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
-        p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
+        //p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
 
         SETUP_INTRA_ANG4(2, 2, ssse3);
         SETUP_INTRA_ANG4(34, 2, ssse3);
@@ -891,7 +891,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG4(34, 2, ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
-        p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
+        //p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
 
         SAD_X3(ssse3);
         SAD_X4(ssse3);
