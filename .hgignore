@@ -7,3 +7,4 @@ build/
 **.yuv
 **.y4m
 **.out
+**.swp
