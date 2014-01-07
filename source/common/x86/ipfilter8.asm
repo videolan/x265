@@ -29,6 +29,7 @@
 SECTION_RODATA 32
 tab_Tm:    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
            db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
+           db 8, 9,10,11, 9,10,11,12,10,11,12,13,11,12,13, 14
 
 tab_Lm:    db 0, 1, 2, 3, 4,  5,  6,  7,  1, 2, 3, 4,  5,  6,  7,  8
            db 2, 3, 4, 5, 6,  7,  8,  9,  3, 4, 5, 6,  7,  8,  9,  10
@@ -127,6 +128,7 @@ tab_c_64_n64:   times 8 db 64, -64
 
 SECTION .text
 
+cextern pw_512
 cextern pw_2000
 
 %macro FILTER_H4_w2_2 3
@@ -688,30 +690,80 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,7,6
 ; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
     IPFILTER_LUMA 4, 4, pp
-    IPFILTER_LUMA 8, 8, pp
-    IPFILTER_LUMA 8, 4, pp
     IPFILTER_LUMA 4, 8, pp
-    IPFILTER_LUMA 16, 16, pp
-    IPFILTER_LUMA 16, 8, pp
-    IPFILTER_LUMA 8, 16, pp
-    IPFILTER_LUMA 16, 12, pp
     IPFILTER_LUMA 12, 16, pp
-    IPFILTER_LUMA 16, 4, pp
     IPFILTER_LUMA 4, 16, pp
-    IPFILTER_LUMA 32, 32, pp
-    IPFILTER_LUMA 32, 16, pp
-    IPFILTER_LUMA 16, 32, pp
-    IPFILTER_LUMA 32, 24, pp
-    IPFILTER_LUMA 24, 32, pp
-    IPFILTER_LUMA 32, 8, pp
-    IPFILTER_LUMA 8, 32, pp
-    IPFILTER_LUMA 64, 64, pp
-    IPFILTER_LUMA 64, 32, pp
-    IPFILTER_LUMA 32, 64, pp
-    IPFILTER_LUMA 64, 48, pp
-    IPFILTER_LUMA 48, 64, pp
-    IPFILTER_LUMA 64, 16, pp
-    IPFILTER_LUMA 16, 64, pp
+
+
+;--------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;--------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_LUMA_PP_W8 2
+INIT_XMM sse4
+cglobal interp_8tap_horiz_pp_%1x%2, 4,6,7
+    mov         r4d, r4m
+
+%ifdef PIC
+    lea         r5, [tab_LumaCoeff]
+    movh        m3, [r5 + r4 * 8]
+%else
+    movh        m3, [tab_LumaCoeff + r4 * 8]
+%endif
+    pshufd      m0, m3, 0                       ; m0 = coeff-L
+    pshufd      m1, m3, 0x55                    ; m1 = coeff-H
+    lea         r5, [tab_Tm]                    ; r5 = shuffle
+    mova        m2, [pw_512]                    ; m2 = 512
+
+    mov         r4d, %2
+.loopH
+%assign x 0
+%rep %1 / 8
+    movu        m3, [r0 - 3 + x]                ; m3 = [F E D C B A 9 8 7 6 5 4 3 2 1 0]
+    pshufb      m4, m3, [r5 + 0*16]             ; m4 = [6 5 4 3 5 4 3 2 4 3 2 1 3 2 1 0]
+    pshufb      m5, m3, [r5 + 1*16]             ; m5 = [A 9 8 7 9 8 7 6 8 7 6 5 7 6 5 4]
+    pshufb          m3, [r5 + 2*16]             ; m3 = [E D C B D C B A C B A 9 B A 9 8]
+    pmaddubsw   m4, m0
+    pmaddubsw   m6, m5, m1
+    pmaddubsw   m5, m0
+    pmaddubsw   m3, m1
+    paddw       m4, m6
+    paddw       m5, m3
+    phaddw      m4, m5
+    pmulhrsw    m4, m2
+    packuswb    m4, m4
+    movh        [r2 + x], m4
+%assign x x+8
+%endrep
+
+    add       r0, r1
+    add       r2, r3
+
+    dec       r4d
+    jnz      .loopH
+    RET
+%endmacro
+
+IPFILTER_LUMA_PP_W8      8,  4
+IPFILTER_LUMA_PP_W8      8,  8
+IPFILTER_LUMA_PP_W8      8, 16
+IPFILTER_LUMA_PP_W8      8, 32
+IPFILTER_LUMA_PP_W8     16,  4
+IPFILTER_LUMA_PP_W8     16,  8
+IPFILTER_LUMA_PP_W8     16, 12
+IPFILTER_LUMA_PP_W8     16, 16
+IPFILTER_LUMA_PP_W8     16, 32
+IPFILTER_LUMA_PP_W8     16, 64
+IPFILTER_LUMA_PP_W8     24, 32
+IPFILTER_LUMA_PP_W8     32,  8
+IPFILTER_LUMA_PP_W8     32, 16
+IPFILTER_LUMA_PP_W8     32, 24
+IPFILTER_LUMA_PP_W8     32, 32
+IPFILTER_LUMA_PP_W8     32, 64
+IPFILTER_LUMA_PP_W8     48, 64
+IPFILTER_LUMA_PP_W8     64, 16
+IPFILTER_LUMA_PP_W8     64, 32
+IPFILTER_LUMA_PP_W8     64, 48
+IPFILTER_LUMA_PP_W8     64, 64
 
 ;----------------------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_ps_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
