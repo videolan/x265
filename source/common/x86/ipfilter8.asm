@@ -623,7 +623,7 @@ IPFILTER_CHROMA_W 32, 32
 ;----------------------------------------------------------------------------------------------------------------------------
 %macro IPFILTER_LUMA 3
 INIT_XMM sse4
-cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 5
+cglobal interp_8tap_horiz_%3_%1x%2, 4,7,6
 
     mov       r4d, r4m
 
