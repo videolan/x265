@@ -2325,17 +2325,17 @@ RET
 ;-----------------------------------------------------------------
 ; void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
+%if HIGH_BIT_DEPTH
 INIT_XMM ssse3
 cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     mov       r3d,    32
-%if HIGH_BIT_DEPTH
     mova      m7,    [deinterleave_word_shuf]
     add       r2,    r2
 .loop
     movu      m0,    [r1]                  ;i
-    movu      m1,    [r1 + 2]              ;j
+    psrld     m1,    m0,    16             ;j
     movu      m2,    [r1 + r2]             ;k
-    movu      m3,    [r1 + r2 + 2]         ;l
+    psrld     m3,    m2,    16             ;l
     movu      m4,    m0
     movu      m5,    m2
     pxor      m4,    m1                    ;i^j
@@ -2350,9 +2350,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     pand      m4,    [hmulw_16p]
     psubw     m0,    m4                    ;Result
     movu      m1,    [r1 + 16]             ;i
-    movu      m2,    [r1 + 16 + 2]         ;j
+    psrld     m2,    m1,    16             ;j
     movu      m3,    [r1 + r2 + 16]        ;k
-    movu      m4,    [r1 + r2 + 16 + 2]    ;l
+    psrld     m4,    m3,    16             ;l
     movu      m5,    m1
     movu      m6,    m3
     pxor      m5,    m2                    ;i^j
@@ -2373,9 +2373,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     movu          [r0],     m0
 
     movu      m0,    [r1 + 32]             ;i
-    movu      m1,    [r1 + 32 + 2]         ;j
+    psrld     m1,    m0,    16             ;j
     movu      m2,    [r1 + r2 + 32]        ;k
-    movu      m3,    [r1 + r2 + 32 + 2]    ;l
+    psrld     m3,    m2,    16             ;l
     movu      m4,    m0
     movu      m5,    m2
     pxor      m4,    m1                    ;i^j
@@ -2390,9 +2390,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     pand      m4,    [hmulw_16p]
     psubw     m0,    m4                    ;Result
     movu      m1,    [r1 + 48]             ;i
-    movu      m2,    [r1 + 48 + 2]         ;j
+    psrld     m2,    m1,    16             ;j
     movu      m3,    [r1 + r2 + 48]        ;k
-    movu      m4,    [r1 + r2 + 48 + 2]    ;l
+    psrld     m4,    m3,    16             ;l
     movu      m5,    m1
     movu      m6,    m3
     pxor      m5,    m2                    ;i^j
@@ -2413,9 +2413,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     movu          [r0 + 16],    m0
 
     movu      m0,    [r1 + 64]             ;i
-    movu      m1,    [r1 + 64 + 2]         ;j
+    psrld     m1,    m0,    16             ;j
     movu      m2,    [r1 + r2 + 64]        ;k
-    movu      m3,    [r1 + r2 + 64 + 2]    ;l
+    psrld     m3,    m2,    16             ;l
     movu      m4,    m0
     movu      m5,    m2
     pxor      m4,    m1                    ;i^j
@@ -2430,9 +2430,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     pand      m4,    [hmulw_16p]
     psubw     m0,    m4                    ;Result
     movu      m1,    [r1 + 80]             ;i
-    movu      m2,    [r1 + 80 + 2]         ;j
+    psrld     m2,    m1,    16             ;j
     movu      m3,    [r1 + r2 + 80]        ;k
-    movu      m4,    [r1 + r2 + 80 + 2]    ;l
+    psrld     m4,    m3,    16             ;l
     movu      m5,    m1
     movu      m6,    m3
     pxor      m5,    m2                    ;i^j
@@ -2453,9 +2453,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     movu          [r0 + 32],    m0
 
     movu      m0,    [r1 + 96]             ;i
-    movu      m1,    [r1 + 96 + 2]         ;j
+    psrld     m1,    m0,    16             ;j
     movu      m2,    [r1 + r2 + 96]        ;k
-    movu      m3,    [r1 + r2 + 96 + 2]    ;l
+    psrld     m3,    m2,    16             ;l
     movu      m4,    m0
     movu      m5,    m2
     pxor      m4,    m1                    ;i^j
@@ -2469,10 +2469,10 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     pand      m4,    m5                    ;(ij|kl)&st
     pand      m4,    [hmulw_16p]
     psubw     m0,    m4                    ;Result
-    movu      m1,    [r1 + 112]             ;i
-    movu      m2,    [r1 + 112 + 2]         ;j
-    movu      m3,    [r1 + r2 + 112]        ;k
-    movu      m4,    [r1 + r2 + 112 + 2]    ;l
+    movu      m1,    [r1 + 112]            ;i
+    psrld     m2,    m1,    16             ;j
+    movu      m3,    [r1 + r2 + 112]       ;k
+    psrld     m4,    m3,    16             ;l
     movu      m5,    m1
     movu      m6,    m3
     pxor      m5,    m2                    ;i^j
@@ -2492,14 +2492,22 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     punpcklqdq    m0,           m1
     movu          [r0 + 48],    m0
     lea    r0,    [r0 + 64]
+    lea    r1,    [r1 + 2 * r2]
+    dec    r3d
+    jnz    .loop
+    RET
 %else
+
+INIT_XMM ssse3
+cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
+    mov       r3d,    32
     mova        m7,      [deinterleave_shuf]
 .loop
 
     movu        m0,      [r1]                  ;i
-    movu        m1,      [r1 + 1]              ;j
+    psrlw       m1,      m0,    8              ;j
     movu        m2,      [r1 + r2]             ;k
-    movu        m3,      [r1 + r2 + 1]         ;l
+    psrlw       m3,      m2,    8              ;l
     movu        m4,      m0
     movu        m5,      m2
 
@@ -2517,9 +2525,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     psubb       m0,      m4                    ;Result
 
     movu        m1,      [r1 + 16]             ;i
-    movu        m2,      [r1 + 16 + 1]         ;j
+    psrlw       m2,      m1,    8              ;j
     movu        m3,      [r1 + r2 + 16]        ;k
-    movu        m4,      [r1 + r2 + 16 + 1]    ;l
+    psrlw       m4,      m3,    8              ;l
     movu        m5,      m1
     movu        m6,      m3
 
@@ -2543,9 +2551,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     movu          [r0],         m0
 
     movu        m0,      [r1 + 32]             ;i
-    movu        m1,      [r1 + 32 + 1]         ;j
+    psrlw       m1,      m0,    8              ;j
     movu        m2,      [r1 + r2 + 32]        ;k
-    movu        m3,      [r1 + r2 + 32 + 1]    ;l
+    psrlw       m3,      m2,    8              ;l
     movu        m4,      m0
     movu        m5,      m2
 
@@ -2563,9 +2571,9 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     psubb       m0,      m4                    ;Result
 
     movu        m1,      [r1 + 48]             ;i
-    movu        m2,      [r1 + 48 + 1]         ;j
+    psrlw       m2,      m1,    8              ;j
     movu        m3,      [r1 + r2 + 48]        ;k
-    movu        m4,      [r1 + r2 + 48 + 1]    ;l
+    psrlw       m4,      m3,    8              ;l
     movu        m5,      m1
     movu        m6,      m3
 
@@ -2589,12 +2597,11 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     movu          [r0 + 16],    m0
 
     lea    r0,    [r0 + 32]
-%endif
     lea    r1,    [r1 + 2 * r2]
     dec    r3d
     jnz    .loop
-
-RET
+    RET
+%endif
 
 
 ;-----------------------------------------------------------------------------
