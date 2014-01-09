@@ -57,9 +57,25 @@ DECL_ANG(4, 16, sse4);
 DECL_ANG(4, 17, sse4);
 DECL_ANG(4, 18, sse4);
 DECL_ANG(4, 26, sse4);
-
+DECL_ANG(8, 2, ssse3);
+DECL_ANG(8, 3, sse4);
+DECL_ANG(8, 4, sse4);
+DECL_ANG(8, 5, sse4);
+DECL_ANG(8, 6, sse4);
+DECL_ANG(8, 7, sse4);
+DECL_ANG(8, 8, sse4);
+DECL_ANG(8, 9, sse4);
+DECL_ANG(8, 10, sse4);
+DECL_ANG(8, 11, sse4);
+DECL_ANG(8, 12, sse4);
+DECL_ANG(8, 13, sse4);
+DECL_ANG(8, 14, sse4);
+DECL_ANG(8, 15, sse4);
+DECL_ANG(8, 16, sse4);
+DECL_ANG(8, 17, sse4);
+DECL_ANG(8, 18, sse4);
+DECL_ANG(8, 26, sse4);
 #undef DECL_ANG
-
 void x265_all_angs_pred_4x4_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 void x265_all_angs_pred_8x8_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 

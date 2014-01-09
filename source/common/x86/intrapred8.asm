@@ -1105,6 +1105,33 @@ cglobal intra_pred_ang4_18, 4,4,1
     psrldq      m0, 1
     movd        [r0], m0
     RET
+;-----------------------------------------------------------------------------
+; void intraPredAng(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal intra_pred_ang8_2, 3,5,2
+    cmp         r4m,            byte 34
+    cmove       r2,             r3mp
+    movu        m0,             [r2 + 2]
+    lea         r4,             [r1 * 3]
+
+    movh        [r0],           m0
+    palignr     m1,             m0, 1
+    movh        [r0 + r1],      m1
+    palignr     m1,             m0, 2
+    movh        [r0 + r1 * 2],  m1
+    palignr     m1,             m0, 3
+    movh        [r0 + r4],      m1
+    palignr     m1,             m0, 4
+    lea         r0,             [r0 + r1 * 4]
+    movh        [r0],           m1
+    palignr     m1,             m0, 5
+    movh        [r0 + r1],      m1
+    palignr     m1,             m0, 6
+    movh        [r0 + r1 * 2],  m1
+    palignr     m1,             m0, 7
+    movh        [r0 + r4],      m1
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void all_angs_pred_4x4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
