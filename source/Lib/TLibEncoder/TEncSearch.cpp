@@ -2508,7 +2508,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
     int mvpIdxBi[2][33];
     int mvpIdx[2][33];
-    int mvpNum[2][33];
     AMVPInfo amvpInfo[2][33];
 
     uint32_t mbBits[3] = { 1, 1, 0 };
@@ -2574,7 +2573,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                     }
                     xEstimateMvPredAMVP(cu, partIdx, list, idx, mvPred[list][idx], &biPDistTemp);
                     mvpIdx[list][idx] = cu->getMVPIdx(list, partAddr);
-                    mvpNum[list][idx] = cu->getMVPNum(list, partAddr);
 
                     bitsTemp += m_mvpIdxCost[mvpIdx[list][idx]][AMVP_MAX_NUM_CANDS];
                     int merange = m_adaptiveRange[list][idx];
@@ -2694,9 +2692,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
         cu->getCUMvField(REF_PIC_LIST_1)->setAllMvd(mvzero, partSize, partAddr, 0, partIdx);
 
         cu->setMVPIdxSubParts(-1, REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(-1, REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
         cu->setMVPIdxSubParts(-1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(-1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
 
         uint32_t mebits = 0;
         // Set Motion Field_
@@ -2728,9 +2724,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                 cu->setInterDirSubParts(3, partAddr, partIdx, cu->getDepth(0));
 
                 cu->setMVPIdxSubParts(mvpIdxBi[0][refIdxBidir[0]], REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setMVPNumSubParts(mvpNum[0][refIdxBidir[0]], REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
                 cu->setMVPIdxSubParts(mvpIdxBi[1][refIdxBidir[1]], REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setMVPNumSubParts(mvpNum[1][refIdxBidir[1]], REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
 
                 mebits = bits[2];
             }
@@ -2746,7 +2740,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                 cu->setInterDirSubParts(1, partAddr, partIdx, cu->getDepth(0));
 
                 cu->setMVPIdxSubParts(mvpIdx[0][refIdx[0]], REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setMVPNumSubParts(mvpNum[0][refIdx[0]], REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
 
                 mebits = bits[0];
             }
@@ -2762,7 +2755,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                 cu->setInterDirSubParts(2, partAddr, partIdx, cu->getDepth(0));
 
                 cu->setMVPIdxSubParts(mvpIdx[1][refIdx[1]], REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setMVPNumSubParts(mvpNum[1][refIdx[1]], REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
 
                 mebits = bits[1];
             }
@@ -2811,9 +2803,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                 cu->getCUMvField(REF_PIC_LIST_1)->setAllMvd(mvzero, partSize, partAddr, 0, partIdx);
 
                 cu->setMVPIdxSubParts(-1, REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setMVPNumSubParts(-1, REF_PIC_LIST_0, partAddr, partIdx, cu->getDepth(partAddr));
                 cu->setMVPIdxSubParts(-1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->setMVPNumSubParts(-1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
                 totalmebits += mrgBits;
             }
             else
@@ -2863,7 +2853,6 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list,
         mvPred = bestMv;
 
         cu->setMVPIdxSubParts(bestIdx, list, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(amvpInfo->m_num, list, partAddr, partIdx, cu->getDepth(partAddr));
 
         if (cu->getSlice()->getMvdL1ZeroFlag() && list == REF_PIC_LIST_1)
         {
@@ -2892,7 +2881,6 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list,
     // Setting Best MVP
     mvPred = bestMv;
     cu->setMVPIdxSubParts(bestIdx, list, partAddr, partIdx, cu->getDepth(partAddr));
-    cu->setMVPNumSubParts(amvpInfo->m_num, list, partAddr, partIdx, cu->getDepth(partAddr));
 }
 
 uint32_t TEncSearch::xGetMvpIdxBits(int idx, int num)

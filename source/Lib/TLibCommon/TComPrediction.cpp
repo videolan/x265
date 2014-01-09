@@ -617,7 +617,6 @@ void TComPrediction::getMvPredAMVP(TComDataCU* cu, uint32_t partIdx, uint32_t pa
         mvPred = pcAMVPInfo->m_mvCand[0];
 
         cu->setMVPIdxSubParts(0, list, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(pcAMVPInfo->m_num, list, partAddr, partIdx, cu->getDepth(partAddr));
         return;
     }
 
