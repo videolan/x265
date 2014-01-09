@@ -1260,10 +1260,10 @@ struct WpScalingParam
     int         w, o, offset, shift, round;
 
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
-    void setFromWeightAndOffset(int weight, int _offset)
+    void setFromWeightAndOffset(int weight, int _offset, int denom = 7)
     {
         inputOffset = _offset;
-        log2WeightDenom = 7;
+        log2WeightDenom = denom;
         inputWeight = weight;
         while (log2WeightDenom > 0 && (inputWeight > 127))
         {
@@ -1557,7 +1557,7 @@ public:
     void  getWpAcDcParam(wpACDCParam *&wp);
     void  initWpAcDcParam();
 
-    void setTileOffstForMultES(uint32_t offset){ m_tileOffstForMultES = offset; }
+    void setTileOffstForMultES(uint32_t offset) { m_tileOffstForMultES = offset; }
 
     uint32_t getTileOffstForMultES()           { return m_tileOffstForMultES; }
 

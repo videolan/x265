@@ -29,6 +29,10 @@
 
 using namespace x265;
 
+/** clip a, such that minVal <= a <= maxVal */
+//template<typename T>
+//inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
+
 void WeightPrediction::mcChroma()
 {
     intptr_t strd = m_refStride;
@@ -142,6 +146,27 @@ uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
 
 void WeightPrediction::weightAnalyseEnc()
 {
+    int denom = 6;
+    bool validRangeFlag = false;
+
+    if (m_slice->getNumRefIdx(REF_PIC_LIST_0) > 3)
+    {
+        denom  = 7;
+    }
+
+    do
+    {
+        validRangeFlag = checkDenom(denom);
+        if (!validRangeFlag)
+        {
+            denom--; // decrement to satisfy the range limitation
+        }
+    }
+    while ((validRangeFlag == false) && (denom > 0));
+}
+
+bool WeightPrediction::checkDenom(int denom)
+{
     wpScalingParam w, *fw;
     Lowres *fenc, *ref;
     int numPredDir = m_slice->isInterP() ? 1 : 2;
@@ -180,6 +205,7 @@ void WeightPrediction::weightAnalyseEnc()
                 float fencVar = (float)fenc->wp_ssd[yuv] + !ref->wp_ssd[yuv];
                 float refVar  = (float)ref->wp_ssd[yuv] + !ref->wp_ssd[yuv];
                 guessScale[yuv] = sqrtf((float)fencVar / refVar);
+                guessScale[yuv] = Clip3(-2.f, 1.8f, sqrtf((float)fencVar / refVar));
                 fencMean[yuv] = (float)fenc->wp_sum[yuv] / (height[yuv] * width[yuv]) / (1 << (X265_DEPTH - 8));
                 refMean[yuv]  = (float)ref->wp_sum[yuv] / (height[yuv] * width[yuv]) / (1 << (X265_DEPTH - 8));
             }
@@ -188,6 +214,7 @@ void WeightPrediction::weightAnalyseEnc()
             {
                 int ic = 0;
                 SET_WEIGHT(w, 0, 1, 0, 0);
+                SET_WEIGHT(fw[yuv], 0, 1 << denom, denom, 0);
                 /* Early termination */
                 if (fabsf(refMean[yuv] - fencMean[yuv]) < 0.5f && fabsf(1.f - guessScale[yuv]) < epsilon)
                     continue;
@@ -209,19 +236,7 @@ void WeightPrediction::weightAnalyseEnc()
                 unsigned int minscore = 0, origscore = 1;
                 int found = 0;
 
-                if (yuv)
-                {
-                    w.log2WeightDenom = chromaDenom;
-                    w.inputWeight = Clip3(0, 255, (int)guessScale[yuv] * (1 << w.log2WeightDenom));
-                    if (w.inputWeight > 127)
-                    {
-                        SET_WEIGHT(fw[1], 0, 64, 6, 0);
-                        SET_WEIGHT(fw[2], 0, 64, 6, 0);
-                        break;
-                    }
-                }
-                else
-                    w.setFromWeightAndOffset((int)(guessScale[yuv] * 128 + 0.5), 0);
+                w.setFromWeightAndOffset((int)(guessScale[yuv] * (1 << denom) + 0.5), 0, denom);
 
                 if (!yuv) lumaDenom = w.log2WeightDenom;
                 mindenom = w.log2WeightDenom;
@@ -329,7 +344,10 @@ void WeightPrediction::weightAnalyseEnc()
                 }
 
                 if (!found || (minscale == 1 << mindenom && minoff == 0) || (float)minscore / origscore > 0.998f)
+                {
+                    SET_WEIGHT(fw[yuv], 0, 1 << mindenom, mindenom, 0);
                     continue;
+                }
                 else
                 {
                     SET_WEIGHT(w, 1, minscale, mindenom, minoff);
@@ -341,22 +359,12 @@ void WeightPrediction::weightAnalyseEnc()
 
             if (check)
             {
-                numWeighted++;
-                if (fw[0].log2WeightDenom == 7)
+                if (fw[1].bPresentFlag || fw[2].bPresentFlag)
                 {
-                    fw[0].inputWeight >>= 1;
-                    fw[0].log2WeightDenom--;
+                    // Enabling in both chroma
+                    fw[1].bPresentFlag = true;
+                    fw[2].bPresentFlag = true;
                 }
-
-                int maxdenom = X265_MAX(fw[0].log2WeightDenom, X265_MAX(fw[1].log2WeightDenom, fw[2].log2WeightDenom));
-                fw[0].inputWeight <<= (maxdenom - fw[0].log2WeightDenom);
-                fw[0].log2WeightDenom += (maxdenom - fw[0].log2WeightDenom);
-                fw[1].inputWeight <<= (maxdenom - fw[1].log2WeightDenom);
-                fw[1].log2WeightDenom += (maxdenom - fw[1].log2WeightDenom);
-                fw[2].inputWeight <<= (maxdenom - fw[2].log2WeightDenom);
-                fw[2].log2WeightDenom += (maxdenom - fw[2].log2WeightDenom);
-                fw[1].bPresentFlag = true;
-                fw[2].bPresentFlag = true;
 
                 int deltaWeight;
                 bool deltaHigh = false;
@@ -369,15 +377,23 @@ void WeightPrediction::weightAnalyseEnc()
 
                 if (deltaHigh)
                 {
-                    SET_WEIGHT(fw[0], 0, 64, 6, 0);
-                    SET_WEIGHT(fw[1], 0, 64, 6, 0);
-                    SET_WEIGHT(fw[2], 0, 64, 6, 0);
-                    fullCheck = 0;
+                    // Checking deltaWeight range
+                    SET_WEIGHT(fw[0], 0, 1 << denom, denom, 0);
+                    SET_WEIGHT(fw[1], 0, 1 << denom, denom, 0);
+                    SET_WEIGHT(fw[2], 0, 1 << denom, denom, 0);
+                    fullCheck -= check;
+                    return false;
                 }
             }
         }
     }
 
+    if (!fullCheck)
+    {
+        return false;
+    }
+
     m_slice->setWpScaling(m_wp);
     m_slice->getPPS()->setUseWP((fullCheck > 0) ? true : false);
+    return true;
 }

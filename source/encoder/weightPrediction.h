@@ -26,7 +26,6 @@
 #include "mv.h"
 
 namespace x265 {
-
 class TComSlice;
 
 class WeightPrediction
@@ -50,7 +49,7 @@ public:
     {
         this->m_slice = slice;
         m_csp = m_slice->getPic()->getPicYuvOrg()->m_picCsp;
-        m_csp444 = (m_csp == X265_CSP_I444) ? 1: 0;
+        m_csp444 = (m_csp == X265_CSP_I444) ? 1 : 0;
         m_blockSize = 8 << m_csp444;
         m_frmHeight = m_slice->getPic()->m_lowres.lines << m_csp444;
         m_frmWidth  = m_slice->getPic()->m_lowres.width << m_csp444;
@@ -60,7 +59,7 @@ public:
 
         m_mcbuf = NULL;
         m_inbuf = NULL;
-        m_buf = (pixel *) X265_MALLOC(pixel, m_frmHeight * m_refStride);
+        m_buf = (pixel*)X265_MALLOC(pixel, m_frmHeight * m_refStride);
 
         int numPredDir = m_slice->isInterP() ? 1 : m_slice->isInterB() ? 2 : 0;
         for (int list = 0; list < numPredDir; list++)
@@ -82,7 +81,7 @@ public:
 
     void mcChroma();
     void weightAnalyseEnc();
+    bool checkDenom(int denom);
     uint32_t weightCost(pixel *cur, pixel *ref, wpScalingParam *w);
-
 };
-};
+}
