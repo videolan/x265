@@ -1134,6 +1134,55 @@ cglobal intra_pred_ang8_2, 3,5,2
     RET
 
 ;-----------------------------------------------------------------------------
+; void intraPredAng16(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal intra_pred_ang16_2, 3,3,3
+    cmp             r4m, byte 34
+    cmove           r2, r3mp
+    movu            m0, [r2 + 2]
+    movu            m1, [r2 + 18]
+    movu            [r0], m0
+    palignr         m2, m1, m0, 1
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 2
+    movu            [r0], m2
+    palignr         m2, m1, m0, 3
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 4
+    movu            [r0], m2
+    palignr         m2, m1, m0, 5
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 6
+    movu            [r0], m2
+    palignr         m2, m1, m0, 7
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 8
+    movu            [r0], m2
+    palignr         m2, m1, m0, 9
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 10
+    movu            [r0], m2
+    palignr         m2, m1, m0, 11
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 12
+    movu            [r0], m2
+    palignr         m2, m1, m0, 13
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 14
+    movu            [r0], m2
+    palignr         m2, m1, m0, 15
+    movu            [r0 + r1], m2
+    RET
+
+;-----------------------------------------------------------------------------
 ; void all_angs_pred_4x4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
