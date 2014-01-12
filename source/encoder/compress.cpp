@@ -230,15 +230,11 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
-    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     outTempCU->setMergeFlagSubParts(true, 0, 0, depth);
 
     outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
     outBestCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
     outBestCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    outBestCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
-    outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     outBestCU->setMergeFlagSubParts(true, 0, 0, depth);
 
     int part = g_convertToBit[outTempCU->getWidth(0)];
