@@ -154,8 +154,8 @@ endif()
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG
 include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
-add_subdirectory(common)
 add_subdirectory(encoder)
+add_subdirectory(common)
 
 if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     # this is horrible. ugly, and hacky, and it reproduces logic found
