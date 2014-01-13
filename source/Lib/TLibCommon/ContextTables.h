@@ -56,7 +56,7 @@
 #define NUM_MERGE_FLAG_EXT_CTX        1       ///< number of context models for merge flag of merge extended
 #define NUM_MERGE_IDX_EXT_CTX         1       ///< number of context models for merge index of merge extended
 
-#define NUM_PART_SIZE_CTX             4       ///< number of context models for partition size
+#define NUM_PART_SIZE_CTX             3       ///< number of context models for partition size
 #define NUM_CU_AMP_CTX                1       ///< number of context models for partition size (AMP)
 #define NUM_PRED_MODE_CTX             1       ///< number of context models for prediction mode
 
@@ -203,9 +203,9 @@ static const uint8_t
 static const uint8_t
     INIT_PART_SIZE[3][NUM_PART_SIZE_CTX] =
 {
-    { 154,  139,  CNU,  CNU, },
-    { 154,  139,  CNU,  CNU, },
-    { 184,  CNU,  CNU,  CNU, },
+    { 154,  139,  CNU, },
+    { 154,  139,  CNU, },
+    { 184,  CNU,  CNU, },
 };
 
 static const uint8_t
