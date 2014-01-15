@@ -554,6 +554,9 @@ extern "C" {
 #define SETUP_INTRA_ANG16(mode, fno, cpu) \
     p.intra_pred[BLOCK_16x16][mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu;
 
+#define SETUP_INTRA_ANG32(mode, fno, cpu) \
+    p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+
 namespace x265 {
 // private x265 namespace
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
@@ -896,6 +899,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG8(34, 2, ssse3);
         SETUP_INTRA_ANG16(2, 2, ssse3);
         SETUP_INTRA_ANG16(34, 2, ssse3);
+        SETUP_INTRA_ANG32(2, 2, ssse3);
+        SETUP_INTRA_ANG32(34, 2, ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;

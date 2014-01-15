@@ -1182,6 +1182,168 @@ cglobal intra_pred_ang16_2, 3,3,3
     movu            [r0 + r1], m2
     RET
 
+
+;---------------------------------------------------------------------------------------------------------------
+; void intraPredAng32(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal intra_pred_ang32_2, 3,4,4
+    cmp             r4m, byte 34
+    cmove           r2, r3mp
+    movu            m0, [r2 + 2]
+    movu            m1, [r2 + 18]
+    movu            m3, [r2 + 34]
+
+    lea             r3, [r1 * 3]
+
+    movu            [r0], m0
+    movu            [r0 + 16], m1
+    palignr         m2, m1, m0, 1
+    movu            [r0 + r1], m2
+    palignr         m2, m3, m1, 1
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m1, m0, 2
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m3, m1, 2
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m1, m0, 3
+    movu            [r0 + r3], m2
+    palignr         m2, m3, m1, 3
+    movu            [r0 + r3 + 16], m2
+
+    lea             r0, [r0 + r1 * 4]
+
+    palignr         m2, m1, m0, 4
+    movu            [r0], m2
+    palignr         m2, m3, m1, 4
+    movu            [r0 + 16], m2
+    palignr         m2, m1, m0, 5
+    movu            [r0 + r1], m2
+    palignr         m2, m3, m1, 5
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m1, m0, 6
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m3, m1, 6
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m1, m0, 7
+    movu            [r0 + r3], m2
+    palignr         m2, m3, m1, 7
+    movu            [r0 + r3 + 16], m2
+
+    lea             r0, [r0 + r1 * 4]
+
+    palignr         m2, m1, m0, 8
+    movu            [r0], m2
+    palignr         m2, m3, m1, 8
+    movu            [r0 + 16], m2
+    palignr         m2, m1, m0, 9
+    movu            [r0 + r1], m2
+    palignr         m2, m3, m1, 9
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m1, m0, 10
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m3, m1, 10
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m1, m0, 11
+    movu            [r0 + r3], m2
+    palignr         m2, m3, m1, 11
+    movu            [r0 + r3 + 16], m2
+
+    lea             r0, [r0 + r1 * 4]
+
+    palignr         m2, m1, m0, 12
+    movu            [r0], m2
+    palignr         m2, m3, m1, 12
+    movu            [r0 + 16], m2
+    palignr         m2, m1, m0, 13
+    movu            [r0 + r1], m2
+    palignr         m2, m3, m1, 13
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m1, m0, 14
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m3, m1, 14
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m1, m0, 15
+    movu            [r0 + r3], m2
+    palignr         m2, m3, m1, 15
+    movu            [r0 + r3 + 16], m2
+
+    lea             r0, [r0 + r1 * 4]
+
+    movu            [r0], m1
+    movu            m0, [r2 + 50]
+    movu            [r0 + 16], m3
+    palignr         m2, m3, m1, 1
+    movu            [r0 + r1], m2
+    palignr         m2, m0, m3, 1
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m3, m1, 2
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m0, m3, 2
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m3, m1, 3
+    movu            [r0 + r3], m2
+    palignr         m2, m0, m3, 3
+    movu            [r0 + r3 + 16], m2
+
+    lea             r0, [r0 + r1 * 4]
+
+    palignr         m2, m3, m1, 4
+    movu            [r0], m2
+    palignr         m2, m0, m3, 4
+    movu            [r0 + 16], m2
+    palignr         m2, m3, m1, 5
+    movu            [r0 + r1], m2
+    palignr         m2, m0, m3, 5
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m3, m1, 6
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m0, m3, 6
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m3, m1, 7
+    movu            [r0 + r3], m2
+    palignr         m2, m0, m3, 7
+    movu            [r0 + r3 + 16], m2
+
+    lea             r0, [r0 + r1 * 4]
+
+    palignr         m2, m3, m1, 8
+    movu            [r0], m2
+    palignr         m2, m0, m3, 8
+    movu            [r0 + 16], m2
+    palignr         m2, m3, m1, 9
+    movu            [r0 + r1], m2
+    palignr         m2, m0, m3, 9
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m3, m1, 10
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m0, m3, 10
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m3, m1, 11
+    movu            [r0 + r3], m2
+    palignr         m2, m0, m3, 11
+    movu            [r0 + r3 + 16], m2
+
+    lea             r0, [r0 + r1 * 4]
+
+    palignr         m2, m3, m1, 12
+    movu            [r0], m2
+    palignr         m2, m0, m3, 12
+    movu            [r0 + 16], m2
+    palignr         m2, m3, m1, 13
+    movu            [r0 + r1], m2
+    palignr         m2, m0, m3, 13
+    movu            [r0 + r1 + 16], m2
+    palignr         m2, m3, m1, 14
+    movu            [r0 + r1 * 2], m2
+    palignr         m2, m0, m3, 14
+    movu            [r0 + r1 * 2 + 16], m2
+    palignr         m2, m3, m1, 15
+    movu            [r0 + r3], m2
+    palignr         m2, m0, m3, 15
+    movu            [r0 + r3 + 16], m2
+    RET
+
 ;-----------------------------------------------------------------------------
 ; void all_angs_pred_4x4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
 ;-----------------------------------------------------------------------------
