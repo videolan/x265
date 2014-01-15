@@ -2461,7 +2461,7 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 {
     ContextModel *ctx = &m_contextModels[OFF_QT_CBF_CTX];
 
-    for (uint32_t uiCtxInc = 0; uiCtxInc < 3 * NUM_QT_CBF_CTX; uiCtxInc++)
+    for (uint32_t uiCtxInc = 0; uiCtxInc < 2 * NUM_QT_CBF_CTX; uiCtxInc++)
     {
         estBitsSbac->blockCbpBits[uiCtxInc][0] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 0);
         estBitsSbac->blockCbpBits[uiCtxInc][1] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 1);
