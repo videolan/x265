@@ -95,12 +95,12 @@ bool WaveFront::checkHigherPriorityRow(int curRow)
     // Check full bitmap words before curRow
     for (int i = 0; i < fullwords; i++)
     {
-        if (m_queuedBitmap[i])
+        if (m_queuedBitmap[i] & m_enableBitmap[i])
             return true;
     }
 
     // check the partially masked bitmap word of curRow
-    if (m_queuedBitmap[fullwords] & mask)
+    if (m_queuedBitmap[fullwords] & m_enableBitmap[fullwords] & mask)
         return true;
     return false;
 }

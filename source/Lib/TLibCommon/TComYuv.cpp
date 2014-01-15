@@ -67,10 +67,10 @@ void TComYuv::create(uint32_t width, uint32_t height, int csp)
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
 
-    // memory allocation
+    // memory allocation (padded for SIMD reads)
     m_bufY = (Pel*)X265_MALLOC(Pel, width * height);
-    m_bufU = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
-    m_bufV = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_bufU = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift) + 8);
+    m_bufV = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift) + 8);
 
     // set width and height
     m_width   = width;
