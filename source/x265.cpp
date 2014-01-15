@@ -306,7 +306,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
     H0("\nSlice decision options:\n");
-    H0("   --[no-]open-gop               Enable openGOP, allows I slice to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
+    H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
     H0("-i/--keyint                      Max intra period in frames. Default %d\n", param->keyframeMax);
     H0("   --rc-lookahead                Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
     H0("   --bframes                     Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
