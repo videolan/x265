@@ -1324,7 +1324,7 @@ void Encoder::configure(x265_param *_param)
         _param->rc.aqStrength = 0.0;
     }
 
-    if (_param->bFrameAdaptive == 0 && _param->rc.cuTree)
+    if (_param->lookaheadDepth == 0 && _param->rc.cuTree)
     {
         x265_log(_param, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
         _param->rc.cuTree = 0;

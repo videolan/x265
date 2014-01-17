@@ -631,105 +631,133 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
 
 void Lookahead::slicetypeDecide()
 {
-    if (cfg->param.bFrameAdaptive && cfg->param.lookaheadDepth && cfg->param.bframes)
+    if ((cfg->param.bFrameAdaptive && cfg->param.bframes) ||
+        cfg->param.rc.cuTree || cfg->param.scenecutThreshold ||
+        (cfg->param.lookaheadDepth && cfg->param.rc.vbvBufferSize))
     {
         slicetypeAnalyse(false);
+    }
 
-        TComPic *list[X265_LOOKAHEAD_MAX];
-        TComPic *ipic = inputQueue.first();
-        int j;
-        for (j = 0; ipic && j < cfg->param.bframes + 2; ipic = ipic->m_next)
+
+    TComPic *list[X265_LOOKAHEAD_MAX];
+    TComPic *ipic = inputQueue.first();
+    int j;
+    for (j = 0; ipic && j < cfg->param.bframes + 2; ipic = ipic->m_next)
+    {
+        list[j++] = ipic;
+    }
+
+    list[j] = NULL;
+
+    int bframes, brefs;
+    for (bframes = 0, brefs = 0;; bframes++)
+    {
+        Lowres& frm = list[bframes]->m_lowres;
+
+        if (frm.sliceType == X265_TYPE_BREF && !cfg->param.bBPyramid && brefs == cfg->param.bBPyramid)
         {
-            list[j++] = ipic;
+            frm.sliceType = X265_TYPE_B;
+            x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid\n",
+                     frm.frameNum);
         }
 
-        list[j] = NULL;
-
-        int bframes, brefs;
-        for (bframes = 0, brefs = 0;; bframes++)
+        /* pyramid with multiple B-refs needs a big enough dpb that the preceding P-frame stays available.
+           smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it.*/
+        else if (frm.sliceType == X265_TYPE_BREF && cfg->param.bBPyramid && brefs &&
+                 cfg->param.maxNumReferences <= (brefs + 3))
         {
-            Lowres& frm = list[bframes]->m_lowres;
+            frm.sliceType = X265_TYPE_B;
+            x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid and %d reference frames\n",
+                     frm.sliceType, cfg->param.maxNumReferences);
+        }
 
-            if (frm.sliceType == X265_TYPE_BREF && !cfg->param.bBPyramid && brefs == cfg->param.bBPyramid)
+        if (frm.sliceType == X265_TYPE_KEYFRAME)
+            frm.sliceType = cfg->param.bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR;
+        if (( /* !cfg->param.intraRefresh || */ frm.frameNum == 0) && frm.frameNum - lastKeyframe >= cfg->param.keyframeMax)
+        {
+            if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
+                frm.sliceType = cfg->param.bOpenGOP && lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
+            bool warn = frm.sliceType != X265_TYPE_IDR;
+            if (warn && cfg->param.bOpenGOP)
+                warn &= frm.sliceType != X265_TYPE_I;
+            if (warn)
             {
-                frm.sliceType = X265_TYPE_B;
-                x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid\n",
-                         frm.frameNum);
+                x265_log(&cfg->param, X265_LOG_WARNING, "specified frame type (%d) at %d is not compatible with keyframe interval\n",
+                         frm.sliceType, frm.frameNum);
+                frm.sliceType = cfg->param.bOpenGOP && lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
             }
-
-            /* pyramid with multiple B-refs needs a big enough dpb that the preceding P-frame stays available.
-               smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it.*/
-            else if (frm.sliceType == X265_TYPE_BREF && cfg->param.bBPyramid && brefs &&
-                     cfg->param.maxNumReferences <= (brefs + 3))
+        }
+        if (frm.sliceType == X265_TYPE_I && frm.frameNum - lastKeyframe >= cfg->param.keyframeMin)
+        {
+            if (cfg->param.bOpenGOP)
             {
-                frm.sliceType = X265_TYPE_B;
-                x265_log(&cfg->param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid and %d reference frames\n",
-                         frm.sliceType, cfg->param.maxNumReferences);
-            }
-
-            if (frm.sliceType == X265_TYPE_KEYFRAME)
-                frm.sliceType = cfg->param.bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR;
-            if (( /* !cfg->param.intraRefresh || */ frm.frameNum == 0) && frm.frameNum - lastKeyframe >= cfg->param.keyframeMax)
-            {
-                if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
-                    frm.sliceType = cfg->param.bOpenGOP && lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
-                bool warn = frm.sliceType != X265_TYPE_IDR;
-                if (warn && cfg->param.bOpenGOP)
-                    warn &= frm.sliceType != X265_TYPE_I;
-                if (warn)
-                {
-                    x265_log(&cfg->param, X265_LOG_WARNING, "specified frame type (%d) at %d is not compatible with keyframe interval\n", frm.sliceType, frm.frameNum);
-                    frm.sliceType = cfg->param.bOpenGOP && lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
-                }
-            }
-            if (frm.sliceType == X265_TYPE_I && frm.frameNum - lastKeyframe >= cfg->param.keyframeMin)
-            {
-                if (cfg->param.bOpenGOP)
-                {
-                    lastKeyframe = frm.frameNum;
-                    frm.bKeyframe = true;
-                }
-                else
-                    frm.sliceType = X265_TYPE_IDR;
-            }
-            if (frm.sliceType == X265_TYPE_IDR)
-            {
-                /* Closed GOP */
                 lastKeyframe = frm.frameNum;
                 frm.bKeyframe = true;
-                if (bframes > 0)
-                {
-                    frames[bframes]->sliceType = X265_TYPE_P;
-                    bframes--;
-                }
             }
-
-            if (bframes == cfg->param.bframes || !list[bframes + 1])
-            {
-                if (IS_X265_TYPE_B(frm.sliceType))
-                    x265_log(&cfg->param, X265_LOG_WARNING, "specified frame type is not compatible with max B-frames\n");
-                if (frm.sliceType == X265_TYPE_AUTO || IS_X265_TYPE_B(frm.sliceType))
-                    frm.sliceType = X265_TYPE_P;
-            }
-            if (frm.sliceType == X265_TYPE_BREF)
-                brefs++;
-            if (frm.sliceType == X265_TYPE_AUTO)
-                frm.sliceType = X265_TYPE_B;
-            else if (!IS_X265_TYPE_B(frm.sliceType))
-                break;
+            else
+                frm.sliceType = X265_TYPE_IDR;
         }
-
-        if (bframes)
-            list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
-        list[bframes]->m_lowres.leadingBframes = bframes;
-        lastNonB = &list[bframes]->m_lowres;
-
-        /* insert a bref into the sequence */
-        if (cfg->param.bBPyramid && bframes > 1 && !brefs)
+        if (frm.sliceType == X265_TYPE_IDR)
         {
-            list[bframes / 2]->m_lowres.sliceType = X265_TYPE_BREF;
-            brefs++;
+            /* Closed GOP */
+            lastKeyframe = frm.frameNum;
+            frm.bKeyframe = true;
+            if (bframes > 0)
+            {
+                frames[bframes]->sliceType = X265_TYPE_P;
+                bframes--;
+            }
         }
+        if (bframes == cfg->param.bframes || !list[bframes + 1])
+        {
+            if (IS_X265_TYPE_B(frm.sliceType))
+                x265_log(&cfg->param, X265_LOG_WARNING, "specified frame type is not compatible with max B-frames\n");
+            if (frm.sliceType == X265_TYPE_AUTO || IS_X265_TYPE_B(frm.sliceType))
+                frm.sliceType = X265_TYPE_P;
+        }
+        if (frm.sliceType == X265_TYPE_BREF)
+            brefs++;
+        if (frm.sliceType == X265_TYPE_AUTO)
+            frm.sliceType = X265_TYPE_B;
+        else if (!IS_X265_TYPE_B(frm.sliceType))
+            break;
+    }
+
+    if (bframes)
+        list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
+    list[bframes]->m_lowres.leadingBframes = bframes;
+    lastNonB = &list[bframes]->m_lowres;
+
+    /* insert a bref into the sequence */
+    if (cfg->param.bBPyramid && bframes > 1 && !brefs)
+    {
+        list[bframes / 2]->m_lowres.sliceType = X265_TYPE_BREF;
+        brefs++;
+    }
+
+    /* calculate the frame costs ahead of time for x264_rc_analyse_slice while we still have lowres */
+    if (cfg->param.rc.rateControlMode != X265_RC_CQP)
+    {
+        int p0, p1, b;
+        p1 = b = bframes + 1;
+
+        frames[0] = lastNonB;
+        for (int i = 0; i <= bframes; i++)
+        {
+            frames[i + 1] = &list[i]->m_lowres;
+        }
+
+        if (IS_X265_TYPE_I(frames[bframes + 1]->sliceType))
+            p0 = bframes + 1;
+        else // P
+            p0 = 0;
+
+        estimateFrameCost(p0, p1, b, 0);
+
+        if ((p0 != p1 || bframes) /*&& cfg->param.rc.i_vbv_buffer_size*/)
+        {
+            // We need the intra costs for row SATDs
+            estimateFrameCost(b, b, b, 0);
 
         /* calculate the frame costs ahead of time for x264_rc_analyse_slice while we still have lowres */
         if (cfg->param.rc.rateControlMode != X265_RC_CQP)
@@ -737,186 +765,52 @@ void Lookahead::slicetypeDecide()
             int p0, p1, b;
             p1 = b = bframes + 1;
 
-            frames[0] = lastNonB;
-            for (int i = 0; i <= bframes; i++)
-            {
-                frames[i + 1] = &list[i]->m_lowres;
-            }
-
-            if (IS_X265_TYPE_I(frames[bframes + 1]->sliceType))
-                p0 = bframes + 1;
-            else // P
-                p0 = 0;
-
-            estimateFrameCost(p0, p1, b, 0);
-
-            if ((p0 != p1 || bframes) /*&& cfg->param.rc.i_vbv_buffer_size*/)
-            {
-                // We need the intra costs for row SATDs
-                estimateFrameCost(b, b, b, 0);
-
-                // We need B-frame costs for row SATDs
-                p0 = 0;
-                for (b = 1; b <= bframes; b++)
-                {
-                    if (frames[b]->sliceType == X265_TYPE_B)
-                        for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; )
-                        {
-                            p1++;
-                        }
-
-                    else
-                        p1 = bframes + 1;
-                    estimateFrameCost(p0, p1, b, 0);
-                    if (frames[b]->sliceType == X265_TYPE_BREF)
-                        p0 = b;
-                }
+                else
+                    p1 = bframes + 1;
+                estimateFrameCost(p0, p1, b, 0);
+                if (frames[b]->sliceType == X265_TYPE_BREF)
+                    p0 = b;
             }
         }
+    }
 
-        /* dequeue all frames from inputQueue that are about to be enqueued
-         * in the output queue.  The order is important because TComPic can
-         * only be in one list at a time */
-        int64_t pts[X265_BFRAME_MAX + 1];
-        for (int i = 0; i <= bframes; i++)
-        {
-            TComPic *pic;
-            pic = inputQueue.popFront();
-            pts[i] = pic->m_pts;
-        }
+    /* dequeue all frames from inputQueue that are about to be enqueued
+     * in the output queue.  The order is important because TComPic can
+     * only be in one list at a time */
+    int64_t pts[X265_BFRAME_MAX + 1];
+    for (int i = 0; i <= bframes; i++)
+    {
+        TComPic *pic;
+        pic = inputQueue.popFront();
+        pts[i] = pic->m_pts;
+    }
 
-        /* add non-B to output queue */
-        int idx = 0;
-        list[bframes]->m_reorderedPts = pts[idx++];
-        outputQueue.pushBack(*list[bframes]);
+    /* add non-B to output queue */
+    int idx = 0;
+    list[bframes]->m_reorderedPts = pts[idx++];
+    outputQueue.pushBack(*list[bframes]);
 
-        /* Add B-ref frame next to P frame in output queue, the B-ref encode before non B-ref frame */
-        if (bframes > 1 && cfg->param.bBPyramid)
-        {
-            for (int i = 0; i < bframes; i++)
-            {
-                if (list[i]->m_lowres.sliceType == X265_TYPE_BREF)
-                {
-                    list[i]->m_reorderedPts = pts[idx++];
-                    outputQueue.pushBack(*list[i]);
-                }
-            }
-        }
-
-        /* add B frames to output queue */
+    /* Add B-ref frame next to P frame in output queue, the B-ref encode before non B-ref frame */
+    if (bframes > 1 && cfg->param.bBPyramid)
+    {
         for (int i = 0; i < bframes; i++)
         {
-            /* push all the B frames into output queue except B-ref, which already pushed into output queue*/
-            if (list[i]->m_lowres.sliceType != X265_TYPE_BREF)
+            if (list[i]->m_lowres.sliceType == X265_TYPE_BREF)
             {
                 list[i]->m_reorderedPts = pts[idx++];
                 outputQueue.pushBack(*list[i]);
             }
         }
-
-        return;
     }
 
-    // Fixed GOP structures for when B-Adapt and/or lookahead are disabled
-    if (numDecided == 0 || cfg->param.keyframeMax <= 1)
+    /* add B frames to output queue */
+    for (int i = 0; i < bframes; i++)
     {
-        TComPic *pic = inputQueue.popFront();
-        pic->m_lowres.sliceType = X265_TYPE_I;
-        pic->m_lowres.bKeyframe = true;
-        lastKeyframe = pic->m_lowres.frameNum;
-        lastNonB = &pic->m_lowres;
-        numDecided++;
-
-        pic->m_reorderedPts = pic->m_pts;
-        outputQueue.pushBack(*pic);
-    }
-    else if (cfg->param.bframes == 0 || inputQueue.size() == 1)
-    {
-        TComPic *pic = inputQueue.popFront();
-        if (pic->getPOC() % cfg->param.keyframeMax)
-            pic->m_lowres.sliceType = X265_TYPE_P;
-        else
+        /* push all the B frames into output queue except B-ref, which already pushed into output queue*/
+        if (list[i]->m_lowres.sliceType != X265_TYPE_BREF)
         {
-            pic->m_lowres.sliceType = X265_TYPE_I;
-            pic->m_lowres.bKeyframe = true;
-            lastKeyframe = pic->m_lowres.frameNum;
-        }
-        lastNonB = &pic->m_lowres;
-        pic->m_reorderedPts = pic->m_pts;
-        outputQueue.pushBack(*pic);
-        numDecided++;
-    }
-    else
-    {
-        TComPic *list[X265_BFRAME_MAX + 1];
-        int64_t pts[X265_BFRAME_MAX + 1];
-        int j;
-        for (j = 0; j <= cfg->param.bframes && !inputQueue.empty(); j++)
-        {
-            TComPic *pic = inputQueue.popFront();
-            list[j] = pic;
-            pts[j] = pic->m_pts;
-            if (pic->m_lowres.frameNum >= lastKeyframe + cfg->param.keyframeMax)
-            {
-                if (j)
-                {
-                    list[j - 1]->m_lowres.sliceType = X265_TYPE_P;
-                    inputQueue.pushFront(*pic); // push I-frame back onto input queue
-                }
-                else
-                {
-                    pic->m_lowres.sliceType = X265_TYPE_I;
-                    pic->m_lowres.bKeyframe = true;
-                    lastKeyframe = pic->m_lowres.frameNum;
-                    j++;
-                }
-                break;
-            }
-        }
-
-        if (!j)
-            return;
-        int bframes = j - 1;
-        if (bframes)
-            list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
-        list[bframes]->m_lowres.leadingBframes = bframes;
-        lastNonB = &list[bframes]->m_lowres;
-
-        TComPic *pic = list[bframes];
-        if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
-            pic->m_lowres.sliceType = X265_TYPE_P;
-
-        int idx = 0;
-        pic->m_reorderedPts = pts[idx++];
-
-        outputQueue.pushBack(*pic);
-        numDecided++;
-
-        if (cfg->param.bBPyramid && bframes > 1)
-        {
-            int bref = bframes / 2;
-            if (list[bref - 1]->m_lowres.sliceType == X265_TYPE_AUTO)
-            {
-                list[bref - 1]->m_lowres.sliceType = X265_TYPE_BREF;
-
-                list[bref - 1]->m_reorderedPts = pts[idx++];
-                outputQueue.pushBack(*list[bref - 1]);
-                numDecided++;
-            }
-        }
-
-        for (int i = 0; i < bframes; i++)
-        {
-            pic = list[i];
-            if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
-                pic->m_lowres.sliceType = X265_TYPE_B;
-
-            if (pic->m_lowres.sliceType != X265_TYPE_BREF)
-            {
-                pic->m_reorderedPts = pts[idx++];
-                outputQueue.pushBack(*pic);
-                numDecided++;
-            }
+            list[i]->m_reorderedPts = pts[idx++];
+            outputQueue.pushBack(*list[i]);
         }
     }
 }
