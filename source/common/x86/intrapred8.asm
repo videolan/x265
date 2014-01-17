@@ -31,6 +31,9 @@ pb_0_8          times 8 db 0, 8
 pb_unpackbw1    times 2 db 1, 8, 2, 8, 3, 8, 4, 8
 
 tab_Si:  db 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7
+c_mode32_17_0:  db 15, 14, 12, 11, 10, 9, 7, 6, 5, 4, 2, 1, 0, 0, 0, 0
+c_shuf8_0:      db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
+c_deinterval8:  db 0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15
 
 const ang_table
 %assign x 0
@@ -1343,6 +1346,158 @@ cglobal intra_pred_ang32_2, 3,4,4
     palignr         m2, m0, m3, 15
     movu            [r0 + r3 + 16], m2
     RET
+
+
+; Process Intra32x32, input 9x4 in [m0, m1, m2, m3], output 4x8
+%macro PROC32_8x4 5  ; col4, c0, c1, c2, c3
+  %if %2 == 0
+    pmovzxbw    m0, m0
+  %else
+    pshufb      m0, [r3]
+    pmaddubsw   m0, [r4 + %2 * 16]
+    pmulhrsw    m0, m5                  ; [07 06 05 04 03 02 01 00]
+  %endif
+  %if %3 == 0
+    pmovzxbw    m1, m1
+  %else
+    pshufb      m1, [r3]
+    pmaddubsw   m1, [r4 + %3 * 16]
+    pmulhrsw    m1, m5                  ; [17 16 15 14 13 12 11 10]
+  %endif
+  %if %4 == 0
+    pmovzxbw    m2, m2
+  %else
+    pshufb      m2, [r3]
+    pmaddubsw   m2, [r4 + %4 * 16]
+    pmulhrsw    m2, m5                  ; [27 26 25 24 23 22 21 20]
+  %endif
+  %if %5 == 0
+    pmovzxbw    m3, m3
+  %else
+    pshufb      m3, [r3]
+    pmaddubsw   m3, [r4 + %5 * 16]
+    pmulhrsw    m3, m5                  ; [37 36 35 34 33 32 31 30]
+  %endif
+
+    ; transpose
+    packuswb    m0, m2                  ; [27 26 25 24 23 22 21 20 07 06 05 04 03 02 01 00]
+    packuswb    m1, m3                  ; [37 36 35 34 33 32 31 30 17 16 15 14 13 12 11 10]
+    pshufb      m0, m6                  ; [27 07 26 06 25 05 24 04 23 03 22 02 21 01 20 00]
+    pshufb      m1, m6                  ; [37 17 36 16 35 15 34 14 33 13 32 12 31 11 30 10]
+    punpcklbw   m2, m0, m1              ; [33 23 13 03 32 22 12 02 31 21 11 01 30 20 10 00]
+    punpckhbw   m0, m1                  ; [37 27 17 07 36 26 16 06 35 25 15 05 34 24 14 04]
+
+    ; store
+    movd        [r0 +       + %1 * 4], m2
+    pextrd      [r0 +  r1   + %1 * 4], m2, 1
+    pextrd      [r0 +  r1*2 + %1 * 4], m2, 2
+    pextrd      [r0 +  r5   + %1 * 4], m2, 3
+    movd        [r6         + %1 * 4], m0
+    pextrd      [r6 +  r1   + %1 * 4], m0, 1
+    pextrd      [r6 +  r1*2 + %1 * 4], m0, 2
+    pextrd      [r6 +  r5   + %1 * 4], m0, 3
+%endmacro
+
+
+;-----------------------------------------------------------------------------
+; void intraPredAng32(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_ang32_17, 4,7,8
+    ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
+    mov         r6, rsp
+    sub         rsp, 64+gprsize
+    and         rsp, ~63
+    mov         [rsp+64], r6
+
+    ; collect reference pixel
+    movu        m0, [r3]
+    movu        m1, [r3 + 16]
+    pshufb      m0, [c_mode32_17_0]
+    pshufb      m1, [c_mode32_17_0]
+    mova        [rsp     ], m1
+    movu        [rsp + 13], m0
+    movu        m0, [r2 + 1]
+    movu        m1, [r2 + 1 + 16]
+    movu        [rsp + 26], m0
+    movu        [rsp + 26 + 16], m1
+    mov         [rsp + 63], byte 4
+
+    ; filter
+    lea         r2, [rsp + 25]          ; r2 -> [0]
+    lea         r3, [c_shuf8_0]         ; r3 -> shuffle8
+    lea         r4, [ang_table]         ; r4 -> ang_table
+    lea         r5, [r1 * 3]            ; r5 -> 3 * stride
+    lea         r6, [r0 + r1 * 4]       ; r6 -> 4 * stride
+    mova        m5, [pw_1024]           ; m5 -> 1024
+    mova        m6, [c_deinterval8]     ; m6 -> c_deinterval8
+
+.loop:
+    ; Row[0 - 3]
+    movu        m3, [r2 - 3]
+    palignr     m0, m3, 3
+    palignr     m1, m3, 2
+    palignr     m2, m3, 1
+    PROC32_8x4  0, 6,12,18,24
+
+    ; Row[4 - 7]
+    movu        m3, [r2 - 6]
+    palignr     m0, m3, 2
+    mova        m1, m0
+    palignr     m2, m3, 1
+    PROC32_8x4  1, 30,4,10,16
+
+    ; Row[8 - 11]
+    movu        m3, [r2 - 9]
+    palignr     m0, m3, 2
+    palignr     m1, m3, 1
+    mova        m2, m1
+    PROC32_8x4  2, 22,28,2,8
+
+    ; Row[12 - 15]
+    movu        m3, [r2 - 12]
+    palignr     m0, m3, 2
+    palignr     m1, m3, 1
+    mova        m2, m3
+    PROC32_8x4  3, 14,20,26,0
+
+    ; Row[16 - 19]
+    movu        m3, [r2 - 16]
+    palignr     m0, m3, 3
+    palignr     m1, m3, 2
+    palignr     m2, m3, 1
+    PROC32_8x4  4, 6,12,18,24
+
+    ; Row[20 - 23]
+    movu        m3, [r2 - 19]
+    palignr     m0, m3, 2
+    mova        m1, m0
+    palignr     m2, m3, 1
+    PROC32_8x4  5, 30,4,10,16
+
+    ; Row[24 - 27]
+    movu        m3, [r2 - 22]
+    palignr     m0, m3, 2
+    palignr     m1, m3, 1
+    mova        m2, m1
+    PROC32_8x4  6, 22,28,2,8
+
+    ; Row[28 - 31]
+    movu        m3, [r2 - 25]
+    palignr     m0, m3, 2
+    palignr     m1, m3, 1
+    mova        m2, m3
+    PROC32_8x4  7, 14,20,26,0
+
+    lea         r0, [r6 + r1 * 4]
+    lea         r6, [r6 + r1 * 8]
+    add         r2, 8
+    dec         byte [rsp + 63]
+    jnz        .loop
+
+    mov         rsp, [rsp+64]
+    RET
+
 
 ;-----------------------------------------------------------------------------
 ; void all_angs_pred_4x4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
