@@ -2461,18 +2461,18 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 {
     ContextModel *ctx = &m_contextModels[OFF_QT_CBF_CTX];
 
-    for (uint32_t uiCtxInc = 0; uiCtxInc < 2 * NUM_QT_CBF_CTX; uiCtxInc++)
+    for (uint32_t ctxInc = 0; ctxInc < 2 * NUM_QT_CBF_CTX; ctxInc++)
     {
-        estBitsSbac->blockCbpBits[uiCtxInc][0] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 0);
-        estBitsSbac->blockCbpBits[uiCtxInc][1] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 1);
+        estBitsSbac->blockCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].m_state, 0);
+        estBitsSbac->blockCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].m_state, 1);
     }
 
     ctx = &m_contextModels[OFF_QT_ROOT_CBF_CTX];
 
-    for (uint32_t uiCtxInc = 0; uiCtxInc < 4; uiCtxInc++)
+    for (uint32_t ctxInc = 0; ctxInc < 4; ctxInc++)
     {
-        estBitsSbac->blockRootCbpBits[uiCtxInc][0] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 0);
-        estBitsSbac->blockRootCbpBits[uiCtxInc][1] = sbacGetEntropyBits(ctx[uiCtxInc].m_state, 1);
+        estBitsSbac->blockRootCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].m_state, 0);
+        estBitsSbac->blockRootCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].m_state, 1);
     }
 }
 
