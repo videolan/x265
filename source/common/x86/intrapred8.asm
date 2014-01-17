@@ -1109,7 +1109,7 @@ cglobal intra_pred_ang4_18, 4,4,1
     movd        [r0], m0
     RET
 ;-----------------------------------------------------------------------------
-; void intraPredAng(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+; void intraPredAng8(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
 cglobal intra_pred_ang8_2, 3,5,2
@@ -1134,6 +1134,99 @@ cglobal intra_pred_ang8_2, 3,5,2
     movh        [r0 + r1 * 2],  m1
     palignr     m1,             m0, 7
     movh        [r0 + r4],      m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang8_3, 3,5,8
+    cmp         r4m,       byte 33
+    cmove       r2,        r3mp
+    lea         r3,        [ang_table + 14 * 16]
+    mova        m7,        [pw_1024]
+
+    movu        m0,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m1,        m0, 1                      ; [x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+
+    punpckhbw   m2,        m0, m1                     ; [x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m0,        m1                         ; [9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    palignr     m1,        m2, m0, 2                  ; [10 9 9 8 8 7 7 6 6 5 5 4 4 3 3 2]
+
+    movu        m3,        [r3 + 12 * 16]             ; [26]
+    movu        m6,        [r3 + 6 * 16]              ; [20]
+
+    pmaddubsw   m4,        m0, m3
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m6
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m5,        m2, m0, 4                  ; [11 10 10 9 9 8 8 7 7 6 6 5 5 4 4 3]
+
+    movu        m3,        [r3]                       ; [14]
+    pmaddubsw   m5,        m3
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 6                  ; [12 11 11 10 10 9 9 8 8 7 7 6 6 5 5 4]
+
+    movu        m3,        [r3 - 6 * 16]              ; [ 8]
+    pmaddubsw   m6,        m3
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 8                  ; [13 12 12 11 11 10 10 9 9 8 8 7 7 6 6 5]
+
+    movu        m3,        [r3 - 12 * 16]             ; [ 2]
+    pmaddubsw   m6,        m1, m3
+    pmulhrsw    m6,        m7
+
+    movu        m3,        [r3 + 14 * 16]             ; [28]
+    pmaddubsw   m1,        m3
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 10                 ; [14 13 13 12 12 11 11 10 10 9 9 8 8 7 7 6]
+
+    movu        m3,        [r3 + 8 * 16]              ; [22]
+    pmaddubsw   m1,        m3
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 12                     ; [15 14 14 13 13 12 12 11 11 10 10 9 9 8 8 7]
+
+    movu        m3,        [r3 + 2 * 16]              ; [16]
+    pmaddubsw   m2,        m3
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    jz         .store
+
+    ; transpose 8x8
+    punpckhbw   m0,        m4, m5
+    punpcklbw   m4,        m5
+    punpckhbw   m2,        m4, m0
+    punpcklbw   m4,        m0
+
+    punpckhbw   m0,        m6, m1
+    punpcklbw   m6,        m1
+    punpckhbw   m1,        m6, m0
+    punpcklbw   m6,        m0
+
+    punpckhdq   m5,        m4, m6
+    punpckldq   m4,        m6
+    punpckldq   m6,        m2, m1
+    punpckhdq   m2,        m1
+    mova        m1,        m2
+
+.store:
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m4
+    movhps      [r0 + r1],       m4
+    movh        [r0 + r1 * 2],   m5
+    movhps      [r0 + r4],       m5
+    lea         r0,              [r0 + r1 * 4]
+    movh        [r0],            m6
+    movhps      [r0 + r1],       m6
+    movh        [r0 + r1 * 2],   m1
+    movhps      [r0 + r4],       m1
+
     RET
 
 ;-----------------------------------------------------------------------------
