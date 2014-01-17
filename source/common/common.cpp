@@ -399,7 +399,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
     {
         if (!strcmp(tune, "psnr"))
         {
-            param->rc.aqStrength = 0.0;            
+            param->rc.aqStrength = 0.0;
         }
         else if (!strcmp(tune, "ssim"))
         {
