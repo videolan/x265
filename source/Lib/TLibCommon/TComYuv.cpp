@@ -572,9 +572,7 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, u
 
 void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
 {
-    int x, y;
     uint32_t src0Stride, src1Stride, dststride;
-    int shiftNum, offset;
 
     int16_t* srcY0 = srcYuv0->getLumaAddr(partUnitIdx);
     int16_t* srcU0 = srcYuv0->getCbAddr(partUnitIdx);
@@ -588,61 +586,24 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitId
     Pel* dstU = getCbAddr(partUnitIdx);
     Pel* dstV = getCrAddr(partUnitIdx);
 
+    int part = partitionFromSizes(width, height);
+
     if (bLuma)
     {
         src0Stride = srcYuv0->m_width;
         src1Stride = srcYuv1->m_width;
         dststride  = getStride();
-        shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
-        offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
-        for (y = 0; y < height; y++)
-        {
-            for (x = 0; x < width; x += 4)
-            {
-                dstY[x + 0] = ClipY((srcY0[x + 0] + srcY1[x + 0] + offset) >> shiftNum);
-                dstY[x + 1] = ClipY((srcY0[x + 1] + srcY1[x + 1] + offset) >> shiftNum);
-                dstY[x + 2] = ClipY((srcY0[x + 2] + srcY1[x + 2] + offset) >> shiftNum);
-                dstY[x + 3] = ClipY((srcY0[x + 3] + srcY1[x + 3] + offset) >> shiftNum);
-            }
-
-            srcY0 += src0Stride;
-            srcY1 += src1Stride;
-            dstY  += dststride;
-        }
+        primitives.luma_addAvg[part](dstY, dststride, srcY0, src0Stride, srcY1, src1Stride);
     }
     if (bChroma)
     {
-        shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
-        offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
-
         src0Stride = srcYuv0->m_cwidth;
         src1Stride = srcYuv1->m_cwidth;
         dststride  = getCStride();
 
-        width  >>= m_hChromaShift;
-        height >>= m_vChromaShift;
-
-        for (y = height - 1; y >= 0; y--)
-        {
-            for (x = width - 1; x >= 0; )
-            {
-                // note: chroma min width is 2
-                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
-                x--;
-                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
-                x--;
-            }
-
-            srcU0 += src0Stride;
-            srcU1 += src1Stride;
-            srcV0 += src0Stride;
-            srcV1 += src1Stride;
-            dstU  += dststride;
-            dstV  += dststride;
-        }
+        primitives.chroma_addAvg[part](dstU, dststride, srcU0, src0Stride, srcU1, src1Stride);
+        primitives.chroma_addAvg[part](dstV, dststride, srcV0, src0Stride, srcV1, src1Stride);
     }
 }
 

@@ -203,6 +203,8 @@ typedef void (*copy_ps_t)(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t
 typedef void (*pixel_sub_ps_t)(int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixel_add_ps_t)(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1);
 
+typedef void (*addAvg_t)(pixel* dst, intptr_t dstStride, int16_t* src0, intptr_t src0Stride, int16_t* src1, intptr_t src1Stride);
+
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
  * a vectorized primitive, or a C function. */
@@ -270,6 +272,9 @@ struct EncoderPrimitives
     downscale_t     frame_init_lowres_core;
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
     extendCURowBorder_t extendRowBorder;
+
+    addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
+    addAvg_t        chroma_addAvg[NUM_CHROMA_PARTITIONS];
 
     struct
     {
