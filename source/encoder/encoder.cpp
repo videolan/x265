@@ -546,8 +546,9 @@ void Encoder::printSummary()
                         len += sprintf(stats + len, " %dx%d: "LL"%%", cuSize/2, cuSize/2, cntIntraNxN);
                 }
             }
+            const char slicechars = "BPI";
             if (stats[0])
-                x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", sliceType == P_SLICE ? 'P' : sliceType == B_SLICE ? 'B' : 'I', cuSize, stats);
+                x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", slicechars[sliceType], cuSize, stats);
         }
     }
 #endif
