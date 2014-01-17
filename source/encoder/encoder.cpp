@@ -1343,8 +1343,6 @@ void Encoder::configure(x265_param *_param)
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
 
-    //====== Enforce these hard coded settings before initializeGOP() to
-    //       avoid a valgrind warning
     m_loopFilterOffsetInPPS = 0;
     m_loopFilterBetaOffsetDiv2 = 0;
     m_loopFilterTcOffsetDiv2 = 0;
@@ -1357,7 +1355,7 @@ void Encoder::configure(x265_param *_param)
     vps.setMaxLayers(1);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
-        /* Increase the DPB size and reorderpicture if enabled the bpyramid */
+        /* Increase the DPB size and reorder picture if bpyramid is enabled */
         m_numReorderPics[i] = (_param->bBPyramid && _param->bframes > 1) ? 2 : 1;
         m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + m_numReorderPics[i]);
 
