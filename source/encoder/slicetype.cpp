@@ -461,6 +461,8 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
                                 cuy > 0 && cuy < heightInCU - 1) || widthInCU <= 2 || heightInCU <= 2;
 
     me.setSourcePU(pelOffset, cuSize, cuSize);
+    /* A small, arbitrary bias to avoid VBV problems caused by zero-residual lookahead blocks. */
+    int lowresPenalty = 4;
 
     MV(*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cuXY],
                          &fenc->lowresMvs[1][p1 - b - 1][cuXY] };
@@ -585,6 +587,7 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
         primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
         pixelcmp_t satd = primitives.satd[partitionFromSizes(cuSize, cuSize)];
         int icost = me.COST_MAX, cost;
+        const int intraPenalty = 5 * lookAheadLambda;
         for (uint32_t mode = 0; mode < 35; mode++)
         {
             if ((mode >= 2) && (mode < 18))
@@ -595,7 +598,7 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
                 icost = cost;
         }
 
-        // TOOD: i_icost += intra_penalty + lowres_penalty;
+        icost += intraPenalty + lowresPenalty;
         fenc->intraCost[cuXY] = icost;
         fenc->rowSatds[0][0][cuy] += icost;
         if (bFrameScoreCU)
@@ -605,6 +608,7 @@ void LookaheadRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int 
                 costIntraAq += (icost * fenc->invQscaleFactor[cuXY] + 128) >> 8;
         }
     }
+    bcost += lowresPenalty;
     if (!bBidir)
     {
         if (fenc->intraCost[cuXY] < bcost)
@@ -754,17 +758,20 @@ void Lookahead::slicetypeDecide()
 
         estimateFrameCost(p0, p1, b, 0);
 
-        if ((p0 != p1 || bframes) /*&& cfg->param.rc.i_vbv_buffer_size*/)
+        if ((p0 != p1 || bframes) && cfg->param.rc.vbvBufferSize)
         {
             // We need the intra costs for row SATDs
             estimateFrameCost(b, b, b, 0);
 
-        /* calculate the frame costs ahead of time for x264_rc_analyse_slice while we still have lowres */
-        if (cfg->param.rc.rateControlMode != X265_RC_CQP)
-        {
-            int p0, p1, b;
-            p1 = b = bframes + 1;
-
+            // We need B-frame costs for row SATDs
+            p0 = 0;
+            for (b = 1; b <= bframes; b++)
+            {
+                if (frames[b]->sliceType == X265_TYPE_B)
+                    for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; )
+                    {
+                        p1++;
+                    }
                 else
                     p1 = bframes + 1;
                 estimateFrameCost(p0, p1, b, 0);

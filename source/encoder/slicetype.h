@@ -59,7 +59,7 @@ struct LookaheadRow
     int                 widthInCU;
     int                 heightInCU;
     int                 merange;
-
+    int                 lookAheadLambda;
     LookaheadRow()
     {
         me.setQP(X265_LOOKAHEAD_QP);
@@ -67,6 +67,7 @@ struct LookaheadRow
         me.setSubpelRefine(1);
         predictions = (pixel*)X265_MALLOC(pixel, 35 * 8 * 8);
         merange = 16;
+        lookAheadLambda = (int)x265_lambda2_non_I[X265_LOOKAHEAD_QP];
     }
 
     ~LookaheadRow()
