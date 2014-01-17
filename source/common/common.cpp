@@ -219,7 +219,7 @@ void x265_param_default(x265_param *param)
 
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 0;
-    param->bEnableSsim = 1;
+    param->bEnableSsim = 0;
 }
 
 extern "C"
