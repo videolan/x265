@@ -86,6 +86,7 @@ typedef struct x265_picture
     int     poc;
     int     colorSpace;
     int64_t pts;
+    int64_t dts;
     void*   userData;
 
     /* new data members to this structure must be added to the end so that

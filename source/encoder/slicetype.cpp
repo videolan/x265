@@ -777,12 +777,17 @@ void Lookahead::slicetypeDecide()
         /* dequeue all frames from inputQueue that are about to be enqueued
          * in the output queue.  The order is important because TComPic can
          * only be in one list at a time */
+        int64_t pts[X265_BFRAME_MAX + 1];
         for (int i = 0; i <= bframes; i++)
         {
-            inputQueue.popFront();
+            TComPic *pic;
+            pic = inputQueue.popFront();
+            pts[i] = pic->m_pts;
         }
 
         /* add non-B to output queue */
+        int idx = 0;
+        list[bframes]->m_reorderedPts = pts[idx++];
         outputQueue.pushBack(*list[bframes]);
 
         /* Add B-ref frame next to P frame in output queue, the B-ref encode before non B-ref frame */
@@ -791,7 +796,10 @@ void Lookahead::slicetypeDecide()
             for (int i = 0; i < bframes; i++)
             {
                 if (list[i]->m_lowres.sliceType == X265_TYPE_BREF)
+                {
+                    list[i]->m_reorderedPts = pts[idx++];
                     outputQueue.pushBack(*list[i]);
+                }
             }
         }
 
@@ -800,7 +808,10 @@ void Lookahead::slicetypeDecide()
         {
             /* push all the B frames into output queue except B-ref, which already pushed into output queue*/
             if (list[i]->m_lowres.sliceType != X265_TYPE_BREF)
+            {
+                list[i]->m_reorderedPts = pts[idx++];
                 outputQueue.pushBack(*list[i]);
+            }
         }
 
         return;
@@ -815,6 +826,8 @@ void Lookahead::slicetypeDecide()
         lastKeyframe = pic->m_lowres.frameNum;
         lastNonB = &pic->m_lowres;
         numDecided++;
+
+        pic->m_reorderedPts = pic->m_pts;
         outputQueue.pushBack(*pic);
     }
     else if (cfg->param.bframes == 0 || inputQueue.size() == 1)
@@ -829,17 +842,20 @@ void Lookahead::slicetypeDecide()
             lastKeyframe = pic->m_lowres.frameNum;
         }
         lastNonB = &pic->m_lowres;
+        pic->m_reorderedPts = pic->m_pts;
         outputQueue.pushBack(*pic);
         numDecided++;
     }
     else
     {
         TComPic *list[X265_BFRAME_MAX + 1];
+        int64_t pts[X265_BFRAME_MAX + 1];
         int j;
         for (j = 0; j <= cfg->param.bframes && !inputQueue.empty(); j++)
         {
             TComPic *pic = inputQueue.popFront();
             list[j] = pic;
+            pts[j] = pic->m_pts;
             if (pic->m_lowres.frameNum >= lastKeyframe + cfg->param.keyframeMax)
             {
                 if (j)
@@ -869,6 +885,10 @@ void Lookahead::slicetypeDecide()
         TComPic *pic = list[bframes];
         if (pic->m_lowres.sliceType == X265_TYPE_AUTO)
             pic->m_lowres.sliceType = X265_TYPE_P;
+
+        int idx = 0;
+        pic->m_reorderedPts = pts[idx++];
+
         outputQueue.pushBack(*pic);
         numDecided++;
 
@@ -878,6 +898,8 @@ void Lookahead::slicetypeDecide()
             if (list[bref - 1]->m_lowres.sliceType == X265_TYPE_AUTO)
             {
                 list[bref - 1]->m_lowres.sliceType = X265_TYPE_BREF;
+
+                list[bref - 1]->m_reorderedPts = pts[idx++];
                 outputQueue.pushBack(*list[bref - 1]);
                 numDecided++;
             }
@@ -891,6 +913,7 @@ void Lookahead::slicetypeDecide()
 
             if (pic->m_lowres.sliceType != X265_TYPE_BREF)
             {
+                pic->m_reorderedPts = pts[idx++];
                 outputQueue.pushBack(*pic);
                 numDecided++;
             }

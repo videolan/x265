@@ -58,6 +58,7 @@ using namespace x265;
 
 Encoder::Encoder()
 {
+    m_encodedFrameNum = 0;
     m_pocLast = -1;
     m_maxRefPicNum = 0;
     m_curEncoder = 0;
@@ -241,6 +242,11 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
 
+        if (m_pocLast == 0)
+            m_firstPts = pic->m_pts;
+         if (m_bframeDelay && m_pocLast == m_bframeDelay)
+             m_bframeDelayTime = pic->m_pts - m_firstPts;
+
         // Encoder holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
         if (param.rc.aqMode || param.bEnableWeightedPred)
@@ -284,7 +290,10 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             pic_out->poc = out->getSlice()->getPOC();
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = out->m_userData;
+
             pic_out->pts = out->m_pts;
+            pic_out->dts = out->m_dts;
+
             switch (out->getSlice()->getSliceType())
             {
             case I_SLICE:
@@ -325,8 +334,21 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         // curEncoder is guaranteed to be idle at this point
         TComPic *fenc = m_lookahead->outputQueue.popFront();
 
+         m_encodedFrameNum++;
+         if (m_bframeDelay)
+         {
+             int64_t *prevReorderedPts = m_prevReorderedPts;
+             fenc->m_dts = m_encodedFrameNum > m_bframeDelay
+                        ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
+                        : fenc->m_reorderedPts - m_bframeDelayTime;
+             prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = fenc->m_reorderedPts;
+         }
+         else
+             fenc->m_dts = fenc->m_reorderedPts;
+
         // Initialize slice for encoding with this FrameEncoder
         curEncoder->initSlice(fenc);
+
 
         // determine references, setup RPS, etc
         m_dpb->prepareEncode(fenc);
@@ -1409,6 +1431,8 @@ void Encoder::configure(x265_param *_param)
     m_useLossless = false;  // x264 configures this via --qp=0
     m_TransquantBypassEnableFlag = false;
     m_CUTransquantBypassFlagValue = false;
+
+     m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits)
