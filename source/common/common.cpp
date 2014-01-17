@@ -514,30 +514,6 @@ int x265_check_params(x265_param *param)
     }
 
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
-    if (param->rc.rateControlMode == X265_RC_CQP)
-    {
-        param->rc.aqMode = X265_AQ_NONE;
-        param->rc.bitrate = 0;   
-        param->rc.cuTree = 0;
-    }
-    
-    if (param->rc.aqMode == 0 && param->rc.cuTree)
-    {
-        param->rc.aqMode = X265_AQ_VARIANCE;
-        param->rc.aqStrength = 0.0;
-    }
-
-    if(param->bFrameAdaptive == 0 && param->rc.cuTree)
-    {
-        x265_log(NULL, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
-        param->rc.cuTree = 0;
-    }
-
-    if (param->rc.aqStrength == 0 && param->rc.cuTree == 0)
-    {
-        param->rc.aqMode = X265_AQ_NONE;        
-    }
-
     return check_failed;
 }
 

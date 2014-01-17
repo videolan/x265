@@ -1311,6 +1311,31 @@ void Encoder::configure(x265_param *_param)
         bEnableRDOQTS = 0;
     }
 
+    if (_param->rc.rateControlMode == X265_RC_CQP)
+    {
+        _param->rc.aqMode = X265_AQ_NONE;
+        _param->rc.bitrate = 0;
+        _param->rc.cuTree = 0;
+    }
+
+    if (_param->rc.aqMode == 0 && _param->rc.cuTree)
+    {
+        _param->rc.aqMode = X265_AQ_VARIANCE;
+        _param->rc.aqStrength = 0.0;
+    }
+
+    if (_param->bFrameAdaptive == 0 && _param->rc.cuTree)
+    {
+        x265_log(_param, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
+        _param->rc.cuTree = 0;
+    }
+
+    if (_param->rc.aqStrength == 0 && _param->rc.cuTree == 0)
+    {
+        _param->rc.aqMode = X265_AQ_NONE;        
+    }
+
+
     //====== Coding Tools ========
 
     uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
