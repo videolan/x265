@@ -244,8 +244,8 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 
         if (m_pocLast == 0)
             m_firstPts = pic->m_pts;
-         if (m_bframeDelay && m_pocLast == m_bframeDelay)
-             m_bframeDelayTime = pic->m_pts - m_firstPts;
+        if (m_bframeDelay && m_pocLast == m_bframeDelay)
+            m_bframeDelayTime = pic->m_pts - m_firstPts;
 
         // Encoder holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
@@ -1336,37 +1336,14 @@ void Encoder::configure(x265_param *_param)
     }
 
 
+    m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
+
     //====== Coding Tools ========
 
     uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
-
-    m_loopFilterOffsetInPPS = 0;
-    m_loopFilterBetaOffsetDiv2 = 0;
-    m_loopFilterTcOffsetDiv2 = 0;
-    m_loopFilterAcrossTilesEnabledFlag = 1;
-
-    //====== HM Settings not exposed for configuration ======
-    TComVPS vps;
-    vps.setMaxTLayers(1);
-    vps.setTemporalNestingFlag(true);
-    vps.setMaxLayers(1);
-    for (int i = 0; i < MAX_TLAYER; i++)
-    {
-        /* Increase the DPB size and reorder picture if bpyramid is enabled */
-        m_numReorderPics[i] = (_param->bBPyramid && _param->bframes > 1) ? 2 : 1;
-        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + m_numReorderPics[i]);
-
-        vps.setNumReorderPics(m_numReorderPics[i], i);
-        vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-    }
-
-    m_vps = vps;
-    m_maxCuDQPDepth = 0;
-    m_maxNumOffsetsPerPic = 2048;
-    m_log2ParallelMergeLevelMinus2 = 0;
 
     //========= set default display window ==================================
     m_defaultDisplayWindow.m_enabledFlag = true;
@@ -1405,6 +1382,31 @@ void Encoder::configure(x265_param *_param)
         m_conformanceWindow.m_enabledFlag = true;
         m_conformanceWindow.m_winBottomOffset = m_pad[1];
     }
+
+    //====== HM Settings not exposed for configuration ======
+    m_loopFilterOffsetInPPS = 0;
+    m_loopFilterBetaOffsetDiv2 = 0;
+    m_loopFilterTcOffsetDiv2 = 0;
+    m_loopFilterAcrossTilesEnabledFlag = 1;
+
+    TComVPS vps;
+    vps.setMaxTLayers(1);
+    vps.setTemporalNestingFlag(true);
+    vps.setMaxLayers(1);
+    for (int i = 0; i < MAX_TLAYER; i++)
+    {
+        /* Increase the DPB size and reorder picture if bpyramid is enabled */
+        m_numReorderPics[i] = (_param->bBPyramid && _param->bframes > 1) ? 2 : 1;
+        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + m_numReorderPics[i]);
+
+        vps.setNumReorderPics(m_numReorderPics[i], i);
+        vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
+    }
+
+    m_vps = vps;
+    m_maxCuDQPDepth = 0;
+    m_maxNumOffsetsPerPic = 2048;
+    m_log2ParallelMergeLevelMinus2 = 0;
 
     m_progressiveSourceFlag = true;
     m_interlacedSourceFlag = false;
@@ -1455,8 +1457,6 @@ void Encoder::configure(x265_param *_param)
     m_useLossless = false;  // x264 configures this via --qp=0
     m_TransquantBypassEnableFlag = false;
     m_CUTransquantBypassFlagValue = false;
-
-     m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits)
