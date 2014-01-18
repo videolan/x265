@@ -763,6 +763,30 @@ bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
     return true;
 }
 
+bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    int j = 0;
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        ref(ref_dest, STRIDE, sbuf1 + j, STRIDE, sbuf2 + j, STRIDE);
+        opt(opt_dest, STRIDE, sbuf1 + j, STRIDE, sbuf2 + j, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -932,6 +956,24 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
                 printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
             }
+        }
+    }
+
+    if (opt.luma_addAvg[part])
+    {
+        if (!check_addAvg(ref.luma_addAvg[part], opt.luma_addAvg[part]))
+        {
+            printf("luma_addAvg[%s] failed\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
+    if (opt.chroma_addAvg[part])
+    {
+        if (!check_addAvg(ref.chroma_addAvg[part], opt.chroma_addAvg[part]))
+        {
+            printf("chroma_addAvg[%s] failed\n", chromaPartStr[part]);
+            return false;
         }
     }
 
@@ -1256,6 +1298,18 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].add_ps[part], ref.chroma[i].add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
+    }
+
+    if (opt.luma_addAvg[part])
+    {
+        printf("luma_addAvg[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.luma_addAvg[part], ref.luma_addAvg[part], pbuf1, STRIDE, sbuf1, STRIDE, sbuf2, STRIDE);
+    }
+
+    if (opt.chroma_addAvg[part])
+    {
+        printf("chroma_addAvg[%s]", chromaPartStr[part]);
+        REPORT_SPEEDUP(opt.chroma_addAvg[part], ref.chroma_addAvg[part], pbuf1, STRIDE, sbuf1, STRIDE, sbuf2, STRIDE);
     }
 
 #undef HEADER
