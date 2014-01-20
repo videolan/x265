@@ -1573,6 +1573,134 @@ cglobal intra_pred_ang16_33, 3,7,8
 
     RET
 
+INIT_XMM sse4
+cglobal intra_pred_ang16_4, 3,7,8
+
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]            ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]       ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m0,        [r2 + 1]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+    mova        m5,        m1
+
+    movu        m3,        [r3 + 5 * 16]             ; [21]
+    movu        m6,        [r3 - 6 * 16]             ; [10]
+
+    pmaddubsw   m4,        m0, m3
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m6
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    movu        m3,        [r3 + 15 * 16]             ; [31]
+    pmaddubsw   m5,        m3
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 4
+
+    movu        m3,        [r3 + 4 * 16]              ; [ 20]
+    pmaddubsw   m6,        m3
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 6
+
+    movu        m3,        [r3 - 7 * 16]              ; [ 9]
+    pmaddubsw   m6,        m1, m3
+    pmulhrsw    m6,        m7
+
+    movu        m3,        [r3 + 14 * 16]             ; [30]
+    pmaddubsw   m1,        m3
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 8
+
+    movu        m3,        [r3 + 3 * 16]              ; [19]
+    pmaddubsw   m1,        m3
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 10
+    mova        m3,        m2
+
+    movu        m0,        [r3 - 8 * 16]              ; [8]
+    pmaddubsw   m2,        m0
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 0
+
+    movu        m0,        [r3 + 13 * 16]             ; [29]
+    pmaddubsw   m4,        m3, m0
+    pmulhrsw    m4,        m7
+
+    movu        m0,        [r2 + 6]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+
+    movu        m6,        [r3 +  2 * 16]            ; [18]
+
+    pmaddubsw   m1,        m6
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m5,        m2, m0, 4
+    movu        m6,        m5
+
+    movu        m3,        [r3 - 9 * 16]             ; [07]
+    pmaddubsw   m5,        m3
+    pmulhrsw    m5,        m7
+
+    movu        m3,        [r3 + 12 * 16]             ; [28]
+    pmaddubsw   m6,        m3
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m6,        m2, m0, 6
+
+    movu        m3,        [r3 +      16]             ; [17]
+    pmaddubsw   m6,        m3
+    pmulhrsw    m6,        m7
+
+    palignr     m1,        m2, m0, 8
+
+
+    pmaddubsw   m3,        m1, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m3,        m7
+    packuswb    m6,        m3
+
+    movu        m3,        [r3 + 11 * 16]             ; [27]
+    pmaddubsw   m1,        m3
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 10
+
+    movu        m3,        [r3]                       ; [16]
+    pmaddubsw   m2,        m3
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+
+    RET
+
 ;---------------------------------------------------------------------------------------------------------------
 ; void intraPredAng32(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------------------------
