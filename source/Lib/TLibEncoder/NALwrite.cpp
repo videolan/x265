@@ -84,7 +84,8 @@ void write(uint8_t*& out, OutputNALUnit& nalu, uint32_t &packetSize)
      */
     uint32_t fsize = nalu.m_bitstream.getByteStreamLength();
     uint8_t* fifo = nalu.m_bitstream.getFIFO();
-    uint8_t* emulation = (uint8_t*)X265_MALLOC(uint8_t, fsize + EMULATION_SIZE);
+    uint32_t  emulationSize = fsize / 2;
+    uint8_t* emulation = (uint8_t*)X265_MALLOC(uint8_t, fsize + emulationSize);
     uint32_t nalsize = 0;
 
     if (emulation)
