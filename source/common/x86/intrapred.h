@@ -95,6 +95,7 @@ DECL_ANG(16, 17, sse4);
 DECL_ANG(16, 18, sse4);
 DECL_ANG(16, 26, sse4);
 DECL_ANG(16, 33, sse4);
+DECL_ANG(16, 32, sse4);
 
 DECL_ANG(32, 2, ssse3);
 DECL_ANG(32, 3, sse4);
