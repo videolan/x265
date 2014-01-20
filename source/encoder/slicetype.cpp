@@ -1387,9 +1387,8 @@ void Lookahead::estimateCUPropagate(Lowres **Frames, double averageDuration, int
         }
     }
 
-    if(cfg->param.rc.vbvBufferSize && cfg->param.logLevel && referenced)
+    if (cfg->param.rc.vbvBufferSize && cfg->param.logLevel && referenced)
         cuTreeFinish(Frames[b], averageDuration, b == p1 ? b - p0 : 0);
-
 }
 
 void Lookahead::cuTreeFinish(Lowres *Frame, double averageDuration, int ref0Distance)
