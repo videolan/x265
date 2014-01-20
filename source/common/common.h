@@ -70,7 +70,6 @@
 
 #define MAX_NAL_UNITS 5
 #define MIN_FIFO_SIZE 1000
-#define EMULATION_SIZE 1000
 
 #define CHECKED_MALLOC(var, type, count) \
     { \
