@@ -543,10 +543,10 @@ void Encoder::printSummary()
                 if (sliceType == I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d: "LL"%%", cuSize/2, cuSize/2, cntIntraNxN);
+                        len += sprintf(stats + len, " %dx%d: "LL"%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
-            const char slicechars = "BPI";
+            const char slicechars[] = "BPI";
             if (stats[0])
                 x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", slicechars[sliceType], cuSize, stats);
         }
@@ -1324,7 +1324,7 @@ void Encoder::configure(x265_param *_param)
         _param->rc.aqStrength = 0.0;
     }
 
-    if (_param->bFrameAdaptive == 0 && _param->rc.cuTree)
+    if (_param->lookaheadDepth == 0 && _param->rc.cuTree)
     {
         x265_log(_param, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
         _param->rc.cuTree = 0;
