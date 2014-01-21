@@ -1196,6 +1196,7 @@ cglobal intra_pred_ang8_3, 3,5,8
     pmulhrsw    m2,        m7
     packuswb    m1,        m2
 
+.transpose8x8:
     jz         .store
 
     ; transpose 8x8
@@ -1228,6 +1229,65 @@ cglobal intra_pred_ang8_3, 3,5,8
     movhps      [r0 + r4],       m1
 
     RET
+
+cglobal intra_pred_ang8_4, 3,5,8
+    cmp         r4m,       byte 32
+    cmove       r2,        r3mp
+    lea         r3,        [ang_table + 19 * 16]
+    mova        m7,        [pw_1024]
+
+    movu        m0,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m1,        m0, 1                      ; [x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+
+    punpckhbw   m2,        m0, m1                     ; [x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m0,        m1                         ; [9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    palignr     m1,        m2, m0, 2                  ; [10 9 9 8 8 7 7 6 6 5 5 4 4 3 3 2]
+    mova        m5,        m1
+
+    movu        m3,        [r3 + 2 * 16]              ; [21]
+    movu        m6,        [r3 - 9 * 16]              ; [10]
+
+    pmaddubsw   m4,        m0, m3
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m6
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    movu        m3,        [r3 + 12 * 16]             ; [31]
+    pmaddubsw   m5,        m3
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 4                  ; [11 10 10 9 9 8 8 7 7 6 6 5 5 4 4 3]
+
+    movu        m3,        [r3 + 1 * 16]              ; [ 20]
+    pmaddubsw   m6,        m3
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 6                  ; [12 11 11 10 10 9 9 8 8 7 7 6 6 5 5 4]
+
+    movu        m3,        [r3 - 10 * 16]             ; [ 9]
+    pmaddubsw   m6,        m1, m3
+    pmulhrsw    m6,        m7
+
+    movu        m3,        [r3 + 11 * 16]             ; [30]
+    pmaddubsw   m1,        m3
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 8                  ; [13 12 12 11 11 10 10 9 9 8 8 7 7 6 6 5]
+
+    movu        m3,        [r3]                       ; [19]
+    pmaddubsw   m1,        m3
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 10                     ; [14 13 13 12 12 11 11 10 10 9 9 8 8 7 7 8]
+
+    movu        m3,        [r3 - 11 * 16]             ; [8]
+    pmaddubsw   m2,        m3
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
 ;-----------------------------------------------------------------------------
 ; void intraPredAng16(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
