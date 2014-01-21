@@ -39,7 +39,6 @@ MotionReference::MotionReference()
 int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
 {
     m_reconPic = pic;
-    unweightedFPelPlane = pic->getLumaAddr();
     lumaStride = pic->getStride();
     intptr_t startpad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
 

@@ -43,13 +43,15 @@ class TEncCfg;
         (w).bPresentFlag = b; \
     }
 
-struct LookaheadRow
+struct EstimateRow
 {
-    Lock                lock;
-    volatile bool       active;
-    volatile uint32_t   completed;      // Number of CUs in this row for which cost estimation is completed
-    pixel*              predictions;    // buffer for 35 intra predictions
     MotionEstimate      me;
+    Lock                lock;
+    pixel*              predictions;    // buffer for 35 intra predictions
+
+    volatile uint32_t   completed;      // Number of CUs in this row for which cost estimation is completed
+    volatile bool       active;
+
     int                 costEst;        // Estimated cost for all CUs in a row
     int                 costEstAq;      // Estimated weight Aq cost for all CUs in a row
     int                 costIntra;      // Estimated Intra cost for all CUs in a row
@@ -60,7 +62,7 @@ struct LookaheadRow
     int                 heightInCU;
     int                 merange;
 
-    LookaheadRow()
+    EstimateRow()
     {
         me.setQP(X265_LOOKAHEAD_QP);
         me.setSearchMethod(X265_HEX_SEARCH);
@@ -69,7 +71,7 @@ struct LookaheadRow
         merange = 16;
     }
 
-    ~LookaheadRow()
+    ~EstimateRow()
     {
         X265_FREE(predictions);
     }
@@ -79,59 +81,85 @@ struct LookaheadRow
     void estimateCUCost(Lowres * *frames, ReferencePlanes * wfref0, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
 };
 
-struct Lookahead : public WaveFront
+/* CostEstimate manages the cost estimation of a single frame, ie:
+ * estimateFrameCost() and everything below it in the call graph */
+struct CostEstimate : public WaveFront
 {
+    CostEstimate(ThreadPool *p);
+    ~CostEstimate();
+    void init(TEncCfg *, TComPic *);
+
     TEncCfg         *cfg;
-    Lowres          *frames[X265_LOOKAHEAD_MAX];
-    Lowres          *lastNonB;
-    int              numDecided;
-    int              lastKeyframe;
+    EstimateRow     *rows;
+    pixel           *wbuffer[4];
+    Lowres         **curframes;
+
+    ReferencePlanes  weightedRef;
+
+    int              paddedLines;     // number of lines in padded frame
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
 
-    ReferencePlanes  weightedRef;
-    pixel           *wbuffer[4];
-    int              paddedLines;
+    bool             bDoSearch[2];
+    bool             rowsCompleted;
+    int              curb, curp0, curp1;
+    void             processRow(int row);
 
-    PicList inputQueue;  // input pictures in order received
-    PicList outputQueue; // pictures to be encoded, in encode order
+    int      estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
 
-    bool bDoSearch[2];
-    int curb, curp0, curp1;
-    bool rowsCompleted;
+protected:
 
-    int *scratch; // temp buffer
+    void     weightsAnalyse(Lowres **frames, int b, int p0);
+    uint32_t weightCostLuma(Lowres **frames, int b, pixel *src, wpScalingParam *w);
+};
 
-    LookaheadRow* lhrows;
-
-    Lookahead(TEncCfg *, ThreadPool *);
+struct Lookahead
+{
+    Lookahead(TEncCfg *, ThreadPool *pool);
     ~Lookahead();
-
     void init();
+    void destroy();
+
+    CostEstimate     est;             // Frame cost estimator
+    PicList          inputQueue;      // input pictures in order received
+    PicList          outputQueue;     // pictures to be encoded, in encode order
+
+    TEncCfg         *cfg;
+    Lowres          *lastNonB;
+    int             *scratch;         // temp buffer
+
+    int              widthInCU;       // width of lowres frame in downscale CUs
+    int              heightInCU;      // height of lowres frame in downscale CUs
+    int              numDecided;
+    int              lastKeyframe;
+    
     void addPicture(TComPic*, int sliceType);
     void flush();
-    void destroy();
+
+    int  getEstimatedPictureCost(TComPic *pic);
+
+protected:
+
+    /* called by addPicture() or flush() to trigger slice decisions */
     void slicetypeDecide();
-    int getEstimatedPictureCost(TComPic *pic);
+    void slicetypeAnalyse(Lowres **frames, bool bKeyframe);
 
-    int estimateFrameCost(int p0, int p1, int b, bool bIntraPenalty);
+    /* called by slicetypeAnalyse() to make slice decisions */
+    int  scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
+    int  scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
+    void slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
+    int  slicetypePathCost(Lowres **frames, char *path, int threshold);
 
-    void slicetypeAnalyse(bool bKeyframe);
-    int scenecut(int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
-    int scenecutInternal(int p0, int p1, bool bRealScenecut);
-    void slicetypePath(int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
-    int slicetypePathCost(char *path, int threshold);
+    /* called by slicetypeAnalyse() to effect cuTree adjustments to adaptive
+     * quant offsets */
+    void cuTree(Lowres **frames, int numframes, bool bintra);
+    void estimateCUPropagate(Lowres **frames, double average_duration, int p0, int p1, int b, int referenced);
+    void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
+                                 int32_t *invQscales, double *fpsFactor, int len);
+    void cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
 
-    void processRow(int row);
-
-    void weightsAnalyse(int b, int p0);
-    uint32_t weightCostLuma(int b, pixel *src, wpScalingParam *w);
-
-    void cuTree(Lowres **Frames, int numframes, bool bintra);
-    void estimateCUPropagate(Lowres **Frames, double average_duration, int p0, int p1, int b, int referenced);
-    void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts, int32_t *invQscales, double *fpsFactor, int len);
-    void cuTreeFinish(Lowres *Frame, double averageDuration, int ref0Distance);
-    int frameCostRecalculate(Lowres **Frames, int p0, int p1, int b);
+    /* called by getEstimatedPictureCost() to finalize cuTree costs */
+    int  frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
 };
 }
 

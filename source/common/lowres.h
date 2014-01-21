@@ -36,11 +36,10 @@ typedef struct WpScalingParam wpScalingParam;
 
 struct ReferencePlanes
 {
-    ReferencePlanes() : isWeighted(false), isLowres(false) {}
+    ReferencePlanes() { memset(this, 0, sizeof(ReferencePlanes)); }
 
     pixel* fpelPlane;
     pixel* lowresPlane[4];
-    pixel* unweightedFPelPlane;
 
     bool isWeighted;
     bool isLowres;
