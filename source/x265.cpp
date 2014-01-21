@@ -323,7 +323,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --vbv-init                    Initial VBV buffer occupancy. Default %f\n", param->rc.vbvBufferInit);
     H0("-q/--qp                          Base QP for CQP mode. Default %d\n", param->rc.qp);
     H0("   --aq-mode                     Mode for Adaptive Quantization - 0:none 1:aqVariance Default %d\n", param->rc.aqMode);
-    H0("   --aq-strength                 Reduces blocking and blurring in flat and textured areas.(0 to 3.0)<double> . Default %f\n", param->rc.aqStrength);
+    H0("   --aq-strength                 Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
     H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
     H0("   --rd                          Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
