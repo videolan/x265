@@ -1341,14 +1341,14 @@ void Lookahead::estimateCUPropagate(Lowres **Frames, double averageDuration, int
                             listamount = (uint16_t)(listamount * bipredWeights[list] + 32) >> 6;
 
                         /* Early termination for simple case of mv0. */
-                        if (mvs[list]->notZero())
+                        if (!mvs[list][cuIndex].word)
                         {
                             CLIP_ADD(refCosts[list][cuIndex], listamount);
                             continue;
                         }
 
-                        uint16_t x = mvs[list]->x;
-                        uint16_t y = mvs[list]->y;
+                        uint16_t x = mvs[list][cuIndex].x;
+                        uint16_t y = mvs[list][cuIndex].y;
                         int cux = (x >> 5) + block_x;
                         int cuy = (y >> 5) + block_y;
                         int idx0 = cux + cuy * StrideInCU;

@@ -127,9 +127,10 @@ int YUVInput::guessFrameCount()
 
 void YUVInput::skipFrames(uint32_t numFrames)
 {
-    if (ifs && numFrames)
+    if (ifs)
     {
-        ifs->ignore(framesize * numFrames);
+        for (uint32_t i = 0; i < numFrames; i++)
+            ifs->ignore(framesize);
     }
 }
 
