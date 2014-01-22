@@ -173,9 +173,9 @@ bool WeightPrediction::checkDenom(int denom)
     int curPoc, refPoc, difPoc;
     int check;
     int fullCheck = 0;
-    int lumaDenom = 0;
     int numWeighted = 0;     // number of weighted references for each m_slice must be less than 8 as per HEVC standard
     int width[3], height[3];
+    int log2denom[3] = {denom};
 
     fenc = &m_slice->getPic()->m_lowres;
     curPoc = m_slice->getPOC();
@@ -204,32 +204,27 @@ bool WeightPrediction::checkDenom(int denom)
             {
                 float fencVar = (float)fenc->wp_ssd[yuv] + !ref->wp_ssd[yuv];
                 float refVar  = (float)ref->wp_ssd[yuv] + !ref->wp_ssd[yuv];
-                guessScale[yuv] = sqrtf((float)fencVar / refVar);
                 guessScale[yuv] = Clip3(-2.f, 1.8f, sqrtf((float)fencVar / refVar));
                 fencMean[yuv] = (float)fenc->wp_sum[yuv] / (height[yuv] * width[yuv]) / (1 << (X265_DEPTH - 8));
                 refMean[yuv]  = (float)ref->wp_sum[yuv] / (height[yuv] * width[yuv]) / (1 << (X265_DEPTH - 8));
+                // Ensure that the denominators of cb and cr are same
+                if (yuv)
+                {
+                    fw[yuv].setFromWeightAndOffset((int)(guessScale[yuv] * (1 << log2denom[1]) + 0.5), 0, log2denom[1]);
+                    log2denom[1] = X265_MIN(log2denom[1], (int)fw[yuv].log2WeightDenom);
+                }
             }
 
+            log2denom[2] = log2denom[1];
             for (int yuv = 0; yuv < 3; yuv++)
             {
                 int ic = 0;
+                denom = log2denom[yuv];
                 SET_WEIGHT(w, 0, 1, 0, 0);
                 SET_WEIGHT(fw[yuv], 0, 1 << denom, denom, 0);
                 /* Early termination */
                 if (fabsf(refMean[yuv] - fencMean[yuv]) < 0.5f && fabsf(1.f - guessScale[yuv]) < epsilon)
                     continue;
-
-                int chromaDenom = 7;
-                if (yuv)
-                {
-                    while (chromaDenom > lumaDenom)
-                    {
-                        float thresh = 127.f / (1 << chromaDenom);
-                        if (guessScale[1] < thresh && guessScale[2] < thresh)
-                            break;
-                        chromaDenom--;
-                    }
-                }
 
                 /* Don't check chroma in lookahead, or if there wasn't a luma weight. */
                 int minoff = 0, minscale, mindenom;
@@ -238,7 +233,6 @@ bool WeightPrediction::checkDenom(int denom)
 
                 w.setFromWeightAndOffset((int)(guessScale[yuv] * (1 << denom) + 0.5), 0, denom);
 
-                if (!yuv) lumaDenom = w.log2WeightDenom;
                 mindenom = w.log2WeightDenom;
                 minscale = w.inputWeight;
 
@@ -343,6 +337,9 @@ bool WeightPrediction::checkDenom(int denom)
                     }
                 }
 
+                if (mindenom < log2denom[yuv])
+                    return false;
+                log2denom[yuv] = mindenom;
                 if (!found || (minscale == 1 << mindenom && minoff == 0) || (float)minscore / origscore > 0.998f)
                 {
                     SET_WEIGHT(fw[yuv], 0, 1 << mindenom, mindenom, 0);
@@ -390,6 +387,7 @@ bool WeightPrediction::checkDenom(int denom)
 
     if (!fullCheck)
     {
+        m_slice->setWpScaling(m_wp);
         return false;
     }
 
