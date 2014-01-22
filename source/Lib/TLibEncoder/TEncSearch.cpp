@@ -442,7 +442,6 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 
     if (default0Save1Load2 != 2)
     {
-        cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
         cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, width);
@@ -563,8 +562,6 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     //===== init availability pattern =====
     if (default0Save1Load2 != 2)
     {
-        cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
-
         cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight);
         Pel* chromaPred = (chromaId > 0 ? cu->getPattern()->getAdiCrBuf(width, height, m_predBuf) : cu->getPattern()->getAdiCbBuf(width, height, m_predBuf));
 
@@ -1033,7 +1030,6 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         //===== init availability pattern =====
 
-        cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
         cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, width);
@@ -1649,7 +1645,6 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 chromaPredMode = cu->getLumaIntraDir(0);
             }
             //===== init availability pattern =====
-            cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
             cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight);
             Pel* chromaPred = (chromaId > 0 ? cu->getPattern()->getAdiCrBuf(width, height, m_predBuf) : cu->getPattern()->getAdiCbBuf(width, height, m_predBuf));
 
@@ -1740,7 +1735,6 @@ void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
 
     //===== init pattern =====
     assert(width == height);
-    cu->getPattern()->initPattern(cu, 0, 0);
     cu->getPattern()->initAdiPatternChroma(cu, 0, 0, m_predBuf, m_predBufStride, m_predBufHeight);
     Pel* patChromaU = cu->getPattern()->getAdiCbBuf(width, height, m_predBuf);
     Pel* patChromaV = cu->getPattern()->getAdiCrBuf(width, height, m_predBuf);
@@ -1801,9 +1795,6 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     uint32_t partOffset = 0;
     for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
     {
-        //===== init pattern for luma prediction =====
-        cu->getPattern()->initPattern(cu, initTrDepth, partOffset);
-
         // Reference sample smoothing
         cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
 
@@ -2136,7 +2127,6 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
         costMultiplier = 4;
     }
 
-    cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
     cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight);
 
     cu->getAllowedChromaDir(0, modeList);

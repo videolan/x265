@@ -88,8 +88,6 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     uint32_t width       = cu->getWidth(0) >> initTrDepth;
     uint32_t partOffset  = 0;
 
-    //===== init pattern for luma prediction =====
-    cu->getPattern()->initPattern(cu, initTrDepth, partOffset);
     // Reference sample smoothing
     cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_search->getPredicBuf(), m_search->getPredicBufWidth(),
                                      m_search->getPredicBufHeight(), m_search->refAbove, m_search->refLeft,
