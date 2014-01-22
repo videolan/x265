@@ -243,7 +243,6 @@ struct EncoderPrimitives
     ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
     filter_p2s_t    luma_p2s;
     filter_p2s_t    chroma_p2s;
-    ipfilter_sp_t   chroma_vsp;
 
     weightp_sp_t    weight_sp;
     weightp_pp_t    weight_pp;

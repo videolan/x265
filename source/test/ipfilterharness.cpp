@@ -607,15 +607,6 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
-    if (opt.chroma_vsp)
-    {
-        if (!check_IPFilter_primitive(ref.chroma_vsp, opt.chroma_vsp))
-        {
-            printf("chroma_vsp failed\n");
-            return false;
-        }
-    }
-
     for (int value = 0; value < NUM_IPFILTER_S_S; value++)
     {
         if (opt.ipfilter_ss[value])
@@ -781,14 +772,6 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             REPORT_SPEEDUP(opt.ipfilter_ps[value], ref.ipfilter_ps[value],
                            pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, g_lumaFilter[val]);
         }
-    }
-
-    if (opt.chroma_vsp)
-    {
-        printf("chroma_vsp \t");
-        REPORT_SPEEDUP(opt.chroma_vsp, ref.chroma_vsp,
-                       short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                       IPF_vec_output_p, dstStride, width, height, val);
     }
 
     for (int value = 0; value < NUM_IPFILTER_S_S; value++)

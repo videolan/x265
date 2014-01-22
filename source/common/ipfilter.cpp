@@ -523,7 +523,6 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipfilter_ss[FILTER_V_S_S_8] = filterVertical_ss_c<8>;
     p.ipfilter_ss[FILTER_V_S_S_4] = filterVertical_ss_c<4>;
 
-    p.chroma_vsp = filterVertical_sp_c<4>;
     p.luma_p2s = filterConvertPelToShort_c<MAX_CU_SIZE>;
     p.chroma_p2s = filterConvertPelToShort_c<MAX_CU_SIZE / 2>;
 
