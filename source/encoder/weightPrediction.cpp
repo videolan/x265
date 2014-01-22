@@ -196,7 +196,13 @@ bool WeightPrediction::checkDenom(int denom)
             refPoc = m_slice->getRefPic(list, refIdxTemp)->getPOC();
             difPoc = abs(curPoc - refPoc);
             m_mvs = fenc->lowresMvs[list][difPoc - 1];
-            if (m_mvs) m_mvCost = fenc->lowresMvCosts[0][difPoc - 1];
+            if (m_mvs)
+            {
+                if (m_mvs[0].x == 0x7FFF)
+                    continue;
+                else
+                    m_mvCost = fenc->lowresMvCosts[0][difPoc - 1];
+            }
             const float epsilon = 1.f / 128.f;
             float guessScale[3], fencMean[3], refMean[3];
 
