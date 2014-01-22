@@ -800,6 +800,27 @@ void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t
         a += dstride;
     }
 }
+
+template<int bx, int by>
+void addAvg(pixel* dst, intptr_t dstStride, int16_t* src0, intptr_t src0Stride, int16_t* src1, intptr_t src1Stride)
+{
+    int shiftNum, offset;
+    shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
+    offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
+
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x += 2)
+        {
+            dst[x + 0] = (pixel)ClipY((src0[x + 0] + src1[x + 0] + offset) >> shiftNum);
+            dst[x + 1] = (pixel)ClipY((src0[x + 1] + src1[x + 1] + offset) >> shiftNum);
+        }
+
+        src0 += src0Stride;
+        src1 += src1Stride;
+        dst  += dstStride;
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -841,6 +862,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_16x64] = satd8<16, 64>;
 
 #define CHROMA(W, H) \
+    p.chroma_addAvg[CHROMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
@@ -848,6 +870,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
 #define LUMA(W, H) \
+    p.luma_addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
