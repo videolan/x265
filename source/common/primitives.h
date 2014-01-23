@@ -133,8 +133,6 @@ typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref,
 typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int32_t *res);
-typedef void (*ipfilter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height);
-typedef void (*ipfilter_s2p_t)(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height);
 typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_sp_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_ps_t)(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, intptr_t sstride); // dst is aligned
