@@ -1262,6 +1262,7 @@ void Lookahead::processRow(int row)
         if (row > 0 && (int32_t)lhrows[row].completed < widthInCU - 1 && lhrows[row - 1].completed < lhrows[row].completed + 2)
         {
             lhrows[row].active = false;
+            x265_emms();
             return;
         }
     }
@@ -1270,6 +1271,7 @@ void Lookahead::processRow(int row)
     {
         rowsCompleted = true;
     }
+    x265_emms();
 }
 
 void Lookahead::cuTree(Lowres **Frames, int numframes, bool bintra)
