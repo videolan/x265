@@ -602,8 +602,8 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitId
         src1Stride = srcYuv1->m_cwidth;
         dststride  = getCStride();
 
-        primitives.chroma_addAvg[part](dstU, dststride, srcU0, src0Stride, srcU1, src1Stride);
-        primitives.chroma_addAvg[part](dstV, dststride, srcV0, src0Stride, srcV1, src1Stride);
+        primitives.chroma[m_csp].addAvg[part](dstU, dststride, srcU0, src0Stride, srcU1, src1Stride);
+        primitives.chroma[m_csp].addAvg[part](dstV, dststride, srcV0, src0Stride, srcV1, src1Stride);
     }
 }
 

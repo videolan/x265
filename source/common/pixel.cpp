@@ -862,7 +862,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_16x64] = satd8<16, 64>;
 
 #define CHROMA(W, H) \
-    p.chroma_addAvg[CHROMA_ ## W ## x ## H]  = addAvg<W, H>; \
+    p.chroma[X265_CSP_I420].addAvg[CHROMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \

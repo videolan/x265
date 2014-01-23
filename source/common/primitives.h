@@ -273,8 +273,7 @@ struct EncoderPrimitives
     extendCURowBorder_t extendRowBorder;
 
     addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
-    addAvg_t        chroma_addAvg[NUM_CHROMA_PARTITIONS];
-
+    
     struct
     {
         filter_pp_t     filter_vpp[NUM_LUMA_PARTITIONS];
@@ -288,6 +287,7 @@ struct EncoderPrimitives
         copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
         pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];
+        addAvg_t        addAvg[NUM_LUMA_PARTITIONS];
     } chroma[4]; // X265_CSP_COUNT - do not want to include x265.h here
 };
 
