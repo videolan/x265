@@ -870,7 +870,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
         p.cvt16to32_shl = x265_cvt16to32_shl_sse2;
-        p.ipfilter_ss[FILTER_V_S_S_8] = x265_interp_8tap_v_ss_sse2;
         p.calcrecon[BLOCK_4x4] = x265_calcRecons4_sse2;
         p.calcrecon[BLOCK_8x8] = x265_calcRecons8_sse2;
         p.calcresidual[BLOCK_4x4] = x265_getResidual4_sse2;

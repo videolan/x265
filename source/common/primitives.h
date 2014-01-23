@@ -116,13 +116,6 @@ enum IDcts
     NUM_IDCTS
 };
 
-enum IPFilterConf_S_S
-{
-    FILTER_V_S_S_8,
-    FILTER_V_S_S_4,
-    NUM_IPFILTER_S_S
-};
-
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
 inline int partitionFromSizes(int width, int height)
 {
@@ -140,8 +133,6 @@ typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref,
 typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int32_t *res);
-typedef void (*ipfilter_sp_t)(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
-typedef void (*ipfilter_ss_t)(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coeffIdx);
 typedef void (*ipfilter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height);
 typedef void (*ipfilter_s2p_t)(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height);
 typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
@@ -231,7 +222,6 @@ struct EncoderPrimitives
     filter_sp_t     luma_vsp[NUM_LUMA_PARTITIONS];
     filter_ss_t     luma_vss[NUM_LUMA_PARTITIONS];
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
-    ipfilter_ss_t   ipfilter_ss[NUM_IPFILTER_S_S];
     filter_p2s_t    luma_p2s;
     filter_p2s_t    chroma_p2s;
 
