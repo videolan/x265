@@ -464,7 +464,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
     }
     else if (xFrac == 0)
     {
-        primitives.ipfilter_ps[FILTER_V_P_S_8](ref, refStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        primitives.luma_vps[partEnum](ref, refStride, dst, dstStride, yFrac);
     }
     else
     {
@@ -472,7 +472,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.luma_hps[partEnum](ref, refStride, m_immedVals, tmpStride, xFrac, 1);
-        primitives.ipfilter_ss[FILTER_V_S_S_8](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, yFrac);
+        primitives.luma_vss[partEnum](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, yFrac);
     }
 }
 
