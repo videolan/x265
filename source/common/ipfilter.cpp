@@ -434,7 +434,6 @@ void interp_vert_ss_c(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t d
     }
 }
 
-typedef void (*ipfilter_ps_t)(pixel *src, intptr_t srcStride, short *dst, intptr_t dstStride, int width, int height, const short *coeff);
 typedef void (*ipfilter_sp_t)(short *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, const short *coeff);
 
 template<int N, int width, int height>
@@ -518,8 +517,6 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     LUMA(16, 64);
     CHROMA(8, 32);
 
-    p.ipfilter_ps[FILTER_V_P_S_8] = filterVertical_ps_c<8>;
-    p.ipfilter_ps[FILTER_V_P_S_4] = filterVertical_ps_c<4>;
     p.ipfilter_ss[FILTER_V_S_S_8] = filterVertical_ss_c<8>;
     p.ipfilter_ss[FILTER_V_S_S_4] = filterVertical_ss_c<4>;
 
