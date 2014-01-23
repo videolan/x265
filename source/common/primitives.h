@@ -85,7 +85,7 @@ enum Chroma420Partions
     NUM_CHROMA_PARTITIONS
 };
 
-enum SquareBlocks   // Routines can be indexed using log2n(width)
+enum SquareBlocks   // Routines can be indexed using log2n(width)-2
 {
     BLOCK_4x4,
     BLOCK_8x8,
