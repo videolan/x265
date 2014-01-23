@@ -968,15 +968,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.chroma_addAvg[part])
-    {
-        if (!check_addAvg(ref.chroma_addAvg[part], opt.chroma_addAvg[part]))
-        {
-            printf("chroma_addAvg[%s] failed\n", chromaPartStr[part]);
-            return false;
-        }
-    }
-
     return true;
 }
 
@@ -1304,12 +1295,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         printf("luma_addAvg[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_addAvg[part], ref.luma_addAvg[part], pbuf1, STRIDE, sbuf1, STRIDE, sbuf2, STRIDE);
-    }
-
-    if (opt.chroma_addAvg[part])
-    {
-        printf("chroma_addAvg[%s]", chromaPartStr[part]);
-        REPORT_SPEEDUP(opt.chroma_addAvg[part], ref.chroma_addAvg[part], pbuf1, STRIDE, sbuf1, STRIDE, sbuf2, STRIDE);
     }
 
 #undef HEADER
