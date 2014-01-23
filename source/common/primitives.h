@@ -227,6 +227,7 @@ struct EncoderPrimitives
     weightp_pp_t    weight_pp;
     pixeladd_ss_t   pixeladd_ss;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
+    addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
 
     intra_pred_t    intra_pred[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE];
     intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS-1];
@@ -251,8 +252,6 @@ struct EncoderPrimitives
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
     extendCURowBorder_t extendRowBorder;
 
-    addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
-    
     struct
     {
         filter_pp_t     filter_vpp[NUM_LUMA_PARTITIONS];
