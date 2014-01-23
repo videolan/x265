@@ -464,7 +464,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
     }
     else if (xFrac == 0)
     {
-        primitives.ipfilter_ps[FILTER_V_P_S_8](ref, refStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
+        primitives.luma_vps[partEnum](ref, refStride, dst, dstStride, yFrac);
     }
     else
     {
@@ -472,7 +472,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.luma_hps[partEnum](ref, refStride, m_immedVals, tmpStride, xFrac, 1);
-        primitives.ipfilter_ss[FILTER_V_S_S_8](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, yFrac);
+        primitives.luma_vss[partEnum](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, yFrac);
     }
 }
 
@@ -522,19 +522,15 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
     }
     else
     {
-        int hShift = CHROMA_H_SHIFT(csp);
-        int vShift = CHROMA_V_SHIFT(csp);
-        uint32_t cxWidth = width >> hShift;
-        uint32_t cxHeight = height >> vShift;
-        int extStride = cxWidth;
+        int extStride = width >> 1;
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
 
-        primitives.chroma[csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride,  xFrac, 1);
-        primitives.chroma_vsp(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, yFrac);
+        primitives.chroma[csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac, 1);
+        primitives.chroma[csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac);
 
         primitives.chroma[csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac, 1);
-        primitives.chroma_vsp(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac);
+        primitives.chroma[csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac);
     }
 }
 
@@ -576,8 +572,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
     }
     else if (xFrac == 0)
     {
-        primitives.ipfilter_ps[FILTER_V_P_S_4](refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
-        primitives.ipfilter_ps[FILTER_V_P_S_4](refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
+        primitives.chroma[csp].filter_vps[partEnum](refCb, refStride, dstCb, dstStride, yFrac);
+        primitives.chroma[csp].filter_vps[partEnum](refCr, refStride, dstCr, dstStride, yFrac);
     }
     else
     {
@@ -585,9 +581,9 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.chroma[csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac, 1);
-        primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, yFrac);
+        primitives.chroma[csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac);
         primitives.chroma[csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac, 1);
-        primitives.ipfilter_ss[FILTER_V_S_S_4](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac);
+        primitives.chroma[csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac);
     }
 }
 
@@ -617,7 +613,6 @@ void TComPrediction::getMvPredAMVP(TComDataCU* cu, uint32_t partIdx, uint32_t pa
         mvPred = pcAMVPInfo->m_mvCand[0];
 
         cu->setMVPIdxSubParts(0, list, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(pcAMVPInfo->m_num, list, partAddr, partIdx, cu->getDepth(partAddr));
         return;
     }
 
