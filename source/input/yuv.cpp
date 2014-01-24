@@ -63,7 +63,7 @@ YUVInput::YUVInput(const char *filename, uint32_t inputBitDepth)
     else
         ifs = new ifstream(filename, ios::binary | ios::in);
 
-    if (ifs && !ifs->fail())
+    if (ifs && ifs->good())
         threadActive = true;
     else if (ifs && ifs != &cin)
     {

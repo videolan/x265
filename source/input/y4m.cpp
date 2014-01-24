@@ -61,7 +61,7 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
         ifs = new ifstream(filename, ios::binary | ios::in);
 
     threadActive = false;
-    if (ifs && !ifs->fail())
+    if (ifs && ifs->good())
     {
         if (parseHeader())
         {
