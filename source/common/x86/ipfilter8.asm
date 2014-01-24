@@ -29,6 +29,7 @@
 SECTION_RODATA 32
 tab_Tm:    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
            db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
+           db 8, 9,10,11, 9,10,11,12,10,11,12,13,11,12,13, 14
 
 tab_Lm:    db 0, 1, 2, 3, 4,  5,  6,  7,  1, 2, 3, 4,  5,  6,  7,  8
            db 2, 3, 4, 5, 6,  7,  8,  9,  3, 4, 5, 6,  7,  8,  9,  10
@@ -127,6 +128,7 @@ tab_c_64_n64:   times 8 db 64, -64
 
 SECTION .text
 
+cextern pw_512
 cextern pw_2000
 
 %macro FILTER_H4_w2_2 3
@@ -688,30 +690,80 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,7,6
 ; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
     IPFILTER_LUMA 4, 4, pp
-    IPFILTER_LUMA 8, 8, pp
-    IPFILTER_LUMA 8, 4, pp
     IPFILTER_LUMA 4, 8, pp
-    IPFILTER_LUMA 16, 16, pp
-    IPFILTER_LUMA 16, 8, pp
-    IPFILTER_LUMA 8, 16, pp
-    IPFILTER_LUMA 16, 12, pp
     IPFILTER_LUMA 12, 16, pp
-    IPFILTER_LUMA 16, 4, pp
     IPFILTER_LUMA 4, 16, pp
-    IPFILTER_LUMA 32, 32, pp
-    IPFILTER_LUMA 32, 16, pp
-    IPFILTER_LUMA 16, 32, pp
-    IPFILTER_LUMA 32, 24, pp
-    IPFILTER_LUMA 24, 32, pp
-    IPFILTER_LUMA 32, 8, pp
-    IPFILTER_LUMA 8, 32, pp
-    IPFILTER_LUMA 64, 64, pp
-    IPFILTER_LUMA 64, 32, pp
-    IPFILTER_LUMA 32, 64, pp
-    IPFILTER_LUMA 64, 48, pp
-    IPFILTER_LUMA 48, 64, pp
-    IPFILTER_LUMA 64, 16, pp
-    IPFILTER_LUMA 16, 64, pp
+
+
+;--------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;--------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_LUMA_PP_W8 2
+INIT_XMM sse4
+cglobal interp_8tap_horiz_pp_%1x%2, 4,6,7
+    mov         r4d, r4m
+
+%ifdef PIC
+    lea         r5, [tab_LumaCoeff]
+    movh        m3, [r5 + r4 * 8]
+%else
+    movh        m3, [tab_LumaCoeff + r4 * 8]
+%endif
+    pshufd      m0, m3, 0                       ; m0 = coeff-L
+    pshufd      m1, m3, 0x55                    ; m1 = coeff-H
+    lea         r5, [tab_Tm]                    ; r5 = shuffle
+    mova        m2, [pw_512]                    ; m2 = 512
+
+    mov         r4d, %2
+.loopH
+%assign x 0
+%rep %1 / 8
+    movu        m3, [r0 - 3 + x]                ; m3 = [F E D C B A 9 8 7 6 5 4 3 2 1 0]
+    pshufb      m4, m3, [r5 + 0*16]             ; m4 = [6 5 4 3 5 4 3 2 4 3 2 1 3 2 1 0]
+    pshufb      m5, m3, [r5 + 1*16]             ; m5 = [A 9 8 7 9 8 7 6 8 7 6 5 7 6 5 4]
+    pshufb          m3, [r5 + 2*16]             ; m3 = [E D C B D C B A C B A 9 B A 9 8]
+    pmaddubsw   m4, m0
+    pmaddubsw   m6, m5, m1
+    pmaddubsw   m5, m0
+    pmaddubsw   m3, m1
+    paddw       m4, m6
+    paddw       m5, m3
+    phaddw      m4, m5
+    pmulhrsw    m4, m2
+    packuswb    m4, m4
+    movh        [r2 + x], m4
+%assign x x+8
+%endrep
+
+    add       r0, r1
+    add       r2, r3
+
+    dec       r4d
+    jnz      .loopH
+    RET
+%endmacro
+
+IPFILTER_LUMA_PP_W8      8,  4
+IPFILTER_LUMA_PP_W8      8,  8
+IPFILTER_LUMA_PP_W8      8, 16
+IPFILTER_LUMA_PP_W8      8, 32
+IPFILTER_LUMA_PP_W8     16,  4
+IPFILTER_LUMA_PP_W8     16,  8
+IPFILTER_LUMA_PP_W8     16, 12
+IPFILTER_LUMA_PP_W8     16, 16
+IPFILTER_LUMA_PP_W8     16, 32
+IPFILTER_LUMA_PP_W8     16, 64
+IPFILTER_LUMA_PP_W8     24, 32
+IPFILTER_LUMA_PP_W8     32,  8
+IPFILTER_LUMA_PP_W8     32, 16
+IPFILTER_LUMA_PP_W8     32, 24
+IPFILTER_LUMA_PP_W8     32, 32
+IPFILTER_LUMA_PP_W8     32, 64
+IPFILTER_LUMA_PP_W8     48, 64
+IPFILTER_LUMA_PP_W8     64, 16
+IPFILTER_LUMA_PP_W8     64, 32
+IPFILTER_LUMA_PP_W8     64, 48
+IPFILTER_LUMA_PP_W8     64, 64
 
 ;----------------------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_ps_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
@@ -3726,147 +3778,6 @@ cglobal chroma_p2s, 3, 7, 6
     add         r2, FENC_STRIDE / 2 * 4
 
     sub         r4d, 2
-    jnz         .loopH
-
-    RET
-
-
-;-------------------------------------------------------------------------------------------------------------
-; void interp_8tap_v_ss(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coefIdx)
-;-------------------------------------------------------------------------------------------------------------
-INIT_XMM sse2
-
-%if ARCH_X86_64
-cglobal interp_8tap_v_ss, 4, 7+2, 8
-%define tmp_r4d     r7d
-%define tmp_r5d     r8d
-%else
-cglobal interp_8tap_v_ss, 4, 7, 8, 0-2*4
-%define tmp_r4d     dword [rsp + 0*4]
-%define tmp_r5d     dword [rsp + 1*4]
-%endif
-
-    ; load width, height and filterIdx
-    mov         r4d, r4m
-    mov         r5d, r5m
-    mov         r6d, r6m
-
-    ; convert to word stride
-    add         r1, r1
-    add         r3, r3
-
-    ; stort to temporary memory or register
-    shr         r4d, 2
-    mov         tmp_r4d, r4d
-    shr         r5d, 2
-    mov         tmp_r5d, r5d
-
-    shl         r6d, 6
-%ifdef PIC
-    lea         r5, [tab_LumaCoeffV]
-    lea         r6, [r5 + r6]
-%else
-    lea         r6, [tab_LumaCoeffV + r6]
-%endif
-
-    lea         r4, [r1 * 3]
-    sub         r0, r4
-
-.loopH:
-    ; load width
-    mov         r4d, tmp_r4d
-
-.loopW:
-
-    movh        m0, [r0]                    ; m0 = [0]
-    movh        m1, [r0 + r1]               ; m1 = [1]
-    lea         r0, [r0 + r1 * 2]
-    punpcklwd   m0, m1
-    pmaddwd     m0, [r6 + 0 * 16]           ; m0 = [0+1]            = R0
-
-    movh        m2, [r0]                    ; m2 = [2]
-    movh        m3, [r0 + r1]               ; m3 = [3]
-    lea         r0, [r0 + r1 * 2]
-    punpcklwd   m1, m2
-    pmaddwd     m1, [r6 + 0 * 16]           ; m1 = [1+2]            = R1
-    punpcklwd   m2, m3                      ; m2 = [2 3]
-    pmaddwd     m7, m2, [r6 + 1 * 16]       ;
-    paddd       m0, m7                      ; m0 = [0+1+2+3]        = R0
-    pmaddwd     m2, [r6 + 0 * 16]           ; m2 = [2+3]            = R2
-
-    movh        m4, [r0]                    ; m4 = [4]
-    movh        m5, [r0 + r1]               ; m5 = [5]
-    lea         r0, [r0 + r1 * 2]
-    punpcklwd   m3, m4                      ; m3 = [3 4]
-    pmaddwd     m7, m3, [r6 + 1 * 16]
-    paddd       m1, m7                      ; m1 = [1+2+3+4]        = R1
-    pmaddwd     m3, [r6 + 0 * 16]           ; m3 = [3+4]            = R3
-    punpcklwd   m4, m5                      ; m4 = [4 5]
-    pmaddwd     m7, m4, [r6 + 2 * 16]
-    paddd       m0, m7                      ; m0 = [0+1+2+3+4+5]    = R0
-    pmaddwd     m4, [r6 + 1 * 16]
-    paddd       m2, m4                      ; m2 = [2+3+4+5]        = R2
-
-    movh        m6, [r0]                    ; m6 = [6]
-    movh        m7, [r0 + r1]               ; m7 = [7]
-    lea         r0, [r0 + r1 * 2]
-    punpcklwd   m5, m6                      ; m5 = [5 6]
-    pmaddwd     m4, m5, [r6 + 2 * 16]
-    paddd       m1, m4                      ; m1 = [1+2+3+4+5+6]    = R1
-    pmaddwd     m5, [r6 + 1 * 16]
-    paddd       m3, m5                      ; m3 = [3+4+5+6]        = R3
-    punpcklwd   m6, m7                      ; m6 = [6 7]
-    pmaddwd     m4, m6, [r6 + 3 * 16]
-    paddd       m0, m4                      ; m0 = [0+1+2+3+4+5+6+7]= R0
-    pmaddwd     m6, [r6 + 2 * 16]
-    paddd       m2, m6                      ; m2 = [2+3+4+5+6+7]    = R2
-    psrad       m0, 6
-    packssdw    m0, m0
-    movh        [r2], m0                    ; store [0]
-
-    movh        m4, [r0]                    ; m4 = [8]
-    movh        m5, [r0 + r1]               ; m5 = [9]
-    punpcklwd   m7, m4                      ; m7 = [7 8]
-    pmaddwd     m6, m7, [r6 + 3 * 16]
-    paddd       m1, m6                      ; m1 = [1+2+3+4+5+6+7+8]= R1
-    pmaddwd     m7, [r6 + 2 * 16]
-    paddd       m3, m7                      ; m3 = [3+4+5+6+7+8]    = R3
-    psrad       m1, 6
-    packssdw    m1, m1
-    movh        [r2 + r3], m1               ; store [1]
-    punpcklwd   m4, m5                      ; m4 = [8 9]
-    pmaddwd     m4, [r6 + 3 * 16]
-    paddd       m2, m4                      ; m2 = [2+3+4+5+6+7+8+9]= R2
-    psrad       m2, 6
-    packssdw    m2, m2
-    movh        [r2 + r3 * 2], m2           ; store [2]
-    lea         r2, [r2 + r3 * 2]
-
-    movh        m4, [r0 + r1 * 2]           ; m4 = [10]
-    punpcklwd   m5, m4                      ; m5 = [9 10]
-    pmaddwd     m5, [r6 + 3 * 16]
-    paddd       m3, m5                      ; m3 = [3+4+5+6+7+8+9+10]=R3
-    psrad       m3, 6
-    packssdw    m3, m3
-    movh        [r2 + r3], m3               ; store [3]
-
-    lea         r5, [r1 * 8 - 8]
-    sub         r0, r5
-    lea         r5, [r3 * 2 - 8]
-    sub         r2, r5
-
-    dec         r4d
-    jnz         .loopW
-
-    ; move to next row
-    mov         r4d, tmp_r4d
-    shl         r4d, 3
-    lea         r0, [r0 + r1 * 4]
-    sub         r0, r4
-    lea         r2, [r2 + r3 * 4]
-    sub         r2, r4
-
-    dec         tmp_r5d
     jnz         .loopH
 
     RET

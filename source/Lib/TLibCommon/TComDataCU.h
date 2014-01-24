@@ -150,7 +150,6 @@ private:
     UChar*        m_chromaIntraDir;   ///< array of intra directions (chroma)
     UChar*        m_interDir;         ///< array of inter directions
     char*         m_mvpIdx[2];        ///< array of motion vector predictor candidates
-    char*         m_mvpNum[2];        ///< array of number of possible motion vectors predictors
     bool*         m_iPCMFlags;        ///< array of intra_pcm flags
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -390,12 +389,7 @@ public:
 
     char*         getMVPIdx(int picList)                       { return m_mvpIdx[picList]; }
 
-    int           getMVPNum(int picList, uint32_t idx)             { return m_mvpNum[picList][idx]; }
-
-    char*         getMVPNum(int picList)                       { return m_mvpNum[picList]; }
-
     void          setMVPIdxSubParts(int mvpIdx, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
-    void          setMVPNumSubParts(int iMVPNum, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
 
     void          clipMv(MV& outMV);
 
