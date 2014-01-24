@@ -65,13 +65,15 @@ protected:
 
     std::istream *ifs;
 
+    void init();
+
 public:
 
     YUVInput(const char *filename, uint32_t inputBitDepth);
 
     virtual ~YUVInput();
 
-    void setDimensions(int w, int h);
+    void setDimensions(int w, int h)              { width = w; height = h; }
 
     void setColorSpace(int csp)                   { colorSpace = csp; }
 
