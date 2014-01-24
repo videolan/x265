@@ -46,8 +46,8 @@ class TEncCfg;
 
 struct RateControlEntry
 {
-    uint64_t texBits;
-    uint64_t lastSatd;
+    int64_t texBits;
+    int64_t lastSatd;
 
     int sliceType;
     int mvBits;
@@ -98,7 +98,7 @@ struct RateControl
     int bframeBits;
     double leadingNoBSatd;
 
-    uint64_t lastSatd;
+    int64_t lastSatd;
     int    qpConstant[3];
     double cplxrSum;          /* sum of bits*qscale/rceq */
     double wantedBitsWindow;  /* target bitrate * window */

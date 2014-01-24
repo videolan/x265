@@ -105,7 +105,7 @@ struct CostEstimate : public WaveFront
     int              curb, curp0, curp1;
 
     void     processRow(int row);
-    uint64_t estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
+    int64_t estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
 
 protected:
 
@@ -136,7 +136,7 @@ struct Lookahead
     void addPicture(TComPic*, int sliceType);
     void flush();
 
-    uint64_t getEstimatedPictureCost(TComPic *pic);
+    int64_t getEstimatedPictureCost(TComPic *pic);
 
 protected:
 
@@ -145,10 +145,10 @@ protected:
     void slicetypeAnalyse(Lowres **frames, bool bKeyframe);
 
     /* called by slicetypeAnalyse() to make slice decisions */
-    uint64_t scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
-    uint64_t scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
+    int64_t scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
+    int64_t scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
     void     slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
-    uint64_t slicetypePathCost(Lowres **frames, char *path, uint64_t threshold);
+    int64_t slicetypePathCost(Lowres **frames, char *path, int64_t threshold);
 
     /* called by slicetypeAnalyse() to effect cuTree adjustments to adaptive
      * quant offsets */
@@ -159,7 +159,7 @@ protected:
     void cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */
-    uint64_t frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
+    int64_t frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
 };
 }
 

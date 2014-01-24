@@ -110,7 +110,7 @@ void Lookahead::flush()
 // Called by RateControl to get the estimated SATD cost for a given picture.
 // It assumes dpb->prepareEncode() has already been called for the picture and
 // all the references are established
-uint64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
+int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
 {
     Lowres *frames[X265_LOOKAHEAD_MAX];
 
@@ -462,7 +462,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     int maxSearch = X265_MIN(cfg->param.lookaheadDepth, X265_LOOKAHEAD_MAX);
     int cuCount = NUM_CUS;
     int reset_start;
-    uint64_t cost1p0, cost2p0, cost1b1, cost2p1;
+    int64_t cost1p0, cost2p0, cost1b1, cost2p1;
 
     if (!lastNonB)
         return;
@@ -560,8 +560,8 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                 int j;
                 for (j = i + 2; j <= X265_MIN(i + cfg->param.bframes, num_frames - 1); j++)
                 {
-                    uint64_t pthresh = X265_MAX(INTER_THRESH - P_SENS_BIAS * (j - i - 1), INTER_THRESH / 10);
-                    uint64_t pcost = est.estimateFrameCost(frames, i + 0, j + 1, j + 1, 1);
+                    int64_t pthresh = X265_MAX(INTER_THRESH - P_SENS_BIAS * (j - i - 1), INTER_THRESH / 10);
+                    int64_t pcost = est.estimateFrameCost(frames, i + 0, j + 1, j + 1, 1);
                     if (pcost > pthresh * cuCount || frames[j + 1]->intraMbs[j - i + 1] > cuCount / 3)
                         break;
                     frames[j]->sliceType = X265_TYPE_B;
@@ -629,7 +629,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 }
 
 
-uint64_t Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int num_frames, int maxSearch)
+int64_t Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int num_frames, int maxSearch)
 {
     /* Only do analysis during a normal scenecut check. */
     if (bRealScenecut && cfg->param.bframes)
@@ -675,21 +675,21 @@ uint64_t Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut
     return scenecutInternal(frames, p0, p1, bRealScenecut);
 }
 
-uint64_t Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut)
+int64_t Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut)
 {
     Lowres *frame = frames[p1];
 
     est.estimateFrameCost(frames, p0, p1, p1, 0);
 
-    uint64_t icost = frame->costEst[0][0];
-    uint64_t pcost = frame->costEst[p1 - p0][0];
+    int64_t icost = frame->costEst[0][0];
+    int64_t pcost = frame->costEst[p1 - p0][0];
     float bias;
     int gopSize = frame->frameNum - lastKeyframe;
     float threshMax = (float)(cfg->param.scenecutThreshold / 100.0);
 
     /* magic numbers pulled out of thin air */
     float threshMin = (float)(threshMax * 0.25);
-    uint64_t res;
+    int64_t res;
 
     if (cfg->param.keyframeMin == cfg->param.keyframeMax)
         threshMin = threshMax;
@@ -720,7 +720,7 @@ void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X26
 {
     char paths[2][X265_LOOKAHEAD_MAX + 1];
     int num_paths = X265_MIN(cfg->param.bframes + 1, length);
-    uint64_t best_cost = (uint64_t)-1;
+    int64_t best_cost = (int64_t)-1;
     int idx = 0;
 
     /* Iterate over all currently possible paths */
@@ -733,7 +733,7 @@ void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X26
         strcpy(paths[idx] + len + path, "P");
 
         /* Calculate the actual cost of the current path */
-        uint64_t cost = slicetypePathCost(frames, paths[idx], best_cost);
+        int64_t cost = slicetypePathCost(frames, paths[idx], best_cost);
         if (cost < best_cost)
         {
             best_cost = cost;
@@ -745,9 +745,9 @@ void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X26
     memcpy(best_paths[length % (X265_BFRAME_MAX + 1)], paths[idx ^ 1], length);
 }
 
-uint64_t Lookahead::slicetypePathCost(Lowres **frames, char *path, uint64_t threshold)
+int64_t Lookahead::slicetypePathCost(Lowres **frames, char *path, int64_t threshold)
 {
-    uint64_t cost = 0;
+    int64_t cost = 0;
     int loc = 1;
     int cur_p = 0;
 
@@ -1035,9 +1035,9 @@ void Lookahead::estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t
 
 /* If MB-tree changes the quantizers, we need to recalculate the frame cost without
  * re-running lookahead. */
-uint64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
+int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
 {
-    uint64_t score = 0;
+    int64_t score = 0;
     int *row_satd = frames[b]->rowSatds[b-p0][p1-b];
     double *qp_offset = IS_X265_TYPE_B(frames[0]->sliceType) ? frames[b]->qpAqOffset : frames[b]->qpOffset;
     x265_emms();
@@ -1129,9 +1129,9 @@ void CostEstimate::init(TEncCfg *_cfg, TComPic *pic)
     }
 }
 
-uint64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty)
+int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty)
 {
-    uint64_t score = 0;
+    int64_t score = 0;
     Lowres *fenc = frames[b];
 
     if (fenc->costEst[b - p0][p1 - b] >= 0 && fenc->rowSatds[b - p0][p1 - b][0] != -1)

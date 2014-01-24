@@ -112,12 +112,12 @@ struct Lowres : public ReferencePlanes
     bool   bLastMiniGopBFrame;
 
     /* lookahead output data */
-    uint64_t  costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
-    uint64_t  costEstAq[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
+    int64_t  costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
+    int64_t  costEstAq[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int32_t*  rowSatds[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int       intraMbs[X265_BFRAME_MAX + 2];
     int32_t*  intraCost;
-    uint64_t  satdCost;
+    int64_t  satdCost;
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int32_t*  lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV*       lowresMvs[2][X265_BFRAME_MAX + 1];
