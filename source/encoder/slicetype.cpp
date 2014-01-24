@@ -433,10 +433,10 @@ void Lookahead::slicetypeDecide()
         if (cfg->param.bBPyramid && bframes > 1)
         {
             int bref = bframes / 2;
-            if (list[bref - 1]->m_lowres.sliceType == X265_TYPE_AUTO)
+            if (list[bref]->m_lowres.sliceType == X265_TYPE_AUTO)
             {
-                list[bref - 1]->m_lowres.sliceType = X265_TYPE_BREF;
-                outputQueue.pushBack(*list[bref - 1]);
+                list[bref]->m_lowres.sliceType = X265_TYPE_BREF;
+                outputQueue.pushBack(*list[bref]);
                 numDecided++;
             }
         }
