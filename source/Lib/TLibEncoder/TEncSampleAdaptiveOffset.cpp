@@ -435,7 +435,7 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
     int maxDepth = 4;
     for (int d = 0; d < maxDepth + 1; d++)
     {
-        for (int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
+        for (int iCIIdx = 0; iCIIdx < CI_NUM_SAO; iCIIdx++)
         {
             delete m_rdSbacCoders[d][iCIIdx];
             delete m_binCoderCABAC[d][iCIIdx];
@@ -502,9 +502,9 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
 
     for (int d = 0; d < maxDepth + 1; d++)
     {
-        m_rdSbacCoders[d] = new TEncSbac*[CI_NUM];
-        m_binCoderCABAC[d] = new TEncBinCABAC*[CI_NUM];
-        for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+        m_rdSbacCoders[d] = new TEncSbac*[CI_NUM_SAO];
+        m_binCoderCABAC[d] = new TEncBinCABAC*[CI_NUM_SAO];
+        for (int ciIdx = 0; ciIdx < CI_NUM_SAO; ciIdx++)
         {
             m_rdSbacCoders[d][ciIdx] = new TEncSbac;
             m_binCoderCABAC[d][ciIdx] = new TEncBinCABAC(true);

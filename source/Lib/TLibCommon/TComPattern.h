@@ -53,60 +53,14 @@ namespace x265 {
 
 class TComDataCU;
 
-/// neighboring pixel access class for one component
-class TComPatternParam
-{
-private:
-
-    int  m_offsetLeft;
-    int  m_offsetAbove;
-    Pel* m_patternOrigin;
-
-public:
-
-    int m_roiWidth;
-    int m_roiHeight;
-    int m_patternStride;
-
-    /// return starting position of buffer
-    Pel* getPatternOrigin()        { return m_patternOrigin; }
-
-    /// return starting position of ROI (ROI = &pattern[AboveOffset][LeftOffset])
-    inline Pel* getROIOrigin()
-    {
-        return m_patternOrigin + m_patternStride * m_offsetAbove + m_offsetLeft;
-    }
-
-    /// set parameters from Pel buffer for accessing neighboring pixels
-    void setPatternParamPel(Pel* piTexture, int roiWidth, int roiHeight, int stride,
-                            int offsetLeft, int offsetAbove);
-
-    /// set parameters of one color component from CU data for accessing neighboring pixels
-    void setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
-                           int offsetLeft, int offsetAbove, uint32_t absZOrderIdx);
-};
-
 /// neighboring pixel access class for all components
 class TComPattern
 {
 private:
 
-    TComPatternParam  m_patternY;
-    TComPatternParam  m_patternCb;
-    TComPatternParam  m_patternCr;
-
     static const UChar m_intraFilter[5];
 
 public:
-
-    // ROI & pattern information, (ROI = &pattern[AboveOffset][LeftOffset])
-    Pel*  getROIY()                 { return m_patternY.getROIOrigin(); }
-
-    int   getROIYWidth()            { return m_patternY.m_roiWidth; }
-
-    int   getROIYHeight()           { return m_patternY.m_roiHeight; }
-
-    int   getPatternLStride()       { return m_patternY.m_patternStride; }
 
     // access functions of ADI buffers
     Pel*  getAdiOrgBuf(int cuWidth, int cuHeight, Pel* adiBuf);
@@ -120,15 +74,9 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     /// set parameters from Pel buffers for accessing neighboring pixels
-    void initPattern(Pel* y, Pel* cb, Pel* cr, int roiWidth, int roiHeight, int stride,
-                     int offsetLeft, int offsetAbove);
-
     void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf,
                         int strideOrig, int heightOrig, Pel* refAbove, Pel* refLeft,
                         Pel* refAboveFlt, Pel* refLeftFlt);
-
-    /// set parameters from CU data for accessing neighboring pixels
-    void  initPattern(TComDataCU* cu, uint32_t partDepth, uint32_t absPartIdx);
 
     /// set luma parameters from CU data for accessing ADI data
     void  initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf,

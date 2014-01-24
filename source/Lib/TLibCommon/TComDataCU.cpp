@@ -98,8 +98,6 @@ TComDataCU::TComDataCU()
     m_cuColocated[1] = NULL;
     m_mvpIdx[0] = NULL;
     m_mvpIdx[1] = NULL;
-    m_mvpNum[0] = NULL;
-    m_mvpNum[1] = NULL;
     m_chromaFormat = 0;
 }
 
@@ -152,8 +150,6 @@ void TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
 
     m_mvpIdx[0] = new char[numPartition];
     m_mvpIdx[1] = new char[numPartition];
-    m_mvpNum[0] = new char[numPartition];
-    m_mvpNum[1] = new char[numPartition];
 
     m_trCoeffY  = (TCoeff*)X265_MALLOC(TCoeff, width * height);
     m_trCoeffCb = (TCoeff*)X265_MALLOC(TCoeff, (width >> m_hChromaShift) * (height >> m_vChromaShift));
@@ -203,10 +199,6 @@ void TComDataCU::destroy()
     m_mvpIdx[0] = NULL;
     delete[] m_mvpIdx[1];
     m_mvpIdx[1] = NULL;
-    delete[] m_mvpNum[0];
-    m_mvpNum[0] = NULL;
-    delete[] m_mvpNum[1];
-    m_mvpNum[1] = NULL;
     delete[] m_skipFlag;
     m_skipFlag = NULL;
     delete[] m_partSizes;
@@ -254,49 +246,45 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     }
 
     // CHECK_ME: why partStartIdx always negative
-    int partStartIdx = 0 - (cuAddr) * pic->getNumPartInCU();
-    int firstElement = std::max<int>(partStartIdx, 0);
-    int numElements = m_numPartitions - firstElement;
+    int numElements = m_numPartitions;
+    assert(numElements > 0);
 
-    if (numElements > 0)
     {
-        memset(m_skipFlag         + firstElement, false,                    numElements * sizeof(*m_skipFlag));
-        memset(m_predModes        + firstElement, MODE_NONE,                numElements * sizeof(*m_predModes));
-        memset(m_cuTransquantBypass + firstElement, false,                  numElements * sizeof(*m_cuTransquantBypass));
-        memset(m_depth            + firstElement, 0,                        numElements * sizeof(*m_depth));
-        memset(m_trIdx            + firstElement, 0,                        numElements * sizeof(*m_trIdx));
-        memset(m_transformSkip[0] + firstElement, 0,                        numElements * sizeof(*m_transformSkip[0]));
-        memset(m_transformSkip[1] + firstElement, 0,                        numElements * sizeof(*m_transformSkip[1]));
-        memset(m_transformSkip[2] + firstElement, 0,                        numElements * sizeof(*m_transformSkip[2]));
-        memset(m_width            + firstElement, g_maxCUWidth,             numElements * sizeof(*m_width));
-        memset(m_height           + firstElement, g_maxCUHeight,            numElements * sizeof(*m_height));
-        memset(m_mvpNum[0]        + firstElement, -1,                       numElements * sizeof(*m_mvpNum[0]));
-        memset(m_mvpNum[1]        + firstElement, -1,                       numElements * sizeof(*m_mvpNum[1]));
-        memset(m_qp               + firstElement, qp,                       numElements * sizeof(*m_qp));
-        memset(m_bMergeFlags      + firstElement, false,                    numElements * sizeof(*m_bMergeFlags));
-        memset(m_mergeIndex       + firstElement, 0,                        numElements * sizeof(*m_mergeIndex));
-        memset(m_lumaIntraDir     + firstElement, DC_IDX,                   numElements * sizeof(*m_lumaIntraDir));
-        memset(m_chromaIntraDir   + firstElement, 0,                        numElements * sizeof(*m_chromaIntraDir));
-        memset(m_interDir         + firstElement, 0,                        numElements * sizeof(*m_interDir));
-        memset(m_cbf[0]           + firstElement, 0,                        numElements * sizeof(*m_cbf[0]));
-        memset(m_cbf[1]           + firstElement, 0,                        numElements * sizeof(*m_cbf[1]));
-        memset(m_cbf[2]           + firstElement, 0,                        numElements * sizeof(*m_cbf[2]));
-        memset(m_iPCMFlags        + firstElement, false,                    numElements * sizeof(*m_iPCMFlags));
+        memset(m_skipFlag         , false,                    numElements * sizeof(*m_skipFlag));
+        memset(m_predModes        , MODE_NONE,                numElements * sizeof(*m_predModes));
+        memset(m_cuTransquantBypass, false,                   numElements * sizeof(*m_cuTransquantBypass));
+        memset(m_depth            , 0,                        numElements * sizeof(*m_depth));
+        memset(m_trIdx            , 0,                        numElements * sizeof(*m_trIdx));
+        memset(m_transformSkip[0] , 0,                        numElements * sizeof(*m_transformSkip[0]));
+        memset(m_transformSkip[1] , 0,                        numElements * sizeof(*m_transformSkip[1]));
+        memset(m_transformSkip[2] , 0,                        numElements * sizeof(*m_transformSkip[2]));
+        memset(m_width            , g_maxCUWidth,             numElements * sizeof(*m_width));
+        memset(m_height           , g_maxCUHeight,            numElements * sizeof(*m_height));
+        memset(m_qp               , qp,                       numElements * sizeof(*m_qp));
+        memset(m_bMergeFlags      , false,                    numElements * sizeof(*m_bMergeFlags));
+        memset(m_mergeIndex       , 0,                        numElements * sizeof(*m_mergeIndex));
+        memset(m_lumaIntraDir     , DC_IDX,                   numElements * sizeof(*m_lumaIntraDir));
+        memset(m_chromaIntraDir   , 0,                        numElements * sizeof(*m_chromaIntraDir));
+        memset(m_interDir         , 0,                        numElements * sizeof(*m_interDir));
+        memset(m_cbf[0]           , 0,                        numElements * sizeof(*m_cbf[0]));
+        memset(m_cbf[1]           , 0,                        numElements * sizeof(*m_cbf[1]));
+        memset(m_cbf[2]           , 0,                        numElements * sizeof(*m_cbf[2]));
+        memset(m_iPCMFlags        , false,                    numElements * sizeof(*m_iPCMFlags));
     }
 
     uint32_t y_tmp = g_maxCUWidth * g_maxCUHeight;
     uint32_t c_tmp = (g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift);
-    if (0 >= partStartIdx)
     {
         m_cuMvField[0].clearMvField();
         m_cuMvField[1].clearMvField();
-        memset(m_trCoeffY, 0, sizeof(TCoeff) * y_tmp);
-        memset(m_iPCMSampleY, 0, sizeof(Pel) * y_tmp);
 
-        memset(m_trCoeffCb, 0, sizeof(TCoeff) * c_tmp);
-        memset(m_trCoeffCr, 0, sizeof(TCoeff) * c_tmp);
-        memset(m_iPCMSampleCb, 0, sizeof(Pel) * c_tmp);
-        memset(m_iPCMSampleCr, 0, sizeof(Pel) * c_tmp);
+        // TODO: can be remove, but I haven't data to verify it, remove later
+        if (getSlice()->getSPS()->getUsePCM())
+        {
+            memset(m_iPCMSampleY, 0, sizeof(Pel) * y_tmp);
+            memset(m_iPCMSampleCb, 0, sizeof(Pel) * c_tmp);
+            memset(m_iPCMSampleCr, 0, sizeof(Pel) * c_tmp);
+        }
     }
 
     // Setting neighbor CU
@@ -360,8 +348,6 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
     {
         m_mvpIdx[0][i] = -1;
         m_mvpIdx[1][i] = -1;
-        m_mvpNum[0][i] = -1;
-        m_mvpNum[1][i] = -1;
         m_depth[i] = depth;
         m_width[i] = width;
         m_height[i] = height;
@@ -448,8 +434,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
         m_cuTransquantBypass[i] = false;
         m_mvpIdx[0][i] = -1;
         m_mvpIdx[1][i] = -1;
-        m_mvpNum[0][i] = -1;
-        m_mvpNum[1][i] = -1;
     }
 
     m_cuMvField[0].clearMvField();
@@ -545,8 +529,6 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
 
     memcpy(m_mvpIdx[0] + offset, cu->getMVPIdx(REF_PIC_LIST_0), iSizeInUchar);
     memcpy(m_mvpIdx[1] + offset, cu->getMVPIdx(REF_PIC_LIST_1), iSizeInUchar);
-    memcpy(m_mvpNum[0] + offset, cu->getMVPNum(REF_PIC_LIST_0), iSizeInUchar);
-    memcpy(m_mvpNum[1] + offset, cu->getMVPNum(REF_PIC_LIST_1), iSizeInUchar);
 
     memcpy(m_iPCMFlags + offset, cu->getIPCMFlag(), iSizeInBool);
 
@@ -616,8 +598,6 @@ void TComDataCU::copyToPic(UChar uhDepth)
 
     memcpy(rpcCU->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInLCU, m_mvpIdx[0], iSizeInUchar);
     memcpy(rpcCU->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInLCU, m_mvpIdx[1], iSizeInUchar);
-    memcpy(rpcCU->getMVPNum(REF_PIC_LIST_0) + m_absIdxInLCU, m_mvpNum[0], iSizeInUchar);
-    memcpy(rpcCU->getMVPNum(REF_PIC_LIST_1) + m_absIdxInLCU, m_mvpNum[1], iSizeInUchar);
 
     m_cuMvField[0].copyTo(rpcCU->getCUMvField(REF_PIC_LIST_0), m_absIdxInLCU);
     m_cuMvField[1].copyTo(rpcCU->getCUMvField(REF_PIC_LIST_1), m_absIdxInLCU);
@@ -706,8 +686,6 @@ void TComDataCU::copyToPic(UChar depth, uint32_t partIdx, uint32_t partDepth)
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInUchar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + partOffset, m_mvpIdx[1], sizeInUchar);
-    memcpy(cu->getMVPNum(REF_PIC_LIST_0) + partOffset, m_mvpNum[0], sizeInUchar);
-    memcpy(cu->getMVPNum(REF_PIC_LIST_1) + partOffset, m_mvpNum[1], sizeInUchar);
     m_cuMvField[0].copyTo(cu->getCUMvField(REF_PIC_LIST_0), m_absIdxInLCU, uiPartStart, qNumPart);
     m_cuMvField[1].copyTo(cu->getCUMvField(REF_PIC_LIST_1), m_absIdxInLCU, uiPartStart, qNumPart);
 
@@ -1558,11 +1536,6 @@ void TComDataCU::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t
 void TComDataCU::setMVPIdxSubParts(int mvpIdx, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
 {
     setSubPart<char>(mvpIdx, m_mvpIdx[picList], absPartIdx, depth, partIdx);
-}
-
-void TComDataCU::setMVPNumSubParts(int mvpNum, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
-{
-    setSubPart<char>(mvpNum, m_mvpNum[picList], absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth)
