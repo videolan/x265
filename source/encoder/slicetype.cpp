@@ -967,7 +967,7 @@ uint64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
             int cuCost = frames[b]->lowresCosts[b-p0][p1-b][cuxy] & LOWRES_COST_MASK;
             double qp_adj = qp_offset[cuxy];
             cuCost = (cuCost * x265_exp2fix8(qp_adj) + 128) >> 8;
-            row_satd[cuy ] += cuCost;
+            row_satd[cuy] += cuCost;
             if ((cuy > 0 && cuy < heightInCU - 1 &&
                  cux > 0 && cux < widthInCU - 1) ||
                  widthInCU <= 2 || heightInCU <= 2)
