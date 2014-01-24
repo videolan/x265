@@ -94,7 +94,8 @@ void MotionReference::applyWeight(int rows, int numRows)
     int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     int local_shift = shift + shiftNum;
     int local_round = local_shift ? (1 << (local_shift - 1)) : 0;
-    primitives.weight_pp(src, dst, lumaStride, dstStride, width, height, weight, local_round, local_shift, offset);
+    int padwidth = (width + 15) & ~15;  // weightp assembly needs even 16 byte widths
+    primitives.weight_pp(src, dst, lumaStride, dstStride, padwidth, height, weight, local_round, local_shift, offset);
 
     // Extending Left & Right
     primitives.extendRowBorder(dst, dstStride, width, height, marginX);
