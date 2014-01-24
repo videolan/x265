@@ -46,19 +46,20 @@ class TEncCfg;
 
 struct RateControlEntry
 {
+    uint64_t texBits;
+    uint64_t lastSatd;
+
     int sliceType;
-    int texBits;
     int mvBits;
+    int bframes;
+    int poc;
+
+    bool bLastMiniGopBFrame;
     double blurredComplexity;
     double qpaRc;
     double qRceq;
-
-    int lastSatd;
-    bool bLastMiniGopBFrame;
     double frameSizePlanned;
     double bufferRate;
-    int bframes;
-    int poc;
 };
 
 struct Predictor
@@ -97,7 +98,7 @@ struct RateControl
     int bframeBits;
     double leadingNoBSatd;
 
-    int    lastSatd;
+    uint64_t lastSatd;
     int    qpConstant[3];
     double cplxrSum;          /* sum of bits*qscale/rceq */
     double wantedBitsWindow;  /* target bitrate * window */

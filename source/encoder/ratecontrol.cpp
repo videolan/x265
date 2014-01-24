@@ -534,7 +534,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         if (curSlice->getPOC() == 0)
             lastQScaleFor[P_SLICE] = q * fabs(cfg->param.rc.ipFactor);
 
-        rce->frameSizePlanned = predictSize(&pred[sliceType], q, lastSatd);
+        rce->frameSizePlanned = predictSize(&pred[sliceType], q, (double)lastSatd);
 
         return q;
     }
@@ -573,7 +573,7 @@ double RateControl::clipQscale(double q)
 
             // Now a hard threshold to make sure the frame fits in VBV.
             // This one is mostly for I-frames.
-            double bits = predictSize(&pred[sliceType], q, lastSatd);
+            double bits = predictSize(&pred[sliceType], q, (double)lastSatd);
 
             // For small VBVs, allow the frame to use up the entire VBV.
             double maxFillFactor;
@@ -590,7 +590,7 @@ double RateControl::clipQscale(double q)
                 bits *= qf;
                 if (bits < bufferRate / minFillFactor)
                     q *= bits * minFillFactor / bufferRate;
-                bits = predictSize(&pred[sliceType], q, lastSatd);
+                bits = predictSize(&pred[sliceType], q, (double)lastSatd);
             }
 
             q = X265_MAX(q0, q);
@@ -601,9 +601,9 @@ double RateControl::clipQscale(double q)
         if (sliceType == P_SLICE)
         {
             int nb = bframes;
-            double bits = predictSize(&pred[sliceType], q, lastSatd);
+            double bits = predictSize(&pred[sliceType], q, (double)lastSatd);
             double pbbits = bits;
-            double bbits = predictSize(&predBfromP, q * cfg->param.rc.pbFactor, lastSatd);
+            double bbits = predictSize(&predBfromP, q * cfg->param.rc.pbFactor, (double)lastSatd);
             double space;
             if (bbits > bufferRate)
                 nb = 0;
@@ -678,7 +678,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
     int mbCount = (int)((cfg->param.sourceHeight * cfg->param.sourceWidth) / pow((int)16, 2.0));
 
     if  (rce->lastSatd >= mbCount)
-        updatePredictor(&pred[rce->sliceType], qp2qScale(rce->qpaRc), rce->lastSatd, (double)bits);
+        updatePredictor(&pred[rce->sliceType], qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bits);
 
     if (!isVbv)
         return;

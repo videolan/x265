@@ -52,11 +52,11 @@ struct EstimateRow
     volatile uint32_t   completed;      // Number of CUs in this row for which cost estimation is completed
     volatile bool       active;
 
-    int                 costEst;        // Estimated cost for all CUs in a row
-    int                 costEstAq;      // Estimated weight Aq cost for all CUs in a row
-    int                 costIntra;      // Estimated Intra cost for all CUs in a row
-    int                 costIntraAq;    // Estimated weighted Aq Intra cost for all CUs in a row
+    uint64_t            costEst;        // Estimated cost for all CUs in a row
+    uint64_t            costEstAq;      // Estimated weight Aq cost for all CUs in a row
+    uint64_t            costIntraAq;    // Estimated weighted Aq Intra cost for all CUs in a row
     int                 intraMbs;       // Number of Intra CUs
+    int                 costIntra;      // Estimated Intra cost for all CUs in a row
 
     int                 widthInCU;
     int                 heightInCU;
@@ -103,9 +103,9 @@ struct CostEstimate : public WaveFront
     bool             bDoSearch[2];
     bool             rowsCompleted;
     int              curb, curp0, curp1;
-    void             processRow(int row);
 
-    int      estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
+    void     processRow(int row);
+    uint64_t estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
 
 protected:
 
@@ -136,7 +136,7 @@ struct Lookahead
     void addPicture(TComPic*, int sliceType);
     void flush();
 
-    int  getEstimatedPictureCost(TComPic *pic);
+    uint64_t getEstimatedPictureCost(TComPic *pic);
 
 protected:
 
@@ -145,10 +145,10 @@ protected:
     void slicetypeAnalyse(Lowres **frames, bool bKeyframe);
 
     /* called by slicetypeAnalyse() to make slice decisions */
-    int  scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
-    int  scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
-    void slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
-    int  slicetypePathCost(Lowres **frames, char *path, int threshold);
+    uint64_t scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
+    uint64_t scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
+    void     slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
+    uint64_t slicetypePathCost(Lowres **frames, char *path, uint64_t threshold);
 
     /* called by slicetypeAnalyse() to effect cuTree adjustments to adaptive
      * quant offsets */
@@ -159,7 +159,7 @@ protected:
     void cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */
-    int  frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
+    uint64_t frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
 };
 }
 
