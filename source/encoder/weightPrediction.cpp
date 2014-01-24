@@ -195,9 +195,11 @@ bool WeightPrediction::checkDenom(int denom)
             ref  = &m_slice->getRefPic(list, refIdxTemp)->m_lowres;
             refPoc = m_slice->getRefPic(list, refIdxTemp)->getPOC();
             difPoc = abs(curPoc - refPoc);
-            m_mvs = fenc->lowresMvs[list][difPoc - 1];
-            if (m_mvs)
+            if (difPoc > m_bframes + 1)
+                continue;
+            else
             {
+                m_mvs = fenc->lowresMvs[list][difPoc - 1];
                 if (m_mvs[0].x == 0x7FFF)
                     continue;
                 else
@@ -245,44 +247,42 @@ bool WeightPrediction::checkDenom(int denom)
                 switch (yuv)
                 {
                 case 0:
-
+                {
                     m_mcbuf = ref->fpelPlane;
                     m_inbuf = fenc->lowresPlane[0];
-                    if (m_mvs)
+                    pixel *tempm_buf;
+                    pixel m_buf8[8 * 8];
+                    int pixoff = 0, cu = 0;
+                    intptr_t strd;
+                    for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
                     {
-                        pixel *tempm_buf;
-                        pixel m_buf8[8 * 8];
-                        int pixoff = 0, cu = 0;
-                        intptr_t strd;
-                        for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
+                        for (int x = 0; x < m_frmWidth; x += 8, pixoff += 8, cu++)
                         {
-                            for (int x = 0; x < m_frmWidth; x += 8, pixoff += 8, cu++)
+                            if (m_mvCost[cu] > fenc->intraCost[cu])
                             {
-                                if (fenc->lowresMvCosts[0][difPoc - 1][cu] > fenc->intraCost[cu])
-                                {
-                                    strd = m_refStride;
-                                    tempm_buf = m_inbuf + pixoff;
-                                }
-                                else
-                                {
-                                    strd = 8;
-                                    tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], m_buf8, strd);
-                                    ic++;
-                                }
-                                primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
+                                strd = m_refStride;
+                                tempm_buf = m_inbuf + pixoff;
                             }
+                            else
+                            {
+                                strd = 8;
+                                tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], m_buf8, strd);
+                                ic++;
+                            }
+                            primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
                         }
-
-                        m_mcbuf = m_buf;
                     }
+
+                    m_mcbuf = m_buf;
                     break;
+                }
 
                 case 1:
 
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCbAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCbAddr();
                     m_blockSize = 8;
-                    if (m_mvs) mcChroma();
+                    mcChroma();
                     break;
 
                 case 2:
@@ -290,7 +290,7 @@ bool WeightPrediction::checkDenom(int denom)
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCrAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCrAddr();
                     m_blockSize = 8;
-                    if (m_mvs) mcChroma();
+                    mcChroma();
                     break;
                 }
 

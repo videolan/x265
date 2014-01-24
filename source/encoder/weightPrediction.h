@@ -42,10 +42,11 @@ private:
     pixel *m_mcbuf, *m_inbuf, *m_buf;
     int32_t *m_intraCost;
     MV *m_mvs;
+    int m_bframes;
 
 public:
 
-    WeightPrediction(TComSlice *slice)
+    WeightPrediction(TComSlice *slice, x265_param param)
     {
         this->m_slice = slice;
         m_csp = m_slice->getPic()->getPicYuvOrg()->m_picCsp;
@@ -56,6 +57,7 @@ public:
         m_dstStride = m_frmWidth;
         m_refStride = m_slice->getPic()->m_lowres.lumaStride;
         m_intraCost = m_slice->getPic()->m_lowres.intraCost;
+        m_bframes = param.bframes;
 
         m_mcbuf = NULL;
         m_inbuf = NULL;
