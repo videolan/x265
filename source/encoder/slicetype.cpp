@@ -720,7 +720,7 @@ void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X26
 {
     char paths[2][X265_LOOKAHEAD_MAX + 1];
     int num_paths = X265_MIN(cfg->param.bframes + 1, length);
-    int64_t best_cost;
+    int64_t best_cost = 0;
     int idx = 0;
 
     /* Iterate over all currently possible paths */
