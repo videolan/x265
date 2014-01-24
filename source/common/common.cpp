@@ -275,6 +275,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         if (!strcmp(preset, "ultrafast"))
         {
             param->lookaheadDepth = 10;
+            param->scenecutThreshold = 0; // disable lookahead
             param->maxCUSize = 32;
             param->searchRange = 28;
             param->bFrameAdaptive = 0;
