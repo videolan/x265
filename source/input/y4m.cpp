@@ -61,7 +61,7 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
         ifs = new ifstream(filename, ios::binary | ios::in);
 
     threadActive = false;
-    if (ifs && !ifs->fail())
+    if (ifs && ifs->good())
     {
         if (parseHeader())
         {
@@ -366,7 +366,7 @@ bool Y4MInput::populateFrameQueue()
     }
     /* consume bytes up to line feed */
     int c = ifs->get();
-    while (c != '\n' && !ifs)
+    while (c != '\n' && ifs->good())
     {
         c = ifs->get();
     }
