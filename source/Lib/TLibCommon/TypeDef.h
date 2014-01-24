@@ -120,10 +120,10 @@ enum CI_IDX
     CI_CURR_BEST = 0,   ///< best mode index
     CI_NEXT_BEST,       ///< next best index
     CI_TEMP_BEST,       ///< temporal index
-    CI_CHROMA_INTRA,    ///< chroma intra index
     CI_QT_TRAFO_TEST,
     CI_QT_TRAFO_ROOT,
     CI_NUM,             ///< total number
+    CI_NUM_SAO   = 3,
 };
 
 /// motion vector predictor direction used in AMVP

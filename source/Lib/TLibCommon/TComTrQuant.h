@@ -68,7 +68,7 @@ typedef struct
     int greaterOneBits[NUM_ONE_FLAG_CTX][2];
     int levelAbsBits[NUM_ABS_FLAG_CTX][2];
 
-    int blockCbpBits[3 * NUM_QT_CBF_CTX][2];
+    int blockCbpBits[2 * NUM_QT_CBF_CTX][2];
     int blockRootCbpBits[4][2];
 } estBitsSbacStruct;
 

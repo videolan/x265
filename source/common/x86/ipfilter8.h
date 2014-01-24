@@ -212,7 +212,6 @@ LUMA_SP_FILTERS(_ssse3);
 LUMA_SS_FILTERS(_sse2);
 
 void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
-void x265_interp_8tap_v_ss_sse2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int width, int height, const int coefIdx);
 void x265_luma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 void x265_chroma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 void x265_interp_4tap_vert_sp_2x4_sse4(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
