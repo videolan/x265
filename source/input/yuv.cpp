@@ -29,6 +29,8 @@
 #include <assert.h>
 #include <iostream>
 
+#define ENABLE_THREADING 1
+
 #if _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -145,8 +147,10 @@ void YUVInput::skipFrames(uint32_t numFrames)
 void YUVInput::startReader()
 {
     init();
+#if ENABLE_THREADING
     if (ifs && threadActive)
         start();
+#endif
 }
 
 void YUVInput::threadMain()
@@ -182,12 +186,16 @@ bool YUVInput::populateFrameQueue()
 
 bool YUVInput::readPicture(x265_picture& pic)
 {
+#if ENABLE_THREADING
     while (head == tail)
     {
         notEmpty.wait();
         if (!threadActive)
             return false;
     }
+#else
+    populateFrameQueue();
+#endif
 
     if (!frameStat[head])
         return false;

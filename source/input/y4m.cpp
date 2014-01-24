@@ -28,6 +28,8 @@
 #include <string.h>
 #include <iostream>
 
+#define ENABLE_THREADING 1
+
 #if _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -307,12 +309,16 @@ void Y4MInput::skipFrames(uint32_t numFrames)
 bool Y4MInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
+#if ENABLE_THREADING
     while (head == tail)
     {
         notEmpty.wait();
         if (!threadActive)
             return false;
     }
+#else
+    populateFrameQueue();
+#endif
 
     if (!frameStat[head])
         return false;
@@ -332,8 +338,10 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
 void Y4MInput::startReader()
 {
+#if ENABLE_THREADING
     if (threadActive)
         start();
+#endif
 }
 
 void Y4MInput::threadMain()
