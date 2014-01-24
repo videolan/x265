@@ -132,7 +132,6 @@ struct Lookahead
 
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
-    int              numDecided;
     int              lastKeyframe;
     
     void addPicture(TComPic*, int sliceType);

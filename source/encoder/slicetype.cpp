@@ -60,7 +60,6 @@ Lookahead::Lookahead(TEncCfg *_cfg, ThreadPool* pool)
     : est(pool)
 {
     this->cfg = _cfg;
-    numDecided = 0;
     lastKeyframe = - cfg->param.keyframeMax;
     lastNonB = NULL;
     widthInCU = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
