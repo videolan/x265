@@ -25,6 +25,7 @@
 #define X265_COMMON_H
 
 #include <cstdlib>
+#include <cstring>
 #include "x265.h"
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
