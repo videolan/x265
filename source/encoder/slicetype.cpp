@@ -898,7 +898,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     uint16_t *refCosts[2] = {frames[p0]->propagateCost, frames[p1]->propagateCost};
     int distScaleFactor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
     int bipredWeight = cfg->param.bEnableWeightedBiPred ? 64 - (distScaleFactor >> 2) : 32;
-    MV *mvs[2] = {frames[b]->lowresMvs[0][b - p0 -1], frames[b]->lowresMvs[1][p1 - b - 1]};
+    MV *mvs[2] = {frames[b]->lowresMvs[0][b - p0 - 1], frames[b]->lowresMvs[1][p1 - b - 1]};
     int bipredWeights[2] = {bipredWeight, 64 - bipredWeight};
     memset(scratch, 0, widthInCU * sizeof(int));
 
