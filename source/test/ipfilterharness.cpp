@@ -51,6 +51,9 @@ IPFilterHarness::IPFilterHarness()
 
     memset(IPF_C_output_p, 0xCD, ipf_t_size);
     memset(IPF_vec_output_p, 0xCD, ipf_t_size);
+    memset(IPF_C_output_s, 0xCD, ipf_t_size * sizeof(int16_t));
+    memset(IPF_vec_output_s, 0xCD, ipf_t_size * sizeof(int16_t));
+
 
     for (int i = 0; i < ipf_t_size; i++)                         // Initialize input buffer
     {
@@ -390,6 +393,14 @@ bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp
 bool IPFilterHarness::check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss_t opt)
 {
     int rand_srcStride, rand_dstStride, rand_coeffIdx;
+
+    // NOTE: refill data to avoid overflow
+    const int max_filter_val = 64 * (1 << 8);
+
+    for (int i = 0; i < ipf_t_size; i++)
+    {
+        short_buff[i] = rand() % (2 * max_filter_val) - max_filter_val;
+    }
 
     for (int i = 0; i <= 100; i++)
     {
