@@ -63,7 +63,7 @@ endif(MSVC)
 
 set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
 set(SSSE3 vec/dct-ssse3.cpp vec/intra-ssse3.cpp)
-set(SSE41 vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp)
+set(SSE41 vec/dct-sse41.cpp vec/intra-sse41.cpp)
 
 if (MSVC)
     set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
@@ -144,8 +144,8 @@ endif(GCC)
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 add_library(common OBJECT
-    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
+    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
     cpu.cpp cpu.h version.cpp
