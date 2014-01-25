@@ -603,21 +603,4 @@ void TComPrediction::xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int re
     }
 }
 
-// AMVP
-void TComPrediction::getMvPredAMVP(TComDataCU* cu, uint32_t partIdx, uint32_t partAddr, int list, MV& mvPred)
-{
-    AMVPInfo* pcAMVPInfo = cu->getCUMvField(list)->getAMVPInfo();
-
-    if (pcAMVPInfo->m_num <= 1)
-    {
-        mvPred = pcAMVPInfo->m_mvCand[0];
-
-        cu->setMVPIdxSubParts(0, list, partAddr, partIdx, cu->getDepth(partAddr));
-        return;
-    }
-
-    assert(cu->getMVPIdx(list, partAddr) >= 0);
-    mvPred = pcAMVPInfo->m_mvCand[cu->getMVPIdx(list, partAddr)];
-}
-
 //! \}

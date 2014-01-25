@@ -222,15 +222,14 @@ protected:
     // --------------------------------------------------------------------------------------------
 
     void xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int picList, int refIdx,
-                             MV& mvPred, uint32_t* distBiP = NULL);
+                             MV& mvPred, AMVPInfo* amvpInfo, uint32_t* distBiP = NULL);
 
-    void xCheckBestMVP(TComDataCU* cu, int picList, MV cMv, MV& mvPred, int& mvpIdx,
+    void xCheckBestMVP(AMVPInfo* amvpInfo, MV cMv, MV& mvPred, int& mvpIdx,
                        uint32_t& outBits, uint32_t& outCost);
 
     uint32_t xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
                               int mvpCandCount, int picList, int refIdx, int sizex, int sizey);
 
-    void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
     uint32_t xGetMvpIdxBits(int idx, int num);
     void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 

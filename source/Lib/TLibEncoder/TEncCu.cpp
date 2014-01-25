@@ -1581,16 +1581,6 @@ void TEncCu::xCheckDQP(TComDataCU* cu)
     }
 }
 
-void TEncCu::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
-{
-    // TODO: SJB - there are multiple implementations of this function, it should be an AMVPInfo method
-    dst->m_num = src->m_num;
-    for (int i = 0; i < src->m_num; i++)
-    {
-        dst->m_mvCand[i] = src->m_mvCand[i];
-    }
-}
-
 void TEncCu::xCopyYuv2Pic(TComPic* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth, uint32_t srcDepth, TComDataCU* cu, uint32_t lpelx, uint32_t tpely)
 {
     uint32_t rpelx = lpelx + (g_maxCUWidth >> depth)  - 1;
