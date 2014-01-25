@@ -56,8 +56,7 @@
 #define NUM_MERGE_FLAG_EXT_CTX        1       ///< number of context models for merge flag of merge extended
 #define NUM_MERGE_IDX_EXT_CTX         1       ///< number of context models for merge index of merge extended
 
-#define NUM_PART_SIZE_CTX             3       ///< number of context models for partition size
-#define NUM_CU_AMP_CTX                1       ///< number of context models for partition size (AMP)
+#define NUM_PART_SIZE_CTX             4       ///< number of context models for partition size
 #define NUM_PRED_MODE_CTX             1       ///< number of context models for prediction mode
 
 #define NUM_ADI_CTX                   1       ///< number of context models for intra prediction
@@ -89,7 +88,7 @@
 #define NUM_ABS_FLAG_CTX_LUMA          4      ///< number of context models for greater than 2 flag of luma
 #define NUM_ABS_FLAG_CTX_CHROMA        2      ///< number of context models for greater than 2 flag of chroma
 
-#define NUM_MVP_IDX_CTX               2       ///< number of context models for MVP index
+#define NUM_MVP_IDX_CTX               1       ///< number of context models for MVP index
 
 #define NUM_SAO_MERGE_FLAG_CTX        1       ///< number of context models for SAO merge flags
 #define NUM_SAO_TYPE_IDX_CTX          1       ///< number of context models for SAO type index
@@ -121,8 +120,7 @@
 #define OFF_ONE_FLAG_CTX                    (OFF_CTX_LAST_FLAG_Y        +     NUM_CTX_LAST_FLAG_XY)
 #define OFF_ABS_FLAG_CTX                    (OFF_ONE_FLAG_CTX           +     NUM_ONE_FLAG_CTX)
 #define OFF_MVP_IDX_CTX                     (OFF_ABS_FLAG_CTX           +     NUM_ABS_FLAG_CTX)
-#define OFF_CU_AMP_CTX                      (OFF_MVP_IDX_CTX            +     NUM_MVP_IDX_CTX)
-#define OFF_SAO_MERGE_FLAG_CTX              (OFF_CU_AMP_CTX             +     NUM_CU_AMP_CTX)
+#define OFF_SAO_MERGE_FLAG_CTX              (OFF_MVP_IDX_CTX            +     NUM_MVP_IDX_CTX)
 #define OFF_SAO_TYPE_IDX_CTX                (OFF_SAO_MERGE_FLAG_CTX     +     NUM_SAO_MERGE_FLAG_CTX)
 #define OFF_TRANSFORMSKIP_FLAG_CTX          (OFF_SAO_TYPE_IDX_CTX       +     NUM_SAO_TYPE_IDX_CTX)
 #define OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX   (OFF_TRANSFORMSKIP_FLAG_CTX + 2 * NUM_TRANSFORMSKIP_FLAG_CTX)
@@ -205,17 +203,9 @@ static const uint8_t
 static const uint8_t
     INIT_PART_SIZE[3][NUM_PART_SIZE_CTX] =
 {
-    { 154,  139,  CNU, },
-    { 154,  139,  CNU, },
-    { 184,  CNU,  CNU, },
-};
-
-static const uint8_t
-    INIT_CU_AMP_POS[3][NUM_CU_AMP_CTX] =
-{
-    { 154, },
-    { 154, },
-    { CNU, },
+    { 154,  139,  154, 154 },
+    { 154,  139,  154, 154 },
+    { 184,  CNU,  CNU, CNU },
 };
 
 static const uint8_t
@@ -277,9 +267,9 @@ static const uint8_t
 static const uint8_t
     INIT_QT_CBF[3][2 * NUM_QT_CBF_CTX] =
 {
-    { 153,  111,  CNU,  CNU,  149,   92,  167,  CNU, },
-    { 153,  111,  CNU,  CNU,  149,  107,  167,  CNU, },
-    { 111,  141,  CNU,  CNU,   94,  138,  182,  CNU, },
+    { 153,  111,  CNU,  CNU,  149,   92,  167,  154, },
+    { 153,  111,  CNU,  CNU,  149,  107,  167,  154, },
+    { 111,  141,  CNU,  CNU,   94,  138,  182,  154, },
 };
 
 static const uint8_t
@@ -339,9 +329,9 @@ static const uint8_t
 static const uint8_t
     INIT_MVP_IDX[3][NUM_MVP_IDX_CTX] =
 {
-    { 168,  CNU, },
-    { 168,  CNU, },
-    { CNU,  CNU, },
+    { 168 },
+    { 168 },
+    { CNU },
 };
 
 static const uint8_t
