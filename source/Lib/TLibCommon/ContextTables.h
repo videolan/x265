@@ -78,7 +78,9 @@
 #define NUM_SIG_FLAG_CTX_LUMA         27      ///< number of context models for luma sig flag
 #define NUM_SIG_FLAG_CTX_CHROMA       15      ///< number of context models for chroma sig flag
 
-#define NUM_CTX_LAST_FLAG_XY          15      ///< number of context models for last coefficient position
+#define NUM_CTX_LAST_FLAG_XY          18      ///< number of context models for last coefficient position
+#define NUM_CTX_LAST_FLAG_XY_LUMA     15      ///< number of context models for last coefficient position of luma
+#define NUM_CTX_LAST_FLAG_XY_CHROMA    3      ///< number of context models for last coefficient position of chroma
 
 #define NUM_ONE_FLAG_CTX              24      ///< number of context models for greater than 1 flag
 #define NUM_ONE_FLAG_CTX_LUMA         16      ///< number of context models for greater than 1 flag of luma
@@ -115,8 +117,8 @@
 #define OFF_SIG_CG_FLAG_CTX                 (OFF_QT_ROOT_CBF_CTX        +     NUM_QT_ROOT_CBF_CTX)
 #define OFF_SIG_FLAG_CTX                    (OFF_SIG_CG_FLAG_CTX        + 2 * NUM_SIG_CG_FLAG_CTX)
 #define OFF_CTX_LAST_FLAG_X                 (OFF_SIG_FLAG_CTX           +     NUM_SIG_FLAG_CTX)
-#define OFF_CTX_LAST_FLAG_Y                 (OFF_CTX_LAST_FLAG_X        + 2 * NUM_CTX_LAST_FLAG_XY)
-#define OFF_ONE_FLAG_CTX                    (OFF_CTX_LAST_FLAG_Y        + 2 * NUM_CTX_LAST_FLAG_XY)
+#define OFF_CTX_LAST_FLAG_Y                 (OFF_CTX_LAST_FLAG_X        +     NUM_CTX_LAST_FLAG_XY)
+#define OFF_ONE_FLAG_CTX                    (OFF_CTX_LAST_FLAG_Y        +     NUM_CTX_LAST_FLAG_XY)
 #define OFF_ABS_FLAG_CTX                    (OFF_ONE_FLAG_CTX           +     NUM_ONE_FLAG_CTX)
 #define OFF_MVP_IDX_CTX                     (OFF_ABS_FLAG_CTX           +     NUM_ABS_FLAG_CTX)
 #define OFF_CU_AMP_CTX                      (OFF_MVP_IDX_CTX            +     NUM_MVP_IDX_CTX)
@@ -289,14 +291,14 @@ static const uint8_t
 };
 
 static const uint8_t
-    INIT_LAST[3][2 * NUM_CTX_LAST_FLAG_XY] =
+    INIT_LAST[3][NUM_CTX_LAST_FLAG_XY] =
 {
     { 125,  110,  124,  110,   95,   94,  125,  111,  111,   79,  125,  126,  111,  111,   79,
-      108,  123,   93,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU, },
+      108,  123,   93 },
     { 125,  110,   94,  110,   95,   79,  125,  111,  110,   78,  110,  111,  111,   95,   94,
-      108,  123,  108,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU, },
+      108,  123,  108 },
     { 110,  110,  124,  125,  140,  153,  125,  127,  140,  109,  111,  143,  127,  111,   79,
-      108,  123,   63,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU,  CNU, },
+      108,  123,   63 },
 };
 
 static const uint8_t
