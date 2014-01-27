@@ -486,7 +486,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     int size = g_convertToBit[width];
     if (absSum)
     {
-        int scalingListType = 0 + g_eTTable[(int)TEXT_LUMA];
+        int scalingListType = 0 + TEXT_LUMA;
         assert(scalingListType < 6);
         m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, height, scalingListType, useTransformSkip, lastPos);
     }
@@ -621,7 +621,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         //--- inverse transform ---
         if (absSum)
         {
-            int scalingListType = 0 + g_eTTable[(int)ttype];
+            int scalingListType = 0 + ttype;
             assert(scalingListType < 6);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, residual, stride, coeff, width, height, scalingListType, useTransformSkipChroma, lastPos);
         }
@@ -1056,7 +1056,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         int size = g_convertToBit[width];
         if (absSum)
         {
-            int scalingListType = 0 + g_eTTable[(int)TEXT_LUMA];
+            int scalingListType = 0 + TEXT_LUMA;
             assert(scalingListType < 6);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, height, scalingListType, useTransformSkip, lastPos);
         }
@@ -1683,7 +1683,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
             //--- inverse transform ---
             if (absSum)
             {
-                int scalingListType = 0 + g_eTTable[(int)ttype];
+                int scalingListType = 0 + ttype;
                 assert(scalingListType < 6);
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, residual, stride, coeff, width, height, scalingListType, useTransformSkipChroma, lastPos);
             }
@@ -3306,7 +3306,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
-            int scalingListType = 3 + g_eTTable[(int)TEXT_LUMA];
+            int scalingListType = 3 + TEXT_LUMA;
             assert(scalingListType < 6);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, resiYuv->m_width,  coeffCurY, trWidth, trHeight, scalingListType, false, lastPosY); //this is for inter mode only
         }
@@ -3326,7 +3326,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-                int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_U];
+                int scalingListType = 3 + TEXT_CHROMA_U;
                 assert(scalingListType < 6);
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, resiYuv->m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, false, lastPosU);
             }
@@ -3342,7 +3342,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-                int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_V];
+                int scalingListType = 3 + TEXT_CHROMA_V;
                 assert(scalingListType < 6);
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, resiYuv->m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, false, lastPosV);
             }
@@ -3550,7 +3550,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
-            int scalingListType = 3 + g_eTTable[(int)TEXT_LUMA];
+            int scalingListType = 3 + TEXT_LUMA;
             assert(scalingListType < 6);
             assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, MAX_CU_SIZE,  coeffCurY, trWidth, trHeight, scalingListType, false, lastPosY); //this is for inter mode only
@@ -3622,7 +3622,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-                int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_U];
+                int scalingListType = 3 + TEXT_CHROMA_U;
                 assert(scalingListType < 6);
                 assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, MAX_CU_SIZE / 2, coeffCurU, trWidthC, trHeightC, scalingListType, false, lastPosU);
@@ -3689,7 +3689,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-                int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_V];
+                int scalingListType = 3 + TEXT_CHROMA_V;
                 assert(scalingListType < 6);
                 assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, MAX_CU_SIZE / 2, coeffCurV, trWidthC, trHeightC, scalingListType, false, lastPosV);
@@ -3795,7 +3795,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
-                int scalingListType = 3 + g_eTTable[(int)TEXT_LUMA];
+                int scalingListType = 3 + TEXT_LUMA;
                 assert(scalingListType < 6);
                 assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
 
@@ -3886,7 +3886,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-                int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_U];
+                int scalingListType = 3 + TEXT_CHROMA_U;
                 assert(scalingListType < 6);
                 assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
 
@@ -3925,7 +3925,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-                int scalingListType = 3 + g_eTTable[(int)TEXT_CHROMA_V];
+                int scalingListType = 3 + TEXT_CHROMA_V;
                 assert(scalingListType < 6);
                 assert(m_qtTempTComYuv[qtlayer].m_cwidth == MAX_CU_SIZE / 2);
 

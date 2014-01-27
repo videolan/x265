@@ -1897,7 +1897,7 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
     uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + (ttype ? TEXT_CHROMA : 0) * NUM_QT_CBF_CTX + ctx]);
+    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + (ttype ? NUM_QT_CBF_CTX : 0) + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseQtCbf()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -1923,7 +1923,7 @@ void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint3
     }
 
     uint32_t useTransformSkip = cu->getTransformSkip(absPartIdx, ttype);
-    m_binIf->encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? TEXT_CHROMA : TEXT_LUMA) * NUM_TRANSFORMSKIP_FLAG_CTX]);
+    m_binIf->encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSkip()");
     DTRACE_CABAC_T("\tsymbol=")
@@ -2042,7 +2042,7 @@ void TEncSbac::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
     uint32_t cbf = 0;
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + (ttype ? TEXT_CHROMA : 0) * NUM_QT_CBF_CTX + ctx]);
+    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + (ttype ? NUM_QT_CBF_CTX : 0) + ctx]);
 }
 
 void TEncSbac::codeQtRootCbfZero(TComDataCU*)

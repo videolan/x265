@@ -107,11 +107,10 @@ enum PredMode
 /// texture component type
 enum TextType
 {
-    TEXT_LUMA,          ///< luma
-    TEXT_CHROMA,        ///< chroma (U+V)
-    TEXT_CHROMA_U,      ///< chroma U
-    TEXT_CHROMA_V,      ///< chroma V
-    TEXT_ALL,           ///< Y+U+V
+    TEXT_LUMA     = 0,  ///< luma
+    TEXT_CHROMA   = 1,  ///< chroma (U+V)
+    TEXT_CHROMA_U = 1,  ///< chroma U
+    TEXT_CHROMA_V = 2,  ///< chroma V
 };
 
 /// index for SBAC based RD optimization

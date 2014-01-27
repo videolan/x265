@@ -169,12 +169,6 @@ template<typename T>
 inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
 
 // ====================================================================================================================
-// Texture type to integer mapping
-// ====================================================================================================================
-
-extern const UChar g_convertTxtTypeToIdx[4];
-
-// ====================================================================================================================
 // Misc.
 // ====================================================================================================================
 
@@ -288,7 +282,6 @@ extern int g_quantTSDefault4x4[16];
 extern uint32_t g_scalingListSize[SCALING_LIST_SIZE_NUM];
 extern uint32_t g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
 extern uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM];
-extern int  g_eTTable[4];
 //! \}
 
 // Map Luma samples to chroma samples
