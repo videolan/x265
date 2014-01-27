@@ -436,11 +436,16 @@ int x265_check_params(x265_param *param)
     uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
-    CHECK(param->inputBitDepth > x265_max_bit_depth,
-          "inputBitDepth must be <= x265_max_bit_depth");
+    /* These checks might be temporary */
     CHECK(param->internalCsp != X265_CSP_I420,
           "Only 4:2:0 color space is supported at this time");
+#if HIGH_BIT_DEPTH
+    CHECK(param->inputBitDepth != 10,
+          "x265 was compiled for 10bit encodes, only 10bit inputs supported");
+#endif
 
+    CHECK(param->inputBitDepth > x265_max_bit_depth,
+          "inputBitDepth must be <= x265_max_bit_depth");
     CHECK(param->rc.qp < -6 * (param->inputBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");
     CHECK(param->frameRate <= 0,
