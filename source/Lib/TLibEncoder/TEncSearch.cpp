@@ -128,7 +128,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     // default to no adaptive range
     for (int dir = 0; dir < 2; dir++)
     {
-        for (int ref = 0; ref < 33; ref++)
+        for (int ref = 0; ref < MAX_NUM_REF; ref++)
         {
             m_adaptiveRange[dir][ref] = cfg->param.searchRange;
         }
@@ -2492,13 +2492,13 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
     MV mvzero(0, 0);
     MV mv[2];
     MV mvBidir[2];
-    MV mvTemp[2][33];
-    MV mvPred[2][33];
-    MV mvPredBi[2][33];
+    MV mvTemp[2][MAX_NUM_REF];
+    MV mvPred[2][MAX_NUM_REF];
+    MV mvPredBi[2][MAX_NUM_REF];
 
-    int mvpIdxBi[2][33];
-    int mvpIdx[2][33];
-    AMVPInfo amvpInfo[2][33];
+    int mvpIdxBi[2][MAX_NUM_REF];
+    int mvpIdx[2][MAX_NUM_REF];
+    AMVPInfo amvpInfo[2][MAX_NUM_REF];
 
     uint32_t mbBits[3] = { 1, 1, 0 };
     int refIdx[2] = { 0, 0 }; // If un-initialized, may cause SEGV in bi-directional prediction iterative stage.

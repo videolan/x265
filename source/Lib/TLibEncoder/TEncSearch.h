@@ -100,7 +100,7 @@ protected:
 
     // ME parameters
     int             m_refLagPixels;
-    int             m_adaptiveRange[2][33];
+    int             m_adaptiveRange[2][MAX_NUM_REF];
     MV              m_mvPredictors[3];
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
