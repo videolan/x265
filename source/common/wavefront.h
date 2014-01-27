@@ -49,7 +49,7 @@ private:
 
 public:
 
-    WaveFront(ThreadPool *pool) : JobProvider(pool), m_queuedBitmap(0) {}
+    WaveFront(ThreadPool *pool) : JobProvider(pool), m_queuedBitmap(0), m_enableBitmap(0) {}
 
     virtual ~WaveFront();
 

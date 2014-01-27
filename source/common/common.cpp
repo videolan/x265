@@ -173,7 +173,7 @@ void x265_param_default(x265_param *param)
     /* Inter Coding tools */
     param->searchMethod = X265_HEX_SEARCH;
     param->subpelRefine = 2;
-    param->searchRange = 58;
+    param->searchRange = 57;
     param->maxNumMergeCand = 2;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
@@ -277,7 +277,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->lookaheadDepth = 10;
             param->scenecutThreshold = 0; // disable lookahead
             param->maxCUSize = 32;
-            param->searchRange = 26;
+            param->searchRange = 25;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 0;
             param->maxNumMergeCand = 2;
@@ -438,6 +438,8 @@ int x265_check_params(x265_param *param)
 
     CHECK(param->inputBitDepth > x265_max_bit_depth,
           "inputBitDepth must be <= x265_max_bit_depth");
+    CHECK(param->internalCsp != X265_CSP_I420,
+          "Only 4:2:0 color space is supported at this time");
 
     CHECK(param->rc.qp < -6 * (param->inputBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");

@@ -721,9 +721,6 @@ void FrameEncoder::compressFrame()
         m_frameFilter.end();
     }
 
-    // TODO: merge into compress loop, need some time to verify, remove later
-    //m_pic->compressMotion();
-
     /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)
     {
@@ -945,6 +942,7 @@ void FrameEncoder::compressCTURows()
     }
 
     int range = m_cfg->param.searchRange + /* fpel search */
+                1 +                        /* diamond search range check lag */
                 2 +                        /* subpel refine */
                 NTAPS_LUMA / 2;            /* subpel filter half-length */
     uint32_t refLagRows = 1 + ((range + g_maxCUHeight - 1) / g_maxCUHeight);
