@@ -944,7 +944,10 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
     }
 
-    uint32_t refLagRows = ((m_cfg->param.searchRange + NTAPS_LUMA / 2 + g_maxCUHeight - 1) / g_maxCUHeight) + 1;
+    int range = m_cfg->param.searchRange + /* fpel search */
+                2 +                        /* subpel refine */
+                NTAPS_LUMA / 2;            /* subpel filter half-length */
+    uint32_t refLagRows = 1 + ((range + g_maxCUHeight - 1) / g_maxCUHeight);
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_pic->m_SSDY = 0;
