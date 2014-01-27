@@ -945,6 +945,7 @@ void FrameEncoder::compressCTURows()
     }
 
     int range = m_cfg->param.searchRange + /* fpel search */
+                1 +                        /* diamond search range check lag */
                 2 +                        /* subpel refine */
                 NTAPS_LUMA / 2;            /* subpel filter half-length */
     uint32_t refLagRows = 1 + ((range + g_maxCUHeight - 1) / g_maxCUHeight);

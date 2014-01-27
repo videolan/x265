@@ -174,7 +174,7 @@ void x265_param_default(x265_param *param)
     /* Inter Coding tools */
     param->searchMethod = X265_HEX_SEARCH;
     param->subpelRefine = 2;
-    param->searchRange = 58;
+    param->searchRange = 57;
     param->maxNumMergeCand = 2;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
@@ -277,7 +277,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->lookaheadDepth = 10;
             param->maxCUSize = 32;
-            param->searchRange = 26;
+            param->searchRange = 25;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 0;
             param->maxNumMergeCand = 2;
