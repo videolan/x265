@@ -438,6 +438,8 @@ int x265_check_params(x265_param *param)
 
     CHECK(param->inputBitDepth > x265_max_bit_depth,
           "inputBitDepth must be <= x265_max_bit_depth");
+    CHECK(param->internalCsp != X265_CSP_I420,
+          "Only 4:2:0 color space is supported at this time");
 
     CHECK(param->rc.qp < -6 * (param->inputBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");
