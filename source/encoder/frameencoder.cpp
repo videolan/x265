@@ -721,9 +721,6 @@ void FrameEncoder::compressFrame()
         m_frameFilter.end();
     }
 
-    // TODO: merge into compress loop, need some time to verify, remove later
-    //m_pic->compressMotion();
-
     /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)
     {
