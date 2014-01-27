@@ -69,14 +69,12 @@ void WeightPrediction::mcChroma()
                 }
                 else
                 {
-                    uint32_t cxWidth = m_blockSize;
-                    uint32_t cxHeight = m_blockSize;
-                    int extStride = cxWidth;
+                    int extStride = m_blockSize;
                     int filterSize = NTAPS_CHROMA;
                     int halfFilterSize = (filterSize >> 1);
 
                     primitives.chroma[m_csp].filter_hps[partEnum](temp, strd, immedVal, extStride, xFrac, 1);
-                    primitives.chroma_vsp(immedVal + (halfFilterSize - 1) * extStride, extStride, m_buf + pixoff, m_refStride, cxWidth, cxHeight, yFrac);
+                    primitives.chroma[m_csp].filter_vsp[partEnum](immedVal + (halfFilterSize - 1) * extStride, extStride, m_buf + pixoff, m_refStride, yFrac);
                 }
             }
             else
