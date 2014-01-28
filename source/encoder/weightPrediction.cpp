@@ -245,42 +245,41 @@ bool WeightPrediction::checkDenom(int denom)
                 switch (yuv)
                 {
                 case 0:
-                {
                     m_mcbuf = ref->fpelPlane;
                     m_inbuf = fenc->lowresPlane[0];
-                    pixel *tempm_buf;
-                    pixel m_buf8[8 * 8];
-                    int pixoff = 0, cu = 0;
-                    intptr_t strd;
-                    for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
+                    if(mcFlag)
                     {
-                        for (int x = 0; x < m_frmWidth; x += 8, pixoff += 8, cu++)
+                        pixel *tempm_buf;
+                        pixel m_buf8[8 * 8];
+                        int pixoff = 0, cu = 0;
+                        intptr_t strd;
+                        for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
                         {
-                            if (m_mvCost[cu] > fenc->intraCost[cu])
+                            for (int x = 0; x < m_frmWidth; x += 8, pixoff += 8, cu++)
                             {
-                                strd = m_refStride;
-                                tempm_buf = m_inbuf + pixoff;
+                                if (m_mvCost[cu] > fenc->intraCost[cu])
+                                {
+                                    strd = m_refStride;
+                                    tempm_buf = m_inbuf + pixoff;
+                                }
+                                else
+                                {
+                                    strd = 8;
+                                    tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], m_buf8, strd);
+                                    ic++;
+                                }
+                                primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
                             }
-                            else
-                            {
-                                strd = 8;
-                                tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], m_buf8, strd);
-                                ic++;
-                            }
-                            primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
                         }
+                        m_mcbuf = m_buf;                    
                     }
-
-                    m_mcbuf = m_buf;
                     break;
-                }
-
                 case 1:
 
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCbAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCbAddr();
                     m_blockSize = 8;
-                    mcChroma();
+                    if(mcFlag) mcChroma();
                     break;
 
                 case 2:
@@ -288,7 +287,7 @@ bool WeightPrediction::checkDenom(int denom)
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCrAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCrAddr();
                     m_blockSize = 8;
-                    mcChroma();
+                    if(mcFlag) mcChroma();
                     break;
                 }
 
