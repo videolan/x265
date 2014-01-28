@@ -13,7 +13,7 @@ include(CheckFunctionExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 4)
+set(X265_BUILD 5)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -154,8 +154,8 @@ endif()
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG
 include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
-add_subdirectory(common)
 add_subdirectory(encoder)
+add_subdirectory(common)
 
 if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     # this is horrible. ugly, and hacky, and it reproduces logic found

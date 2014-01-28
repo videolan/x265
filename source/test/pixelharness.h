@@ -64,6 +64,7 @@ protected:
     bool check_pixel_var(var_t ref, var_t opt);
     bool check_ssim_4x4x2_core(ssim_4x4x2_core_t ref, ssim_4x4x2_core_t opt);
     bool check_ssim_end(ssim_end4_t ref, ssim_end4_t opt);
+    bool check_addAvg(addAvg_t, addAvg_t);
 
 public:
 

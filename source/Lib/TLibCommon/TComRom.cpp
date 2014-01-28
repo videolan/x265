@@ -302,10 +302,6 @@ const UChar g_intraModeNumFast[7] =
     3 // 128x128
 };
 
-// chroma
-
-const UChar g_convertTxtTypeToIdx[4] = { 0, 1, 1, 2 };
-
 // ====================================================================================================================
 // Misc.
 // ====================================================================================================================
@@ -508,7 +504,6 @@ int g_quantInterDefault8x8[64] =
 uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
 uint32_t g_scalingListSizeX[4] = { 4, 8, 16,  32 };
 uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 2 };
-int  g_eTTable[4] = { 0, 3, 1, 2 };
 
 const int g_winUnitX[] = { 1, 2, 2, 1 };
 const int g_winUnitY[] = { 1, 2, 1, 1 };

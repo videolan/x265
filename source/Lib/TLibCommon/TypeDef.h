@@ -107,11 +107,10 @@ enum PredMode
 /// texture component type
 enum TextType
 {
-    TEXT_LUMA,          ///< luma
-    TEXT_CHROMA,        ///< chroma (U+V)
-    TEXT_CHROMA_U,      ///< chroma U
-    TEXT_CHROMA_V,      ///< chroma V
-    TEXT_ALL,           ///< Y+U+V
+    TEXT_LUMA     = 0,  ///< luma
+    TEXT_CHROMA   = 1,  ///< chroma (U+V)
+    TEXT_CHROMA_U = 1,  ///< chroma U
+    TEXT_CHROMA_V = 2,  ///< chroma V
 };
 
 /// index for SBAC based RD optimization
@@ -120,10 +119,10 @@ enum CI_IDX
     CI_CURR_BEST = 0,   ///< best mode index
     CI_NEXT_BEST,       ///< next best index
     CI_TEMP_BEST,       ///< temporal index
-    CI_CHROMA_INTRA,    ///< chroma intra index
     CI_QT_TRAFO_TEST,
     CI_QT_TRAFO_ROOT,
     CI_NUM,             ///< total number
+    CI_NUM_SAO   = 3,
 };
 
 /// motion vector predictor direction used in AMVP

@@ -274,7 +274,7 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int w
         int deltaU[32 * 32];
 
         uint32_t log2TrSize = g_convertToBit[width] + 2;
-        int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(int)ttype];
+        int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
         assert(scalingListType < 6);
         int32_t *quantCoeff = 0;
         quantCoeff = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
@@ -510,7 +510,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     uint32_t       goRiceParam      = 0;
     double     blockUncodedCost = 0;
     const uint32_t log2BlkSize      = g_convertToBit[width] + 2;
-    int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(int)ttype];
+    int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
 
     assert(scalingListType < 6);
 
@@ -789,7 +789,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        ctxCbf    = (ttype ? TEXT_CHROMA : ttype) * NUM_QT_CBF_CTX + ctxCbf;
+        ctxCbf    = (ttype ? NUM_QT_CBF_CTX : 0) + ctxCbf;
         bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][0]);
         baseCost += xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][1]);
     }

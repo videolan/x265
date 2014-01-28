@@ -379,11 +379,11 @@ NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, TComPic* pic)
     }
     if (pic->m_lowres.bKeyframe)
     {
-        if (m_cfg->param.decodingRefreshType == 1)
+        if (m_cfg->param.bOpenGOP)
         {
             return NAL_UNIT_CODED_SLICE_CRA;
         }
-        else if (m_cfg->param.decodingRefreshType == 2)
+        else
         {
             return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
         }
