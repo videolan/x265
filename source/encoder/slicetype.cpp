@@ -720,7 +720,7 @@ void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X26
 {
     char paths[2][X265_LOOKAHEAD_MAX + 1];
     int num_paths = X265_MIN(cfg->param.bframes + 1, length);
-    int64_t best_cost = 0;
+    int64_t best_cost = 1LL << 62;
     int idx = 0;
 
     /* Iterate over all currently possible paths */
@@ -734,7 +734,7 @@ void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X26
 
         /* Calculate the actual cost of the current path */
         int64_t cost = slicetypePathCost(frames, paths[idx], best_cost);
-        if (path == 0 || cost < best_cost)
+        if (cost < best_cost)
         {
             best_cost = cost;
             idx ^= 1;
