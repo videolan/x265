@@ -465,7 +465,7 @@ void FrameEncoder::compressFrame()
         //------------------------------------------------------------------------------
         //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
         //------------------------------------------------------------------------------
-        WeightPrediction wp(slice);
+        WeightPrediction wp(slice, m_cfg->param);
         wp.weightAnalyseEnc();
     }
 
