@@ -104,9 +104,6 @@ public:
     // inter
     void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList = REF_PIC_LIST_X, int partIdx = -1, bool bLuma = true, bool bChroma = true);
 
-    // motion vector prediction
-    void getMvPredAMVP(TComDataCU* cu, uint32_t partIdx, uint32_t partAddr, int picList, MV& mvPred);
-
     // Angular Intra
     void predIntraLumaAng(uint32_t dirMode, Pel* pred, intptr_t stride, int width);
     void predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* pred, intptr_t stride, int width);
