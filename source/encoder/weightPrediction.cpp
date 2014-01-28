@@ -29,10 +29,6 @@
 
 using namespace x265;
 
-/** clip a, such that minVal <= a <= maxVal */
-//template<typename T>
-//inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
-
 void WeightPrediction::mcChroma()
 {
     intptr_t strd = m_refStride;
@@ -92,7 +88,6 @@ uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
 {
     int stride = m_refStride;
     pixel *temp = (pixel*)X265_MALLOC(pixel, m_frmWidth * m_frmHeight);
-    bool nonBorderCU;
 
     if (w)
     {
@@ -108,30 +103,26 @@ uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
         stride = m_dstStride;
     }
 
-    int32_t cost = 0;
+    uint32_t cost = 0;
     int pixoff = 0;
     int mb = 0;
-    int count = 0;
     for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
     {
         for (int x = 0; x < m_frmWidth; x += 8, mb++, pixoff += 8)
         {
-            nonBorderCU = (x > 0) && (x < m_frmWidth - 8 - 1) && (y > 0) && (y < m_frmHeight - 8 - 1);
+            bool nonBorderCU = (x > 0) && (x < m_frmWidth - 8 - 1) && (y > 0) && (y < m_frmHeight - 8 - 1);
             if (nonBorderCU)
             {
-                if (m_mvs)
+                if (m_mcFlag)
                 {
                     if (m_mvCost[mb] < m_intraCost[mb])
                     {
-                        int satd = primitives.satd[LUMA_8x8](ref + (stride * y) + x, stride, cur + pixoff, m_refStride);
-                        cost += satd;
-                        count++;
+                        cost += primitives.satd[LUMA_8x8](ref + (stride * y) + x, stride, cur + pixoff, m_refStride);
                     }
                 }
                 else
                 {
-                    int satd = primitives.satd[LUMA_8x8](ref + (stride * y) + x, stride, cur + pixoff, m_refStride);
-                    cost += satd;
+                    cost += primitives.satd[LUMA_8x8](ref + (stride * y) + x, stride, cur + pixoff, m_refStride);
                 }
             }
         }
@@ -188,7 +179,7 @@ bool WeightPrediction::checkDenom(int denom)
     {
         for (int refIdxTemp = 0; (refIdxTemp < m_slice->getNumRefIdx(list)) && (numWeighted < 8); refIdxTemp++)
         {
-            bool mcFlag = false;
+            m_mcFlag = false;
             check = 0;
             fw = m_wp[list][refIdxTemp];
             ref  = &m_slice->getRefPic(list, refIdxTemp)->m_lowres;
@@ -200,7 +191,7 @@ bool WeightPrediction::checkDenom(int denom)
                 if (m_mvs[0].x != 0x7FFF)
                 {
                     m_mvCost = fenc->lowresMvCosts[0][difPoc - 1];
-                    mcFlag = true;
+                    m_mcFlag = true;
                 }
             }
             const float epsilon = 1.f / 128.f;
@@ -247,7 +238,7 @@ bool WeightPrediction::checkDenom(int denom)
                 case 0:
                     m_mcbuf = ref->fpelPlane;
                     m_inbuf = fenc->lowresPlane[0];
-                    if(mcFlag)
+                    if (m_mcFlag)
                     {
                         pixel *tempm_buf;
                         pixel m_buf8[8 * 8];
@@ -279,7 +270,7 @@ bool WeightPrediction::checkDenom(int denom)
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCbAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCbAddr();
                     m_blockSize = 8;
-                    if(mcFlag) mcChroma();
+                    if (m_mcFlag) mcChroma();
                     break;
 
                 case 2:
@@ -287,7 +278,7 @@ bool WeightPrediction::checkDenom(int denom)
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCrAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCrAddr();
                     m_blockSize = 8;
-                    if(mcFlag) mcChroma();
+                    if (m_mcFlag) mcChroma();
                     break;
                 }
 
