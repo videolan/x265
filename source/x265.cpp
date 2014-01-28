@@ -545,15 +545,15 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
 
 #if HIGH_BIT_DEPTH
-    if (param->inputBitDepth != 12 && param->inputBitDepth != 10 && param->inputBitDepth != 8)
+    if (param->inputBitDepth != 10)
     {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of 8, 10, or 12 are supported\n");
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of 10 are supported in this build\n");
         return true;
     }
 #else
     if (param->inputBitDepth != 8)
     {
-        x265_log(param, X265_LOG_ERROR, "not compiled for bit depths greater than 8\n");
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of 8 are supported in this build\n");
         return true;
     }
 #endif // if HIGH_BIT_DEPTH
