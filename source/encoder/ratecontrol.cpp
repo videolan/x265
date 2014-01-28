@@ -517,10 +517,10 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
 
             q = Clip3(lqmin, lqmax, q);
         }
-
-        else if (cfg->param.rc.rateControlMode == X265_RC_CRF && qCompress != 1)
+        else 
         {
-            q = qp2qScale(ABR_INIT_QP) / fabs(cfg->param.rc.ipFactor);
+            if (qCompress != 1 && framesDone == 0)
+                q = qp2qScale(ABR_INIT_QP) / fabs(cfg->param.rc.ipFactor);
         }
 
         double lmin1 = lmin[sliceType];
