@@ -1223,11 +1223,11 @@ void Encoder::configure(x265_param *_param)
     }
     if (poolThreadCount > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "WPP streams / pool / frames  : %d / %d / %d\n", rows, poolThreadCount, _param->frameNumThreads);
+        x265_log(_param, X265_LOG_INFO, "WPP streams / pool / frames         : %d / %d / %d\n", rows, poolThreadCount, _param->frameNumThreads);
     }
     else if (_param->frameNumThreads > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "Concurrently encoded frames  : %d\n", _param->frameNumThreads);
+        x265_log(_param, X265_LOG_INFO, "Concurrently encoded frames         : %d\n", _param->frameNumThreads);
         _param->bEnableWavefront = 0;
     }
     else
