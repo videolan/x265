@@ -188,20 +188,20 @@ bool WeightPrediction::checkDenom(int denom)
     {
         for (int refIdxTemp = 0; (refIdxTemp < m_slice->getNumRefIdx(list)) && (numWeighted < 8); refIdxTemp++)
         {
+            bool mcFlag = false;
             check = 0;
             fw = m_wp[list][refIdxTemp];
             ref  = &m_slice->getRefPic(list, refIdxTemp)->m_lowres;
             refPoc = m_slice->getRefPic(list, refIdxTemp)->getPOC();
             difPoc = abs(curPoc - refPoc);
-            if (difPoc > m_bframes + 1)
-                continue;
-            else
+            if (difPoc <= m_bframes + 1)                
             {
                 m_mvs = fenc->lowresMvs[list][difPoc - 1];
-                if (m_mvs[0].x == 0x7FFF)
-                    continue;
-                else
+                if (m_mvs[0].x != 0x7FFF)
+                {
                     m_mvCost = fenc->lowresMvCosts[0][difPoc - 1];
+                    mcFlag = true;
+                }
             }
             const float epsilon = 1.f / 128.f;
             float guessScale[3], fencMean[3], refMean[3];
