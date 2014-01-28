@@ -190,9 +190,10 @@ bool WeightPrediction::checkDenom(int denom)
                 m_mvs = fenc->lowresMvs[list][difPoc - 1];
                 if (m_mvs[0].x != 0x7FFF)
                 {
-                    m_mvCost = fenc->lowresMvCosts[0][difPoc - 1];
+                    m_mvCost = fenc->lowresMvCosts[list][difPoc - 1];
                     m_mcFlag = true;
                 }
+                /* TODO: else trigger lookahead frame cost estimate here */
             }
             const float epsilon = 1.f / 128.f;
             float guessScale[3], fencMean[3], refMean[3];
