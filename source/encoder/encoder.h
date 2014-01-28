@@ -136,6 +136,8 @@ public:
 
     void updateVbvPlan(RateControl* rc);
 
+    void signalReconRowCompleted(int poc);
+
 protected:
 
     uint64_t calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits); // Returns total number of bits for encoded pic

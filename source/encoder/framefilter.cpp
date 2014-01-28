@@ -61,6 +61,7 @@ void FrameFilter::destroy()
 
 void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
 {
+    m_top = top;
     m_cfg = top;
     m_numRows = numRows;
 
@@ -269,10 +270,8 @@ void FrameFilter::processRowPost(int row)
 
     // Notify other FrameEncoders that this row of reconstructed pixels is available
     m_pic->m_reconRowCount++;
-    for (uint32_t i = 0; i < m_pic->m_countRefEncoders; i++)
-    {
-        m_pic->m_reconRowWait.trigger();
-    }
+    if (m_pic->m_countRefEncoders)
+        m_top->signalReconRowCompleted(m_pic->getPOC());
 
     int cuAddr = lineStartCUAddr;
     if (m_cfg->param.bEnablePsnr)

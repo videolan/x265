@@ -55,6 +55,7 @@ FrameEncoder::FrameEncoder()
         m_nalList[i] = NULL;
     }
 
+    m_blockRefPOC = -1;
     m_nalCount = 0;
     m_totalTime = 0;
     memset(&m_rce, 0, sizeof(RateControlEntry));
@@ -967,10 +968,16 @@ void FrameEncoder::compressCTURows()
                 for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
                 {
                     TComPic *refpic = slice->getRefPic(l, ref);
-                    while ((refpic->m_reconRowCount != (uint32_t)m_numRows) && (refpic->m_reconRowCount < row + refLagRows))
+
+                    /* indicate which reference picture we might wait for,
+                     * prior to checking recon row count */
+                    m_blockRefPOC = refpic->getPOC();
+                    while ((refpic->m_reconRowCount != (uint32_t)m_numRows) &&
+                           (refpic->m_reconRowCount < row + refLagRows))
                     {
-                        refpic->m_reconRowWait.wait();
+                        m_reconRowWait.wait();
                     }
+                    m_blockRefPOC = -1;
 
                     if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
                     {
@@ -1004,10 +1011,16 @@ void FrameEncoder::compressCTURows()
                     for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
                         TComPic *refpic = slice->getRefPic(list, ref);
-                        while ((refpic->m_reconRowCount != (uint32_t)m_numRows) && (refpic->m_reconRowCount < i + refLagRows))
+
+                        /* indicate which reference picture we might wait for,
+                         * prior to checking recon row count */
+                        m_blockRefPOC = refpic->getPOC();
+                        while ((refpic->m_reconRowCount != (uint32_t)m_numRows) &&
+                               (refpic->m_reconRowCount < i + refLagRows))
                         {
-                            refpic->m_reconRowWait.wait();
+                            m_reconRowWait.wait();
                         }
+                        m_blockRefPOC = -1;
 
                         if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
                         {
