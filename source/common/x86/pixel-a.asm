@@ -626,23 +626,17 @@ cglobal pixel_satd_4x16, 4, 6, 8
     movd eax, m7
     RET
 
-cglobal pixel_satd_8x8_internal
-    LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
-    SATD_8x4_SSE vertical, 0, 1, 2, 3, 4, 5, 6
-%%pixel_satd_8x4_internal:
-    LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
-    SATD_8x4_SSE vertical, 0, 1, 2, 3, 4, 5, 6
-    ret
-
 cglobal pixel_satd_8x8_internal2
 %if WIN64
     LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
     SATD_8x4_1_SSE vertical, 0, 1, 2, 3, 4, 5, 6, 12, 13
+%%pixel_satd_8x4_internal2:
     LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
     SATD_8x4_1_SSE vertical, 0, 1, 2, 3, 4, 5, 6, 12, 13
 %else
     LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
     SATD_8x4_1_SSE vertical, 0, 1, 2, 3, 4, 5, 6, 4, 5
+%%pixel_satd_8x4_internal2:
     LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
     SATD_8x4_1_SSE vertical, 0, 1, 2, 3, 4, 5, 6, 4, 5
 %endif
@@ -651,15 +645,6 @@ cglobal pixel_satd_8x8_internal2
 ; 16x8 regresses on phenom win64, 16x16 is almost the same (too many spilled registers)
 ; These aren't any faster on AVX systems with fast movddup (Bulldozer, Sandy Bridge)
 %if HIGH_BIT_DEPTH == 0 && (WIN64 || UNIX64) && notcpuflag(avx)
-
-cglobal pixel_satd_16x4_internal
-    LOAD_SUMSUB_16x4P 0, 1, 2, 3, 4, 8, 5, 9, 6, 7, r0, r2, 11
-    lea  r2, [r2+4*r3]
-    lea  r0, [r0+4*r1]
-    ; always use horizontal mode here
-    SATD_8x4_SSE 0, 0, 1, 2, 3, 6, 11, 10
-    SATD_8x4_SSE 0, 4, 8, 5, 9, 6, 3, 10
-    ret
 
 cglobal pixel_satd_16x4_internal2
     LOAD_SUMSUB_16x4P 0, 1, 2, 3, 4, 8, 5, 9, 6, 7, r0, r2, 11
@@ -1250,20 +1235,26 @@ cglobal pixel_satd_32x8, 4,7,8,0-gprsize    ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
-    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 8*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 8*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 16*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 16*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 24*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 24*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 %endif
 
 %if WIN64
@@ -1297,24 +1288,30 @@ cglobal pixel_satd_32x16, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 8*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 8*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 16*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 16*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 24*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 24*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 %endif
 
 %if WIN64
@@ -1352,34 +1349,34 @@ cglobal pixel_satd_32x24, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-%if HIGH_BIT_DEPTH
-    pxor       m7, m7
-%endif
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 8*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 8*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 16*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 16*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 24*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 24*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 %endif
 
 %if WIN64
@@ -1755,54 +1752,50 @@ cglobal pixel_satd_64x16, 4,7,8,0-gprsize   ;if !WIN64
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-%if HIGH_BIT_DEPTH
-    pxor       m7, m7
-%endif
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 8*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2,8*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 16*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2,16*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 24*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2,24*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 32*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2,32*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 40*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2,40*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 48*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2,48*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 56*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2,56*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 %endif
 
 %if WIN64
@@ -2279,78 +2272,110 @@ cglobal pixel_satd_64x64, 4,7,8,0-gprsize   ;if !WIN64
 cglobal pixel_satd_16x4, 4,6,8
     SATD_START_SSE2 m6, m7
     BACKUP_POINTERS
-    call %%pixel_satd_8x4_internal
+    call %%pixel_satd_8x4_internal2
     RESTORE_AND_INC_POINTERS
-    call %%pixel_satd_8x4_internal
-    SATD_END_SSE2 m6
+    call %%pixel_satd_8x4_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 
 cglobal pixel_satd_16x8, 4,6,8
     SATD_START_SSE2 m6, m7
     BACKUP_POINTERS
-    call pixel_satd_8x8_internal
+    call pixel_satd_8x8_internal2
     RESTORE_AND_INC_POINTERS
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 
 cglobal pixel_satd_16x12, 4,6,8
     SATD_START_SSE2 m6, m7, 1
     BACKUP_POINTERS
-    call pixel_satd_8x8_internal
-    call %%pixel_satd_8x4_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call %%pixel_satd_8x4_internal2
     RESTORE_AND_INC_POINTERS
-    call pixel_satd_8x8_internal
-    call %%pixel_satd_8x4_internal
-    SATD_END_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call %%pixel_satd_8x4_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 
 cglobal pixel_satd_16x16, 4,6,8
     SATD_START_SSE2 m6, m7, 1
     BACKUP_POINTERS
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     RESTORE_AND_INC_POINTERS
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 
 cglobal pixel_satd_16x32, 4,6,8
     SATD_START_SSE2 m6, m7, 1
     BACKUP_POINTERS
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     RESTORE_AND_INC_POINTERS
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 
 cglobal pixel_satd_16x64, 4,6,8
     SATD_START_SSE2 m6, m7, 1
     BACKUP_POINTERS
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     RESTORE_AND_INC_POINTERS
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 %endif
 
 %if WIN64
@@ -2444,30 +2469,31 @@ cglobal pixel_satd_24x32, 4,7,8,0-gprsize
     SATD_START_SSE2 m6, m7
     mov r6, r0
     mov [rsp], r2
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-%if HIGH_BIT_DEPTH
-    pxor       m7, m7
-%endif
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 8*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 8*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_ACCUM m6, m0, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
     lea r0, [r6 + 16*SIZEOF_PIXEL]
     mov r2, [rsp]
     add r2, 16*SIZEOF_PIXEL
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    call pixel_satd_8x8_internal
-    SATD_END_SSE2 m6, m7
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    call pixel_satd_8x8_internal2
+    pxor    m7, m7
+    movhlps m7, m6
+    paddd   m6, m7
+    pshufd  m7, m6, 1
+    paddd   m6, m7
+    movd   eax, m6
+    RET
 %endif    ;WIN64
 
 cglobal pixel_satd_8x32, 4,6,8
@@ -2512,7 +2538,7 @@ cglobal pixel_satd_8x8, 4,6,8
 
 cglobal pixel_satd_8x4, 4,6,8
     SATD_START_SSE2 m6, m7
-    call %%pixel_satd_8x4_internal
+    call %%pixel_satd_8x4_internal2
     SATD_END_SSE2 m6
 %endmacro ; SATDS_SSE2
 
