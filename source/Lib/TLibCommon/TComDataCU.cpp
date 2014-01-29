@@ -1240,19 +1240,6 @@ uint32_t TComDataCU::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth)
     return ctx;
 }
 
-uint32_t TComDataCU::getCtxQtCbf(TextType ttype, uint32_t trDepth)
-{
-    if (ttype)
-    {
-        return trDepth;
-    }
-    else
-    {
-        const uint32_t ctx = (trDepth == 0 ? 1 : 0);
-        return ctx;
-    }
-}
-
 uint32_t TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t absPartIdx)
 {
     uint32_t log2CbSize = g_convertToBit[getWidth(absPartIdx)] + 2;

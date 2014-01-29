@@ -789,7 +789,6 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        ctxCbf    = (ttype ? NUM_QT_CBF_CTX : 0) + ctxCbf;
         bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][0]);
         baseCost += xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][1]);
     }

@@ -467,7 +467,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t      getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth);
-    uint32_t      getCtxQtCbf(TextType ttype, uint32_t trDepth);
+    uint32_t      getCtxQtCbf(TextType ttype, uint32_t trDepth) { return ttype == TEXT_LUMA ? (trDepth == 0 ? 1 : 0) : trDepth + 2; }
 
     uint32_t      getCtxSkipFlag(uint32_t absPartIdx);
     uint32_t      getCtxInterDir(uint32_t absPartIdx);

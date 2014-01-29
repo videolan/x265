@@ -67,7 +67,7 @@
 
 #define NUM_REF_NO_CTX                2       ///< number of context models for reference index
 #define NUM_TRANS_SUBDIV_FLAG_CTX     3       ///< number of context models for transform subdivision flags
-#define NUM_QT_CBF_CTX                4       ///< number of context models for QT CBF
+#define NUM_QT_CBF_CTX                6       ///< number of context models for QT CBF
 #define NUM_QT_ROOT_CBF_CTX           1       ///< number of context models for QT ROOT CBF
 #define NUM_DELTA_QP_CTX              3       ///< number of context models for dQP
 
@@ -111,7 +111,7 @@
 #define OFF_REF_NO_CTX                      (OFF_INTER_DIR_CTX          +     NUM_INTER_DIR_CTX)
 #define OFF_MV_RES_CTX                      (OFF_REF_NO_CTX             +     NUM_REF_NO_CTX)
 #define OFF_QT_CBF_CTX                      (OFF_MV_RES_CTX             +     NUM_MV_RES_CTX)
-#define OFF_TRANS_SUBDIV_FLAG_CTX           (OFF_QT_CBF_CTX             + 2 * NUM_QT_CBF_CTX)
+#define OFF_TRANS_SUBDIV_FLAG_CTX           (OFF_QT_CBF_CTX             +     NUM_QT_CBF_CTX)
 #define OFF_QT_ROOT_CBF_CTX                 (OFF_TRANS_SUBDIV_FLAG_CTX  +     NUM_TRANS_SUBDIV_FLAG_CTX)
 #define OFF_SIG_CG_FLAG_CTX                 (OFF_QT_ROOT_CBF_CTX        +     NUM_QT_ROOT_CBF_CTX)
 #define OFF_SIG_FLAG_CTX                    (OFF_SIG_CG_FLAG_CTX        + 2 * NUM_SIG_CG_FLAG_CTX)
@@ -264,11 +264,11 @@ static const uint8_t
 };
 
 static const uint8_t
-    INIT_QT_CBF[3][2 * NUM_QT_CBF_CTX] =
+    INIT_QT_CBF[3][NUM_QT_CBF_CTX] =
 {
-    { 153,  111,  CNU,  CNU,  149,   92,  167,  154, },
-    { 153,  111,  CNU,  CNU,  149,  107,  167,  154, },
-    { 111,  141,  CNU,  CNU,   94,  138,  182,  154, },
+    { 153,  111,  149,   92,  167,  154, },
+    { 153,  111,  149,  107,  167,  154, },
+    { 111,  141,   94,  138,  182,  154, },
 };
 
 static const uint8_t
