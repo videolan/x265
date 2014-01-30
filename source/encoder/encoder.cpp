@@ -124,7 +124,7 @@ void Encoder::create()
             if (m_csvfpt)
             {
                 if (param.logLevel >= X265_LOG_DEBUG)
-                    fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, Encoding time, Elapsed time, List 0, List 1\n");
+                    fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
                 else
                     fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
             }
@@ -853,9 +853,9 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
             else
                 fprintf(m_csvfpt, " -, -, -, -,");
             if (param.bEnableSsim)
-                fprintf(m_csvfpt, " %.3lf,", ssim);
+                fprintf(m_csvfpt, " %.6f, %6.3f,", ssim, x265_ssim(ssim));
             else
-                fprintf(m_csvfpt, " -,");
+                fprintf(m_csvfpt, " -, -,");
             fprintf(m_csvfpt, " %.3lf, %.3lf", pic->m_frameTime, pic->m_elapsedCompressTime);
             if (!slice->isIntra())
             {
