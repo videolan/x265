@@ -112,12 +112,10 @@ bool WaveFront::findJob()
     // thread safe
     for (int w = 0; w < m_numWords; w++)
     {
-        while (m_queuedBitmap[w])
+        uint64_t oldval = m_queuedBitmap[w];
+        while (oldval & m_enableBitmap[w])
         {
-            uint64_t oldval = m_queuedBitmap[w];
-            uint64_t mask = m_queuedBitmap[w] & m_enableBitmap[w];
-            if (mask == 0) // race condition
-                break;
+            uint64_t mask = oldval & m_enableBitmap[w];
 
             CTZ64(id, mask);
 
@@ -129,6 +127,7 @@ bool WaveFront::findJob()
                 return true;
             }
             // some other thread cleared the bit, try another bit
+            oldval = m_queuedBitmap[w];
         }
     }
 
