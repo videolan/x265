@@ -36,6 +36,7 @@ const ang_table
 %endrep
 
 const pw_unpack0wd, times 4 db 0,1,8,8
+const pw_1023,      times 8 dw 1023
 
 SECTION .text
 
@@ -1125,8 +1126,9 @@ cglobal intra_pred_ang4_10, 3,3,4
     psubw       m1,             m2
     psraw       m1,             1
     paddw       m0,             m1
-    pmovsxwd    m0,             m0
-    packusdw    m0,             m0
+    pxor        m1,             m1
+    pmaxsw      m0,             m1
+    pminsw      m0,             [pw_1023]
 
 .quit:
     movh        [r0],           m0
@@ -1153,8 +1155,9 @@ cglobal intra_pred_ang4_26, 4,4,3
     psubw       m1,             m2
     psraw       m1,             1
     paddw       m0,             m1
-    pmovsxwd    m0,             m0
-    packusdw    m0,             m0
+    pxor        m1,             m1
+    pmaxsw      m0,             m1
+    pminsw      m0,             [pw_1023]
 
     pextrw      [r0],           m0, 0
     pextrw      [r0 + r1],      m0, 1

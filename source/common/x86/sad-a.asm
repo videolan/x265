@@ -2503,9 +2503,9 @@ SAD_X 4,  4,  4
     psadbw   m3, m6
     psadbw   m4, m6
     psadbw   m5, m6
-    paddw    m0, m3
-    paddw    m1, m4
-    paddw    m2, m5
+    paddd    m0, m3
+    paddd    m1, m4
+    paddd    m2, m5
 %endmacro
 
 %macro SAD_X4_START_2x8P_SSE2 0
@@ -2534,16 +2534,16 @@ SAD_X 4,  4,  4
     movhps   m5, [r2+%4]
     psadbw   m4, m6
     psadbw   m5, m6
-    paddw    m0, m4
-    paddw    m1, m5
+    paddd    m0, m4
+    paddd    m1, m5
     movq     m4, [r3+%2]
     movq     m5, [r4+%2]
     movhps   m4, [r3+%4]
     movhps   m5, [r4+%4]
     psadbw   m4, m6
     psadbw   m5, m6
-    paddw    m2, m4
-    paddw    m3, m5
+    paddd    m2, m4
+    paddd    m3, m5
 %endmacro
 
 %macro SAD_X4_START_1x16P_SSE2 0
@@ -2651,21 +2651,6 @@ SAD_X 4,  4,  4
 
 %macro SAD_X3_END_SSE2 1
     movifnidn r5, r5mp
-%if cpuflag(ssse3)
-%if %1
-    pshufd     m3, m0, 8
-    pshufd     m4, m1, 8
-    pshufd     m5, m2, 8
-    punpcklqdq m3, m4
-    phaddd     m3, m5
-    mova     [r5], m3
-%else
-    packssdw   m0, m1
-    packssdw   m2, m2
-    phaddd     m0, m2
-    mova     [r5], m0
-%endif
-%else
     movhlps    m3, m0
     movhlps    m4, m1
     movhlps    m5, m2
@@ -2675,29 +2660,11 @@ SAD_X 4,  4,  4
     movd   [r5+0], m0
     movd   [r5+4], m1
     movd   [r5+8], m2
-%endif
     RET
 %endmacro
 
 %macro SAD_X4_END_SSE2 1
     mov      r0, r6mp
-%if cpuflag(ssse3)
-%if %1
-    pshufd     m4, m0, 8
-    pshufd     m5, m1, 8
-    punpcklqdq m4, m5
-    pshufd     m0, m2, 8
-    pshufd     m5, m3, 8
-    punpcklqdq m0, m5
-    phaddd     m4, m0
-    mova     [r0], m4
-%else
-    packssdw   m0, m1
-    packssdw   m2, m3
-    phaddd     m0, m2
-    mova     [r0], m0
-%endif
-%else
     psllq      m1, 32
     psllq      m3, 32
     paddd      m0, m1
@@ -2708,73 +2675,6 @@ SAD_X 4,  4,  4
     paddd      m2, m3
     movq   [r0+0], m0
     movq   [r0+8], m2
-%endif
-    RET
-%endmacro
-
-%macro SAD_X4_START_2x8P_SSSE3 0
-    movddup  m4, [r0]
-    movq     m0, [r1]
-    movq     m1, [r3]
-    movhps   m0, [r2]
-    movhps   m1, [r4]
-    movddup  m5, [r0+FENC_STRIDE]
-    movq     m2, [r1+r5]
-    movq     m3, [r3+r5]
-    movhps   m2, [r2+r5]
-    movhps   m3, [r4+r5]
-    psadbw   m0, m4
-    psadbw   m1, m4
-    psadbw   m2, m5
-    psadbw   m3, m5
-    paddw    m0, m2
-    paddw    m1, m3
-%endmacro
-
-%macro SAD_X4_2x8P_SSSE3 4
-    movddup  m6, [r0+%1]
-    movq     m2, [r1+%2]
-    movq     m3, [r3+%2]
-    movhps   m2, [r2+%2]
-    movhps   m3, [r4+%2]
-    movddup  m7, [r0+%3]
-    movq     m4, [r1+%4]
-    movq     m5, [r3+%4]
-    movhps   m4, [r2+%4]
-    movhps   m5, [r4+%4]
-    psadbw   m2, m6
-    psadbw   m3, m6
-    psadbw   m4, m7
-    psadbw   m5, m7
-    paddw    m0, m2
-    paddw    m1, m3
-    paddw    m0, m4
-    paddw    m1, m5
-%endmacro
-
-%macro SAD_X4_4x8P_SSSE3 2
-%if %1==0
-    lea    r6, [r5*3]
-    SAD_X4_START_2x8P_SSSE3
-%else
-    SAD_X4_2x8P_SSSE3 FENC_STRIDE*(0+(%1&1)*4), r5*0, FENC_STRIDE*(1+(%1&1)*4), r5*1
-%endif
-    SAD_X4_2x8P_SSSE3 FENC_STRIDE*(2+(%1&1)*4), r5*2, FENC_STRIDE*(3+(%1&1)*4), r6
-%if %1 != %2-1
-%if (%1&1) != 0
-    add  r0, 8*FENC_STRIDE
-%endif
-    lea  r1, [r1+4*r5]
-    lea  r2, [r2+4*r5]
-    lea  r3, [r3+4*r5]
-    lea  r4, [r4+4*r5]
-%endif
-%endmacro
-
-%macro SAD_X4_END_SSSE3 0
-    mov      r0, r6mp
-    packssdw m0, m1
-    mova   [r0], m0
     RET
 %endmacro
 
@@ -3357,16 +3257,6 @@ SAD_X_SSE2 4, 16, 16, 7
 SAD_X_SSE2 4, 16,  8, 7
 SAD_X_SSE2 4, 16,  4, 7
 
-%macro SAD_X_SSSE3 3
-cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,8
-%assign x 0
-%rep %3/4
-    SAD_X%1_4x%2P_SSSE3 x, %3/4
-%assign x x+1
-%endrep
-    SAD_X%1_END_SSSE3
-%endmacro
-
 INIT_XMM ssse3
 SAD_X3_W12
 SAD_X3_W32
@@ -3390,10 +3280,10 @@ SAD_X_SSE2  4, 16, 32, 7
 SAD_X_SSE2  4, 16, 16, 7
 SAD_X_SSE2  4, 16, 12, 7
 SAD_X_SSE2  4, 16,  8, 7
-SAD_X_SSSE3 4,  8, 32
-SAD_X_SSSE3 4,  8, 16
-SAD_X_SSSE3 4,  8,  8
-SAD_X_SSSE3 4,  8,  4
+SAD_X_SSE2  4,  8, 32, 7
+SAD_X_SSE2  4,  8, 16, 7
+SAD_X_SSE2  4,  8,  8, 7
+SAD_X_SSE2  4,  8,  4, 7
 
 INIT_XMM avx
 SAD_X3_W12
