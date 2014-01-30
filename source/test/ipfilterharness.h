@@ -33,7 +33,7 @@ class IPFilterHarness : public TestHarness
 {
 protected:
 
-    pixel *pixel_buff;
+    pixel *pixel_buff, **pixel_test_buff;
     int16_t *short_buff;
 
     pixel *IPF_vec_output_p, *IPF_C_output_p;
