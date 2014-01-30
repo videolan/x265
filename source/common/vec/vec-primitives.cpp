@@ -25,6 +25,7 @@
 #include "x265.h"
 
 /* The #if logic here must match the file lists in CMakeLists.txt */
+#if X265_ARCH_X86
 #if defined(__INTEL_COMPILER)
 #define HAVE_SSE3
 #define HAVE_SSSE3
@@ -46,7 +47,8 @@
 #if _MSC_VER >= 1700 // VC11
 #define HAVE_AVX2
 #endif
-#endif // if defined(__INTEL_COMPILER)
+#endif // compiler checks
+#endif // if X265_ARCH_X86
 
 namespace x265 {
 // private x265 namespace

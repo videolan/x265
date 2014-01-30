@@ -41,6 +41,8 @@
 #endif
 
 namespace x265 {
+
+#if X265_ARCH_X86
 const cpu_name_t cpu_names[] =
 {
 #define MMX2 X265_CPU_MMX | X265_CPU_MMX2 | X265_CPU_CMOV
@@ -288,4 +290,7 @@ uint32_t cpu_detect(void)
 
     return cpu;
 }
+#else /* !x86 */
+uint32_t cpu_detect(void) { return 0; }
+#endif
 }

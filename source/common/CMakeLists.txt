@@ -65,7 +65,7 @@ set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
 set(SSSE3 vec/dct-ssse3.cpp vec/intra-ssse3.cpp)
 set(SSE41 vec/dct-sse41.cpp vec/intra-sse41.cpp)
 
-if (MSVC)
+if(MSVC AND X86)
     set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
     # wd4127 conditional expression is constant
     # wd4244 'argument' : conversion from 'int' to 'char', possible loss of data
@@ -85,7 +85,7 @@ if (MSVC)
         set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} /arch:SSE2")
     endif()
 endif()
-if(GCC)
+if(GCC AND X86)
     if(CLANG)
         # llvm intrinsic headers cause shadow warnings
         set(WARNDISABLE "-Wno-shadow -Wno-unused-parameter")
@@ -98,7 +98,7 @@ if(GCC)
         set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -mssse3")
         set_source_files_properties(${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -msse4.1")
     endif()
-endif(GCC)
+endif()
 set(VEC_PRIMITIVES vec/vec-primitives.cpp ${PRIMITIVES})
 source_group(Intrinsics FILES ${VEC_PRIMITIVES})
 
@@ -133,7 +133,7 @@ if(ENABLE_ASSEMBLY)
 endif(ENABLE_ASSEMBLY)
 
 if(GCC)
-    if (NOT X64)
+    if(X86 AND NOT X64)
         # force gcc to generate code for sync primitives
         set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
