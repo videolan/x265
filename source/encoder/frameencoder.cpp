@@ -938,8 +938,9 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_entropyCoder.resetEntropy();
 
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
-        m_rows[i].m_completed = 0;
         m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
+        m_rows[i].m_completed = 0;
+        m_rows[i].m_busy = false;
     }
 
     int range = m_cfg->param.searchRange + /* fpel search */
@@ -1047,14 +1048,26 @@ void FrameEncoder::processRowEncoder(int row)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
-    int64_t startTime = x265_mdate();
     // Called by worker threads
     CTURow& curRow  = m_rows[row];
-    CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
+    if (curRow.m_busy)
+    {
+        /* On multi-socket Windows servers, we have seen problems with
+         * ATOMIC_CAS which resulted in multiple worker threads processing
+         * the same CU row, which often resulted in bad pointer accesses. We
+         * believe the problem is fixed, but are leaving this check in place
+         * to prevent crashes in case it is not. */
+        x265_log(&m_cfg->param, X265_LOG_WARNING,
+                 "internal error - simulaneous row access detected. Please report HW to x265-devel@videolan.org");
+        return;
+    }
+    curRow.m_busy = true;
 
+    int64_t startTime = x265_mdate();
+    CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    for (uint32_t col = m_rows[row].m_completed; col < numCols; col++)
+    for (uint32_t col = curRow.m_completed; col < numCols; col++)
     {
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_pic->getCU(cuAddr);
@@ -1098,6 +1111,7 @@ void FrameEncoder::processRowEncoder(int row)
         if (row > 0 && m_rows[row].m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2)
         {
             curRow.m_active = false;
+            curRow.m_busy = false;
             m_totalTime = m_totalTime + (x265_mdate() - startTime);
             return;
         }
@@ -1122,6 +1136,7 @@ void FrameEncoder::processRowEncoder(int row)
         }
     }
     m_totalTime = m_totalTime + (x265_mdate() - startTime);
+    curRow.m_busy = false;
 }
 
 int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)

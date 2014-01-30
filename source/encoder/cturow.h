@@ -86,9 +86,21 @@ public:
 
     void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
 
-    /* Threading */
+    /* Threading variables */
     Lock                m_lock;
+
+    /* row is ready to run, has no neighbor dependencies. The row may have
+     * external dependencies (reference frame pixels) that prevent it from being
+     * processed, so it may stay with m_active=true for some time before it is
+     * encoded by a worker thread. */
     volatile bool       m_active;
+
+    /* row is being processed by a worker thread.  This flag is only true when a
+     * worker thread is within the context of FrameEncoder::processRow(). This 
+     * flag is used to detect multiple possible wavefront problems. */
+    volatile bool       m_busy;
+
+    /* count of completed CUs in this row */
     volatile uint32_t   m_completed;
 };
 }
