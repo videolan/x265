@@ -366,8 +366,8 @@ bool PixelHarness::check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, STRIDE, (int16_t*)pbuf2 + j, (int16_t*)pbuf1 + j, STRIDE, STRIDE);
-        ref(bx, by, ref_dest, STRIDE, (int16_t*)pbuf2 + j, (int16_t*)pbuf1 + j, STRIDE, STRIDE);
+        opt(bx, by, opt_dest, STRIDE, sbuf2 + j, sbuf1 + j, STRIDE, STRIDE);
+        ref(bx, by, ref_dest, STRIDE, sbuf2 + j, sbuf1 + j, STRIDE, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
