@@ -24,9 +24,9 @@
 #include "threadpool.h"
 #include "threading.h"
 #include "wavefront.h"
+#include "common.h"
 #include <assert.h>
 #include <string.h>
-#include <new>
 
 namespace x265 {
 // x265 private namespace
@@ -38,11 +38,11 @@ bool WaveFront::init(int numRows)
     if (m_pool)
     {
         m_numWords = (numRows + 63) >> 6;
-        m_queuedBitmap = new uint64_t[m_numWords];
+        m_queuedBitmap = (uint64_t*)x265_malloc(sizeof(uint64_t) * m_numWords);
         if (m_queuedBitmap)
             memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
 
-        m_enableBitmap = new uint64_t[m_numWords];
+        m_enableBitmap = (uint64_t*)x265_malloc(sizeof(uint64_t) * m_numWords);
         if (m_enableBitmap)
             memset((void*)m_enableBitmap, 0, sizeof(uint64_t) * m_numWords);
 
@@ -54,8 +54,8 @@ bool WaveFront::init(int numRows)
 
 WaveFront::~WaveFront()
 {
-    delete[] m_queuedBitmap;
-    delete[] m_enableBitmap;
+    x265_free((void*)m_queuedBitmap);
+    x265_free((void*)m_enableBitmap);
 }
 
 void WaveFront::clearEnabledRowMask()
