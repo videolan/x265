@@ -39,6 +39,7 @@
 #define X265_COMMONDEF_H
 
 #include <cstdlib>
+#include "common.h"
 #include "TypeDef.h"
 
 //! \ingroup TLibCommon
@@ -140,10 +141,6 @@
 // for use in HM, replaces old xMalloc/xFree macros
 #define X265_MALLOC(type, count)    x265_malloc(sizeof(type) * (count))
 #define X265_FREE(ptr)              x265_free(ptr)
-
-// new code can use these functions directly
-extern void  x265_free(void *);
-extern void *x265_malloc(size_t size);
 
 // ====================================================================================================================
 // Coding tool configuration
