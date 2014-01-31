@@ -200,9 +200,12 @@ bool WeightPrediction::checkDenom(int denom)
 
             for (int yuv = 0; yuv < 3; yuv++)
             {
-                float fencVar = (float)fenc->wp_ssd[yuv] + !ref->wp_ssd[yuv];
-                float refVar  = (float)ref->wp_ssd[yuv] + !ref->wp_ssd[yuv];
-                guessScale[yuv] = Clip3(-2.f, 1.8f, sqrtf((float)fencVar / refVar));
+                uint64_t fencVar = fenc->wp_ssd[yuv] + !ref->wp_ssd[yuv];
+                uint64_t refVar  = ref->wp_ssd[yuv] + !ref->wp_ssd[yuv];
+                if (fencVar && refVar)
+                    guessScale[yuv] = Clip3(-2.f, 1.8f, std::sqrt((float)fencVar / refVar));
+                else
+                    guessScale[yuv] = 1.8f;
                 fencMean[yuv] = (float)fenc->wp_sum[yuv] / (height[yuv] * width[yuv]) / (1 << (X265_DEPTH - 8));
                 refMean[yuv]  = (float)ref->wp_sum[yuv] / (height[yuv] * width[yuv]) / (1 << (X265_DEPTH - 8));
                 // Ensure that the denominators of cb and cr are same
@@ -221,7 +224,9 @@ bool WeightPrediction::checkDenom(int denom)
                 SET_WEIGHT(w, 0, 1, 0, 0);
                 SET_WEIGHT(fw[yuv], 0, 1 << denom, denom, 0);
                 /* Early termination */
-                if (fabsf(refMean[yuv] - fencMean[yuv]) < 0.5f && fabsf(1.f - guessScale[yuv]) < epsilon)
+                float meanDiff = refMean[yuv] < fencMean[yuv] ? fencMean[yuv] - refMean[yuv] : refMean[yuv] - fencMean[yuv];
+                float guessVal = guessScale[yuv] > 1.f ? guessScale[yuv] - 1.f : 1.f - guessScale[yuv];
+                if (meanDiff < 0.5f && guessVal < epsilon)
                     continue;
 
                 /* Don't check chroma in lookahead, or if there wasn't a luma weight. */
