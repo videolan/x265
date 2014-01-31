@@ -1277,7 +1277,6 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
     if (fabsf(refMean - fencMean) < 0.5f && fabsf(1.f - guessScale) < epsilon)
         return;
 
-    /* Don't check chroma in lookahead, or if there wasn't a luma weight. */
     int minoff = 0, minscale, mindenom;
     unsigned int minscore = 0, origscore = 1;
     int found = 0;
@@ -1298,8 +1297,8 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
     if (curOffset < -128 || curOffset > 127)
     {
         /* Rescale considering the constraints on curOffset. We do it in this order
-            * because scale has a much wider range than offset (because of denom), so
-            * it should almost never need to be clamped. */
+         * because scale has a much wider range than offset (because of denom), so
+         * it should almost never need to be clamped. */
         curOffset = Clip3(-128, 127, curOffset);
         curScale = (int)((1 << mindenom) * (fencMean - curOffset) / refMean + 0.5f);
         curScale = Clip3(0, 127, curScale);
