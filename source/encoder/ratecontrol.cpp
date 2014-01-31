@@ -108,7 +108,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
         int cuHeight = ((maxRow / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
         int cuCount = cuWidth * cuHeight;
 
-        if(cfg->param.rc.aqMode && cfg->param.rc.aqStrength == 0 )
+        if (cfg->param.rc.aqMode && cfg->param.rc.aqStrength == 0)
         {
             memset(pic->m_lowres.qpOffset, 0, cuCount * sizeof(double));
             memset(pic->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
@@ -116,14 +116,13 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
                 pic->m_lowres.invQscaleFactor[cuxy] = 256;
         }
 
-         /* Need variance data for weighted prediction */
+        /* Need variance data for weighted prediction */
         if (cfg->param.bEnableWeightedPred)
         {
             for (block_y = 0; block_y < maxRow; block_y += 16)
                 for (block_x = 0; block_x < maxCol; block_x += 16)
                     acEnergyCu(pic, block_x, block_y);
         }
-
     }
     else
     {
@@ -156,9 +155,9 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             {
                 for (block_x = 0; block_x < maxCol; block_x += 16)
                 {
-                    if(cfg->param.rc.aqMode == X265_AQ_AUTO_VARIANCE)
+                    if (cfg->param.rc.aqMode == X265_AQ_AUTO_VARIANCE)
                     {
-                        qp_adj =pic->m_lowres.qpOffset[block_xy];
+                        qp_adj = pic->m_lowres.qpOffset[block_xy];
                         qp_adj = strength * (qp_adj - avg_adj);
                     }
                     else
