@@ -1220,16 +1220,16 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
     return score;
 }
 
-uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, pixel *src, wpScalingParam *w)
+uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, pixel *src, wpScalingParam *wp)
 {
     Lowres *fenc = frames[b];
     int stride = fenc->lumaStride;
 
-    if (w)
+    if (wp)
     {
-        int offset = w->inputOffset << (X265_DEPTH - 8);
-        int scale = w->inputWeight;
-        int denom = w->log2WeightDenom;
+        int offset = wp->inputOffset << (X265_DEPTH - 8);
+        int scale = wp->inputWeight;
+        int denom = wp->log2WeightDenom;
         int correction = IF_INTERNAL_PREC - X265_DEPTH;
 
         // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
@@ -1258,7 +1258,6 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, pixel *src, wpScal
 void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
 {
     static const float epsilon = 1.f / 128.f;
-    wpScalingParam w;
     Lowres *fenc, *ref;
     fenc = frames[b];
     ref  = frames[p0];

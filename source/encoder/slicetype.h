@@ -95,6 +95,7 @@ struct CostEstimate : public WaveFront
     Lowres         **curframes;
 
     ReferencePlanes  weightedRef;
+    wpScalingParam   w;
 
     int              paddedLines;     // number of lines in padded frame
     int              widthInCU;       // width of lowres frame in downscale CUs
