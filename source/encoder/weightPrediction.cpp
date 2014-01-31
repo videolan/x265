@@ -229,7 +229,6 @@ bool WeightPrediction::checkDenom(int denom)
                 if (meanDiff < 0.5f && guessVal < epsilon)
                     continue;
 
-                /* Don't check chroma in lookahead, or if there wasn't a luma weight. */
                 int minoff = 0, minscale, mindenom;
                 unsigned int minscore = 0, origscore = 1;
                 int found = 0;
@@ -268,11 +267,11 @@ bool WeightPrediction::checkDenom(int denom)
                                 primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
                             }
                         }
-                        m_mcbuf = m_buf;                    
+                        m_mcbuf = m_buf;
                     }
                     break;
-                case 1:
 
+                case 1:
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCbAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCbAddr();
                     m_blockSize = 8;
@@ -280,7 +279,6 @@ bool WeightPrediction::checkDenom(int denom)
                     break;
 
                 case 2:
-
                     m_mcbuf = m_slice->getRefPic(list, refIdxTemp)->getPicYuvOrg()->getCrAddr();
                     m_inbuf = m_slice->getPic()->getPicYuvOrg()->getCrAddr();
                     m_blockSize = 8;
