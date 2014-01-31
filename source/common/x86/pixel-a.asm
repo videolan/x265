@@ -626,6 +626,14 @@ cglobal pixel_satd_4x16, 4, 6, 8
     movd eax, m7
     RET
 
+cglobal pixel_satd_8x8_internal
+    LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
+    SATD_8x4_SSE vertical, 0, 1, 2, 3, 4, 5, 6
+%%pixel_satd_8x4_internal:
+    LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
+    SATD_8x4_SSE vertical, 0, 1, 2, 3, 4, 5, 6
+    ret
+
 cglobal pixel_satd_8x8_internal2
 %if WIN64
     LOAD_SUMSUB_8x4P 0, 1, 2, 3, 4, 5, 7, r0, r2, 1, 0
@@ -2527,14 +2535,8 @@ cglobal pixel_satd_8x16, 4,6,8
 
 cglobal pixel_satd_8x8, 4,6,8
     SATD_START_SSE2 m6, m7
-    call pixel_satd_8x8_internal2
-    pxor    m7, m7
-    movhlps m7, m6
-    paddd   m6, m7
-    pshufd  m7, m6, 1
-    paddd   m6, m7
-    movd   eax, m6
-    RET
+    call pixel_satd_8x8_internal
+    SATD_END_SSE2 m6
 
 cglobal pixel_satd_8x4, 4,6,8
     SATD_START_SSE2 m6, m7
