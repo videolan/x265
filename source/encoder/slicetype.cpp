@@ -1257,18 +1257,20 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, pixel *src, wpScal
 
 void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
 {
+    static const float epsilon = 1.f / 128.f;
     wpScalingParam w;
-
     Lowres *fenc, *ref;
-
     fenc = frames[b];
     ref  = frames[p0];
     int deltaIndex = fenc->frameNum - ref->frameNum;
 
     /* epsilon is chosen to require at least a numerator of 127 (with denominator = 128) */
-    const float epsilon = 1.f / 128.f;
     float guessScale, fencMean, refMean;
-    guessScale = sqrtf((float)fenc->wp_ssd[0] / ref->wp_ssd[0]);
+    x265_emms();
+    if (fenc->wp_ssd[0] && ref->wp_ssd[0])
+        guessScale = sqrtf((float)fenc->wp_ssd[0] / ref->wp_ssd[0]);
+    else
+        guessScale = 1.0f;
     fencMean = (float)fenc->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
     refMean  = (float)ref->wp_sum[0] / (fenc->lines * fenc->width) / (1 << (X265_DEPTH - 8));
 
