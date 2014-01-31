@@ -149,6 +149,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (14.f * bit_depth_correction)) / avg_adj;
         }
         else
+        {
             strength = cfg->param.rc.aqStrength * 1.0397f;
             block_xy = 0; 
             for (block_y = 0; block_y < maxRow; block_y += 16)
@@ -171,6 +172,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
                     block_xy++;
                 }
             }
+        }
     }
 
     if (cfg->param.bEnableWeightedPred)
