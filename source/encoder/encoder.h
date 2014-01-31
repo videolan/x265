@@ -68,10 +68,15 @@ struct NALUnitEBSP;
 class Encoder : public TEncCfg, public x265_encoder
 {
 private:
-
     int                m_pocLast;          ///< time index (POC)
     int                m_outputCount;
     PicList            m_freeList;
+
+    int                m_bframeDelay;
+    int64_t            m_firstPts;
+    int64_t            m_bframeDelayTime;
+    int64_t            m_prevReorderedPts[2];
+    int64_t            m_encodedFrameNum;
 
     ThreadPool*        m_threadPool;
     Lookahead*         m_lookahead;

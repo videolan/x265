@@ -58,6 +58,7 @@ using namespace x265;
 
 Encoder::Encoder()
 {
+    m_encodedFrameNum = 0;
     m_pocLast = -1;
     m_maxRefPicNum = 0;
     m_curEncoder = 0;
@@ -123,7 +124,7 @@ void Encoder::create()
             if (m_csvfpt)
             {
                 if (param.logLevel >= X265_LOG_DEBUG)
-                    fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, Encoding time, Elapsed time, List 0, List 1\n");
+                    fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
                 else
                     fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
             }
@@ -255,6 +256,11 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
 
+        if (m_pocLast == 0)
+            m_firstPts = pic->m_pts;
+        if (m_bframeDelay && m_pocLast == m_bframeDelay)
+            m_bframeDelayTime = pic->m_pts - m_firstPts;
+
         // Encoder holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
         if (param.rc.aqMode || param.bEnableWeightedPred)
@@ -298,7 +304,10 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             pic_out->poc = out->getSlice()->getPOC();
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = out->m_userData;
+
             pic_out->pts = out->m_pts;
+            pic_out->dts = out->m_dts;
+
             switch (out->getSlice()->getSliceType())
             {
             case I_SLICE:
@@ -339,8 +348,21 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         // curEncoder is guaranteed to be idle at this point
         TComPic *fenc = m_lookahead->outputQueue.popFront();
 
+         m_encodedFrameNum++;
+         if (m_bframeDelay)
+         {
+             int64_t *prevReorderedPts = m_prevReorderedPts;
+             fenc->m_dts = m_encodedFrameNum > m_bframeDelay
+                        ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
+                        : fenc->m_reorderedPts - m_bframeDelayTime;
+             prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = fenc->m_reorderedPts;
+         }
+         else
+             fenc->m_dts = fenc->m_reorderedPts;
+
         // Initialize slice for encoding with this FrameEncoder
         curEncoder->initSlice(fenc);
+
 
         // determine references, setup RPS, etc
         m_dpb->prepareEncode(fenc);
@@ -535,11 +557,12 @@ void Encoder::printSummary()
                 if (sliceType == I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d: "LL"%%", cuSize/2, cuSize/2, cntIntraNxN);
+                        len += sprintf(stats + len, " %dx%d: "LL"%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
+            const char slicechars[] = "BPI";
             if (stats[0])
-                x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", sliceType == P_SLICE ? 'P' : sliceType == B_SLICE ? 'B' : 'I', cuSize, stats);
+                x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", slicechars[sliceType], cuSize, stats);
         }
     }
 #endif
@@ -596,8 +619,13 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
 
 void Encoder::writeLog(int argc, char **argv)
 {
-    if (param.logLevel < X265_LOG_DEBUG && m_csvfpt)
+    if (param.logLevel <= X265_LOG_DEBUG && m_csvfpt)
     {
+        if(param.logLevel == X265_LOG_DEBUG)
+        {
+            fprintf(m_csvfpt, "Summary\n");
+            fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
+        }
         // CLI arguments or other
         for (int i = 1; i < argc; i++)
         {
@@ -844,9 +872,9 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
             else
                 fprintf(m_csvfpt, " -, -, -, -,");
             if (param.bEnableSsim)
-                fprintf(m_csvfpt, " %.3lf,", ssim);
+                fprintf(m_csvfpt, " %.6f, %6.3f,", ssim, x265_ssim(ssim));
             else
-                fprintf(m_csvfpt, " -,");
+                fprintf(m_csvfpt, " -, -,");
             fprintf(m_csvfpt, " %.3lf, %.3lf", pic->m_frameTime, pic->m_elapsedCompressTime);
             if (!slice->isIntra())
             {
@@ -1302,39 +1330,39 @@ void Encoder::configure(x265_param *_param)
         bEnableRDOQTS = 0;
     }
 
+    if (_param->rc.rateControlMode == X265_RC_CQP)
+    {
+        _param->rc.aqMode = X265_AQ_NONE;
+        _param->rc.bitrate = 0;
+        _param->rc.cuTree = 0;
+    }
+
+    if (_param->rc.aqMode == 0 && _param->rc.cuTree)
+    {
+        _param->rc.aqMode = X265_AQ_VARIANCE;
+        _param->rc.aqStrength = 0.0;
+    }
+
+    if (_param->lookaheadDepth == 0 && _param->rc.cuTree)
+    {
+        x265_log(_param, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
+        _param->rc.cuTree = 0;
+    }
+
+    if (_param->rc.aqStrength == 0 && _param->rc.cuTree == 0)
+    {
+        _param->rc.aqMode = X265_AQ_NONE;        
+    }
+
+
+    m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
+
     //====== Coding Tools ========
 
     uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
-
-    //====== Enforce these hard coded settings before initializeGOP() to
-    //       avoid a valgrind warning
-    m_loopFilterOffsetInPPS = 0;
-    m_loopFilterBetaOffsetDiv2 = 0;
-    m_loopFilterTcOffsetDiv2 = 0;
-    m_loopFilterAcrossTilesEnabledFlag = 1;
-
-    //====== HM Settings not exposed for configuration ======
-    TComVPS vps;
-    vps.setMaxTLayers(1);
-    vps.setTemporalNestingFlag(true);
-    vps.setMaxLayers(1);
-    for (int i = 0; i < MAX_TLAYER; i++)
-    {
-        /* Increase the DPB size and reorderpicture if enabled the bpyramid */
-        m_numReorderPics[i] = (_param->bBPyramid && _param->bframes > 1) ? 2 : 1;
-        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + m_numReorderPics[i]);
-
-        vps.setNumReorderPics(m_numReorderPics[i], i);
-        vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-    }
-
-    m_vps = vps;
-    m_maxCuDQPDepth = 0;
-    m_maxNumOffsetsPerPic = 2048;
-    m_log2ParallelMergeLevelMinus2 = 0;
 
     //========= set default display window ==================================
     m_defaultDisplayWindow.m_enabledFlag = true;
@@ -1373,6 +1401,31 @@ void Encoder::configure(x265_param *_param)
         m_conformanceWindow.m_enabledFlag = true;
         m_conformanceWindow.m_winBottomOffset = m_pad[1];
     }
+
+    //====== HM Settings not exposed for configuration ======
+    m_loopFilterOffsetInPPS = 0;
+    m_loopFilterBetaOffsetDiv2 = 0;
+    m_loopFilterTcOffsetDiv2 = 0;
+    m_loopFilterAcrossTilesEnabledFlag = 1;
+
+    TComVPS vps;
+    vps.setMaxTLayers(1);
+    vps.setTemporalNestingFlag(true);
+    vps.setMaxLayers(1);
+    for (int i = 0; i < MAX_TLAYER; i++)
+    {
+        /* Increase the DPB size and reorder picture if bpyramid is enabled */
+        m_numReorderPics[i] = (_param->bBPyramid && _param->bframes > 1) ? 2 : 1;
+        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + m_numReorderPics[i]);
+
+        vps.setNumReorderPics(m_numReorderPics[i], i);
+        vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
+    }
+
+    m_vps = vps;
+    m_maxCuDQPDepth = 0;
+    m_maxNumOffsetsPerPic = 2048;
+    m_log2ParallelMergeLevelMinus2 = 0;
 
     m_progressiveSourceFlag = true;
     m_interlacedSourceFlag = false;

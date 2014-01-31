@@ -43,6 +43,7 @@ private:
     int32_t *m_intraCost;
     MV *m_mvs;
     int m_bframes;
+    bool m_mcFlag;
 
 public:
 
@@ -58,6 +59,7 @@ public:
         m_refStride = m_slice->getPic()->m_lowres.lumaStride;
         m_intraCost = m_slice->getPic()->m_lowres.intraCost;
         m_bframes = param.bframes;
+        m_mcFlag = false;
 
         m_mcbuf = NULL;
         m_inbuf = NULL;

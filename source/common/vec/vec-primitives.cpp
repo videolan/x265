@@ -25,6 +25,7 @@
 #include "x265.h"
 
 /* The #if logic here must match the file lists in CMakeLists.txt */
+#if X265_ARCH_X86
 #if defined(__INTEL_COMPILER)
 #define HAVE_SSE3
 #define HAVE_SSSE3
@@ -46,7 +47,8 @@
 #if _MSC_VER >= 1700 // VC11
 #define HAVE_AVX2
 #endif
-#endif // if defined(__INTEL_COMPILER)
+#endif // compiler checks
+#endif // if X265_ARCH_X86
 
 namespace x265 {
 // private x265 namespace
@@ -59,8 +61,6 @@ void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
 
 void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives&);
-
-void Setup_Vec_IPFilterPrimitives_sse41(EncoderPrimitives&);
 
 /* Use primitives for the best available vector architecture */
 void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask)
@@ -83,7 +83,6 @@ void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_SSE4)
     {
         Setup_Vec_IPredPrimitives_sse41(p);
-        Setup_Vec_IPFilterPrimitives_sse41(p);
         Setup_Vec_DCTPrimitives_sse41(p);
     }
 #endif

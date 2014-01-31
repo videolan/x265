@@ -565,10 +565,18 @@ extern "C" {
 
 #define SETUP_INTRA_ANG4(mode, fno, cpu) \
     p.intra_pred[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
+#define SETUP_INTRA_ANG8(mode, fno, cpu) \
+    p.intra_pred[BLOCK_8x8][mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu;
+#define SETUP_INTRA_ANG16(mode, fno, cpu) \
+    p.intra_pred[BLOCK_16x16][mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu;
+#define SETUP_INTRA_ANG32(mode, fno, cpu) \
+    p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+
+#define SETUP_INTRA_ANG32(mode, fno, cpu) \
+    p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
 
 namespace x265 {
 // private x265 namespace
-
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #if HIGH_BIT_DEPTH
@@ -868,7 +876,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
         p.cvt16to32_shl = x265_cvt16to32_shl_sse2;
-        p.ipfilter_ss[FILTER_V_S_S_8] = x265_interp_8tap_v_ss_sse2;
         p.calcrecon[BLOCK_4x4] = x265_calcRecons4_sse2;
         p.calcrecon[BLOCK_8x8] = x265_calcRecons8_sse2;
         p.calcresidual[BLOCK_4x4] = x265_getResidual4_sse2;
@@ -895,10 +902,15 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         SETUP_INTRA_ANG4(2, 2, ssse3);
         SETUP_INTRA_ANG4(34, 2, ssse3);
+        SETUP_INTRA_ANG8(2, 2, ssse3);
+        SETUP_INTRA_ANG8(34, 2, ssse3);
+        SETUP_INTRA_ANG16(2, 2, ssse3);
+        SETUP_INTRA_ANG16(34, 2, ssse3);
+        SETUP_INTRA_ANG32(2, 2, ssse3);
+        SETUP_INTRA_ANG32(34, 2, ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
-
         SAD_X3(ssse3);
         SAD_X4(ssse3);
         p.sad_x4[LUMA_8x4] = x265_pixel_sad_x4_8x4_ssse3;
@@ -1000,6 +1012,11 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG4(31, 5, sse4);
         SETUP_INTRA_ANG4(32, 4, sse4);
         SETUP_INTRA_ANG4(33, 3, sse4);
+
+        SETUP_INTRA_ANG32(17, 17, sse4);
+
+        SETUP_INTRA_ANG8(3, 3, sse4);
+        SETUP_INTRA_ANG8(33, 3, sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
     }

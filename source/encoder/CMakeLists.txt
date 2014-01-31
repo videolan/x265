@@ -2,10 +2,7 @@
 if(GCC)
     # encoder.cpp must include HM headers which are not careful about named parameters
     set_source_files_properties(encoder.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
-endif(GCC)
-
-if(GCC)
-    if (NOT X64)
+    if(X86 AND NOT X64)
         # force gcc to generate code for sync primitives
         set_source_files_properties(framefilter.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()

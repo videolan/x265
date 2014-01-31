@@ -150,7 +150,6 @@ private:
     UChar*        m_chromaIntraDir;   ///< array of intra directions (chroma)
     UChar*        m_interDir;         ///< array of inter directions
     char*         m_mvpIdx[2];        ///< array of motion vector predictor candidates
-    char*         m_mvpNum[2];        ///< array of number of possible motion vectors predictors
     bool*         m_iPCMFlags;        ///< array of intra_pcm flags
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -282,9 +281,9 @@ public:
 
     void          setTrIdxSubParts(uint32_t uiTrIdx, uint32_t absPartIdx, uint32_t depth);
 
-    UChar*        getTransformSkip(TextType ttype)     { return m_transformSkip[g_convertTxtTypeToIdx[ttype]]; }
+    UChar*        getTransformSkip(TextType ttype)     { return m_transformSkip[ttype]; }
 
-    UChar         getTransformSkip(uint32_t idx, TextType ttype)    { return m_transformSkip[g_convertTxtTypeToIdx[ttype]][idx]; }
+    UChar         getTransformSkip(uint32_t idx, TextType ttype)    { return m_transformSkip[ttype][idx]; }
 
     void          setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void          setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth);
@@ -305,13 +304,13 @@ public:
 
     Pel*&         getPCMSampleCr()            { return m_iPCMSampleCr; }
 
-    UChar         getCbf(uint32_t idx, TextType ttype) { return m_cbf[g_convertTxtTypeToIdx[ttype]][idx]; }
+    UChar         getCbf(uint32_t idx, TextType ttype) { return m_cbf[ttype][idx]; }
 
-    UChar*        getCbf(TextType ttype)           { return m_cbf[g_convertTxtTypeToIdx[ttype]]; }
+    UChar*        getCbf(TextType ttype)           { return m_cbf[ttype]; }
 
     UChar         getCbf(uint32_t idx, TextType ttype, uint32_t trDepth) { return (getCbf(idx, ttype) >> trDepth) & 0x1; }
 
-    void          setCbf(uint32_t idx, TextType ttype, UChar uh)     { m_cbf[g_convertTxtTypeToIdx[ttype]][idx] = uh; }
+    void          setCbf(uint32_t idx, TextType ttype, UChar uh)     { m_cbf[ttype][idx] = uh; }
 
     void          clearCbf(uint32_t idx, TextType ttype, uint32_t numParts);
     UChar         getQtRootCbf(uint32_t idx)           { return getCbf(idx, TEXT_LUMA, 0) || getCbf(idx, TEXT_CHROMA_U, 0) || getCbf(idx, TEXT_CHROMA_V, 0); }
@@ -390,12 +389,7 @@ public:
 
     char*         getMVPIdx(int picList)                       { return m_mvpIdx[picList]; }
 
-    int           getMVPNum(int picList, uint32_t idx)             { return m_mvpNum[picList][idx]; }
-
-    char*         getMVPNum(int picList)                       { return m_mvpNum[picList]; }
-
     void          setMVPIdxSubParts(int mvpIdx, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
-    void          setMVPNumSubParts(int iMVPNum, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
 
     void          clipMv(MV& outMV);
 

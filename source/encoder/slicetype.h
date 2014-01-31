@@ -61,6 +61,7 @@ struct EstimateRow
     int                 widthInCU;
     int                 heightInCU;
     int                 merange;
+    int                 lookAheadLambda;
 
     EstimateRow()
     {
@@ -69,6 +70,7 @@ struct EstimateRow
         me.setSubpelRefine(1);
         predictions = (pixel*)X265_MALLOC(pixel, 35 * 8 * 8);
         merange = 16;
+        lookAheadLambda = (int)x265_lambda2_non_I[X265_LOOKAHEAD_QP];
     }
 
     ~EstimateRow()
@@ -131,7 +133,6 @@ struct Lookahead
 
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
-    int              numDecided;
     int              lastKeyframe;
     
     void addPicture(TComPic*, int sliceType);

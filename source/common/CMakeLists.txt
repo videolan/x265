@@ -56,36 +56,36 @@ if(MSVC)
     # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
-    if (INTEL_CXX)
+    if(INTEL_CXX)
         add_definitions(/Qwd2557) # signed/unsigned mismatch
     endif()
 endif(MSVC)
 
 set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
 set(SSSE3 vec/dct-ssse3.cpp vec/intra-ssse3.cpp)
-set(SSE41 vec/dct-sse41.cpp vec/ipfilter-sse41.cpp vec/intra-sse41.cpp)
+set(SSE41 vec/dct-sse41.cpp vec/intra-sse41.cpp)
 
-if (MSVC)
+if(MSVC AND X86)
     set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
     # wd4127 conditional expression is constant
     # wd4244 'argument' : conversion from 'int' to 'char', possible loss of data
     # wd4100 unreferenced formal parameter
     set(WARNDISABLE "/wd4244 /wd4127 /wd4100")
-    if (INTEL_CXX)
+    if(INTEL_CXX)
         add_definitions(/Qwd111) # statement is unreachable
         add_definitions(/Qwd128) # loop is unreachable
         add_definitions(/Qwd177) # declared function is unused
         add_definitions(/Qwd185) # dynamic initialization in unreachable code
         add_definitions(/Qwd280) # conditional expression is constant
     endif()
-    if (X64)
+    if(X64)
         set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE}")
     else()
         # x64 implies SSE4, so only add /arch:SSE2 if building for Win32
         set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} /arch:SSE2")
     endif()
 endif()
-if(GCC)
+if(GCC AND X86)
     if(CLANG)
         # llvm intrinsic headers cause shadow warnings
         set(WARNDISABLE "-Wno-shadow -Wno-unused-parameter")
@@ -98,7 +98,7 @@ if(GCC)
         set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -mssse3")
         set_source_files_properties(${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -msse4.1")
     endif()
-endif(GCC)
+endif()
 set(VEC_PRIMITIVES vec/vec-primitives.cpp ${PRIMITIVES})
 source_group(Intrinsics FILES ${VEC_PRIMITIVES})
 
@@ -114,7 +114,7 @@ if(ENABLE_ASSEMBLY)
         set(A_SRCS ${A_SRCS} sad-a.asm intrapred8.asm)
     endif()
 
-    if (NOT X64)
+    if(NOT X64)
         set(A_SRCS ${A_SRCS} pixel-32.asm)
     endif()
 
@@ -133,19 +133,19 @@ if(ENABLE_ASSEMBLY)
 endif(ENABLE_ASSEMBLY)
 
 if(GCC)
-    if (NOT X64)
+    if(X86 AND NOT X64)
         # force gcc to generate code for sync primitives
         set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
-    if (GCC_HAS_NO_NARROWING)
+    if(GCC_HAS_NO_NARROWING)
         set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
     endif()
 endif(GCC)
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 add_library(common OBJECT
-    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
+    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
     cpu.cpp cpu.h version.cpp
