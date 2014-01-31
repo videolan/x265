@@ -56,7 +56,7 @@ if(MSVC)
     # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
-    if (INTEL_CXX)
+    if(INTEL_CXX)
         add_definitions(/Qwd2557) # signed/unsigned mismatch
     endif()
 endif(MSVC)
@@ -71,14 +71,14 @@ if (MSVC)
     # wd4244 'argument' : conversion from 'int' to 'char', possible loss of data
     # wd4100 unreferenced formal parameter
     set(WARNDISABLE "/wd4244 /wd4127 /wd4100")
-    if (INTEL_CXX)
+    if(INTEL_CXX)
         add_definitions(/Qwd111) # statement is unreachable
         add_definitions(/Qwd128) # loop is unreachable
         add_definitions(/Qwd177) # declared function is unused
         add_definitions(/Qwd185) # dynamic initialization in unreachable code
         add_definitions(/Qwd280) # conditional expression is constant
     endif()
-    if (X64)
+    if(X64)
         set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE}")
     else()
         # x64 implies SSE4, so only add /arch:SSE2 if building for Win32
@@ -114,7 +114,7 @@ if(ENABLE_ASSEMBLY)
         set(A_SRCS ${A_SRCS} sad-a.asm intrapred8.asm)
     endif()
 
-    if (NOT X64)
+    if(NOT X64)
         set(A_SRCS ${A_SRCS} pixel-32.asm)
     endif()
 
@@ -137,7 +137,7 @@ if(GCC)
         # force gcc to generate code for sync primitives
         set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
-    if (GCC_HAS_NO_NARROWING)
+    if(GCC_HAS_NO_NARROWING)
         set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
     endif()
 endif(GCC)

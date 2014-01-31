@@ -26,7 +26,7 @@ if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
     add_definitions(-DX86_64=1)
 endif()
 
-if (CMAKE_GENERATOR STREQUAL "Xcode")
+if(CMAKE_GENERATOR STREQUAL "Xcode")
   set(XCODE 1)
 endif()
 if (APPLE)
