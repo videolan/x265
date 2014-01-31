@@ -186,6 +186,20 @@ void Encoder::init()
     m_encodeStartTime = x265_mdate();
 }
 
+/* Called when a frame encoder has completed a CTU row of reconstructed
+ * pixels and extended them; making them available for use as reference.
+ * It calls this function with its POC, so the top encoder may waken any
+ * other frame encoders that were waiting for a row of recon pixels from
+ * this picture */
+void Encoder::signalReconRowCompleted(int poc)
+{
+    for (int i = 0; i < param.frameNumThreads; i++)
+    {
+        if (m_frameEncoder[i].m_blockRefPOC == poc)
+            m_frameEncoder[i].m_reconRowWait.trigger();
+    }
+}
+
 int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
 {
     return m_frameEncoder->getStreamHeaders(nalunits);

@@ -114,6 +114,10 @@ public:
         }
     }
 
+    int          m_blockRefPOC;
+
+    Event        m_reconRowWait;
+
     TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
 
     TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }

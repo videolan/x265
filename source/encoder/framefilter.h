@@ -56,6 +56,7 @@ public:
 
 protected:
 
+    Encoder*                    m_top;
     TEncCfg*                    m_cfg;
     TComPic*                    m_pic;
 
