@@ -130,7 +130,7 @@ struct Lowres : public ReferencePlanes
     uint64_t  wp_sum[3];
 
     uint16_t* propagateCost;
-    double    weightedCostDelta[X265_BFRAME_MAX+2];
+    double    weightedCostDelta[X265_BFRAME_MAX + 2];
 
     void create(TComPicYuv *orig, int bframes, int32_t *aqMode);
     void destroy(int bframes);

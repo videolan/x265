@@ -230,7 +230,7 @@ struct EncoderPrimitives
     addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
 
     intra_pred_t    intra_pred[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE];
-    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS-1];
+    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS - 1];
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
 

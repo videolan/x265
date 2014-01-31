@@ -68,6 +68,7 @@ struct NALUnitEBSP;
 class Encoder : public TEncCfg, public x265_encoder
 {
 private:
+
     int                m_pocLast;          ///< time index (POC)
     int                m_outputCount;
     PicList            m_freeList;

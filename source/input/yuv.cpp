@@ -140,7 +140,9 @@ void YUVInput::skipFrames(uint32_t numFrames)
     if (ifs)
     {
         for (uint32_t i = 0; i < numFrames; i++)
+        {
             ifs->ignore(framesize);
+        }
     }
 }
 
@@ -193,6 +195,7 @@ bool YUVInput::readPicture(x265_picture& pic)
         if (!threadActive)
             return false;
     }
+
 #else
     populateFrameQueue();
 #endif

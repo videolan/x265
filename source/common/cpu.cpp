@@ -41,7 +41,6 @@
 #endif
 
 namespace x265 {
-
 #if X265_ARCH_X86
 const cpu_name_t cpu_names[] =
 {
@@ -290,7 +289,9 @@ uint32_t cpu_detect(void)
 
     return cpu;
 }
+
 #else /* !x86 */
 uint32_t cpu_detect(void) { return 0; }
-#endif
+
+#endif // if X265_ARCH_X86
 }

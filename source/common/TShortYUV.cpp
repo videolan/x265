@@ -194,7 +194,6 @@ void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, uns
     unsigned int srcStride = m_width;
     unsigned int dstStride = dstPicYuv->getStride();
 
-
     primitives.blockcpy_ps(width, height, dst, dstStride, src, srcStride);
 }
 

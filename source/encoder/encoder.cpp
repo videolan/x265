@@ -348,21 +348,20 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         // curEncoder is guaranteed to be idle at this point
         TComPic *fenc = m_lookahead->outputQueue.popFront();
 
-         m_encodedFrameNum++;
-         if (m_bframeDelay)
-         {
-             int64_t *prevReorderedPts = m_prevReorderedPts;
-             fenc->m_dts = m_encodedFrameNum > m_bframeDelay
-                        ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
-                        : fenc->m_reorderedPts - m_bframeDelayTime;
-             prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = fenc->m_reorderedPts;
-         }
-         else
-             fenc->m_dts = fenc->m_reorderedPts;
+        m_encodedFrameNum++;
+        if (m_bframeDelay)
+        {
+            int64_t *prevReorderedPts = m_prevReorderedPts;
+            fenc->m_dts = m_encodedFrameNum > m_bframeDelay
+                ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
+                : fenc->m_reorderedPts - m_bframeDelayTime;
+            prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = fenc->m_reorderedPts;
+        }
+        else
+            fenc->m_dts = fenc->m_reorderedPts;
 
         // Initialize slice for encoding with this FrameEncoder
         curEncoder->initSlice(fenc);
-
 
         // determine references, setup RPS, etc
         m_dpb->prepareEncode(fenc);
@@ -447,6 +446,7 @@ void Encoder::printSummary()
                         }
                         finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
                     }
+
                     if (depth == (int)g_maxCUDepth - 1)
                         finalLog.cntIntraNxN += enclog.cntIntraNxN;
                     if (sliceType != I_SLICE)
@@ -521,15 +521,15 @@ void Encoder::printSummary()
             }
             // print statistics
             int cuSize = g_maxCUWidth >> depth;
-            char stats[256] = {0};
+            char stats[256] = { 0 };
             int len = 0;
             if (sliceType != I_SLICE)
             {
-                len += sprintf(stats + len, "EncCU "LL"%% Merge "LL"%%", encCu, cntSkipCu);
+                len += sprintf(stats + len, "EncCU "LL "%% Merge "LL "%%", encCu, cntSkipCu);
             }
             if (cntInter)
             {
-                len += sprintf(stats + len, " Inter "LL"%%", cntInter);
+                len += sprintf(stats + len, " Inter "LL "%%", cntInter);
                 if (param.bEnableAMP)
                     len += sprintf(stats + len, "(%dx%d "LL "%% %dx%d "LL "%% %dx%d "LL "%% AMP "LL "%%)",
                                    cuSize, cuSize, cuInterDistribution[0],
@@ -544,9 +544,9 @@ void Encoder::printSummary()
             }
             if (cntIntra)
             {
-                len += sprintf(stats + len, " Intra "LL"%%(DC "LL"%% P "LL"%% Ang "LL"%%",
-                                cntIntra, cuIntraDistribution[0],
-                                cuIntraDistribution[1], cuIntraDistribution[2]);
+                len += sprintf(stats + len, " Intra "LL "%%(DC "LL "%% P "LL "%% Ang "LL "%%",
+                               cntIntra, cuIntraDistribution[0],
+                               cuIntraDistribution[1], cuIntraDistribution[2]);
                 if (sliceType != I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
@@ -557,7 +557,7 @@ void Encoder::printSummary()
                 if (sliceType == I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d: "LL"%%", cuSize / 2, cuSize / 2, cntIntraNxN);
+                        len += sprintf(stats + len, " %dx%d: "LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
             const char slicechars[] = "BPI";
@@ -565,7 +565,8 @@ void Encoder::printSummary()
                 x265_log(&param, X265_LOG_INFO, "%c%-2d: %s\n", slicechars[sliceType], cuSize, stats);
         }
     }
-#endif
+
+#endif // if LOG_CU_STATISTICS
     if (param.logLevel >= X265_LOG_INFO)
     {
         char buffer[200];
@@ -621,7 +622,7 @@ void Encoder::writeLog(int argc, char **argv)
 {
     if (param.logLevel <= X265_LOG_DEBUG && m_csvfpt)
     {
-        if(param.logLevel == X265_LOG_DEBUG)
+        if (param.logLevel == X265_LOG_DEBUG)
         {
             fprintf(m_csvfpt, "Summary\n");
             fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
@@ -1313,13 +1314,13 @@ void Encoder::configure(x265_param *_param)
         break;
     case 3:
         bEnableRDOQ = bEnableRDOQTS = 0;
-        break; 
+        break;
     case 2:
         bEnableRDOQ = bEnableRDOQTS = 0;
-        break; 
+        break;
     case 1:
         bEnableRDOQ = bEnableRDOQTS = 0;
-        break; 
+        break;
     case 0:
         bEnableRDOQ = bEnableRDOQTS = 0;
         break;
@@ -1351,9 +1352,8 @@ void Encoder::configure(x265_param *_param)
 
     if (_param->rc.aqStrength == 0 && _param->rc.cuTree == 0)
     {
-        _param->rc.aqMode = X265_AQ_NONE;        
+        _param->rc.aqMode = X265_AQ_NONE;
     }
-
 
     m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
 
@@ -1699,9 +1699,9 @@ extern "C"
 double x265_ssim(double ssim)
 {
     double inv_ssim = 1 - ssim;
+
     if (inv_ssim <= 0.0000000001) /* Max 100dB */
         return 100;
 
     return -10.0 * log10(inv_ssim);
 }
-

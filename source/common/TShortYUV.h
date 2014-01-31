@@ -55,7 +55,6 @@ private:
 
     int m_csp;
 
-
 public:
 
     int16_t* m_bufY;

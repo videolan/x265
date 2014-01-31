@@ -121,7 +121,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
             p += sprintf(p, " none!");
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
-#endif
+#endif // if X265_ARCH_X86
 
     Setup_C_Primitives(primitives);
     Setup_Instrinsic_Primitives(primitives, cpuid);

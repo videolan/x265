@@ -68,6 +68,7 @@ public:
     }
 
     bool isDirty() const  { return m_dirty; }
+
     void markDirty()      { m_dirty = true; }
 
     bool isExited() const { return m_exited; }
@@ -178,6 +179,7 @@ void ThreadPoolImpl::pokeIdleThread()
 {
     /* Find a bit in the sleeping thread bitmap and poke it awake */
     uint64_t oldval = PoolThread::s_sleepMap;
+
     if (oldval)
     {
         unsigned long id;
@@ -259,7 +261,9 @@ void ThreadPoolImpl::Stop()
     {
         uint64_t idlemap = 0;
         for (int i = 0; i < m_numThreads; i++)
+        {
             idlemap |= (1LL << i);
+        }
 
         // wait for all threads to idle
         while (PoolThread::s_sleepMap != idlemap)
@@ -270,7 +274,9 @@ void ThreadPoolImpl::Stop()
         // set invalid flag, then wake them up so they exit their main func
         m_ok = false;
         for (int i = 0; i < m_numThreads; i++)
+        {
             pokeIdleThread();
+        }
 
         int exited_count = 0;
         do

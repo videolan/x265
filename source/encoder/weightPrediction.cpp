@@ -164,7 +164,7 @@ bool WeightPrediction::checkDenom(int denom)
     int fullCheck = 0;
     int numWeighted = 0;     // number of weighted references for each m_slice must be less than 8 as per HEVC standard
     int width[3], height[3];
-    int log2denom[3] = {denom};
+    int log2denom[3] = { denom };
 
     fenc = &m_slice->getPic()->m_lowres;
     curPoc = m_slice->getPOC();
@@ -185,7 +185,7 @@ bool WeightPrediction::checkDenom(int denom)
             ref  = &m_slice->getRefPic(list, refIdxTemp)->m_lowres;
             refPoc = m_slice->getRefPic(list, refIdxTemp)->getPOC();
             difPoc = abs(curPoc - refPoc);
-            if (difPoc <= m_bframes + 1)                
+            if (difPoc <= m_bframes + 1)
             {
                 m_mvs = fenc->lowresMvs[list][difPoc - 1];
                 if (m_mvs[0].x != 0x7FFF)
@@ -267,6 +267,7 @@ bool WeightPrediction::checkDenom(int denom)
                                 primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
                             }
                         }
+
                         m_mcbuf = m_buf;
                     }
                     break;

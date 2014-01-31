@@ -978,6 +978,7 @@ void FrameEncoder::compressCTURows()
                     {
                         m_reconRowWait.wait();
                     }
+
                     m_blockRefPOC = -1;
 
                     if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
@@ -1021,6 +1022,7 @@ void FrameEncoder::compressCTURows()
                         {
                             m_reconRowWait.wait();
                         }
+
                         m_blockRefPOC = -1;
 
                         if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)

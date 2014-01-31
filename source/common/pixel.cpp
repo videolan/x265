@@ -654,12 +654,12 @@ float ssim_end_1(int s1, int s2, int ss, int s12)
 
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 #if HIGH_BIT_DEPTH
-assert(X265_DEPTH == 10);
+    assert(X265_DEPTH == 10);
 #define type float
     static const float ssim_c1 = (float)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64);
     static const float ssim_c2 = (float)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63);
 #else
-assert(X265_DEPTH == 8);
+    assert(X265_DEPTH == 8);
 #define type int
     static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5);
     static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5);
@@ -805,6 +805,7 @@ template<int bx, int by>
 void addAvg(pixel* dst, intptr_t dstStride, int16_t* src0, intptr_t src0Stride, int16_t* src1, intptr_t src1Stride)
 {
     int shiftNum, offset;
+
     shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
     offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 

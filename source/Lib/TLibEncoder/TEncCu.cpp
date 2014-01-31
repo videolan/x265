@@ -385,7 +385,7 @@ void TEncCu::compressCU(TComDataCU* cu)
             i += next;
         }
         while (i < numPartition);
-#endif
+#endif // if LOG_CU_STATISTICS
     }
     else
     {
@@ -440,7 +440,7 @@ void TEncCu::compressCU(TComDataCU* cu)
             i = i + next;
         }
         while (i < numPartition);
-#endif
+#endif // if LOG_CU_STATISTICS
     }
 }
 
@@ -707,6 +707,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     //PPAScopeEvent(TEncCu_xCompressCU + depth);
 
     TComPic* pic = outBestCU->getPic();
+
     m_abortFlag = false;
 
     // get Original YUV data from picture

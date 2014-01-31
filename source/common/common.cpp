@@ -590,16 +590,16 @@ void x265_print_params(x265_param *param)
     switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
-        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : ABR-%d kbps / %0.1f / %d\n", param->rc.bitrate, 
-            param->rc.aqStrength, param->rc.cuTree);
+        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : ABR-%d kbps / %0.1f / %d\n", param->rc.bitrate,
+                 param->rc.aqStrength, param->rc.cuTree);
         break;
     case X265_RC_CQP:
         x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : CQP-%d / %0.1f / %d\n", param->rc.qp, param->rc.aqStrength,
-            param->rc.cuTree);
+                 param->rc.cuTree);
         break;
     case X265_RC_CRF:
-        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : CRF-%0.1f / %0.1f / %d\n", param->rc.rfConstant, 
-            param->rc.aqStrength, param->rc.cuTree);
+        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : CRF-%0.1f / %0.1f / %d\n", param->rc.rfConstant,
+                 param->rc.aqStrength, param->rc.cuTree);
         break;
     }
 
@@ -733,7 +733,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("qp")
     {
         p->rc.qp = atoi(value);
-        p->rc.rateControlMode = X265_RC_CQP;        
+        p->rc.rateControlMode = X265_RC_CQP;
     }
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, berror);
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, berror);

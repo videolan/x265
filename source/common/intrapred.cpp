@@ -85,7 +85,7 @@ void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, 
 {
     int k, l;
 
-    pixel dcval = dcPredValue(above+1, left+1, width);
+    pixel dcval = dcPredValue(above + 1, left + 1, width);
 
     for (k = 0; k < width; k++)
     {
@@ -97,7 +97,7 @@ void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, 
 
     if (bFilter)
     {
-        dcPredFilter(above+1, left+1, dst, dstStride, width);
+        dcPredFilter(above + 1, left + 1, dst, dstStride, width);
     }
 }
 

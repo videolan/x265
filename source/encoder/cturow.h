@@ -96,7 +96,7 @@ public:
     volatile bool       m_active;
 
     /* row is being processed by a worker thread.  This flag is only true when a
-     * worker thread is within the context of FrameEncoder::processRow(). This 
+     * worker thread is within the context of FrameEncoder::processRow(). This
      * flag is used to detect multiple possible wavefront problems. */
     volatile bool       m_busy;
 

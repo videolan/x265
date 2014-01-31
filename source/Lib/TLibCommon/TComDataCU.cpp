@@ -482,6 +482,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
     memcpy(m_width, rpcCU->getWidth() + m_absIdxInLCU, iSizeInUchar);
     memcpy(m_height, rpcCU->getHeight() + m_absIdxInLCU, iSizeInUchar);
 }
+
 // --------------------------------------------------------------------------------------------------------------------
 // Copy
 // --------------------------------------------------------------------------------------------------------------------

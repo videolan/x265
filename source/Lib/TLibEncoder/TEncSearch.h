@@ -204,11 +204,11 @@ protected:
 
     void xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
                                    TComYuv* predYuv, TShortYUV* resiYuv, uint32_t& outDist);
-    
+
     void residualTransformQuantIntra(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, bool bLumaOnly, TComYuv* fencYuv,
-                             TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv);
+                                     TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv);
     void residualQTIntrachroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
-                                   TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv);
+                               TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv);
 
     void xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
 
@@ -251,7 +251,7 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     void xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype);
-    
+
     void setWpScalingDistParam(TComDataCU* cu, int refIdx, int picList);
 };
 }

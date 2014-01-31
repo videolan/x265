@@ -571,13 +571,13 @@ typedef struct x265_param
          * bitrate is specified on the command line, ABR is implied. Default 0 */
         int       bitrate;
 
-        /* The degree of rate fluctuation that x265 tolerates. Rate tolerance is used 
+        /* The degree of rate fluctuation that x265 tolerates. Rate tolerance is used
          * alongwith overflow (difference between actual and target bitrate), to adjust
            qp. Default is 1.0 */
         double    rateTolerance;
-        
-        /* qComp sets the quantizer curve compression factor. It weights the frame 
-         * quantizer based on the complexity of residual (measured by lookahead). 
+
+        /* qComp sets the quantizer curve compression factor. It weights the frame
+         * quantizer based on the complexity of residual (measured by lookahead).
          * Default value is 0.6. Increasing it to 1 will effectively generate CQP */
         double    qCompress;
 
@@ -588,13 +588,13 @@ typedef struct x265_param
 
         /* Max QP difference between frames. Default: 4 */
         int       qpStep;
-        
-        /* Ratefactor constant: targets a certain constant "quality". 
-         * Acceptable values between 0 and 51. Default value: 28 */
-        double    rfConstant;                  
 
-        /* Enable adaptive quantization. This mode distributes available bits between all 
-         * macroblocks of a frame, assigning more bits to low complexity areas. Turning 
+        /* Ratefactor constant: targets a certain constant "quality".
+         * Acceptable values between 0 and 51. Default value: 28 */
+        double    rfConstant;
+
+        /* Enable adaptive quantization. This mode distributes available bits between all
+         * macroblocks of a frame, assigning more bits to low complexity areas. Turning
          * this ON will usually affect PSNR negatively, however SSIM and visual quality
          * generally improves. Default: OFF (0) */
         int       aqMode;
@@ -603,19 +603,19 @@ typedef struct x265_param
          * AQ is enabled. Default value: 1.0. Acceptable values between 0.0 and 3.0 */
         double    aqStrength;
 
-        /* Sets the maximum rate the VBV buffer should be assumed to refill at 
+        /* Sets the maximum rate the VBV buffer should be assumed to refill at
          * Default is zero */
         int       vbvMaxBitrate;
 
         /* Sets the size of the VBV buffer in kilobits. Default is zero */
         int       vbvBufferSize;
 
-        /* Sets how full the VBV buffer must be before playback starts. If it is less than 
-         * 1, then the initial fill is vbv-init * vbvBufferSize. Otherwise, it is 
+        /* Sets how full the VBV buffer must be before playback starts. If it is less than
+         * 1, then the initial fill is vbv-init * vbvBufferSize. Otherwise, it is
          * interpreted as the initial fill in kbits. Default is 0.9 */
         double    vbvBufferInit;
 
-        /* Enable CUTree ratecontrol. This keeps track of the CUs that propagate temporally 
+        /* Enable CUTree ratecontrol. This keeps track of the CUs that propagate temporally
          * across frames and assigns more bits to these CUs. Improves encode efficiency.
          * Default: OFF (0) */
         int       cuTree;

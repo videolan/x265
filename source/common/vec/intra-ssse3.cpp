@@ -660,7 +660,6 @@ predIntraAng4x4_func predIntraAng4[] =
     predIntraAng4_32
 };
 
-
 void intraPredAng4x4(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 {
     assert(dirMode > 1); //no planar and dc
@@ -3201,6 +3200,7 @@ void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives& p)
         p.intra_pred[BLOCK_16x16][i] = intraPredAng16x16;
         p.intra_pred[BLOCK_32x32][i] = intraPredAng32x32;
     }
+
 #endif
 }
 }

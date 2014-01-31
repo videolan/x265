@@ -8112,7 +8112,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef HALF
 #undef N
 }
-#endif
+
+#endif // if !defined(__clang__)
 #endif // if !HIGH_BIT_DEPTH
 }
 

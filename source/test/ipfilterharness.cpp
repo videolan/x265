@@ -67,7 +67,9 @@ IPFilterHarness::IPFilterHarness()
 
     /*[0] --- Random values  */
     for (size_t i = 0; i < ipf_t_size * sizeof(pixel); i++)
+    {
         pixel_test_buff[0][i] = rand() & PIXEL_MAX;
+    }
 
     /*[1] --- Minimum       */
     memset(pixel_test_buff[1], PIXEL_MIN, ipf_t_size * sizeof(pixel));
@@ -79,7 +81,6 @@ IPFilterHarness::IPFilterHarness()
     memset(IPF_vec_output_p, 0xCD, ipf_t_size);
     memset(IPF_C_output_s, 0xCD, ipf_t_size * sizeof(int16_t));
     memset(IPF_vec_output_s, 0xCD, ipf_t_size * sizeof(int16_t));
-
 
     for (int i = 0; i < ipf_t_size; i++)                         // Initialize input buffer
     {
@@ -102,6 +103,7 @@ IPFilterHarness::~IPFilterHarness()
     {
         X265_FREE(pixel_test_buff[i]);
     }
+
     X265_FREE(pixel_test_buff);
 }
 
@@ -306,9 +308,9 @@ bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t 
 
     for (int i = 0; i < ITERS; i++)
     {
-        int index = i % TEST_CASES ;
+        int index = i % TEST_CASES;
 
-        for(int coeffIdx = 0; coeffIdx < 4; coeffIdx++)
+        for (int coeffIdx = 0; coeffIdx < 4; coeffIdx++)
         {
             rand_srcStride = rand() % 100;             // Randomly generated srcStride
             rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride

@@ -772,7 +772,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sse_sp[i] = (pixelcmp_sp_t)p.sse_ss[i];
     }
 
-  for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
+    for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
     {
         p.luma_copy_ps[i] = (copy_ps_t)p.luma_copy_pp[i];
         p.luma_copy_sp[i] = (copy_sp_t)p.luma_copy_pp[i];
@@ -1026,7 +1026,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         HEVC_SATD(avx);
         SA8D_INTER_FROM_BLOCK(avx);
         ASSGN_SSE(avx);
-        
+
         ASSGN_SSE_SS(avx);
         SAD_X3(avx);
         SAD_X4(avx);

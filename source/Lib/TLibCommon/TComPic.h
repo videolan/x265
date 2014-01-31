@@ -80,11 +80,11 @@ public:
     volatile uint32_t     m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
     volatile uint32_t     m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
     void*                 m_userData;           // user provided pointer passed in with this picture
-    
+
     int64_t               m_pts;                // user provided presentation time stamp
     int64_t               m_reorderedPts;
     int64_t               m_dts;
-    
+
     Lowres                m_lowres;
 
     TComPic*              m_next;
