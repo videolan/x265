@@ -5,6 +5,10 @@ if(NOT CMAKE_BUILD_TYPE)
         "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel."
         FORCE)
 endif()
+message(STATUS "cmake version ${CMAKE_VERSION}")
+if(NOT CMAKE_VERSION VERSION_LESS "2.8.12.20131121")
+    cmake_policy(SET CMP0025 OLD) # report Apple's Clang as just Clang
+endif()
 
 project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
