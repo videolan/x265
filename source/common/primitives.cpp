@@ -96,7 +96,6 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     {
         cpuid = x265::cpu_detect();
     }
-#if X265_ARCH_X86
     if (param->logLevel >= X265_LOG_INFO)
     {
         char buf[1000];
@@ -116,12 +115,10 @@ void x265_setup_primitives(x265_param *param, int cpuid)
                 && (!i || x265::cpu_names[i].flags != x265::cpu_names[i - 1].flags))
                 p += sprintf(p, " %s", x265::cpu_names[i].name);
         }
-
         if (!cpuid)
             p += sprintf(p, " none!");
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
-#endif // if X265_ARCH_X86
 
     Setup_C_Primitives(primitives);
     Setup_Instrinsic_Primitives(primitives, cpuid);

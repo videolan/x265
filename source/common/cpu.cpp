@@ -41,7 +41,6 @@
 #endif
 
 namespace x265 {
-#if X265_ARCH_X86
 const cpu_name_t cpu_names[] =
 {
 #define MMX2 X265_CPU_MMX | X265_CPU_MMX2 | X265_CPU_CMOV
@@ -109,6 +108,7 @@ uint32_t cpu_detect(void)
     if (max_basic_cap == 0)
         return 0;
 
+#if X265_ARCH_X86
     x265_cpu_cpuid(1, &eax, &ebx, &ecx, &edx);
     if (edx & 0x00800000)
         cpu |= X265_CPU_MMX;
@@ -286,12 +286,8 @@ uint32_t cpu_detect(void)
 #if BROKEN_STACK_ALIGNMENT
     cpu |= X265_CPU_STACK_MOD4;
 #endif
+#endif // if X265_ARCH_X86
 
     return cpu;
 }
-
-#else /* !x86 */
-uint32_t cpu_detect(void) { return 0; }
-
-#endif // if X265_ARCH_X86
 }

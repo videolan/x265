@@ -21,13 +21,17 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386" OR
+   ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
     set(X86 1)
     add_definitions(-DX265_ARCH_X86=1)
     if("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
         set(X64 1)
         add_definitions(-DX86_64=1)
     endif()
+else()
+    message(STATUS "CMAKE_SYSTEM_PROCESSOR value `${CMAKE_SYSTEM_PROCESSOR}` is unknown")
+    message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
 endif()
 
 if(CMAKE_GENERATOR STREQUAL "Xcode")
