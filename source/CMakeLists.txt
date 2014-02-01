@@ -117,7 +117,7 @@ if (GCC)
 endif(GCC)
 
 find_package(Yasm)
-if(YASM_FOUND)
+if(YASM_FOUND AND X86)
     if (YASM_VERSION_STRING VERSION_LESS "1.2.0")
         message(STATUS "Yasm version ${YASM_VERSION_STRING} is too old. 1.2.0 or later required")
         option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
