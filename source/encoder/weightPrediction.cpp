@@ -26,6 +26,7 @@
 #include "mv.h"
 #include "slicetype.h"
 #include "weightPrediction.h"
+#include <cmath>
 
 using namespace x265;
 
