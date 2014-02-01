@@ -40,9 +40,29 @@
 #include <machine/cpu.h>
 #endif
 
+#if X265_ARCH_ARM
+#include <signal.h>
+#include <setjmp.h>
+static sigjmp_buf jmpbuf;
+static volatile sig_atomic_t canjump = 0;
+
+static void sigill_handler(int sig)
+{
+    if (!canjump)
+    {
+        signal(sig, SIG_DFL);
+        raise(sig);
+    }
+
+    canjump = 0;
+    siglongjmp(jmpbuf, 1);
+}
+#endif
+
 namespace x265 {
 const cpu_name_t cpu_names[] =
 {
+#if X265_ARCH_X86
 #define MMX2 X265_CPU_MMX | X265_CPU_MMX2 | X265_CPU_CMOV
     { "MMX2",        MMX2 },
     { "MMXEXT",      MMX2 },
@@ -76,8 +96,16 @@ const cpu_name_t cpu_names[] =
     { "SlowPalignr",     X265_CPU_SLOW_PALIGNR },
     { "SlowShuffle",     X265_CPU_SLOW_SHUFFLE },
     { "UnalignedStack",  X265_CPU_STACK_MOD4 },
+
+#elif X265_ARCH_ARM
+    {"ARMv6",           X265_CPU_ARMV6},
+    {"NEON",            X265_CPU_NEON},
+    {"FastNeonMRC",     X265_CPU_FAST_NEON_MRC},
+#endif
     { "", 0 },
 };
+
+#if X265_ARCH_X86
 
 extern "C" {
 /* cpu-a.asm */
@@ -93,10 +121,10 @@ void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx);
 uint32_t cpu_detect(void)
 {
     uint32_t cpu = 0;
+
     uint32_t eax, ebx, ecx, edx;
     uint32_t vendor[4] = { 0 };
     uint32_t max_extended_cap, max_basic_cap;
-    int cache;
 
 #if !X86_64
     if (!x265_cpu_cpuid_test())
@@ -108,7 +136,6 @@ uint32_t cpu_detect(void)
     if (max_basic_cap == 0)
         return 0;
 
-#if X265_ARCH_X86
     x265_cpu_cpuid(1, &eax, &ebx, &ecx, &edx);
     if (edx & 0x00800000)
         cpu |= X265_CPU_MMX;
@@ -240,7 +267,7 @@ uint32_t cpu_detect(void)
     {
         /* cacheline size is specified in 3 places, any of which may be missing */
         x265_cpu_cpuid(1, &eax, &ebx, &ecx, &edx);
-        cache = (ebx & 0xff00) >> 5; // cflush size
+        int cache = (ebx & 0xff00) >> 5; // cflush size
         if (!cache && max_extended_cap >= 0x80000006)
         {
             x265_cpu_cpuid(0x80000006, &eax, &ebx, &ecx, &edx);
@@ -286,8 +313,63 @@ uint32_t cpu_detect(void)
 #if BROKEN_STACK_ALIGNMENT
     cpu |= X265_CPU_STACK_MOD4;
 #endif
-#endif // if X265_ARCH_X86
 
     return cpu;
 }
+
+#elif X265_ARCH_ARM
+
+extern "C" {
+void x265_cpu_neon_test(void);
+int x265_cpu_fast_neon_mrc_test(void);
+}
+
+uint32_t x265_cpu_detect(void)
+{
+    int flags = 0;
+#if HAVE_ARMV6
+    flags |= X265_CPU_ARMV6;
+
+    // don't do this hack if compiled with -mfpu=neon
+#if !HAVE_NEON
+    static void (* oldsig)(int);
+    oldsig = signal(SIGILL, sigill_handler);
+    if (sigsetjmp(jmpbuf, 1))
+    {
+        signal(SIGILL, oldsig);
+        return flags;
+    }
+
+    canjump = 1;
+    x265_cpu_neon_test();
+    canjump = 0;
+    signal(SIGILL, oldsig);
+#endif
+
+    flags |= X265_CPU_NEON;
+
+    // fast neon -> arm (Cortex-A9) detection relies on user access to the
+    // cycle counter; this assumes ARMv7 performance counters.
+    // NEON requires at least ARMv7, ARMv8 may require changes here, but
+    // hopefully this hacky detection method will have been replaced by then.
+    // Note that there is potential for a race condition if another program or
+    // x264 instance disables or reinits the counters while x264 is using them,
+    // which may result in incorrect detection and the counters stuck enabled.
+    // right now Apple does not seem to support performance counters for this test
+#ifndef __MACH__
+    flags |= x265_cpu_fast_neon_mrc_test() ? X265_CPU_FAST_NEON_MRC : 0;
+#endif
+    // TODO: write dual issue test? currently it's A8 (dual issue) vs. A9 (fast mrc)
+#endif
+    return flags;
+}
+
+#else
+
+uint32_t x265_cpu_detect(void)
+{
+    return 0;
+}
+
+#endif
 }

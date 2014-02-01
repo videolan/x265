@@ -139,6 +139,12 @@ typedef enum
 #define X265_CPU_SLOW_PSHUFB     0x2000000  /* such as on the Intel Atom */
 #define X265_CPU_SLOW_PALIGNR    0x4000000  /* such as on the AMD Bobcat */
 
+/* ARM */
+#define X265_CPU_ARMV6           0x0000001
+#define X265_CPU_NEON            0x0000002  /* ARM NEON */
+#define X265_CPU_FAST_NEON_MRC   0x0000004  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
+
+
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
 
 #define X265_MAX_SUBPEL_LEVEL   7
