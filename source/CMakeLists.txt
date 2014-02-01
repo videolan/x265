@@ -21,6 +21,7 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
+# System architecture detection
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386" OR
    ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "amd64" OR
    ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64" OR
@@ -39,6 +40,14 @@ else()
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
 endif()
 
+if(UNIX)
+    SET(PLATFORM_LIBS pthread)
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        SET(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
+    endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+endif(UNIX)
+
+# Compiler detection
 if(CMAKE_GENERATOR STREQUAL "Xcode")
   set(XCODE 1)
 endif()
@@ -107,6 +116,18 @@ if (GCC)
     endif(X64 AND NOT WIN32)
 endif(GCC)
 
+find_package(Yasm)
+if(YASM_FOUND)
+    if (YASM_VERSION_STRING VERSION_LESS "1.2.0")
+        message(STATUS "Yasm version ${YASM_VERSION_STRING} is too old. 1.2.0 or later required")
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
+    else()
+        message(STATUS "Found Yasm ${YASM_VERSION_STRING} to build assembly primitives")
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
+    endif()
+endif(YASM_FOUND)
+
+# Build options
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
 if(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=1)
@@ -120,24 +141,6 @@ if(LOG_CU_STATISTICS)
 else(LOG_CU_STATISTICS)
     add_definitions(-DLOG_CU_STATISTICS=0)
 endif(LOG_CU_STATISTICS)
-
-find_package(Yasm)
-if(YASM_FOUND)
-    if (YASM_VERSION_STRING VERSION_LESS "1.2.0")
-        message(STATUS "Yasm version ${YASM_VERSION_STRING} is too old. 1.2.0 or later required")
-        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
-    else()
-        message(STATUS "Found Yasm ${YASM_VERSION_STRING} to build assembly primitives")
-        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
-    endif()
-endif(YASM_FOUND)
-
-if(UNIX)
-    SET(PLATFORM_LIBS pthread)
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        SET(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
-    endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(UNIX)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
