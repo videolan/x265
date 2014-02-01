@@ -126,7 +126,7 @@ if(YASM_FOUND AND X86)
         message(STATUS "Found Yasm ${YASM_VERSION_STRING} to build assembly primitives")
         option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
     endif()
-endif(YASM_FOUND)
+endif()
 
 # Build options
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
