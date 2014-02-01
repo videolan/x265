@@ -22,10 +22,10 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
 # System architecture detection
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386" OR
-   ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "amd64" OR
-   ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64" OR
-   ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
+string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
+if(${SYSPROC} STREQUAL "i386" OR ${SYSPROC} STREQUAL "amd64" OR
+   ${SYSPROC} STREQUAL "x86_64" OR ${SYSPROC} STREQUAL "x86")
+    message(STATUS "Detected x86 system processor")
     set(X86 1)
     add_definitions(-DX265_ARCH_X86=1)
     if("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
@@ -33,6 +33,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386" OR
         add_definitions(-DX86_64=1)
     endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
+    message(STATUS "Detected ARM system processor")
     set(ARM 1)
     add_definitions(-DX265_ARCH_ARM=1)
 else()
