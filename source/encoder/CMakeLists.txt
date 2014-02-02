@@ -1,13 +1,4 @@
 # vim: syntax=cmake
-if(GCC)
-    # encoder.cpp must include HM headers which are not careful about named parameters
-    set_source_files_properties(encoder.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
-    if(X86 AND NOT X64)
-        # force gcc to generate code for sync primitives
-        set_source_files_properties(framefilter.cpp PROPERTIES COMPILE_FLAGS -march=i686)
-    endif()
-endif(GCC)
-
 set(LIBENCODER_HDR
     ../Lib/TLibEncoder/NALwrite.h
     ../Lib/TLibEncoder/SEIwrite.h
@@ -34,6 +25,10 @@ set(LIBENCODER_SRC
 source_group(TLibEncoder FILES ${LIBENCODER_HDR} ${LIBENCODER_SRC})
 
 if(GCC)
+    # encoder.cpp must include HM headers which are not careful about named parameters
+    set_source_files_properties(encoder.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
+
+    # HM code is not careful about signed compares
     set_source_files_properties(compress.cpp ${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-sign-compare")
 endif(GCC)

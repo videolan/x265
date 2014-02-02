@@ -132,15 +132,10 @@ if(ENABLE_ASSEMBLY)
     source_group(Assembly FILES ${ASM_PRIMITIVES})
 endif(ENABLE_ASSEMBLY)
 
-if(GCC)
-    if(X86 AND NOT X64)
-        # force gcc to generate code for sync primitives
-        set_source_files_properties(threadpool.cpp reference.cpp wavefront.cpp common.cpp PROPERTIES COMPILE_FLAGS -march=i686)
-    endif()
-    if(GCC_HAS_NO_NARROWING)
-        set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
-    endif()
-endif(GCC)
+if(GCC AND GCC_HAS_NO_NARROWING)
+    set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
+endif()
+
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 add_library(common OBJECT
