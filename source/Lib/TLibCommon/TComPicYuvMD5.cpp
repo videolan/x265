@@ -106,6 +106,9 @@ void updateCRC(const Pel* plane, uint32_t& crcVal, uint32_t height, uint32_t wid
                 crcVal = (((crcVal << 1) + bitVal) & 0xffff) ^ (crcMsb * 0x1021);
             }
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
             // take CRC of second pictureData byte if bit depth is greater than 8-bits
             if (X265_DEPTH > 8)
             {
