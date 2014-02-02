@@ -35,13 +35,11 @@ endif(GCC)
 if(MSVC)
     # ignore these warnings from HM source
     # /wd4244 type conversion, possible loss of data
-    # /wd4512 assignment operator could not be generated
-    # /wd4127 conditional expression is constant
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
     # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
+        "/wd4244 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 
 check_include_files(inttypes.h HAVE_INT_TYPES_H)
