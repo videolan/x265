@@ -332,11 +332,11 @@ void FrameEncoder::setLambda(int qp, int row)
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
     // instead we weight the distortion of chroma.
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    int qpc = Clip3(0, 70, qp + chromaQPOffset);
+    int qpc = Clip3(0, 69, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
 
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, 70, qp + chromaQPOffset);
+    qpc = Clip3(0, 69, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
 
@@ -371,10 +371,10 @@ void FrameEncoder::compressFrame()
     // instead we weight the distortion of chroma.
     int qpc;
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    qpc = Clip3(0, 70, qp + chromaQPOffset);
+    qpc = Clip3(0, 69, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, 70, qp + chromaQPOffset);
+    qpc = Clip3(0, 69, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
 
