@@ -191,7 +191,7 @@ public:
 private:
 
     uint32_t                 m_lastQp;
-    ContextModel         m_contextModels[MAX_NUM_CTX_MOD];
+    ContextModel         m_contextModels[MAX_OFF_CTX_MOD];
 };
 }
 //! \}

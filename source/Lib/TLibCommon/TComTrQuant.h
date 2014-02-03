@@ -63,13 +63,13 @@ typedef struct
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
     int significantBits[NUM_SIG_FLAG_CTX][2];
-    int lastXBits[32];
-    int lastYBits[32];
+    int lastXBits[10];
+    int lastYBits[10];
     int greaterOneBits[NUM_ONE_FLAG_CTX][2];
     int levelAbsBits[NUM_ABS_FLAG_CTX][2];
 
     int blockCbpBits[NUM_QT_CBF_CTX][2];
-    int blockRootCbpBits[4][2];
+    int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
 } estBitsSbacStruct;
 
 // ====================================================================================================================

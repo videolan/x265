@@ -186,8 +186,6 @@ TEncSbac::TEncSbac()
     , m_binIf(NULL)
     , m_coeffCost(0)
 {
-    assert(MAX_OFF_CTX_MOD <= MAX_NUM_CTX_MOD);
-
     memset(m_contextModels, 0, sizeof(m_contextModels));
 }
 
@@ -2468,7 +2466,7 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 
     ctx = &m_contextModels[OFF_QT_ROOT_CBF_CTX];
 
-    for (uint32_t ctxInc = 0; ctxInc < 4; ctxInc++)
+    for (uint32_t ctxInc = 0; ctxInc < NUM_QT_ROOT_CBF_CTX; ctxInc++)
     {
         estBitsSbac->blockRootCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].m_state, 0);
         estBitsSbac->blockRootCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].m_state, 1);
