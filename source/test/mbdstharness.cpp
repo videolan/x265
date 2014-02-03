@@ -59,22 +59,22 @@ const DctConf_t IDctConf_infos[] =
 
 MBDstHarness::MBDstHarness()
 {
-    mbuf1 = (int16_t*)X265_MALLOC(int16_t, mb_t_size);
-    mbufdct = (int16_t*)X265_MALLOC(int16_t, mb_t_size);
-    mbufidct = (int*)X265_MALLOC(int,   mb_t_size);
+    mbuf1 = X265_MALLOC(int16_t, mb_t_size);
+    mbufdct = X265_MALLOC(int16_t, mb_t_size);
+    mbufidct = X265_MALLOC(int, mb_t_size);
 
-    mbuf2 = (int16_t*)X265_MALLOC(int16_t, mem_cmp_size);
-    mbuf3 = (int16_t*)X265_MALLOC(int16_t, mem_cmp_size);
-    mbuf4 = (int16_t*)X265_MALLOC(int16_t, mem_cmp_size);
+    mbuf2 = X265_MALLOC(int16_t, mem_cmp_size);
+    mbuf3 = X265_MALLOC(int16_t, mem_cmp_size);
+    mbuf4 = X265_MALLOC(int16_t, mem_cmp_size);
 
-    mintbuf1 = (int*)X265_MALLOC(int, mb_t_size);
-    mintbuf2 = (int*)X265_MALLOC(int, mb_t_size);
-    mintbuf3 = (int*)X265_MALLOC(int, mem_cmp_size);
-    mintbuf4 = (int*)X265_MALLOC(int, mem_cmp_size);
-    mintbuf5 = (int*)X265_MALLOC(int, mem_cmp_size);
-    mintbuf6 = (int*)X265_MALLOC(int, mem_cmp_size);
-    mintbuf7 = (int*)X265_MALLOC(int, mem_cmp_size);
-    mintbuf8 = (int*)X265_MALLOC(int, mem_cmp_size);
+    mintbuf1 = X265_MALLOC(int, mb_t_size);
+    mintbuf2 = X265_MALLOC(int, mb_t_size);
+    mintbuf3 = X265_MALLOC(int, mem_cmp_size);
+    mintbuf4 = X265_MALLOC(int, mem_cmp_size);
+    mintbuf5 = X265_MALLOC(int, mem_cmp_size);
+    mintbuf6 = X265_MALLOC(int, mem_cmp_size);
+    mintbuf7 = X265_MALLOC(int, mem_cmp_size);
+    mintbuf8 = X265_MALLOC(int, mem_cmp_size);
 
     if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct)
     {

@@ -53,7 +53,7 @@ using namespace x265;
 
 TComOutputBitstream::TComOutputBitstream()
 {
-    m_fifo = (uint8_t*)X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
+    m_fifo = X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
     clear();
 }
 
@@ -215,7 +215,7 @@ void TComOutputBitstream::push_back(uint8_t val)
 
         /**  FIFO size is Reached into MIN_FIFO_SIZE then Reallocate the FIFO and Copy the fifo to new memory
         location and continue to push encoded bit streams */
-        uint8_t *temp = (uint8_t*)X265_MALLOC(uint8_t, buffsize);
+        uint8_t *temp = X265_MALLOC(uint8_t, buffsize);
 
         /** check Allocated buffer before copy the encoder bitstream and push into FIFO */
         if (temp)

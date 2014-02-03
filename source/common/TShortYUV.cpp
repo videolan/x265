@@ -49,9 +49,9 @@ void TShortYUV::create(unsigned int width, unsigned int height, int csp)
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
 
-    m_bufY  = (int16_t*)X265_MALLOC(int16_t, width * height);
-    m_bufCb = (int16_t*)X265_MALLOC(int16_t, (width >> m_hChromaShift) * (height >> m_vChromaShift));
-    m_bufCr = (int16_t*)X265_MALLOC(int16_t, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_bufY  = X265_MALLOC(int16_t, width * height);
+    m_bufCb = X265_MALLOC(int16_t, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_bufCr = X265_MALLOC(int16_t, (width >> m_hChromaShift) * (height >> m_vChromaShift));
 
     // set width and height
     m_width  = width;

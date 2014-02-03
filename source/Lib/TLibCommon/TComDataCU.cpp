@@ -121,10 +121,10 @@ void TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     tmp = g_convertToBit[tmp] + 2;
     m_unitMask = ~((1 << tmp) - 1);
 
-    m_qp     = (char*)X265_MALLOC(char,   numPartition);
-    m_depth  = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_width  = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_height = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_qp     = X265_MALLOC(char,  numPartition);
+    m_depth  = X265_MALLOC(UChar, numPartition);
+    m_width  = X265_MALLOC(UChar, numPartition);
+    m_height = X265_MALLOC(UChar, numPartition);
 
     m_skipFlag = new bool[numPartition];
 
@@ -133,38 +133,38 @@ void TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     m_predModes = new char[numPartition];
     m_cuTransquantBypass = new bool[numPartition];
 
-    m_bMergeFlags     = (bool*)X265_MALLOC(bool,  numPartition);
-    m_mergeIndex      = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_lumaIntraDir    = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_chromaIntraDir  = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_interDir        = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_bMergeFlags     = X265_MALLOC(bool,  numPartition);
+    m_mergeIndex      = X265_MALLOC(UChar, numPartition);
+    m_lumaIntraDir    = X265_MALLOC(UChar, numPartition);
+    m_chromaIntraDir  = X265_MALLOC(UChar, numPartition);
+    m_interDir        = X265_MALLOC(UChar, numPartition);
 
-    m_trIdx            = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_transformSkip[0] = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_transformSkip[1] = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_transformSkip[2] = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_trIdx            = X265_MALLOC(UChar, numPartition);
+    m_transformSkip[0] = X265_MALLOC(UChar, numPartition);
+    m_transformSkip[1] = X265_MALLOC(UChar, numPartition);
+    m_transformSkip[2] = X265_MALLOC(UChar, numPartition);
 
-    m_cbf[0] = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_cbf[1] = (UChar*)X265_MALLOC(UChar, numPartition);
-    m_cbf[2] = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_cbf[0] = X265_MALLOC(UChar, numPartition);
+    m_cbf[1] = X265_MALLOC(UChar, numPartition);
+    m_cbf[2] = X265_MALLOC(UChar, numPartition);
 
     m_mvpIdx[0] = new char[numPartition];
     m_mvpIdx[1] = new char[numPartition];
 
-    m_trCoeffY  = (TCoeff*)X265_MALLOC(TCoeff, width * height);
-    m_trCoeffCb = (TCoeff*)X265_MALLOC(TCoeff, (width >> m_hChromaShift) * (height >> m_vChromaShift));
-    m_trCoeffCr = (TCoeff*)X265_MALLOC(TCoeff, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_trCoeffY  = X265_MALLOC(TCoeff, width * height);
+    m_trCoeffCb = X265_MALLOC(TCoeff, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_trCoeffCr = X265_MALLOC(TCoeff, (width >> m_hChromaShift) * (height >> m_vChromaShift));
 
-    m_iPCMFlags   = (bool*)X265_MALLOC(bool, numPartition);
-    m_iPCMSampleY  = (Pel*)X265_MALLOC(Pel, width * height);
-    m_iPCMSampleCb = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
-    m_iPCMSampleCr = (Pel*)X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_iPCMFlags   = X265_MALLOC(bool, numPartition);
+    m_iPCMSampleY  = X265_MALLOC(Pel, width * height);
+    m_iPCMSampleCb = X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    m_iPCMSampleCr = X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
 
     m_cuMvField[0].create(numPartition);
     m_cuMvField[1].create(numPartition);
 
     // create pattern memory
-    m_pattern = (TComPattern*)X265_MALLOC(TComPattern, 1);
+    m_pattern = X265_MALLOC(TComPattern, 1);
 }
 
 void TComDataCU::destroy()

@@ -68,7 +68,7 @@ struct EstimateRow
         me.setQP(X265_LOOKAHEAD_QP);
         me.setSearchMethod(X265_HEX_SEARCH);
         me.setSubpelRefine(1);
-        predictions = (pixel*)X265_MALLOC(pixel, 35 * 8 * 8);
+        predictions = X265_MALLOC(pixel, 35 * 8 * 8);
         merange = 16;
         lookAheadLambda = (int)x265_lambda2_non_I[X265_LOOKAHEAD_QP];
     }

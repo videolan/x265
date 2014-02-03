@@ -47,8 +47,8 @@ IntraPredHarness::IntraPredHarness()
 
     pixel_out_c   = (pixel*)malloc(out_size * sizeof(pixel));
     pixel_out_vec = (pixel*)malloc(out_size * sizeof(pixel));
-    pixel_out_33_c   = (pixel*)X265_MALLOC(pixel, out_size_33);
-    pixel_out_33_vec = (pixel*)X265_MALLOC(pixel, out_size_33);
+    pixel_out_33_c   = X265_MALLOC(pixel, out_size_33);
+    pixel_out_33_vec = X265_MALLOC(pixel, out_size_33);
 
     if (!pixel_out_c || !pixel_out_vec)
     {

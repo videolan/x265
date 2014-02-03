@@ -509,7 +509,7 @@ void FrameEncoder::compressFrame()
 
             m_seiWriter.writeSEImessage(nalu.m_bitstream, seiGradualDecodingRefreshInfo, slice->getSPS());
             writeRBSPTrailingBits(nalu.m_bitstream);
-            m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+            m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
             if (m_nalList[m_nalCount])
             {
                 m_nalList[m_nalCount]->init(nalu);
@@ -526,7 +526,7 @@ void FrameEncoder::compressFrame()
 
         m_seiWriter.writeSEImessage(nalu.m_bitstream, sei_recovery_point, slice->getSPS());
         writeRBSPTrailingBits(nalu.m_bitstream);
-        m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+        m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
         if (m_nalList[m_nalCount])
         {
             m_nalList[m_nalCount]->init(nalu);
@@ -671,7 +671,7 @@ void FrameEncoder::compressFrame()
     }
     entropyCoder->setBitstream(&nalu.m_bitstream);
     bitstreamRedirect->clear();
-    m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+    m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
     if (m_nalList[m_nalCount])
     {
         m_nalList[m_nalCount]->init(nalu);
@@ -709,7 +709,7 @@ void FrameEncoder::compressFrame()
         m_seiWriter.writeSEImessage(onalu.m_bitstream, m_seiReconPictureDigest, slice->getSPS());
         writeRBSPTrailingBits(onalu.m_bitstream);
 
-        m_nalList[m_nalCount] = (NALUnitEBSP*)X265_MALLOC(NALUnitEBSP, 1);
+        m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
         if (m_nalList[m_nalCount])
         {
             m_nalList[m_nalCount]->init(onalu);

@@ -74,7 +74,7 @@ TComTrQuant::TComTrQuant()
 
     // allocate temporary buffers
     // OPT_ME: I may reduce this to short and output matched, but I am not sure it is right.
-    m_tmpCoeff = (int32_t*)X265_MALLOC(int, MAX_CU_SIZE * MAX_CU_SIZE);
+    m_tmpCoeff = X265_MALLOC(int32_t, MAX_CU_SIZE * MAX_CU_SIZE);
 
     // allocate bit estimation class (for RDOQ)
     m_estBitsSbac = new estBitsSbacStruct;

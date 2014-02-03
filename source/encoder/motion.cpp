@@ -103,7 +103,7 @@ MotionEstimate::MotionEstimate()
     if (size_scale[0] == 0)
         init_scales();
 
-    fenc = (pixel*)X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
+    fenc = X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
 }
 
 MotionEstimate::~MotionEstimate()

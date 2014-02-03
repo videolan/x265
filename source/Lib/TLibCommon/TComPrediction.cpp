@@ -66,7 +66,7 @@ TComPrediction::TComPrediction()
 
 TComPrediction::~TComPrediction()
 {
-    delete[] m_predBuf;
+    X265_FREE(m_predBuf);
     X265_FREE(m_predAllAngsBuf);
 
     X265_FREE(refAbove);
@@ -91,15 +91,15 @@ void TComPrediction::initTempBuff(int csp)
 {
     if (m_predBuf == NULL)
     {
-        m_predBufHeight  = ((MAX_CU_SIZE + 2) << 4);
-        m_predBufStride = ((MAX_CU_SIZE  + 8) << 4);
-        m_predBuf = new Pel[m_predBufStride * m_predBufHeight];
-        m_predAllAngsBuf = (Pel*)X265_MALLOC(Pel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
+        m_predBufHeight = ((MAX_CU_SIZE + 2) << 4);
+        m_predBufStride = ((MAX_CU_SIZE + 8) << 4);
+        m_predBuf = X265_MALLOC(Pel, m_predBufStride * m_predBufHeight);
+        m_predAllAngsBuf = X265_MALLOC(Pel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
 
-        refAbove = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        refAboveFlt = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        refLeft = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        refLeftFlt = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        refAbove = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        refAboveFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        refLeft = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        refLeftFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
 
         m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
         m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
@@ -107,7 +107,7 @@ void TComPrediction::initTempBuff(int csp)
         m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
         m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
 
-        m_immedVals = (int16_t*)X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
+        m_immedVals = X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
     }
 
     if (m_lumaRecStride != (MAX_CU_SIZE >> 1) + 1)

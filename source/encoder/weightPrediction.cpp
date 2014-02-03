@@ -36,7 +36,7 @@ void WeightPrediction::mcChroma()
     int pixoff = 0;
     int cu = 0;
     int partEnum = CHROMA_8x8;
-    int16_t *immedVal = (int16_t*)X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
+    int16_t *immedVal = X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
     pixel *temp;
 
     for (int y = 0; y < m_frmHeight; y += m_blockSize, pixoff = y * m_refStride)
@@ -88,7 +88,7 @@ void WeightPrediction::mcChroma()
 uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
 {
     int stride = m_refStride;
-    pixel *temp = (pixel*)X265_MALLOC(pixel, m_frmWidth * m_frmHeight);
+    pixel *temp = X265_MALLOC(pixel, m_frmWidth * m_frmHeight);
 
     if (w)
     {

@@ -139,7 +139,7 @@
 #define NOT_VALID                  -1
 
 // for use in HM, replaces old xMalloc/xFree macros
-#define X265_MALLOC(type, count)    x265_malloc(sizeof(type) * (count))
+#define X265_MALLOC(type, count)    (type*)x265_malloc(sizeof(type) * (count))
 #define X265_FREE(ptr)              x265_free(ptr)
 
 // ====================================================================================================================

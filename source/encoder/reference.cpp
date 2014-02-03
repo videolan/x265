@@ -51,7 +51,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
         if (!m_weightBuffer)
         {
             size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
-            m_weightBuffer = (pixel*)X265_MALLOC(pixel, lumaStride * padheight);
+            m_weightBuffer = X265_MALLOC(pixel, lumaStride * padheight);
             if (!m_weightBuffer)
                 return -1;
         }

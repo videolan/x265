@@ -88,9 +88,9 @@ void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUHeight;
 
-    m_picBufY = (Pel*)X265_MALLOC(Pel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
-    m_picBufU = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
-    m_picBufV = (Pel*)X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    m_picBufY = X265_MALLOC(Pel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+    m_picBufU = X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    m_picBufV = X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
 
     m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;

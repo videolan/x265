@@ -40,14 +40,14 @@ IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
     pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    short_buff = (int16_t*)X265_MALLOC(int16_t, ipf_t_size);
+    short_buff = X265_MALLOC(int16_t, ipf_t_size);
     IPF_vec_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t)); // Output Buffer1
     IPF_C_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t));   // Output Buffer2
     IPF_vec_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel)); // Output Buffer1
     IPF_C_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel));   // Output Buffer2
 
-    /*Array of pixel buffers*/
-    pixel_test_buff = (pixel**)X265_MALLOC(pixel*, TEST_CASES);
+    /* Array of pixel buffers */
+    pixel_test_buff = X265_MALLOC(pixel*, TEST_CASES);
 
     if (!pixel_buff || !short_buff || !IPF_vec_output_s || !IPF_vec_output_p || !IPF_C_output_s || !IPF_C_output_p || !pixel_test_buff)
     {
@@ -57,7 +57,7 @@ IPFilterHarness::IPFilterHarness()
 
     for (int i = 0; i < TEST_CASES; i++)
     {
-        pixel_test_buff[i] = (pixel*)X265_MALLOC(pixel, ipf_t_size);
+        pixel_test_buff[i] = X265_MALLOC(pixel, ipf_t_size);
         if (!pixel_test_buff[i])
         {
             fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");

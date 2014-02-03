@@ -41,16 +41,16 @@ PixelHarness::PixelHarness()
     int bufsize = STRIDE * (maxheight + padrows) + INCR * ITERS;
 
     /* 64 pixels wide, 2k deep */
-    pbuf1 = (pixel*)X265_MALLOC(pixel, bufsize);
-    pbuf2 = (pixel*)X265_MALLOC(pixel, bufsize);
-    pbuf3 = (pixel*)X265_MALLOC(pixel, bufsize);
-    pbuf4 = (pixel*)X265_MALLOC(pixel, bufsize);
+    pbuf1 = X265_MALLOC(pixel, bufsize);
+    pbuf2 = X265_MALLOC(pixel, bufsize);
+    pbuf3 = X265_MALLOC(pixel, bufsize);
+    pbuf4 = X265_MALLOC(pixel, bufsize);
 
-    ibuf1 = (int*)X265_MALLOC(int, bufsize);
+    ibuf1 = X265_MALLOC(int, bufsize);
 
-    sbuf1 = (int16_t*)X265_MALLOC(int16_t, bufsize);
-    sbuf2 = (int16_t*)X265_MALLOC(int16_t, bufsize);
-    sbuf3 = (int16_t*)X265_MALLOC(int16_t, bufsize);
+    sbuf1 = X265_MALLOC(int16_t, bufsize);
+    sbuf2 = X265_MALLOC(int16_t, bufsize);
+    sbuf3 = X265_MALLOC(int16_t, bufsize);
 
     if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !sbuf3 || !ibuf1)
     {
