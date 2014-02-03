@@ -156,28 +156,27 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (14.f * bit_depth_correction)) / avg_adj;
         }
         else
-        {
             strength = cfg->param.rc.aqStrength * 1.0397f;
-            block_xy = 0;
-            for (block_y = 0; block_y < maxRow; block_y += 16)
+
+        block_xy = 0;
+        for (block_y = 0; block_y < maxRow; block_y += 16)
+        {
+            for (block_x = 0; block_x < maxCol; block_x += 16)
             {
-                for (block_x = 0; block_x < maxCol; block_x += 16)
+                if (cfg->param.rc.aqMode == X265_AQ_AUTO_VARIANCE)
                 {
-                    if (cfg->param.rc.aqMode == X265_AQ_AUTO_VARIANCE)
-                    {
-                        qp_adj = pic->m_lowres.qpOffset[block_xy];
-                        qp_adj = strength * (qp_adj - avg_adj);
-                    }
-                    else
-                    {
-                        uint32_t energy = acEnergyCu(pic, block_x, block_y);
-                        qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (14.427f + 2 * (X265_DEPTH - 8)));
-                    }
-                    pic->m_lowres.qpAqOffset[block_xy] = qp_adj;
-                    pic->m_lowres.qpOffset[block_xy] = qp_adj;
-                    pic->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
-                    block_xy++;
+                    qp_adj = pic->m_lowres.qpOffset[block_xy];
+                    qp_adj = strength * (qp_adj - avg_adj);
                 }
+                else
+                {
+                    uint32_t energy = acEnergyCu(pic, block_x, block_y);
+                    qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (14.427f + 2 * (X265_DEPTH - 8)));
+                }
+                pic->m_lowres.qpAqOffset[block_xy] = qp_adj;
+                pic->m_lowres.qpOffset[block_xy] = qp_adj;
+                pic->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
+                block_xy++;
             }
         }
     }
