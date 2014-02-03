@@ -166,6 +166,41 @@ int x265_pixel_ssd_64x32_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x48_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x64_sse4(pixel *, intptr_t, pixel *, intptr_t);
 
+#define ADDAVG(func)  \
+    void x265_ ## func ## _sse2 (int16_t*, int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
+    void x265_ ## func ## _sse4 (int16_t*, int16_t*, pixel*, intptr_t, intptr_t, intptr_t);
+ADDAVG(addAvg_2x4)
+ADDAVG(addAvg_2x8)
+ADDAVG(addAvg_4x2);
+ADDAVG(addAvg_4x4)
+ADDAVG(addAvg_4x8)
+ADDAVG(addAvg_4x16)
+ADDAVG(addAvg_6x8)
+ADDAVG(addAvg_8x2)
+ADDAVG(addAvg_8x4)
+ADDAVG(addAvg_8x6)
+ADDAVG(addAvg_8x8)
+ADDAVG(addAvg_8x16)
+ADDAVG(addAvg_8x32)
+ADDAVG(addAvg_12x16)
+ADDAVG(addAvg_16x4)
+ADDAVG(addAvg_16x8)
+ADDAVG(addAvg_16x12)
+ADDAVG(addAvg_16x16)
+ADDAVG(addAvg_16x32)
+ADDAVG(addAvg_16x64)
+ADDAVG(addAvg_24x32)
+ADDAVG(addAvg_32x8)
+ADDAVG(addAvg_32x16)
+ADDAVG(addAvg_32x24)
+ADDAVG(addAvg_32x32)
+ADDAVG(addAvg_32x64)
+ADDAVG(addAvg_48x64)
+ADDAVG(addAvg_64x16)
+ADDAVG(addAvg_64x32)
+ADDAVG(addAvg_64x48)
+ADDAVG(addAvg_64x64)
+
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD
 #undef DECL_X1

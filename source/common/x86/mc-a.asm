@@ -49,12 +49,1044 @@ cextern pw_4
 cextern pw_8
 cextern pw_32
 cextern pw_64
+cextern pw_128
+cextern pw_256
 cextern pw_512
 cextern pw_00ff
 cextern pw_pixel_max
 cextern sw_64
 cextern pd_32
 cextern deinterleave_shufd
+
+;====================================================================================================================
+;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
+;====================================================================================================================
+; r0 = pSrc0,    r1 = pSrc1
+; r2 = pDst,     r3 = iStride0
+; r4 = iStride1, r5 = iDstStride
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal addAvg_2x4, 6,6,8, src0, src1, dst, src0Stride, src1tride, dstStride
+
+    mova          m0,          [pw_256]
+    mova          m7,          [pw_128]
+    add           r3,          r3
+    add           r4,          r4
+
+    movd          m1,          [r0]
+    movd          m2,          [r0 + r3]
+    movd          m3,          [r1]
+    movd          m4,          [r1 + r4]
+
+    punpckldq     m1,          m2
+    punpckldq     m3,          m4
+
+    lea           r0,          [r0 + 2 * r3]
+    lea           r1,          [r1 + 2 * r4]
+
+    movd          m2,          [r0]
+    movd          m4,          [r0 + r3]
+    movd          m5,          [r1]
+    movd          m6,          [r1 + r4]
+
+    punpckldq     m2,          m4
+    punpckldq     m5,          m6
+    punpcklqdq    m1,          m2
+    punpcklqdq    m3,          m5
+
+    paddw         m1,          m3
+    pmulhrsw      m1,          m0
+    paddw         m1,          m7
+    packuswb      m1,          m1
+
+    pextrw        [r2],        m1, 0
+    pextrw        [r2 + r5],   m1, 1
+    lea           r2,          [r2 + 2 * r5]
+    pextrw        [r2],        m1, 2
+    pextrw        [r2 + r5],   m1, 3
+
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal addAvg_2x8, 6,6,8, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+
+    mova          m0,          [pw_256]
+    mova          m7,          [pw_128]
+    add           r3,          r3
+    add           r4,          r4
+
+    movd          m1,          [r0]
+    movd          m2,          [r0 + r3]
+    movd          m3,          [r1]
+    movd          m4,          [r1 + r4]
+
+    punpckldq     m1,          m2
+    punpckldq     m3,          m4
+
+    lea           r0,          [r0 + 2 * r3]
+    lea           r1,          [r1 + 2 * r4]
+
+    movd          m2,          [r0]
+    movd          m4,          [r0 + r3]
+    movd          m5,          [r1]
+    movd          m6,          [r1 + r4]
+
+    punpckldq     m2,          m4
+    punpckldq     m5,          m6
+    punpcklqdq    m1,          m2
+    punpcklqdq    m3,          m5
+
+    paddw         m1,          m3
+    pmulhrsw      m1,          m0
+    paddw         m1,          m7
+    packuswb      m1,          m1
+
+    pextrw        [r2],        m1, 0
+    pextrw        [r2 + r5],   m1, 1
+    lea           r2,          [r2 + 2 * r5]
+    pextrw        [r2],        m1, 2
+    pextrw        [r2 + r5],   m1, 3
+
+    lea           r2,          [r2 + 2 * r5]
+    lea           r0,          [r0 + 2 * r3]
+    lea           r1,          [r1 + 2 * r4]
+
+    movd          m1,          [r0]
+    movd          m2,          [r0 + r3]
+    movd          m3,          [r1]
+    movd          m4,          [r1 + r4]
+
+    punpckldq     m1,          m2
+    punpckldq     m3,          m4
+
+    lea           r0,          [r0 + 2 * r3]
+    lea           r1,          [r1 + 2 * r4]
+
+    movd          m2,          [r0]
+    movd          m4,          [r0 + r3]
+    movd          m5,          [r1]
+    movd          m6,          [r1 + r4]
+
+    punpckldq     m2,          m4
+    punpckldq     m5,          m6
+    punpcklqdq    m1,          m2
+    punpcklqdq    m3,          m5
+
+    paddw         m1,          m3
+    pmulhrsw      m1,          m0
+    paddw         m1,          m7
+    packuswb      m1,          m1
+
+    pextrw        [r2],        m1, 0
+    pextrw        [r2 + r5],   m1, 1
+    lea           r2,          [r2 + 2 * r5]
+    pextrw        [r2],        m1, 2
+    pextrw        [r2 + r5],   m1, 3
+
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal addAvg_4x2, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+
+    mova           m1,          [pw_256]
+    mova           m3,          [pw_128]
+    add            r3,          r3
+    add            r4,          r4
+
+    movh           m0,          [r0]
+    movhps         m0,          [r0 + r3]
+    movh           m2,          [r1]
+    movhps         m2,          [r1 + r4]
+
+    paddw          m0,          m2
+    pmulhrsw       m0,          m1
+    paddw          m0,          m3
+
+    packuswb       m0,          m0
+    movd           [r2],        m0
+    pshufd         m0,          m0, 1
+    movd           [r2 + r5],   m0
+
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W4_H4 1
+INIT_XMM sse2
+cglobal addAvg_4x%1, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova           m1,          [pw_256]
+    mova           m3,          [pw_128]
+    add            r3,          r3
+    add            r4,          r4
+
+    mov            r6d,         %1/4
+
+.loop
+    movh           m0,          [r0]
+    movhps         m0,          [r0 + r3]
+    movh           m2,          [r1]
+    movhps         m2,          [r1 + r4]
+
+    paddw          m0,          m2
+    pmulhrsw       m0,          m1
+    paddw          m0,          m3
+
+    packuswb       m0,          m0
+    movd           [r2],        m0
+    pshufd         m0,          m0, 1
+    movd           [r2 + r5],   m0
+
+    lea            r2,          [r2 + 2 * r5]
+    lea            r0,          [r0 + 2 * r3]
+    lea            r1,          [r1 + 2 * r4]
+
+    movh           m0,          [r0]
+    movhps         m0,          [r0 + r3]
+    movh           m2,          [r1]
+    movhps         m2,          [r1 + r4]
+
+    paddw          m0,          m2
+    pmulhrsw       m0,          m1
+    paddw          m0,          m3
+
+    packuswb       m0,          m0
+    movd           [r2],        m0
+    pshufd         m0,          m0, 1
+    movd           [r2 + r5],   m0
+
+    lea            r2,          [r2 + 2 * r5]
+    lea            r0,          [r0 + 2 * r3]
+    lea            r1,          [r1 + 2 * r4]
+
+    dec            r6d
+    jnz            .loop
+    RET
+%endmacro
+
+ADDAVG_W4_H4 4
+ADDAVG_W4_H4 8
+ADDAVG_W4_H4 16
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal addAvg_6x8, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+
+    mova        m4,             [pw_256]
+    mova        m5,             [pw_128]
+    add         r3,             r3
+    add         r4,             r4
+
+    movu        m0,             [r0]
+    movu        m2,             [r1]
+    paddw       m0,             m2
+    pmulhrsw    m0,             m4
+    paddw       m0,             m5
+    packuswb    m0,             m0
+    movd        [r2],           m0
+    pextrw      [r2 + 4],       m0, 2
+
+    movu        m1,             [r0 + r3]
+    movu        m3,             [r1 + r4]
+    paddw       m1,             m3
+    pmulhrsw    m1,             m4
+    paddw       m1,             m5
+    packuswb    m1,             m1
+    movd        [r2 + r5],      m1
+    pextrw      [r2 + r5 + 4],  m1, 2
+
+    lea         r2,             [r2 + 2 * r5]
+    lea         r0,             [r0 + 2 * r3]
+    lea         r1,             [r1 + 2 * r4]
+
+    movu        m0,             [r0]
+    movu        m2,             [r1]
+    paddw       m0,             m2
+    pmulhrsw    m0,             m4
+    paddw       m0,             m5
+    packuswb    m0,             m0
+    movd        [r2],           m0
+    pextrw      [r2 + 4],       m0, 2
+
+    movu        m1,             [r0 + r3]
+    movu        m3,             [r1 + r4]
+    paddw       m1,             m3
+    pmulhrsw    m1,             m4
+    paddw       m1,             m5
+    packuswb    m1,             m1
+    movd        [r2 + r5],      m1
+    pextrw      [r2 + r5 + 4],  m1, 2
+
+    lea         r2,             [r2 + 2 * r5]
+    lea         r0,             [r0 + 2 * r3]
+    lea         r1,             [r1 + 2 * r4]
+
+    movu        m0,             [r0]
+    movu        m2,             [r1]
+    paddw       m0,             m2
+    pmulhrsw    m0,             m4
+    paddw       m0,             m5
+    packuswb    m0,             m0
+    movd        [r2],           m0
+    pextrw      [r2 + 4],       m0, 2
+
+    movu        m1,             [r0 + r3]
+    movu        m3,             [r1 + r4]
+    paddw       m1,             m3
+    pmulhrsw    m1,             m4
+    paddw       m1,             m5
+    packuswb    m1,             m1
+    movd        [r2 + r5],      m1
+    pextrw      [r2 + r5 + 4],  m1, 2
+
+    lea         r2,             [r2 + 2 * r5]
+    lea         r0,             [r0 + 2 * r3]
+    lea         r1,             [r1 + 2 * r4]
+
+    movu        m0,             [r0]
+    movu        m2,             [r1]
+    paddw       m0,             m2
+    pmulhrsw    m0,             m4
+    paddw       m0,             m5
+    packuswb    m0,             m0
+    movd        [r2],           m0
+    pextrw      [r2 + 4],       m0, 2
+
+    movu        m1,             [r0 + r3]
+    movu        m3,             [r1 + r4]
+    paddw       m1,             m3
+    pmulhrsw    m1,             m4
+    paddw       m1,             m5
+    packuswb    m1,             m1
+    movd        [r2 + r5],      m1
+    pextrw      [r2 + r5 + 4],  m1, 2
+
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal addAvg_8x2, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova        m4,          [pw_256]
+    mova        m5,          [pw_128]
+    add         r3,          r3
+    add         r4,          r4
+
+    movu        m0,          [r0]
+    movu        m2,          [r1]
+    paddw       m0,          m2
+    pmulhrsw    m0,          m4
+    paddw       m0,          m5
+    packuswb    m0,          m0
+    movh        [r2],        m0
+
+    movu        m1,          [r0 + r3]
+    movu        m3,          [r1 + r4]
+    paddw       m1,          m3
+    pmulhrsw    m1,          m4
+    paddw       m1,          m5
+    packuswb    m1,          m1
+    movh        [r2 + r5],   m1
+
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal addAvg_8x6, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+
+    mova        m4,          [pw_256]
+    mova        m5,          [pw_128]
+    add         r3,          r3
+    add         r4,          r4
+
+    movu        m0,          [r0]
+    movu        m2,          [r1]
+    paddw       m0,          m2
+    pmulhrsw    m0,          m4
+    paddw       m0,          m5
+    packuswb    m0,          m0
+    movh        [r2],        m0
+
+    movu        m1,          [r0 + r3]
+    movu        m3,          [r1 + r4]
+    paddw       m1,          m3
+    pmulhrsw    m1,          m4
+    paddw       m1,          m5
+    packuswb    m1,          m1
+    movh        [r2 + r5],   m1
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        m0,          [r0]
+    movu        m2,          [r1]
+    paddw       m0,          m2
+    pmulhrsw    m0,          m4
+    paddw       m0,          m5
+    packuswb    m0,          m0
+    movh        [r2],        m0
+
+    movu        m1,          [r0 + r3]
+    movu        m3,          [r1 + r4]
+    paddw       m1,          m3
+    pmulhrsw    m1,          m4
+    paddw       m1,          m5
+    packuswb    m1,          m1
+    movh        [r2 + r5],   m1
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        m0,          [r0]
+    movu        m2,          [r1]
+    paddw       m0,          m2
+    pmulhrsw    m0,          m4
+    paddw       m0,          m5
+    packuswb    m0,          m0
+    movh        [r2],        m0
+
+    movu        m1,          [r0 + r3]
+    movu        m3,          [r1 + r4]
+    paddw       m1,          m3
+    pmulhrsw    m1,          m4
+    paddw       m1,          m5
+    packuswb    m1,          m1
+    movh        [r2 + r5],   m1
+
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W8_H4 1
+INIT_XMM sse2
+cglobal addAvg_8x%1, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+
+    mova        m4,          [pw_256]
+    mova        m5,          [pw_128]
+    add         r3,          r3
+    add         r4,          r4
+
+    mov         r6d,         %1/4
+
+.loop
+    movu        m0,          [r0]
+    movu        m2,          [r1]
+    paddw       m0,          m2
+    pmulhrsw    m0,          m4
+    paddw       m0,          m5
+
+    packuswb    m0,          m0
+    movh        [r2],        m0
+
+    movu        m1,          [r0 + r3]
+    movu        m3,          [r1 + r4]
+    paddw       m1,          m3
+    pmulhrsw    m1,          m4
+    paddw       m1,          m5
+
+    packuswb    m1,          m1
+    movh        [r2 + r5],   m1
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        m0,          [r0]
+    movu        m2,          [r1]
+    paddw       m0,          m2
+    pmulhrsw    m0,          m4
+    paddw       m0,          m5
+
+    packuswb    m0,          m0
+    movh        [r2],        m0
+
+    movu        m1,          [r0 + r3]
+    movu        m3,          [r1 + r4]
+    paddw       m1,          m3
+    pmulhrsw    m1,          m4
+    paddw       m1,          m5
+
+    packuswb    m1,          m1
+    movh        [r2 + r5],   m1
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+
+ADDAVG_W8_H4 4
+ADDAVG_W8_H4 8
+ADDAVG_W8_H4 16
+ADDAVG_W8_H4 32
+
+;-----------------------------------------------------------------------------
+
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W12_H4 1
+INIT_XMM sse2
+cglobal addAvg_12x%1, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova           m4,             [pw_256]
+    mova           m5,             [pw_128]
+    add            r3,             r3
+    add            r4,             r4
+
+    mov            r6d,            %1/4
+
+.loop
+    movu           m0,             [r0]
+    movu           m2,             [r1]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m4
+    paddw          m0,             m5
+    packuswb       m0,             m0
+    movh           [r2],           m0
+
+    movh           m0,             [r0 + 16]
+    movhps         m0,             [r0 + 16 + r3]
+    movh           m2,             [r1 + 16]
+    movhps         m2,             [r1 + 16 + r4]
+
+    paddw          m0,             m2
+    pmulhrsw       m0,             m4
+    paddw          m0,             m5
+
+    packuswb       m0,             m0
+    movd           [r2 + 8],       m0
+    pshufd         m0,             m0, 1
+    movd           [r2 + 8 + r5],  m0
+
+    movu           m1,             [r0 + r3]
+    movu           m3,             [r1 + r4]
+    paddw          m1,             m3
+    pmulhrsw       m1,             m4
+    paddw          m1,             m5
+
+    packuswb       m1,             m1
+    movh           [r2 + r5],      m1
+
+    lea            r2,             [r2 + 2 * r5]
+    lea            r0,             [r0 + 2 * r3]
+    lea            r1,             [r1 + 2 * r4]
+
+    movu           m0,             [r0]
+    movu           m2,             [r1]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m4
+    paddw          m0,             m5
+
+    packuswb       m0,             m0
+    movh           [r2],           m0
+
+    movh           m0,             [r0 + 16]
+    movhps         m0,             [r0 + 16 + r3]
+    movh           m2,             [r1 + 16]
+    movhps         m2,             [r1 + 16 + r4]
+
+    paddw          m0,             m2
+    pmulhrsw       m0,             m4
+    paddw          m0,             m5
+
+    packuswb       m0,             m0
+    movd           [r2 + 8],       m0
+    pshufd         m0,             m0,  1
+    movd           [r2 + 8 + r5],  m0
+
+    movu           m1,             [r0 + r3]
+    movu           m3,             [r1 + r4]
+    paddw          m1,             m3
+    pmulhrsw       m1,             m4
+    paddw          m1,             m5
+
+    packuswb       m1,             m1
+    movh           [r2 + r5],      m1
+
+    lea            r2,             [r2 + 2 * r5]
+    lea            r0,             [r0 + 2 * r3]
+    lea            r1,             [r1 + 2 * r4]
+
+    dec            r6d
+    jnz            .loop
+    RET
+%endmacro
+
+ADDAVG_W12_H4 16
+
+;-----------------------------------------------------------------------------
+
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W16_H4 1
+INIT_XMM sse2
+cglobal addAvg_16x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova        m4,              [pw_256]
+    mova        m5,              [pw_128]
+    add         r3,              r3
+    add         r4,              r4
+
+    mov         r6d,             %1/4
+
+.loop
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 16]
+    movu        m2,              [r1 + 16]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2],            m0
+
+    movu        m1,              [r0 + r3]
+    movu        m3,              [r1 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 16 + r3]
+    movu        m3,              [r1 + 16 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + r5],       m1
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 16]
+    movu        m2,              [r1 + 16]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2],            m0
+
+    movu        m1,              [r0 + r3]
+    movu        m3,              [r1 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 16 + r3]
+    movu        m3,              [r1 + 16 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + r5],       m1
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+
+ADDAVG_W16_H4 4
+ADDAVG_W16_H4 8
+ADDAVG_W16_H4 12
+ADDAVG_W16_H4 16
+ADDAVG_W16_H4 32
+ADDAVG_W16_H4 64
+
+;-----------------------------------------------------------------------------
+
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W24_H2 2
+INIT_XMM sse2
+cglobal addAvg_%1x%2, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova        m4,              [pw_256]
+    mova        m5,              [pw_128]
+    add         r3,              r3
+    add         r4,              r4
+
+    mov         r6d,             %2/2
+
+.loop
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 16]
+    movu        m2,              [r1 + 16]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + 32]
+    movu        m2,              [r1 + 32]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    packuswb    m0,              m0
+    movh        [r2 + 16],       m0
+
+    movu        m1,              [r0 + r3]
+    movu        m3,              [r1 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 16 + r3]
+    movu        m3,              [r1 + 16 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + r5],       m1
+
+    movu        m1,              [r0 + 32 + r3]
+    movu        m3,              [r1 + 32 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m1,              m1
+    movh        [r2 + 16 + r5],  m1
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+
+ADDAVG_W24_H2 24, 32
+
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W32_H2 1
+INIT_XMM sse2
+cglobal addAvg_32x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova        m4,              [pw_256]
+    mova        m5,              [pw_128]
+    add         r3,              r3
+    add         r4,              r4
+
+    mov         r6d,             %1/2
+
+.loop
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 16]
+    movu        m2,              [r1 + 16]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + 32]
+    movu        m2,              [r1 + 32]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 48]
+    movu        m2,              [r1 + 48]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2 + 16],       m0
+
+    movu        m1,              [r0 + r3]
+    movu        m3,              [r1 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 16 + r3]
+    movu        m3,              [r1 + 16 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + r5],       m1
+
+    movu        m1,              [r0 + 32 + r3]
+    movu        m3,              [r1 + 32 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 48 + r3]
+    movu        m3,              [r1 + 48 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + 16 + r5],  m1
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz        .loop
+    RET
+%endmacro
+
+ADDAVG_W32_H2 8
+ADDAVG_W32_H2 16
+ADDAVG_W32_H2 24
+ADDAVG_W32_H2 32
+ADDAVG_W32_H2 64
+
+;-----------------------------------------------------------------------------
+
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W48_H2 1
+INIT_XMM sse2
+cglobal addAvg_48x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+
+    mova        m4,              [pw_256]
+    mova        m5,              [pw_128]
+    add         r3,              r3
+    add         r4,              r4
+
+    mov         r6d,             %1/2
+
+.loop
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 16]
+    movu        m2,              [r1 + 16]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + 32]
+    movu        m2,              [r1 + 32]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 48]
+    movu        m2,              [r1 + 48]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2 + 16],       m0
+
+    movu        m0,              [r0 + 64]
+    movu        m2,              [r1 + 64]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 80]
+    movu        m2,              [r1 + 80]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2 + 32],       m0
+
+    movu        m1,              [r0 + r3]
+    movu        m3,              [r1 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 16 + r3]
+    movu        m3,              [r1 + 16 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + r5],       m1
+
+    movu        m1,              [r0 + 32 + r3]
+    movu        m3,              [r1 + 32 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 48 + r3]
+    movu        m3,              [r1 + 48 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + 16 + r5],  m1
+
+    movu        m1,              [r0 + 64 + r3]
+    movu        m3,              [r1 + 64 + r4]
+    paddw       m1,              m3
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    movu        m2,              [r0 + 80 + r3]
+    movu        m3,              [r1 + 80 + r4]
+    paddw       m2,              m3
+    pmulhrsw    m2,              m4
+    paddw       m2,              m5
+
+    packuswb    m1,              m2
+    movu        [r2 + 32 + r5],  m1
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+
+ADDAVG_W48_H2 64
+
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+%macro ADDAVG_W64_H1 1
+INIT_XMM sse2
+cglobal addAvg_64x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova        m4,              [pw_256]
+    mova        m5,              [pw_128]
+    add         r3,              r3
+    add         r4,              r4
+
+    mov         r6d,             %1
+
+.loop
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 16]
+    movu        m2,              [r1 + 16]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + 32]
+    movu        m2,              [r1 + 32]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 48]
+    movu        m2,              [r1 + 48]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2 + 16],       m0
+
+    movu        m0,              [r0 + 64]
+    movu        m2,              [r1 + 64]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 80]
+    movu        m2,              [r1 + 80]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2 + 32],       m0
+
+    movu        m0,              [r0 + 96]
+    movu        m2,              [r1 + 96]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m4
+    paddw       m0,              m5
+
+    movu        m1,              [r0 + 112]
+    movu        m2,              [r1 + 112]
+    paddw       m1,              m2
+    pmulhrsw    m1,              m4
+    paddw       m1,              m5
+
+    packuswb    m0,              m1
+    movu        [r2 + 48],       m0
+
+    add         r2,              r5
+    add         r0,              r3
+    add         r1,              r4
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+
+ADDAVG_W64_H1 16
+ADDAVG_W64_H1 32
+ADDAVG_W64_H1 48
+ADDAVG_W64_H1 64
+;-----------------------------------------------------------------------------
 
 ;=============================================================================
 ; implicit weighted biprediction

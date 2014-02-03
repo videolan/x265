@@ -563,6 +563,62 @@ extern "C" {
     SETUP_PIXEL_SSE_SP_DEF(64, 16, cpu); \
     SETUP_PIXEL_SSE_SP_DEF(16, 64, cpu);
 
+#define SETUP_LUMA_ADDAVG_FUNC_DEF(W, H, cpu) \
+    p.luma_addAvg[LUMA_## W ## x ## H] = x265_addAvg_## W ## x ## H ## cpu;
+
+#define LUMA_ADDAVG(cpu) \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(4,  4,  cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(4,  8,  cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(4,  16, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(8,  4,  cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(8,  8,  cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(8,  16, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(8,  32, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(12, 16, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(16, 4,  cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(16, 8,  cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(16, 12, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(16, 16, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(16, 32, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(24, 32, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(16, 64, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(32, 8,  cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(32, 16, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(32, 24, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(32, 32, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(32, 64, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(48, 64, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(64, 16, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(64, 32, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(64, 48, cpu); \
+    SETUP_LUMA_ADDAVG_FUNC_DEF(64, 64, cpu); \
+
+#define SETUP_CHROMA_ADDAVG_FUNC_DEF(W, H, cpu) \
+    p.chroma[X265_CSP_I420].addAvg[CHROMA_## W ## x ## H] = x265_addAvg_## W ## x ## H ## cpu;
+
+#define CHROMA_ADDAVG(cpu) \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  2,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  4,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  8,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  16, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  2,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  4,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  6,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  8,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  16, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  32, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(16, 4,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(16, 8,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(32, 8,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(32, 32, cpu); \
+
 #define SETUP_INTRA_ANG4(mode, fno, cpu) \
     p.intra_pred[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
 #define SETUP_INTRA_ANG8(mode, fno, cpu) \
@@ -890,6 +946,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.dct[DCT_4x4] = x265_dct4_sse2;
         p.idct[IDCT_4x4] = x265_idct4_sse2;
         p.idct[IDST_4x4] = x265_idst4_sse2;
+
+        LUMA_ADDAVG(_sse2);
+        CHROMA_ADDAVG(_sse2);
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
@@ -1019,6 +1078,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG8(33, 3, sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
+
+        p.chroma[X265_CSP_I420].addAvg[CHROMA_2x4]  = x265_addAvg_2x4_sse4;
+        p.chroma[X265_CSP_I420].addAvg[CHROMA_2x8]  = x265_addAvg_2x8_sse4;
+        p.chroma[X265_CSP_I420].addAvg[CHROMA_6x8]  = x265_addAvg_6x8_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

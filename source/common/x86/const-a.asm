@@ -33,6 +33,8 @@ const hsub_mul,    times 16 db 1, -1
 const pw_1,        times 16 dw 1
 const pw_16,       times 16 dw 16
 const pw_32,       times 16 dw 32
+const pw_128,      times 16 dw 128
+const pw_256,      times 16 dw 256
 const pw_512,      times 16 dw 512
 const pw_1024,     times 16 dw 1024
 const pw_4096,     times 16 dw 4096

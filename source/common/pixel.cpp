@@ -802,7 +802,7 @@ void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t
 }
 
 template<int bx, int by>
-void addAvg(pixel* dst, intptr_t dstStride, int16_t* src0, intptr_t src0Stride, int16_t* src1, intptr_t src1Stride)
+void addAvg(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
 {
     int shiftNum, offset;
 
