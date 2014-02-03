@@ -151,28 +151,31 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
 
 bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt)
 {
-    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+    int rand_srcStride, rand_dstStride;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
-        rand_coeffIdx = rand() % 8;                // Random coeffIdex in the filter
+        int index = i % TEST_CASES;
 
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100;              // Randomly generated dstStride
+        for (int coeffIdx = 0; coeffIdx < 8; coeffIdx++)
+        {
+            rand_srcStride = rand() % 100;              // Randomly generated srcStride
+            rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt(pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_p,
-            rand_dstStride,
-            rand_coeffIdx);
-        ref(pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_C_output_p,
-            rand_dstStride,
-            rand_coeffIdx);
+            opt(pixel_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_vec_output_p,
+                rand_dstStride,
+                coeffIdx);
+            ref(pixel_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_C_output_p,
+                rand_dstStride,
+                coeffIdx);
 
-        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
-            return false;
+            if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
+                return false;
+        }
     }
 
     return true;
@@ -180,29 +183,32 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
 
 bool IPFilterHarness::check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_ps_t opt)
 {
-    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+    int rand_srcStride, rand_dstStride;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
-        rand_coeffIdx = rand() % 8;                // Random coeffIdex in the filter
+        int index = i % TEST_CASES;
 
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100;              // Randomly generated dstStride
+        for (int coeffIdx = 0; coeffIdx < 8; coeffIdx++)
+        {
+            rand_srcStride = rand() % 100;              // Randomly generated srcStride
+            rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        ref(pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_C_output_s,
-            rand_dstStride,
-            rand_coeffIdx);
+            ref(pixel_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_C_output_s,
+                rand_dstStride,
+                coeffIdx);
 
-        opt(pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_s,
-            rand_dstStride,
-            rand_coeffIdx);
+            opt(pixel_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_vec_output_s,
+                rand_dstStride,
+                coeffIdx);
 
-        if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
-            return false;
+            if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
+                return false;
+        }
     }
 
     return true;
@@ -210,33 +216,37 @@ bool IPFilterHarness::check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_
 
 bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filter_hps_t opt)
 {
-    int rand_srcStride, rand_dstStride, rand_coeffIdx, rand_isRowExt;
+    int rand_srcStride, rand_dstStride;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
-        rand_coeffIdx = rand() % 8;                 // Random coeffIdex in the filter
-        rand_isRowExt = rand() % 2;                 // 0 : Interpolate W x H
-                                                    // 1 : Interpolate W x (H + 3)
+        int index = i % TEST_CASES;
 
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100;              // Randomly generated dstStride
+        for (int coeffIdx = 0; coeffIdx < 8; coeffIdx++)
+        {
+            for (int isRowExt = 0; isRowExt < 2; isRowExt++)  // 0 : Interpolate W x H, 1 : Interpolate W x (H + 7)
+            {
+                rand_srcStride = rand() % 100;                // Randomly generated srcStride
+                rand_dstStride = rand() % 100;                // Randomly generated dstStride
 
-        ref(pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_C_output_s,
-            rand_dstStride,
-            rand_coeffIdx,
-            rand_isRowExt);
+                ref(pixel_test_buff[index] + 3 * rand_srcStride,
+                    rand_srcStride,
+                    IPF_C_output_s,
+                    rand_dstStride,
+                    coeffIdx,
+                    isRowExt);
 
-        opt(pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_s,
-            rand_dstStride,
-            rand_coeffIdx,
-            rand_isRowExt);
+                opt(pixel_test_buff[index] + 3 * rand_srcStride,
+                    rand_srcStride,
+                    IPF_vec_output_s,
+                    rand_dstStride,
+                    coeffIdx,
+                    isRowExt);
 
-        if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
-            return false;
+                if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
+                    return false;
+            }
+        }
     }
 
     return true;
