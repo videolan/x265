@@ -60,6 +60,7 @@ struct RateControlEntry
     double qRceq;
     double frameSizePlanned;
     double bufferRate;
+    double movingAvgSum;
 };
 
 struct Predictor
@@ -83,7 +84,6 @@ struct RateControl
     double bitrate;
     double rateFactorConstant;
     bool   isAbr;
-
     double bufferSize;
     double bufferFillFinal;  /* real buffer as of the last finished frame */
     double bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
@@ -97,7 +97,8 @@ struct RateControl
     int bframes;
     int bframeBits;
     double leadingNoBSatd;
-
+    bool isAbrReset;
+    int lastAbrResetPoc;
     int64_t lastSatd;
     int    qpConstant[3];
     double cplxrSum;          /* sum of bits*qscale/rceq */
@@ -136,6 +137,7 @@ protected:
     double clipQscale(double q);
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
+    void checkAndResetABR(RateControlEntry* rce);
 };
 }
 

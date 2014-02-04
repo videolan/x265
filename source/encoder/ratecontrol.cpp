@@ -239,7 +239,8 @@ RateControl::RateControl(TEncCfg * _cfg)
     shortTermCplxCount = 0;
     framesDone = 0;
     lastNonBPictType = I_SLICE;
-
+    isAbrReset = false;
+    lastAbrResetPoc = -1;
     // vbv initialization
     cfg->param.rc.vbvBufferSize = Clip3(0, 2000000, cfg->param.rc.vbvBufferSize);
     cfg->param.rc.vbvMaxBitrate = Clip3(0, 2000000, cfg->param.rc.vbvMaxBitrate);
@@ -374,12 +375,12 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     if (isAbr) //ABR,CRF
     {
         lastSatd = l->getEstimatedPictureCost(pic);
+        rce->lastSatd = lastSatd;
         double q = qScale2qp(rateEstimateQscale(rce));
         qp = Clip3(MIN_QP, MAX_MAX_QP, (int)(q + 0.5));
         rce->qpaRc = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
         rce->qRceq = lastRceq;
-        rce->lastSatd = lastSatd;
         accumPQpUpdate();
     }
     else //CQP
@@ -424,6 +425,16 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         double q0 = prevRefSlice->m_avgQpRc;
         double q1 = nextRefSlice->m_avgQpRc;
 
+        // Skip taking a reference frame before the Scenecut if ABR has been reset.
+        if (lastAbrResetPoc >= 0 && !isVbv)
+        {
+            if (prevRefSlice->getSliceType() == P_SLICE && prevRefSlice->getPOC() < lastAbrResetPoc)
+            {
+                i0 = i1;
+                dt0 = dt1;
+                q0 = q1;
+            }
+        }
         if (prevRefSlice->getSliceType() == B_SLICE && prevRefSlice->isReferenced())
             q0 -= pbOffset / 2;
         if (nextRefSlice->getSliceType() == B_SLICE && nextRefSlice->isReferenced())
@@ -463,6 +474,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
          * tolerances, the bit distribution approaches that of 2pass. */
 
         double wantedBits, overflow = 1;
+        rce->movingAvgSum = shortTermCplxSum;
         shortTermCplxSum *= 0.5;
         shortTermCplxCount *= 0.5;
         shortTermCplxSum += lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
@@ -478,6 +490,10 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         }
         else
         {
+            if (!isVbv)
+            {
+                checkAndResetABR(rce);
+            }
             q = getQScale(rce, wantedBitsWindow / cplxrSum);
 
             /* ABR code can potentially be counterproductive in CBR, so just don't bother.
@@ -497,7 +513,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         }
 
         if (sliceType == I_SLICE && cfg->param.keyframeMax > 1
-            && lastNonBPictType != I_SLICE)
+            && lastNonBPictType != I_SLICE && !isAbrReset)
         {
             q = qp2qScale(accumPQp / accumPNorm);
             q /= fabs(cfg->param.rc.ipFactor);
@@ -538,12 +554,44 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
 
         lastQScaleFor[sliceType] = q;
 
-        if (curSlice->getPOC() == 0)
+        if (curSlice->getPOC() == 0 || (isAbrReset && sliceType == I_SLICE))
             lastQScaleFor[P_SLICE] = q * fabs(cfg->param.rc.ipFactor);
 
         rce->frameSizePlanned = predictSize(&pred[sliceType], q, (double)lastSatd);
 
         return q;
+    }
+}
+
+void RateControl::checkAndResetABR(RateControlEntry* rce)
+{
+    double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
+    // Check if current Slice is a scene cut that follows low detailed/blank frames
+    if (rce->lastSatd > 4 * rce->movingAvgSum)
+    {
+        if (!isAbrReset && rce->movingAvgSum > 0)
+        {
+            // Reset ABR if prev frames are blank to prevent further sudden overflows/ high bit rate spikes.
+            double underflow = 1.0 + (totalBits - wantedBitsWindow) / abrBuffer;
+            if (underflow < 1 && curSlice->m_avgQpRc == 0)
+            {
+                totalBits = 0;
+                framesDone = 0;
+                cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
+                wantedBitsWindow = bitrate * frameDuration;
+                accumPNorm = .01;
+                accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
+                shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
+                shortTermCplxCount = 1;
+                isAbrReset = true;
+                lastAbrResetPoc = rce->poc;
+            }
+        }
+       else
+       {
+           // Clear flag to reset ABR and continue as usual.
+           isAbrReset = false;
+       }
     }
 }
 
@@ -705,19 +753,27 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
 {
     if (isAbr)
     {
-        if (rce->sliceType != B_SLICE)
-            /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
-             * to improve short term compensation for next frame. */
-            cplxrSum += bits * qp2qScale(rce->qpaRc) / rce->qRceq;
-        else
+        if (!isVbv)
         {
-            /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
-             * Not perfectly accurate with B-refs, but good enough. */
-            cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(cfg->param.rc.pbFactor));
+            checkAndResetABR(rce);
         }
-        wantedBitsWindow += frameDuration * bitrate;
+
+        if (!isAbrReset)
+        {
+            if (rce->sliceType != B_SLICE)
+                /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
+                 * to improve short term compensation for next frame. */
+                cplxrSum += bits * qp2qScale(rce->qpaRc) / rce->qRceq;
+            else
+            {
+                /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
+                 * Not perfectly accurate with B-refs, but good enough. */
+                cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(cfg->param.rc.pbFactor));
+            }
+            wantedBitsWindow += frameDuration * bitrate;
+            totalBits += bits;
+        }
     }
-    totalBits += bits;
 
     if (isVbv)
     {
@@ -731,8 +787,7 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
                 bframeBits = 0;
             }
         }
+        updateVbv(bits, rce);
     }
-
-    updateVbv(bits, rce);
     return 0;
 }
