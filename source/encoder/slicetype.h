@@ -147,8 +147,8 @@ protected:
     void slicetypeAnalyse(Lowres **frames, bool bKeyframe);
 
     /* called by slicetypeAnalyse() to make slice decisions */
-    int64_t scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
-    int64_t scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
+    bool    scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
+    bool    scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
     void    slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
     int64_t slicetypePathCost(Lowres **frames, char *path, int64_t threshold);
 

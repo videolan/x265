@@ -547,7 +547,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     }
 }
 
-int64_t Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int num_frames, int maxSearch)
+bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int num_frames, int maxSearch)
 {
     /* Only do analysis during a normal scenecut check. */
     if (bRealScenecut && cfg->param.bframes)
@@ -566,7 +566,7 @@ int64_t Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut,
          * and not considered a scenecut. */
         for (int cp1 = p1; cp1 <= maxp1; cp1++)
         {
-            if (!scenecutInternal(frames, p0, cp1, 0))
+            if (!scenecutInternal(frames, p0, cp1, false))
                 /* Any frame in between p0 and cur_p1 cannot be a real scenecut. */
                 for (int i = cp1; i > p0; i--)
                 {
@@ -581,7 +581,7 @@ int64_t Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut,
          * If the video ends before F, no frame becomes a scenecut. */
         for (int cp0 = p0; cp0 <= maxp1; cp0++)
         {
-            if (origmaxp1 > maxSearch || (cp0 < maxp1 && scenecutInternal(frames, cp0, maxp1, 0)))
+            if (origmaxp1 > maxSearch || (cp0 < maxp1 && scenecutInternal(frames, cp0, maxp1, false)))
                 /* If cur_p0 is the p0 of a scenecut, it cannot be the p1 of a scenecut. */
                 frames[cp0]->bScenecut = false;
         }
@@ -589,11 +589,11 @@ int64_t Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut,
 
     /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts. */
     if (!frames[p1]->bScenecut)
-        return 0;
+        return false;
     return scenecutInternal(frames, p0, p1, bRealScenecut);
 }
 
-int64_t Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut)
+bool Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut)
 {
     Lowres *frame = frames[p1];
 
@@ -601,13 +601,12 @@ int64_t Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealS
 
     int64_t icost = frame->costEst[0][0];
     int64_t pcost = frame->costEst[p1 - p0][0];
-    float bias;
     int gopSize = frame->frameNum - lastKeyframe;
     float threshMax = (float)(cfg->param.scenecutThreshold / 100.0);
 
     /* magic numbers pulled out of thin air */
     float threshMin = (float)(threshMax * 0.25);
-    int64_t res;
+    float bias;
 
     if (cfg->param.keyframeMin == cfg->param.keyframeMax)
         threshMin = threshMax;
@@ -623,7 +622,7 @@ int64_t Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealS
             / (cfg->param.keyframeMax - cfg->param.keyframeMin);
     }
 
-    res = pcost >= (1.0 - bias) * icost;
+    bool res = pcost >= (1.0 - bias) * icost;
     if (res && bRealScenecut)
     {
         int imb = frame->intraMbs[p1 - p0];
