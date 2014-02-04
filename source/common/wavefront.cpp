@@ -38,15 +38,15 @@ bool WaveFront::init(int numRows)
     if (m_pool)
     {
         m_numWords = (numRows + 63) >> 6;
-        m_queuedBitmap = (uint64_t*)x265_malloc(sizeof(uint64_t) * m_numWords);
-        if (m_queuedBitmap)
-            memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
+        m_internalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
+        if (m_internalDependencyBitmap)
+            memset((void*)m_internalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
 
-        m_enableBitmap = (uint64_t*)x265_malloc(sizeof(uint64_t) * m_numWords);
-        if (m_enableBitmap)
-            memset((void*)m_enableBitmap, 0, sizeof(uint64_t) * m_numWords);
+        m_externalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
+        if (m_externalDependencyBitmap)
+            memset((void*)m_externalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
 
-        return m_queuedBitmap && m_enableBitmap;
+        return m_internalDependencyBitmap && m_externalDependencyBitmap;
     }
 
     return false;
@@ -54,13 +54,13 @@ bool WaveFront::init(int numRows)
 
 WaveFront::~WaveFront()
 {
-    x265_free((void*)m_queuedBitmap);
-    x265_free((void*)m_enableBitmap);
+    x265_free((void*)m_internalDependencyBitmap);
+    x265_free((void*)m_externalDependencyBitmap);
 }
 
 void WaveFront::clearEnabledRowMask()
 {
-    memset((void*)m_enableBitmap, 0, sizeof(uint64_t) * m_numWords);
+    memset((void*)m_externalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
 }
 
 void WaveFront::enqueueRow(int row)
@@ -69,7 +69,7 @@ void WaveFront::enqueueRow(int row)
     uint64_t bit = 1LL << (row & 63);
 
     assert(row < m_numRows);
-    ATOMIC_OR(&m_queuedBitmap[row >> 6], bit);
+    ATOMIC_OR(&m_internalDependencyBitmap[row >> 6], bit);
     m_pool->pokeIdleThread();
 }
 
@@ -79,12 +79,12 @@ void WaveFront::enableRow(int row)
     uint64_t bit = 1LL << (row & 63);
 
     assert(row < m_numRows);
-    ATOMIC_OR(&m_enableBitmap[row >> 6], bit);
+    ATOMIC_OR(&m_externalDependencyBitmap[row >> 6], bit);
 }
 
 void WaveFront::enableAllRows()
 {
-    memset((void*)m_enableBitmap, ~0, sizeof(uint64_t) * m_numWords);
+    memset((void*)m_externalDependencyBitmap, ~0, sizeof(uint64_t) * m_numWords);
 }
 
 bool WaveFront::checkHigherPriorityRow(int curRow)
@@ -95,12 +95,12 @@ bool WaveFront::checkHigherPriorityRow(int curRow)
     // Check full bitmap words before curRow
     for (int i = 0; i < fullwords; i++)
     {
-        if (m_queuedBitmap[i] & m_enableBitmap[i])
+        if (m_internalDependencyBitmap[i] & m_externalDependencyBitmap[i])
             return true;
     }
 
     // check the partially masked bitmap word of curRow
-    if (m_queuedBitmap[fullwords] & m_enableBitmap[fullwords] & mask)
+    if (m_internalDependencyBitmap[fullwords] & m_externalDependencyBitmap[fullwords] & mask)
         return true;
     return false;
 }
@@ -112,22 +112,22 @@ bool WaveFront::findJob()
     // thread safe
     for (int w = 0; w < m_numWords; w++)
     {
-        uint64_t oldval = m_queuedBitmap[w];
-        while (oldval & m_enableBitmap[w])
+        uint64_t oldval = m_internalDependencyBitmap[w];
+        while (oldval & m_externalDependencyBitmap[w])
         {
-            uint64_t mask = oldval & m_enableBitmap[w];
+            uint64_t mask = oldval & m_externalDependencyBitmap[w];
 
             CTZ64(id, mask);
 
             uint64_t newval = oldval & ~(1LL << id);
-            if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
+            if (ATOMIC_CAS(&m_internalDependencyBitmap[w], oldval, newval) == oldval)
             {
                 // we cleared the bit, process row
                 processRow(w * 64 + id);
                 return true;
             }
             // some other thread cleared the bit, try another bit
-            oldval = m_queuedBitmap[w];
+            oldval = m_internalDependencyBitmap[w];
         }
     }
 

@@ -38,9 +38,13 @@ class WaveFront : public JobProvider
 {
 private:
 
-    // bitmap of rows queued for processing, uses atomic intrinsics
-    uint64_t volatile *m_queuedBitmap;
-    uint64_t volatile *m_enableBitmap;
+    // bitmaps of rows queued for processing, uses atomic intrinsics
+
+    // Dependencies are categorized as internal and external. Internal dependencies
+    // are caused by neighbor block availability.  External dependencies are generally
+    // reference frame reconstructed pixels being available.
+    uint64_t volatile *m_internalDependencyBitmap;
+    uint64_t volatile *m_externalDependencyBitmap;
 
     // number of words in the bitmap
     int m_numWords;
@@ -49,21 +53,31 @@ private:
 
 public:
 
-    WaveFront(ThreadPool *pool) : JobProvider(pool), m_queuedBitmap(0), m_enableBitmap(0) {}
+    WaveFront(ThreadPool *pool)
+        : JobProvider(pool)
+        , m_internalDependencyBitmap(0)
+        , m_externalDependencyBitmap(0)
+    {}
 
     virtual ~WaveFront();
 
     // If returns false, the frame must be encoded in series.
     bool init(int numRows);
 
-    // Enqueue a row to be processed. A worker thread will later call ProcessRow(row)
+    // Enqueue a row to be processed (mark its internal dependencies as resolved).
+    // A worker thread will later call processRow(row).
     // This provider must be enqueued in the pool before enqueuing a row
     void enqueueRow(int row);
 
+    // Mark the row's external dependencies as being resolved
     void enableRow(int row);
 
+    // Mark all row external dependencies as being resolved. Some wavefront
+    // implementations (lookahead, for instance) have no recon pixel dependencies.
     void enableAllRows();
 
+    // Mark all rows as having external dependencies which must be
+    // resolved before each row may proceed.
     void clearEnabledRowMask();
 
     // WaveFront's implementation of JobProvider::findJob. Consults
@@ -71,13 +85,13 @@ public:
     // or returns false
     bool findJob();
 
-    // Returns true if a row above curRow is available for processing.  The processRow()
-    // method may call this function periodically and voluntarily exit
-    bool checkHigherPriorityRow(int curRow);
-
     // Start or resume encode processing of this row, must be implemented by
     // derived classes.
     virtual void processRow(int row) = 0;
+
+    // Returns true if a row above curRow is available for processing.  The processRow()
+    // method may call this function periodically and voluntarily exit
+    bool checkHigherPriorityRow(int curRow);
 };
 } // end namespace x265
 
