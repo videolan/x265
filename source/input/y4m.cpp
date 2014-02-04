@@ -309,6 +309,27 @@ void Y4MInput::skipFrames(uint32_t numFrames)
     }
 }
 
+void Y4MInput::startReader()
+{
+#if ENABLE_THREADING
+    if (threadActive)
+        start();
+#endif
+}
+
+void Y4MInput::threadMain()
+{
+    do
+    {
+        if (!populateFrameQueue())
+            break;
+    }
+    while (threadActive);
+
+    threadActive = false;
+    notEmpty.trigger();
+}
+
 bool Y4MInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
@@ -338,27 +359,6 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     PPAStopCpuEventFunc(read_yuv);
     return true;
-}
-
-void Y4MInput::startReader()
-{
-#if ENABLE_THREADING
-    if (threadActive)
-        start();
-#endif
-}
-
-void Y4MInput::threadMain()
-{
-    do
-    {
-        if (!populateFrameQueue())
-            break;
-    }
-    while (threadActive);
-
-    threadActive = false;
-    notEmpty.trigger();
 }
 
 bool Y4MInput::populateFrameQueue()
