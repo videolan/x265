@@ -59,7 +59,7 @@
 
 using namespace x265;
 
-static const char short_options[] = "o:p:f:F:r:i:b:s:t:q:m:hwV?";
+static const char short_options[] = "o:p:f:F:r:I:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
 #if HIGH_BIT_DEPTH
@@ -112,7 +112,10 @@ static const struct option long_options[] =
     { "constrained-intra",    no_argument, NULL, 0 },
     { "no-open-gop",          no_argument, NULL, 0 },
     { "open-gop",             no_argument, NULL, 0 },
-    { "keyint",         required_argument, NULL, 'i' },
+    { "keyint",         required_argument, NULL, 'I' },
+    { "min-keyint",     required_argument, NULL, 'i' },
+    { "scenecut",       required_argument, NULL, 0 },
+    { "no-scenecut",          no_argument, NULL, 0 },
     { "rc-lookahead",   required_argument, NULL, 0 },
     { "bframes",        required_argument, NULL, 'b' },
     { "bframe-bias",    required_argument, NULL, 0 },
@@ -307,7 +310,10 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
     H0("\nSlice decision options:\n");
     H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
-    H0("-i/--keyint                      Max intra period in frames. Default %d\n", param->keyframeMax);
+    H0("-I/--keyint                      Max intra period in frames. Default %d\n", param->keyframeMax);
+    H0("-i/--min-keyint                  Minimum GOP size [auto]\n");
+    H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
+    H0("   --scenecut                    How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
     H0("   --rc-lookahead                Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
     H0("   --bframes                     Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
     H0("   --bframe-bias                 Bias towards B frame decisions. Default %d\n", param->bFrameBias);
@@ -441,6 +447,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("input-depth") param->inputBitDepth = (uint32_t)atoi(optarg);
             OPT("recon-depth") reconFileBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
+            OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
             else
                 berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);

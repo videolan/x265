@@ -586,7 +586,7 @@ void x265_print_params(x265_param *param)
 
     x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
-    x265_log(param, X265_LOG_INFO, "Keyframe min / max                  : %d / %d\n", param->keyframeMin, param->keyframeMax);
+    x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : %d / %d / %d\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold);
     switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
@@ -696,7 +696,9 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = bvalue;
     OPT("constrained-intra") p->bEnableConstrainedIntra = bvalue;
     OPT("open-gop") p->bOpenGOP = bvalue;
+    OPT("scenecut") p->scenecutThreshold = atoi(value);
     OPT("keyint") p->keyframeMax = atoi(value);
+    OPT("min-keyint") p->keyframeMin = atoi(value);
     OPT("rc-lookahead") p->lookaheadDepth = atoi(value);
     OPT("bframes") p->bframes = atoi(value);
     OPT("bframe-bias") p->bFrameBias = atoi(value);
@@ -779,6 +781,8 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
     BOOL(p->bOpenGOP, "open-gop");
     s += sprintf(s, " keyint=%d", p->keyframeMax);
+    s += sprintf(s, " min-keyint=%d", p->keyframeMin);
+    s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " bframes=%d", p->bframes);
     s += sprintf(s, " bframe-bias=%d", p->bFrameBias);
