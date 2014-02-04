@@ -587,6 +587,16 @@ void x265_print_params(x265_param *param)
     x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
     x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : %d / %d / %d\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold);
+    if (param->cbQpOffset || param->crQpOffset)
+    {
+        x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
+    }
+    if (param->rdPenalty)
+    {
+        x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
+    }
+    x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
+    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / refs          : %d / %d / %d\n", param->bBPyramid, param->bEnableWeightedPred, param->maxNumReferences);
     switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
@@ -602,17 +612,6 @@ void x265_print_params(x265_param *param)
                  param->rc.aqStrength, param->rc.cuTree);
         break;
     }
-
-    if (param->cbQpOffset || param->crQpOffset)
-    {
-        x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
-    }
-    if (param->rdPenalty)
-    {
-        x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
-    }
-    x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
-    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / refs          : %d / %d / %d\n", param->bBPyramid, param->bEnableWeightedPred, param->maxNumReferences);
     x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
