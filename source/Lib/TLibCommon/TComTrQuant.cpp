@@ -261,6 +261,9 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int w
 
     assert(width == height);
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
     {
         acSum = xRateDistOptQuant(cu, coef, qCoef, width, height, ttype, absPartIdx, lastPos);
