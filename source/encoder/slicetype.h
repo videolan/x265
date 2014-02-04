@@ -113,7 +113,7 @@ struct CostEstimate : public WaveFront
 protected:
 
     void     weightsAnalyse(Lowres **frames, int b, int p0);
-    uint32_t weightCostLuma(Lowres **frames, int b, pixel *src, wpScalingParam *w);
+    uint32_t weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *w);
 };
 
 struct Lookahead

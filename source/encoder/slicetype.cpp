@@ -1153,9 +1153,11 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
     return score;
 }
 
-uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, pixel *src, wpScalingParam *wp)
+uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *wp)
 {
     Lowres *fenc = frames[b];
+    Lowres *ref  = frames[p0];
+    pixel *src = ref->fpelPlane;
     int stride = fenc->lumaStride;
 
     if (wp)
@@ -1166,7 +1168,7 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, pixel *src, wpScal
         int correction = IF_INTERNAL_PREC - X265_DEPTH;
 
         // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
-        primitives.weight_pp(src, weightedRef.fpelPlane, stride, stride, stride, fenc->lines,
+        primitives.weight_pp(ref->buffer[0], wbuffer[0], stride, stride, stride, paddedLines,
                              scale, (1 << (denom - 1 + correction)), denom + correction, offset);
         src = weightedRef.fpelPlane;
     }
@@ -1219,8 +1221,7 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
     mindenom = w.log2WeightDenom;
     minscale = w.inputWeight;
 
-    pixel *mcbuf = frames[p0]->fpelPlane;
-    origscore = minscore = weightCostLuma(frames, b, mcbuf, NULL);
+    origscore = minscore = weightCostLuma(frames, b, p0, NULL);
 
     if (!minscore)
         return;
@@ -1238,7 +1239,7 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
         curScale = Clip3(0, 127, curScale);
     }
     SET_WEIGHT(w, 1, curScale, mindenom, curOffset);
-    s = weightCostLuma(frames, b, mcbuf, &w);
+    s = weightCostLuma(frames, b, p0, &w);
     COPY4_IF_LT(minscore, s, minscale, curScale, minoff, curOffset, found, 1);
 
     /* Use a smaller denominator if possible */
