@@ -72,6 +72,8 @@
 #define MAX_NAL_UNITS 5
 #define MIN_FIFO_SIZE 1000
 
+#define X265_MALLOC(type, count)    (type*)x265_malloc(sizeof(type) * (count))
+#define X265_FREE(ptr)              x265_free(ptr)
 #define CHECKED_MALLOC(var, type, count) \
     { \
         var = (type*)x265_malloc(sizeof(type) * (count)); \
