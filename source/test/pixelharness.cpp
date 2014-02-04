@@ -971,7 +971,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         {
             if (!check_addAvg(ref.chroma[i].addAvg[part], opt.chroma[i].addAvg[part]))
             {
-                printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
+                printf("chroma_addAvg[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
             }
         }
@@ -1306,7 +1306,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         }
         if (opt.chroma[i].addAvg[part])
         {
-            HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            HEADER("[%s]  addAvg[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].addAvg[part], ref.chroma[i].addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
         }
     }
