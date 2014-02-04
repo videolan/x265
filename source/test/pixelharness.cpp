@@ -916,6 +916,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
+    if (opt.luma_addAvg[part])
+    {
+        if (!check_addAvg(ref.luma_addAvg[part], opt.luma_addAvg[part]))
+        {
+            printf("luma_addAvg[%s] failed\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
     for (int i = 0; i < X265_CSP_COUNT; i++)
     {
         if (opt.chroma[i].copy_pp[part])
@@ -965,15 +974,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
                 printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
             }
-        }
-    }
-
-    if (opt.luma_addAvg[part])
-    {
-        if (!check_addAvg(ref.luma_addAvg[part], opt.luma_addAvg[part]))
-        {
-            printf("luma_addAvg[%s] failed\n", lumaPartStr[part]);
-            return false;
         }
     }
 
@@ -1271,6 +1271,12 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 #endif
     }
 
+    if (opt.luma_addAvg[part])
+    {
+        HEADER("luma_addAvg[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.luma_addAvg[part], ref.luma_addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+    }
+
     for (int i = 0; i < X265_CSP_COUNT; i++)
     {
         if (opt.chroma[i].copy_pp[part])
@@ -1303,12 +1309,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].addAvg[part], ref.chroma[i].addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
         }
-    }
-
-    if (opt.luma_addAvg[part])
-    {
-        printf("luma_addAvg[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_addAvg[part], ref.luma_addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
     }
 
 #undef HEADER
