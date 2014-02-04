@@ -54,9 +54,12 @@ void Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
     propagateCost = (uint16_t*)x265_malloc(sizeof(uint16_t) * cuCount);
 
     /* allocate lowres buffers */
+    size_t planesize = lumaStride * (lines + 2 * orig->getLumaMarginY());
     for (int i = 0; i < 4; i++)
     {
-        buffer[i] = X265_MALLOC(pixel, lumaStride * (lines + 2 * orig->getLumaMarginY()));
+        buffer[i] = X265_MALLOC(pixel, planesize);
+        /* initialize the whole buffer to prevent valgrind warnings on right edge */
+        memset(buffer[i], 0, sizeof(pixel) * planesize);
     }
 
     int padoffset = lumaStride * orig->getLumaMarginY() + orig->getLumaMarginX();
