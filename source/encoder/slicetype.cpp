@@ -377,11 +377,10 @@ void Lookahead::slicetypeDecide()
 
 void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 {
-    int num_frames, origNumFrames, keyint_limit, framecnt;
+    int numFrames, origNumFrames, keyintLimit, framecnt;
     int maxSearch = X265_MIN(cfg->param.lookaheadDepth, X265_LOOKAHEAD_MAX);
     int cuCount = NUM_CUS;
-    int reset_start;
-    int64_t cost1p0, cost2p0, cost1b1, cost2p1;
+    int resetStart;
 
     if (!lastNonB)
         return;
@@ -403,19 +402,19 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
     frames[framecnt + 1] = NULL;
 
-    keyint_limit = cfg->param.keyframeMax - frames[0]->frameNum + lastKeyframe - 1;
-    origNumFrames = num_frames = X265_MIN(framecnt, keyint_limit);
+    keyintLimit = cfg->param.keyframeMax - frames[0]->frameNum + lastKeyframe - 1;
+    origNumFrames = numFrames = X265_MIN(framecnt, keyintLimit);
 
-    if (cfg->param.bOpenGOP && num_frames < framecnt)
-        num_frames++;
-    else if (num_frames == 0)
+    if (cfg->param.bOpenGOP && numFrames < framecnt)
+        numFrames++;
+    else if (numFrames == 0)
     {
         frames[1]->sliceType = X265_TYPE_I;
         return;
     }
 
-    int num_bframes = 0;
-    int num_analysed_frames = num_frames;
+    int numBFrames = 0;
+    int numAnalyzed = numFrames;
     if (cfg->param.scenecutThreshold && scenecut(frames, 0, 1, 1, origNumFrames, maxSearch))
     {
         frames[1]->sliceType = X265_TYPE_I;
@@ -426,30 +425,32 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     {
         if (cfg->param.bFrameAdaptive == X265_B_ADAPT_TRELLIS)
         {
-            if (num_frames > 1)
+            if (numFrames > 1)
             {
                 char best_paths[X265_BFRAME_MAX + 1][X265_LOOKAHEAD_MAX + 1] = { "", "P" };
-                int best_path_index = num_frames % (X265_BFRAME_MAX + 1);
+                int best_path_index = numFrames % (X265_BFRAME_MAX + 1);
 
                 /* Perform the frametype analysis. */
-                for (int j = 2; j <= num_frames; j++)
+                for (int j = 2; j <= numFrames; j++)
                 {
                     slicetypePath(frames, j, best_paths);
                 }
 
-                num_bframes = (int)strspn(best_paths[best_path_index], "B");
+                numBFrames = (int)strspn(best_paths[best_path_index], "B");
 
                 /* Load the results of the analysis into the frame types. */
-                for (int j = 1; j < num_frames; j++)
+                for (int j = 1; j < numFrames; j++)
                 {
                     frames[j]->sliceType = best_paths[best_path_index][j - 1] == 'B' ? X265_TYPE_B : X265_TYPE_P;
                 }
             }
-            frames[num_frames]->sliceType = X265_TYPE_P;
+            frames[numFrames]->sliceType = X265_TYPE_P;
         }
         else if (cfg->param.bFrameAdaptive == X265_B_ADAPT_FAST)
         {
-            for (int i = 0; i <= num_frames - 2; )
+            int64_t cost1p0, cost2p0, cost1b1, cost2p1;
+
+            for (int i = 0; i <= numFrames - 2; )
             {
                 cost2p1 = est.estimateFrameCost(frames, i + 0, i + 2, i + 2, 1);
                 if (frames[i + 2]->intraMbs[2] > cuCount / 2)
@@ -477,7 +478,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                 frames[i + 1]->sliceType = X265_TYPE_B;
 
                 int j;
-                for (j = i + 2; j <= X265_MIN(i + cfg->param.bframes, num_frames - 1); j++)
+                for (j = i + 2; j <= X265_MIN(i + cfg->param.bframes, numFrames - 1); j++)
                 {
                     int64_t pthresh = X265_MAX(INTER_THRESH - P_SENS_BIAS * (j - i - 1), INTER_THRESH / 10);
                     int64_t pcost = est.estimateFrameCost(frames, i + 0, j + 1, j + 1, 1);
@@ -489,65 +490,65 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                 frames[j]->sliceType = X265_TYPE_P;
                 i = j;
             }
-            frames[num_frames]->sliceType = X265_TYPE_P;
-            num_bframes = 0;
-            while (num_bframes < num_frames && frames[num_bframes + 1]->sliceType == X265_TYPE_B)
+            frames[numFrames]->sliceType = X265_TYPE_P;
+            numBFrames = 0;
+            while (numBFrames < numFrames && frames[numBFrames + 1]->sliceType == X265_TYPE_B)
             {
-                num_bframes++;
+                numBFrames++;
             }
         }
         else
         {
-            num_bframes = X265_MIN(num_frames - 1, cfg->param.bframes);
-            for (int j = 1; j < num_frames; j++)
+            numBFrames = X265_MIN(numFrames - 1, cfg->param.bframes);
+            for (int j = 1; j < numFrames; j++)
             {
-                frames[j]->sliceType = (j % (num_bframes + 1)) ? X265_TYPE_B : X265_TYPE_P;
+                frames[j]->sliceType = (j % (numBFrames + 1)) ? X265_TYPE_B : X265_TYPE_P;
             }
 
-            frames[num_frames]->sliceType = X265_TYPE_P;
+            frames[numFrames]->sliceType = X265_TYPE_P;
         }
         /* Check scenecut on the first minigop. */
-        for (int j = 1; j < num_bframes + 1; j++)
+        for (int j = 1; j < numBFrames + 1; j++)
         {
             if (cfg->param.scenecutThreshold && scenecut(frames, j, j + 1, 0, origNumFrames, maxSearch))
             {
                 frames[j]->sliceType = X265_TYPE_P;
-                num_analysed_frames = j;
+                numAnalyzed = j;
                 break;
             }
         }
 
-        reset_start = bKeyframe ? 1 : X265_MIN(num_bframes + 2, num_analysed_frames + 1);
+        resetStart = bKeyframe ? 1 : X265_MIN(numBFrames + 2, numAnalyzed + 1);
     }
     else
     {
-        for (int j = 1; j <= num_frames; j++)
+        for (int j = 1; j <= numFrames; j++)
         {
             frames[j]->sliceType = X265_TYPE_P;
         }
 
-        reset_start = bKeyframe ? 1 : 2;
-        num_bframes = 0;
+        resetStart = bKeyframe ? 1 : 2;
+        numBFrames = 0;
     }
 
     if (cfg->param.rc.cuTree)
-        cuTree(frames, X265_MIN(num_frames, cfg->param.keyframeMax), bKeyframe);
+        cuTree(frames, X265_MIN(numFrames, cfg->param.keyframeMax), bKeyframe);
 
     // if (!cfg->param.bIntraRefresh)
-    for (int j = keyint_limit + 1; j <= num_frames; j += cfg->param.keyframeMax)
+    for (int j = keyintLimit + 1; j <= numFrames; j += cfg->param.keyframeMax)
     {
         frames[j]->sliceType = X265_TYPE_I;
-        reset_start = X265_MIN(reset_start, j + 1);
+        resetStart = X265_MIN(resetStart, j + 1);
     }
 
     /* Restore frametypes for all frames that haven't actually been decided yet. */
-    for (int j = reset_start; j <= num_frames; j++)
+    for (int j = resetStart; j <= numFrames; j++)
     {
         frames[j]->sliceType = X265_TYPE_AUTO;
     }
 }
 
-bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int num_frames, int maxSearch)
+bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch)
 {
     /* Only do analysis during a normal scenecut check. */
     if (bRealScenecut && cfg->param.bframes)
@@ -559,7 +560,7 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
             origmaxp1 += cfg->param.bframes;
         else
             origmaxp1++;
-        int maxp1 = X265_MIN(origmaxp1, num_frames);
+        int maxp1 = X265_MIN(origmaxp1, numFrames);
 
         /* Where A and B are scenes: AAAAAABBBAAAAAA
          * If BBB is shorter than (maxp1-p0), it is detected as a flash
@@ -830,7 +831,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
 
     memset(scratch, 0, widthInCU * sizeof(int));
 
-    uint16_t *propagate_cost = frames[b]->propagateCost;
+    uint16_t *propagateCost = frames[b]->propagateCost;
 
     x265_emms();
     double fpsFactor = CLIP_DURATION(1.0 / cfg->param.frameRate) / CLIP_DURATION(averageDuration);
@@ -840,19 +841,19 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
         memset(frames[b]->propagateCost, 0, widthInCU * sizeof(uint16_t));
 
     uint16_t StrideInCU = (uint16_t)widthInCU;
-    for (uint16_t block_y = 0; block_y < heightInCU; block_y++)
+    for (uint16_t blocky = 0; blocky < heightInCU; blocky++)
     {
-        int cuIndex = block_y * StrideInCU;
+        int cuIndex = blocky * StrideInCU;
         /* TODO This function go into ASM */
-        estimateCUPropagateCost(scratch, propagate_cost,
+        estimateCUPropagateCost(scratch, propagateCost,
                                 frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
                                 frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
 
         if (referenced)
-            propagate_cost += widthInCU;
-        for (uint16_t block_x = 0; block_x < widthInCU; block_x++, cuIndex++)
+            propagateCost += widthInCU;
+        for (uint16_t blockx = 0; blockx < widthInCU; blockx++, cuIndex++)
         {
-            int propagate_amount = scratch[block_x];
+            int propagate_amount = scratch[blockx];
             /* Don't propagate for an intra block. */
             if (propagate_amount > 0)
             {
@@ -878,8 +879,8 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
 
                         uint16_t x = mvs[list][cuIndex].x;
                         uint16_t y = mvs[list][cuIndex].y;
-                        int cux = (x >> 5) + block_x;
-                        int cuy = (y >> 5) + block_y;
+                        int cux = (x >> 5) + blockx;
+                        int cuy = (y >> 5) + blocky;
                         int idx0 = cux + cuy * StrideInCU;
                         int idx1 = idx0 + 1;
                         int idx2 = idx0 + StrideInCU;
@@ -940,8 +941,8 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
         int intracost = (frame->intraCost[cuIndex] * frame->invQscaleFactor[cuIndex] + 128) >> 8;
         if (intracost)
         {
-            int propagate_cost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
-            double log2_ratio = X265_LOG2(intracost + propagate_cost) - X265_LOG2(intracost) + weightdelta;
+            int propagateCost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
+            double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
             frame->qpOffset[cuIndex] = frame->qpAqOffset[cuIndex] - strength * log2_ratio;
         }
     }
@@ -969,20 +970,20 @@ void Lookahead::estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t
 int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
 {
     int64_t score = 0;
-    int *row_satd = frames[b]->rowSatds[b - p0][p1 - b];
+    int *rowSatd = frames[b]->rowSatds[b - p0][p1 - b];
     double *qp_offset = IS_X265_TYPE_B(frames[0]->sliceType) ? frames[b]->qpAqOffset : frames[b]->qpOffset;
 
     x265_emms();
     for (int cuy = heightInCU - 1; cuy >= 0; cuy--)
     {
-        row_satd[cuy] = 0;
+        rowSatd[cuy] = 0;
         for (int cux = widthInCU - 1; cux >= 0; cux--)
         {
             int cuxy = cux + cuy * widthInCU;
             int cuCost = frames[b]->lowresCosts[b - p0][p1 - b][cuxy] & LOWRES_COST_MASK;
             double qp_adj = qp_offset[cuxy];
             cuCost = (cuCost * x265_exp2fix8(qp_adj) + 128) >> 8;
-            row_satd[cuy] += cuCost;
+            rowSatd[cuy] += cuCost;
             if ((cuy > 0 && cuy < heightInCU - 1 &&
                  cux > 0 && cux < widthInCU - 1) ||
                 widthInCU <= 2 || heightInCU <= 2)
