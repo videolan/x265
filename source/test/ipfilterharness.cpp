@@ -66,7 +66,7 @@ IPFilterHarness::IPFilterHarness()
     }
 
     /*[0] --- Random values  */
-    for (size_t i = 0; i < ipf_t_size * sizeof(pixel); i++)
+    for (int i = 0; i < ipf_t_size; i++)
     {
         pixel_test_buff[0][i] = rand() & PIXEL_MAX;
     }
