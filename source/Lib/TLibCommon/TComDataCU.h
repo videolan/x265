@@ -145,7 +145,6 @@ private:
 
     bool*         m_bMergeFlags;      ///< array of merge flags
     UChar*        m_mergeIndex;       ///< array of merge candidate indices
-    bool          m_bIsMergeAMP;
     UChar*        m_lumaIntraDir;     ///< array of intra directions (luma)
     UChar*        m_chromaIntraDir;   ///< array of intra directions (chroma)
     UChar*        m_interDir;         ///< array of inter directions
@@ -336,10 +335,6 @@ public:
     void          setMergeIndexSubParts(uint32_t mergeIndex, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
     template<typename T>
     void          setSubPart(T bParameter, T* pbBaseLCU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
-
-    void          setMergeAMP(bool b)       { m_bIsMergeAMP = b; }
-
-    bool          getMergeAMP()             { return m_bIsMergeAMP; }
 
     UChar*        getLumaIntraDir()         { return m_lumaIntraDir; }
 

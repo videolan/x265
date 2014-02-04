@@ -167,9 +167,6 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
     }
 
     m_bEncodeDQP = false;
-    m_LCUPredictionSAD = 0;
-    m_addSADDepth      = 0;
-    m_temporalSAD      = 0;
 }
 
 void TEncCu::destroy()
@@ -350,10 +347,6 @@ void TEncCu::compressCU(TComDataCU* cu)
     // initialize CU data
     m_bestCU[0]->initCU(cu->getPic(), cu->getAddr());
     m_tempCU[0]->initCU(cu->getPic(), cu->getAddr());
-
-    m_addSADDepth      = 0;
-    m_LCUPredictionSAD = 0;
-    m_temporalSAD      = 0;
 
     // analysis of CU
 #if LOG_CU_STATISTICS
@@ -537,7 +530,6 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 {
     //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
 
-    m_abortFlag = false;
     TComPic* pic = outBestCU->getPic();
 
     // get Original YUV data from picture
@@ -579,12 +571,6 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 
         bTrySplitDQP = bTrySplit;
 
-        if (depth <= m_addSADDepth)
-        {
-            m_LCUPredictionSAD += m_temporalSAD;
-            m_addSADDepth = depth;
-        }
-
         xCheckRDCostIntra(outBestCU, outTempCU, SIZE_2Nx2N);
         outTempCU->initEstData(depth, qp);
 
@@ -610,7 +596,6 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     else if (!(bSliceEnd && bInsidePicture))
     {
         bBoundary = true;
-        m_addSADDepth++;
     }
 
     outTempCU->initEstData(depth, qp);
@@ -708,8 +693,6 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
 
     TComPic* pic = outBestCU->getPic();
 
-    m_abortFlag = false;
-
     // get Original YUV data from picture
     m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
 
@@ -777,12 +760,6 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
         }
 
         bTrySplitDQP = bTrySplit;
-
-        if (depth <= m_addSADDepth)
-        {
-            m_LCUPredictionSAD += m_temporalSAD;
-            m_addSADDepth = depth;
-        }
 
         if (!earlyDetectionSkipMode)
         {
@@ -961,7 +938,6 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     else if (!(bSliceEnd && bInsidePicture))
     {
         bBoundary = true;
-        m_addSADDepth++;
     }
 
     // copy original YUV samples to PCM buffer
@@ -1396,7 +1372,6 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
 
-    outTempCU->setMergeAMP(true);
     m_tmpRecoYuv[depth]->clear();
     m_tmpResiYuv[depth]->clear();
     m_search->predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG);

@@ -199,8 +199,6 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
 
-    outTempCU->setMergeAMP(true);
-
     //do motion compensation only for Luma since luma cost alone is calculated
     outTempCU->m_totalBits = 0;
     m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
@@ -327,8 +325,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
 void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, uint32_t PartitionIndex, UChar minDepth)
 {
-    m_abortFlag = false;
-
     TComPic* pic = outTempCU->getPic();
 
     // get Original YUV data from picture

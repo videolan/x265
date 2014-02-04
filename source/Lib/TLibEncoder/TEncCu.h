@@ -122,13 +122,9 @@ private:
     TEncSbac***  m_rdSbacCoders;
     TEncSbac*    m_rdGoOnSbacCoder;
 
-    uint32_t     m_LCUPredictionSAD;
-    int          m_addSADDepth;
-    int          m_temporalSAD;
     UChar        m_totalDepth;
 
     bool         m_bEncodeDQP;
-    bool         m_abortFlag; // aborts recursion when the child CU costs more than parent CU
 
 public:
 
