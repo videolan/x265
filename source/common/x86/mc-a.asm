@@ -218,7 +218,7 @@ cglobal addAvg_4x2, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W4_H4 1
 INIT_XMM sse2
-cglobal addAvg_4x%1, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+cglobal addAvg_4x%1, 6,7,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova           m1,          [pw_256]
     mova           m3,          [pw_128]
     add            r3,          r3
@@ -467,7 +467,7 @@ cglobal addAvg_8x6, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W8_H4 1
 INIT_XMM sse2
-cglobal addAvg_8x%1, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+cglobal addAvg_8x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
 
     mova        m4,          [pw_256]
     mova        m5,          [pw_128]
@@ -537,7 +537,7 @@ ADDAVG_W8_H4 32
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W12_H4 1
 INIT_XMM sse2
-cglobal addAvg_12x%1, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+cglobal addAvg_12x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova           m4,             [pw_256]
     mova           m5,             [pw_128]
     add            r3,             r3
