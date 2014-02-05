@@ -137,7 +137,16 @@ if(YASM_FOUND AND X86)
 endif()
 
 # Build options
-option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
+
+if(X64)
+    # NOTE: We only officially support 16bit-per-pixel compiles of x265
+    # on 64bit architectures. 16bpp plus large resolution plus slow
+    # preset plus 32bit address space usually means malloc failure.  You
+    # can disable this if(X64) check if you desparately need a 32bit
+    # build with 10bit/12bit support, but this violates the "shrink wrap
+    # license" so to speak.  If it breaks you get to keep both halves.
+    option(HIGH_BIT_DEPTH "Store pixels as 16bit values" OFF)
+endif(X64)
 if(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=1)
 else(HIGH_BIT_DEPTH)
