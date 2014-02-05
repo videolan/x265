@@ -136,6 +136,7 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
     leadingBframes = 0;
     satdCost = (int64_t)-1;
     memset(costEst, -1, sizeof(costEst));
+    memset(weightedCostDelta, 0, sizeof(weightedCostDelta));
 
     if (qpAqOffset && invQscaleFactor)
         memset(costEstAq, -1, sizeof(costEstAq));
