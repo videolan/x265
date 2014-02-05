@@ -239,7 +239,11 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         if (m_freeList.empty())
         {
             pic = new TComPic;
-            pic->create(this);
+            if (!pic || !pic->create(this))
+            {
+                x265_log(&param, X265_LOG_ERROR, "memory allocation failure, aborting encode");
+                return -1;
+            }
             if (param.bEnableSAO)
             {
                 // TODO: these should be allocated on demand within the encoder

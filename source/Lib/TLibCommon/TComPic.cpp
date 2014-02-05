@@ -74,25 +74,26 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-void TComPic::create(TEncCfg* cfg)
+bool TComPic::create(TEncCfg* cfg)
 {
-    m_picSym = new TComPicSym;
-    m_picSym->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
-
-    m_origPicYuv = new TComPicYuv;
-    m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
-
-    m_reconPicYuv = new TComPicYuv;
-    m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
-
     /* store conformance window parameters with picture */
     m_conformanceWindow = cfg->m_conformanceWindow;
 
     /* store display window parameters with picture */
     m_defaultDisplayWindow = cfg->getDefaultDisplayWindow();
 
-    /* configure lowres dimensions */
-    m_lowres.create(m_origPicYuv, cfg->param.bframes, &cfg->param.rc.aqMode);
+    m_picSym = new TComPicSym;
+    m_origPicYuv = new TComPicYuv;
+    m_reconPicYuv = new TComPicYuv;
+    if (!m_picSym || !m_origPicYuv || !m_reconPicYuv)
+        return false;
+
+    bool ok = true;
+    ok &= m_picSym->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
+    ok &= m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
+    ok &= m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
+    ok &= m_lowres.create(m_origPicYuv, cfg->param.bframes, &cfg->param.rc.aqMode);
+    return ok;
 }
 
 void TComPic::destroy(int bframes)

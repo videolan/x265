@@ -105,7 +105,7 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    void          create(TEncCfg* cfg);
+    bool          create(TEncCfg* cfg);
 
     virtual void  destroy(int bframes);
 

@@ -63,7 +63,7 @@ TComPicYuv::~TComPicYuv()
 {
 }
 
-void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
+bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -88,17 +88,17 @@ void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUHeight;
 
-    m_picBufY = X265_MALLOC(Pel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
-    m_picBufU = X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
-    m_picBufV = X265_MALLOC(Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    CHECKED_MALLOC(m_picBufY, Pel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+    CHECKED_MALLOC(m_picBufU, Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    CHECKED_MALLOC(m_picBufV, Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
 
     m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
     m_picOrgV = m_picBufV + m_chromaMarginY * getCStride() + m_chromaMarginX;
 
     /* TODO: these four buffers are the same for every TComPicYuv in the encoder */
-    m_cuOffsetY = new int[m_numCuInWidth * m_numCuInHeight];
-    m_cuOffsetC = new int[m_numCuInWidth * m_numCuInHeight];
+    CHECKED_MALLOC(m_cuOffsetY, int, m_numCuInWidth * m_numCuInHeight);
+    CHECKED_MALLOC(m_cuOffsetC, int, m_numCuInWidth * m_numCuInHeight);
     for (int cuRow = 0; cuRow < m_numCuInHeight; cuRow++)
     {
         for (int cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
@@ -108,8 +108,8 @@ void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
         }
     }
 
-    m_buOffsetY = new int[(size_t)1 << (2 * maxCUDepth)];
-    m_buOffsetC = new int[(size_t)1 << (2 * maxCUDepth)];
+    CHECKED_MALLOC(m_buOffsetY, int, (size_t)1 << (2 * maxCUDepth));
+    CHECKED_MALLOC(m_buOffsetC, int, (size_t)1 << (2 * maxCUDepth));
     for (int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
     {
         for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
@@ -118,6 +118,10 @@ void TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
             m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * ((maxCUHeight >> m_vChromaShift) >> maxCUDepth) + buCol * ((maxCUWidth >> m_hChromaShift) >> maxCUDepth);
         }
     }
+    return true;
+
+fail:
+    return false;
 }
 
 void TComPicYuv::destroy()
@@ -125,21 +129,10 @@ void TComPicYuv::destroy()
     X265_FREE(m_picBufY);
     X265_FREE(m_picBufU);
     X265_FREE(m_picBufV);
-    delete[] m_cuOffsetY;
-    delete[] m_cuOffsetC;
-    delete[] m_buOffsetY;
-    delete[] m_buOffsetC;
-
-    m_picOrgY = NULL;
-    m_picOrgU = NULL;
-    m_picOrgV = NULL;
-    m_picBufY = NULL;
-    m_picBufU = NULL;
-    m_picBufV = NULL;
-    m_cuOffsetY = NULL;
-    m_cuOffsetC = NULL;
-    m_buOffsetY = NULL;
-    m_buOffsetC = NULL;
+    X265_FREE(m_cuOffsetY);
+    X265_FREE(m_cuOffsetC);
+    X265_FREE(m_buOffsetY);
+    X265_FREE(m_buOffsetC);
 }
 
 uint32_t TComPicYuv::getCUHeight(int rowNum)

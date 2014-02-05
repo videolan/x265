@@ -186,7 +186,7 @@ public:
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
 
-    void          create(uint32_t numPartition, uint32_t width, uint32_t height, int unitSize, int csp);
+    bool          create(uint32_t numPartition, uint32_t width, uint32_t height, int unitSize, int csp);
     void          destroy();
 
     void          initCU(TComPic* pic, uint32_t cuAddr);

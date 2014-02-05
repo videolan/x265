@@ -63,10 +63,11 @@ TComPicSym::TComPicSym()
     , m_cuData(NULL)
 {}
 
-void TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth)
+bool TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth)
 {
     uint32_t i;
 
+    m_saoParam        = NULL;
     m_totalDepth      = maxDepth;
     m_numPartitions   = 1 << (m_totalDepth << 1);
 
@@ -83,16 +84,21 @@ void TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxWid
     m_heightInCU      = (picHeight % m_maxCUHeight) ? picHeight / m_maxCUHeight + 1 : picHeight / m_maxCUHeight;
 
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
-    m_cuData          = new TComDataCU*[m_numCUsInFrame];
 
     m_slice = new TComSlice;
+    m_cuData = new TComDataCU*[m_numCUsInFrame];
+    if (!m_slice || !m_cuData)
+        return false;
+
     for (i = 0; i < m_numCUsInFrame; i++)
     {
         m_cuData[i] = new TComDataCU;
-        m_cuData[i]->create(m_numPartitions, m_maxCUWidth, m_maxCUHeight, m_maxCUWidth >> m_totalDepth, picCsp);
+        if (!m_cuData[i])
+            return false;
+        if (!m_cuData[i]->create(m_numPartitions, m_maxCUWidth, m_maxCUHeight, m_maxCUWidth >> m_totalDepth, picCsp))
+            return false;
     }
-
-    m_saoParam = NULL;
+    return true;
 }
 
 void TComPicSym::destroy()
@@ -104,7 +110,6 @@ void TComPicSym::destroy()
     {
         m_cuData[i]->destroy();
         delete m_cuData[i];
-        m_cuData[i] = NULL;
     }
 
     delete [] m_cuData;

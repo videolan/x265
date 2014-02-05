@@ -636,7 +636,12 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        uint32_t numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
+        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
+        if (numEncoded < 0)
+        {
+            b_ctrl_c = 1;
+            break;
+        }
         outFrameCount += numEncoded;
         if (numEncoded && pic_recon)
         {

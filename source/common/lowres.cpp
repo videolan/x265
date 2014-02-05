@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-void Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
+bool Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
 {
     isLowres = true;
     width = orig->getWidth() / 2;
@@ -45,19 +45,17 @@ void Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
 
     if (*aqMode)
     {
-        qpAqOffset = (double*)x265_malloc(sizeof(double) * cuCount);
-        invQscaleFactor = (int*)x265_malloc(sizeof(int) * cuCount);
-        qpOffset = (double*)x265_malloc(sizeof(double) * cuCount);
-        if (!qpAqOffset || !invQscaleFactor || !qpOffset)
-            *aqMode = 0;
+        CHECKED_MALLOC(qpAqOffset, double, cuCount);
+        CHECKED_MALLOC(invQscaleFactor, int, cuCount);
+        CHECKED_MALLOC(qpOffset, double, cuCount);
     }
-    propagateCost = (uint16_t*)x265_malloc(sizeof(uint16_t) * cuCount);
+    CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
     /* allocate lowres buffers */
     size_t planesize = lumaStride * (lines + 2 * orig->getLumaMarginY());
     for (int i = 0; i < 4; i++)
     {
-        buffer[i] = X265_MALLOC(pixel, planesize);
+        CHECKED_MALLOC(buffer[i], pixel, planesize);
         /* initialize the whole buffer to prevent valgrind warnings on right edge */
         memset(buffer[i], 0, sizeof(pixel) * planesize);
     }
@@ -68,24 +66,29 @@ void Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
     lowresPlane[2] = buffer[2] + padoffset;
     lowresPlane[3] = buffer[3] + padoffset;
 
-    intraCost = X265_MALLOC(int32_t, cuCount);
+    CHECKED_MALLOC(intraCost, int32_t, cuCount);
 
     for (int i = 0; i < bframes + 2; i++)
     {
         for (int j = 0; j < bframes + 2; j++)
         {
-            rowSatds[i][j] = X265_MALLOC(int32_t, cuHeight);
-            lowresCosts[i][j] = X265_MALLOC(uint16_t, cuCount);
+            CHECKED_MALLOC(rowSatds[i][j], int32_t, cuHeight);
+            CHECKED_MALLOC(lowresCosts[i][j], uint16_t, cuCount);
         }
     }
 
     for (int i = 0; i < bframes + 1; i++)
     {
-        lowresMvs[0][i] = X265_MALLOC(MV, cuCount);
-        lowresMvs[1][i] = X265_MALLOC(MV, cuCount);
-        lowresMvCosts[0][i] = X265_MALLOC(int32_t, cuCount);
-        lowresMvCosts[1][i] = X265_MALLOC(int32_t, cuCount);
+        CHECKED_MALLOC(lowresMvs[0][i], MV, cuCount);
+        CHECKED_MALLOC(lowresMvs[1][i], MV, cuCount);
+        CHECKED_MALLOC(lowresMvCosts[0][i], int32_t, cuCount);
+        CHECKED_MALLOC(lowresMvCosts[1][i], int32_t, cuCount);
     }
+    return true;
+
+fail:
+    *aqMode = 0;
+    return false;
 }
 
 void Lowres::destroy(int bframes)
