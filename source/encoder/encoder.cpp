@@ -242,6 +242,11 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             if (!pic || !pic->create(this))
             {
                 x265_log(&param, X265_LOG_ERROR, "memory allocation failure, aborting encode");
+                if (pic)
+                {
+                    pic->destroy(param.bframes);
+                    delete pic;
+                }
                 return -1;
             }
             if (param.bEnableSAO)
