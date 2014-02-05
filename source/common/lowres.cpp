@@ -43,6 +43,9 @@ bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
     width = cuWidth * X265_LOWRES_CU_SIZE;
     lines = cuHeight * X265_LOWRES_CU_SIZE;
 
+    size_t planesize = lumaStride * (lines + 2 * orig->getLumaMarginY());
+    size_t padoffset = lumaStride * orig->getLumaMarginY() + orig->getLumaMarginX();
+
     if (*aqMode)
     {
         CHECKED_MALLOC(qpAqOffset, double, cuCount);
@@ -52,7 +55,6 @@ bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
     /* allocate lowres buffers */
-    size_t planesize = lumaStride * (lines + 2 * orig->getLumaMarginY());
     for (int i = 0; i < 4; i++)
     {
         CHECKED_MALLOC(buffer[i], pixel, planesize);
@@ -60,7 +62,6 @@ bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
         memset(buffer[i], 0, sizeof(pixel) * planesize);
     }
 
-    int padoffset = lumaStride * orig->getLumaMarginY() + orig->getLumaMarginX();
     lowresPlane[0] = buffer[0] + padoffset;
     lowresPlane[1] = buffer[1] + padoffset;
     lowresPlane[2] = buffer[2] + padoffset;
