@@ -628,9 +628,6 @@ extern "C" {
 #define SETUP_INTRA_ANG32(mode, fno, cpu) \
     p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
 
-#define SETUP_INTRA_ANG32(mode, fno, cpu) \
-    p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
-
 namespace x265 {
 // private x265 namespace
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
