@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-bool Lowres::create(TComPicYuv *orig, int bframes, int32_t *aqMode)
+bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
 {
     isLowres = true;
     width = orig->getWidth() / 2;
