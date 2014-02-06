@@ -1437,16 +1437,18 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         pixel *pix_cur = fenc->lowresPlane[0] + pelOffset;
 
         // Copy Above
-        memcpy(above0, pix_cur - 1 - fenc->lumaStride, cuSize + 1);
+        memcpy(above0, pix_cur - 1 - fenc->lumaStride, (cuSize + 1) * sizeof(pixel));
 
         // Copy Left
         for (int i = 0; i < cuSize + 1; i++)
         {
             left0[i] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
         }
-
-        memset(above0 + cuSize + 1, above0[cuSize], cuSize);
-        memset(left0 + cuSize + 1, left0[cuSize], cuSize);
+        for (int i = 0; i < cuSize; i++)
+        {
+            above0[cuSize + i + 1] = above0[cuSize];
+            left0[cuSize + i + 1] = left0[cuSize];
+        }
 
         // filtering with [1 2 1]
         // assume getUseStrongIntraSmoothing() is disabled
