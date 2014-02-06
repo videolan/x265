@@ -78,11 +78,7 @@ public:
     virtual ~PoolThread() {}
 
     void threadMain();
-
-    static volatile uint64_t s_sleepMap;
 };
-
-volatile uint64_t PoolThread::s_sleepMap /* = 0 */;
 
 class ThreadPoolImpl : public ThreadPool
 {
@@ -91,7 +87,9 @@ private:
     bool         m_ok;
     int          m_referenceCount;
     int          m_numThreads;
+    int          m_numSleepMapWords;
     PoolThread  *m_threads;
+    volatile uint64_t *m_sleepMap;
 
     /* Lock for write access to the provider lists.  Threads are
      * always allowed to read m_firstProvider and follow the
@@ -118,6 +116,10 @@ public:
 
         return this;
     }
+
+    void markThreadAsleep(int id);
+
+    void waitForAllIdle();
 
     int getThreadCount() const { return m_numThreads; }
 
@@ -166,8 +168,7 @@ void PoolThread::threadMain()
 
         if (cur == NULL)
         {
-            uint64_t bit = 1LL << m_id;
-            ATOMIC_OR(&s_sleepMap, bit);
+            m_pool.markThreadAsleep(m_id);
             m_wakeEvent.wait();
         }
     }
@@ -175,19 +176,34 @@ void PoolThread::threadMain()
     m_exited = true;
 }
 
+void ThreadPoolImpl::markThreadAsleep(int id)
+{
+    int word = id >> 6;
+    uint64_t bit = 1LL << (id & 63);
+    ATOMIC_OR(&m_sleepMap[word], bit);
+}
+
 void ThreadPoolImpl::pokeIdleThread()
 {
-    /* Find a bit in the sleeping thread bitmap and poke it awake */
-    uint64_t oldval = PoolThread::s_sleepMap;
-
-    if (oldval)
+    /* Find a bit in the sleeping thread bitmap and poke it awake, do
+     * not give up until a thread is awakened or all of them are awake */
+    for (int i = 0; i < m_numSleepMapWords; i++)
     {
-        unsigned long id;
-        CTZ64(id, oldval);
+        uint64_t oldval = m_sleepMap[i];
+        while (oldval)
+        {
+            unsigned long id;
+            CTZ64(id, oldval);
 
-        uint64_t newval = oldval & ~(1LL << id);
-        if (ATOMIC_CAS(&PoolThread::s_sleepMap, oldval, newval) == oldval)
-            m_threads[id].poke();
+            uint64_t newval = oldval & ~(1LL << id);
+            if (ATOMIC_CAS(&m_sleepMap[i], oldval, newval) == oldval)
+            {
+                m_threads[(i << 6) | id].poke();
+                return;
+            }
+
+            oldval = m_sleepMap[i];
+        }
     }
 }
 
@@ -228,71 +244,80 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
 {
     if (numThreads == 0)
         numThreads = get_cpu_count();
-    numThreads = X265_MIN(64, numThreads); // do not overflow sleep map
+    m_numSleepMapWords = (numThreads + 63) >> 6;
+    m_sleepMap = X265_MALLOC(uint64_t, m_numSleepMapWords);
 
-    char *buffer = new char[sizeof(PoolThread) * numThreads];
+    char *buffer = (char*)X265_MALLOC(PoolThread, numThreads);
     m_threads = reinterpret_cast<PoolThread*>(buffer);
     m_numThreads = numThreads;
 
-    if (m_threads)
+    if (m_threads && m_sleepMap)
     {
-        uint64_t idlemap = 0;
+        for (int i = 0; i < m_numSleepMapWords; i++)
+            m_sleepMap[i] = 0;
 
         m_ok = true;
-        for (int i = 0; i < numThreads; i++)
+        int i;
+        for (i = 0; i < numThreads; i++)
         {
             new (buffer)PoolThread(*this, i);
             buffer += sizeof(PoolThread);
-            m_ok = m_ok && m_threads[i].start();
-            idlemap |= (1LL << i);
+            if (!m_threads[i].start())
+            {
+                m_ok = false;
+                break;
+            }
         }
 
-        // Wait for threads to spin up and idle
-        while (PoolThread::s_sleepMap != idlemap)
+        if (m_ok)
+        {
+            waitForAllIdle();
+        }
+        else
+        {
+            // stop threads that did start up
+            for (int j = 0; j < i; j++)
+            {
+                m_threads[j].poke();
+                m_threads[j].stop();
+            }
+        }
+    }
+}
+
+void ThreadPoolImpl::waitForAllIdle()
+{
+    if (!m_ok)
+        return;
+
+    int id = 0;
+    do
+    {
+        int word = id >> 6;
+        uint64_t bit = 1LL << (id & 63);
+        if (m_sleepMap[word] & bit)
+        {
+            id++;
+        }
+        else
         {
             GIVE_UP_TIME();
         }
     }
+    while (id < m_numThreads);
 }
 
 void ThreadPoolImpl::Stop()
 {
     if (m_ok)
     {
-        uint64_t idlemap = 0;
-        for (int i = 0; i < m_numThreads; i++)
-        {
-            idlemap |= (1LL << i);
-        }
-
-        // wait for all threads to idle
-        while (PoolThread::s_sleepMap != idlemap)
-        {
-            GIVE_UP_TIME();
-        }
+        waitForAllIdle();
 
         // set invalid flag, then wake them up so they exit their main func
         m_ok = false;
         for (int i = 0; i < m_numThreads; i++)
         {
-            pokeIdleThread();
-        }
-
-        int exited_count = 0;
-        do
-        {
-            GIVE_UP_TIME();
-            exited_count = 0;
-            for (int i = 0; i < m_numThreads; i++)
-            {
-                exited_count += m_threads[i].isExited() ? 1 : 0;
-            }
-        }
-        while (exited_count < m_numThreads);
-
-        // join each thread to cleanup resources
-        for (int i = 0; i < m_numThreads; i++)
-        {
+            m_threads[i].poke();
             m_threads[i].stop();
         }
     }
@@ -300,6 +325,8 @@ void ThreadPoolImpl::Stop()
 
 ThreadPoolImpl::~ThreadPoolImpl()
 {
+    X265_FREE((void*)m_sleepMap);
+
     if (m_threads)
     {
         // cleanup thread handles
@@ -308,7 +335,7 @@ ThreadPoolImpl::~ThreadPoolImpl()
             m_threads[i].~PoolThread();
         }
 
-        delete[] reinterpret_cast<char*>(m_threads);
+        X265_FREE(reinterpret_cast<char*>(m_threads));
     }
 }
 
