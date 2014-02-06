@@ -3734,10 +3734,18 @@ cglobal intra_pred_ang32_9, 3,7,8
 ; void intraPredAng32_10(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 ;------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_ang32_10, 5,7,8
+cglobal intra_pred_ang32_10, 6,7,8,0-(2*mmsize)
+%define m8 [rsp + 0 * mmsize]
+%define m9 [rsp + 1 * mmsize]
     lea         r4, [r1 * 3]
     pxor        m7, m7
     mov         r6, 2
+    movu        m0, [r3]
+    movu        m1, [r3 + 1]
+    mova        m8, m0
+    mova        m9, m1
+    mov         r3d, r5d
+
 .loop:
     movu        m0, [r2 + 1]
     palignr     m1, m0, 1
@@ -3811,13 +3819,13 @@ cglobal intra_pred_ang32_10, 5,7,8
     movu        [r5 + r4 + 16], m3
 
 ; filter
-    cmp         r5m, byte 0
+    cmp         r3d, byte 0
     jz         .quit
     movhlps     m1, m0
     pmovzxbw    m0, m0
     mova        m1, m0
-    movu        m2, [r3]
-    movu        m3, [r3 + 1]
+    movu        m2, m8
+    movu        m3, m9
 
     pshufb      m2, m7
     pmovzxbw    m2, m2
@@ -5433,9 +5441,17 @@ cglobal intra_pred_ang32_25, 4,7,8
 ; void intraPredAng32_26(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 ;------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_ang32_26, 4,7,7
+cglobal intra_pred_ang32_26, 6,7,7,0-(2*mmsize)
+%define m8 [rsp + 0 * mmsize]
+%define m9 [rsp + 1 * mmsize]
     lea         r4,             [r1 * 3]
     mov         r6,             2
+    movu        m0,             [r2]
+    movu        m1,             [r2 + 1]
+    mova        m8,             m0
+    mova        m9,             m1
+    mov         r2d,            r5d
+
 .loop:
     movu        m0,             [r3 + 1]
 
@@ -5495,15 +5511,15 @@ cglobal intra_pred_ang32_26, 4,7,7
     movu        [r5 + r4],      m0
 
 ; filter
-    cmp         r5m, byte 0
+    cmp         r2d, byte 0
     jz         .quit
 
     pxor        m4,        m4
     pshufb      m0,        m4
     pmovzxbw    m0,        m0
     mova        m1,        m0
-    movu        m2,        [r2]
-    movu        m3,        [r2 + 1]
+    movu        m2,        m8
+    movu        m3,        m9
 
     pshufb      m2,        m4
     pmovzxbw    m2,        m2
