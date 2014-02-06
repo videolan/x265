@@ -114,7 +114,21 @@ DECL_ANG(32, 15, sse4);
 DECL_ANG(32, 16, sse4);
 DECL_ANG(32, 17, sse4);
 DECL_ANG(32, 18, sse4);
+DECL_ANG(32, 19, sse4);
+DECL_ANG(32, 20, sse4);
+DECL_ANG(32, 21, sse4);
+DECL_ANG(32, 22, sse4);
+DECL_ANG(32, 23, sse4);
+DECL_ANG(32, 24, sse4);
+DECL_ANG(32, 25, sse4);
 DECL_ANG(32, 26, sse4);
+DECL_ANG(32, 27, sse4);
+DECL_ANG(32, 28, sse4);
+DECL_ANG(32, 29, sse4);
+DECL_ANG(32, 30, sse4);
+DECL_ANG(32, 31, sse4);
+DECL_ANG(32, 32, sse4);
+DECL_ANG(32, 33, sse4);
 
 #undef DECL_ANG
 void x265_all_angs_pred_4x4_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);

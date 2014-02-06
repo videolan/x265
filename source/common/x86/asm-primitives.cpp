@@ -1107,7 +1107,37 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG8(32, 4, sse4);
         SETUP_INTRA_ANG8(33, 3, sse4);
 
+        SETUP_INTRA_ANG32(3,  3,  sse4);
+        SETUP_INTRA_ANG32(4,  4,  sse4);
+        SETUP_INTRA_ANG32(5,  5,  sse4);
+        SETUP_INTRA_ANG32(6,  6,  sse4);
+        SETUP_INTRA_ANG32(7,  7,  sse4);
+        SETUP_INTRA_ANG32(8,  8,  sse4);
+        SETUP_INTRA_ANG32(9,  9,  sse4);
+        SETUP_INTRA_ANG32(10, 10, sse4);
+        SETUP_INTRA_ANG32(11, 11, sse4);
+        SETUP_INTRA_ANG32(12, 12, sse4);
+        SETUP_INTRA_ANG32(13, 13, sse4);
+        SETUP_INTRA_ANG32(14, 14, sse4);
+        SETUP_INTRA_ANG32(15, 15, sse4);
+        SETUP_INTRA_ANG32(16, 16, sse4);
         SETUP_INTRA_ANG32(17, 17, sse4);
+        SETUP_INTRA_ANG32(18, 18, sse4);
+        SETUP_INTRA_ANG32(19, 19, sse4);
+        SETUP_INTRA_ANG32(20, 20, sse4);
+        SETUP_INTRA_ANG32(21, 21, sse4);
+        SETUP_INTRA_ANG32(22, 22, sse4);
+        SETUP_INTRA_ANG32(23, 23, sse4);
+        SETUP_INTRA_ANG32(24, 24, sse4);
+        SETUP_INTRA_ANG32(25, 25, sse4);
+        SETUP_INTRA_ANG32(26, 26, sse4);
+        SETUP_INTRA_ANG32(27, 27, sse4);
+        SETUP_INTRA_ANG32(28, 28, sse4);
+        SETUP_INTRA_ANG32(29, 29, sse4);
+        SETUP_INTRA_ANG32(30, 30, sse4);
+        SETUP_INTRA_ANG32(31, 31, sse4);
+        SETUP_INTRA_ANG32(32, 32, sse4);
+        SETUP_INTRA_ANG32(33, 33, sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
 
