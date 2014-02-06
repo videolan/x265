@@ -511,7 +511,7 @@ cglobal pixel_satd_4x4, 4,6
 %endif
 %endmacro
 
-%macro SATD_4x8_SSE 3
+%macro SATD_4x8_SSE 3-4
 %if HIGH_BIT_DEPTH
     movh    m0, [r0+0*r1]
     movh    m4, [r2+0*r3]
@@ -577,7 +577,11 @@ cglobal pixel_satd_4x4, 4,6
     DIFFOP 2, 6, 3, 5, 7
 %endif
 %endif ; HIGH_BIT_DEPTH
+%if %0 == 4
+    SATD_8x4_1_SSE %1, 0, 1, 2, 3, 4, 5, 7, %3, %4
+%else
     SATD_8x4_SSE %1, 0, 1, 2, 3, 4, 5, 7, %3
+%endif
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -2386,6 +2390,69 @@ cglobal pixel_satd_16x64, 4,6,8
     RET
 %endif
 
+%if HIGH_BIT_DEPTH
+%if WIN64
+cglobal pixel_satd_12x16, 4,8,8
+    SATD_START_MMX
+    mov r6, r0
+    mov r7, r2
+    pxor m7, m7
+    SATD_4x8_SSE vertical, 0, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r6 + 4*SIZEOF_PIXEL]
+    lea r2, [r7 + 4*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r6 + 8*SIZEOF_PIXEL]
+    lea r2, [r7 + 8*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    pxor    m1, m1
+    movhlps m1, m7
+    paddd   m7, m1
+    pshufd  m1, m7, 1
+    paddd   m7, m1
+    movd   eax, m7
+    RET
+%else
+cglobal pixel_satd_12x16, 4,7,8,0-gprsize
+    SATD_START_MMX
+    mov r6, r0
+    mov [rsp], r2
+    pxor m7, m7
+    SATD_4x8_SSE vertical, 0, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r6 + 4*SIZEOF_PIXEL]
+    mov r2, [rsp]
+    add r2, 4*SIZEOF_PIXEL
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r6 + 8*SIZEOF_PIXEL]
+    mov r2, [rsp]
+    add r2, 8*SIZEOF_PIXEL
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    pxor    m1, m1
+    movhlps m1, m7
+    paddd   m7, m1
+    pshufd  m1, m7, 1
+    paddd   m7, m1
+    movd   eax, m7
+    RET
+%endif
+%else    ;HIGH_BIT_DEPTH
 %if WIN64
 cglobal pixel_satd_12x16, 4,8,8
     SATD_START_MMX
@@ -2442,6 +2509,7 @@ cglobal pixel_satd_12x16, 4,7,8,0-gprsize
     HADDW m7, m1
     movd eax, m7
     RET
+%endif
 %endif
 
 %if WIN64

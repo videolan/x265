@@ -638,16 +638,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT6(satd, _sse2);
         HEVC_SATD(sse2);
         p.satd[LUMA_4x4] = x265_pixel_satd_4x4_mmx2;
-        p.satd[LUMA_4x16] = x265_pixel_satd_4x16_sse2;
-        p.satd[LUMA_8x32] = x265_pixel_satd_8x32_sse2;
-        p.satd[LUMA_16x4] = x265_pixel_satd_16x4_sse2;
-        p.satd[LUMA_16x12] = x265_pixel_satd_16x12_sse2;
-        p.satd[LUMA_16x32] = x265_pixel_satd_16x32_sse2;
-        p.satd[LUMA_16x64] = x265_pixel_satd_16x64_sse2;
-        p.satd[LUMA_12x16] = x265_pixel_satd_12x16_sse2;
-        p.satd[LUMA_32x8] = x265_pixel_satd_32x8_sse2;
-        p.satd[LUMA_32x16] = x265_pixel_satd_32x16_sse2;
-        p.satd[LUMA_32x24] = x265_pixel_satd_32x24_sse2;
 
         p.sa8d_inter[LUMA_4x4]  = x265_pixel_satd_4x4_mmx2;
         SA8D_INTER_FROM_BLOCK(sse2);
@@ -691,27 +681,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         PIXEL_AVG(sse2);
         PIXEL_AVG_W4(mmx2);
         LUMA_VAR(_sse2);
-
-        INIT8(sad, _mmx2);
-        p.sad[LUMA_8x32]  = x265_pixel_sad_8x32_sse2;
-        p.sad[LUMA_16x4]  = x265_pixel_sad_16x4_sse2;
-        p.sad[LUMA_16x12] = x265_pixel_sad_16x12_sse2;
-        p.sad[LUMA_16x32] = x265_pixel_sad_16x32_sse2;
-
-        p.sad[LUMA_32x8]  = x265_pixel_sad_32x8_sse2;
-        p.sad[LUMA_32x16] = x265_pixel_sad_32x16_sse2;
-        p.sad[LUMA_32x24] = x265_pixel_sad_32x24_sse2;
-        p.sad[LUMA_32x32] = x265_pixel_sad_32x32_sse2;
-        p.sad[LUMA_32x64] = x265_pixel_sad_32x64_sse2;
-
-        p.sad[LUMA_64x16] = x265_pixel_sad_64x16_sse2;
-        p.sad[LUMA_64x32] = x265_pixel_sad_64x32_sse2;
-        p.sad[LUMA_64x48] = x265_pixel_sad_64x48_sse2;
-        p.sad[LUMA_64x64] = x265_pixel_sad_64x64_sse2;
-
-        p.sad[LUMA_48x64] = x265_pixel_sad_48x64_sse2;
-        p.sad[LUMA_24x32] = x265_pixel_sad_24x32_sse2;
-        p.sad[LUMA_12x16] = x265_pixel_sad_12x16_sse2;
 
         SAD_X3(sse2);
         p.sad_x3[LUMA_4x4] = x265_pixel_sad_x3_4x4_mmx2;
