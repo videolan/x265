@@ -31,11 +31,11 @@ class PixelHarness : public TestHarness
 {
 protected:
 
-    pixel *pbuf1, *pbuf2, *pbuf3, *pbuf4;
+    pixel *pbuf1, *pbuf2, *pbuf3, *pbuf4, **pixel_test_buff;
 
-    int *ibuf1;
+    int *ibuf1, **int_test_buff;
 
-    int16_t *sbuf1, *sbuf2, *sbuf3;
+    int16_t *sbuf1, *sbuf2, *sbuf3, **short_test_buff, **short_test_buff1;
 
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt);
