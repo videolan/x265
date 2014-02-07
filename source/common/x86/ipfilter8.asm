@@ -151,10 +151,9 @@ cextern pw_2000
 ; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_horiz_pp_2x4, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
+cglobal interp_4tap_horiz_pp_2x4, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
 %define t2          m2
 %define t1          m1
 %define t0          m0
@@ -171,7 +170,6 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 pshufd      coef2,       coef2,      0
 mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
-mova        Tm1,         [tab_Tm + 16]
 
 %rep 2
 FILTER_H4_w2_2   t0, t1, t2
@@ -185,10 +183,9 @@ RET
 ; void interp_4tap_horiz_pp_2x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_horiz_pp_2x8, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
+cglobal interp_4tap_horiz_pp_2x8, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
 %define t2          m2
 %define t1          m1
 %define t0          m0
@@ -205,7 +202,6 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 pshufd      coef2,       coef2,      0
 mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
-mova        Tm1,         [tab_Tm + 16]
 
 %rep 4
 FILTER_H4_w2_2   t0, t1, t2
@@ -234,10 +230,9 @@ RET
 ; void interp_4tap_horiz_pp_4x2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_horiz_pp_4x2, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
+cglobal interp_4tap_horiz_pp_4x2, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
 %define t2          m2
 %define t1          m1
 %define t0          m0
@@ -254,7 +249,6 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 pshufd      coef2,       coef2,      0
 mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
-mova        Tm1,         [tab_Tm + 16]
 
 FILTER_H4_w4_2   t0, t1, t2
 
@@ -264,10 +258,9 @@ RET
 ; void interp_4tap_horiz_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_horiz_pp_4x4, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
+cglobal interp_4tap_horiz_pp_4x4, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
 %define t2          m2
 %define t1          m1
 %define t0          m0
@@ -284,7 +277,6 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 pshufd      coef2,       coef2,      0
 mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
-mova        Tm1,         [tab_Tm + 16]
 
 %rep 2
 FILTER_H4_w4_2   t0, t1, t2
@@ -298,10 +290,9 @@ RET
 ; void interp_4tap_horiz_pp_4x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_horiz_pp_4x8, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
+cglobal interp_4tap_horiz_pp_4x8, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
 %define t2          m2
 %define t1          m1
 %define t0          m0
@@ -318,7 +309,6 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 pshufd      coef2,       coef2,      0
 mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
-mova        Tm1,         [tab_Tm + 16]
 
 %rep 4
 FILTER_H4_w4_2   t0, t1, t2
@@ -332,10 +322,9 @@ RET
 ; void interp_4tap_horiz_pp_4x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_horiz_pp_4x16, 4, 6, 6, src, srcstride, dst, dststride
-%define coef2       m5
-%define Tm0         m4
-%define Tm1         m3
+cglobal interp_4tap_horiz_pp_4x16, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
 %define t2          m2
 %define t1          m1
 %define t0          m0
@@ -352,7 +341,6 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 pshufd      coef2,       coef2,      0
 mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
-mova        Tm1,         [tab_Tm + 16]
 
 %rep 8
 FILTER_H4_w4_2   t0, t1, t2
