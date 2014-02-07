@@ -705,7 +705,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_mmx2;
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
-        p.cvt16to32_shl = x265_cvt16to32_shl_sse2;
 
         CHROMA_PIXELSUB_PS(_sse2);
         LUMA_PIXELSUB(_sse2);
@@ -738,6 +737,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+        p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
+
         p.intra_pred[BLOCK_4x4][0] = x265_intra_pred_planar4_sse4;
         p.intra_pred[BLOCK_8x8][0] = x265_intra_pred_planar8_sse4;
         p.intra_pred[BLOCK_16x16][0] = x265_intra_pred_planar16_sse4;
@@ -897,7 +898,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(sse2);
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
-        p.cvt16to32_shl = x265_cvt16to32_shl_sse2;
         p.calcrecon[BLOCK_4x4] = x265_calcRecons4_sse2;
         p.calcrecon[BLOCK_8x8] = x265_calcRecons8_sse2;
         p.calcresidual[BLOCK_4x4] = x265_getResidual4_sse2;
@@ -912,9 +912,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.dct[DCT_4x4] = x265_dct4_sse2;
         p.idct[IDCT_4x4] = x265_idct4_sse2;
         p.idct[IDST_4x4] = x265_idst4_sse2;
-
-        LUMA_ADDAVG(_sse2);
-        CHROMA_ADDAVG(_sse2);
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
@@ -959,6 +956,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+        LUMA_ADDAVG(_sse4);
+        CHROMA_ADDAVG(_sse4);
+        p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
+
         HEVC_SATD(sse4);
         SA8D_INTER_FROM_BLOCK(sse4);
 

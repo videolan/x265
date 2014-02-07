@@ -167,7 +167,6 @@ int x265_pixel_ssd_64x48_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x64_sse4(pixel *, intptr_t, pixel *, intptr_t);
 
 #define ADDAVG(func)  \
-    void x265_ ## func ## _sse2 (int16_t*, int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
     void x265_ ## func ## _sse4 (int16_t*, int16_t*, pixel*, intptr_t, intptr_t, intptr_t);
 ADDAVG(addAvg_2x4)
 ADDAVG(addAvg_2x8)

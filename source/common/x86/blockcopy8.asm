@@ -2881,7 +2881,7 @@ cglobal cvt32to16_shr, 5, 7, 1, dst, src, stride
 ;--------------------------------------------------------------------------------------
 ; void cvt16to32_shl(int32_t *dst, int16_t *src, intptr_t stride, int shift, int size);
 ;--------------------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
 %define shift       m1
 

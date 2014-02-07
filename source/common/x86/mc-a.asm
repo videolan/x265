@@ -190,7 +190,7 @@ cglobal addAvg_2x8, 6,6,8, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 ;-----------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_4x2, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
 
     mova           m1,          [pw_256]
@@ -217,7 +217,7 @@ cglobal addAvg_4x2, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W4_H4 1
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_4x%1, 6,7,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova           m1,          [pw_256]
     mova           m3,          [pw_128]
@@ -370,7 +370,7 @@ cglobal addAvg_6x8, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 ;-----------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_8x2, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova        m4,          [pw_256]
     mova        m5,          [pw_128]
@@ -397,7 +397,7 @@ cglobal addAvg_8x2, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 ;-----------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_8x6, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
 
     mova        m4,          [pw_256]
@@ -466,7 +466,7 @@ cglobal addAvg_8x6, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W8_H4 1
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_8x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
 
     mova        m4,          [pw_256]
@@ -536,7 +536,7 @@ ADDAVG_W8_H4 32
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W12_H4 1
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_12x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova           m4,             [pw_256]
     mova           m5,             [pw_128]
@@ -629,7 +629,7 @@ ADDAVG_W12_H4 16
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W16_H4 1
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_16x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova        m4,              [pw_256]
     mova        m5,              [pw_128]
@@ -724,7 +724,7 @@ ADDAVG_W16_H4 64
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W24_H2 2
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_%1x%2, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova        m4,              [pw_256]
     mova        m5,              [pw_128]
@@ -797,7 +797,7 @@ ADDAVG_W24_H2 24, 32
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W32_H2 1
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_32x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova        m4,              [pw_256]
     mova        m5,              [pw_128]
@@ -887,7 +887,7 @@ ADDAVG_W32_H2 64
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W48_H2 1
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_48x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
 
     mova        m4,              [pw_256]
@@ -1003,7 +1003,7 @@ ADDAVG_W48_H2 64
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W64_H1 1
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal addAvg_64x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
     mova        m4,              [pw_256]
     mova        m5,              [pw_128]
