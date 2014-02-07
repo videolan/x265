@@ -2759,10 +2759,10 @@ SAD_X 4,  4,  4
     psadbw  m3, m6
     psadbw  m4, m7
     psadbw  m5, m7
-    paddw   m0, m2
-    paddw   m1, m3
-    paddw   m0, m4
-    paddw   m1, m5
+    paddd   m0, m2
+    paddd   m1, m3
+    paddd   m0, m4
+    paddd   m1, m5
 %endmacro
 
 %macro SAD_X4_4x16P_AVX2 2
@@ -2797,9 +2797,13 @@ SAD_X 4,  4,  4
 
 %macro SAD_X4_END_AVX2 0
     mov       r0, r6mp
-    packssdw  m0, m1        ; 0 0 1 1 2 2 3 3
-    vextracti128 xm1, m0, 1
-    phaddd   xm0, xm1       ; 0 1 2 3
+    pshufd     m0, m0, 0x8
+    pshufd     m1, m1, 0x8
+    vextracti128 xm2, m0, 1
+    vextracti128 xm3, m1, 1
+    punpcklqdq   xm0, xm1
+    punpcklqdq   xm2, xm3
+    phaddd   xm0, xm2       ; 0 1 2 3
     mova    [r0], xm0
     RET
 %endmacro
