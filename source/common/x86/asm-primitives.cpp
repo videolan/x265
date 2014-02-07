@@ -1042,8 +1042,35 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         SETUP_INTRA_ANG16(3, 3, sse4);
         SETUP_INTRA_ANG16(4, 4, sse4);
-        SETUP_INTRA_ANG16(33, 33, sse4);
+        SETUP_INTRA_ANG16(5, 5, sse4);
+        SETUP_INTRA_ANG16(6, 6, sse4);
+        SETUP_INTRA_ANG16(7, 7, sse4);
+        SETUP_INTRA_ANG16(8, 8, sse4);
+        SETUP_INTRA_ANG16(9, 9, sse4);
+        SETUP_INTRA_ANG16(10, 10, sse4);
+        SETUP_INTRA_ANG16(11, 11, sse4);
+        SETUP_INTRA_ANG16(12, 12, sse4);
+        SETUP_INTRA_ANG16(13, 13, sse4);
+        SETUP_INTRA_ANG16(14, 14, sse4);
+        SETUP_INTRA_ANG16(15, 15, sse4);
+        SETUP_INTRA_ANG16(16, 16, sse4);
+        SETUP_INTRA_ANG16(17, 17, sse4);
+        SETUP_INTRA_ANG16(18, 18, sse4);
+        SETUP_INTRA_ANG16(19, 19, sse4);
+        SETUP_INTRA_ANG16(20, 20, sse4);
+        SETUP_INTRA_ANG16(21, 21, sse4);
+        SETUP_INTRA_ANG16(22, 22, sse4);
+        SETUP_INTRA_ANG16(23, 23, sse4);
+        SETUP_INTRA_ANG16(24, 24, sse4);
+        SETUP_INTRA_ANG16(25, 25, sse4);
+        SETUP_INTRA_ANG16(26, 26, sse4);
+        SETUP_INTRA_ANG16(27, 27, sse4);
+        SETUP_INTRA_ANG16(28, 28, sse4);
+        SETUP_INTRA_ANG16(29, 29, sse4);
+        SETUP_INTRA_ANG16(30, 30, sse4);
+        SETUP_INTRA_ANG16(31, 31, sse4);
         SETUP_INTRA_ANG16(32, 32, sse4);
+        SETUP_INTRA_ANG16(33, 33, sse4);
 
         SETUP_INTRA_ANG8(3, 3, sse4);
         SETUP_INTRA_ANG8(4, 4, sse4);
