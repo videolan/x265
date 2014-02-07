@@ -202,9 +202,12 @@ int TComOutputBitstream::countStartCodeEmulations()
 
 void TComOutputBitstream::push_back(uint8_t val)
 {
+    if (!m_fifo)
+        return;
+    
     /** Chenck FIFO Size if not reached MIN_FIFO_SIZE and Check Allocated m_fifo Buffer
     before push the encoded bit stream to m_fifo */
-    if (m_fsize < buffsize && m_fifo)
+    if (m_fsize < buffsize)
     {
         m_fifo[m_fsize] = val;
         m_fsize++;
