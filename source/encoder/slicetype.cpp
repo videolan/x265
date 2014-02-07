@@ -824,10 +824,10 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
 void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int p0, int p1, int b, int referenced)
 {
     uint16_t *refCosts[2] = { frames[p0]->propagateCost, frames[p1]->propagateCost };
-    int distScaleFactor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
-    int bipredWeight = cfg->param.bEnableWeightedBiPred ? 64 - (distScaleFactor >> 2) : 32;
+    int32_t distScaleFactor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
+    int32_t bipredWeight = cfg->param.bEnableWeightedBiPred ? 64 - (distScaleFactor >> 2) : 32;
     MV *mvs[2] = { frames[b]->lowresMvs[0][b - p0 - 1], frames[b]->lowresMvs[1][p1 - b - 1] };
-    int bipredWeights[2] = { bipredWeight, 64 - bipredWeight };
+    int32_t bipredWeights[2] = { bipredWeight, 64 - bipredWeight };
 
     memset(scratch, 0, widthInCU * sizeof(int));
 
@@ -840,7 +840,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     if (!referenced)
         memset(frames[b]->propagateCost, 0, widthInCU * sizeof(uint16_t));
 
-    uint16_t StrideInCU = (uint16_t)widthInCU;
+    int32_t StrideInCU = widthInCU;
     for (uint16_t blocky = 0; blocky < heightInCU; blocky++)
     {
         int cuIndex = blocky * StrideInCU;
@@ -853,22 +853,22 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
             propagateCost += widthInCU;
         for (uint16_t blockx = 0; blockx < widthInCU; blockx++, cuIndex++)
         {
-            int propagate_amount = scratch[blockx];
+            int32_t propagate_amount = scratch[blockx];
             /* Don't propagate for an intra block. */
             if (propagate_amount > 0)
             {
                 /* Access width-2 bitfield. */
-                int lists_used = frames[b]->lowresCosts[b - p0][p1 - b][cuIndex] >> LOWRES_COST_SHIFT;
+                int32_t lists_used = frames[b]->lowresCosts[b - p0][p1 - b][cuIndex] >> LOWRES_COST_SHIFT;
                 /* Follow the MVs to the previous frame(s). */
                 for (uint16_t list = 0; list < 2; list++)
                 {
                     if ((lists_used >> list) & 1)
                     {
-#define CLIP_ADD(s, x) (s) = X265_MIN((s) + (x), (1 << 16) - 1)
-                        uint16_t listamount = (uint16_t)propagate_amount;
+#define CLIP_ADD(s, x) (s) = (uint16_t) X265_MIN((s) + (x), (1 << 16) - 1)
+                        int32_t listamount = propagate_amount;
                         /* Apply bipred weighting. */
                         if (lists_used == 3)
-                            listamount = (uint16_t)(listamount * bipredWeights[list] + 32) >> 6;
+                            listamount = (listamount * bipredWeights[list] + 32) >> 6;
 
                         /* Early termination for simple case of mv0. */
                         if (!mvs[list][cuIndex].word)
@@ -877,20 +877,20 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
                             continue;
                         }
 
-                        uint16_t x = mvs[list][cuIndex].x;
-                        uint16_t y = mvs[list][cuIndex].y;
-                        int cux = (x >> 5) + blockx;
-                        int cuy = (y >> 5) + blocky;
-                        int idx0 = cux + cuy * StrideInCU;
-                        int idx1 = idx0 + 1;
-                        int idx2 = idx0 + StrideInCU;
-                        int idx3 = idx0 + StrideInCU + 1;
+                        int32_t x = mvs[list][cuIndex].x;
+                        int32_t y = mvs[list][cuIndex].y;
+                        int32_t cux = (x >> 5) + blockx;
+                        int32_t cuy = (y >> 5) + blocky;
+                        int32_t idx0 = cux + cuy * StrideInCU;
+                        int32_t idx1 = idx0 + 1;
+                        int32_t idx2 = idx0 + StrideInCU;
+                        int32_t idx3 = idx0 + StrideInCU + 1;
                         x &= 31;
                         y &= 31;
-                        uint16_t idx0weight = (uint16_t)(32 - y) * (32 - x);
-                        uint16_t idx1weight = (uint16_t)(32 - y) * x;
-                        uint16_t idx2weight = (uint16_t)y * (32 - x);
-                        uint16_t idx3weight = (uint16_t)y * x;
+                        int32_t idx0weight = (32 - y) * (32 - x);
+                        int32_t idx1weight = (32 - y) * x;
+                        int32_t idx2weight = y * (32 - x);
+                        int32_t idx3weight = y * x;
 
                         /* We could just clip the MVs, but pixels that lie outside the frame probably shouldn't
                          * be counted. */
