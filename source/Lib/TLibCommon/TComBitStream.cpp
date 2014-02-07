@@ -54,6 +54,7 @@ using namespace x265;
 TComOutputBitstream::TComOutputBitstream()
 {
     m_fifo = X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
+    m_buffsize = MIN_FIFO_SIZE;
     clear();
 }
 
@@ -81,7 +82,6 @@ void TComOutputBitstream::clear()
     m_held_bits = 0;
     m_num_held_bits = 0;
     m_fsize = 0;
-    buffsize = MIN_FIFO_SIZE;
 }
 
 void TComOutputBitstream::write(uint32_t bits, uint32_t numBits)
@@ -159,7 +159,7 @@ void TComOutputBitstream::writeAlignZero()
  .
  \param  pcSubstream  substream to be added
  */
-void   TComOutputBitstream::addSubstream(TComOutputBitstream* substream)
+void TComOutputBitstream::addSubstream(TComOutputBitstream* substream)
 {
     uint32_t numBits = substream->getNumberOfWrittenBits();
 
@@ -204,34 +204,25 @@ void TComOutputBitstream::push_back(uint8_t val)
 {
     if (!m_fifo)
         return;
-    
-    /** Chenck FIFO Size if not reached MIN_FIFO_SIZE and Check Allocated m_fifo Buffer
-    before push the encoded bit stream to m_fifo */
-    if (m_fsize < buffsize)
-    {
-        m_fifo[m_fsize] = val;
-        m_fsize++;
-    }
-    else
-    {
-        buffsize *= 2;
 
-        /**  FIFO size is Reached into MIN_FIFO_SIZE then Reallocate the FIFO and Copy the fifo to new memory
-        location and continue to push encoded bit streams */
-        uint8_t *temp = X265_MALLOC(uint8_t, buffsize);
-
-        /** check Allocated buffer before copy the encoder bitstream and push into FIFO */
+    if (m_fsize >= m_buffsize)
+    {
+        /** reallocate buffer with doubled size */
+        uint8_t *temp = X265_MALLOC(uint8_t, m_buffsize * 2);
         if (temp)
         {
             ::memcpy(temp, m_fifo, m_fsize);
-            temp[m_fsize] = val;
-            m_fsize++;
             X265_FREE(m_fifo);
-
-            /** point the reallocated buffer from temp to fifo, this can be free'd in Distructor */
             m_fifo = temp;
+            m_buffsize *= 2;
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc bitstream buffer");
+            return;
         }
     }
+    m_fifo[m_fsize++] = val;
 }
 
 //! \}
