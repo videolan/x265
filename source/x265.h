@@ -166,7 +166,7 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_TYPE_P             0x0003
 #define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
 #define X265_TYPE_B             0x0005
-#define X265_TYPE_KEYFRAME      0x0006  /* IDR or I depending on b_open_gop option */
+
 #define X265_AQ_NONE                 0
 #define X265_AQ_VARIANCE             1
 #define X265_AQ_AUTO_VARIANCE        2

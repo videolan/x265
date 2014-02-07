@@ -227,8 +227,6 @@ void Lookahead::slicetypeDecide()
                      frm.sliceType, cfg->param.maxNumReferences);
         }
 
-        if (frm.sliceType == X265_TYPE_KEYFRAME)
-            frm.sliceType = cfg->param.bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR;
         if ( /*(!cfg->param.intraRefresh || frm.frameNum == 0) && */ frm.frameNum - lastKeyframe >= cfg->param.keyframeMax)
         {
             if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
