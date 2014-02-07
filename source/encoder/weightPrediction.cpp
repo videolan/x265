@@ -38,7 +38,6 @@ WeightPrediction::WeightPrediction(TComSlice *slice, x265_param param)
     m_blockSize = 8 << m_csp444;
     m_frmHeight = m_slice->getPic()->m_lowres.lines << m_csp444;
     m_frmWidth  = m_slice->getPic()->m_lowres.width << m_csp444;
-    m_dstStride = m_frmWidth;
     m_refStride = m_slice->getPic()->m_lowres.lumaStride;
     m_intraCost = m_slice->getPic()->m_lowres.intraCost;
     m_bframes = param.bframes;
@@ -134,10 +133,10 @@ uint32_t WeightPrediction::weightCost(pixel *cur, pixel *ref, wpScalingParam *w)
         int correction = IF_INTERNAL_PREC - X265_DEPTH;
 
         // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
-        primitives.weight_pp(ref, temp, m_refStride, m_dstStride, m_frmWidth, m_frmHeight,
+        primitives.weight_pp(ref, temp, m_refStride, m_frmWidth, m_frmWidth, m_frmHeight,
                              scale, (1 << (denom - 1 + correction)), denom + correction, offset);
         ref = temp;
-        stride = m_dstStride;
+        stride = m_frmWidth;
     }
 
     uint32_t cost = 0;

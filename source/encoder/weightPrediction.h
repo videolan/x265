@@ -34,7 +34,7 @@ private:
 
     int m_csp, m_csp444;
     int m_blockSize, m_frmHeight, m_frmWidth;
-    int m_refStride, m_dstStride;
+    int m_refStride;
     int32_t *m_mvCost;
     TComSlice *m_slice;
     wpScalingParam m_wp[2][MAX_NUM_REF][3];
