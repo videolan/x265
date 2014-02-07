@@ -59,7 +59,6 @@ void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
 
-void Setup_Vec_IPredPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_IPredPrimitives_sse41(EncoderPrimitives&);
 
 /* Use primitives for the best available vector architecture */
@@ -75,7 +74,6 @@ void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask)
 #ifdef HAVE_SSSE3
     if (cpuMask & X265_CPU_SSSE3)
     {
-        Setup_Vec_IPredPrimitives_ssse3(p);
         Setup_Vec_DCTPrimitives_ssse3(p);
     }
 #endif
