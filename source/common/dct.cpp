@@ -720,9 +720,11 @@ void idct32_c(int32_t *src, int16_t *dst, intptr_t stride)
 
 void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 {
-    assert(num <= 32 * 32);
+#if !HIGH_BIT_DEPTH
     // NOTE: maximum of scale is (72 * 256)
     assert(scale < 32768);
+#endif
+    assert(num <= 32 * 32);
     assert((num % 8) == 0);
     assert(shift <= 10);
 
