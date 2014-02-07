@@ -84,14 +84,14 @@ void TComOutputBitstream::clear()
     buffsize = MIN_FIFO_SIZE;
 }
 
-void TComOutputBitstream::write(uint32_t uiBits, uint32_t uiNumberOfBits)
+void TComOutputBitstream::write(uint32_t bits, uint32_t numBits)
 {
-    assert(uiNumberOfBits <= 32);
-    assert(uiNumberOfBits == 32 || (uiBits & (~0 << uiNumberOfBits)) == 0);
+    assert(numBits <= 32);
+    assert(numBits == 32 || (bits & (~0 << numBits)) == 0);
 
     /* any modulo 8 remainder of num_total_bits cannot be written this time,
      * and will be held until next time. */
-    uint32_t num_total_bits = uiNumberOfBits + m_num_held_bits;
+    uint32_t num_total_bits = numBits + m_num_held_bits;
     uint32_t next_num_held_bits = num_total_bits % 8;
 
     /* form a byte aligned word (write_bits), by concatenating any held bits
@@ -100,7 +100,7 @@ void TComOutputBitstream::write(uint32_t uiBits, uint32_t uiNumberOfBits)
      * len(H)=7, len(V)=1: ... ---- HHHH HHHV . 0000 0000, next_num_held_bits=0
      * len(H)=7, len(V)=2: ... ---- HHHH HHHV . V000 0000, next_num_held_bits=1
      * if total_bits < 8, the value of v_ is not used */
-    UChar next_held_bits = uiBits << (8 - next_num_held_bits);
+    UChar next_held_bits = bits << (8 - next_num_held_bits);
 
     if (!(num_total_bits >> 3))
     {
@@ -113,8 +113,8 @@ void TComOutputBitstream::write(uint32_t uiBits, uint32_t uiNumberOfBits)
     }
 
     /* topword serves to justify held_bits to align with the msb of uiBits */
-    uint32_t topword = (uiNumberOfBits - next_num_held_bits) & ~((1 << 3) - 1);
-    uint32_t write_bits = (m_held_bits << topword) | (uiBits >> next_num_held_bits);
+    uint32_t topword = (numBits - next_num_held_bits) & ~((1 << 3) - 1);
+    uint32_t write_bits = (m_held_bits << topword) | (bits >> next_num_held_bits);
 
     switch (num_total_bits >> 3)
     {
@@ -138,9 +138,9 @@ void TComOutputBitstream::writeByte(uint32_t val)
 
 void TComOutputBitstream::writeAlignOne()
 {
-    uint32_t num_bits = getNumBitsUntilByteAligned();
+    uint32_t numBits = getNumBitsUntilByteAligned();
 
-    write((1 << num_bits) - 1, num_bits);
+    write((1 << numBits) - 1, numBits);
 }
 
 void TComOutputBitstream::writeAlignZero()
@@ -159,20 +159,20 @@ void TComOutputBitstream::writeAlignZero()
  .
  \param  pcSubstream  substream to be added
  */
-void   TComOutputBitstream::addSubstream(TComOutputBitstream* pcSubstream)
+void   TComOutputBitstream::addSubstream(TComOutputBitstream* substream)
 {
-    uint32_t uiNumBits = pcSubstream->getNumberOfWrittenBits();
+    uint32_t numBits = substream->getNumberOfWrittenBits();
 
-    const uint8_t* rbsp = pcSubstream->getFIFO();
+    const uint8_t* rbsp = substream->getFIFO();
 
-    for (uint32_t count = 0; count < pcSubstream->m_fsize; count++)
+    for (uint32_t count = 0; count < substream->m_fsize; count++)
     {
         write(rbsp[count], 8);
     }
 
-    if (uiNumBits & 0x7)
+    if (numBits & 0x7)
     {
-        write(pcSubstream->getHeldBits() >> (8 - (uiNumBits & 0x7)), uiNumBits & 0x7);
+        write(substream->getHeldBits() >> (8 - (numBits & 0x7)), numBits & 0x7);
     }
 }
 
