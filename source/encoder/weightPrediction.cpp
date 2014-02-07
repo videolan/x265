@@ -209,8 +209,10 @@ bool WeightPrediction::checkDenom(int denom)
     TComPicYuv *orig = m_slice->getPic()->getPicYuvOrg();
     width[0]  = ((orig->getWidth() + 8) >> 4) << 4;
     height[0] = ((orig->getHeight() + 8) >> 4) << 4;
-    width[2] = width[1] = width[0] >> CHROMA_H_SHIFT(m_csp);
-    height[2] = height[1] = height[0] >> CHROMA_V_SHIFT(m_csp);
+    int hshift = CHROMA_H_SHIFT(m_csp);
+    int vshift = CHROMA_V_SHIFT(m_csp);
+    width[2] = width[1] = width[0] >> hshift;
+    height[2] = height[1] = height[0] >> vshift;
 
     for (int list = 0; list < numPredDir; list++)
     {
