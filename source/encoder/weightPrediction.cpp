@@ -207,10 +207,11 @@ bool WeightPrediction::checkDenom(int denom)
     curPoc = m_slice->getPOC();
 
     // Rounding the width, height to 16
-    width[0]  = ((m_slice->getPic()->getPicYuvOrg()->getWidth() + 8) >> 4) << 4;
-    height[0] = ((m_slice->getPic()->getPicYuvOrg()->getHeight() + 8) >> 4) << 4;
-    width[2] = width[1] = width[0] >> 1;
-    height[2] = height[1] = height[0] >> 1;
+    TComPicYuv *orig = m_slice->getPic()->getPicYuvOrg();
+    width[0]  = ((orig->getWidth() + 8) >> 4) << 4;
+    height[0] = ((orig->getHeight() + 8) >> 4) << 4;
+    width[2] = width[1] = width[0] >> CHROMA_H_SHIFT(m_csp);
+    height[2] = height[1] = height[0] >> CHROMA_V_SHIFT(m_csp);
 
     for (int list = 0; list < numPredDir; list++)
     {
