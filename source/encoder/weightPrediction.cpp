@@ -30,6 +30,42 @@
 
 using namespace x265;
 
+WeightPrediction::WeightPrediction(TComSlice *slice, x265_param param)
+{
+    this->m_slice = slice;
+    m_csp = m_slice->getPic()->getPicYuvOrg()->m_picCsp;
+    m_csp444 = (m_csp == X265_CSP_I444) ? 1 : 0;
+    m_blockSize = 8 << m_csp444;
+    m_frmHeight = m_slice->getPic()->m_lowres.lines << m_csp444;
+    m_frmWidth  = m_slice->getPic()->m_lowres.width << m_csp444;
+    m_dstStride = m_frmWidth;
+    m_refStride = m_slice->getPic()->m_lowres.lumaStride;
+    m_intraCost = m_slice->getPic()->m_lowres.intraCost;
+    m_bframes = param.bframes;
+    m_mcFlag = false;
+
+    m_mcbuf = NULL;
+    m_inbuf = NULL;
+    m_buf = (pixel*)X265_MALLOC(pixel, m_frmHeight * m_refStride);
+
+    int numPredDir = m_slice->isInterP() ? 1 : m_slice->isInterB() ? 2 : 0;
+    for (int list = 0; list < numPredDir; list++)
+    {
+        for (int refIdxTemp = 0; refIdxTemp < m_slice->getNumRefIdx(list); refIdxTemp++)
+        {
+            for (int yuv = 0; yuv < 3; yuv++)
+            {
+                SET_WEIGHT(m_wp[list][refIdxTemp][yuv], 0, 64, 6, 0);
+            }
+        }
+    }
+}
+
+WeightPrediction::~WeightPrediction()
+{
+    X265_FREE(m_buf);
+}
+
 void WeightPrediction::mcChroma()
 {
     intptr_t strd = m_refStride;
@@ -141,7 +177,7 @@ void WeightPrediction::weightAnalyseEnc()
 
     if (m_slice->getNumRefIdx(REF_PIC_LIST_0) > 3)
     {
-        denom  = 7;
+        denom = 7;
     }
 
     do
