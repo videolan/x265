@@ -30,6 +30,42 @@
 
 using namespace x265;
 
+WeightPrediction::WeightPrediction(TComSlice *slice, x265_param param)
+{
+    this->m_slice = slice;
+    m_csp = m_slice->getPic()->getPicYuvOrg()->m_picCsp;
+    m_csp444 = (m_csp == X265_CSP_I444) ? 1 : 0;
+    m_blockSize = 8 << m_csp444;
+    m_frmHeight = m_slice->getPic()->m_lowres.lines << m_csp444;
+    m_frmWidth  = m_slice->getPic()->m_lowres.width << m_csp444;
+    m_dstStride = m_frmWidth;
+    m_refStride = m_slice->getPic()->m_lowres.lumaStride;
+    m_intraCost = m_slice->getPic()->m_lowres.intraCost;
+    m_bframes = param.bframes;
+    m_mcFlag = false;
+
+    m_mcbuf = NULL;
+    m_inbuf = NULL;
+    m_buf = (pixel*)X265_MALLOC(pixel, m_frmHeight * m_refStride);
+
+    int numPredDir = m_slice->isInterP() ? 1 : m_slice->isInterB() ? 2 : 0;
+    for (int list = 0; list < numPredDir; list++)
+    {
+        for (int refIdxTemp = 0; refIdxTemp < m_slice->getNumRefIdx(list); refIdxTemp++)
+        {
+            for (int yuv = 0; yuv < 3; yuv++)
+            {
+                SET_WEIGHT(m_wp[list][refIdxTemp][yuv], 0, 64, 6, 0);
+            }
+        }
+    }
+}
+
+WeightPrediction::~WeightPrediction()
+{
+    X265_FREE(m_buf);
+}
+
 void WeightPrediction::mcChroma()
 {
     intptr_t strd = m_refStride;
@@ -141,7 +177,7 @@ void WeightPrediction::weightAnalyseEnc()
 
     if (m_slice->getNumRefIdx(REF_PIC_LIST_0) > 3)
     {
-        denom  = 7;
+        denom = 7;
     }
 
     do
@@ -171,10 +207,11 @@ bool WeightPrediction::checkDenom(int denom)
     curPoc = m_slice->getPOC();
 
     // Rounding the width, height to 16
-    width[0]  = ((m_slice->getPic()->getPicYuvOrg()->getWidth() + 8) >> 4) << 4;
-    height[0] = ((m_slice->getPic()->getPicYuvOrg()->getHeight() + 8) >> 4) << 4;
-    width[2] = width[1] = width[0] >> 1;
-    height[2] = height[1] = height[0] >> 1;
+    TComPicYuv *orig = m_slice->getPic()->getPicYuvOrg();
+    width[0]  = ((orig->getWidth() + 8) >> 4) << 4;
+    height[0] = ((orig->getHeight() + 8) >> 4) << 4;
+    width[2] = width[1] = width[0] >> CHROMA_H_SHIFT(m_csp);
+    height[2] = height[1] = height[0] >> CHROMA_V_SHIFT(m_csp);
 
     for (int list = 0; list < numPredDir; list++)
     {
@@ -247,7 +284,7 @@ bool WeightPrediction::checkDenom(int denom)
                     if (m_mcFlag)
                     {
                         pixel *tempm_buf;
-                        pixel m_buf8[8 * 8];
+                        pixel buf8x8[8 * 8];
                         int pixoff = 0, cu = 0;
                         intptr_t strd;
                         for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
@@ -262,7 +299,7 @@ bool WeightPrediction::checkDenom(int denom)
                                 else
                                 {
                                     strd = 8;
-                                    tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], m_buf8, strd);
+                                    tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], buf8x8, strd);
                                     ic++;
                                 }
                                 primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);

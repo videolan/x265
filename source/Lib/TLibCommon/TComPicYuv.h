@@ -166,7 +166,7 @@ public:
     void  copyFromPicture(const x265_picture&, int32_t *pad);
 }; // END CLASS DEFINITION TComPicYuv
 
-void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cu_Height);
+void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cuHeight);
 void updateCRC(const Pel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, uint32_t stride);
 void crcFinish(uint32_t & crc, UChar digest[16]);
 void checksumFinish(uint32_t & checksum, UChar digest[16]);
