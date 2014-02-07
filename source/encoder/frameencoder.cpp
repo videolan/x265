@@ -32,10 +32,11 @@
 #include "cturow.h"
 #include "common.h"
 #include "slicetype.h"
-#include "weightPrediction.h"
 #include <math.h>
 
-using namespace x265;
+namespace x265 {
+
+void weightAnalyse(TComSlice& slice, x265_param& param);
 
 enum SCALING_LIST_PARAMETER
 {
@@ -451,23 +452,14 @@ void FrameEncoder::compressFrame()
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
     //------------------------------------------------------------------------------
-    // calculate AC/DC values for current picture
     m_wp.xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
-    if (slice->getPPS()->getUseWP() || slice->getPPS()->getWPBiPred())
+    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) || (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
     {
+        // calculate AC/DC values for current picture
         m_wp.xCalcACDCParamSlice(slice);
-    }
 
-    bool wpexplicit = (slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
-        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
-
-    if (wpexplicit)
-    {
-        //------------------------------------------------------------------------------
-        //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
-        //------------------------------------------------------------------------------
-        WeightPrediction wp(slice, m_cfg->param);
-        wp.weightAnalyseEnc();
+        // select weights
+        weightAnalyse(*slice, m_cfg->param);
     }
 
     // Generate motion references
@@ -1192,4 +1184,6 @@ TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)
     }
 
     return NULL;
+}
+
 }
