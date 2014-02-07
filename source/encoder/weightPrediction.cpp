@@ -284,7 +284,7 @@ bool WeightPrediction::checkDenom(int denom)
                     if (m_mcFlag)
                     {
                         pixel *tempm_buf;
-                        pixel m_buf8[8 * 8];
+                        pixel buf8x8[8 * 8];
                         int pixoff = 0, cu = 0;
                         intptr_t strd;
                         for (int y = 0; y < m_frmHeight; y += 8, pixoff = y * m_refStride)
@@ -299,7 +299,7 @@ bool WeightPrediction::checkDenom(int denom)
                                 else
                                 {
                                     strd = 8;
-                                    tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], m_buf8, strd);
+                                    tempm_buf = ref->lowresMC(pixoff, m_mvs[cu], buf8x8, strd);
                                     ic++;
                                 }
                                 primitives.blockcpy_pp(8, 8, m_buf + (y * m_refStride) + x, m_refStride, tempm_buf, strd);
