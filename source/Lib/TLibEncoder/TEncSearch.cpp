@@ -839,7 +839,6 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
             //----- code luma block with given intra prediction mode and store Cbf-----
-            singleCost = 0;
             xIntraCodingLumaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistY);
             if (bCheckSplit)
             {
@@ -1998,7 +1997,6 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 bestPUMode  = origMode;
                 bestPUDistY = puDistY;
                 bestPUDistC = puDistC;
-                bestPUCost  = puCost;
 
                 xSetIntraResultQT(cu, initTrDepth, partOffset, bLumaOnly, reconYuv);
 
@@ -3121,8 +3119,6 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     }
     if (zeroCost < cost)
     {
-        cost       = zeroCost;
-        bits       = 0;
         distortion = zeroDistortion;
 
         const uint32_t qpartnum = cu->getPic()->getNumPartInCU() >> (cu->getDepth(0) << 1);
@@ -3159,7 +3155,6 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         }
 
         bestBits = bits;
-        bdist    = distortion;
         bcost    = cost;
         qpBest   = qp;
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
@@ -3877,7 +3872,6 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
             m_entropyCoder->resetBits();
             singleBitsU = 0;
-            singleBitsV = 0;
 
             if (absSumTransformSkipU)
             {

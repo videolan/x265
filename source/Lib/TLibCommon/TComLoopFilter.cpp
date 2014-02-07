@@ -463,7 +463,6 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
 
                 if (((refP0 == refQ0) && (refP1 == refQ1)) || ((refP0 == refQ1) && (refP1 == refQ0)))
                 {
-                    bs = 0;
                     if (refP0 != refP1) // Different L0 & L1
                     {
                         if (refP0 == refQ0)
@@ -694,8 +693,6 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
     for (uint32_t idx = 0; idx < numParts; idx++)
     {
-        bs = 0;
-
         bsAbsIdx = xCalcBsIdx(cu, absZOrderIdx, dir, edge, idx);
         bs = m_blockingStrength[dir][bsAbsIdx];
 

@@ -116,7 +116,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
                 p += sprintf(p, " %s", x265::cpu_names[i].name);
         }
         if (!cpuid)
-            p += sprintf(p, " none!");
+            sprintf(p, " none!");
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
 

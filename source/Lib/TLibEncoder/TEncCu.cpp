@@ -1097,13 +1097,6 @@ void TEncCu::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         numberOfWrittenBits = m_entropyCoder->getNumberOfWrittenBits();
     }
 
-    // Calculate slice end IF this CU puts us over slice bit size.
-    uint32_t granularitySize = cu->getPic()->getNumPartInCU();
-    int granularityEnd = ((cu->getSCUAddr() + absPartIdx) / granularitySize) * granularitySize;
-    if (granularityEnd <= 0)
-    {
-        granularityEnd += X265_MAX(granularitySize, (cu->getPic()->getNumPartInCU() >> (depth << 1)));
-    }
     if (granularityBoundary)
     {
         slice->setSliceBits((uint32_t)(slice->getSliceBits() + numberOfWrittenBits));

@@ -2096,7 +2096,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
     {
         //>> MTK colocated-RightBottom
         uint32_t partIdxRB;
-        int lcuIdx = getAddr();
+        int lcuIdx;
 
         deriveRightBottomIdx(puIdx, partIdxRB);
 
@@ -2392,7 +2392,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         bAdded = xAddMVPCandOrder(info, picList, refIdx, partIdxLB, MD_BELOW_LEFT);
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(info, picList, refIdx, partIdxLB, MD_LEFT);
+            xAddMVPCandOrder(info, picList, refIdx, partIdxLB, MD_LEFT);
         }
     }
     // Above predictor search
@@ -2405,7 +2405,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCand(info, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
+        xAddMVPCand(info, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
     }
     bAdded = bAddedSmvp;
     if (info->m_num == 2) bAdded = true;
@@ -2420,7 +2420,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
 
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(info, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
+            xAddMVPCandOrder(info, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
         }
     }
 
@@ -2440,7 +2440,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         uint32_t partIdxRB;
         uint32_t absPartIdx;
         uint32_t absPartAddr;
-        int lcuIdx = getAddr();
+        int lcuIdx;
 
         deriveRightBottomIdx(partIdx, partIdxRB);
         absPartAddr = m_absIdxInLCU + partAddr;
@@ -2537,9 +2537,7 @@ void TComDataCU::clipMv(MV& outMV)
 
 uint32_t TComDataCU::getIntraSizeIdx(uint32_t absPartIdx)
 {
-    uint32_t shift = ((m_trIdx[absPartIdx] == 0) && (m_partSizes[absPartIdx] == SIZE_NxN)) ? m_trIdx[absPartIdx] + 1 : m_trIdx[absPartIdx];
-
-    shift = (m_partSizes[absPartIdx] == SIZE_NxN ? 1 : 0);
+    uint32_t shift = (m_partSizes[absPartIdx] == SIZE_NxN ? 1 : 0);
 
     UChar width = m_width[absPartIdx] >> shift;
     uint32_t  cnt = 0;
@@ -2822,7 +2820,6 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
         return false;
     }
     curPOC = m_slice->getPOC();
-    curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
     colPOC = colCU->getSlice()->getPOC();
 
     if (colCU->isIntra(absPartAddr))

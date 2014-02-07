@@ -131,7 +131,6 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t strid
 
     int log2BlkSize = g_convertToBit[size] + 2;
 
-    Pel *src = m_predBuf;
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
     int diff = std::min<int>(abs((int)dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
     UChar filterIdx = diff > intraFilterThreshold[log2BlkSize - 2] ? 1 : 0;
@@ -148,7 +147,6 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t strid
 
     if (filterIdx)
     {
-        src += ADI_BUF_STRIDE * (2 * size + 1);
         refLft = refLeftFlt + size - 1;
         refAbv = refAboveFlt + size - 1;
     }

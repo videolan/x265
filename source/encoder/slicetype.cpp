@@ -528,7 +528,6 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         }
 
         resetStart = bKeyframe ? 1 : 2;
-        numBFrames = 0;
     }
 
     if (cfg->param.rc.cuTree)

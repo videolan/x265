@@ -145,8 +145,6 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, d
         m_rdGoOnSbacCoder->load(m_rdSbacCoders[onePart->partLevel][CI_CURR_BEST]);
         m_rdGoOnSbacCoder->resetBits();
 
-        estDist = 0;
-
         if (typeIdx == -1)
         {
             for (int ry = onePart->startCUY; ry <= onePart->endCUY; ry++)
@@ -1085,8 +1083,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     Pel* fenc;
     Pel* pRec;
     int stride;
-    int lcuHeight = pTmpSPS->getMaxCUHeight();
-    int lcuWidth  = pTmpSPS->getMaxCUWidth();
+    int lcuHeight;
+    int lcuWidth;
     uint32_t rPelX;
     uint32_t bPelY;
     int64_t* stats;

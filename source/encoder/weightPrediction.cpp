@@ -364,7 +364,6 @@ bool WeightPrediction::checkDenom(int denom)
                             ioff = Clip3(-128, 127, ioff);
                         }
 
-                        s = 0;
                         SET_WEIGHT(w, 1, is, mindenom, ioff);
                         s = weightCost(m_inbuf, m_mcbuf, &w);
                         COPY4_IF_LT(minscore, s, minscale, is, minoff, ioff, found, 1);
@@ -415,6 +414,7 @@ bool WeightPrediction::checkDenom(int denom)
                     SET_WEIGHT(fw[1], 0, 1 << denom, denom, 0);
                     SET_WEIGHT(fw[2], 0, 1 << denom, denom, 0);
                     fullCheck -= check;
+                    /* TODO: this is wrong! we can't just exit here */
                     return false;
                 }
             }

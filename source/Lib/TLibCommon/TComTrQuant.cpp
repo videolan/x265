@@ -469,18 +469,16 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
     assert(width == height);
     uint32_t log2TrSize = g_convertToBit[width] + 2;
     int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
-    uint32_t transformSkipShift;
     int  j, k;
     if (shift > 0)
     {
         assert(width == height);
-        transformSkipShift = shift;
         primitives.cvt32to16_shr(residual, coef, stride, shift, width);
     }
     else
     {
         //The case when X265_DEPTH >= 13
-        transformSkipShift = -shift;
+        uint32_t transformSkipShift = -shift;
         for (j = 0; j < height; j++)
         {
             for (k = 0; k < width; k++)

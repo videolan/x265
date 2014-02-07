@@ -437,8 +437,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             if (0) ;
             OPT("cpuid") cpuid = atoi(optarg);
             OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
-            OPT("preset") preset = optarg;
-            OPT("tune") tune = optarg;
             OPT("no-progress") this->bProgress = false;
             OPT("frame-skip") this->frameSkip = (uint32_t)atoi(optarg);
             OPT("output") bitstreamfn = optarg;
@@ -449,6 +447,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("input-res") inputRes = optarg;
             OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
+            OPT("preset") ;
+            OPT("tune")   ;
             else
                 berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
 

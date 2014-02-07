@@ -657,12 +657,11 @@ double RateControl::clipQscale(double q)
         {
             int nb = bframes;
             double bits = predictSize(&pred[sliceType], q, (double)lastSatd);
-            double pbbits = bits;
             double bbits = predictSize(&predBfromP, q * cfg->param.rc.pbFactor, (double)lastSatd);
             double space;
             if (bbits > bufferRate)
                 nb = 0;
-            pbbits = nb * bbits;
+            double pbbits = nb * bbits;
 
             space = bufferFill + (1 + nb) * bufferRate - bufferSize;
             if (pbbits < space)
