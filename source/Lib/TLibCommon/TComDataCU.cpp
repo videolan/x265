@@ -1907,19 +1907,19 @@ bool TComDataCU::hasEqualMotion(uint32_t absPartIdx, TComDataCU* candCU, uint32_
  * \param numValidMergeCand
  */
 void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours,
-                                         int& numValidMergeCand, int mrgCandIdx)
+                                         int& numValidMergeCand)
 {
     uint32_t absPartAddr = m_absIdxInLCU + absPartIdx;
-    bool abCandIsInter[MRG_MAX_NUM_CANDS];
+    const uint32_t maxNumMergeCand = getSlice()->getMaxNumMergeCand();
+    const bool isInterB = getSlice()->isInterB();
 
-    for (uint32_t i = 0; i < getSlice()->getMaxNumMergeCand(); ++i)
+    for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
-        abCandIsInter[i] = false;
         mvFieldNeighbours[(i << 1)].refIdx = NOT_VALID;
         mvFieldNeighbours[(i << 1) + 1].refIdx = NOT_VALID;
     }
 
-    numValidMergeCand = getSlice()->getMaxNumMergeCand();
+    numValidMergeCand = maxNumMergeCand;
     // compute the location of the current PU
     int xP, yP, nPSW, nPSH;
     this->getPartPosition(puIdx, xP, yP, nPSW, nPSH);
@@ -1928,7 +1928,6 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
     uint32_t partIdxLT, partIdxRT, partIdxLB;
     PartSize curPS = getPartitionSize(absPartIdx);
-    deriveLeftRightTopIdxGeneral(absPartIdx, puIdx, partIdxLT, partIdxRT);
     deriveLeftBottomIdxGeneral(absPartIdx, puIdx, partIdxLB);
 
     //left
@@ -1941,27 +1940,24 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         !cuLeft->isIntra(leftPartIdx);
     if (isAvailableA1)
     {
-        abCandIsInter[count] = true;
         // get Inter Dir
         interDirNeighbours[count] = cuLeft->getInterDir(leftPartIdx);
         // get Mv from Left
         cuLeft->getMvField(cuLeft, leftPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count << 1]);
-        if (getSlice()->isInterB())
+        if (isInterB)
         {
             cuLeft->getMvField(cuLeft, leftPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[(count << 1) + 1]);
         }
-        if (mrgCandIdx == count)
+        count++;
+        // early termination
+        if (count == maxNumMergeCand)
         {
             return;
         }
-        count++;
     }
 
-    // early termination
-    if (count == getSlice()->getMaxNumMergeCand())
-    {
-        return;
-    }
+    deriveLeftRightTopIdxGeneral(absPartIdx, puIdx, partIdxLT, partIdxRT);
+
     // above
     uint32_t abovePartIdx = 0;
     TComDataCU* cuAbove = 0;
@@ -1972,25 +1968,20 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         !cuAbove->isIntra(abovePartIdx);
     if (isAvailableB1 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuAbove, abovePartIdx)))
     {
-        abCandIsInter[count] = true;
         // get Inter Dir
         interDirNeighbours[count] = cuAbove->getInterDir(abovePartIdx);
         // get Mv from Left
         cuAbove->getMvField(cuAbove, abovePartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count << 1]);
-        if (getSlice()->isInterB())
+        if (isInterB)
         {
             cuAbove->getMvField(cuAbove, abovePartIdx, REF_PIC_LIST_1, mvFieldNeighbours[(count << 1) + 1]);
         }
-        if (mrgCandIdx == count)
+        count++;
+        // early termination
+        if (count == maxNumMergeCand)
         {
             return;
         }
-        count++;
-    }
-    // early termination
-    if (count == getSlice()->getMaxNumMergeCand())
-    {
-        return;
     }
 
     // above right
@@ -2002,25 +1993,20 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         !cuAboveRight->isIntra(aboveRightPartIdx);
     if (isAvailableB0 && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, cuAboveRight, aboveRightPartIdx)))
     {
-        abCandIsInter[count] = true;
         // get Inter Dir
         interDirNeighbours[count] = cuAboveRight->getInterDir(aboveRightPartIdx);
         // get Mv from Left
         cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count << 1]);
-        if (getSlice()->isInterB())
+        if (isInterB)
         {
             cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[(count << 1) + 1]);
         }
-        if (mrgCandIdx == count)
+        count++;
+        // early termination
+        if (count == maxNumMergeCand)
         {
             return;
         }
-        count++;
-    }
-    // early termination
-    if (count == getSlice()->getMaxNumMergeCand())
-    {
-        return;
     }
 
     //left bottom
@@ -2032,26 +2018,22 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         !cuLeftBottom->isIntra(leftBottomPartIdx);
     if (isAvailableA0 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuLeftBottom, leftBottomPartIdx)))
     {
-        abCandIsInter[count] = true;
         // get Inter Dir
         interDirNeighbours[count] = cuLeftBottom->getInterDir(leftBottomPartIdx);
         // get Mv from Left
         cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count << 1]);
-        if (getSlice()->isInterB())
+        if (isInterB)
         {
             cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[(count << 1) + 1]);
         }
-        if (mrgCandIdx == count)
+        count++;
+        // early termination
+        if (count == maxNumMergeCand)
         {
             return;
         }
-        count++;
     }
-    // early termination
-    if (count == getSlice()->getMaxNumMergeCand())
-    {
-        return;
-    }
+
     // above left
     if (count < 4)
     {
@@ -2064,32 +2046,26 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         if (isAvailableB2 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuAboveLeft, aboveLeftPartIdx))
             && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, cuAboveLeft, aboveLeftPartIdx)))
         {
-            abCandIsInter[count] = true;
             // get Inter Dir
             interDirNeighbours[count] = cuAboveLeft->getInterDir(aboveLeftPartIdx);
             // get Mv from Left
             cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count << 1]);
-            if (getSlice()->isInterB())
+            if (isInterB)
             {
                 cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[(count << 1) + 1]);
             }
-            if (mrgCandIdx == count)
+            count++;
+            // early termination
+            if (count == maxNumMergeCand)
             {
                 return;
             }
-            count++;
         }
-    }
-    // early termination
-    if (count == getSlice()->getMaxNumMergeCand())
-    {
-        return;
     }
     if (getSlice()->getEnableTMVPFlag())
     {
         //>> MTK colocated-RightBottom
         uint32_t partIdxRB;
-        int lcuIdx;
 
         deriveRightBottomIdx(puIdx, partIdxRB);
 
@@ -2098,14 +2074,13 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
         MV colmv;
         int refIdx;
+        int lcuIdx = -1;
 
         if ((m_pic->getCU(m_cuAddr)->getCUPelX() + g_rasterToPelX[uiAbsPartIdxTmp] + m_pic->getMinCUWidth()) >= m_slice->getSPS()->getPicWidthInLumaSamples())  // image boundary check
         {
-            lcuIdx = -1;
         }
         else if ((m_pic->getCU(m_cuAddr)->getCUPelY() + g_rasterToPelY[uiAbsPartIdxTmp] + m_pic->getMinCUHeight()) >= m_slice->getSPS()->getPicHeightInLumaSamples())
         {
-            lcuIdx = -1;
         }
         else
         {
@@ -2118,7 +2093,6 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             else if (uiAbsPartIdxTmp % numPartInCUWidth < numPartInCUWidth - 1)       // is not at the last column of LCU But is last row of LCU
             {
                 absPartAddr = g_rasterToZscan[(uiAbsPartIdxTmp + numPartInCUWidth + 1) % m_pic->getNumPartInCU()];
-                lcuIdx = -1;
             }
             else if (uiAbsPartIdxTmp / numPartInCUWidth < m_pic->getNumPartInHeight() - 1) // is not at the last row of LCU But is last column of LCU
             {
@@ -2128,7 +2102,6 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             else //is the right bottom corner of LCU
             {
                 absPartAddr = 0;
-                lcuIdx = -1;
             }
         }
 
@@ -2150,7 +2123,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             mvFieldNeighbours[2 * arrayAddr].setMvField(colmv, refIdx);
         }
 
-        if (getSlice()->isInterB())
+        if (isInterB)
         {
             bExistMV = lcuIdx >= 0 && xGetColMVP(REF_PIC_LIST_1, lcuIdx, absPartAddr, colmv, refIdx);
             if (bExistMV == false)
@@ -2167,70 +2140,63 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         if (dir != 0)
         {
             interDirNeighbours[arrayAddr] = dir;
-            abCandIsInter[arrayAddr] = true;
 
-            if (mrgCandIdx == count)
+            count++;
+            // early termination
+            if (count == maxNumMergeCand)
             {
                 return;
             }
-            count++;
         }
     }
-    // early termination
-    if (count == getSlice()->getMaxNumMergeCand())
-    {
-        return;
-    }
+
     uint32_t arrayAddr = count;
-    uint32_t cutoff = arrayAddr;
 
-    if (getSlice()->isInterB())
+    if (isInterB)
     {
-        // TODO: TComRom??
-        uint32_t priorityList0[12] = { 0, 1, 0, 2, 1, 2, 0, 3, 1, 3, 2, 3 };
-        uint32_t priorityList1[12] = { 1, 0, 2, 0, 2, 1, 3, 0, 3, 1, 3, 2 };
+        const int cutoff = count * (count - 1);
+        uint32_t priorityList0 = 0xEDC984; // { 0, 1, 0, 2, 1, 2, 0, 3, 1, 3, 2, 3 }
+        uint32_t priorityList1 = 0xB73621; // { 1, 0, 2, 0, 2, 1, 3, 0, 3, 1, 3, 2 }
 
-        for (int idx = 0; idx < cutoff * (cutoff - 1) && arrayAddr != getSlice()->getMaxNumMergeCand(); idx++)
+        for (int idx = 0; idx < cutoff; idx++)
         {
-            int i = priorityList0[idx];
-            int j = priorityList1[idx];
-            if (abCandIsInter[i] && abCandIsInter[j] && (interDirNeighbours[i] & 0x1) && (interDirNeighbours[j] & 0x2))
+            int i = priorityList0 & 3;
+            int j = priorityList1 & 3;
+            priorityList0 >>= 2;
+            priorityList1 >>= 2;
+
+            if ((interDirNeighbours[i] & 0x1) && (interDirNeighbours[j] & 0x2))
             {
-                abCandIsInter[arrayAddr] = true;
-                interDirNeighbours[arrayAddr] = 3;
-
                 // get Mv from cand[i] and cand[j]
-                mvFieldNeighbours[arrayAddr << 1].setMvField(mvFieldNeighbours[i << 1].mv, mvFieldNeighbours[i << 1].refIdx);
-                mvFieldNeighbours[(arrayAddr << 1) + 1].setMvField(mvFieldNeighbours[(j << 1) + 1].mv, mvFieldNeighbours[(j << 1) + 1].refIdx);
+                int refIdxL0 = mvFieldNeighbours[i << 1].refIdx;
+                int refIdxL1 = mvFieldNeighbours[(j << 1) + 1].refIdx;
+                int refPOCL0 = m_slice->getRefPOC(REF_PIC_LIST_0, refIdxL0);
+                int refPOCL1 = m_slice->getRefPOC(REF_PIC_LIST_1, refIdxL1);
+                if (!(refPOCL0 == refPOCL1 && mvFieldNeighbours[i << 1].mv == mvFieldNeighbours[(j << 1) + 1].mv))
+                {
+                    mvFieldNeighbours[arrayAddr << 1].setMvField(mvFieldNeighbours[i << 1].mv, refIdxL0);
+                    mvFieldNeighbours[(arrayAddr << 1) + 1].setMvField(mvFieldNeighbours[(j << 1) + 1].mv, refIdxL1);
+                    interDirNeighbours[arrayAddr] = 3;
 
-                int refPOCL0 = m_slice->getRefPOC(REF_PIC_LIST_0, mvFieldNeighbours[(arrayAddr << 1)].refIdx);
-                int refPOCL1 = m_slice->getRefPOC(REF_PIC_LIST_1, mvFieldNeighbours[(arrayAddr << 1) + 1].refIdx);
-                if (refPOCL0 == refPOCL1 && mvFieldNeighbours[(arrayAddr << 1)].mv == mvFieldNeighbours[(arrayAddr << 1) + 1].mv)
-                {
-                    abCandIsInter[arrayAddr] = false;
-                }
-                else
-                {
                     arrayAddr++;
+                    // early termination
+                    if (arrayAddr == maxNumMergeCand)
+                    {
+                        return;
+                    }
                 }
             }
         }
     }
-    // early termination
-    if (arrayAddr == getSlice()->getMaxNumMergeCand())
-    {
-        return;
-    }
-    int numRefIdx = (getSlice()->isInterB()) ? X265_MIN(m_slice->getNumRefIdx(REF_PIC_LIST_0), m_slice->getNumRefIdx(REF_PIC_LIST_1)) : m_slice->getNumRefIdx(REF_PIC_LIST_0);
+    int numRefIdx = (isInterB) ? X265_MIN(m_slice->getNumRefIdx(REF_PIC_LIST_0), m_slice->getNumRefIdx(REF_PIC_LIST_1)) : m_slice->getNumRefIdx(REF_PIC_LIST_0);
     int r = 0;
     int refcnt = 0;
-    while (arrayAddr < getSlice()->getMaxNumMergeCand())
+    while (arrayAddr < maxNumMergeCand)
     {
-        abCandIsInter[arrayAddr] = true;
         interDirNeighbours[arrayAddr] = 1;
         mvFieldNeighbours[arrayAddr << 1].setMvField(MV(0, 0), r);
 
-        if (getSlice()->isInterB())
+        if (isInterB)
         {
             interDirNeighbours[arrayAddr] = 3;
             mvFieldNeighbours[(arrayAddr << 1) + 1].setMvField(MV(0, 0), r);
@@ -2246,8 +2212,6 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             ++refcnt;
         }
     }
-
-    numValidMergeCand = arrayAddr;
 }
 
 /** Check whether the current PU and a spatial neighboring PU are in a same ME region.
