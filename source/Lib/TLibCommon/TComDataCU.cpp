@@ -1162,7 +1162,7 @@ void TComDataCU::getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList)
 *\param   piMode          it is set with MPM mode in case both MPM are equal. It is used to restrict RD search at encode side.
 *\returns Number of MPM
 */
-void TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDirPred, int32_t* modes)
+int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDirPred)
 {
     TComDataCU* tempCU;
     uint32_t        tempPartIdx;
@@ -1171,25 +1171,20 @@ void TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDir
     // Get intra direction of left PU
     tempCU = getPULeft(tempPartIdx, m_absIdxInLCU + absPartIdx);
 
-    leftIntraDir  = tempCU ? (tempCU->isIntra(tempPartIdx) ? tempCU->getLumaIntraDir(tempPartIdx) : DC_IDX) : DC_IDX;
+    leftIntraDir  = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->getLumaIntraDir(tempPartIdx) : DC_IDX;
 
     // Get intra direction of above PU
     tempCU = getPUAbove(tempPartIdx, m_absIdxInLCU + absPartIdx, true, true);
 
-    aboveIntraDir = tempCU ? (tempCU->isIntra(tempPartIdx) ? tempCU->getLumaIntraDir(tempPartIdx) : DC_IDX) : DC_IDX;
+    aboveIntraDir = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->getLumaIntraDir(tempPartIdx) : DC_IDX;
 
     if (leftIntraDir == aboveIntraDir)
     {
-        if (modes)
-        {
-            *modes = 1;
-        }
-
-        if (leftIntraDir > 1) // angular modes
+        if (leftIntraDir >= 2) // angular modes
         {
             intraDirPred[0] = leftIntraDir;
-            intraDirPred[1] = ((leftIntraDir + 29) % 32) + 2;
-            intraDirPred[2] = ((leftIntraDir - 1) % 32) + 2;
+            intraDirPred[1] = ((leftIntraDir - 2 + 31) & 31) + 2;
+            intraDirPred[2] = ((leftIntraDir - 2 +  1) & 31) + 2;
         }
         else //non-angular
         {
@@ -1197,13 +1192,10 @@ void TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDir
             intraDirPred[1] = DC_IDX;
             intraDirPred[2] = VER_IDX;
         }
+        return 1;
     }
     else
     {
-        if (modes)
-        {
-            *modes = 2;
-        }
         intraDirPred[0] = leftIntraDir;
         intraDirPred[1] = aboveIntraDir;
 
@@ -1215,6 +1207,7 @@ void TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDir
         {
             intraDirPred[2] =  (leftIntraDir + aboveIntraDir) < 2 ? VER_IDX : DC_IDX;
         }
+        return 2;
     }
 }
 

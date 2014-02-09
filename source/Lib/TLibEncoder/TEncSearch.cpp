@@ -1800,7 +1800,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
-        int numModesAvailable = 35; //total number of Intra modes
+        const int numModesAvailable = 35; //total number of Intra modes
         Pel* fenc   = fencYuv->getLumaAddr(pu, width);
         uint32_t stride = predYuv->getStride();
         uint32_t rdModeList[FAST_UDI_MAX_RDMODE_NUM];
@@ -1901,14 +1901,8 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
             }
 
-            int preds[3] = { -1, -1, -1 };
-            int mode = -1;
-            int numCand = 3;
-            cu->getIntraDirLumaPredictor(partOffset, preds, &mode);
-            if (mode >= 0)
-            {
-                numCand = mode;
-            }
+            int preds[3];
+            int numCand = cu->getIntraDirLumaPredictor(partOffset, preds);
 
             for (int j = 0; j < numCand; j++)
             {
@@ -1917,7 +1911,11 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
                 for (int i = 0; i < numModesForFullRD; i++)
                 {
-                    mostProbableModeIncluded |= (mostProbableMode == rdModeList[i]);
+                    if (mostProbableMode == rdModeList[i])
+                    {
+                        mostProbableModeIncluded = true;
+                        break;
+                    }
                 }
 
                 if (!mostProbableModeIncluded)

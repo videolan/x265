@@ -1686,8 +1686,8 @@ void TEncSbac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple)
 {
     uint32_t dir[4], j;
-    int preds[4][3] = { { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 } };
-    int predIdx[4] = { -1, -1, -1, -1 };
+    int preds[4][3];
+    int predIdx[4];
     PartSize mode = cu->getPartitionSize(absPartIdx);
     uint32_t partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;
     uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
@@ -1696,6 +1696,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
     {
         dir[j] = cu->getLumaIntraDir(absPartIdx + partOffset * j);
         cu->getIntraDirLumaPredictor(absPartIdx + partOffset * j, preds[j]);
+        predIdx[j] = -1;
         for (uint32_t i = 0; i < 3; i++)
         {
             if (dir[j] == preds[j][i])
