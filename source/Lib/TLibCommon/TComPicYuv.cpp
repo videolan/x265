@@ -155,14 +155,14 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
     Pel *U = getCbAddr();
     Pel *V = getCrAddr();
 
-    // m_picWidth is the width that is being encoded, padx indicates how many
-    // of those pixels are padding to reach multiple of MinCU(4) size.
-    //
-    // Internally, we need to extend rows out to a multiple of 16 for lowres
-    // downscale and other operations. But those padding pixels are never
-    // encoded.
-    //
-    // The same applies to m_picHeight and pady
+    /* m_picWidth is the width that is being encoded, padx indicates how many
+     * of those pixels are padding to reach multiple of MinCU(4) size.
+     *
+     * Internally, we need to extend rows out to a multiple of 16 for lowres
+     * downscale and other operations. But those padding pixels are never
+     * encoded.
+     *
+     * The same applies to m_picHeight and pady */
 
     int padx = pad[0];
     int pady = pad[1];
