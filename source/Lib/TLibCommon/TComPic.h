@@ -103,6 +103,8 @@ public:
     uint32_t              m_crc[3];
     uint32_t              m_checksum[3];
 
+    bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
+
     TComPic();
     virtual ~TComPic();
 

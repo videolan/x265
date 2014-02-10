@@ -53,6 +53,7 @@ void DPB::recycleUnreferenced(PicList& freeList)
         if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
         {
             pic->m_reconRowCount = 0;
+            pic->m_bChromaPlanesExtended = false;
 
             // iterator is invalidated by remove, restart scan
             m_picList.remove(*pic);

@@ -69,6 +69,7 @@ TComPic::TComPic()
     m_ssimCnt = 0;
     m_frameTime = 0.0;
     m_elapsedCompressTime = 0.0;
+    m_bChromaPlanesExtended = false;
 }
 
 TComPic::~TComPic()
