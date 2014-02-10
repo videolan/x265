@@ -413,7 +413,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
     int numBFrames = 0;
     int numAnalyzed = numFrames;
-    if (cfg->param.scenecutThreshold && scenecut(frames, 0, 1, 1, origNumFrames, maxSearch))
+    if (cfg->param.scenecutThreshold && scenecut(frames, 0, 1, true, origNumFrames, maxSearch))
     {
         frames[1]->sliceType = X265_TYPE_I;
         return;
@@ -508,7 +508,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         /* Check scenecut on the first minigop. */
         for (int j = 1; j < numBFrames + 1; j++)
         {
-            if (cfg->param.scenecutThreshold && scenecut(frames, j, j + 1, 0, origNumFrames, maxSearch))
+            if (cfg->param.scenecutThreshold && scenecut(frames, j, j + 1, false, origNumFrames, maxSearch))
             {
                 frames[j]->sliceType = X265_TYPE_P;
                 numAnalyzed = j;
