@@ -56,18 +56,10 @@ class TComDataCU;
 /// neighboring pixel access class for all components
 class TComPattern
 {
-private:
-
-    static const UChar m_intraFilter[5];
-
 public:
 
     // access functions of ADI buffers
-    Pel*  getAdiOrgBuf(int cuWidth, int cuHeight, Pel* adiBuf);
-    Pel*  getAdiCbBuf(int cuWidth, int cuHeight, Pel* adiBuf);
-    Pel*  getAdiCrBuf(int cuWidth, int cuHeight, Pel* adiBuf);
-
-    Pel*  getPredictorPtr(uint32_t dirMode, uint32_t uiWidthBits, Pel* adiBuf);
+    static Pel* getAdiChromaBuf(int chromaId, int cuHeight, Pel* adiBuf) { return adiBuf + (chromaId == 0 ? 0 : ADI_BUF_STRIDE * (cuHeight * 2 + 1)); }
 
     // -------------------------------------------------------------------------------------------------------------------
     // initialization functions

@@ -340,7 +340,6 @@ void TEncCu::init(Encoder* top)
 
 /** \param  rpcCU pointer of CU data class
  */
-bool mergeFlag = 0;
 
 void TEncCu::compressCU(TComDataCU* cu)
 {
@@ -740,11 +739,9 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                 xCheckRDCostInter(outBestCU, outTempCU, SIZE_2Nx2N);
                 outTempCU->initEstData(depth, qp); // by competition for inter_2Nx2N
             }
-            mergeFlag = 1;
             // by Merge for inter_2Nx2N
             xCheckRDCostMerge2Nx2N(outBestCU, outTempCU, &earlyDetectionSkipMode, m_bestPredYuv[depth], m_bestRecoYuv[depth]);
 
-            mergeFlag = 0;
             outTempCU->initEstData(depth, qp);
 
             if (!m_cfg->param.bEnableEarlySkip)

@@ -45,19 +45,6 @@ using namespace x265;
 //! \{
 
 // ====================================================================================================================
-// Tables
-// ====================================================================================================================
-
-const UChar TComPattern::m_intraFilter[5] =
-{
-    10, //4x4
-    7, //8x8
-    1, //16x16
-    0, //32x32
-    10, //64x64
-};
-
-// ====================================================================================================================
 // Public member functions (TComPattern)
 // ====================================================================================================================
 
@@ -434,56 +421,6 @@ void TComPattern::fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, bool* bNeig
             adiTemp[i * ADI_BUF_STRIDE] = piAdiLineTemp[-i];
         }
     }
-}
-
-Pel* TComPattern::getAdiOrgBuf(int /*cuWidth*/, int /*cuHeight*/, Pel* adiBuf)
-{
-    return adiBuf;
-}
-
-Pel* TComPattern::getAdiCbBuf(int /*cuWidth*/, int /*cuHeight*/, Pel* adiBuf)
-{
-    return adiBuf;
-}
-
-Pel* TComPattern::getAdiCrBuf(int /*cuWidth*/, int cuHeight, Pel* adiBuf)
-{
-    return adiBuf + ADI_BUF_STRIDE * (cuHeight * 2 + 1);
-}
-
-/** Get pointer to reference samples for intra prediction
- * \param dirMode     prediction mode index
- * \param log2BlkSize size of block (2 = 4x4, 3 = 8x8, 4 = 16x16, 5 = 32x32, 6 = 64x64)
- * \param adiBuf    pointer to unfiltered reference samples
- * \return            pointer to (possibly filtered) reference samples
- *
- * The prediction mode index is used to determine whether a smoothed reference sample buffer is returned.
- */
-Pel* TComPattern::getPredictorPtr(uint32_t dirMode, uint32_t log2BlkSize, Pel* adiBuf)
-{
-    Pel* src;
-
-    assert(log2BlkSize >= 2 && log2BlkSize < 7);
-    int diff = std::min<int>(abs((int)dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
-    UChar ucFiltIdx = diff > m_intraFilter[log2BlkSize - 2] ? 1 : 0;
-    if (dirMode == DC_IDX)
-    {
-        ucFiltIdx = 0; //no smoothing for DC or LM chroma
-    }
-
-    assert(ucFiltIdx <= 1);
-
-    int width  = 1 << log2BlkSize;
-    int height = 1 << log2BlkSize;
-
-    src = getAdiOrgBuf(width, height, adiBuf);
-
-    if (ucFiltIdx)
-    {
-        src += ADI_BUF_STRIDE * (2 * height + 1);
-    }
-
-    return src;
 }
 
 bool TComPattern::isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT)
