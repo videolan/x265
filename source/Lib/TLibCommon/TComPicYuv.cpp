@@ -189,12 +189,15 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         uint16_t *u = (uint16_t*)pic.planes[1];
         uint16_t *v = (uint16_t*)pic.planes[2];
 
+        /* defensive programming, mask off bits that are supposed to be zero */
+        uint16_t mask = (1 << X265_DEPTH) - 1;
+
         // Manually copy pixels to up-size them
         for (int r = 0; r < height; r++)
         {
             for (int c = 0; c < width; c++)
             {
-                Y[c] = (Pel)y[c];
+                Y[c] = (pixel)(y[c] & mask);
             }
 
             for (int x = 0; x < padx; x++)
@@ -210,8 +213,8 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         {
             for (int c = 0; c < width >> m_hChromaShift; c++)
             {
-                U[c] = (Pel)u[c];
-                V[c] = (Pel)v[c];
+                U[c] = (pixel)(u[c] & mask);
+                V[c] = (pixel)(v[c] & mask);
             }
 
             for (int x = 0; x < padx >> m_hChromaShift; x++)
