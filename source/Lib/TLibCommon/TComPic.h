@@ -87,20 +87,21 @@ public:
 
     Lowres                m_lowres;
 
-    TComPic*              m_next;
+    TComPic*              m_next;               // PicList doubly linked list pointers
     TComPic*              m_prev;
+
     uint64_t              m_SSDY;
     uint64_t              m_SSDU;
     uint64_t              m_SSDV;
-    double                m_elapsedCompressTime;
-    double                m_frameTime;
+    double                m_ssim;
+    int                   m_ssimCnt;
+
+    double                m_elapsedCompressTime; // elapsed time spent in worker threads
+    double                m_frameTime;           // wall time from frame start to finish
+
     MD5Context            m_state[3];
     uint32_t              m_crc[3];
     uint32_t              m_checksum[3];
-
-    /* SSIM values per frame */
-    double                m_ssim;
-    int                   m_ssimCnt;
 
     TComPic();
     virtual ~TComPic();
