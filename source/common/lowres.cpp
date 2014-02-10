@@ -127,9 +127,9 @@ void Lowres::destroy(int bframes)
 // (re) initialize lowres state
 void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
 {
-    bScenecut = true;
     bIntraCalculated = false;
     bLastMiniGopBFrame = false;
+    bScenecut = true;  // could be a scene-cut, until ruled out by flash detection
     bKeyframe = false; // Not a keyframe unless identified by lookahead
     sliceType = type;
     frameNum = poc;
@@ -160,7 +160,7 @@ void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
         intraMbs[i] = 0;
     }
 
-    /* downscale and generate 4 HPEL planes for lookahead */
+    /* downscale and generate 4 hpel planes for lookahead */
     primitives.frame_init_lowres_core(orig->getLumaAddr(),
                                       lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
                                       orig->getStride(), lumaStride, width, lines);
