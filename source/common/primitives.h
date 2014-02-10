@@ -269,6 +269,8 @@ struct EncoderPrimitives
     } chroma[4]; // X265_CSP_COUNT - do not want to include x265.h here
 };
 
+void extendPicBorder(pixel* recon, int stride, int width, int height, int marginX, int marginY);
+
 /* This copy of the table is what gets used by the encoder.
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;

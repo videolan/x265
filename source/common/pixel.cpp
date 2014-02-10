@@ -827,7 +827,30 @@ void addAvg(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intpt
 namespace x265 {
 // x265 private namespace
 
-/* It should initialize entries for pixel functions defined in this file. */
+/* Extend the edges of a picture so that it may safely be used for motion
+ * compensation. This function assumes the picture is stored in a buffer with
+ * sufficient padding for the X and Y margins */
+void extendPicBorder(pixel* pic, int stride, int width, int height, int marginX, int marginY)
+{
+    /* extend left and right margins */
+    primitives.extendRowBorder(pic, stride, width, height, marginX);
+
+    /* copy top row to create above margin */
+    pixel *top = pic - marginX;
+    for (int y = 0; y < marginY; y++)
+    {
+        memcpy(top - (y + 1) * stride, top, stride * sizeof(pixel));
+    }
+
+    /* copy bottom row to create below margin */
+    pixel *bot = pic - marginX + (height - 1) * stride;
+    for (int y = 0; y < marginY; y++)
+    {
+        memcpy(bot + (y + 1) * stride, bot, stride * sizeof(pixel));
+    }
+}
+
+/* Initialize entries for pixel functions defined in this file */
 void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 {
     SET_FUNC_PRIMITIVE_TABLE_C2(sad)

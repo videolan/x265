@@ -146,35 +146,6 @@ uint32_t TComPicYuv::getCUHeight(int rowNum)
     return height;
 }
 
-void TComPicYuv::xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int marginX, int marginY)
-{
-    int x, y;
-
-    /* TODO: this should become a performance primitive */
-    for (y = 0; y < height; y++)
-    {
-        for (x = 0; x < marginX; x++)
-        {
-            recon[-marginX + x] = recon[0];
-            recon[width + x] = recon[width - 1];
-        }
-
-        recon += stride;
-    }
-
-    recon -= (stride + marginX);
-    for (y = 0; y < marginY; y++)
-    {
-        ::memcpy(recon + (y + 1) * stride, recon, sizeof(Pel) * (width + (marginX << 1)));
-    }
-
-    recon -= ((height - 1) * stride);
-    for (y = 0; y < marginY; y++)
-    {
-        ::memcpy(recon - (y + 1) * stride, recon, sizeof(Pel) * (width + (marginX << 1)));
-    }
-}
-
 /* Copy pixels from an input picture (C structure) into internal TComPicYuv instance
  * Upscale pixels from 8bits to 16 bits when required, but do not modify
  * pixels. */

@@ -262,8 +262,8 @@ bool tryCommonDenom(
                         int height = refyuv->getHeight() >> vshift;
                         int marginX = refyuv->getChromaMarginX();
                         int marginY = refyuv->getChromaMarginY();
-                        refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCbAddr(), stride, width, height, marginX, marginY);
-                        refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCrAddr(), stride, width, height, marginX, marginY);
+                        extendPicBorder(refyuv->getCbAddr(), stride, width, height, marginX, marginY);
+                        extendPicBorder(refyuv->getCrAddr(), stride, width, height, marginX, marginY);
                     }
                 }
             }

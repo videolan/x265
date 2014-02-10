@@ -101,8 +101,6 @@ public:
     TComPicYuv();
     virtual ~TComPicYuv();
 
-    void xExtendPicCompBorder(Pel* recon, int stride, int width, int height, int marginX, int marginY);
-
     // ------------------------------------------------------------------------------------------------
     //  Memory management
     // ------------------------------------------------------------------------------------------------
