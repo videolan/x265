@@ -253,14 +253,18 @@ bool tryCommonDenom(
 
                     /* reference chroma planes must be extended prior to being
                      * used as motion compensation sources */
-                    TComPicYuv *refyuv = refPic->getPicYuvOrg();
-                    int width = refyuv->getWidth() >> hshift;
-                    int height = refyuv->getHeight() >> vshift;
-                    int marginX = refyuv->getChromaMarginX();
-                    int marginY = refyuv->getChromaMarginY();
-                    int stride = refyuv->getCStride();
-                    refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCbAddr(), stride, width, height, marginX, marginY);
-                    refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCrAddr(), stride, width, height, marginX, marginY);
+                    if (!refPic->m_bChromaPlanesExtended)
+                    {
+                        refPic->m_bChromaPlanesExtended = true;
+                        TComPicYuv *refyuv = refPic->getPicYuvOrg();
+                        int stride = refyuv->getCStride();
+                        int width = refyuv->getWidth() >> hshift;
+                        int height = refyuv->getHeight() >> vshift;
+                        int marginX = refyuv->getChromaMarginX();
+                        int marginY = refyuv->getChromaMarginY();
+                        refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCbAddr(), stride, width, height, marginX, marginY);
+                        refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCrAddr(), stride, width, height, marginX, marginY);
+                    }
                 }
             }
 
