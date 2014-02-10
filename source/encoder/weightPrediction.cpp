@@ -248,8 +248,20 @@ bool tryCommonDenom(
                 mvCosts = fenc.lowresMvCosts[list][diffPoc - 1];
                 /* test whether this motion search was performed by lookahead */
                 if (mvs[0].x != 0x7FFF)
+                {
                     bMotionCompensate = true;
-                /* TODO: trigger lookahead frame cost estimate here, when necessary */
+
+                    /* reference chroma planes must be extended prior to being
+                     * used as motion compensation sources */
+                    TComPicYuv *refyuv = refPic->getPicYuvOrg();
+                    int width = refyuv->getWidth() >> hshift;
+                    int height = refyuv->getHeight() >> vshift;
+                    int marginX = refyuv->getChromaMarginX();
+                    int marginY = refyuv->getChromaMarginY();
+                    int stride = refyuv->getCStride();
+                    refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCbAddr(), stride, width, height, marginX, marginY);
+                    refPic->getPicYuvOrg()->xExtendPicCompBorder(refyuv->getCrAddr(), stride, width, height, marginX, marginY);
+                }
             }
 
             /* prepare estimates */
@@ -322,7 +334,6 @@ bool tryCommonDenom(
 
                     if (bMotionCompensate)
                     {
-                        // TODO: extend borders of fref, only once
                         mcChroma(mcTemp, fref, fenc, frefstride, mvCosts, fenc.intraCost, mvs, height, width, csp);
                         fref = mcTemp;
                     }
@@ -394,9 +405,9 @@ bool tryCommonDenom(
                             ioff = Clip3(-128, 127, ioff);
                         }
 
-                        SET_WEIGHT(w, true, is, mindenom, ioff);
+                        SET_WEIGHT(w, true, curScale, mindenom, ioff);
                         uint32_t s = weightCost(orig, origstride, fref, frefstride, weightTemp, width, height, &w);
-                        COPY4_IF_LT(minscore, s, minscale, is, minoff, ioff, bFound, true);
+                        COPY4_IF_LT(minscore, s, minscale, curScale, minoff, ioff, bFound, true);
                         if (minoff == curOffset - oD && ioff != curOffset - oD)
                             break;
                     }
@@ -420,15 +431,6 @@ bool tryCommonDenom(
 
             if (bWeightRef)
             {
-                // Check deltaWeight range, which must be between 127 and -128
-                // TODO: Check deltaOffset is between -512 to 511
-                for (int i = 0; i < 3; i++)
-                {
-                    int deltaWeight = fw[i].inputWeight - (1 << fw[i].log2WeightDenom);
-                    if (deltaWeight > 127 || deltaWeight < -128)
-                        // abort and retry with a lower denom
-                        return false;
-                }
 
                 // Make sure both chroma channels match
                 if (fw[1].bPresentFlag != fw[2].bPresentFlag)
