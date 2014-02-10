@@ -351,15 +351,12 @@ typedef struct x265_param
      * performance impact, but the use case may preclude it.  Default true */
     int       bOpenGOP;
 
-    /* Minimum keyframe distance or intra period in number of frames. Can be
-     * between 1 and keyframeMax. When the lookahead is between the min and max
-     * thresholds, it will use an I slice if a scene cut is detected, or a
-     * P slice otherwise */
+    /* Scenecuts closer together than this are coded as I, not IDR. */
     int       keyframeMin;
 
-    /* Maximum keyframe distance or intra period in number of frames. If 0 or
-     * 1, all frames are I frames. -1 is casted to MAX_UINT internally which
-     * effectively makes frame 0 the only I frame. Default is 250 */
+    /* Maximum keyframe distance or intra period in number of frames. If 0 or 1,
+     * all frames are I frames. A negative value is casted to MAX_INT internally
+     * which effectively makes frame 0 the only I frame. Default is 250 */
     int       keyframeMax;
 
     /* The maximum number of L0 references a P or B slice may use. This

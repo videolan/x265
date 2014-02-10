@@ -41,6 +41,7 @@
 #include "x265.h"
 
 #include <cstdlib>
+#include <climits>
 #include <math.h> // log10
 #include <stdio.h>
 #include <string.h>
@@ -1291,17 +1292,25 @@ void Encoder::configure(x265_param *_param)
     {
         x265_log(_param, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
     }
-    if (!_param->keyframeMin)
+    if (_param->keyframeMax < 0)
     {
-        _param->keyframeMin = X265_MIN(_param->frameRate, _param->keyframeMax / 10);
+        /* A negative max GOP size indicates the user wants only one I frame at
+         * the start of the stream. Set an infinite GOP distance and disable
+         * adaptive I frame placement */
+        _param->keyframeMax = INT_MAX;
+        _param->scenecutThreshold = 0;
     }
-    _param->keyframeMin = X265_MAX(1, X265_MIN(_param->keyframeMin, _param->keyframeMax / 2 + 1));
-    if (_param->keyframeMax <= 1)
+    else if (_param->keyframeMax <= 1)
     {
         // disable lookahead for all-intra encodes
         _param->bFrameAdaptive = 0;
         _param->bframes = 0;
     }
+    if (!_param->keyframeMin)
+    {
+        _param->keyframeMin = X265_MIN(_param->frameRate, _param->keyframeMax / 10);
+    }
+    _param->keyframeMin = X265_MAX(1, X265_MIN(_param->keyframeMin, _param->keyframeMax / 2 + 1));
     if (!_param->bEnableRectInter)
     {
         _param->bEnableAMP = false;

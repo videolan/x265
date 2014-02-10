@@ -28,6 +28,7 @@
 #include "threading.h"
 #include "common.h"
 
+#include <climits>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -460,8 +461,6 @@ int x265_check_params(x265_param *param)
           "subme must be less than or equal to X265_MAX_SUBPEL_LEVEL (7)");
     CHECK(param->subpelRefine < 0,
           "subme must be greater than or equal to 0");
-    CHECK(param->keyframeMax < 0,
-          "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
     CHECK(param->frameNumThreads < 0,
           "frameNumThreads (--frame-threads) must be 0 or higher");
     CHECK(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
@@ -586,7 +585,14 @@ void x265_print_params(x265_param *param)
 
     x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
-    x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : %d / %d / %d\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold);
+    if (param->keyframeMax != INT_MAX || param->scenecutThreshold)
+    {
+        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : %d / %d / %d\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold);
+    }
+    else
+    {
+        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : disabled\n");
+    }
     if (param->cbQpOffset || param->crQpOffset)
     {
         x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);

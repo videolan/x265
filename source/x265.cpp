@@ -310,8 +310,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
     H0("\nSlice decision options:\n");
     H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
-    H0("-I/--keyint                      Max intra period in frames. Default %d\n", param->keyframeMax);
-    H0("-i/--min-keyint                  Minimum GOP size [auto]\n");
+    H0("-I/--keyint                      Max IDR period in frames. -1 for infinite-gop. Default %d\n", param->keyframeMax);
+    H0("-i/--min-keyint                  Scenecuts closer together than this are coded as I, not IDR. Default: auto\n");
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
     H0("   --scenecut                    How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
     H0("   --rc-lookahead                Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
