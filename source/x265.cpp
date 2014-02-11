@@ -330,6 +330,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-q/--qp                          Base QP for CQP mode. Default %d\n", param->rc.qp);
     H0("   --aq-mode                     Mode for Adaptive Quantization - 0:none 1:aqVariance Default %d\n", param->rc.aqMode);
     H0("   --aq-strength                 Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
+    H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %d\n", param->rc.cuTree);
     H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
     H0("   --rd                          Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
@@ -348,7 +349,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --recon-depth                 Bit-depth of reconstructed raw image file. Defaults to input bit depth\n");
     H0("\nSEI options:\n");
     H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
-    H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %d\n", param->rc.cuTree);
 #undef OPT
 #undef H0
     exit(0);
