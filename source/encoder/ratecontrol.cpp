@@ -284,6 +284,8 @@ RateControl::RateControl(TEncCfg * _cfg)
     fps = cfg->param.frameRate;
     if (isVbv)
     {
+        /* We don't support changing the ABR bitrate right now,
+           so if the stream starts as CBR, keep it CBR. */
         if (cfg->param.rc.vbvBufferSize < (int)(cfg->param.rc.vbvMaxBitrate / fps))
         {
             cfg->param.rc.vbvBufferSize = (int)(cfg->param.rc.vbvMaxBitrate / fps);
@@ -297,7 +299,13 @@ RateControl::RateControl(TEncCfg * _cfg)
         vbvMaxRate = vbvMaxBitrate;
         bufferSize = vbvBufferSize;
         singleFrameVbv = bufferRate * 1.1 > bufferSize;
+
+        if (cfg->param.rc.vbvBufferInit > 1.)
+                cfg->param.rc.vbvBufferInit = Clip3( 0.0, 1.0, cfg->param.rc.vbvBufferInit / cfg->param.rc.vbvBufferSize);
+        cfg->param.rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(cfg->param.rc.vbvBufferInit, bufferRate / bufferSize));
         bufferFillFinal = bufferSize * cfg->param.rc.vbvBufferInit;
+        vbvMinRate = /*!rc->b_2pass && */ cfg->param.rc.rateControlMode == X265_RC_ABR
+                   && cfg->param.rc.vbvMaxBitrate <= cfg->param.rc.bitrate;
     }
 
     for (int i = 0; i < 5; i++)
@@ -498,7 +506,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
 
             /* ABR code can potentially be counterproductive in CBR, so just don't bother.
              * Don't run it if the frame complexity is zero either. */
-            if (lastSatd)
+            if (!vbvMinRate && lastSatd)
             {
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
                 double timeDone = (double)(framesDone - cfg->param.frameNumThreads + 1) / cfg->param.frameRate;
@@ -670,7 +678,8 @@ double RateControl::clipQscale(double q)
             }
             q = X265_MAX(q0 - 5, q);
         }
-        q = X265_MAX(q0, q);
+        if (!vbvMinRate)
+            q = X265_MAX(q0, q);
     }
 
     if (lmin1 == lmax1)

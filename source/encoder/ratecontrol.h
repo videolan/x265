@@ -89,6 +89,7 @@ struct RateControl
     double bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
     double bufferRate;       /* # of bits added to buffer_fill after each frame */
     double vbvMaxRate;       /* in kbps */
+    double vbvMinRate;       /* in kbps */
     bool singleFrameVbv;
     bool isVbv;
     double fps;
