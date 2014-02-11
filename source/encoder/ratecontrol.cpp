@@ -752,7 +752,7 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
 {
     if (isAbr)
     {
-        if (!isVbv)
+        if (!isVbv && cfg->param.rc.rateControlMode == X265_RC_ABR)
         {
             checkAndResetABR(rce);
         }
