@@ -2309,7 +2309,6 @@ void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, 
  */
 void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info)
 {
-    MV mvp;
     bool bAddedSmvp = false;
 
     info->m_num = 0;
@@ -2320,7 +2319,6 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
 
     //-- Get Spatial MV
     uint32_t partIdxLT, partIdxRT, partIdxLB;
-    uint32_t numPartInCUWidth = m_pic->getNumPartInWidth();
     bool bAdded = false;
 
     deriveLeftRightTopIdx(partIdx, partIdxLT, partIdxRT);
@@ -2364,10 +2362,8 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
     {
         xAddMVPCand(info, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
     }
-    bAdded = bAddedSmvp;
-    if (info->m_num == 2) bAdded = true;
 
-    if (!bAdded)
+    if (!bAddedSmvp)
     {
         bAdded = xAddMVPCandOrder(info, picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
         if (!bAdded)
@@ -2387,6 +2383,10 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         {
             info->m_num = 1;
         }
+        else
+        {
+            return;
+        }
     }
 
     if (getSlice()->getEnableTMVPFlag())
@@ -2397,23 +2397,22 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         uint32_t partIdxRB;
         uint32_t absPartIdx;
         uint32_t absPartAddr;
-        int lcuIdx;
 
         deriveRightBottomIdx(partIdx, partIdxRB);
         absPartAddr = m_absIdxInLCU + partAddr;
 
         //----  co-located RightBottom Temporal Predictor (H) ---//
         absPartIdx = g_zscanToRaster[partIdxRB];
+        int lcuIdx = -1;
         if ((m_pic->getCU(m_cuAddr)->getCUPelX() + g_rasterToPelX[absPartIdx] + m_pic->getMinCUWidth()) >= m_slice->getSPS()->getPicWidthInLumaSamples())  // image boundary check
         {
-            lcuIdx = -1;
         }
         else if ((m_pic->getCU(m_cuAddr)->getCUPelY() + g_rasterToPelY[absPartIdx] + m_pic->getMinCUHeight()) >= m_slice->getSPS()->getPicHeightInLumaSamples())
         {
-            lcuIdx = -1;
         }
         else
         {
+            uint32_t numPartInCUWidth = m_pic->getNumPartInWidth();
             if ((absPartIdx % numPartInCUWidth < numPartInCUWidth - 1) &&        // is not at the last column of LCU
                 (absPartIdx / numPartInCUWidth < m_pic->getNumPartInHeight() - 1)) // is not at the last row    of LCU
             {
@@ -2423,7 +2422,6 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
             else if (absPartIdx % numPartInCUWidth < numPartInCUWidth - 1)       // is not at the last column of LCU But is last row of LCU
             {
                 absPartAddr = g_rasterToZscan[(absPartIdx + numPartInCUWidth + 1) % m_pic->getNumPartInCU()];
-                lcuIdx      = -1;
             }
             else if (absPartIdx / numPartInCUWidth < m_pic->getNumPartInHeight() - 1) // is not at the last row of LCU But is last column of LCU
             {
@@ -2433,7 +2431,6 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
             else //is the right bottom corner of LCU
             {
                 absPartAddr = 0;
-                lcuIdx      = -1;
             }
         }
         if (lcuIdx >= 0 && xGetColMVP(picList, lcuIdx, absPartAddr, colmv, refIdxCol))
@@ -2453,10 +2450,6 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         //----  co-located RightBottom Temporal Predictor  ---//
     }
 
-    if (info->m_num > AMVP_MAX_NUM_CANDS)
-    {
-        info->m_num = AMVP_MAX_NUM_CANDS;
-    }
     while (info->m_num < AMVP_MAX_NUM_CANDS)
     {
         info->m_mvCand[info->m_num] = 0;

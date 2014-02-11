@@ -53,6 +53,8 @@
 #include "bitcost.h"
 #include "motion.h"
 
+#define MVP_IDX_BITS 1
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -105,9 +107,6 @@ protected:
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
     Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
-
-    // AMVP cost of a given mvp index for a given mvp candidate count
-    uint32_t        m_mvpIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1];
 
     // Color space parameters
     int             m_hChromaShift;
@@ -227,8 +226,8 @@ protected:
     void xCheckBestMVP(AMVPInfo* amvpInfo, MV cMv, MV& mvPred, int& mvpIdx,
                        uint32_t& outBits, uint32_t& outCost);
 
-    uint32_t xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
-                              int mvpCandCount, int picList, int refIdx, int sizex, int sizey);
+    uint32_t xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand,
+                              int picList, int refIdx, int sizex, int sizey);
 
     uint32_t xGetMvpIdxBits(int idx, int num);
     void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);

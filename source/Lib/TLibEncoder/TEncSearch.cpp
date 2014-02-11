@@ -134,18 +134,6 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
         }
     }
 
-    // initialize motion cost
-    for (int num = 0; num < AMVP_MAX_NUM_CANDS + 1; num++)
-    {
-        for (int idx = 0; idx < AMVP_MAX_NUM_CANDS; idx++)
-        {
-            if (idx < num)
-                m_mvpIdxCost[idx][num] = xGetMvpIdxBits(idx, num);
-            else
-                m_mvpIdxCost[idx][num] = MAX_INT;
-        }
-    }
-
     initTempBuff(cfg->param.internalCsp);
 
     m_tempPel = new Pel[g_maxCUWidth * g_maxCUHeight];
@@ -2562,7 +2550,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                     xEstimateMvPredAMVP(cu, partIdx, list, idx, mvPred[list][idx], &amvpInfo[list][idx], &biPDistTemp);
                     mvpIdx[list][idx] = cu->getMVPIdx(list, partAddr);
 
-                    bitsTemp += m_mvpIdxCost[mvpIdx[list][idx]][AMVP_MAX_NUM_CANDS];
+                    bitsTemp += MVP_IDX_BITS;
                     int merange = m_adaptiveRange[list][idx];
                     MV& mvp = mvPred[list][idx];
                     MV& outmv = mvTemp[list][idx];
@@ -2831,25 +2819,13 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list,
     cu->fillMvpCand(partIdx, partAddr, list, refIdx, amvpInfo);
 
     bestMv = amvpInfo->m_mvCand[0];
-    if (amvpInfo->m_num <= 1)
-    {
-        mvPred = bestMv;
-
-        cu->setMVPIdxSubParts(bestIdx, list, partAddr, partIdx, cu->getDepth(partAddr));
-
-        if (cu->getSlice()->getMvdL1ZeroFlag() && list == REF_PIC_LIST_1)
-        {
-            (*distBiP) = xGetTemplateCost(cu, partAddr, &m_predTempYuv, mvPred, 0, AMVP_MAX_NUM_CANDS, list, refIdx, roiWidth, roiHeight);
-        }
-        return;
-    }
 
     m_predTempYuv.clear();
 
     //-- Check Minimum Cost.
-    for (i = 0; i < amvpInfo->m_num; i++)
+    for (i = 0; i < AMVP_MAX_NUM_CANDS; i++)
     {
-        uint32_t cost = xGetTemplateCost(cu, partAddr, &m_predTempYuv, amvpInfo->m_mvCand[i], i, AMVP_MAX_NUM_CANDS, list, refIdx, roiWidth, roiHeight);
+        uint32_t cost = xGetTemplateCost(cu, partAddr, &m_predTempYuv, amvpInfo->m_mvCand[i], list, refIdx, roiWidth, roiHeight);
         if (bestCost > cost)
         {
             bestCost = cost;
@@ -2945,20 +2921,19 @@ void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_
 void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost)
 {
     assert(amvpInfo->m_mvCand[outMvpIdx] == mvPred);
-    if (amvpInfo->m_num < 2) return;
 
     m_me.setMVP(mvPred);
     int bestMvpIdx = outMvpIdx;
-    int mvBitsOrig = m_me.bitcost(mv) + m_mvpIdxCost[outMvpIdx][AMVP_MAX_NUM_CANDS];
+    int mvBitsOrig = m_me.bitcost(mv) + MVP_IDX_BITS;
     int bestMvBits = mvBitsOrig;
 
-    for (int mvpIdx = 0; mvpIdx < amvpInfo->m_num; mvpIdx++)
+    for (int mvpIdx = 0; mvpIdx < AMVP_MAX_NUM_CANDS; mvpIdx++)
     {
         if (mvpIdx == outMvpIdx)
             continue;
 
         m_me.setMVP(amvpInfo->m_mvCand[mvpIdx]);
-        int mvbits = m_me.bitcost(mv) + m_mvpIdxCost[mvpIdx][AMVP_MAX_NUM_CANDS];
+        int mvbits = m_me.bitcost(mv) + MVP_IDX_BITS;
 
         if (mvbits < bestMvBits)
         {
@@ -2978,8 +2953,8 @@ void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMv
     }
 }
 
-uint32_t TEncSearch::xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand, int mvpIdx,
-                                      int mvpCandCount, int list, int refIdx, int sizex, int sizey)
+uint32_t TEncSearch::xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand,
+                                      int list, int refIdx, int sizex, int sizey)
 {
     // TODO: does it clip with m_referenceRowsAvailable?
     cu->clipMv(mvCand);
@@ -2990,7 +2965,7 @@ uint32_t TEncSearch::xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv
     // calc distortion
     uint32_t cost = m_me.bufSAD(templateCand->getLumaAddr(partAddr), templateCand->getStride());
     x265_emms();
-    return m_rdCost->calcRdSADCost(cost, m_mvpIdxCost[mvpIdx][mvpCandCount]);
+    return m_rdCost->calcRdSADCost(cost, MVP_IDX_BITS);
 }
 
 void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax)
