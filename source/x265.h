@@ -85,8 +85,14 @@ typedef struct x265_picture
     int     sliceType;
     int     poc;
     int     colorSpace;
+
+    /* presentation time stamp: user-specified, returned on output */
     int64_t pts;
+
+    /* display time stamp: ignored on input, copied from reordered
+     * pts. Returned on output */
     int64_t dts;
+
     void*   userData;
 
     /* new data members to this structure must be added to the end so that
