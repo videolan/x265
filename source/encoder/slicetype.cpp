@@ -1358,10 +1358,10 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     int listused = 0;
 
     // establish search bounds that don't cross extended frame boundaries
-    mvmin.x = (uint16_t)(-cux * cuSize - 8);
-    mvmin.y = (uint16_t)(-cuy * cuSize - 8);
-    mvmax.x = (uint16_t)((widthInCU - cux - 1) * cuSize + 8);
-    mvmax.y = (uint16_t)((heightInCU - cuy - 1) * cuSize + 8);
+    mvmin.x = (int16_t)(-cux * cuSize - 8);
+    mvmin.y = (int16_t)(-cuy * cuSize - 8);
+    mvmax.x = (int16_t)((widthInCU - cux - 1) * cuSize + 8);
+    mvmax.y = (int16_t)((heightInCU - cuy - 1) * cuSize + 8);
 
     if (p0 != p1)
     {
