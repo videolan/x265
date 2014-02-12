@@ -44,11 +44,17 @@ void mcLuma(
 {
     pixel *src = ref.lowresPlane[0];
     int stride = ref.lumaStride;
+    const int cuSize = 8;
+    MV mvmin, mvmax;
+
     int cu = 0;
-    for (int y = 0; y < ref.lines; y += 8)
+    for (int y = 0; y < ref.lines; y += cuSize)
     {
         int pixoff = y * stride;
-        for (int x = 0; x < ref.width; x += 8, pixoff += 8, cu++)
+        mvmin.y = (int16_t)((-y - 8) << 2);
+        mvmax.y = (int16_t)((ref.lines - y - 1 + 8) << 2);
+
+        for (int x = 0; x < ref.width; x += cuSize, pixoff += cuSize, cu++)
         {
             if (mvCost[cu] > intraCost[cu])
             {
@@ -59,7 +65,13 @@ void mcLuma(
             {
                 ALIGN_VAR_16(pixel, buf8x8[8 * 8]);
                 intptr_t bstride = 8;
-                pixel *tmp = ref.lowresMC(pixoff, mvs[cu], buf8x8, bstride);
+                mvmin.x = (int16_t)((-x - 8) << 2);
+                mvmax.x = (int16_t)((ref.width - x - 1 + 8) << 2);
+
+                /* clip MV to available pixels */
+                MV mv = mvs[cu];
+                mv = mv.clipped(mvmin, mvmax);
+                pixel *tmp = ref.lowresMC(pixoff, mv, buf8x8, bstride);
                 primitives.luma_copy_pp[LUMA_8x8](mcout + pixoff, stride, tmp, bstride);
             }
         }
@@ -87,6 +99,7 @@ void mcChroma(
     int vShift = CHROMA_V_SHIFT(csp);
     int bw = 16 >> hShift;
     int bh = 16 >> vShift;
+    MV mvmin, mvmax;
 
     int lowresWidthInCU = fenc.width >> 3;
     int lowresHeightInCU = fenc.lines >> 3;
@@ -98,6 +111,8 @@ void mcChroma(
          * into the lowres structures */
         int cu = y * lowresWidthInCU;
         int pixoff = y * stride;
+        mvmin.y = (int16_t)((-y - 8) << 2);
+        mvmax.y = (int16_t)((height - y - 1 + 8) << 2);
 
         for (int x = 0; x < width; x += bw, cu++, pixoff += bw)
         {
@@ -107,6 +122,11 @@ void mcChroma(
                 mv <<= 1;        // fullres MV
                 mv.x >>= hShift;
                 mv.y >>= vShift;
+
+                /* clip MV to available pixels */
+                mvmin.x = (int16_t)((-x - 8) << 2);
+                mvmax.x = (int16_t)((width - x - 1 + 8) << 2);
+                mv = mv.clipped(mvmin, mvmax);
 
                 int fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);
                 pixel *temp = src + pixoff + fpeloffset;
