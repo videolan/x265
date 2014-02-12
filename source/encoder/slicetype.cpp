@@ -373,13 +373,57 @@ void Lookahead::slicetypeDecide()
     }
 }
 
+void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
+{
+    int prevNonB = 0, curNonB = 1, idx = 0;
+    while (curNonB < numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
+        curNonB++;
+    int nextNonB = keyframe ? prevNonB : curNonB;
+
+    while (curNonB < numFrames)
+    {
+        /* P/I cost: This shouldn't include the cost of nextNonB */
+        if (nextNonB != curNonB)
+        {
+            int p0 = IS_X265_TYPE_I(frames[curNonB]->sliceType) ? curNonB : prevNonB;
+            frames[nextNonB]->plannedSatd[idx] = vbvFrameCost(frames, p0, curNonB, curNonB);
+            frames[nextNonB]->plannedType[idx] = frames[curNonB]->sliceType;
+            idx++;
+        }
+        /* Handle the B-frames: coded order */
+        for (int i = prevNonB+1; i < curNonB; i++, idx++)
+        {
+            frames[nextNonB]->plannedSatd[idx] = vbvFrameCost(frames, prevNonB, curNonB, i);
+            frames[nextNonB]->plannedType[idx] = X265_TYPE_B;
+        }
+        prevNonB = curNonB;
+        curNonB++;
+        while (curNonB <= numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
+            curNonB++;
+    }
+    frames[nextNonB]->plannedType[idx] = X265_TYPE_AUTO;
+}
+
+int64_t Lookahead::vbvFrameCost(Lowres **frames, int p0, int p1, int b)
+{
+    int64_t cost = est.estimateFrameCost(frames, p0, p1, b, 0);
+    if (cfg->param.rc.aqMode)
+    {
+        if (cfg->param.rc.cuTree)
+            return frameCostRecalculate(frames, p0, p1, b);
+        else
+            return frames[b]->costEstAq[b-p0][p1-b];
+    }
+    return cost;
+}
+
 void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 {
     int numFrames, origNumFrames, keyintLimit, framecnt;
     int maxSearch = X265_MIN(cfg->param.lookaheadDepth, X265_LOOKAHEAD_MAX);
     int cuCount = NUM_CUS;
     int resetStart;
-
+    bool bIsVbvLookahead = cfg->param.rc.vbvBufferSize && cfg->param.lookaheadDepth;
     if (!lastNonB)
         return;
 
@@ -403,7 +447,9 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     keyintLimit = cfg->param.keyframeMax - frames[0]->frameNum + lastKeyframe - 1;
     origNumFrames = numFrames = X265_MIN(framecnt, keyintLimit);
 
-    if (cfg->param.bOpenGOP && numFrames < framecnt)
+    if (bIsVbvLookahead)
+        numFrames = framecnt;
+    else if (cfg->param.bOpenGOP && numFrames < framecnt)
         numFrames++;
     else if (numFrames == 0)
     {
@@ -537,6 +583,9 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         frames[j]->sliceType = X265_TYPE_I;
         resetStart = X265_MIN(resetStart, j + 1);
     }
+
+    if (bIsVbvLookahead)
+        vbvLookahead(frames, numFrames, bKeyframe);
 
     /* Restore frametypes for all frames that haven't actually been decided yet. */
     for (int j = resetStart; j <= numFrames; j++)

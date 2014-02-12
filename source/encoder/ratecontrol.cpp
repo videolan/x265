@@ -384,7 +384,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     {
         lastSatd = l->getEstimatedPictureCost(pic);
         rce->lastSatd = lastSatd;
-        double q = qScale2qp(rateEstimateQscale(rce));
+        double q = qScale2qp(rateEstimateQscale(pic, rce));
         qp = Clip3(MIN_QP, MAX_MAX_QP, (int)(q + 0.5));
         rce->qpaRc = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
@@ -419,7 +419,7 @@ void RateControl::accumPQpUpdate()
         accumPQp += qp;
 }
 
-double RateControl::rateEstimateQscale(RateControlEntry *rce)
+double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
 {
     double q;
 
@@ -561,7 +561,7 @@ double RateControl::rateEstimateQscale(RateControlEntry *rce)
         double lmax1 = lmax[sliceType];
         q = Clip3(lmin1, lmax1, q);
 
-        q = clipQscale(q);
+        q = clipQscale(pic, q);
 
         lastQScaleFor[sliceType] = q;
 
@@ -617,7 +617,7 @@ double RateControl::predictSize(Predictor *p, double q, double var)
     return (p->coeff * var + p->offset) / (q * p->count);
 }
 
-double RateControl::clipQscale(double q)
+double RateControl::clipQscale(TComPic* pic, double q)
 {
     double lmin1 = lmin[sliceType];
     double lmax1 = lmax[sliceType];
@@ -627,8 +627,55 @@ double RateControl::clipQscale(double q)
     // since they are controlled by the P-frames' QPs.
     if (isVbv && lastSatd > 0)
     {
-        //if (lookahead){} //for lookahead
-        //else
+        if (cfg->param.lookaheadDepth)
+        {
+            int terminate = 0;
+
+            /* Avoid an infinite loop. */
+            for (int iterations = 0; iterations < 1000 && terminate != 3; iterations++)
+            {
+                double frameQ[3];
+                double curBits = predictSize(&pred[sliceType], q, (double)lastSatd);
+                double bufferFillCur = bufferFill - curBits;
+                double targetFill;
+                double totalDuration = 0;
+                frameQ[0] = sliceType == I_SLICE ? q * cfg->param.rc.ipFactor : q;
+                frameQ[1] = frameQ[0] * cfg->param.rc.pbFactor;
+                frameQ[2] = frameQ[0] / cfg->param.rc.ipFactor;
+
+                /* Loop over the planned future frames. */
+                for (int j = 0; bufferFillCur >= 0 && bufferFillCur <= bufferSize; j++)
+                {
+                    totalDuration += frameDuration;
+                    bufferFillCur += vbvMaxRate * frameDuration;
+                    int type = pic->m_lowres.plannedType[j];
+                    int64_t satd = pic->m_lowres.plannedSatd[j];
+                    if (type == X265_TYPE_AUTO)
+                        break;
+                    type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
+                    curBits = predictSize(&pred[type], frameQ[type], (double)satd);
+                    bufferFillCur -= curBits;
+                }
+                /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
+                targetFill = X265_MIN(bufferFill + totalDuration * vbvMaxRate * 0.5, bufferSize * 0.5);
+                if (bufferFillCur < targetFill)
+                {
+                    q *= 1.01;
+                    terminate |= 1;
+                    continue;
+                }
+                /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
+                targetFill = Clip3(bufferFill - totalDuration * vbvMaxRate * 0.5, bufferSize * 0.8, bufferSize);
+                if (vbvMinRate && bufferFillCur > targetFill)
+                {
+                    q /= 1.01;
+                    terminate |= 2;
+                    continue;
+                }
+                break;
+            }
+        }
+        else
         {
             if ((sliceType == P_SLICE ||
                  (sliceType == I_SLICE && lastNonBPictType == I_SLICE)) &&

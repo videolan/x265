@@ -151,6 +151,8 @@ protected:
     bool    scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
     void    slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
     int64_t slicetypePathCost(Lowres **frames, char *path, int64_t threshold);
+    int64_t vbvFrameCost(Lowres **frames, int p0, int p1, int b);
+    void    vbvLookahead(Lowres **frames, int numFrames, int keyframes);
 
     /* called by slicetypeAnalyse() to effect cuTree adjustments to adaptive
      * quant offsets */
