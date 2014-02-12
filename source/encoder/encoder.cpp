@@ -1618,7 +1618,7 @@ x265_encoder *x265_encoder_open(x265_param *param)
 extern "C"
 int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
-    if (!pp_nal)
+    if (!pp_nal || !enc)
         return 0;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
@@ -1652,6 +1652,9 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 extern "C"
 int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
 {
+    if (!enc)
+        return -1;
+
     Encoder *encoder = static_cast<Encoder*>(enc);
     NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
     int numEncoded = encoder->encode(!pic_in, pic_in, pic_out, nalunits);
@@ -1682,29 +1685,36 @@ EXTERN_CYCLE_COUNTER(ME);
 extern "C"
 void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t statsSizeBytes)
 {
-    Encoder *encoder = static_cast<Encoder*>(enc);
-
-    encoder->fetchStats(outputStats, statsSizeBytes);
+    if (enc && outputStats)
+    {
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        encoder->fetchStats(outputStats, statsSizeBytes);
+    }
 }
 
 extern "C"
 void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
 {
-    Encoder *encoder = static_cast<Encoder*>(enc);
-
-    encoder->writeLog(argc, argv);
+    if (enc)
+    {
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        encoder->writeLog(argc, argv);
+    }
 }
 
 extern "C"
 void x265_encoder_close(x265_encoder *enc)
 {
-    Encoder *encoder = static_cast<Encoder*>(enc);
+    if (enc)
+    {
+        Encoder *encoder = static_cast<Encoder*>(enc);
 
-    REPORT_CYCLE_COUNTER(ME);
+        REPORT_CYCLE_COUNTER(ME);
 
-    encoder->printSummary();
-    encoder->destroy();
-    delete encoder;
+        encoder->printSummary();
+        encoder->destroy();
+        delete encoder;
+    }
 }
 
 extern "C"
