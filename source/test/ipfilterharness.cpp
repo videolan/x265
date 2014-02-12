@@ -33,6 +33,8 @@
 
 #define ITERS  100
 #define TEST_CASES 3
+#define SMAX (1 << 12)
+#define SMIN (-1 << 12)
 
 using namespace x265;
 
@@ -49,7 +51,10 @@ IPFilterHarness::IPFilterHarness()
     /* Array of pixel buffers */
     pixel_test_buff = X265_MALLOC(pixel*, TEST_CASES);
 
-    if (!pixel_buff || !short_buff || !IPF_vec_output_s || !IPF_vec_output_p || !IPF_C_output_s || !IPF_C_output_p || !pixel_test_buff)
+    /* Array of short buffers */
+    short_test_buff = X265_MALLOC(int16_t*, TEST_CASES);
+
+    if (!pixel_buff || !short_buff || !IPF_vec_output_s || !IPF_vec_output_p || !IPF_C_output_s || !IPF_C_output_p || !pixel_test_buff || !short_test_buff)
     {
         fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
         exit(-1);
@@ -58,7 +63,8 @@ IPFilterHarness::IPFilterHarness()
     for (int i = 0; i < TEST_CASES; i++)
     {
         pixel_test_buff[i] = X265_MALLOC(pixel, ipf_t_size);
-        if (!pixel_test_buff[i])
+        short_test_buff[i] = X265_MALLOC(int16_t, ipf_t_size);
+        if (!pixel_test_buff[i] || !short_test_buff[i])
         {
             fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
             exit(-1);
@@ -66,16 +72,19 @@ IPFilterHarness::IPFilterHarness()
     }
 
     /*[0] --- Random values  */
+    /*[1] --- Minimum        */
+    /*[2] --- Maximum        */
     for (int i = 0; i < ipf_t_size; i++)
     {
         pixel_test_buff[0][i] = rand() & PIXEL_MAX;
+        short_test_buff[0][i] = (rand() % (2 * SMAX)) - SMAX;
+
+        pixel_test_buff[1][i] = PIXEL_MIN;
+        short_test_buff[1][i] = SMIN;
+
+        pixel_test_buff[2][i] = PIXEL_MAX;
+        short_test_buff[2][i] = SMAX;
     }
-
-    /*[1] --- Minimum       */
-    memset(pixel_test_buff[1], PIXEL_MIN, ipf_t_size * sizeof(pixel));
-
-    /*[2] --- Maximum       */
-    memset(pixel_test_buff[2], PIXEL_MAX, ipf_t_size * sizeof(pixel));
 
     memset(IPF_C_output_p, 0xCD, ipf_t_size);
     memset(IPF_vec_output_p, 0xCD, ipf_t_size);
@@ -102,9 +111,10 @@ IPFilterHarness::~IPFilterHarness()
     for (int i = 0; i < TEST_CASES; i++)
     {
         X265_FREE(pixel_test_buff[i]);
+        X265_FREE(short_test_buff[i]);
     }
-
     X265_FREE(pixel_test_buff);
+    X265_FREE(short_test_buff);
 }
 
 bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma)
@@ -113,11 +123,9 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
     const int min_size = isChroma ? 2 : 4;
     const int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
 
-    memset(IPF_vec_output_s, 0, ipf_t_size);                     // Initialize output buffer to zero
-    memset(IPF_C_output_s, 0, ipf_t_size);                       // Initialize output buffer to zero
-
-    for (int i = 0; i <= 1000; i++)
+    for (int i = 0; i < ITERS; i++)
     {
+        int index = i % TEST_CASES;
         int rand_height = (int16_t)rand() % 100;                 // Randomly generated Height
         int rand_width = (int16_t)rand() % 100;                  // Randomly generated Width
 
@@ -131,12 +139,13 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
         rand_height &= ~(min_size - 1);
         rand_height = Clip3(min_size, max_size, rand_height);
 
-        ref(pixel_buff,
+        ref(pixel_test_buff[index],
             rand_srcStride,
             IPF_C_output_s,
             rand_width,
             rand_height);
-        opt(pixel_buff,
+
+        opt(pixel_test_buff[index],
             rand_srcStride,
             IPF_vec_output_s,
             rand_width,
@@ -167,6 +176,7 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
                 IPF_vec_output_p,
                 rand_dstStride,
                 coeffIdx);
+
             ref(pixel_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_C_output_p,
@@ -254,29 +264,32 @@ bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filte
 
 bool IPFilterHarness::check_IPFilterChroma_sp_primitive(filter_sp_t ref, filter_sp_t opt)
 {
-    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+    int rand_srcStride, rand_dstStride;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
-        rand_coeffIdx = rand() % 8;                 // Random coeffIdex in the filter
+        int index = i % TEST_CASES;
 
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100 + 32;         // Randomly generated dstStride
+        for (int coeffIdx = 0; coeffIdx < 8; coeffIdx++)
+        {
+            rand_srcStride = rand() % 100;              // Randomly generated srcStride
+            rand_dstStride = rand() % 100 + 32;         // Randomly generated dstStride
 
-        ref(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_C_output_p,
-            rand_dstStride,
-            rand_coeffIdx);
+            ref(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_C_output_p,
+                rand_dstStride,
+                coeffIdx);
 
-        opt(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_p,
-            rand_dstStride,
-            rand_coeffIdx);
+            opt(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_vec_output_p,
+                rand_dstStride,
+                coeffIdx);
 
-        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
-            return false;
+            if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
+                return false;
+        }
     }
 
     return true;
@@ -284,29 +297,32 @@ bool IPFilterHarness::check_IPFilterChroma_sp_primitive(filter_sp_t ref, filter_
 
 bool IPFilterHarness::check_IPFilterChroma_ss_primitive(filter_ss_t ref, filter_ss_t opt)
 {
-    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+    int rand_srcStride, rand_dstStride;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
-        rand_coeffIdx = rand() % 8;                 // Random coeffIdex in the filter
+        int index = i % TEST_CASES;
 
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100 + 32;         // Randomly generated dstStride
+        for (int coeffIdx = 0; coeffIdx < 8; coeffIdx++)
+        {
+            rand_srcStride = rand() % 100;              // Randomly generated srcStride
+            rand_dstStride = rand() % 100 + 32;         // Randomly generated dstStride
 
-        ref(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_C_output_s,
-            rand_dstStride,
-            rand_coeffIdx);
+            ref(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_C_output_s,
+                rand_dstStride,
+                coeffIdx);
 
-        opt(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_s,
-            rand_dstStride,
-            rand_coeffIdx);
+            opt(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_vec_output_s,
+                rand_dstStride,
+                coeffIdx);
 
-        if (memcmp(IPF_C_output_s, IPF_vec_output_s, ipf_t_size * sizeof(int16_t)))
-            return false;
+            if (memcmp(IPF_C_output_s, IPF_vec_output_s, ipf_t_size * sizeof(int16_t)))
+                return false;
+        }
     }
 
     return true;
@@ -415,29 +431,32 @@ bool IPFilterHarness::check_IPFilterLuma_hps_primitive(filter_hps_t ref, filter_
 
 bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp_t opt)
 {
-    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+    int rand_srcStride, rand_dstStride;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
-        rand_coeffIdx = rand() % 3;                // Random coeffIdex in the filter
+        int index = i % TEST_CASES;
 
-        rand_srcStride = rand() % 100;             // Randomly generated srcStride
-        rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
+        for (int coeffIdx = 0; coeffIdx < 4; coeffIdx++)
+        {
+            rand_srcStride = rand() % 100;             // Randomly generated srcStride
+            rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
 
-        ref(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_C_output_p,
-            rand_dstStride,
-            rand_coeffIdx);
+            ref(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_C_output_p,
+                rand_dstStride,
+                coeffIdx);
 
-        opt(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_p,
-            rand_dstStride,
-            rand_coeffIdx);
+            opt(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_vec_output_p,
+                rand_dstStride,
+                coeffIdx);
 
-        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
-            return false;
+            if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
+                return false;
+        }
     }
 
     return true;
@@ -445,37 +464,32 @@ bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp
 
 bool IPFilterHarness::check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss_t opt)
 {
-    int rand_srcStride, rand_dstStride, rand_coeffIdx;
+    int rand_srcStride, rand_dstStride;
 
-    // NOTE: refill data to avoid overflow
-    const int max_filter_val = 64 * (1 << 8);
-
-    for (int i = 0; i < ipf_t_size; i++)
+    for (int i = 0; i < ITERS; i++)
     {
-        short_buff[i] = rand() % (2 * max_filter_val) - max_filter_val;
-    }
+        int index = i % TEST_CASES;
 
-    for (int i = 0; i <= 100; i++)
-    {
-        rand_coeffIdx = rand() % 3;                // Random coeffIdex in the filter
+        for (int coeffIdx = 0; coeffIdx < 4; coeffIdx++)
+        {
+            rand_srcStride = rand() % 100;             // Randomly generated srcStride
+            rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
 
-        rand_srcStride = rand() % 100;             // Randomly generated srcStride
-        rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
+            ref(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_C_output_s,
+                rand_dstStride,
+                coeffIdx);
 
-        ref(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_C_output_s,
-            rand_dstStride,
-            rand_coeffIdx);
+            opt(short_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_vec_output_s,
+                rand_dstStride,
+                coeffIdx);
 
-        opt(short_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            IPF_vec_output_s,
-            rand_dstStride,
-            rand_coeffIdx);
-
-        if (memcmp(IPF_C_output_s, IPF_vec_output_s, ipf_t_size * sizeof(int16_t)))
-            return false;
+            if (memcmp(IPF_C_output_s, IPF_vec_output_s, ipf_t_size * sizeof(int16_t)))
+                return false;
+        }
     }
 
     return true;

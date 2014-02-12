@@ -34,7 +34,7 @@ class IPFilterHarness : public TestHarness
 protected:
 
     pixel *pixel_buff, **pixel_test_buff;
-    int16_t *short_buff;
+    int16_t *short_buff, **short_test_buff;
 
     pixel *IPF_vec_output_p, *IPF_C_output_p;
     int16_t *IPF_vec_output_s, *IPF_C_output_s;
