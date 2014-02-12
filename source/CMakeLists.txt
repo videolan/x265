@@ -242,10 +242,24 @@ install(TARGETS x265-static
         ARCHIVE DESTINATION lib)
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
 
+# MINGW windres support is broken in cmake, it passes CFLAGS to the
+# resource compiler: http://public.kitware.com/Bug/print_bug_page.php?bug_id=12998
+if(CMAKE_RC_COMPILER AND NOT MINGW)
+    # convert HG_REVISION_TAG (ex: 0.7) and HG_REVISION_DIST (ex: 103) to
+    # @X265_VERSION_MAJOR@,@X265_VERSION_MINOR@,@X265_BRANCH_ID@,@X265_TAG_DISTANCE@
+    string(REPLACE "." ";" VERSION_LIST ${HG_REVISION_TAG})
+    list(GET VERSION_LIST 0 X265_VERSION_MAJOR)
+    list(GET VERSION_LIST 1 X265_VERSION_MINOR)
+    set(X265_TAG_DISTANCE ${HG_REVISION_DIST})
+    set(X265_BRANCH_ID 0) # TODO: 0 - stable, 1 - default or other
+    set(X265_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/x265.rc")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/x265.rc.in" "${X265_RC_FILE}" @ONLY)
+endif()
+
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
     add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
-                                   $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+                ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
     target_link_libraries(x265-shared ${PLATFORM_LIBS})
     set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
     if(UNIX AND NOT APPLE)
@@ -301,7 +315,8 @@ if(ENABLE_CLI)
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h
                            $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
     else()
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h)
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE}
+                           x265.cpp x265.h)
         target_link_libraries(cli x265-static ${PLATFORM_LIBS})
     endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
