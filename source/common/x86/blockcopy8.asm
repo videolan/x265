@@ -2911,6 +2911,8 @@ cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
     ; r3 - shift
     ; r4 - size
 
+    sub             r2d,      r4d
+    add             r2d,      r2d
     mov             r5d,      r4d
     shr             r4d,      2
 .loop_row
@@ -2927,6 +2929,7 @@ cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
     dec             r6d
     jnz             .loop_col
 
+    add             r1,       r2
     dec             r5d
     jnz             .loop_row
 
