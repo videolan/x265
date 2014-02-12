@@ -324,7 +324,7 @@ void x265_cpu_neon_test(void);
 int x265_cpu_fast_neon_mrc_test(void);
 }
 
-uint32_t x265_cpu_detect(void)
+uint32_t cpu_detect(void)
 {
     int flags = 0;
 #if HAVE_ARMV6
@@ -366,7 +366,7 @@ uint32_t x265_cpu_detect(void)
 
 #else
 
-uint32_t x265_cpu_detect(void)
+uint32_t cpu_detect(void)
 {
     return 0;
 }
