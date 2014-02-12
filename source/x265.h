@@ -35,6 +35,17 @@ extern "C" {
  *      opaque handler for encoder */
 typedef struct x265_encoder x265_encoder;
 
+/* Application developers planning to link against a shared library version of
+ * libx265 from a Microsoft Visual Studio or similar development environment
+ * will need to define X265_API_IMPORTS before including this header.
+ * This clause does not apply to MinGW, similar development environments, or non
+ * Windows platforms. */
+#ifdef X265_API_IMPORTS
+#define X265_API __declspec(dllimport)
+#else
+#define X265_API
+#endif
+
 typedef enum
 {
     NAL_UNIT_CODED_SLICE_TRAIL_N = 0,
@@ -719,15 +730,15 @@ void x265_picture_init(x265_param *param, x265_picture *pic);
  *      x265_max_bit_depth is 12, the internal and input bit depths can be
  *      either 8, 10, or 12. Note that the internal bit depth must be the same
  *      for all encoders allocated in the same process. */
-extern const int x265_max_bit_depth;
+X265_API extern const int x265_max_bit_depth;
 
 /* x265_version_str:
  *      A static string containing the version of this compiled x265 library */
-extern const char *x265_version_str;
+X265_API extern const char *x265_version_str;
 
 /* x265_build_info:
  *      A static string describing the compiler and target architecture */
-extern const char *x265_build_info_str;
+X265_API extern const char *x265_build_info_str;
 
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro
