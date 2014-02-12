@@ -1291,7 +1291,7 @@ void TComDataCU::setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartId
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(UChar) * curPartNum);
+    memset(m_cbf[g_aucConvertTxtTypeToIdx[ttype]] + absPartIdx, cbf, sizeof(UChar) * curPartNum);
 }
 
 /** Sets a coded block flag for all sub-partitions of a partition
@@ -1304,7 +1304,7 @@ void TComDataCU::setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartId
  */
 void TComDataCU::setCbfSubParts(uint32_t uiCbf, TextType ttype, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
 {
-    setSubPart<UChar>(uiCbf, m_cbf[ttype], absPartIdx, depth, partIdx);
+    setSubPart<UChar>(uiCbf, m_cbf[g_aucConvertTxtTypeToIdx[ttype]], absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setDepthSubParts(uint32_t depth, uint32_t absPartIdx)
@@ -1534,7 +1534,7 @@ void TComDataCU::setTransformSkipSubParts(uint32_t useTransformSkip, TextType tt
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(UChar) * curPartNum);
+    memset(m_transformSkip[g_aucConvertTxtTypeToIdx[ttype]] + absPartIdx, useTransformSkip, sizeof(UChar) * curPartNum);
 }
 
 UChar TComDataCU::getNumPartInter()
@@ -2503,7 +2503,8 @@ uint32_t TComDataCU::getIntraSizeIdx(uint32_t absPartIdx)
 
 void TComDataCU::clearCbf(uint32_t idx, TextType ttype, uint32_t numParts)
 {
-    ::memset(&m_cbf[ttype][idx], 0, sizeof(UChar) * numParts);
+    assert((int)ttype <= 2);
+    ::memset(&m_cbf[g_aucConvertTxtTypeToIdx[ttype]][idx], 0, sizeof(UChar) * numParts);
 }
 
 /** Set a I_PCM flag for all sub-partitions of a partition.
