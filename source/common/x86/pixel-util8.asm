@@ -2609,30 +2609,34 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
 ;-----------------------------------------------------------------------------
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
-cglobal pixel_sub_ps_2x4, 6, 6, 8, dest, deststride, src0, src1, srcstride0, srcstride1
-    add      r1,    r1
-    add      r4,    r4
-    add      r5,    r5
-    movd     m0,    [r2]
-    movd     m1,    [r3]
-    movd     m2,    [r2 + r4]
-    movd     m3,    [r3 + r5]
-    movd     m4,    [r2 + 2 * r4]
-    movd     m5,    [r3 + 2 * r5]
-    lea      r2,    [r2 + 2 * r4]
-    lea      r3,    [r3 + 2 * r5]
-    movd     m6,    [r2 + r4]
-    movd     m7,    [r3 + r5]
-    psubw    m0,    m1
-    psubw    m2,    m3
-    psubw    m4,    m5
-    psubw    m6,    m7
+cglobal pixel_sub_ps_2x4, 6, 6, 2
+    add      r1, r1
+    add      r4, r4
+    add      r5, r5
 
-    movd     [r0],           m0
-    movd     [r0 + r1],      m2
-    movd     [r0 + 2 * r1],  m4
-    lea      r0,             [r0 + 2 * r1]
-    movd     [r0 + r1],      m6
+    movd     m0, [r2]
+    movd     m1, [r3]
+    psubw    m0, m1
+    movd     [r0], m0
+
+    movd     m0, [r2 + r4]
+    movd     m1, [r3 + r5]
+    psubw    m0, m1
+    movd     [r0 + r1], m0
+
+    movd     m0, [r2 + 2 * r4]
+    movd     m1, [r3 + 2 * r5]
+    psubw    m0, m1
+    movd     [r0 + 2 * r1], m0
+
+    lea      r2, [r2 + 2 * r4]
+    lea      r3, [r3 + 2 * r5]
+    lea      r0, [r0 + 2 * r1]
+
+    movd     m0, [r2 + r4]
+    movd     m1, [r3 + r5]
+    psubw    m0, m1
+    movd     [r0 + r1], m0
 %else
 INIT_XMM sse4
 %if ARCH_X86_64
@@ -2726,54 +2730,59 @@ RET
 ;-----------------------------------------------------------------------------
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
-cglobal pixel_sub_ps_2x8, 6, 6, 8, dest, deststride, src0, src1, srcstride0, srcstride1
-    add      r1,    r1
-    add      r4,    r4
-    add      r5,    r5
-    movd     m0,    [r2]
-    movd     m1,    [r3]
-    movd     m2,    [r2 + r4]
-    movd     m3,    [r3 + r5]
-    movd     m4,    [r2 + 2 * r4]
-    movd     m5,    [r3 + 2 * r5]
-    lea      r2,    [r2 + 2 * r4]
-    lea      r3,    [r3 + 2 * r5]
-    movd     m6,    [r2 + r4]
-    movd     m7,    [r3 + r5]
+cglobal pixel_sub_ps_2x8, 6, 6, 2
+    add      r1, r1
+    add      r4, r4
+    add      r5, r5
+
+    movd     m0, [r2]
+    movd     m1, [r3]
+    psubw    m0, m1
+    movd     [r0], m0
+
+    movd     m0, [r2 + r4]
+    movd     m1, [r3 + r5]
+    psubw    m0, m1
+    movd     [r0 + r1], m0
+
+    movd     m0, [r2 + 2 * r4]
+    movd     m1, [r3 + 2 * r5]
+    psubw    m0, m1
+    movd     [r0 + 2 * r1], m0
+
+    lea      r2, [r2 + 2 * r4]
+    lea      r3, [r3 + 2 * r5]
+    movd     m0, [r2 + r4]
+    movd     m1, [r3 + r5]
+    psubw    m0, m1
+    lea      r0, [r0 + 2 * r1]
+    movd     [r0 + r1], m0
+
+    movd     m0, [r2 + 2 * r4]
+    movd     m1, [r3 + 2 * r5]
     psubw    m0,    m1
-    psubw    m2,    m3
-    psubw    m4,    m5
-    psubw    m6,    m7
-
-    movd     [r0],           m0
-    movd     [r0 + r1],      m2
-    movd     [r0 + 2 * r1],  m4
-    lea      r0,             [r0 + 2 * r1]
-    movd     [r0 + r1],      m6
-
-    movd     m0,    [r2 + 2 * r4]
-    movd     m1,    [r3 + 2 * r5]
-    lea      r2,    [r2 + 2 * r4]
-    lea      r3,    [r3 + 2 * r5]
-    movd     m2,    [r2 + r4]
-    movd     m3,    [r3 + r5]
-    movd     m4,    [r2 + 2 * r4]
-    movd     m5,    [r3 + 2 * r5]
-    lea      r2,    [r2 + 2 * r4]
-    lea      r3,    [r3 + 2 * r5]
-    movd     m6,    [r2 + r4]
-    movd     m7,    [r3 + r5]
-    psubw    m0,    m1
-    psubw    m2,    m3
-    psubw    m4,    m5
-    psubw    m6,    m7
-
     movd     [r0 + 2 * r1],  m0
-    lea      r0,             [r0 + 2 * r1]
-    movd     [r0 + r1],      m2
-    movd     [r0 + 2 * r1],  m4
-    lea      r0,             [r0 + 2 * r1]
-    movd     [r0 + r1],      m6
+
+    lea      r2, [r2 + 2 * r4]
+    lea      r3, [r3 + 2 * r5]
+    movd     m0, [r2 + r4]
+    movd     m1, [r3 + r5]
+    psubw    m0, m1
+    lea      r0, [r0 + 2 * r1]
+    movd     [r0 + r1], m0
+
+    movd     m0, [r2 + 2 * r4]
+    movd     m1, [r3 + 2 * r5]
+    psubw    m0, m1
+    movd     [r0 + 2 * r1], m0
+
+    lea      r2, [r2 + 2 * r4]
+    lea      r3, [r3 + 2 * r5]
+    movd     m0, [r2 + r4]
+    movd     m1, [r3 + r5]
+    psubw    m0, m1
+    lea      r0, [r0 + 2 * r1]
+    movd     [r0 + r1], m0
 %else
 INIT_XMM sse4
 %if ARCH_X86_64
@@ -3048,99 +3057,87 @@ PIXELSUB_PS_W4_H4 4, 16
 ; void pixel_sub_ps_c_%1x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
 %macro PIXELSUB_PS_W6_H4 2
-cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, srcstride1
+cglobal pixel_sub_ps_%1x%2, 6, 7, 2
     add    r1,     r1
     mov    r6d,    %2/4
 %if HIGH_BIT_DEPTH
-    add         r4,    r4
-    add         r5,    r5
+    add         r4, r4
+    add         r5, r5
 .loop
-    movu        m0,    [r2]
-    movu        m1,    [r3]
-    movu        m2,    [r2 + r4]
-    movu        m3,    [r3 + r5]
-    mova        m4,    m0
-    mova        m5,    m1
-    mova        m6,    m2
-    mova        m7,    m3
-    punpckhqdq  m4,    m4
-    punpckhqdq  m5,    m5
-    punpckhqdq  m6,    m6
-    punpckhqdq  m7,    m7
-    psubw       m0,    m1
-    psubw       m2,    m3
-    psubw       m4,    m5
-    psubw       m6,    m7
+    movu        m0, [r2]
+    movu        m1, [r3]
+    psubw       m0, m1
+    movh        [r0], m0
+    movhlps     m0, m0
+    movd        [r0 + 8], m0
 
-    lea      r2,    [r2 + 2 * r4]
-    lea      r3,    [r3 + 2 * r5]
-    movh     [r0],             m0
-    movd     [r0 + 8],         m4
-    movh     [r0 + r1],        m2
-    movd     [r0 + r1 + 8],    m6
+    movu        m0, [r2 + r4]
+    movu        m1, [r3 + r5]
+    psubw       m0, m1
+    movh        [r0 + r1], m0
+    movhlps     m0, m0
+    movd        [r0 + r1 + 8], m0
 
-    movu        m0,    [r2]
-    movu        m1,    [r3]
-    movu        m2,    [r2 + r4]
-    movu        m3,    [r3 + r5]
-    mova        m4,    m0
-    mova        m5,    m1
-    mova        m6,    m2
-    mova        m7,    m3
-    punpckhqdq  m4,    m4
-    punpckhqdq  m5,    m5
-    punpckhqdq  m6,    m6
-    punpckhqdq  m7,    m7
-    psubw       m0,    m1
-    psubw       m2,    m3
-    psubw       m4,    m5
-    psubw       m6,    m7
-    lea      r0,    [r0 + 2 * r1]
-    movh     [r0],             m0
-    movd     [r0 + 8],         m4
-    movh     [r0 + r1],        m2
-    movd     [r0 + r1 + 8],    m6
+    lea         r2, [r2 + 2 * r4]
+    lea         r3, [r3 + 2 * r5]
+    lea         r0, [r0 + 2 * r1]
+
+    movu        m0, [r2]
+    movu        m1, [r3]
+    psubw       m0, m1
+    movh        [r0], m0
+    movhlps     m0, m0
+    movd        [r0 + 8], m0
+
+    movu        m0, [r2 + r4]
+    movu        m1, [r3 + r5]
+    psubw       m0, m1
+    movh        [r0 + r1], m0
+    movhlps     m0, m0
+    movd        [r0 + r1 + 8], m0
 %else
 .loop
-    movh        m0,    [r2]
-    movh        m1,    [r3]
-    movh        m2,    [r2 + r4]
-    movh        m3,    [r3 + r5]
-    movh        m4,    [r2 + 2 * r4]
-    movh        m5,    [r3 + 2 * r5]
-    lea         r2,    [r2 + 2 * r4]
-    lea         r3,    [r3 + 2 * r5]
-    movh        m6,    [r2 + r4]
-    movh        m7,    [r3 + r5]
-    pmovzxbw    m0,    m0
-    pmovzxbw    m1,    m1
-    pmovzxbw    m2,    m2
-    pmovzxbw    m3,    m3
-    pmovzxbw    m4,    m4
-    pmovzxbw    m5,    m5
-    pmovzxbw    m6,    m6
-    pmovzxbw    m7,    m7
-    psubw       m0,    m1
-    psubw       m2,    m3
-    psubw       m4,    m5
-    psubw       m6,    m7
+    movh        m0, [r2]
+    pmovzxbw    m0, m0
+    movh        m1, [r3]
+    pmovzxbw    m1, m1
+    psubw       m0, m1
+    movh        [r0], m0
+    pextrd      [r0 + 8], m0, 2
 
-    movh      [r0],                 m0
-    pextrd    [r0 + 8],             m0,    2
-    movh      [r0 + r1],            m2
-    pextrd    [r0 + r1 + 8],        m2,    2
-    movh      [r0 + 2* r1],         m4
-    pextrd    [r0 + 2 * r1 + 8],    m4,    2
-    lea       r0,                   [r0 + 2 * r1]
-    movh      [r0 + r1],            m6
-    pextrd    [r0 + r1 + 8],        m6,    2
+    movh        m0, [r2 + r4]
+    pmovzxbw    m0, m0
+    movh        m1, [r3 + r5]
+    pmovzxbw    m1, m1
+    psubw       m0, m1
+    movh        [r0 + r1], m0
+    pextrd      [r0 + r1 + 8], m0, 2
+
+    movh        m0, [r2 + 2 * r4]
+    pmovzxbw    m0, m0
+    movh        m1, [r3 + 2 * r5]
+    pmovzxbw    m1, m1
+    psubw       m0, m1
+    movh        [r0 + 2* r1], m0
+    pextrd      [r0 + 2 * r1 + 8], m0, 2
+
+    lea         r2, [r2 + 2 * r4]
+    lea         r3, [r3 + 2 * r5]
+    movh        m0, [r2 + r4]
+    pmovzxbw    m0, m0
+    movh        m1, [r3 + r5]
+    pmovzxbw    m1, m1
+    psubw       m0, m1
+    lea         r0, [r0 + 2 * r1]
+    movh        [r0 + r1], m0
+    pextrd      [r0 + r1 + 8], m0, 2
 %endif
-    dec    r6d
-    lea    r2,    [r2 + 2 * r4]
-    lea    r3,    [r3 + 2 * r5]
-    lea    r0,    [r0 + 2 * r1]
-jnz    .loop
-RET
+    dec         r6d
+    lea         r2, [r2 + 2 * r4]
+    lea         r3, [r3 + 2 * r5]
+    lea         r0, [r0 + 2 * r1]
+    jnz         .loop
+    RET
 %endmacro
 
 %if HIGH_BIT_DEPTH
