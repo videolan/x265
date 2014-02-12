@@ -500,9 +500,9 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
             {
                 for (int ref = 0; ref < slice.getNumRefIdx(list); ref++)
                 {
-                    SET_WEIGHT(wp[list][ref][0], false, 64, 6, 0);
-                    SET_WEIGHT(wp[list][ref][1], false, 64, 6, 0);
-                    SET_WEIGHT(wp[list][ref][2], false, 64, 6, 0);
+                    SET_WEIGHT(wp[list][ref][0], false, 1<<denom, denom, 0);
+                    SET_WEIGHT(wp[list][ref][1], false, 1<<denom, denom, 0);
+                    SET_WEIGHT(wp[list][ref][2], false, 1<<denom, denom, 0);
                 }
             }
             if (weightp::tryCommonDenom(slice, param, wp, temp, denom))
