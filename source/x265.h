@@ -21,8 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef X265_X265_H
-#define X265_X265_H
+#ifndef X265_H
+#define X265_H
 
 #include <stdint.h>
 #include "x265_config.h"
@@ -793,4 +793,4 @@ double x265_ssim(double ssim);
 }
 #endif
 
-#endif // X265_X265_H
+#endif // X265_H
