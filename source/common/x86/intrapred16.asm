@@ -35,8 +35,15 @@ const ang_table
 %assign x x+1
 %endrep
 
-const pw_unpack0wd, times 4 db 0,1,8,8
+const pw_unpackwdq, times 8 db 0,1
 const pw_1023,      times 8 dw 1023
+const pw_ang8_12,   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 0, 1
+const pw_ang8_13,   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 15, 8, 9, 0, 1
+const pw_ang8_14,   db 0, 0, 0, 0, 0, 0, 0, 0, 14, 15, 10, 11, 4, 5, 0, 1
+const pw_ang8_15,   db 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 8, 9, 4, 5, 0, 1
+const pw_ang8_16,   db 0, 0, 0, 0, 0, 0, 12, 13, 10, 11, 6, 7, 4, 5, 0, 1
+const pw_ang8_17,   db 0, 0, 14, 15, 12, 13, 10, 11, 8, 9, 4, 5, 2, 3, 0, 1
+const pw_swap16,    db 14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1
 
 SECTION .text
 
@@ -1336,3 +1343,3658 @@ cglobal intra_pred_ang4_18, 4,4,1
     psrldq      m0, 2
     movh        [r0], m0
     RET
+
+;-----------------------------------------------------------------------------
+; void intraPredAng8(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal intra_pred_ang8_2, 3,4,3
+    cmp         r4m,           byte 34
+    cmove       r2,            r3mp
+    add         r1,            r1
+    lea         r3,            [r1 * 3]
+    movu        m0,            [r2 + 4]
+    movu        m1,            [r2 + 20]
+    movu        [r0],          m0
+    palignr     m2,            m1, m0, 2
+    movu        [r0 + r1],     m2
+    palignr     m2,            m1, m0, 4
+    movu        [r0 + r1 * 2], m2
+    palignr     m2,            m1, m0, 6
+    movu        [r0 + r3],     m2
+    lea         r0,            [r0 + r1 * 4]
+    palignr     m2,            m1, m0, 8
+    movu        [r0],          m2
+    palignr     m2,            m1, m0, 10
+    movu        [r0 + r1],     m2
+    palignr     m2,            m1, m0, 12
+    movu        [r0 + r1 * 2], m2
+    palignr     m1,            m0, 14
+    movu        [r0 + r3],     m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang8_3, 3,5,8
+    lea         r3,        [ang_table + 14 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+    punpckhwd   m1,        m4                         ; [x 16 16 15 15 14 14 13]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 12 * 16]             ; [26]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 12 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    pmaddwd     m2,        [r3 + 6 * 16]              ; [20]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m6,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m6,        [r3 + 6 * 16]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    packusdw    m2,        m6
+
+    palignr     m6,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m6,        [r3]                       ; [14]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m7,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m7,        [r3]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    pmaddwd     m7,        [r3 - 6 * 16]              ; [ 8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m3,        m5, m0, 12                 ; [12 11 11 10 10 9 9 8]
+    pmaddwd     m3,        [r3 - 6 * 16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    packusdw    m7,        m3
+
+    punpckhwd   m3,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m3, m2
+    punpckhdq   m3,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m7
+    movhps      [r0 + r1],       m7
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m3
+    movhps      [r2 + r4],       m3
+
+    mova        m4,        m0
+    pmaddwd     m4,        [r3 - 12 * 16]             ; [ 2]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m5
+    pmaddwd     m2,        [r3 - 12 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 14 * 16]             ; [28]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m6,        m5
+    pmaddwd     m6,        [r3 + 14 * 16]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    packusdw    m2,        m6
+
+    palignr     m6,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m6,        [r3 + 8 * 16]              ; [22]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m7,        m1, m5, 4                  ; [14 13 13 12 12 11 11 10]
+    pmaddwd     m7,        [r3 + 8 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m7,        [r3 + 2 * 16]              ; [16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, 8                      ; [15 14 14 13 13 12 12 11]
+    pmaddwd     m1,        [r3 + 2 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    punpckhwd   m3,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m3, m2
+    punpckhdq   m3,        m2
+
+    movh        [r0 + 8],            m7
+    movhps      [r0 + r1 + 8],       m7
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m3
+    movhps      [r0 + r4 + 8],       m3
+
+    RET
+
+cglobal intra_pred_ang8_4, 3,6,8
+    lea         r3,        [ang_table + 19 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 2 * 16]              ; [21]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 2 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m6,        m2
+    pmaddwd     m2,        [r3 - 9 * 16]              ; [10]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    mova        m7,        m1
+    pmaddwd     m1,        [r3 - 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 12 * 16]             ; [31]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 12 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m7,        [r3 + 1 * 16]              ; [20]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m1,        [r3 + 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m7
+    movhps      [r0 + r1],       m7
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r5,              [r0 + r1 * 4]
+    movh        [r5],            m6
+    movhps      [r5 + r1],       m6
+    movh        [r5 + r1 * 2],   m1
+    movhps      [r5 + r4],       m1
+
+    palignr     m4,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    mova        m2,        m4
+    pmaddwd     m4,        [r3 - 10 * 16]             ; [ 9]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m3,        m5, m0, 12                 ; [12 11 11 10 10 9 9 8]
+    mova        m6,        m3
+    pmaddwd     m3,        [r3 - 10 * 16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    packusdw    m4,        m3
+
+    pmaddwd     m2,        [r3 + 11 * 16]             ; [30]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    pmaddwd     m6,        [r3 + 11 * 16]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    packusdw    m2,        m6
+
+    mova        m6,        m0
+    pmaddwd     m6,        [r3]                       ; [19]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m7,        m5
+    pmaddwd     m7,        [r3]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    movh        m1,        [r2 + 26]                  ; [16 15 14 13]
+    palignr     m7,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m7,        [r3 - 11 * 16]             ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, 4                      ; [14 13 13 12 12 11 11 10]
+    pmaddwd     m1,        [r3 - 11 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    punpckhwd   m3,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m3, m2
+    punpckhdq   m3,        m2
+
+    movh        [r0 + 8],            m7
+    movhps      [r0 + r1 + 8],       m7
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m3
+    movhps      [r0 + r4 + 8],       m3
+
+    RET
+
+cglobal intra_pred_ang8_5, 3,5,8
+    lea         r3,        [ang_table + 13 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 4 * 16]              ; [17]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 4 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m6,        m2
+    pmaddwd     m2,        [r3 - 11 * 16]             ; [2]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    mova        m7,        m1
+    pmaddwd     m1,        [r3 - 11 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 6 * 16]              ; [19]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 6 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m7,        [r3 - 9 * 16]              ; [4]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m1,        [r3 - 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m7
+    movhps      [r0 + r1],       m7
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m1
+    movhps      [r2 + r4],       m1
+
+    palignr     m4,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m4,        [r3 + 8 * 16]              ; [21]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m2,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m2,        [r3 + 8 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    mova        m6,        m2
+    pmaddwd     m2,        [r3 - 7 * 16]              ; [6]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m1,        m5, m0, 12                 ; [12 11 11 10 10 9 9 8]
+    mova        m7,        m1
+    pmaddwd     m1,        [r3 - 7 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 10 * 16]             ; [23]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 10 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    mova        m7,        m0
+    pmaddwd     m7,        [r3 - 5 * 16]              ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    mova        m1,        m5
+    pmaddwd     m1,        [r3 - 5 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    punpckhwd   m3,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m3, m2
+    punpckhdq   m3,        m2
+
+    movh        [r0 + 8],            m7
+    movhps      [r0 + r1 + 8],       m7
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m3
+    movhps      [r0 + r4 + 8],       m3
+
+    RET
+
+cglobal intra_pred_ang8_6, 3,5,8
+    lea         r3,        [ang_table + 14 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 1 * 16]              ; [13]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 12 * 16]             ; [26]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 12 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    palignr     m6,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m7,        m6
+    pmaddwd     m6,        [r3 - 7 * 16]              ; [7]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m1,        [r3 - 7 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    pmaddwd     m7,        [r3 + 6 * 16]              ; [20]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m1,        [r3 + 6 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m7
+    movhps      [r0 + r1],       m7
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m1
+    movhps      [r2 + r4],       m1
+
+    palignr     m4,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    mova        m6,        m4
+    pmaddwd     m4,        [r3 - 13 * 16]             ; [1]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m2,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    mova        m7,        m2
+    pmaddwd     m2,        [r3 - 13 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    pmaddwd     m2,        m6, [r3]                   ; [14]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    pmaddwd     m1,        m7, [r3]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 13 * 16]             ; [27]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 13 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    pmaddwd     m7,        [r3 - 6 * 16]              ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m5,        m0, 12                     ; [12 11 11 10 10 9 9 8]
+    pmaddwd     m5,        [r3 - 6 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m7,        m5
+
+    punpckhwd   m3,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m3, m2
+    punpckhdq   m3,        m2
+
+    movh        [r0 + 8],            m7
+    movhps      [r0 + r1 + 8],       m7
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m3
+    movhps      [r0 + r4 + 8],       m3
+
+    RET
+
+cglobal intra_pred_ang8_7, 3,5,8
+    lea         r3,        [ang_table + 18 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 9 * 16]              ; [9]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3]                       ; [18]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 + 9 * 16]              ; [27]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    palignr     m7,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    pmaddwd     m7,        [r3 - 14 * 16]             ; [4]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m1,        [r3 - 14 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m7
+    movhps      [r0 + r1],       m7
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m1
+    movhps      [r2 + r4],       m1
+
+    palignr     m4,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m6,        m4
+    pmaddwd     m4,        [r3 - 5 * 16]              ; [13]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m2,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    mova        m7,        m2
+    pmaddwd     m2,        [r3 - 5 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    pmaddwd     m2,        m6, [r3 + 4 * 16]          ; [22]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    pmaddwd     m1,        m7, [r3 + 4 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 13 * 16]             ; [31]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 13 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m7,        [r3 - 10 * 16]             ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m5,        m0, 8                      ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m5,        [r3 - 10 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m7,        m5
+
+    punpckhwd   m3,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m7
+    punpcklwd   m6,        m7
+
+    punpckldq   m7,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m3, m2
+    punpckhdq   m3,        m2
+
+    movh        [r0 + 8],            m7
+    movhps      [r0 + r1 + 8],       m7
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m3
+    movhps      [r0 + r4 + 8],       m3
+
+    RET
+
+cglobal intra_pred_ang8_8, 3,6,7
+    lea         r3,        [ang_table + 17 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 4]                   ; [9 8 7 6 5 4 3 2]
+
+    punpcklwd   m3,        m0, m1                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m1                         ; [9 8 8 7 7 6 6 5]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 12 * 16]             ; [5]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 12 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 - 7 * 16]              ; [10]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 7 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 - 2 * 16]              ; [15]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 2 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r3 + 3 * 16]              ; [20]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r5,              [r0 + r1 * 4]
+    movh        [r5],            m6
+    movhps      [r5 + r1],       m6
+    movh        [r5 + r1 * 2],   m1
+    movhps      [r5 + r4],       m1
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 8 * 16]              ; [25]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 8 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 13 * 16]             ; [30]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 13 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    movh        m1,        [r2 + 18]                  ; [12 11 10 9]
+
+    palignr     m6,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m5,        m6
+    pmaddwd     m6,        [r3 - 14 * 16]             ; [3]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m1,        m0, 4                      ; [10 9 9 8 8 7 7 6]
+    mova        m3,        m1
+    pmaddwd     m1,        [r3 - 14 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    pmaddwd     m5,        [r3 - 9 * 16]              ; [8]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    pmaddwd     m3,        [r3 - 9 * 16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    packusdw    m5,        m3
+
+    punpckhwd   m3,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m3, m2
+    punpckhdq   m3,        m2
+
+    movh        [r0 + 8],            m5
+    movhps      [r0 + r1 + 8],       m5
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m3
+    movhps      [r0 + r4 + 8],       m3
+
+    RET
+
+cglobal intra_pred_ang8_9, 3,5,7
+    lea         r3,        [ang_table + 9 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 4]                   ; [9 8 7 6 5 4 3 2]
+
+    punpcklwd   m3,        m0, m1                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m1                         ; [9 8 8 7 7 6 6 5]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 7 * 16]              ; [2]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 7 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 - 5 * 16]              ; [4]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 5 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 - 3 * 16]              ; [6]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r3 - 1 * 16]              ; [8]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m1
+    movhps      [r2 + r4],       m1
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 1 * 16]              ; [10]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 3 * 16]              ; [12]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 + 5 * 16]              ; [14]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r3 + 5 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pmaddwd     m3,        [r3 + 7 * 16]              ; [16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r3 + 7 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_10, 4,5,3
+    movu        m1,             [r2 + 2]            ; [8 7 6 5 4 3 2 1]
+    pshufb      m0,             m1, [pw_unpackwdq]  ; [1 1 1 1 1 1 1 1]
+    add         r1,             r1
+    lea         r4,             [r1 * 3]
+
+    psrldq      m1,             2
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [2 2 2 2 2 2 2 2]
+    movu        [r0 + r1],      m2
+    psrldq      m1,             2
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [3 3 3 3 3 3 3 3]
+    movu        [r0 + r1 * 2],  m2
+    psrldq      m1,             2
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [4 4 4 4 4 4 4 4]
+    movu        [r0 + r4],      m2
+
+    lea         r2,             [r0 + r1 *4]
+    psrldq      m1,             2
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [5 5 5 5 5 5 5 5]
+    movu        [r2],           m2
+    psrldq      m1,             2
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [6 6 6 6 6 6 6 6]
+    movu        [r2 + r1],      m2
+    psrldq      m1,             2
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [7 7 7 7 7 7 7 7]
+    movu        [r2 + r1 * 2],  m2
+    psrldq      m1,             2
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [8 8 8 8 8 8 8 8]
+    movu        [r2 + r4],      m2
+
+    cmp         r5m,            byte 0
+    jz         .quit
+
+    ; filter
+
+    movh        m1,             [r3]                ; [3 2 1 0]
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [0 0 0 0 0 0 0 0]
+    movu        m1,             [r3 + 2]            ; [8 7 6 5 4 3 2 1]
+    psubw       m1,             m2
+    psraw       m1,             1
+    paddw       m0,             m1
+    pxor        m1,             m1
+    pmaxsw      m0,             m1
+    pminsw      m0,             [pw_1023]
+
+.quit:
+    movu        [r0],           m0
+    RET
+
+cglobal intra_pred_ang8_11, 3,5,7
+    lea         r3,        [ang_table + 23 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 7 * 16]              ; [30]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 7 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 5 * 16]              ; [28]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 5 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 + 3 * 16]              ; [26]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r3 + 1 * 16]              ; [24]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m1
+    movhps      [r2 + r4],       m1
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 1 * 16]              ; [22]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 - 3 * 16]              ; [20]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 - 5 * 16]              ; [18]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r3 - 5 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pmaddwd     m3,        [r3 - 7 * 16]              ; [16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r3 - 7 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_12, 4,6,7
+    lea         r5,        [ang_table + 16 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 11 * 16]             ; [27]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 11 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 6 * 16]              ; [22]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 + 6 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 1 * 16]              ; [17]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 + 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 - 4 * 16]              ; [12]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 4 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    punpckhwd   m1,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m1, m2
+    punpckhdq   m1,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m1
+    movhps      [r2 + r4],       m1
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 9 * 16]              ; [7]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 14 * 16]             ; [2]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 14 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r3]
+    pshufb      m1,        [pw_ang8_12]
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 13 * 16]             ; [29]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pmaddwd     m3,        [r5 + 8 * 16]              ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 8 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_13, 4,6,8
+    lea         r5,        [ang_table + 14 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 9 * 16]              ; [23]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5]                       ; [14]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 9 * 16]              ; [5]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r3]
+    pshufb      m1,        [pw_ang8_13]
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 + 14 * 16]             ; [28]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 + 14 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    punpckhwd   m7,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m7, m2
+    punpckhdq   m7,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m7
+    movhps      [r2 + r4],       m7
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 5 * 16]              ; [19]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 5 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 4 * 16]              ; [10]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 4 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 13 * 16]             ; [1]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    pmaddwd     m3,        [r5 + 10 * 16]             ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 10 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_14, 4,6,8
+    lea         r5,        [ang_table + 18 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 1 * 16]              ; [19]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 12 * 16]             ; [6]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 12 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r3]
+    pshufb      m1,        [pw_ang8_14]
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 7 * 16]              ; [25]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 7 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 - 6 * 16]              ; [12]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 - 6 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    punpckhwd   m7,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m7, m2
+    punpckhdq   m7,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m7
+    movhps      [r2 + r4],       m7
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 13 * 16]             ; [31]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 13 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5]                       ; [18]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 13 * 16]             ; [5]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    pmaddwd     m3,        [r5 + 6 * 16]              ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 6 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_15, 4,6,8
+    lea         r5,        [ang_table + 20 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 5 * 16]              ; [15]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 5 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r3]
+    pshufb      m1,        [pw_ang8_15]
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 10 * 16]             ; [30]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 10 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 7 * 16]              ; [13]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 7 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 + 8 * 16]              ; [28]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 + 8 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    punpckhwd   m7,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m7, m2
+    punpckhdq   m7,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m7
+    movhps      [r2 + r4],       m7
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 9 * 16]              ; [11]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 6 * 16]              ; [26]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 6 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 11 * 16]             ; [9]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 11 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+    pinsrw      m3,        [r3 + 16], 0
+
+    pmaddwd     m3,        [r5 + 4 * 16]              ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 4 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_16, 4,6,8
+    lea         r5,        [ang_table + 13 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 2 * 16]              ; [11]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 2 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r3]
+    pshufb      m1,        [pw_ang8_16]
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 9 * 16]              ; [22]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 9 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 12 * 16]             ; [1]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 12 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 - 1 * 16]              ; [12]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 - 1 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    punpckhwd   m7,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m7, m2
+    punpckhdq   m7,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m7
+    movhps      [r2 + r4],       m7
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 10 * 16]             ; [23]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 10 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 11 * 16]             ; [2]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 11 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5]                       ; [13]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+    pinsrw      m3,        [r3 + 16], 0
+
+    pmaddwd     m3,        [r5 + 11 * 16]             ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 11 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_17, 4,6,8
+    lea         r5,        [ang_table + 17 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 11 * 16]             ; [6]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 11 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r3]
+    pshufb      m1,        [pw_ang8_17]
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 5 * 16]              ; [12]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 5 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 1 * 16]              ; [18]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 1 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 + 7 * 16]              ; [24]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 + 7 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    punpckhwd   m7,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m5
+    punpcklwd   m6,        m5
+
+    punpckldq   m5,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m7, m2
+    punpckhdq   m7,        m2
+
+    lea         r4,              [r1 * 3]
+    movh        [r0],            m5
+    movhps      [r0 + r1],       m5
+    movh        [r0 + r1 * 2],   m4
+    movhps      [r0 + r4],       m4
+    lea         r2,              [r0 + r1 * 4]
+    movh        [r2],            m6
+    movhps      [r2 + r1],       m6
+    movh        [r2 + r1 * 2],   m7
+    movhps      [r2 + r4],       m7
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 13 * 16]             ; [30]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 13 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 13 * 16]             ; [4]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 7 * 16]              ; [10]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 7 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    pmaddwd     m3,        [r5 - 1 * 16]              ; [16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 - 1 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    punpckhwd   m5,        m4, m2
+    punpcklwd   m4,        m2
+    punpckhwd   m2,        m6, m3
+    punpcklwd   m6,        m3
+
+    punpckldq   m3,        m4, m6
+    punpckhdq   m4,        m6
+    punpckldq   m6,        m5, m2
+    punpckhdq   m5,        m2
+
+    movh        [r0 + 8],            m3
+    movhps      [r0 + r1 + 8],       m3
+    movh        [r0 + r1 * 2 + 8],   m4
+    movhps      [r0 + r4 + 8],       m4
+    lea         r0,                  [r0 + r1 * 4]
+    movh        [r0 + 8],            m6
+    movhps      [r0 + r1 + 8],       m6
+    movh        [r0 + r1 * 2 + 8],   m5
+    movhps      [r0 + r4 + 8],       m5
+
+    RET
+
+cglobal intra_pred_ang8_18, 4,5,3
+    add         r1,              r1
+    lea         r4,              [r1 * 3]
+    movu        m1,              [r3]
+    movu        m0,              [r2 + 2]
+    pshufb      m0,              [pw_swap16]
+    movu        [r0],            m1
+    palignr     m2,              m1, m0, 14
+    movu        [r0 + r1],       m2
+    palignr     m2,              m1, m0, 12
+    movu        [r0 + r1 * 2],   m2
+    palignr     m2,              m1, m0, 10
+    movu        [r0 + r4],       m2
+    lea         r0,              [r0 + r1 * 4]
+    palignr     m2,              m1, m0, 8
+    movu        [r0],            m2
+    palignr     m2,              m1, m0, 6
+    movu        [r0 + r1],       m2
+    palignr     m2,              m1, m0, 4
+    movu        [r0 + r1 * 2],   m2
+    palignr     m1,              m0, 2
+    movu        [r0 + r4],       m1
+    RET
+
+cglobal intra_pred_ang8_19, 4,6,8
+    lea         r5,        [ang_table + 17 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r3]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r3 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 11 * 16]             ; [6]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 11 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r2]
+    pshufb      m1,        [pw_ang8_17]
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 5 * 16]              ; [12]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 5 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 1 * 16]              ; [18]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 1 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 + 7 * 16]              ; [24]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 + 7 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 13 * 16]             ; [30]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 13 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 13 * 16]             ; [4]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 7 * 16]              ; [10]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 7 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    pmaddwd     m3,        [r5 - 1 * 16]              ; [16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 - 1 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_20, 4,6,8
+    lea         r5,        [ang_table + 13 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r3]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r3 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 2 * 16]              ; [11]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 2 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r2]
+    pshufb      m1,        [pw_ang8_16]
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 9 * 16]              ; [22]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 9 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 12 * 16]             ; [1]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 12 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 - 1 * 16]              ; [12]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 - 1 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 10 * 16]             ; [23]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 10 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 11 * 16]             ; [2]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 11 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5]                       ; [13]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+    pinsrw      m3,        [r2 + 16], 0
+
+    pmaddwd     m3,        [r5 + 11 * 16]             ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 11 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_21, 4,6,8
+    lea         r5,        [ang_table + 20 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r3]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r3 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 5 * 16]              ; [15]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 5 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r2]
+    pshufb      m1,        [pw_ang8_15]
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 10 * 16]             ; [30]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 10 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 7 * 16]              ; [13]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 7 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 + 8 * 16]              ; [28]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 + 8 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 9 * 16]              ; [11]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 6 * 16]              ; [26]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 6 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 11 * 16]             ; [9]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 11 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+    pinsrw      m3,        [r2 + 16], 0
+
+    pmaddwd     m3,        [r5 + 4 * 16]              ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 4 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_22, 4,6,8
+    lea         r5,        [ang_table + 18 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r3]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r3 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 1 * 16]              ; [19]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 12 * 16]             ; [6]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 12 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r2]
+    pshufb      m1,        [pw_ang8_14]
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 7 * 16]              ; [25]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 7 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 - 6 * 16]              ; [12]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 - 6 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 13 * 16]             ; [31]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 13 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5]                       ; [18]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 13 * 16]             ; [5]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    pmaddwd     m3,        [r5 + 6 * 16]              ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 6 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_23, 4,6,8
+    lea         r5,        [ang_table + 14 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r3]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r3 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 9 * 16]              ; [23]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5]                       ; [14]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 9 * 16]              ; [5]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r2]
+    pshufb      m1,        [pw_ang8_13]
+    palignr     m3,        m1, 12
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 + 14 * 16]             ; [28]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m7,        m0
+    pmaddwd     m7,        [r5 + 14 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m5,        m7
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 5 * 16]              ; [19]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 5 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 4 * 16]              ; [10]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 4 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m2,        m5
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 - 13 * 16]             ; [1]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 - 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pslldq      m1,        2
+    palignr     m0,        m3, 12
+    palignr     m3,        m1, 12
+
+    pmaddwd     m3,        [r5 + 10 * 16]             ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 10 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_24, 4,6,7
+    lea         r5,        [ang_table + 16 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r3]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r3 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 + 11 * 16]             ; [27]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 + 11 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 + 6 * 16]              ; [22]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 + 6 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 1 * 16]              ; [17]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 + 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r5 - 4 * 16]              ; [12]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 4 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r5 - 9 * 16]              ; [7]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r5 - 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r5 - 14 * 16]             ; [2]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r5 - 14 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    palignr     m0,        m3, 12
+    movu        m1,        [r2]
+    pshufb      m1,        [pw_ang8_12]
+    palignr     m3,        m1, 12
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r5 + 13 * 16]             ; [29]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r5 + 13 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pmaddwd     m3,        [r5 + 8 * 16]              ; [24]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r5 + 8 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_25, 3,5,7
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 23 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2]                       ; [7 6 5 4 3 2 1 0]
+    movu        m1,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+
+    punpcklwd   m3,        m0, m1                     ; [4 3 3 2 2 1 1 0]
+    punpckhwd   m0,        m1                         ; [8 7 7 6 6 5 5 4]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 7 * 16]              ; [30]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 7 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 5 * 16]              ; [28]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 5 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 + 3 * 16]              ; [26]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r3 + 1 * 16]              ; [24]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 1 * 16]              ; [22]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 - 3 * 16]              ; [20]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 - 5 * 16]              ; [18]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r3 - 5 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pmaddwd     m3,        [r3 - 7 * 16]              ; [16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r3 - 7 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_26, 4,5,3
+    movu        m0,             [r3 + 2]            ; [8 7 6 5 4 3 2 1]
+    add         r1,             r1
+    lea         r4,             [r1 * 3]
+
+    movu        [r0],           m0
+    movu        [r0 + r1],      m0
+    movu        [r0 + r1 * 2],  m0
+    movu        [r0 + r4],      m0
+
+    lea         r3,             [r0 + r1 *4]
+    movu        [r3],           m0
+    movu        [r3 + r1],      m0
+    movu        [r3 + r1 * 2],  m0
+    movu        [r3 + r4],      m0
+
+    cmp         r5m,            byte 0
+    jz         .quit
+
+    ; filter
+
+    pshufb      m0,             [pw_unpackwdq]
+    movh        m1,             [r2]                ; [3 2 1 0]
+    pshufb      m2,             m1, [pw_unpackwdq]  ; [0 0 0 0 0 0 0 0]
+    movu        m1,             [r2 + 2]            ; [8 7 6 5 4 3 2 1]
+    psubw       m1,             m2
+    psraw       m1,             1
+    paddw       m0,             m1
+    pxor        m1,             m1
+    pmaxsw      m0,             m1
+    pminsw      m0,             [pw_1023]
+    pextrw      [r0],          m0, 0
+    pextrw      [r0 + r1],     m0, 1
+    pextrw      [r0 + r1 * 2], m0, 2
+    pextrw      [r0 + r4],     m0, 3
+    pextrw      [r3],          m0, 4
+    pextrw      [r3 + r1],     m0, 5
+    pextrw      [r3 + r1 * 2], m0, 6
+    pextrw      [r3 + r4],     m0, 7
+
+.quit:
+    RET
+
+cglobal intra_pred_ang8_27, 3,5,7
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 9 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 4]                   ; [9 8 7 6 5 4 3 2]
+
+    punpcklwd   m3,        m0, m1                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m1                         ; [9 8 8 7 7 6 6 5]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 7 * 16]              ; [2]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 7 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 - 5 * 16]              ; [4]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 5 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 - 3 * 16]              ; [6]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r3 - 1 * 16]              ; [8]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 1 * 16]              ; [10]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 3 * 16]              ; [12]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 + 5 * 16]              ; [14]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m5,        m0
+    pmaddwd     m5,        [r3 + 5 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m6,        m5
+
+    pmaddwd     m3,        [r3 + 7 * 16]              ; [16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    pmaddwd     m0,        [r3 + 7 * 16]
+    paddd       m0,        [pd_16]
+    psrld       m0,        5
+    packusdw    m3,        m0
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m3
+
+    RET
+
+cglobal intra_pred_ang8_28, 3,5,7
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 17 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 4]                   ; [9 8 7 6 5 4 3 2]
+
+    punpcklwd   m3,        m0, m1                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m1                         ; [9 8 8 7 7 6 6 5]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 12 * 16]             ; [5]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 12 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 - 7 * 16]              ; [10]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 7 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 - 2 * 16]              ; [15]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 - 2 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    mova        m5,        m3
+    pmaddwd     m5,        [r3 + 3 * 16]              ; [20]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 3 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m5,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 8 * 16]              ; [25]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 8 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 13 * 16]             ; [30]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 13 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    movh        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+
+    palignr     m6,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m5,        m6
+    pmaddwd     m6,        [r3 - 14 * 16]             ; [3]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m1,        m0, 4                      ; [10 9 9 8 8 7 7 6]
+    mova        m3,        m1
+    pmaddwd     m1,        [r3 - 14 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    pmaddwd     m5,        [r3 - 9 * 16]              ; [8]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    pmaddwd     m3,        [r3 - 9 * 16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    packusdw    m5,        m3
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m5
+
+    RET
+
+cglobal intra_pred_ang8_29, 3,5,8
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 18 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 9 * 16]              ; [9]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 9 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3]                       ; [18]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    mova        m6,        m3
+    pmaddwd     m6,        [r3 + 9 * 16]              ; [27]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    palignr     m7,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    pmaddwd     m7,        [r3 - 14 * 16]             ; [4]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m1,        [r3 - 14 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    palignr     m4,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m6,        m4
+    pmaddwd     m4,        [r3 - 5 * 16]              ; [13]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m2,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    mova        m7,        m2
+    pmaddwd     m2,        [r3 - 5 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    pmaddwd     m2,        m6, [r3 + 4 * 16]          ; [22]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    pmaddwd     m1,        m7, [r3 + 4 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 13 * 16]             ; [31]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 13 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m7,        [r3 - 10 * 16]             ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m5,        m0, 8                      ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m5,        [r3 - 10 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m7,        m5
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    RET
+
+cglobal intra_pred_ang8_30, 3,5,8
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 14 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 - 1 * 16]              ; [13]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 - 1 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m3
+    pmaddwd     m2,        [r3 + 12 * 16]             ; [26]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m1,        m0
+    pmaddwd     m1,        [r3 + 12 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    palignr     m6,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m7,        m6
+    pmaddwd     m6,        [r3 - 7 * 16]              ; [7]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m1,        [r3 - 7 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m6,        m1
+
+    pmaddwd     m7,        [r3 + 6 * 16]              ; [20]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m1,        [r3 + 6 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    palignr     m4,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    mova        m6,        m4
+    pmaddwd     m4,        [r3 - 13 * 16]             ; [1]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m2,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    mova        m7,        m2
+    pmaddwd     m2,        [r3 - 13 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    pmaddwd     m2,        m6, [r3]                   ; [14]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    pmaddwd     m1,        m7, [r3]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 13 * 16]             ; [27]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 13 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    pmaddwd     m7,        [r3 - 6 * 16]              ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m5,        m0, 12                     ; [12 11 11 10 10 9 9 8]
+    pmaddwd     m5,        [r3 - 6 * 16]
+    paddd       m5,        [pd_16]
+    psrld       m5,        5
+    packusdw    m7,        m5
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    RET
+
+cglobal intra_pred_ang8_31, 3,5,8
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 13 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 4 * 16]              ; [17]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 4 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m6,        m2
+    pmaddwd     m2,        [r3 - 11 * 16]             ; [2]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    mova        m7,        m1
+    pmaddwd     m1,        [r3 - 11 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 6 * 16]              ; [19]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 6 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m7,        [r3 - 9 * 16]              ; [4]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m1,        [r3 - 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    palignr     m4,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m4,        [r3 + 8 * 16]              ; [21]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m2,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m2,        [r3 + 8 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    mova        m6,        m2
+    pmaddwd     m2,        [r3 - 7 * 16]              ; [6]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m1,        m5, m0, 12                 ; [12 11 11 10 10 9 9 8]
+    mova        m7,        m1
+    pmaddwd     m1,        [r3 - 7 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 10 * 16]             ; [23]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 10 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    mova        m7,        m0
+    pmaddwd     m7,        [r3 - 5 * 16]              ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    mova        m1,        m5
+    pmaddwd     m1,        [r3 - 5 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    RET
+
+cglobal intra_pred_ang8_32, 3,6,8
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 19 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 2 * 16]              ; [21]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 2 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    mova        m6,        m2
+    pmaddwd     m2,        [r3 - 9 * 16]              ; [10]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m1,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    mova        m7,        m1
+    pmaddwd     m1,        [r3 - 9 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m2,        m1
+
+    pmaddwd     m6,        [r3 + 12 * 16]             ; [31]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    pmaddwd     m7,        [r3 + 12 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m7,        [r3 + 1 * 16]              ; [20]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m1,        [r3 + 1 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    palignr     m4,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    mova        m2,        m4
+    pmaddwd     m4,        [r3 - 10 * 16]             ; [ 9]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    palignr     m3,        m5, m0, 12                 ; [12 11 11 10 10 9 9 8]
+    mova        m6,        m3
+    pmaddwd     m3,        [r3 - 10 * 16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    packusdw    m4,        m3
+
+    pmaddwd     m2,        [r3 + 11 * 16]             ; [30]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    pmaddwd     m6,        [r3 + 11 * 16]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    packusdw    m2,        m6
+
+    mova        m6,        m0
+    pmaddwd     m6,        [r3]                       ; [19]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    mova        m7,        m5
+    pmaddwd     m7,        [r3]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    movh        m1,        [r2 + 26]                  ; [16 15 14 13]
+    palignr     m7,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m7,        [r3 - 11 * 16]             ; [8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, 4                      ; [14 13 13 12 12 11 11 10]
+    pmaddwd     m1,        [r3 - 11 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    RET
+
+cglobal intra_pred_ang8_33, 3,5,8
+    mov         r2,        r3mp
+    lea         r3,        [ang_table + 14 * 16]
+    add         r1,        r1
+
+    movu        m0,        [r2 + 2]                   ; [8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 18]                  ; [16 15 14 13 12 11 10 9]
+    palignr     m2,        m1, m0, 2                  ; [9 8 7 6 5 4 3 2]
+    psrldq      m4,        m1, 2                      ; [x 16 15 14 13 12 11 10]
+
+    punpcklwd   m3,        m0, m2                     ; [5 4 4 3 3 2 2 1]
+    punpckhwd   m0,        m2                         ; [9 8 8 7 7 6 6 5]
+    punpcklwd   m5,        m1, m4                     ; [13 12 12 11 11 10 10 9]
+    punpckhwd   m1,        m4                         ; [x 16 16 15 15 14 14 13]
+
+    mova        m4,        m3
+    pmaddwd     m4,        [r3 + 12 * 16]             ; [26]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 12 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    palignr     m2,        m0, m3, 4                  ; [6 5 5 4 4 3 3 2]
+    pmaddwd     m2,        [r3 + 6 * 16]              ; [20]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    palignr     m6,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m6,        [r3 + 6 * 16]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    packusdw    m2,        m6
+
+    palignr     m6,        m0, m3, 8                  ; [7 6 6 5 5 4 4 3]
+    pmaddwd     m6,        [r3]                       ; [14]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m7,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m7,        [r3]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m0, m3, 12                 ; [8 7 7 6 6 5 5 4]
+    pmaddwd     m7,        [r3 - 6 * 16]              ; [ 8]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m3,        m5, m0, 12                 ; [12 11 11 10 10 9 9 8]
+    pmaddwd     m3,        [r3 - 6 * 16]
+    paddd       m3,        [pd_16]
+    psrld       m3,        5
+    packusdw    m7,        m3
+
+    lea         r4,              [r1 * 3]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    mova        m4,        m0
+    pmaddwd     m4,        [r3 - 12 * 16]             ; [ 2]
+    paddd       m4,        [pd_16]
+    psrld       m4,        5
+    mova        m2,        m5
+    pmaddwd     m2,        [r3 - 12 * 16]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    packusdw    m4,        m2
+
+    mova        m2,        m0
+    pmaddwd     m2,        [r3 + 14 * 16]             ; [28]
+    paddd       m2,        [pd_16]
+    psrld       m2,        5
+    mova        m6,        m5
+    pmaddwd     m6,        [r3 + 14 * 16]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    packusdw    m2,        m6
+
+    palignr     m6,        m5, m0, 4                  ; [10 9 9 8 8 7 7 6]
+    pmaddwd     m6,        [r3 + 8 * 16]              ; [22]
+    paddd       m6,        [pd_16]
+    psrld       m6,        5
+    palignr     m7,        m1, m5, 4                  ; [14 13 13 12 12 11 11 10]
+    pmaddwd     m7,        [r3 + 8 * 16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    packusdw    m6,        m7
+
+    palignr     m7,        m5, m0, 8                  ; [11 10 10 9 9 8 8 7]
+    pmaddwd     m7,        [r3 + 2 * 16]              ; [16]
+    paddd       m7,        [pd_16]
+    psrld       m7,        5
+    palignr     m1,        m5, 8                      ; [15 14 14 13 13 12 12 11]
+    pmaddwd     m1,        [r3 + 2 * 16]
+    paddd       m1,        [pd_16]
+    psrld       m1,        5
+    packusdw    m7,        m1
+
+    lea         r0,              [r0 + r1 * 4]
+    movu        [r0],            m4
+    movu        [r0 + r1],       m2
+    movu        [r0 + r1 * 2],   m6
+    movu        [r0 + r4],       m7
+
+    RET
+

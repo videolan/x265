@@ -734,6 +734,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         SETUP_INTRA_ANG4(2, 2, ssse3);
         SETUP_INTRA_ANG4(34, 2, ssse3);
+
+        SETUP_INTRA_ANG8(2, 2, ssse3);
+        SETUP_INTRA_ANG8(34, 2, ssse3);
     }
     if (cpuMask & X265_CPU_SSE4)
     {
@@ -780,6 +783,38 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG4(31, 5, sse4);
         SETUP_INTRA_ANG4(32, 4, sse4);
         SETUP_INTRA_ANG4(33, 3, sse4);
+
+        SETUP_INTRA_ANG8(3, 3, sse4);
+        SETUP_INTRA_ANG8(4, 4, sse4);
+        SETUP_INTRA_ANG8(5, 5, sse4);
+        SETUP_INTRA_ANG8(6, 6, sse4);
+        SETUP_INTRA_ANG8(7, 7, sse4);
+        SETUP_INTRA_ANG8(8, 8, sse4);
+        SETUP_INTRA_ANG8(9, 9, sse4);
+        SETUP_INTRA_ANG8(10, 10, sse4);
+        SETUP_INTRA_ANG8(11, 11, sse4);
+        SETUP_INTRA_ANG8(12, 12, sse4);
+        SETUP_INTRA_ANG8(13, 13, sse4);
+        SETUP_INTRA_ANG8(14, 14, sse4);
+        SETUP_INTRA_ANG8(15, 15, sse4);
+        SETUP_INTRA_ANG8(16, 16, sse4);
+        SETUP_INTRA_ANG8(17, 17, sse4);
+        SETUP_INTRA_ANG8(18, 18, sse4);
+        SETUP_INTRA_ANG8(19, 19, sse4);
+        SETUP_INTRA_ANG8(20, 20, sse4);
+        SETUP_INTRA_ANG8(21, 21, sse4);
+        SETUP_INTRA_ANG8(22, 22, sse4);
+        SETUP_INTRA_ANG8(23, 23, sse4);
+        SETUP_INTRA_ANG8(24, 24, sse4);
+        SETUP_INTRA_ANG8(25, 25, sse4);
+        SETUP_INTRA_ANG8(26, 26, sse4);
+        SETUP_INTRA_ANG8(27, 27, sse4);
+        SETUP_INTRA_ANG8(28, 28, sse4);
+        SETUP_INTRA_ANG8(29, 29, sse4);
+        SETUP_INTRA_ANG8(30, 30, sse4);
+        SETUP_INTRA_ANG8(31, 31, sse4);
+        SETUP_INTRA_ANG8(32, 32, sse4);
+        SETUP_INTRA_ANG8(33, 33, sse4);
     }
     if (cpuMask & X265_CPU_XOP)
     {
