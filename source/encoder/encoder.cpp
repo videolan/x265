@@ -59,6 +59,7 @@ using namespace x265;
 
 Encoder::Encoder()
 {
+    m_aborted = false;
     m_encodedFrameNum = 0;
     m_pocLast = -1;
     m_maxRefPicNum = 0;
@@ -234,6 +235,9 @@ void Encoder::updateVbvPlan(RateControl* rc)
  */
 int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_out, NALUnitEBSP **nalunits)
 {
+    if (m_aborted)
+        return -1;
+
     if (pic_in)
     {
         TComPic *pic;
@@ -242,6 +246,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             pic = new TComPic;
             if (!pic || !pic->create(this))
             {
+                m_aborted = true;
                 x265_log(&param, X265_LOG_ERROR, "memory allocation failure, aborting encode");
                 if (pic)
                 {
