@@ -252,8 +252,8 @@ void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
 
 void CLIOptions::printVersion(x265_param *param)
 {
-    fprintf(stderr, "x265 [info]: HEVC encoder version %s\n", x265_version_str);
-    fprintf(stderr, "x265 [info]: build info %s\n", x265_build_info_str);
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
+    x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
     x265_setup_primitives(param, -1);
 }
 
