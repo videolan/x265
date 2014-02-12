@@ -642,9 +642,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
                 if (level >= baseLevel)
                 {
-                    if (level  > 3 * (1 << goRiceParam))
+                    if (goRiceParam < 4 && level > (3 << goRiceParam))
                     {
-                        goRiceParam = std::min<uint32_t>(goRiceParam + 1, 4);
+                        goRiceParam++;
                     }
                 }
                 if (level >= 1)

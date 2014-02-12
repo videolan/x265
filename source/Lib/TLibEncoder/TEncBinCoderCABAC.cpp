@@ -57,11 +57,6 @@ void TEncBinCABAC::init(TComBitIf* bitIf)
     m_bitIf = bitIf;
 }
 
-void TEncBinCABAC::uninit()
-{
-    m_bitIf = 0;
-}
-
 void TEncBinCABAC::start()
 {
     m_low              = 0;

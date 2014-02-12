@@ -66,9 +66,7 @@ public:
     virtual void setBitstream(TComBitIf* p) = 0;
     virtual void setSlice(TComSlice* p) = 0;
     virtual void resetBits() = 0;
-    virtual void resetCoeffCost() = 0;
     virtual uint32_t getNumberOfWrittenBits() = 0;
-    virtual uint32_t getCoeffCost() = 0;
 
     virtual void codeVPS(TComVPS* vps) = 0;
     virtual void codeSPS(TComSPS* sps) = 0;
@@ -78,7 +76,7 @@ public:
     virtual void codeTilesWPPEntryPoint(TComSlice* slice) = 0;
     virtual void codeTerminatingBit(uint32_t isLast) = 0;
     virtual void codeSliceFinish() = 0;
-    virtual void codeMVPIdx(TComDataCU* cu, uint32_t absPartIdx, int list) = 0;
+    virtual void codeMVPIdx(uint32_t symbol) = 0;
     virtual void codeScalingList(TComScalingList* scalingList) = 0;
 
 public:
@@ -107,16 +105,12 @@ public:
     virtual void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int eRefList) = 0;
     virtual void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx) = 0;
     virtual void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, uint32_t absPartIdx, uint32_t width, uint32_t height, uint32_t depth, TextType ttype) = 0;
-    virtual void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype) = 0;
     virtual void codeSAOSign(uint32_t code) = 0;
     virtual void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol) = 0;
     virtual void codeSaoMerge(uint32_t code) = 0;
     virtual void codeSaoTypeIdx(uint32_t code) = 0;
     virtual void codeSaoUflc(uint32_t length, uint32_t code) = 0;
     virtual void estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype) = 0;
-
-    virtual void codeDFFlag(uint32_t code, const char *symbolName) = 0;
-    virtual void codeDFSvlc(int code, const char *symbolName)   = 0;
 
     virtual ~TEncEntropyIf() {}
 };
@@ -137,11 +131,7 @@ public:
 
     void    resetBits() { m_entropyCoderIf->resetBits();      }
 
-    void    resetCoeffCost() { m_entropyCoderIf->resetCoeffCost(); }
-
     uint32_t    getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
-
-    uint32_t    getCoeffCost() { return m_entropyCoderIf->getCoeffCost(); }
 
     void    resetEntropy() { m_entropyCoderIf->resetEntropy();  }
 

@@ -184,7 +184,6 @@ TEncSbac::TEncSbac()
 // new structure here
     : m_slice(NULL)
     , m_binIf(NULL)
-    , m_coeffCost(0)
 {
     memset(m_contextModels, 0, sizeof(m_contextModels));
 }
@@ -235,7 +234,6 @@ void TEncSbac::resetEntropy()
     initBuffer(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], sliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
     initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
     // new structure
-    m_lastQp = qp;
 
     m_binIf->start();
 }
@@ -298,18 +296,6 @@ void TEncSbac::determineCabacInitIdx()
     {
         m_slice->getPPS()->setEncCABACTableIdx(I_SLICE);
     }
-}
-
-void TEncSbac::codeDFFlag(uint32_t code, const char *symbolName)
-{
-    (void)symbolName;
-    WRITE_FLAG(code, symbolName);
-}
-
-void TEncSbac::codeDFSvlc(int code, const char *symbolName)
-{
-    (void)symbolName;
-    WRITE_SVLC(code, symbolName);
 }
 
 #define SCALING_LIST_OUTPUT_RESULT                0 //JCTVC-G880/JCTVC-G1016 quantization matrices
@@ -1361,27 +1347,9 @@ void TEncSbac::codeSliceFinish()
     m_binIf->finish();
 }
 
-void TEncSbac::xWriteUnarySymbol(uint32_t symbol, ContextModel* scmModel, int offset)
-{
-    m_binIf->encodeBin(symbol ? 1 : 0, scmModel[0]);
-
-    if (0 == symbol)
-    {
-        return;
-    }
-
-    while (symbol--)
-    {
-        m_binIf->encodeBin(symbol ? 1 : 0, scmModel[offset]);
-    }
-}
-
 void TEncSbac::xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
 {
-    if (maxSymbol == 0)
-    {
-        return;
-    }
+    assert(maxSymbol > 0);
 
     m_binIf->encodeBin(symbol ? 1 : 0, scmModel[0]);
 
@@ -1439,8 +1407,9 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t symbol, uint32_t &param)
     if (codeNumber < (COEF_REMAIN_BIN_REDUCTION << param))
     {
         length = codeNumber >> param;
+        codeNumber -= length << param;
         m_binIf->encodeBinsEP((1 << (length + 1)) - 2, length + 1);
-        m_binIf->encodeBinsEP((codeNumber % (1 << param)), param);
+        m_binIf->encodeBinsEP(codeNumber, param);
     }
     else
     {
@@ -1478,18 +1447,12 @@ void TEncSbac::xCopyFrom(TEncSbac* src)
 {
     m_binIf->copyState(src->m_binIf);
 
-    this->m_coeffCost = src->m_coeffCost;
-    this->m_lastQp    = src->m_lastQp;
-
     memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
-void TEncSbac::codeMVPIdx(TComDataCU* cu, uint32_t absPartIdx, int eRefList)
+void TEncSbac::codeMVPIdx(uint32_t symbol)
 {
-    int symbol = cu->getMVPIdx(eRefList, absPartIdx);
-    int num = AMVP_MAX_NUM_CANDS;
-
-    xWriteUnaryMaxSymbol(symbol, &m_contextModels[OFF_MVP_IDX_CTX], 1, num - 1);
+    m_binIf->encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
 }
 
 void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
@@ -1534,7 +1497,7 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     {
         m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
         m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8 && cu->getHeight(absPartIdx) == 8))
+        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8))
         {
             m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
@@ -1550,7 +1513,7 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
     case SIZE_NxN:
     {
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8 && cu->getHeight(absPartIdx) == 8))
+        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8))
         {
             m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
             m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
@@ -1634,11 +1597,11 @@ void TEncSbac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
  */
 void TEncSbac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
 {
-    uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
     uint32_t numCand = cu->getSlice()->getMaxNumMergeCand();
 
     if (numCand > 1)
     {
+        uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
         m_binIf->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
 
         assert(unaryIdx < numCand);
@@ -1776,7 +1739,7 @@ void TEncSbac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
     const uint32_t interDir = cu->getInterDir(absPartIdx) - 1;
     const uint32_t ctx      = cu->getCtxInterDir(absPartIdx);
 
-    if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getHeight(absPartIdx) != 8)
+    if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getWidth(absPartIdx) != 8)
     {
         m_binIf->encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
     }
@@ -1788,40 +1751,30 @@ void TEncSbac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
 
 void TEncSbac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int eRefList)
 {
-    {
-        int refFrame = cu->getCUMvField(eRefList)->getRefIdx(absPartIdx);
-        int idx = 0;
-        m_binIf->encodeBin((refFrame == 0 ? 0 : 1), m_contextModels[OFF_REF_NO_CTX]);
+    int refFrame = cu->getCUMvField(eRefList)->getRefIdx(absPartIdx);
+    m_binIf->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
 
+    if (refFrame > 0)
+    {
+        uint32_t refNum = cu->getSlice()->getNumRefIdx(eRefList) - 2;
+        if (refNum == 0)
+        {
+            return;
+        }
+        refFrame--;
+        m_binIf->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
         if (refFrame > 0)
         {
-            uint32_t refNum = cu->getSlice()->getNumRefIdx(eRefList) - 2;
-            idx++;
-            refFrame--;
-            // TODO: reference codeMergeIndex() to improvement
-            for (uint32_t i = 0; i < refNum; ++i)
-            {
-                const uint32_t symbol = i == refFrame ? 0 : 1;
-                if (i == 0)
-                {
-                    m_binIf->encodeBin(symbol, m_contextModels[OFF_REF_NO_CTX + idx]);
-                }
-                else
-                {
-                    m_binIf->encodeBinEP(symbol);
-                }
-                if (symbol == 0)
-                {
-                    break;
-                }
-            }
+            uint32_t mask = (1 << refFrame) - 2;
+            mask >>= (refFrame == refNum) ? 1 : 0;
+            m_binIf->encodeBinsEP(mask, refFrame - (refFrame == refNum));
         }
     }
 }
 
 void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int eRefList)
 {
-    if (cu->getSlice()->getMvdL1ZeroFlag() && eRefList == REF_PIC_LIST_1 && cu->getInterDir(absPartIdx) == 3)
+    if (eRefList == REF_PIC_LIST_1 && cu->getSlice()->getMvdL1ZeroFlag() && cu->getInterDir(absPartIdx) == 3)
     {
         return;
     }
@@ -1911,13 +1864,13 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
     DTRACE_CABAC_T("\n")
 }
 
-void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype)
+void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, TextType ttype)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         return;
     }
-    if (width != 4 || height != 4)
+    if (width != 4)
     {
         return;
     }
@@ -1998,9 +1951,6 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
         }
 
         pcmSample = cu->getPCMSampleCr() + chromaOffset;
-        width = cu->getWidth(absPartIdx) / 2;
-        height = cu->getHeight(absPartIdx) / 2;
-        sampleBits = cu->getSlice()->getSPS()->getPCMBitDepthChroma();
 
         for (y = 0; y < height; y++)
         {
@@ -2150,11 +2100,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     (void)depth;
 #endif // if ENC_DEC_TRACE
 
-    if (width > m_slice->getSPS()->getMaxTrSize())
-    {
-        width  = m_slice->getSPS()->getMaxTrSize();
-        height = m_slice->getSPS()->getMaxTrSize();
-    }
+    assert(width <= m_slice->getSPS()->getMaxTrSize());
 
     // compute number of significant coefficients
     uint32_t numSig = TEncEntropy::countNonZeroCoeffs(coeff, width * height);
@@ -2163,7 +2109,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
         return;
     if (cu->getSlice()->getPPS()->getUseTransformSkip())
     {
-        codeTransformSkipFlags(cu, absPartIdx, width, height, ttype);
+        codeTransformSkipFlags(cu, absPartIdx, width, ttype);
     }
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
 
@@ -2232,7 +2178,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
 
     const int lastScanSet      = scanPosLast >> LOG2_SCAN_SET_SIZE;
     uint32_t c1 = 1;
-    uint32_t goRiceParam           = 0;
+    uint32_t goRiceParam;
     int  scanPosSig            = scanPosLast;
 
     for (int subSet = lastScanSet; subSet >= 0; subSet--)
@@ -2339,9 +2285,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
 
             if (c1 == 0)
             {
-                baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                 if (firstC2FlagIdx != -1)
                 {
+                    baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                     uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
                     m_binIf->encodeBin(symbol, baseCtxMod[0]);
                 }
@@ -2366,9 +2312,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
                     if (absCoeff[idx] >= baseLevel)
                     {
                         xWriteCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
-                        if (absCoeff[idx] > 3 * (1 << goRiceParam))
+                        if (goRiceParam < 4 && absCoeff[idx] > (3 << goRiceParam))
                         {
-                            goRiceParam = std::min<uint32_t>(goRiceParam + 1, 4);
+                            goRiceParam++;
                         }
                     }
                     if (absCoeff[idx] >= 2)
@@ -2483,13 +2429,14 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 void TEncSbac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype)
 {
     assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
-    int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
+    const int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
+    const ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype ? NUM_SIG_CG_FLAG_CTX : 0)];
 
     for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
     {
         for (uint32_t bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].m_state, bin);
+            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(baseCoeffGroupCtx[ctxIdx].m_state, bin);
         }
     }
 }
@@ -2504,7 +2451,7 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
 {
     int firstCtx = 1, numCtx = 8;
 
-    if (X265_MAX(width, height) >= 16)
+    if (width >= 16)
     {
         firstCtx = (ttype == TEXT_LUMA) ? 21 : 12;
         numCtx = (ttype == TEXT_LUMA) ? 6 : 3;

@@ -64,8 +64,6 @@ public:
 
     void  init(TEncBinCABAC* p)       { m_binIf = p; }
 
-    void  uninit()                    { m_binIf = 0; }
-
     //  Virtual list
     void  resetEntropy();
     void  determineCabacInitIdx();
@@ -80,10 +78,6 @@ public:
     void  setSlice(TComSlice* p)      { m_slice = p; }
 
     // SBAC RD
-    void  resetCoeffCost()            { m_coeffCost = 0;  }
-
-    uint32_t  getCoeffCost()              { return m_coeffCost;  }
-
     void  load(TEncSbac* scr);
     void  loadIntraDirModeLuma(TEncSbac* scr);
     void  store(TEncSbac* dest);
@@ -125,7 +119,6 @@ public:
 
 private:
 
-    void  xWriteUnarySymbol(uint32_t symbol, ContextModel* scmModel, int offset);
     void  xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
     void  xWriteEpExGolomb(uint32_t symbol, uint32_t count);
     void  xWriteCoefRemainExGolomb(uint32_t symbol, uint32_t &param);
@@ -133,16 +126,12 @@ private:
     void  xCopyFrom(TEncSbac* src);
     void  xCopyContextsFrom(TEncSbac* src);
 
-    void codeDFFlag(uint32_t /*code*/, const char* /*symbolName*/);
-    void codeDFSvlc(int /*code*/, const char* /*symbolName*/);
     void xCodeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
 
 public:
 
     TComSlice*    m_slice;
     TEncBinCABAC* m_binIf;
-    //SBAC RD
-    uint32_t          m_coeffCost;
 
     //--Adaptive loop filter
 
@@ -153,7 +142,7 @@ public:
     void codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);
     void codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    void codeMVPIdx(TComDataCU* cu, uint32_t absPartIdx, int eRefList);
+    void codeMVPIdx(uint32_t symbol);
 
     void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
     void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
@@ -174,7 +163,7 @@ public:
 
     void codeLastSignificantXY(uint32_t posx, uint32_t posy, int width, int height, TextType ttype, uint32_t scanIdx);
     void codeCoeffNxN(TComDataCU* cu, TCoeff* coef, uint32_t absPartIdx, uint32_t width, uint32_t height, uint32_t depth, TextType ttype);
-    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype);
+    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, TextType ttype);
 
     // -------------------------------------------------------------------------------------------------------------------
     // for RD-optimizatioon
@@ -190,7 +179,6 @@ public:
 
 private:
 
-    uint32_t                 m_lastQp;
     ContextModel         m_contextModels[MAX_OFF_CTX_MOD];
 };
 }

@@ -450,11 +450,14 @@ void TEncEntropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
         }
         else
         {
+            uint32_t interDir = cu->getInterDir(subPartIdx);
             encodeInterDirPU(cu, subPartIdx);
             for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
             {
-                if (cu->getSlice()->getNumRefIdx(refListIdx) > 0)
+                if (interDir & (1 << refListIdx))
                 {
+                    assert(cu->getSlice()->getNumRefIdx(refListIdx) > 0);
+
                     encodeRefFrmIdxPU(cu, subPartIdx, refListIdx);
                     encodeMvdPU(cu, subPartIdx, refListIdx);
                     encodeMVPIdxPU(cu, subPartIdx, refListIdx);
@@ -489,7 +492,7 @@ void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int lis
             return;
         }
 
-        if (cu->getInterDir(absPartIdx) & (1 << list))
+        assert(cu->getInterDir(absPartIdx) & (1 << list));
         {
             m_entropyCoderIf->codeRefFrmIdx(cu, absPartIdx, list);
         }
@@ -506,7 +509,7 @@ void TEncEntropy::encodeMvdPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     assert(!cu->isIntra(absPartIdx));
 
-    if (cu->getInterDir(absPartIdx) & (1 << list))
+    assert(cu->getInterDir(absPartIdx) & (1 << list));
     {
         m_entropyCoderIf->codeMvd(cu, absPartIdx, list);
     }
@@ -514,9 +517,9 @@ void TEncEntropy::encodeMvdPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 
 void TEncEntropy::encodeMVPIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    if ((cu->getInterDir(absPartIdx) & (1 << list)))
+    assert(cu->getInterDir(absPartIdx) & (1 << list));
     {
-        m_entropyCoderIf->codeMVPIdx(cu, absPartIdx, list);
+        m_entropyCoderIf->codeMVPIdx(cu->getMVPIdx(list, absPartIdx));
     }
 }
 

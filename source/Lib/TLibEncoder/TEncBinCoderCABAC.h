@@ -55,7 +55,6 @@ public:
     virtual ~TEncBinCABAC();
 
     void  init(TComBitIf* bitIf);
-    void  uninit();
 
     void  start();
     void  finish();
