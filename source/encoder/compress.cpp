@@ -411,14 +411,12 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
             /* Compute  Merge Cost */
             xComputeCostMerge2Nx2N(m_bestMergeCU[depth], m_mergeCU[depth], m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
-            TComYuv* bestMergePred;
-            bestMergePred = m_modePredYuv[3][depth];
             bool earlyskip = false;
             if (m_cfg->param.rdLevel > 1)
                 earlyskip = (m_cfg->param.bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0));
             else if (m_cfg->param.rdLevel == 1)
             {
-                uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
+                const uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
                 int index = 4 - g_convertToBit[m_bestMergeCU[depth]->getWidth(0)];
                 if (m_bestMergeCU[depth]->m_totalDistortion < threshold[index])
                 {
