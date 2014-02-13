@@ -109,8 +109,8 @@ enum TextType
 {
     TEXT_LUMA     = 0,  ///< luma
     TEXT_CHROMA   = 1,  ///< chroma (U+V)
-    TEXT_CHROMA_U = 2,  ///< chroma U
-    TEXT_CHROMA_V = 3,  ///< chroma V
+    TEXT_CHROMA_U = 1,  ///< chroma U
+    TEXT_CHROMA_V = 2,  ///< chroma V
 };
 
 /// index for SBAC based RD optimization

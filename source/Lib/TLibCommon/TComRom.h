@@ -293,10 +293,6 @@ extern const double x265_lambda2_non_I[MAX_MAX_QP + 1];
 extern const UChar g_lpsTable[64][4];
 extern const UChar g_renormTable[32];
 extern const UChar x265_exp2_lut[64];
-
-// TSKIP
-extern const UChar g_aucConvertTxtTypeToIdx[4];
-extern const UChar g_eTTable[4];
 }
 
 #endif  //ifndef X265_TCOMROM_H
