@@ -230,6 +230,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     m_cuPelY           = (cuAddr / pic->getFrameWidthInCU()) * g_maxCUHeight;
     m_absIdxInLCU      = 0;
     m_totalCost        = MAX_INT64;
+    m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
     m_numPartitions    = pic->getNumPartInCU();
@@ -333,6 +334,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
 void TComDataCU::initEstData(uint32_t depth, int qp)
 {
     m_totalCost        = MAX_INT64;
+    m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
 
@@ -386,6 +388,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_cuPelY           = cu->getCUPelY() + (g_maxCUHeight >> depth) * (partUnitIdx >> 1);
 
     m_totalCost        = MAX_INT64;
+    m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
     m_numPartitions    = cu->getTotalNumPart() >> 2;
@@ -458,6 +461,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
     m_cuPelY           = cu->getCUPelY() + (g_maxCUHeight >> depth) * (partUnitIdx >> 1);
 
     m_totalCost        = MAX_INT64;
+    m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
     m_numPartitions    = cu->getTotalNumPart() >> 2;
