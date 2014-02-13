@@ -175,7 +175,7 @@ endif(ENABLE_PPA)
 
 if (WIN32)
     # Visual leak detector
-    find_package(VLD)
+    find_package(VLD QUIET)
     if(VLD_FOUND)
         add_definitions(-DHAVE_VLD)
         include_directories(${VLD_INCLUDE_DIRS})
