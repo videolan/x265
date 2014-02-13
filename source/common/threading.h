@@ -288,7 +288,7 @@ inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
 
 #if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 /* Windows XP did not define this intrinsic */
-FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
+FORCEINLINE LONGLONG x265_interlocked_OR64(__inout LONGLONG volatile *Destination,
                                       __in    LONGLONG           Value)
 {
     LONGLONG Old;
@@ -302,8 +302,8 @@ FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
     return Old;
 }
 
-#define ATOMIC_OR(ptr, mask)            _InterlockedOr64((volatile LONG64*)ptr, mask)
-#if defined(__MSC_VER) && !defined(__INTEL_COMPILER)
+#define ATOMIC_OR(ptr, mask)            x265_interlocked_OR64((volatile LONG64*)ptr, mask)
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma intrinsic(_InterlockedCompareExchange64)
 #endif
 #else // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
