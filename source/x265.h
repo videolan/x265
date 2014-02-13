@@ -88,22 +88,45 @@ typedef struct x265_nal
     uint8_t* payload;
 } x265_nal;
 
+/* Used to pass pictures into the encoder, and to get picture data back out of
+ * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
 {
+    /* Must be specified on input pictures, the number of planes is determined
+     * by the colorSpace value */
     void*   planes[3];
     int     stride[3];
+
+    /* Must be specified on input pictures. x265_picture_init() will set it to
+     * the encoder's internal bit depth, but this field must describe the depth
+     * of the input pictures. Must be between 8 and 16. Values larger than 8
+     * imply 16bits per input sample. If input bit depth is larger than the
+     * internal bit depth, the encoder will down-shift pixels. Input samples
+     * larger than 8bits will be masked to internal bit depth. On output the
+     * bitDepth will be the internal encoder bit depth */
     int     bitDepth;
+
+    /* Must be specified on input pictures: X265_TYPE_AUTO or other.
+     * x265_picture_init() sets this to auto, returned on output */
     int     sliceType;
+
+    /* Ignored on input, set to picture count, returned on output */
     int     poc;
+
+    /* Must be specified on input pictures: X265_CSP_I420 or other. It should
+     * match the internal color space of the encoder. x265_picture_init() will
+     * initialize this value to the internal color space */
     int     colorSpace;
 
     /* presentation time stamp: user-specified, returned on output */
     int64_t pts;
 
-    /* display time stamp: ignored on input, copied from reordered
-     * pts. Returned on output */
+    /* display time stamp: ignored on input, copied from reordered pts. Returned
+     * on output */
     int64_t dts;
 
+    /* The value provided on input is returned with the same picture (POC) on
+     * output */
     void*   userData;
 
     /* new data members to this structure must be added to the end so that
@@ -312,12 +335,9 @@ typedef struct x265_param
 
     /*== Source Picture Specification ==*/
 
-    /* source pixel bit depth (and internal encoder bit depth). If x265 was
-     * compiled to use 8bit pixels (HIGH_BIT_DEPTH=0), this field must be 8 and
-     * x265_picture.bitDepth must also be 8. x265_max_bit_depth can be consulted
-     * at runtime to determine the maximum bit depth supported by your build of
-     * x265. A high bit depth build of x265 will support input bit depths of 8,
-     * 10, or 12 */
+    /* Internal encoder bit depth. If x265 was compiled to use 8bit pixels
+     * (HIGH_BIT_DEPTH=0), this field must be 8, else this field must be 10.
+     * Future builds may support 12bit pixels. */
     int       inputBitDepth;
 
     /* Color space of internal pictures. Only X265_CSP_I420 is currently supported.
@@ -719,7 +739,9 @@ x265_picture *x265_picture_alloc();
 void x265_picture_free(x265_picture *);
 
 /***
- * Initialize an x265_picture structure to default values
+ * Initialize an x265_picture structure to default values. It sets the pixel
+ * depth and color space to the encoder's internal values and sets the slice
+ * type to auto - so the lookahead will determine slice type.
  */
 void x265_picture_init(x265_param *param, x265_picture *pic);
 

@@ -227,8 +227,10 @@ extern "C"
 void x265_picture_init(x265_param *param, x265_picture *pic)
 {
     memset(pic, 0, sizeof(x265_picture));
+
     /* This is the encoder internal bit depth */
     pic->bitDepth = param->inputBitDepth;
+    pic->colorSpace = param->internalCsp;
 }
 
 extern "C"
