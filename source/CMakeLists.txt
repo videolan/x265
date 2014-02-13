@@ -249,12 +249,11 @@ if(CMAKE_RC_COMPILER)
         # this is my hacky workaround, removing <FLAGS> from this string
         set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
     endif()
-    # convert HG_REVISION_TAG (ex: 0.7) and HG_REVISION_DIST (ex: 103) to
+    # convert X265_LATEST_TAG (ex: 0.7) and X265_TAG_DISTANCE (ex: 103) to
     # @X265_VERSION_MAJOR@,@X265_VERSION_MINOR@,@X265_BRANCH_ID@,@X265_TAG_DISTANCE@
-    string(REPLACE "." ";" VERSION_LIST ${HG_REVISION_TAG})
+    string(REPLACE "." ";" VERSION_LIST "${X265_LATEST_TAG}")
     list(GET VERSION_LIST 0 X265_VERSION_MAJOR)
     list(GET VERSION_LIST 1 X265_VERSION_MINOR)
-    set(X265_TAG_DISTANCE ${HG_REVISION_DIST})
     set(X265_BRANCH_ID 0) # TODO: 0 - stable, 1 - default or other
     set(X265_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/x265.rc")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/x265.rc.in" "${X265_RC_FILE}" @ONLY)
