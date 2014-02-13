@@ -182,12 +182,12 @@ uint32_t weightCost(
         int scale = w->inputWeight;
         int denom = w->log2WeightDenom;
         int correction = IF_INTERNAL_PREC - X265_DEPTH;
+        int pwidth = ((width + 15) >> 4) << 4;
 
         // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
-        primitives.weight_pp(ref, temp, refstride, width, width, height,
+        primitives.weight_pp(ref, temp, refstride, refstride, pwidth, height,
                              scale, (1 << (denom - 1 + correction)), denom + correction, offset);
         ref = temp;
-        refstride = width;
     }
 
     uint32_t cost = 0;
