@@ -2854,15 +2854,15 @@ FILTER_V4_W32 32, 32
 ; void filterConvertPelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height)
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal luma_p2s, 3, 7, 8
+cglobal luma_p2s, 3, 7, 6
 
     ; load width and height
     mov         r3d, r3m
     mov         r4d, r4m
 
     ; load constant
-    mova        m6, [tab_c_128]
-    mova        m7, [tab_c_64_n64]
+    mova        m4, [tab_c_128]
+    mova        m5, [tab_c_64_n64]
 
 .loopH:
 
@@ -2871,21 +2871,21 @@ cglobal luma_p2s, 3, 7, 8
     lea         r6, [r0 + r5]
 
     movh        m0, [r6]
-    punpcklbw   m0, m6
-    pmaddubsw   m0, m7
+    punpcklbw   m0, m4
+    pmaddubsw   m0, m5
 
     movh        m1, [r6 + r1]
-    punpcklbw   m1, m6
-    pmaddubsw   m1, m7
+    punpcklbw   m1, m4
+    pmaddubsw   m1, m5
 
     movh        m2, [r6 + r1 * 2]
-    punpcklbw   m2, m6
-    pmaddubsw   m2, m7
+    punpcklbw   m2, m4
+    pmaddubsw   m2, m5
 
     lea         r6, [r6 + r1 * 2]
     movh        m3, [r6 + r1]
-    punpcklbw   m3, m6
-    pmaddubsw   m3, m7
+    punpcklbw   m3, m4
+    pmaddubsw   m3, m5
 
     add         r5, 8
     cmp         r5, r3
@@ -2917,36 +2917,37 @@ cglobal luma_p2s, 3, 7, 8
     movd        m1, [r0 + r1]
     punpcklbw   m2, m0, m1                     ; m2=[0 1]
 
-    movd        m0, [r0 + 2 * r1]
+    lea         r0, [r0 + 2 * r1]
+    movd        m0, [r0]
     punpcklbw   m1, m0                         ; m1=[1 2]
     punpcklqdq  m2, m1                         ; m2=[0 1 1 2]
     pmaddubsw   m4, m2, [r6 + 0 * 16]          ; m4=[0+1 1+2]
 
-    lea         r0, [r0 + 2 * r1]
     movd        m1, [r0 + r1]
     punpcklbw   m5, m0, m1                     ; m2=[2 3]
-    movd        m0, [r0 + 2 * r1]
+    lea         r0, [r0 + 2 * r1]
+    movd        m0, [r0]
     punpcklbw   m1, m0                         ; m1=[3 4]
     punpcklqdq  m5, m1                         ; m5=[2 3 3 4]
     pmaddubsw   m2, m5, [r6 + 1 * 16]          ; m2=[2+3 3+4]
-    paddw       m4, m2                         ; m4=[0+1+2+3 1+2+3+4]      Row1-2
-    pmaddubsw   m5, [r6 + 0 * 16]              ; m5=[2+3 3+4]            Row3-4
+    paddw       m4, m2                         ; m4=[0+1+2+3 1+2+3+4]                   Row1-2
+    pmaddubsw   m5, [r6 + 0 * 16]              ; m5=[2+3 3+4]                           Row3-4
 
-    lea         r0, [r0 + 2 * r1]
     movd        m1, [r0 + r1]
     punpcklbw   m2, m0, m1                     ; m2=[4 5]
-    movd        m0, [r0 + 2 * r1]
+    lea         r0, [r0 + 2 * r1]
+    movd        m0, [r0]
     punpcklbw   m1, m0                         ; m1=[5 6]
     punpcklqdq  m2, m1                         ; m2=[4 5 5 6]
     pmaddubsw   m1, m2, [r6 + 2 * 16]          ; m1=[4+5 5+6]
-    paddw       m4, m1                         ; m4=[0+1+2+3+4+5 1+2+3+4+5+6]      Row1-2
+    paddw       m4, m1                         ; m4=[0+1+2+3+4+5 1+2+3+4+5+6]           Row1-2
     pmaddubsw   m2, [r6 + 1 * 16]              ; m2=[4+5 5+6]
-    paddw       m5, m2                         ; m5=[2+3+4+5 3+4+5+6]              Row3-4
+    paddw       m5, m2                         ; m5=[2+3+4+5 3+4+5+6]                   Row3-4
 
-    lea         r0, [r0 + 2 * r1]
     movd        m1, [r0 + r1]
     punpcklbw   m2, m0, m1                     ; m2=[6 7]
-    movd        m0, [r0 + 2 * r1]
+    lea         r0, [r0 + 2 * r1]
+    movd        m0, [r0]
     punpcklbw   m1, m0                         ; m1=[7 8]
     punpcklqdq  m2, m1                         ; m2=[6 7 7 8]
     pmaddubsw   m1, m2, [r6 + 3 * 16]          ; m1=[6+7 7+8]
@@ -2954,7 +2955,6 @@ cglobal luma_p2s, 3, 7, 8
     pmaddubsw   m2, [r6 + 2 * 16]              ; m2=[6+7 7+8]
     paddw       m5, m2                         ; m5=[2+3+4+5+6+7 3+4+5+6+7+8]           Row3-4
 
-    lea         r0, [r0 + 2 * r1]
     movd        m1, [r0 + r1]
     punpcklbw   m2, m0, m1                     ; m2=[8 9]
     movd        m0, [r0 + 2 * r1]
@@ -2968,60 +2968,60 @@ cglobal luma_p2s, 3, 7, 8
     movq       m0, [r0]
     movq       m1, [r0 + r1]
     punpcklbw  m0, m1
-    pmaddubsw  m7, m0, [r6 + 0 *16]            ;m7=[0+1]  Row1
-
-    movq       m0, [r0 + 2 * r1]
-    punpcklbw  m1, m0
-    pmaddubsw  m6, m1, [r6 + 0 *16]            ;m6=[1+2]  Row2
+    pmaddubsw  m7, m0, [r6 + 0 *16]            ;m7=[0+1]               Row1
 
     lea        r0, [r0 + 2 * r1]
+    movq       m0, [r0]
+    punpcklbw  m1, m0
+    pmaddubsw  m6, m1, [r6 + 0 *16]            ;m6=[1+2]               Row2
+
     movq       m1, [r0 + r1]
     punpcklbw  m0, m1
-    pmaddubsw  m5, m0, [r6 + 0 *16]            ;m5=[2+3]  Row3
+    pmaddubsw  m5, m0, [r6 + 0 *16]            ;m5=[2+3]               Row3
     pmaddubsw  m0, [r6 + 1 * 16]
-    paddw      m7, m0                          ;m7=[0+1+2+3]  Row1
-
-    movq       m0, [r0 + 2 * r1]
-    punpcklbw  m1, m0
-    pmaddubsw  m4, m1, [r6 + 0 *16]            ;m4=[3+4]  Row4
-    pmaddubsw  m1, [r6 + 1 * 16]
-    paddw      m6, m1                          ;m6 = [1+2+3+4]  Row2
+    paddw      m7, m0                          ;m7=[0+1+2+3]           Row1
 
     lea        r0, [r0 + 2 * r1]
+    movq       m0, [r0]
+    punpcklbw  m1, m0
+    pmaddubsw  m4, m1, [r6 + 0 *16]            ;m4=[3+4]               Row4
+    pmaddubsw  m1, [r6 + 1 * 16]
+    paddw      m6, m1                          ;m6 = [1+2+3+4]         Row2
+
     movq       m1, [r0 + r1]
     punpcklbw  m0, m1
     pmaddubsw  m2, m0, [r6 + 1 * 16]
     pmaddubsw  m0, [r6 + 2 * 16]
-    paddw      m7, m0                          ;m7=[0+1+2+3+4+5]  Row1
-    paddw      m5, m2                          ;m5=[2+3+4+5]  Row3
+    paddw      m7, m0                          ;m7=[0+1+2+3+4+5]       Row1
+    paddw      m5, m2                          ;m5=[2+3+4+5]           Row3
 
-    movq       m0, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m0, [r0]
     punpcklbw  m1, m0
     pmaddubsw  m2, m1, [r6 + 1 * 16]
     pmaddubsw  m1, [r6 + 2 * 16]
-    paddw      m6, m1                          ;m6=[1+2+3+4+5+6]  Row2
-    paddw      m4, m2                          ;m4=[3+4+5+6]  Row4
+    paddw      m6, m1                          ;m6=[1+2+3+4+5+6]       Row2
+    paddw      m4, m2                          ;m4=[3+4+5+6]           Row4
 
-    lea        r0, [r0 + 2 * r1]
     movq       m1, [r0 + r1]
     punpcklbw  m0, m1
     pmaddubsw  m2, m0, [r6 + 2 * 16]
     pmaddubsw  m0, [r6 + 3 * 16]
-    paddw      m7, m0                          ;m7=[0+1+2+3+4+5+6+7]  Row1 end
-    paddw      m5, m2                          ;m5=[2+3+4+5+6+7]  Row3
+    paddw      m7, m0                          ;m7=[0+1+2+3+4+5+6+7]   Row1 end
+    paddw      m5, m2                          ;m5=[2+3+4+5+6+7]       Row3
 
-    movq       m0, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m0, [r0]
     punpcklbw  m1, m0
     pmaddubsw  m2, m1, [r6 + 2 * 16]
     pmaddubsw  m1, [r6 + 3 * 16]
-    paddw      m6, m1                          ;m6=[1+2+3+4+5+6+7+8]  Row2 end
-    paddw      m4, m2                          ;m4=[3+4+5+6+7+8]  Row4
+    paddw      m6, m1                          ;m6=[1+2+3+4+5+6+7+8]   Row2 end
+    paddw      m4, m2                          ;m4=[3+4+5+6+7+8]       Row4
 
-    lea        r0, [r0 + 2 * r1]
     movq       m1, [r0 + r1]
     punpcklbw  m0, m1
     pmaddubsw  m0, [r6 + 3 * 16]
-    paddw      m5, m0                          ;m5=[2+3+4+5+6+7+8+9]  Row3 end
+    paddw      m5, m0                          ;m5=[2+3+4+5+6+7+8+9]   Row3 end
 
     movq       m0, [r0 + 2 * r1]
     punpcklbw  m1, m0
@@ -3035,7 +3035,7 @@ cglobal luma_p2s, 3, 7, 8
 %macro FILTER_VER_LUMA_4xN 3
 INIT_XMM sse4
 cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 6
-    lea       r5, [r1 + 2 * r1]
+    lea       r5, [3 * r1]
     sub       r0, r5
     shl       r4d, 6
 %ifidn %3,ps
@@ -3056,6 +3056,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 6
 %endif
 
     mov       r4d, %2/4
+    lea       r5, [4 * r1]
 
 .loopH
     PROCESS_LUMA_W4_4R
@@ -3064,30 +3065,26 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 6
     pmulhrsw  m4, m3
     pmulhrsw  m5, m3
 
-    packuswb  m4, m4
-    packuswb  m5, m5
+    packuswb  m4, m5
 
     movd      [r2], m4
-    pshufd    m4, m4, 1
-    movd      [r2 + r3], m4
-    movd      [r2 + 2 * r3], m5
-    pshufd    m5, m5, 1
-    lea       r5, [r3 + 2 * r3]
-    movd      [r2 + r5], m5
+    pextrd    [r2 + r3], m4, 1
+    lea       r2, [r2 + 2 * r3]
+    pextrd    [r2], m4, 2
+    pextrd    [r2 + r3], m4, 3
 %else
     psubw     m4, m3
     psubw     m5, m3
 
     movlps    [r2], m4
     movhps    [r2 + r3], m4
-    movlps    [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movhps    [r2 + r5], m5
+    lea       r2, [r2 + 2 * r3]
+    movlps    [r2], m5
+    movhps    [r2 + r3], m5
 %endif
 
-    lea       r5, [4 * r1]
     sub       r0, r5
-    lea       r2, [r2 + 4 * r3]
+    lea       r2, [r2 + 2 * r3]
 
     dec       r4d
     jnz       .loopH
@@ -3131,7 +3128,7 @@ FILTER_VER_LUMA_4xN 4, 16, ps
 %macro FILTER_VER_LUMA_8xN 3
 INIT_XMM sse4
 cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
-    lea       r5, [r1 + 2 * r1]
+    lea       r5, [3 * r1]
     sub       r0, r5
     shl       r4d, 6
 
@@ -3153,6 +3150,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 %endif
 
     mov       r4d, %2/4
+    lea       r5, [4 * r1]
 
 .loopH
     PROCESS_LUMA_W8_4R
@@ -3168,9 +3166,9 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 
     movlps    [r2], m7
     movhps    [r2 + r3], m7
-    movlps    [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movhps    [r2 + r5], m5
+    lea       r2, [r2 + 2 * r3]
+    movlps    [r2], m5
+    movhps    [r2 + r3], m5
 %else
     psubw     m7, m3
     psubw     m6, m3
@@ -3179,14 +3177,13 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 
     movu      [r2], m7
     movu      [r2 + r3], m6
-    movu      [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movu      [r2 + r5], m4
+    lea       r2, [r2 + 2 * r3]
+    movu      [r2], m5
+    movu      [r2 + r3], m4
 %endif
 
-    lea       r5, [4 * r1]
     sub       r0, r5
-    lea       r2, [r2 + 4 * r3]
+    lea       r2, [r2 + 2 * r3]
 
     dec       r4d
     jnz       .loopH
@@ -3240,7 +3237,7 @@ FILTER_VER_LUMA_8xN 8, 32, ps
 %macro FILTER_VER_LUMA_12xN 3
 INIT_XMM sse4
 cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
-    lea       r5, [r1 + 2 * r1]
+    lea       r5, [3 * r1]
     sub       r0, r5
     shl       r4d, 6
 %ifidn %3,ps
@@ -3276,9 +3273,9 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 
     movlps    [r2], m7
     movhps    [r2 + r3], m7
-    movlps    [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movhps    [r2 + r5], m5
+    lea       r5, [r2 + 2 * r3]
+    movlps    [r5], m5
+    movhps    [r5 + r3], m5
 %else
     psubw     m7, m3
     psubw     m6, m3
@@ -3287,9 +3284,9 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 
     movu      [r2], m7
     movu      [r2 + r3], m6
-    movu      [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movu      [r2 + r5], m4
+    lea       r5, [r2 + 2 * r3]
+    movu      [r5], m5
+    movu      [r5 + r3], m4
 %endif
 
     lea       r5, [8 * r1 - 8]
@@ -3306,25 +3303,22 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
     pmulhrsw  m4, m3
     pmulhrsw  m5, m3
 
-    packuswb  m4, m4
-    packuswb  m5, m5
+    packuswb  m4, m5
 
     movd      [r2], m4
-    pshufd    m4, m4, 1
-    movd      [r2 + r3], m4
-    movd      [r2 + 2 * r3], m5
-    pshufd    m5, m5, 1
-    lea       r5, [r3 + 2 * r3]
-    movd      [r2 + r5], m5
+    pextrd    [r2 + r3], m4, 1
+    lea       r5, [r2 + 2 * r3]
+    pextrd    [r5], m4, 2
+    pextrd    [r5 + r3], m4, 3
 %else
     psubw     m4, m3
     psubw     m5, m3
 
     movlps    [r2], m4
     movhps    [r2 + r3], m4
-    movlps    [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movhps    [r2 + r5], m5
+    lea       r5, [r2 + 2 * r3]
+    movlps    [r5], m5
+    movhps    [r5 + r3], m5
 %endif
 
     lea       r5, [4 * r1 + 8]
@@ -3357,7 +3351,7 @@ FILTER_VER_LUMA_12xN 12, 16, ps
 %macro FILTER_VER_LUMA 3
 INIT_XMM sse4
 cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
-    lea       r5, [r1 + 2 * r1]
+    lea       r5, [3 * r1]
     sub       r0, r5
     shl       r4d, 6
 %ifidn %3,ps
@@ -3393,9 +3387,9 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
 
     movlps    [r2], m7
     movhps    [r2 + r3], m7
-    movlps    [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movhps    [r2 + r5], m5
+    lea       r5, [r2 + 2 * r3]
+    movlps    [r5], m5
+    movhps    [r5 + r3], m5
 %else
     psubw     m7, m3
     psubw     m6, m3
@@ -3404,9 +3398,9 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
 
     movu      [r2], m7
     movu      [r2 + r3], m6
-    movu      [r2 + 2 * r3], m5
-    lea       r5, [r3 + 2 * r3]
-    movu      [r2 + r5], m4
+    lea       r5, [r2 + 2 * r3]
+    movu      [r5], m5
+    movu      [r5 + r3], m4
 %endif
 
     lea       r5, [8 * r1 - 8]
@@ -3474,24 +3468,24 @@ FILTER_VER_LUMA 64, 64, ps
     punpcklwd  m0, m1                          ;m0=[0 1]
     pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1]  Row1
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m1, m4                          ;m1=[1 2]
     pmaddwd    m1, [r6 + 0 *16]                ;m1=[1+2]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[2 3]
     pmaddwd    m2, m4, [r6 + 0 *16]            ;m2=[2+3]  Row3
     pmaddwd    m4, [r6 + 1 * 16]
     paddd      m0, m4                          ;m0=[0+1+2+3]  Row1
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m5, m4                          ;m5=[3 4]
     pmaddwd    m3, m5, [r6 + 0 *16]            ;m3=[3+4]  Row4
     pmaddwd    m5, [r6 + 1 * 16]
     paddd      m1, m5                          ;m1 = [1+2+3+4]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[4 5]
     pmaddwd    m6, m4, [r6 + 1 * 16]
@@ -3499,14 +3493,14 @@ FILTER_VER_LUMA 64, 64, ps
     pmaddwd    m4, [r6 + 2 * 16]
     paddd      m0, m4                          ;m0=[0+1+2+3+4+5]  Row1
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m5, m4                          ;m5=[5 6]
     pmaddwd    m6, m5, [r6 + 1 * 16]
     paddd      m3, m6                          ;m3=[3+4+5+6]  Row4
     pmaddwd    m5, [r6 + 2 * 16]
     paddd      m1, m5                          ;m1=[1+2+3+4+5+6]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[6 7]
     pmaddwd    m6, m4, [r6 + 2 * 16]
@@ -3514,14 +3508,14 @@ FILTER_VER_LUMA 64, 64, ps
     pmaddwd    m4, [r6 + 3 * 16]
     paddd      m0, m4                          ;m0=[0+1+2+3+4+5+6+7]  Row1 end
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m5, m4                          ;m5=[7 8]
     pmaddwd    m6, m5, [r6 + 2 * 16]
     paddd      m3, m6                          ;m3=[3+4+5+6+7+8]  Row4
     pmaddwd    m5, [r6 + 3 * 16]
     paddd      m1, m5                          ;m1=[1+2+3+4+5+6+7+8]  Row2 end
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[8 9]
     pmaddwd    m4, [r6 + 3 * 16]
@@ -3573,16 +3567,13 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
     packssdw  m0, m1
     packssdw  m2, m3
 
-    packuswb  m0, m0
-    packuswb  m2, m2
+    packuswb  m0, m2
 
     movd      [r2], m0
-    pshufd    m0, m0, 1
-    movd      [r2 + r3], m0
-    movd      [r2 + 2 * r3], m2
-    pshufd    m2, m2, 1
-    lea       r5, [r3 + 2 * r3]
-    movd      [r2 + r5], m2
+    pextrd    [r2 + r3], m0, 1
+    lea       r5, [r2 + 2 * r3]
+    pextrd    [r5], m0, 2
+    pextrd    [r5 + r3], m0, 3
 
     lea       r5, [8 * r1 - 2 * 4]
     sub       r0, r5
@@ -3632,15 +3623,15 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
 ; TODO: combin of U and V is more performance, but need more register
 ; TODO: use two path for height alignment to 4 and otherwise may improvement 10% performance, but code is more complex, so I disable it
 INIT_XMM ssse3
-cglobal chroma_p2s, 3, 7, 6
+cglobal chroma_p2s, 3, 7, 4
 
     ; load width and height
     mov         r3d, r3m
     mov         r4d, r4m
 
     ; load constant
-    mova        m4, [tab_c_128]
-    mova        m5, [tab_c_64_n64]
+    mova        m2, [tab_c_128]
+    mova        m3, [tab_c_64_n64]
 
 .loopH:
 
@@ -3649,12 +3640,12 @@ cglobal chroma_p2s, 3, 7, 6
     lea         r6, [r0 + r5]
 
     movh        m0, [r6]
-    punpcklbw   m0, m4
-    pmaddubsw   m0, m5
+    punpcklbw   m0, m2
+    pmaddubsw   m0, m3
 
     movh        m1, [r6 + r1]
-    punpcklbw   m1, m4
-    pmaddubsw   m1, m5
+    punpcklbw   m1, m2
+    pmaddubsw   m1, m3
 
     add         r5d, 8
     cmp         r5d, r3d
@@ -3693,35 +3684,35 @@ cglobal chroma_p2s, 3, 7, 6
     movq       m0, [r0]
     movq       m1, [r0 + r1]
     punpcklwd  m0, m1                          ;m0=[0 1]
-    pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1]  Row1
-
-    movq       m4, [r0 + 2 * r1]
-    punpcklwd  m1, m4                          ;m1=[1 2]
-    pmaddwd    m1, [r6 + 0 *16]                ;m1=[1+2]  Row2
+    pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1]         Row1
 
     lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
+    punpcklwd  m1, m4                          ;m1=[1 2]
+    pmaddwd    m1, [r6 + 0 *16]                ;m1=[1+2]         Row2
+
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[2 3]
-    pmaddwd    m2, m4, [r6 + 0 *16]            ;m2=[2+3]  Row3
+    pmaddwd    m2, m4, [r6 + 0 *16]            ;m2=[2+3]         Row3
     pmaddwd    m4, [r6 + 1 * 16]
-    paddd      m0, m4                          ;m0=[0+1+2+3]  Row1 done
-
-    movq       m4, [r0 + 2 * r1]
-    punpcklwd  m5, m4                          ;m5=[3 4]
-    pmaddwd    m3, m5, [r6 + 0 *16]            ;m3=[3+4]  Row4
-    pmaddwd    m5, [r6 + 1 * 16]
-    paddd      m1, m5                          ;m1 = [1+2+3+4]  Row2
+    paddd      m0, m4                          ;m0=[0+1+2+3]     Row1 done
 
     lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
+    punpcklwd  m5, m4                          ;m5=[3 4]
+    pmaddwd    m3, m5, [r6 + 0 *16]            ;m3=[3+4]         Row4
+    pmaddwd    m5, [r6 + 1 * 16]
+    paddd      m1, m5                          ;m1 = [1+2+3+4]   Row2
+
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[4 5]
     pmaddwd    m4, [r6 + 1 * 16]
-    paddd      m2, m4                          ;m2=[2+3+4+5]  Row3   
+    paddd      m2, m4                          ;m2=[2+3+4+5]     Row3
 
     movq       m4, [r0 + 2 * r1]
     punpcklwd  m5, m4                          ;m5=[5 6]
     pmaddwd    m5, [r6 + 1 * 16]
-    paddd      m3, m5                          ;m3=[3+4+5+6]  Row4
+    paddd      m3, m5                          ;m3=[3+4+5+6]     Row4
 %endmacro
 
 ;--------------------------------------------------------------------------------------------------------------
@@ -3764,16 +3755,13 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
     packssdw  m0, m1
     packssdw  m2, m3
 
-    packuswb  m0, m0
-    packuswb  m2, m2
+    packuswb  m0, m2
 
     movd      [r2], m0
-    pshufd    m0, m0, 1
-    movd      [r2 + r3], m0
-    movd      [r2 + 2 * r3], m2
-    pshufd    m2, m2, 1
-    lea       r5, [r3 + 2 * r3]
-    movd      [r2 + r5], m2
+    pextrd    [r2 + r3], m0, 1
+    lea       r5, [r2 + 2 * r3]
+    pextrd    [r5], m0, 2
+    pextrd    [r5 + r3], m0, 3
 
     lea       r5, [4 * r1 - 2 * 4]
     sub       r0, r5
@@ -3807,36 +3795,36 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
     FILTER_VER_CHROMA_SP 32, 8
 
 
-%macro PROCESS_CHROMA_SP_W2_4R 0
+%macro PROCESS_CHROMA_SP_W2_4R 1
     movd       m0, [r0]
     movd       m1, [r0 + r1]
     punpcklwd  m0, m1                          ;m0=[0 1]
 
-    movd       m2, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movd       m2, [r0]
     punpcklwd  m1, m2                          ;m1=[1 2]
     punpcklqdq m0, m1                          ;m0=[0 1 1 2]
-    pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1 1+2] Row 1-2
+    pmaddwd    m0, [%1 + 0 *16]                ;m0=[0+1 1+2] Row 1-2
 
-    lea        r0, [r0 + 2 * r1]
     movd       m1, [r0 + r1]
     punpcklwd  m2, m1                          ;m2=[2 3]
 
-    movd       m3, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movd       m3, [r0]
     punpcklwd  m1, m3                          ;m2=[3 4]
     punpcklqdq m2, m1                          ;m2=[2 3 3 4]
 
-    pmaddwd    m4, m2, [r6 + 1 * 16]           ;m4=[2+3 3+4] Row 1-2
-    pmaddwd    m2, [r6 + 0 * 16]               ;m2=[2+3 3+4] Row 3-4
+    pmaddwd    m4, m2, [%1 + 1 * 16]           ;m4=[2+3 3+4] Row 1-2
+    pmaddwd    m2, [%1 + 0 * 16]               ;m2=[2+3 3+4] Row 3-4
     paddd      m0, m4                          ;m0=[0+1+2+3 1+2+3+4] Row 1-2
 
-    lea        r0, [r0 + 2 * r1]
     movd       m1, [r0 + r1]
     punpcklwd  m3, m1                          ;m3=[4 5]
 
     movd       m4, [r0 + 2 * r1]
     punpcklwd  m1, m4                          ;m1=[5 6]
     punpcklqdq m3, m1                          ;m2=[4 5 5 6]
-    pmaddwd    m3, [r6 + 1 * 16]               ;m3=[4+5 5+6] Row 3-4
+    pmaddwd    m3, [%1 + 1 * 16]               ;m3=[4+5 5+6] Row 3-4
     paddd      m2, m3                          ;m2=[2+3+4+5 3+4+5+6] Row 3-4
 %endmacro
 
@@ -3845,7 +3833,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
 ;-------------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_SP_W2_4R 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 6
+cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 6
 
     add       r1d, r1d
     sub       r0, r1
@@ -3853,9 +3841,9 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 6
 
 %ifdef PIC
     lea       r5, [tab_ChromaCoeffV]
-    lea       r6, [r5 + r4]
+    lea       r5, [r5 + r4]
 %else
-    lea       r6, [tab_ChromaCoeffV + r4]
+    lea       r5, [tab_ChromaCoeffV + r4]
 %endif
 
     mova      m5, [tab_c_526336]
@@ -3863,7 +3851,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 6
     mov       r4d, (%2/4)
 
 .loopH
-    PROCESS_CHROMA_SP_W2_4R
+    PROCESS_CHROMA_SP_W2_4R r5
 
     paddd     m0, m5
     paddd     m2, m5
@@ -3876,8 +3864,8 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 6
 
     pextrw    [r2], m0, 0
     pextrw    [r2 + r3], m0, 1
-    pextrw    [r2 + 2 * r3], m0, 2
     lea       r2, [r2 + 2 * r3]
+    pextrw    [r2], m0, 2
     pextrw    [r2 + r3], m0, 3
 
     lea       r2, [r2 + 2 * r3]
@@ -3915,11 +3903,11 @@ cglobal interp_4tap_vert_sp_4x2, 5, 6, 5
     punpcklwd  m0, m1                          ;m0=[0 1]
     pmaddwd    m0, [r5 + 0 *16]                ;m0=[0+1]  Row1
 
-    movq       m2, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m2, [r0]
     punpcklwd  m1, m2                          ;m1=[1 2]
     pmaddwd    m1, [r5 + 0 *16]                ;m1=[1+2]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m3, [r0 + r1]
     punpcklwd  m2, m3                          ;m4=[2 3]
     pmaddwd    m2, [r5 + 1 * 16]
@@ -3938,8 +3926,7 @@ cglobal interp_4tap_vert_sp_4x2, 5, 6, 5
     packuswb   m0, m0
 
     movd       [r2], m0
-    pshufd     m0, m0, 1
-    movd       [r2 + r3], m0
+    pextrd     [r2 + r3], m0, 1
 
     RET
 
@@ -3980,22 +3967,19 @@ cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
     packssdw  m0, m1
     packssdw  m2, m3
 
-    packuswb  m0, m0
-    packuswb  m2, m2
+    packuswb  m0, m2
 
     movd      [r2], m0
-    pshufd    m0, m0, 1
-    movd      [r2 + r3], m0
-    movd      [r2 + 2 * r3], m2
-    pshufd    m2, m2, 1
-    lea       r5, [r3 + 2 * r3]
-    movd      [r2 + r5], m2
+    pextrd    [r2 + r3], m0, 1
+    lea       r5, [r2 + 2 * r3]
+    pextrd    [r5], m0, 2
+    pextrd    [r5 + r3], m0, 3
 
     lea       r5, [4 * r1 - 2 * 4]
     sub       r0, r5
     add       r2, 4
 
-    PROCESS_CHROMA_SP_W2_4R
+    PROCESS_CHROMA_SP_W2_4R r6
 
     paddd     m0, m6
     paddd     m2, m6
@@ -4008,8 +3992,8 @@ cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
 
     pextrw    [r2], m0, 0
     pextrw    [r2 + r3], m0, 1
-    pextrw    [r2 + 2 * r3], m0, 2
     lea       r2, [r2 + 2 * r3]
+    pextrw    [r2], m0, 2
     pextrw    [r2 + r3], m0, 3
 
     sub       r0, 2 * 4
@@ -4500,7 +4484,7 @@ FILTER_HORIZ_CHROMA_WxN 32, 32
 ;void interp_4tap_vert_ps_2x4(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
+cglobal interp_4tap_vert_ps_2x4, 4, 6, 7
 
     mov         r4d, r4m
     sub         r0, r1
@@ -4515,13 +4499,12 @@ cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
 
     pshufb      m0, [tab_Cm]
 
-    mova        m1, [pw_2000]
+    lea         r5, [3 * r1]
 
     movd        m2, [r0]
     movd        m3, [r0 + r1]
     movd        m4, [r0 + 2 * r1]
-    lea         r5, [r0 + 2 * r1]
-    movd        m5, [r5 + r1]
+    movd        m5, [r0 + r5]
 
     punpcklbw   m2, m3
     punpcklbw   m6, m4, m5
@@ -4529,22 +4512,24 @@ cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
 
     pmaddubsw   m2, m0
 
-    movd        m6, [r0 + 4 * r1]
+    lea         r0, [r0 + 4 * r1]
+    movd        m6, [r0]
 
     punpcklbw   m3, m4
-    punpcklbw   m7, m5, m6
-    punpcklbw   m3, m7
+    punpcklbw   m1, m5, m6
+    punpcklbw   m3, m1
 
     pmaddubsw   m3, m0
     phaddw      m2, m3
+
+    mova        m1, [pw_2000]
+
     psubw       m2, m1
 
     movd        [r2], m2
-    pshufd      m2, m2 , 2
-    movd        [r2 + r3], m2
+    pextrd      [r2 + r3], m2, 2
 
-    lea         r5, [r0 + 4 * r1]
-    movd        m2, [r5 + r1]
+    movd        m2, [r0 + r1]
 
     punpcklbw   m4, m5
     punpcklbw   m3, m6, m2
@@ -4552,7 +4537,7 @@ cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
 
     pmaddubsw   m4, m0
 
-    movd        m3, [r5 + 2 * r1]
+    movd        m3, [r0 + 2 * r1]
 
     punpcklbw   m5, m6
     punpcklbw   m2, m3
@@ -4562,10 +4547,9 @@ cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
     phaddw      m4, m5
     psubw       m4, m1
 
-    movd        [r2 + 2 * r3], m4
-    pshufd      m4, m4, 2
-    lea         r6, [r2 + 2 * r3]
-    movd        [r6 + r3], m4
+    lea         r2, [r2 + 2 * r3]
+    movd        [r2], m4
+    pextrd      [r2 + r3], m4, 2
 
     RET
 
@@ -4573,7 +4557,7 @@ cglobal interp_4tap_vert_ps_2x4, 4, 7, 8
 ; void interp_4tap_vert_ps_2x8(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
+cglobal interp_4tap_vert_ps_2x8, 4, 6, 8
 
     mov        r4d, r4m
     sub        r0, r1
@@ -4589,14 +4573,13 @@ cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
     pshufb     m0, [tab_Cm]
 
     mova       m1, [pw_2000]
-
+    lea        r5, [3 * r1]
     mov        r4d, 2
 .loop
     movd       m2, [r0]
     movd       m3, [r0 + r1]
     movd       m4, [r0 + 2 * r1]
-    lea        r5, [r0 + 2 * r1]
-    movd       m5, [r5 + r1]
+    movd       m5, [r0 + r5]
 
     punpcklbw  m2, m3
     punpcklbw  m6, m4, m5
@@ -4604,7 +4587,8 @@ cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
 
     pmaddubsw  m2, m0
 
-    movd       m6, [r0 + 4 * r1]
+    lea        r0, [r0 + 4 * r1]
+    movd       m6, [r0]
 
     punpcklbw  m3, m4
     punpcklbw  m7, m5, m6
@@ -4620,8 +4604,7 @@ cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
     pshufd     m2, m2, 2
     movd       [r2 + r3], m2
 
-    lea        r5, [r0 + 4 * r1]
-    movd       m2, [r5 + r1]
+    movd       m2, [r0 + r1]
 
     punpcklbw  m4, m5
     punpcklbw  m3, m6, m2
@@ -4629,7 +4612,7 @@ cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
 
     pmaddubsw  m4, m0
 
-    movd       m3, [r5 + 2 * r1]
+    movd       m3, [r0 + 2 * r1]
 
     punpcklbw  m5, m6
     punpcklbw  m2, m3
@@ -4641,13 +4624,12 @@ cglobal interp_4tap_vert_ps_2x8, 4, 7, 8
 
     psubw      m4, m1
 
-    movd       [r2 + 2 * r3], m4
-    lea        r6, [r2 + 2 * r3]
+    lea        r2, [r2 + 2 * r3]
+    movd       [r2], m4
     pshufd     m4 , m4 ,2
-    movd       [r6 + r3], m4
+    movd       [r2 + r3], m4
 
-    lea        r0, [r0 + 4 * r1]
-    lea        r2, [r2 + 4 * r3]
+    lea        r2, [r2 + 2 * r3]
 
     dec        r4d
     jnz        .loop
@@ -4690,9 +4672,9 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
 
     movlps    [r2], m0
     movhps    [r2 + r3], m0
-    movlps    [r2 + 2 * r3], m2
-    lea       r5, [r3 + 2 * r3]
-    movhps    [r2 + r5], m2
+    lea       r5, [r2 + 2 * r3]
+    movlps    [r5], m2
+    movhps    [r5 + r3], m2
 
     lea       r5, [4 * r1 - 2 * 4]
     sub       r0, r5
@@ -4730,7 +4712,7 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
 ;---------------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_SS_W2_4R 2
 INIT_XMM sse2
-cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 5
+cglobal interp_4tap_vert_ss_%1x%2, 5, 6, 5
 
     add       r1d, r1d
     add       r3d, r3d
@@ -4739,29 +4721,26 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 5
 
 %ifdef PIC
     lea       r5, [tab_ChromaCoeffV]
-    lea       r6, [r5 + r4]
+    lea       r5, [r5 + r4]
 %else
-    lea       r6, [tab_ChromaCoeffV + r4]
+    lea       r5, [tab_ChromaCoeffV + r4]
 %endif
 
     mov       r4d, (%2/4)
 
 .loopH
-    PROCESS_CHROMA_SP_W2_4R
+    PROCESS_CHROMA_SP_W2_4R r5
 
     psrad     m0, 6
     psrad     m2, 6
 
-    packssdw  m0, m0
-    packssdw  m2, m2
+    packssdw  m0, m2
 
     movd      [r2], m0
-    pshufd    m0, m0, 1
-    movd      [r2 + r3], m0
+    pextrd    [r2 + r3], m0, 1
     lea       r2, [r2 + 2 * r3]
-    movd      [r2], m2
-    pshufd    m2, m2, 1
-    movd      [r2 + r3], m2
+    pextrd    [r2], m0, 2
+    pextrd    [r2 + r3], m0, 3
 
     lea       r2, [r2 + 2 * r3]
 
@@ -4797,11 +4776,11 @@ cglobal interp_4tap_vert_ss_4x2, 5, 6, 4
     punpcklwd  m0, m1                          ;m0=[0 1]
     pmaddwd    m0, [r5 + 0 *16]                ;m0=[0+1]  Row1
 
-    movq       m2, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m2, [r0]
     punpcklwd  m1, m2                          ;m1=[1 2]
     pmaddwd    m1, [r5 + 0 *16]                ;m1=[1+2]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m3, [r0 + r1]
     punpcklwd  m2, m3                          ;m4=[2 3]
     pmaddwd    m2, [r5 + 1 * 16]
@@ -4854,29 +4833,26 @@ cglobal interp_4tap_vert_ss_6x8, 5, 7, 6
 
     movlps    [r2], m0
     movhps    [r2 + r3], m0
-    movlps    [r2 + 2 * r3], m2
-    lea       r5, [r3 + 2 * r3]
-    movhps    [r2 + r5], m2
+    lea       r5, [r2 + 2 * r3]
+    movlps    [r5], m2
+    movhps    [r5 + r3], m2
 
     lea       r5, [4 * r1 - 2 * 4]
     sub       r0, r5
     add       r2, 2 * 4
 
-    PROCESS_CHROMA_SP_W2_4R
+    PROCESS_CHROMA_SP_W2_4R r6
 
     psrad     m0, 6
     psrad     m2, 6
 
-    packssdw  m0, m0
-    packssdw  m2, m2
+    packssdw  m0, m2
 
     movd      [r2], m0
-    pshufd    m0, m0, 1
-    movd      [r2 + r3], m0
+    pextrd    [r2 + r3], m0, 1
     lea       r2, [r2 + 2 * r3]
-    movd      [r2], m2
-    pshufd    m2, m2, 1
-    movd      [r2 + r3], m2
+    pextrd    [r2], m0, 2
+    pextrd    [r2 + r3], m0, 3
 
     sub       r0, 2 * 4
     lea       r2, [r2 + 2 * r3 - 2 * 4]
@@ -4944,7 +4920,7 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
 
     add        r1d, r1d
     add        r3d, r3d
-    lea        r5, [r1 + 2 * r1]
+    lea        r5, [3 * r1]
     sub        r0, r5
     shl        r4d, 6
 
@@ -4964,24 +4940,24 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
     punpcklwd  m0, m1                          ;m0=[0 1]
     pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1]  Row1
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m1, m4                          ;m1=[1 2]
     pmaddwd    m1, [r6 + 0 *16]                ;m1=[1+2]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[2 3]
     pmaddwd    m2, m4, [r6 + 0 *16]            ;m2=[2+3]  Row3
     pmaddwd    m4, [r6 + 1 * 16]
     paddd      m0, m4                          ;m0=[0+1+2+3]  Row1
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m5, m4                          ;m5=[3 4]
     pmaddwd    m3, m5, [r6 + 0 *16]            ;m3=[3+4]  Row4
     pmaddwd    m5, [r6 + 1 * 16]
     paddd      m1, m5                          ;m1 = [1+2+3+4]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[4 5]
     pmaddwd    m6, m4, [r6 + 1 * 16]
@@ -4989,14 +4965,14 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
     pmaddwd    m4, [r6 + 2 * 16]
     paddd      m0, m4                          ;m0=[0+1+2+3+4+5]  Row1
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m5, m4                          ;m5=[5 6]
     pmaddwd    m6, m5, [r6 + 1 * 16]
     paddd      m3, m6                          ;m3=[3+4+5+6]  Row4
     pmaddwd    m5, [r6 + 2 * 16]
     paddd      m1, m5                          ;m1=[1+2+3+4+5+6]  Row2
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[6 7]
     pmaddwd    m6, m4, [r6 + 2 * 16]
@@ -5005,7 +4981,8 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
     paddd      m0, m4                          ;m0=[0+1+2+3+4+5+6+7]  Row1 end
     psrad      m0, 6
 
-    movq       m4, [r0 + 2 * r1]
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
     punpcklwd  m5, m4                          ;m5=[7 8]
     pmaddwd    m6, m5, [r6 + 2 * 16]
     paddd      m3, m6                          ;m3=[3+4+5+6+7+8]  Row4
@@ -5018,7 +4995,6 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
     movlps     [r2], m0
     movhps     [r2 + r3], m0
 
-    lea        r0, [r0 + 2 * r1]
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[8 9]
     pmaddwd    m4, [r6 + 3 * 16]
@@ -5034,7 +5010,7 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
     packssdw   m2, m3
 
     movlps     [r2 + 2 * r3], m2
-    lea        r5, [r3 + 2 * r3]
+    lea        r5, [3 * r3]
     movhps     [r2 + r5], m2
 
     lea        r5, [8 * r1 - 2 * 4]
