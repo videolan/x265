@@ -181,6 +181,7 @@ public:
     uint32_t      m_totalBits;       ///< sum of partition signal bits
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
     uint32_t      m_count[4];
+    uint64_t      m_sa8dCost;
 
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
