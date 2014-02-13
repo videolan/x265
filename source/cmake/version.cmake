@@ -1,5 +1,9 @@
-find_program(HG_EXECUTABLE hg)
-find_program(GIT_EXECUTABLE git)
+if(CMAKE_VERSION VERSION_LESS "2.8.10")
+    find_program(HG_EXECUTABLE hg)
+else()
+    find_package(Hg)
+endif()
+find_package(Git) # present in 2.8.8
 
 if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
     # read the lines of the archive summary file to extract the version
