@@ -242,9 +242,13 @@ install(TARGETS x265-static
         ARCHIVE DESTINATION lib)
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
 
-# MINGW windres support is broken in cmake, it passes CFLAGS to the
-# resource compiler: http://public.kitware.com/Bug/print_bug_page.php?bug_id=12998
-if(CMAKE_RC_COMPILER AND NOT MINGW)
+if(CMAKE_RC_COMPILER)
+    if(MINGW)
+        # MINGW windres support is broken in cmake, it passes CFLAGS to the
+        # resource compiler: http://public.kitware.com/Bug/print_bug_page.php?bug_id=12998
+        # this is my hacky workaround, removing <FLAGS> from this string
+        set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
+    endif()
     # convert HG_REVISION_TAG (ex: 0.7) and HG_REVISION_DIST (ex: 103) to
     # @X265_VERSION_MAJOR@,@X265_VERSION_MINOR@,@X265_BRANCH_ID@,@X265_TAG_DISTANCE@
     string(REPLACE "." ";" VERSION_LIST ${HG_REVISION_TAG})
