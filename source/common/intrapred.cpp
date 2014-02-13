@@ -160,8 +160,8 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *ref
     int signAng        = intraPredAngle < 0 ? -1 : 1;
 
     // Set bitshifts and scale the angle parameter to block size
-    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
-    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
+    static const int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
+    static const int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
     int invAngle       = invAngTable[absAng];
 
     absAng             = angTable[absAng];

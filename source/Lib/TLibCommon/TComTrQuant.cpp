@@ -1066,7 +1066,7 @@ int TComTrQuant::getSigCtxInc(int      patternSigCtx,
     int posYinSubset = posY & 3;
 
     // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
-    static uint8_t table_cnt[4][4][4] =
+    static const uint8_t table_cnt[4][4][4] =
     {
         // patternSigCtx = 0
         {

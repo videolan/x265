@@ -389,6 +389,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     {
         if (!bSliceEnd && bInsidePicture)
         {
+            static const uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
+
             /* Initialise all Mode-CUs based on parentCU */
             if (depth == 0)
             {
@@ -416,7 +418,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 earlyskip = (m_cfg->param.bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0));
             else if (m_cfg->param.rdLevel == 1)
             {
-                const uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
                 int index = 4 - g_convertToBit[m_bestMergeCU[depth]->getWidth(0)];
                 if (m_bestMergeCU[depth]->m_totalDistortion < threshold[index])
                 {
@@ -433,7 +434,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
             else if (m_cfg->param.rdLevel == 0)
             {
-                uint32_t threshold[4] = { 20000, 6000, 1600, 500 };
                 int index = 4 - g_convertToBit[m_bestMergeCU[depth]->getWidth(0)];
                 if (m_bestMergeCU[depth]->m_totalDistortion < threshold[index])
                 {

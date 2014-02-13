@@ -104,7 +104,7 @@ uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 
-uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
+const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx)
 {
@@ -192,12 +192,12 @@ const int16_t g_chromaFilter[8][NTAPS_CHROMA] =
     { -2, 10, 58, -2 }
 };
 
-int g_quantScales[6] =
+const int g_quantScales[6] =
 {
     26214, 23302, 20560, 18396, 16384, 14564
 };
 
-int g_invQuantScales[6] =
+const int g_invQuantScales[6] =
 {
     40, 45, 51, 57, 64, 72
 };
@@ -330,7 +330,17 @@ const uint32_t g_sigLastScan8x8[3][4] =
     { 0, 1, 2, 3 },
     { 0, 2, 1, 3 }
 };
-uint32_t g_sigLastScanCG32x32[64];
+const uint32_t g_sigLastScanCG32x32[64] =
+{
+     0,  8,  1, 16,  9,  2, 24, 17,
+    10,  3, 32, 25, 18, 11,  4, 40,
+    33, 26, 19, 12,  5, 48, 41, 34,
+    27, 20, 13,  6, 56, 49, 42, 35,
+    28, 21, 14,  7, 57, 50, 43, 36,
+    29, 22, 15, 58, 51, 44, 37, 30,
+    23, 59, 52, 45, 38, 31, 60, 53,
+    46, 39, 61, 54, 47, 62, 55, 63
+};
 
 const uint32_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
 const uint32_t g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
@@ -345,13 +355,8 @@ void initSigLastScan(uint32_t* buffD, uint32_t* buffH, uint32_t* buffV, int widt
     const uint32_t  numScanPos  = uint32_t(width * width);
     uint32_t        nextScanPos = 0;
 
-    if (width < 16)
+    if (width <= 4)
     {
-        uint32_t* buffTemp = buffD;
-        if (width == 8)
-        {
-            buffTemp = g_sigLastScanCG32x32;
-        }
         for (uint32_t scanLine = 0; nextScanPos < numScanPos; scanLine++)
         {
             int primDim = int(scanLine);
@@ -364,7 +369,7 @@ void initSigLastScan(uint32_t* buffD, uint32_t* buffH, uint32_t* buffV, int widt
 
             while (primDim >= 0 && scndDim < width)
             {
-                buffTemp[nextScanPos] = primDim * width + scndDim;
+                buffD[nextScanPos] = primDim * width + scndDim;
                 nextScanPos++;
                 scndDim++;
                 primDim--;
@@ -501,9 +506,9 @@ int g_quantInterDefault8x8[64] =
     20, 24, 25, 28, 33, 41, 54, 71,
     24, 25, 28, 33, 41, 54, 71, 91
 };
-uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
-uint32_t g_scalingListSizeX[4] = { 4, 8, 16,  32 };
-uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 2 };
+const uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
+const uint32_t g_scalingListSizeX[4] = { 4, 8, 16,  32 };
+const uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 2 };
 
 const int g_winUnitX[] = { 1, 2, 2, 1 };
 const int g_winUnitY[] = { 1, 2, 1, 1 };

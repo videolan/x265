@@ -94,7 +94,7 @@ extern uint32_t g_addCUDepth;
 #define MAX_TS_WIDTH  4
 #define MAX_TS_HEIGHT 4
 
-extern uint32_t g_puOffset[8];
+extern const uint32_t g_puOffset[8];
 
 #define QUANT_IQUANT_SHIFT    20 // Q(QP%6) * IQ(QP%6) = 2^20
 #define QUANT_SHIFT           14 // Q(4) = 2^14
@@ -104,8 +104,8 @@ extern uint32_t g_puOffset[8];
 #define SHIFT_INV_1ST          7 // Shift after first inverse transform stage
 #define SHIFT_INV_2ND         12 // Shift after second inverse transform stage
 
-extern int g_quantScales[6];     // Q(QP%6)
-extern int g_invQuantScales[6];  // IQ(QP%6)
+extern const int g_quantScales[6];     // Q(QP%6)
+extern const int g_invQuantScales[6];  // IQ(QP%6)
 extern const int16_t g_t4[4][4];
 extern const int16_t g_t8[8][8];
 extern const int16_t g_t16[16][16];
@@ -143,7 +143,7 @@ extern const uint32_t g_goRiceRange[5];      //!< maximum value coded with Rice 
 extern const uint32_t g_goRicePrefixLen[5];  //!< prefix length for each maximum value
 
 extern const uint32_t g_sigLastScan8x8[3][4];   //!< coefficient group scan order for 8x8 TUs
-extern       uint32_t g_sigLastScanCG32x32[64];
+extern const uint32_t g_sigLastScanCG32x32[64];
 
 // ====================================================================================================================
 // ADI table
@@ -279,9 +279,9 @@ extern int g_quantInterDefault8x8[64];
 extern int g_quantInterDefault16x16[256];
 extern int g_quantInterDefault32x32[1024];
 extern int g_quantTSDefault4x4[16];
-extern uint32_t g_scalingListSize[SCALING_LIST_SIZE_NUM];
-extern uint32_t g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
-extern uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM];
+extern const uint32_t g_scalingListSize[SCALING_LIST_SIZE_NUM];
+extern const uint32_t g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
+extern const uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM];
 //! \}
 
 // Map Luma samples to chroma samples
