@@ -41,12 +41,12 @@ using namespace x265;
 IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
-    pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    pixel_buff = X265_MALLOC(pixel, ipf_t_size);           // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
     short_buff = X265_MALLOC(int16_t, ipf_t_size);
-    IPF_vec_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t)); // Output Buffer1
-    IPF_C_output_s = (int16_t*)malloc(ipf_t_size * sizeof(int16_t));   // Output Buffer2
-    IPF_vec_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel)); // Output Buffer1
-    IPF_C_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel));   // Output Buffer2
+    IPF_vec_output_s = X265_MALLOC(int16_t, ipf_t_size);   // Output Buffer1
+    IPF_C_output_s   = X265_MALLOC(int16_t, ipf_t_size);   // Output Buffer2
+    IPF_vec_output_p = X265_MALLOC(pixel, ipf_t_size);     // Output Buffer1
+    IPF_C_output_p   = X265_MALLOC(pixel, ipf_t_size);     // Output Buffer2
 
     /* Array of pixel buffers */
     pixel_test_buff = X265_MALLOC(pixel*, TEST_CASES);
@@ -102,12 +102,12 @@ IPFilterHarness::IPFilterHarness()
 
 IPFilterHarness::~IPFilterHarness()
 {
-    free(IPF_vec_output_s);
-    free(IPF_C_output_s);
-    free(IPF_vec_output_p);
-    free(IPF_C_output_p);
+    X265_FREE(IPF_vec_output_s);
+    X265_FREE(IPF_C_output_s);
+    X265_FREE(IPF_vec_output_p);
+    X265_FREE(IPF_C_output_p);
     X265_FREE(short_buff);
-    free(pixel_buff);
+    X265_FREE(pixel_buff);
     for (int i = 0; i < TEST_CASES; i++)
     {
         X265_FREE(pixel_test_buff[i]);
@@ -738,7 +738,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("luma_hv [%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.luma_hvpp[value], ref.luma_hvpp[value],
-                           pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1, 3);
+                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, srcStride, 1, 3);
         }
     }
 
