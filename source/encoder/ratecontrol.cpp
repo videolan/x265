@@ -231,8 +231,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     bitrate = cfg->param.rc.bitrate * 1000;
     frameDuration = 1.0 / cfg->param.frameRate;
     lastNonBPictType = -1;
-    baseQp = cfg->param.rc.qp;
-    qp = baseQp;
+    qp = cfg->param.rc.qp;
     lastRceq = 1; /* handles the cmplxrsum when the previous frame cost is zero */
     totalBits = 0;
     shortTermCplxSum = 0;
@@ -353,9 +352,9 @@ RateControl::RateControl(TEncCfg * _cfg)
 
     if (cfg->param.rc.rateControlMode == X265_RC_CQP)
     {
-        qpConstant[P_SLICE] = baseQp;
-        qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(baseQp - ipOffset + 0.5));
-        qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(baseQp + pbOffset + 0.5));
+        qpConstant[P_SLICE] = qp;
+        qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp - ipOffset + 0.5));
+        qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp + pbOffset + 0.5));
     }
 
     /* qstep - value set as encoder specific */

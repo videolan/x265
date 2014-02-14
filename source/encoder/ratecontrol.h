@@ -79,7 +79,7 @@ struct RateControl
     int ncu;                  /* number of CUs in a frame */
     int keyFrameInterval;     /* TODO: need to initialize in init */
     int qp;                   /* updated qp for current frame */
-    int baseQp;               /* CQP base QP */
+
     double frameDuration;     /* current frame duration in seconds */
     double bitrate;
     double rateFactorConstant;
