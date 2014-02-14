@@ -184,6 +184,9 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     cu->m_totalDistortion = bsad;
     cu->m_totalCost = bcost;
 
+    cu->m_totalBits = 0;
+    cu->m_totalCost = m_rdCost->calcRdSADCost(cu->m_totalDistortion, cu->m_totalBits);
+
     // generate predYuv for the best mode
     cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
 }
@@ -286,6 +289,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
         outTempCU->m_totalBits = outBestCU->m_totalBits;
         outTempCU->m_totalDistortion = outBestCU->m_totalDistortion;
+        outTempCU->m_totalBits = 0;
         outTempCU->m_totalCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
         outTempCU->m_sa8dCost = outTempCU->m_totalCost;
         outBestCU->m_sa8dCost = outTempCU->m_sa8dCost;
