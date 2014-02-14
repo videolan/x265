@@ -106,8 +106,8 @@ public:
 
     // Angular Intra
     void predIntraLumaAng(uint32_t dirMode, Pel* pred, intptr_t stride, int width);
-    void predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* pred, intptr_t stride, int width);
-
+    void predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* pred, intptr_t stride, int width, int height, int chFmt);
+    bool filteringIntraReferenceSamples(uint32_t dirMode, uint32_t width);
     Pel* getPredicBuf()             { return m_predBuf; }
 
     int  getPredicBufWidth()        { return m_predBufStride; }

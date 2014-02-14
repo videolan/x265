@@ -204,7 +204,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     }
 }
 
-void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf, int strideOrig, int heightOrig)
+void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf, int strideOrig, int heightOrig, int chromaId)
 {
     Pel*  roiOrigin;
     Pel*  adiTemp;
@@ -246,18 +246,8 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     {
         return;
     }
-
-    // get Cb pattern
-    roiOrigin = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
-    adiTemp   = adiBuf;
-
-    fillReferenceSamples(roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
-                         cuWidth, cuHeight, width, height, picStride);
-
-    // get Cr pattern
-    roiOrigin = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
-    adiTemp   = adiBuf + ADI_BUF_STRIDE * height;
-
+    roiOrigin = chromaId > 0 ? cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart) : cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
+    adiTemp   = chromaId > 0 ? (adiBuf + 2 * ADI_BUF_STRIDE * height) : adiBuf;
     fillReferenceSamples(roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
                          cuWidth, cuHeight, width, height, picStride);
 }

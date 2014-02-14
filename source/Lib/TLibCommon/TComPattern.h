@@ -59,7 +59,7 @@ class TComPattern
 public:
 
     // access functions of ADI buffers
-    static Pel* getAdiChromaBuf(int chromaId, int cuHeight, Pel* adiBuf) { return adiBuf + (chromaId == 0 ? 0 : ADI_BUF_STRIDE * (cuHeight * 2 + 1)); }
+    static Pel* getAdiChromaBuf(int chromaId, int cuHeight, Pel* adiBuf) { return adiBuf + (chromaId == 0 ? 0 : 2 * ADI_BUF_STRIDE * (cuHeight * 2 + 1)); }
 
     // -------------------------------------------------------------------------------------------------------------------
     // initialization functions
@@ -76,8 +76,7 @@ public:
 
     /// set chroma parameters from CU data for accessing ADI data
     void  initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
-                               Pel* adiBuf, int strideOrig, int heightOrig);
-
+                               Pel* adiBuf, int strideOrig, int heightOrig, int chromaId);
 private:
 
     /// padding of unavailable reference samples for intra prediction

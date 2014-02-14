@@ -566,11 +566,11 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     //===== init availability pattern =====
     if (default0Save1Load2 != 2)
     {
-        cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight);
+        cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, chromaId);
         Pel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
 
         //===== get prediction signal =====
-        predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width);
+        predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
 
         // save prediction
         if (default0Save1Load2 == 1)
@@ -1651,11 +1651,11 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 chromaPredMode = cu->getLumaIntraDir(0);
             }
             //===== init availability pattern =====
-            cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight);
+            cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, chromaId);
             Pel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
 
             //===== get prediction signal =====
-            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width);
+            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
 
             //===== get residual signal =====
             assert(!((uint32_t)(size_t)fenc & (width - 1)));
@@ -1734,14 +1734,16 @@ void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
     uint32_t width  = cu->getWidth(0) >> 1;
     uint32_t height = cu->getHeight(0) >> 1;
     uint32_t stride = fencYuv->getCStride();
-    Pel* fencU  = fencYuv->getCbAddr(0);
-    Pel* fencV  = fencYuv->getCrAddr(0);
-    Pel* predU  = predYuv->getCbAddr(0);
-    Pel* predV  = predYuv->getCrAddr(0);
+    int      chFmt  = cu->getChromaFormat();
+    Pel* fencU      = fencYuv->getCbAddr(0);
+    Pel* fencV      = fencYuv->getCrAddr(0);
+    Pel* predU      = predYuv->getCbAddr(0);
+    Pel* predV      = predYuv->getCrAddr(0);
 
     //===== init pattern =====
     assert(width == height);
-    cu->getPattern()->initAdiPatternChroma(cu, 0, 0, m_predBuf, m_predBufStride, m_predBufHeight);
+    cu->getPattern()->initAdiPatternChroma(cu, 0, 0, m_predBuf, m_predBufStride, m_predBufHeight, 0);
+    cu->getPattern()->initAdiPatternChroma(cu, 0, 0, m_predBuf, m_predBufStride, m_predBufHeight, 1);
     Pel* patChromaU = TComPattern::getAdiChromaBuf(0, height, m_predBuf);
     Pel* patChromaV = TComPattern::getAdiChromaBuf(1, height, m_predBuf);
 
@@ -1754,8 +1756,8 @@ void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
     for (uint32_t mode = minMode; mode < maxMode; mode++)
     {
         //--- get prediction ---
-        predIntraChromaAng(patChromaU, mode, predU, stride, width);
-        predIntraChromaAng(patChromaV, mode, predV, stride, width);
+        predIntraChromaAng(patChromaU, mode, predU, stride, width, height, chFmt);
+        predIntraChromaAng(patChromaV, mode, predV, stride, width, height, chFmt);
 
         //--- get SAD ---
         uint32_t sad = sa8d(fencU, stride, predU, stride) + sa8d(fencV, stride, predV, stride);
@@ -2118,6 +2120,7 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
 
     uint32_t width          = cu->getWidth(0) >> (trDepth + m_hChromaShift);
     uint32_t height         = cu->getHeight(0) >> (trDepth + m_vChromaShift);
+    int      chFmt          = cu->getChromaFormat();
     uint32_t stride         = fencYuv->getCStride();
     int scaleWidth = width;
     int scaleStride = stride;
@@ -2130,8 +2133,8 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
         costMultiplier = 4;
     }
 
-    cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight);
-
+    cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, 0);
+    cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, 1);
     cu->getAllowedChromaDir(0, modeList);
     //----- check chroma modes -----
     for (uint32_t mode = minMode; mode < maxMode; mode++)
@@ -2149,7 +2152,7 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
             Pel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
 
             //===== get prediction signal =====
-            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width);
+            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
             int log2SizeMinus2 = g_convertToBit[scaleWidth];
             pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
             sad = costMultiplier * sa8d(fenc, scaleStride, pred, scaleStride);
