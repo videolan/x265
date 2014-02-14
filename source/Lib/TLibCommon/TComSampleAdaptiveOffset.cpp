@@ -150,8 +150,11 @@ int  TComSampleAdaptiveOffset::convertLevelRowCol2Idx(int level, int row, int co
 /** create SampleAdaptiveOffset memory.
  * \param
  */
-void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeight, uint32_t maxCUWidth, uint32_t maxCUHeight)
+void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, int csp)
 {
+    m_hChromaShift = CHROMA_H_SHIFT(csp);
+    m_vChromaShift = CHROMA_V_SHIFT(csp);
+
     m_picWidth  = sourceWidth;
     m_picHeight = sourceHeight;
 
@@ -553,13 +556,14 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     Pel *clipTbl = NULL;
     int32_t *offsetBo = NULL;
     int32_t *tmp_swap;
+    picWidthTmp  = (isChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
+    picHeightTmp = (isChroma == 0) ? m_picHeight : m_picHeight >> m_vChromaShift;
+    lcuWidth     = (isChroma == 0) ? lcuWidth    : lcuWidth    >> m_hChromaShift;
+    lcuHeight    = (isChroma == 0) ? lcuHeight   : lcuHeight   >> m_vChromaShift;
+    lpelx        = (isChroma == 0) ? lpelx       : lpelx       >> m_hChromaShift;
+    tpely        = (isChroma == 0) ? tpely       : tpely       >> m_vChromaShift;
 
-    picWidthTmp  = m_picWidth  >> isChroma;
-    picHeightTmp = m_picHeight >> isChroma;
-    lcuWidth     = lcuWidth    >> isChroma;
-    lcuHeight    = lcuHeight   >> isChroma;
-    lpelx        = lpelx      >> isChroma;
-    tpely        = tpely      >> isChroma;
+
     rpelx        = lpelx + lcuWidth;
     bpely        = tpely + lcuHeight;
     rpelx        = rpelx > picWidthTmp  ? picWidthTmp  : rpelx;
@@ -589,8 +593,8 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
-        cuHeightTmp = (m_maxCUHeight >> isChroma);
-        shift = (m_maxCUWidth >> isChroma) - 1;
+        cuHeightTmp  = (isChroma == 0) ? m_maxCUHeight  : (m_maxCUHeight  >> m_vChromaShift);
+        shift = (isChroma == 0) ? (m_maxCUWidth- 1) : ((m_maxCUWidth >> m_hChromaShift) - 1);
         for (int i = 0; i < cuHeightTmp + 1; i++)
         {
             m_tmpL2[i] = rec[shift];
@@ -827,12 +831,12 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
     else if (yCbCr == 1)
     {
         rec        = m_pic->getPicYuvRec()->getCbAddr();
-        picWidthTmp = m_picWidth >> 1;
+        picWidthTmp = m_picWidth >> m_hChromaShift;
     }
     else
     {
         rec        = m_pic->getPicYuvRec()->getCrAddr();
-        picWidthTmp = m_picWidth >> 1;
+        picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
     memcpy(m_tmpU1[yCbCr], rec, sizeof(Pel) * picWidthTmp);
@@ -872,17 +876,16 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
         {
             rec  = m_pic->getPicYuvRec()->getCbAddr(addr);
             stride = m_pic->getCStride();
-            picWidthTmp = m_picWidth >> 1;
+            picWidthTmp = m_picWidth >> m_hChromaShift;
         }
         else
         {
             rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
             stride = m_pic->getCStride();
-            picWidthTmp = m_picWidth >> 1;
+            picWidthTmp = m_picWidth >> m_hChromaShift;
         }
-
-        //     pRec += stride*(m_uiMaxCUHeight-1);
-        for (i = 0; i < (m_maxCUHeight >> sChroma) + 1; i++)
+        uint32_t cuHeightTmp  = (sChroma == 0) ? m_maxCUHeight  : (m_maxCUHeight  >> m_vChromaShift);
+        for (i = 0; i < cuHeightTmp + 1; i++)
         {
             m_tmpL1[i] = rec[0];
             rec += stride;
@@ -964,8 +967,9 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
                         rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
                         stride = m_pic->getCStride();
                     }
-                    int widthShift = m_maxCUWidth >> sChroma;
-                    for (i = 0; i < (m_maxCUHeight >> sChroma) + 1; i++)
+
+                    int widthShift = (sChroma == 0) ? m_maxCUWidth : (m_maxCUWidth >> m_hChromaShift);
+                    for (i = 0; i < cuHeightTmp + 1; i++)
                     {
                         m_tmpL1[i] = rec[widthShift - 1];
                         rec += stride;
@@ -998,12 +1002,12 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     else if (yCbCr == 1)
     {
         rec        = m_pic->getPicYuvRec()->getCbAddr();
-        picWidthTmp = m_picWidth >> 1;
+        picWidthTmp = m_picWidth >> m_hChromaShift;
     }
     else
     {
         rec        = m_pic->getPicYuvRec()->getCrAddr();
-        picWidthTmp = m_picWidth >> 1;
+        picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
     if (idxY == 0)
@@ -1041,17 +1045,16 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
         {
             rec  = m_pic->getPicYuvRec()->getCbAddr(addr);
             stride = m_pic->getCStride();
-            picWidthTmp = m_picWidth >> 1;
+            picWidthTmp = m_picWidth >> m_hChromaShift;
         }
         else
         {
             rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
             stride = m_pic->getCStride();
-            picWidthTmp = m_picWidth >> 1;
+            picWidthTmp = m_picWidth >> m_hChromaShift;
         }
-
-        //     pRec += stride*(m_uiMaxCUHeight-1);
-        for (i = 0; i < (m_maxCUHeight >> sChroma) + 1; i++)
+        uint32_t maxCUHeight  = (sChroma == 0) ? m_maxCUHeight : (m_maxCUHeight >> m_vChromaShift);
+        for (i = 0; i < maxCUHeight + 1; i++)
         {
             m_tmpL1[i] = rec[0];
             rec += stride;
@@ -1126,8 +1129,9 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
                         rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
                         stride = m_pic->getCStride();
                     }
-                    int widthShift = m_maxCUWidth >> sChroma;
-                    for (i = 0; i < (m_maxCUHeight >> sChroma) + 1; i++)
+
+                    int widthShift = (sChroma == 0) ? m_maxCUWidth : (m_maxCUWidth >> m_hChromaShift);
+                    for (i = 0; i < maxCUHeight + 1; i++)
                     {
                         m_tmpL1[i] = rec[widthShift - 1];
                         rec += stride;

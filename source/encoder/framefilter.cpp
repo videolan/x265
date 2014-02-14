@@ -64,6 +64,8 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
     m_top = top;
     m_cfg = top;
     m_numRows = numRows;
+    m_hChromaShift = CHROMA_H_SHIFT(m_cfg->getColorFormat());
+    m_vChromaShift = CHROMA_V_SHIFT(m_cfg->getColorFormat());
 
     // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
     m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
@@ -78,7 +80,7 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
         m_sao.setSaoLcuBoundary(top->param.saoLcuBoundary);
         m_sao.setSaoLcuBasedOptimization(top->param.saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
-        m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
+        m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, m_cfg->getColorFormat());
         m_sao.createEncBuffer();
     }
 
@@ -223,9 +225,8 @@ void FrameFilter::processRowPost(int row)
 
     // Border extend Left and Right
     primitives.extendRowBorder(recon->getLumaAddr(lineStartCUAddr), recon->getStride(), recon->getWidth(), realH, recon->getLumaMarginX());
-    primitives.extendRowBorder(recon->getCbAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> 1, realH >> 1, recon->getChromaMarginX());
-    primitives.extendRowBorder(recon->getCrAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> 1, realH >> 1, recon->getChromaMarginX());
-
+    primitives.extendRowBorder(recon->getCbAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> m_hChromaShift, realH >> m_vChromaShift, recon->getChromaMarginX());
+    primitives.extendRowBorder(recon->getCrAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> m_hChromaShift, realH >> m_vChromaShift, recon->getChromaMarginX());
     // Border extend Top
     if (row == 0)
     {
@@ -253,9 +254,8 @@ void FrameFilter::processRowPost(int row)
         const intptr_t stride = recon->getStride();
         const intptr_t strideC = recon->getCStride();
         pixel *pixY = recon->getLumaAddr(lineStartCUAddr) - recon->getLumaMarginX() + (realH - 1) * stride;
-        pixel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
-        pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> 1) - 1) * strideC;
-
+        pixel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> m_vChromaShift) - 1) * strideC;
+        pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> m_vChromaShift) - 1) * strideC;
         for (int y = 0; y < recon->getLumaMarginY(); y++)
         {
             memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
@@ -288,9 +288,8 @@ void FrameFilter::processRowPost(int row)
             height = g_maxCUHeight;
 
         uint64_t ssdY = computeSSD(orig->getLumaAddr(cuAddr), recon->getLumaAddr(cuAddr), stride, width, height);
-
-        height >>= 1;
-        width  >>= 1;
+        height >>= m_vChromaShift;
+        width  >>= m_hChromaShift;
         stride = recon->getCStride();
 
         uint64_t ssdU = computeSSD(orig->getCbAddr(cuAddr), recon->getCbAddr(cuAddr), stride, width, height);
@@ -335,9 +334,8 @@ void FrameFilter::processRowPost(int row)
         }
 
         updateMD5Plane(m_pic->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);
-
-        width >>= 1;
-        height >>= 1;
+        width  >>= m_hChromaShift;
+        height >>= m_vChromaShift;
         stride = recon->getCStride();
 
         updateMD5Plane(m_pic->m_state[1], recon->getCbAddr(cuAddr), width, height, stride);
@@ -354,9 +352,8 @@ void FrameFilter::processRowPost(int row)
             m_pic->m_crc[0] = m_pic->m_crc[1] = m_pic->m_crc[2] = 0xffff;
         }
         updateCRC(recon->getLumaAddr(cuAddr), m_pic->m_crc[0], height, width, stride);
-
-        width >>= 1;
-        height >>= 1;
+        width  >>= m_hChromaShift;
+        height >>= m_vChromaShift;
         stride = recon->getCStride();
 
         updateCRC(recon->getCbAddr(cuAddr), m_pic->m_crc[1], height, width, stride);
@@ -373,10 +370,10 @@ void FrameFilter::processRowPost(int row)
             m_pic->m_checksum[0] = m_pic->m_checksum[1] = m_pic->m_checksum[2] = 0;
         }
         updateChecksum(recon->getLumaAddr(), m_pic->m_checksum[0], height, width, stride, row, cuHeight);
-        width >>= 1;
-        height >>= 1;
+        width  >>= m_hChromaShift;
+        height >>= m_vChromaShift;
         stride = recon->getCStride();
-        cuHeight >>= 1;
+        cuHeight >>= m_vChromaShift;
         updateChecksum(recon->getCbAddr(), m_pic->m_checksum[1], height, width, stride, row, cuHeight);
         updateChecksum(recon->getCrAddr(), m_pic->m_checksum[2], height, width, stride, row, cuHeight);
     }

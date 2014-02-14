@@ -156,6 +156,8 @@ protected:
     int  m_numCuInWidth;
     int  m_numCuInHeight;
     int  m_numTotalParts;
+    int m_hChromaShift;
+    int m_vChromaShift;
 
     uint32_t m_saoBitIncreaseY;
     uint32_t m_saoBitIncreaseC; //for chroma
@@ -184,8 +186,7 @@ public:
 
     TComSampleAdaptiveOffset();
     virtual ~TComSampleAdaptiveOffset();
-
-    void create(uint32_t sourceWidth, uint32_t sourceHeight, uint32_t maxCUWidth, uint32_t maxCUHeight);
+    void create(uint32_t sourceWidth, uint32_t sourceHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, int csp);
     void destroy();
 
     int  convertLevelRowCol2Idx(int level, int row, int col) const;

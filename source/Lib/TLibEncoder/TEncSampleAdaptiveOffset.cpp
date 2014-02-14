@@ -830,25 +830,24 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int32_t *tmp_swap;
 
     int iIsChroma = (yCbCr != 0) ? 1 : 0;
-    int numSkipLine = iIsChroma ? 2 : 4;
-
+    int numSkipLine = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
     if (m_saoLcuBasedOptimization == 0)
     {
         numSkipLine = 0;
     }
+    int numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
 
-    int numSkipLineRight = iIsChroma ? 3 : 5;
     if (m_saoLcuBasedOptimization == 0)
     {
         numSkipLineRight = 0;
     }
+    iPicWidthTmp  = (iIsChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
+    iPicHeightTmp = (iIsChroma == 0) ? m_picHeight : m_picHeight >> m_vChromaShift;
+    iLcuWidth     = (iIsChroma == 0) ? iLcuWidth   : iLcuWidth   >> m_hChromaShift;
+    iLcuHeight    = (iIsChroma == 0) ? iLcuHeight  : iLcuHeight  >> m_vChromaShift;
+    lpelx         = (iIsChroma == 0) ? lpelx       : lpelx       >> m_hChromaShift;
+    tpely         = (iIsChroma == 0) ? tpely       : tpely       >> m_vChromaShift;
 
-    iPicWidthTmp  = m_picWidth  >> iIsChroma;
-    iPicHeightTmp = m_picHeight >> iIsChroma;
-    iLcuWidth     = iLcuWidth    >> iIsChroma;
-    iLcuHeight    = iLcuHeight   >> iIsChroma;
-    lpelx       = lpelx      >> iIsChroma;
-    tpely       = tpely      >> iIsChroma;
     rpelx       = lpelx + iLcuWidth;
     bpely       = tpely + iLcuHeight;
     rpelx       = rpelx > iPicWidthTmp  ? iPicWidthTmp  : rpelx;
@@ -862,8 +861,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     {
         if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
         {
-            numSkipLine = iIsChroma ? 1 : 3;
-            numSkipLineRight = iIsChroma ? 2 : 4;
+            numSkipLine      = iIsChroma ? 3 - (2 * m_vChromaShift) : 3;
+            numSkipLineRight = iIsChroma ? 4 - (2 * m_hChromaShift) : 4;
         }
         iStats = m_offsetOrg[partIdx][SAO_BO];
         iCount = m_count[partIdx][SAO_BO];
@@ -903,8 +902,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
         {
             if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
             {
-                numSkipLine = iIsChroma ? 1 : 3;
-                numSkipLineRight = iIsChroma ? 3 : 5;
+                numSkipLine      = iIsChroma ? 3 - (2 * m_vChromaShift) : 3;
+                numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
             }
             iStats = m_offsetOrg[partIdx][SAO_EO_0];
             iCount = m_count[partIdx][SAO_EO_0];
@@ -936,8 +935,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
         {
             if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
             {
-                numSkipLine = iIsChroma ? 2 : 4;
-                numSkipLineRight = iIsChroma ? 2 : 4;
+                numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
+                numSkipLineRight = iIsChroma ? 4 - (2 * m_hChromaShift) : 4;
             }
             iStats = m_offsetOrg[partIdx][SAO_EO_1];
             iCount = m_count[partIdx][SAO_EO_1];
@@ -979,8 +978,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
         {
             if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
             {
-                numSkipLine = iIsChroma ? 2 : 4;
-                numSkipLineRight = iIsChroma ? 3 : 5;
+                numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
+                numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
             }
             iStats = m_offsetOrg[partIdx][SAO_EO_2];
             iCount = m_count[partIdx][SAO_EO_2];
@@ -1029,8 +1028,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
         {
             if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
             {
-                numSkipLine = iIsChroma ? 2 : 4;
-                numSkipLineRight = iIsChroma ? 3 : 5;
+                numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
+                numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
             }
             iStats = m_offsetOrg[partIdx][SAO_EO_3];
             iCount = m_count[partIdx][SAO_EO_3];
