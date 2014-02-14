@@ -282,7 +282,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-o/--output                      Bitstream output file name\n");
     H0("\nInput Options:\n");
     H0("   --input                       Raw YUV or Y4M input file name\n");
-    H0("   --input-depth                 Bit-depth of input file and internal encoder bit depth. Default %d\n", param->inputBitDepth);
+    H0("   --input-depth                 Bit-depth of input file. Default 8\n");
     H0("   --input-res                   Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp                   Source color space parameter, auto-detected if Y4M\n");
     H0("   --fps                         Source frame rate, auto-detected if Y4M\n");
@@ -359,6 +359,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     int berror = 0;
     int help = 0;
     int cpuid = 0;
+    int inputBitDepth = 8;
     int reconFileBitDepth = 0;
     const char *inputfn = NULL;
     const char *reconfn = NULL;
@@ -442,7 +443,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
-            OPT("input-depth") param->inputBitDepth = (uint32_t)atoi(optarg);
+            OPT("input-depth") inputBitDepth = (uint32_t)atoi(optarg);
             OPT("recon-depth") reconFileBitDepth = (uint32_t)atoi(optarg);
             OPT("input-res") inputRes = optarg;
             OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
@@ -480,7 +481,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
         return true;
     }
-    this->input = Input::open(inputfn, param->inputBitDepth, bForceY4m);
+    this->input = Input::open(inputfn, inputBitDepth, bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -488,28 +489,34 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
     if (this->input->getWidth())
     {
-        /* parse the width, height, frame rate from the y4m file */
+        /* the file knows its own dimensions, must be Y4M */
         param->internalCsp = this->input->getColorSpace();
         param->sourceWidth = this->input->getWidth();
         param->sourceHeight = this->input->getHeight();
         param->frameRate = (int)this->input->getRate();
     }
-    else if (inputRes)
-    {
-        this->input->setColorSpace(param->internalCsp);
-        sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
-        this->input->setDimensions(param->sourceWidth, param->sourceHeight);
-        this->input->setBitDepth(param->inputBitDepth);
-    }
-    else if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->frameRate <= 0)
-    {
-        x265_log(param, X265_LOG_ERROR, "YUV input requires source width, height, and rate to be specified\n");
-        return true;
-    }
     else
     {
+        if (inputRes)
+            sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
+        if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->frameRate <= 0)
+        {
+            x265_log(param, X265_LOG_ERROR, "YUV input requires --input-res WxH and --fps N to be specified\n");
+            return true;
+        }
         this->input->setDimensions(param->sourceWidth, param->sourceHeight);
-        this->input->setBitDepth(param->inputBitDepth);
+        this->input->setColorSpace(param->internalCsp);
+        this->input->setBitDepth(inputBitDepth);
+    }
+    if (param->internalCsp != X265_CSP_I420)
+    {
+        x265_log(param, X265_LOG_ERROR, "Only I420 color space is supported in this build\n");
+        return true;
+    }
+    if (inputBitDepth < 8 || inputBitDepth > 16)
+    {
+        x265_log(param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n", inputBitDepth);
+        return true;
     }
 
     int guess = this->input->guessFrameCount();
@@ -529,11 +536,11 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         if (this->framesToBeEncoded == 0)
             fprintf(stderr, "%s  [info]: %dx%d %dHz %s, unknown frame count\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate,
-                    (param->internalCsp >= X265_CSP_I444) ? "C444" : (param->internalCsp >= X265_CSP_I422) ? "C422" : "C420");
+                    x265_source_csp_names[param->internalCsp]);
         else
             fprintf(stderr, "%s  [info]: %dx%d %dHz %s, frames %u - %d of %d\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate,
-                    (param->internalCsp >= X265_CSP_I444) ? "C444" : (param->internalCsp >= X265_CSP_I422) ? "C422" : "C420",
+                    x265_source_csp_names[param->internalCsp],
                     this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, fileFrameCount);
     }
 
@@ -542,7 +549,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (reconfn)
     {
         if (reconFileBitDepth == 0)
-            reconFileBitDepth = param->inputBitDepth;
+            reconFileBitDepth = param->internalBitDepth;
         this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->internalCsp);
         if (this->recon->isFail())
         {
@@ -553,13 +560,13 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
 
 #if HIGH_BIT_DEPTH
-    if (param->inputBitDepth != 10)
+    if (param->internalBitDepth != 10)
     {
         x265_log(param, X265_LOG_ERROR, "Only bit depths of 10 are supported in this build\n");
         return true;
     }
 #else
-    if (param->inputBitDepth != 8)
+    if (param->internalBitDepth != 8)
     {
         x265_log(param, X265_LOG_ERROR, "Only bit depths of 8 are supported in this build\n");
         return true;

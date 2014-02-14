@@ -333,12 +333,12 @@ typedef struct x265_param
      * types are MD5(1), CRC(2), Checksum(3).  Default is 0, none */
     int       decodedPictureHashSEI;
 
-    /*== Source Picture Specification ==*/
+    /*== Internal Picture Specification ==*/
 
     /* Internal encoder bit depth. If x265 was compiled to use 8bit pixels
      * (HIGH_BIT_DEPTH=0), this field must be 8, else this field must be 10.
      * Future builds may support 12bit pixels. */
-    int       inputBitDepth;
+    int       internalBitDepth;
 
     /* Color space of internal pictures. Only X265_CSP_I420 is currently supported.
      * Eventually, i422 and i444 will be supported as internal color spaces and other

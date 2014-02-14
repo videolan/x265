@@ -240,6 +240,19 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 
     if (pic_in)
     {
+        if (pic_in->colorSpace != param.internalCsp)
+        {
+            x265_log(&param, X265_LOG_ERROR, "Unsupported color space (%d) on input\n",
+                     pic_in->colorSpace);
+            return -1;
+        }
+        if (pic_in->bitDepth < 8 || pic_in->bitDepth > 16)
+        {
+            x265_log(&param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n",
+                     pic_in->bitDepth);
+            return -1;
+        }
+
         TComPic *pic;
         if (m_freeList.empty())
         {
@@ -247,7 +260,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             if (!pic || !pic->create(this))
             {
                 m_aborted = true;
-                x265_log(&param, X265_LOG_ERROR, "memory allocation failure, aborting encode");
+                x265_log(&param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
                 if (pic)
                 {
                     pic->destroy(param.bframes);
@@ -858,7 +871,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
                 p += sprintf(buf + p, "]");
             }
         }
-        x265_log(&param, X265_LOG_DEBUG, buf);
+        x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
 
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
@@ -1229,7 +1242,7 @@ void Encoder::determineLevelAndProfile(x265_param *_param)
         break;
     }
 
-    if (_param->inputBitDepth > 8)
+    if (_param->internalBitDepth > 8)
         m_profile = Profile::MAIN10;
     else if (_param->keyframeMax == 1)
         m_profile = Profile::MAINSTILLPICTURE;
