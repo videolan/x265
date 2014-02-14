@@ -608,8 +608,7 @@ void TComDataCU::copyToPic(UChar uhDepth)
     uint32_t tmp2 = m_absIdxInLCU * m_pic->getMinCUWidth() * m_pic->getMinCUHeight();
     memcpy(rpcCU->getCoeffY()     + tmp2, m_trCoeffY,    sizeof(TCoeff) * tmp);
     memcpy(rpcCU->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(Pel) * tmp);
-
-    tmp  = ((g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_hChromaShift)) >> (uhDepth << 1);
+    tmp  = ((g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift)) >> (uhDepth << 1);
     tmp2 = m_absIdxInLCU * (m_pic->getMinCUWidth() >> m_hChromaShift) * (m_pic->getMinCUHeight() >> m_vChromaShift);
     memcpy(rpcCU->getCoeffCb() + tmp2, m_trCoeffCb, sizeof(TCoeff) * tmp);
     memcpy(rpcCU->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
@@ -2868,60 +2867,67 @@ void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter)
 
 uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t width, bool bIsLuma, bool bIsIntra)
 {
-    uint32_t uiCTXIdx;
     uint32_t scanIdx;
     uint32_t dirMode;
-
     if (!bIsIntra)
     {
-        scanIdx = SCAN_DIAG;
-        return scanIdx;
+        return SCAN_DIAG;
     }
+    //check that MDCS can be used for this TU
 
-    switch (width)
-    {
-    case  2: uiCTXIdx = 6;
-        break;
-    case  4: uiCTXIdx = 5;
-        break;
-    case  8: uiCTXIdx = 4;
-        break;
-    case 16: uiCTXIdx = 3;
-        break;
-    case 32: uiCTXIdx = 2;
-        break;
-    case 64: uiCTXIdx = 1;
-        break;
-    default: uiCTXIdx = 0;
-        break;
-    }
-
+    uint32_t height = width; 
     if (bIsLuma)
     {
+        const uint32_t maximumWidth  = MDCS_MAXIMUM_WIDTH;
+        const uint32_t maximumHeight = MDCS_MAXIMUM_HEIGHT;
+
+        if ((width > maximumWidth) || (height > maximumHeight)) return SCAN_DIAG;
+
         dirMode = getLumaIntraDir(absPartIdx);
-        scanIdx = SCAN_DIAG;
-        if (uiCTXIdx > 3 && uiCTXIdx < 6) //if multiple scans supported for transform size
-        {
-            scanIdx = abs((int)dirMode - VER_IDX) < 5 ? SCAN_HOR : (abs((int)dirMode - HOR_IDX) < 5 ? SCAN_VER : SCAN_DIAG);
-        }
     }
     else
     {
-        dirMode = getChromaIntraDir(absPartIdx);
+        const uint32_t maximumWidth  = MDCS_MAXIMUM_WIDTH  >> m_hChromaShift;
+        const uint32_t maximumHeight = MDCS_MAXIMUM_HEIGHT >> m_vChromaShift;
+
+        if ((width > maximumWidth) || (height > maximumHeight)) return SCAN_DIAG;
+
+        dirMode  = getChromaIntraDir(absPartIdx);
         if (dirMode == DM_CHROMA_IDX)
         {
-            // get number of partitions in current CU
-            uint32_t depth = getDepth(absPartIdx);
-            uint32_t numParts = getPic()->getNumPartInCU() >> (2 * depth);
+            dirMode = getLumaIntraDir(absPartIdx);
+        }
+    }
 
-            // get luma mode from upper-left corner of current CU
-            dirMode = getLumaIntraDir((absPartIdx / numParts) * numParts);
-        }
-        scanIdx = SCAN_DIAG;
-        if (uiCTXIdx > 4 && uiCTXIdx < 7) //if multiple scans supported for transform size
-        {
-            scanIdx = abs((int)dirMode - VER_IDX) < 5 ? SCAN_HOR : (abs((int)dirMode - HOR_IDX) < 5 ? SCAN_VER : SCAN_DIAG);
-        }
+    switch (MDCS_MODE)
+    {
+    case MDCS_BOTH_DIRECTIONS:
+        if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
+            scanIdx = SCAN_HOR;
+        else if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
+            scanIdx = SCAN_VER;
+        else
+            scanIdx = SCAN_DIAG;
+        break;
+
+    case MDCS_VERTICAL_ONLY:
+        if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
+            scanIdx = SCAN_VER;
+        break;
+
+    case MDCS_HORIZONTAL_ONLY:
+        if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
+            scanIdx = SCAN_HOR;
+        break;
+
+    case MDCS_DISABLED:
+        scanIdx = 0;
+        break;
+
+    default:
+        assert(false);
+        x265_log(NULL, X265_LOG_ERROR, "Unrecognised MDCS mode\n");
+        break;
     }
 
     return scanIdx;
