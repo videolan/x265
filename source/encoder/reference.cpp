@@ -88,17 +88,16 @@ void MotionReference::applyWeight(int rows, int numRows)
     int height = ((rows - m_numWeightedRows) * g_maxCUHeight);
     if (rows == numRows)
         height = ((m_reconPic->getHeight() % g_maxCUHeight) ? (m_reconPic->getHeight() % g_maxCUHeight) : g_maxCUHeight);
-    size_t dstStride = lumaStride;
 
     // Computing weighted CU rows
     int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     int local_shift = shift + shiftNum;
     int local_round = local_shift ? (1 << (local_shift - 1)) : 0;
     int padwidth = (width + 15) & ~15;  // weightp assembly needs even 16 byte widths
-    primitives.weight_pp(src, dst, lumaStride, dstStride, padwidth, height, weight, local_round, local_shift, offset);
+    primitives.weight_pp(src, dst, lumaStride, lumaStride, padwidth, height, weight, local_round, local_shift, offset);
 
     // Extending Left & Right
-    primitives.extendRowBorder(dst, dstStride, width, height, marginX);
+    primitives.extendRowBorder(dst, lumaStride, width, height, marginX);
 
     // Extending Above
     if (m_numWeightedRows == 0)
@@ -106,17 +105,17 @@ void MotionReference::applyWeight(int rows, int numRows)
         pixel *pixY = fpelPlane - marginX;
         for (int y = 0; y < marginY; y++)
         {
-            memcpy(pixY - (y + 1) * dstStride, pixY, dstStride * sizeof(pixel));
+            memcpy(pixY - (y + 1) * lumaStride, pixY, lumaStride * sizeof(pixel));
         }
     }
 
     // Extending Bottom
     if (rows == numRows)
     {
-        pixel *pixY = fpelPlane - marginX + (m_reconPic->getHeight() - 1) * dstStride;
+        pixel *pixY = fpelPlane - marginX + (m_reconPic->getHeight() - 1) * lumaStride;
         for (int y = 0; y < marginY; y++)
         {
-            memcpy(pixY + (y + 1) * dstStride, pixY, dstStride * sizeof(pixel));
+            memcpy(pixY + (y + 1) * lumaStride, pixY, lumaStride * sizeof(pixel));
         }
     }
     m_numWeightedRows = rows;
