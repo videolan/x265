@@ -393,7 +393,10 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     }
     else //CQP
     {
-        qp = qpConstant[sliceType];
+        if (sliceType == B_SLICE && curSlice->isReferenced())
+            qp = (qpConstant[B_SLICE] + qpConstant[P_SLICE]) / 2;
+        else
+            qp = qpConstant[sliceType];
     }
 
     if (sliceType != B_SLICE)
