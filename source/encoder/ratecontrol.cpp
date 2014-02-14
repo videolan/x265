@@ -318,26 +318,22 @@ RateControl::RateControl(TEncCfg * _cfg)
     bframes = cfg->param.bframes;
     bframeBits = 0;
     leadingNoBSatd = 0;
+    accumPNorm = .01;
+    /* estimated ratio that produces a reasonable QP for the first I-frame */
+    cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
+    wantedBitsWindow = bitrate * frameDuration;
 
     if (cfg->param.rc.rateControlMode == X265_RC_ABR)
     {
         /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
-        accumPNorm = .01;
-        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
-        /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
-        wantedBitsWindow = bitrate * frameDuration;
+        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;    
     }
     else if (cfg->param.rc.rateControlMode == X265_RC_CRF)
     {
 #define ABR_INIT_QP ((int)cfg->param.rc.rfConstant + QP_BD_OFFSET)
-        accumPNorm = .01;
-        accumPQp = ABR_INIT_QP * accumPNorm;
-        /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
-        wantedBitsWindow = bitrate * frameDuration;
+        accumPQp = ABR_INIT_QP * accumPNorm;        
     }
 
     ipOffset = 6.0 * X265_LOG2(cfg->param.rc.ipFactor);
