@@ -834,27 +834,31 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
         int QP = slice->getSliceQp();
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
-        fprintf(stderr, "\rPOC %4d ( %c-SLICE, QP %d) %10d bits", poc, c, QP, bits);
+
+        char buf[1024];
+        int p;
+        p = sprintf(buf, "POC:%d %c QP %2d %10d bits", poc, c, QP, bits);
         if (param.bEnablePsnr)
-            fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
+            p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
-            fprintf(stderr, "[SSIM: %.3lf]", ssim);
+            p += sprintf(buf + p, " [SSIM: %.3lfdB]", x265_ssim(ssim));
 
         if (!slice->isIntra())
         {
             int numLists = slice->isInterP() ? 1 : 2;
             for (int list = 0; list < numLists; list++)
             {
-                fprintf(stderr, " [L%d ", list);
+                p += sprintf(buf + p, " [L%d ", list);
                 for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
                     int k = slice->getRefPOC(list, ref) - slice->getLastIDR();
-                    fprintf(stderr, "%d ", k);
+                    p += sprintf(buf + p, "%d ", k);
                 }
 
-                fprintf(stderr, "]");
+                p += sprintf(buf + p, "]");
             }
         }
+        x265_log(&param, X265_LOG_DEBUG, buf);
 
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
