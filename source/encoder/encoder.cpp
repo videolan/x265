@@ -766,23 +766,6 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
-    const char* digestStr = NULL;
-    if (param.decodedPictureHashSEI)
-    {
-        if (param.decodedPictureHashSEI == 1)
-        {
-            digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 16);
-        }
-        else if (param.decodedPictureHashSEI == 2)
-        {
-            digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 2);
-        }
-        else if (param.decodedPictureHashSEI == 3)
-        {
-            digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 4);
-        }
-    }
-
     /* calculate the size of the access unit, excluding:
      *  - any AnnexB contributions (start_code_prefix, zero_byte, etc.,)
      *  - SEI NAL units
@@ -909,18 +892,22 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
             fprintf(m_csvfpt, "\n");
         }
 
-        if (digestStr && param.logLevel >= 4)
+        if (param.decodedPictureHashSEI && param.logLevel >= 4)
         {
+            const char* digestStr = NULL;
             if (param.decodedPictureHashSEI == 1)
             {
+                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 16);
                 fprintf(stderr, " [MD5:%s]", digestStr);
             }
             else if (param.decodedPictureHashSEI == 2)
             {
+                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 2);
                 fprintf(stderr, " [CRC:%s]", digestStr);
             }
             else if (param.decodedPictureHashSEI == 3)
             {
+                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 4);
                 fprintf(stderr, " [Checksum:%s]", digestStr);
             }
         }
