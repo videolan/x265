@@ -104,7 +104,7 @@ TComTrQuant::~TComTrQuant()
  *
  * return void
  */
-void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset)
+void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt)
 {
     int qpScaled;
 
@@ -122,7 +122,7 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
         }
         else
         {
-            qpScaled = g_chromaScale[qpScaled] + qpBdOffset;
+            qpScaled = g_chromaScale[chFmt][qpScaled] + qpBdOffset;
         }
     }
     m_qpParam.setQpParam(qpScaled);

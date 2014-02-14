@@ -47,9 +47,7 @@ using namespace x265;
 // ====================================================================================================================
 // Constants
 // ====================================================================================================================
-
-#define   QpUV(iQpY)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_chromaScale[(iQpY)]))
-
+#define   QpUV(iQpY, chFmt)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_chromaScale[chFmt][(iQpY)]))
 #define DEFAULT_INTRA_TC_OFFSET 2 ///< Default intra TC offset
 
 // ====================================================================================================================
@@ -727,8 +725,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
             {
                 int chromaQPOffset  = (chromaIdx == 0) ? cu->getSlice()->getPPS()->getChromaCbQpOffset() : cu->getSlice()->getPPS()->getChromaCrQpOffset();
                 Pel* piTmpSrcChroma = (chromaIdx == 0) ? tmpSrcCb : tmpSrcCr;
-
-                qp = QpUV(((qpP + qpQ + 1) >> 1) + chromaQPOffset);
+                qp = QpUV((((qpP + qpQ + 1) >> 1) + chromaQPOffset), cu->getChromaFormat());
                 int iBitdepthScale = 1 << (X265_DEPTH - 8);
 
                 int iIndexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + (tcOffsetDiv2 << 1));

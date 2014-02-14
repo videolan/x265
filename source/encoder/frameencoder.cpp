@@ -315,8 +315,9 @@ void FrameEncoder::threadMain()
 
 void FrameEncoder::setLambda(int qp, int row)
 {
-    TComSlice* slice = m_pic->getSlice();
-    TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
+    TComSlice*  slice = m_pic->getSlice();
+    TComPicYuv* fenc  = slice->getPic()->getPicYuvOrg();
+    int         chFmt = slice->getSPS()->getChromaFormatIdc();
 
     double lambda = 0;
 
@@ -334,11 +335,11 @@ void FrameEncoder::setLambda(int qp, int row)
     // instead we weight the distortion of chroma.
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     int qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
+    double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
 
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
+    double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
 
     m_rows[row].m_search.setQPLambda(qp, lambda, chromaLambda);
@@ -351,9 +352,11 @@ void FrameEncoder::setLambda(int qp, int row)
 void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
-    int64_t startCompressTime = x265_mdate();
-    TEncEntropy* entropyCoder = getEntropyCoder(0);
-    TComSlice*   slice        = m_pic->getSlice();
+    int64_t      startCompressTime = x265_mdate();
+    TEncEntropy* entropyCoder      = getEntropyCoder(0);
+    TComSlice*   slice             = m_pic->getSlice();
+    int          chFmt             = slice->getSPS()->getChromaFormatIdc();
+
     m_nalCount = 0;
 
     int qp = slice->getSliceQp();
@@ -373,10 +376,10 @@ void FrameEncoder::compressFrame()
     int qpc;
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    double cbWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
+    double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    double crWeight = pow(2.0, (qp - g_chromaScale[qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
+    double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc])); // takes into account of the chroma qp mapping and chroma qp Offset
     double chromaLambda = lambda / crWeight;
 
     // NOTE: set SAO lambda every Frame

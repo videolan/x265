@@ -70,6 +70,9 @@ void destroyROM();
 void initSigLastScan(uint32_t* buffD, uint32_t* buffH, uint32_t* buffV, int width, int height);
 
 // ====================================================================================================================
+static const int chromaQPMappingTableSize = 58;
+
+extern const UChar  g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
 // Data structure related table & variable
 // ====================================================================================================================
 
@@ -124,12 +127,6 @@ extern const int16_t g_t32[32][32];
 
 extern const int16_t g_lumaFilter[4][NTAPS_LUMA];     ///< Luma filter taps
 extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
-
-// ====================================================================================================================
-// Luma QP to Chroma QP mapping
-// ====================================================================================================================
-
-extern const UChar g_chromaScale[70];
 
 // ====================================================================================================================
 // Scanning order & context mapping table
