@@ -88,6 +88,8 @@
 
 #define MLS_GRP_NUM                 64 ///< G644 : Max number of coefficient groups, max(16, 64)
 #define MLS_CG_SIZE                 4 ///< G644 : Coefficient group size of 4x4
+#define MLS_CG_LOG2_WIDTH           2
+#define MLS_CG_LOG2_HEIGHT          2
 
 #define ARL_C_PRECISION             7 ///< G382: 7-bit arithmetic precision
 #define LEVEL_RANGE                 30 ///< G382: max coefficient level in statistics collection

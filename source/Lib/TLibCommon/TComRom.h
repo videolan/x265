@@ -57,6 +57,7 @@ namespace x265 {
 #define MAX_CU_DEPTH            6                           // log2(LCUSize)
 #define MAX_CU_SIZE             (1 << (MAX_CU_DEPTH))       // maximum allowable size of CU
 #define MIN_PU_SIZE             4
+#define MIN_TU_SIZE             4
 #define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
 #define ADI_BUF_STRIDE          (2 * MAX_CU_SIZE + 1 + 15)  // alignment to 16 bytes
 
@@ -75,7 +76,7 @@ void initSigLastScan(uint32_t* buffD, uint32_t* buffH, uint32_t* buffV, int widt
 // flexible conversion from relative to absolute index
 extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-
+extern uint32_t*  g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][ MAX_CU_DEPTH ][ MAX_CU_DEPTH ];
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
 

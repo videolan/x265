@@ -70,13 +70,35 @@ typedef int    TCoeff;         // transform coefficient
 // ====================================================================================================================
 // Enumeration
 // ====================================================================================================================
-
+#define MDCS_MODE                       MDCS_BOTH_DIRECTIONS        ///< Name taken from definition of MDCSMode enumeration below
+#define MDCS_ANGLE_LIMIT                                  4         ///< (default 4) 0 = Horizontal/vertical only, 1 = Horizontal/vertical +/- 1, 2 = Horizontal/vertical +/- 2 etc...
+#define MDCS_MAXIMUM_WIDTH                                8         ///< (default 8) (measured in pixels) TUs with width greater than this can only use diagonal scan
+#define MDCS_MAXIMUM_HEIGHT                               8         ///< (default 8) (measured in pixels) TUs with height greater than this can only use diagonal scan
 /// supported slice type
 enum SliceType
 {
     B_SLICE,
     P_SLICE,
     I_SLICE
+};
+/// chroma formats (according to semantics of chroma_format_idc)
+enum ChromaFormat
+{
+    CHROMA_400  = 0,
+    CHROMA_420  = 1,
+    CHROMA_422  = 2,
+    CHROMA_444  = 3,
+    NUM_CHROMA_FORMAT = 4
+};
+
+///MDCS modes
+enum MDCSMode
+{
+  MDCS_DISABLED        = 0,
+  MDCS_HORIZONTAL_ONLY = 1,
+  MDCS_VERTICAL_ONLY   = 2,
+  MDCS_BOTH_DIRECTIONS = 3,
+  MDCS_NUMBER_OF_MODES = 4
 };
 
 #define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
@@ -138,11 +160,37 @@ enum MVP_DIR
 /// coefficient scanning type used in ACS
 enum COEFF_SCAN_TYPE
 {
-    SCAN_DIAG = 0,       ///< up-right diagonal scan
-    SCAN_HOR,            ///< horizontal first scan
-    SCAN_VER             ///< vertical first scan
+  SCAN_DIAG = 0,        ///< up-right diagonal scan
+  SCAN_HOR  = 1,        ///< horizontal first scan
+  SCAN_VER  = 2,        ///< vertical first scan
+  SCAN_NUMBER_OF_TYPES = 3
 };
 
+enum SignificanceMapContextType
+{
+  CONTEXT_TYPE_4x4    = 0,
+  CONTEXT_TYPE_8x8    = 1,
+  CONTEXT_TYPE_NxN    = 2,
+  CONTEXT_NUMBER_OF_TYPES = 3
+};
+
+enum COEFF_SCAN_GROUP_TYPE
+{
+  SCAN_UNGROUPED   = 0,
+  SCAN_GROUPED_4x4 = 1,
+  SCAN_NUMBER_OF_GROUP_TYPES = 2
+};
+
+//TU settings for entropy encoding
+struct TUEntropyCodingParameters
+{
+  const uint32_t            *scan;
+  const uint32_t            *scanCG;
+        COEFF_SCAN_TYPE      scanType;
+        uint32_t             widthInGroups;
+        uint32_t             heightInGroups;
+        uint32_t             firstSignificanceMapContext;
+};
 namespace Profile {
 enum Name
 {
