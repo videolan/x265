@@ -225,7 +225,8 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     {
         m_bakAbsPartIdxCU = absPartIdx;
     }
-    if (log2TrafoSize == 2)
+
+    if ((log2TrafoSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
     {
         uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
         if ((absPartIdx % partNum) == 0)
@@ -275,7 +276,15 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 
     const uint32_t trDepthCurr = depth - cu->getDepth(absPartIdx);
     const bool bFirstCbfOfCU = trDepthCurr == 0;
-    if (bFirstCbfOfCU || log2TrafoSize > 2)
+
+    bool mCodeAll = true;
+    const uint32_t numPels = (width >> cu->getHorzChromaShift()) * (height >> cu->getHorzChromaShift());
+    if(numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
+    {
+        mCodeAll = false;
+    }
+
+    if (bFirstCbfOfCU || mCodeAll)
     {
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1))
         {
@@ -286,7 +295,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
             m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepthCurr);
         }
     }
-    else if (log2TrafoSize == 2)
+    else
     {
         assert(cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1));
         assert(cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1));
@@ -306,17 +315,17 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 
         absPartIdx += partNum;
         offsetLuma += size;
-        offsetChroma += (size >> 2);
+        offsetChroma += (size >> (cu->getHorzChromaShift() + cu->getVertChromaShift()));
         xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, depth, width, height, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += size;
-        offsetChroma += (size >> 2);
+        offsetChroma += (size >> (cu->getHorzChromaShift() + cu->getVertChromaShift()));
         xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, depth, width, height, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += size;
-        offsetChroma += (size >> 2);
+        offsetChroma += (size >> (cu->getHorzChromaShift() + cu->getVertChromaShift()));
         xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, depth, width, height, trIdx, bCodeDQP);
     }
     else
@@ -358,20 +367,8 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         {
             m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, width, height, depth, TEXT_LUMA);
         }
-        if (log2TrafoSize > 2)
-        {
-            int trWidth = width >> 1;
-            int trHeight = height >> 1;
-            if (cbfU)
-            {
-                m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffCb() + offsetChroma), absPartIdx, trWidth, trHeight, depth, TEXT_CHROMA_U);
-            }
-            if (cbfV)
-            {
-                m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffCr() + offsetChroma), absPartIdx, trWidth, trHeight, depth, TEXT_CHROMA_V);
-            }
-        }
-        else
+
+        if ((log2TrafoSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
         {
             uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
             if ((absPartIdx % partNum) == (partNum - 1))
@@ -386,9 +383,21 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
                 }
             }
         }
+        else
+        {
+            int trWidth  = width >> cu->getHorzChromaShift();
+            int trHeight = height >> cu->getVertChromaShift();
+            if (cbfU)
+            {
+                m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffCb() + offsetChroma), absPartIdx, trWidth, trHeight, depth, TEXT_CHROMA_U);
+            }
+            if (cbfV)
+            {
+                m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffCr() + offsetChroma), absPartIdx, trWidth, trHeight, depth, TEXT_CHROMA_V);
+            }
+        }
     }
 }
-
 // Intra direction for Luma
 void TEncEntropy::encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU)
 {
@@ -415,7 +424,18 @@ void TEncEntropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
     if (cu->isIntra(absPartIdx)) // If it is Intra mode, encode intra prediction mode.
     {
         encodeIntraDirModeLuma(cu, absPartIdx, true);
-        encodeIntraDirModeChroma(cu, absPartIdx, bRD);
+        if (cu->getChromaFormat() != CHROMA_400)
+        {
+            encodeIntraDirModeChroma(cu, absPartIdx, bRD);
+
+            if ((cu->getChromaFormat() == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
+            {
+                uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset, bRD);
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset*2, bRD);
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset*3, bRD);
+            }
+        }
     }
     else                        // if it is Inter mode, encode motion vector and reference index
     {
@@ -572,8 +592,7 @@ void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t dept
 {
     uint32_t minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
     uint32_t lumaOffset   = minCoeffSize * absPartIdx;
-    uint32_t chromaOffset = lumaOffset >> 2;
-
+    uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
     if (cu->isIntra(absPartIdx))
     {
         DTRACE_CABAC_VL(g_nSymbolCounter++)
