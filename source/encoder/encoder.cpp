@@ -831,11 +831,10 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
         int poc = slice->getPOC();
-        int QP_Base = slice->getSliceQpBase();
         int QP = slice->getSliceQp();
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
-        fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d) %10d bits", poc, c, QP_Base, QP, bits);
+        fprintf(stderr, "\rPOC %4d ( %c-SLICE, QP %d) %10d bits", poc, c, QP, bits);
         if (param.bEnablePsnr)
             fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -860,7 +859,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
         {
-            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %d, %d, %10d,", m_outputCount++, c, poc, QP_Base, QP, bits);
+            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %d, %10d,", m_outputCount++, c, poc, QP, bits);
             double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
             if (param.bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);

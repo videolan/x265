@@ -402,7 +402,6 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     framesDone++;
     /* set the final QP to slice structure */
     curSlice->setSliceQp(qp);
-    curSlice->setSliceQpBase(qp);
     curSlice->m_avgQpRc = qp;
 }
 
