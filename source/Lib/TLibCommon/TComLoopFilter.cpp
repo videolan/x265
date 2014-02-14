@@ -224,11 +224,11 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
     uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK / pelsInPart ? DEBLOCK_SMALLEST_BLOCK / pelsInPart : 1;
 
     uint32_t sizeInPU = pic->getNumPartInWidth() >> (depth);
-
+    const bool bAlwaysDoChroma = (cu->getChromaFormat() == CHROMA_444);
     for (uint32_t e = 0; e < sizeInPU; e += partIdxIncr)
     {
         xEdgeFilterLuma(cu, absZOrderIdx, depth, dir, e);
-        if ((pelsInPart > DEBLOCK_SMALLEST_BLOCK) || (e % ((DEBLOCK_SMALLEST_BLOCK << 1) / pelsInPart)) == 0)
+        if (bAlwaysDoChroma || (pelsInPart > DEBLOCK_SMALLEST_BLOCK) || (e % ((DEBLOCK_SMALLEST_BLOCK << 1) / pelsInPart)) == 0)
         {
             xEdgeFilterChroma(cu, absZOrderIdx, depth, dir, e);
         }
@@ -640,8 +640,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     int qp = 0;
     int qpP = 0;
     int qpQ = 0;
-
-    uint32_t  pelsInPartChroma = g_maxCUWidth >> (g_maxCUDepth + 1);
+    uint32_t  pelsInPartChroma = g_maxCUWidth >> (g_maxCUDepth + cu->getHorzChromaShift());
     int   offset, srcStep;
 
     const uint32_t lcuWidthInBaseUnits = cu->getPic()->getNumPartInWidth();
