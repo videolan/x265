@@ -9,8 +9,7 @@ set(LIBENCODER_HDR
     ../Lib/TLibEncoder/TEncEntropy.h
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.h
     ../Lib/TLibEncoder/TEncSbac.h
-    ../Lib/TLibEncoder/TEncSearch.h
-    ../Lib/TLibEncoder/WeightPredAnalysis.h)
+    ../Lib/TLibEncoder/TEncSearch.h)
 set(LIBENCODER_SRC
     ../Lib/TLibEncoder/NALwrite.cpp
     ../Lib/TLibEncoder/SEIwrite.cpp
@@ -20,8 +19,7 @@ set(LIBENCODER_SRC
     ../Lib/TLibEncoder/TEncEntropy.cpp
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.cpp
     ../Lib/TLibEncoder/TEncSbac.cpp
-    ../Lib/TLibEncoder/TEncSearch.cpp
-    ../Lib/TLibEncoder/WeightPredAnalysis.cpp)
+    ../Lib/TLibEncoder/TEncSearch.cpp)
 source_group(TLibEncoder FILES ${LIBENCODER_HDR} ${LIBENCODER_SRC})
 
 if(GCC)

@@ -452,13 +452,8 @@ void FrameEncoder::compressFrame()
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
     //------------------------------------------------------------------------------
-    m_wp.xStoreWPparam(m_pps.getUseWP(), m_pps.getWPBiPred());
     if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) || (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
     {
-        // calculate AC/DC values for current picture
-        m_wp.xCalcACDCParamSlice(slice);
-
-        // select weights
         weightAnalyse(*slice, m_cfg->param);
     }
 
@@ -488,7 +483,6 @@ void FrameEncoder::compressFrame()
         slice->setNextSlice(true);
     }
 
-    m_wp.xRestoreWPparam(slice);
     if ((m_cfg->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
     {
         if (m_cfg->getGradualDecodingRefreshInfoEnabled() && !slice->getRapPicFlag())
