@@ -147,7 +147,8 @@ public:
 
 protected:
 
-    uint64_t calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits); // Returns total number of bits for encoded pic
+    // Returns total number of bits for encoded pic
+    uint64_t calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, NALUnitEBSP **nalunits);
 };
 }
 

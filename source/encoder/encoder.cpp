@@ -346,7 +346,9 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 
         if (out->getSlice()->m_numWPRefs > 0)
             m_numWPFrames++;
-        uint64_t bits = calculateHashAndPSNR(out, nalunits);
+
+        uint64_t bits = calculateHashAndPSNR(out, curEncoder, nalunits);
+
         // Allow this frame to be recycled if no frame encoders are using it for reference
         ATOMIC_DEC(&out->m_countRefEncoders);
 
@@ -742,7 +744,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
 }
 
 /* Returns Number of bits in current encoded pic */
-uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
+uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, NALUnitEBSP **nalunits)
 {
     TComPicYuv* recon = pic->getPicYuvRec();
 
@@ -769,15 +771,15 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, NALUnitEBSP **nalunits)
     {
         if (param.decodedPictureHashSEI == 1)
         {
-            digestStr = digestToString(m_frameEncoder->m_seiReconPictureDigest.digest, 16);
+            digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 16);
         }
         else if (param.decodedPictureHashSEI == 2)
         {
-            digestStr = digestToString(m_frameEncoder->m_seiReconPictureDigest.digest, 2);
+            digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 2);
         }
         else if (param.decodedPictureHashSEI == 3)
         {
-            digestStr = digestToString(m_frameEncoder->m_seiReconPictureDigest.digest, 4);
+            digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 4);
         }
     }
 
