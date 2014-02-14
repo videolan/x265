@@ -289,7 +289,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
-            param->bEnableLoopFilter = 1;
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
             param->bEnableWeightedPred = 0;
@@ -352,7 +351,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         else if (!strcmp(preset, "slow"))
         {
             param->lookaheadDepth = 25;
-            param->bframes = 4;
             param->rdLevel = 4;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
