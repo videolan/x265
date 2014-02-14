@@ -217,24 +217,24 @@ PIXEL_ADD_PS_W2_H4   2, 8
 ;-----------------------------------------------------------------------------
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
-cglobal pixel_add_ps_4x2, 6, 6, 6, dest, destride, src0, scr1, srcStride0, srcStride1
-    add      r1,    r1
-    add      r4,    r4
-    add      r5,    r5
-    pxor     m4,    m4
-    mova     m5,    [pw_pixel_max]
+cglobal pixel_add_ps_4x2, 6, 6, 4
+    add      r1, r1
+    add      r4, r4
+    add      r5, r5
+    pxor     m0, m0
+    mova     m1, [pw_pixel_max]
 
-    movh     m0,    [r2]
-    movh     m1,    [r3]
-    movh     m2,    [r2 + r4]
-    movh     m3,    [r3 + r5]
-    paddw    m0,    m1
-    paddw    m2,    m3
-    CLIPW    m0,    m4,    m5
-    CLIPW    m2,    m4,    m5
+    movh     m2, [r2]
+    movhps   m2, [r2 + r4]
 
-    movh     [r0],           m0
-    movh     [r0 + r1],      m2
+    movh     m3, [r3]
+    movhps   m3, [r3 + r5]
+
+    paddw    m2, m3
+    CLIPW    m2, m0, m1
+
+    movh     [r0], m2
+    movhps   [r0 + r1], m2
 %else
 INIT_XMM sse4
 cglobal pixel_add_ps_4x2, 6, 6, 2, dest, destride, src0, scr1, srcStride0, srcStride1
@@ -265,41 +265,41 @@ RET
 %macro PIXEL_ADD_PS_W4_H4 2
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
-cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, srcStride1
-    mov     r6d,    %2/4
-    add      r1,    r1
-    add      r4,    r4
-    add      r5,    r5
-    pxor     m4,    m4
-    mova     m5,    [pw_pixel_max]
+cglobal pixel_add_ps_%1x%2, 6, 7, 4
+    mov      r6d, %2/4
+    add      r1, r1
+    add      r4, r4
+    add      r5, r5
+    pxor     m0, m0
+    mova     m1, [pw_pixel_max]
 .loop
-    movh     m0,    [r2]
-    movh     m1,    [r3]
-    movh     m2,    [r2 + r4]
-    movh     m3,    [r3 + r5]
-    paddw    m0,    m1
-    paddw    m2,    m3
-    CLIPW    m0,    m4,    m5
-    CLIPW    m2,    m4,    m5
+    movh     m2, [r2]
+    movhps   m2, [r2 + r4]
 
-    movh     [r0],           m0
-    movh     [r0 + r1],      m2
+    movh     m3, [r3]
+    movhps   m3, [r3 + r5]
+
+    paddw    m2, m3
+    CLIPW    m2, m0, m1
+
+    movlps   [r0], m2
+    movhps   [r0 + r1], m2
 
     lea      r2,    [r2 + 2 * r4]
     lea      r3,    [r3 + 2 * r5]
     lea      r0,    [r0 + 2 * r1]
 
-    movh     m0,    [r2]
-    movh     m1,    [r3]
-    movh     m2,    [r2 + r4]
-    movh     m3,    [r3 + r5]
-    paddw    m0,    m1
-    paddw    m2,    m3
-    CLIPW    m0,    m4,    m5
-    CLIPW    m2,    m4,    m5
+    movh     m2, [r2]
+    movhps   m2, [r2 + r4]
 
-    movh     [r0],           m0
-    movh     [r0 + r1],      m2
+    movh     m3, [r3]
+    movhps   m3, [r3 + r5]
+
+    paddw    m2, m3
+    CLIPW    m2, m0, m1
+
+    movh     [r0], m2
+    movhps   [r0 + r1], m2
 %else
 INIT_XMM sse4
 cglobal pixel_add_ps_%1x%2, 6, 7, 2, dest, destride, src0, scr1, srcStride0, srcStride1
