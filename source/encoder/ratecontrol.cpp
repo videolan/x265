@@ -230,7 +230,6 @@ RateControl::RateControl(TEncCfg * _cfg)
 
     bitrate = cfg->param.rc.bitrate * 1000;
     frameDuration = 1.0 / cfg->param.frameRate;
-    lastNonBPictType = -1;
     qp = cfg->param.rc.qp;
     lastRceq = 1; /* handles the cmplxrsum when the previous frame cost is zero */
     totalBits = 0;
