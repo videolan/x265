@@ -126,7 +126,7 @@ void Encoder::create()
             if (m_csvfpt)
             {
                 if (param.logLevel >= X265_LOG_DEBUG)
-                    fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
+                    fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
                 else
                     fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
             }
