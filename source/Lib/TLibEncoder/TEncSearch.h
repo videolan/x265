@@ -60,6 +60,12 @@
 
 namespace x265 {
 // private namespace
+#define DONT_SPLIT            0
+#define VERTICAL_SPLIT        1
+#define QUAD_SPLIT            2
+#define NUMBER_OF_SPLIT_MODES 3
+
+static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
 
 class TEncCu;
 
@@ -111,6 +117,11 @@ protected:
     // Color space parameters
     int             m_hChromaShift;
     int             m_vChromaShift;
+    uint32_t        m_section;
+    uint32_t        m_splitMode;
+    uint32_t        m_absPartIdxTURelCU;
+    uint32_t        m_absPartIdxStep;
+    uint32_t        m_partOffset;
 
 public:
 
@@ -182,6 +193,8 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t xSymbolBitsInter(TComDataCU* cu);
+    bool isNextSection();
+    bool isLastSection();
 
 protected:
 
