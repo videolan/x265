@@ -286,9 +286,13 @@ if(X265_LATEST_TAG)
     foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
         list(APPEND PLIBLIST "-l${LIB}")
     endforeach()
-    # blacklist of libraries that should not be in Libs.private
-    list(REMOVE_ITEM PLIBLIST "-lc" "-lpthread")
-    string(REPLACE ";" " " PRIVATE_LIBS "${PLIBLIST}")
+    if(PLIBLIST)
+        # blacklist of libraries that should not be in Libs.private
+        list(REMOVE_ITEM PLIBLIST "-lc" "-lpthread")
+        string(REPLACE ";" " " PRIVATE_LIBS "${PLIBLIST}")
+    else()
+        set(PRIVATE_LIBS "")
+    endif(PLIBLIST)
 
     # Produce a pkg-config file
     configure_file("x265.pc.in" "x265.pc" @ONLY)
