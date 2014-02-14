@@ -283,7 +283,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->searchRange = 25;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 0;
-            param->maxNumMergeCand = 2;
             param->searchMethod = X265_DIA_SEARCH;
             param->bEnableRectInter = 0;
             param->bEnableAMP = 0;
