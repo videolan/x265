@@ -778,7 +778,7 @@ private:
     int         m_SPSId;
     int         m_VPSId;
     int         m_chromaFormatIdc;
-
+    bool        m_colorPlaneFlag;
     uint32_t    m_maxTLayers;         // maximum number of temporal layers
 
     // Structure
@@ -862,6 +862,9 @@ public:
     int  getChromaFormatIdc()         { return m_chromaFormatIdc; }
 
     void setChromaFormatIdc(int i)    { m_chromaFormatIdc = i; }
+    void setSeparateColorPlaneFlag(bool c)      { m_colorPlaneFlag = c;}
+
+    bool getSeparateColorPlaneFlag()      { return m_colorPlaneFlag;}
 
     static int getWinUnitX(int chromaFormatIdc) { assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return g_winUnitX[chromaFormatIdc]; }
 

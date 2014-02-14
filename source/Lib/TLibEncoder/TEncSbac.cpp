@@ -442,9 +442,8 @@ void TEncSbac::codeSPS(TComSPS* sps)
     codePTL(sps->getPTL(), 1, sps->getMaxTLayers() - 1);
     WRITE_UVLC(sps->getSPSId(),                   "sps_seq_parameter_set_id");
     WRITE_UVLC(sps->getChromaFormatIdc(),         "chroma_format_idc");
-    assert(sps->getChromaFormatIdc() == 1);
-    // in the first version chroma_format_idc can only be equal to 1 (4:2:0)
-    if (sps->getChromaFormatIdc() == 3)
+
+    if (sps->getChromaFormatIdc() == CHROMA_444)
     {
         WRITE_FLAG(0,                                  "separate_colour_plane_flag");
     }
@@ -1045,12 +1044,15 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
         {
             WRITE_FLAG(slice->getPicOutputFlag() ? 1 : 0, "pic_output_flag");
         }
-
-        // in the first version chroma_format_idc is equal to one, thus colour_plane_id will not be present
-        assert(slice->getSPS()->getChromaFormatIdc() == 1);
-        // if( separate_colour_plane_flag  ==  1 )
-        //   colour_plane_id                                      u(2)
-
+        if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
+        {
+            //In this version separate_color_plane_flag is 0
+            if(slice->getSPS()->getSeparateColorPlaneFlag())
+            {
+                //plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
+                //WRITE_FLAG(0, "colour_plane_id");
+            }
+        }
         if (!slice->getIdrPicFlag())
         {
             int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << slice->getSPS()->getBitsForPOC())) % (1 << slice->getSPS()->getBitsForPOC());
@@ -2107,16 +2109,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
 
     if (numSig == 0)
         return;
-    if (cu->getSlice()->getPPS()->getUseTransformSkip())
-    {
-        codeTransformSkipFlags(cu, absPartIdx, width, ttype);
-    }
-    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-
-    //----- encode significance map -----
-    const uint32_t log2BlockSize = g_convertToBit[width] + 2;
-    uint32_t scanIdx = cu->getCoefScanIdx(absPartIdx, width, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
-    const uint32_t *scan = g_sigLastScan[scanIdx][log2BlockSize - 1];
+ 
 
     bool beValid;
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -2127,84 +2120,78 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     {
         beValid = cu->getSlice()->getPPS()->getSignHideFlag() > 0;
     }
+    if (cu->getSlice()->getPPS()->getUseTransformSkip())
+    {
+        codeTransformSkipFlags(cu, absPartIdx, width, ttype);
+    }
+
+
+    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
+    const uint32_t log2BlockWidth  = g_convertToBit[width] + 2;
+    const uint32_t log2BlockHeight = g_convertToBit[height] + 2;
+
+    //select scans
+    TUEntropyCodingParameters codingParameters;
+    TComTrQuant::getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  width, height, ttype);
+
+    //----- encode significance map -----
 
     // Find position of last coefficient
     int scanPosLast = -1;
     int posLast;
-
-    const uint32_t * scanCG;
-    {
-        scanCG = g_sigLastScan[scanIdx][log2BlockSize > 3 ? log2BlockSize - 2 - 1 : 0];
-        if (log2BlockSize == 3)
-        {
-            scanCG = g_sigLastScan8x8[scanIdx];
-        }
-        else if (log2BlockSize == 5)
-        {
-            scanCG = g_sigLastScanCG32x32;
-        }
-    }
-    uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
-    static const uint32_t shift = MLS_CG_SIZE >> 1;
-    const uint32_t numBlkSide = width >> shift;
-
-    ::memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * MLS_GRP_NUM);
-
+    uint32_t sigCoeffGroupFlag[ MLS_GRP_NUM ];
+    memset( sigCoeffGroupFlag, 0, sizeof(uint32_t) * MLS_GRP_NUM );
     do
     {
-        posLast = scan[++scanPosLast];
-
-        // get L1 sig map
-        uint32_t posy    = posLast >> log2BlockSize;
-        uint32_t posx    = posLast - (posy << log2BlockSize);
-        uint32_t blkIdx  = numBlkSide * (posy >> shift) + (posx >> shift);
-        if (coeff[posLast])
+        posLast = codingParameters.scan[++scanPosLast];
+        if(coeff[posLast] != 0)
         {
+            // get L1 sig map
+            uint32_t posy    = posLast >> log2BlockWidth;
+            uint32_t posx    = posLast - (posy << log2BlockWidth);
+            uint32_t blkIdx  = codingParameters.widthInGroups * (posy >> MLS_CG_LOG2_HEIGHT) + (posx >> MLS_CG_LOG2_WIDTH);
             sigCoeffGroupFlag[blkIdx] = 1;
-        }
 
-        numSig -= (coeff[posLast] != 0);
+            numSig --;
+        }
     }
     while (numSig > 0);
 
     // Code position of last coefficient
-    int posLastY = posLast >> log2BlockSize;
-    int posLastX = posLast - (posLastY << log2BlockSize);
-    codeLastSignificantXY(posLastX, posLastY, width, height, ttype, scanIdx);
-
+    int posLastY = posLast >> log2BlockWidth;
+    int posLastX = posLast - (posLastY << log2BlockWidth);
+    codeLastSignificantXY(posLastX, posLastY, width, height, ttype, codingParameters.scanType);
     //===== code significance flag =====
     ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype ? NUM_SIG_CG_FLAG_CTX : 0)];
     ContextModel * const baseCtx = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_SIG_FLAG_CTX] : &m_contextModels[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
-
-    const int lastScanSet      = scanPosLast >> LOG2_SCAN_SET_SIZE;
+    const int lastScanSet      = scanPosLast >> MLS_CG_SIZE;
     uint32_t c1 = 1;
-    uint32_t goRiceParam;
+    uint32_t goRiceParam           = 0;
     int  scanPosSig            = scanPosLast;
 
     for (int subSet = lastScanSet; subSet >= 0; subSet--)
     {
         int numNonZero = 0;
-        int subPos     = subSet << LOG2_SCAN_SET_SIZE;
+        int subPos     = subSet << MLS_CG_SIZE;
         goRiceParam    = 0;
-        int absCoeff[16];
+        int absCoeff[1 << MLS_CG_SIZE];
         uint32_t coeffSigns = 0;
-
-        int lastNZPosInCG = -1, firstNZPosInCG = SCAN_SET_SIZE;
-
+        int lastNZPosInCG = -1;
+        int firstNZPosInCG = 1 << MLS_CG_SIZE;
         if (scanPosSig == scanPosLast)
         {
-            absCoeff[0] = abs(coeff[posLast]);
+            absCoeff[0] = int(abs(coeff[posLast]));
             coeffSigns    = (coeff[posLast] < 0);
             numNonZero    = 1;
             lastNZPosInCG  = scanPosSig;
             firstNZPosInCG = scanPosSig;
             scanPosSig--;
         }
-
         // encode significant_coeffgroup_flag
-        int cgBlkPos = scanCG[subSet];
-        int cgPosY   = cgBlkPos / numBlkSide;
-        int cgPosX   = cgBlkPos - (cgPosY * numBlkSide);
+        int cgBlkPos = codingParameters.scanCG[subSet];
+        int cgPosY   = cgBlkPos / codingParameters.widthInGroups;
+        int cgPosX   = cgBlkPos - (cgPosY * codingParameters.widthInGroups);
+
         if (subSet == lastScanSet || subSet == 0)
         {
             sigCoeffGroupFlag[cgBlkPos] = 1;
@@ -2212,29 +2199,26 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
         else
         {
             uint32_t sigCoeffGroup = (sigCoeffGroupFlag[cgBlkPos] != 0);
-            uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, log2BlockSize);
+            uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
             m_binIf->encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
-
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag[cgBlkPos])
         {
-            int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, log2BlockSize);
-            uint32_t blkPos, posy, posx, sig, ctxSig;
+            const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
+            uint32_t blkPos, sig, ctxSig;
             for (; scanPosSig >= subPos; scanPosSig--)
             {
-                blkPos  = scan[scanPosSig];
-                posy    = blkPos >> log2BlockSize;
-                posx    = blkPos - (posy << log2BlockSize);
+                blkPos  = codingParameters.scan[scanPosSig];
                 sig     = (coeff[blkPos] != 0);
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
-                    ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, scanIdx, posx, posy, log2BlockSize, ttype);
+                    ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, codingParameters, scanPosSig, log2BlockWidth, log2BlockHeight, ttype);
                     m_binIf->encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
                 {
-                    absCoeff[numNonZero] = abs(coeff[blkPos]);
+                    absCoeff[numNonZero] = int(abs(coeff[blkPos]));
                     coeffSigns = 2 * coeffSigns + (coeff[blkPos] < 0);
                     numNonZero++;
                     if (lastNZPosInCG == -1)
