@@ -287,7 +287,9 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         outTempCU->m_totalBits = outBestCU->m_totalBits;
         outTempCU->m_totalDistortion = outBestCU->m_totalDistortion;
         outTempCU->m_totalCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
-        if (m_cfg->param.rdLevel > 2)
+        outTempCU->m_sa8dCost = outTempCU->m_totalCost;
+        outBestCU->m_sa8dCost = outTempCU->m_sa8dCost;
+        if (m_cfg->param.rdLevel >= 2)
         {
             //calculate the motion compensation for chroma for the best mode selected
             int numPart = outBestCU->getNumPartInter();
