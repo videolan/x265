@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include "cpu.h"
+#include "x265.h"
 
 #define FENC_STRIDE 64
 
@@ -75,7 +76,7 @@ enum LumaPartitions
 // 4:2:0 chroma partition sizes. These enums are just a convenience for indexing into the
 // chroma primitive arrays when instantiating templates. The function tables should always
 // be indexed by the luma partition enum
-enum Chroma420Partions
+enum Chroma420Partitions
 {
     CHROMA_2x2, // never used by HEVC
     CHROMA_4x4,   CHROMA_4x2,   CHROMA_2x4,
@@ -221,7 +222,7 @@ struct EncoderPrimitives
     filter_ss_t     luma_vss[NUM_LUMA_PARTITIONS];
     filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
     filter_p2s_t    luma_p2s;
-    filter_p2s_t    chroma_p2s;
+    filter_p2s_t    chroma_p2s[X265_CSP_COUNT];
 
     weightp_sp_t    weight_sp;
     weightp_pp_t    weight_pp;

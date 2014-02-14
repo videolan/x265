@@ -886,13 +886,21 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_64x16] = satd8<64, 16>;
     p.satd[LUMA_16x64] = satd8<16, 64>;
 
-#define CHROMA(W, H) \
+#define CHROMA_420(W, H) \
     p.chroma[X265_CSP_I420].addAvg[CHROMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
     p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+#define CHROMA_444(W, H) \
+    p.chroma[X265_CSP_I444].addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
+    p.chroma[X265_CSP_I444].copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
+    p.chroma[X265_CSP_I444].copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
+    p.chroma[X265_CSP_I444].copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I444].sub_ps [LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I444].add_ps [LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
 #define LUMA(W, H) \
     p.luma_addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
@@ -904,53 +912,79 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     LUMA(4, 4);
     LUMA(8, 8);
-    CHROMA(4, 4);
+    CHROMA_420(4, 4);
     LUMA(4, 8);
-    CHROMA(2, 4);
+    CHROMA_420(2, 4);
     LUMA(8, 4);
-    CHROMA(4, 2);
+    CHROMA_420(4, 2);
     LUMA(16, 16);
-    CHROMA(8, 8);
+    CHROMA_420(8,  8);
     LUMA(16,  8);
-    CHROMA(8, 4);
+    CHROMA_420(8,  4);
     LUMA(8, 16);
-    CHROMA(4, 8);
+    CHROMA_420(4,  8);
     LUMA(16, 12);
-    CHROMA(8, 6);
+    CHROMA_420(8,  6);
     LUMA(12, 16);
-    CHROMA(6, 8);
+    CHROMA_420(6,  8);
     LUMA(16,  4);
-    CHROMA(8, 2);
+    CHROMA_420(8,  2);
     LUMA(4, 16);
-    CHROMA(2, 8);
+    CHROMA_420(2,  8);
     LUMA(32, 32);
-    CHROMA(16, 16);
+    CHROMA_420(16, 16);
     LUMA(32, 16);
-    CHROMA(16, 8);
+    CHROMA_420(16, 8);
     LUMA(16, 32);
-    CHROMA(8, 16);
+    CHROMA_420(8,  16);
     LUMA(32, 24);
-    CHROMA(16, 12);
+    CHROMA_420(16, 12);
     LUMA(24, 32);
-    CHROMA(12, 16);
+    CHROMA_420(12, 16);
     LUMA(32,  8);
-    CHROMA(16, 4);
+    CHROMA_420(16, 4);
     LUMA(8, 32);
-    CHROMA(4, 16);
+    CHROMA_420(4,  16);
     LUMA(64, 64);
-    CHROMA(32, 32);
+    CHROMA_420(32, 32);
     LUMA(64, 32);
-    CHROMA(32, 16);
+    CHROMA_420(32, 16);
     LUMA(32, 64);
-    CHROMA(16, 32);
+    CHROMA_420(16, 32);
     LUMA(64, 48);
-    CHROMA(32, 24);
+    CHROMA_420(32, 24);
     LUMA(48, 64);
-    CHROMA(24, 32);
+    CHROMA_420(24, 32);
     LUMA(64, 16);
-    CHROMA(32, 8);
+    CHROMA_420(32, 8);
     LUMA(16, 64);
-    CHROMA(8, 32);
+    CHROMA_420(8,  32);
+
+    CHROMA_444(4,  4);
+    CHROMA_444(8,  8);
+    CHROMA_444(4,  8);
+    CHROMA_444(8,  4);
+    CHROMA_444(16, 16);
+    CHROMA_444(16, 8);
+    CHROMA_444(8,  16);
+    CHROMA_444(16, 12);
+    CHROMA_444(12, 16);
+    CHROMA_444(16, 4);
+    CHROMA_444(4,  16);
+    CHROMA_444(32, 32);
+    CHROMA_444(32, 16);
+    CHROMA_444(16, 32);
+    CHROMA_444(32, 24);
+    CHROMA_444(24, 32);
+    CHROMA_444(32, 8);
+    CHROMA_444(8,  32);
+    CHROMA_444(64, 64);
+    CHROMA_444(64, 32);
+    CHROMA_444(32, 64);
+    CHROMA_444(64, 48);
+    CHROMA_444(48, 64);
+    CHROMA_444(64, 16);
+    CHROMA_444(16, 64);
 
     SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp_t, pixel, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, int16_t, pixel)

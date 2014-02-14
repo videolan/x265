@@ -2109,7 +2109,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
 
     if (numSig == 0)
         return;
- 
 
     bool beValid;
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -2124,7 +2123,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     {
         codeTransformSkipFlags(cu, absPartIdx, width, ttype);
     }
-
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
     const uint32_t log2BlockWidth  = g_convertToBit[width] + 2;
@@ -2269,9 +2267,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
 
             if (c1 == 0)
             {
+                baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                 if (firstC2FlagIdx != -1)
                 {
-                    baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                     uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
                     m_binIf->encodeBin(symbol, baseCtxMod[0]);
                 }
@@ -2296,9 +2294,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
                     if (absCoeff[idx] >= baseLevel)
                     {
                         xWriteCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
-                        if (goRiceParam < 4 && absCoeff[idx] > (3 << goRiceParam))
+                        if (absCoeff[idx] > 3 * (1 << goRiceParam))
                         {
-                            goRiceParam++;
+                            goRiceParam = std::min<uint32_t>(goRiceParam + 1, 4);
                         }
                     }
                     if (absCoeff[idx] >= 2)
@@ -2413,14 +2411,13 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 void TEncSbac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype)
 {
     assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
-    const int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
-    const ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype ? NUM_SIG_CG_FLAG_CTX : 0)];
+    int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
 
     for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
     {
         for (uint32_t bin = 0; bin < 2; bin++)
         {
-            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(baseCoeffGroupCtx[ctxIdx].m_state, bin);
+            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].m_state, bin);
         }
     }
 }

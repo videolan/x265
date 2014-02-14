@@ -648,8 +648,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
 
     if ((yFrac | xFrac) == 0)
     {
-        primitives.chroma_p2s(refCb, refStride, dstCb, cxWidth, cxHeight);
-        primitives.chroma_p2s(refCr, refStride, dstCr, cxWidth, cxHeight);
+        primitives.chroma_p2s[csp](refCb, refStride, dstCb, cxWidth, cxHeight);
+        primitives.chroma_p2s[csp](refCr, refStride, dstCr, cxWidth, cxHeight);
     }
     else if (yFrac == 0)
     {

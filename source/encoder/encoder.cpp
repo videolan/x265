@@ -1362,6 +1362,7 @@ void Encoder::configure(x265_param *_param)
         _param->rc.aqMode = X265_AQ_NONE;
     }
 
+    m_csp = _param->internalCsp;
     m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
 
     //====== Coding Tools ========
