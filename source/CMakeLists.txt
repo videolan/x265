@@ -284,8 +284,12 @@ endif()
 if(X265_LATEST_TAG)
     # convert lists of link libraries into -lstdc++ -lm etc..
     foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
-        set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
+        list(APPEND PLIBLIST "-l${LIB}")
     endforeach()
+    # blacklist of libraries that should not be in Libs.private
+    list(REMOVE_ITEM PLIBLIST "-lc" "-lpthread")
+    string(REPLACE ";" " " PRIVATE_LIBS "${PLIBLIST}")
+
     # Produce a pkg-config file
     configure_file("x265.pc.in" "x265.pc" @ONLY)
     install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
