@@ -273,7 +273,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --cpuid                       Limit SIMD capability bitmap 0:auto 1:None. Default:0\n");
     H0("   --threads                     Number of threads for thread pool (0: detect CPU core count, default)\n");
     H0("-p/--preset                      ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
-    H0("-t/--tune                        Tune the settings for a particular type of source or situation\n");
+    H0("-t/--tune                        Tune the settings for a particular type of source or situation: (psnr, ssim, zero-latency)\n");
     H0("-F/--frame-threads               Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
     H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
@@ -284,7 +284,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input                       Raw YUV or Y4M input file name\n");
     H0("   --input-depth                 Bit-depth of input file. Default 8\n");
     H0("   --input-res                   Source picture size [w x h], auto-detected if Y4M\n");
-    H0("   --input-csp                   Source color space parameter, auto-detected if Y4M\n");
+    H0("   --input-csp                   Source color space parameter, auto-detected if Y4M. 1:i420 3:i444. Default: 1\n");
     H0("   --fps                         Source frame rate, auto-detected if Y4M\n");
     H0("   --frame-skip                  Number of frames to skip at start of input file\n");
     H0("-f/--frames                      Number of frames to be encoded. Default all\n");
@@ -508,9 +508,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         this->input->setColorSpace(param->internalCsp);
         this->input->setBitDepth(inputBitDepth);
     }
-    if (param->internalCsp != X265_CSP_I420)
+    if (param->internalCsp != X265_CSP_I420 && param->internalCsp != X265_CSP_I444)
     {
-        x265_log(param, X265_LOG_ERROR, "Only I420 color space is supported in this build\n");
+        x265_log(param, X265_LOG_ERROR, "Only i420 and i444 color spaces are supported in this build\n");
         return true;
     }
     if (inputBitDepth < 8 || inputBitDepth > 16)

@@ -113,7 +113,7 @@ typedef struct x265_picture
     /* Ignored on input, set to picture count, returned on output */
     int     poc;
 
-    /* Must be specified on input pictures: X265_CSP_I420 or other. It should
+    /* Must be specified on input pictures: X265_CSP_I420 or other. It must
      * match the internal color space of the encoder. x265_picture_init() will
      * initialize this value to the internal color space */
     int     colorSpace;
@@ -213,7 +213,7 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define IS_X265_TYPE_I(x) ((x) == X265_TYPE_I || (x) == X265_TYPE_IDR)
 #define IS_X265_TYPE_B(x) ((x) == X265_TYPE_B || (x) == X265_TYPE_BREF)
 
-/* NOTE! For this release only X265_CSP_I420 is supported */
+/* NOTE! For this release only X265_CSP_I420 and X265_CSP_I444 are supported */
 
 /* Supported internal color space types (according to semantics of chroma_format_idc) */
 #define X265_CSP_I400           0  /* yuv 4:0:0 planar */
@@ -340,9 +340,10 @@ typedef struct x265_param
      * Future builds may support 12bit pixels. */
     int       internalBitDepth;
 
-    /* Color space of internal pictures. Only X265_CSP_I420 is currently supported.
-     * Eventually, i422 and i444 will be supported as internal color spaces and other
-     * packed formats will be supported in x265_picture.colorSpace */
+    /* Color space of internal pictures. Only X265_CSP_I420 and X265_CSP_I444
+     * are supported.  Eventually, i422 will also be supported as an internal
+     * color space and other packed formats will be supported in
+     * x265_picture.colorSpace */
     int       internalCsp;
 
     /* Frame rate of source pictures */

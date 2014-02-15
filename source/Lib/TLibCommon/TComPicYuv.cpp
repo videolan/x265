@@ -147,7 +147,7 @@ uint32_t TComPicYuv::getCUHeight(int rowNum)
 }
 
 /* Copy pixels from an x265_picture into internal TComPicYuv instance.
- * Downshift pixels as necessary, mask off bits above X265_DEPTH for safety. */
+ * Shift pixels as necessary, mask off bits above X265_DEPTH for safety. */
 void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 {
     /* m_picWidth is the width that is being encoded, padx indicates how many

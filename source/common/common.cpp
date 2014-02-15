@@ -435,9 +435,10 @@ int x265_check_params(x265_param *param)
     uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
+    CHECK(param->internalCsp != X265_CSP_I420 && param->internalCsp != X265_CSP_I444,
+          "Only 4:2:0 and 4:4:4 color spaces is supported at this time");
+
     /* These checks might be temporary */
-//    CHECK(param->internalCsp != X265_CSP_I420,
-//          "Only 4:2:0 color space is supported at this time");
 #if HIGH_BIT_DEPTH
     CHECK(param->internalBitDepth != 10,
           "x265 was compiled for 10bit encodes, only 10bit inputs supported");
