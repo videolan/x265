@@ -603,14 +603,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
-    if (opt.chroma_p2s)
+    /*if (opt.chroma_p2s)
     {
         if (!check_IPFilter_primitive(ref.chroma_p2s[X265_CSP_I420], opt.chroma_p2s[X265_CSP_I420], 1))
         {
             printf("chroma_p2s failed\n");
             return false;
         }
-    }
+    }*/
 
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
     {
@@ -742,12 +742,12 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.chroma_p2s)
+    /*if (opt.chroma_p2s)
     {
         printf("chroma_p2s\t");
         REPORT_SPEEDUP(opt.chroma_p2s[X265_CSP_I420], ref.chroma_p2s[X265_CSP_I420],
                        pixel_buff, srcStride, IPF_vec_output_s, width, height);
-    }
+    }*/
 
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
     {
