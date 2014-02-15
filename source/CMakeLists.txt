@@ -40,7 +40,7 @@ if("${SYSPROC}" STREQUAL "i386"   OR "${SYSPROC}" STREQUAL "amd64" OR
 elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv6l")
     message(STATUS "Detected ARM system processor")
     set(ARM 1)
-    add_definitions(-DX265_ARCH_ARM=1)
+    add_definitions(-DX265_ARCH_ARM=1 -DHAVE_ARMV6=1)
 else()
     message(STATUS "CMAKE_SYSTEM_PROCESSOR value `${CMAKE_SYSTEM_PROCESSOR}` is unknown")
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")

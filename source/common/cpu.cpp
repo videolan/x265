@@ -40,7 +40,7 @@
 #include <machine/cpu.h>
 #endif
 
-#if X265_ARCH_ARM
+#if X265_ARCH_ARM && !defined(HAVE_NEON)
 #include <signal.h>
 #include <setjmp.h>
 static sigjmp_buf jmpbuf;

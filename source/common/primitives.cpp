@@ -158,14 +158,9 @@ extern "C" {
 // is disabled there should be no reason to use EMMS.
 void x265_cpu_emms(void) {}
 
-int x265_cpu_cpuid_test(void)
-{
-    return 0;
-}
+#if defined(X265_ARCH_X86)
 
-#if !defined(X265_ARCH_X86)
-# define __cpuidex(regsArray, level, index)
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
 # pragma warning(disable: 4100)
 #elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
 # define __cpuidex(regsArray, level, index) \
@@ -175,6 +170,11 @@ int x265_cpu_cpuid_test(void)
 #else
 # error "compiler not supported"
 #endif
+
+int x265_cpu_cpuid_test(void)
+{
+    return 0;
+}
 
 void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
 {
@@ -215,5 +215,6 @@ void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
     *eax = (uint32_t)out;
     *edx = (uint32_t)(out >> 32);
 }
+#endif // X265_ARCH_X86
 }
 #endif // if !ENABLE_ASSEMBLY
