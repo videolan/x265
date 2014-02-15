@@ -126,7 +126,7 @@ void Encoder::create()
             if (m_csvfpt)
             {
                 if (param.logLevel >= X265_LOG_DEBUG)
-                    fprintf(m_csvfpt, "Encode Order, Type, POC, nQP, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
+                    fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
                 else
                     fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
             }
@@ -831,36 +831,39 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
         int poc = slice->getPOC();
-        int QP_Base = slice->getSliceQpBase();
         int QP = slice->getSliceQp();
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
-        fprintf(stderr, "\rPOC %4d ( %c-SLICE, nQP %d QP %d) %10d bits", poc, c, QP_Base, QP, bits);
+
+        char buf[1024];
+        int p;
+        p = sprintf(buf, "POC:%d %c QP %2d %10d bits", poc, c, QP, bits);
         if (param.bEnablePsnr)
-            fprintf(stderr, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
+            p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
-            fprintf(stderr, "[SSIM: %.3lf]", ssim);
+            p += sprintf(buf + p, " [SSIM: %.3lfdB]", x265_ssim(ssim));
 
         if (!slice->isIntra())
         {
             int numLists = slice->isInterP() ? 1 : 2;
             for (int list = 0; list < numLists; list++)
             {
-                fprintf(stderr, " [L%d ", list);
+                p += sprintf(buf + p, " [L%d ", list);
                 for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
                     int k = slice->getRefPOC(list, ref) - slice->getLastIDR();
-                    fprintf(stderr, "%d ", k);
+                    p += sprintf(buf + p, "%d ", k);
                 }
 
-                fprintf(stderr, "]");
+                p += sprintf(buf + p, "]");
             }
         }
+        x265_log(&param, X265_LOG_DEBUG, buf);
 
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
         {
-            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %d, %d, %10d,", m_outputCount++, c, poc, QP_Base, QP, bits);
+            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %d, %10d,", m_outputCount++, c, poc, QP, bits);
             double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
             if (param.bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);

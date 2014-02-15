@@ -1306,7 +1306,6 @@ private:
     SliceType   m_sliceType;
     int         m_sliceQp;
     bool        m_dependentSliceSegmentFlag;
-    int         m_sliceQpBase;
     bool        m_deblockingFilterDisable;
     bool        m_deblockingFilterOverrideFlag;    //< offsets for deblocking filter inherit from PPS
     int         m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
@@ -1417,9 +1416,7 @@ public:
     bool      getDependentSliceSegmentFlag() const   { return m_dependentSliceSegmentFlag; }
 
     void      setDependentSliceSegmentFlag(bool val) { m_dependentSliceSegmentFlag = val; }
-
-    int       getSliceQpBase()                    { return m_sliceQpBase; }
-
+    
     int       getSliceQpDelta()                   { return m_sliceQpDelta; }
 
     int       getSliceQpDeltaCb()                 { return m_sliceQpDeltaCb; }
@@ -1478,8 +1475,6 @@ public:
     void      setSliceType(SliceType e)               { m_sliceType = e; }
 
     void      setSliceQp(int i)                       { m_sliceQp = i; }
-
-    void      setSliceQpBase(int i)                   { m_sliceQpBase = i; }
 
     void      setSliceQpDelta(int i)                  { m_sliceQpDelta = i; }
 

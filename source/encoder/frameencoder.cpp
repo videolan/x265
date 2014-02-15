@@ -417,7 +417,6 @@ void FrameEncoder::compressFrame()
     {
         qp = MAX_QP;
         slice->setSliceQp(qp);
-        slice->setSliceQpBase(qp);
     }
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);

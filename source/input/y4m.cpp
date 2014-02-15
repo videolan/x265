@@ -348,6 +348,8 @@ bool Y4MInput::readPicture(x265_picture& pic)
     if (!frameStat[head])
         return false;
 
+    pic.bitDepth = 8;
+    pic.colorSpace = colorSpace;
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
         pic.planes[i] = plane[head][i];

@@ -203,6 +203,7 @@ bool YUVInput::readPicture(x265_picture& pic)
     if (!frameStat[head])
         return false;
 
+    pic.colorSpace = colorSpace;
     pic.bitDepth = depth;
     pic.planes[0] = buf[head];
     pic.planes[1] = (char*)(pic.planes[0]) + width * height * pixelbytes;

@@ -230,9 +230,7 @@ RateControl::RateControl(TEncCfg * _cfg)
 
     bitrate = cfg->param.rc.bitrate * 1000;
     frameDuration = 1.0 / cfg->param.frameRate;
-    lastNonBPictType = -1;
-    baseQp = cfg->param.rc.qp;
-    qp = baseQp;
+    qp = cfg->param.rc.qp;
     lastRceq = 1; /* handles the cmplxrsum when the previous frame cost is zero */
     totalBits = 0;
     shortTermCplxSum = 0;
@@ -320,26 +318,22 @@ RateControl::RateControl(TEncCfg * _cfg)
     bframes = cfg->param.bframes;
     bframeBits = 0;
     leadingNoBSatd = 0;
+    accumPNorm = .01;
+    /* estimated ratio that produces a reasonable QP for the first I-frame */
+    cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
+    wantedBitsWindow = bitrate * frameDuration;
 
     if (cfg->param.rc.rateControlMode == X265_RC_ABR)
     {
         /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
-        accumPNorm = .01;
-        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
-        /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
-        wantedBitsWindow = bitrate * frameDuration;
+        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;    
     }
     else if (cfg->param.rc.rateControlMode == X265_RC_CRF)
     {
 #define ABR_INIT_QP ((int)cfg->param.rc.rfConstant + QP_BD_OFFSET)
-        accumPNorm = .01;
-        accumPQp = ABR_INIT_QP * accumPNorm;
-        /* estimated ratio that produces a reasonable QP for the first I-frame */
-        cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
-        wantedBitsWindow = bitrate * frameDuration;
+        accumPQp = ABR_INIT_QP * accumPNorm;        
     }
 
     ipOffset = 6.0 * X265_LOG2(cfg->param.rc.ipFactor);
@@ -353,9 +347,9 @@ RateControl::RateControl(TEncCfg * _cfg)
 
     if (cfg->param.rc.rateControlMode == X265_RC_CQP)
     {
-        qpConstant[P_SLICE] = baseQp;
-        qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(baseQp - ipOffset + 0.5));
-        qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(baseQp + pbOffset + 0.5));
+        qpConstant[P_SLICE] = qp;
+        qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp - ipOffset + 0.5));
+        qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp + pbOffset + 0.5));
     }
 
     /* qstep - value set as encoder specific */
@@ -404,7 +398,6 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     framesDone++;
     /* set the final QP to slice structure */
     curSlice->setSliceQp(qp);
-    curSlice->setSliceQpBase(qp);
     curSlice->m_avgQpRc = qp;
 }
 

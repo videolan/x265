@@ -88,9 +88,9 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUHeight;
 
-    CHECKED_MALLOC(m_picBufY, Pel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
-    CHECKED_MALLOC(m_picBufU, Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
-    CHECKED_MALLOC(m_picBufV, Pel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    CHECKED_MALLOC(m_picBufY, pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+    CHECKED_MALLOC(m_picBufU, pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    CHECKED_MALLOC(m_picBufV, pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
 
     m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
