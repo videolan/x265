@@ -265,7 +265,7 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
         return;
     }
 
-    if ( (ttype != TEXT_LUMA) && (trSizeLog2 == 2) && !(chFmt == CHROMA_444))
+    if ((ttype != TEXT_LUMA) && (trSizeLog2 == 2) && !(chFmt == CHROMA_444))
     {
         assert(trDepth > 0);
         trDepth--;
@@ -369,7 +369,7 @@ void TEncSearch::xEncIntraHeader(TComDataCU* cu, uint32_t trDepth, uint32_t absP
         {
             uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
             assert(trDepth > 0);
-            if ((absPartIdx%qtNumParts) == 0)
+            if ((absPartIdx % qtNumParts) == 0)
                 m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx, true);
         }
     }
@@ -2169,6 +2169,7 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
 
     cu->setChromIntraDirSubParts(bestMode, 0, depth);
 }
+
 bool TEncSearch::isNextSection()
 {
     if (m_splitMode == DONT_SPLIT)
@@ -2181,13 +2182,13 @@ bool TEncSearch::isNextSection()
         m_absPartIdxTURelCU += m_absPartIdxStep;
 
         m_section++;
-        return m_section< (1 << m_splitMode);
+        return m_section < (1 << m_splitMode);
     }
 }
 
 bool TEncSearch::isLastSection()
 {
-    return (m_section+1) >= (1<<m_splitMode);
+    return (m_section + 1) >= (1 << m_splitMode);
 }
 
 void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
@@ -2199,6 +2200,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
 {
     uint32_t depth              = cu->getDepth(0);
     uint32_t initTrDepth        = (cu->getPartitionSize(0) != SIZE_2Nx2N) && (cu->getChromaFormat() == CHROMA_444 ? 1 : 0);
+
     m_splitMode                 = (initTrDepth == 0) ? DONT_SPLIT : QUAD_SPLIT;
     m_absPartIdxStep            = (cu->getPic()->getNumPartInCU() >> (depth << 1)) >> partIdxStepShift[m_splitMode];
     m_partOffset                = 0;
@@ -2254,6 +2256,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
                 ::memcpy(m_qtTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V) + m_partOffset, m_absPartIdxStep * sizeof(UChar));
             }
         }
+
         if (!isLastSection())
         {
             uint32_t compWidth   = (cu->getWidth(0) >> m_hChromaShift)  >> initTrDepth;
@@ -2278,8 +2281,8 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
         ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + m_partOffset, m_qtTempTransformSkipFlag[2], m_absPartIdxStep * sizeof(UChar));
         cu->setChromIntraDirSubParts(bestMode, m_partOffset, depth + initTrDepth);
         cu->m_totalDistortion += bestDist - preCalcDistC;
-
-    } while(isNextSection());
+    }
+    while (isNextSection());
 
     //----- restore context models -----
     if (initTrDepth != 0)
@@ -2292,10 +2295,11 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
             uiCombCbfU |= cu->getCbf(uiPartIdx, TEXT_CHROMA_U, 1);
             uiCombCbfV |= cu->getCbf(uiPartIdx, TEXT_CHROMA_V, 1);
         }
+
         for (uint32_t uiOffs = 0; uiOffs < 4 * m_absPartIdxStep; uiOffs++)
         {
-            cu->getCbf( TEXT_CHROMA_U )[ uiOffs ] |= uiCombCbfU;
-            cu->getCbf( TEXT_CHROMA_V )[ uiOffs ] |= uiCombCbfV;
+            cu->getCbf(TEXT_CHROMA_U)[uiOffs] |= uiCombCbfU;
+            cu->getCbf(TEXT_CHROMA_V)[uiOffs] |= uiCombCbfV;
         }
     }
     //----- restore context models -----
@@ -3474,7 +3478,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
     const uint32_t trMode = depth - cu->getDepth(0);
     const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
-    uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUWidth() >> m_hChromaShift) >> depth] + 2;;
+    uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUWidth() >> m_hChromaShift) >> depth] + 2;
     int chFmt                 = cu->getChromaFormat();
 
     bool bSplitFlag = ((cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
@@ -4227,7 +4231,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
     if (curTrMode == trMode)
     {
         const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
-        uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUWidth() >> cu->getHorzChromaShift()) >> depth] + 2;;
+        uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUWidth() >> cu->getHorzChromaShift()) >> depth] + 2;
         const uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool  bCodeChroma   = true;

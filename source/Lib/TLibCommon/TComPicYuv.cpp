@@ -118,6 +118,7 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
             m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * ((maxCUHeight >> m_vChromaShift) >> maxCUDepth) + buCol * ((maxCUWidth >> m_hChromaShift) >> maxCUDepth);
         }
     }
+
     return true;
 
 fail:

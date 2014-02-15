@@ -77,6 +77,7 @@ public:
     /// set chroma parameters from CU data for accessing ADI data
     void  initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
                                Pel* adiBuf, int strideOrig, int heightOrig, int chromaId);
+
 private:
 
     /// padding of unavailable reference samples for intra prediction

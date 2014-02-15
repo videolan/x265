@@ -137,7 +137,7 @@ bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t w
     }
     else
     {
-        int diff = std::min<int>(abs((int) dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
+        int diff = std::min<int>(abs((int)dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
         uint32_t sizeIndex = g_convertToBit[width];
         bFilter = diff > intraFilterThreshold[sizeIndex];
     }
@@ -180,7 +180,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
 
     bool bUseFilteredPredictions = true;
 
-    if(chFmt != CHROMA_444)
+    if (chFmt != CHROMA_444)
     {
         bUseFilteredPredictions = false;
     }
@@ -192,7 +192,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
 
     if (bUseFilteredPredictions)
     {
-        uint32_t cuWidth2  = width  << 1;
+        uint32_t cuWidth2  = width << 1;
         uint32_t cuHeight2 = height << 1;
         // generate filtered intra prediction samples
         // left and left above border + above and above right border + top left corner = length of 3. filter buffer
@@ -225,7 +225,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
             filterBufN[i] = (filterBuf[i - 1] + 2 * filterBuf[i] + filterBuf[i + 1] + 2) >> 2;
         }
 
-       // fill 1. filter buffer with filtered values
+        // fill 1. filter buffer with filtered values
         l = 0;
         for (int i = 0; i < cuHeight2; i++)
         {
@@ -583,8 +583,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
     Pel* dstCb = dstPic->getCbAddr(partAddr);
     Pel* dstCr = dstPic->getCrAddr(partAddr);
 
-    int xFrac = mv->x & ((1 << shiftHor)-1);
-    int yFrac = mv->y & ((1 << shiftVer)-1);
+    int xFrac = mv->x & ((1 << shiftHor) - 1);
+    int yFrac = mv->y & ((1 << shiftVer) - 1);
 
     int partEnum = partitionFromSizes(width, height);
     int csp = cu->getChromaFormat();
@@ -635,8 +635,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
     int16_t* dstCb = dstPic->getCbAddr(partAddr);
     int16_t* dstCr = dstPic->getCrAddr(partAddr);
 
-    int xFrac = mv->x & ((1 << shiftHor)-1);
-    int yFrac = mv->y & ((1 << shiftVer)-1);
+    int xFrac = mv->x & ((1 << shiftHor) - 1);
+    int yFrac = mv->y & ((1 << shiftVer) - 1);
 
     int partEnum = partitionFromSizes(width, height);
     int csp = cu->getChromaFormat();

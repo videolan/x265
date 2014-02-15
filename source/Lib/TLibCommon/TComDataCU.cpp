@@ -2494,6 +2494,7 @@ uint32_t TComDataCU::getIntraSizeIdx(uint32_t absPartIdx)
 
     UChar width = m_width[absPartIdx] >> shift;
     uint32_t  cnt = 0;
+
     while (width)
     {
         cnt++;
@@ -2869,13 +2870,14 @@ uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t width, bool bI
 {
     uint32_t scanIdx;
     uint32_t dirMode;
+
     if (!bIsIntra)
     {
         return SCAN_DIAG;
     }
     //check that MDCS can be used for this TU
 
-    uint32_t height = width; 
+    uint32_t height = width;
     if (bIsLuma)
     {
         const uint32_t maximumWidth  = MDCS_MAXIMUM_WIDTH;

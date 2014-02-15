@@ -862,9 +862,10 @@ public:
     int  getChromaFormatIdc()         { return m_chromaFormatIdc; }
 
     void setChromaFormatIdc(int i)    { m_chromaFormatIdc = i; }
-    void setSeparateColorPlaneFlag(bool c)      { m_colorPlaneFlag = c;}
 
-    bool getSeparateColorPlaneFlag()      { return m_colorPlaneFlag;}
+    void setSeparateColorPlaneFlag(bool c)      { m_colorPlaneFlag = c; }
+
+    bool getSeparateColorPlaneFlag()      { return m_colorPlaneFlag; }
 
     static int getWinUnitX(int chromaFormatIdc) { assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return g_winUnitX[chromaFormatIdc]; }
 
@@ -1416,7 +1417,7 @@ public:
     bool      getDependentSliceSegmentFlag() const   { return m_dependentSliceSegmentFlag; }
 
     void      setDependentSliceSegmentFlag(bool val) { m_dependentSliceSegmentFlag = val; }
-    
+
     int       getSliceQpDelta()                   { return m_sliceQpDelta; }
 
     int       getSliceQpDeltaCb()                 { return m_sliceQpDeltaCb; }

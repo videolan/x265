@@ -57,7 +57,8 @@ static void sigill_handler(int sig)
     canjump = 0;
     siglongjmp(jmpbuf, 1);
 }
-#endif
+
+#endif // if X265_ARCH_ARM
 
 namespace x265 {
 const cpu_name_t cpu_names[] =
@@ -98,10 +99,10 @@ const cpu_name_t cpu_names[] =
     { "UnalignedStack",  X265_CPU_STACK_MOD4 },
 
 #elif X265_ARCH_ARM
-    {"ARMv6",           X265_CPU_ARMV6},
-    {"NEON",            X265_CPU_NEON},
-    {"FastNeonMRC",     X265_CPU_FAST_NEON_MRC},
-#endif
+    { "ARMv6",           X265_CPU_ARMV6 },
+    { "NEON",            X265_CPU_NEON },
+    { "FastNeonMRC",     X265_CPU_FAST_NEON_MRC },
+#endif // if X265_ARCH_X86
     { "", 0 },
 };
 
@@ -327,6 +328,7 @@ int x265_cpu_fast_neon_mrc_test(void);
 uint32_t cpu_detect(void)
 {
     int flags = 0;
+
 #if HAVE_ARMV6
     flags |= X265_CPU_ARMV6;
 
@@ -344,7 +346,7 @@ uint32_t cpu_detect(void)
     x265_cpu_neon_test();
     canjump = 0;
     signal(SIGILL, oldsig);
-#endif
+#endif // if !HAVE_NEON
 
     flags |= X265_CPU_NEON;
 
@@ -360,16 +362,16 @@ uint32_t cpu_detect(void)
     flags |= x265_cpu_fast_neon_mrc_test() ? X265_CPU_FAST_NEON_MRC : 0;
 #endif
     // TODO: write dual issue test? currently it's A8 (dual issue) vs. A9 (fast mrc)
-#endif
+#endif // if HAVE_ARMV6
     return flags;
 }
 
-#else
+#else // if X265_ARCH_X86
 
 uint32_t cpu_detect(void)
 {
     return 0;
 }
 
-#endif
+#endif // if X265_ARCH_X86
 }

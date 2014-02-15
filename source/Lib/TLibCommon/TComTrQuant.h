@@ -161,7 +161,7 @@ public:
     static int  calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t posXCG, uint32_t posYCG, uint32_t widthInGroups, uint32_t heightInGroups);
     static int getSigCtxInc(int patternSigCtx, const TUEntropyCodingParameters &codingParameters, const int scanPosition, const int log2BlockWidth, const int log2BlockHeight, const TextType ttype);
     static uint32_t getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag, uint32_t cGPosX, uint32_t cGPosY, const uint32_t widthInGroups, const uint32_t heightInGroups);
-     static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype);
+    static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype);
     estBitsSbacStruct* m_estBitsSbac;
 
 protected:

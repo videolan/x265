@@ -556,13 +556,13 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     Pel *clipTbl = NULL;
     int32_t *offsetBo = NULL;
     int32_t *tmp_swap;
+
     picWidthTmp  = (isChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
     picHeightTmp = (isChroma == 0) ? m_picHeight : m_picHeight >> m_vChromaShift;
     lcuWidth     = (isChroma == 0) ? lcuWidth    : lcuWidth    >> m_hChromaShift;
     lcuHeight    = (isChroma == 0) ? lcuHeight   : lcuHeight   >> m_vChromaShift;
     lpelx        = (isChroma == 0) ? lpelx       : lpelx       >> m_hChromaShift;
     tpely        = (isChroma == 0) ? tpely       : tpely       >> m_vChromaShift;
-
 
     rpelx        = lpelx + lcuWidth;
     bpely        = tpely + lcuHeight;
@@ -594,7 +594,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
         cuHeightTmp  = (isChroma == 0) ? m_maxCUHeight  : (m_maxCUHeight  >> m_vChromaShift);
-        shift = (isChroma == 0) ? (m_maxCUWidth- 1) : ((m_maxCUWidth >> m_hChromaShift) - 1);
+        shift = (isChroma == 0) ? (m_maxCUWidth - 1) : ((m_maxCUWidth >> m_hChromaShift) - 1);
         for (int i = 0; i < cuHeightTmp + 1; i++)
         {
             m_tmpL2[i] = rec[shift];

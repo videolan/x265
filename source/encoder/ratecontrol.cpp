@@ -299,11 +299,11 @@ RateControl::RateControl(TEncCfg * _cfg)
         singleFrameVbv = bufferRate * 1.1 > bufferSize;
 
         if (cfg->param.rc.vbvBufferInit > 1.)
-                cfg->param.rc.vbvBufferInit = Clip3( 0.0, 1.0, cfg->param.rc.vbvBufferInit / cfg->param.rc.vbvBufferSize);
+            cfg->param.rc.vbvBufferInit = Clip3(0.0, 1.0, cfg->param.rc.vbvBufferInit / cfg->param.rc.vbvBufferSize);
         cfg->param.rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(cfg->param.rc.vbvBufferInit, bufferRate / bufferSize));
         bufferFillFinal = bufferSize * cfg->param.rc.vbvBufferInit;
         vbvMinRate = /*!rc->b_2pass && */ cfg->param.rc.rateControlMode == X265_RC_ABR
-                   && cfg->param.rc.vbvMaxBitrate <= cfg->param.rc.bitrate;
+            && cfg->param.rc.vbvMaxBitrate <= cfg->param.rc.bitrate;
     }
 
     for (int i = 0; i < 5; i++)
@@ -328,12 +328,12 @@ RateControl::RateControl(TEncCfg * _cfg)
         /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
-        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;    
+        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
     }
     else if (cfg->param.rc.rateControlMode == X265_RC_CRF)
     {
 #define ABR_INIT_QP ((int)cfg->param.rc.rfConstant + QP_BD_OFFSET)
-        accumPQp = ABR_INIT_QP * accumPNorm;        
+        accumPQp = ABR_INIT_QP * accumPNorm;
     }
 
     ipOffset = 6.0 * X265_LOG2(cfg->param.rc.ipFactor);
@@ -570,6 +570,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
 void RateControl::checkAndResetABR(RateControlEntry* rce)
 {
     double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
+
     // Check if current Slice is a scene cut that follows low detailed/blank frames
     if (rce->lastSatd > 4 * rce->movingAvgSum)
     {
@@ -591,11 +592,11 @@ void RateControl::checkAndResetABR(RateControlEntry* rce)
                 lastAbrResetPoc = rce->poc;
             }
         }
-       else
-       {
-           // Clear flag to reset ABR and continue as usual.
-           isAbrReset = false;
-       }
+        else
+        {
+            // Clear flag to reset ABR and continue as usual.
+            isAbrReset = false;
+        }
     }
 }
 
@@ -649,6 +650,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
                     curBits = predictSize(&pred[type], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
                 }
+
                 /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
                 targetFill = X265_MIN(bufferFill + totalDuration * vbvMaxRate * 0.5, bufferSize * 0.5);
                 if (bufferFillCur < targetFill)

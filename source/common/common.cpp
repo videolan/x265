@@ -617,6 +617,7 @@ void x265_print_params(x265_param *param)
                  param->rc.aqStrength, param->rc.cuTree);
         break;
     }
+
     x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");

@@ -35,7 +35,6 @@
 #include <math.h>
 
 namespace x265 {
-
 void weightAnalyse(TComSlice& slice, x265_param& param);
 
 enum SCALING_LIST_PARAMETER
@@ -1181,5 +1180,4 @@ TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)
 
     return NULL;
 }
-
 }

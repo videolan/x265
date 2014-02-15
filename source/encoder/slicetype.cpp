@@ -376,8 +376,12 @@ void Lookahead::slicetypeDecide()
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
 {
     int prevNonB = 0, curNonB = 1, idx = 0;
+
     while (curNonB < numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
+    {
         curNonB++;
+    }
+
     int nextNonB = keyframe ? prevNonB : curNonB;
 
     while (curNonB < numFrames)
@@ -391,28 +395,33 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
             idx++;
         }
         /* Handle the B-frames: coded order */
-        for (int i = prevNonB+1; i < curNonB; i++, idx++)
+        for (int i = prevNonB + 1; i < curNonB; i++, idx++)
         {
             frames[nextNonB]->plannedSatd[idx] = vbvFrameCost(frames, prevNonB, curNonB, i);
             frames[nextNonB]->plannedType[idx] = X265_TYPE_B;
         }
+
         prevNonB = curNonB;
         curNonB++;
         while (curNonB <= numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
+        {
             curNonB++;
+        }
     }
+
     frames[nextNonB]->plannedType[idx] = X265_TYPE_AUTO;
 }
 
 int64_t Lookahead::vbvFrameCost(Lowres **frames, int p0, int p1, int b)
 {
     int64_t cost = est.estimateFrameCost(frames, p0, p1, b, 0);
+
     if (cfg->param.rc.aqMode)
     {
         if (cfg->param.rc.cuTree)
             return frameCostRecalculate(frames, p0, p1, b);
         else
-            return frames[b]->costEstAq[b-p0][p1-b];
+            return frames[b]->costEstAq[b - p0][p1 - b];
     }
     return cost;
 }
@@ -424,6 +433,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     int cuCount = NUM_CUS;
     int resetStart;
     bool bIsVbvLookahead = cfg->param.rc.vbvBufferSize && cfg->param.lookaheadDepth;
+
     if (!lastNonB)
         return;
 
@@ -910,7 +920,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
                 {
                     if ((lists_used >> list) & 1)
                     {
-#define CLIP_ADD(s, x) (s) = (uint16_t) X265_MIN((s) + (x), (1 << 16) - 1)
+#define CLIP_ADD(s, x) (s) = (uint16_t)X265_MIN((s) + (x), (1 << 16) - 1)
                         int32_t listamount = propagate_amount;
                         /* Apply bipred weighting. */
                         if (lists_used == 3)
@@ -1490,6 +1500,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         {
             left0[i] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
         }
+
         for (int i = 0; i < cuSize; i++)
         {
             above0[cuSize + i + 1] = above0[cuSize];

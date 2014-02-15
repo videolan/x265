@@ -98,6 +98,7 @@ bool TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxWid
         if (!m_cuData[i]->create(m_numPartitions, m_maxCUWidth, m_maxCUHeight, m_maxCUWidth >> m_totalDepth, picCsp))
             return false;
     }
+
     return true;
 }
 

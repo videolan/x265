@@ -279,7 +279,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 
     bool mCodeAll = true;
     const uint32_t numPels = (width >> cu->getHorzChromaShift()) * (height >> cu->getHorzChromaShift());
-    if(numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
+    if (numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
     {
         mCodeAll = false;
     }
@@ -398,6 +398,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
     }
 }
+
 // Intra direction for Luma
 void TEncEntropy::encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU)
 {
@@ -432,8 +433,8 @@ void TEncEntropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
             {
                 uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
                 encodeIntraDirModeChroma(cu, absPartIdx + partOffset, bRD);
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset*2, bRD);
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset*3, bRD);
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 2, bRD);
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 3, bRD);
             }
         }
     }
@@ -593,6 +594,7 @@ void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t dept
     uint32_t minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
     uint32_t lumaOffset   = minCoeffSize * absPartIdx;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
+
     if (cu->isIntra(absPartIdx))
     {
         DTRACE_CABAC_VL(g_nSymbolCounter++)

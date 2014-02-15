@@ -512,6 +512,7 @@ void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStrid
 void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
+
     assert(!(width & 15));
 
     for (y = 0; y <= height - 1; y++)
@@ -899,8 +900,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I444].copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].sub_ps [LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].add_ps [LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I444].sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I444].add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
 #define LUMA(W, H) \
     p.luma_addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \

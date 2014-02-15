@@ -113,6 +113,7 @@ IPFilterHarness::~IPFilterHarness()
         X265_FREE(pixel_test_buff[i]);
         X265_FREE(short_test_buff[i]);
     }
+
     X265_FREE(pixel_test_buff);
     X265_FREE(short_test_buff);
 }

@@ -104,7 +104,6 @@ PixelHarness::PixelHarness()
         int_test_buff[2][i]     = SHORT_MAX;
     }
 
-
     for (int i = 0; i < bufsize; i++)
     {
         pbuf1[i] = rand() & PIXEL_MAX;
@@ -135,6 +134,7 @@ PixelHarness::~PixelHarness()
         X265_FREE(short_test_buff1[i]);
         X265_FREE(int_test_buff[i]);
     }
+
     X265_FREE(pixel_test_buff);
     X265_FREE(short_test_buff);
     X265_FREE(short_test_buff1);
@@ -168,8 +168,8 @@ bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        int vres = opt(short_test_buff[index1], STRIDE,pixel_test_buff[index2] + j, STRIDE);
-        int cres = ref(short_test_buff[index1], STRIDE,pixel_test_buff[index2] + j, STRIDE);
+        int vres = opt(short_test_buff[index1], STRIDE, pixel_test_buff[index2] + j, STRIDE);
+        int cres = ref(short_test_buff[index1], STRIDE, pixel_test_buff[index2] + j, STRIDE);
         if (vres != cres)
             return false;
 
@@ -187,8 +187,8 @@ bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        int vres = opt(short_test_buff[index1], STRIDE,short_test_buff[index2] + j, STRIDE);
-        int cres = ref(short_test_buff[index1], STRIDE,short_test_buff[index2] + j, STRIDE);
+        int vres = opt(short_test_buff[index1], STRIDE, short_test_buff[index2] + j, STRIDE);
+        int cres = ref(short_test_buff[index1], STRIDE, short_test_buff[index2] + j, STRIDE);
         if (vres != cres)
             return false;
 
@@ -352,9 +352,9 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
         int stride = STRIDE;
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        ref(pixel_test_buff[index1] + j,short_test_buff[index2] + j,
+        ref(pixel_test_buff[index1] + j, short_test_buff[index2] + j,
             ref_reco, ref_recq, ref_pred, stride, stride, stride);
-        opt(pixel_test_buff[index1] + j,short_test_buff[index2] + j,
+        opt(pixel_test_buff[index1] + j, short_test_buff[index2] + j,
             opt_reco, opt_recq, opt_pred, stride, stride, stride);
 
         if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
@@ -381,6 +381,7 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
 
         j += INCR;
     }
+
 #if HIGH_BIT_DEPTH
     X265_DEPTH = old_depth;
 #endif

@@ -129,9 +129,9 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
 }
 
 // To minimize the distortion only. No rate is considered.
-void TComTrQuant::signBitHidingHDQ( TCoeff* qCoef, TCoeff* coef, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters )
+void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters)
 {
-    const uint32_t width     = codingParameters.widthInGroups  << MLS_CG_LOG2_WIDTH;
+    const uint32_t width     = codingParameters.widthInGroups << MLS_CG_LOG2_WIDTH;
     const uint32_t height    = codingParameters.heightInGroups << MLS_CG_LOG2_HEIGHT;
 
     int lastCG = -1;
@@ -293,7 +293,7 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int w
 
         if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
         {
-            signBitHidingHDQ( qCoef, coef, deltaU, codingParameters ) ;
+            signBitHidingHDQ(qCoef, coef, deltaU, codingParameters);
         }
     }
     return acSum;
@@ -490,12 +490,13 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
         }
     }
 }
-void TComTrQuant::getTUEntropyCodingParameters(TComDataCU* cu,
-                                             TUEntropyCodingParameters &result,
-                                             uint32_t absPartIdx,
-                                             uint32_t width,
-                                             uint32_t height,
-                                             TextType ttype)
+
+void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
+                                               TUEntropyCodingParameters &result,
+                                               uint32_t                   absPartIdx,
+                                               uint32_t                   width,
+                                               uint32_t                   height,
+                                               TextType                   ttype)
 {
     //set the local parameters
     const uint32_t                 log2BlockWidth  = g_convertToBit[width]  + 2;
@@ -511,8 +512,8 @@ void TComTrQuant::getTUEntropyCodingParameters(TComDataCU* cu,
     const uint32_t log2WidthInGroups  = g_convertToBit[result.widthInGroups  * 4];
     const uint32_t log2HeightInGroups = g_convertToBit[result.heightInGroups * 4];
 
-    result.scan   = g_scanOrder[ SCAN_GROUPED_4x4 ][ result.scanType ][ log2BlockWidth    ][ log2BlockHeight    ];
-    result.scanCG = g_scanOrder[ SCAN_UNGROUPED   ][ result.scanType ][ log2WidthInGroups ][ log2HeightInGroups ];
+    result.scan   = g_scanOrder[SCAN_GROUPED_4x4][result.scanType][log2BlockWidth][log2BlockHeight];
+    result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2WidthInGroups][log2HeightInGroups];
 
     //set the significance map context selection parameters
     if ((width == 4) && (height == 4))
@@ -576,8 +577,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     const uint32_t cgSize = (1 << MLS_CG_SIZE); // 16
     double costCoeffGroupSig[MLS_GRP_NUM];
     uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
-    const uint32_t log2BlockWidth    = g_convertToBit[ width  ] + 2;
-    const uint32_t log2BlockHeight   = g_convertToBit[ height ] + 2;
+    const uint32_t log2BlockWidth    = g_convertToBit[width] + 2;
+    const uint32_t log2BlockHeight   = g_convertToBit[height] + 2;
     uint32_t   ctxSet    = 0;
     int    c1            = 1;
     int    c2            = 0;
@@ -645,10 +646,10 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 }
                 else
                 {
-                    uint16_t ctxSig = getSigCtxInc( patternSigCtx, codingParameters, scanPos, log2BlockWidth, log2BlockHeight, ttype);
+                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, codingParameters, scanPos, log2BlockWidth, log2BlockHeight, ttype);
                     level           = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
-                                                   levelDouble, maxAbsLevel, ctxSig, oneCtx, absCtx, goRiceParam,
-                                                   c1Idx, c2Idx, qbits, scaleFactor, 0);
+                                                     levelDouble, maxAbsLevel, ctxSig, oneCtx, absCtx, goRiceParam,
+                                                     c1Idx, c2Idx, qbits, scaleFactor, 0);
                     sigRateDelta[blkPos] = m_estBitsSbac->significantBits[ctxSig][1] - m_estBitsSbac->significantBits[ctxSig][0];
                 }
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
@@ -735,7 +736,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             {
                 if (sigCoeffGroupFlag[cgBlkPos] == 0)
                 {
-                    uint32_t  ctxSig = getSigCoeffGroupCtxInc( sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups );
+                    uint32_t  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
                     baseCost += xGetRateSigCoeffGroup(0, ctxSig) - rdStats.sigCost;
                     costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(0, ctxSig);
                 }
@@ -752,7 +753,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                         double costZeroCG = baseCost;
 
                         // add SigCoeffGroupFlag cost to total cost
-                        uint32_t  ctxSig = getSigCoeffGroupCtxInc( sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups );
+                        uint32_t  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
                         if (cgScanPos < cgLastScanPos)
                         {
                             baseCost  += xGetRateSigCoeffGroup(1, ctxSig);
@@ -1030,9 +1031,9 @@ int TComTrQuant::calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t p
     uint32_t sigRight = 0;
     uint32_t sigLower = 0;
     if (rightAvailable)
-        sigRight = ((sigCoeffGroupFlag[ (posYCG * widthInGroups) + posXCG + 1 ] != 0) ? 1 : 0);
+        sigRight = ((sigCoeffGroupFlag[(posYCG * widthInGroups) + posXCG + 1] != 0) ? 1 : 0);
     if (belowAvailable)
-        sigLower = ((sigCoeffGroupFlag[ (posYCG + 1) * widthInGroups + posXCG ] != 0) ? 1 : 0);
+        sigLower = ((sigCoeffGroupFlag[(posYCG + 1) * widthInGroups + posXCG] != 0) ? 1 : 0);
     return sigRight + (sigLower << 1);
 }
 
@@ -1046,12 +1047,12 @@ int TComTrQuant::calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t p
  * \param textureType texture type (TEXT_LUMA...)
  * \returns ctxInc for current scan position
  */
-int TComTrQuant::getSigCtxInc(      int patternSigCtx,
-                                  const TUEntropyCodingParameters &codingParameters,
-                                  const int                        scanPosition,
-                                  const int                        log2BlockWidth,
-                                  const int                        log2BlockHeight,
-                                  const TextType                   ttype)
+int TComTrQuant::getSigCtxInc(int                              patternSigCtx,
+                              const TUEntropyCodingParameters &codingParameters,
+                              const int                        scanPosition,
+                              const int                        log2BlockWidth,
+                              const int                        log2BlockHeight,
+                              const TextType                   ttype)
 {
     static const int ctxIndMap[16] =
     {
@@ -1070,7 +1071,7 @@ int TComTrQuant::getSigCtxInc(      int patternSigCtx,
 
     if ((log2BlockWidth == 2) && (log2BlockHeight == 2)) //4x4
     {
-        offset = ctxIndMap[ (4 * posY) + posX ];
+        offset = ctxIndMap[(4 * posY) + posX];
     }
     else
     {
@@ -1126,8 +1127,9 @@ int TComTrQuant::getSigCtxInc(      int patternSigCtx,
 
         offset = (notFirstGroup ? notFirstGroupNeighbourhoodContextOffset[ttype] : 0) + cnt;
     }
-  return codingParameters.firstSignificanceMapContext + offset;
+    return codingParameters.firstSignificanceMapContext + offset;
 }
+
 /** Get the best level in RD sense
  * \param codedCost reference to coded cost
  * \param codedCost0 reference to cost when coefficient is 0
@@ -1354,21 +1356,22 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
  * \param uiLog2BlkSize log2 value of block size
  * \returns ctxInc for current scan position
  */
-uint32_t TComTrQuant::getSigCoeffGroupCtxInc  (const uint32_t*  sigCoeffGroupFlag,
-                                           const uint32_t   cgPosX,
-                                           const uint32_t   cgPosY,
-                                           const uint32_t   widthInGroups,
-                                           const uint32_t   heightInGroups)
+uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag,
+                                             const uint32_t  cgPosX,
+                                             const uint32_t  cgPosY,
+                                             const uint32_t  widthInGroups,
+                                             const uint32_t  heightInGroups)
 {
     uint32_t sigRight = 0;
     uint32_t sigLower = 0;
+
     if (cgPosX < (widthInGroups  - 1))
     {
-        sigRight = ((sigCoeffGroupFlag[ (cgPosY * widthInGroups) + cgPosX + 1 ] != 0) ? 1 : 0);
+        sigRight = ((sigCoeffGroupFlag[(cgPosY * widthInGroups) + cgPosX + 1] != 0) ? 1 : 0);
     }
     if (cgPosY < (heightInGroups - 1))
     {
-        sigLower = ((sigCoeffGroupFlag[ (cgPosY + 1) * widthInGroups + cgPosX ] != 0) ? 1 : 0);
+        sigLower = ((sigCoeffGroupFlag[(cgPosY + 1) * widthInGroups + cgPosX] != 0) ? 1 : 0);
     }
     return ((sigRight + sigLower) != 0) ? 1 : 0;
 }

@@ -85,6 +85,7 @@ bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
         CHECKED_MALLOC(lowresMvCosts[0][i], int32_t, cuCount);
         CHECKED_MALLOC(lowresMvCosts[1][i], int32_t, cuCount);
     }
+
     return true;
 
 fail:

@@ -180,6 +180,7 @@ void ThreadPoolImpl::markThreadAsleep(int id)
 {
     int word = id >> 6;
     uint64_t bit = 1LL << (id & 63);
+
     ATOMIC_OR(&m_sleepMap[word], bit);
 }
 
@@ -254,7 +255,9 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     if (m_threads && m_sleepMap)
     {
         for (int i = 0; i < m_numSleepMapWords; i++)
+        {
             m_sleepMap[i] = 0;
+        }
 
         m_ok = true;
         int i;

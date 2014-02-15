@@ -831,6 +831,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
 
     int iIsChroma = (yCbCr != 0) ? 1 : 0;
     int numSkipLine = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
+
     if (m_saoLcuBasedOptimization == 0)
     {
         numSkipLine = 0;

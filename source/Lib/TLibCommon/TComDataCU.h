@@ -483,6 +483,7 @@ public:
     int           getHorzChromaShift()  { return m_hChromaShift; }
 
     int           getVertChromaShift()  { return m_vChromaShift; }
+
     int           getChromaFormat()     { return m_chromaFormat; }
 };
 

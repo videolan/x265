@@ -167,6 +167,7 @@ MBDstHarness::~MBDstHarness()
         X265_FREE(short_test_buff[i]);
         X265_FREE(int_test_buff[i]);
     }
+
     X265_FREE(short_test_buff);
     X265_FREE(int_test_buff);
 }
@@ -310,6 +311,7 @@ bool MBDstHarness::check_dequant_primitive(dequant_scaling_t ref, dequant_scalin
 bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
 {
     int j = 0;
+
     for (int i = 0; i <= ITERS; i++)
     {
         int width = (rand() % 4 + 1) * 4;

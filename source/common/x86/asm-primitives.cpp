@@ -639,7 +639,7 @@ extern "C" {
     SETUP_PIXEL_SSE_SP_DEF(16, 64, cpu);
 
 #define SETUP_LUMA_ADDAVG_FUNC_DEF(W, H, cpu) \
-    p.luma_addAvg[LUMA_## W ## x ## H] = x265_addAvg_## W ## x ## H ## cpu;
+    p.luma_addAvg[LUMA_ ## W ## x ## H] = x265_addAvg_ ## W ## x ## H ## cpu;
 
 #define LUMA_ADDAVG(cpu) \
     SETUP_LUMA_ADDAVG_FUNC_DEF(4,  4,  cpu); \
@@ -669,7 +669,7 @@ extern "C" {
     SETUP_LUMA_ADDAVG_FUNC_DEF(64, 64, cpu); \
 
 #define SETUP_CHROMA_ADDAVG_FUNC_DEF(W, H, cpu) \
-    p.chroma[X265_CSP_I420].addAvg[CHROMA_## W ## x ## H] = x265_addAvg_## W ## x ## H ## cpu;
+    p.chroma[X265_CSP_I420].addAvg[CHROMA_ ## W ## x ## H] = x265_addAvg_ ## W ## x ## H ## cpu;
 
 #define CHROMA_ADDAVG(cpu) \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  2,  cpu); \
@@ -893,7 +893,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG8(31, 31, sse4);
         SETUP_INTRA_ANG8(32, 32, sse4);
         SETUP_INTRA_ANG8(33, 33, sse4);
-        
+
         SETUP_INTRA_ANG32(3,  3,  sse4);
         SETUP_INTRA_ANG32(4,  4,  sse4);
         SETUP_INTRA_ANG32(5,  5,  sse4);

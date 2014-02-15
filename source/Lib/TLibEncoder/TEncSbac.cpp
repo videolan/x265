@@ -1047,7 +1047,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
         if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
         {
             //In this version separate_color_plane_flag is 0
-            if(slice->getSPS()->getSeparateColorPlaneFlag())
+            if (slice->getSPS()->getSeparateColorPlaneFlag())
             {
                 //plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
                 //WRITE_FLAG(0, "colour_plane_id");
@@ -1754,6 +1754,7 @@ void TEncSbac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
 void TEncSbac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int eRefList)
 {
     int refFrame = cu->getCUMvField(eRefList)->getRefIdx(absPartIdx);
+
     m_binIf->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
 
     if (refFrame > 0)
@@ -2137,12 +2138,12 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     // Find position of last coefficient
     int scanPosLast = -1;
     int posLast;
-    uint32_t sigCoeffGroupFlag[ MLS_GRP_NUM ];
-    memset( sigCoeffGroupFlag, 0, sizeof(uint32_t) * MLS_GRP_NUM );
+    uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
+    memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * MLS_GRP_NUM);
     do
     {
         posLast = codingParameters.scan[++scanPosLast];
-        if(coeff[posLast] != 0)
+        if (coeff[posLast] != 0)
         {
             // get L1 sig map
             uint32_t posy    = posLast >> log2BlockWidth;
@@ -2150,7 +2151,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
             uint32_t blkIdx  = codingParameters.widthInGroups * (posy >> MLS_CG_LOG2_HEIGHT) + (posx >> MLS_CG_LOG2_WIDTH);
             sigCoeffGroupFlag[blkIdx] = 1;
 
-            numSig --;
+            numSig--;
         }
     }
     while (numSig > 0);

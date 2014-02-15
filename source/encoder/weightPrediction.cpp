@@ -32,15 +32,13 @@
 using namespace x265;
 
 namespace weightp {
-
 /* make a motion compensated copy of lowres ref into mcout with the same stride.
  * The borders of mcout are not extended */
-void mcLuma(
-        pixel *mcout,
-        Lowres& ref,
-        const int *mvCost,
-        const int *intraCost,
-        const MV *mvs)
+void mcLuma(pixel *    mcout,
+            Lowres&    ref,
+            const int *mvCost,
+            const int *intraCost,
+            const MV * mvs)
 {
     pixel *src = ref.lowresPlane[0];
     int stride = ref.lumaStride;
@@ -48,6 +46,7 @@ void mcLuma(
     MV mvmin, mvmax;
 
     int cu = 0;
+
     for (int y = 0; y < ref.lines; y += cuSize)
     {
         int pixoff = y * stride;
@@ -76,22 +75,22 @@ void mcLuma(
             }
         }
     }
+
     x265_emms();
 }
 
 /* use lowres MVs from lookahead to generate a motion compensated chroma plane.
  * if a block had cheaper lowres cost as intra, we treat it as MV 0 */
-void mcChroma(
-        pixel *mcout,
-        pixel *src,
-        Lowres& fenc,
-        int stride,
-        const int *mvCost,
-        const int *intraCost,
-        const MV *mvs,
-        int height,
-        int width,
-        int csp)
+void mcChroma(pixel *    mcout,
+              pixel *    src,
+              Lowres&    fenc,
+              int        stride,
+              const int *mvCost,
+              const int *intraCost,
+              const MV * mvs,
+              int        height,
+              int        width,
+              int        csp)
 {
     /* the motion vectors correspond to 8x8 lowres luma blocks, or 16x16 fullres
      * luma blocks. We have to adapt block size to chroma csp */
@@ -158,6 +157,7 @@ void mcChroma(
             }
         }
     }
+
     x265_emms();
 }
 
@@ -165,15 +165,14 @@ void mcChroma(
  * frame (potentially weighted, potentially motion compensated). We
  * always use source images for this analysis since reference recon
  * pixels have unreliable availability */
-uint32_t weightCost(
-        pixel *fenc,
-        int fencstride,
-        pixel *ref,
-        int refstride,
-        pixel *temp,
-        int width,
-        int height,
-        wpScalingParam *w)
+uint32_t weightCost(pixel *         fenc,
+                    int             fencstride,
+                    pixel *         ref,
+                    int             refstride,
+                    pixel *         temp,
+                    int             width,
+                    int             height,
+                    wpScalingParam *w)
 {
     if (w)
     {
@@ -204,18 +203,18 @@ uint32_t weightCost(
             }
         }
     }
+
     x265_emms();
     return cost;
 }
 
 const float epsilon = 1.f / 128.f;
 
-bool tryCommonDenom(
-        TComSlice& slice,
-        x265_param& param,
-        wpScalingParam wp[2][MAX_NUM_REF][3],
-        pixel *temp,
-        int indenom)
+bool tryCommonDenom(TComSlice&     slice,
+                    x265_param&    param,
+                    wpScalingParam wp[2][MAX_NUM_REF][3],
+                    pixel *        temp,
+                    int            indenom)
 {
     TComPic *pic = slice.getPic();
     TComPicYuv *picorig = pic->getPicYuvOrg();
@@ -247,6 +246,7 @@ bool tryCommonDenom(
 
     int numWeighted = 0;
     int numPredDir = slice.isInterP() ? 1 : 2;
+
     for (int list = 0; list < numPredDir; list++)
     {
         for (int ref = 0; ref < slice.getNumRefIdx(list); ref++)
@@ -309,6 +309,7 @@ bool tryCommonDenom(
                     log2denom[1] = X265_MIN(log2denom[1], (int)fw[yuv].log2WeightDenom);
                 }
             }
+
             log2denom[2] = log2denom[1];
 
             for (int yuv = 0; yuv < 3; yuv++)
@@ -455,7 +456,6 @@ bool tryCommonDenom(
 
             if (bWeightRef)
             {
-
                 // Make sure both chroma channels match
                 if (fw[1].bPresentFlag != fw[2].bPresentFlag)
                 {
@@ -473,11 +473,9 @@ bool tryCommonDenom(
 
     return true;
 }
-
 }
 
 namespace x265 {
-
 void weightAnalyse(TComSlice& slice, x265_param& param)
 {
     wpScalingParam wp[2][MAX_NUM_REF][3];
@@ -490,6 +488,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
     TComPicYuv *orig = slice.getPic()->getPicYuvOrg();
     pixel *temp = X265_MALLOC(pixel, 2 * orig->getStride() * orig->getHeight());
     bool useWp = false;
+
     if (temp)
     {
         int denom = slice.getNumRefIdx(REF_PIC_LIST_0) > 3 ? 7 : 6;
@@ -500,11 +499,12 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
             {
                 for (int ref = 0; ref < slice.getNumRefIdx(list); ref++)
                 {
-                    SET_WEIGHT(wp[list][ref][0], false, 1<<denom, denom, 0);
-                    SET_WEIGHT(wp[list][ref][1], false, 1<<denom, denom, 0);
-                    SET_WEIGHT(wp[list][ref][2], false, 1<<denom, denom, 0);
+                    SET_WEIGHT(wp[list][ref][0], false, 1 << denom, denom, 0);
+                    SET_WEIGHT(wp[list][ref][1], false, 1 << denom, denom, 0);
+                    SET_WEIGHT(wp[list][ref][2], false, 1 << denom, denom, 0);
                 }
             }
+
             if (weightp::tryCommonDenom(slice, param, wp, temp, denom))
             {
                 useWp = true;
@@ -520,5 +520,4 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
     slice.setWpScaling(wp);
     slice.getPPS()->setUseWP(useWp);
 }
-
 }
