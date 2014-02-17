@@ -825,8 +825,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSE4)
     {
-        p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
 
+        p.quant = x265_quant_sse4;
+        p.dequant_normal = x265_dequant_normal_sse4;
+        p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
         p.intra_pred[BLOCK_4x4][0] = x265_intra_pred_planar4_sse4;
         p.intra_pred[BLOCK_8x8][0] = x265_intra_pred_planar8_sse4;
         p.intra_pred[BLOCK_16x16][0] = x265_intra_pred_planar16_sse4;

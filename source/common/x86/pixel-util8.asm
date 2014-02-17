@@ -1071,20 +1071,19 @@ cglobal quant, 5,6,8, 0-(3*mmsize)
     mova        m4, [c_d_4]     ; m4 = [4 4 4 4]
 .loop:
     ; 4 coeff
-    movu        m0, [r0]        ; m1 = level
+    movu        m0, [r0]        ; m0 = level
     pxor        m1, m1
-    pcmpgtd     m1, m0          ; m2 = sign
-    movu        m2, [r1]        ; m3 = qcoeff
+    pcmpgtd     m1, m0          ; m1 = sign
+    movu        m2, [r1]        ; m2 = qcoeff
     pabsd       m0, m0
-    pmulld      m0, m2          ; m1 = tmpLevel1
+    pmulld      m0, m2          ; m0 = tmpLevel1
     paddd       m2, m0, addVec
-    psrad       m2, qbits       ; m3 = level1
+    psrad       m2, qbits       ; m2 = level1
     paddd       m7, m2
     pslld       m3, m2, qbits
     psubd       m0, m3
-    psrad       m0, qbits8      ; m1 = deltaU1
+    psrad       m0, qbits8      ; m0 = deltaU1
     movu        [r2], m0
-
     pxor        m0, m0
     pcmpeqd     m0, m2          ; m0 = mask4
     pand        m5, m0
@@ -1097,22 +1096,20 @@ cglobal quant, 5,6,8, 0-(3*mmsize)
     packssdw    m2, m2
     pmovsxwd    m2, m2
     movu        [r3], m2
-
     ; 4 coeff
-    movu        m0, [r0 + 16]   ; m1 = level
+    movu        m0, [r0 + 16]   ; m0 = level
     pxor        m1, m1
-    pcmpgtd     m1, m0          ; m2 = sign
-    movu        m2, [r1 + 16]   ; m3 = qcoeff
+    pcmpgtd     m1, m0          ; m1 = sign
+    movu        m2, [r1 + 16]   ; m2 = qcoeff
     pabsd       m0, m0
-    pmulld      m0, m2          ; m1 = tmpLevel1
+    pmulld      m0, m2          ; m0 = tmpLevel1
     paddd       m2, m0, addVec
-    psrad       m2, qbits       ; m3 = level1
+    psrad       m2, qbits       ; m2 = level1
     paddd       m7, m2
     pslld       m3, m2, qbits
     psubd       m0, m3
-    psrad       m0, qbits8      ; m1 = deltaU1
+    psrad       m0, qbits8      ; m0 = deltaU1
     movu        [r2 + 16], m0
-
     pxor        m0, m0
     pcmpeqd     m0, m2          ; m0 = mask4
     pand        m5, m0
@@ -1154,8 +1151,11 @@ cglobal quant, 5,6,8, 0-(3*mmsize)
 ; void dequant_normal(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal dequant_normal, 2,5,8
-    movd        m1, r3m             ; m1 = word [scale]
+cglobal dequant_normal, 4,5,5
+    movd        m1, r3             ; m1 = word [scale]
+    cmp         r3d, 255
+    jle         .skip
+    psrld       m1, 2
     mov         r4d, r4m
     movd        m0, r4d             ; m0 = shift
     xor         r3d, r3d
@@ -1171,6 +1171,45 @@ cglobal dequant_normal, 2,5,8
     ; m1 = scale
     ; m2 = word [1]
 .loop:
+    movu        m3, [r0]
+    movu        m4, [r0 + 16]
+    packssdw    m3, m4              ; m3 = clipQCoef
+    psllw       m3, 2
+    punpckhwd   m4, m3, m2
+    punpcklwd   m3, m2
+    pmaddwd     m3, m1              ; m3 = dword (clipQCoef * scale + add)
+    pmaddwd     m4, m1
+    psrad       m3, m0
+    psrad       m4, m0
+    packssdw    m3, m3              ; OPT_ME: store must be 32 bits
+    pmovsxwd    m3, m3
+    packssdw    m4, m4
+    pmovsxwd    m4, m4
+    movu        [r1], m3
+    movu        [r1 + 16], m4
+
+    add         r0, 32
+    add         r1, 32
+
+    sub         r2d, 8
+    jnz        .loop
+    jz         .end
+
+.skip:
+    mov         r4d, r4m
+    movd        m0, r4d             ; m0 = shift
+    xor         r3d, r3d
+    dec         r4d
+    bts         r3d, r4d
+    movd        m2, r3d
+    punpcklwd   m1, m2
+    pshufd      m1, m1, 0           ; m1 = dword [add scale]
+    mova        m2, [pw_1]
+    mov         r2d, r2m
+    ; m0 = shift
+    ; m1 = scale
+    ; m2 = word [1]
+.sloop:
     movu        m3, [r0]
     movu        m4, [r0 + 16]
     packssdw    m3, m4              ; m3 = clipQCoef
@@ -1191,7 +1230,8 @@ cglobal dequant_normal, 2,5,8
     add         r1, 32
 
     sub         r2d, 8
-    jnz        .loop
+    jnz        .sloop
+.end:
     RET
 
 
