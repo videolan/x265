@@ -533,7 +533,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
                 if (wp[list][ref][1].bPresentFlag)
                     p += sprintf(buf + p, "U{%d*x>>%d%+d}", wp[list][ref][1].inputWeight, wp[list][ref][1].log2WeightDenom, wp[list][ref][1].inputOffset);
                 if (wp[list][ref][2].bPresentFlag)
-                    p += sprintf(buf + p, "U{%d*x>>%d%+d}", wp[list][ref][2].inputWeight, wp[list][ref][2].log2WeightDenom, wp[list][ref][2].inputOffset);
+                    p += sprintf(buf + p, "V{%d*x>>%d%+d}", wp[list][ref][2].inputWeight, wp[list][ref][2].log2WeightDenom, wp[list][ref][2].inputOffset);
                 p += sprintf(buf + p, "]");
             }
         }
