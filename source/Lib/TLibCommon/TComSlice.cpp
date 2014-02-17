@@ -466,7 +466,6 @@ void  TComSlice::resetWpScaling()
                 wpScalingParam  *pwp = &(m_weightPredTable[e][i][yuv]);
                 pwp->bPresentFlag    = false;
                 pwp->log2WeightDenom = 0;
-                pwp->log2WeightDenom = 0;
                 pwp->inputWeight     = 1;
                 pwp->inputOffset     = 0;
             }
