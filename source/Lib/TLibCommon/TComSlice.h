@@ -1342,8 +1342,6 @@ private:
     uint32_t    m_sliceSegmentBits;
     bool        m_bFinalized;
 
-    wpACDCParam m_weightACDCParam[3];                 // [0:Y, 1:U, 2:V]
-
     uint32_t    m_tileOffstForMultES;
 
     uint32_t*   m_substreamSizes;
@@ -1550,11 +1548,6 @@ public:
     void  resetWpScaling();
     void  initWpScaling();
     inline bool applyWP() { return (m_sliceType == P_SLICE && m_pps->getUseWP()) || (m_sliceType == B_SLICE && m_pps->getWPBiPred()); }
-
-    void  setWpAcDcParam(wpACDCParam wp[3]) { memcpy(m_weightACDCParam, wp, sizeof(wpACDCParam) * 3); }
-
-    void  getWpAcDcParam(wpACDCParam *&wp);
-    void  initWpAcDcParam();
 
     void setTileOffstForMultES(uint32_t offset) { m_tileOffstForMultES = offset; }
 

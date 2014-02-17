@@ -93,7 +93,6 @@ TComSlice::TComSlice()
     }
 
     resetWpScaling();
-    initWpAcDcParam();
     m_saoEnabledFlag = false;
 }
 
@@ -438,27 +437,6 @@ void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRA
     {
         pocCRA = getPOC();
         prevRAPisBLA = true;
-    }
-}
-
-/** get AC and DC values for weighted pred
- * \param *wp
- * \returns void
- */
-void TComSlice::getWpAcDcParam(wpACDCParam *&wp)
-{
-    wp = m_weightACDCParam;
-}
-
-/** init AC and DC values for weighted pred
- * \returns void
- */
-void TComSlice::initWpAcDcParam()
-{
-    for (int comp = 0; comp < 3; comp++)
-    {
-        m_weightACDCParam[comp].ac = 0;
-        m_weightACDCParam[comp].dc = 0;
     }
 }
 
