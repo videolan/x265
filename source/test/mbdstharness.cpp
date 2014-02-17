@@ -29,14 +29,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
 #define ITERS  100
 #define TEST_CASES 3
-#define SMAX (1 << 12)
-#define SMIN (-1 << 12)
-
+#define IDCTMAX (1 << (BIT_DEPTH + 4)) - 1;
 using namespace x265;
-
 struct DctConf_t
 {
     const char *name;
@@ -79,11 +75,10 @@ MBDstHarness::MBDstHarness()
     mintbuf6 = X265_MALLOC(int, mem_cmp_size);
     mintbuf7 = X265_MALLOC(int, mem_cmp_size);
     mintbuf8 = X265_MALLOC(int, mem_cmp_size);
-
     short_test_buff  = (int16_t**)X265_MALLOC(int16_t*, TEST_CASES);
     int_test_buff    = (int**)X265_MALLOC(int*, TEST_CASES);
-
-    if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct || !mintbuf1 || !mintbuf2 || !mintbuf3 || !mintbuf4 || !mintbuf5 || !mintbuf6 || !mintbuf7 || !mintbuf8 || !short_test_buff || !int_test_buff)
+    int_idct_test_buff    = (int**)X265_MALLOC(int*, TEST_CASES);
+    if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct || !mintbuf1 || !mintbuf2 || !mintbuf3 || !mintbuf4 || !mintbuf5 || !mintbuf6 || !mintbuf7 || !mintbuf8 || !short_test_buff || !int_test_buff || !int_idct_test_buff)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -93,7 +88,8 @@ MBDstHarness::MBDstHarness()
     {
         short_test_buff[i]  = (int16_t*)X265_MALLOC(int16_t, mb_t_size);
         int_test_buff[i]  = (int*)X265_MALLOC(int, mb_t_size);
-        if (!short_test_buff[i] || !int_test_buff[i])
+        int_idct_test_buff[i]  = (int*)X265_MALLOC(int, mb_t_size);
+        if (!short_test_buff[i] || !int_test_buff[i] || !int_idct_test_buff[i])
         {
             fprintf(stderr, "Init_Test_Case_buffers: malloc failed, unable to initiate tests!\n");
             exit(-1);
@@ -107,15 +103,15 @@ MBDstHarness::MBDstHarness()
     for (int i = 0; i < mb_t_size; i++)
     {
         short_test_buff[0][i]   = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
-        int_test_buff[0][i]     = rand() % SMAX;
-
+        int_test_buff[0][i]     = rand() % PIXEL_MAX;
+        int_idct_test_buff[0][i]     = rand() % IDCTMAX;
         short_test_buff[1][i]   = -PIXEL_MAX;
-        int_test_buff[1][i]     = 0;
-
+        int_test_buff[1][i]     = -PIXEL_MAX;
+        int_idct_test_buff[1][i]     = 0;
         short_test_buff[2][i]   = PIXEL_MAX;
-        int_test_buff[2][i]     = SMAX - 1;
+        int_test_buff[2][i]     = PIXEL_MAX;
+        int_idct_test_buff[2][i]     = IDCTMAX;
     }
-
     const int idct_max = (1 << (BIT_DEPTH + 4)) - 1;
     for (int i = 0; i < mb_t_size; i++)
     {
@@ -166,10 +162,12 @@ MBDstHarness::~MBDstHarness()
     {
         X265_FREE(short_test_buff[i]);
         X265_FREE(int_test_buff[i]);
+        X265_FREE(int_idct_test_buff[i]);
     }
 
     X265_FREE(short_test_buff);
     X265_FREE(int_test_buff);
+    X265_FREE(int_idct_test_buff);
 }
 
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
@@ -211,15 +209,14 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
     for (int i = 0; i <= 100; i++)
     {
         int index = rand() % TEST_CASES;
-        ref(int_test_buff[index] + j, mbuf2, width);
-        opt(int_test_buff[index] + j, mbuf3, width);
-
+        ref(int_idct_test_buff[index] + j, mbuf2, width);
+        opt(int_idct_test_buff[index] + j, mbuf3, width);
         if (memcmp(mbuf2, mbuf3, cmp_size))
         {
 #if _DEBUG
             // redo for debug
-            ref(int_test_buff[index] + j, mbuf2, width);
-            opt(int_test_buff[index] + j, mbuf3, width);
+            ref(int_idct_test_buff[index] + j, mbuf2, width);
+            opt(int_idct_test_buff[index] + j, mbuf3, width);
 #endif
             return false;
         }
@@ -244,8 +241,11 @@ bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_
 
         int width = (1 << log2TrSize);
         int height = width;
-
-        int qp = rand() % 52;
+#if HIGH_BIT_DEPTH
+        int qp = rand() % 64;
+#else
+        int qp = rand() % 51;
+#endif
         int per = qp / 6;
         int rem = qp % 6;
         static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
