@@ -871,7 +871,6 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
                 p += sprintf(buf + p, "]");
             }
         }
-        x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
 
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
@@ -914,20 +913,20 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
             if (param.decodedPictureHashSEI == 1)
             {
                 digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 16);
-                fprintf(stderr, " [MD5:%s]", digestStr);
+                p += sprintf(buf + p, " [MD5:%s]", digestStr);
             }
             else if (param.decodedPictureHashSEI == 2)
             {
                 digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 2);
-                fprintf(stderr, " [CRC:%s]", digestStr);
+                p += sprintf(buf + p, " [CRC:%s]", digestStr);
             }
             else if (param.decodedPictureHashSEI == 3)
             {
                 digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 4);
-                fprintf(stderr, " [Checksum:%s]", digestStr);
+                p += sprintf(buf + p, " [Checksum:%s]", digestStr);
             }
         }
-        fprintf(stderr, "\n");
+        x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
         fflush(stderr);
     }
 
