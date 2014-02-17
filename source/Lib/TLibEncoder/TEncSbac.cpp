@@ -36,6 +36,7 @@
 */
 
 #include "TEncSbac.h"
+#include "primitives.h"
 
 namespace x265 {
 //! \ingroup TLibEncoder
@@ -2106,7 +2107,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     assert(width <= m_slice->getSPS()->getMaxTrSize());
 
     // compute number of significant coefficients
-    uint32_t numSig = TEncEntropy::countNonZeroCoeffs(coeff, width * height);
+    uint32_t numSig = primitives.count_nonzero(coeff, width * height);
 
     if (numSig == 0)
         return;

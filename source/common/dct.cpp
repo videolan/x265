@@ -797,6 +797,21 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
 
     return acSum;
 }
+
+int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
+{
+    assert(((intptr_t)quantCoeff & 15) == 0);
+    assert(numCoeff > 0 && (numCoeff & 15) == 0);
+
+    int count = 0;
+
+    for (int i = 0; i < numCoeff; i++)
+    {
+        count += quantCoeff[i] != 0;
+    }
+
+    return count;
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -817,5 +832,6 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.idct[IDCT_8x8] = idct8_c;
     p.idct[IDCT_16x16] = idct16_c;
     p.idct[IDCT_32x32] = idct32_c;
+    p.count_nonzero = count_nonzero_c;
 }
 }

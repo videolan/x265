@@ -87,9 +87,9 @@ TEncSearch::~TEncSearch()
         const uint32_t numLayersToAllocate = m_cfg->getQuadtreeTULog2MaxSize() - m_cfg->getQuadtreeTULog2MinSize() + 1;
         for (uint32_t i = 0; i < numLayersToAllocate; ++i)
         {
-            delete[] m_qtTempCoeffY[i];
-            delete[] m_qtTempCoeffCb[i];
-            delete[] m_qtTempCoeffCr[i];
+            X265_FREE(m_qtTempCoeffY[i]);
+            X265_FREE(m_qtTempCoeffCb[i]);
+            X265_FREE(m_qtTempCoeffCr[i]);
             m_qtTempTComYuv[i].destroy();
         }
     }
@@ -98,9 +98,9 @@ TEncSearch::~TEncSearch()
     delete[] m_qtTempCoeffCr;
     delete[] m_qtTempTrIdx;
     delete[] m_qtTempTComYuv;
-    delete[] m_qtTempTUCoeffY;
-    delete[] m_qtTempTUCoeffCb;
-    delete[] m_qtTempTUCoeffCr;
+    X265_FREE(m_qtTempTUCoeffY);
+    X265_FREE(m_qtTempTUCoeffCb);
+    X265_FREE(m_qtTempTUCoeffCr);
     for (uint32_t i = 0; i < 3; ++i)
     {
         delete[] m_qtTempCbf[i];
@@ -155,19 +155,18 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
 
     for (uint32_t i = 0; i < numLayersToAllocate; ++i)
     {
-        m_qtTempCoeffY[i]  = new TCoeff[g_maxCUWidth * g_maxCUHeight];
-
-        m_qtTempCoeffCb[i] = new TCoeff[(g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift)];
-        m_qtTempCoeffCr[i] = new TCoeff[(g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift)];
+        m_qtTempCoeffY[i]  = X265_MALLOC(TCoeff, g_maxCUWidth * g_maxCUHeight);
+        m_qtTempCoeffCb[i] = X265_MALLOC(TCoeff, (g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift));
+        m_qtTempCoeffCr[i] = X265_MALLOC(TCoeff, (g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift));
         m_qtTempTComYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param.internalCsp);
     }
 
     m_sharedPredTransformSkip[0] = new Pel[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_sharedPredTransformSkip[1] = new Pel[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_sharedPredTransformSkip[2] = new Pel[MAX_TS_WIDTH * MAX_TS_HEIGHT];
-    m_qtTempTUCoeffY  = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
-    m_qtTempTUCoeffCb = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
-    m_qtTempTUCoeffCr = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
+    m_qtTempTUCoeffY  = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    m_qtTempTUCoeffCb = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    m_qtTempTUCoeffCr = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
 
     m_qtTempTransformSkipTComYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param.internalCsp);
 

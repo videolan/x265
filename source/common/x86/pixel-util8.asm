@@ -1194,6 +1194,37 @@ cglobal dequant_normal, 2,5,8
     jnz        .loop
     RET
 
+
+;-----------------------------------------------------------------------------
+; int count_nonzero(const int32_t *quantCoeff, int numCoeff);
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal count_nonzero, 2,3,4
+    pxor        m0, m0
+    pxor        m1, m1
+    mov         r2d, r1d
+    shr         r1d, 3
+
+.loop
+    mova        m2, [r0]
+    mova        m3, [r0 + 16]
+    add         r0, 32
+    packssdw    m2, m3
+    pcmpeqw     m2, m0
+    psrlw       m2, 15
+    packsswb    m2, m2
+    psadbw      m2, m0
+    paddd       m1, m2
+    dec         r1d
+    jnz        .loop
+
+    movd        r1d, m1
+    sub         r2d, r1d
+    mov         eax, r2d
+
+    RET
+
+
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
 ;void weight_pp(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 ;-----------------------------------------------------------------------------------------------------------------------------------------------

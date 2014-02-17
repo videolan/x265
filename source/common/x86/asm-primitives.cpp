@@ -1084,6 +1084,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.dct[DCT_4x4] = x265_dct4_sse2;
         p.idct[IDCT_4x4] = x265_idct4_sse2;
         p.idct[IDST_4x4] = x265_idst4_sse2;
+        p.count_nonzero = x265_count_nonzero_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
