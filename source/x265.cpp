@@ -549,7 +549,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (reconfn)
     {
         if (reconFileBitDepth == 0)
-            reconFileBitDepth = param->internalBitDepth;
+            reconFileBitDepth = param->inputBitDepth;
         this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->internalCsp);
         if (this->recon->isFail())
         {
@@ -560,13 +560,13 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
 
 #if HIGH_BIT_DEPTH
-    if (param->internalBitDepth != 10)
+    if (param->inputBitDepth != 10)
     {
         x265_log(param, X265_LOG_ERROR, "Only bit depths of 10 are supported in this build\n");
         return true;
     }
 #else
-    if (param->internalBitDepth != 8)
+    if (param->inputBitDepth != 8)
     {
         x265_log(param, X265_LOG_ERROR, "Only bit depths of 8 are supported in this build\n");
         return true;

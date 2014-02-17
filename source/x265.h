@@ -337,7 +337,7 @@ typedef struct x265_param
     /* Internal encoder bit depth. If x265 was compiled to use 8bit pixels
      * (HIGH_BIT_DEPTH=0), this field must be 8, else this field must be 10.
      * Future builds may support 12bit pixels. */
-    int       internalBitDepth;
+    int       inputBitDepth;
 
     /* Color space of internal pictures. Only X265_CSP_I420 and X265_CSP_I444
      * are supported.  Eventually, i422 will also be supported as an internal
