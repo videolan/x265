@@ -1251,7 +1251,7 @@ public:
     void setSliceHeaderExtensionPresentFlag(bool val)  { m_sliceHeaderExtensionPresentFlag = val; }
 };
 
-struct WpScalingParam
+typedef struct wpScalingParam
 {
     // Explicit weighted prediction parameters parsed in slice header,
     // or Implicit weighted prediction parameters (8 bits depth values).
@@ -1277,15 +1277,7 @@ struct WpScalingParam
 
         inputWeight = X265_MIN(inputWeight, 127);
     }
-};
-
-typedef WpScalingParam wpScalingParam;
-
-typedef struct
-{
-    int64_t ac;
-    int64_t dc;
-} wpACDCParam;
+} wpScalingParam;
 
 /// slice header class
 class TComSlice

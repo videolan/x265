@@ -32,8 +32,7 @@ namespace x265 {
 // private x265 namespace
 
 class TComPicYuv;
-struct WpScalingParam;
-typedef WpScalingParam wpScalingParam;
+struct wpScalingParam;
 
 class MotionReference : public ReferencePlanes
 {
