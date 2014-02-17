@@ -517,6 +517,30 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         X265_FREE(temp);
     }
 
+    if (useWp && param.logLevel >= X265_LOG_DEBUG)
+    {
+        char buf[1024];
+        int p = 0;
+
+        p = sprintf(buf, "poc: %d weights:", slice.getPOC());
+        for (int list = 0; list < numPredDir; list++)
+        {
+            for (int ref = 0; ref < slice.getNumRefIdx(list); ref++)
+            {
+                p += sprintf(buf + p, " [L%d:R%d ", list, ref);
+                if (wp[list][ref][0].bPresentFlag)
+                    p += sprintf(buf + p, "Y{%d*x>>%d%+d}", wp[list][ref][0].inputWeight, wp[list][ref][0].log2WeightDenom, wp[list][ref][0].inputOffset);
+                if (wp[list][ref][1].bPresentFlag)
+                    p += sprintf(buf + p, "U{%d*x>>%d%+d}", wp[list][ref][1].inputWeight, wp[list][ref][1].log2WeightDenom, wp[list][ref][1].inputOffset);
+                if (wp[list][ref][2].bPresentFlag)
+                    p += sprintf(buf + p, "U{%d*x>>%d%+d}", wp[list][ref][2].inputWeight, wp[list][ref][2].log2WeightDenom, wp[list][ref][2].inputOffset);
+                p += sprintf(buf + p, "]");
+            }
+        }
+        if (p < 80) // pad with spaces to ensure progress line overwritten
+            sprintf(buf + p, "%*s", 80-p, " ");
+        x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
+    }
     slice.setWpScaling(wp);
     slice.getPPS()->setUseWP(useWp);
 }
