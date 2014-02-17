@@ -3531,7 +3531,7 @@ FILTER_VER_LUMA 64, 64, ps
 ; void interp_8tap_vert_sp_%1x%2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_LUMA_SP 2
-INIT_XMM ssse3
+INIT_XMM sse4
 cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
 
     add       r1d, r1d
@@ -3719,7 +3719,7 @@ cglobal chroma_p2s, 3, 7, 4
 ; void interp_4tap_vert_sp_%1x%2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_SP 2
-INIT_XMM ssse3
+INIT_XMM sse4
 cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
 
     add       r1d, r1d
@@ -3882,7 +3882,7 @@ FILTER_VER_CHROMA_SP_W2_4R 2, 8
 ;--------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_sp_4x2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
-INIT_XMM ssse3
+INIT_XMM sse4
 cglobal interp_4tap_vert_sp_4x2, 5, 6, 5
 
     add        r1d, r1d
@@ -4040,7 +4040,7 @@ cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
 ; void interp_4tap_vert_sp_8x%2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_SP_W8_H2 2
-INIT_XMM ssse3
+INIT_XMM sse2
 cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 8
 
     add       r1d, r1d
@@ -4711,7 +4711,7 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
 ; void interp_4tap_vertical_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_SS_W2_4R 2
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal interp_4tap_vert_ss_%1x%2, 5, 6, 5
 
     add       r1d, r1d
@@ -4803,7 +4803,7 @@ cglobal interp_4tap_vert_ss_4x2, 5, 6, 4
 ;-------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vertical_ss_6x8(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------------
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal interp_4tap_vert_ss_6x8, 5, 7, 6
 
     add       r1d, r1d

@@ -292,17 +292,12 @@ extern "C" {
     SETUP_CHROMA_FUNC_DEF_444(32, 8, cpu); \
     SETUP_CHROMA_FUNC_DEF_444(8, 32, cpu);
 
-#define CHROMA_SP_FILTERS_420(cpu) \
+#define CHROMA_SP_FILTERS_SSE4_420(cpu) \
     SETUP_CHROMA_SP_FUNC_DEF_420(4, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(4, 2, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_420(8, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_420(8, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(4, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_420(8, 6, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_420(8, 2, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(16, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(16, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_420(8, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(16, 12, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(12, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(16, 4, cpu); \
@@ -312,17 +307,21 @@ extern "C" {
     SETUP_CHROMA_SP_FUNC_DEF_420(16, 32, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(32, 24, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(24, 32, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_420(32, 8, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_420(32, 8, cpu);
+
+#define CHROMA_SP_FILTERS_420(cpu) \
+    SETUP_CHROMA_SP_FUNC_DEF_420(8, 2, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_420(8, 4, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_420(8, 6, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_420(8, 8, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_420(8, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_420(8, 32, cpu);
 
-#define CHROMA_SP_FILTERS_444(cpu) \
+#define CHROMA_SP_FILTERS_SSE4_444(cpu) \
     SETUP_CHROMA_SP_FUNC_DEF_444(4, 4, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_444(8, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_444(8, 4, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(4, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(16, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(16, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_444(8, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(16, 12, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(12, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(16, 4, cpu); \
@@ -332,20 +331,22 @@ extern "C" {
     SETUP_CHROMA_SP_FUNC_DEF_444(16, 32, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(32, 24, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(24, 32, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF_444(32, 8, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_444(32, 8, cpu);
+
+#define CHROMA_SP_FILTERS_444(cpu) \
+    SETUP_CHROMA_SP_FUNC_DEF_444(8, 8, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_444(8, 4, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF_444(8, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF_444(8, 32, cpu);
 
 #define CHROMA_SS_FILTERS_420(cpu) \
     SETUP_CHROMA_SS_FUNC_DEF_420(4, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(4, 2, cpu); \
-    SETUP_CHROMA_SS_FUNC_DEF_420(2, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(8, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(8, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(4, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(8, 6, cpu); \
-    SETUP_CHROMA_SS_FUNC_DEF_420(6, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(8, 2, cpu); \
-    SETUP_CHROMA_SS_FUNC_DEF_420(2, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(16, 16, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(16, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(8, 16, cpu); \
@@ -360,6 +361,12 @@ extern "C" {
     SETUP_CHROMA_SS_FUNC_DEF_420(24, 32, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(32, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(8, 32, cpu);
+
+#define CHROMA_SS_FILTERS_SSE4_420(cpu) \
+    SETUP_CHROMA_SS_FUNC_DEF_420(2, 4, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF_420(2, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF_420(6, 8, cpu);
+
 
 #define CHROMA_SS_FILTERS_444(cpu) \
     SETUP_CHROMA_SS_FUNC_DEF_444(4, 4, cpu); \
@@ -1000,6 +1007,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_SS_FILTERS_420(_sse2);
         CHROMA_SS_FILTERS_444(_sse2);
+        CHROMA_SP_FILTERS_420(_sse2);
+        CHROMA_SP_FILTERS_444(_sse2);
         LUMA_SS_FILTERS(_sse2);
 
         // This function pointer initialization is temporary will be removed
@@ -1123,10 +1132,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_p2s[X265_CSP_I444] = x265_chroma_p2s_ssse3;
         p.chroma_p2s[X265_CSP_I420] = x265_chroma_p2s_ssse3;
 
-        CHROMA_SP_FILTERS_420(_ssse3);
-        CHROMA_SP_FILTERS_444(_ssse3);
-        LUMA_SP_FILTERS(_ssse3);
-
         p.dct[DST_4x4] = x265_dst4_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
@@ -1153,6 +1158,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_FILTERS_420(_sse4);
         CHROMA_FILTERS_444(_sse4);
+        CHROMA_SS_FILTERS_SSE4_420(_sse4);
+        CHROMA_SP_FILTERS_SSE4_444(_sse4);
+        CHROMA_SP_FILTERS_SSE4_420(_sse4);
+        LUMA_SP_FILTERS(_sse4);
         LUMA_FILTERS(_sse4);
         ASSGN_SSE_SS(sse4);
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;

@@ -153,27 +153,32 @@
     void x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
 #define CHROMA_SP_FILTERS(cpu) \
-    SETUP_CHROMA_SP_FUNC_DEF(4, 4, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(4, 2, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(8, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(8, 4, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(4, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(8, 6, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(8, 32, cpu);
+
+#define CHROMA_SP_FILTERS_SSE4(cpu) \
+    SETUP_CHROMA_SP_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_SP_FUNC_DEF(6, 8, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(8, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 12, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(12, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 4, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(4, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(32, 32, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(32, 16, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(16, 32, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(32, 24, cpu); \
     SETUP_CHROMA_SP_FUNC_DEF(24, 32, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(32, 8, cpu); \
-    SETUP_CHROMA_SP_FUNC_DEF(8, 32, cpu);
+    SETUP_CHROMA_SP_FUNC_DEF(32, 8, cpu);
 
 #define SETUP_CHROMA_SS_FUNC_DEF(W, H, cpu) \
     void x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx);
@@ -181,14 +186,11 @@
 #define CHROMA_SS_FILTERS(cpu) \
     SETUP_CHROMA_SS_FUNC_DEF(4, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(4, 2, cpu); \
-    SETUP_CHROMA_SS_FUNC_DEF(2, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(4, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 6, cpu); \
-    SETUP_CHROMA_SS_FUNC_DEF(6, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 2, cpu); \
-    SETUP_CHROMA_SS_FUNC_DEF(2, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(16, 16, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(16, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 16, cpu); \
@@ -204,19 +206,24 @@
     SETUP_CHROMA_SS_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 32, cpu)
 
+
+#define CHROMA_SS_FILTERS_SSE4(cpu) \
+    SETUP_CHROMA_SS_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_SS_FUNC_DEF(6, 8, cpu);
+
 CHROMA_FILTERS(_sse4);
-CHROMA_SP_FILTERS(_ssse3);
+CHROMA_SP_FILTERS(_sse2);
+CHROMA_SP_FILTERS_SSE4(_sse4);
 CHROMA_SS_FILTERS(_sse2);
+CHROMA_SS_FILTERS_SSE4(_sse4);
 LUMA_FILTERS(_sse4);
-LUMA_SP_FILTERS(_ssse3);
+LUMA_SP_FILTERS(_sse4);
 LUMA_SS_FILTERS(_sse2);
 
 void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
 void x265_luma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 void x265_chroma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
-void x265_interp_4tap_vert_sp_2x4_sse4(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
-void x265_interp_4tap_vert_sp_2x8_sse4(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
-void x265_interp_4tap_vert_sp_6x8_sse4(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
 #undef SETUP_CHROMA_FUNC_DEF
 #undef SETUP_CHROMA_SP_FUNC_DEF
@@ -230,5 +237,7 @@ void x265_interp_4tap_vert_sp_6x8_sse4(int16_t * src, intptr_t srcStride, pixel 
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
 #undef LUMA_SS_FILTERS
+#undef CHROMA_SS_FILTERS_SSE4
+#undef CHROMA_SP_FILTERS_SSE4
 
 #endif // ifndef X265_MC_H
