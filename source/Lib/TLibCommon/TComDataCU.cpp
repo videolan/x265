@@ -920,7 +920,7 @@ TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPart
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t curPartUnitIdx, uint32_t partUnitOffset, bool bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t curPartUnitIdx, uint32_t partUnitOffset)
 {
     uint32_t absPartIdxLB     = g_zscanToRaster[curPartUnitIdx];
     uint32_t absZorderCUIdxLB = g_zscanToRaster[m_absIdxInLCU] + ((m_height[0] / m_pic->getMinCUHeight()) - 1) * m_pic->getNumPartInWidth();
@@ -954,7 +954,7 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t cur
             return NULL;
         }
         blPartUnitIdx = g_rasterToZscan[absPartIdxLB + (1 + partUnitOffset) * numPartInCUWidth - 1];
-        if ((bEnforceSliceRestriction && (m_cuLeft == NULL || m_cuLeft->getSlice() == NULL)))
+        if (m_cuLeft == NULL || m_cuLeft->getSlice() == NULL)
         {
             return NULL;
         }
@@ -965,7 +965,7 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t cur
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset, bool bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset)
 {
     uint32_t absPartIdxRT     = g_zscanToRaster[curPartUnitIdx];
     uint32_t absZorderCUIdx   = g_zscanToRaster[m_absIdxInLCU] + (m_width[0] / m_pic->getMinCUWidth()) - 1;
@@ -999,7 +999,7 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
             return NULL;
         }
         arPartUnitIdx = g_rasterToZscan[absPartIdxRT + m_pic->getNumPartInCU() - numPartInCUWidth + partUnitOffset];
-        if ((bEnforceSliceRestriction && (m_cuAbove == NULL || m_cuAbove->getSlice() == NULL)))
+        if (m_cuAbove == NULL || m_cuAbove->getSlice() == NULL)
         {
             return NULL;
         }
@@ -1013,8 +1013,8 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
     }
 
     arPartUnitIdx = g_rasterToZscan[m_pic->getNumPartInCU() - numPartInCUWidth + partUnitOffset - 1];
-    if ((bEnforceSliceRestriction && (m_cuAboveRight == NULL || m_cuAboveRight->getSlice() == NULL ||
-                                      (m_cuAboveRight->getAddr()) > getAddr())))
+    if ((m_cuAboveRight == NULL || m_cuAboveRight->getSlice() == NULL ||
+         (m_cuAboveRight->getAddr()) > getAddr()))
     {
         return NULL;
     }
@@ -2460,18 +2460,9 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
     }
 }
 
-bool TComDataCU::isBipredRestriction(uint32_t puIdx)
+bool TComDataCU::isBipredRestriction()
 {
-    int width = 0;
-    int height = 0;
-    uint32_t partAddr;
-
-    getPartIndexAndSize(puIdx, partAddr, width, height);
-    if (getWidth(0) == 8 && (width < 8 || height < 8))
-    {
-        return true;
-    }
-    return false;
+    return getWidth(0) == 8 && getPartitionSize(0) != SIZE_2Nx2N;
 }
 
 void TComDataCU::clipMv(MV& outMV)
@@ -2503,11 +2494,6 @@ uint32_t TComDataCU::getIntraSizeIdx(uint32_t absPartIdx)
 
     cnt -= 2;
     return cnt > 6 ? 6 : cnt;
-}
-
-void TComDataCU::clearCbf(uint32_t idx, TextType ttype, uint32_t numParts)
-{
-    ::memset(&m_cbf[ttype][idx], 0, sizeof(UChar) * numParts);
 }
 
 /** Set a I_PCM flag for all sub-partitions of a partition.

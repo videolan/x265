@@ -2502,7 +2502,7 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
     {
         cu->getInterMergeCandidates(absPartIdx, puIdx, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
     }
-    xRestrictBipredMergeCand(cu, puIdx, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+    xRestrictBipredMergeCand(cu, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
 
     outCost = MAX_UINT;
     for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
@@ -2542,9 +2542,9 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
  * \param numValidMergeCand
  * \returns void
  */
-void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, uint32_t puIdx, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, int numValidMergeCand)
+void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, int numValidMergeCand)
 {
-    if (cu->isBipredRestriction(puIdx))
+    if (cu->isBipredRestriction())
     {
         for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
         {
@@ -2679,7 +2679,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
             }
 
             // Bi-directional prediction
-            if ((cu->getSlice()->isInterB()) && (cu->isBipredRestriction(partIdx) == false))
+            if ((cu->getSlice()->isInterB()) && (cu->isBipredRestriction() == false))
             {
                 mvBidir[0] = mv[0];
                 mvBidir[1] = mv[1];
@@ -3145,21 +3145,6 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     int      qp, qpBest = 0;
     uint64_t cost, bcost = MAX_INT64;
 
-    uint32_t trLevel = 0;
-    if ((cu->getWidth(0) > cu->getSlice()->getSPS()->getMaxTrSize()))
-    {
-        while (cu->getWidth(0) > (cu->getSlice()->getSPS()->getMaxTrSize() << trLevel))
-        {
-            trLevel++;
-        }
-    }
-    uint32_t maxTrLevel = 1 + trLevel;
-
-    while ((width >> maxTrLevel) < (g_maxCUWidth >> g_maxCUDepth))
-    {
-        maxTrLevel--;
-    }
-
     qp = bHighPass ? Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, (int)cu->getQP(0)) : cu->getQP(0);
 
     outResiYuv->subtract(fencYuv, predYuv, 0, width);
@@ -3204,8 +3189,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     bits = xSymbolBitsInter(cu);
 
-    uint64_t exactCost = m_rdCost->calcRdCost(distortion, bits);
-    cost = exactCost;
+    cost = m_rdCost->calcRdCost(distortion, bits);
 
     if (cost < bcost)
     {

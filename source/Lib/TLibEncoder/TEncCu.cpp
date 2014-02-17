@@ -534,14 +534,10 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     // get Original YUV data from picture
     m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
 
-    // variables for fast encoder decision
-    bool bTrySplit = true;
-
     // variable for Early CU determination
     bool bSubBranch = true;
 
     // variable for Cbf fast mode PU decision
-    bool bTrySplitDQP = true;
     bool bBoundary = false;
 
     uint32_t lpelx = outBestCU->getCUPelX();
@@ -563,12 +559,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     //We need to split; so dont try these modes
     if (!bSliceEnd && bInsidePicture)
     {
-        // variables for fast encoder decision
-        bTrySplit = true;
-
         outTempCU->initEstData(depth, qp);
-
-        bTrySplitDQP = bTrySplit;
 
         xCheckRDCostIntra(outBestCU, outTempCU, SIZE_2Nx2N);
         outTempCU->initEstData(depth, qp);
@@ -600,7 +591,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     outTempCU->initEstData(depth, qp);
 
     // further split
-    if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
+    if (bSubBranch && depth < g_maxCUDepth - g_addCUDepth)
     {
         for (; partUnitIdx < 4; partUnitIdx++)
         {
@@ -695,17 +686,12 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     // get Original YUV data from picture
     m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
 
-    // variables for fast encoder decision
-    bool bTrySplit = true;
-
     // variable for Early CU determination
     bool bSubBranch = true;
 
     // variable for Cbf fast mode PU decision
     bool doNotBlockPu = true;
     bool earlyDetectionSkipMode = false;
-
-    bool bTrySplitDQP = true;
 
     bool bBoundary = false;
     uint32_t lpelx = outBestCU->getCUPelX();
@@ -725,9 +711,6 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     // We need to split, so don't try these modes.
     if (!bSliceEnd && bInsidePicture)
     {
-        // variables for fast encoder decision
-        bTrySplit    = true;
-
         outTempCU->initEstData(depth, qp);
 
         // do inter modes, SKIP and 2Nx2N
@@ -755,8 +738,6 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                 }
             }
         }
-
-        bTrySplitDQP = bTrySplit;
 
         if (!earlyDetectionSkipMode)
         {
@@ -946,7 +927,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     outTempCU->initEstData(depth, qp);
 
     // further split
-    if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
+    if (bSubBranch && depth < g_maxCUDepth - g_addCUDepth)
     {
         UChar       nextDepth     = depth + 1;
         TComDataCU* subBestPartCU = m_bestCU[nextDepth];

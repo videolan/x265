@@ -312,7 +312,6 @@ public:
 
     void          setCbf(uint32_t idx, TextType ttype, UChar uh)     { m_cbf[ttype][idx] = uh; }
 
-    void          clearCbf(uint32_t idx, TextType ttype, uint32_t numParts);
     UChar         getQtRootCbf(uint32_t idx)           { return getCbf(idx, TEXT_LUMA, 0) || getCbf(idx, TEXT_CHROMA_U, 0) || getCbf(idx, TEXT_CHROMA_V, 0); }
 
     void          setCbfSubParts(uint32_t cbfY, uint32_t cbfU, uint32_t cbfV, uint32_t absPartIdx, uint32_t depth);
@@ -426,8 +425,8 @@ public:
     TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInLCU);
     char          getRefQP(uint32_t uiCurrAbsIdxInLCU);
 
-    TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1, bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1, bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);
+    TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);
 
     void          deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT);
     void          deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB);
@@ -447,7 +446,7 @@ public:
     bool          isIntra(uint32_t partIdx)  { return m_predModes[partIdx] == MODE_INTRA; }
 
     bool          isSkipped(uint32_t partIdx); ///< SKIP (no residual)
-    bool          isBipredRestriction(uint32_t puIdx);
+    bool          isBipredRestriction();
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for symbol prediction (most probable / mode conversion)

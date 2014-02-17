@@ -249,7 +249,7 @@ protected:
                           TComMvField* pacMvField, uint32_t& mergeIndex, uint32_t& outCost, uint32_t& outbits,
                           TComMvField* mvFieldNeighbors, UChar* interDirNeighbors, int& numValidMergeCand);
 
-    void xRestrictBipredMergeCand(TComDataCU* cu, uint32_t puIdx, TComMvField* mvFieldNeighbours,
+    void xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNeighbours,
                                   UChar* interDirNeighbours, int numValidMergeCand);
 
     // -------------------------------------------------------------------------------------------------------------------
