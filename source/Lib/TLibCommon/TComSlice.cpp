@@ -492,7 +492,7 @@ void  TComSlice::initWpScaling()
                     pwp->inputOffset = 0;
                 }
 
-                pwp->w = pwp->inputWeight;
+                pwp->w      = pwp->inputWeight;
                 pwp->o      = pwp->inputOffset << (X265_DEPTH - 8);
                 pwp->shift  = pwp->log2WeightDenom;
                 pwp->round  = (pwp->log2WeightDenom >= 1) ? (1 << (pwp->log2WeightDenom - 1)) : (0);
