@@ -82,6 +82,7 @@ static const struct option long_options[] =
     { "input-res",      required_argument, NULL, 0 },
     { "input-csp",      required_argument, NULL, 0 },
     { "fps",            required_argument, NULL, 0 },
+    { "seek",           required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
     { "frames",         required_argument, NULL, 'f' },
     { "recon",          required_argument, NULL, 'r' },
@@ -171,7 +172,7 @@ struct CLIOptions
     bool bProgress;
     bool bForceY4m;
 
-    uint32_t frameSkip;         // number of frames to skip from the beginning
+    uint32_t seek;              // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
 
@@ -185,7 +186,7 @@ struct CLIOptions
     {
         input = NULL;
         recon = NULL;
-        framesToBeEncoded = frameSkip = 0;
+        framesToBeEncoded = seek = 0;
         totalbytes = 0;
         bProgress = true;
         bForceY4m = false;
@@ -286,8 +287,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input-res                   Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp                   Source color space parameter, auto-detected if Y4M. 1:i420 3:i444. Default: 1\n");
     H0("   --fps                         Source frame rate, auto-detected if Y4M\n");
-    H0("   --frame-skip                  Number of frames to skip at start of input file\n");
-    H0("-f/--frames                      Number of frames to be encoded. Default all\n");
+    H0("   --seek                        First frame to encode\n");
+    H0("-f/--frames                      Maximum number of frames to encode. Default all\n");
     H0("\nQuad-Tree analysis:\n");
     H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
     H0("-s/--ctu                         Maximum CU size (default: 64x64). Default %d\n", param->maxCUSize);
@@ -439,7 +440,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("cpuid") cpuid = atoi(optarg);
             OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
             OPT("no-progress") this->bProgress = false;
-            OPT("frame-skip") this->frameSkip = (uint32_t)atoi(optarg);
+            OPT("seek") this->seek = (uint32_t)atoi(optarg);
+            OPT("frame-skip") this->seek = (uint32_t)atoi(optarg);
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
@@ -520,16 +522,16 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
 
     int guess = this->input->guessFrameCount();
-    if (this->frameSkip)
+    if (this->seek)
     {
-        this->input->skipFrames(this->frameSkip);
+        this->input->skipFrames(this->seek);
     }
 
     uint32_t fileFrameCount = guess < 0 ? 0 : (uint32_t)guess;
     if (this->framesToBeEncoded && fileFrameCount)
-        this->framesToBeEncoded = X265_MIN(this->framesToBeEncoded, fileFrameCount - this->frameSkip);
+        this->framesToBeEncoded = X265_MIN(this->framesToBeEncoded, fileFrameCount - this->seek);
     else if (fileFrameCount)
-        this->framesToBeEncoded = fileFrameCount - this->frameSkip;
+        this->framesToBeEncoded = fileFrameCount - this->seek;
 
     if (param->logLevel >= X265_LOG_INFO)
     {
@@ -541,7 +543,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             fprintf(stderr, "%s  [info]: %dx%d %dHz %s, frames %u - %d of %d\n", input->getName(),
                     param->sourceWidth, param->sourceHeight, param->frameRate,
                     x265_source_csp_names[param->internalCsp],
-                    this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, fileFrameCount);
+                    this->seek, this->seek + this->framesToBeEncoded - 1, fileFrameCount);
     }
 
     this->input->startReader();
@@ -683,7 +685,7 @@ int main(int argc, char **argv)
 
     /* clear progress report */
     if (cliopt.bProgress)
-        fprintf(stderr, "                                                                               \r");
+        fprintf(stderr, "%*s\r", 80, " ");
 
     x265_encoder_get_stats(encoder, &stats, sizeof(stats));
     if (param->csvfn && !b_ctrl_c)
@@ -693,7 +695,7 @@ int main(int argc, char **argv)
 
     if (b_ctrl_c)
         fprintf(stderr, "aborted at input frame %d, output frame %d\n",
-                cliopt.frameSkip + inFrameCount, stats.encodedPictureCount);
+                cliopt.seek + inFrameCount, stats.encodedPictureCount);
 
     if (stats.encodedPictureCount)
     {
