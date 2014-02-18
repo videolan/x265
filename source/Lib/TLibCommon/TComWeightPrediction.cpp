@@ -454,7 +454,20 @@ void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, uint32_t partUnitIdx
         srcStride = srcYuv0->m_width;
         dstStride  = outDstYuv->getStride();
 
-        primitives.weight_sp(srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
+//        primitives.weight_sp(srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
+        for ( int y = height-1; y >= 0; y-- )
+        {
+            for ( int x = width-1; x >= 0; )
+            {
+                // note: luma min width is 4
+                dstY[x] = weightUnidirY(w0,srcY0[x], round, shift, offset); x--;
+                dstY[x] = weightUnidirY(w0,srcY0[x], round, shift, offset); x--;
+                dstY[x] = weightUnidirY(w0,srcY0[x], round, shift, offset); x--;
+                dstY[x] = weightUnidirY(w0,srcY0[x], round, shift, offset); x--;
+            }
+            srcY0 += srcStride;
+            dstY  += dstStride;
+        }
     }
 
     if (bChroma)

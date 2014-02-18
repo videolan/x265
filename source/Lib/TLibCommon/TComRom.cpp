@@ -36,6 +36,7 @@
 */
 
 #include "TComRom.h"
+#include "threading.h"
 #include <memory.h>
 #include <cstdlib>
 #include <stdio.h>
@@ -127,9 +128,14 @@ public:
     }
 };
 
+static int initialized /* = 0 */;
+
 // initialize ROM variables
 void initROM()
 {
+    if (ATOMIC_CAS32(&initialized, 0, 1) == 1)
+        return;
+
     int i, c;
 
     // g_aucConvertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
@@ -205,6 +211,9 @@ void initROM()
 
 void destroyROM()
 {
+    if (ATOMIC_CAS32(&initialized, 1, 0) == 0)
+        return;
+
     for (uint32_t groupTypeIndex = 0; groupTypeIndex < SCAN_NUMBER_OF_GROUP_TYPES; groupTypeIndex++)
     {
         for (uint32_t scanOrderIndex = 0; scanOrderIndex < SCAN_NUMBER_OF_TYPES; scanOrderIndex++)
