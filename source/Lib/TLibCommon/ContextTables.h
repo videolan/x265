@@ -136,17 +136,12 @@ typedef struct ContextModel
     uint8_t bBinsCoded;
 } ContextModel;
 
-extern const uint8_t g_nextStateMPS[128];
-extern const uint8_t g_nextStateLPS[128];
 extern const int     g_entropyBits[128];
-extern       uint8_t g_nextState[128][2];
-void buildNextStateTable();
+extern const uint8_t g_nextState[128][2];
 uint8_t sbacInit(int qp, int initValue);   ///< initialize state with initial probability
 
 #define sbacGetMps(S)               ((S) & 1)
 #define sbacGetState(S)             ((S) >> 1)
-#define sbacNextLPS(S)              (g_nextStateLPS[(S)])
-#define sbacNextMPS(S)              (g_nextStateMPS[(S)])
 #define sbacNext(S, V)              (g_nextState[(S)][(V)])
 #define sbacGetEntropyBits(S, V)    (g_entropyBits[(S) ^ (V)])
 #define sbacGetEntropyBitsTrm(V)    (g_entropyBits[126 ^ (V)])

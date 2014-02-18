@@ -83,7 +83,6 @@ void x265_setup_primitives(x265_param *param, int cpuid)
 {
     // initialize global variables
     initROM();
-    buildNextStateTable();
 
     if (cpuid < 0)
     {
