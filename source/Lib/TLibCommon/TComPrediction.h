@@ -73,11 +73,9 @@ protected:
     TShortYUV m_predShortYuv[2];
     TComYuv   m_predTempYuv;
 
-    int16_t*    m_immedVals;
-    Pel*      m_lumaRecBuffer; ///< array for down-sampled reconstructed luma sample
-    int       m_lumaRecStride; ///< stride of m_lumaRecBuffer
-    int m_hChromaShift;
-    int m_vChromaShift;
+    int16_t*  m_immedVals;
+    int       m_hChromaShift;
+    int       m_vChromaShift;
 
     // motion compensation functions
     void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, TComYuv* outPredYuv, bool bLuma = true, bool bChroma = true);

@@ -60,8 +60,6 @@ static const UChar intraFilterThreshold[5] =
 TComPrediction::TComPrediction()
     : m_predBuf(NULL)
     , m_predAllAngsBuf(NULL)
-    , m_lumaRecBuffer(0)
-    , m_lumaRecStride(0)
 {}
 
 TComPrediction::~TComPrediction()
@@ -81,10 +79,7 @@ TComPrediction::~TComPrediction()
 
     m_predTempYuv.destroy();
 
-    delete [] m_lumaRecBuffer;
-
-    if (m_immedVals)
-        X265_FREE(m_immedVals);
+    X265_FREE(m_immedVals);
 }
 
 void TComPrediction::initTempBuff(int csp)
@@ -111,15 +106,6 @@ void TComPrediction::initTempBuff(int csp)
         m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
 
         m_immedVals = X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
-    }
-
-    if (m_lumaRecStride != (MAX_CU_SIZE >> 1) + 1)
-    {
-        m_lumaRecStride =  (MAX_CU_SIZE >> 1) + 1;
-        if (!m_lumaRecBuffer)
-        {
-            m_lumaRecBuffer = new Pel[m_lumaRecStride * m_lumaRecStride];
-        }
     }
 }
 
@@ -524,7 +510,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
     pixel *ref    = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     int dstStride = dstPic->m_width;
-    int16_t *dst    = dstPic->getLumaAddr(partAddr);
+    int16_t *dst  = dstPic->getLumaAddr(partAddr);
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
