@@ -159,7 +159,7 @@ void initROM()
             for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
             {
                 const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-                g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockWidth][log2BlockHeight] = new uint32_t[totalValues];
+                g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockWidth][log2BlockHeight] = X265_MALLOC(uint32_t, totalValues);
                 ScanGenerator fullBlockScan(blockWidth, blockHeight, blockWidth, scanType);
 
                 for (uint32_t scanPosition = 0; scanPosition < totalValues; scanPosition++)
@@ -181,7 +181,7 @@ void initROM()
             {
                 const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
 
-                g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockWidth][log2BlockHeight] = new uint32_t[totalValues];
+                g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockWidth][log2BlockHeight] = X265_MALLOC(uint32_t, totalValues);
 
                 ScanGenerator fullBlockScan(widthInGroups, heightInGroups, groupWidth, scanType);
 
@@ -222,7 +222,7 @@ void destroyROM()
             {
                 for (uint32_t log2BlockHeight = 0; log2BlockHeight < MAX_CU_DEPTH; log2BlockHeight++)
                 {
-                    delete [] g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockWidth][log2BlockHeight];
+                    X265_FREE(g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockWidth][log2BlockHeight]);
                 }
             }
         }
