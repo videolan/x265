@@ -376,8 +376,9 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
 
     if (isAbr) //ABR,CRF
     {
-        lastSatd = l->getEstimatedPictureCost(pic);
-        rce->lastSatd = lastSatd;
+        currentSatd = l->getEstimatedPictureCost(pic);
+        /* Update rce for use in rate control VBV later */
+        rce->lastSatd = currentSatd; 
         double q = qScale2qp(rateEstimateQscale(pic, rce));
         qp = Clip3(MIN_QP, MAX_MAX_QP, (int)(q + 0.5));
         rce->qpaRc = q;
@@ -481,9 +482,10 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         rce->movingAvgSum = shortTermCplxSum;
         shortTermCplxSum *= 0.5;
         shortTermCplxCount *= 0.5;
-        shortTermCplxSum += lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
+        shortTermCplxSum += currentSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
         shortTermCplxCount++;
-        rce->texBits = lastSatd;
+        /* texBits to be used in 2-pass */
+        rce->texBits = currentSatd;
         rce->blurredComplexity = shortTermCplxSum / shortTermCplxCount;
         rce->mvBits = 0;
         rce->sliceType = sliceType;
@@ -502,7 +504,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
 
             /* ABR code can potentially be counterproductive in CBR, so just don't bother.
              * Don't run it if the frame complexity is zero either. */
-            if (!vbvMinRate && lastSatd)
+            if (!vbvMinRate && currentSatd)
             {
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
                 double timeDone = (double)(framesDone - cfg->param.frameNumThreads + 1) / cfg->param.frameRate;
@@ -561,7 +563,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         if (curSlice->getPOC() == 0 || (isAbrReset && sliceType == I_SLICE))
             lastQScaleFor[P_SLICE] = q * fabs(cfg->param.rc.ipFactor);
 
-        rce->frameSizePlanned = predictSize(&pred[sliceType], q, (double)lastSatd);
+        rce->frameSizePlanned = predictSize(&pred[sliceType], q, (double)currentSatd);
 
         return q;
     }
@@ -619,7 +621,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
 
     // B-frames are not directly subject to VBV,
     // since they are controlled by the P-frames' QPs.
-    if (isVbv && lastSatd > 0)
+    if (isVbv && currentSatd > 0)
     {
         if (cfg->param.lookaheadDepth)
         {
@@ -629,7 +631,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
             for (int iterations = 0; iterations < 1000 && terminate != 3; iterations++)
             {
                 double frameQ[3];
-                double curBits = predictSize(&pred[sliceType], q, (double)lastSatd);
+                double curBits = predictSize(&pred[sliceType], q, (double)currentSatd);
                 double bufferFillCur = bufferFill - curBits;
                 double targetFill;
                 double totalDuration = 0;
@@ -681,7 +683,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
 
             // Now a hard threshold to make sure the frame fits in VBV.
             // This one is mostly for I-frames.
-            double bits = predictSize(&pred[sliceType], q, (double)lastSatd);
+            double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
 
             // For small VBVs, allow the frame to use up the entire VBV.
             double maxFillFactor;
@@ -698,7 +700,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
                 bits *= qf;
                 if (bits < bufferRate / minFillFactor)
                     q *= bits * minFillFactor / bufferRate;
-                bits = predictSize(&pred[sliceType], q, (double)lastSatd);
+                bits = predictSize(&pred[sliceType], q, (double)currentSatd);
             }
 
             q = X265_MAX(q0, q);
@@ -709,8 +711,8 @@ double RateControl::clipQscale(TComPic* pic, double q)
         if (sliceType == P_SLICE)
         {
             int nb = bframes;
-            double bits = predictSize(&pred[sliceType], q, (double)lastSatd);
-            double bbits = predictSize(&predBfromP, q * cfg->param.rc.pbFactor, (double)lastSatd);
+            double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
+            double bbits = predictSize(&predBfromP, q * cfg->param.rc.pbFactor, (double)currentSatd);
             double space;
             if (bbits > bufferRate)
                 nb = 0;

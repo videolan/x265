@@ -46,8 +46,8 @@ class TEncCfg;
 
 struct RateControlEntry
 {
-    int64_t texBits;
-    int64_t lastSatd;
+    int64_t texBits;  /* Required in 2-pass rate control */
+    int64_t lastSatd; /* Contains the picture cost of the previous frame, required for resetAbr and VBV */
 
     int sliceType;
     int mvBits;
@@ -100,7 +100,7 @@ struct RateControl
     double leadingNoBSatd;
     bool isAbrReset;
     int lastAbrResetPoc;
-    int64_t lastSatd;
+    int64_t currentSatd;
     int    qpConstant[3];
     double cplxrSum;          /* sum of bits*qscale/rceq */
     double wantedBitsWindow;  /* target bitrate * window */
