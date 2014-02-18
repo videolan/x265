@@ -441,8 +441,9 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
     }
     if (param.bEnableSsim)
     {
-        sprintf(buffer + len, " SSIM Mean: %.6lf",
-                stat.m_globalSsim / (double)stat.m_numPics);
+        sprintf(buffer + len, " SSIM Mean: %.6lf (%.3lfdB)",
+                stat.m_globalSsim / (double)stat.m_numPics,
+                x265_ssim(stat.m_globalSsim / (double)stat.m_numPics));
     }
     return buffer;
 }
