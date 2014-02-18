@@ -92,7 +92,6 @@ struct RateControl
     double vbvMinRate;       /* in kbps */
     bool singleFrameVbv;
     bool isVbv;
-    double fps;
     Predictor pred[5];
     Predictor predBfromP;
     int bframes;

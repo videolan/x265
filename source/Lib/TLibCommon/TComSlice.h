@@ -1053,7 +1053,7 @@ public:
 
     TComVUI* getVuiParameters() { return &m_vuiParameters; }
 
-    void setHrdParameters(uint32_t frameRate, uint32_t numDU, uint32_t bitRate, bool randomAccess);
+    void setHrdParameters(uint32_t fpsNum, uint32_t fpsDenom, uint32_t numDU, uint32_t bitRate, bool randomAccess);
 
     TComPTL* getPTL() { return &m_ptl; }
 };

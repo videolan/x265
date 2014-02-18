@@ -30,7 +30,7 @@
 using namespace x265;
 using namespace std;
 
-Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate, uint32_t depth, int csp)
+Y4MOutput::Y4MOutput(const char *filename, int w, int h, uint32_t fpsNum, uint32_t fpsDenom, int csp)
     : width(w)
     , height(h)
     , colorSpace(csp)
@@ -41,21 +41,9 @@ Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate, uint32_t dept
 
     const char *cf = (csp >= X265_CSP_I444) ? "444" : (csp >= X265_CSP_I422) ? "422" : "420";
 
-#if HIGH_BIT_DEPTH
-    if (depth > 8)
-    {
-        x265_log(NULL, X265_LOG_WARNING, "y4m: down-shifting reconstructed pixels to 8 bits\n");
-    }
-#else
-    if (depth > 8)
-    {
-        x265_log(NULL, X265_LOG_WARNING, "y4m: forcing reconstructed pixels to 8 bits\n");
-    }
-#endif
-
     if (ofs)
     {
-        ofs << "YUV4MPEG2 W" << width << " H" << height << " F" << rate << ":1 Ip" << " C" << cf << "\n";
+        ofs << "YUV4MPEG2 W" << width << " H" << height << " F" << fpsNum << ":" << fpsDenom << " Ip" << " C" << cf << "\n";
         header = ofs.tellp();
     }
 
@@ -78,6 +66,18 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
     outPicPos += (uint64_t)pic.poc * (6 + frameSize);
     ofs.seekp(outPicPos);
     ofs << "FRAME\n";
+
+#if HIGH_BIT_DEPTH
+    if (pic.bitDepth > 8 && pic.poc == 0)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "y4m: down-shifting reconstructed pixels to 8 bits\n");
+    }
+#else
+    if (pic.bitDepth > 8 && pic.poc == 0)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "y4m: forcing reconstructed pixels to 8 bits\n");
+    }
+#endif
 
 #if HIGH_BIT_DEPTH
     // encoder gave us short pixels, downshift, then write

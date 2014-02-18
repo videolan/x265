@@ -28,12 +28,12 @@
 
 using namespace x265;
 
-Output* Output::open(const char *fname, int width, int height, uint32_t bitdepth, int rate, int csp)
+Output* Output::open(const char *fname, int width, int height, uint32_t bitdepth, uint32_t fpsNum, uint32_t fpsDenom, int csp)
 {
     const char * s = strrchr(fname, '.');
 
     if (s && !strcmp(s, ".y4m"))
-        return new Y4MOutput(fname, width, height, rate, bitdepth, csp);
+        return new Y4MOutput(fname, width, height, fpsNum, fpsDenom, csp);
     else
         return new YUVOutput(fname, width, height, bitdepth, csp);
 }

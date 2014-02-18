@@ -81,7 +81,7 @@ public:
 
     void setBitDepth(uint32_t bitDepth)           { depth = bitDepth; }
 
-    float getRate() const                         { return 0.0f; }
+    void getRate(uint32_t&, uint32_t&) const      { }
 
     int getWidth() const                          { return width; }
 

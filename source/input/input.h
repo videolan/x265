@@ -54,7 +54,7 @@ public:
 
     virtual void setColorSpace(int csp) = 0;
 
-    virtual float getRate() const = 0;
+    virtual void getRate(uint32_t& num, uint32_t& denom) const = 0;
 
     virtual int getWidth() const = 0;
 

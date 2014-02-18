@@ -149,7 +149,7 @@ void x265_param_default(x265_param *param)
     param->csvfn = NULL;
 
     /* Source specifications */
-    param->inputBitDepth = x265_max_bit_depth;
+    param->internalBitDepth = x265_max_bit_depth;
     param->internalCsp = X265_CSP_I420;
 
     /* CU definitions */
@@ -228,7 +228,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 {
     memset(pic, 0, sizeof(x265_picture));
 
-    pic->bitDepth = param->inputBitDepth;
+    pic->bitDepth = param->internalBitDepth;
     pic->colorSpace = param->internalCsp;
 }
 
@@ -242,7 +242,7 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     else if (!strcmp(profile, "main10"))
     {
 #if HIGH_BIT_DEPTH
-        param->inputBitDepth = 10;
+        param->internalBitDepth = 10;
 #else
         x265_log(param, X265_LOG_WARNING, "Main10 not supported, not compiled for 16bpp.\n");
         return -1;
@@ -440,16 +440,16 @@ int x265_check_params(x265_param *param)
 
     /* These checks might be temporary */
 #if HIGH_BIT_DEPTH
-    CHECK(param->inputBitDepth != 10,
+    CHECK(param->internalBitDepth != 10,
           "x265 was compiled for 10bit encodes, only 10bit inputs supported");
 #endif
 
-    CHECK(param->inputBitDepth > x265_max_bit_depth,
-          "inputBitDepth must be <= x265_max_bit_depth");
-    CHECK(param->rc.qp < -6 * (param->inputBitDepth - 8) || param->rc.qp > 51,
+    CHECK(param->internalBitDepth > x265_max_bit_depth,
+          "internalBitDepth must be <= x265_max_bit_depth");
+    CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");
-    CHECK(param->frameRate <= 0,
-          "Frame rate must be more than 1");
+    CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
+          "Frame rate numerator and denominator must be specified");
     CHECK(param->searchMethod<0 || param->searchMethod> X265_FULL_SEARCH,
           "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 5:FULL)");
     CHECK(param->searchRange < 0,
@@ -537,9 +537,9 @@ int x265_set_globals(x265_param *param)
             x265_log(param, X265_LOG_ERROR, "maxCUSize must be the same for all encoders in a single process");
             return -1;
         }
-        if (param->inputBitDepth != g_bitDepth)
+        if (param->internalBitDepth != g_bitDepth)
         {
-            x265_log(param, X265_LOG_ERROR, "inputBitDepth must be the same for all encoders in a single process");
+            x265_log(param, X265_LOG_ERROR, "internalBitDepth must be the same for all encoders in a single process");
             return -1;
         }
     }
@@ -548,7 +548,7 @@ int x265_set_globals(x265_param *param)
         // set max CU width & height
         g_maxCUWidth  = param->maxCUSize;
         g_maxCUHeight = param->maxCUSize;
-        g_bitDepth = param->inputBitDepth;
+        g_bitDepth = param->internalBitDepth;
 
         // compute actual CU depth with respect to config depth and max transform size
         g_addCUDepth = 0;
@@ -577,7 +577,7 @@ void x265_print_params(x265_param *param)
     if (param->logLevel < X265_LOG_INFO)
         return;
 #if HIGH_BIT_DEPTH
-    x265_log(param, X265_LOG_INFO, "Internal bit depth                  : %d\n", param->inputBitDepth);
+    x265_log(param, X265_LOG_INFO, "Internal bit depth                  : %d\n", param->internalBitDepth);
 #endif
     x265_log(param, X265_LOG_INFO, "CU size                             : %d\n", param->maxCUSize);
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra         : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
@@ -678,7 +678,25 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 #endif
 #define OPT(STR) else if (!strcmp(name, STR))
     if (0) ;
-    OPT("fps") p->frameRate = atoi(value);
+    OPT("fps")
+    {
+        if (sscanf(value, "%u/%u", &p->fpsNum, &p->fpsDenom) == 2)
+            ;
+        else
+        {
+            float fps = atof(value);
+            if (fps > 0 && fps <= INT_MAX/1000)
+            {
+                p->fpsNum = (int)(fps * 1000 + .5);
+                p->fpsDenom = 1000;
+            }
+            else
+            {
+                p->fpsNum = atoi(value);
+                p->fpsDenom = 1;
+            }
+        }
+    }
     OPT("csv") p->csvfn = value;
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
@@ -767,7 +785,7 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " %s", (param) ? cliopt : "no-"cliopt);
 
     BOOL(p->bEnableWavefront, "wpp");
-    s += sprintf(s, " fps=%d", p->frameRate);
+    s += sprintf(s, " fps=%d/%d", p->fpsNum, p->fpsDenom);
     s += sprintf(s, " ctu=%d", p->maxCUSize);
     s += sprintf(s, " tu-intra-depth=%d", p->tuQTMaxIntraDepth);
     s += sprintf(s, " tu-inter-depth=%d", p->tuQTMaxInterDepth);

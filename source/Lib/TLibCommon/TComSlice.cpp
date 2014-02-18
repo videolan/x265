@@ -598,7 +598,7 @@ void  TComSPS::createRPSList(int numRPS)
     m_RPSList.create(numRPS);
 }
 
-void TComSPS::setHrdParameters(uint32_t frameRate, uint32_t numDU, uint32_t bitRate, bool randomAccess)
+void TComSPS::setHrdParameters(uint32_t fpsNum, uint32_t fpsDenom, uint32_t numDU, uint32_t bitRate, bool randomAccess)
 {
     if (!getVuiParametersPresentFlag())
     {
@@ -610,33 +610,8 @@ void TComSPS::setHrdParameters(uint32_t frameRate, uint32_t numDU, uint32_t bitR
 
     TimingInfo *timingInfo = vui->getTimingInfo();
     timingInfo->setTimingInfoPresentFlag(true);
-    switch (frameRate)
-    {
-    case 24:
-        timingInfo->setNumUnitsInTick(1125000);
-        timingInfo->setTimeScale(27000000);
-        break;
-    case 25:
-        timingInfo->setNumUnitsInTick(1080000);
-        timingInfo->setTimeScale(27000000);
-        break;
-    case 30:
-        timingInfo->setNumUnitsInTick(900900);
-        timingInfo->setTimeScale(27000000);
-        break;
-    case 50:
-        timingInfo->setNumUnitsInTick(540000);
-        timingInfo->setTimeScale(27000000);
-        break;
-    case 60:
-        timingInfo->setNumUnitsInTick(450450);
-        timingInfo->setTimeScale(27000000);
-        break;
-    default:
-        timingInfo->setNumUnitsInTick(1001);
-        timingInfo->setTimeScale(60000);
-        break;
-    }
+    timingInfo->setNumUnitsInTick(fpsDenom);
+    timingInfo->setTimeScale(fpsNum);
 
     bool rateCnt = (bitRate > 0);
     hrd->setNalHrdParametersPresentFlag(rateCnt);

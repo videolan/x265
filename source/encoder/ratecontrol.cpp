@@ -229,7 +229,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     isAbr = cfg->param.rc.rateControlMode != X265_RC_CQP; // later add 2pass option
 
     bitrate = cfg->param.rc.bitrate * 1000;
-    frameDuration = 1.0 / cfg->param.frameRate;
+    frameDuration = (double)cfg->param.fpsDenom / cfg->param.fpsNum;
     qp = cfg->param.rc.qp;
     lastRceq = 1; /* handles the cmplxrsum when the previous frame cost is zero */
     totalBits = 0;
@@ -279,7 +279,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     }
 
     isVbv = cfg->param.rc.vbvMaxBitrate > 0 && cfg->param.rc.vbvBufferSize > 0;
-    fps = cfg->param.frameRate;
+    double fps = (double)cfg->param.fpsNum / cfg->param.fpsDenom;
     if (isVbv)
     {
         /* We don't support changing the ABR bitrate right now,
@@ -507,7 +507,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             if (!vbvMinRate && currentSatd)
             {
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
-                double timeDone = (double)(framesDone - cfg->param.frameNumThreads + 1) / cfg->param.frameRate;
+                double timeDone = (double)(framesDone - cfg->param.frameNumThreads + 1) * frameDuration;
                 wantedBits = timeDone * bitrate;
                 if (wantedBits > 0 && totalBits > 0)
                 {
@@ -743,9 +743,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
     if (cfg->param.rc.cuTree)
     {
         // Scale and units are obtained from rateNum and rateDenom for videos with fixed frame rates.
-        double scale = cfg->param.frameRate * 2;
-        double numTicks = 1;
-        double timescale = numTicks / scale;
+        double timescale = cfg->param.fpsDenom / (2 * cfg->param.fpsNum);
         q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * timescale), 1 - cfg->param.rc.qCompress);
     }
     else

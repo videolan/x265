@@ -426,7 +426,7 @@ void EncStats::addSsim(double ssim)
 
 char* Encoder::statsString(EncStats& stat, char* buffer)
 {
-    double fps = (double)param.frameRate;
+    double fps = (double)param.fpsNum / param.fpsDenom;
     double scale = fps / 1000 / (double)stat.m_numPics;
 
     int len = sprintf(buffer, "%-6d ", stat.m_numPics);
@@ -632,7 +632,7 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
         {
             stats->globalSsim = m_analyzeAll.m_globalSsim / stats->encodedPictureCount;
             stats->globalPsnr = (stats->globalPsnrY * 6 + stats->globalPsnrU + stats->globalPsnrV) / (8 * stats->encodedPictureCount);
-            stats->elapsedVideoTime = (double)stats->encodedPictureCount / param.frameRate;
+            stats->elapsedVideoTime = (double)stats->encodedPictureCount * param.fpsDenom / param.fpsNum;
             stats->bitrate = (0.001f * stats->accBits) / stats->elapsedVideoTime;
         }
         else
@@ -1142,7 +1142,7 @@ void Encoder::determineLevelAndProfile(x265_param *_param)
     // TODO: there are minimum CTU sizes for higher levels, needs to be enforced
 
     uint32_t lumaSamples = _param->sourceWidth * _param->sourceHeight;
-    uint32_t samplesPerSec = lumaSamples * _param->frameRate;
+    uint32_t samplesPerSec = lumaSamples * ((double)_param->fpsNum / _param->fpsDenom);
     uint32_t bitrate = _param->rc.bitrate;
 
     m_level = Level::LEVEL1;
@@ -1242,7 +1242,7 @@ void Encoder::determineLevelAndProfile(x265_param *_param)
         break;
     }
 
-    if (_param->inputBitDepth > 8)
+    if (_param->internalBitDepth > 8)
         m_profile = Profile::MAIN10;
     else if (_param->keyframeMax == 1)
         m_profile = Profile::MAINSTILLPICTURE;
@@ -1312,7 +1312,8 @@ void Encoder::configure(x265_param *_param)
     }
     if (!_param->keyframeMin)
     {
-        _param->keyframeMin = X265_MIN(_param->frameRate, _param->keyframeMax / 10);
+        double fps = (double)_param->fpsNum / _param->fpsDenom;
+        _param->keyframeMin = X265_MIN((int)fps, _param->keyframeMax / 10);
     }
     _param->keyframeMin = X265_MAX(1, X265_MIN(_param->keyframeMin, _param->keyframeMax / 2 + 1));
     if (!_param->bEnableRectInter)

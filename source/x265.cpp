@@ -178,6 +178,7 @@ struct CLIOptions
 
     int64_t startTime;
     int64_t prevUpdateTime;
+    float   frameRate;
 
     /* in microseconds */
     static const int UPDATE_INTERVAL = 250000;
@@ -226,29 +227,29 @@ void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
 void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
 {
     char buf[200];
-    int64_t i_time = x265_mdate();
+    int64_t time = x265_mdate();
 
-    if (!bProgress || !frameNum || (prevUpdateTime && i_time - prevUpdateTime < UPDATE_INTERVAL))
+    if (!bProgress || !frameNum || (prevUpdateTime && time - prevUpdateTime < UPDATE_INTERVAL))
         return;
-    int64_t i_elapsed = i_time - startTime;
-    double fps = i_elapsed > 0 ? frameNum * 1000000. / i_elapsed : 0;
+    int64_t elapsed = time - startTime;
+    double fps = elapsed > 0 ? frameNum * 1000000. / elapsed : 0;
     if (framesToBeEncoded)
     {
-        float bitrate = 0.008f * totalbytes / ((float)frameNum / param->frameRate);
-        int eta = (int)(i_elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
+        float bitrate = 0.008f * totalbytes / ((float)frameNum / ((float)param->fpsNum / param->fpsDenom));
+        int eta = (int)(elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
         sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
                 100. * frameNum / framesToBeEncoded, frameNum, framesToBeEncoded, fps, bitrate,
                 eta / 3600, (eta / 60) % 60, eta % 60);
     }
     else
     {
-        double bitrate = (double)totalbytes * 8 / ((double)1000 * param->frameRate);
+        float bitrate = (float)totalbytes * 8 / ((float)1000 * param->fpsNum / param->fpsDenom);
         sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", frameNum, fps, bitrate);
     }
     fprintf(stderr, "%s  \r", buf + 5);
     SetConsoleTitle(buf);
     fflush(stderr); // needed in windows
-    prevUpdateTime = i_time;
+    prevUpdateTime = time;
 }
 
 void CLIOptions::printVersion(x265_param *param)
@@ -286,7 +287,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input-depth                 Bit-depth of input file. Default 8\n");
     H0("   --input-res                   Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp                   Source color space parameter, auto-detected if Y4M. 1:i420 3:i444. Default: 1\n");
-    H0("   --fps                         Source frame rate, auto-detected if Y4M\n");
+    H0("   --fps                         Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --seek                        First frame to encode\n");
     H0("-f/--frames                      Maximum number of frames to encode. Default all\n");
     H0("\nQuad-Tree analysis:\n");
@@ -365,7 +366,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *inputfn = NULL;
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
-    const char *inputRes = NULL;
     const char *preset = "medium";
     const char *tune = "ssim";
 
@@ -445,9 +445,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
+            OPT("input-res") berror |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
             OPT("input-depth") inputBitDepth = (uint32_t)atoi(optarg);
             OPT("recon-depth") reconFileBitDepth = (uint32_t)atoi(optarg);
-            OPT("input-res") inputRes = optarg;
             OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
             OPT("preset") ;
@@ -495,13 +495,11 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         param->internalCsp = this->input->getColorSpace();
         param->sourceWidth = this->input->getWidth();
         param->sourceHeight = this->input->getHeight();
-        param->frameRate = (int)this->input->getRate();
+        this->input->getRate(param->fpsNum, param->fpsDenom);
     }
     else
     {
-        if (inputRes)
-            sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
-        if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->frameRate <= 0)
+        if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->fpsNum == 0 || param->fpsDenom == 0)
         {
             x265_log(param, X265_LOG_ERROR, "YUV input requires --input-res WxH and --fps N to be specified\n");
             return true;
@@ -536,12 +534,12 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (param->logLevel >= X265_LOG_INFO)
     {
         if (this->framesToBeEncoded == 0)
-            fprintf(stderr, "%s  [info]: %dx%d %dHz %s, unknown frame count\n", input->getName(),
-                    param->sourceWidth, param->sourceHeight, param->frameRate,
+            fprintf(stderr, "%s  [info]: %dx%d %d/%d fps %s, unknown frame count\n", input->getName(),
+                    param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
                     x265_source_csp_names[param->internalCsp]);
         else
-            fprintf(stderr, "%s  [info]: %dx%d %dHz %s, frames %u - %d of %d\n", input->getName(),
-                    param->sourceWidth, param->sourceHeight, param->frameRate,
+            fprintf(stderr, "%s  [info]: %dx%d %d/%d fps %s, frames %u - %d of %d\n", input->getName(),
+                    param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
                     x265_source_csp_names[param->internalCsp],
                     this->seek, this->seek + this->framesToBeEncoded - 1, fileFrameCount);
     }
@@ -551,8 +549,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (reconfn)
     {
         if (reconFileBitDepth == 0)
-            reconFileBitDepth = param->inputBitDepth;
-        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth, param->frameRate, param->internalCsp);
+            reconFileBitDepth = param->internalBitDepth;
+        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth,
+                                   param->fpsNum, param->fpsDenom, param->internalCsp);
         if (this->recon->isFail())
         {
             x265_log(param, X265_LOG_WARNING, "unable to write reconstruction file\n");
@@ -562,13 +561,13 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
 
 #if HIGH_BIT_DEPTH
-    if (param->inputBitDepth != 10)
+    if (param->internalBitDepth != 10)
     {
         x265_log(param, X265_LOG_ERROR, "Only bit depths of 10 are supported in this build\n");
         return true;
     }
 #else
-    if (param->inputBitDepth != 8)
+    if (param->internalBitDepth != 8)
     {
         x265_log(param, X265_LOG_ERROR, "Only bit depths of 8 are supported in this build\n");
         return true;

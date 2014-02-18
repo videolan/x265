@@ -81,7 +81,7 @@ public:
 
     void setColorSpace(int)       { /* ignore, warn */ }
 
-    float getRate() const         { return ((float)rateNum) / rateDenom; }
+    void getRate(uint32_t& num, uint32_t& denom) const { num = rateNum; denom = rateDenom; }
 
     int getWidth() const          { return width; }
 

@@ -780,7 +780,7 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
     double totalDuration = 0.0;
     for (int j = 0; j <= numframes; j++)
     {
-        totalDuration += 1.0 / cfg->param.frameRate;
+        totalDuration += (double)cfg->param.fpsDenom / cfg->param.fpsNum;
     }
 
     double averageDuration = totalDuration / (numframes + 1);
@@ -890,7 +890,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     uint16_t *propagateCost = frames[b]->propagateCost;
 
     x265_emms();
-    double fpsFactor = CLIP_DURATION(1.0 / cfg->param.frameRate) / CLIP_DURATION(averageDuration);
+    double fpsFactor = CLIP_DURATION((double)cfg->param.fpsDenom / cfg->param.fpsNum) / CLIP_DURATION(averageDuration);
 
     /* For non-refferd frames the source costs are always zero, so just memset one row and re-use it. */
     if (!referenced)
@@ -980,7 +980,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
 
 void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance)
 {
-    int fpsFactor = (int)(CLIP_DURATION(averageDuration) / CLIP_DURATION(1.0 / cfg->param.frameRate) * 256);
+    int fpsFactor = (int)(CLIP_DURATION(averageDuration) / CLIP_DURATION((double)cfg->param.fpsDenom / cfg->param.fpsNum) * 256);
     double weightdelta = 0.0;
 
     if (ref0Distance && frame->weightedCostDelta[ref0Distance - 1] > 0)
