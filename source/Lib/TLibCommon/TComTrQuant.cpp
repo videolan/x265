@@ -502,7 +502,7 @@ void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
     const uint32_t                 log2BlockWidth  = g_convertToBit[width]  + 2;
     const uint32_t                 log2BlockHeight = g_convertToBit[height] + 2;
 
-    result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, width, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
+    result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, width, height, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
 
     //set the group layout
     result.widthInGroups  = width  >> MLS_CG_LOG2_WIDTH;
@@ -516,19 +516,20 @@ void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
     result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2WidthInGroups][log2HeightInGroups];
 
     //set the significance map context selection parameters
+    TextType ctype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
     if ((width == 4) && (height == 4))
     {
-        result.firstSignificanceMapContext = significanceMapContextSetStart[ttype][CONTEXT_TYPE_4x4];
+        result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4];
     }
     else if ((width == 8) && (height == 8))
     {
-        result.firstSignificanceMapContext = significanceMapContextSetStart[ttype][CONTEXT_TYPE_8x8];
+        result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8];
         if (result.scanType != SCAN_DIAG)
-            result.firstSignificanceMapContext += nonDiagonalScan8x8ContextOffset[ttype];
+            result.firstSignificanceMapContext += nonDiagonalScan8x8ContextOffset[ctype];
     }
     else
     {
-        result.firstSignificanceMapContext = significanceMapContextSetStart[ttype][CONTEXT_TYPE_NxN];
+        result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN];
     }
 }
 
@@ -1124,8 +1125,8 @@ int TComTrQuant::getSigCtxInc(int                              patternSigCtx,
         }
 
         const bool notFirstGroup = ((posX >> MLS_CG_LOG2_WIDTH) + (posY >> MLS_CG_LOG2_HEIGHT)) > 0;
-
-        offset = (notFirstGroup ? notFirstGroupNeighbourhoodContextOffset[ttype] : 0) + cnt;
+        TextType ctype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
+        offset = (notFirstGroup ? notFirstGroupNeighbourhoodContextOffset[ctype] : 0) + cnt;
     }
     return codingParameters.firstSignificanceMapContext + offset;
 }

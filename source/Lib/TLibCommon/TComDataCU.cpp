@@ -2852,7 +2852,7 @@ void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter)
                                        + (partWidth / m_pic->getMinCUWidth()) / 2];
 }
 
-uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t width, bool bIsLuma, bool bIsIntra)
+uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t width, uint32_t height, bool bIsLuma, bool bIsIntra)
 {
     uint32_t scanIdx;
     uint32_t dirMode;
@@ -2863,7 +2863,6 @@ uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t width, bool bI
     }
     //check that MDCS can be used for this TU
 
-    uint32_t height = width;
     if (bIsLuma)
     {
         const uint32_t maximumWidth  = MDCS_MAXIMUM_WIDTH;
