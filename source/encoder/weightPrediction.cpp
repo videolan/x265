@@ -487,8 +487,6 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
 
     TComPicYuv *orig = slice.getPic()->getPicYuvOrg();
     pixel *temp = X265_MALLOC(pixel, 2 * orig->getStride() * orig->getHeight());
-    bool useWp = false;
-
     if (temp)
     {
         int denom = slice.getNumRefIdx(REF_PIC_LIST_0) > 3 ? 7 : 6;
@@ -506,10 +504,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
             }
 
             if (weightp::tryCommonDenom(slice, param, wp, temp, denom))
-            {
-                useWp = true;
                 break;
-            }
             denom--; // decrement to satisfy the range limitation
         }
         while (denom > 0);
@@ -517,29 +512,38 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         X265_FREE(temp);
     }
 
-    if (useWp && param.logLevel >= X265_LOG_DEBUG)
+    if (param.logLevel >= X265_LOG_DEBUG)
     {
         char buf[1024];
         int p = 0;
+        bool bWeighted = false;
 
         p = sprintf(buf, "poc: %d weights:", slice.getPOC());
         for (int list = 0; list < numPredDir; list++)
         {
             for (int ref = 0; ref < slice.getNumRefIdx(list); ref++)
             {
-                p += sprintf(buf + p, " [L%d:R%d ", list, ref);
-                if (wp[list][ref][0].bPresentFlag)
-                    p += sprintf(buf + p, "Y{%d*x>>%d%+d}", wp[list][ref][0].inputWeight, wp[list][ref][0].log2WeightDenom, wp[list][ref][0].inputOffset);
-                if (wp[list][ref][1].bPresentFlag)
-                    p += sprintf(buf + p, "U{%d*x>>%d%+d}", wp[list][ref][1].inputWeight, wp[list][ref][1].log2WeightDenom, wp[list][ref][1].inputOffset);
-                if (wp[list][ref][2].bPresentFlag)
-                    p += sprintf(buf + p, "V{%d*x>>%d%+d}", wp[list][ref][2].inputWeight, wp[list][ref][2].log2WeightDenom, wp[list][ref][2].inputOffset);
-                p += sprintf(buf + p, "]");
+                wpScalingParam* w = &wp[list][ref][0];
+                if (w[0].bPresentFlag || w[1].bPresentFlag || w[2].bPresentFlag)
+                {
+                    bWeighted = true;
+                    p += sprintf(buf + p, " [L%d:R%d ", list, ref);
+                    if (w[0].bPresentFlag)
+                        p += sprintf(buf + p, "Y{%d*x>>%d%+d}", w[0].inputWeight, w[0].log2WeightDenom, w[0].inputOffset);
+                    if (w[1].bPresentFlag)
+                        p += sprintf(buf + p, "U{%d*x>>%d%+d}", w[1].inputWeight, w[1].log2WeightDenom, w[1].inputOffset);
+                    if (w[2].bPresentFlag)
+                        p += sprintf(buf + p, "V{%d*x>>%d%+d}", w[2].inputWeight, w[2].log2WeightDenom, w[2].inputOffset);
+                    p += sprintf(buf + p, "]");
+                }
             }
         }
-        if (p < 80) // pad with spaces to ensure progress line overwritten
-            sprintf(buf + p, "%*s", 80-p, " ");
-        x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
+        if (bWeighted)
+        {
+            if (p < 80) // pad with spaces to ensure progress line overwritten
+                sprintf(buf + p, "%*s", 80-p, " ");
+            x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
+        }
     }
     slice.setWpScaling(wp);
 }
