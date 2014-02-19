@@ -64,9 +64,12 @@ tab_dct8_2:     times 2 dd 83, 36
 pb_unpackhlw1:  db 0,1,8,9,2,3,10,11,4,5,12,13,6,7,14,15
 
 SECTION .text
-
 cextern pd_1
 cextern pd_2
+cextern pd_4
+cextern pd_8
+cextern pd_16
+cextern pd_32
 cextern pd_64
 cextern pd_128
 cextern pd_256
@@ -79,16 +82,21 @@ cextern pw_ppppmmmm
 ;------------------------------------------------------
 INIT_XMM sse2
 cglobal dct4, 3, 4, 8
-
+%if BIT_DEPTH == 10
+  %define       DCT_SHIFT 3
+  mova          m7, [pd_4]
+%elif BIT_DEPTH == 8
+  %define       DCT_SHIFT 1
+  mova          m7, [pd_1]
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
     add         r2d, r2d
     lea         r3, [tab_dct4]
 
     mova        m4, [r3 + 0 * 16]
     mova        m5, [r3 + 1 * 16]
     mova        m6, [r3 + 2 * 16]
-
-    mova        m7, [pd_1]
-
     movh        m0, [r0 + 0 * r2]
     movh        m1, [r0 + 1 * r2]
     punpcklqdq  m0, m1
@@ -107,27 +115,21 @@ cglobal dct4, 3, 4, 8
 
     paddw       m1, m2, m0
     psubw       m2, m0
-
     pmaddwd     m0, m1, m4
     paddd       m0, m7
-    psrad       m0, 1
-
+    psrad       m0, DCT_SHIFT
     pmaddwd     m3, m2, m5
     paddd       m3, m7
-    psrad       m3, 1
-
+    psrad       m3, DCT_SHIFT
     packssdw    m0, m3
     pshufd      m0, m0, 0xD8
     pshufhw     m0, m0, 0xB1
-
     pmaddwd     m1, m6
     paddd       m1, m7
-    psrad       m1, 1
-
+    psrad       m1, DCT_SHIFT
     pmaddwd     m2, [r3 + 3 * 16]
     paddd       m2, m7
-    psrad       m2, 1
-
+    psrad       m2, DCT_SHIFT
     packssdw    m1, m2
     pshufd      m1, m1, 0xD8
     pshufhw     m1, m1, 0xB1
@@ -179,7 +181,7 @@ cglobal idct4, 3, 4, 7
   %define IDCT4_OFFSET  [pd_512]
   %define IDCT4_SHIFT   10
 %else
-  %error Unsupport BIT_DEPTH!
+  %error Unsupported BIT_DEPTH!
 %endif
     add         r2d, r2d
     lea         r3, [tab_dct4]
@@ -268,67 +270,60 @@ cglobal idct4, 3, 4, 7
 INIT_XMM ssse3
 %if ARCH_X86_64
 cglobal dst4, 3, 4, 8+2
+  %define       coef2   m8
+  %define       coef3   m9
 %else ; ARCH_X86_64 = 0
 cglobal dst4, 3, 4, 8
+  %define       coef2   [r3 + 2 * 16]
+  %define       coef3   [r3 + 3 * 16]
 %endif ; ARCH_X86_64
+%define         coef0   m6
+%define         coef1   m7
 
-    %define coef0   m6
-    %define coef1   m7
-%if ARCH_X86_64
-    %define coef2   m8
-    %define coef3   m9
-%else
-    %define coef2   [r3 + 2 * 16]
-    %define coef3   [r3 + 3 * 16]
+%if BIT_DEPTH == 8
+  %define       DST_SHIFT 1
+  mova          m5, [pd_1]
+%elif BIT_DEPTH == 10
+  %define       DST_SHIFT 3
+  mova          m5, [pd_4]
 %endif
-
     add         r2d, r2d
     lea         r3, [tab_dst4]
-
-    mova        m5, [pd_1]
-
     mova        coef0, [r3 + 0 * 16]
     mova        coef1, [r3 + 1 * 16]
 %if ARCH_X86_64
     mova        coef2, [r3 + 2 * 16]
     mova        coef3, [r3 + 3 * 16]
 %endif
-
-    movh        m0, [r0 + 0 * r2]            ;load
+    movh        m0, [r0 + 0 * r2]            ; load
     movh        m1, [r0 + 1 * r2]
     punpcklqdq  m0, m1
-
     lea         r0, [r0 + 2 * r2]
     movh        m1, [r0]
     movh        m2, [r0 + r2]
     punpcklqdq  m1, m2
-
-    pmaddwd     m2, m0, coef0                ;DST1
+    pmaddwd     m2, m0, coef0                ; DST1
     pmaddwd     m3, m1, coef0
     phaddd      m2, m3
     paddd       m2, m5
-    psrad       m2, 1
-
+    psrad       m2, DST_SHIFT
     pmaddwd     m3, m0, coef1
     pmaddwd     m4, m1, coef1
     phaddd      m3, m4
     paddd       m3, m5
-    psrad       m3, 1
+    psrad       m3, DST_SHIFT
     packssdw    m2, m3                       ; m2 = T70
-
     pmaddwd     m3, m0, coef2
     pmaddwd     m4, m1, coef2
     phaddd      m3, m4
     paddd       m3, m5
-    psrad       m3, 1
-
+    psrad       m3, DST_SHIFT
     pmaddwd     m0, coef3
     pmaddwd     m1, coef3
     phaddd      m0, m1
     paddd       m0, m5
-    psrad       m0, 1
+    psrad       m0, DST_SHIFT
     packssdw    m3, m0                       ; m3 = T71
-
     mova        m5, [pd_128]
 
     pmaddwd     m0, m2, coef0                ; DST2
@@ -365,11 +360,18 @@ cglobal dst4, 3, 4, 8
 ;void idst4(int32_t *src, int16_t *dst, intptr_t stride)
 ;-------------------------------------------------------
 INIT_XMM sse2
-cglobal idst4, 3, 4, 6
-
+cglobal idst4, 3, 4, 7
+%if BIT_DEPTH == 8
+  %define m6  [pd_2048]
+  %define IDCT4_SHIFT 12
+%elif BIT_DEPTH == 10
+  %define m6  [pd_512]
+  %define IDCT4_SHIFT 10
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
     add         r2d, r2d
     lea         r3, [tab_idst4]
-
     mova        m5, [pd_64]
 
     movu        m0, [r0 + 0 * 16]
@@ -414,38 +416,30 @@ cglobal idst4, 3, 4, 6
 
     punpcklwd   m2, m0, m1
     punpckhwd   m0, m1
-
-    mova        m5, [pd_2048]
-
     punpcklwd   m1, m2, m0
     punpckhwd   m2, m0
-
     pmaddwd     m0, m1, [r3 + 0 * 16]
     pmaddwd     m3, m2, [r3 + 1 * 16]
     paddd       m0, m3
-    paddd       m0, m5
-    psrad       m0, 12                      ; m1 = S0
-
+    paddd       m0, m6
+    psrad       m0, IDCT4_SHIFT             ; m0 = S0
     pmaddwd     m3, m1, [r3 + 2 * 16]
     pmaddwd     m4, m2, [r3 + 3 * 16]
     paddd       m3, m4
-    paddd       m3, m5
-    psrad       m3, 12                      ; m3 = S8
+    paddd       m3, m6
+    psrad       m3, IDCT4_SHIFT             ; m3 = S8
     packssdw    m0, m3                      ; m0 = m128iA
-
     pmaddwd     m3, m1, [r3 + 4 * 16]
     pmaddwd     m4, m2, [r3 + 5 * 16]
     paddd       m3, m4
-    paddd       m3, m5
-    psrad       m3, 12                      ; m3 = S0
-
+    paddd       m3, m6
+    psrad       m3, IDCT4_SHIFT             ; m3 = S0
     pmaddwd     m1, [r3 + 6 * 16]
     pmaddwd     m2, [r3 + 7 * 16]
     paddd       m1, m2
-    paddd       m1, m5
-    psrad       m1, 12                      ; m1 = S8
+    paddd       m1, m6
+    psrad       m1, IDCT4_SHIFT             ; m1 = S8
     packssdw    m3, m1                      ; m3 = m128iD
-
     punpcklwd   m1, m0, m3
     punpckhwd   m0, m3
 
@@ -475,12 +469,19 @@ cglobal dct8, 3,6,7,0-16*mmsize
     ; ...
     ; Row6[4-7] Row7[4-7]
     ;------------------------
+%if BIT_DEPTH == 10
+  %define       DCT_SHIFT 4
+  mova          m6, [pd_8]
+%elif BIT_DEPTH == 8
+  %define       DCT_SHIFT 2
+  mova          m6, [pd_2]
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
 
     add         r2, r2
     lea         r3, [r2 * 3]
     mov         r5, rsp
-
-    mova        m6, [pd_2]
 %assign x 0
 %rep 2
     movu        m0, [r0]
@@ -518,7 +519,7 @@ cglobal dct8, 3,6,7,0-16*mmsize
     pmaddwd     m5, m0, [r4 + 0*16]
     phaddd      m1, m5
     paddd       m1, m6
-    psrad       m1, 2
+    psrad       m1, DCT_SHIFT
   %if x == 1
     pshufd      m1, m1, 0x1B
   %endif
@@ -528,7 +529,7 @@ cglobal dct8, 3,6,7,0-16*mmsize
     pmaddwd     m5, m0, [r4 + 1*16]
     phaddd      m1, m5
     paddd       m1, m6
-    psrad       m1, 2
+    psrad       m1, DCT_SHIFT
   %if x == 1
     pshufd      m1, m1, 0x1B
   %endif
@@ -538,7 +539,7 @@ cglobal dct8, 3,6,7,0-16*mmsize
     pmaddwd     m5, m0, [r4 + 2*16]
     phaddd      m1, m5
     paddd       m1, m6
-    psrad       m1, 2
+    psrad       m1, DCT_SHIFT
   %if x == 1
     pshufd      m1, m1, 0x1B
   %endif
@@ -548,7 +549,7 @@ cglobal dct8, 3,6,7,0-16*mmsize
     pmaddwd     m0, [r4 + 3*16]
     phaddd      m4, m0
     paddd       m4, m6
-    psrad       m4, 2
+    psrad       m4, DCT_SHIFT
   %if x == 1
     pshufd      m4, m4, 0x1B
   %endif
@@ -561,34 +562,30 @@ cglobal dct8, 3,6,7,0-16*mmsize
     psubw       m2, m3              ; m2 = [EO1 EO0]
     psignw      m2, [pw_ppppmmmm]
     pshufb      m2, [pb_unpackhlw1]
-
     pmaddwd     m3, m0, [r4 + 0*16]
     paddd       m3, m6
-    psrad       m3, 2
+    psrad       m3, DCT_SHIFT
   %if x == 1
     pshufd      m3, m3, 0x1B
   %endif
     mova        [r5 + 0*2*mmsize], m3 ; Row 0
-
     pmaddwd     m0, [r4 + 2*16]
     paddd       m0, m6
-    psrad       m0, 2
+    psrad       m0, DCT_SHIFT
   %if x == 1
     pshufd      m0, m0, 0x1B
   %endif
     mova        [r5 + 4*2*mmsize], m0 ; Row 4
-
     pmaddwd     m3, m2, [r4 + 1*16]
     paddd       m3, m6
-    psrad       m3, 2
+    psrad       m3, DCT_SHIFT
   %if x == 1
     pshufd      m3, m3, 0x1B
   %endif
     mova        [r5 + 2*2*mmsize], m3 ; Row 2
-
     pmaddwd     m2, [r4 + 3*16]
     paddd       m2, m6
-    psrad       m2, 2
+    psrad       m2, DCT_SHIFT
   %if x == 1
     pshufd      m2, m2, 0x1B
   %endif

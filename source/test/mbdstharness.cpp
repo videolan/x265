@@ -169,12 +169,14 @@ MBDstHarness::~MBDstHarness()
     X265_FREE(int_test_buff);
     X265_FREE(int_idct_test_buff);
 }
-
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 {
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
     int j = 0;
     int cmp_size = sizeof(int) * width * width;
-
     for (int i = 0; i <= 100; i++)
     {
         int index = rand() % TEST_CASES;
@@ -188,24 +190,34 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
             ref(short_test_buff[index] + j, mintbuf3, width);
             opt(short_test_buff[index] + j, mintbuf4, width);
 #endif
+
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
+
             return false;
         }
-
         j += 16;
 #if _DEBUG
         memset(mbuf2, 0xCD, mem_cmp_size);
         memset(mbuf3, 0xCD, mem_cmp_size);
 #endif
     }
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
 
     return true;
 }
-
 bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
 {
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
+
     int j = 0;
     int cmp_size = sizeof(int16_t) * width * width;
-
     for (int i = 0; i <= 100; i++)
     {
         int index = rand() % TEST_CASES;
@@ -218,16 +230,22 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
             ref(int_idct_test_buff[index] + j, mbuf2, width);
             opt(int_idct_test_buff[index] + j, mbuf3, width);
 #endif
+
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
+
             return false;
         }
-
         j += 16;
 #if _DEBUG
         memset(mbuf2, 0xCD, mem_cmp_size);
         memset(mbuf3, 0xCD, mem_cmp_size);
 #endif
     }
-
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
     return true;
 }
 

@@ -808,6 +808,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.calcrecon[BLOCK_8x8] = x265_calcRecons8_sse2;
         p.calcrecon[BLOCK_16x16] = x265_calcRecons16_sse2;
         p.calcrecon[BLOCK_32x32] = x265_calcRecons32_sse2;
+
+        p.dct[DCT_4x4] = x265_dct4_sse2;
+        p.idct[IDCT_4x4] = x265_idct4_sse2;
+        p.idct[IDST_4x4] = x265_idst4_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
@@ -822,10 +826,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         SETUP_INTRA_ANG32(2, 2, ssse3);
         SETUP_INTRA_ANG32(34, 2, ssse3);
+
+        p.dct[DST_4x4] = x265_dst4_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
-
+        p.dct[DCT_8x8] = x265_dct8_sse4;
         p.quant = x265_quant_sse4;
         p.dequant_normal = x265_dequant_normal_sse4;
         p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
