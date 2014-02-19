@@ -743,7 +743,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
     if (cfg->param.rc.cuTree)
     {
         // Scale and units are obtained from rateNum and rateDenom for videos with fixed frame rates.
-        double timescale = cfg->param.fpsDenom / (2 * cfg->param.fpsNum);
+        double timescale = (double)cfg->param.fpsDenom / (2 * cfg->param.fpsNum);
         q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * timescale), 1 - cfg->param.rc.qCompress);
     }
     else
