@@ -679,10 +679,13 @@ extern "C" {
     p.chroma[X265_CSP_I420].addAvg[CHROMA_ ## W ## x ## H] = x265_addAvg_ ## W ## x ## H ## cpu;
 
 #define CHROMA_ADDAVG(cpu) \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(2,  4,  cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(2,  8,  cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  2,  cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  4,  cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  8,  cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(4,  16, cpu); \
+    SETUP_CHROMA_ADDAVG_FUNC_DEF(6,  8,  cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  2,  cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  4,  cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(8,  6,  cpu); \
@@ -831,6 +834,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+        LUMA_ADDAVG(_sse4);
+        CHROMA_ADDAVG(_sse4);
+
         p.dct[DCT_8x8] = x265_dct8_sse4;
         p.quant = x265_quant_sse4;
         p.dequant_normal = x265_dequant_normal_sse4;
@@ -1330,10 +1336,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SETUP_INTRA_ANG32(33, 33, sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
-
-        p.chroma[X265_CSP_I420].addAvg[CHROMA_2x4]  = x265_addAvg_2x4_sse4;
-        p.chroma[X265_CSP_I420].addAvg[CHROMA_2x8]  = x265_addAvg_2x8_sse4;
-        p.chroma[X265_CSP_I420].addAvg[CHROMA_6x8]  = x265_addAvg_6x8_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

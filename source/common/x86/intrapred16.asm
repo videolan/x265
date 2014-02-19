@@ -45,7 +45,6 @@ const pw_punpcklwd,         db  0,  1,  2,  3,  2,  3,  4,  5,  4,  5,  6,  7,  
 const c_mode32_10_0,        db  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1
 
 const pw_unpackwdq, times 8 db 0,1
-const pw_1023,      times 8 dw 1023
 const pw_ang8_12,   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 0, 1
 const pw_ang8_13,   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 15, 8, 9, 0, 1
 const pw_ang8_14,   db 0, 0, 0, 0, 0, 0, 0, 0, 14, 15, 10, 11, 4, 5, 0, 1
@@ -58,6 +57,7 @@ SECTION .text
 
 cextern pw_1
 cextern pw_8
+cextern pw_1023
 cextern pd_16
 cextern pd_32
 cextern pw_4096

@@ -881,6 +881,11 @@ bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
 
 bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
 {
+#if HIGH_BIT_DEPTH
+    int old_depth = X265_DEPTH;
+    X265_DEPTH = 10;
+#endif
+
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
@@ -897,11 +902,19 @@ bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
         opt(short_test_buff[index1] + j, short_test_buff[index2] + j, opt_dest, STRIDE, STRIDE, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        {
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
             return false;
+        }
 
         j += INCR;
     }
 
+#if HIGH_BIT_DEPTH
+    X265_DEPTH = old_depth;
+#endif
     return true;
 }
 
