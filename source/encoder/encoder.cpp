@@ -1142,7 +1142,7 @@ void Encoder::determineLevelAndProfile(x265_param *_param)
     // TODO: there are minimum CTU sizes for higher levels, needs to be enforced
 
     uint32_t lumaSamples = _param->sourceWidth * _param->sourceHeight;
-    uint32_t samplesPerSec = lumaSamples * ((double)_param->fpsNum / _param->fpsDenom);
+    uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)_param->fpsNum / _param->fpsDenom));
     uint32_t bitrate = _param->rc.bitrate;
 
     m_level = Level::LEVEL1;
