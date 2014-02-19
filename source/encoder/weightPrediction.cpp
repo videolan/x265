@@ -542,6 +542,5 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
     }
     slice.setWpScaling(wp);
-    slice.getPPS()->setUseWP(useWp);
 }
 }

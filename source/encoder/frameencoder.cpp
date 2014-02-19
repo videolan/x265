@@ -455,6 +455,7 @@ void FrameEncoder::compressFrame()
     //------------------------------------------------------------------------------
     if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) || (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
     {
+        assert(slice->getPPS()->getUseWP());
         weightAnalyse(*slice, m_cfg->param);
     }
 
