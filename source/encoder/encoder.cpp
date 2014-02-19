@@ -1043,7 +1043,7 @@ void Encoder::initSPS(TComSPS *sps)
     if (sps->getVuiParametersPresentFlag())
     {
         TComVUI* vui = sps->getVuiParameters();
-        vui->setAspectRatioInfoPresentFlag(getAspectRatioIdc() != -1);
+        vui->setAspectRatioInfoPresentFlag(getAspectRatioInfoPresentFlag());
         vui->setAspectRatioIdc(getAspectRatioIdc());
         vui->setSarWidth(getSarWidth());
         vui->setSarHeight(getSarHeight());
@@ -1062,12 +1062,17 @@ void Encoder::initSPS(TComSPS *sps)
         vui->setNeutralChromaIndicationFlag(getNeutralChromaIndicationFlag());
         vui->setDefaultDisplayWindow(getDefaultDisplayWindow());
         vui->setFrameFieldInfoPresentFlag(getFrameFieldInfoPresentFlag());
-        vui->setFieldSeqFlag(false);
-        vui->setHrdParametersPresentFlag(false);
+        vui->setFieldSeqFlag(getFieldSeqFlag());
+        vui->setHrdParametersPresentFlag(getVuiHrdParametersPresentFlag());
+        vui->getTimingInfo()->setTimingInfoPresentFlag(getVuiTimingInfoPresentFlag());
+        vui->getTimingInfo()->setNumUnitsInTick(getVuiNumUnitsInTick());
+        vui->getTimingInfo()->setTimeScale(getVuiTimeScale());
         vui->getTimingInfo()->setPocProportionalToTimingFlag(getPocProportionalToTimingFlag());
         vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(getNumTicksPocDiffOneMinus1());
         vui->setBitstreamRestrictionFlag(getBitstreamRestrictionFlag());
+        vui->setTilesFixedStructureFlag(getTilesFixedStructureFlag());
         vui->setMotionVectorsOverPicBoundariesFlag(getMotionVectorsOverPicBoundariesFlag());
+        vui->setRestrictedRefPicListsFlag(getRestrictedRefPicListsFlag());
         vui->setMinSpatialSegmentationIdc(getMinSpatialSegmentationIdc());
         vui->setMaxBytesPerPicDenom(getMaxBytesPerPicDenom());
         vui->setMaxBitsPerMinCuDenom(getMaxBitsPerMinCuDenom());
@@ -1390,11 +1395,11 @@ void Encoder::configure(x265_param *_param)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
 
     //========= set default display window ==================================
-    m_defaultDisplayWindow.m_enabledFlag = true;
-    m_defaultDisplayWindow.m_winRightOffset = 0;
-    m_defaultDisplayWindow.m_winTopOffset = 0;
-    m_defaultDisplayWindow.m_winBottomOffset = 0;
-    m_defaultDisplayWindow.m_winLeftOffset = 0;
+    m_defaultDisplayWindow.m_enabledFlag = _param->bEnableDefaultDisplayWindowFlag;
+    m_defaultDisplayWindow.m_winRightOffset = _param->defDispWinRightOffset;
+    m_defaultDisplayWindow.m_winTopOffset = _param->defDispWinTopOffset;
+    m_defaultDisplayWindow.m_winBottomOffset = _param->defDispWinBottomOffset;
+    m_defaultDisplayWindow.m_winLeftOffset = _param->defDispWinLeftOffset;
     m_pad[0] = m_pad[1] = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
@@ -1465,25 +1470,26 @@ void Encoder::configure(x265_param *_param)
     m_decodingUnitInfoSEIEnabled = 0;
     m_useScalingListId = 0;
     m_activeParameterSetsSEIEnabled = 0;
-    m_vuiParametersPresentFlag = false;
+    m_vuiParametersPresentFlag = _param->bEnableVuiParametersPresentFlag;
     m_minSpatialSegmentationIdc = 0;
-    m_aspectRatioIdc = 0;
-    m_sarWidth = 0;
-    m_sarHeight = 0;
-    m_overscanInfoPresentFlag = false;
-    m_overscanAppropriateFlag = false;
-    m_videoSignalTypePresentFlag = false;
-    m_videoFormat = 5;
-    m_videoFullRangeFlag = false;
-    m_colourDescriptionPresentFlag = false;
-    m_colourPrimaries = 2;
-    m_transferCharacteristics = 2;
-    m_matrixCoefficients = 2;
-    m_chromaLocInfoPresentFlag = false;
-    m_chromaSampleLocTypeTopField = 0;
-    m_chromaSampleLocTypeBottomField = 0;
+    m_aspectRatioInfoPresentFlag = _param->bEnableAspectRatioIdc;
+    m_aspectRatioIdc = _param->aspectRatioIdc;
+    m_sarWidth = _param->sarWidth;
+    m_sarHeight = _param->sarHeight;
+    m_overscanInfoPresentFlag = _param->bEnableOverscanInfoPresentFlag;
+    m_overscanAppropriateFlag = _param->bEnableOverscanAppropriateFlag;
+    m_videoSignalTypePresentFlag = _param->bEnableVideoSignalTypePresentFlag;
+    m_videoFormat = _param->videoFormat;
+    m_videoFullRangeFlag = _param->bEnableVideoFullRangeFlag;
+    m_colourDescriptionPresentFlag = _param->bEnableColorDescriptionPresentFlag;
+    m_colourPrimaries = _param->colorPrimaries;
+    m_transferCharacteristics = _param->transferCharacteristics;
+    m_matrixCoefficients = _param->matrixCoeffs;
+    m_chromaLocInfoPresentFlag = _param->bEnableChromaLocInfoPresentFlag;
+    m_chromaSampleLocTypeTopField = _param->chromaSampleLocTypeTopField;
+    m_chromaSampleLocTypeBottomField = _param->chromaSampleLocTypeBottomField;
     m_neutralChromaIndicationFlag = false;
-    m_frameFieldInfoPresentFlag = false;
+    m_frameFieldInfoPresentFlag = _param->bEnableFrameFieldInfoPresentFlag;
     m_pocProportionalToTimingFlag = false;
     m_numTicksPocDiffOneMinus1 = 0;
     m_bitstreamRestrictionFlag = false;
@@ -1501,6 +1507,11 @@ void Encoder::configure(x265_param *_param)
     m_useLossless = false;  // x264 configures this via --qp=0
     m_TransquantBypassEnableFlag = false;
     m_CUTransquantBypassFlagValue = false;
+    m_fieldSeqFlag = _param->bEnableFieldSeqFlag;
+    m_vuiTimingInfoPresentFlag = _param->bEnableVuiTimingInfoPresentFlag;
+    m_vuiHrdParametersPresentFlag = _param->bEnableVuiHrdParametersPresentFlag;
+    m_bitstreamRestrictionFlag = _param->bEnableBitstreamRestrictionFlag;
+    m_subPicHrdParamsPresentFlag = _param->bEnableSubPicHrdParamsPresentFlag;
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits)

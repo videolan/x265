@@ -665,7 +665,7 @@ void TEncSbac::codeVUI(TComVUI *vui, TComSPS* sps)
     WRITE_FLAG(vui->getBitstreamRestrictionFlag(),              "bitstream_restriction_flag");
     if (vui->getBitstreamRestrictionFlag())
     {
-        WRITE_FLAG(0,                                                "tiles_fixed_structure_flag");
+        WRITE_FLAG(vui->getTilesFixedStructureFlag(),             "tiles_fixed_structure_flag");
         WRITE_FLAG(vui->getMotionVectorsOverPicBoundariesFlag(),  "motion_vectors_over_pic_boundaries_flag");
         WRITE_FLAG(vui->getRestrictedRefPicListsFlag(),           "restricted_ref_pic_lists_flag");
         WRITE_UVLC(vui->getMinSpatialSegmentationIdc(),           "min_spatial_segmentation_idc");

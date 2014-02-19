@@ -221,6 +221,35 @@ void x265_param_default(x265_param *param)
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 0;
     param->bEnableSsim = 0;
+
+    /* Video Usability Information (VUI) */
+    param->bEnableVuiParametersPresentFlag = 0;
+    param->bEnableAspectRatioIdc = 0;
+    param->aspectRatioIdc = 0;
+    param->sarWidth = 0;
+    param->sarHeight = 0;
+    param->bEnableOverscanAppropriateFlag = 0;
+    param->bEnableVideoSignalTypePresentFlag = 0;
+    param->videoFormat = 5;
+    param->bEnableVideoFullRangeFlag = 0;
+    param->bEnableColorDescriptionPresentFlag = 0;
+    param->colorPrimaries = 2;
+    param->transferCharacteristics = 2;
+    param->matrixCoeffs = 2;
+    param->bEnableChromaLocInfoPresentFlag = 0;
+    param->chromaSampleLocTypeTopField = 0;
+    param->chromaSampleLocTypeBottomField = 0;
+    param->bEnableFieldSeqFlag = 0;
+    param->bEnableFrameFieldInfoPresentFlag = 0;
+    param->bEnableDefaultDisplayWindowFlag = 0;
+    param->defDispWinLeftOffset = 0;
+    param->defDispWinRightOffset = 0;
+    param->defDispWinTopOffset = 0;
+    param->defDispWinBottomOffset = 0;
+    param->bEnableVuiTimingInfoPresentFlag = 0;
+    param->bEnableVuiHrdParametersPresentFlag = 0;
+    param->bEnableBitstreamRestrictionFlag = 0;
+    param->bEnableSubPicHrdParamsPresentFlag = 0;
 }
 
 extern "C"
@@ -764,6 +793,200 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, berror);
     OPT("cutree")    p->rc.cuTree = bvalue;
     OPT("no-cutree") p->rc.cuTree = bvalue;
+    OPT("vui")
+    {
+        p->bEnableVuiParametersPresentFlag = bvalue;
+        p->bEnableAspectRatioIdc = bvalue;
+        p->bEnableOverscanInfoPresentFlag = bvalue;
+        p->bEnableVideoSignalTypePresentFlag = bvalue;
+        p->bEnableColorDescriptionPresentFlag = bvalue;
+        p->bEnableChromaLocInfoPresentFlag = bvalue;
+        p->bEnableFieldSeqFlag = bvalue;
+        p->bEnableFrameFieldInfoPresentFlag = bvalue;
+        p->bEnableDefaultDisplayWindowFlag = bvalue;
+        p->bEnableVuiTimingInfoPresentFlag = bvalue;
+        p->bEnableVuiHrdParametersPresentFlag = bvalue;
+        p->bEnableBitstreamRestrictionFlag = bvalue;
+        p->bEnableSubPicHrdParamsPresentFlag = bvalue;
+    }
+    OPT("sar")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableAspectRatioIdc = bvalue;
+        p->aspectRatioIdc = atoi(value);
+    }
+    OPT("extended-sar")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableAspectRatioIdc = bvalue;
+        p->aspectRatioIdc = 255;
+        sscanf(value, "%dx%d", &p->sarWidth, &p->sarHeight);
+    }
+    OPT("overscan") 
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        if (!strcmp(value, "show"))
+            p->bEnableOverscanInfoPresentFlag = bvalue;
+        else if (!strcmp(value, "crop"))
+        {
+            p->bEnableOverscanInfoPresentFlag = bvalue;
+            p->bEnableOverscanAppropriateFlag = bvalue;
+        }
+    }
+    OPT("videoformat")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVideoSignalTypePresentFlag = bvalue;
+        if (!strcmp(value, "component"))
+            p->videoFormat = 0;
+        else if (!strcmp(value, "pal"))
+            p->videoFormat = 1;
+        else if (!strcmp(value, "ntsc"))
+            p->videoFormat = 2;
+        else if (!strcmp(value, "secam"))
+            p->videoFormat = 3;
+        else if (!strcmp(value, "mac"))
+            p->videoFormat = 4;
+        else if (!strcmp(value, "undef"))
+            p->videoFormat = 5;
+    }
+    OPT("range")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVideoSignalTypePresentFlag = bvalue;
+        p->bEnableVideoFullRangeFlag = bvalue;
+    }
+    OPT("colorprim")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVideoSignalTypePresentFlag = bvalue;
+        p->bEnableColorDescriptionPresentFlag = bvalue;
+        if (!strcmp(value, "bt709"))
+            p->colorPrimaries = 1;
+        else if (!strcmp(value, "undef"))
+            p->colorPrimaries = 2;
+        else if (!strcmp(value, "bt470m"))
+            p->colorPrimaries = 4;
+        else if (!strcmp(value, "bt470bg"))
+            p->colorPrimaries = 5;
+        else if (!strcmp(value, "smpte170m"))
+            p->colorPrimaries = 6;
+        else if (!strcmp(value, "smpte240m"))
+            p->colorPrimaries = 7;
+        else if (!strcmp(value, "film"))
+            p->colorPrimaries = 8;
+        else if (!strcmp(value, "bt2020"))
+            p->colorPrimaries = 9;
+    }
+    OPT("transfer")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVideoSignalTypePresentFlag = bvalue;
+        p->bEnableColorDescriptionPresentFlag = bvalue;
+        if (!strcmp(value, "bt709"))
+            p->transferCharacteristics = 1;
+        else if (!strcmp(value, "undef"))
+            p->transferCharacteristics = 2;
+        else if (!strcmp(value, "bt470m"))
+            p->transferCharacteristics = 4;
+        else if (!strcmp(value, "bt470bg"))
+            p->transferCharacteristics = 5;
+        else if (!strcmp(value, "smpte170m"))
+            p->transferCharacteristics = 6;
+        else if (!strcmp(value, "smpte240m"))
+            p->transferCharacteristics = 7;
+        else if (!strcmp(value, "linear"))
+            p->transferCharacteristics = 8;
+        else if (!strcmp(value, "log100"))
+            p->transferCharacteristics = 9;
+        else if (!strcmp(value, "log316"))
+            p->transferCharacteristics = 10;
+        else if (!strcmp(value, "iec61966-2-4"))
+            p->transferCharacteristics = 11;
+        else if (!strcmp(value, "bt1361e"))
+            p->transferCharacteristics = 12;
+        else if (!strcmp(value, "iec61966-2-1"))
+            p->transferCharacteristics = 13;
+        else if (!strcmp(value, "bt2020-10"))
+            p->transferCharacteristics = 14;
+        else if (!strcmp(value, "bt2020-12"))
+            p->transferCharacteristics = 15;
+    }
+    OPT("colormatrix")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVideoSignalTypePresentFlag = bvalue;
+        p->bEnableColorDescriptionPresentFlag = bvalue;
+        if (!strcmp(value, "GBR"))
+            p->matrixCoeffs = 0;
+        else if (!strcmp(value, "bt709"))
+            p->matrixCoeffs = 1;
+        else if (!strcmp(value, "undef"))
+            p->matrixCoeffs = 2;
+        else if (!strcmp(value, "fcc"))
+            p->matrixCoeffs = 4;
+        else if (!strcmp(value, "bt470bg"))
+            p->matrixCoeffs = 5;
+        else if (!strcmp(value, "smpte170m"))
+            p->matrixCoeffs = 6;
+        else if (!strcmp(value, "smpte240m"))
+            p->matrixCoeffs = 7;
+        else if (!strcmp(value, "YCgCo"))
+            p->matrixCoeffs = 8;
+        else if (!strcmp(value, "bt2020nc"))
+            p->matrixCoeffs = 9;
+        else if (!strcmp(value, "bt2020c"))
+            p->matrixCoeffs = 10;
+    }
+    OPT("chromaloc")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableChromaLocInfoPresentFlag = bvalue;
+        p->chromaSampleLocTypeTopField = atoi(value);
+        p->chromaSampleLocTypeBottomField = p->chromaSampleLocTypeTopField;
+    }
+    OPT("fieldseq")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableFieldSeqFlag = bvalue;
+    }
+    OPT("framefieldinfo")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableFrameFieldInfoPresentFlag = bvalue;
+    }
+    OPT("crop-rect")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableDefaultDisplayWindowFlag = bvalue;
+        sscanf(value,"%d,%d,%d,%d",
+            &p->defDispWinLeftOffset,
+            &p->defDispWinTopOffset,
+            &p->defDispWinRightOffset,
+            &p->defDispWinBottomOffset);
+    }
+    OPT("timinginfo")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVuiTimingInfoPresentFlag = bvalue;
+    }
+    OPT("nal-hrd")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVuiTimingInfoPresentFlag = bvalue;
+        p->bEnableVuiHrdParametersPresentFlag = bvalue;
+    }
+    OPT("bitstreamrestriction")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableBitstreamRestrictionFlag = bvalue;
+    }
+    OPT("subpichrd")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVuiHrdParametersPresentFlag = bvalue;
+        p->bEnableSubPicHrdParamsPresentFlag = bvalue;
+    }
 
     else
         return X265_PARAM_BAD_NAME;

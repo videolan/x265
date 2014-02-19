@@ -151,6 +151,14 @@ protected:
     int       m_maxBitsPerMinCuDenom;                         ///< Indicates an upper bound for the number of bits of coding_unit() data
     int       m_log2MaxMvLengthHorizontal;                    ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
     int       m_log2MaxMvLengthVertical;                      ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
+    bool      m_fieldSeqFlag;                                 ///< Indicates that each picture is a field and has its own SEI timing message
+    bool      m_vuiTimingInfoPresentFlag;                     ///< Indicates that timing info is added to the VUI
+    int       m_vuiNumUnitsInTick;                            ///< The number of system ticks in an h265 tick where an h265 tick is in units of system ticks per frame
+    int       m_vuiTimeScale;                                 ///< The number of system ticks per second
+    bool      m_vuiHrdParametersPresentFlag;                  ///< Indicates HRD parameters are to be added to the VUI
+    bool      m_subPicHrdParamsPresentFlag;                   ///< Indicates that sub pic parameters should be added to the HRD
+    bool      m_restrictedRefPicListsFlag;                    ///< Indicates all P and B slices have the same reference pic list 0 and all B slices have the same reference pic list 1
+    bool      m_tilesFixedStructureFlag;                      ///< Indicates each PPS in the CVS have the same tile structure fields
 
 public:
 
@@ -305,6 +313,22 @@ public:
     bool getNonPackedConstraintFlag() const { return m_nonPackedConstraintFlag; }
 
     bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
+
+    bool getFieldSeqFlag() const { return m_fieldSeqFlag; }
+
+    bool getVuiTimingInfoPresentFlag() const { return m_vuiTimingInfoPresentFlag; }
+
+    int getVuiNumUnitsInTick() const { return m_vuiNumUnitsInTick; }
+
+    int getVuiTimeScale() const { return m_vuiTimeScale; }
+
+    bool getVuiHrdParametersPresentFlag() const { return m_vuiHrdParametersPresentFlag; }
+ 
+    bool getSubPicHrdParamsPresentFlag() const { return m_subPicHrdParamsPresentFlag; }
+
+    bool getRestrictedRefPicListsFlag() const { return m_restrictedRefPicListsFlag; }
+
+    bool getTilesFixedStructureFlag() const { return m_tilesFixedStructureFlag; }
 };
 }
 //! \}

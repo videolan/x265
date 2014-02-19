@@ -604,6 +604,7 @@ private:
     bool m_frameFieldInfoPresentFlag;
     bool m_hrdParametersPresentFlag;
     bool m_bitstreamRestrictionFlag;
+    bool m_tilesFixedStructureFlag;
     bool m_motionVectorsOverPicBoundariesFlag;
     bool m_restrictedRefPicListsFlag;
     int  m_minSpatialSegmentationIdc;
@@ -638,6 +639,7 @@ public:
         , m_frameFieldInfoPresentFlag(false)
         , m_hrdParametersPresentFlag(false)
         , m_bitstreamRestrictionFlag(false)
+        , m_tilesFixedStructureFlag(false)
         , m_motionVectorsOverPicBoundariesFlag(true)
         , m_restrictedRefPicListsFlag(1)
         , m_minSpatialSegmentationIdc(0)
@@ -736,6 +738,10 @@ public:
     bool getBitstreamRestrictionFlag() { return m_bitstreamRestrictionFlag; }
 
     void setBitstreamRestrictionFlag(bool i) { m_bitstreamRestrictionFlag = i; }
+
+    bool getTilesFixedStructureFlag() { return m_tilesFixedStructureFlag; }
+
+    void setTilesFixedStructureFlag(bool i) { m_tilesFixedStructureFlag = i; }
 
     bool getMotionVectorsOverPicBoundariesFlag() { return m_motionVectorsOverPicBoundariesFlag; }
 
