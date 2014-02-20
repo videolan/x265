@@ -83,7 +83,7 @@ public:
 
 protected:
 
-    TShortYUV*      m_qtTempTComYuv;
+    TShortYUV*      m_qtTempShortYuv;
     Pel*            m_sharedPredTransformSkip[3];
 
     TCoeff**        m_qtTempCoeffY;

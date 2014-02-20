@@ -57,7 +57,7 @@ TEncSearch::TEncSearch()
     m_qtTempCoeffCb = NULL;
     m_qtTempCoeffCr = NULL;
     m_qtTempTrIdx = NULL;
-    m_qtTempTComYuv = NULL;
+    m_qtTempShortYuv = NULL;
     m_qtTempTUCoeffY  = NULL;
     m_qtTempTUCoeffCb = NULL;
     m_qtTempTUCoeffCr = NULL;
@@ -89,14 +89,14 @@ TEncSearch::~TEncSearch()
             X265_FREE(m_qtTempCoeffY[i]);
             X265_FREE(m_qtTempCoeffCb[i]);
             X265_FREE(m_qtTempCoeffCr[i]);
-            m_qtTempTComYuv[i].destroy();
+            m_qtTempShortYuv[i].destroy();
         }
     }
     delete[] m_qtTempCoeffY;
     delete[] m_qtTempCoeffCb;
     delete[] m_qtTempCoeffCr;
     delete[] m_qtTempTrIdx;
-    delete[] m_qtTempTComYuv;
+    delete[] m_qtTempShortYuv;
     X265_FREE(m_qtTempTUCoeffY);
     X265_FREE(m_qtTempTUCoeffCb);
     X265_FREE(m_qtTempTUCoeffCr);
@@ -147,7 +147,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempCbf[0]  = new UChar[numPartitions];
     m_qtTempCbf[1]  = new UChar[numPartitions];
     m_qtTempCbf[2]  = new UChar[numPartitions];
-    m_qtTempTComYuv  = new TShortYUV[numLayersToAllocate];
+    m_qtTempShortYuv  = new TShortYUV[numLayersToAllocate];
 
     m_hChromaShift = CHROMA_H_SHIFT(cfg->param.internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(cfg->param.internalCsp);
@@ -157,7 +157,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
         m_qtTempCoeffY[i]  = X265_MALLOC(TCoeff, g_maxCUWidth * g_maxCUHeight);
         m_qtTempCoeffCb[i] = X265_MALLOC(TCoeff, (g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift));
         m_qtTempCoeffCr[i] = X265_MALLOC(TCoeff, (g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift));
-        m_qtTempTComYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param.internalCsp);
+        m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param.internalCsp);
     }
 
     m_sharedPredTransformSkip[0] = new Pel[MAX_TS_WIDTH * MAX_TS_HEIGHT];
@@ -431,9 +431,9 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     uint32_t numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
     TCoeff*  coeff          = m_qtTempCoeffY[qtLayer] + numCoeffPerInc * absPartIdx;
 
-    int16_t* reconQt        = m_qtTempTComYuv[qtLayer].getLumaAddr(absPartIdx);
+    int16_t* reconQt        = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
 
-    assert(m_qtTempTComYuv[qtLayer].m_width == MAX_CU_SIZE);
+    assert(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE);
 
     uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
     Pel*     reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
@@ -547,8 +547,8 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     uint32_t qtlayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
     uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> (m_hChromaShift + m_vChromaShift);
     TCoeff*  coeff          = (chromaId > 0 ? m_qtTempCoeffCr[qtlayer] : m_qtTempCoeffCb[qtlayer]) + numCoeffPerInc * absPartIdx;
-    int16_t* reconQt        = (chromaId > 0 ? m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx) : m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx));
-    uint32_t reconQtStride  = m_qtTempTComYuv[qtlayer].m_cwidth;
+    int16_t* reconQt        = (chromaId > 0 ? m_qtTempShortYuv[qtlayer].getCrAddr(absPartIdx) : m_qtTempShortYuv[qtlayer].getCbAddr(absPartIdx));
+    uint32_t reconQtStride  = m_qtTempShortYuv[qtlayer].m_cwidth;
     uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
     Pel*     reconIPred       = (chromaId > 0 ? cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder) : cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder));
     uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
@@ -953,8 +953,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         uint32_t height    = cu->getHeight(0) >> trDepth;
         uint32_t qtLayer   = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
         uint32_t zorder    = cu->getZorderIdxInCU() + absPartIdx;
-        int16_t* src       = m_qtTempTComYuv[qtLayer].getLumaAddr(absPartIdx);
-        assert(m_qtTempTComYuv[qtLayer].m_width == MAX_CU_SIZE);
+        int16_t* src       = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
+        assert(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE);
         Pel*     dst       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
         uint32_t dststride = cu->getPic()->getPicYuvRec()->getStride();
         primitives.blockcpy_ps(width, height, dst, dststride, src, MAX_CU_SIZE);
@@ -963,12 +963,12 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         {
             width  >>= m_hChromaShift;
             height >>= m_vChromaShift;
-            src       = m_qtTempTComYuv[qtLayer].getCbAddr(absPartIdx);
-            uint32_t srcstride = m_qtTempTComYuv[qtLayer].m_cwidth;
+            src       = m_qtTempShortYuv[qtLayer].getCbAddr(absPartIdx);
+            uint32_t srcstride = m_qtTempShortYuv[qtLayer].m_cwidth;
             dst       = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
             dststride = cu->getPic()->getPicYuvRec()->getCStride();
             primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
-            src = m_qtTempTComYuv[qtLayer].getCrAddr(absPartIdx);
+            src = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdx);
             dst = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
             primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
         }
@@ -1137,11 +1137,11 @@ void TEncSearch::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t ab
         }
 
         //===== copy reconstruction =====
-        m_qtTempTComYuv[qtlayer].copyPartToPartLuma(reconYuv, absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartLuma(reconYuv, absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
         if (!bLumaOnly && !bSkipChroma)
         {
             uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-            m_qtTempTComYuv[qtlayer].copyPartToPartChroma(reconYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+            m_qtTempShortYuv[qtlayer].copyPartToPartChroma(reconYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
         }
     }
     else
@@ -1192,12 +1192,12 @@ void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
     }
 
     //===== copy reconstruction =====
-    m_qtTempTComYuv[qtlayer].copyPartToPartLuma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
+    m_qtTempShortYuv[qtlayer].copyPartToPartLuma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
 
     if (!bLumaOnly && !bSkipChroma)
     {
         uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-        m_qtTempTComYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
     }
 }
 
@@ -1240,18 +1240,18 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
 
     int part = partitionFromSizes(1 << trSizeLog2, 1 << trSizeLog2);
     //===== copy reconstruction =====
-    m_qtTempTransformSkipTComYuv.copyPartToPartLuma(&m_qtTempTComYuv[qtlayer], absPartIdx, part);
+    m_qtTempTransformSkipTComYuv.copyPartToPartLuma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
 
     if (!bLumaOnly && !bSkipChroma)
     {
-        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempTComYuv[qtlayer], absPartIdx, part);
+        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
     }
 
     uint32_t   zOrder           = cu->getZorderIdxInCU() + absPartIdx;
     Pel*   reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zOrder);
     uint32_t   reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
-    int16_t* reconQt          = m_qtTempTComYuv[qtlayer].getLumaAddr(absPartIdx);
-    assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
+    int16_t* reconQt          = m_qtTempShortYuv[qtlayer].getLumaAddr(absPartIdx);
+    assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
     uint32_t   width            = cu->getWidth(0) >> trDepth;
     uint32_t   height           = cu->getHeight(0) >> trDepth;
     primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, MAX_CU_SIZE);
@@ -1262,11 +1262,11 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
         height >>= 1;
         reconIPred = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zOrder);
         reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
-        reconQt = m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx);
-        uint32_t reconQtStride = m_qtTempTComYuv[qtlayer].m_cwidth;
+        reconQt = m_qtTempShortYuv[qtlayer].getCbAddr(absPartIdx);
+        uint32_t reconQtStride = m_qtTempShortYuv[qtlayer].m_cwidth;
         primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
         reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zOrder);
-        reconQt    = m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx);
+        reconQt    = m_qtTempShortYuv[qtlayer].getCrAddr(absPartIdx);
         primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
     }
 }
@@ -1316,7 +1316,7 @@ void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uin
 
         //===== copy reconstruction =====
         uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-        m_qtTempTComYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2, stateU0V1Both2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2, stateU0V1Both2);
     }
 }
 
@@ -1366,24 +1366,24 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
 
         //===== copy reconstruction =====
         uint32_t lumaSize = 1 << (bChromaSame ? trSizeLog2 + 1 : trSizeLog2);
-        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempTComYuv[qtlayer], absPartIdx, lumaSize, stateU0V1Both2);
+        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, lumaSize, stateU0V1Both2);
 
         uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
         uint32_t width            = cu->getWidth(0) >> (trDepth + 1);
         uint32_t height           = cu->getHeight(0) >> (trDepth + 1);
-        uint32_t reconQtStride    = m_qtTempTComYuv[qtlayer].m_cwidth;
+        uint32_t reconQtStride    = m_qtTempShortYuv[qtlayer].m_cwidth;
         uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
 
         if (stateU0V1Both2 == 0 || stateU0V1Both2 == 2)
         {
             Pel* reconIPred = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
-            int16_t* reconQt  = m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx);
+            int16_t* reconQt  = m_qtTempShortYuv[qtlayer].getCbAddr(absPartIdx);
             primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
         }
         if (stateU0V1Both2 == 1 || stateU0V1Both2 == 2)
         {
             Pel* reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
-            int16_t* reconQt  = m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx);
+            int16_t* reconQt  = m_qtTempShortYuv[qtlayer].getCrAddr(absPartIdx);
             primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
         }
     }
@@ -1582,7 +1582,7 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
 
         //===== copy reconstruction =====
         uint32_t trSizeCLog2 = (bChromaSame || (chFmt == CHROMA_444))  ? trSizeLog2 : trSizeLog2 - 1;
-        m_qtTempTComYuv[qtlayer].copyPartToPartChroma(reconYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(reconYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
     }
     else
     {
@@ -3574,16 +3574,16 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         }
         if (absSumY)
         {
-            int16_t *curResiY = m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
+            int16_t *curResiY = m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx);
 
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0, chFmt);
 
             int scalingListType = 3 + TEXT_LUMA;
             assert(scalingListType < 6);
-            assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
+            assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, MAX_CU_SIZE,  coeffCurY, trWidth, trHeight, scalingListType, false, lastPosY); //this is for inter mode only
 
-            const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx), MAX_CU_SIZE);
+            const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx), MAX_CU_SIZE);
             if (cu->isLosslessCoded(0))
             {
                 distY = nonZeroDistY;
@@ -3624,8 +3624,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
         if (!absSumY)
         {
-            int16_t *ptr =  m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
-            assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
+            int16_t *ptr =  m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx);
+            assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
 
             assert(trWidth == trHeight);
             primitives.blockfill_s[(int)g_convertToBit[trWidth]](ptr, MAX_CU_SIZE, 0);
@@ -3645,17 +3645,17 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             }
             if (absSumU)
             {
-                int16_t *pcResiCurrU = m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
+                int16_t *pcResiCurrU = m_qtTempShortYuv[qtlayer].getCbAddr(absTUPartIdxC);
 
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                 int scalingListType = 3 + TEXT_CHROMA_U;
                 assert(scalingListType < 6);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, false, lastPosU);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, false, lastPosU);
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                             m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
-                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempShortYuv[qtlayer].getCbAddr(absTUPartIdxC),
+                                                             m_qtTempShortYuv[qtlayer].m_cwidth);
                 const uint32_t nonZeroDistU = m_rdCost->scaleChromaDistCb(dist);
 
                 if (cu->isLosslessCoded(0))
@@ -3697,8 +3697,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             }
             if (!absSumU)
             {
-                int16_t *ptr = m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
-                const uint32_t stride = m_qtTempTComYuv[qtlayer].m_cwidth;
+                int16_t *ptr = m_qtTempShortYuv[qtlayer].getCbAddr(absTUPartIdxC);
+                const uint32_t stride = m_qtTempShortYuv[qtlayer].m_cwidth;
                 assert(trWidthC == trHeightC);
                 primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
             }
@@ -3710,16 +3710,16 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             }
             if (absSumV)
             {
-                int16_t *curResiV = m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
+                int16_t *curResiV = m_qtTempShortYuv[qtlayer].getCrAddr(absTUPartIdxC);
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                 int scalingListType = 3 + TEXT_CHROMA_V;
                 assert(scalingListType < 6);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, false, lastPosV);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, false, lastPosV);
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                             m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
-                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempShortYuv[qtlayer].getCrAddr(absTUPartIdxC),
+                                                             m_qtTempShortYuv[qtlayer].m_cwidth);
                 const uint32_t nonZeroDistV = m_rdCost->scaleChromaDistCr(dist);
 
                 if (cu->isLosslessCoded(0))
@@ -3761,8 +3761,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             }
             if (!absSumV)
             {
-                int16_t *ptr =  m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
-                const uint32_t stride = m_qtTempTComYuv[qtlayer].m_cwidth;
+                int16_t *ptr =  m_qtTempShortYuv[qtlayer].getCrAddr(absTUPartIdxC);
+                const uint32_t stride = m_qtTempShortYuv[qtlayer].m_cwidth;
                 assert(trWidthC == trHeightC);
                 primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
             }
@@ -3780,8 +3780,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             int lastPosTransformSkipY = -1;
             uint64_t singleCostY = MAX_INT64;
 
-            int16_t *curResiY = m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
-            assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
+            int16_t *curResiY = m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx);
+            assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
 
             TCoeff bestCoeffY[32 * 32];
             memcpy(bestCoeffY, coeffCurY, sizeof(TCoeff) * numSamplesLuma);
@@ -3819,12 +3819,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 int scalingListType = 3 + TEXT_LUMA;
                 assert(scalingListType < 6);
-                assert(m_qtTempTComYuv[qtlayer].m_width == MAX_CU_SIZE);
+                assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
 
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, MAX_CU_SIZE,  coeffCurY, trWidth, trHeight, scalingListType, true, lastPosTransformSkipY);
 
                 nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width,
-                                                           m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx),
+                                                           m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx),
                                                            MAX_CU_SIZE);
 
                 singleCostY = m_rdCost->calcRdCost(nonZeroDistY, skipSingleBitsY);
@@ -3856,9 +3856,9 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             uint64_t singleCostU = MAX_INT64;
             uint64_t singleCostV = MAX_INT64;
 
-            int16_t *curResiU = m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
-            int16_t *curResiV = m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
-            uint32_t stride = m_qtTempTComYuv[qtlayer].m_cwidth;
+            int16_t *curResiU = m_qtTempShortYuv[qtlayer].getCbAddr(absTUPartIdxC);
+            int16_t *curResiV = m_qtTempShortYuv[qtlayer].getCrAddr(absTUPartIdxC);
+            uint32_t stride = m_qtTempShortYuv[qtlayer].m_cwidth;
             TCoeff bestCoeffU[32 * 32], bestCoeffV[32 * 32];
             memcpy(bestCoeffU, coeffCurU, sizeof(TCoeff) * numSamplesChroma);
             memcpy(bestCoeffV, coeffCurV, sizeof(TCoeff) * numSamplesChroma);
@@ -3908,10 +3908,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 int scalingListType = 3 + TEXT_CHROMA_U;
                 assert(scalingListType < 6);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiU, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, true, lastPosTransformSkipU);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiU, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, true, lastPosTransformSkipU);
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                             m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
-                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempShortYuv[qtlayer].getCbAddr(absTUPartIdxC),
+                                                             m_qtTempShortYuv[qtlayer].m_cwidth);
                 nonZeroDistU = m_rdCost->scaleChromaDistCb(dist);
                 singleCostU = m_rdCost->calcRdCost(nonZeroDistU, singleBitsU);
             }
@@ -3944,10 +3944,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 int scalingListType = 3 + TEXT_CHROMA_V;
                 assert(scalingListType < 6);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, true, lastPosTransformSkipV);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, true, lastPosTransformSkipV);
                 uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth,
-                                                             m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
-                                                             m_qtTempTComYuv[qtlayer].m_cwidth);
+                                                             m_qtTempShortYuv[qtlayer].getCrAddr(absTUPartIdxC),
+                                                             m_qtTempShortYuv[qtlayer].m_cwidth);
                 nonZeroDistV = m_rdCost->scaleChromaDistCr(dist);
                 singleCostV = m_rdCost->calcRdCost(nonZeroDistV, singleBitsV);
             }
@@ -4213,11 +4213,11 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
         {
             int trWidth  = 1 << trSizeLog2;
             int trHeight = 1 << trSizeLog2;
-            m_qtTempTComYuv[qtlayer].copyPartToPartLuma(resiYuv, absTUPartIdx, trWidth, trHeight);
+            m_qtTempShortYuv[qtlayer].copyPartToPartLuma(resiYuv, absTUPartIdx, trWidth, trHeight);
 
             if (bCodeChroma)
             {
-                m_qtTempTComYuv[qtlayer].copyPartToPartChroma(resiYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+                m_qtTempShortYuv[qtlayer].copyPartToPartChroma(resiYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
             }
         }
         else
