@@ -549,6 +549,47 @@ int x265_check_params(x265_param *param)
     }
 
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
+    CHECK((param->aspectRatioIdc < 0
+          || param->aspectRatioIdc > 16)
+         && param->aspectRatioIdc != 255,
+         "Sample Aspect Ratio must be 0-16 or 255");
+    CHECK(param->sarWidth < 0,
+         "Sample Aspect Ratio width must be greater than 0");
+    CHECK(param->sarHeight < 0,
+         "Sample Aspect Ratio height must be greater than 0");
+    CHECK(param->videoFormat < 0 || param->videoFormat > 5,
+         "Video Format must be Component component,"
+         " pal, ntsc, secam, mac or undef");
+    CHECK(param->colorPrimaries < 0
+          || param->colorPrimaries > 9
+          || param->colorPrimaries == 3,
+         "Color Primaries must be undef, bt709, bt470m,"
+         " bt470bg, smpte170m, smpte240m, film or bt2020");
+    CHECK(param->transferCharacteristics < 0
+          || param->transferCharacteristics > 15
+          || param->transferCharacteristics == 3,
+         "Transfer Characteristics must be undef, bt709, bt470m, bt470bg,"
+         " smpte170m, smpte240m, linear, log100, log316, iec61966-2-4, bt1361e,"
+         " iec61966-2-1, bt2020-10 or bt2020-12");
+    CHECK(param->matrixCoeffs < 0
+          || param->matrixCoeffs > 10
+          || param->matrixCoeffs == 3,
+          "Matrix Coefficients must be undef, bt709, fcc, bt470bg, smpte170m,"
+          " smpte240m, GBR, YCgCo, bt2020nc or bt2020c");
+    CHECK(param->chromaSampleLocTypeTopField < 0
+          || param->chromaSampleLocTypeTopField > 5,
+          "Chroma Sample Location Type Top Field must be 0-5");
+    CHECK(param->chromaSampleLocTypeBottomField < 0
+          || param->chromaSampleLocTypeBottomField > 5,
+          "Chroma Sample Location Type Bottom Field must be 0-5");
+    CHECK(param->defDispWinLeftOffset < 0,
+          "Default Display Window Left Offset must be 0 or greater");
+    CHECK(param->defDispWinRightOffset < 0,
+          "Default Display Window Right Offset must be 0 or greater");
+    CHECK(param->defDispWinTopOffset < 0,
+          "Default Display Window Top Offset must be 0 or greater");
+    CHECK(param->defDispWinBottomOffset < 0,
+          "Default Display Window Bottom Offset must be 0 or greater");
     return check_failed;
 }
 
@@ -832,6 +873,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->bEnableOverscanInfoPresentFlag = bvalue;
             p->bEnableOverscanAppropriateFlag = bvalue;
         }
+        else
+            p->bEnableOverscanInfoPresentFlag = -1;
     }
     OPT("videoformat")
     {
@@ -849,6 +892,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->videoFormat = 4;
         else if (!strcmp(value, "undef"))
             p->videoFormat = 5;
+        else
+            p->videoFormat = -1;
     }
     OPT("range")
     {
@@ -877,6 +922,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->colorPrimaries = 8;
         else if (!strcmp(value, "bt2020"))
             p->colorPrimaries = 9;
+        else
+            p->colorPrimaries = -1;
     }
     OPT("transfer")
     {
@@ -911,6 +958,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->transferCharacteristics = 14;
         else if (!strcmp(value, "bt2020-12"))
             p->transferCharacteristics = 15;
+        else
+            p->transferCharacteristics = -1;
     }
     OPT("colormatrix")
     {
@@ -937,6 +986,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->matrixCoeffs = 9;
         else if (!strcmp(value, "bt2020c"))
             p->matrixCoeffs = 10;
+        else
+            p->matrixCoeffs = -1;
     }
     OPT("chromaloc")
     {
