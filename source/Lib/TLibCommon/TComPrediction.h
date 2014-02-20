@@ -63,8 +63,6 @@ class TComPrediction : public TComWeightPrediction
 {
 protected:
 
-    pixel*    m_predAllAngsBuf;
-
     // references sample for IntraPrediction
     TComYuv   m_predYuv[2];
     TShortYUV m_predShortYuv[2];

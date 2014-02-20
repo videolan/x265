@@ -58,15 +58,18 @@ static const UChar intraFilterThreshold[5] =
 // ====================================================================================================================
 
 TComPrediction::TComPrediction()
-    : m_predBuf(NULL)
-    , m_predAllAngsBuf(NULL)
-{}
+{
+    m_predBuf = NULL;
+    m_refAbove = NULL;
+    m_refAboveFlt = NULL;
+    m_refLeft = NULL;
+    m_refLeftFlt = NULL;
+    m_immedVals = NULL;
+}
 
 TComPrediction::~TComPrediction()
 {
     X265_FREE(m_predBuf);
-    X265_FREE(m_predAllAngsBuf);
-
     X265_FREE(m_refAbove);
     X265_FREE(m_refAboveFlt);
     X265_FREE(m_refLeft);
@@ -90,7 +93,6 @@ void TComPrediction::initTempBuff(int csp)
         m_predBufHeight = ((MAX_CU_SIZE + 2) << 4);
         m_predBufStride = ((MAX_CU_SIZE + 8) << 4);
         m_predBuf = X265_MALLOC(pixel, m_predBufStride * m_predBufHeight);
-        m_predAllAngsBuf = X265_MALLOC(pixel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
 
         m_refAbove = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
         m_refAboveFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
