@@ -1126,12 +1126,12 @@ void TEncSearch::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t ab
 
         if (!bLumaOnly && !bSkipChroma)
         {
-            uint32_t numCoeffC    = (bChromaSame ? numCoeffY    : numCoeffY    >> 2);
+            uint32_t numCoeffC    = (bChromaSame ? numCoeffY : numCoeffY >> 2);
             uint32_t numCoeffIncC = numCoeffIncY >> 2;
             TCoeff* coeffSrcU = m_qtTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
             TCoeff* coeffSrcV = m_qtTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-            TCoeff* coeffDstU = cu->getCoeffCb()            + (numCoeffIncC * absPartIdx);
-            TCoeff* coeffDstV = cu->getCoeffCr()            + (numCoeffIncC * absPartIdx);
+            TCoeff* coeffDstU = cu->getCoeffCb()         + (numCoeffIncC * absPartIdx);
+            TCoeff* coeffDstV = cu->getCoeffCr()         + (numCoeffIncC * absPartIdx);
             ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
             ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
         }
@@ -1248,13 +1248,13 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
     }
 
     uint32_t   zOrder           = cu->getZorderIdxInCU() + absPartIdx;
-    Pel*   reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zOrder);
+    pixel*     reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zOrder);
     uint32_t   reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
-    int16_t* reconQt          = m_qtTempShortYuv[qtlayer].getLumaAddr(absPartIdx);
-    assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
+    int16_t*   reconQt          = m_qtTempShortYuv[qtlayer].getLumaAddr(absPartIdx);
     uint32_t   width            = cu->getWidth(0) >> trDepth;
     uint32_t   height           = cu->getHeight(0) >> trDepth;
     primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, MAX_CU_SIZE);
+    assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
 
     if (!bLumaOnly && !bSkipChroma)
     {
@@ -1265,6 +1265,7 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
         reconQt = m_qtTempShortYuv[qtlayer].getCbAddr(absPartIdx);
         uint32_t reconQtStride = m_qtTempShortYuv[qtlayer].m_cwidth;
         primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+
         reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zOrder);
         reconQt    = m_qtTempShortYuv[qtlayer].getCrAddr(absPartIdx);
         primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
