@@ -99,6 +99,19 @@ private:
         return blkX + blkY * size;
     }
 
+    void    copyToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx);
+    void    copyToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx);
+
+    void    copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
+    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t partDepth = 0, uint32_t partIdx = 0);
+
+    void    copyFromPicLuma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
+    void    copyFromPicChroma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
+
+    void    copyPartToLuma(TComYuv* dstPicYuv, uint32_t srcPartIdx, uint32_t part);
+    void    copyPartToChroma(TComYuv* dstPicYuv, uint32_t srcPartIdx, uint32_t part);
+
+
 public:
 
     TComYuv();
@@ -118,23 +131,15 @@ public:
 
     //  Copy YUV buffer to picture buffer
     void    copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
-    void    copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
-    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t partDepth = 0, uint32_t partIdx = 0);
 
     //  Copy YUV buffer from picture buffer
     void    copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
-    void    copyFromPicLuma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
-    void    copyFromPicChroma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
 
     //  Copy Small YUV buffer to the part of other Big YUV buffer
     void    copyToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx);
-    void    copyToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx);
-    void    copyToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx);
 
     //  Copy the part of Big YUV buffer to other Small YUV buffer
     void    copyPartToYuv(TComYuv* dstPicYuv, uint32_t srcPartIdx);
-    void    copyPartToLuma(TComYuv* dstPicYuv, uint32_t srcPartIdx, uint32_t part);
-    void    copyPartToChroma(TComYuv* dstPicYuv, uint32_t srcPartIdx, uint32_t part);
 
     //  Copy YUV partition buffer to other YUV partition buffer
     void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma = true, bool bChroma = true);
