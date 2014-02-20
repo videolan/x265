@@ -171,22 +171,48 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
         cost.estimateFrameCost(frames, p0, p1, b, false);
         cost.flush();
     }
-
     if (cfg->param.rc.cuTree)
+    {
         pic->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
+        if (b && cfg->param.rc.vbvBufferSize)
+            frameCostRecalculate(frames,b, b, b);
+    }
+
     else if (cfg->param.rc.aqMode)
         pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
     else
         pic->m_lowres.satdCost = pic->m_lowres.costEst[b - p0][p1 - b];
+
+    if (cfg->param.rc.vbvBufferSize > 0 && cfg->param.rc.vbvMaxBitrate > 0)
+    {
+        pic->m_lowres.lowresCostForRc = pic->m_lowres.lowresCosts[b - p0][p1 - b];
+        uint32_t lowresRow = 0 , lowresCol = 0, lowresCuIdx = 0, sum = 0;
+        uint32_t scale = cfg->param.maxCUSize / (2 * X265_LOWRES_CU_SIZE);
+        uint32_t widthInLowresCu = (uint32_t)widthInCU, heightInLowresCu = (uint32_t)heightInCU;
+
+        for (uint32_t row = 0; row < pic->getFrameHeightInCU(); row++)
+        {
+            lowresRow = row * scale;
+            for (uint32_t cnt = 0 ; cnt < scale && lowresRow < heightInLowresCu; lowresRow++, cnt++)
+            {
+                sum = 0;
+                lowresCuIdx = lowresRow * widthInLowresCu ;
+                for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
+                {
+                    sum +=  pic->m_lowres.lowresCostForRc[lowresCuIdx];
+                }
+                pic->m_rowSatdForVbv[row] += sum;
+            }
+          }
+      }
     return pic->m_lowres.satdCost;
 }
-
 void Lookahead::slicetypeDecide()
 {
     Lowres *frames[X265_LOOKAHEAD_MAX];
     TComPic *list[X265_LOOKAHEAD_MAX];
     TComPic *ipic = inputQueue.first();
-
+    bool isKeyFrameAnalyse = (cfg->param.rc.cuTree || (cfg->param.rc.vbvBufferSize && cfg->param.lookaheadDepth));
     if (!est.rows && ipic)
         est.init(cfg, ipic);
 
@@ -371,8 +397,11 @@ void Lookahead::slicetypeDecide()
             outputQueue.pushBack(*list[i]);
         }
     }
+    if (isKeyFrameAnalyse && IS_X265_TYPE_I(lastNonB->sliceType))
+    {
+        slicetypeAnalyse(frames,true);
+    }
 }
-
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
 {
     int prevNonB = 0, curNonB = 1, idx = 0;
