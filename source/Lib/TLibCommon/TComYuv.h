@@ -131,9 +131,7 @@ public:
     //  Copy YUV partition buffer to other YUV partition buffer
     void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
-    void    copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t part);
     void    copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part);
-
     void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part);
     void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId);
 
