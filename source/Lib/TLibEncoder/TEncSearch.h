@@ -173,8 +173,6 @@ public:
 
     void IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv);
 
-    uint32_t estimateHeaderBits(TComDataCU* cu, uint32_t absPartIdx);
-
     void xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, bool bLumaOnly, TComYuv* fencYuv,
                              TComYuv* predYuv, TShortYUV* resiYuv, uint32_t& distY, uint32_t& distC, bool bCheckFirst,
                              uint64_t& dRDCost);
@@ -242,7 +240,6 @@ protected:
     uint32_t xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand,
                               int picList, int refIdx, int sizex, int sizey);
 
-    uint32_t xGetMvpIdxBits(int idx, int num);
     void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     void xMergeEstimation(TComDataCU* cu, int partIdx, uint32_t& uiInterDir,
@@ -263,8 +260,6 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     void xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype);
-
-    void setWpScalingDistParam(TComDataCU* cu, int refIdx, int picList);
 };
 }
 //! \}

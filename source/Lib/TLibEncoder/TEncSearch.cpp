@@ -75,7 +75,6 @@ TEncSearch::TEncSearch()
     m_entropyCoder = NULL;
     m_rdSbacCoders    = NULL;
     m_rdGoOnSbacCoder = NULL;
-    setWpScalingDistParam(NULL, -1, REF_PIC_LIST_X);
 }
 
 TEncSearch::~TEncSearch()
@@ -2889,8 +2888,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
     }
 
     cu->m_totalBits = totalmebits;
-
-    setWpScalingDistParam(cu, -1, REF_PIC_LIST_X);
 }
 
 // AMVP
@@ -2930,32 +2927,6 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list,
     // Setting Best MVP
     mvPred = bestMv;
     cu->setMVPIdxSubParts(bestIdx, list, partAddr, partIdx, cu->getDepth(partAddr));
-}
-
-uint32_t TEncSearch::xGetMvpIdxBits(int idx, int num)
-{
-    assert(idx >= 0 && num >= 0 && idx < num);
-
-    if (num == 1)
-        return 0;
-
-    uint32_t length = 1;
-    int temp = idx;
-    if (temp == 0)
-    {
-        return length;
-    }
-
-    bool bCodeLast = (num - 1 > temp);
-
-    length += (temp - 1);
-
-    if (bCodeLast)
-    {
-        length++;
-    }
-
-    return length;
 }
 
 void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
@@ -4354,84 +4325,6 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         m_entropyCoder->encodeCoeff(cu, 0, cu->getDepth(0), cu->getWidth(0), cu->getHeight(0), bDummy);
         return m_entropyCoder->getNumberOfWrittenBits();
     }
-}
-
-/**** Function to estimate the header bits ************/
-uint32_t  TEncSearch::estimateHeaderBits(TComDataCU* cu, uint32_t absPartIdx)
-{
-    uint32_t bits = 0;
-
-    m_entropyCoder->resetBits();
-
-    uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
-    uint32_t rpelx = lpelx + (g_maxCUWidth >> cu->getDepth(0))  - 1;
-    uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-    uint32_t bpely = tpely + (g_maxCUHeight >>  cu->getDepth(0)) - 1;
-
-    TComSlice * slice = cu->getPic()->getSlice();
-    if ((rpelx < slice->getSPS()->getPicWidthInLumaSamples()) && (bpely < slice->getSPS()->getPicHeightInLumaSamples()))
-    {
-        m_entropyCoder->encodeSplitFlag(cu, absPartIdx,  cu->getDepth(0));
-    }
-
-    if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
-    {
-        m_entropyCoder->encodeMergeFlag(cu, 0);
-        m_entropyCoder->encodeMergeIndex(cu, 0, true);
-    }
-
-    if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-    {
-        m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
-    }
-
-    if (!cu->getSlice()->isIntra())
-    {
-        m_entropyCoder->encodeSkipFlag(cu, 0, true);
-    }
-
-    m_entropyCoder->encodePredMode(cu, 0, true);
-
-    m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0), true);
-    bits += m_entropyCoder->getNumberOfWrittenBits();
-
-    return bits;
-}
-
-void  TEncSearch::setWpScalingDistParam(TComDataCU*, int, int)
-{
-#if 0 // dead code
-    if (refIdx < 0)
-    {
-        m_distParam.applyWeight = false;
-        return;
-    }
-
-    TComSlice       *slice = cu->getSlice();
-    TComPPS         *pps   = cu->getSlice()->getPPS();
-    wpScalingParam  *wp0, *wp1;
-    m_distParam.applyWeight = (slice->getSliceType() == P_SLICE && pps->getUseWP()) || (slice->getSliceType() == B_SLICE && pps->getWPBiPred());
-    if (!m_distParam.applyWeight) return;
-
-    int refIdx0 = (list == REF_PIC_LIST_0) ? refIdx : (-1);
-    int refIdx1 = (list == REF_PIC_LIST_1) ? refIdx : (-1);
-
-    getWpScaling(cu, refIdx0, refIdx1, wp0, wp1);
-
-    if (refIdx0 < 0) wp0 = NULL;
-    if (refIdx1 < 0) wp1 = NULL;
-
-    m_distParam.wpCur  = NULL;
-
-    if (list == REF_PIC_LIST_0)
-    {
-        m_distParam.wpCur = wp0;
-    }
-    else
-    {
-        m_distParam.wpCur = wp1;
-    }
-#endif // if 0
 }
 
 //! \}
