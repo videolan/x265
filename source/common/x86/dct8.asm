@@ -362,10 +362,10 @@ cglobal dst4, 3, 4, 8
 INIT_XMM sse2
 cglobal idst4, 3, 4, 7
 %if BIT_DEPTH == 8
-  %define m6  [pd_2048]
+  mova m6, [pd_2048]
   %define IDCT4_SHIFT 12
 %elif BIT_DEPTH == 10
-  %define m6  [pd_512]
+  mova m6, [pd_512]
   %define IDCT4_SHIFT 10
 %else
   %error Unsupported BIT_DEPTH!
