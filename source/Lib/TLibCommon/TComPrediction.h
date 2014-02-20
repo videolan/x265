@@ -94,7 +94,7 @@ protected:
 
 public:
 
-    Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
+    Pel *m_refAbove, *m_refAboveFlt, *m_refLeft, *m_refLeftFlt;
 
     TComPrediction();
     virtual ~TComPrediction();

@@ -444,7 +444,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 
     if (default0Save1Load2 != 2)
     {
-        cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt);
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, width);
         // save prediction
@@ -1030,7 +1030,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         //===== init availability pattern =====
 
-        cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt);
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, width);
 
@@ -1803,7 +1803,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
     {
         // Reference sample smoothing
-        cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_predBufStride, m_predBufHeight, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
         const int numModesAvailable = 35; //total number of Intra modes
@@ -1825,10 +1825,10 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             candNum = 0;
             uint32_t modeCosts[35];
 
-            Pel *above         = refAbove    + width - 1;
-            Pel *aboveFiltered = refAboveFlt + width - 1;
-            Pel *left          = refLeft     + width - 1;
-            Pel *leftFiltered  = refLeftFlt  + width - 1;
+            Pel *above         = m_refAbove    + width - 1;
+            Pel *aboveFiltered = m_refAboveFlt + width - 1;
+            Pel *left          = m_refLeft     + width - 1;
+            Pel *leftFiltered  = m_refLeftFlt  + width - 1;
 
             // 33 Angle modes once
             ALIGN_VAR_32(Pel, buf_trans[32 * 32]);

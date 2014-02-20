@@ -67,10 +67,10 @@ TComPrediction::~TComPrediction()
     X265_FREE(m_predBuf);
     X265_FREE(m_predAllAngsBuf);
 
-    X265_FREE(refAbove);
-    X265_FREE(refAboveFlt);
-    X265_FREE(refLeft);
-    X265_FREE(refLeftFlt);
+    X265_FREE(m_refAbove);
+    X265_FREE(m_refAboveFlt);
+    X265_FREE(m_refLeft);
+    X265_FREE(m_refLeftFlt);
 
     m_predYuv[0].destroy();
     m_predYuv[1].destroy();
@@ -94,10 +94,10 @@ void TComPrediction::initTempBuff(int csp)
         m_predBuf = X265_MALLOC(Pel, m_predBufStride * m_predBufHeight);
         m_predAllAngsBuf = X265_MALLOC(Pel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
 
-        refAbove = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        refAboveFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        refLeft = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        refLeftFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        m_refAbove = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        m_refAboveFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        m_refLeft = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        m_refLeftFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
 
         m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
         m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
@@ -141,14 +141,14 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t strid
     bool bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, width);
 
     Pel *refLft, *refAbv;
-    refLft = refLeft + width - 1;
-    refAbv = refAbove + width - 1;
+    refLft = m_refLeft + width - 1;
+    refAbv = m_refAbove + width - 1;
 
     if (bUseFilteredPredictions)
     {
         src += ADI_BUF_STRIDE * (2 * width + 1);
-        refLft = refLeftFlt + width - 1;
-        refAbv = refAboveFlt + width - 1;
+        refLft = m_refLeftFlt + width - 1;
+        refAbv = m_refAboveFlt + width - 1;
     }
 
     bool bFilter = width <= 16 && dirMode != PLANAR_IDX;
