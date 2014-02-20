@@ -171,9 +171,8 @@ public:
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
 protected:
-
     void determineSliceBounds();
-    int calcQpForCu(TComPic *pic, uint32_t cuAddr);
+    int calcQpForCu (TComPic *pic, uint32_t cuAddr, double baseQp);
     Encoder*                 m_top;
     TEncCfg*                 m_cfg;
 

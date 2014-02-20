@@ -1057,6 +1057,7 @@ void FrameEncoder::processRowEncoder(int row)
     CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
+    double qpBase = m_pic->m_avgQpRc;
     for (uint32_t col = curRow.m_completed; col < numCols; col++)
     {
         const uint32_t cuAddr = lineStartCUAddr + col;
@@ -1065,26 +1066,41 @@ void FrameEncoder::processRowEncoder(int row)
 
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
-
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        if (m_cfg->param.rc.aqMode)
+
+        if ((uint32_t)row >= col && (row !=0))
+            qpBase = m_pic->getCU(cuAddr - numCols + 1)->m_baseQp;
+
+        if (m_cfg->param.rc.aqMode || (m_cfg->param.rc.vbvBufferSize >0 && m_cfg->param.rc.vbvMaxBitrate >0))
         {
-            int qp = calcQpForCu(m_pic, cuAddr);
+            int qp = calcQpForCu(m_pic, cuAddr , qpBase);
             setLambda(qp, row);
-            if (qp > MAX_QP)
-                qp = MAX_QP;
-            cu->setQP(0, (char)qp);
+            qp = X265_MIN(qp, MAX_QP);
+            cu->setQP(0,char(qp));
+            cu->m_baseQp = qpBase;
         }
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
+        if (m_cfg->param.rc.vbvBufferSize && m_cfg->param.rc.vbvMaxBitrate)
+        {
+            // Update encoded bits, satdCost, baseQP for each CU
+            m_pic->m_rowDiagSatd[row] += m_pic->m_cuCostsForVbv[cuAddr];
+            m_pic->m_rowEncodedBits[row] += cu->m_totalBits;
+            m_pic->m_numEncodedCusPerRow[row] = cuAddr;
+            m_pic->m_qpaAq[row] += cu->getQP(0);
+            m_pic->m_qpaRc[row] += cu->m_baseQp;
 
-        // TODO: Keep atomic running totals for rate control?
-        // cu->m_totalBits;
-        // cu->m_totalCost;
-        // cu->m_totalDistortion;
+            if ((uint32_t)row == col)
+                m_pic->m_rowDiagQp[row] = qpBase;
 
+            // If current block is at row diagonal checkpoint, call vbv ratecontrol.
+            if ((uint32_t)row == col && row != 0 )
+            {
+                 m_top->m_rateControl->rowDiagonalVbvRateControl(m_pic, row, &m_rce, qpBase);
+                 qpBase = Clip3((double)MIN_QP, (double)MAX_MAX_QP, qpBase);
+            }
+        }
         // Completed CU processing
         m_rows[row].m_completed++;
-
         if (m_rows[row].m_completed >= 2 && row < m_numRows - 1)
         {
             ScopedLock below(m_rows[row + 1].m_lock);
@@ -1127,38 +1143,43 @@ void FrameEncoder::processRowEncoder(int row)
     m_totalTime = m_totalTime + (x265_mdate() - startTime);
     curRow.m_busy = false;
 }
-
-int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr)
+int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
 {
     x265_emms();
-    double qp = pic->getSlice()->m_avgQpRc;
-    if (m_cfg->param.rc.aqMode)
+    double qp = baseQp;
+
+    /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
+    double qp_offset = 0;
+    int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
+    int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
+    int noOfBlocks = g_maxCUWidth / 16;
+    int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
+    int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
+
+    double *qpoffs = (pic->getSlice()->isReferenced() && m_cfg->param.rc.cuTree) ? pic->m_lowres.qpOffset : pic->m_lowres.qpAqOffset;
+    int cnt = 0, idx =0;
+    for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
     {
-        /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
-        double qp_offset = 0;
-        int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
-        int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
-        int noOfBlocks = g_maxCUWidth / 16;
-        int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
-        int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
-
-        double *qpoffs = (pic->getSlice()->isReferenced() && m_cfg->param.rc.cuTree) ? pic->m_lowres.qpOffset : pic->m_lowres.qpAqOffset;
-        int cnt = 0;
-        for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
+        for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
         {
-            for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
+            idx = block_x + w + (block_y * maxBlockCols);
+            if (m_cfg->param.rc.aqMode)
+                qp_offset += qpoffs[idx];
+            if (m_cfg->param.rc.vbvBufferSize > 0 && m_cfg->param.rc.vbvMaxBitrate > 0)
             {
-                qp_offset += qpoffs[block_x + w + (block_y * maxBlockCols)];
-                cnt++;
+                m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.lowresCostForRc[idx];
+                if (!m_cfg->param.rc.cuTree)
+                    m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.intraCost[idx];
             }
+            cnt++;
         }
-
-        qp_offset /= cnt;
-        qp += qp_offset;
     }
+    qp_offset /= cnt;
+    qp += qp_offset;
+
+
     return Clip3(MIN_QP, MAX_MAX_QP, (int)(qp + 0.5));
 }
-
 TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)
 {
     if (m_pic)
