@@ -1365,8 +1365,8 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
         }
 
         //===== copy reconstruction =====
-        uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempTComYuv[qtlayer], absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2, stateU0V1Both2);
+        uint32_t lumaSize = 1 << (bChromaSame ? trSizeLog2 + 1 : trSizeLog2);
+        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempTComYuv[qtlayer], absPartIdx, lumaSize, stateU0V1Both2);
 
         uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
         uint32_t width            = cu->getWidth(0) >> (trDepth + 1);
