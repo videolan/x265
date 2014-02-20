@@ -1153,8 +1153,9 @@ cglobal quant, 5,6,8, 0-(3*mmsize)
 INIT_XMM sse4
 cglobal dequant_normal, 4,5,5
     movd        m1, r3             ; m1 = word [scale]
-    cmp         r3d, 255
+    cmp         r3d, 32767
     jle         .skip
+
     psrld       m1, 2
     mov         r4d, r4m
     movd        m0, r4d             ; m0 = shift
