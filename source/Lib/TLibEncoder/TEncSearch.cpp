@@ -1786,6 +1786,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     uint32_t overallDistC = 0;
     uint32_t candNum;
     uint64_t candCostList[FAST_UDI_MAX_RDMODE_NUM];
+    const UChar intraModeNumFast[7] = {3, 8, 8, 3, 3, 3, 3}; // 2x2, 4x4, 8x8, 16x16, 32x32, 64x64, 128x128
 
     //===== set QP and clear Cbf =====
     if (cu->getSlice()->getPPS()->getUseDQP() == true)
@@ -1809,7 +1810,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         Pel* fenc   = fencYuv->getLumaAddr(pu, width);
         uint32_t stride = predYuv->getStride();
         uint32_t rdModeList[FAST_UDI_MAX_RDMODE_NUM];
-        int numModesForFullRD = g_intraModeNumFast[widthBit];
+        int numModesForFullRD = intraModeNumFast[widthBit];
 
         bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)
