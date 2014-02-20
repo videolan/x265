@@ -84,7 +84,7 @@ public:
 protected:
 
     TShortYUV*      m_qtTempShortYuv;
-    Pel*            m_sharedPredTransformSkip[3];
+    pixel*          m_sharedPredTransformSkip[3];
 
     TCoeff**        m_qtTempCoeffY;
     TCoeff**        m_qtTempCoeffCb;
@@ -112,7 +112,7 @@ protected:
     MV              m_mvPredictors[3];
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
-    Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
+    pixel*          m_tempPel;    // avoid mallocs in xEstimateResidualQT
 
     // Color space parameters
     int             m_hChromaShift;
