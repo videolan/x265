@@ -183,9 +183,6 @@ void TComYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t 
     Pel* src = getLumaAddr(partIdx);
     Pel* dst = dstPicYuv->getLumaAddr(partIdx);
 
-    if (src == dst)
-        return;
-
     uint32_t srcstride = getStride();
     uint32_t dststride = dstPicYuv->getStride();
 
@@ -209,9 +206,6 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_
     Pel* srcV = getCrAddr(partIdx);
     Pel* dstU = dstPicYuv->getCbAddr(partIdx);
     Pel* dstV = dstPicYuv->getCrAddr(partIdx);
-
-    if (srcU == dstU && srcV == dstV)
-        return;
 
     uint32_t srcstride = getCStride();
     uint32_t dststride = dstPicYuv->getCStride();
