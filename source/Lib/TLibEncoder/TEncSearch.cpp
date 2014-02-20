@@ -2612,10 +2612,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
         Pel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
 
-        cu->getMvPredLeft(m_mvPredictors[0]);
-        cu->getMvPredAbove(m_mvPredictors[1]);
-        cu->getMvPredAboveRight(m_mvPredictors[2]);
-
         bool bTestNormalMC = true;
 
         if (bUseMRG && cu->getWidth(0) > 8 && numPart == 2)
@@ -2647,7 +2643,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                     MV mvmin, mvmax;
                     xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
                     int satdCost = m_me.motionEstimate(m_mref[list][idx],
-                                                       mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
+                                                       mvmin, mvmax, mvp, 0, m_mvPredictors, merange, outmv);
 
                     /* Get total cost of partition, but only include MV bit cost once */
                     bitsTemp += m_me.bitcost(outmv);
