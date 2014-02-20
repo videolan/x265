@@ -86,7 +86,7 @@ protected:
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
 
     void xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, int height, TComYuv*& outPredYuv, bool bLuma = true, bool bChroma = true);
-    void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partAddr, int width, int height, TComYuv*& outDstYuv, bool bLuma = true, bool bChroma = true);
+    void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partAddr, int width, int height, TComYuv* outDstYuv, bool bLuma = true, bool bChroma = true);
 
     void xGetLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, Pel* dst0, int dststride, uint32_t width, uint32_t height, uint32_t ext0);
 
