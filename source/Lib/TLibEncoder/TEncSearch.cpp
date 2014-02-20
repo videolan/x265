@@ -107,7 +107,7 @@ TEncSearch::~TEncSearch()
         delete[] m_qtTempTransformSkipFlag[i];
     }
 
-    m_qtTempTransformSkipTComYuv.destroy();
+    m_qtTempTransformSkipYuv.destroy();
     m_tmpYuvPred.destroy();
 }
 
@@ -167,7 +167,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTUCoeffCb = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     m_qtTempTUCoeffCr = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
 
-    m_qtTempTransformSkipTComYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param.internalCsp);
+    m_qtTempTransformSkipYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param.internalCsp);
 
     m_qtTempTransformSkipFlag[0] = new UChar[numPartitions];
     m_qtTempTransformSkipFlag[1] = new UChar[numPartitions];
@@ -1192,12 +1192,12 @@ void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
     }
 
     //===== copy reconstruction =====
-    m_qtTempShortYuv[qtlayer].copyPartToPartLuma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
+    m_qtTempShortYuv[qtlayer].copyPartToPartLuma(&m_qtTempTransformSkipYuv, absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
 
     if (!bLumaOnly && !bSkipChroma)
     {
         uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
     }
 }
 
@@ -1240,11 +1240,11 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
 
     int part = partitionFromSizes(1 << trSizeLog2, 1 << trSizeLog2);
     //===== copy reconstruction =====
-    m_qtTempTransformSkipTComYuv.copyPartToPartLuma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
+    m_qtTempTransformSkipYuv.copyPartToPartLuma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
 
     if (!bLumaOnly && !bSkipChroma)
     {
-        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
+        m_qtTempTransformSkipYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
     }
 
     uint32_t   zOrder           = cu->getZorderIdxInCU() + absPartIdx;
@@ -1317,7 +1317,7 @@ void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uin
 
         //===== copy reconstruction =====
         uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipTComYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2, stateU0V1Both2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2, stateU0V1Both2);
     }
 }
 
@@ -1367,7 +1367,7 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
 
         //===== copy reconstruction =====
         uint32_t lumaSize = 1 << (bChromaSame ? trSizeLog2 + 1 : trSizeLog2);
-        m_qtTempTransformSkipTComYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, lumaSize, stateU0V1Both2);
+        m_qtTempTransformSkipYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, lumaSize, stateU0V1Both2);
 
         uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
         uint32_t width            = cu->getWidth(0) >> (trDepth + 1);

@@ -96,7 +96,7 @@ protected:
     TCoeff*         m_qtTempTUCoeffCb;
     TCoeff*         m_qtTempTUCoeffCr;
     UChar*          m_qtTempTransformSkipFlag[3];
-    TComYuv         m_qtTempTransformSkipTComYuv;
+    TComYuv         m_qtTempTransformSkipYuv;
 
     // interface to option
     TEncCfg*        m_cfg;
