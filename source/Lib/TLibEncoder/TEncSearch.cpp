@@ -3210,7 +3210,14 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     assert(bcost != MAX_INT64);
 
-    outReconYuv->addClip(predYuv, outBestResiYuv, 0, width);
+    if (cu->getQtRootCbf(0))
+    {
+        outReconYuv->addClip(predYuv, outBestResiYuv, 0, width);
+    }
+    else
+    {
+        predYuv->copyToPartYuv(outReconYuv, 0);
+    }
 
     // update with clipped distortion and cost (qp estimation loop uses unclipped values)
     int part = partitionFromSizes(width, height);
@@ -3246,12 +3253,19 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
     {
         residualTransformQuantInter(cu, 0, 0, resiYuv, cu->getDepth(0), true);
         uint32_t width  = cu->getWidth(0);
-        reconYuv->addClip(predYuv, resiYuv, 0, width);
-
-        if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && cu->getQtRootCbf(0) == 0)
+        if (cu->getQtRootCbf(0))
         {
-            cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
+            reconYuv->addClip(predYuv, resiYuv, 0, width);
         }
+        else
+        {
+            predYuv->copyToPartYuv(reconYuv, 0);
+            if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
+            {
+                cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
+            }
+        }
+
     }
     else if (cu->getPredictionMode(0) == MODE_INTRA)
     {

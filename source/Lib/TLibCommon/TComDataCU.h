@@ -312,7 +312,7 @@ public:
 
     void          setCbf(uint32_t idx, TextType ttype, UChar uh)     { m_cbf[ttype][idx] = uh; }
 
-    UChar         getQtRootCbf(uint32_t idx)           { return getCbf(idx, TEXT_LUMA, 0) || getCbf(idx, TEXT_CHROMA_U, 0) || getCbf(idx, TEXT_CHROMA_V, 0); }
+    UChar         getQtRootCbf(uint32_t idx)           { return getCbf(idx, TEXT_LUMA) || getCbf(idx, TEXT_CHROMA_U) || getCbf(idx, TEXT_CHROMA_V); }
 
     void          setCbfSubParts(uint32_t cbfY, uint32_t cbfU, uint32_t cbfV, uint32_t absPartIdx, uint32_t depth);
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
