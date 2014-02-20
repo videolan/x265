@@ -89,13 +89,13 @@ protected:
     TCoeff**        m_qtTempCoeffY;
     TCoeff**        m_qtTempCoeffCb;
     TCoeff**        m_qtTempCoeffCr;
-    UChar*          m_qtTempTrIdx;
-    UChar*          m_qtTempCbf[3];
+    uint8_t*        m_qtTempTrIdx;
+    uint8_t*        m_qtTempCbf[3];
 
     TCoeff*         m_qtTempTUCoeffY;
     TCoeff*         m_qtTempTUCoeffCb;
     TCoeff*         m_qtTempTUCoeffCr;
-    UChar*          m_qtTempTransformSkipFlag[3];
+    uint8_t*        m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipYuv;
 
     // interface to option

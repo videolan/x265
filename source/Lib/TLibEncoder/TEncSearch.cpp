@@ -64,8 +64,8 @@ TEncSearch::TEncSearch()
     for (int i = 0; i < 3; i++)
     {
         m_sharedPredTransformSkip[i] = NULL;
-        m_qtTempCbf[i] = NULL;
         m_qtTempTransformSkipFlag[i] = NULL;
+        m_qtTempCbf[i] = NULL;
     }
 
     m_cfg = NULL;
@@ -90,22 +90,22 @@ TEncSearch::~TEncSearch()
             m_qtTempShortYuv[i].destroy();
         }
     }
-    delete[] m_qtTempCoeffY;
-    delete[] m_qtTempCoeffCb;
-    delete[] m_qtTempCoeffCr;
-    delete[] m_qtTempTrIdx;
-    delete[] m_qtTempShortYuv;
     X265_FREE(m_qtTempTUCoeffY);
     X265_FREE(m_qtTempTUCoeffCb);
     X265_FREE(m_qtTempTUCoeffCr);
     X265_FREE(m_tempPel);
+    X265_FREE(m_qtTempTrIdx);
     for (uint32_t i = 0; i < 3; ++i)
     {
-        delete[] m_qtTempCbf[i];
-        delete[] m_qtTempTransformSkipFlag[i];
+        X265_FREE(m_qtTempCbf[i]);
         X265_FREE(m_sharedPredTransformSkip[i]);
+        X265_FREE(m_qtTempTransformSkipFlag[i]);
     }
 
+    delete[] m_qtTempCoeffY;
+    delete[] m_qtTempCoeffCb;
+    delete[] m_qtTempCoeffCr;
+    delete[] m_qtTempShortYuv;
     m_qtTempTransformSkipYuv.destroy();
     m_tmpYuvPred.destroy();
 }
@@ -136,8 +136,6 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_vChromaShift = CHROMA_V_SHIFT(cfg->param.internalCsp);
     initTempBuff(cfg->param.internalCsp);
 
-    m_tempPel = X265_MALLOC(pixel, g_maxCUWidth * g_maxCUHeight);
-
     const uint32_t numLayersToAllocate = cfg->getQuadtreeTULog2MaxSize() - cfg->getQuadtreeTULog2MinSize() + 1;
     m_qtTempCoeffY  = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCb = new TCoeff*[numLayersToAllocate];
@@ -152,10 +150,13 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     }
 
     const uint32_t numPartitions = 1 << (g_maxCUDepth << 1);
-    m_qtTempTrIdx   = new UChar[numPartitions];
-    m_qtTempCbf[0]  = new UChar[numPartitions];
-    m_qtTempCbf[1]  = new UChar[numPartitions];
-    m_qtTempCbf[2]  = new UChar[numPartitions];
+    m_qtTempTrIdx  = X265_MALLOC(uint8_t, numPartitions);
+    m_qtTempCbf[0] = X265_MALLOC(uint8_t, numPartitions);
+    m_qtTempCbf[1] = X265_MALLOC(uint8_t, numPartitions);
+    m_qtTempCbf[2] = X265_MALLOC(uint8_t, numPartitions);
+    m_qtTempTransformSkipFlag[0] = X265_MALLOC(uint8_t, numPartitions);
+    m_qtTempTransformSkipFlag[1] = X265_MALLOC(uint8_t, numPartitions);
+    m_qtTempTransformSkipFlag[2] = X265_MALLOC(uint8_t, numPartitions);
 
     m_sharedPredTransformSkip[0] = X265_MALLOC(pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     m_sharedPredTransformSkip[1] = X265_MALLOC(pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
@@ -164,11 +165,9 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTUCoeffCb = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     m_qtTempTUCoeffCr = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
 
+    m_tempPel = X265_MALLOC(pixel, g_maxCUWidth * g_maxCUHeight);
     m_qtTempTransformSkipYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param.internalCsp);
 
-    m_qtTempTransformSkipFlag[0] = new UChar[numPartitions];
-    m_qtTempTransformSkipFlag[1] = new UChar[numPartitions];
-    m_qtTempTransformSkipFlag[2] = new UChar[numPartitions];
     m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param.internalCsp);
 }
 
