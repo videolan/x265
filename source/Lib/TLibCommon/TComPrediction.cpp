@@ -71,15 +71,13 @@ TComPrediction::~TComPrediction()
     X265_FREE(m_refAboveFlt);
     X265_FREE(m_refLeft);
     X265_FREE(m_refLeftFlt);
+    X265_FREE(m_immedVals);
 
     m_predYuv[0].destroy();
     m_predYuv[1].destroy();
     m_predShortYuv[0].destroy();
     m_predShortYuv[1].destroy();
-
     m_predTempYuv.destroy();
-
-    X265_FREE(m_immedVals);
 }
 
 void TComPrediction::initTempBuff(int csp)
@@ -91,13 +89,13 @@ void TComPrediction::initTempBuff(int csp)
     {
         m_predBufHeight = ((MAX_CU_SIZE + 2) << 4);
         m_predBufStride = ((MAX_CU_SIZE + 8) << 4);
-        m_predBuf = X265_MALLOC(Pel, m_predBufStride * m_predBufHeight);
-        m_predAllAngsBuf = X265_MALLOC(Pel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
+        m_predBuf = X265_MALLOC(pixel, m_predBufStride * m_predBufHeight);
+        m_predAllAngsBuf = X265_MALLOC(pixel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
 
-        m_refAbove = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        m_refAboveFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        m_refLeft = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
-        m_refLeftFlt = X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        m_refAbove = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
+        m_refAboveFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
+        m_refLeft = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
+        m_refLeftFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
 
         m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
         m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
@@ -119,7 +117,7 @@ bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t w
 
     if (dirMode == DC_IDX)
     {
-        bFilter = false; //no smoothing for DC or LM chroma
+        bFilter = false; // no smoothing for DC or LM chroma
     }
     else
     {
@@ -131,19 +129,17 @@ bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t w
     return bFilter;
 }
 
-void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t stride, int width)
+void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, int width)
 {
+    assert(width >= 4 && width <= 64);
     int log2BlkSize = g_convertToBit[width];
-
-    Pel *src = m_predBuf;
-
-    assert(width >= 4 && width < 128);
     bool bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, width);
 
-    Pel *refLft, *refAbv;
+    pixel *refLft, *refAbv;
     refLft = m_refLeft + width - 1;
     refAbv = m_refAbove + width - 1;
 
+    pixel *src = m_predBuf;
     if (bUseFilteredPredictions)
     {
         src += ADI_BUF_STRIDE * (2 * width + 1);
@@ -156,13 +152,13 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, Pel* dst, intptr_t strid
 }
 
 // Angular chroma
-void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, intptr_t stride, int width, int height, int chFmt)
+void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, int width, int height, int chFmt)
 {
     int log2BlkSize = g_convertToBit[width];
 
     // Create the prediction
-    Pel refAbv[3 * MAX_CU_SIZE];
-    Pel refLft[3 * MAX_CU_SIZE];
+    pixel refAbv[3 * MAX_CU_SIZE];
+    pixel refLft[3 * MAX_CU_SIZE];
 
     bool bUseFilteredPredictions = true;
 
@@ -185,10 +181,10 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
         int bufSize = cuHeight2 + cuWidth2 + 1;
         uint32_t wh = ADI_BUF_STRIDE * height;         // number of elements in one buffer
 
-        Pel* filteredBuf1 = src + wh;             // 1. filter buffer
-        Pel* filteredBuf2 = filteredBuf1 + wh;    // 2. filter buffer
-        Pel* filterBuf    = filteredBuf2 + wh;    // buffer for 2. filtering (sequential)
-        Pel* filterBufN   = filterBuf + bufSize;  // buffer for 1. filtering (sequential)
+        pixel* filteredBuf1 = src + wh;             // 1. filter buffer
+        pixel* filteredBuf2 = filteredBuf1 + wh;    // 2. filter buffer
+        pixel* filterBuf    = filteredBuf2 + wh;    // buffer for 2. filtering (sequential)
+        pixel* filterBufN   = filterBuf + bufSize;  // buffer for 1. filtering (sequential)
 
         int l = 0;
         // left border from bottom to top
@@ -223,7 +219,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
 
         int limit = (2 * width + 1);
         src += wh;
-        memcpy(refAbv + width - 1, src, (limit) * sizeof(Pel));
+        memcpy(refAbv + width - 1, src, (limit) * sizeof(pixel));
         for (int k = 0; k < limit; k++)
         {
             refLft[k + width - 1] = src[k * ADI_BUF_STRIDE];
@@ -232,7 +228,7 @@ void TComPrediction::predIntraChromaAng(Pel* src, uint32_t dirMode, Pel* dst, in
     else
     {
         int limit = (dirMode <= 25 && dirMode >= 11) ? (width + 1 + 1) : (2 * width + 1);
-        memcpy(refAbv + width - 1, src, (limit) * sizeof(Pel));
+        memcpy(refAbv + width - 1, src, (limit) * sizeof(pixel));
         for (int k = 0; k < limit; k++)
         {
             refLft[k + width - 1] = src[k * ADI_BUF_STRIDE];
@@ -470,12 +466,12 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
 void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic)
 {
     int dstStride = dstPic->getStride();
-    Pel *dst      = dstPic->getLumaAddr(partAddr);
+    pixel *dst      = dstPic->getLumaAddr(partAddr);
 
     int srcStride = refPic->getStride();
     int srcOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
     int partEnum = partitionFromSizes(width, height);
-    Pel* src = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + srcOffset;
+    pixel* src = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + srcOffset;
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
@@ -563,11 +559,11 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
 
     int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
-    Pel* refCb = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-    Pel* refCr = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    pixel* refCb = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    pixel* refCr = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-    Pel* dstCb = dstPic->getCbAddr(partAddr);
-    Pel* dstCr = dstPic->getCrAddr(partAddr);
+    pixel* dstCb = dstPic->getCbAddr(partAddr);
+    pixel* dstCr = dstPic->getCrAddr(partAddr);
 
     int xFrac = mv->x & ((1 << shiftHor) - 1);
     int yFrac = mv->y & ((1 << shiftVer) - 1);
@@ -615,8 +611,8 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
 
     int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
-    Pel* refCb = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-    Pel* refCr = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    pixel* refCb = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    pixel* refCr = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     int16_t* dstCb = dstPic->getCbAddr(partAddr);
     int16_t* dstCr = dstPic->getCrAddr(partAddr);
