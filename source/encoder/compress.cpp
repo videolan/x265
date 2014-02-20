@@ -353,7 +353,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
     if (depth == 0 && m_cfg->param.rdLevel == 0)
     {
-        m_origYuv[depth]->copyToPicYuv(cu->getPic()->getPicYuvRec(), cu->getAddr(), 0);
+        m_origYuv[depth]->copyToPicYuv(cu->getPic()->getPicYuvRec(), cu->getAddr(), 0, 0, 0);
     }
     // We need to split, so don't try these modes.
     TComYuv* tempYuv = NULL;
@@ -907,7 +907,7 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
                 res = m_tmpResiYuv[depth]->getCrAddr(0);
                 reco = m_bestRecoYuv[depth]->getCrAddr(0);
                 primitives.chroma[m_cfg->param.internalCsp].add_ps[part](reco, dststride, pred, res, src1stride, src2stride);
-                m_bestRecoYuv[depth]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), absPartIdx);
+                m_bestRecoYuv[depth]->copyToPicYuv(lcu->getPic()->getPicYuvRec(), lcu->getAddr(), absPartIdx, 0, 0);
                 return;
             }
         }
@@ -936,7 +936,7 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], absPartIdx);
         m_search->generateCoeffRecon(cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth], false);
         xCheckDQP(cu);
-        m_tmpRecoYuv[depth]->copyToPicYuv(cu->getPic()->getPicYuvRec(), lcu->getAddr(), absPartIdx);
+        m_tmpRecoYuv[depth]->copyToPicYuv(cu->getPic()->getPicYuvRec(), lcu->getAddr(), absPartIdx, 0, 0);
         cu->copyCodedToPic(depth);
     }
 }

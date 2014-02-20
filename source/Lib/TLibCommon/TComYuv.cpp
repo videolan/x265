@@ -101,25 +101,25 @@ void TComYuv::clear()
     ::memset(m_bufV, 0, (m_cwidth * m_cheight) * sizeof(Pel));
 }
 
-void TComYuv::copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth, uint32_t partIdx)
+void TComYuv::copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t depth, uint32_t partIdx)
 {
     int width, height;
 
-    width  = m_width >> partDepth;
-    height = m_height >> partDepth;
+    width  = m_width >> depth;
+    height = m_height >> depth;
 
     int part = partitionFromSizes(width, height);
 
-    copyToPicLuma(destPicYuv, cuAddr, absZOrderIdx, partDepth, partIdx);
-    copyToPicChroma(destPicYuv, cuAddr, absZOrderIdx, part, partDepth, partIdx);
+    copyToPicLuma(destPicYuv, cuAddr, absZOrderIdx, depth, partIdx);
+    copyToPicChroma(destPicYuv, cuAddr, absZOrderIdx, part, depth, partIdx);
 }
 
-void TComYuv::copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth, uint32_t partIdx)
+void TComYuv::copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t depth, uint32_t partIdx)
 {
     int width, height;
 
-    width  = m_width >> partDepth;
-    height = m_height >> partDepth;
+    width  = m_width >> depth;
+    height = m_height >> depth;
 
     int part = partitionFromSizes(width, height);
 
@@ -132,11 +132,11 @@ void TComYuv::copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t ab
     primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 }
 
-void TComYuv::copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t partDepth, uint32_t partIdx)
+void TComYuv::copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t depth, uint32_t partIdx)
 {
     int width;
 
-    width  = m_cwidth >> partDepth;
+    width  = m_cwidth >> depth;
 
     Pel* srcU = getCbAddr(partIdx, width);
     Pel* srcV = getCrAddr(partIdx, width);
@@ -300,7 +300,8 @@ void TComYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_
     Pel* dstU = dstPicYuv->getCbAddr(partIdx);
     Pel* dstV = dstPicYuv->getCrAddr(partIdx);
 
-    if (srcU == dstU && srcV == dstV) return;
+    if (srcU == dstU && srcV == dstV)
+        return;
 
     uint32_t srcstride = getCStride();
     uint32_t dststride = dstPicYuv->getCStride();

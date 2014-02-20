@@ -102,8 +102,8 @@ private:
     void    copyToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx);
     void    copyToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx);
 
-    void    copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
-    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t partDepth = 0, uint32_t partIdx = 0);
+    void    copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t depth, uint32_t partIdx);
+    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t depth, uint32_t partIdx);
 
     void    copyFromPicLuma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
     void    copyFromPicChroma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
@@ -130,7 +130,7 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Copy YUV buffer to picture buffer
-    void    copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t partDepth = 0, uint32_t partIdx = 0);
+    void    copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t depth, uint32_t partIdx);
 
     //  Copy YUV buffer from picture buffer
     void    copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
