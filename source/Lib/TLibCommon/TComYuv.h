@@ -127,9 +127,9 @@ public:
     void    copyFromPicChroma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
 
     //  Copy Small YUV buffer to the part of other Big YUV buffer
-    void    copyToPartYuv(TComYuv* dstPicYuv, uint32_t uiDstPartIdx);
-    void    copyToPartLuma(TComYuv* dstPicYuv, uint32_t uiDstPartIdx);
-    void    copyToPartChroma(TComYuv* dstPicYuv, uint32_t uiDstPartIdx);
+    void    copyToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx);
+    void    copyToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx);
+    void    copyToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx);
 
     //  Copy the part of Big YUV buffer to other Small YUV buffer
     void    copyPartToYuv(TComYuv* dstPicYuv, uint32_t srcPartIdx);
