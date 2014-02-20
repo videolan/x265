@@ -67,7 +67,6 @@ namespace x265 {
 
 void initROM();
 void destroyROM();
-void initSigLastScan(uint32_t* buffD, uint32_t* buffH, uint32_t* buffV, int width, int height);
 
 // ====================================================================================================================
 static const int chromaQPMappingTableSize = 58;
@@ -131,8 +130,6 @@ extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 // ====================================================================================================================
 // Scanning order & context mapping table
 // ====================================================================================================================
-
-extern uint32_t* g_sigLastScan[3][MAX_CU_DEPTH];  // raster index from scanning index (diag, hor, ver)
 
 extern const uint32_t g_groupIdx[32];
 extern const uint32_t g_minInGroup[10];
