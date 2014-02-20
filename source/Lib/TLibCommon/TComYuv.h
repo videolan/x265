@@ -99,19 +99,6 @@ private:
         return blkX + blkY * size;
     }
 
-    void    copyToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx);
-    void    copyToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx);
-
-    void    copyToPicLuma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t depth, uint32_t partIdx);
-    void    copyToPicChroma(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t part, uint32_t depth, uint32_t partIdx);
-
-    void    copyFromPicLuma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
-    void    copyFromPicChroma(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
-
-    void    copyPartToLuma(TComYuv* dstPicYuv, uint32_t srcPartIdx, uint32_t part);
-    void    copyPartToChroma(TComYuv* dstPicYuv, uint32_t srcPartIdx, uint32_t part);
-
-
 public:
 
     TComYuv();
@@ -148,7 +135,6 @@ public:
     void    copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part);
     void    copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t part);
     void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t part);
-
     void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId);
 
     // ------------------------------------------------------------------------------------------------------------------
