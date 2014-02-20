@@ -53,7 +53,7 @@ struct RateControlEntry
     int mvBits;
     int bframes;
     int poc;
-
+    int64_t leadingNoBSatd;
     bool bLastMiniGopBFrame;
     double blurredComplexity;
     double qpaRc;
@@ -61,8 +61,8 @@ struct RateControlEntry
     double frameSizePlanned;
     double bufferRate;
     double movingAvgSum;
+    double qpNoVbv;
 };
-
 struct Predictor
 {
     double coeff;
@@ -94,9 +94,10 @@ struct RateControl
     bool isVbv;
     Predictor pred[5];
     Predictor predBfromP;
+    Predictor rowPreds[4];
+    Predictor *rowPred[2];
     int bframes;
     int bframeBits;
-    double leadingNoBSatd;
     bool isAbrReset;
     int lastAbrResetPoc;
     int64_t currentSatd;
@@ -106,6 +107,7 @@ struct RateControl
     double ipOffset;
     double pbOffset;
     int lastNonBPictType;
+    int64_t leadingNoBSatd;
     double accumPQp;          /* for determining I-frame quant */
     double accumPNorm;
     double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
@@ -118,8 +120,9 @@ struct RateControl
     double lastRceq;
     int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
     double qCompress;
+    double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
+    double frameSizeEstimated;  /* hold synched frameSize, updated from cu level vbv rc */
     RateControl(TEncCfg * _cfg);
-
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(TComPic *pic);

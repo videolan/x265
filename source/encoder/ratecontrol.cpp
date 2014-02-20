@@ -243,11 +243,12 @@ RateControl::RateControl(TEncCfg * _cfg)
     lastNonBPictType = I_SLICE;
     isAbrReset = false;
     lastAbrResetPoc = -1;
+    frameSizeEstimated = 0;
     // vbv initialization
     cfg->param.rc.vbvBufferSize = Clip3(0, 2000000, cfg->param.rc.vbvBufferSize);
     cfg->param.rc.vbvMaxBitrate = Clip3(0, 2000000, cfg->param.rc.vbvMaxBitrate);
     cfg->param.rc.vbvBufferInit = Clip3(0.0, 2000000.0, cfg->param.rc.vbvBufferInit);
-
+    vbvMinRate = 0;
     if (cfg->param.rc.vbvBufferSize)
     {
         if (cfg->param.rc.rateControlMode == X265_RC_CQP)
@@ -317,6 +318,13 @@ RateControl::RateControl(TEncCfg * _cfg)
         pred[i].decay = 0.5;
         pred[i].offset = 0.0;
     }
+    for (int i = 0; i < 4; i++)
+    {
+        rowPreds[i].coeff = 0.25;
+        rowPreds[i].count = 1.0;
+        rowPreds[i].decay = 0.5;
+        rowPreds[i].offset = 0.0;
+    }
 
     predBfromP = pred[0];
     bframes = cfg->param.bframes;
@@ -374,10 +382,12 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     rce->bLastMiniGopBFrame = pic->m_lowres.bLastMiniGopBFrame;
     rce->bufferRate = bufferRate;
     rce->poc = curSlice->getPOC();
-
     if (isVbv)
+    {
+        rowPred[0] = &rowPreds[sliceType];
+        rowPred[1] = &rowPreds[3];
         updateVbvPlan(enc);
-
+    }
     if (isAbr) //ABR,CRF
     {
         currentSatd = l->getEstimatedPictureCost(pic);
@@ -385,9 +395,10 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         rce->lastSatd = currentSatd; 
         double q = qScale2qp(rateEstimateQscale(pic, rce));
         qp = Clip3(MIN_QP, MAX_MAX_QP, (int)(q + 0.5));
-        rce->qpaRc = q;
+        rce->qpaRc = pic->m_avgQpRc = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
         rce->qRceq = lastRceq;
+        rce->qpNoVbv = qpNoVbv;
         accumPQpUpdate();
     }
     else //CQP
@@ -397,9 +408,12 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         else
             qp = qpConstant[sliceType];
     }
-
     if (sliceType != B_SLICE)
+    {
         lastNonBPictType = sliceType;
+        leadingNoBSatd = currentSatd;
+    }
+    rce->leadingNoBSatd = leadingNoBSatd;
     framesDone++;
     /* set the final QP to slice structure */
     curSlice->setSliceQp(qp);
@@ -461,10 +475,11 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             q += pbOffset / 2;
         else
             q += pbOffset;
-
-        rce->frameSizePlanned = predictSize(&predBfromP, qp2qScale(q), leadingNoBSatd);
-
-        return qp2qScale(q);
+        qpNoVbv = q;
+        double qScale = qp2qScale(qpNoVbv);
+        rce->frameSizePlanned = predictSize(&predBfromP, qScale, (double)leadingNoBSatd);
+        frameSizeEstimated = rce->frameSizePlanned;
+        return qScale;
     }
     else
     {
@@ -555,7 +570,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             if (qCompress != 1 && framesDone == 0)
                 q = qp2qScale(ABR_INIT_QP) / fabs(cfg->param.rc.ipFactor);
         }
-
+        qpNoVbv = qScale2qp(q);
         double lmin1 = lmin[sliceType];
         double lmax1 = lmax[sliceType];
         q = Clip3(lmin1, lmax1, q);
@@ -840,7 +855,7 @@ int RateControl::rateControlEnd(int64_t bits, RateControlEntry* rce)
             if (rce->bLastMiniGopBFrame)
             {
                 if (rce->bframes != 0)
-                    updatePredictor(&predBfromP, qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bframeBits / rce->bframes);
+                    updatePredictor(&predBfromP, qp2qScale(rce->qpaRc), (double)rce->leadingNoBSatd, (double)bframeBits / rce->bframes);
                 bframeBits = 0;
             }
         }
