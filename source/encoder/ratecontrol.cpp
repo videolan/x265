@@ -56,9 +56,10 @@ static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, in
 }
 
 /* Find the energy of each block in Y/Cb/Cr plane */
-static inline uint32_t acEnergyPlane(TComPic *pic, pixel* src, int srcStride, int bChroma)
+static inline uint32_t acEnergyPlane(TComPic *pic, pixel* src, int srcStride, int bChroma, int colorFormat)
 {
-    if (bChroma)
+    /* Support only 420 and 444 color spaces */
+    if (colorFormat == X265_CSP_I420 && bChroma)
     {
         ALIGN_VAR_8(pixel, pix[8 * 8]);
         primitives.luma_copy_pp[LUMA_8x8](pix, 8, src, srcStride);
@@ -74,13 +75,16 @@ uint32_t RateControl::acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_
     int stride = pic->getPicYuvOrg()->getStride();
     int cStride = pic->getPicYuvOrg()->getCStride();
     uint32_t blockOffsetLuma = block_x + (block_y * stride);
-    uint32_t blockOffsetChroma = (block_x >> 1) + ((block_y >> 1) * cStride);
+    int colorFormat = cfg->param.internalCsp;
+    int hShift = CHROMA_H_SHIFT(colorFormat);
+    int vShift = CHROMA_V_SHIFT(colorFormat);
+    uint32_t blockOffsetChroma = (block_x >> hShift) + ((block_y >> vShift) * cStride);
 
     uint32_t var;
 
-    var  = acEnergyPlane(pic, pic->getPicYuvOrg()->getLumaAddr() + blockOffsetLuma, stride, 0);
-    var += acEnergyPlane(pic, pic->getPicYuvOrg()->getCbAddr() + blockOffsetChroma, cStride, 1);
-    var += acEnergyPlane(pic, pic->getPicYuvOrg()->getCrAddr() + blockOffsetChroma, cStride, 2);
+    var  = acEnergyPlane(pic, pic->getPicYuvOrg()->getLumaAddr() + blockOffsetLuma, stride, 0, colorFormat);
+    var += acEnergyPlane(pic, pic->getPicYuvOrg()->getCbAddr() + blockOffsetChroma, cStride, 1, colorFormat);
+    var += acEnergyPlane(pic, pic->getPicYuvOrg()->getCrAddr() + blockOffsetChroma, cStride, 2, colorFormat);
     x265_emms();
     return var;
 }
