@@ -112,7 +112,6 @@ protected:
     MV              m_mvPredictors[3];
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
-    pixel*          m_tempPel;    // avoid mallocs in xEstimateResidualQT
 
     // Color space parameters
     uint32_t        m_section;

@@ -71,7 +71,6 @@ TEncSearch::TEncSearch()
     m_cfg = NULL;
     m_rdCost  = NULL;
     m_trQuant = NULL;
-    m_tempPel = NULL;
     m_entropyCoder = NULL;
     m_rdSbacCoders    = NULL;
     m_rdGoOnSbacCoder = NULL;
@@ -93,7 +92,6 @@ TEncSearch::~TEncSearch()
     X265_FREE(m_qtTempTUCoeffY);
     X265_FREE(m_qtTempTUCoeffCb);
     X265_FREE(m_qtTempTUCoeffCr);
-    X265_FREE(m_tempPel);
     X265_FREE(m_qtTempTrIdx);
     for (uint32_t i = 0; i < 3; ++i)
     {
@@ -162,7 +160,6 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTUCoeffCb = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     m_qtTempTUCoeffCr = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
 
-    m_tempPel = X265_MALLOC(pixel, g_maxCUWidth * g_maxCUHeight);
     m_qtTempTransformSkipYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param.internalCsp);
 
     m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param.internalCsp);
@@ -3556,10 +3553,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         const uint32_t numSamplesLuma = 1 << (trSizeLog2 << 1);
         const uint32_t numSamplesChroma = 1 << (trSizeCLog2 << 1);
 
-        ::memset(m_tempPel, 0, sizeof(Pel) * numSamplesLuma); // not necessary needed for inside of recursion (only at the beginning)
+        ALIGN_VAR_32(static const pixel, zeroPel[MAX_CU_SIZE * MAX_CU_SIZE]) = { 0 };
 
         int partSize = partitionFromSizes(trWidth, trHeight);
-        uint32_t distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, m_tempPel, trWidth);
+        uint32_t distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, (pixel*)zeroPel, trWidth);
 
         if (outZeroDist)
         {
@@ -3630,7 +3627,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         int partSizeC = partitionFromSizes(trWidthC, trHeightC);
         if (bCodeChroma)
         {
-            distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth, m_tempPel, trWidthC));
+            distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->m_cwidth, (pixel*)zeroPel, trWidthC));
 
             if (outZeroDist)
             {
@@ -3696,7 +3693,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, stride, 0);
             }
 
-            distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth, m_tempPel, trWidthC));
+            distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->m_cwidth, (pixel*)zeroPel, trWidthC));
             if (outZeroDist)
             {
                 *outZeroDist += distV;
