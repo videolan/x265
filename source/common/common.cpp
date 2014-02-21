@@ -558,9 +558,9 @@ int x265_check_params(x265_param *param)
            || param->aspectRatioIdc > 16)
           && param->aspectRatioIdc != 255,
           "Sample Aspect Ratio must be 0-16 or 255");
-    CHECK(param->sarWidth <= 0,
+    CHECK(param->aspectRatioIdc == 255 && param->sarWidth <= 0,
           "Sample Aspect Ratio width must be greater than 0");
-    CHECK(param->sarHeight <= 0,
+    CHECK(param->aspectRatioIdc == 255 && param->sarHeight <= 0,
           "Sample Aspect Ratio height must be greater than 0");
     CHECK(param->videoFormat < 0 || param->videoFormat > 5,
           "Video Format must be Component component,"
