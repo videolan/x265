@@ -116,6 +116,7 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_trQuant = trQuant;
     m_rdCost  = rdCost;
 
+    initTempBuff(cfg->param.internalCsp);
     m_me.setSearchMethod(cfg->param.searchMethod);
     m_me.setSubpelRefine(cfg->param.subpelRefine);
 
@@ -131,10 +132,6 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
             m_adaptiveRange[dir][ref] = cfg->param.searchRange;
         }
     }
-
-    m_hChromaShift = CHROMA_H_SHIFT(cfg->param.internalCsp);
-    m_vChromaShift = CHROMA_V_SHIFT(cfg->param.internalCsp);
-    initTempBuff(cfg->param.internalCsp);
 
     const uint32_t numLayersToAllocate = cfg->getQuadtreeTULog2MaxSize() - cfg->getQuadtreeTULog2MinSize() + 1;
     m_qtTempCoeffY  = new TCoeff*[numLayersToAllocate];

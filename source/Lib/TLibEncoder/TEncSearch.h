@@ -115,8 +115,6 @@ protected:
     pixel*          m_tempPel;    // avoid mallocs in xEstimateResidualQT
 
     // Color space parameters
-    int             m_hChromaShift;
-    int             m_vChromaShift;
     uint32_t        m_section;
     uint32_t        m_splitMode;
     uint32_t        m_absPartIdxTURelCU;
