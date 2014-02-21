@@ -1231,14 +1231,9 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
         ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
     }
 
-    int part = partitionFromSizes(1 << trSizeLog2, 1 << trSizeLog2);
-    //===== copy reconstruction =====
-    m_qtTempTransformSkipYuv.copyPartToPartLuma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
 
-    if (!bLumaOnly && !bSkipChroma)
-    {
-        m_qtTempTransformSkipYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, part);
-    }
+    //===== copy reconstruction =====
+    m_qtTempTransformSkipYuv.copyPartToPartShort(&m_qtTempShortYuv[qtlayer], absPartIdx, 1 << trSizeLog2, !bLumaOnly && !bSkipChroma, bChromaSame);
 
     uint32_t   zOrder           = cu->getZorderIdxInCU() + absPartIdx;
     pixel*     reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zOrder);
