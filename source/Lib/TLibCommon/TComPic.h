@@ -102,18 +102,25 @@ public:
     MD5Context            m_state[3];
     uint32_t              m_crc[3];
     uint32_t              m_checksum[3];
-
     bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
-
+    double*               m_rowDiagQp;
+    double*               m_rowDiagQScale;
+    uint32_t*             m_rowDiagSatd;
+    uint32_t*             m_rowEncodedBits;
+    uint32_t*             m_numEncodedCusPerRow;
+    uint32_t*             m_rowSatdForVbv;
+    uint32_t*             m_cuCostsForVbv;
+    int*                  m_qpaAq;
+    double*               m_qpaRc;
+    double                m_avgQpRc;
     TComPic();
     virtual ~TComPic();
 
     bool          create(TEncCfg* cfg);
-
     virtual void  destroy(int bframes);
+    void          reInit(TEncCfg* cfg);
 
     bool          getUsedByCurr()           { return m_bUsedByCurr; }
-
     void          setUsedByCurr(bool bUsed) { m_bUsedByCurr = bUsed; }
 
     bool          getIsLongTerm()           { return m_bIsLongTerm; }

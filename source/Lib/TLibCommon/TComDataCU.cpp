@@ -99,8 +99,8 @@ TComDataCU::TComDataCU()
     m_mvpIdx[0] = NULL;
     m_mvpIdx[1] = NULL;
     m_chromaFormat = 0;
+    m_baseQp = 0;
 }
-
 TComDataCU::~TComDataCU()
 {}
 
@@ -235,6 +235,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     m_totalBits        = 0;
     m_numPartitions    = pic->getNumPartInCU();
     int qp             = pic->m_lowres.invQscaleFactor ? pic->getCU(getAddr())->getQP(0) : m_slice->getSliceQp();
+    m_baseQp           = pic->getCU(getAddr())->m_baseQp;
     for (int i = 0; i < 4; i++)
     {
         m_avgCost[i] = 0;

@@ -182,7 +182,7 @@ public:
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
     uint32_t      m_count[4];
     uint64_t      m_sa8dCost;
-
+    double        m_baseQp;          //Qp of Cu set from RateControl/Vbv.
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------

@@ -84,8 +84,6 @@ private:
     Lookahead*         m_lookahead;
     FrameEncoder*      m_frameEncoder;
     DPB*               m_dpb;
-    RateControl*       m_rateControl;
-
     /* frame parallelism */
     int                m_curEncoder;
 
@@ -142,11 +140,10 @@ public:
     int  extractNalData(NALUnitEBSP **nalunits);
 
     void updateVbvPlan(RateControl* rc);
-
     void signalReconRowCompleted(int poc);
+    RateControl*       m_rateControl;
 
 protected:
-
     // Returns total number of bits for encoded pic
     uint64_t calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, NALUnitEBSP **nalunits);
 };

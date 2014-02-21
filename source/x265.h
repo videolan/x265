@@ -801,6 +801,8 @@ typedef struct x265_param
          * across frames and assigns more bits to these CUs. Improves encode efficiency.
          * Default: OFF (0) */
         int       cuTree;
+        /* In CRF mode, maximum CRF as caused by VBV */
+        double    rfConstantMax;
     } rc;
 } x265_param;
 

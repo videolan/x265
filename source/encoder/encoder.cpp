@@ -277,9 +277,9 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         }
         else
             pic = m_freeList.popBack();
-
         /* Copy input picture into a TComPic, send to lookahead */
         pic->getSlice()->setPOC(++m_pocLast);
+        pic->reInit(this);
         pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_pad);
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;

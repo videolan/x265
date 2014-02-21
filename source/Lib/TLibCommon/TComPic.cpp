@@ -56,6 +56,13 @@ TComPic::TComPic()
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
+    , m_rowDiagQp(NULL)
+    , m_rowDiagQScale(NULL)
+    , m_rowDiagSatd(NULL)
+    , m_rowEncodedBits(NULL)
+    , m_numEncodedCusPerRow(NULL)
+    , m_rowSatdForVbv(NULL)
+    , m_cuCostsForVbv(NULL)
 {
     m_reconRowCount = 0;
     m_countRefEncoders = 0;
@@ -69,9 +76,11 @@ TComPic::TComPic()
     m_ssimCnt = 0;
     m_frameTime = 0.0;
     m_elapsedCompressTime = 0.0;
+    m_qpaAq = 0;
+    m_qpaRc = 0;
+    m_avgQpRc = 0;
     m_bChromaPlanesExtended = false;
 }
-
 TComPic::~TComPic()
 {}
 
@@ -94,9 +103,47 @@ bool TComPic::create(TEncCfg* cfg)
     ok &= m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
     ok &= m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
     ok &= m_lowres.create(m_origPicYuv, cfg->param.bframes, &cfg->param.rc.aqMode);
+
+    if (ok && cfg->param.rc.vbvBufferSize > 0 && cfg->param.rc.vbvMaxBitrate > 0)
+    {
+        int numRows = m_picSym->getFrameHeightInCU();
+        int numCols = m_picSym->getFrameWidthInCU();
+        CHECKED_MALLOC(m_rowDiagQp, double, numRows);
+        CHECKED_MALLOC(m_rowDiagQScale, double, numRows);
+        CHECKED_MALLOC(m_rowDiagSatd, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowEncodedBits, uint32_t, numRows);
+        CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, numRows);
+        CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, numRows * numCols);
+        CHECKED_MALLOC(m_qpaRc, double, numRows);
+        CHECKED_MALLOC(m_qpaAq, int, numRows);
+        reInit(cfg);
+    }
+
+    return ok;
+
+fail :
+    ok = false;
     return ok;
 }
 
+void TComPic::reInit(TEncCfg* cfg)
+{
+    if (cfg->param.rc.vbvBufferSize > 0 && cfg->param.rc.vbvMaxBitrate > 0)
+    {
+        int numRows = m_picSym->getFrameHeightInCU();
+        int numCols = m_picSym->getFrameWidthInCU();
+        memset(m_rowDiagQp, 0, numRows * sizeof(double));
+        memset(m_rowDiagQScale, 0, numRows * sizeof(double));
+        memset(m_rowDiagSatd, 0, numRows * sizeof(uint32_t));
+        memset(m_rowEncodedBits, 0, numRows * sizeof(uint32_t));
+        memset(m_numEncodedCusPerRow, 0, numRows * sizeof(uint32_t));
+        memset(m_rowSatdForVbv, 0, numRows * sizeof(uint32_t));
+        memset(m_cuCostsForVbv, 0,  numRows * numCols * sizeof(uint32_t));
+        memset(m_qpaRc, 0, numRows * sizeof(double));
+        memset(m_qpaAq, 0, numRows * sizeof(uint32_t));
+    }
+}
 void TComPic::destroy(int bframes)
 {
     if (m_picSym)
@@ -119,8 +166,16 @@ void TComPic::destroy(int bframes)
         delete m_reconPicYuv;
         m_reconPicYuv = NULL;
     }
-
     m_lowres.destroy(bframes);
-}
 
+    X265_FREE(m_rowDiagQp);
+    X265_FREE(m_rowDiagQScale);
+    X265_FREE(m_rowDiagSatd);
+    X265_FREE(m_rowEncodedBits);
+    X265_FREE(m_numEncodedCusPerRow);
+    X265_FREE(m_rowSatdForVbv);
+    X265_FREE(m_cuCostsForVbv);
+    X265_FREE(m_qpaAq);
+    X265_FREE(m_qpaRc);
+}
 //! \}
