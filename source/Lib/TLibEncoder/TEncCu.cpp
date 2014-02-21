@@ -1239,6 +1239,12 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     {
         for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
         {
+            /* TODO: check only necessary when -F>1, and ref pixels available is in units of LCU rows */
+            if (mvFieldNeighbours[0 + 2 * mergeCand].mv.y >= (m_cfg->param.searchRange + 1) * 4
+                || mvFieldNeighbours[1 + 2 * mergeCand].mv.y >= (m_cfg->param.searchRange + 1) * 4)
+            {
+                continue;
+            }
             if (!(noResidual == 1 && mergeCandBuffer[mergeCand] == 1))
             {
                 if (!(bestIsSkip && noResidual == 0))
