@@ -53,8 +53,6 @@ int64_t x265_mdate(void)
 #endif
 }
 
-static int parseName(const char *arg, const char * const * names, int& error);
-
 using namespace x265;
 
 #define X265_ALIGNBYTES 32
@@ -725,30 +723,95 @@ void x265_print_params(x265_param *param)
     fflush(stderr);
 }
 
+static int x265_atobool(const char *str, bool& bError)
+{
+    if (!strcmp(str, "1") ||
+        !strcmp(str, "true") ||
+        !strcmp(str, "yes"))
+        return 1;
+    if (!strcmp(str, "0") ||
+        !strcmp(str, "false") ||
+        !strcmp(str, "no"))
+        return 0;
+    bError = true;
+    return 0;
+}
+
+static int x265_atoi(const char *str, bool& bError)
+{
+    char *end;
+    int v = strtol(str, &end, 0);
+
+    if (end == str || *end != '\0')
+        bError = true;
+    return v;
+}
+
+static double x265_atof(const char *str, bool& bError)
+{
+    char *end;
+    double v = strtod(str, &end);
+
+    if (end == str || *end != '\0')
+        bError = true;
+    return v;
+}
+
+static int parseName(const char *arg, const char * const * names, bool& bError)
+{
+    for (int i = 0; names[i]; i++)
+    {
+        if (!strcmp(arg, names[i]))
+        {
+            return i;
+        }
+    }
+
+    return x265_atoi(arg, bError);
+}
+
+/* internal versions of string-to-int with additional error checking */
+#undef atoi
+#undef atof
+#define atoi(str) x265_atoi(str, bError)
+#define atof(str) x265_atof(str, bError)
+#define atobool(str) (bNameWasBool = true, x265_atobool(str, bError))
+
 extern "C"
 int x265_param_parse(x265_param *p, const char *name, const char *value)
 {
-    int berror = 0;
-    int valuewasnull;
-
-    /* Enable or Disable - default is Enable */
-    int bvalue = 1;
+    bool bError = false;
+    bool bNameWasBool = false;
+    bool bValueWasNull = !value;
+    char nameBuf[64];
 
     if (!name)
         return X265_PARAM_BAD_NAME;
 
-    if (!value)
-        value = "1";
-
-    if (!strncmp(name, "no-", 3))
+    // s/_/-/g
+    if (strlen(name) + 1 < sizeof(nameBuf) && strchr(name, '_'))
     {
-        bvalue = 0;
-        name += 3;
-    }
-    else
-        bvalue = 1;
+        char *c;
+        strcpy(nameBuf, name);
+        while ((c = strchr(nameBuf, '_')))
+        {
+            *c = '-';
+        }
 
-    valuewasnull = !value;
+        name = nameBuf;
+    }
+
+    int i;
+    if ((!strncmp(name, "no-", 3) && (i = 3)) ||
+        (!strncmp(name, "no", 2) && (i = 2)))
+    {
+        name += i;
+        value = !value || x265_atobool(value, bError) ? "false" : "true";
+    }
+    else if (!value)
+        value = "true";
+    else if (value[0] == '=')
+        value++;
 
 #if defined(_MSC_VER)
 #pragma warning(disable: 4127) // conditional expression is constant
@@ -778,24 +841,24 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
     OPT("log") p->logLevel = atoi(value);
-    OPT("wpp") p->bEnableWavefront = bvalue;
+    OPT("wpp") p->bEnableWavefront = atobool(value);
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);
     OPT("tu-intra-depth") p->tuQTMaxIntraDepth = (uint32_t)atoi(value);
     OPT("tu-inter-depth") p->tuQTMaxInterDepth = (uint32_t)atoi(value);
     OPT("subme") p->subpelRefine = atoi(value);
     OPT("merange") p->searchRange = atoi(value);
-    OPT("rect") p->bEnableRectInter = bvalue;
-    OPT("amp") p->bEnableAMP = bvalue;
+    OPT("rect") p->bEnableRectInter = atobool(value);
+    OPT("amp") p->bEnableAMP = atobool(value);
     OPT("max-merge") p->maxNumMergeCand = (uint32_t)atoi(value);
-    OPT("early-skip") p->bEnableEarlySkip = bvalue;
-    OPT("fast-cbf") p->bEnableCbfFastMode = bvalue;
+    OPT("early-skip") p->bEnableEarlySkip = atobool(value);
+    OPT("fast-cbf") p->bEnableCbfFastMode = atobool(value);
     OPT("rdpenalty") p->rdPenalty = atoi(value);
-    OPT("tskip") p->bEnableTransformSkip = bvalue;
-    OPT("no-tskip-fast") p->bEnableTSkipFast = bvalue;
-    OPT("tskip-fast") p->bEnableTSkipFast = bvalue;
-    OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = bvalue;
-    OPT("constrained-intra") p->bEnableConstrainedIntra = bvalue;
-    OPT("open-gop") p->bOpenGOP = bvalue;
+    OPT("tskip") p->bEnableTransformSkip = atobool(value);
+    OPT("no-tskip-fast") p->bEnableTSkipFast = atobool(value);
+    OPT("tskip-fast") p->bEnableTSkipFast = atobool(value);
+    OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = atobool(value);
+    OPT("constrained-intra") p->bEnableConstrainedIntra = atobool(value);
+    OPT("open-gop") p->bOpenGOP = atobool(value);
     OPT("scenecut") p->scenecutThreshold = atoi(value);
     OPT("keyint") p->keyframeMax = atoi(value);
     OPT("min-keyint") p->keyframeMin = atoi(value);
@@ -804,19 +867,19 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("bframe-bias") p->bFrameBias = atoi(value);
     OPT("b-adapt") p->bFrameAdaptive = atoi(value);
     OPT("ref") p->maxNumReferences = atoi(value);
-    OPT("weightp") p->bEnableWeightedPred = bvalue;
+    OPT("weightp") p->bEnableWeightedPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
-    OPT("signhide") p->bEnableSignHiding = bvalue;
-    OPT("lft") p->bEnableLoopFilter = bvalue;
-    OPT("sao") p->bEnableSAO = bvalue;
+    OPT("signhide") p->bEnableSignHiding = atobool(value);
+    OPT("lft") p->bEnableLoopFilter = atobool(value);
+    OPT("sao") p->bEnableSAO = atobool(value);
     OPT("sao-lcu-bounds") p->saoLcuBoundary = atoi(value);
     OPT("sao-lcu-opt") p->saoLcuBasedOptimization = atoi(value);
-    OPT("ssim") p->bEnableSsim = bvalue;
-    OPT("psnr") p->bEnablePsnr = bvalue;
+    OPT("ssim") p->bEnableSsim = atobool(value);
+    OPT("psnr") p->bEnablePsnr = atobool(value);
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
-    OPT("b-pyramid") p->bBPyramid = bvalue;
+    OPT("b-pyramid") p->bBPyramid = atobool(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
     OPT("vbv-maxrate") p->rc.vbvMaxBitrate = atoi(value);
@@ -837,12 +900,13 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->rc.qp = atoi(value);
         p->rc.rateControlMode = X265_RC_CQP;
     }
-    OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, berror);
-    OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, berror);
-    OPT("cutree")    p->rc.cuTree = bvalue;
-    OPT("no-cutree") p->rc.cuTree = bvalue;
+    OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, bError);
+    OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, bError);
+    OPT("cutree")    p->rc.cuTree = atobool(value);
     OPT("vui")
     {
+        int bvalue = atobool(value);
+
         p->bEnableVuiParametersPresentFlag = bvalue;
         p->bEnableAspectRatioIdc = bvalue;
         p->bEnableOverscanInfoPresentFlag = bvalue;
@@ -860,25 +924,25 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("sar")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableAspectRatioIdc = bvalue;
+        p->bEnableAspectRatioIdc = atobool(value);
         p->aspectRatioIdc = atoi(value);
     }
     OPT("extended-sar")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableAspectRatioIdc = bvalue;
+        p->bEnableAspectRatioIdc = atobool(value);
         p->aspectRatioIdc = 255;
-        sscanf(value, "%dx%d", &p->sarWidth, &p->sarHeight);
+        bError |= sscanf(value, "%dx%d", &p->sarWidth, &p->sarHeight) != 2;
     }
     OPT("overscan")
     {
         p->bEnableVuiParametersPresentFlag = 1;
         if (!strcmp(value, "show"))
-            p->bEnableOverscanInfoPresentFlag = bvalue;
+            p->bEnableOverscanInfoPresentFlag = atobool(value);
         else if (!strcmp(value, "crop"))
         {
-            p->bEnableOverscanInfoPresentFlag = bvalue;
-            p->bEnableOverscanAppropriateFlag = bvalue;
+            p->bEnableOverscanInfoPresentFlag = atobool(value);
+            p->bEnableOverscanAppropriateFlag = atobool(value);
         }
         else
             p->bEnableOverscanInfoPresentFlag = -1;
@@ -886,7 +950,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("videoformat")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = bvalue;
+        p->bEnableVideoSignalTypePresentFlag = atobool(value);
         if (!strcmp(value, "component"))
             p->videoFormat = 0;
         else if (!strcmp(value, "pal"))
@@ -905,14 +969,14 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("range")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = bvalue;
-        p->bEnableVideoFullRangeFlag = bvalue;
+        p->bEnableVideoSignalTypePresentFlag = atobool(value);
+        p->bEnableVideoFullRangeFlag = atobool(value);
     }
     OPT("colorprim")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = bvalue;
-        p->bEnableColorDescriptionPresentFlag = bvalue;
+        p->bEnableVideoSignalTypePresentFlag = atobool(value);
+        p->bEnableColorDescriptionPresentFlag = atobool(value);
         if (!strcmp(value, "bt709"))
             p->colorPrimaries = 1;
         else if (!strcmp(value, "undef"))
@@ -935,8 +999,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("transfer")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = bvalue;
-        p->bEnableColorDescriptionPresentFlag = bvalue;
+        p->bEnableVideoSignalTypePresentFlag = atobool(value);
+        p->bEnableColorDescriptionPresentFlag = atobool(value);
         if (!strcmp(value, "bt709"))
             p->transferCharacteristics = 1;
         else if (!strcmp(value, "undef"))
@@ -971,8 +1035,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("colormatrix")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = bvalue;
-        p->bEnableColorDescriptionPresentFlag = bvalue;
+        p->bEnableVideoSignalTypePresentFlag = atobool(value);
+        p->bEnableColorDescriptionPresentFlag = atobool(value);
         if (!strcmp(value, "GBR"))
             p->matrixCoeffs = 0;
         else if (!strcmp(value, "bt709"))
@@ -999,59 +1063,61 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("chromaloc")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableChromaLocInfoPresentFlag = bvalue;
+        p->bEnableChromaLocInfoPresentFlag = atobool(value);
         p->chromaSampleLocTypeTopField = atoi(value);
         p->chromaSampleLocTypeBottomField = p->chromaSampleLocTypeTopField;
     }
     OPT("fieldseq")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableFieldSeqFlag = bvalue;
+        p->bEnableFieldSeqFlag = atobool(value);
     }
     OPT("framefieldinfo")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableFrameFieldInfoPresentFlag = bvalue;
+        p->bEnableFrameFieldInfoPresentFlag = atobool(value);
     }
     OPT("crop-rect")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableDefaultDisplayWindowFlag = bvalue;
-        sscanf(value, "%d,%d,%d,%d",
-               &p->defDispWinLeftOffset,
-               &p->defDispWinTopOffset,
-               &p->defDispWinRightOffset,
-               &p->defDispWinBottomOffset);
+        p->bEnableDefaultDisplayWindowFlag = atobool(value);
+        bError |= sscanf(value, "%d,%d,%d,%d",
+                         &p->defDispWinLeftOffset,
+                         &p->defDispWinTopOffset,
+                         &p->defDispWinRightOffset,
+                         &p->defDispWinBottomOffset) != 4;
     }
     OPT("timinginfo")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVuiTimingInfoPresentFlag = bvalue;
+        p->bEnableVuiTimingInfoPresentFlag = atobool(value);
     }
     OPT("nal-hrd")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVuiTimingInfoPresentFlag = bvalue;
-        p->bEnableVuiHrdParametersPresentFlag = bvalue;
+        p->bEnableVuiTimingInfoPresentFlag = atobool(value);
+        p->bEnableVuiHrdParametersPresentFlag = atobool(value);
     }
     OPT("bitstreamrestriction")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableBitstreamRestrictionFlag = bvalue;
+        p->bEnableBitstreamRestrictionFlag = atobool(value);
     }
     OPT("subpichrd")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVuiHrdParametersPresentFlag = bvalue;
-        p->bEnableSubPicHrdParamsPresentFlag = bvalue;
+        p->bEnableVuiHrdParametersPresentFlag = atobool(value);
+        p->bEnableSubPicHrdParamsPresentFlag = atobool(value);
     }
-
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
+#undef atobool
+#undef atoi
+#undef atof
 
-    berror |= valuewasnull;
-    return berror ? X265_PARAM_BAD_VALUE : 0;
+    bError |= bValueWasNull && !bNameWasBool;
+    return bError ? X265_PARAM_BAD_VALUE : 0;
 }
 
 char *x265_param2string(x265_param *p)
@@ -1110,20 +1176,4 @@ char *x265_param2string(x265_param *p)
 #undef BOOL
 
     return buf;
-}
-
-static int parseName(const char *arg, const char * const * names, int& error)
-{
-    for (int i = 0; names[i]; i++)
-    {
-        if (!strcmp(arg, names[i]))
-        {
-            return i;
-        }
-    }
-
-    int a = atoi(arg);
-    if (a == 0 && strcmp(arg, "0"))
-        error = 1;
-    return a;
 }
