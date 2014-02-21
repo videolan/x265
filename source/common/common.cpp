@@ -460,6 +460,10 @@ int x265_check_params(x265_param *param)
 {
 #define CHECK(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
+    CHECK(param->maxCUSize > 2147483648/*2^31*/,
+          "maximum CU size should positive number");
+    if (check_failed == 1)
+        return check_failed;// return if maxCUSize is negative, since maxcusize is used in below code for accessing an array which should be positive
     uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
     uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
@@ -530,6 +534,8 @@ int x265_check_params(x265_param *param)
           "RD Level is out of range");
     CHECK(param->bframes > param->lookaheadDepth,
           "Lookahead depth must be greater than the max consecutive bframe count");
+    CHECK(param->bframes < 0,
+          "bframe count should be greater than zero");
     CHECK(param->bframes > X265_BFRAME_MAX,
           "max consecutive bframe count must be 16 or smaller");
     CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
