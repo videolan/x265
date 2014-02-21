@@ -556,11 +556,11 @@ int x265_check_params(x265_param *param)
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->aspectRatioIdc < 0
            || param->aspectRatioIdc > 16)
-          && param->aspectRatioIdc != 255,
+          && param->aspectRatioIdc != X265_EXTENDED_SAR,
           "Sample Aspect Ratio must be 0-16 or 255");
-    CHECK(param->aspectRatioIdc == 255 && param->sarWidth <= 0,
+    CHECK(param->aspectRatioIdc == X265_EXTENDED_SAR && param->sarWidth <= 0,
           "Sample Aspect Ratio width must be greater than 0");
-    CHECK(param->aspectRatioIdc == 255 && param->sarHeight <= 0,
+    CHECK(param->aspectRatioIdc == X265_EXTENDED_SAR && param->sarHeight <= 0,
           "Sample Aspect Ratio height must be greater than 0");
     CHECK(param->videoFormat < 0 || param->videoFormat > 5,
           "Video Format must be Component component,"
@@ -931,7 +931,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableAspectRatioIdc = 1;
-        p->aspectRatioIdc = 255;
+        p->aspectRatioIdc = X265_EXTENDED_SAR;
         bError |= sscanf(value, "%dx%d", &p->sarWidth, &p->sarHeight) != 2;
     }
     OPT("overscan")

@@ -232,6 +232,8 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_CSP_RGB            8  /* packed rgb 24bits   */
 #define X265_CSP_MAX            9  /* end of list */
 
+#define X265_EXTENDED_SAR       255 /* aspect ratio explicitly specified as width:height */
+
 static const char * const x265_source_csp_names[] = { "i400", "i420", "i422", "i444", "nv12", "nv16", 0 };
 
 typedef struct
@@ -343,18 +345,18 @@ typedef struct x265_param
     int bEnableAspectRatioIdc;
 
     /* Aspect ratio idc to be added to the VUI.  The default is 0 indicating
-     * the apsect ratio is unspecified.  If set to EXTENDED_SAR(255) then
+     * the apsect ratio is unspecified.  If set to X265_EXTENDED_SAR then
      * sarWidth and sarHeight must also be set. */
     int       aspectRatioIdc;
 
     /* Sample Aspect Ratio width in arbitrary units to be added to the VUI
-     * only if aspectRatioIdc is set to EXTENDED_SAR(255).  This is the width
+     * only if aspectRatioIdc is set to X265_EXTENDED_SAR.  This is the width
      * of an individual pixel.  If this is set then sarHeight must also be set.
      */
     int       sarWidth;
 
     /* Sample Aspect Ratio height in arbitrary units to be added to the VUI.
-     * only if aspectRatioIdc is set to EXTENDED_SAR(255).  This is the width
+     * only if aspectRatioIdc is set to X265_EXTENDED_SAR.  This is the width
      * of an individual pixel.  If this is set then sarWidth must also be set.
      */
     int       sarHeight;
