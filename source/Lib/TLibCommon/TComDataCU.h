@@ -135,6 +135,9 @@ private:
     TComDataCU*   m_cuAbove;         ///< pointer of above CU
     TComDataCU*   m_cuLeft;          ///< pointer of left CU
     TComDataCU*   m_cuColocated[2];  ///< pointer of temporally colocated CU's for both directions
+    TComMvField   m_mvFieldA;        ///< motion vector of position A
+    TComMvField   m_mvFieldB;        ///< motion vector of position B
+    TComMvField   m_mvFieldC;        ///< motion vector of position C
 
     // -------------------------------------------------------------------------------------------------------------------
     // coding tool information
@@ -384,6 +387,12 @@ public:
     void          setMVPIdxSubParts(int mvpIdx, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
 
     void          clipMv(MV& outMV);
+
+    void          getMvPredLeft(MV& mvPred)       { mvPred = m_mvFieldA.mv; }
+
+    void          getMvPredAbove(MV& mvPred)      { mvPred = m_mvFieldB.mv; }
+
+    void          getMvPredAboveRight(MV& mvPred) { mvPred = m_mvFieldC.mv; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // utility functions for neighboring information
