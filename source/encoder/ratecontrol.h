@@ -91,6 +91,7 @@ struct RateControl
     double vbvMaxRate;       /* in kbps */
     double vbvMinRate;       /* in kbps */
     bool singleFrameVbv;
+    double rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
     bool isVbv;
     Predictor pred[5];
     Predictor predBfromP;
@@ -123,10 +124,13 @@ struct RateControl
     double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
     double frameSizeEstimated;  /* hold synched frameSize, updated from cu level vbv rc */
     RateControl(TEncCfg * _cfg);
+
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(TComPic *pic);
     int rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce);
+    int rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
+
 protected:
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
@@ -139,7 +143,7 @@ protected:
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
     void checkAndResetABR(TComPic* pic, RateControlEntry* rce);
+    double predictRowsSizeSum(TComPic* pic, double qpm , int32_t& encodedBits);
 };
 }
-
 #endif // ifndef X265_RATECONTROL_H

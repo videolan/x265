@@ -220,6 +220,10 @@ RateControl::RateControl(TEncCfg * _cfg)
 
     // validate for cfg->param.rc, maybe it is need to add a function like x265_parameters_valiate()
     cfg->param.rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, cfg->param.rc.rfConstant);
+    cfg->param.rc.rfConstantMax = Clip3((double)-QP_BD_OFFSET, (double)51, cfg->param.rc.rfConstantMax);
+    rateFactorMaxIncrement = 0;
+    vbvMinRate = 0;
+
     if (cfg->param.rc.rateControlMode == X265_RC_CRF)
     {
         cfg->param.rc.qp = (int)cfg->param.rc.rfConstant + QP_BD_OFFSET;
@@ -229,6 +233,15 @@ RateControl::RateControl(TEncCfg * _cfg)
         double mbtree_offset = cfg->param.rc.cuTree ? (1.0 - cfg->param.rc.qCompress) * 13.5 : 0;
         rateFactorConstant = pow(baseCplx, 1 - qCompress) /
             qp2qScale(cfg->param.rc.rfConstant + mbtree_offset + QP_BD_OFFSET);
+        if (cfg->param.rc.rfConstantMax)
+        {
+            rateFactorMaxIncrement = cfg->param.rc.rfConstantMax - cfg->param.rc.rfConstant;
+            if (rateFactorMaxIncrement <= 0)
+            {
+                x265_log(&cfg->param, X265_LOG_WARNING, "CRF max must be greater than CRF\n");
+                rateFactorMaxIncrement = 0;
+            }
+        }
     }
 
     isAbr = cfg->param.rc.rateControlMode != X265_RC_CQP; // later add 2pass option
@@ -448,6 +461,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         bool i1 = nextRefSlice->getSliceType() == I_SLICE;
         int dt0 = abs(curSlice->getPOC() - prevRefSlice->getPOC());
         int dt1 = abs(curSlice->getPOC() - nextRefSlice->getPOC());
+
         // Skip taking a reference frame before the Scenecut if ABR has been reset.
         if (lastAbrResetPoc >= 0 && !isVbv)
         {
@@ -676,7 +690,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
                     continue;
                 }
                 /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
-                targetFill = Clip3(bufferFill - totalDuration * vbvMaxRate * 0.5, bufferSize * 0.8, bufferSize);
+                targetFill = Clip3(bufferSize * 0.8, bufferSize, bufferFill - totalDuration * vbvMaxRate * 0.5);
                 if (vbvMinRate && bufferFillCur > targetFill)
                 {
                     q /= 1.01;
@@ -747,6 +761,169 @@ double RateControl::clipQscale(TComPic* pic, double q)
         return lmin1;
 
     return Clip3(lmin1, lmax1, q);
+}
+ double RateControl::predictRowsSizeSum(TComPic* pic, double qpVbv, int32_t & encodedBitsSoFar)
+{
+    uint32_t rowSatdCostSoFar = 0 ,totalSatdBits = 0;
+    encodedBitsSoFar = 0;
+    double qScale = qp2qScale(qpVbv);
+    int picType = pic->getSlice()->getSliceType();
+    TComPic* refPic = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+    int maxRows = pic->getPicSym()->getFrameHeightInCU();
+    for (int row = 0 ; row < maxRows; row++)
+    {
+        encodedBitsSoFar += pic->m_rowEncodedBits[row];
+        rowSatdCostSoFar = pic->m_rowDiagSatd[row];
+        uint32_t satdCostForPendingCus = pic->m_rowSatdForVbv[row] - rowSatdCostSoFar;
+        if (satdCostForPendingCus  > 0)
+        {
+            double pred_s = predictSize(rowPred[0], qScale, satdCostForPendingCus);
+            uint32_t refRowSatdCost= 0 , refRowBits = 0;
+            double refQScale=0;
+
+            if (picType != I_SLICE)
+            {
+                uint32_t endCuAddr = pic->getPicSym()->getFrameWidthInCU() * (row + 1);
+                for (uint32_t cuAddr = pic->m_numEncodedCusPerRow[row] + 1; cuAddr < endCuAddr; cuAddr++)
+                {
+                    refRowSatdCost += refPic->m_cuCostsForVbv[cuAddr];
+                    refRowBits = refPic->getCU(cuAddr)->m_totalBits;
+                }
+                refQScale = row == maxRows - 1 ? refPic->m_rowDiagQScale[row] : refPic->m_rowDiagQScale[row + 1];
+            }
+            
+            if (picType == I_SLICE || qScale >= refQScale)
+            {
+                if (picType == P_SLICE
+                    && refPic->getSlice()->getSliceType() == picType
+                    && refQScale > 0
+                    && refRowSatdCost > 0)
+                {
+                    if (abs(int32_t(refRowSatdCost - satdCostForPendingCus)) < (int32_t)satdCostForPendingCus / 2)
+                    {
+                        double pred_t = refRowBits * satdCostForPendingCus / refRowSatdCost
+                                        * refQScale / qScale;
+                        totalSatdBits += int32_t((pred_s + pred_t) * 0.5);
+                    }
+                }
+
+                else
+                    totalSatdBits += int32_t(pred_s);
+            }
+            else
+            {
+                 /* Our QP is lower than the reference! */
+                double pred_intra = predictSize(rowPred[1], qScale, refRowSatdCost);
+                /* Sum: better to overestimate than underestimate by using only one of the two predictors. */
+                totalSatdBits += int32_t(pred_intra + pred_s);
+            }
+        }
+    }
+    return totalSatdBits + encodedBitsSoFar;
+ }
+int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv)
+{
+    double qScaleVbv = qp2qScale(qpVbv);
+    pic->m_rowDiagQp[row] = qpVbv;
+    pic->m_rowDiagQScale[row] = qScaleVbv;
+    //TODO  : check whther we gotto update prodictor using whole Row Satd or only satd of blocks upto the diagonal in row.
+    updatePredictor(rowPred[0], qScaleVbv, (double)pic->m_rowDiagSatd[row], (double)pic->m_rowEncodedBits[row]);
+    if (pic->getSlice()->getSliceType() == P_SLICE)
+    {
+        TComPic* refSlice = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+        if (qpVbv < refSlice->m_rowDiagQp[row])
+        {
+            updatePredictor(rowPred[1], qScaleVbv, refSlice->m_rowDiagSatd[row], refSlice->m_rowEncodedBits[row]);
+        }
+    }
+
+    int canReencodeRow = 1;
+    /* tweak quality based on difference from predicted size */
+    double prevRowQp = qpVbv;
+    double qpAbsoluteMax = MAX_MAX_QP;
+    if (rateFactorMaxIncrement)
+        qpAbsoluteMax = X265_MIN(qpAbsoluteMax, rce->qpNoVbv + rateFactorMaxIncrement);
+    double qpMax = X265_MIN(prevRowQp + cfg->param.rc.qpStep, qpAbsoluteMax );
+    double qpMin = X265_MAX(prevRowQp - cfg->param.rc.qpStep, MIN_QP );
+    double stepSize = 0.5;
+    double bufferLeftPlanned = bufferFill - rce->frameSizePlanned;
+
+    double maxFrameError = X265_MAX(0.05, 1.0 / pic->getFrameHeightInCU());
+
+    if (row < pic->getPicSym()->getFrameHeightInCU() - 1)
+    {
+        /* B-frames shouldn't use lower QP than their reference frames. */
+        if (rce->sliceType == B_SLICE)
+        {
+            TComPic* refSlice1 = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+            TComPic* refSlice2 = pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0);
+            qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_rowDiagQp[row], refSlice2->m_rowDiagQp[row]));
+            qpVbv = X265_MAX(qpVbv, qpMin);
+        }
+        /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
+        double rcTol = bufferLeftPlanned / cfg->param.frameNumThreads * cfg->param.rc.rateTolerance;
+        int32_t encodedBitsSoFar = 0;
+        double b1 = predictRowsSizeSum(pic, qpVbv, encodedBitsSoFar);
+
+        /* Don't increase the row QPs until a sufficent amount of the bits of the frame have been processed, in case a flat */
+        /* area at the top of the frame was measured inaccurately. */
+        if (encodedBitsSoFar < 0.05f * rce->frameSizePlanned)
+            qpMax = qpAbsoluteMax = prevRowQp;
+
+        if (rce->sliceType != I_SLICE)
+            rcTol *= 0.5;
+
+        if (!vbvMinRate)
+            qpMin = X265_MAX(qpMin, rce->qpNoVbv);
+
+        while (qpVbv < qpMax
+              && ((b1 > rce->frameSizePlanned + rcTol) ||
+                  (bufferFill - b1 < bufferLeftPlanned * 0.5) ||
+                  (b1 > rce->frameSizePlanned && qpVbv < rce->qpNoVbv)))
+        {
+            qpVbv += stepSize;
+            b1 = predictRowsSizeSum(pic, qpVbv, encodedBitsSoFar);
+        }
+          
+        while (qpVbv > qpMin
+               && (qpVbv > pic->m_rowDiagQp[0] || singleFrameVbv)
+               && ((b1 < rce->frameSizePlanned * 0.8f && qpVbv <= prevRowQp)
+               || b1 < (bufferFill - bufferSize + bufferRate) * 1.1))
+        {
+            qpVbv -= stepSize;
+            b1 = predictRowsSizeSum(pic, qpVbv, encodedBitsSoFar);
+        } 
+        /* avoid VBV underflow */
+        while ((qpVbv < qpAbsoluteMax)
+               && (bufferFill - b1 < bufferRate * maxFrameError))
+        {
+            qpVbv += stepSize;
+            b1 = predictRowsSizeSum(pic, qpVbv, encodedBitsSoFar);
+        }
+        frameSizeEstimated = b1;
+
+        /* If the current row was large enough to cause a large QP jump, try re-encoding it. */
+        if (qpVbv > qpMax && prevRowQp < qpMax && canReencodeRow)
+        {
+            /* Bump QP to halfway in between... close enough. */
+            qpVbv = Clip3(prevRowQp + 1.0f, qpMax, (prevRowQp + qpVbv)*0.5);
+            return -1;
+        }
+    }
+    else
+    {
+        int32_t encodedBitsSoFar = 0;
+        frameSizeEstimated = predictRowsSizeSum(pic, qpVbv, encodedBitsSoFar);
+        /* Last-ditch attempt: if the last row of the frame underflowed the VBV,
+         * try again. */
+        if((frameSizeEstimated > (bufferFill - bufferRate * maxFrameError) &&
+            qpVbv < qpMax && canReencodeRow))
+        {
+            qpVbv = qpMax;
+            return -1;
+        }
+    }
+    return 0;
 }
 
 /* modify the bitrate curve from pass1 for one frame */
