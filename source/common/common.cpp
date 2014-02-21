@@ -930,7 +930,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("extended-sar")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableAspectRatioIdc = atobool(value);
+        p->bEnableAspectRatioIdc = 1;
         p->aspectRatioIdc = 255;
         bError |= sscanf(value, "%dx%d", &p->sarWidth, &p->sarHeight) != 2;
     }
