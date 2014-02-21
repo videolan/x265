@@ -554,6 +554,8 @@ int x265_check_params(x265_param *param)
             CHECK(i != 1, "Max CU size should be 2^n");
     }
 
+    CHECK(param->maxCUSize > 64,
+          "max ctu size should be less than 64");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->aspectRatioIdc < 0
           || param->aspectRatioIdc > 16)
