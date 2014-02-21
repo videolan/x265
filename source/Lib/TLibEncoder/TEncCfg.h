@@ -323,7 +323,7 @@ public:
     int getVuiTimeScale() const { return m_vuiTimeScale; }
 
     bool getVuiHrdParametersPresentFlag() const { return m_vuiHrdParametersPresentFlag; }
- 
+
     bool getSubPicHrdParamsPresentFlag() const { return m_subPicHrdParamsPresentFlag; }
 
     bool getRestrictedRefPicListsFlag() const { return m_restrictedRefPicListsFlag; }

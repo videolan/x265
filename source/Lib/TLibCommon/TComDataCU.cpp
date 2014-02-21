@@ -101,6 +101,7 @@ TComDataCU::TComDataCU()
     m_chromaFormat = 0;
     m_baseQp = 0;
 }
+
 TComDataCU::~TComDataCU()
 {}
 

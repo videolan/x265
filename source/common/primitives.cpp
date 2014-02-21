@@ -214,6 +214,7 @@ void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
     *eax = (uint32_t)out;
     *edx = (uint32_t)(out >> 32);
 }
+
 #endif // X265_ARCH_X86
 }
 #endif // if !ENABLE_ASSEMBLY

@@ -904,7 +904,7 @@ bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
         {
 #if HIGH_BIT_DEPTH
-    X265_DEPTH = old_depth;
+            X265_DEPTH = old_depth;
 #endif
             return false;
         }

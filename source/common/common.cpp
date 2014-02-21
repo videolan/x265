@@ -557,27 +557,27 @@ int x265_check_params(x265_param *param)
 
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->aspectRatioIdc < 0
-          || param->aspectRatioIdc > 16)
-         && param->aspectRatioIdc != 255,
-         "Sample Aspect Ratio must be 0-16 or 255");
+           || param->aspectRatioIdc > 16)
+          && param->aspectRatioIdc != 255,
+          "Sample Aspect Ratio must be 0-16 or 255");
     CHECK(param->sarWidth < 0,
-         "Sample Aspect Ratio width must be greater than 0");
+          "Sample Aspect Ratio width must be greater than 0");
     CHECK(param->sarHeight < 0,
-         "Sample Aspect Ratio height must be greater than 0");
+          "Sample Aspect Ratio height must be greater than 0");
     CHECK(param->videoFormat < 0 || param->videoFormat > 5,
-         "Video Format must be Component component,"
-         " pal, ntsc, secam, mac or undef");
+          "Video Format must be Component component,"
+          " pal, ntsc, secam, mac or undef");
     CHECK(param->colorPrimaries < 0
           || param->colorPrimaries > 9
           || param->colorPrimaries == 3,
-         "Color Primaries must be undef, bt709, bt470m,"
-         " bt470bg, smpte170m, smpte240m, film or bt2020");
+          "Color Primaries must be undef, bt709, bt470m,"
+          " bt470bg, smpte170m, smpte240m, film or bt2020");
     CHECK(param->transferCharacteristics < 0
           || param->transferCharacteristics > 15
           || param->transferCharacteristics == 3,
-         "Transfer Characteristics must be undef, bt709, bt470m, bt470bg,"
-         " smpte170m, smpte240m, linear, log100, log316, iec61966-2-4, bt1361e,"
-         " iec61966-2-1, bt2020-10 or bt2020-12");
+          "Transfer Characteristics must be undef, bt709, bt470m, bt470bg,"
+          " smpte170m, smpte240m, linear, log100, log316, iec61966-2-4, bt1361e,"
+          " iec61966-2-1, bt2020-10 or bt2020-12");
     CHECK(param->matrixCoeffs < 0
           || param->matrixCoeffs > 10
           || param->matrixCoeffs == 3,
@@ -762,7 +762,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         else
         {
             float fps = (float)atof(value);
-            if (fps > 0 && fps <= INT_MAX/1000)
+            if (fps > 0 && fps <= INT_MAX / 1000)
             {
                 p->fpsNum = (int)(fps * 1000 + .5);
                 p->fpsDenom = 1000;
@@ -870,7 +870,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->aspectRatioIdc = 255;
         sscanf(value, "%dx%d", &p->sarWidth, &p->sarHeight);
     }
-    OPT("overscan") 
+    OPT("overscan")
     {
         p->bEnableVuiParametersPresentFlag = 1;
         if (!strcmp(value, "show"))
@@ -1017,11 +1017,11 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableDefaultDisplayWindowFlag = bvalue;
-        sscanf(value,"%d,%d,%d,%d",
-            &p->defDispWinLeftOffset,
-            &p->defDispWinTopOffset,
-            &p->defDispWinRightOffset,
-            &p->defDispWinBottomOffset);
+        sscanf(value, "%d,%d,%d,%d",
+               &p->defDispWinLeftOffset,
+               &p->defDispWinTopOffset,
+               &p->defDispWinRightOffset,
+               &p->defDispWinBottomOffset);
     }
     OPT("timinginfo")
     {

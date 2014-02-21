@@ -1228,7 +1228,6 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
         ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
     }
 
-
     //===== copy reconstruction =====
     m_qtTempTransformSkipYuv.copyPartToPartShort(&m_qtTempShortYuv[qtlayer], absPartIdx, 1 << trSizeLog2, !bLumaOnly && !bSkipChroma, bChromaSame);
 
@@ -1772,7 +1771,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     uint32_t overallDistC = 0;
     uint32_t candNum;
     uint64_t candCostList[FAST_UDI_MAX_RDMODE_NUM];
-    const UChar intraModeNumFast[7] = {3, 8, 8, 3, 3, 3, 3}; // 2x2, 4x4, 8x8, 16x16, 32x32, 64x64, 128x128
+    const UChar intraModeNumFast[7] = { 3, 8, 8, 3, 3, 3, 3 }; // 2x2, 4x4, 8x8, 16x16, 32x32, 64x64, 128x128
 
     //===== set QP and clear Cbf =====
     if (cu->getSlice()->getPPS()->getUseDQP() == true)
@@ -3223,7 +3222,6 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
                 cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
             }
         }
-
     }
     else if (cu->getPredictionMode(0) == MODE_INTRA)
     {

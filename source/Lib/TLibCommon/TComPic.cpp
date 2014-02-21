@@ -81,6 +81,7 @@ TComPic::TComPic()
     m_avgQpRc = 0;
     m_bChromaPlanesExtended = false;
 }
+
 TComPic::~TComPic()
 {}
 
@@ -122,7 +123,7 @@ bool TComPic::create(TEncCfg* cfg)
 
     return ok;
 
-fail :
+fail:
     ok = false;
     return ok;
 }
@@ -144,6 +145,7 @@ void TComPic::reInit(TEncCfg* cfg)
         memset(m_qpaAq, 0, numRows * sizeof(uint32_t));
     }
 }
+
 void TComPic::destroy(int bframes)
 {
     if (m_picSym)
@@ -178,4 +180,5 @@ void TComPic::destroy(int bframes)
     X265_FREE(m_qpaAq);
     X265_FREE(m_qpaRc);
 }
+
 //! \}

@@ -121,6 +121,7 @@ public:
     void          reInit(TEncCfg* cfg);
 
     bool          getUsedByCurr()           { return m_bUsedByCurr; }
+
     void          setUsedByCurr(bool bUsed) { m_bUsedByCurr = bUsed; }
 
     bool          getIsLongTerm()           { return m_bIsLongTerm; }

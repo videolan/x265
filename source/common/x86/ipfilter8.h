@@ -206,7 +206,6 @@
     SETUP_CHROMA_SS_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(8, 32, cpu)
 
-
 #define CHROMA_SS_FILTERS_SSE4(cpu) \
     SETUP_CHROMA_SS_FUNC_DEF(2, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(2, 8, cpu); \

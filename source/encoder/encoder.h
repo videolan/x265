@@ -144,6 +144,7 @@ public:
     RateControl*       m_rateControl;
 
 protected:
+
     // Returns total number of bits for encoded pic
     uint64_t calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, NALUnitEBSP **nalunits);
 };

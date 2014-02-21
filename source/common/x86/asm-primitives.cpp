@@ -367,7 +367,6 @@ extern "C" {
     SETUP_CHROMA_SS_FUNC_DEF_420(2, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_420(6, 8, cpu);
 
-
 #define CHROMA_SS_FILTERS_444(cpu) \
     SETUP_CHROMA_SS_FUNC_DEF_444(4, 4, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_444(8, 8, cpu); \

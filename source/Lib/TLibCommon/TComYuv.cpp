@@ -107,6 +107,7 @@ void TComYuv::copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t abs
     int part = partitionFromSizes(width, m_height >> depth);
     Pel* srcY = getLumaAddr(partIdx, width);
     Pel* dstY = destPicYuv->getLumaAddr(cuAddr, absZOrderIdx);
+
     primitives.luma_copy_pp[part](dstY, destPicYuv->getStride(), srcY, getStride());
 
     width = m_cwidth >> depth;
@@ -121,6 +122,7 @@ void TComYuv::copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t abs
 void TComYuv::copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx)
 {
     Pel* srcY = srcPicYuv->getLumaAddr(cuAddr, absZOrderIdx);
+
     primitives.luma_copy_pp[m_part](m_bufY, getStride(), srcY, srcPicYuv->getStride());
 
     Pel* srcU = srcPicYuv->getCbAddr(cuAddr, absZOrderIdx);
@@ -132,6 +134,7 @@ void TComYuv::copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t ab
 void TComYuv::copyToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 {
     Pel* dstY = dstPicYuv->getLumaAddr(partIdx);
+
     primitives.luma_copy_pp[m_part](dstY, dstPicYuv->getStride(), m_bufY, getStride());
 
     Pel* dstU = dstPicYuv->getCbAddr(partIdx);
@@ -148,6 +151,7 @@ void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 
     Pel* srcY = getLumaAddr(partIdx);
     Pel* dstY = dstPicYuv->getLumaAddr(0);
+
     primitives.luma_copy_pp[part](dstY, dstPicYuv->getStride(), srcY, getStride());
 
     Pel* srcU = getCbAddr(partIdx);
@@ -161,6 +165,7 @@ void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
 {
     int part = partitionFromSizes(width, height);
+
     assert(width != 4 || height != 4);
 
     if (bLuma)
@@ -194,6 +199,7 @@ void TComYuv::copyPartToPartShort(TShortYUV* dstPicYuv, uint32_t partIdx, uint32
 
     int16_t* dst = dstPicYuv->getLumaAddr(partIdx);
     uint32_t dststride = dstPicYuv->m_width;
+
     primitives.luma_copy_ps[part](dst, dststride, getLumaAddr(partIdx), getStride());
 
     if (bChroma)
@@ -218,6 +224,7 @@ void TComYuv::copyPartToPartShort(TShortYUV* dstPicYuv, uint32_t partIdx, uint32
 void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId)
 {
     int part = partitionFromSizes(lumaSize, lumaSize);
+
     assert(lumaSize != 4);
 
     if (chromaId == 0)

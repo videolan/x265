@@ -344,7 +344,7 @@ typedef struct x265_param
 
     /* Aspect ratio idc to be added to the VUI.  The default is 0 indicating
      * the apsect ratio is unspecified.  If set to EXTENDED_SAR(255) then
-     * sarWidth and sarHeight must also be set. */ 
+     * sarWidth and sarHeight must also be set. */
     int       aspectRatioIdc;
 
     /* Sample Aspect Ratio width in arbitrary units to be added to the VUI
@@ -354,12 +354,12 @@ typedef struct x265_param
     int       sarWidth;
 
     /* Sample Aspect Ratio height in arbitrary units to be added to the VUI.
-     * only if aspectRatioIdc is set to EXTENDED_SAR(255).  This is the width 
+     * only if aspectRatioIdc is set to EXTENDED_SAR(255).  This is the width
      * of an individual pixel.  If this is set then sarWidth must also be set.
      */
     int       sarHeight;
 
-    /* Enable overscan info present flag in the VUI.  If this is set then 
+    /* Enable overscan info present flag in the VUI.  If this is set then
      * bEnabledOverscanAppropriateFlag will be added to the VUI. The default
      * is false. */
     int       bEnableOverscanInfoPresentFlag;
@@ -370,8 +370,8 @@ typedef struct x265_param
      * is false. */
     int       bEnableOverscanAppropriateFlag;
 
-    /* Video signal type present flag of the VUI.  If this is set then 
-     * videoFormat, bEnableVideoFullRangeFlag and 
+    /* Video signal type present flag of the VUI.  If this is set then
+     * videoFormat, bEnableVideoFullRangeFlag and
      * bEnableColorDescriptionPresentFlag will be added to the VUI.  The default
      * is false. */
     int       bEnableVideoSignalTypePresentFlag;
@@ -385,7 +385,7 @@ typedef struct x265_param
      * E′B real-valued component signals.  False is the default. */
     int       bEnableVideoFullRangeFlag;
 
-    /* Color description present flag in the VUI.  If this is set then 
+    /* Color description present flag in the VUI.  If this is set then
      * color_primaries, transfer_characteristics and matrix_coeffs are to be added
      * to the VUI.  The default is false. */
     int       bEnableColorDescriptionPresentFlag;
@@ -414,13 +414,13 @@ typedef struct x265_param
      * field.  The default is 0. */
     int       chromaSampleLocTypeBottomField;
 
-    /* Field seq flag specifies that the pictures are fields and each one has a 
+    /* Field seq flag specifies that the pictures are fields and each one has a
      * timing SEI message.  The default is false */
     int       bEnableFieldSeqFlag;
 
     /* Frame field info present flag indicates that each picture has a timing SEI
-     * message wich includes a pic_struct, source_scan_type and duplicate_flag 
-     * elements.  If not set then the pic_struct element is not included.  The 
+     * message wich includes a pic_struct, source_scan_type and duplicate_flag
+     * elements.  If not set then the pic_struct element is not included.  The
      * default is false. */
     int       bEnableFrameFieldInfoPresentFlag;
 
@@ -433,21 +433,21 @@ typedef struct x265_param
      * conformance cropping window to further crop the displayed window. */
     int       defDispWinLeftOffset;
 
-    /* Default display window right offset holds the right offset with the 
+    /* Default display window right offset holds the right offset with the
      * conformance cropping window to further crop the displayed window. */
     int       defDispWinRightOffset;
 
-    /* Default display window top offset holds the top offset with the 
+    /* Default display window top offset holds the top offset with the
      * conformance cropping window to further crop the displayed window. */
     int       defDispWinTopOffset;
 
-    /* Default display window bottom offset holds the bottom offset with the 
+    /* Default display window bottom offset holds the bottom offset with the
      * conformance cropping window to further crop the displayed window. */
     int       defDispWinBottomOffset;
 
     /* VUI timing info present flag adds vui_num_units_in_tick, vui_time_scale,
      * vui_poc_proportional_to_timing_flag and vui_hrd_parameters_present_flag
-     * to the VUI.  vui_num_units_in_tick, vui_time_scale and 
+     * to the VUI.  vui_num_units_in_tick, vui_time_scale and
      * vui_poc_proportional_to_timing_flag are derived from processing the input
      * video.  The default is false. */
     int       bEnableVuiTimingInfoPresentFlag;

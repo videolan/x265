@@ -487,6 +487,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
 
     TComPicYuv *orig = slice.getPic()->getPicYuvOrg();
     pixel *temp = X265_MALLOC(pixel, 2 * orig->getStride() * orig->getHeight());
+
     if (temp)
     {
         int denom = slice.getNumRefIdx(REF_PIC_LIST_0) > 3 ? 7 : 6;
@@ -538,10 +539,11 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
                 }
             }
         }
+
         if (bWeighted)
         {
             if (p < 80) // pad with spaces to ensure progress line overwritten
-                sprintf(buf + p, "%*s", 80-p, " ");
+                sprintf(buf + p, "%*s", 80 - p, " ");
             x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
         }
     }

@@ -376,7 +376,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --sar                         Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=Unspecified, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
-    H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1. Default %d\n",param->aspectRatioIdc);
+    H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1. Default %d\n", param->aspectRatioIdc);
     H0("   --extended-sar                Use a custom Sample Aspect Ratio,[WxH]\n");
     H0("   --overscan <string>           Specify crop overscan setting from undef, show or crop. Default of undef\n");
     H0("   --videoformat <string>        Specify video format from undef, component, pal, ntsc, secam, mac. Default of undef\n");
@@ -388,7 +388,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 bt2020-10, bt2020-12. Default of undef\n");
     H0("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
     H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c\n");
-    H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n",param->chromaSampleLocTypeTopField);
+    H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->chromaSampleLocTypeTopField);
     H0("   --[no-]fieldseq               Specify that pictures are fields and an SEI timing message\n");
     H0("                                 will be added to every access unit. Default %s\n", OPT(param->bEnableFieldSeqFlag));
     H0("   --[no-]framefieldinfo         Specify that a pic-struct will be added to the SEI timing message. Default %s\n", OPT(param->bEnableFrameFieldInfoPresentFlag));

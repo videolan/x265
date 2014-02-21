@@ -63,6 +63,7 @@ struct RateControlEntry
     double movingAvgSum;
     double qpNoVbv;
 };
+
 struct Predictor
 {
     double coeff;
@@ -132,6 +133,7 @@ struct RateControl
     int rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
 
 protected:
+
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
@@ -143,7 +145,7 @@ protected:
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
     void checkAndResetABR(TComPic* pic, RateControlEntry* rce);
-    double predictRowsSizeSum(TComPic* pic, double qpm , int32_t& encodedBits);
+    double predictRowsSizeSum(TComPic* pic, double qpm, int32_t& encodedBits);
 };
 }
 #endif // ifndef X265_RATECONTROL_H
