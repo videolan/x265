@@ -541,7 +541,7 @@ int x265_check_params(x265_param *param)
           "max consecutive bframe count must be 16 or smaller");
     CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
           "Lookahead depth must be less than 256");
-    CHECK(param->rc.aqMode < X265_AQ_NONE || param->rc.aqMode > X265_AQ_AUTO_VARIANCE,
+    CHECK(param->rc.aqMode < X265_AQ_NONE || X265_AQ_AUTO_VARIANCE < param->rc.aqMode,
           "Aq-Mode is out of range");
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");

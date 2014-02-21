@@ -496,8 +496,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("recon-depth") reconFileBitDepth = (uint32_t)atoi(optarg);
             OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
-            OPT("preset") ;
-            OPT("tune")   ;
+            OPT("preset") /* handled above */;
+            OPT("tune")   /* handled above */;
             else
                 berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
 

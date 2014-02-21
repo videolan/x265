@@ -536,8 +536,9 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             }
             q = getQScale(rce, wantedBitsWindow / cplxrSum);
 
-            /* ABR code can potentially be counterproductive in CBR, so just don't bother.
-             * Don't run it if the frame complexity is zero either. */
+            /* ABR code can potentially be counterproductive in CBR, so just
+             * don't bother.  Don't run it if the frame complexity is zero
+             * either. */
             if (!vbvMinRate && currentSatd)
             {
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
@@ -875,8 +876,9 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
         int32_t encodedBitsSoFar = 0;
         double b1 = predictRowsSizeSum(pic, qpVbv, encodedBitsSoFar);
 
-        /* Don't increase the row QPs until a sufficent amount of the bits of the frame have been processed, in case a flat */
-        /* area at the top of the frame was measured inaccurately. */
+        /* * Don't increase the row QPs until a sufficent amount of the bits of
+         * the frame have been processed, in case a flat area at the top of the
+         * frame was measured inaccurately. */
         if (encodedBitsSoFar < 0.05f * rce->frameSizePlanned)
             qpMax = qpAbsoluteMax = prevRowQp;
 

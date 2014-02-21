@@ -176,7 +176,8 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 
     /* add one more row and col of pad for downscale interpolation, fixes
      * warnings from valgrind about using uninitialized pixels */
-    padx++; pady++;
+    padx++;
+    pady++;
 
     if (pic.bitDepth < X265_DEPTH)
     {

@@ -155,10 +155,11 @@ uint8_t sbacInit(int qp, int initValue);   ///< initialize state with initial pr
 #define NEIGHBOURHOOD_00_CONTEXT_1_THRESHOLD_4x4  3
 #define NEIGHBOURHOOD_00_CONTEXT_2_THRESHOLD_4x4  1
 
-static const uint32_t significanceMapContextSetStart         [MAX_NUM_CHANNEL_TYPE][3] = { {0,  9, 21}, {0,  9, 12} };
-static const uint32_t significanceMapContextSetSize          [MAX_NUM_CHANNEL_TYPE][3] = { {9, 12,  6}, {9,  3,  3} };
-static const uint32_t nonDiagonalScan8x8ContextOffset        [MAX_NUM_CHANNEL_TYPE]    = {  6,           0          };
-static const uint32_t notFirstGroupNeighbourhoodContextOffset[MAX_NUM_CHANNEL_TYPE]    = {  3,           0          };
+static const uint32_t significanceMapContextSetStart[MAX_NUM_CHANNEL_TYPE][3] = { { 0,  9, 21 }, { 0,  9, 12 } };
+static const uint32_t significanceMapContextSetSize[MAX_NUM_CHANNEL_TYPE][3]  = { { 9, 12,  6 }, { 9,  3,  3 } };
+static const uint32_t nonDiagonalScan8x8ContextOffset[MAX_NUM_CHANNEL_TYPE]   = {  6, 0  };
+static const uint32_t notFirstGroupNeighbourhoodContextOffset[MAX_NUM_CHANNEL_TYPE] = { 3, 0 };
+
 // initial probability for cu_transquant_bypass flag
 static const uint8_t
     INIT_CU_TRANSQUANT_BYPASS_FLAG[3][NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX] =

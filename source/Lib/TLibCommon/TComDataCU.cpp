@@ -248,26 +248,26 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     assert(numElements > 0);
 
     {
-        memset(m_skipFlag         , false,                    numElements * sizeof(*m_skipFlag));
-        memset(m_predModes        , MODE_NONE,                numElements * sizeof(*m_predModes));
-        memset(m_cuTransquantBypass, false,                   numElements * sizeof(*m_cuTransquantBypass));
-        memset(m_depth            , 0,                        numElements * sizeof(*m_depth));
-        memset(m_trIdx            , 0,                        numElements * sizeof(*m_trIdx));
-        memset(m_transformSkip[0] , 0,                        numElements * sizeof(*m_transformSkip[0]));
-        memset(m_transformSkip[1] , 0,                        numElements * sizeof(*m_transformSkip[1]));
-        memset(m_transformSkip[2] , 0,                        numElements * sizeof(*m_transformSkip[2]));
-        memset(m_width            , g_maxCUWidth,             numElements * sizeof(*m_width));
-        memset(m_height           , g_maxCUHeight,            numElements * sizeof(*m_height));
-        memset(m_qp               , qp,                       numElements * sizeof(*m_qp));
-        memset(m_bMergeFlags      , false,                    numElements * sizeof(*m_bMergeFlags));
-        memset(m_mergeIndex       , 0,                        numElements * sizeof(*m_mergeIndex));
-        memset(m_lumaIntraDir     , DC_IDX,                   numElements * sizeof(*m_lumaIntraDir));
-        memset(m_chromaIntraDir   , 0,                        numElements * sizeof(*m_chromaIntraDir));
-        memset(m_interDir         , 0,                        numElements * sizeof(*m_interDir));
-        memset(m_cbf[0]           , 0,                        numElements * sizeof(*m_cbf[0]));
-        memset(m_cbf[1]           , 0,                        numElements * sizeof(*m_cbf[1]));
-        memset(m_cbf[2]           , 0,                        numElements * sizeof(*m_cbf[2]));
-        memset(m_iPCMFlags        , false,                    numElements * sizeof(*m_iPCMFlags));
+        memset(m_skipFlag,           false,         numElements * sizeof(*m_skipFlag));
+        memset(m_predModes,          MODE_NONE,     numElements * sizeof(*m_predModes));
+        memset(m_cuTransquantBypass, false,         numElements * sizeof(*m_cuTransquantBypass));
+        memset(m_depth,              0,             numElements * sizeof(*m_depth));
+        memset(m_trIdx,              0,             numElements * sizeof(*m_trIdx));
+        memset(m_transformSkip[0],   0,             numElements * sizeof(*m_transformSkip[0]));
+        memset(m_transformSkip[1],   0,             numElements * sizeof(*m_transformSkip[1]));
+        memset(m_transformSkip[2],   0,             numElements * sizeof(*m_transformSkip[2]));
+        memset(m_width,              g_maxCUWidth,  numElements * sizeof(*m_width));
+        memset(m_height,             g_maxCUHeight, numElements * sizeof(*m_height));
+        memset(m_qp,                 qp,            numElements * sizeof(*m_qp));
+        memset(m_bMergeFlags,        false,         numElements * sizeof(*m_bMergeFlags));
+        memset(m_mergeIndex,         0,             numElements * sizeof(*m_mergeIndex));
+        memset(m_lumaIntraDir,       DC_IDX,        numElements * sizeof(*m_lumaIntraDir));
+        memset(m_chromaIntraDir,     0,             numElements * sizeof(*m_chromaIntraDir));
+        memset(m_interDir,           0,             numElements * sizeof(*m_interDir));
+        memset(m_cbf[0],             0,             numElements * sizeof(*m_cbf[0]));
+        memset(m_cbf[1],             0,             numElements * sizeof(*m_cbf[1]));
+        memset(m_cbf[2],             0,             numElements * sizeof(*m_cbf[2]));
+        memset(m_iPCMFlags,          false,         numElements * sizeof(*m_iPCMFlags));
     }
 
     uint32_t y_tmp = g_maxCUWidth * g_maxCUHeight;

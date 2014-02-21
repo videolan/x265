@@ -82,10 +82,9 @@ PixelHarness::PixelHarness()
         }
     }
 
-    /*[0] --- Random values  */
-    /*[1] --- Minimum        */
-    /*[2] --- Maximum        */
-
+    /* [0] --- Random values
+     * [1] --- Minimum
+     * [2] --- Maximum */
     for (int i = 0; i < BUFFSIZE; i++)
     {
         pixel_test_buff[0][i]   = rand() % PIXEL_MAX;

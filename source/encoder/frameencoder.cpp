@@ -931,10 +931,10 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_busy = false;
     }
 
-    int range = m_cfg->param.searchRange + /* fpel search */
-                1 +                        /* diamond search range check lag */
-                2 +                        /* subpel refine */
-                NTAPS_LUMA / 2;            /* subpel filter half-length */
+    int range = m_cfg->param.searchRange; /* fpel search */
+    range    += 1;                        /* diamond search range check lag */
+    range    += 2;                        /* subpel refine */
+    range    += NTAPS_LUMA / 2;           /* subpel filter half-length */
     uint32_t refLagRows = 1 + ((range + g_maxCUHeight - 1) / g_maxCUHeight);
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
