@@ -460,14 +460,20 @@ int x265_check_params(x265_param *param)
 {
 #define CHECK(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
-    CHECK(param->maxCUSize > 2147483648/*2^31*/,
-          "maximum CU size should positive number");
+
+    CHECK(param->maxCUSize > 64,
+          "max ctu size should be less than 64");
+    CHECK(param->maxCUSize < 16,
+          "Maximum partition width size should be larger than or equal to 16");
     if (check_failed == 1)
-        return check_failed;// return if maxCUSize is negative, since maxcusize is used in below code for accessing an array which should be positive
+        return check_failed;
+
     uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
     uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
+    CHECK((param->maxCUSize >> maxCUDepth) < 4,
+          "Minimum partition width size should be larger than or equal to 8");
     CHECK(param->internalCsp != X265_CSP_I420 && param->internalCsp != X265_CSP_I444,
           "Only 4:2:0 and 4:4:4 color spaces is supported at this time");
 
@@ -499,11 +505,6 @@ int x265_check_params(x265_param *param)
     CHECK(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
     CHECK(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
     CHECK(param->crQpOffset >  12, "Max. Chroma Cr QP Offset is  12");
-
-    CHECK((param->maxCUSize >> maxCUDepth) < 4,
-          "Minimum partition width size should be larger than or equal to 8");
-    CHECK(param->maxCUSize < 16,
-          "Maximum partition width size should be larger than or equal to 16");
 
     CHECK((1u << tuQTMaxLog2Size) > param->maxCUSize,
           "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
@@ -554,8 +555,6 @@ int x265_check_params(x265_param *param)
             CHECK(i != 1, "Max CU size should be 2^n");
     }
 
-    CHECK(param->maxCUSize > 64,
-          "max ctu size should be less than 64");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->aspectRatioIdc < 0
           || param->aspectRatioIdc > 16)
