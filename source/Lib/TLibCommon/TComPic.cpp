@@ -103,7 +103,7 @@ bool TComPic::create(TEncCfg* cfg)
     ok &= m_picSym->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
     ok &= m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
     ok &= m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
-    ok &= m_lowres.create(m_origPicYuv, cfg->param.bframes, &cfg->param.rc.aqMode);
+    ok &= m_lowres.create(m_origPicYuv, cfg->param.bframes, !!cfg->param.rc.aqMode);
 
     if (ok && cfg->param.rc.vbvBufferSize > 0 && cfg->param.rc.vbvMaxBitrate > 0)
     {

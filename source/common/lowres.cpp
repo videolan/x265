@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
+bool Lowres::create(TComPicYuv *orig, int bframes, bool bAQEnabled)
 {
     isLowres = true;
     width = orig->getWidth() / 2;
@@ -46,7 +46,7 @@ bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
     size_t planesize = lumaStride * (lines + 2 * orig->getLumaMarginY());
     size_t padoffset = lumaStride * orig->getLumaMarginY() + orig->getLumaMarginX();
 
-    if (*aqMode)
+    if (bAQEnabled)
     {
         CHECKED_MALLOC(qpAqOffset, double, cuCount);
         CHECKED_MALLOC(invQscaleFactor, int, cuCount);
@@ -89,7 +89,6 @@ bool Lowres::create(TComPicYuv *orig, int bframes, int *aqMode)
     return true;
 
 fail:
-    *aqMode = 0;
     return false;
 }
 
