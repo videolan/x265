@@ -1240,11 +1240,12 @@ cglobal dequant_normal, 4,5,5
 ; int count_nonzero(const int32_t *quantCoeff, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal count_nonzero, 2,3,4
+cglobal count_nonzero, 2,2,4
     pxor        m0, m0
-    pxor        m1, m1
-    mov         r2d, r1d
     shr         r1d, 3
+    movd        m1, r1d
+    pshuflw     m1, m1, 0
+    punpcklqdq  m1, m1
 
 .loop
     mova        m2, [r0]
@@ -1252,16 +1253,13 @@ cglobal count_nonzero, 2,3,4
     add         r0, 32
     packssdw    m2, m3
     pcmpeqw     m2, m0
-    psrlw       m2, 15
-    packsswb    m2, m2
-    psadbw      m2, m0
-    paddd       m1, m2
+    paddw       m1, m2
     dec         r1d
-    jnz        .loop
+    jnz         .loop
 
-    movd        r1d, m1
-    sub         r2d, r1d
-    mov         eax, r2d
+    packuswb    m1, m1
+    psadbw      m1, m0
+    movd        eax, m1
 
     RET
 

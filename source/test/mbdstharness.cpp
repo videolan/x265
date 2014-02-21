@@ -380,6 +380,41 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
     return true;
 }
 
+bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt)
+{
+    ALIGN_VAR_32(int32_t, qcoeff[32 * 32]);
+
+    for (int i = 0; i < 4; i++)
+    {
+        int log2TrSize = i + 2;
+        int num = 1 << (log2TrSize * 2);
+        int mask = num - 1;
+
+        for (int n = 0; n <= num; n++)
+        {
+            memset(qcoeff, 0, num * sizeof(int32_t));
+
+            for (int j = 0; j < n; j++)
+            {
+                int k = rand() & mask;
+                while (qcoeff[k])
+                {
+                    k = (k + 11) & mask;
+                }
+                qcoeff[k] = rand() - RAND_MAX / 2;
+            }
+
+            int refval = ref(qcoeff, num);
+            int optval = opt(qcoeff, num);
+
+            if (refval != optval)
+                return false;
+        }
+    }
+
+    return true;
+}
+
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int i = 0; i < NUM_DCTS; i++)
@@ -424,6 +459,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.count_nonzero)
+    {
+        if (!check_count_nonzero_primitive(ref.count_nonzero, opt.count_nonzero))
+        {
+            printf("count_nonzero: Failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -464,5 +508,14 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         printf("quant\t\t");
         int dummy = -1;
         REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32, &dummy);
+    }
+
+    if (opt.count_nonzero)
+    {
+        for (int i = 4; i <= 32; i <<= 1)
+        {
+            printf("count_nonzero[%dx%d]", i, i);
+            REPORT_SPEEDUP(opt.count_nonzero, ref.count_nonzero, mbufidct, i * i)
+        }
     }
 }

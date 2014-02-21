@@ -43,6 +43,7 @@ protected:
     bool check_quant_primitive(quant_t ref, quant_t opt);
     bool check_dct_primitive(dct_t ref, dct_t opt, int width);
     bool check_idct_primitive(idct_t ref, idct_t opt, int width);
+    bool check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt);
 
 public:
 
