@@ -137,15 +137,6 @@ extern const uint32_t g_minInGroup[10];
 extern const uint32_t g_goRiceRange[5];      //!< maximum value coded with Rice codes
 extern const uint32_t g_goRicePrefixLen[5];  //!< prefix length for each maximum value
 
-extern const uint32_t g_sigLastScan8x8[3][4];   //!< coefficient group scan order for 8x8 TUs
-extern const uint32_t g_sigLastScanCG32x32[64];
-
-// ====================================================================================================================
-// ADI table
-// ====================================================================================================================
-
-extern const UChar g_intraModeNumFast[7];
-
 // ====================================================================================================================
 // Bit-depth
 // ====================================================================================================================
