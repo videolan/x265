@@ -1382,6 +1382,12 @@ void Encoder::configure(x265_param *_param)
         _param->rc.aqMode = X265_AQ_NONE;
     }
 
+    if (_param->internalCsp != X265_CSP_I420)
+    {
+        x265_log(_param, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
+        x265_log(_param, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
+    }
+
     m_csp = _param->internalCsp;
     m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
 
