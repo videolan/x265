@@ -83,11 +83,13 @@ if(MSVC)
             string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
         endforeach()
     endif (STATIC_LINK_CRT)
-    # Enforce coding standards.  Full warnings and warnings as errors
-    add_definitions(/W4 /WX /D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(/W4)  # Full warnings
     add_definitions(/Ob2) # always inline
     add_definitions(/Oi)  # enable intrinsics
     add_definitions(/MP)  # multithreaded build
+
+    # disable Microsofts suggestions for proprietary secure APIs
+    add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 
     check_include_files(stdint.h HAVE_STDINT_H)
     if(NOT HAVE_STDINT_H)
@@ -113,10 +115,6 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 endif()
 if (GCC)
-    option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
-    if(WARNINGS_AS_ERRORS)
-        add_definitions(-Werror)
-    endif(WARNINGS_AS_ERRORS)
     if(X64 AND NOT WIN32)
         add_definitions(-fPIC)
     endif(X64 AND NOT WIN32)
@@ -155,6 +153,15 @@ if(HIGH_BIT_DEPTH)
 else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
+
+option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
+if(WARNINGS_AS_ERRORS)
+    if(GCC)
+        add_definitions(-Werror)
+    elseif(MSVC)
+        add_definitions(/WX)
+    endif()
+endif(WARNINGS_AS_ERRORS)
 
 option(LOG_CU_STATISTICS "Log Mode Decision Statistics at the CU Level" OFF)
 if(LOG_CU_STATISTICS)
