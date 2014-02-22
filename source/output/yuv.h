@@ -55,6 +55,8 @@ public:
 
     virtual ~YUVOutput();
 
+    const char *getName() const                   { return "yuv"; }
+
     bool isFail() const                           { return ofs.fail(); }
 
     void release()                                { delete this; }

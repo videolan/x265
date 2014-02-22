@@ -56,6 +56,8 @@ public:
 
     virtual ~Y4MOutput();
 
+    const char *getName() const                   { return "y4m"; }
+
     bool isFail() const                           { return ofs.fail(); }
 
     void release()                                { delete this; }

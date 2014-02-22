@@ -47,6 +47,8 @@ public:
     virtual void release() = 0;
 
     virtual bool writePicture(const x265_picture& pic) = 0;
+
+    virtual const char *getName() const = 0;
 };
 }
 
