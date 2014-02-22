@@ -39,7 +39,6 @@ namespace x265 {
 // x265 private namespace
 
 class ThreadPoolImpl;
-static int get_cpu_count();
 
 class PoolThread : public Thread
 {
@@ -244,7 +243,7 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     , m_lastProvider(NULL)
 {
     if (numThreads == 0)
-        numThreads = get_cpu_count();
+        numThreads = getCpuCount();
     m_numSleepMapWords = (numThreads + 63) >> 6;
     m_sleepMap = X265_MALLOC(uint64_t, m_numSleepMapWords);
 
@@ -428,7 +427,7 @@ void JobProvider::dequeue()
     m_pool->pokeIdleThread();
 }
 
-static int get_cpu_count()
+int getCpuCount()
 {
 #if _WIN32
     SYSTEM_INFO sysinfo;

@@ -33,6 +33,8 @@ namespace x265 {
 
 class ThreadPool;
 
+int getCpuCount();
+
 // Any class that wants to distribute work to the thread pool must
 // derive from JobProvider and implement FindJob().
 class JobProvider

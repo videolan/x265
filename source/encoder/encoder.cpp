@@ -1269,14 +1269,15 @@ void Encoder::configure(x265_param *_param)
 
     if (_param->frameNumThreads == 0)
     {
+        int cpuCount = getCpuCount();
         // auto-detect frame threads
-        if (poolThreadCount > 32)
+        if (cpuCount > 32)
             _param->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
-        else if (poolThreadCount >= 16)
+        else if (cpuCount >= 16)
             _param->frameNumThreads = 5; // 8 HT cores, or dual socket
-        else if (poolThreadCount >= 8)
+        else if (cpuCount >= 8)
             _param->frameNumThreads = 3; // 4 HT cores
-        else if (poolThreadCount >= 4)
+        else if (cpuCount >= 4)
             _param->frameNumThreads = 2; // Dual or Quad core
         else
             _param->frameNumThreads = 1;
