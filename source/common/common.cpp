@@ -801,11 +801,14 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         name = nameBuf;
     }
 
-    int i;
-    if ((!strncmp(name, "no-", 3) && (i = 3)) ||
-        (!strncmp(name, "no", 2) && (i = 2)))
+    if (!strncmp(name, "no-", 3))
     {
-        name += i;
+        name += 3;
+        value = !value || x265_atobool(value, bError) ? "false" : "true";
+    }
+    else if (!strncmp(name, "no", 2))
+    {
+        name += 2;
         value = !value || x265_atobool(value, bError) ? "false" : "true";
     }
     else if (!value)
