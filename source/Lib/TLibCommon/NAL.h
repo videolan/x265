@@ -36,36 +36,26 @@
 
 #include "CommonDef.h"
 #include "x265.h"
-#include <sstream>
 
 namespace x265 {
 // private namespace
-
-class TComOutputBitstream;
 
 /**
  * Represents a single NALunit header and the associated RBSPayload
  */
 struct NALUnit
 {
-    NalUnitType m_nalUnitType; ///< nal_unit_type
-    uint32_t        m_temporalId; ///< temporal_id
-    uint32_t        m_reservedZero6Bits; ///< reserved_zero_6bits
+    NalUnitType m_nalUnitType;       ///< nal_unit_type
+    uint32_t    m_temporalId;        ///< temporal_id
+    uint32_t    m_reservedZero6Bits; ///< reserved_zero_6bits
 
-    /** construct an NALunit structure with given header values. */
-    NALUnit(NalUnitType nalUnitType,
-            int         temporalId = 0,
-            int         reservedZero6Bits = 0)
-        : m_nalUnitType(nalUnitType)
-        , m_temporalId(temporalId)
-        , m_reservedZero6Bits(reservedZero6Bits)
-    {}
-
-    /** default constructor - no initialization; must be perfomed by user */
-    NALUnit() {}
+    NALUnit(NalUnitType nalUnitType)
+    {
+        m_nalUnitType = nalUnitType;
+        m_temporalId = 0;
+        m_reservedZero6Bits = 0;
+    }
 };
-
-struct OutputNALUnit;
 
 /**
  * A single NALunit, with complete payload in EBSP format.
@@ -80,9 +70,8 @@ struct NALUnitEBSP : public NALUnit
      * the NALUnit header, then the rbsp_bytes including any
      * emulation_prevention_three_byte symbols.
      */
-    void init(const OutputNALUnit& nalu);
+    void init(const struct OutputNALUnit& nalu);
 };
 }
-//! \}
 
 #endif // ifndef X265_NAL_H

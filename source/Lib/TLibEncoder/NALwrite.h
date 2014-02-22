@@ -53,7 +53,7 @@ struct OutputNALUnit : public NALUnit
      * written to the bitstream.
      */
     OutputNALUnit(NalUnitType nalUnitType)
-        : NALUnit(nalUnitType, 0, 0)
+        : NALUnit(nalUnitType)
         , m_bitstream()
     {}
 
