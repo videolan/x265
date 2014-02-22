@@ -941,11 +941,11 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->bEnableVuiParametersPresentFlag = 1;
         if (!strcmp(value, "show"))
-            p->bEnableOverscanInfoPresentFlag = atobool(value);
+            p->bEnableOverscanInfoPresentFlag = 1;
         else if (!strcmp(value, "crop"))
         {
-            p->bEnableOverscanInfoPresentFlag = atobool(value);
-            p->bEnableOverscanAppropriateFlag = atobool(value);
+            p->bEnableOverscanInfoPresentFlag = 1;
+            p->bEnableOverscanAppropriateFlag = 1;
         }
         else
             p->bEnableOverscanInfoPresentFlag = -1;
@@ -953,7 +953,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("videoformat")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = atobool(value);
+        p->bEnableVideoSignalTypePresentFlag = 1;
         if (!strcmp(value, "component"))
             p->videoFormat = 0;
         else if (!strcmp(value, "pal"))
@@ -978,8 +978,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("colorprim")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = atobool(value);
-        p->bEnableColorDescriptionPresentFlag = atobool(value);
+        p->bEnableVideoSignalTypePresentFlag = 1;
+        p->bEnableColorDescriptionPresentFlag = 1;
         if (!strcmp(value, "bt709"))
             p->colorPrimaries = 1;
         else if (!strcmp(value, "undef"))
@@ -1002,8 +1002,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("transfer")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = atobool(value);
-        p->bEnableColorDescriptionPresentFlag = atobool(value);
+        p->bEnableVideoSignalTypePresentFlag = 1;
+        p->bEnableColorDescriptionPresentFlag = 1;
         if (!strcmp(value, "bt709"))
             p->transferCharacteristics = 1;
         else if (!strcmp(value, "undef"))
@@ -1038,8 +1038,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("colormatrix")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = atobool(value);
-        p->bEnableColorDescriptionPresentFlag = atobool(value);
+        p->bEnableVideoSignalTypePresentFlag = 1;
+        p->bEnableColorDescriptionPresentFlag = 1;
         if (!strcmp(value, "GBR"))
             p->matrixCoeffs = 0;
         else if (!strcmp(value, "bt709"))
@@ -1066,7 +1066,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("chromaloc")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableChromaLocInfoPresentFlag = atobool(value);
+        p->bEnableChromaLocInfoPresentFlag = 1;
         p->chromaSampleLocTypeTopField = atoi(value);
         p->chromaSampleLocTypeBottomField = p->chromaSampleLocTypeTopField;
     }
@@ -1083,7 +1083,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("crop-rect")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableDefaultDisplayWindowFlag = atobool(value);
+        p->bEnableDefaultDisplayWindowFlag = 1;
         bError |= sscanf(value, "%d,%d,%d,%d",
                          &p->defDispWinLeftOffset,
                          &p->defDispWinTopOffset,
