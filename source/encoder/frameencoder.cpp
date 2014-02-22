@@ -195,7 +195,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     nalunits[count]->init(nalu);
     count++;
 
-    nalu = NALUnit(NAL_UNIT_SPS);
+    nalu.resetToType(NAL_UNIT_SPS);
     entropyCoder->setBitstream(&nalu.m_bitstream);
     entropyCoder->encodeSPS(&m_sps);
     writeRBSPTrailingBits(nalu.m_bitstream);
@@ -203,7 +203,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     nalunits[count]->init(nalu);
     count++;
 
-    nalu = NALUnit(NAL_UNIT_PPS);
+    nalu.resetToType(NAL_UNIT_PPS);
     entropyCoder->setBitstream(&nalu.m_bitstream);
     entropyCoder->encodePPS(&m_pps);
     writeRBSPTrailingBits(nalu.m_bitstream);
@@ -236,7 +236,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
         sei.verFlip = false;
         sei.anticlockwiseRotation = m_cfg->getDisplayOrientationSEIAngle();
 
-        nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
+        nalu.resetToType(NAL_UNIT_PREFIX_SEI);
         entropyCoder->setBitstream(&nalu.m_bitstream);
         m_seiWriter.writeSEImessage(nalu.m_bitstream, sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_bitstream);
@@ -560,7 +560,7 @@ void FrameEncoder::compressFrame()
 
     /* start slice NALunit */
     bool sliceSegment = !slice->isNextSlice();
-    OutputNALUnit nalu(slice->getNalUnitType(), 0);
+    OutputNALUnit nalu(slice->getNalUnitType());
     entropyCoder->setBitstream(&nalu.m_bitstream);
     entropyCoder->encodeSliceHeader(slice);
 
@@ -693,7 +693,7 @@ void FrameEncoder::compressFrame()
                 checksumFinish(m_pic->m_checksum[i], m_seiReconPictureDigest.digest[i]);
             }
         }
-        OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
+        OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI);
         m_seiWriter.writeSEImessage(onalu.m_bitstream, m_seiReconPictureDigest, slice->getSPS());
         writeRBSPTrailingBits(onalu.m_bitstream);
 

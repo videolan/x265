@@ -34,17 +34,12 @@
 #ifndef X265_NALWRITE_H
 #define X265_NALWRITE_H
 
-#include <ostream>
-
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/NAL.h"
 
 namespace x265 {
 // private namespace
-
-//! \ingroup TLibEncoder
-//! \{
 
 /**
  * A convenience wrapper to NALUnit that also provides a
@@ -57,18 +52,15 @@ struct OutputNALUnit : public NALUnit
      * storage for a bitstream.  Upon construction the NALunit header is
      * written to the bitstream.
      */
-    OutputNALUnit(NalUnitType nalUnitType,
-                  uint32_t    temporalID = 0,
-                  uint32_t    reserved_zero_6bits = 0)
-        : NALUnit(nalUnitType, temporalID, reserved_zero_6bits)
+    OutputNALUnit(NalUnitType nalUnitType)
+        : NALUnit(nalUnitType, 0, 0)
         , m_bitstream()
     {}
 
-    OutputNALUnit& operator =(const NALUnit& src)
+    void resetToType(NalUnitType nalUnitType)
     {
+        m_nalUnitType = nalUnitType;
         m_bitstream.clear();
-        static_cast<NALUnit*>(this)->operator =(src);
-        return *this;
     }
 
     TComOutputBitstream m_bitstream;
@@ -85,7 +77,5 @@ void inline NALUnitEBSP::init(OutputNALUnit& nalu)
     write(m_nalUnitData, nalu, m_packetSize);
 }
 }
-
-//! \}
 
 #endif // ifndef X265_NALWRITE_H
