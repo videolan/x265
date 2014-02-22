@@ -128,7 +128,7 @@ public:
     /**
      * Return the number of valid bytes available from  getByteStream()
      */
-    uint32_t getByteStreamLength();
+    uint32_t getByteStreamLength() const;
 
     /**
      * Reset all internal state.

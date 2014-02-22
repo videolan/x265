@@ -72,7 +72,7 @@ char* TComOutputBitstream::getByteStream() const
     return (char*)m_fifo;
 }
 
-uint32_t TComOutputBitstream::getByteStreamLength()
+uint32_t TComOutputBitstream::getByteStreamLength() const
 {
     return m_fsize;
 }

@@ -66,15 +66,15 @@ struct OutputNALUnit : public NALUnit
     TComOutputBitstream m_bitstream;
 };
 
-void write(uint8_t*& out, OutputNALUnit& nalu, uint32_t& packetSize);
+uint8_t *write(const OutputNALUnit& nalu, uint32_t& packetSize);
 void writeRBSPTrailingBits(TComOutputBitstream& bs);
 
-void inline NALUnitEBSP::init(OutputNALUnit& nalu)
+void inline NALUnitEBSP::init(const OutputNALUnit& nalu)
 {
     m_nalUnitType = nalu.m_nalUnitType;
     m_temporalId = nalu.m_temporalId;
     m_reservedZero6Bits = nalu.m_reservedZero6Bits;
-    write(m_nalUnitData, nalu, m_packetSize);
+    m_nalUnitData = write(nalu, m_packetSize);
 }
 }
 
