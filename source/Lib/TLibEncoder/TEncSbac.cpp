@@ -1411,6 +1411,14 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t symbol, uint32_t &param)
     }
 }
 
+void  TEncSbac::setBitstream(TComBitIf* p)
+{
+    m_bitIf = p;
+    // NOTE: When write header, it isn't initial
+    if (m_binIf)
+        m_binIf->init(p);
+}
+
 // SBAC RD
 void  TEncSbac::load(TEncSbac* src)
 {
