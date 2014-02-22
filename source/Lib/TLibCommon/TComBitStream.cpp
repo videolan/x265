@@ -145,19 +145,16 @@ void TComOutputBitstream::writeAlignOne()
 
 void TComOutputBitstream::writeAlignZero()
 {
-    if (0 == m_num_held_bits)
-    {
+    if (!m_num_held_bits)
         return;
-    }
+
     push_back(m_held_bits);
     m_held_bits = 0;
     m_num_held_bits = 0;
 }
 
 /**
- - add substream to the end of the current bitstream
- .
- \param  pcSubstream  substream to be added
+ * add substream to the end of the current bitstream
  */
 void TComOutputBitstream::addSubstream(TComOutputBitstream* substream)
 {
