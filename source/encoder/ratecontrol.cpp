@@ -756,7 +756,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
             {
                 q *= X265_MAX(pbbits / space, bits / (0.5 * bufferSize));
             }
-            q = X265_MAX(q0 - 5, q);
+            q = X265_MAX(q0 / 2, q);
         }
         if (!vbvMinRate)
             q = X265_MAX(q0, q);
