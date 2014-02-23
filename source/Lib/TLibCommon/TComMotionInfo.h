@@ -130,9 +130,9 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     void    setAllMv(const MV& mv,              PartSize cuMode, int partAddr, uint32_t depth, int partIdx = 0);
-    void    setAllMvd(const MV& mvd,            PartSize cuMode, int partAddr, uint32_t depth, int partIdx = 0);
     void    setAllRefIdx(int refIdx,                  PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
     void    setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
+    void    setMvd(int idx, const MV& mvd) { m_mvd[idx] = mvd; }
 
     void setNumPartition(int numPart)
     {

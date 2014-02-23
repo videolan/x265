@@ -326,13 +326,14 @@ public:
 
     bool          getMergeFlag(uint32_t idx)            { return m_bMergeFlags[idx]; }
 
-    void          setMergeFlagSubParts(bool bMergeFlag, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
+    void          setMergeFlag(uint32_t idx, bool bMergeFlag) { m_bMergeFlags[idx] = bMergeFlag; }
 
     UChar*        getMergeIndex()                   { return m_mergeIndex; }
 
     UChar         getMergeIndex(uint32_t idx)           { return m_mergeIndex[idx]; }
 
-    void          setMergeIndexSubParts(uint32_t mergeIndex, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
+    void          setMergeIndex(uint32_t idx, uint32_t mergeIndex) { m_mergeIndex[idx] = (UChar)mergeIndex; }
+
     template<typename T>
     void          setSubPart(T bParameter, T* pbBaseLCU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
 
@@ -383,8 +384,6 @@ public:
     int           getMVPIdx(int picList, uint32_t idx)             { return m_mvpIdx[picList][idx]; }
 
     char*         getMVPIdx(int picList)                       { return m_mvpIdx[picList]; }
-
-    void          setMVPIdxSubParts(int mvpIdx, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
 
     void          clipMv(MV& outMV);
 

@@ -310,11 +310,6 @@ void TComCUMvField::setAllMv(const MV& mv, PartSize cuMode, int partAddr, uint32
     setAll(m_mv, mv, cuMode, partAddr, depth, partIdx);
 }
 
-void TComCUMvField::setAllMvd(const MV& mvd, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
-{
-    setAll(m_mvd, mvd, cuMode, partAddr, depth, partIdx);
-}
-
 void TComCUMvField::setAllRefIdx(int refIdx, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
     setAll(m_refIdx, static_cast<char>(refIdx), cuMode, partAddr, depth, partIdx);

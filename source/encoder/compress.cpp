@@ -227,12 +227,12 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outTempCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    outTempCU->setMergeFlagSubParts(true, 0, 0, depth);
+    outTempCU->setMergeFlag(0, true);
 
     outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
     outBestCU->setCUTransquantBypassSubParts(m_cfg->getCUTransquantBypassFlagValue(), 0, depth);
     outBestCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    outBestCU->setMergeFlagSubParts(true, 0, 0, depth);
+    outBestCU->setMergeFlag(0, true);
 
     int part = g_convertToBit[outTempCU->getWidth(0)];
     int bestMergeCand = -1;
@@ -245,7 +245,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             && mvFieldNeighbours[1 + 2 * mergeCand].mv.y < (m_cfg->param.searchRange + 1) * 4)
         {
             // set MC parameters, interprets depth relative to LCU level
-            outTempCU->setMergeIndexSubParts(mergeCand, 0, 0, depth);
+            outTempCU->setMergeIndex(0, mergeCand);
             outTempCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
             outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
             outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
@@ -278,12 +278,12 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     if (bestMergeCand < 0)
     {
-        outBestCU->setMergeFlagSubParts(false, 0, 0, depth);
+        outBestCU->setMergeFlag(0, false);
         outBestCU->initEstData(depth, outBestCU->getQP(0));
     }
     else
     {
-        outTempCU->setMergeIndexSubParts(bestMergeCand, 0, 0, depth);
+        outTempCU->setMergeIndex(0, bestMergeCand);
         outTempCU->setInterDirSubParts(interDirNeighbours[bestMergeCand], 0, 0, depth);
         outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
         outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);

@@ -345,8 +345,6 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
 
     for (uint32_t i = 0; i < m_numPartitions; i++)
     {
-        m_mvpIdx[0][i] = -1;
-        m_mvpIdx[1][i] = -1;
         m_depth[i] = depth;
         m_width[i] = width;
         m_height[i] = height;
@@ -361,7 +359,6 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
         m_iPCMFlags[i] = 0;
         m_qp[i] = qp;
         m_bMergeFlags[i] = 0;
-        m_mergeIndex[i] = 0;
         m_lumaIntraDir[i] = DC_IDX;
         m_chromaIntraDir[i] = 0;
         m_interDir[i] = 0;
@@ -408,7 +405,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     memset(m_qp, qp, sizeInChar);
 
     memset(m_bMergeFlags,     0, iSizeInBool);
-    memset(m_mergeIndex,      0, iSizeInUchar);
     memset(m_lumaIntraDir,    DC_IDX, iSizeInUchar);
     memset(m_chromaIntraDir,  0, iSizeInUchar);
     memset(m_interDir,        0, iSizeInUchar);
@@ -432,8 +428,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
         m_partSizes[i] = SIZE_NONE;
         m_predModes[i] = MODE_NONE;
         m_cuTransquantBypass[i] = false;
-        m_mvpIdx[0][i] = -1;
-        m_mvpIdx[1][i] = -1;
     }
 
     m_cuMvField[0].clearMvField();
@@ -1492,16 +1486,6 @@ void TComDataCU::setSubPart(T param, T* baseLCU, uint32_t cuAddr, uint32_t cuDep
     }
 }
 
-void TComDataCU::setMergeFlagSubParts(bool bMergeFlag, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
-{
-    setSubPart(bMergeFlag, m_bMergeFlags, absPartIdx, depth, partIdx);
-}
-
-void TComDataCU::setMergeIndexSubParts(uint32_t mergeIndex, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
-{
-    setSubPart<UChar>(mergeIndex, m_mergeIndex, absPartIdx, depth, partIdx);
-}
-
 void TComDataCU::setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
@@ -1512,11 +1496,6 @@ void TComDataCU::setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uin
 void TComDataCU::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
 {
     setSubPart<UChar>(dir, m_interDir, absPartIdx, depth, partIdx);
-}
-
-void TComDataCU::setMVPIdxSubParts(int mvpIdx, int picList, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
-{
-    setSubPart<char>(mvpIdx, m_mvpIdx[picList], absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth)
