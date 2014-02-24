@@ -134,6 +134,7 @@ struct RateControl
 
 protected:
 
+    void reInit();
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
@@ -144,7 +145,7 @@ protected:
     double clipQscale(TComPic* pic, double q);
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
-    void checkAndResetABR(TComPic* pic, RateControlEntry* rce);
+    void checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
     double predictRowsSizeSum(TComPic* pic, double qpm, int32_t& encodedBits);
 };
 }

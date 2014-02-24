@@ -245,15 +245,12 @@ RateControl::RateControl(TEncCfg * _cfg)
     }
 
     isAbr = cfg->param.rc.rateControlMode != X265_RC_CQP; // later add 2pass option
-
     bitrate = cfg->param.rc.bitrate * 1000;
     frameDuration = (double)cfg->param.fpsDenom / cfg->param.fpsNum;
     qp = cfg->param.rc.qp;
     lastRceq = 1; /* handles the cmplxrsum when the previous frame cost is zero */
-    totalBits = 0;
     shortTermCplxSum = 0;
     shortTermCplxCount = 0;
-    framesDone = 0;
     lastNonBPictType = I_SLICE;
     isAbrReset = false;
     lastAbrResetPoc = -1;
@@ -325,43 +322,20 @@ RateControl::RateControl(TEncCfg * _cfg)
             && cfg->param.rc.vbvMaxBitrate <= cfg->param.rc.bitrate;
     }
 
-    for (int i = 0; i < 5; i++)
-    {
-        pred[i].coeff = 2.0;
-        pred[i].count = 1.0;
-        pred[i].decay = 0.5;
-        pred[i].offset = 0.0;
-    }
-
-    for (int i = 0; i < 4; i++)
-    {
-        rowPreds[i].coeff = 0.25;
-        rowPreds[i].count = 1.0;
-        rowPreds[i].decay = 0.5;
-        rowPreds[i].offset = 0.0;
-    }
-
-    predBfromP = pred[0];
     bframes = cfg->param.bframes;
     bframeBits = 0;
     leadingNoBSatd = 0;
-    accumPNorm = .01;
-    /* estimated ratio that produces a reasonable QP for the first I-frame */
-    cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
-    wantedBitsWindow = bitrate * frameDuration;
-
     if (cfg->param.rc.rateControlMode == X265_RC_ABR)
     {
         /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
-        accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
     }
     else if (cfg->param.rc.rateControlMode == X265_RC_CRF)
     {
 #define ABR_INIT_QP ((int)cfg->param.rc.rfConstant + QP_BD_OFFSET)
-        accumPQp = ABR_INIT_QP * accumPNorm;
     }
+    reInit();
 
     ipOffset = 6.0 * X265_LOG2(cfg->param.rc.ipFactor);
     pbOffset = 6.0 * X265_LOG2(cfg->param.rc.pbFactor);
@@ -382,6 +356,36 @@ RateControl::RateControl(TEncCfg * _cfg)
     /* qstep - value set as encoder specific */
     lstep = pow(2, cfg->param.rc.qpStep / 6.0);
 }
+
+void RateControl::reInit()
+{
+    totalBits = 0;
+    framesDone = 0;
+
+    /* estimated ratio that produces a reasonable QP for the first I-frame */
+    cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
+    wantedBitsWindow = bitrate * frameDuration;
+    accumPNorm = .01;
+    accumPQp = (cfg->param.rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN) * accumPNorm;
+
+    /* Frame Predictors and Row predictors used in vbv */
+    for (int i = 0; i < 5; i++)
+    {
+        pred[i].coeff = 2.0;
+        pred[i].count = 1.0;
+        pred[i].decay = 0.5;
+        pred[i].offset = 0.0;
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        rowPreds[i].coeff = 0.25;
+        rowPreds[i].count = 1.0;
+        rowPreds[i].decay = 0.5;
+        rowPreds[i].offset = 0.0;
+    }
+    predBfromP = pred[0];
+}
+
 
 void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
 {
@@ -465,7 +469,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         int dt1 = abs(curSlice->getPOC() - nextRefSlice->getPOC());
 
         // Skip taking a reference frame before the Scenecut if ABR has been reset.
-        if (lastAbrResetPoc >= 0 && !isVbv)
+        if (lastAbrResetPoc >= 0)
         {
             if (prevRefSlice->getSliceType() == P_SLICE && prevRefSlice->getPOC() < lastAbrResetPoc)
             {
@@ -531,10 +535,8 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         }
         else
         {
-            if (!isVbv)
-            {
-                checkAndResetABR(pic, rce);
-            }
+
+            checkAndResetABR(rce, false);
             q = getQScale(rce, wantedBitsWindow / cplxrSum);
 
             /* ABR code can potentially be counterproductive in CBR, so just
@@ -570,7 +572,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
                 lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
                 q = Clip3(lqmin, lqmax, q);
             }
-            else if (totalBits > 0 || (isVbv && rce->poc > 0))
+            else if (totalBits > 0 || (isVbv && framesDone > 0))
             {
                 lqmin = lastQScaleFor[sliceType] / lstep;
                 lqmax = lastQScaleFor[sliceType] * lstep;
@@ -604,7 +606,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
     }
 }
 
-void RateControl::checkAndResetABR(TComPic* pic, RateControlEntry* rce)
+void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 {
     double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
 
@@ -615,14 +617,9 @@ void RateControl::checkAndResetABR(TComPic* pic, RateControlEntry* rce)
         {
             // Reset ABR if prev frames are blank to prevent further sudden overflows/ high bit rate spikes.
             double underflow = 1.0 + (totalBits - wantedBitsWindow) / abrBuffer;
-            if (underflow < 1 && pic->m_avgQpRc == 0)
+            if (underflow < 1 && !isFrameDone)
             {
-                totalBits = 0;
-                framesDone = 0;
-                cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
-                wantedBitsWindow = bitrate * frameDuration;
-                accumPNorm = .01;
-                accumPQp = (ABR_INIT_QP_MIN)*accumPNorm;
+                reInit();
                 shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
                 shortTermCplxCount = 1;
                 isAbrReset = true;
@@ -1010,9 +1007,9 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
 {
     if (isAbr)
     {
-        if (!isVbv && cfg->param.rc.rateControlMode == X265_RC_ABR)
+        if (cfg->param.rc.rateControlMode == X265_RC_ABR)
         {
-            checkAndResetABR(pic, rce);
+            checkAndResetABR(rce, true);
         }
         if (!isAbrReset)
         {
