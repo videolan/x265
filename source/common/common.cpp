@@ -793,7 +793,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         char *c;
         strcpy(nameBuf, name);
-        while ((c = strchr(nameBuf, '_')) != '\0')
+        while ((c = strchr(nameBuf, '_')) != 0)
         {
             *c = '-';
         }
