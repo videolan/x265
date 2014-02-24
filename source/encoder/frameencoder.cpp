@@ -1058,6 +1058,7 @@ void FrameEncoder::processRowEncoder(int row)
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
     double qpBase = m_pic->m_avgQpRc;
+    bool isVbv = m_cfg->param.rc.vbvBufferSize > 0 && m_cfg->param.rc.vbvMaxBitrate > 0;
     for (uint32_t col = curRow.m_completed; col < numCols; col++)
     {
         const uint32_t cuAddr = lineStartCUAddr + col;
@@ -1068,10 +1069,10 @@ void FrameEncoder::processRowEncoder(int row)
         codeRow.m_entropyCoder.resetEntropy();
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
 
-        if ((uint32_t)row >= col && (row != 0))
+        if ((uint32_t)row >= col && (row != 0) && isVbv)
             qpBase = m_pic->getCU(cuAddr - numCols + 1)->m_baseQp;
 
-        if (m_cfg->param.rc.aqMode || (m_cfg->param.rc.vbvBufferSize > 0 && m_cfg->param.rc.vbvMaxBitrate > 0))
+        if (m_cfg->param.rc.aqMode || isVbv)
         {
             int qp = calcQpForCu(m_pic, cuAddr, qpBase);
             setLambda(qp, row);
@@ -1080,7 +1081,7 @@ void FrameEncoder::processRowEncoder(int row)
             cu->m_baseQp = qpBase;
         }
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
-        if (m_cfg->param.rc.vbvBufferSize && m_cfg->param.rc.vbvMaxBitrate)
+        if (isVbv)
         {
             // Update encoded bits, satdCost, baseQP for each CU
             m_pic->m_rowDiagSatd[row] += m_pic->m_cuCostsForVbv[cuAddr];
