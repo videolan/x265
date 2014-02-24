@@ -148,5 +148,6 @@ add_library(common OBJECT
     md5.cpp md5.h
     TShortYUV.cpp TShortYUV.h mv.h
     common.cpp common.h
+    param.cpp param.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h)

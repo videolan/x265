@@ -29,6 +29,7 @@
 #include "output/output.h"
 #include "common.h"
 #include "x265.h"
+#include "param.h"
 
 #if HAVE_VLD
 /* Visual Leak Detector */

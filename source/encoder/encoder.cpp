@@ -29,6 +29,7 @@
 #include "primitives.h"
 #include "threadpool.h"
 #include "common.h"
+#include "param.h"
 
 #include "TLibEncoder/NALwrite.h"
 #include "bitcost.h"
@@ -1584,30 +1585,6 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits)
 
 fail:
     return nalcount;
-}
-
-extern "C"
-x265_param *x265_param_alloc()
-{
-    return (x265_param*)x265_malloc(sizeof(x265_param));
-}
-
-extern "C"
-void x265_param_free(x265_param *p)
-{
-    return x265_free(p);
-}
-
-extern "C"
-x265_picture *x265_picture_alloc()
-{
-    return (x265_picture*)x265_malloc(sizeof(x265_picture));
-}
-
-extern "C"
-void x265_picture_free(x265_picture *p)
-{
-    return x265_free(p);
 }
 
 extern "C"

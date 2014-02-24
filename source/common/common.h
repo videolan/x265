@@ -112,11 +112,7 @@
 /* defined in common.cpp */
 int64_t x265_mdate(void);
 void x265_log(x265_param *param, int level, const char *fmt, ...);
-int  x265_check_params(x265_param *param);
-void x265_print_params(x265_param *param);
-int x265_set_globals(x265_param *param);
 int x265_exp2fix8(double x);
-char *x265_param2string(x265_param *p);
 void *x265_malloc(size_t size);
 void x265_free(void *ptr);
 
