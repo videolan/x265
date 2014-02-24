@@ -2893,8 +2893,6 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list,
 
     bestMv = amvpInfo->m_mvCand[0];
 
-    m_predTempYuv.clear();
-
     //-- Check Minimum Cost.
     for (i = 0; i < AMVP_MAX_NUM_CANDS; i++)
     {
@@ -2907,8 +2905,6 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list,
             (*distBiP) = cost;
         }
     }
-
-    m_predTempYuv.clear();
 
     // Setting Best MVP
     mvPred = bestMv;

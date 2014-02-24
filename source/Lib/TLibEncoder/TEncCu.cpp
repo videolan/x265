@@ -1260,7 +1260,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
 
                     // do MC
-                    m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth]);
+                    m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, 0);
                     // estimate residual and encode everything
                     m_search->encodeResAndCalcRdInterCU(outTempCU,
                                                         m_origYuv[depth],
