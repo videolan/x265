@@ -59,8 +59,7 @@ typedef unsigned char  UChar;
 
 #if HIGH_BIT_DEPTH
 typedef uint16_t Pel;          // 16-bit pixel type
-#define X265_DEPTH x265::g_bitDepth  // runtime configurable bit depth
-extern int g_bitDepth;
+#define X265_DEPTH 10          // compile time configurable bit depth
 #else
 typedef UChar  Pel;            // 8-bit pixel type
 #define X265_DEPTH 8           // compile time configurable bit depth

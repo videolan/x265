@@ -182,7 +182,7 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
     if (pic.bitDepth < X265_DEPTH)
     {
         /* 8bit input, 10bit internal depth. Do a simple up-shift of 2 bits */
-        assert(g_bitDepth == 10);
+        assert(X265_DEPTH == 10);
 
         pixel *Y = getLumaAddr();
         pixel *U = getCbAddr();

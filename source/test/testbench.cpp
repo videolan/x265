@@ -74,10 +74,6 @@ int main(int argc, char *argv[])
         }
     }
 
-#if HIGH_BIT_DEPTH
-    g_bitDepth = 12;
-#endif
-
     int seed = (int)time(NULL);
     const char *bpp[] = { "8bpp", "16bpp" };
     printf("Using random seed %X %s\n", seed, bpp[HIGH_BIT_DEPTH]);

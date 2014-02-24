@@ -784,11 +784,12 @@ int x265_check_params(x265_param *param)
     /* These checks might be temporary */
 #if HIGH_BIT_DEPTH
     CHECK(param->internalBitDepth != 10,
-          "x265 was compiled for 10bit encodes, only 10bit inputs supported");
+          "x265 was compiled for 10bit encodes, only 10bit internal depth supported");
+#else
+    CHECK(param->internalBitDepth != 8,
+          "x265 was compiled for 8bit encodes, only 8bit internal depth supported");
 #endif
 
-    CHECK(param->internalBitDepth > x265_max_bit_depth,
-          "internalBitDepth must be <= x265_max_bit_depth");
     CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");
     CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
@@ -918,18 +919,12 @@ int x265_set_globals(x265_param *param)
             x265_log(param, X265_LOG_ERROR, "maxCUSize must be the same for all encoders in a single process");
             return -1;
         }
-        if (param->internalBitDepth != g_bitDepth)
-        {
-            x265_log(param, X265_LOG_ERROR, "internalBitDepth must be the same for all encoders in a single process");
-            return -1;
-        }
     }
     else
     {
         // set max CU width & height
         g_maxCUWidth  = param->maxCUSize;
         g_maxCUHeight = param->maxCUSize;
-        g_bitDepth = param->internalBitDepth;
 
         // compute actual CU depth with respect to config depth and max transform size
         g_addCUDepth = 0;

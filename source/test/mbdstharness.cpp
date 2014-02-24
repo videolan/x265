@@ -172,10 +172,6 @@ MBDstHarness::~MBDstHarness()
 
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 {
-#if HIGH_BIT_DEPTH
-    int old_depth = X265_DEPTH;
-    X265_DEPTH = 10;
-#endif
     int j = 0;
     int cmp_size = sizeof(int) * width * width;
     for (int i = 0; i <= 100; i++)
@@ -192,10 +188,6 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
             opt(short_test_buff[index] + j, mintbuf4, width);
 #endif
 
-#if HIGH_BIT_DEPTH
-            X265_DEPTH = old_depth;
-#endif
-
             return false;
         }
         j += 16;
@@ -205,20 +197,11 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 #endif
     }
 
-#if HIGH_BIT_DEPTH
-    X265_DEPTH = old_depth;
-#endif
-
     return true;
 }
 
 bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
 {
-#if HIGH_BIT_DEPTH
-    int old_depth = X265_DEPTH;
-    X265_DEPTH = 10;
-#endif
-
     int j = 0;
     int cmp_size = sizeof(int16_t) * width * width;
     for (int i = 0; i <= 100; i++)
@@ -234,10 +217,6 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
             opt(int_idct_test_buff[index] + j, mbuf3, width);
 #endif
 
-#if HIGH_BIT_DEPTH
-            X265_DEPTH = old_depth;
-#endif
-
             return false;
         }
         j += 16;
@@ -247,9 +226,6 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
 #endif
     }
 
-#if HIGH_BIT_DEPTH
-    X265_DEPTH = old_depth;
-#endif
     return true;
 }
 

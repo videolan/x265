@@ -233,7 +233,6 @@ void destroyROM()
 // Data structure related table & variable
 // ====================================================================================================================
 
-int  g_bitDepth = 8;
 uint32_t g_maxCUWidth  = MAX_CU_SIZE;
 uint32_t g_maxCUHeight = MAX_CU_SIZE;
 uint32_t g_maxCUDepth  = MAX_CU_DEPTH;

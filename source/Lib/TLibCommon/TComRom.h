@@ -141,8 +141,6 @@ extern const uint32_t g_goRicePrefixLen[5];  //!< prefix length for each maximum
 // Bit-depth
 // ====================================================================================================================
 
-extern int g_bitDepth;
-
 /** clip x, such that 0 <= x <= #g_maxLumaVal */
 template<typename T>
 inline T ClipY(T x) { return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x)); }
