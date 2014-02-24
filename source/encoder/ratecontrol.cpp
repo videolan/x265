@@ -409,7 +409,8 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         /* Update rce for use in rate control VBV later */
         rce->lastSatd = currentSatd;
         double q = qScale2qp(rateEstimateQscale(pic, rce));
-        qp = Clip3(MIN_QP, MAX_MAX_QP, (int)(q + 0.5));
+        q = Clip3((double)MIN_QP, (double)MAX_MAX_QP, q);
+        qp = int(q + 0.5);
         rce->qpaRc = pic->m_avgQpRc = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
         rce->qRceq = lastRceq;
@@ -585,10 +586,10 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             if (qCompress != 1 && framesDone == 0)
                 q = qp2qScale(ABR_INIT_QP) / fabs(cfg->param.rc.ipFactor);
         }
-        qpNoVbv = qScale2qp(q);
         double lmin1 = lmin[sliceType];
         double lmax1 = lmax[sliceType];
         q = Clip3(lmin1, lmax1, q);
+        qpNoVbv = qScale2qp(q);
 
         q = clipQscale(pic, q);
 
