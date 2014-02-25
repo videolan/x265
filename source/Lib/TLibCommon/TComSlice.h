@@ -1356,7 +1356,6 @@ public:
 
     wpScalingParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
     int             m_numWPRefs;                          // number of references for which unidirectional weighted prediction is used
-    int             m_avgQpRc;
 
     TComSlice();
     virtual ~TComSlice();
