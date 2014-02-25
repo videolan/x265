@@ -1261,81 +1261,81 @@ void Encoder::determineLevelAndProfile(x265_param *_param)
     x265_log(_param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
 }
 
-void Encoder::configure(x265_param *_param)
+void Encoder::configure(x265_param *p)
 {
     // Trim the thread pool if WPP is disabled
-    if (!_param->bEnableWavefront)
-        _param->poolNumThreads = 1;
+    if (!p->bEnableWavefront)
+        p->poolNumThreads = 1;
 
-    setThreadPool(ThreadPool::allocThreadPool(_param->poolNumThreads));
+    setThreadPool(ThreadPool::allocThreadPool(p->poolNumThreads));
     int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
-    int rows = (_param->sourceHeight + _param->maxCUSize - 1) / _param->maxCUSize;
+    int rows = (p->sourceHeight + p->maxCUSize - 1) / p->maxCUSize;
 
-    if (_param->frameNumThreads == 0)
+    if (p->frameNumThreads == 0)
     {
         // auto-detect frame threads
         int cpuCount = getCpuCount();
         if (poolThreadCount <= 1)
-            _param->frameNumThreads = X265_MIN(cpuCount, rows / 2);
+            p->frameNumThreads = X265_MIN(cpuCount, rows / 2);
         else if (cpuCount > 32)
-            _param->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
+            p->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
         else if (cpuCount >= 16)
-            _param->frameNumThreads = 5; // 8 HT cores, or dual socket
+            p->frameNumThreads = 5; // 8 HT cores, or dual socket
         else if (cpuCount >= 8)
-            _param->frameNumThreads = 3; // 4 HT cores
+            p->frameNumThreads = 3; // 4 HT cores
         else if (cpuCount >= 4)
-            _param->frameNumThreads = 2; // Dual or Quad core
+            p->frameNumThreads = 2; // Dual or Quad core
         else
-            _param->frameNumThreads = 1;
+            p->frameNumThreads = 1;
     }
     if (poolThreadCount > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "WPP streams / pool / frames         : %d / %d / %d\n", rows, poolThreadCount, _param->frameNumThreads);
+        x265_log(p, X265_LOG_INFO, "WPP streams / pool / frames         : %d / %d / %d\n", rows, poolThreadCount, p->frameNumThreads);
     }
-    else if (_param->frameNumThreads > 1)
+    else if (p->frameNumThreads > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "Concurrently encoded frames         : %d\n", _param->frameNumThreads);
-        _param->bEnableWavefront = 0;
+        x265_log(p, X265_LOG_INFO, "Concurrently encoded frames         : %d\n", p->frameNumThreads);
+        p->bEnableWavefront = 0;
     }
     else
     {
-        x265_log(_param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
-        _param->bEnableWavefront = 0;
+        x265_log(p, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
+        p->bEnableWavefront = 0;
     }
-    if (!_param->saoLcuBasedOptimization && _param->frameNumThreads > 1)
+    if (!p->saoLcuBasedOptimization && p->frameNumThreads > 1)
     {
-        x265_log(_param, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
+        x265_log(p, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
     }
-    if (_param->keyframeMax < 0)
+    if (p->keyframeMax < 0)
     {
         /* A negative max GOP size indicates the user wants only one I frame at
          * the start of the stream. Set an infinite GOP distance and disable
          * adaptive I frame placement */
-        _param->keyframeMax = INT_MAX;
-        _param->scenecutThreshold = 0;
+        p->keyframeMax = INT_MAX;
+        p->scenecutThreshold = 0;
     }
-    else if (_param->keyframeMax <= 1)
+    else if (p->keyframeMax <= 1)
     {
         // disable lookahead for all-intra encodes
-        _param->bFrameAdaptive = 0;
-        _param->bframes = 0;
+        p->bFrameAdaptive = 0;
+        p->bframes = 0;
     }
-    if (!_param->keyframeMin)
+    if (!p->keyframeMin)
     {
-        double fps = (double)_param->fpsNum / _param->fpsDenom;
-        _param->keyframeMin = X265_MIN((int)fps, _param->keyframeMax / 10);
+        double fps = (double)p->fpsNum / p->fpsDenom;
+        p->keyframeMin = X265_MIN((int)fps, p->keyframeMax / 10);
     }
-    _param->keyframeMin = X265_MAX(1, X265_MIN(_param->keyframeMin, _param->keyframeMax / 2 + 1));
-    if (!_param->bEnableRectInter)
+    p->keyframeMin = X265_MAX(1, X265_MIN(p->keyframeMin, p->keyframeMax / 2 + 1));
+    if (!p->bEnableRectInter)
     {
-        _param->bEnableAMP = false;
+        p->bEnableAMP = false;
     }
-    if (_param->bBPyramid && !_param->bframes)
+    if (p->bBPyramid && !p->bframes)
     {
-        _param->bBPyramid = 0;
+        p->bBPyramid = 0;
     }
     /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
-    switch (_param->rdLevel)
+    switch (p->rdLevel)
     {
     case 6:
         bEnableRDOQ = bEnableRDOQTS = 1;
@@ -1360,68 +1360,68 @@ void Encoder::configure(x265_param *_param)
         break;
     }
 
-    if (!(bEnableRDOQ && _param->bEnableTransformSkip))
+    if (!(bEnableRDOQ && p->bEnableTransformSkip))
     {
         bEnableRDOQTS = 0;
     }
 
-    if (_param->rc.rateControlMode == X265_RC_CQP)
+    if (p->rc.rateControlMode == X265_RC_CQP)
     {
-        _param->rc.aqMode = X265_AQ_NONE;
-        _param->rc.bitrate = 0;
-        _param->rc.cuTree = 0;
+        p->rc.aqMode = X265_AQ_NONE;
+        p->rc.bitrate = 0;
+        p->rc.cuTree = 0;
     }
 
-    if (_param->rc.aqMode == 0 && _param->rc.cuTree)
+    if (p->rc.aqMode == 0 && p->rc.cuTree)
     {
-        _param->rc.aqMode = X265_AQ_VARIANCE;
-        _param->rc.aqStrength = 0.0;
+        p->rc.aqMode = X265_AQ_VARIANCE;
+        p->rc.aqStrength = 0.0;
     }
 
-    if (_param->lookaheadDepth == 0 && _param->rc.cuTree)
+    if (p->lookaheadDepth == 0 && p->rc.cuTree)
     {
-        x265_log(_param, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
-        _param->rc.cuTree = 0;
+        x265_log(p, X265_LOG_WARNING, "cuTree disabled, requires lookahead to be enabled\n");
+        p->rc.cuTree = 0;
     }
 
-    if (_param->rc.aqStrength == 0 && _param->rc.cuTree == 0)
+    if (p->rc.aqStrength == 0 && p->rc.cuTree == 0)
     {
-        _param->rc.aqMode = X265_AQ_NONE;
+        p->rc.aqMode = X265_AQ_NONE;
     }
 
-    if (_param->internalCsp != X265_CSP_I420)
+    if (p->internalCsp != X265_CSP_I420)
     {
-        x265_log(_param, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
-        x265_log(_param, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
+        x265_log(p, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
+        x265_log(p, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
     }
 
-    m_csp = _param->internalCsp;
-    m_bframeDelay = _param->bframes ? (_param->bBPyramid ? 2 : 1) : 0;
+    m_csp = p->internalCsp;
+    m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     //====== Coding Tools ========
 
-    uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
+    uint32_t tuQTMaxLog2Size = g_convertToBit[p->maxCUSize] + 2 - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
 
     //========= set default display window ==================================
-    m_defaultDisplayWindow.m_enabledFlag = _param->bEnableDefaultDisplayWindowFlag;
-    m_defaultDisplayWindow.m_winRightOffset = _param->defDispWinRightOffset;
-    m_defaultDisplayWindow.m_winTopOffset = _param->defDispWinTopOffset;
-    m_defaultDisplayWindow.m_winBottomOffset = _param->defDispWinBottomOffset;
-    m_defaultDisplayWindow.m_winLeftOffset = _param->defDispWinLeftOffset;
+    m_defaultDisplayWindow.m_enabledFlag = p->bEnableDefaultDisplayWindowFlag;
+    m_defaultDisplayWindow.m_winRightOffset = p->defDispWinRightOffset;
+    m_defaultDisplayWindow.m_winTopOffset = p->defDispWinTopOffset;
+    m_defaultDisplayWindow.m_winBottomOffset = p->defDispWinBottomOffset;
+    m_defaultDisplayWindow.m_winLeftOffset = p->defDispWinLeftOffset;
     m_pad[0] = m_pad[1] = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
-    uint32_t maxCUDepth = (uint32_t)g_convertToBit[_param->maxCUSize];
-    uint32_t minCUDepth = (_param->maxCUSize >> (maxCUDepth - 1));
-    if ((_param->sourceWidth % minCUDepth) != 0)
+    uint32_t maxCUDepth = (uint32_t)g_convertToBit[p->maxCUSize];
+    uint32_t minCUDepth = (p->maxCUSize >> (maxCUDepth - 1));
+    if ((p->sourceWidth % minCUDepth) != 0)
     {
         uint32_t padsize = 0;
-        uint32_t rem = _param->sourceWidth % minCUDepth;
+        uint32_t rem = p->sourceWidth % minCUDepth;
         padsize = minCUDepth - rem;
-        _param->sourceWidth += padsize;
+        p->sourceWidth += padsize;
         m_pad[0] = padsize; //pad width
 
         /* set the confirmation window offsets  */
@@ -1430,12 +1430,12 @@ void Encoder::configure(x265_param *_param)
     }
 
     //======== set pad size if height is not multiple of the minimum CU size =========
-    if ((_param->sourceHeight % minCUDepth) != 0)
+    if ((p->sourceHeight % minCUDepth) != 0)
     {
         uint32_t padsize = 0;
-        uint32_t rem = _param->sourceHeight % minCUDepth;
+        uint32_t rem = p->sourceHeight % minCUDepth;
         padsize = minCUDepth - rem;
-        _param->sourceHeight += padsize;
+        p->sourceHeight += padsize;
         m_pad[1] = padsize; //pad height
 
         /* set the confirmation window offsets  */
@@ -1456,8 +1456,8 @@ void Encoder::configure(x265_param *_param)
     for (int i = 0; i < MAX_TLAYER; i++)
     {
         /* Increase the DPB size and reorder picture if bpyramid is enabled */
-        m_numReorderPics[i] = (_param->bBPyramid && _param->bframes > 1) ? 2 : 1;
-        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, _param->maxNumReferences) + m_numReorderPics[i]);
+        m_numReorderPics[i] = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
+        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, p->maxNumReferences) + m_numReorderPics[i]);
 
         vps.setNumReorderPics(m_numReorderPics[i], i);
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
@@ -1481,26 +1481,26 @@ void Encoder::configure(x265_param *_param)
     m_decodingUnitInfoSEIEnabled = 0;
     m_useScalingListId = 0;
     m_activeParameterSetsSEIEnabled = 0;
-    m_vuiParametersPresentFlag = _param->bEnableVuiParametersPresentFlag;
+    m_vuiParametersPresentFlag = p->bEnableVuiParametersPresentFlag;
     m_minSpatialSegmentationIdc = 0;
-    m_aspectRatioInfoPresentFlag = _param->bEnableAspectRatioIdc;
-    m_aspectRatioIdc = _param->aspectRatioIdc;
-    m_sarWidth = _param->sarWidth;
-    m_sarHeight = _param->sarHeight;
-    m_overscanInfoPresentFlag = _param->bEnableOverscanInfoPresentFlag;
-    m_overscanAppropriateFlag = _param->bEnableOverscanAppropriateFlag;
-    m_videoSignalTypePresentFlag = _param->bEnableVideoSignalTypePresentFlag;
-    m_videoFormat = _param->videoFormat;
-    m_videoFullRangeFlag = _param->bEnableVideoFullRangeFlag;
-    m_colourDescriptionPresentFlag = _param->bEnableColorDescriptionPresentFlag;
-    m_colourPrimaries = _param->colorPrimaries;
-    m_transferCharacteristics = _param->transferCharacteristics;
-    m_matrixCoefficients = _param->matrixCoeffs;
-    m_chromaLocInfoPresentFlag = _param->bEnableChromaLocInfoPresentFlag;
-    m_chromaSampleLocTypeTopField = _param->chromaSampleLocTypeTopField;
-    m_chromaSampleLocTypeBottomField = _param->chromaSampleLocTypeBottomField;
+    m_aspectRatioInfoPresentFlag = p->bEnableAspectRatioIdc;
+    m_aspectRatioIdc = p->aspectRatioIdc;
+    m_sarWidth = p->sarWidth;
+    m_sarHeight = p->sarHeight;
+    m_overscanInfoPresentFlag = p->bEnableOverscanInfoPresentFlag;
+    m_overscanAppropriateFlag = p->bEnableOverscanAppropriateFlag;
+    m_videoSignalTypePresentFlag = p->bEnableVideoSignalTypePresentFlag;
+    m_videoFormat = p->videoFormat;
+    m_videoFullRangeFlag = p->bEnableVideoFullRangeFlag;
+    m_colourDescriptionPresentFlag = p->bEnableColorDescriptionPresentFlag;
+    m_colourPrimaries = p->colorPrimaries;
+    m_transferCharacteristics = p->transferCharacteristics;
+    m_matrixCoefficients = p->matrixCoeffs;
+    m_chromaLocInfoPresentFlag = p->bEnableChromaLocInfoPresentFlag;
+    m_chromaSampleLocTypeTopField = p->chromaSampleLocTypeTopField;
+    m_chromaSampleLocTypeBottomField = p->chromaSampleLocTypeBottomField;
     m_neutralChromaIndicationFlag = false;
-    m_frameFieldInfoPresentFlag = _param->bEnableFrameFieldInfoPresentFlag;
+    m_frameFieldInfoPresentFlag = p->bEnableFrameFieldInfoPresentFlag;
     m_pocProportionalToTimingFlag = false;
     m_numTicksPocDiffOneMinus1 = 0;
     m_bitstreamRestrictionFlag = false;
@@ -1518,11 +1518,11 @@ void Encoder::configure(x265_param *_param)
     m_useLossless = false;  // x264 configures this via --qp=0
     m_TransquantBypassEnableFlag = false;
     m_CUTransquantBypassFlagValue = false;
-    m_fieldSeqFlag = _param->bEnableFieldSeqFlag;
-    m_vuiTimingInfoPresentFlag = _param->bEnableVuiTimingInfoPresentFlag;
-    m_vuiHrdParametersPresentFlag = _param->bEnableVuiHrdParametersPresentFlag;
-    m_bitstreamRestrictionFlag = _param->bEnableBitstreamRestrictionFlag;
-    m_subPicHrdParamsPresentFlag = _param->bEnableSubPicHrdParamsPresentFlag;
+    m_fieldSeqFlag = p->bEnableFieldSeqFlag;
+    m_vuiTimingInfoPresentFlag = p->bEnableVuiTimingInfoPresentFlag;
+    m_vuiHrdParametersPresentFlag = p->bEnableVuiHrdParametersPresentFlag;
+    m_bitstreamRestrictionFlag = p->bEnableBitstreamRestrictionFlag;
+    m_subPicHrdParamsPresentFlag = p->bEnableSubPicHrdParamsPresentFlag;
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits)
