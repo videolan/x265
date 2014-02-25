@@ -75,8 +75,6 @@ protected:
 
     void pictureAlloc(int index);
 
-    int  guessFrameCount();
-
     void threadMain();
 
     bool populateFrameQueue();

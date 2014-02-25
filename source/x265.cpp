@@ -584,7 +584,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (!param->bEnableAspectRatioIdc && info.sarWidth && info.sarHeight)
         setParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
-    if (this->framesToBeEncoded == 0 && (uint32_t)info.frameCount > seek)
+    if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
         this->framesToBeEncoded = info.frameCount - seek;
     if (param->logLevel >= X265_LOG_INFO)
     {
@@ -597,7 +597,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         if (width && height)
             p += sprintf(buf + p, " sar %d:%d", width, height);
 
-        if (framesToBeEncoded == 0 || info.frameCount == 0)
+        if (framesToBeEncoded <= 0 || info.frameCount <= 0)
             strcpy(buf + p, " unknown frame count");
         else
             sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeEncoded - 1, info.frameCount);

@@ -103,7 +103,37 @@ YUVInput::YUVInput(InputFileInfo& info)
             return;
         }
     }
-    info.frameCount = guessFrameCount();
+    info.frameCount = -1;
+
+    /* try to estimate frame count, if this is not stdin */
+    if (ifs != &cin)
+    {
+        istream::pos_type cur = ifs->tellg();
+
+#if defined(_MSC_VER) && _MSC_VER < 1700
+        /* Older MSVC versions cannot handle 64bit file sizes properly, so go native */
+        HANDLE hFile = CreateFileA(info.filename, GENERIC_READ, 
+            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 
+            FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hFile != INVALID_HANDLE_VALUE)
+        {
+            LARGE_INTEGER size;
+            if (GetFileSizeEx(hFile, &size))
+                info.frameCount = (int)((size.QuadPart - (int64_t)cur) / framesize);
+            CloseHandle(hFile);
+        }
+#else
+        if (cur >= 0)
+        {
+            ifs->seekg(0, ios::end);
+            istream::pos_type size = ifs->tellg();
+            ifs->seekg(cur, ios::beg);
+            if (size > 0)
+                info.frameCount = (int)((size - cur) / framesize);
+        }
+#endif
+    }
+
     if (info.skipFrames)
     {
         for (int i = 0; i < info.skipFrames; i++)
@@ -129,24 +159,6 @@ void YUVInput::release()
     notFull.trigger();
     stop();
     delete this;
-}
-
-int YUVInput::guessFrameCount()
-{
-    if (!ifs || ifs == &cin) return -1;
-
-    ifstream::pos_type cur = ifs->tellg();
-    if (cur < 0)
-        return -1;
-
-    ifs->seekg(0, ios::end);
-    ifstream::pos_type size = ifs->tellg();
-    ifs->seekg(cur, ios::beg);
-    if (size < 0)
-        return -1;
-
-    assert(framesize);
-    return (int)((size - cur) / framesize);
 }
 
 void YUVInput::startReader()
