@@ -228,6 +228,40 @@ void Encoder::updateVbvPlan(RateControl* rc)
     }
 }
 
+#define VERBOSE_RATE 0
+#if VERBOSE_RATE
+static const char* nalUnitTypeToString(NalUnitType type)
+{
+    switch (type)
+    {
+    case NAL_UNIT_CODED_SLICE_TRAIL_R:    return "TRAIL_R";
+    case NAL_UNIT_CODED_SLICE_TRAIL_N:    return "TRAIL_N";
+    case NAL_UNIT_CODED_SLICE_TLA_R:      return "TLA_R";
+    case NAL_UNIT_CODED_SLICE_TSA_N:      return "TSA_N";
+    case NAL_UNIT_CODED_SLICE_STSA_R:     return "STSA_R";
+    case NAL_UNIT_CODED_SLICE_STSA_N:     return "STSA_N";
+    case NAL_UNIT_CODED_SLICE_BLA_W_LP:   return "BLA_W_LP";
+    case NAL_UNIT_CODED_SLICE_BLA_W_RADL: return "BLA_W_RADL";
+    case NAL_UNIT_CODED_SLICE_BLA_N_LP:   return "BLA_N_LP";
+    case NAL_UNIT_CODED_SLICE_IDR_W_RADL: return "IDR_W_RADL";
+    case NAL_UNIT_CODED_SLICE_IDR_N_LP:   return "IDR_N_LP";
+    case NAL_UNIT_CODED_SLICE_CRA:        return "CRA";
+    case NAL_UNIT_CODED_SLICE_RADL_R:     return "RADL_R";
+    case NAL_UNIT_CODED_SLICE_RASL_R:     return "RASL_R";
+    case NAL_UNIT_VPS:                    return "VPS";
+    case NAL_UNIT_SPS:                    return "SPS";
+    case NAL_UNIT_PPS:                    return "PPS";
+    case NAL_UNIT_ACCESS_UNIT_DELIMITER:  return "AUD";
+    case NAL_UNIT_EOS:                    return "EOS";
+    case NAL_UNIT_EOB:                    return "EOB";
+    case NAL_UNIT_FILLER_DATA:            return "FILLER";
+    case NAL_UNIT_PREFIX_SEI:             return "SEI";
+    case NAL_UNIT_SUFFIX_SEI:             return "SEI";
+    default:                              return "UNK";
+    }
+}
+#endif // if VERBOSE_RATE
+
 /**
  \param   flush               force encoder to encode a frame
  \param   pic_in              input original YUV picture or NULL
@@ -362,11 +396,28 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         if (out->getSlice()->m_numWPRefs > 0)
             m_numWPFrames++;
 
-        uint64_t bits = calculateHashAndPSNR(out, curEncoder, nalunits);
+        /* calculate the size of the access unit, excluding:
+         *  - any AnnexB contributions (start_code_prefix, zero_byte, etc.,)
+         *  - SEI NAL units
+         */
+        uint32_t numRBSPBytes = 0;
+        for (int count = 0; nalunits[count] != NULL; count++)
+        {
+            uint32_t numRBSPBytes_nal = nalunits[count]->m_packetSize;
+#if VERBOSE_RATE
+            printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString((*it)->m_nalUnitType), numRBSPBytes_nal);
+#endif
+            if (nalunits[count]->m_nalUnitType != NAL_UNIT_PREFIX_SEI && nalunits[count]->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
+            {
+                numRBSPBytes += numRBSPBytes_nal;
+            }
+        }
+        uint64_t bits = numRBSPBytes * 8;
+        m_rateControl->rateControlEnd(out, bits, &curEncoder->m_rce);
+        finishFrameStats(out, curEncoder, bits);
 
         // Allow this frame to be recycled if no frame encoders are using it for reference
         ATOMIC_DEC(&out->m_countRefEncoders);
-        m_rateControl->rateControlEnd(out, bits, &(curEncoder->m_rce));
         m_dpb->recycleUnreferenced(m_freeList);
         ret = 1;
     }
@@ -423,6 +474,12 @@ void EncStats::addSsim(double ssim)
     m_globalSsim += ssim;
 }
 
+void EncStats::addQP(double aveQp)
+{
+    m_totalQp += aveQp;
+}
+
+
 char* Encoder::statsString(EncStats& stat, char* buffer)
 {
     double fps = (double)param.fpsNum / param.fpsDenom;
@@ -431,6 +488,7 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
     int len = sprintf(buffer, "%-6d ", stat.m_numPics);
 
     len += sprintf(buffer + len, "kb/s: %-8.2lf", stat.m_accBits * scale);
+    len += sprintf(buffer + len, " Ave QP: %2.2lf", stat.m_totalQp / (double)stat.m_numPics);
     if (param.bEnablePsnr)
     {
         len += sprintf(buffer + len, " PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf",
@@ -695,41 +753,6 @@ void Encoder::writeLog(int argc, char **argv)
     }
 }
 
-#define VERBOSE_RATE 0
-#if VERBOSE_RATE
-static const char* nalUnitTypeToString(NalUnitType type)
-{
-    switch (type)
-    {
-    case NAL_UNIT_CODED_SLICE_TRAIL_R:    return "TRAIL_R";
-    case NAL_UNIT_CODED_SLICE_TRAIL_N:    return "TRAIL_N";
-    case NAL_UNIT_CODED_SLICE_TLA_R:      return "TLA_R";
-    case NAL_UNIT_CODED_SLICE_TSA_N:      return "TSA_N";
-    case NAL_UNIT_CODED_SLICE_STSA_R:     return "STSA_R";
-    case NAL_UNIT_CODED_SLICE_STSA_N:     return "STSA_N";
-    case NAL_UNIT_CODED_SLICE_BLA_W_LP:   return "BLA_W_LP";
-    case NAL_UNIT_CODED_SLICE_BLA_W_RADL: return "BLA_W_RADL";
-    case NAL_UNIT_CODED_SLICE_BLA_N_LP:   return "BLA_N_LP";
-    case NAL_UNIT_CODED_SLICE_IDR_W_RADL: return "IDR_W_RADL";
-    case NAL_UNIT_CODED_SLICE_IDR_N_LP:   return "IDR_N_LP";
-    case NAL_UNIT_CODED_SLICE_CRA:        return "CRA";
-    case NAL_UNIT_CODED_SLICE_RADL_R:     return "RADL_R";
-    case NAL_UNIT_CODED_SLICE_RASL_R:     return "RASL_R";
-    case NAL_UNIT_VPS:                    return "VPS";
-    case NAL_UNIT_SPS:                    return "SPS";
-    case NAL_UNIT_PPS:                    return "PPS";
-    case NAL_UNIT_ACCESS_UNIT_DELIMITER:  return "AUD";
-    case NAL_UNIT_EOS:                    return "EOS";
-    case NAL_UNIT_EOB:                    return "EOB";
-    case NAL_UNIT_FILLER_DATA:            return "FILLER";
-    case NAL_UNIT_PREFIX_SEI:             return "SEI";
-    case NAL_UNIT_SUFFIX_SEI:             return "SEI";
-    default:                              return "UNK";
-    }
-}
-
-#endif // if VERBOSE_RATE
-
 /**
  * Produce an ascii(hex) representation of picture digest.
  *
@@ -756,8 +779,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
     return string;
 }
 
-/* Returns Number of bits in current encoded pic */
-uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, NALUnitEBSP **nalunits)
+void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t bits)
 {
     TComPicYuv* recon = pic->getPicYuvRec();
 
@@ -779,29 +801,11 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
-    /* calculate the size of the access unit, excluding:
-     *  - any AnnexB contributions (start_code_prefix, zero_byte, etc.,)
-     *  - SEI NAL units
-     */
-    uint32_t numRBSPBytes = 0;
-    for (int count = 0; nalunits[count] != NULL; count++)
-    {
-        uint32_t numRBSPBytes_nal = nalunits[count]->m_packetSize;
-#if VERBOSE_RATE
-        printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString((*it)->m_nalUnitType), numRBSPBytes_nal);
-#endif
-        if (nalunits[count]->m_nalUnitType != NAL_UNIT_PREFIX_SEI && nalunits[count]->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
-        {
-            numRBSPBytes += numRBSPBytes_nal;
-        }
-    }
-
-    uint32_t bits = numRBSPBytes * 8;
-
     TComSlice*  slice = pic->getSlice();
 
     //===== add bits, psnr and ssim =====
     m_analyzeAll.addBits(bits);
+    m_analyzeAll.addQP(pic->m_avgQpRc);
 
     if (param.bEnablePsnr)
     {
@@ -817,6 +821,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     if (slice->isIntra())
     {
         m_analyzeI.addBits(bits);
+        m_analyzeI.addQP(pic->m_avgQpRc);
         if (param.bEnablePsnr)
             m_analyzeI.addPsnr(psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -825,6 +830,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     else if (slice->isInterP())
     {
         m_analyzeP.addBits(bits);
+        m_analyzeP.addQP(pic->m_avgQpRc);
         if (param.bEnablePsnr)
             m_analyzeP.addPsnr(psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -833,6 +839,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     else if (slice->isInterB())
     {
         m_analyzeB.addBits(bits);
+        m_analyzeB.addQP(pic->m_avgQpRc);
         if (param.bEnablePsnr)
             m_analyzeB.addPsnr(psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -844,13 +851,12 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
         int poc = slice->getPOC();
-        int QP = slice->getSliceQp();
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
 
         char buf[1024];
         int p;
-        p = sprintf(buf, "POC:%d %c QP %2d %10d bits", poc, c, QP, bits);
+        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpRc, slice->getSliceQp(), (int)bits);
         if (param.bEnablePsnr)
             p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -875,7 +881,7 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
         {
-            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %d, %10d,", m_outputCount++, c, poc, QP, bits);
+            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, pic->m_avgQpRc, (int)bits);
             double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
             if (param.bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
@@ -929,8 +935,6 @@ uint64_t Encoder::calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, N
         x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
         fflush(stderr);
     }
-
-    return bits;
 }
 
 #if defined(_MSC_VER)

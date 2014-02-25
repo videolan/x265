@@ -38,6 +38,7 @@ struct EncStats
     double        m_psnrSumU;
     double        m_psnrSumV;
     double        m_globalSsim;
+    double        m_totalQp;
     uint64_t      m_accBits;
     uint32_t      m_numPics;
 
@@ -46,7 +47,10 @@ struct EncStats
         m_psnrSumY = m_psnrSumU = m_psnrSumV = m_globalSsim = 0;
         m_accBits = 0;
         m_numPics = 0;
+        m_totalQp = 0;
     }
+
+    void addQP(double aveQp);
 
     void addPsnr(double psnrY, double psnrU, double psnrV);
 
@@ -145,8 +149,7 @@ public:
 
 protected:
 
-    // Returns total number of bits for encoded pic
-    uint64_t calculateHashAndPSNR(TComPic* pic, FrameEncoder *curEncoder, NALUnitEBSP **nalunits);
+    void finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t bits);
 };
 }
 
