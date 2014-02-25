@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
 #endif
 #include <stdint.h>
 
@@ -142,9 +143,10 @@ public:
 
     Event()
     {
+        int pid = (int)getpid();
         do
         {
-            snprintf(name, sizeof(name), "/x265_%d", s_incr++);
+            snprintf(name, sizeof(name), "/x265_%d_%d", pid, s_incr++);
             this->semaphore = sem_open(name, O_CREAT | O_EXCL, 0777, 0);
         }
         while (this->semaphore == SEM_FAILED);
@@ -234,7 +236,6 @@ public:
 
 #ifdef __GNUC__                         /* GCCs builtin atomics */
 
-#include <unistd.h>
 #include <limits.h>
 
 #define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
