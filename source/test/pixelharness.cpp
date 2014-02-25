@@ -45,23 +45,23 @@ PixelHarness::PixelHarness()
     int bufsize = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS;
 
     /* 64 pixels wide, 2k deep */
-    pbuf1 = (pixel*)X265_MALLOC(pixel, bufsize);
-    pbuf2 = (pixel*)X265_MALLOC(pixel, bufsize);
-    pbuf3 = (pixel*)X265_MALLOC(pixel, bufsize);
-    pbuf4 = (pixel*)X265_MALLOC(pixel, bufsize);
+    pbuf1 = X265_MALLOC(pixel, bufsize);
+    pbuf2 = X265_MALLOC(pixel, bufsize);
+    pbuf3 = X265_MALLOC(pixel, bufsize);
+    pbuf4 = X265_MALLOC(pixel, bufsize);
 
-    ibuf1 = (int*)X265_MALLOC(int, bufsize);
+    ibuf1 = X265_MALLOC(int, bufsize);
 
-    sbuf1 = (int16_t*)X265_MALLOC(int16_t, bufsize);
-    sbuf2 = (int16_t*)X265_MALLOC(int16_t, bufsize);
-    sbuf3 = (int16_t*)X265_MALLOC(int16_t, bufsize);
+    sbuf1 = X265_MALLOC(int16_t, bufsize);
+    sbuf2 = X265_MALLOC(int16_t, bufsize);
+    sbuf3 = X265_MALLOC(int16_t, bufsize);
 
     /*Test Case buffer array */
-    pixel_test_buff  = (pixel**)X265_MALLOC(pixel*, TEST_CASES);
-    short_test_buff  = (int16_t**)X265_MALLOC(int16_t*, TEST_CASES);
-    short_test_buff1 = (int16_t**)X265_MALLOC(int16_t*, TEST_CASES);
-    short_test_buff2 = (int16_t**)X265_MALLOC(int16_t*, TEST_CASES);
-    int_test_buff    = (int**)X265_MALLOC(int*, TEST_CASES);
+    pixel_test_buff  = X265_MALLOC(pixel*, TEST_CASES);
+    short_test_buff  = X265_MALLOC(int16_t*, TEST_CASES);
+    short_test_buff1 = X265_MALLOC(int16_t*, TEST_CASES);
+    short_test_buff2 = X265_MALLOC(int16_t*, TEST_CASES);
+    int_test_buff    = X265_MALLOC(int*, TEST_CASES);
     if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !sbuf3 || !ibuf1 ||
         !pixel_test_buff || !short_test_buff || !int_test_buff || !short_test_buff1 || !short_test_buff2)
     {
@@ -71,11 +71,11 @@ PixelHarness::PixelHarness()
 
     for (int i = 0; i < TEST_CASES; i++)
     {
-        pixel_test_buff[i]  = (pixel*)X265_MALLOC(pixel, BUFFSIZE);
-        short_test_buff[i]  = (int16_t*)X265_MALLOC(int16_t, BUFFSIZE);
-        short_test_buff1[i] = (int16_t*)X265_MALLOC(int16_t, BUFFSIZE);
-        short_test_buff2[i] = (int16_t*)X265_MALLOC(int16_t, BUFFSIZE);
-        int_test_buff[i]    = (int*)X265_MALLOC(int, BUFFSIZE);
+        pixel_test_buff[i]  = X265_MALLOC(pixel, BUFFSIZE);
+        short_test_buff[i]  = X265_MALLOC(int16_t, BUFFSIZE);
+        short_test_buff1[i] = X265_MALLOC(int16_t, BUFFSIZE);
+        short_test_buff2[i] = X265_MALLOC(int16_t, BUFFSIZE);
+        int_test_buff[i]    = X265_MALLOC(int, BUFFSIZE);
         if (!pixel_test_buff[i] || !short_test_buff[i] || !int_test_buff[i] || !short_test_buff1[i])
         {
             fprintf(stderr, "Init_Test_Case_buffers: malloc failed, unable to initiate tests!\n");
