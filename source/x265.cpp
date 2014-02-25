@@ -524,65 +524,85 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
         return true;
     }
-    this->input = Input::open(inputfn, inputBitDepth, bForceY4m);
+
+#if HIGH_BIT_DEPTH
+    if (param->internalBitDepth != 10)
+    {
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of 10 are supported in this build\n");
+        return true;
+    }
+#else
+    if (param->internalBitDepth != 8)
+    {
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of 8 are supported in this build\n");
+        return true;
+    }
+#endif // if HIGH_BIT_DEPTH
+
+    InputFileInfo info;
+    info.filename = inputfn;
+    info.depth = inputBitDepth;
+    info.csp = param->internalCsp;
+    info.width = param->sourceWidth;
+    info.height = param->sourceHeight;
+    info.fpsNum = param->fpsNum;
+    info.fpsDenom = param->fpsDenom;
+    info.sarWidth = param->sarWidth;
+    info.sarHeight = param->sarHeight;
+    info.skipFrames = seek;
+    info.frameCount = 0;
+    getParamAspectRatio(param, info.sarWidth, info.sarHeight);
+
+    this->input = Input::open(info, bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
         return true;
     }
-    if (this->input->getWidth())
-    {
-        /* the file knows its own dimensions, must be Y4M */
-        param->internalCsp = this->input->getColorSpace();
-        param->sourceWidth = this->input->getWidth();
-        param->sourceHeight = this->input->getHeight();
-        this->input->getRate(param->fpsNum, param->fpsDenom);
-    }
-    else
-    {
-        if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->fpsNum == 0 || param->fpsDenom == 0)
-        {
-            x265_log(param, X265_LOG_ERROR, "YUV input requires --input-res WxH and --fps N to be specified\n");
-            return true;
-        }
-        this->input->setDimensions(param->sourceWidth, param->sourceHeight);
-        this->input->setColorSpace(param->internalCsp);
-        this->input->setBitDepth(inputBitDepth);
-    }
-    if (param->internalCsp != X265_CSP_I420 && param->internalCsp != X265_CSP_I444)
+    if (info.csp != X265_CSP_I420 && info.csp != X265_CSP_I444)
     {
         x265_log(param, X265_LOG_ERROR, "Only i420 and i444 color spaces are supported in this build\n");
         return true;
     }
-    if (inputBitDepth < 8 || inputBitDepth > 16)
+    if (info.depth < 8 || info.depth > 16)
     {
         x265_log(param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n", inputBitDepth);
         return true;
     }
 
-    int guess = this->input->guessFrameCount();
-    if (this->seek)
+    /* Unconditionally accept height/width/csp from file info */
+    param->sourceWidth = info.width;
+    param->sourceHeight = info.height;
+    param->internalCsp = info.csp;
+
+    /* Accept fps and sar from file info if not specified by user */
+    if (param->fpsDenom == 0 || param->fpsNum == 0)
     {
-        this->input->skipFrames(this->seek);
+        param->fpsDenom = info.fpsDenom;
+        param->fpsNum = info.fpsNum;
     }
+    if (!param->bEnableAspectRatioIdc && info.sarWidth && info.sarHeight)
+        setParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
-    uint32_t fileFrameCount = guess < 0 ? 0 : (uint32_t)guess;
-    if (this->framesToBeEncoded && fileFrameCount)
-        this->framesToBeEncoded = X265_MIN(this->framesToBeEncoded, fileFrameCount - this->seek);
-    else if (fileFrameCount)
-        this->framesToBeEncoded = fileFrameCount - this->seek;
-
+    if (this->framesToBeEncoded == 0 && (uint32_t)info.frameCount > seek)
+        this->framesToBeEncoded = info.frameCount - seek;
     if (param->logLevel >= X265_LOG_INFO)
     {
-        if (this->framesToBeEncoded == 0)
-            fprintf(stderr, "%s  [info]: %dx%d %d/%d fps %s, unknown frame count\n", input->getName(),
-                    param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
-                    x265_source_csp_names[param->internalCsp]);
+        char buf[128];
+        int p = sprintf(buf, "%dx%d fps %d/%d %s", param->sourceWidth, param->sourceHeight,
+                        param->fpsNum, param->fpsDenom, x265_source_csp_names[param->internalCsp]);
+
+        int width, height;
+        getParamAspectRatio(param, width, height);
+        if (width && height)
+            p += sprintf(buf + p, " sar %d:%d", width, height);
+
+        if (framesToBeEncoded == 0 || info.frameCount == 0)
+            strcpy(buf + p, " unknown frame count");
         else
-            fprintf(stderr, "%s  [info]: %dx%d %d/%d fps %s, frames %u - %d of %d\n", input->getName(),
-                    param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
-                    x265_source_csp_names[param->internalCsp],
-                    this->seek, this->seek + this->framesToBeEncoded - 1, fileFrameCount);
+            sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeEncoded - 1, info.frameCount);
+
+        fprintf(stderr, "%s  [info]: %s\n", input->getName(), buf);
     }
 
     this->input->startReader();
@@ -604,20 +624,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
                     param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
                     x265_source_csp_names[param->internalCsp]);
     }
-
-#if HIGH_BIT_DEPTH
-    if (param->internalBitDepth != 10)
-    {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of 10 are supported in this build\n");
-        return true;
-    }
-#else
-    if (param->internalBitDepth != 8)
-    {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of 8 are supported in this build\n");
-        return true;
-    }
-#endif // if HIGH_BIT_DEPTH
 
     this->bitstreamFile.open(bitstreamfn, std::fstream::binary | std::fstream::out);
     if (!this->bitstreamFile)

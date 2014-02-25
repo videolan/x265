@@ -65,27 +65,19 @@ protected:
 
     std::istream *ifs;
 
-    void init();
+    int guessFrameCount();
+
+    void threadMain();
+
+    bool populateFrameQueue();
 
 public:
 
-    YUVInput(const char *filename, uint32_t inputBitDepth);
+    YUVInput(InputFileInfo& info);
 
     virtual ~YUVInput();
 
-    void setDimensions(int w, int h)              { width = w; height = h; }
-
-    void setColorSpace(int csp)                   { colorSpace = csp; }
-
-    int getColorSpace() const                     { return colorSpace; }
-
-    void setBitDepth(uint32_t bitDepth)           { depth = bitDepth; }
-
-    void getRate(uint32_t&, uint32_t&) const      { }
-
-    int getWidth() const                          { return width; }
-
-    int getHeight() const                         { return height; }
+    void release();
 
     bool isEof() const                            { return ifs && ifs->eof();  }
 
@@ -93,17 +85,7 @@ public:
 
     void startReader();
 
-    void release();
-
-    int  guessFrameCount();
-
-    void skipFrames(uint32_t numFrames);
-
     bool readPicture(x265_picture&);
-
-    void threadMain();
-
-    bool populateFrameQueue();
 
     const char *getName() const                   { return "yuv"; }
 };

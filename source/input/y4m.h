@@ -41,11 +41,15 @@ protected:
 
     uint32_t rateDenom;
 
+    uint32_t sarWidth;
+
+    uint32_t sarHeight;
+
     int width;
 
     int height;
 
-    int colorSpace;   ///< source Color Space Parameter
+    int colorSpace;
 
     uint32_t plane_size[3];
 
@@ -69,25 +73,21 @@ protected:
 
     bool parseHeader();
 
+    void pictureAlloc(int index);
+
+    int  guessFrameCount();
+
+    void threadMain();
+
+    bool populateFrameQueue();
+
 public:
 
-    Y4MInput(const char *filename, uint32_t inputBitDepth);
+    Y4MInput(InputFileInfo& info);
 
     virtual ~Y4MInput();
 
-    void setDimensions(int, int)  { /* ignore, warn */ }
-
-    void setBitDepth(uint32_t)    { /* ignore, warn */ }
-
-    void setColorSpace(int)       { /* ignore, warn */ }
-
-    void getRate(uint32_t& num, uint32_t& denom) const { num = rateNum; denom = rateDenom; }
-
-    int getWidth() const          { return width; }
-
-    int getHeight() const         { return height; }
-
-    int getColorSpace() const     { return colorSpace; }
+    void release();
 
     bool isEof() const            { return ifs && ifs->eof();  }
 
@@ -95,19 +95,7 @@ public:
 
     void startReader();
 
-    void release();
-
-    int  guessFrameCount();
-
-    void skipFrames(uint32_t numFrames);
-
     bool readPicture(x265_picture&);
-
-    void pictureAlloc(int index);
-
-    void threadMain();
-
-    bool populateFrameQueue();
 
     const char *getName() const   { return "y4m"; }
 };

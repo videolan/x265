@@ -41,7 +41,9 @@
 using namespace x265;
 using namespace std;
 
-Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
+static const char header[] = "FRAME";
+
+Y4MInput::Y4MInput(InputFileInfo& info)
 {
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
@@ -49,10 +51,17 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
     }
 
     head = tail = 0;
-    colorSpace = X265_CSP_I420;
+
+    colorSpace = info.csp;
+    sarWidth = info.sarWidth;
+    sarHeight = info.sarHeight;
+    width = info.width;
+    height = info.height;
+    rateNum = info.fpsNum;
+    rateDenom = info.fpsDenom;
 
     ifs = NULL;
-    if (!strcmp(filename, "-"))
+    if (!strcmp(info.filename, "-"))
     {
         ifs = &cin;
 #if _WIN32
@@ -60,24 +69,47 @@ Y4MInput::Y4MInput(const char *filename, uint32_t /*inputBitDepth*/)
 #endif
     }
     else
-        ifs = new ifstream(filename, ios::binary | ios::in);
+        ifs = new ifstream(info.filename, ios::binary | ios::in);
 
     threadActive = false;
-    if (ifs && ifs->good())
+    if (ifs && ifs->good() && parseHeader())
     {
-        if (parseHeader())
+        threadActive = true;
+        for (uint32_t i = 0; i < QUEUE_SIZE; i++)
         {
-            threadActive = true;
-            for (uint32_t i = 0; i < QUEUE_SIZE; i++)
-            {
-                pictureAlloc(i);
-            }
+            pictureAlloc(i);
         }
     }
-    if (!threadActive && ifs && ifs != &cin)
+    if (!threadActive)
     {
-        delete ifs;
+        if (ifs && ifs != &cin)
+            delete ifs;
         ifs = NULL;
+        return;
+    }
+
+    info.width = width;
+    info.height = height;
+    info.sarHeight = sarHeight;
+    info.sarWidth = sarWidth;
+    info.fpsNum = rateNum;
+    info.fpsDenom = rateDenom;
+    info.csp = colorSpace;
+    info.depth = 8;
+    info.frameCount = guessFrameCount();
+
+    if (info.skipFrames)
+    {
+        size_t frameSize = strlen(header) + 1;
+        for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+        {
+            frameSize += (size_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
+        }
+
+        for (int i = 0; i < info.skipFrames; i++)
+        {
+            ifs->ignore(frameSize);
+        }
     }
 }
 
@@ -117,11 +149,6 @@ bool Y4MInput::parseHeader()
     if (!ifs)
         return false;
 
-    width = 0;
-    height = 0;
-    rateNum = 0;
-    rateDenom = 0;
-    colorSpace = X265_CSP_I420;
     int csp = 0;
 
     while (!ifs->eof())
@@ -221,7 +248,37 @@ bool Y4MInput::parseHeader()
 
                 break;
 
+            case 'A':
+                sarWidth = 0;
+                sarHeight = 0;
+                while (!ifs->eof())
+                {
+                    c = ifs->get();
+                    if (c == ':')
+                    {
+                        while (!ifs->eof())
+                        {
+                            c = ifs->get();
+                            if (c == ' ' || c == '\n')
+                            {
+                                break;
+                            }
+                            else
+                                sarHeight = sarHeight * 10 + (c - '0');
+                        }
+
+                        break;
+                    }
+                    else
+                    {
+                        sarWidth = sarWidth * 10 + (c - '0');
+                    }
+                }
+
+                break;
+
             case 'C':
+                csp = 0;
                 while (!ifs->eof())
                 {
                     c = ifs->get();
@@ -267,8 +324,6 @@ bool Y4MInput::parseHeader()
     return true;
 }
 
-static const char header[] = "FRAME";
-
 int Y4MInput::guessFrameCount()
 {
     if (!ifs || ifs == &cin)
@@ -290,23 +345,6 @@ int Y4MInput::guessFrameCount()
     }
 
     return (int)((size - cur) / frameSize);
-}
-
-void Y4MInput::skipFrames(uint32_t numFrames)
-{
-    if (ifs && numFrames)
-    {
-        size_t frameSize = strlen(header) + 1;
-        for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-        {
-            frameSize += (size_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
-        }
-
-        for (uint32_t i = 0; i < numFrames; i++)
-        {
-            ifs->ignore(frameSize);
-        }
-    }
 }
 
 void Y4MInput::startReader()

@@ -42,7 +42,7 @@
 using namespace x265;
 using namespace std;
 
-YUVInput::YUVInput(const char *filename, uint32_t inputBitDepth)
+YUVInput::YUVInput(InputFileInfo& info)
 {
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
@@ -51,11 +51,21 @@ YUVInput::YUVInput(const char *filename, uint32_t inputBitDepth)
 
     head = 0;
     tail = 0;
-    depth = inputBitDepth;
-    pixelbytes = inputBitDepth > 8 ? 2 : 1;
-    width = height = framesize = 0;
+    framesize = 0;
+    depth = info.depth;
+    width = info.width;
+    height = info.height;
+    colorSpace = info.csp;
     threadActive = false;
-    if (!strcmp(filename, "-"))
+    ifs = NULL;
+
+    if (width == 0 || height == 0 || info.fpsNum == 0 || info.fpsDenom == 0)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "yuv: width, height, and FPS must be specified\n");
+        return;
+    }
+
+    if (!strcmp(info.filename, "-"))
     {
         ifs = &cin;
 #if _WIN32
@@ -63,14 +73,43 @@ YUVInput::YUVInput(const char *filename, uint32_t inputBitDepth)
 #endif
     }
     else
-        ifs = new ifstream(filename, ios::binary | ios::in);
+        ifs = new ifstream(info.filename, ios::binary | ios::in);
 
     if (ifs && ifs->good())
         threadActive = true;
-    else if (ifs && ifs != &cin)
+    else
     {
-        delete ifs;
+        if (ifs && ifs != &cin)
+            delete ifs;
         ifs = NULL;
+        return;
+    }
+
+    pixelbytes = depth > 8 ? 2 : 1;
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        uint32_t w = width >> x265_cli_csps[colorSpace].width[i];
+        uint32_t h = height >> x265_cli_csps[colorSpace].height[i];
+        framesize += w * h * pixelbytes;
+    }
+
+    for (uint32_t i = 0; i < QUEUE_SIZE; i++)
+    {
+        buf[i] = new char[framesize];
+        if (buf[i] == NULL)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "yuv: buffer allocation failure, aborting\n");
+            threadActive = false;
+            return;
+        }
+    }
+    info.frameCount = guessFrameCount();
+    if (info.skipFrames)
+    {
+        for (int i = 0; i < info.skipFrames; i++)
+        {
+            ifs->ignore(framesize);
+        }
     }
 }
 
@@ -92,32 +131,8 @@ void YUVInput::release()
     delete this;
 }
 
-void YUVInput::init()
-{
-    if (!framesize)
-    {
-        for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-        {
-            uint32_t w = width >> x265_cli_csps[colorSpace].width[i];
-            uint32_t h = height >> x265_cli_csps[colorSpace].height[i];
-            framesize += w * h * pixelbytes;
-        }
-
-        for (uint32_t i = 0; i < QUEUE_SIZE; i++)
-        {
-            buf[i] = new char[framesize];
-            if (buf[i] == NULL)
-            {
-                x265_log(NULL, X265_LOG_ERROR, "yuv: buffer allocation failure, aborting\n");
-                threadActive = false;
-            }
-        }
-    }
-}
-
 int YUVInput::guessFrameCount()
 {
-    init();
     if (!ifs || ifs == &cin) return -1;
 
     ifstream::pos_type cur = ifs->tellg();
@@ -134,21 +149,8 @@ int YUVInput::guessFrameCount()
     return (int)((size - cur) / framesize);
 }
 
-void YUVInput::skipFrames(uint32_t numFrames)
-{
-    init();
-    if (ifs)
-    {
-        for (uint32_t i = 0; i < numFrames; i++)
-        {
-            ifs->ignore(framesize);
-        }
-    }
-}
-
 void YUVInput::startReader()
 {
-    init();
 #if ENABLE_THREADING
     if (ifs && threadActive)
         start();

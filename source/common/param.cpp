@@ -671,6 +671,65 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 namespace x265 {
 // internal encoder functions
 
+static const int fixedRatios[][2] =
+{
+    { 1,  1 },
+    { 12, 11 },
+    { 10, 11 },
+    { 16, 11 },
+    { 40, 33 },
+    { 24, 11 },
+    { 20, 11 },
+    { 32, 11 },
+    { 80, 33 },
+    { 18, 11 },
+    { 15, 11 },
+    { 64, 33 },
+    { 160, 99 },
+    { 4, 3 },
+    { 3, 2 },
+    { 2, 1 },
+};
+
+void setParamAspectRatio(x265_param *p, int width, int height)
+{
+    p->bEnableVuiParametersPresentFlag = 1;
+    p->bEnableAspectRatioIdc = 1;
+    p->aspectRatioIdc = X265_EXTENDED_SAR;
+    p->sarWidth = width;
+    p->sarHeight = height;
+    for (size_t i = 0; i < sizeof(fixedRatios) / sizeof(fixedRatios[0]); i++)
+    {
+        if (width == fixedRatios[i][0] && height == fixedRatios[i][1])
+        {
+            p->aspectRatioIdc = (int)i + 1;
+            return;
+        }
+    }
+}
+
+void getParamAspectRatio(x265_param *p, int& width, int& height)
+{
+    if (!p->bEnableVuiParametersPresentFlag || !p->bEnableAspectRatioIdc || !p->aspectRatioIdc)
+    {
+        width = height = 0;
+    }
+    else if ((size_t)p->aspectRatioIdc <= sizeof(fixedRatios) / sizeof(fixedRatios[0]))
+    {
+        width  = fixedRatios[p->aspectRatioIdc - 1][0];
+        height = fixedRatios[p->aspectRatioIdc - 1][1];
+    }
+    else if (p->aspectRatioIdc == X265_EXTENDED_SAR)
+    {
+        width  = p->sarWidth;
+        height = p->sarHeight;
+    }
+    else
+    {
+        width = height = 0;
+    }
+}
+
 static inline int _confirm(x265_param *param, bool bflag, const char* message)
 {
     if (!bflag)

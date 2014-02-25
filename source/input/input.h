@@ -36,6 +36,24 @@
 namespace x265 {
 // private x265 namespace
 
+struct InputFileInfo
+{
+    /* possibly user-supplied, possibly read from file header */
+    int width;
+    int height;
+    int csp;
+    int depth;
+    int fpsNum;
+    int fpsDenom;
+    int sarWidth;
+    int sarHeight;
+    int frameCount;
+
+    /* user supplied */
+    int skipFrames;
+    const char *filename;
+};
+
 class Input
 {
 protected:
@@ -46,35 +64,17 @@ public:
 
     Input()           {}
 
-    static Input* open(const char *filename, uint32_t inputBitDepth, bool bForceY4m);
-
-    virtual void setDimensions(int width, int height) = 0;
-
-    virtual void setBitDepth(uint32_t bitDepth) = 0;
-
-    virtual void setColorSpace(int csp) = 0;
-
-    virtual void getRate(uint32_t& num, uint32_t& denom) const = 0;
-
-    virtual int getWidth() const = 0;
-
-    virtual int getHeight() const = 0;
-
-    virtual int getColorSpace() const = 0;
+    static Input* open(InputFileInfo& info, bool bForceY4m);
 
     virtual void startReader() = 0;
 
     virtual void release() = 0;
-
-    virtual void skipFrames(uint32_t numFrames) = 0;
 
     virtual bool readPicture(x265_picture& pic) = 0;
 
     virtual bool isEof() const = 0;
 
     virtual bool isFail() = 0;
-
-    virtual int  guessFrameCount() = 0;
 
     virtual const char *getName() const = 0;
 };
