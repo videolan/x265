@@ -31,6 +31,9 @@ using namespace x265;
 extern "C"
 x265_encoder *x265_encoder_open(x265_param *param)
 {
+    if (!param)
+        return NULL;
+
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
 
     if (x265_check_params(param))
