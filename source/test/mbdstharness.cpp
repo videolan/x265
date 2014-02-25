@@ -101,14 +101,14 @@ MBDstHarness::MBDstHarness()
      * [2] --- Maximum */
     for (int i = 0; i < mb_t_size; i++)
     {
-        short_test_buff[0][i]   = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
-        int_test_buff[0][i]     = rand() % PIXEL_MAX;
+        short_test_buff[0][i]    = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
+        int_test_buff[0][i]      = rand() % PIXEL_MAX;
         int_idct_test_buff[0][i] = rand() % IDCTMAX;
-        short_test_buff[1][i]   = -PIXEL_MAX;
-        int_test_buff[1][i]     = -PIXEL_MAX;
+        short_test_buff[1][i]    = -PIXEL_MAX;
+        int_test_buff[1][i]      = -PIXEL_MAX;
         int_idct_test_buff[1][i] = 0;
-        short_test_buff[2][i]   = PIXEL_MAX;
-        int_test_buff[2][i]     = PIXEL_MAX;
+        short_test_buff[2][i]    = PIXEL_MAX;
+        int_test_buff[2][i]      = PIXEL_MAX;
         int_idct_test_buff[2][i] = IDCTMAX;
     }
 
