@@ -236,6 +236,7 @@ public:
 
 #ifdef __GNUC__                         /* GCCs builtin atomics */
 
+#include <unistd.h>
 #include <limits.h>
 
 #define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
