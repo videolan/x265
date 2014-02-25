@@ -324,7 +324,6 @@ void Lookahead::slicetypeDecide()
         int p0, p1, b;
         p1 = b = bframes + 1;
 
-        frames[0] = lastNonB;
         for (int i = 0; i <= bframes; i++)
         {
             frames[i + 1] = &list[i]->m_lowres;
