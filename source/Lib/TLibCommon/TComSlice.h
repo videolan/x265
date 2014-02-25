@@ -446,13 +446,13 @@ public:
 
     bool getTimingInfoPresentFlag()             { return m_timingInfoPresentFlag; }
 
-    void setNumUnitsInTick(uint32_t value)          { m_numUnitsInTick = value; }
+    void setNumUnitsInTick(uint32_t value)      { m_numUnitsInTick = value; }
 
-    uint32_t getNumUnitsInTick()                    { return m_numUnitsInTick; }
+    uint32_t getNumUnitsInTick()                { return m_numUnitsInTick; }
 
-    void setTimeScale(uint32_t value)               { m_timeScale = value; }
+    void setTimeScale(uint32_t value)           { m_timeScale = value; }
 
-    uint32_t getTimeScale()                         { return m_timeScale; }
+    uint32_t getTimeScale()                     { return m_timeScale; }
 
     bool getPocProportionalToTimingFlag()       { return m_pocProportionalToTimingFlag; }
 
