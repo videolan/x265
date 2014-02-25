@@ -805,7 +805,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
 
     //===== add bits, psnr and ssim =====
     m_analyzeAll.addBits(bits);
-    m_analyzeAll.addQP(pic->m_avgQpRc);
+    m_analyzeAll.addQP(pic->m_avgQpAq);
 
     if (param.bEnablePsnr)
     {
@@ -821,7 +821,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
     if (slice->isIntra())
     {
         m_analyzeI.addBits(bits);
-        m_analyzeI.addQP(pic->m_avgQpRc);
+        m_analyzeI.addQP(pic->m_avgQpAq);
         if (param.bEnablePsnr)
             m_analyzeI.addPsnr(psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -830,7 +830,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
     else if (slice->isInterP())
     {
         m_analyzeP.addBits(bits);
-        m_analyzeP.addQP(pic->m_avgQpRc);
+        m_analyzeP.addQP(pic->m_avgQpAq);
         if (param.bEnablePsnr)
             m_analyzeP.addPsnr(psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -839,7 +839,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
     else if (slice->isInterB())
     {
         m_analyzeB.addBits(bits);
-        m_analyzeB.addQP(pic->m_avgQpRc);
+        m_analyzeB.addQP(pic->m_avgQpAq);
         if (param.bEnablePsnr)
             m_analyzeB.addPsnr(psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -856,7 +856,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
 
         char buf[1024];
         int p;
-        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpRc, slice->getSliceQp(), (int)bits);
+        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpAq, slice->getSliceQp(), (int)bits);
         if (param.bEnablePsnr)
             p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param.bEnableSsim)
@@ -881,7 +881,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
         {
-            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, pic->m_avgQpRc, (int)bits);
+            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, pic->m_avgQpAq, (int)bits);
             double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
             if (param.bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
