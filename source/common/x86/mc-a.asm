@@ -54,7 +54,6 @@ cextern pw_256
 cextern pw_512
 cextern pw_1023
 cextern pw_1024
-cextern pw_16400
 cextern pw_00ff
 cextern pw_pixel_max
 cextern sw_64
@@ -67,12 +66,9 @@ cextern deinterleave_shufd
 ; r0 = pSrc0,    r1 = pSrc1
 ; r2 = pDst,     r3 = iStride0
 ; r4 = iStride1, r5 = iDstStride
-
 %if HIGH_BIT_DEPTH
 INIT_XMM sse4
-cglobal addAvg_2x4, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova          m7,          [pw_16400]
-    mova          m0,          [pw_1023]
+cglobal addAvg_2x4, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     add           r3,          r3
     add           r4,          r4
     add           r5,          r5
@@ -91,20 +87,18 @@ cglobal addAvg_2x4, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movd          m2,          [r0]
     movd          m4,          [r0 + r3]
     movd          m5,          [r1]
-    movd          m6,          [r1 + r4]
-
+    movd          m0,          [r1 + r4]
     punpckldq     m2,          m4
-    punpckldq     m5,          m6
+    punpckldq     m5,          m0
     punpcklqdq    m1,          m2
     punpcklqdq    m3,          m5
-
     paddw         m1,          m3
-    paddw         m1,          m7
-    psraw         m1,          5
-    pxor          m6,          m6
-    pmaxsw        m1,          m6
-    pminsw        m1,          m0
+    pmulhrsw      m1,          [pw_1024]
+    paddw         m1,          [pw_512]
 
+    pxor          m0,          m0
+    pmaxsw        m1,          m0
+    pminsw        m1,          [pw_1023]
     movd          [r2],        m1
     pextrd        [r2 + r5],   m1, 1
     lea           r2,          [r2 + 2 * r5]
@@ -112,14 +106,11 @@ cglobal addAvg_2x4, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     pextrd        [r2 + r5],   m1, 3
 
     RET
-
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal addAvg_2x8, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-
-    mova          m7,          [pw_16400]
-    mova          m0,          [pw_1023]
-
+cglobal addAvg_2x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova          m0,          [pw_512]
+    pxor          m7,          m7
     add           r3,          r3
     add           r4,          r4
     add           r5,          r5
@@ -145,14 +136,12 @@ cglobal addAvg_2x8, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     punpckldq     m5,          m6
     punpcklqdq    m1,          m2
     punpcklqdq    m3,          m5
-
     paddw         m1,          m3
-    paddw         m1,          m7
-    psraw         m1,          5
-    pxor          m6,          m6
-    pmaxsw        m1,          m6
-    pminsw        m1,          m0
+    pmulhrsw      m1,          [pw_1024]
+    paddw         m1,          m0
 
+    pmaxsw        m1,          m7
+    pminsw        m1,          [pw_1023]
     movd          [r2],        m1
     pextrd        [r2 + r5],   m1, 1
     lea           r2,          [r2 + 2 * r5]
@@ -169,10 +158,6 @@ cglobal addAvg_2x8, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal addAvg_4x2, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-
-    mova           m4,          [pw_16400]
-    mova           m5,          [pw_1023]
-    pxor           m6,          m6
     add            r3,          r3
     add            r4,          r4
     add            r5,          r5
@@ -184,22 +169,22 @@ cglobal addAvg_4x2, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
     punpcklqdq     m0,          m1
     punpcklqdq     m2,          m3
-
     paddw          m0,          m2
-    paddw          m0,          m4
-    psraw          m0,          5
-    pmaxsw         m1,          m6
-    pminsw         m1,          m5
+    pmulhrsw       m0,          [pw_1024]
+    paddw          m0,          [pw_512]
 
+    pxor           m6,          m6
+    pmaxsw         m0,          m6
+    pminsw         m0,          [pw_1023]
     movh           [r2],        m0
     movhps         [r2 + r5],   m0
     RET
-
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal addAvg_6x8, 6,7,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,             [pw_16400]
+cglobal addAvg_6x8, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,             [pw_512]
     mova        m5,             [pw_1023]
+    mova        m7,             [pw_1024]
     pxor        m6,             m6
     add         r3,             r3
     add         r4,             r4
@@ -209,8 +194,9 @@ cglobal addAvg_6x8, 6,7,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        m0,             [r0]
     movu        m2,             [r1]
     paddw       m0,             m2
+    pmulhrsw    m0,             m7
     paddw       m0,             m4
-    psraw       m0,             5
+
     pmaxsw      m0,             m6
     pminsw      m0,             m5
     movh        [r2],           m0
@@ -219,8 +205,9 @@ cglobal addAvg_6x8, 6,7,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        m1,             [r0 + r3]
     movu        m3,             [r1 + r4]
     paddw       m1,             m3
+    pmulhrsw    m1,             m7
     paddw       m1,             m4
-    psraw       m1,             5
+
     pmaxsw      m1,             m6
     pminsw      m1,             m5
     movh        [r2 + r5],      m1
@@ -231,12 +218,12 @@ cglobal addAvg_6x8, 6,7,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     lea         r1,             [r1 + 2 * r4]
 %endrep
     RET
-
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal addAvg_8x2, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,          [pw_16400]
+cglobal addAvg_8x2, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,          [pw_512]
     mova        m5,          [pw_1023]
+    mova        m7,          [pw_1024]
     pxor        m6,          m6
     add         r3,          r3
     add         r4,          r4
@@ -245,8 +232,9 @@ cglobal addAvg_8x2, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        m0,          [r0]
     movu        m2,          [r1]
     paddw       m0,          m2
+    pmulhrsw    m0,          m7
     paddw       m0,          m4
-    psraw       m0,          5
+
     pmaxsw      m0,          m6
     pminsw      m0,          m5
     movu        [r2],        m0
@@ -254,18 +242,19 @@ cglobal addAvg_8x2, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        m1,          [r0 + r3]
     movu        m3,          [r1 + r4]
     paddw       m1,          m3
+    pmulhrsw    m1,          m7
     paddw       m1,          m4
-    psraw       m1,          5
+
     pmaxsw      m1,          m6
     pminsw      m1,          m5
     movu        [r2 + r5],   m1
     RET
-
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal addAvg_8x6, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,          [pw_16400]
+cglobal addAvg_8x6, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,          [pw_512]
     mova        m5,          [pw_1023]
+    mova        m7,          [pw_1024]
     pxor        m6,          m6
     add         r3,          r3
     add         r4,          r4
@@ -275,8 +264,9 @@ cglobal addAvg_8x6, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        m0,          [r0]
     movu        m2,          [r1]
     paddw       m0,          m2
+    pmulhrsw    m0,          m7
     paddw       m0,          m4
-    psraw       m0,          5
+
     pmaxsw      m0,          m6
     pminsw      m0,          m5
     movu        [r2],        m0
@@ -284,8 +274,9 @@ cglobal addAvg_8x6, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        m1,          [r0 + r3]
     movu        m3,          [r1 + r4]
     paddw       m1,          m3
+    pmulhrsw    m1,          m7
     paddw       m1,          m4
-    psraw       m1,          5
+
     pmaxsw      m1,          m6
     pminsw      m1,          m5
     movu        [r2 + r5],   m1

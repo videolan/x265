@@ -60,10 +60,10 @@ PixelHarness::PixelHarness()
     pixel_test_buff  = (pixel**)X265_MALLOC(pixel*, TEST_CASES);
     short_test_buff  = (int16_t**)X265_MALLOC(int16_t*, TEST_CASES);
     short_test_buff1 = (int16_t**)X265_MALLOC(int16_t*, TEST_CASES);
+    short_test_buff2 = (int16_t**)X265_MALLOC(int16_t*, TEST_CASES);
     int_test_buff    = (int**)X265_MALLOC(int*, TEST_CASES);
-
     if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !sbuf3 || !ibuf1 ||
-        !pixel_test_buff || !short_test_buff || !int_test_buff || !short_test_buff1)
+        !pixel_test_buff || !short_test_buff || !int_test_buff || !short_test_buff1 || !short_test_buff2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -74,6 +74,7 @@ PixelHarness::PixelHarness()
         pixel_test_buff[i]  = (pixel*)X265_MALLOC(pixel, BUFFSIZE);
         short_test_buff[i]  = (int16_t*)X265_MALLOC(int16_t, BUFFSIZE);
         short_test_buff1[i] = (int16_t*)X265_MALLOC(int16_t, BUFFSIZE);
+        short_test_buff2[i] = (int16_t*)X265_MALLOC(int16_t, BUFFSIZE);
         int_test_buff[i]    = (int*)X265_MALLOC(int, BUFFSIZE);
         if (!pixel_test_buff[i] || !short_test_buff[i] || !int_test_buff[i] || !short_test_buff1[i])
         {
@@ -88,21 +89,21 @@ PixelHarness::PixelHarness()
     for (int i = 0; i < BUFFSIZE; i++)
     {
         pixel_test_buff[0][i]   = rand() % PIXEL_MAX;
-        short_test_buff[0][i]   = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
-        short_test_buff1[0][i]  = rand() & PIXEL_MAX;                  //For block copy only
+        short_test_buff[0][i]   = (rand() % (2 * SMAX + 1)) - SMAX - 1; // max(SHORT_MIN, min(rand(), SMAX));
+        short_test_buff1[0][i]  = rand() & PIXEL_MAX;                   // For block copy only
+        short_test_buff2[0][i]  = rand() % 16383;                       // for addAvg
         int_test_buff[0][i]     = rand() % SHORT_MAX;
-
         pixel_test_buff[1][i]   = PIXEL_MIN;
         short_test_buff[1][i]   = SMIN;
         short_test_buff1[1][i]  = PIXEL_MIN;
+        short_test_buff2[1][i]  = -16384;
         int_test_buff[1][i]     = SHORT_MIN;
-
         pixel_test_buff[2][i]   = PIXEL_MAX;
         short_test_buff[2][i]   = SMAX;
         short_test_buff1[2][i]  = PIXEL_MAX;
+        short_test_buff2[2][i]  = 16383;
         int_test_buff[2][i]     = SHORT_MAX;
     }
-
     for (int i = 0; i < bufsize; i++)
     {
         pbuf1[i] = rand() & PIXEL_MAX;
@@ -855,9 +856,8 @@ bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        ref(short_test_buff[index1] + j, short_test_buff[index2] + j, ref_dest, STRIDE, STRIDE, STRIDE);
-        opt(short_test_buff[index1] + j, short_test_buff[index2] + j, opt_dest, STRIDE, STRIDE, STRIDE);
-
+        ref(short_test_buff2[index1] + j, short_test_buff2[index2] + j, ref_dest, STRIDE, STRIDE, STRIDE);
+        opt(short_test_buff2[index1] + j, short_test_buff2[index2] + j, opt_dest, STRIDE, STRIDE, STRIDE);
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
         {
             return false;
