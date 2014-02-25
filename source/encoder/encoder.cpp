@@ -1081,7 +1081,10 @@ void Encoder::initSPS(TComSPS *sps)
 
     /* set the VPS profile information */
     *getVPS()->getPTL() = *sps->getPTL();
-    getVPS()->getTimingInfo()->setTimingInfoPresentFlag(false);
+    TimingInfo *t = getVPS()->getTimingInfo();
+    t->setTimingInfoPresentFlag(true);
+    t->setNumUnitsInTick(param.fpsDenom);
+    t->setTimeScale(param.fpsNum);
 }
 
 void Encoder::initPPS(TComPPS *pps)
