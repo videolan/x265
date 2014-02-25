@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <math.h> // log10
 
 #if _WIN32
 #include <sys/types.h>
@@ -135,22 +136,12 @@ void x265_log(x265_param *param, int level, const char *fmt, ...)
 }
 
 extern "C"
-x265_picture *x265_picture_alloc()
+double x265_ssim(double ssim)
 {
-    return (x265_picture*)x265_malloc(sizeof(x265_picture));
-}
+    double inv_ssim = 1 - ssim;
 
-extern "C"
-void x265_picture_init(x265_param *param, x265_picture *pic)
-{
-    memset(pic, 0, sizeof(x265_picture));
+    if (inv_ssim <= 0.0000000001) /* Max 100dB */
+        return 100;
 
-    pic->bitDepth = param->internalBitDepth;
-    pic->colorSpace = param->internalCsp;
-}
-
-extern "C"
-void x265_picture_free(x265_picture *p)
-{
-    return x265_free(p);
+    return -10.0 * log10(inv_ssim);
 }

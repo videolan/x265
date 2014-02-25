@@ -58,4 +58,5 @@ add_library(encoder OBJECT ../x265.h
     compress.cpp
     reference.cpp reference.h
     encoder.cpp encoder.h
+    api.cpp
     weightPrediction.cpp)
