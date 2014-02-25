@@ -342,12 +342,12 @@ bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t 
             rand_srcStride = rand() % 100;             // Randomly generated srcStride
             rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
 
-            opt(pixel_test_buff[index] + 3 * rand_srcStride,
+            opt(pixel_test_buff[index] + 3 * rand_srcStride + 6,
                 rand_srcStride,
                 IPF_vec_output_p,
                 rand_dstStride,
                 coeffIdx);
-            ref(pixel_test_buff[index] + 3 * rand_srcStride,
+            ref(pixel_test_buff[index] + 3 * rand_srcStride + 6,
                 rand_srcStride,
                 IPF_C_output_p,
                 rand_dstStride,
@@ -408,13 +408,13 @@ bool IPFilterHarness::check_IPFilterLuma_hps_primitive(filter_hps_t ref, filter_
                 rand_srcStride = rand() % 100;                // Randomly generated srcStride
                 rand_dstStride = rand() % 100 + 64;           // Randomly generated dstStride
 
-                ref(pixel_test_buff[index] + 3 * rand_srcStride,
+                ref(pixel_test_buff[index] + 3 * rand_srcStride + 6,
                     rand_srcStride,
                     IPF_C_output_s,
                     rand_dstStride,
                     coeffIdx,
                     isRowExt);
-                opt(pixel_test_buff[index] + 3 * rand_srcStride,
+                opt(pixel_test_buff[index] + 3 * rand_srcStride + 6,
                     rand_srcStride,
                     IPF_vec_output_s,
                     rand_dstStride,

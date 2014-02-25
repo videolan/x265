@@ -387,12 +387,18 @@ extern "C" {
     SETUP_CHROMA_SS_FUNC_DEF_444(32, 8, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_444(8, 32, cpu);
 
+#if HIGH_BIT_DEPTH    // temporary, until all 10bit functions are completed
+#define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
+    p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu; \
+    p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu;
+#else
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu; \
     p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu; \
     p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = x265_blockcopy_ps_ ## W ## x ## H ## cpu;
+#endif
 
 #define SETUP_LUMA_SUB_FUNC_DEF(W, H, cpu) \
     p.luma_sub_ps[LUMA_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
@@ -835,6 +841,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     {
         LUMA_ADDAVG(_sse4);
         CHROMA_ADDAVG(_sse4);
+        LUMA_FILTERS(_sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
         p.quant = x265_quant_sse4;
