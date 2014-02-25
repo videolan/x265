@@ -412,11 +412,9 @@ void FrameEncoder::compressFrame()
     }
 
     /* Clip qps back to 0-51 range before encoding */
-    if (qp > MAX_QP)
-    {
-        qp = MAX_QP;
-        slice->setSliceQp(qp);
-    }
+    qp = X265_MIN(qp, MAX_QP);
+    slice->setSliceQp(qp);
+    m_pic->m_avgQpAq = qp;
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
@@ -1079,6 +1077,7 @@ void FrameEncoder::processRowEncoder(int row)
             qp = X265_MIN(qp, MAX_QP);
             cu->setQP(0, char(qp));
             cu->m_baseQp = qpBase;
+            m_pic->m_qpaAq[row] += qp;
         }
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
         if (isVbv)
@@ -1087,7 +1086,6 @@ void FrameEncoder::processRowEncoder(int row)
             m_pic->m_rowDiagSatd[row] += m_pic->m_cuCostsForVbv[cuAddr];
             m_pic->m_rowEncodedBits[row] += cu->m_totalBits;
             m_pic->m_numEncodedCusPerRow[row] = cuAddr;
-            m_pic->m_qpaAq[row] += cu->getQP(0);
             m_pic->m_qpaRc[row] += cu->m_baseQp;
 
             if ((uint32_t)row == col)

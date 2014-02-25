@@ -415,7 +415,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         double q = qScale2qp(rateEstimateQscale(pic, rce));
         q = Clip3((double)MIN_QP, (double)MAX_MAX_QP, q);
         qp = int(q + 0.5);
-        rce->qpaRc = pic->m_avgQpRc = q;
+        rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
         rce->qRceq = lastRceq;
         rce->qpNoVbv = qpNoVbv;
@@ -427,7 +427,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
             qp = (qpConstant[B_SLICE] + qpConstant[P_SLICE]) / 2;
         else
             qp = qpConstant[sliceType];
-        pic->m_avgQpRc = qp;
+        pic->m_avgQpAq = pic->m_avgQpRc = qp;
     }
     if (sliceType != B_SLICE)
     {
@@ -1013,15 +1013,24 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
         }
         if (!isAbrReset)
         {
-            if (pic->m_qpaRc)
+            if (cfg->param.rc.aqMode || isVbv)
             {
-                for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
+                if (pic->m_qpaRc)
                 {
-                    pic->m_avgQpRc += pic->m_qpaRc[i];
+                    for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
+                        pic->m_avgQpRc += pic->m_qpaRc[i];
+
+                    pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
+                    rce->qpaRc = pic->m_avgQpRc;
                 }
 
-                pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
-                rce->qpaRc = pic->m_avgQpRc;
+                if (pic->m_qpaAq)
+                {
+                    for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
+                        pic->m_avgQpAq += pic->m_qpaAq[i];
+
+                    pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
+                }
             }
 
             if (rce->sliceType != B_SLICE)

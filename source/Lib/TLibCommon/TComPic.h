@@ -110,9 +110,11 @@ public:
     uint32_t*             m_numEncodedCusPerRow;
     uint32_t*             m_rowSatdForVbv;
     uint32_t*             m_cuCostsForVbv;
-    int*                  m_qpaAq;
+    double*               m_qpaAq;
     double*               m_qpaRc;
-    double                m_avgQpRc;
+    double                m_avgQpRc; //avg QP as decided by ratecontrol
+    double                m_avgQpAq; //avg QP as decided by AQ in addition to ratecontrol
+
     TComPic();
     virtual ~TComPic();
 
