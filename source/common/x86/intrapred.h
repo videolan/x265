@@ -160,4 +160,5 @@ DECL_ANG(32, 33, sse4);
 void x265_all_angs_pred_4x4_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 void x265_all_angs_pred_8x8_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 void x265_all_angs_pred_16x16_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
+void x265_all_angs_pred_32x32_sse4(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
 #endif // ifndef X265_INTRAPRED_H
