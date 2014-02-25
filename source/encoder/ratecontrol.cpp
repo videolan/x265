@@ -427,6 +427,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
             qp = (qpConstant[B_SLICE] + qpConstant[P_SLICE]) / 2;
         else
             qp = qpConstant[sliceType];
+        pic->m_avgQpRc = qp;
     }
     if (sliceType != B_SLICE)
     {
