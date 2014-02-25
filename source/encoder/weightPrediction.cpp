@@ -513,7 +513,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         X265_FREE(temp);
     }
 
-    if (param.logLevel >= X265_LOG_DEBUG)
+    if (param.logLevel >= 4)
     {
         char buf[1024];
         int p = 0;
