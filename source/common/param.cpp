@@ -765,10 +765,8 @@ int x265_check_params(x265_param *param)
 #define CHECK(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    CHECK(param->maxCUSize > 64,
-          "max ctu size should be less than 64");
-    CHECK(param->maxCUSize < 16,
-          "Maximum partition width size should be larger than or equal to 16");
+    CHECK(param->maxCUSize != 64 && param->maxCUSize != 32 && param->maxCUSize != 16,
+          "max ctu size must be 16, 32, or 64");
     if (check_failed == 1)
         return check_failed;
 
@@ -850,15 +848,6 @@ int x265_check_params(x265_param *param)
           "Aq-Mode is out of range");
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
-
-    // max CU size should be power of 2
-    uint32_t i = param->maxCUSize;
-    while (i)
-    {
-        i >>= 1;
-        if ((i & 1) == 1)
-            CHECK(i != 1, "Max CU size should be 2^n");
-    }
 
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->aspectRatioIdc < 0
