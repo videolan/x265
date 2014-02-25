@@ -154,11 +154,9 @@ static const struct option long_options[] =
     { "cutree",                    no_argument, NULL, 0 },
     { "vui",                  no_argument, NULL, 0 },
     { "sar",            required_argument, NULL, 0 },
-    { "extended-sar",   required_argument, NULL, 0 },
     { "overscan",       required_argument, NULL, 0 },
     { "videoformat",    required_argument, NULL, 0 },
-    { "range",                no_argument, NULL, 0 },
-    { "no-range",             no_argument, NULL, 0 },
+    { "range",          required_argument, NULL, 0 },
     { "colorprim",      required_argument, NULL, 0 },
     { "transfer",       required_argument, NULL, 0 },
     { "colormatrix",    required_argument, NULL, 0 },
@@ -371,21 +369,20 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H0("\nVUI options:\n");
     H0("   --vui                         Add Video Useability Information with all fields to the SPS. Default %s\n", OPT(param->bEnableVuiParametersPresentFlag));
-    H0("   --sar                         Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
-    H0("                                 Choose from 0=Unspecified, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
+    H0("   --sar <int:int|int>           Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
+    H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
-    H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1. Default %d\n", param->aspectRatioIdc);
-    H0("   --extended-sar                Use a custom Sample Aspect Ratio,[WxH]\n");
-    H0("   --overscan <string>           Specify crop overscan setting from undef, show or crop. Default of undef\n");
-    H0("   --videoformat <string>        Specify video format from undef, component, pal, ntsc, secam, mac. Default of undef\n");
-    H0("   --[no-]range                       Specify black level and range of luma and chroma signals. Default of %s\n", OPT(param->bEnableVideoFullRangeFlag));
+    H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1 or custom ratio of <int:int>. Default %d\n", param->aspectRatioIdc);
+    H0("   --overscan <string>           Specify crop overscan setting from undef, show or crop. Default undef\n");
+    H0("   --videoformat <string>        Specify video format from undef, component, pal, ntsc, secam, mac. Default undef\n");
+    H0("   --range <string>              Specify black level and range of luma and chroma signals as full or limited Default limited\n");
     H0("   --colorprim <string>          Specify color primaries from undef, bt709, bt470m, bt470bg, smpte170m,\n");
-    H0("                                 smpte240m, film, bt2020. Default of undef\n");
+    H0("                                 smpte240m, film, bt2020. Default undef\n");
     H0("   --transfer <string>           Specify transfer characteristics from undef, bt709, bt470m, bt470bg, smpte170m,\n");
     H0("                                 smpte240m, linear, log100, log316, iec61966-2-4, bt1361e, iec61966-2-1,\n");
-    H0("                                 bt2020-10, bt2020-12. Default of undef\n");
+    H0("                                 bt2020-10, bt2020-12. Default undef\n");
     H0("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
-    H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c\n");
+    H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->chromaSampleLocTypeTopField);
     H0("   --[no-]fieldseq               Specify that pictures are fields and an SEI timing message\n");
     H0("                                 will be added to every access unit. Default %s\n", OPT(param->bEnableFieldSeqFlag));

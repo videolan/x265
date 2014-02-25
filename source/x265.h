@@ -184,8 +184,6 @@ typedef enum
 #define X265_CPU_NEON            0x0000002  /* ARM NEON */
 #define X265_CPU_FAST_NEON_MRC   0x0000004  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
 
-static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
-
 #define X265_MAX_SUBPEL_LEVEL   7
 
 /* Log level */
@@ -234,8 +232,6 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 
 #define X265_EXTENDED_SAR       255 /* aspect ratio explicitly specified as width:height */
 
-static const char * const x265_source_csp_names[] = { "i400", "i420", "i422", "i444", "nv12", "nv16", 0 };
-
 typedef struct
 {
     int planes;
@@ -278,6 +274,19 @@ typedef struct x265_stats
 
     /* new statistic member variables must be added below this line */
 } x265_stats;
+
+/* String values accepted by x265_param_parse() (and CLI) for various parameters */
+static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
+static const char * const x265_source_csp_names[] = { "i400", "i420", "i422", "i444", "nv12", "nv16", 0 };
+static const char * const x265_video_format_names[] = { "component", "pal", "ntsc", "secam", "mac", "undef", 0 };
+static const char * const x265_fullrange_names[] = { "limited", "full", 0 };
+static const char * const x265_colorprim_names[] = { "", "bt709", "undef", "", "bt470m", "bt470bg", "smpte170m", "smpte240m", "film", "bt2020", 0 };
+static const char * const x265_transfer_names[] = { "", "bt709", "undef", "", "bt470m", "bt470bg", "smpte170m", "smpte240m", "linear", "log100",
+                                                    "log316", "iec61966-2-4", "bt1361e", "iec61966-2-1", "bt2020-10", "bt2020-12", 0 };
+static const char * const x265_colmatrix_names[] = { "GBR", "bt709", "undef", "", "fcc", "bt470bg", "smpte170m", "smpte240m",
+                                                     "YCgCo", "bt2020nc", "bt2020c", 0 };
+static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11", "16:11", "40:33", "24:11", "20:11",
+                                               "32:11", "80:33", "18:11", "15:11", "64:33", "160:99", "4:3", "3:2", "2:1", 0 };
 
 /* x265 input parameters
  *

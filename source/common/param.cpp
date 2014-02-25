@@ -551,15 +551,13 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("sar")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableAspectRatioIdc = atobool(value);
-        p->aspectRatioIdc = atoi(value);
-    }
-    OPT("extended-sar")
-    {
-        p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableAspectRatioIdc = 1;
-        p->aspectRatioIdc = X265_EXTENDED_SAR;
-        bError |= sscanf(value, "%dx%d", &p->sarWidth, &p->sarHeight) != 2;
+        p->aspectRatioIdc = parseName(value, x265_sar_names, bError);
+        if (bError)
+        {
+            p->aspectRatioIdc = X265_EXTENDED_SAR;
+            bError = sscanf(value, "%d:%d", &p->sarWidth, &p->sarHeight) != 2;
+        }
     }
     OPT("overscan")
     {
@@ -571,121 +569,43 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->bEnableOverscanInfoPresentFlag = 1;
             p->bEnableOverscanAppropriateFlag = 1;
         }
+        else if (!strcmp(value, "undef"))
+            p->bEnableOverscanInfoPresentFlag = 0;
         else
-            p->bEnableOverscanInfoPresentFlag = -1;
+            bError = true;
     }
     OPT("videoformat")
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableVideoSignalTypePresentFlag = 1;
-        if (!strcmp(value, "component"))
-            p->videoFormat = 0;
-        else if (!strcmp(value, "pal"))
-            p->videoFormat = 1;
-        else if (!strcmp(value, "ntsc"))
-            p->videoFormat = 2;
-        else if (!strcmp(value, "secam"))
-            p->videoFormat = 3;
-        else if (!strcmp(value, "mac"))
-            p->videoFormat = 4;
-        else if (!strcmp(value, "undef"))
-            p->videoFormat = 5;
-        else
-            p->videoFormat = -1;
+        p->videoFormat = parseName(value, x265_video_format_names, bError);
     }
     OPT("range")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVideoSignalTypePresentFlag = atobool(value);
-        p->bEnableVideoFullRangeFlag = atobool(value);
+        p->bEnableVideoSignalTypePresentFlag = 1; 
+        p->bEnableVideoFullRangeFlag = parseName(value, x265_fullrange_names, bError);
     }
     OPT("colorprim")
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableVideoSignalTypePresentFlag = 1;
         p->bEnableColorDescriptionPresentFlag = 1;
-        if (!strcmp(value, "bt709"))
-            p->colorPrimaries = 1;
-        else if (!strcmp(value, "undef"))
-            p->colorPrimaries = 2;
-        else if (!strcmp(value, "bt470m"))
-            p->colorPrimaries = 4;
-        else if (!strcmp(value, "bt470bg"))
-            p->colorPrimaries = 5;
-        else if (!strcmp(value, "smpte170m"))
-            p->colorPrimaries = 6;
-        else if (!strcmp(value, "smpte240m"))
-            p->colorPrimaries = 7;
-        else if (!strcmp(value, "film"))
-            p->colorPrimaries = 8;
-        else if (!strcmp(value, "bt2020"))
-            p->colorPrimaries = 9;
-        else
-            p->colorPrimaries = -1;
+        p->colorPrimaries = parseName(value, x265_colorprim_names, bError);
     }
     OPT("transfer")
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableVideoSignalTypePresentFlag = 1;
         p->bEnableColorDescriptionPresentFlag = 1;
-        if (!strcmp(value, "bt709"))
-            p->transferCharacteristics = 1;
-        else if (!strcmp(value, "undef"))
-            p->transferCharacteristics = 2;
-        else if (!strcmp(value, "bt470m"))
-            p->transferCharacteristics = 4;
-        else if (!strcmp(value, "bt470bg"))
-            p->transferCharacteristics = 5;
-        else if (!strcmp(value, "smpte170m"))
-            p->transferCharacteristics = 6;
-        else if (!strcmp(value, "smpte240m"))
-            p->transferCharacteristics = 7;
-        else if (!strcmp(value, "linear"))
-            p->transferCharacteristics = 8;
-        else if (!strcmp(value, "log100"))
-            p->transferCharacteristics = 9;
-        else if (!strcmp(value, "log316"))
-            p->transferCharacteristics = 10;
-        else if (!strcmp(value, "iec61966-2-4"))
-            p->transferCharacteristics = 11;
-        else if (!strcmp(value, "bt1361e"))
-            p->transferCharacteristics = 12;
-        else if (!strcmp(value, "iec61966-2-1"))
-            p->transferCharacteristics = 13;
-        else if (!strcmp(value, "bt2020-10"))
-            p->transferCharacteristics = 14;
-        else if (!strcmp(value, "bt2020-12"))
-            p->transferCharacteristics = 15;
-        else
-            p->transferCharacteristics = -1;
+        p->transferCharacteristics = parseName(value, x265_transfer_names, bError);
     }
     OPT("colormatrix")
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableVideoSignalTypePresentFlag = 1;
         p->bEnableColorDescriptionPresentFlag = 1;
-        if (!strcmp(value, "GBR"))
-            p->matrixCoeffs = 0;
-        else if (!strcmp(value, "bt709"))
-            p->matrixCoeffs = 1;
-        else if (!strcmp(value, "undef"))
-            p->matrixCoeffs = 2;
-        else if (!strcmp(value, "fcc"))
-            p->matrixCoeffs = 4;
-        else if (!strcmp(value, "bt470bg"))
-            p->matrixCoeffs = 5;
-        else if (!strcmp(value, "smpte170m"))
-            p->matrixCoeffs = 6;
-        else if (!strcmp(value, "smpte240m"))
-            p->matrixCoeffs = 7;
-        else if (!strcmp(value, "YCgCo"))
-            p->matrixCoeffs = 8;
-        else if (!strcmp(value, "bt2020nc"))
-            p->matrixCoeffs = 9;
-        else if (!strcmp(value, "bt2020c"))
-            p->matrixCoeffs = 10;
-        else
-            p->matrixCoeffs = -1;
+        p->matrixCoeffs = parseName(value, x265_colmatrix_names, bError);
     }
     OPT("chromaloc")
     {
@@ -722,7 +642,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("nal-hrd")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVuiTimingInfoPresentFlag = atobool(value);
+        p->bEnableVuiTimingInfoPresentFlag = 1;
         p->bEnableVuiHrdParametersPresentFlag = atobool(value);
     }
     OPT("bitstreamrestriction")
@@ -733,7 +653,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("subpichrd")
     {
         p->bEnableVuiParametersPresentFlag = 1;
-        p->bEnableVuiHrdParametersPresentFlag = atobool(value);
+        p->bEnableVuiHrdParametersPresentFlag = 1;
         p->bEnableSubPicHrdParamsPresentFlag = atobool(value);
     }
     else
@@ -859,7 +779,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->aspectRatioIdc == X265_EXTENDED_SAR && param->sarHeight <= 0,
           "Sample Aspect Ratio height must be greater than 0");
     CHECK(param->videoFormat < 0 || param->videoFormat > 5,
-          "Video Format must be Component component,"
+          "Video Format must be component,"
           " pal, ntsc, secam, mac or undef");
     CHECK(param->colorPrimaries < 0
           || param->colorPrimaries > 9
