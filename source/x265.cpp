@@ -63,9 +63,6 @@ using namespace x265;
 static const char short_options[] = "o:p:f:F:r:I:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
-#if HIGH_BIT_DEPTH
-    { "depth",          required_argument, NULL, 0 },
-#endif
     { "help",                 no_argument, NULL, 'h' },
     { "version",              no_argument, NULL, 'V' },
     { "cpuid",          required_argument, NULL, 0 },
