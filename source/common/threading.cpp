@@ -65,7 +65,7 @@ Thread::~Thread()
 
 #else /* POSIX / pthreads */
 
-int Event::s_incr /* = 0 */;
+volatile int Event::s_incr /* = 0 */;
 
 static void *ThreadShim(void *opaque)
 {

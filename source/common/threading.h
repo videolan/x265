@@ -35,9 +35,102 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
 #endif
+
 #include <stdint.h>
+
+#if MACOS
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
+
+#ifdef __GNUC__                         /* GCCs builtin atomics */
+
+#include <unistd.h>
+#include <limits.h>
+
+#define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
+#define ATOMIC_OR(ptr, mask)                __sync_or_and_fetch(ptr, mask)
+#define ATOMIC_CAS(ptr, oldval, newval)     __sync_val_compare_and_swap(ptr, oldval, newval)
+#define ATOMIC_CAS32(ptr, oldval, newval)   __sync_val_compare_and_swap(ptr, oldval, newval)
+#define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
+#define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
+#define GIVE_UP_TIME()                      usleep(0)
+
+#elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
+
+#include <intrin.h>
+
+#if !_WIN64
+inline int _BitScanReverse64(DWORD *id, uint64_t x64) // fake 64bit CLZ
+{
+    uint32_t high32 = (uint32_t)(x64 >> 32);
+    uint32_t low32 = (uint32_t)x64;
+
+    if (high32)
+    {
+        _BitScanReverse(id, high32);
+        *id += 32;
+        return 1;
+    }
+    else if (low32)
+        return _BitScanReverse(id, low32);
+    else
+        return *id = 0;
+}
+
+inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
+{
+    uint32_t high32 = (uint32_t)(x64 >> 32);
+    uint32_t low32 = (uint32_t)x64;
+
+    if (high32)
+    {
+        _BitScanForward(id, high32);
+        *id += 32;
+        return 1;
+    }
+    else if (low32)
+        return _BitScanForward(id, low32);
+    else
+        return *id = 0;
+}
+
+#endif // if !_WIN64
+
+#if _WIN32_WINNT <= _WIN32_WINNT_WINXP
+/* Windows XP did not define this intrinsic */
+FORCEINLINE LONGLONG x265_interlocked_OR64(__inout LONGLONG volatile *Destination,
+                                           __in    LONGLONG           Value)
+{
+    LONGLONG Old;
+
+    do
+    {
+        Old = *Destination;
+    }
+    while (_InterlockedCompareExchange64(Destination, Old | Value, Old) != Old);
+
+    return Old;
+}
+
+#define ATOMIC_OR(ptr, mask)            x265_interlocked_OR64((volatile LONG64*)ptr, mask)
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#pragma intrinsic(_InterlockedCompareExchange64)
+#endif
+#else // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
+#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
+#endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
+
+#define CTZ64(id, x)                        _BitScanForward64(&id, x)
+#define ATOMIC_CAS(ptr, oldval, newval)     (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
+#define ATOMIC_CAS32(ptr, oldval, newval)   (uint64_t)_InterlockedCompareExchange((volatile LONG*)ptr, newval, oldval)
+#define ATOMIC_INC(ptr)                     InterlockedIncrement((volatile LONG*)ptr)
+#define ATOMIC_DEC(ptr)                     InterlockedDecrement((volatile LONG*)ptr)
+#define GIVE_UP_TIME()                      Sleep(0)
+
+#endif // ifdef __GNUC__
+
 
 namespace x265 {
 // x265 private namespace
@@ -146,7 +239,8 @@ public:
         int pid = (int)getpid();
         do
         {
-            snprintf(name, sizeof(name), "/x265_%d_%d", pid, s_incr++);
+            int num = ATOMIC_INC(&s_incr);
+            snprintf(name, sizeof(name), "/x265_%d_%d", pid, num);
             this->semaphore = sem_open(name, O_CREAT | O_EXCL, 0777, 0);
         }
         while (this->semaphore == SEM_FAILED);
@@ -175,7 +269,7 @@ public:
 
 protected:
 
-    static int s_incr;
+    static volatile int s_incr;
     char name[64];
 
     /* the POSIX version uses a counting semaphore */
@@ -228,97 +322,5 @@ public:
     void stop();
 };
 } // end namespace x265
-
-#if MACOS
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#endif
-
-#ifdef __GNUC__                         /* GCCs builtin atomics */
-
-#include <unistd.h>
-#include <limits.h>
-
-#define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
-#define ATOMIC_OR(ptr, mask)                __sync_or_and_fetch(ptr, mask)
-#define ATOMIC_CAS(ptr, oldval, newval)     __sync_val_compare_and_swap(ptr, oldval, newval)
-#define ATOMIC_CAS32(ptr, oldval, newval)   __sync_val_compare_and_swap(ptr, oldval, newval)
-#define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
-#define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
-#define GIVE_UP_TIME()                      usleep(0)
-
-#elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
-
-#include <intrin.h>
-
-#if !_WIN64
-inline int _BitScanReverse64(DWORD *id, uint64_t x64) // fake 64bit CLZ
-{
-    uint32_t high32 = (uint32_t)(x64 >> 32);
-    uint32_t low32 = (uint32_t)x64;
-
-    if (high32)
-    {
-        _BitScanReverse(id, high32);
-        *id += 32;
-        return 1;
-    }
-    else if (low32)
-        return _BitScanReverse(id, low32);
-    else
-        return *id = 0;
-}
-
-inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
-{
-    uint32_t high32 = (uint32_t)(x64 >> 32);
-    uint32_t low32 = (uint32_t)x64;
-
-    if (high32)
-    {
-        _BitScanForward(id, high32);
-        *id += 32;
-        return 1;
-    }
-    else if (low32)
-        return _BitScanForward(id, low32);
-    else
-        return *id = 0;
-}
-
-#endif // if !_WIN64
-
-#if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-/* Windows XP did not define this intrinsic */
-FORCEINLINE LONGLONG x265_interlocked_OR64(__inout LONGLONG volatile *Destination,
-                                           __in    LONGLONG           Value)
-{
-    LONGLONG Old;
-
-    do
-    {
-        Old = *Destination;
-    }
-    while (_InterlockedCompareExchange64(Destination, Old | Value, Old) != Old);
-
-    return Old;
-}
-
-#define ATOMIC_OR(ptr, mask)            x265_interlocked_OR64((volatile LONG64*)ptr, mask)
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-#pragma intrinsic(_InterlockedCompareExchange64)
-#endif
-#else // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
-#endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-
-#define CTZ64(id, x)                        _BitScanForward64(&id, x)
-#define ATOMIC_CAS(ptr, oldval, newval)     (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
-#define ATOMIC_CAS32(ptr, oldval, newval)   (uint64_t)_InterlockedCompareExchange((volatile LONG*)ptr, newval, oldval)
-#define ATOMIC_INC(ptr)                     InterlockedIncrement((volatile LONG*)ptr)
-#define ATOMIC_DEC(ptr)                     InterlockedDecrement((volatile LONG*)ptr)
-#define GIVE_UP_TIME()                      Sleep(0)
-
-#endif // ifdef __GNUC__
 
 #endif // ifndef X265_THREADING_H
