@@ -225,6 +225,8 @@ void Lookahead::slicetypeDecide()
     {
         slicetypeAnalyse(frames, false);
     }
+    else
+        frames[0] = lastNonB;
 
     int j;
     for (j = 0; ipic && j < cfg->param.bframes + 2; ipic = ipic->m_next)
