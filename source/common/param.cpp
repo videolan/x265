@@ -791,12 +791,12 @@ int x265_check_params(x265_param *param)
     CHECK((1u << tuQTMaxLog2Size) > param->maxCUSize,
           "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
 
-    CHECK(param->tuQTMaxInterDepth < 1,
-          "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
+    CHECK(param->tuQTMaxInterDepth < 1 || param->tuQTMaxInterDepth > 4,
+          "QuadtreeTUMaxDepthInter must be greater than 0 and less than 5");
     CHECK(param->maxCUSize < (1u << (tuQTMinLog2Size + param->tuQTMaxInterDepth - 1)),
           "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
-    CHECK(param->tuQTMaxIntraDepth < 1,
-          "QuadtreeTUMaxDepthIntra must be greater than or equal to 1");
+    CHECK(param->tuQTMaxIntraDepth < 1 || param->tuQTMaxIntraDepth > 4,
+          "QuadtreeTUMaxDepthIntra must be greater 0 and less than 5");
     CHECK(param->maxCUSize < (1u << (tuQTMinLog2Size + param->tuQTMaxIntraDepth - 1)),
           "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
 
