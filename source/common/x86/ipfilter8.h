@@ -24,38 +24,6 @@
 #ifndef X265_IPFILTER8_H
 #define X265_IPFILTER8_H
 
-#define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
-    void x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
-    void x265_interp_4tap_horiz_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx, int isRowExt); \
-    void x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
-    void x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx);
-
-#define CHROMA_FILTERS(cpu) \
-    SETUP_CHROMA_FUNC_DEF(4, 4, cpu); \
-    SETUP_CHROMA_FUNC_DEF(4, 2, cpu); \
-    SETUP_CHROMA_FUNC_DEF(2, 4, cpu); \
-    SETUP_CHROMA_FUNC_DEF(8, 8, cpu); \
-    SETUP_CHROMA_FUNC_DEF(8, 4, cpu); \
-    SETUP_CHROMA_FUNC_DEF(4, 8, cpu); \
-    SETUP_CHROMA_FUNC_DEF(8, 6, cpu); \
-    SETUP_CHROMA_FUNC_DEF(6, 8, cpu); \
-    SETUP_CHROMA_FUNC_DEF(8, 2, cpu); \
-    SETUP_CHROMA_FUNC_DEF(2, 8, cpu); \
-    SETUP_CHROMA_FUNC_DEF(16, 16, cpu); \
-    SETUP_CHROMA_FUNC_DEF(16, 8, cpu); \
-    SETUP_CHROMA_FUNC_DEF(8, 16, cpu); \
-    SETUP_CHROMA_FUNC_DEF(16, 12, cpu); \
-    SETUP_CHROMA_FUNC_DEF(12, 16, cpu); \
-    SETUP_CHROMA_FUNC_DEF(16, 4, cpu); \
-    SETUP_CHROMA_FUNC_DEF(4, 16, cpu); \
-    SETUP_CHROMA_FUNC_DEF(32, 32, cpu); \
-    SETUP_CHROMA_FUNC_DEF(32, 16, cpu); \
-    SETUP_CHROMA_FUNC_DEF(16, 32, cpu); \
-    SETUP_CHROMA_FUNC_DEF(32, 24, cpu); \
-    SETUP_CHROMA_FUNC_DEF(24, 32, cpu); \
-    SETUP_CHROMA_FUNC_DEF(32, 8, cpu); \
-    SETUP_CHROMA_FUNC_DEF(8, 32, cpu)
-
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     void x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
     void x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx, int isRowExt); \
@@ -149,6 +117,119 @@
     SETUP_LUMA_SS_FUNC_DEF(64, 16, cpu); \
     SETUP_LUMA_SS_FUNC_DEF(16, 64, cpu);
 
+#if HIGH_BIT_DEPTH
+
+#define SETUP_CHROMA_VERT_FUNC_DEF(W, H, cpu) \
+    void x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx); \
+    void x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
+    void x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
+    void x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx);
+
+#define CHROMA_VERT_FILTERS(cpu) \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 32, cpu)
+
+#define CHROMA_VERT_FILTERS_SSE4(cpu) \
+    SETUP_CHROMA_VERT_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(6, 8, cpu);
+
+#define SETUP_CHROMA_HORIZ_FUNC_DEF(W, H, cpu) \
+    void x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
+    void x265_interp_4tap_horiz_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx, int isRowExt);
+
+#define CHROMA_HORIZ_FILTERS(cpu) \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(6, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 32, cpu)
+
+void x265_chroma_p2s_sse2(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
+
+CHROMA_VERT_FILTERS(_sse2);
+CHROMA_HORIZ_FILTERS(_sse4);
+CHROMA_VERT_FILTERS_SSE4(_sse4);
+
+#undef CHROMA_VERT_FILTERS_SSE4
+#undef CHROMA_VERT_FILTERS
+#undef SETUP_CHROMA_VERT_FUNC_DEF
+#undef CHROMA_HORIZ_FILTERS
+#undef SETUP_CHROMA_HORIZ_FUNC_DEF
+
+#else
+
+#define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
+    void x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
+    void x265_interp_4tap_horiz_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx, int isRowExt); \
+    void x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
+    void x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, int16_t * dst, intptr_t dstStride, int coeffIdx);
+
+#define CHROMA_FILTERS(cpu) \
+    SETUP_CHROMA_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_FUNC_DEF(6, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_FUNC_DEF(8, 32, cpu)
+
+
 #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     void x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
 
@@ -216,28 +297,32 @@ CHROMA_SP_FILTERS(_sse2);
 CHROMA_SP_FILTERS_SSE4(_sse4);
 CHROMA_SS_FILTERS(_sse2);
 CHROMA_SS_FILTERS_SSE4(_sse4);
-LUMA_FILTERS(_sse4);
-LUMA_SP_FILTERS(_sse4);
-LUMA_SS_FILTERS(_sse2);
 
-void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
-void x265_luma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 void x265_chroma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 void x265_chroma_p2s_i444_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 
 #undef SETUP_CHROMA_FUNC_DEF
 #undef SETUP_CHROMA_SP_FUNC_DEF
 #undef SETUP_CHROMA_SS_FUNC_DEF
-#undef SETUP_LUMA_FUNC_DEF
-#undef SETUP_LUMA_SP_FUNC_DEF
-#undef SETUP_LUMA_SS_FUNC_DEF
 #undef CHROMA_FILTERS
 #undef CHROMA_SP_FILTERS
 #undef CHROMA_SS_FILTERS
+#undef CHROMA_SS_FILTERS_SSE4
+#undef CHROMA_SP_FILTERS_SSE4
+#endif
+
+LUMA_FILTERS(_sse4);
+LUMA_SP_FILTERS(_sse4);
+LUMA_SS_FILTERS(_sse2);
+
+void x265_interp_8tap_hv_pp_8x8_ssse3(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int idxX, int idxY);
+void x265_luma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
+
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
 #undef LUMA_SS_FILTERS
-#undef CHROMA_SS_FILTERS_SSE4
-#undef CHROMA_SP_FILTERS_SSE4
+#undef SETUP_LUMA_FUNC_DEF
+#undef SETUP_LUMA_SP_FUNC_DEF
+#undef SETUP_LUMA_SS_FUNC_DEF
 
 #endif // ifndef X265_MC_H

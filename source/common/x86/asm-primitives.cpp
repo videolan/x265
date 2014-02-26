@@ -718,6 +718,68 @@ extern "C" {
 #define SETUP_INTRA_ANG32(mode, fno, cpu) \
     p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
 
+#define SETUP_CHROMA_VERT_FUNC_DEF(W, H, cpu) \
+    p.chroma[X265_CSP_I420].filter_vss[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu; \
+    p.chroma[X265_CSP_I420].filter_vsp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu;
+
+#define CHROMA_VERT_FILTERS(cpu) \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(8, 32, cpu);
+
+#define CHROMA_VERT_FILTERS_SSE4(cpu) \
+    SETUP_CHROMA_VERT_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(6, 8, cpu);
+
+#define SETUP_CHROMA_HORIZ_FUNC_DEF(W, H, cpu) \
+    p.chroma[X265_CSP_I420].filter_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
+    p.chroma[X265_CSP_I420].filter_hps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_ps_ ## W ## x ## H ## cpu;
+
+#define CHROMA_HORIZ_FILTERS(cpu) \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(2, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 6, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(6, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 12, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(12, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 4, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 24, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(24, 32, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(32, 8, cpu); \
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 32, cpu)
+
 namespace x265 {
 // private x265 namespace
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
@@ -802,6 +864,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         CHROMA_BLOCKCOPY(_sse2);
         LUMA_BLOCKCOPY(_sse2);
 
+        CHROMA_VERT_FILTERS(_sse2);
+        p.chroma_p2s[X265_CSP_I420] = x265_chroma_p2s_sse2;
+
         p.blockfill_s[BLOCK_4x4] = x265_blockfill_s_4x4_sse2;
         p.blockfill_s[BLOCK_8x8] = x265_blockfill_s_8x8_sse2;
         p.blockfill_s[BLOCK_16x16] = x265_blockfill_s_16x16_sse2;
@@ -845,6 +910,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         LUMA_ADDAVG(_sse4);
         CHROMA_ADDAVG(_sse4);
         LUMA_FILTERS(_sse4);
+        CHROMA_HORIZ_FILTERS(_sse4);
+        CHROMA_VERT_FILTERS_SSE4(_sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
         p.quant = x265_quant_sse4;

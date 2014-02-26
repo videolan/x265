@@ -169,7 +169,7 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
 
         for (int coeffIdx = 0; coeffIdx < 8; coeffIdx++)
         {
-            rand_srcStride = rand() % 100;              // Randomly generated srcStride
+            rand_srcStride = rand() % 100 + 2;          // Randomly generated srcStride
             rand_dstStride = rand() % 100 + 32;         // Randomly generated dstStride
 
             opt(pixel_test_buff[index] + 3 * rand_srcStride,
@@ -237,7 +237,7 @@ bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filte
         {
             for (int isRowExt = 0; isRowExt < 2; isRowExt++)  // 0 : Interpolate W x H, 1 : Interpolate W x (H + 7)
             {
-                rand_srcStride = rand() % 100;                // Randomly generated srcStride
+                rand_srcStride = rand() % 100 + 2;            // Randomly generated srcStride
                 rand_dstStride = rand() % 100;                // Randomly generated dstStride
 
                 ref(pixel_test_buff[index] + 3 * rand_srcStride,
