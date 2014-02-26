@@ -1077,7 +1077,8 @@ void FrameEncoder::processRowEncoder(int row)
             qp = X265_MIN(qp, MAX_QP);
             cu->setQP(0, char(qp));
             cu->m_baseQp = qpBase;
-            m_pic->m_qpaAq[row] += qp;
+            if (m_cfg->param.rc.aqMode)
+                m_pic->m_qpaAq[row] += qp;
         }
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param.bEnableWavefront && col == 1);
         if (isVbv)
