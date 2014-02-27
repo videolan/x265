@@ -184,6 +184,7 @@
     SETUP_CHROMA_HORIZ_FUNC_DEF(8, 32, cpu)
 
 void x265_chroma_p2s_sse2(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
+void x265_luma_p2s_sse2(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 
 CHROMA_VERT_FILTERS(_sse2);
 CHROMA_HORIZ_FILTERS(_sse4);
