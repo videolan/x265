@@ -26,6 +26,9 @@
 #ifndef X265_THREADING_H
 #define X265_THREADING_H
 
+#include "common.h"
+#include "x265.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -236,44 +239,46 @@ public:
 
     Event()
     {
-        int pid = (int)getpid();
-        do
+        m_counter = 0;
+        if (pthread_mutex_init(&m_mutex, NULL) ||
+            pthread_cond_init(&m_cond, NULL))
         {
-            int num = ATOMIC_INC(&s_incr);
-            snprintf(name, sizeof(name), "/x265_%d_%d", pid, num);
-            this->semaphore = sem_open(name, O_CREAT | O_EXCL, 0777, 0);
+            x265_log(NULL, X265_LOG_ERROR, "fatal: unable to initialize conditional variable\n");
         }
-        while (this->semaphore == SEM_FAILED);
     }
 
     ~Event()
     {
-        sem_close(this->semaphore);
-        sem_unlink(name);
+        pthread_cond_destroy(&m_cond);
+        pthread_mutex_destroy(&m_mutex);
     }
 
     void wait()
     {
-        // keep waiting even if interrupted
-        while (sem_wait(this->semaphore) < 0)
-        {
-            if (errno != EINTR)
-                break;
-        }
+        pthread_mutex_lock(&m_mutex);
+        /* blocking wait on conditional variable, mutex is atomically released
+         * while blocked. When condition is signaled, mutex is re-acquired */
+        while (m_counter == 0)
+            pthread_cond_wait(&m_cond, &m_mutex);
+        m_counter--;
+        pthread_mutex_unlock(&m_mutex);
     }
 
     void trigger()
     {
-        sem_post(this->semaphore);
+        pthread_mutex_lock(&m_mutex);
+        if (m_counter < UINT32_MAX)
+            m_counter++;
+        /* Signal a single blocking thread */
+        pthread_cond_signal(&m_cond);
+        pthread_mutex_unlock(&m_mutex);
     }
 
 protected:
 
-    static volatile int s_incr;
-    char name[64];
-
-    /* the POSIX version uses a counting semaphore */
-    sem_t *semaphore;
+    pthread_mutex_t m_mutex;
+    pthread_cond_t  m_cond;
+    uint32_t        m_counter;
 };
 
 #endif // ifdef _WIN32

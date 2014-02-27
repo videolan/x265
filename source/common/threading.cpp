@@ -65,8 +65,6 @@ Thread::~Thread()
 
 #else /* POSIX / pthreads */
 
-volatile int Event::s_incr /* = 0 */;
-
 static void *ThreadShim(void *opaque)
 {
     // defer processing to the virtual function implemented in the derived class
