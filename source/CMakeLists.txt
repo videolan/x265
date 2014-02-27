@@ -276,7 +276,7 @@ if(ENABLE_SHARED)
         set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
     endif()
     if(UNIX AND NOT APPLE)
-        set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic")
+        set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic,-znoexecstack")
     endif()
     if(X265_LATEST_TAG)
         # shared library is not installed if a tag is not found
