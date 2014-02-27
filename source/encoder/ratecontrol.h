@@ -62,6 +62,7 @@ struct RateControlEntry
     double bufferRate;
     double movingAvgSum;
     double qpNoVbv;
+    double bufferFill;
 };
 
 struct Predictor
