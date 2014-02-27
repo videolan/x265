@@ -190,6 +190,12 @@ public:
         WaitForSingleObject(this->handle, INFINITE);
     }
 
+    bool timedWait(uint32_t milliseconds)
+    {
+        /* returns true if event was signaled */
+        return WaitForSingleObject(this->handle, milliseconds) == WAIT_OBJECT_0;
+    }
+
     void trigger()
     {
         SetEvent(this->handle);
@@ -262,6 +268,35 @@ public:
             pthread_cond_wait(&m_cond, &m_mutex);
         m_counter--;
         pthread_mutex_unlock(&m_mutex);
+    }
+
+    bool timedWait(uint32_t waitms)
+    {
+        bool bTimedOut = false;
+        pthread_mutex_lock(&m_mutex);
+        if (m_counter == 0)
+        {
+            struct timeval tv;
+            struct timespec ts;
+            gettimeofday(&tv, NULL);
+            /* convert current time from (sec, usec) to (sec, nsec) */
+            ts.tv_sec = tv.tv_sec;
+            ts.tv_nsec = tv.tv_usec * 1000;
+
+            ts.tv_nsec += 1000 * 1000 * (waitms % 1000);    /* add ms to tv_nsec */
+            ts.tv_sec += ts.tv_nsec / (1000 * 1000 * 1000); /* overflow tv_nsec */
+            ts.tv_nsec %= (1000 * 1000 * 1000);             /* clamp tv_nsec */
+            ts.tv_sec += waitms / 1000;                     /* add seconds */
+
+            /* blocking wait on conditional variable, mutex is atomically released
+             * while blocked. When condition is signaled, mutex is re-acquired.
+             * ts is absolute time to stop waiting */
+            bTimedOut = pthread_cond_timedwait(&m_cond, &m_mutex, &ts) == ETIMEDOUT;
+        }
+        if (m_counter > 0)
+            m_counter--;
+        pthread_mutex_unlock(&m_mutex);
+        return bTimedOut;
     }
 
     void trigger()
