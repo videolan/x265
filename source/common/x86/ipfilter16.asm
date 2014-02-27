@@ -833,7 +833,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %4, %5
     lea         r%6,      [tab_ChromaCoeff]
     movh        m0,       [r%6 + r4 * 4]
 %else
-    movh        m0,       [tab_ChromaCoeff1 + r4 * 4]
+    movh        m0,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
     punpcklqdq  m0,       m0
