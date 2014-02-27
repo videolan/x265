@@ -232,7 +232,7 @@ RateControl::RateControl(TEncCfg * _cfg)
         double baseCplx = ncu * (cfg->param.bframes ? 120 : 80);
         double mbtree_offset = cfg->param.rc.cuTree ? (1.0 - cfg->param.rc.qCompress) * 13.5 : 0;
         rateFactorConstant = pow(baseCplx, 1 - qCompress) /
-            qp2qScale(cfg->param.rc.rfConstant + mbtree_offset + QP_BD_OFFSET);
+            qp2qScale(cfg->param.rc.rfConstant + mbtree_offset);
         if (cfg->param.rc.rfConstantMax)
         {
             rateFactorMaxIncrement = cfg->param.rc.rfConstantMax - cfg->param.rc.rfConstant;
@@ -333,7 +333,7 @@ RateControl::RateControl(TEncCfg * _cfg)
     }
     else if (cfg->param.rc.rateControlMode == X265_RC_CRF)
     {
-#define ABR_INIT_QP ((int)cfg->param.rc.rfConstant + QP_BD_OFFSET)
+#define ABR_INIT_QP ((int)cfg->param.rc.rfConstant)
     }
     reInit();
 
@@ -409,7 +409,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     }
     if (isAbr) //ABR,CRF
     {
-        currentSatd = l->getEstimatedPictureCost(pic);
+        currentSatd = l->getEstimatedPictureCost(pic) >> (X265_DEPTH - 8);
         /* Update rce for use in rate control VBV later */
         rce->lastSatd = currentSatd;
         double q = qScale2qp(rateEstimateQscale(pic, rce));
