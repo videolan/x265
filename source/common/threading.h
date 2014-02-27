@@ -49,6 +49,7 @@
 
 #ifdef __GNUC__                         /* GCCs builtin atomics */
 
+#include <sys/time.h>
 #include <unistd.h>
 #include <limits.h>
 
@@ -302,7 +303,7 @@ public:
     void trigger()
     {
         pthread_mutex_lock(&m_mutex);
-        if (m_counter < UINT32_MAX)
+        if (m_counter < UINT_MAX)
             m_counter++;
         /* Signal a single blocking thread */
         pthread_cond_signal(&m_cond);
