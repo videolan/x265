@@ -361,7 +361,7 @@ static int x265_atobool(const char *str, bool& bError)
     return 0;
 }
 
-static int x265_atoi(const char *str, bool& bError)
+int x265_atoi(const char *str, bool& bError)
 {
     char *end;
     int v = strtol(str, &end, 0);
@@ -870,6 +870,29 @@ int x265_check_params(x265_param *param)
           "Default Display Window Top Offset must be 0 or greater");
     CHECK(param->defDispWinBottomOffset < 0,
           "Default Display Window Bottom Offset must be 0 or greater");
+    CHECK(param->rc.rfConstant < 0 || param->rc.rfConstant > 51,
+          "Valid quality based VBR range 0 - 51");
+    CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,
+          "Valid adaptive b scheduling values 0 - none, 1 - fast, 2 - full");
+    CHECK(param->logLevel < -1 || param->logLevel > 3,
+          "Valid Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE");
+    CHECK(param->scenecutThreshold < 0,
+          "scenecutThreshold must be greater than 0");
+    CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
+          "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum"); 
+    CHECK(param->keyframeMax < -1,
+          "Invalid max IDR period in frames. value should be greater than -1"); 
+    CHECK(param->decodedPictureHashSEI < 0 || param->decodedPictureHashSEI > 3,
+          "Invalid hash option. Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum");
+    CHECK(param->rc.vbvBufferSize < 0,
+          "Size of the vbv buffer can not be less than zero");
+    CHECK(param->rc.vbvMaxBitrate < 0,
+          "Maximum local bit rate can not be less than zero");
+    CHECK(param->rc.vbvBufferInit < 0 || param->rc.vbvBufferInit > 1,
+          "Valid VBV buffer occpancy range 0 - 1");
+    CHECK(param->rc.bitrate < 0,
+          "Target bitrate can not be less than zero");
+    CHECK(param->bFrameBias < 0, "Bias towards B frame decisions must be 0 or greater");
     return check_failed;
 }
 
