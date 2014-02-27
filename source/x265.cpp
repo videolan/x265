@@ -399,7 +399,7 @@ void CLIOptions::showHelp(x265_param *param)
 
 bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 {
-    int berror = 0;
+    bool bError = 0;
     int help = 0;
     int cpuid = 0;
     int inputBitDepth = 8;
@@ -478,25 +478,25 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     else if (!strcmp(long_options[long_options_index].name, longname))
 
             if (0) ;
-            OPT("cpuid") cpuid = atoi(optarg);
-            OPT("frames") this->framesToBeEncoded = (uint32_t)atoi(optarg);
+            OPT("cpuid") cpuid = x265_atoi(optarg, bError);
+            OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
-            OPT("seek") this->seek = (uint32_t)atoi(optarg);
-            OPT("frame-skip") this->seek = (uint32_t)atoi(optarg);
+            OPT("seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
+            OPT("frame-skip") this->seek = (uint32_t)x265_atoi(optarg, bError);
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
-            OPT("input-res") berror |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
-            OPT("input-depth") inputBitDepth = (uint32_t)atoi(optarg);
-            OPT("recon-depth") reconFileBitDepth = (uint32_t)atoi(optarg);
+            OPT("input-res") bError |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
+            OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
+            OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
             OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
             else
-                berror |= x265_param_parse(param, long_options[long_options_index].name, optarg);
+                bError |= !!x265_param_parse(param, long_options[long_options_index].name, optarg);
 
-            if (berror)
+            if (bError)
             {
                 const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind - 2];
                 x265_log(NULL, X265_LOG_ERROR, "invalid argument: %s = %s\n", name, optarg);
