@@ -146,7 +146,8 @@ add_library(common OBJECT
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h
-    TShortYUV.cpp TShortYUV.h mv.h
+    bitstream.h mv.h
+    TShortYUV.cpp TShortYUV.h
     common.cpp common.h
     param.cpp param.h
     lowres.cpp lowres.h
