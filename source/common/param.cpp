@@ -339,6 +339,8 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bFrameAdaptive = 0;
             param->bframes = 0;
             param->lookaheadDepth = 0;
+            param->scenecutThreshold = 0;
+            param->rc.cuTree = 0;
         }
         else
             return -1;
