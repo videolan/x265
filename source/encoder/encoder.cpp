@@ -913,7 +913,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
             fprintf(m_csvfpt, "\n");
         }
 
-        if (param.decodedPictureHashSEI && param.logLevel >= 4)
+        if (param.decodedPictureHashSEI && param.logLevel >= X265_LOG_FULL)
         {
             const char* digestStr = NULL;
             if (param.decodedPictureHashSEI == 1)

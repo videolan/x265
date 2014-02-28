@@ -192,6 +192,7 @@ typedef enum
 #define X265_LOG_WARNING        1
 #define X265_LOG_INFO           2
 #define X265_LOG_DEBUG          3
+#define X265_LOG_FULL           4
 
 #define X265_B_ADAPT_NONE       0
 #define X265_B_ADAPT_FAST       1
@@ -321,7 +322,7 @@ typedef struct x265_param
     int       frameNumThreads;
 
     /* The level of logging detail emitted by the encoder. X265_LOG_NONE to
-     * X265_LOG_DEBUG, default is X265_LOG_INFO */
+     * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
 
     /* Enable the measurement and reporting of PSNR. Default is enabled */

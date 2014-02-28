@@ -123,6 +123,9 @@ void x265_log(x265_param *param, int level, const char *fmt, ...)
     case X265_LOG_DEBUG:
         log_level = "debug";
         break;
+    case X265_LOG_FULL:
+        log_level = "full";
+        break;
     default:
         log_level = "unknown";
         break;

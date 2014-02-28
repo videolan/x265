@@ -513,7 +513,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         X265_FREE(temp);
     }
 
-    if (param.logLevel >= 4)
+    if (param.logLevel >= X265_LOG_FULL)
     {
         char buf[1024];
         int p = 0;
@@ -530,11 +530,11 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
                     bWeighted = true;
                     p += sprintf(buf + p, " [L%d:R%d ", list, ref);
                     if (w[0].bPresentFlag)
-                        p += sprintf(buf + p, "Y{%d*x>>%d%+d}", w[0].inputWeight, w[0].log2WeightDenom, w[0].inputOffset);
+                        p += sprintf(buf + p, "Y{%d/%d%+d}", w[0].inputWeight, 1 << w[0].log2WeightDenom, w[0].inputOffset);
                     if (w[1].bPresentFlag)
-                        p += sprintf(buf + p, "U{%d*x>>%d%+d}", w[1].inputWeight, w[1].log2WeightDenom, w[1].inputOffset);
+                        p += sprintf(buf + p, "U{%d/%d%+d}", w[1].inputWeight, 1 << w[1].log2WeightDenom, w[1].inputOffset);
                     if (w[2].bPresentFlag)
-                        p += sprintf(buf + p, "V{%d*x>>%d%+d}", w[2].inputWeight, w[2].log2WeightDenom, w[2].inputOffset);
+                        p += sprintf(buf + p, "V{%d/%d%+d}", w[2].inputWeight, 1 << w[2].log2WeightDenom, w[2].inputOffset);
                     p += sprintf(buf + p, "]");
                 }
             }
@@ -544,7 +544,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         {
             if (p < 80) // pad with spaces to ensure progress line overwritten
                 sprintf(buf + p, "%*s", 80 - p, " ");
-            x265_log(&param, X265_LOG_DEBUG, "%s\n", buf);
+            x265_log(&param, X265_LOG_FULL, "%s\n", buf);
         }
     }
     slice.setWpScaling(wp);

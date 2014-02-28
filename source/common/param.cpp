@@ -874,8 +874,8 @@ int x265_check_params(x265_param *param)
           "Valid quality based VBR range 0 - 51");
     CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,
           "Valid adaptive b scheduling values 0 - none, 1 - fast, 2 - full");
-    CHECK(param->logLevel < -1 || param->logLevel > 3,
-          "Valid Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE");
+    CHECK(param->logLevel < -1 || param->logLevel > X265_LOG_FULL,
+          "Valid Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG 4:FULL -1:NONE");
     CHECK(param->scenecutThreshold < 0,
           "scenecutThreshold must be greater than 0");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
