@@ -32,6 +32,7 @@ extern "C" {
 #include "pixel-util.h"
 #include "mc.h"
 #include "ipfilter8.h"
+#include "loopfilter.h"
 #include "blockcopy8.h"
 #include "intrapred.h"
 #include "dct8.h"
@@ -1236,6 +1237,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+        p.saoCuOrgE0 = x265_saoCuOrgE0_sse4;
+
         LUMA_ADDAVG(_sse4);
         CHROMA_ADDAVG(_sse4);
         p.cvt16to32_shl = x265_cvt16to32_shl_sse4;

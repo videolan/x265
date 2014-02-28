@@ -143,11 +143,9 @@ protected:
     static const int m_numCulPartsLevel[5];
     static const uint32_t m_eoTable[9];
     static const int m_numClass[MAX_NUM_SAO_TYPE];
-
     int32_t *m_offsetBo;
     int32_t *m_chromaOffsetBo;
-    int m_offsetEo[LUMA_GROUP_NUM];
-
+    int8_t m_offsetEo[LUMA_GROUP_NUM];
     int  m_picWidth;
     int  m_picHeight;
     uint32_t m_maxSplitLevel;

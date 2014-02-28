@@ -51,6 +51,7 @@ PixelHarness::PixelHarness()
     pbuf4 = X265_MALLOC(pixel, bufsize);
 
     ibuf1 = X265_MALLOC(int, bufsize);
+    psbuf1 = X265_MALLOC(int8_t, bufsize);
 
     sbuf1 = X265_MALLOC(int16_t, bufsize);
     sbuf2 = X265_MALLOC(int16_t, bufsize);
@@ -63,7 +64,8 @@ PixelHarness::PixelHarness()
     short_test_buff2 = X265_MALLOC(int16_t*, TEST_CASES);
     int_test_buff    = X265_MALLOC(int*, TEST_CASES);
     if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !sbuf3 || !ibuf1 ||
-        !pixel_test_buff || !short_test_buff || !int_test_buff || !short_test_buff1 || !short_test_buff2)
+        !pixel_test_buff || !short_test_buff || !int_test_buff || !short_test_buff1 ||
+        !short_test_buff2 || !psbuf1)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -113,7 +115,7 @@ PixelHarness::PixelHarness()
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
-
+        psbuf1[i] = (rand() %65) - 32;                   // range is between -32 to 32
         sbuf3[i] = rand() % PIXEL_MAX; // for blockcopy only
     }
 }
@@ -869,6 +871,37 @@ bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
     return true;
 }
 
+bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int width = 16 * (rand() % 4 + 1);
+        int8_t sign = rand () % 3;
+        if (sign == 2)
+        {
+            sign = -1;
+        }
+
+        ref(ref_dest, psbuf1 + j, width, sign);
+        opt(opt_dest, psbuf1 + j, width, sign);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -1252,6 +1285,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.saoCuOrgE0)
+    {
+        if (!check_saoCuOrgE0_t(ref.saoCuOrgE0, opt.saoCuOrgE0))
+        {
+            printf("SAO_EO_0 failed\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -1530,5 +1572,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("ssim_end_4");
         REPORT_SPEEDUP(opt.ssim_end_4, ref.ssim_end_4, (int(*)[4])pbuf2, (int(*)[4])pbuf1, 4);
+    }
+
+    if (opt.saoCuOrgE0)
+    {
+        printf("SAO_EO_0");
+        REPORT_SPEEDUP(opt.saoCuOrgE0, ref.saoCuOrgE0, pbuf1, psbuf1, 64, 1);
     }
 }

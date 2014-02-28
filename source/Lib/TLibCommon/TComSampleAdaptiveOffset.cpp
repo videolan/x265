@@ -44,7 +44,6 @@
 namespace x265 {
 //! \ingroup TLibCommon
 //! \{
-
 SAOParam::~SAOParam()
 {
     for (int i = 0; i < 3; i++)
@@ -535,12 +534,10 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     uint32_t tpely     = tmpCu->getCUPelY();
     uint32_t rpelx;
     uint32_t bpely;
-    int  signLeft;
-    int  signRight;
+    int  edgeType;
     int  signDown;
     int  signDown1;
     int  signDown2;
-    uint32_t edgeType;
     int picWidthTmp;
     int picHeightTmp;
     int startX;
@@ -614,23 +611,56 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     {
     case SAO_EO_0: // dir: -
     {
-        startX = (lpelx == 0) ? 1 : 0;
-        endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
-        for (y = 0; y < lcuHeight; y++)
-        {
-            signLeft = xSign(rec[startX] - tmpL[y]);
-            for (x = startX; x < endX; x++)
-            {
-                signRight =  xSign(rec[x] - rec[x + 1]);
-                edgeType =  signRight + signLeft + 2;
-                signLeft  = -signRight;
+      pixel firstPxl = 0, lastPxl = 0;
+      startX = (lpelx == 0) ? 1 : 0;
+      endX   = (rpelx == picWidthTmp) ? lcuWidth-1 : lcuWidth;
+      if (lcuWidth % 16)
+      {
+          int8_t signRight;
+          for (y = 0; y < lcuHeight; y++)
+          {
+              int8_t signLeft = xSign(rec[startX] - tmpL[y]);
+              for (x = startX; x < endX; x++)
+              {
+                  signRight = xSign(rec[x] - rec[x+1]);
+                  edgeType = signRight + signLeft + 2;
+                  signLeft  = -signRight;
 
-                rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
-            }
+                  rec[x] =  Clip3(0, (1 << X265_DEPTH) - 1, rec[x] + m_offsetEo[edgeType]);
+              }
+              rec += stride;
+          }
+      }
+      else
+      {
+          for (y = 0; y < lcuHeight; y++)
+          {
+              int8_t signLeft = xSign(rec[startX] - tmpL[y]);
 
-            rec += stride;
-        }
+              if (lpelx == 0)
+              {
+                  firstPxl = rec[0];
+              }
 
+              if (rpelx == picWidthTmp)
+              {
+                  lastPxl = rec[lcuWidth - 1];
+              }
+
+              primitives.saoCuOrgE0(rec, m_offsetEo, lcuWidth, signLeft);
+
+              if (lpelx == 0)
+              {
+                  rec[0] = firstPxl;
+              }
+
+              if (rpelx == picWidthTmp)
+              {
+                  rec[lcuWidth - 1] = lastPxl;
+              }
+              rec += stride;
+          }
+      }
         break;
     }
     case SAO_EO_1: // dir: |
