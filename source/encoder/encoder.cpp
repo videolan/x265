@@ -671,6 +671,16 @@ void Encoder::printSummary()
             x265_log(&param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
                      m_numWPFrames, m_analyzeP.m_numPics, (float)100.0 * m_numWPFrames / m_analyzeP.m_numPics);
         }
+        int pWithB = 0;
+        for (int i = 0; i <= param.bframes; i++)
+            pWithB += m_lookahead->histogram[i];
+        if (pWithB)
+        {
+            int p = 0;
+            for (int i = 0; i <= param.bframes; i++)
+                p += sprintf(buffer + p, "%.1f%% ", 100. * m_lookahead->histogram[i] / pWithB);
+            x265_log(&param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
+        }
     }
 }
 
