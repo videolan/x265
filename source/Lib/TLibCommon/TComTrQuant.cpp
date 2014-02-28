@@ -131,14 +131,13 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
 // To minimize the distortion only. No rate is considered.
 void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters)
 {
-    const uint32_t width     = codingParameters.widthInGroups << MLS_CG_LOG2_WIDTH;
-    const uint32_t height    = codingParameters.heightInGroups << MLS_CG_LOG2_HEIGHT;
+    const uint32_t trSize = codingParameters.widthInGroups << MLS_CG_LOG2_WIDTH;
 
     int lastCG = -1;
     int absSum = 0;
     int n;
 
-    for (int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+    for (int subSet = (trSize * trSize - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
     {
         int  subPos = subSet << LOG2_SCAN_SET_SIZE;
         int  firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
@@ -255,29 +254,27 @@ void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, int32_t* deltaU,
     } // TU loop
 }
 
-uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int width, int height,
+uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int trSize,
                              TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ)
 {
     uint32_t acSum = 0;
     int add = 0;
     bool useRDOQ = (cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ) && curUseRDOQ;
 
-    assert(width == height);
-
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
     {
-        acSum = xRateDistOptQuant(cu, coef, qCoef, width, height, ttype, absPartIdx, lastPos);
+        acSum = xRateDistOptQuant(cu, coef, qCoef, trSize, ttype, absPartIdx, lastPos);
     }
     else
     {
         TUEntropyCodingParameters codingParameters;
-        getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  width, height, ttype);
+        getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  trSize, trSize, ttype);
         int deltaU[32 * 32];
 
-        uint32_t log2TrSize = g_convertToBit[width] + 2;
+        const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
         int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
         assert(scalingListType < 6);
         int32_t *quantCoeff = 0;
@@ -288,7 +285,7 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int w
         int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
 
-        int numCoeff = width * height;
+        int numCoeff = trSize * trSize;
         acSum += primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
 
         if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
@@ -311,8 +308,7 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
                                    int16_t*    residual,
                                    uint32_t    stride,
                                    TCoeff*     coeff,
-                                   uint32_t    width,
-                                   uint32_t    height,
+                                   uint32_t    trSize,
                                    TextType    ttype,
                                    uint32_t    absPartIdx,
                                    int32_t*    lastPos,
@@ -322,11 +318,11 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         uint32_t absSum = 0;
-        for (uint32_t k = 0; k < height; k++)
+        for (uint32_t k = 0; k < trSize; k++)
         {
-            for (uint32_t j = 0; j < width; j++)
+            for (uint32_t j = 0; j < trSize; j++)
             {
-                coeff[k * width + j] = ((int16_t)residual[k * stride + j]);
+                coeff[k * trSize + j] = ((int16_t)residual[k * stride + j]);
                 absSum += abs(residual[k * stride + j]);
             }
         }
@@ -344,29 +340,29 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         mode = REG_DCT;
     }
 
-    assert((cu->getSlice()->getSPS()->getMaxTrSize() >= width));
+    assert((cu->getSlice()->getSPS()->getMaxTrSize() >= trSize));
     if (useTransformSkip)
     {
-        xTransformSkip(residual, stride, m_tmpCoeff, width, height);
+        xTransformSkip(residual, stride, m_tmpCoeff, trSize);
     }
     else
     {
         // TODO: this may need larger data types for X265_DEPTH > 8
-        const uint32_t log2BlockSize = g_convertToBit[width];
-        primitives.dct[DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
+        const uint32_t log2BlockSize = g_convertToBit[trSize];
+        primitives.dct[DCT_4x4 + log2BlockSize - ((trSize == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
-    return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos, curUseRDOQ);
+    return xQuant(cu, m_tmpCoeff, coeff, trSize, ttype, absPartIdx, lastPos, curUseRDOQ);
 }
 
-void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t width, uint32_t height, int scalingListType, bool useTransformSkip, int lastPos)
+void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip, int lastPos)
 {
     if (transQuantBypass)
     {
-        for (uint32_t k = 0; k < height; k++)
+        for (uint32_t k = 0; k < trSize; k++)
         {
-            for (uint32_t j = 0; j < width; j++)
+            for (uint32_t j = 0; j < trSize; j++)
             {
-                residual[k * stride + j] = (int16_t)(coeff[k * width + j]);
+                residual[k * stride + j] = (int16_t)(coeff[k * trSize + j]);
             }
         }
 
@@ -377,7 +373,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
     int per = m_qpParam.m_per;
     int rem = m_qpParam.m_rem;
     bool useScalingList = getUseScalingList();
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int32_t *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
@@ -386,30 +382,30 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
     {
         static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
         int scale = invQuantScales[rem] << per;
-        primitives.dequant_normal(coeff, m_tmpCoeff, width * height, scale, shift);
+        primitives.dequant_normal(coeff, m_tmpCoeff, trSize * trSize, scale, shift);
     }
     else
     {
         // CHECK_ME: the code is not verify since this is DEAD path
-        primitives.dequant_scaling(coeff, dequantCoef, m_tmpCoeff, width * height, per, shift);
+        primitives.dequant_scaling(coeff, dequantCoef, m_tmpCoeff, trSize * trSize, per, shift);
     }
 
     if (useTransformSkip == true)
     {
-        xITransformSkip(m_tmpCoeff, residual, stride, width, height);
+        xITransformSkip(m_tmpCoeff, residual, stride, trSize);
     }
     else
     {
         // CHECK_ME: we can't here when no any coeff
         assert(lastPos >= 0);
 
-        const uint32_t log2BlockSize = g_convertToBit[width];
+        const uint32_t log2BlockSize = log2TrSize - 2;
 
 #if HIGH_BIT_DEPTH
         lastPos = !lastPos; // prevent warning
 #else
         // DC only
-        if (lastPos == 0 && !((width == 4) && (mode != REG_DCT)))
+        if (lastPos == 0 && !((trSize == 4) && (mode != REG_DCT)))
         {
             int dc_val = (((m_tmpCoeff[0] * 64 + 64) >> 7) * 64 + 2048) >> 12;
             primitives.blockfill_s[log2BlockSize](residual, stride, dc_val);
@@ -419,7 +415,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
 #endif
 
         // TODO: this may need larger data types for X265_DEPTH > 8
-        primitives.idct[IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
+        primitives.idct[IDCT_4x4 + log2BlockSize - ((trSize == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
     }
 }
 
@@ -433,16 +429,15 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int width, int height)
+void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int trSize)
 {
-    assert(width == height);
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     uint32_t transformSkipShift;
     int  j, k;
     if (shift >= 0)
     {
-        primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, width);
+        primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, trSize);
     }
     else
     {
@@ -450,11 +445,11 @@ void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* c
         int offset;
         transformSkipShift = -shift;
         offset = (1 << (transformSkipShift - 1));
-        for (j = 0; j < height; j++)
+        for (j = 0; j < trSize; j++)
         {
-            for (k = 0; k < width; k++)
+            for (k = 0; k < trSize; k++)
             {
-                coeff[j * height + k] = (resiBlock[j * stride + k] + offset) >> transformSkipShift;
+                coeff[j * trSize + k] = (resiBlock[j * stride + k] + offset) >> transformSkipShift;
             }
         }
     }
@@ -466,26 +461,24 @@ void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* c
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t stride, int width, int height)
+void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t stride, int trSize)
 {
-    assert(width == height);
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int  j, k;
     if (shift > 0)
     {
-        assert(width == height);
-        primitives.cvt32to16_shr(residual, coef, stride, shift, width);
+        primitives.cvt32to16_shr(residual, coef, stride, shift, trSize);
     }
     else
     {
         //The case when X265_DEPTH >= 13
         uint32_t transformSkipShift = -shift;
-        for (j = 0; j < height; j++)
+        for (j = 0; j < trSize; j++)
         {
-            for (k = 0; k < width; k++)
+            for (k = 0; k < trSize; k++)
             {
-                residual[j * stride + k] =  coef[j * width + k] << transformSkipShift;
+                residual[j * stride + k] =  coef[j * trSize + k] << transformSkipShift;
             }
         }
     }
@@ -546,10 +539,10 @@ void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
-uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t width, uint32_t height,
+uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t trSize,
                                         TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     uint32_t absSum = 0;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     uint32_t       goRiceParam      = 0;
@@ -573,13 +566,13 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     int sigRateDelta[32 * 32];
     int deltaU[32 * 32];
     TUEntropyCodingParameters codingParameters;
-    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  width, height, ttype);
+    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  trSize, trSize, ttype);
 
     const uint32_t cgSize = (1 << MLS_CG_SIZE); // 16
     double costCoeffGroupSig[MLS_GRP_NUM];
     uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
-    const uint32_t log2BlockWidth    = g_convertToBit[width] + 2;
-    const uint32_t log2BlockHeight   = g_convertToBit[height] + 2;
+    const uint32_t log2BlockWidth    = log2TrSize;
+    const uint32_t log2BlockHeight   = log2TrSize;
     uint32_t   ctxSet    = 0;
     int    c1            = 1;
     int    c2            = 0;
@@ -591,7 +584,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     int    baseLevel;
     ::memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * MLS_GRP_NUM);
 
-    uint32_t cgNum = width * height >> MLS_CG_SIZE;
+    uint32_t cgNum = trSize * trSize >> MLS_CG_SIZE;
     int scanPos;
     coeffGroupRDStats rdStats;
 
@@ -892,7 +885,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
         int tmpSum = 0;
         int n;
 
-        for (int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+        for (int subSet = (trSize * trSize - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
             int firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
