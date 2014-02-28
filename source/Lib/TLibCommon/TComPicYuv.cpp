@@ -57,6 +57,11 @@ TComPicYuv::TComPicYuv()
     m_picOrgY = NULL;  // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
     m_picOrgU = NULL;
     m_picOrgV = NULL;
+
+    m_cuOffsetY = NULL;
+    m_cuOffsetC = NULL;
+    m_buOffsetY = NULL;
+    m_buOffsetC = NULL;
 }
 
 TComPicYuv::~TComPicYuv()
