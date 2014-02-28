@@ -79,9 +79,7 @@ private:
 
     int m_hChromaShift;
     int m_vChromaShift;
-
     int m_csp;
-    int m_part;       // This will eliminate all calls to part = partitionFromSizes(m_width, m_height);
 
     static int getAddrOffset(uint32_t partUnitIdx, uint32_t width)
     {
@@ -100,6 +98,8 @@ private:
     }
 
 public:
+
+    int m_part; // partitionFromSizes(m_width, m_height)
 
     TComYuv();
     virtual ~TComYuv();
@@ -189,7 +189,7 @@ public:
     uint32_t getCHeight()   { return m_cheight; }
 
     uint32_t getCWidth()    { return m_cwidth;  }
-}; // END CLASS DEFINITION TComYuv
+};
 }
 //! \}
 

@@ -331,8 +331,16 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 {
     TComPic* pic = outTempCU->getPic();
 
-    // get Original YUV data from picture
-    m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
+    if (depth == 0)
+    {
+        // get original YUV data from picture
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
+    }
+    else
+    {
+        // copy partition YUV from depth 0 CTU cache
+        m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outTempCU->getZorderIdxInCU());
+    }
 
     // variables for fast encoder decision
     bool bSubBranch = true;

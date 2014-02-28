@@ -145,13 +145,10 @@ void TComYuv::copyToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 
 void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 {
-    uint32_t height = dstPicYuv->getHeight();
-    uint32_t width = dstPicYuv->getWidth();
-    int part = partitionFromSizes(width, height);
-
     Pel* srcY = getLumaAddr(partIdx);
     Pel* dstY = dstPicYuv->getLumaAddr(0);
 
+    int part = dstPicYuv->m_part;
     primitives.luma_copy_pp[part](dstY, dstPicYuv->getStride(), srcY, getStride());
 
     Pel* srcU = getCbAddr(partIdx);
