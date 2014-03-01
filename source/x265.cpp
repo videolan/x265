@@ -121,6 +121,7 @@ static const struct option long_options[] =
     { "bframes",        required_argument, NULL, 'b' },
     { "bframe-bias",    required_argument, NULL, 0 },
     { "b-adapt",        required_argument, NULL, 0 },
+    { "no-b-adapt",           no_argument, NULL, 0 },
     { "no-b-pyramid",         no_argument, NULL, 0 },
     { "b-pyramid",            no_argument, NULL, 0 },
     { "ref",            required_argument, NULL, 0 },
@@ -494,7 +495,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("input-res") bError |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
             OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
-            OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;

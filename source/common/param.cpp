@@ -479,13 +479,29 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = atobool(value);
     OPT("constrained-intra") p->bEnableConstrainedIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
-    OPT("scenecut") p->scenecutThreshold = atoi(value);
+    OPT("scenecut")
+    {
+        p->scenecutThreshold = atobool(value);
+        if (bError || p->scenecutThreshold)
+        {
+            bError = false;
+            p->scenecutThreshold = atoi(value);
+        }
+    }
     OPT("keyint") p->keyframeMax = atoi(value);
     OPT("min-keyint") p->keyframeMin = atoi(value);
     OPT("rc-lookahead") p->lookaheadDepth = atoi(value);
     OPT("bframes") p->bframes = atoi(value);
     OPT("bframe-bias") p->bFrameBias = atoi(value);
-    OPT("b-adapt") p->bFrameAdaptive = atoi(value);
+    OPT("b-adapt")
+    {
+        p->bFrameAdaptive = atobool(value);
+        if (bError || p->bFrameAdaptive)
+        {
+            bError = false;
+            p->bFrameAdaptive = atoi(value);
+        }
+    }
     OPT("ref") p->maxNumReferences = atoi(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
