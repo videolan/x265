@@ -335,7 +335,16 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
         }
-        else if (!strcmp(tune, "zero-latency"))
+        else if (!strcmp(tune, "fastdecode") ||
+                 !strcmp(tune, "fast-decode"))
+        {
+            param->bEnableLoopFilter = 0;
+            param->bEnableSAO = 0;
+            param->bEnableWeightedPred = 0;
+            param->bEnableWeightedBiPred = 0;
+        }
+        else if (!strcmp(tune, "zerolatency") ||
+                 !strcmp(tune, "zero-latency"))
         {
             param->bFrameAdaptive = 0;
             param->bframes = 0;

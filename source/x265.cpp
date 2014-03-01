@@ -293,8 +293,10 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-V/--version                     Show version info and exit\n");
     H0("   --[no-]asm                    Override CPU detection. Default: auto\n");
     H0("   --threads                     Number of threads for thread pool (0: detect CPU core count, default)\n");
-    H0("-p/--preset                      ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
-    H0("-t/--tune                        Tune the settings for a particular type of source or situation: (psnr, ssim, zero-latency)\n");
+    H0("-p/--preset                      Trade off performance for compression efficiency. Default medium\n");
+    H0("                                     ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
+    H0("-t/--tune                        Tune the settings for a particular type of source or situation:\n");
+    H0("                                     psnr, ssim, zerolatency, or fastdecode\n");
     H0("-F/--frame-threads               Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
     H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
