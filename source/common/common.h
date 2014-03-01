@@ -113,6 +113,5 @@ void x265_log(x265_param *param, int level, const char *fmt, ...);
 int x265_exp2fix8(double x);
 void *x265_malloc(size_t size);
 void x265_free(void *ptr);
-int x265_atoi(const char *str, bool& bError);
 
 #endif // ifndef X265_COMMON_H

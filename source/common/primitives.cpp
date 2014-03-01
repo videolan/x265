@@ -75,8 +75,7 @@ void Setup_C_Primitives(EncoderPrimitives &p)
 }
 using namespace x265;
 
-/* cpuid == 0 - auto-detect CPU type, else
- * cpuid > 0 -  force CPU type
+/* cpuid >= 0 - force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
 extern "C"
 void x265_setup_primitives(x265_param *param, int cpuid)
@@ -89,11 +88,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
         if (primitives.sad[0])
             return;
         else
-            cpuid = 0;
-    }
-    if (cpuid == 0)
-    {
-        cpuid = x265::cpu_detect();
+            cpuid = x265::cpu_detect();
     }
     if (param->logLevel >= X265_LOG_INFO)
     {
@@ -125,9 +120,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
 
 #if ENABLE_ASSEMBLY
     Setup_Assembly_Primitives(primitives, cpuid);
-#endif
-
-#if !ENABLE_ASSEMBLY
+#else
     x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
 #endif
 }

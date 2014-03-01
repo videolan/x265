@@ -25,6 +25,7 @@
 #include "x265.h"
 #include "threading.h"
 #include "param.h"
+#include "cpu.h"
 
 #include <climits>
 #include <stdio.h>
@@ -363,16 +364,6 @@ static int x265_atobool(const char *str, bool& bError)
     return 0;
 }
 
-int x265_atoi(const char *str, bool& bError)
-{
-    char *end;
-    int v = strtol(str, &end, 0);
-
-    if (end == str || *end != '\0')
-        bError = true;
-    return v;
-}
-
 static double x265_atof(const char *str, bool& bError)
 {
     char *end;
@@ -672,6 +663,56 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 
 namespace x265 {
 // internal encoder functions
+
+int x265_atoi(const char *str, bool& bError)
+{
+    char *end;
+    int v = strtol(str, &end, 0);
+
+    if (end == str || *end != '\0')
+        bError = true;
+    return v;
+}
+
+/* cpu name can be:
+ *   auto || true - x265::cpu_detect()
+ *   false || no  - disabled
+ *   integer bitmap value
+ *   comma separated list of SIMD names, eg: SSE4.1,XOP */
+int parseCpuName(const char *value, bool& bError)
+{
+    if (!value)
+    {
+        bError = 1;
+        return 0;
+    }
+    int cpu;
+    if (isdigit(value[0]))
+       cpu = x265_atoi(value, bError);
+    else
+       cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
+
+    if (bError)
+    {
+        char *buf = strdup(value);
+        char *tok, *saveptr = NULL, *init;
+        bError = 0;
+        cpu = 0;
+        for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
+        {
+            int i;
+            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++);
+            cpu |= x265::cpu_names[i].flags;
+            if (!x265::cpu_names[i].flags)
+                bError = 1;
+        }
+        free(buf);
+        if ((cpu & X265_CPU_SSSE3) && !(cpu & X265_CPU_SSE2_IS_SLOW))
+            cpu |= X265_CPU_SSE2_IS_FAST;
+    }
+
+    return cpu;
+}
 
 static const int fixedRatios[][2] =
 {
