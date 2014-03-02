@@ -29,7 +29,7 @@
 
 using namespace x265;
 
-void CTURow::create(Encoder* top)
+bool CTURow::create(Encoder* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
@@ -51,11 +51,6 @@ void CTURow::create(Encoder* top)
         }
     }
 
-    m_search.init(top, &m_rdCost, &m_trQuant);
-    m_search.setRDSbacCoder(m_rdSbacCoders);
-    m_search.setEntropyCoder(&m_entropyCoder);
-    m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
-
     m_cuCoder.init(top);
     m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth);
     m_cuCoder.setRdCost(&m_rdCost);
@@ -64,6 +59,11 @@ void CTURow::create(Encoder* top)
     m_cuCoder.setPredSearch(&m_search);
     m_cuCoder.setTrQuant(&m_trQuant);
     m_cuCoder.setRdCost(&m_rdCost);
+
+    m_search.setRDSbacCoder(m_rdSbacCoders);
+    m_search.setEntropyCoder(&m_entropyCoder);
+    m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
+    return m_search.init(top, &m_rdCost, &m_trQuant);
 }
 
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)

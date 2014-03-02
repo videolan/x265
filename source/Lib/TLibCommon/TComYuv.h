@@ -108,7 +108,7 @@ public:
     //  Memory management
     // ------------------------------------------------------------------------------------------------------------------
 
-    void    create(uint32_t width, uint32_t height, int csp); ///< Create  YUV buffer
+    bool    create(uint32_t width, uint32_t height, int csp); ///< Create  YUV buffer
     void    destroy();                                        ///< Destroy YUV buffer
     void    clear();                                          ///< clear   YUV buffer
 

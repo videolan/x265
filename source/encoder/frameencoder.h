@@ -59,7 +59,7 @@ public:
 
     void setThreadPool(ThreadPool *p);
 
-    void init(Encoder *top, int numRows);
+    bool init(Encoder *top, int numRows);
 
     void destroy();
 

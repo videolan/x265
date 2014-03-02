@@ -62,15 +62,10 @@ TComYuv::TComYuv()
 TComYuv::~TComYuv()
 {}
 
-void TComYuv::create(uint32_t width, uint32_t height, int csp)
+bool TComYuv::create(uint32_t width, uint32_t height, int csp)
 {
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
-
-    // memory allocation (padded for SIMD reads)
-    m_bufY = X265_MALLOC(Pel, width * height);
-    m_bufU = X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift) + 8);
-    m_bufV = X265_MALLOC(Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift) + 8);
 
     // set width and height
     m_width   = width;
@@ -81,6 +76,15 @@ void TComYuv::create(uint32_t width, uint32_t height, int csp)
 
     m_csp = csp;
     m_part = partitionFromSizes(m_width, m_height);
+
+    // memory allocation (padded for SIMD reads)
+    CHECKED_MALLOC(m_bufY, pixel, width * height);
+    CHECKED_MALLOC(m_bufU, pixel, m_cwidth * m_cheight + 8);
+    CHECKED_MALLOC(m_bufV, pixel, m_cwidth * m_cheight + 8);
+    return true;
+
+fail:
+    return false;
 }
 
 void TComYuv::destroy()

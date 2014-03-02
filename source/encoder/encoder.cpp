@@ -182,7 +182,11 @@ void Encoder::init()
         int numRows = (param.sourceHeight + g_maxCUHeight - 1) / g_maxCUHeight;
         for (int i = 0; i < param.frameNumThreads; i++)
         {
-            m_frameEncoder[i].init(this, numRows);
+            if (!m_frameEncoder[i].init(this, numRows))
+            {
+                x265_log(&param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
+                m_aborted = true;
+            }
         }
     }
     m_lookahead->init();

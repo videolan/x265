@@ -136,7 +136,7 @@ public:
     TEncSearch();
     virtual ~TEncSearch();
 
-    void init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
+    bool init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
 
 protected:
 

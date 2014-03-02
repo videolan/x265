@@ -108,7 +108,7 @@ TEncSearch::~TEncSearch()
     m_tmpYuvPred.destroy();
 }
 
-void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
+bool TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
 {
     m_cfg     = cfg;
     m_trQuant = trQuant;
@@ -145,24 +145,26 @@ void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     }
 
     const uint32_t numPartitions = 1 << (g_maxCUDepth << 1);
-    m_qtTempTrIdx  = X265_MALLOC(uint8_t, numPartitions);
-    m_qtTempCbf[0] = X265_MALLOC(uint8_t, numPartitions);
-    m_qtTempCbf[1] = X265_MALLOC(uint8_t, numPartitions);
-    m_qtTempCbf[2] = X265_MALLOC(uint8_t, numPartitions);
-    m_qtTempTransformSkipFlag[0] = X265_MALLOC(uint8_t, numPartitions);
-    m_qtTempTransformSkipFlag[1] = X265_MALLOC(uint8_t, numPartitions);
-    m_qtTempTransformSkipFlag[2] = X265_MALLOC(uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempTrIdx, uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempCbf[0], uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempCbf[1], uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempCbf[2], uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempTransformSkipFlag[0], uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempTransformSkipFlag[1], uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempTransformSkipFlag[2], uint8_t, numPartitions);
 
-    m_sharedPredTransformSkip[0] = X265_MALLOC(pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    m_sharedPredTransformSkip[1] = X265_MALLOC(pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    m_sharedPredTransformSkip[2] = X265_MALLOC(pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    m_qtTempTUCoeffY  = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    m_qtTempTUCoeffCb = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    m_qtTempTUCoeffCr = X265_MALLOC(TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    CHECKED_MALLOC(m_sharedPredTransformSkip[0], pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    CHECKED_MALLOC(m_sharedPredTransformSkip[1], pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    CHECKED_MALLOC(m_sharedPredTransformSkip[2], pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    CHECKED_MALLOC(m_qtTempTUCoeffY, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    CHECKED_MALLOC(m_qtTempTUCoeffCb, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    CHECKED_MALLOC(m_qtTempTUCoeffCr, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
 
-    m_qtTempTransformSkipYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param.internalCsp);
+    return m_qtTempTransformSkipYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param.internalCsp) &&
+           m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param.internalCsp);
 
-    m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param.internalCsp);
+fail:
+    return false;
 }
 
 void TEncSearch::setQPLambda(int QP, double lambdaLuma, double lambdaChroma)
