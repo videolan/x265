@@ -32,6 +32,17 @@
 #include <string.h>
 #include <stdarg.h>
 
+#if _MSC_VER
+#pragma warning(disable: 4996) // POSIX functions are just fine, thanks
+#endif
+
+#if _WIN32
+#define STRTOK strtok_s
+#define strcasecmp _stricmp 
+#else
+#define STRTOK strtok_r
+#endif
+
 using namespace x265;
 
 extern "C"
@@ -723,7 +734,7 @@ int parseCpuName(const char *value, bool& bError)
         char *tok, *saveptr = NULL, *init;
         bError = 0;
         cpu = 0;
-        for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
+        for (init = buf; (tok = STRTOK(init, ",", &saveptr)); init = NULL)
         {
             int i;
             for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++);
