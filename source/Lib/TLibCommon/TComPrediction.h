@@ -44,7 +44,7 @@
 #include "TComPattern.h"
 #include "TComTrQuant.h"
 #include "TComWeightPrediction.h"
-#include "TShortYUV.h"
+#include "shortyuv.h"
 
 namespace x265 {
 // private namespace

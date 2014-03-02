@@ -23,7 +23,7 @@
 
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComYuv.h"
-#include "TShortYUV.h"
+#include "shortyuv.h"
 #include "primitives.h"
 #include "x265.h"
 

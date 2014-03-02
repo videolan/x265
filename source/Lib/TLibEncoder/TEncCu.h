@@ -49,7 +49,7 @@
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComDataCU.h"
-#include "TShortYUV.h"
+#include "shortyuv.h"
 
 #include "TEncEntropy.h"
 #include "TEncSearch.h"

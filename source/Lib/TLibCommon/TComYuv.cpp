@@ -38,8 +38,8 @@
 
 #include "CommonDef.h"
 #include "TComYuv.h"
-#include "TShortYUV.h"
 #include "TComPrediction.h"
+#include "shortyuv.h"
 #include "primitives.h"
 
 #include <cstdlib>
