@@ -52,19 +52,20 @@ bool CTURow::create(Encoder* top)
     }
 
     m_cuCoder.init(top);
-    m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth);
     m_cuCoder.setRdCost(&m_rdCost);
     m_cuCoder.setRDSbacCoder(m_rdSbacCoders);
     m_cuCoder.setEntropyCoder(&m_entropyCoder);
     m_cuCoder.setPredSearch(&m_search);
     m_cuCoder.setTrQuant(&m_trQuant);
     m_cuCoder.setRdCost(&m_rdCost);
-
     m_search.setRDSbacCoder(m_rdSbacCoders);
     m_search.setEntropyCoder(&m_entropyCoder);
     m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
-    return m_search.init(top, &m_rdCost, &m_trQuant);
+
+    return m_search.init(top, &m_rdCost, &m_trQuant) &&
+           m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth);
 }
+
 
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
 {

@@ -135,7 +135,7 @@ public:
     TEncCu();
 
     void init(Encoder* top);
-    void create(UChar totalDepth, uint32_t maxWidth);
+    bool create(UChar totalDepth, uint32_t maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);
     void encodeCU(TComDataCU* cu);
