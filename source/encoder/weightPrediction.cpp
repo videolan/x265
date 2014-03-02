@@ -385,7 +385,7 @@ void prepareRef(Cache& cache, TComSlice& slice, x265_param& param)
     Lowres& fenc = pic->m_lowres;
 
     cache.weightTemp = X265_MALLOC(pixel, picorig->getStride() * picorig->getHeight());
-    cache.lambda = x265_lambda2_non_I[slice.getSliceQp()];
+    cache.lambda = (int) x265_lambda2_non_I[slice.getSliceQp()];
     cache.intraCost = fenc.intraCost;
     cache.lowresWidthInCU = fenc.width >> 3;
     cache.lowresHeightInCU = fenc.lines >> 3;
