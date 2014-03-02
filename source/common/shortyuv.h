@@ -23,8 +23,8 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-#ifndef X265_TSHORTYUV_H
-#define X265_TSHORTYUV_H
+#ifndef X265_SHORTYUV_H
+#define X265_SHORTYUV_H
 
 #include "TLibCommon/TComRom.h"
 
@@ -33,7 +33,7 @@ namespace x265 {
 
 class TComYuv;
 
-class TShortYUV
+class ShortYuv
 {
 public:
 
@@ -50,8 +50,8 @@ public:
     int m_hChromaShift;
     int m_vChromaShift;
 
-    TShortYUV();
-    virtual ~TShortYUV();
+    ShortYuv();
+    virtual ~ShortYuv();
 
     static int getAddrOffset(uint32_t idx, uint32_t width)
     {
@@ -98,14 +98,14 @@ public:
     void subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
     void subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
 
-    void addClip(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void addClipLuma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void addClipChroma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void addClip(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void addClipLuma(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void addClipChroma(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
 
-    void copyPartToPartYuv(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
-    void copyPartToPartLuma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
-    void copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
-    void copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t iWidth, uint32_t iHeight, uint32_t chromaId);
+    void copyPartToPartYuv(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
+    void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t iWidth, uint32_t iHeight, uint32_t chromaId);
 
     void copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
     void copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
@@ -114,4 +114,4 @@ public:
 };
 }
 
-#endif // ifndef X265_TSHORTYUV_H
+#endif // ifndef X265_SHORTYUV_H

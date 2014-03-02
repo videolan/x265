@@ -135,7 +135,7 @@ bool TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempCoeffY  = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCb = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCr = new TCoeff*[numLayersToAllocate];
-    m_qtTempShortYuv = new TShortYUV[numLayersToAllocate];
+    m_qtTempShortYuv = new ShortYuv[numLayersToAllocate];
     for (uint32_t i = 0; i < numLayersToAllocate; ++i)
     {
         m_qtTempCoeffY[i]  = X265_MALLOC(TCoeff, g_maxCUWidth * g_maxCUHeight);
@@ -402,7 +402,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
                                      uint32_t    absPartIdx,
                                      TComYuv*    fencYuv,
                                      TComYuv*    predYuv,
-                                     TShortYUV*  resiYuv,
+                                     ShortYuv*  resiYuv,
                                      uint32_t&   outDist,
                                      int         default0Save1Load2)
 {
@@ -504,7 +504,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
                                        uint32_t    absPartIdx,
                                        TComYuv*    fencYuv,
                                        TComYuv*    predYuv,
-                                       TShortYUV*  resiYuv,
+                                       ShortYuv*  resiYuv,
                                        uint32_t&   outDist,
                                        uint32_t    chromaId,
                                        int         default0Save1Load2)
@@ -653,7 +653,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                                      bool        bLumaOnly,
                                      TComYuv*    fencYuv,
                                      TComYuv*    predYuv,
-                                     TShortYUV*  resiYuv,
+                                     ShortYuv*  resiYuv,
                                      uint32_t&   outDistY,
                                      uint32_t&   outDistC,
                                      bool        bCheckFirst,
@@ -977,7 +977,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
                                              bool        bLumaOnly,
                                              TComYuv*    fencYuv,
                                              TComYuv*    predYuv,
-                                             TShortYUV*  resiYuv,
+                                             ShortYuv*  resiYuv,
                                              TComYuv*    reconYuv)
 {
     uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
@@ -1381,7 +1381,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                                            uint32_t    absPartIdx,
                                            TComYuv*    fencYuv,
                                            TComYuv*    predYuv,
-                                           TShortYUV*  resiYuv,
+                                           ShortYuv*  resiYuv,
                                            uint32_t&   outDist)
 {
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
@@ -1586,7 +1586,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                                        uint32_t    absPartIdx,
                                        TComYuv*    fencYuv,
                                        TComYuv*    predYuv,
-                                       TShortYUV*  resiYuv,
+                                       ShortYuv*  resiYuv,
                                        TComYuv*    reconYuv)
 {
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
@@ -1761,7 +1761,7 @@ void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
     cu->setChromIntraDirSubParts(bestMode, 0, cu->getDepth(0));
 }
 
-void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, uint32_t& outDistC, bool bLumaOnly)
+void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t& outDistC, bool bLumaOnly)
 {
     uint32_t depth        = cu->getDepth(0);
     uint32_t numPU        = cu->getNumPartInter();
@@ -2180,7 +2180,7 @@ bool TEncSearch::isLastSection()
 void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
                                       TComYuv*    fencYuv,
                                       TComYuv*    predYuv,
-                                      TShortYUV*  resiYuv,
+                                      ShortYuv*  resiYuv,
                                       TComYuv*    reconYuv,
                                       uint32_t    preCalcDistC)
 {
@@ -2383,7 +2383,7 @@ void TEncSearch::xEncPCM(TComDataCU* cu, uint32_t absPartIdx, Pel* fenc, Pel* pc
  * \param rpcRecoYuv
  * \returns void
  */
-void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv)
+void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv)
 {
     uint32_t depth      = cu->getDepth(0);
     uint32_t width      = cu->getWidth(0);
@@ -3031,8 +3031,8 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
  * \param bSkipRes
  * \returns void
  */
-void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv,
-                                           TShortYUV* outBestResiYuv, TComYuv* outReconYuv, bool bSkipRes, bool curUseRDOQ)
+void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv,
+                                           ShortYuv* outBestResiYuv, TComYuv* outReconYuv, bool bSkipRes, bool curUseRDOQ)
 {
     if (cu->isIntra(0))
     {
@@ -3183,7 +3183,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     cu->setQPSubParts(qpBest, 0, cu->getDepth(0));
 }
 
-void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv, bool skipRes)
+void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, bool skipRes)
 {
     if (skipRes && cu->getPredictionMode(0) == MODE_INTER && cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
     {
@@ -3223,7 +3223,7 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
 #pragma warning(disable: 4701) // potentially uninitialized local variable
 #endif
 
-void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, const uint32_t depth, bool curuseRDOQ)
+void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, ShortYuv* resiYuv, const uint32_t depth, bool curuseRDOQ)
 {
     assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -3407,7 +3407,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                                      uint32_t       absPartIdx,
                                      uint32_t       absTUPartIdx,
-                                     TShortYUV*     resiYuv,
+                                     ShortYuv*     resiYuv,
                                      const uint32_t depth,
                                      uint64_t &     rdCost,
                                      uint32_t &     outBits,
@@ -4161,7 +4161,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     }
 }
 
-void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, TShortYUV* resiYuv, uint32_t depth, bool bSpatial)
+void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial)
 {
     assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
     int            chFmt     = cu->getChromaFormat();

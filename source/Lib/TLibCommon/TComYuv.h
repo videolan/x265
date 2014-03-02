@@ -46,7 +46,7 @@
 namespace x265 {
 // private namespace
 
-class TShortYUV;
+class ShortYuv;
 class TComPicYuv;
 
 //! \ingroup TLibCommon
@@ -132,17 +132,17 @@ public:
     //  Copy YUV partition buffer to other YUV partition buffer
     void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
-    void    copyPartToPartShort(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, bool bChroma, bool bChromaSame);
-    void    copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId);
+    void    copyPartToPartShort(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, bool bChroma, bool bChromaSame);
+    void    copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Clip(srcYuv0 + srcYuv1) -> m_apiBuf
-    void    addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void    addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
-    void    addClipChroma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
+    void    addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
+    void    addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
 
     //  srcYuv0 - srcYuv1 -> m_apiBuf
     void    subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
@@ -151,7 +151,7 @@ public:
 
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
     void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
-    void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
+    void    addAvg(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Access function for YUV buffer

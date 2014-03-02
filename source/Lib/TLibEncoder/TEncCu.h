@@ -101,11 +101,11 @@ private:
     TComDataCU** m_tempCU;      ///< Temporary CUs at each depth
 
     TComYuv**    m_bestPredYuv; ///< Best Prediction Yuv for each depth
-    TShortYUV**  m_bestResiYuv; ///< Best Residual Yuv for each depth
+    ShortYuv**  m_bestResiYuv; ///< Best Residual Yuv for each depth
     TComYuv**    m_bestRecoYuv; ///< Best Reconstruction Yuv for each depth
 
     TComYuv**    m_tmpPredYuv;  ///< Temporary Prediction Yuv for each depth
-    TShortYUV**  m_tmpResiYuv;  ///< Temporary Residual Yuv for each depth
+    ShortYuv**  m_tmpResiYuv;  ///< Temporary Residual Yuv for each depth
     TComYuv**    m_tmpRecoYuv;  ///< Temporary Reconstruction Yuv for each depth
     TComYuv**    m_modePredYuv[MAX_PRED_TYPES]; ///< Prediction buffers for inter, intra, rect(2) and merge
     TComYuv**    m_bestMergeRecoYuv;
@@ -170,7 +170,7 @@ protected:
     void xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, bool bUseMRG = false);
     void xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYUV, PartSize partSize, bool bUseMRG = false);
     void xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
-    void xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv, TComYuv* outReconYuv);
+    void xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv);
     void encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, UChar depth);
     void xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     void xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);

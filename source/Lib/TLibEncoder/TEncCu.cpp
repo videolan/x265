@@ -84,7 +84,7 @@ bool TEncCu::create(UChar totalDepth, uint32_t maxWidth)
     m_tempCU      = new TComDataCU*[m_totalDepth - 1];
 
     m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
-    m_bestResiYuv = new TShortYUV*[m_totalDepth - 1];
+    m_bestResiYuv = new ShortYuv*[m_totalDepth - 1];
     m_bestRecoYuv = new TComYuv*[m_totalDepth - 1];
 
     m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
@@ -96,7 +96,7 @@ bool TEncCu::create(UChar totalDepth, uint32_t maxWidth)
     m_modePredYuv[4] = new TComYuv*[m_totalDepth - 1];
     m_modePredYuv[5] = new TComYuv*[m_totalDepth - 1];
 
-    m_tmpResiYuv = new TShortYUV*[m_totalDepth - 1];
+    m_tmpResiYuv = new ShortYuv*[m_totalDepth - 1];
     m_tmpRecoYuv = new TComYuv*[m_totalDepth - 1];
 
     m_bestMergeRecoYuv = new TComYuv*[m_totalDepth - 1];
@@ -139,7 +139,7 @@ bool TEncCu::create(UChar totalDepth, uint32_t maxWidth)
         m_bestPredYuv[i] = new TComYuv;
         ok &= m_bestPredYuv[i]->create(width, height, csp);
 
-        m_bestResiYuv[i] = new TShortYUV;
+        m_bestResiYuv[i] = new ShortYuv;
         ok &= m_bestResiYuv[i]->create(width, height, csp);
 
         m_bestRecoYuv[i] = new TComYuv;
@@ -154,7 +154,7 @@ bool TEncCu::create(UChar totalDepth, uint32_t maxWidth)
             ok &= m_modePredYuv[j][i]->create(width, height, csp);
         }
 
-        m_tmpResiYuv[i] = new TShortYUV;
+        m_tmpResiYuv[i] = new ShortYuv;
         ok &= m_tmpResiYuv[i]->create(width, height, csp);
 
         m_tmpRecoYuv[i] = new TComYuv;
