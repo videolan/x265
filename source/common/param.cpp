@@ -34,6 +34,7 @@
 
 #if _MSC_VER
 #pragma warning(disable: 4996) // POSIX functions are just fine, thanks
+#pragma warning(disable: 4706) // assignment within conditional
 #endif
 
 #if _WIN32
