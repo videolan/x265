@@ -40,35 +40,26 @@ using namespace x265;
 
 IPFilterHarness::IPFilterHarness()
 {
+    // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
     ipf_t_size = 200 * 200;
-    pixel_buff = X265_MALLOC(pixel, ipf_t_size);           // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    short_buff = X265_MALLOC(int16_t, ipf_t_size);
-    IPF_vec_output_s = X265_MALLOC(int16_t, ipf_t_size);   // Output Buffer1
-    IPF_C_output_s   = X265_MALLOC(int16_t, ipf_t_size);   // Output Buffer2
-    IPF_vec_output_p = X265_MALLOC(pixel, ipf_t_size);     // Output Buffer1
-    IPF_C_output_p   = X265_MALLOC(pixel, ipf_t_size);     // Output Buffer2
+
+    CHECKED_MALLOC(pixel_buff, pixel, ipf_t_size);
+    CHECKED_MALLOC(short_buff, int16_t, ipf_t_size);
+    CHECKED_MALLOC(IPF_vec_output_s, int16_t, ipf_t_size);
+    CHECKED_MALLOC(IPF_C_output_s, int16_t, ipf_t_size);
+    CHECKED_MALLOC(IPF_vec_output_p, pixel, ipf_t_size);
+    CHECKED_MALLOC(IPF_C_output_p, pixel, ipf_t_size);
 
     /* Array of pixel buffers */
-    pixel_test_buff = X265_MALLOC(pixel*, TEST_CASES);
+    CHECKED_MALLOC(pixel_test_buff, pixel*, TEST_CASES);
 
     /* Array of short buffers */
-    short_test_buff = X265_MALLOC(int16_t*, TEST_CASES);
-
-    if (!pixel_buff || !short_buff || !IPF_vec_output_s || !IPF_vec_output_p || !IPF_C_output_s || !IPF_C_output_p || !pixel_test_buff || !short_test_buff)
-    {
-        fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
-        exit(-1);
-    }
+    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
 
     for (int i = 0; i < TEST_CASES; i++)
     {
-        pixel_test_buff[i] = X265_MALLOC(pixel, ipf_t_size);
-        short_test_buff[i] = X265_MALLOC(int16_t, ipf_t_size);
-        if (!pixel_test_buff[i] || !short_test_buff[i])
-        {
-            fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
-            exit(-1);
-        }
+        CHECKED_MALLOC(pixel_test_buff[i], pixel, ipf_t_size);
+        CHECKED_MALLOC(short_test_buff[i], int16_t, ipf_t_size);
     }
 
     /* [0] --- Random values
@@ -98,6 +89,10 @@ IPFilterHarness::IPFilterHarness()
         pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
         short_buff[i] = (int16_t)(isPositive) * (rand() &  SHRT_MAX);
     }
+    return;
+
+fail:
+    exit(1);
 }
 
 IPFilterHarness::~IPFilterHarness()

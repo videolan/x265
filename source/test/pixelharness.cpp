@@ -45,44 +45,32 @@ PixelHarness::PixelHarness()
     int bufsize = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS;
 
     /* 64 pixels wide, 2k deep */
-    pbuf1 = X265_MALLOC(pixel, bufsize);
-    pbuf2 = X265_MALLOC(pixel, bufsize);
-    pbuf3 = X265_MALLOC(pixel, bufsize);
-    pbuf4 = X265_MALLOC(pixel, bufsize);
+    CHECKED_MALLOC(pbuf1, pixel, bufsize);
+    CHECKED_MALLOC(pbuf2, pixel, bufsize);
+    CHECKED_MALLOC(pbuf3, pixel, bufsize);
+    CHECKED_MALLOC(pbuf4, pixel, bufsize);
 
-    ibuf1 = X265_MALLOC(int, bufsize);
-    psbuf1 = X265_MALLOC(int8_t, bufsize);
+    CHECKED_MALLOC(ibuf1, int, bufsize);
+    CHECKED_MALLOC(psbuf1, int8_t, bufsize);
 
-    sbuf1 = X265_MALLOC(int16_t, bufsize);
-    sbuf2 = X265_MALLOC(int16_t, bufsize);
-    sbuf3 = X265_MALLOC(int16_t, bufsize);
+    CHECKED_MALLOC(sbuf1, int16_t, bufsize);
+    CHECKED_MALLOC(sbuf2, int16_t, bufsize);
+    CHECKED_MALLOC(sbuf3, int16_t, bufsize);
 
-    /*Test Case buffer array */
-    pixel_test_buff  = X265_MALLOC(pixel*, TEST_CASES);
-    short_test_buff  = X265_MALLOC(int16_t*, TEST_CASES);
-    short_test_buff1 = X265_MALLOC(int16_t*, TEST_CASES);
-    short_test_buff2 = X265_MALLOC(int16_t*, TEST_CASES);
-    int_test_buff    = X265_MALLOC(int*, TEST_CASES);
-    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !sbuf3 || !ibuf1 ||
-        !pixel_test_buff || !short_test_buff || !int_test_buff || !short_test_buff1 ||
-        !short_test_buff2 || !psbuf1)
-    {
-        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
-        exit(1);
-    }
+    /* Test Case buffer array */
+    CHECKED_MALLOC(pixel_test_buff, pixel*, TEST_CASES);
+    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
+    CHECKED_MALLOC(short_test_buff1, int16_t*, TEST_CASES);
+    CHECKED_MALLOC(short_test_buff2, int16_t*, TEST_CASES);
+    CHECKED_MALLOC(int_test_buff, int*, TEST_CASES);
 
     for (int i = 0; i < TEST_CASES; i++)
     {
-        pixel_test_buff[i]  = X265_MALLOC(pixel, BUFFSIZE);
-        short_test_buff[i]  = X265_MALLOC(int16_t, BUFFSIZE);
-        short_test_buff1[i] = X265_MALLOC(int16_t, BUFFSIZE);
-        short_test_buff2[i] = X265_MALLOC(int16_t, BUFFSIZE);
-        int_test_buff[i]    = X265_MALLOC(int, BUFFSIZE);
-        if (!pixel_test_buff[i] || !short_test_buff[i] || !int_test_buff[i] || !short_test_buff1[i])
-        {
-            fprintf(stderr, "Init_Test_Case_buffers: malloc failed, unable to initiate tests!\n");
-            exit(-1);
-        }
+        CHECKED_MALLOC(pixel_test_buff[i], pixel, BUFFSIZE);
+        CHECKED_MALLOC(short_test_buff[i], int16_t, BUFFSIZE);
+        CHECKED_MALLOC(short_test_buff1[i], int16_t, BUFFSIZE);
+        CHECKED_MALLOC(short_test_buff2[i], int16_t, BUFFSIZE);
+        CHECKED_MALLOC(int_test_buff[i], int, BUFFSIZE);
     }
 
     /* [0] --- Random values
@@ -118,6 +106,10 @@ PixelHarness::PixelHarness()
         psbuf1[i] = (rand() %65) - 32;                   // range is between -32 to 32
         sbuf3[i] = rand() % PIXEL_MAX; // for blockcopy only
     }
+    return;
+
+fail:
+    exit(1);
 }
 
 PixelHarness::~PixelHarness()

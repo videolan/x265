@@ -59,41 +59,34 @@ const DctConf_t IDctConf_infos[] =
 
 MBDstHarness::MBDstHarness()
 {
-    mbuf1 = X265_MALLOC(int16_t, mb_t_size);
-    mbufdct = X265_MALLOC(int16_t, mb_t_size);
-    mbufidct = X265_MALLOC(int, mb_t_size);
+    const int idct_max = (1 << (BIT_DEPTH + 4)) - 1;
+    CHECKED_MALLOC(mbuf1, int16_t, mb_t_size);
+    CHECKED_MALLOC(mbufdct, int16_t, mb_t_size);
+    CHECKED_MALLOC(mbufidct, int, mb_t_size);
 
-    mbuf2 = X265_MALLOC(int16_t, mem_cmp_size);
-    mbuf3 = X265_MALLOC(int16_t, mem_cmp_size);
-    mbuf4 = X265_MALLOC(int16_t, mem_cmp_size);
+    CHECKED_MALLOC(mbuf1, int16_t, mem_cmp_size);
+    CHECKED_MALLOC(mbuf2, int16_t, mem_cmp_size);
+    CHECKED_MALLOC(mbuf3, int16_t, mem_cmp_size);
+    CHECKED_MALLOC(mbuf4, int16_t, mem_cmp_size);
 
-    mintbuf1 = X265_MALLOC(int, mb_t_size);
-    mintbuf2 = X265_MALLOC(int, mb_t_size);
-    mintbuf3 = X265_MALLOC(int, mem_cmp_size);
-    mintbuf4 = X265_MALLOC(int, mem_cmp_size);
-    mintbuf5 = X265_MALLOC(int, mem_cmp_size);
-    mintbuf6 = X265_MALLOC(int, mem_cmp_size);
-    mintbuf7 = X265_MALLOC(int, mem_cmp_size);
-    mintbuf8 = X265_MALLOC(int, mem_cmp_size);
-    short_test_buff    = X265_MALLOC(int16_t*, TEST_CASES);
-    int_test_buff      = X265_MALLOC(int*, TEST_CASES);
-    int_idct_test_buff = X265_MALLOC(int*, TEST_CASES);
-    if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct || !mintbuf1 || !mintbuf2 || !mintbuf3 || !mintbuf4 || !mintbuf5 || !mintbuf6 || !mintbuf7 || !mintbuf8 || !short_test_buff || !int_test_buff || !int_idct_test_buff)
-    {
-        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
-        exit(1);
-    }
+    CHECKED_MALLOC(mintbuf1, int, mb_t_size);
+    CHECKED_MALLOC(mintbuf2, int, mb_t_size);
+    CHECKED_MALLOC(mintbuf3, int, mem_cmp_size);
+    CHECKED_MALLOC(mintbuf4, int, mem_cmp_size);
+    CHECKED_MALLOC(mintbuf5, int, mem_cmp_size);
+    CHECKED_MALLOC(mintbuf6, int, mem_cmp_size);
+    CHECKED_MALLOC(mintbuf7, int, mem_cmp_size);
+    CHECKED_MALLOC(mintbuf8, int, mem_cmp_size);
+
+    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
+    CHECKED_MALLOC(int_test_buff, int*, TEST_CASES);
+    CHECKED_MALLOC(int_idct_test_buff, int*, TEST_CASES);
 
     for (int i = 0; i < TEST_CASES; i++)
     {
-        short_test_buff[i]    = X265_MALLOC(int16_t, mb_t_size);
-        int_test_buff[i]      = X265_MALLOC(int, mb_t_size);
-        int_idct_test_buff[i] = X265_MALLOC(int, mb_t_size);
-        if (!short_test_buff[i] || !int_test_buff[i] || !int_idct_test_buff[i])
-        {
-            fprintf(stderr, "Init_Test_Case_buffers: malloc failed, unable to initiate tests!\n");
-            exit(-1);
-        }
+        CHECKED_MALLOC(short_test_buff[i], int16_t, mb_t_size);
+        CHECKED_MALLOC(int_test_buff[i], int, mb_t_size);
+        CHECKED_MALLOC(int_idct_test_buff[i], int, mb_t_size);
     }
 
     /* [0] --- Random values
@@ -112,7 +105,6 @@ MBDstHarness::MBDstHarness()
         int_idct_test_buff[2][i] = IDCTMAX;
     }
 
-    const int idct_max = (1 << (BIT_DEPTH + 4)) - 1;
     for (int i = 0; i < mb_t_size; i++)
     {
         mbuf1[i] = rand() & PIXEL_MAX;
@@ -139,6 +131,10 @@ MBDstHarness::MBDstHarness()
     memset(mintbuf7, 0, mem_cmp_size);
     memset(mintbuf8, 0, mem_cmp_size);
 #endif // if _DEBUG
+    return;
+
+fail:
+    exit(1);
 }
 
 MBDstHarness::~MBDstHarness()

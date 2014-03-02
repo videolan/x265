@@ -32,38 +32,30 @@ using namespace x265;
 
 IntraPredHarness::IntraPredHarness()
 {
-    pixel_buff = (pixel*)malloc(ip_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    CHECKED_MALLOC(pixel_buff, pixel, ip_t_size);
+    CHECKED_MALLOC(pixel_out_c, pixel, out_size);
+    CHECKED_MALLOC(pixel_out_vec, pixel, out_size);
+    CHECKED_MALLOC(pixel_out_33_c, pixel, out_size_33);
+    CHECKED_MALLOC(pixel_out_33_vec, pixel, out_size_33);
 
-    if (!pixel_buff)
-    {
-        fprintf(stderr, "init_IntraPred_buffers: malloc failed, unable to initiate tests!\n");
-        exit(-1);
-    }
-
-    for (int i = 0; i < ip_t_size; i++)                         // Initialize input buffer
+    // Initialize input buffer
+    for (int i = 0; i < ip_t_size; i++)
     {
         pixel_buff[i] = rand() % PIXEL_MAX;
     }
 
-    pixel_out_c   = (pixel*)malloc(out_size * sizeof(pixel));
-    pixel_out_vec = (pixel*)malloc(out_size * sizeof(pixel));
-    pixel_out_33_c   = X265_MALLOC(pixel, out_size_33);
-    pixel_out_33_vec = X265_MALLOC(pixel, out_size_33);
-
-    if (!pixel_out_c || !pixel_out_vec)
-    {
-        fprintf(stderr, "init_IntraPred_buffers: malloc failed, unable to initiate tests!\n");
-        exit(-1);
-    }
-
     initROM();
+    return;
+
+fail:
+    exit(1);
 }
 
 IntraPredHarness::~IntraPredHarness()
 {
-    free(pixel_buff);
-    free(pixel_out_c);
-    free(pixel_out_vec);
+    X265_FREE(pixel_buff);
+    X265_FREE(pixel_out_c);
+    X265_FREE(pixel_out_vec);
     X265_FREE(pixel_out_33_c);
     X265_FREE(pixel_out_33_vec);
 }
