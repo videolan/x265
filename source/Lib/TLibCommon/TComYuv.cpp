@@ -100,65 +100,65 @@ void TComYuv::destroy()
 
 void TComYuv::clear()
 {
-    ::memset(m_bufY, 0, (m_width  * m_height) * sizeof(Pel));
-    ::memset(m_bufU, 0, (m_cwidth * m_cheight) * sizeof(Pel));
-    ::memset(m_bufV, 0, (m_cwidth * m_cheight) * sizeof(Pel));
+    ::memset(m_bufY, 0, (m_width  * m_height) * sizeof(pixel));
+    ::memset(m_bufU, 0, (m_cwidth * m_cheight) * sizeof(pixel));
+    ::memset(m_bufV, 0, (m_cwidth * m_cheight) * sizeof(pixel));
 }
 
 void TComYuv::copyToPicYuv(TComPicYuv* destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx, uint32_t depth, uint32_t partIdx)
 {
     int width = m_width >> depth;
     int part = partitionFromSizes(width, m_height >> depth);
-    Pel* srcY = getLumaAddr(partIdx, width);
-    Pel* dstY = destPicYuv->getLumaAddr(cuAddr, absZOrderIdx);
+    pixel* srcY = getLumaAddr(partIdx, width);
+    pixel* dstY = destPicYuv->getLumaAddr(cuAddr, absZOrderIdx);
 
     primitives.luma_copy_pp[part](dstY, destPicYuv->getStride(), srcY, getStride());
 
     width = m_cwidth >> depth;
-    Pel* srcU = getCbAddr(partIdx, width);
-    Pel* srcV = getCrAddr(partIdx, width);
-    Pel* dstU = destPicYuv->getCbAddr(cuAddr, absZOrderIdx);
-    Pel* dstV = destPicYuv->getCrAddr(cuAddr, absZOrderIdx);
+    pixel* srcU = getCbAddr(partIdx, width);
+    pixel* srcV = getCrAddr(partIdx, width);
+    pixel* dstU = destPicYuv->getCbAddr(cuAddr, absZOrderIdx);
+    pixel* dstV = destPicYuv->getCrAddr(cuAddr, absZOrderIdx);
     primitives.chroma[m_csp].copy_pp[part](dstU, destPicYuv->getCStride(), srcU, getCStride());
     primitives.chroma[m_csp].copy_pp[part](dstV, destPicYuv->getCStride(), srcV, getCStride());
 }
 
 void TComYuv::copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx)
 {
-    Pel* srcY = srcPicYuv->getLumaAddr(cuAddr, absZOrderIdx);
+    pixel* srcY = srcPicYuv->getLumaAddr(cuAddr, absZOrderIdx);
 
     primitives.luma_copy_pp[m_part](m_bufY, getStride(), srcY, srcPicYuv->getStride());
 
-    Pel* srcU = srcPicYuv->getCbAddr(cuAddr, absZOrderIdx);
-    Pel* srcV = srcPicYuv->getCrAddr(cuAddr, absZOrderIdx);
+    pixel* srcU = srcPicYuv->getCbAddr(cuAddr, absZOrderIdx);
+    pixel* srcV = srcPicYuv->getCrAddr(cuAddr, absZOrderIdx);
     primitives.chroma[m_csp].copy_pp[m_part](m_bufU, getCStride(), srcU, srcPicYuv->getCStride());
     primitives.chroma[m_csp].copy_pp[m_part](m_bufV, getCStride(), srcV, srcPicYuv->getCStride());
 }
 
 void TComYuv::copyToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 {
-    Pel* dstY = dstPicYuv->getLumaAddr(partIdx);
+    pixel* dstY = dstPicYuv->getLumaAddr(partIdx);
 
     primitives.luma_copy_pp[m_part](dstY, dstPicYuv->getStride(), m_bufY, getStride());
 
-    Pel* dstU = dstPicYuv->getCbAddr(partIdx);
-    Pel* dstV = dstPicYuv->getCrAddr(partIdx);
+    pixel* dstU = dstPicYuv->getCbAddr(partIdx);
+    pixel* dstV = dstPicYuv->getCrAddr(partIdx);
     primitives.chroma[m_csp].copy_pp[m_part](dstU, dstPicYuv->getCStride(), m_bufU, getCStride());
     primitives.chroma[m_csp].copy_pp[m_part](dstV, dstPicYuv->getCStride(), m_bufV, getCStride());
 }
 
 void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 {
-    Pel* srcY = getLumaAddr(partIdx);
-    Pel* dstY = dstPicYuv->getLumaAddr(0);
+    pixel* srcY = getLumaAddr(partIdx);
+    pixel* dstY = dstPicYuv->getLumaAddr(0);
 
     int part = dstPicYuv->m_part;
     primitives.luma_copy_pp[part](dstY, dstPicYuv->getStride(), srcY, getStride());
 
-    Pel* srcU = getCbAddr(partIdx);
-    Pel* srcV = getCrAddr(partIdx);
-    Pel* dstU = dstPicYuv->getCbAddr(0);
-    Pel* dstV = dstPicYuv->getCrAddr(0);
+    pixel* srcU = getCbAddr(partIdx);
+    pixel* srcV = getCrAddr(partIdx);
+    pixel* dstU = dstPicYuv->getCbAddr(0);
+    pixel* dstV = dstPicYuv->getCrAddr(0);
     primitives.chroma[m_csp].copy_pp[part](dstU, dstPicYuv->getCStride(), srcU, getCStride());
     primitives.chroma[m_csp].copy_pp[part](dstV, dstPicYuv->getCStride(), srcV, getCStride());
 }
@@ -171,8 +171,8 @@ void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t w
 
     if (bLuma)
     {
-        Pel* src = getLumaAddr(partIdx);
-        Pel* dst = dstPicYuv->getLumaAddr(partIdx);
+        pixel* src = getLumaAddr(partIdx);
+        pixel* dst = dstPicYuv->getLumaAddr(partIdx);
 
         uint32_t srcstride = getStride();
         uint32_t dststride = dstPicYuv->getStride();
@@ -181,10 +181,10 @@ void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t w
     }
     if (bChroma)
     {
-        Pel* srcU = getCbAddr(partIdx);
-        Pel* srcV = getCrAddr(partIdx);
-        Pel* dstU = dstPicYuv->getCbAddr(partIdx);
-        Pel* dstV = dstPicYuv->getCrAddr(partIdx);
+        pixel* srcU = getCbAddr(partIdx);
+        pixel* srcV = getCrAddr(partIdx);
+        pixel* dstU = dstPicYuv->getCbAddr(partIdx);
+        pixel* dstV = dstPicYuv->getCrAddr(partIdx);
 
         uint32_t srcstride = getCStride();
         uint32_t dststride = dstPicYuv->getCStride();
@@ -230,7 +230,7 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
 
     if (chromaId == 0)
     {
-        Pel*   srcU = getCbAddr(partIdx);
+        pixel*   srcU = getCbAddr(partIdx);
         int16_t* dstU = dstPicYuv->getCbAddr(partIdx);
 
         uint32_t srcstride = getCStride();
@@ -240,7 +240,7 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
     }
     else if (chromaId == 1)
     {
-        Pel*  srcV = getCrAddr(partIdx);
+        pixel*   srcV = getCrAddr(partIdx);
         int16_t* dstV = dstPicYuv->getCrAddr(partIdx);
 
         uint32_t srcstride = getCStride();
@@ -250,8 +250,8 @@ void TComYuv::copyPartToPartChroma(TShortYUV* dstPicYuv, uint32_t partIdx, uint3
     }
     else
     {
-        Pel*   srcU = getCbAddr(partIdx);
-        Pel*   srcV = getCrAddr(partIdx);
+        pixel*   srcU = getCbAddr(partIdx);
+        pixel*   srcV = getCrAddr(partIdx);
         int16_t* dstU = dstPicYuv->getCbAddr(partIdx);
         int16_t* dstV = dstPicYuv->getCrAddr(partIdx);
 
@@ -273,9 +273,9 @@ void TComYuv::addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, 
 
 void TComYuv::addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part)
 {
-    Pel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
+    pixel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
     int16_t* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    Pel* dst = getLumaAddr(trUnitIdx, partSize);
+    pixel* dst = getLumaAddr(trUnitIdx, partSize);
 
     uint32_t src0Stride = srcYuv0->getStride();
     uint32_t src1Stride = srcYuv1->m_width;
@@ -286,12 +286,12 @@ void TComYuv::addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitI
 
 void TComYuv::addClipChroma(TComYuv* srcYuv0, TShortYUV* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part)
 {
-    Pel* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
+    pixel* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
     int16_t* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
-    Pel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
+    pixel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
     int16_t* srcV1 = srcYuv1->getCrAddr(trUnitIdx, partSize);
-    Pel* dstU = getCbAddr(trUnitIdx, partSize);
-    Pel* dstV = getCrAddr(trUnitIdx, partSize);
+    pixel* dstU = getCbAddr(trUnitIdx, partSize);
+    pixel* dstV = getCrAddr(trUnitIdx, partSize);
 
     uint32_t src0Stride = srcYuv0->getCStride();
     uint32_t src1Stride = srcYuv1->m_cwidth;
@@ -311,9 +311,9 @@ void TComYuv::subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitId
 {
     int x, y;
 
-    Pel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
-    Pel* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    Pel* dst  = getLumaAddr(trUnitIdx, partSize);
+    pixel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
+    pixel* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
+    pixel* dst  = getLumaAddr(trUnitIdx, partSize);
 
     int src0Stride = srcYuv0->getStride();
     int src1Stride = srcYuv1->getStride();
@@ -336,12 +336,12 @@ void TComYuv::subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnit
 {
     int x, y;
 
-    Pel* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
-    Pel* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
-    Pel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
-    Pel* srcV1 = srcYuv1->getCrAddr(trUnitIdx, partSize);
-    Pel* dstU  = getCbAddr(trUnitIdx, partSize);
-    Pel* dstV  = getCrAddr(trUnitIdx, partSize);
+    pixel* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
+    pixel* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
+    pixel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
+    pixel* srcV1 = srcYuv1->getCrAddr(trUnitIdx, partSize);
+    pixel* dstU  = getCbAddr(trUnitIdx, partSize);
+    pixel* dstV  = getCrAddr(trUnitIdx, partSize);
 
     int src0Stride = srcYuv0->getCStride();
     int src1Stride = srcYuv1->getCStride();
@@ -370,17 +370,17 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, u
     uint32_t src0Stride, src1Stride, dststride;
     int shiftNum, offset;
 
-    Pel* srcY0 = srcYuv0->getLumaAddr(partUnitIdx);
-    Pel* srcU0 = srcYuv0->getCbAddr(partUnitIdx);
-    Pel* srcV0 = srcYuv0->getCrAddr(partUnitIdx);
+    pixel* srcY0 = srcYuv0->getLumaAddr(partUnitIdx);
+    pixel* srcU0 = srcYuv0->getCbAddr(partUnitIdx);
+    pixel* srcV0 = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* srcY1 = srcYuv1->getLumaAddr(partUnitIdx);
-    Pel* srcU1 = srcYuv1->getCbAddr(partUnitIdx);
-    Pel* srcV1 = srcYuv1->getCrAddr(partUnitIdx);
+    pixel* srcY1 = srcYuv1->getLumaAddr(partUnitIdx);
+    pixel* srcU1 = srcYuv1->getCbAddr(partUnitIdx);
+    pixel* srcV1 = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* dstY  = getLumaAddr(partUnitIdx);
-    Pel* dstU  = getCbAddr(partUnitIdx);
-    Pel* dstV  = getCrAddr(partUnitIdx);
+    pixel* dstY  = getLumaAddr(partUnitIdx);
+    pixel* dstU  = getCbAddr(partUnitIdx);
+    pixel* dstV  = getCrAddr(partUnitIdx);
 
     if (bLuma)
     {
@@ -452,9 +452,9 @@ void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitId
     int16_t* srcU1 = srcYuv1->getCbAddr(partUnitIdx);
     int16_t* srcV1 = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* dstY = getLumaAddr(partUnitIdx);
-    Pel* dstU = getCbAddr(partUnitIdx);
-    Pel* dstV = getCrAddr(partUnitIdx);
+    pixel* dstY = getLumaAddr(partUnitIdx);
+    pixel* dstU = getCbAddr(partUnitIdx);
+    pixel* dstV = getCrAddr(partUnitIdx);
 
     int part = partitionFromSizes(width, height);
 

@@ -41,6 +41,7 @@
 
 #include "CommonDef.h"
 #include "TComRom.h"
+#include "primitives.h"
 
 namespace x265 {
 // private namespace
@@ -64,9 +65,9 @@ private:
     //  YUV buffer
     // ------------------------------------------------------------------------------------------------------------------
 
-    Pel* m_bufY;
-    Pel* m_bufU;
-    Pel* m_bufV;
+    pixel* m_bufY;
+    pixel* m_bufU;
+    pixel* m_bufV;
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
@@ -157,25 +158,25 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Access starting position of YUV buffer
-    Pel* getLumaAddr()  { return m_bufY; }
+    pixel* getLumaAddr()  { return m_bufY; }
 
-    Pel* getCbAddr()    { return m_bufU; }
+    pixel* getCbAddr()    { return m_bufU; }
 
-    Pel* getCrAddr()    { return m_bufV; }
+    pixel* getCrAddr()    { return m_bufV; }
 
     //  Access starting position of YUV partition unit buffer
-    Pel* getLumaAddr(uint32_t partUnitIdx) { return m_bufY + getAddrOffset(partUnitIdx, m_width); }
+    pixel* getLumaAddr(uint32_t partUnitIdx) { return m_bufY + getAddrOffset(partUnitIdx, m_width); }
 
-    Pel* getCbAddr(uint32_t partUnitIdx) { return m_bufU + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
+    pixel* getCbAddr(uint32_t partUnitIdx) { return m_bufU + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
 
-    Pel* getCrAddr(uint32_t partUnitIdx) { return m_bufV + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
+    pixel* getCrAddr(uint32_t partUnitIdx) { return m_bufV + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
 
     //  Access starting position of YUV transform unit buffer
-    Pel* getLumaAddr(uint32_t iTransUnitIdx, uint32_t iBlkSize) { return m_bufY + getAddrOffset(iTransUnitIdx, iBlkSize, m_width); }
+    pixel* getLumaAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufY + getAddrOffset(transUnitIdx, blkSize, m_width); }
 
-    Pel* getCbAddr(uint32_t iTransUnitIdx, uint32_t iBlkSize) { return m_bufU + getAddrOffset(iTransUnitIdx, iBlkSize, m_cwidth); }
+    pixel* getCbAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufU + getAddrOffset(transUnitIdx, blkSize, m_cwidth); }
 
-    Pel* getCrAddr(uint32_t iTransUnitIdx, uint32_t iBlkSize) { return m_bufV + getAddrOffset(iTransUnitIdx, iBlkSize, m_cwidth); }
+    pixel* getCrAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufV + getAddrOffset(transUnitIdx, blkSize, m_cwidth); }
 
     //  Get stride value of YUV buffer
     uint32_t getStride()    { return m_width;   }
