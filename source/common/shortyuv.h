@@ -80,32 +80,27 @@ public:
 
     int16_t* getCrAddr()    { return m_bufCr; }
 
-    //  Access starting position of YUV partition unit buffer
+    // Access starting position of YUV partition unit buffer
     int16_t* getLumaAddr(uint32_t partUnitIdx) { return m_bufY + getAddrOffset(partUnitIdx, m_width); }
 
     int16_t* getCbAddr(uint32_t partUnitIdx) { return m_bufCb + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
 
     int16_t* getCrAddr(uint32_t partUnitIdx) { return m_bufCr + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
 
-    //  Access starting position of YUV transform unit buffer
+    // Access starting position of YUV transform unit buffer
     int16_t* getLumaAddr(uint32_t partIdx, uint32_t size) { return m_bufY + getAddrOffset(partIdx, size, m_width); }
 
     int16_t* getCbAddr(uint32_t partIdx, uint32_t size) { return m_bufCb + getAddrOffset(partIdx, size, m_cwidth); }
 
     int16_t* getCrAddr(uint32_t partIdx, uint32_t size) { return m_bufCr + getAddrOffset(partIdx, size, m_cwidth); }
 
-    void subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
-    void subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
     void subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-
     void addClip(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void addClipLuma(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void addClipChroma(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
 
     void copyPartToPartYuv(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
     void copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
     void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
-    void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t iWidth, uint32_t iHeight, uint32_t chromaId);
+    void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, uint32_t chromaId);
 
     void copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
     void copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
