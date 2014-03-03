@@ -64,7 +64,6 @@ MBDstHarness::MBDstHarness()
     CHECKED_MALLOC(mbufdct, int16_t, mb_t_size);
     CHECKED_MALLOC(mbufidct, int, mb_t_size);
 
-    CHECKED_MALLOC(mbuf1, int16_t, mem_cmp_size);
     CHECKED_MALLOC(mbuf2, int16_t, mem_cmp_size);
     CHECKED_MALLOC(mbuf3, int16_t, mem_cmp_size);
     CHECKED_MALLOC(mbuf4, int16_t, mem_cmp_size);
