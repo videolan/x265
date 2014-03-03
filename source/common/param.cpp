@@ -38,10 +38,45 @@
 #endif
 
 #if _WIN32
-#define STRTOK strtok_s
 #define strcasecmp _stricmp 
-#else
-#define STRTOK strtok_r
+#endif
+
+#if !HAVE_STROTOK_R
+/* 
+ * adapted from public domain strtok_r() by Charlie Gordon
+ *
+ *   from comp.lang.c  9/14/2007
+ *
+ *      http://groups.google.com/group/comp.lang.c/msg/2ab1ecbb86646684
+ *
+ *     (Declaration that it's public domain):
+ *      http://groups.google.com/group/comp.lang.c/msg/7c7b39328fefab9c
+ */
+
+char* strtok_r(
+    char *str, 
+    const char *delim, 
+    char **nextp)
+{
+    if (!str)
+        str = *nextp;
+
+    str += strspn(str, delim);
+
+    if (!*str)
+        return NULL;
+
+    char *ret = str;
+
+    str += strcspn(str, delim);
+
+    if (*str)
+        *str++ = '\0';
+
+    *nextp = str;
+
+    return ret;
+}
 #endif
 
 using namespace x265;
@@ -735,7 +770,7 @@ int parseCpuName(const char *value, bool& bError)
         char *tok, *saveptr = NULL, *init;
         bError = 0;
         cpu = 0;
-        for (init = buf; (tok = STRTOK(init, ",", &saveptr)); init = NULL)
+        for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
         {
             int i;
             for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++);
