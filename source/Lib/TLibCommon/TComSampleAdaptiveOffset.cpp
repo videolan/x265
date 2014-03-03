@@ -179,7 +179,7 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
     uint32_t pixelRangeY = 1 << X265_DEPTH;
     uint32_t boRangeShiftY = X265_DEPTH - SAO_BO_BITS;
 
-    m_lumaTableBo = new Pel[pixelRangeY];
+    m_lumaTableBo = X265_MALLOC(pixel, pixelRangeY);
     for (int k2 = 0; k2 < pixelRangeY; k2++)
     {
         m_lumaTableBo[k2] = 1 + (k2 >> boRangeShiftY);
@@ -188,15 +188,15 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
     uint32_t pixelRangeC = 1 << X265_DEPTH;
     uint32_t boRangeShiftC = X265_DEPTH - SAO_BO_BITS;
 
-    m_chromaTableBo = new Pel[pixelRangeC];
+    m_chromaTableBo = X265_MALLOC(pixel, pixelRangeC);
     for (int k2 = 0; k2 < pixelRangeC; k2++)
     {
         m_chromaTableBo[k2] = 1 + (k2 >> boRangeShiftC);
     }
 
-    m_upBuff1 = new int[m_picWidth + 2];
-    m_upBuff2 = new int[m_picWidth + 2];
-    m_upBufft = new int[m_picWidth + 2];
+    m_upBuff1 = X265_MALLOC(int, m_picWidth + 2);
+    m_upBuff2 = X265_MALLOC(int, m_picWidth + 2);
+    m_upBufft = X265_MALLOC(int, m_picWidth + 2);
 
     m_upBuff1++;
     m_upBuff2++;
@@ -208,8 +208,8 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
 
     int rangeExt = maxY >> 1;
 
-    m_clipTableBase = new Pel[maxY + 2 * rangeExt];
-    m_offsetBo      = new int[maxY + 2 * rangeExt];
+    m_clipTableBase = X265_MALLOC(pixel, maxY + 2 * rangeExt);
+    m_offsetBo      = X265_MALLOC(int, maxY + 2 * rangeExt);
 
     for (i = 0; i < (minY + rangeExt); i++)
     {
@@ -233,8 +233,8 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
 
     int rangeExtC = maxC >> 1;
 
-    m_chromaClipTableBase = new Pel[maxC + 2 * rangeExtC];
-    m_chromaOffsetBo      = new int[maxC + 2 * rangeExtC];
+    m_chromaClipTableBase = X265_MALLOC(pixel, maxC + 2 * rangeExtC);
+    m_chromaOffsetBo      = X265_MALLOC(int, maxC + 2 * rangeExtC);
 
     for (i = 0; i < (minC + rangeExtC); i++)
     {
@@ -253,16 +253,16 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
 
     m_chromaClipTable = &(m_chromaClipTableBase[rangeExtC]);
 
-    m_tmpL1 = new Pel[m_maxCUHeight + 1];
-    m_tmpL2 = new Pel[m_maxCUHeight + 1];
+    m_tmpL1 = X265_MALLOC(pixel, m_maxCUHeight + 1);
+    m_tmpL2 = X265_MALLOC(pixel, m_maxCUHeight + 1);
 
-    m_tmpU1[0] = new Pel[m_picWidth];
-    m_tmpU1[1] = new Pel[m_picWidth];
-    m_tmpU1[2] = new Pel[m_picWidth];
+    m_tmpU1[0] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU1[1] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU1[2] = X265_MALLOC(pixel, m_picWidth);
 
-    m_tmpU2[0] = new Pel[m_picWidth];
-    m_tmpU2[1] = new Pel[m_picWidth];
-    m_tmpU2[2] = new Pel[m_picWidth];
+    m_tmpU2[0] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU2[1] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU2[2] = X265_MALLOC(pixel, m_picWidth);
 }
 
 /** destroy SampleAdaptiveOffset memory.
@@ -270,53 +270,50 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
  */
 void TComSampleAdaptiveOffset::destroy()
 {
-    delete [] m_clipTableBase;
+    X265_FREE(m_clipTableBase);
     m_clipTableBase = NULL;
-    delete [] m_offsetBo;
+    X265_FREE(m_offsetBo);
     m_offsetBo = NULL;
-    delete[] m_lumaTableBo;
+    X265_FREE(m_lumaTableBo);
     m_lumaTableBo = NULL;
-    delete [] m_chromaClipTableBase;
+    X265_FREE(m_chromaClipTableBase);
     m_chromaClipTableBase = NULL;
-    delete [] m_chromaOffsetBo;
+    X265_FREE(m_chromaOffsetBo);
     m_chromaOffsetBo = NULL;
-    delete[] m_chromaTableBo;
+    X265_FREE(m_chromaTableBo);
     m_chromaTableBo = NULL;
 
-    if (m_upBuff1)
-    {
-        m_upBuff1--;
-        delete [] m_upBuff1;
-        m_upBuff1 = NULL;
-    }
-    if (m_upBuff2)
-    {
-        m_upBuff2--;
-        delete [] m_upBuff2;
-        m_upBuff2 = NULL;
-    }
-    if (m_upBufft)
-    {
-        m_upBufft--;
-        delete [] m_upBufft;
-        m_upBufft = NULL;
-    }
-    delete [] m_tmpL1;
+    m_upBuff1--;
+    X265_FREE(m_upBuff1);
+    m_upBuff1 = NULL;
+
+    m_upBuff2--;
+    X265_FREE(m_upBuff2);
+    m_upBuff2 = NULL;
+
+    m_upBufft--;
+    X265_FREE(m_upBufft);
+    m_upBufft = NULL;
+
+    X265_FREE(m_tmpL1);
     m_tmpL1 = NULL;
-    delete [] m_tmpL2;
+    X265_FREE(m_tmpL2);
     m_tmpL2 = NULL;
-    delete [] m_tmpU1[0];
-    delete [] m_tmpU1[1];
-    delete [] m_tmpU1[2];
+    X265_FREE(m_tmpU1[0]);
+
     m_tmpU1[0] = NULL;
+    X265_FREE(m_tmpU1[1]);
     m_tmpU1[1] = NULL;
+    X265_FREE(m_tmpU1[2]);
     m_tmpU1[2] = NULL;
-    delete [] m_tmpU2[0];
-    delete [] m_tmpU2[1];
-    delete [] m_tmpU2[2];
+
+    X265_FREE(m_tmpU2[0]);
     m_tmpU2[0] = NULL;
+    X265_FREE(m_tmpU2[1]);
     m_tmpU2[1] = NULL;
+    X265_FREE(m_tmpU2[2]);
     m_tmpU2[2] = NULL;
+
 }
 
 /** allocate memory for SAO parameters

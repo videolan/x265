@@ -161,21 +161,21 @@ protected:
     uint32_t m_saoBitIncreaseC; //for chroma
     uint32_t m_qp;
 
-    Pel   *m_clipTable;
-    Pel   *m_clipTableBase;
-    Pel   *m_lumaTableBo;
-    Pel   *m_chromaClipTable;
-    Pel   *m_chromaClipTableBase;
-    Pel   *m_chromaTableBo;
+    pixel* m_clipTable;
+    pixel* m_clipTableBase;
+    pixel* m_lumaTableBo;
+    pixel* m_chromaClipTable;
+    pixel* m_chromaClipTableBase;
+    pixel* m_chromaTableBo;
     int32_t    *m_upBuff1;
     int32_t    *m_upBuff2;
     int32_t    *m_upBufft;
     TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
-    Pel* m_tmpU1[3];
-    Pel* m_tmpU2[3];
-    Pel* m_tmpL1;
-    Pel* m_tmpL2;
+    pixel* m_tmpU1[3];
+    pixel* m_tmpU2[3];
+    pixel* m_tmpL1;
+    pixel* m_tmpL2;
     int     m_maxNumOffsetsPerPic;
     bool    m_saoLcuBoundary;
     bool    m_saoLcuBasedOptimization;
