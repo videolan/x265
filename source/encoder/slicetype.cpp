@@ -419,7 +419,7 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
 
     int nextNonB = keyframe ? prevNonB : curNonB;
 
-    while (curNonB < numFrames)
+    while (curNonB < numFrames + !keyframe)
     {
         /* P/I cost: This shouldn't include the cost of nextNonB */
         if (nextNonB != curNonB)
