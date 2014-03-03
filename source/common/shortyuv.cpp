@@ -139,12 +139,16 @@ void ShortYuv::copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_
 
     uint32_t srcStride = m_width;
     uint32_t dstStride = dstPicYuv->m_width;
+#if HIGH_BIT_DEPTH
+    primitives.blockcpy_pp(width, height, (pixel*)dst, dstStride, (pixel*)src, srcStride);
+#else
     for (uint32_t y = height; y != 0; y--)
     {
         ::memcpy(dst, src, width * sizeof(int16_t));
         src += srcStride;
         dst += dstStride;
     }
+#endif
 }
 
 void ShortYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height)
@@ -167,6 +171,10 @@ void ShortYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint3
 
     uint32_t srcStride = m_cwidth;
     uint32_t dstStride = dstPicYuv->m_cwidth;
+#if HIGH_BIT_DEPTH
+    primitives.blockcpy_pp(width, height, (pixel*)dstU, dstStride, (pixel*)srcU, srcStride);
+    primitives.blockcpy_pp(width, height, (pixel*)dstV, dstStride, (pixel*)srcV, srcStride);
+#else
     for (uint32_t y = height; y != 0; y--)
     {
         ::memcpy(dstU, srcU, width * sizeof(int16_t));
@@ -176,6 +184,7 @@ void ShortYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint3
         dstU += dstStride;
         dstV += dstStride;
     }
+#endif
 }
 
 void ShortYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height)
@@ -198,10 +207,6 @@ void ShortYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint3
     {
         int16_t* srcU = getCbAddr(partIdx);
         int16_t* dstU = dstPicYuv->getCbAddr(partIdx);
-        if (srcU == dstU)
-        {
-            return;
-        }
         uint32_t srcStride = m_cwidth;
         uint32_t dstStride = dstPicYuv->m_cwidth;
         for (uint32_t y = height; y != 0; y--)
@@ -215,7 +220,6 @@ void ShortYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint3
     {
         int16_t* srcV = getCrAddr(partIdx);
         int16_t* dstV = dstPicYuv->getCrAddr(partIdx);
-        if (srcV == dstV) return;
         uint32_t srcStride = m_cwidth;
         uint32_t dstStride = dstPicYuv->m_cwidth;
         for (uint32_t y = height; y != 0; y--)
@@ -231,7 +235,6 @@ void ShortYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint3
         int16_t* srcV = getCrAddr(partIdx);
         int16_t* dstU = dstPicYuv->getCbAddr(partIdx);
         int16_t* dstV = dstPicYuv->getCrAddr(partIdx);
-        if (srcU == dstU && srcV == dstV) return;
         uint32_t srcStride = m_cwidth;
         uint32_t dstStride = dstPicYuv->m_cwidth;
         for (uint32_t y = height; y != 0; y--)
