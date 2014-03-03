@@ -1231,7 +1231,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.luma_hvpp[LUMA_8x8] = x265_interp_8tap_hv_pp_8x8_ssse3;
         p.luma_p2s = x265_luma_p2s_ssse3;
         p.chroma_p2s[X265_CSP_I420] = x265_chroma_p2s_ssse3;
-        p.chroma_p2s[X265_CSP_I444] = x265_chroma_p2s_i444_ssse3; // full width dststride
+        p.chroma_p2s[X265_CSP_I444] = x265_luma_p2s_ssse3; // for i444 , chroma_p2s can be replaced by luma_p2s
 
         p.dct[DST_4x4] = x265_dst4_ssse3;
     }

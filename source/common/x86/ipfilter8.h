@@ -300,7 +300,6 @@ CHROMA_SS_FILTERS(_sse2);
 CHROMA_SS_FILTERS_SSE4(_sse4);
 
 void x265_chroma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
-void x265_chroma_p2s_i444_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
 
 #undef SETUP_CHROMA_FUNC_DEF
 #undef SETUP_CHROMA_SP_FUNC_DEF
