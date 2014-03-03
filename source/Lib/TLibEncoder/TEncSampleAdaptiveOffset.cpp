@@ -392,36 +392,36 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
     {
         for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
         {
-            delete [] m_count[i][j];
-            delete [] m_offset[i][j];
-            delete [] m_offsetOrg[i][j];
+            X265_FREE(m_count[i][j]);
+            X265_FREE(m_offset[i][j]);
+            X265_FREE(m_offsetOrg[i][j]);
         }
 
-        delete [] m_rate[i];
-        delete [] m_dist[i];
-        delete [] m_cost[i];
-        delete [] m_count[i];
-        delete [] m_offset[i];
-        delete [] m_offsetOrg[i];
+        X265_FREE(m_rate[i]);
+        X265_FREE(m_dist[i]);
+        X265_FREE(m_cost[i]);
+        X265_FREE(m_count[i]);
+        X265_FREE(m_offset[i]);
+        X265_FREE(m_offsetOrg[i]);
     }
 
-    delete [] m_distOrg;
+    X265_FREE(m_distOrg);
     m_distOrg = NULL;
-    delete [] m_costPartBest;
+    X265_FREE(m_costPartBest);
     m_costPartBest = NULL;
-    delete [] m_typePartBest;
+    X265_FREE(m_typePartBest);
     m_typePartBest = NULL;
-    delete [] m_rate;
+    X265_FREE(m_rate);
     m_rate = NULL;
-    delete [] m_dist;
+    X265_FREE(m_dist);
     m_dist = NULL;
-    delete [] m_cost;
+    X265_FREE(m_cost);
     m_cost = NULL;
-    delete [] m_count;
+    X265_FREE(m_count);
     m_count = NULL;
-    delete [] m_offset;
+    X265_FREE(m_offset);
     m_offset = NULL;
-    delete [] m_offsetOrg;
+    X265_FREE(m_offsetOrg);
     m_offsetOrg = NULL;
 
     delete[] m_countPreDblk;
@@ -435,19 +435,19 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
     {
         for (int iCIIdx = 0; iCIIdx < CI_NUM_SAO; iCIIdx++)
         {
-            delete m_rdSbacCoders[d][iCIIdx];
-            delete m_binCoderCABAC[d][iCIIdx];
+            X265_FREE(m_rdSbacCoders[d][iCIIdx]);
+            X265_FREE(m_binCoderCABAC[d][iCIIdx]);
         }
     }
 
     for (int d = 0; d < maxDepth + 1; d++)
     {
-        delete [] m_rdSbacCoders[d];
-        delete [] m_binCoderCABAC[d];
+        X265_FREE(m_rdSbacCoders[d]);
+        X265_FREE(m_binCoderCABAC[d]);
     }
 
-    delete [] m_rdSbacCoders;
-    delete [] m_binCoderCABAC;
+    X265_FREE(m_rdSbacCoders);
+    X265_FREE(m_binCoderCABAC);
 }
 
 /** create Encoder Buffer for SAO
@@ -455,33 +455,33 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
  */
 void TEncSampleAdaptiveOffset::createEncBuffer()
 {
-    m_distOrg = new int64_t[m_numTotalParts];
-    m_costPartBest = new double[m_numTotalParts];
-    m_typePartBest = new int[m_numTotalParts];
+    m_distOrg = X265_MALLOC(int64_t, m_numTotalParts);
+    m_costPartBest = X265_MALLOC(double, m_numTotalParts);
+    m_typePartBest = X265_MALLOC(int, m_numTotalParts);
 
-    m_rate = new int64_t*[m_numTotalParts];
-    m_dist = new int64_t*[m_numTotalParts];
-    m_cost = new double*[m_numTotalParts];
+    m_rate = X265_MALLOC(int64_t*, m_numTotalParts);
+    m_dist = X265_MALLOC(int64_t*, m_numTotalParts);
+    m_cost = X265_MALLOC(double*, m_numTotalParts);
 
-    m_count  = new int64_t * *[m_numTotalParts];
-    m_offset = new int64_t * *[m_numTotalParts];
-    m_offsetOrg = new int64_t * *[m_numTotalParts];
+    m_count  = X265_MALLOC(int64_t**, m_numTotalParts);
+    m_offset = X265_MALLOC(int64_t**, m_numTotalParts);
+    m_offsetOrg = X265_MALLOC(int64_t**, m_numTotalParts);
 
     for (int i = 0; i < m_numTotalParts; i++)
     {
-        m_rate[i] = new int64_t[MAX_NUM_SAO_TYPE];
-        m_dist[i] = new int64_t[MAX_NUM_SAO_TYPE];
-        m_cost[i] = new double[MAX_NUM_SAO_TYPE];
+        m_rate[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
+        m_dist[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
+        m_cost[i] = X265_MALLOC(double, MAX_NUM_SAO_TYPE);
 
-        m_count[i] = new int64_t *[MAX_NUM_SAO_TYPE];
-        m_offset[i] = new int64_t *[MAX_NUM_SAO_TYPE];
-        m_offsetOrg[i] = new int64_t *[MAX_NUM_SAO_TYPE];
+        m_count[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+        m_offset[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+        m_offsetOrg[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
 
         for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
         {
-            m_count[i][j]   = new int64_t[MAX_NUM_SAO_CLASS];
-            m_offset[i][j]   = new int64_t[MAX_NUM_SAO_CLASS];
-            m_offsetOrg[i][j] = new int64_t[MAX_NUM_SAO_CLASS];
+            m_count[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+            m_offset[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+            m_offsetOrg[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
         }
     }
 
@@ -495,17 +495,17 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     }
 
     int maxDepth = 4;
-    m_rdSbacCoders = new TEncSbac * *[maxDepth + 1];
-    m_binCoderCABAC = new TEncBinCABAC * *[maxDepth + 1];
+    m_rdSbacCoders = X265_MALLOC(TEncSbac**, maxDepth + 1);
+    m_binCoderCABAC = X265_MALLOC(TEncBinCABAC**, maxDepth + 1);
 
     for (int d = 0; d < maxDepth + 1; d++)
     {
-        m_rdSbacCoders[d] = new TEncSbac*[CI_NUM_SAO];
-        m_binCoderCABAC[d] = new TEncBinCABAC*[CI_NUM_SAO];
+        m_rdSbacCoders[d] = X265_MALLOC(TEncSbac*, CI_NUM_SAO);
+        m_binCoderCABAC[d] = X265_MALLOC(TEncBinCABAC*, CI_NUM_SAO);
         for (int ciIdx = 0; ciIdx < CI_NUM_SAO; ciIdx++)
         {
-            m_rdSbacCoders[d][ciIdx] = new TEncSbac;
-            m_binCoderCABAC[d][ciIdx] = new TEncBinCABAC(true);
+            m_rdSbacCoders[d][ciIdx] = X265_MALLOC(TEncSbac, 1);
+            m_binCoderCABAC[d][ciIdx] = X265_MALLOC(TEncBinCABAC, true);
             m_rdSbacCoders[d][ciIdx]->init(m_binCoderCABAC[d][ciIdx]);
         }
     }
