@@ -113,11 +113,17 @@ IPFilterHarness::~IPFilterHarness()
     X265_FREE(short_test_buff);
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma)
+bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma, int csp)
 {
     intptr_t rand_srcStride;
-    const int min_size = isChroma ? 2 : 4;
-    const int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
+    int min_size = isChroma ? 2 : 4;
+    int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
+
+    if (isChroma && (csp == X265_CSP_I444))
+    {
+        min_size = 4;
+        max_size = MAX_CU_SIZE;
+    }
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -532,7 +538,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 {
     if (opt.luma_p2s)
     {
-        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s, 0))
+        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s, 0, 1))   // last parameter does not matter in case of luma
         {
             printf("luma_p2s failed\n");
             return false;
@@ -603,7 +609,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     {
         if (opt.chroma_p2s[csp])
         {
-            if (!check_IPFilter_primitive(ref.chroma_p2s[csp], opt.chroma_p2s[csp], 1))
+            if (!check_IPFilter_primitive(ref.chroma_p2s[csp], opt.chroma_p2s[csp], 1, csp))
             {
                 printf("chroma_p2s[%s]", x265_source_csp_names[csp]);
                 return false;
