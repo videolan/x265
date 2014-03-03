@@ -1172,8 +1172,6 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
             if (m_cfg->param.rc.vbvBufferSize > 0 && m_cfg->param.rc.vbvMaxBitrate > 0)
             {
                 m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.lowresCostForRc[idx];
-                if (!m_cfg->param.rc.cuTree)
-                    m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.intraCost[idx];
             }
             cnt++;
         }
