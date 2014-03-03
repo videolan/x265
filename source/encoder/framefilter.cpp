@@ -77,7 +77,6 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
 
     if (top->param.bEnableSAO)
     {
-        m_sao.setSaoLcuBoundary(top->param.saoLcuBoundary);
         m_sao.setSaoLcuBasedOptimization(top->param.saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
         m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, m_cfg->getColorFormat());
@@ -120,10 +119,6 @@ void FrameFilter::start(TComPic *pic)
 
 void FrameFilter::end()
 {
-    if (m_cfg->param.bEnableSAO)
-    {
-        m_sao.destroyPicSaoInfo();
-    }
 }
 
 void FrameFilter::processRow(int row)

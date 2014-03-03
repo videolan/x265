@@ -199,17 +199,12 @@ public:
 
     void processSaoCu(int addr, int partIdx, int yCbCr); //!< LCU-basd SAO process without slice granularity
     void createPicSaoInfo(TComPic* pic);
-    void destroyPicSaoInfo();
 
     void resetLcuPart(SaoLcuParam* saoLcuParam);
     void convertQT2SaoUnit(SAOParam* saoParam, uint32_t partIdx, int yCbCr);
     void convertOnePart2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int yCbCr);
     void processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr);
     void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr);
-    void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
-
-    bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
-
     void setSaoLcuBasedOptimization(int bVal)  { m_saoLcuBasedOptimization = bVal != 0; }
 
     bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
