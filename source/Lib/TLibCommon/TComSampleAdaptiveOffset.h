@@ -195,7 +195,7 @@ public:
     static void freeSaoParam(SAOParam* saoParam);
 
     void SAOProcess(SAOParam* saoParam);
-    Pel* getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr = 0);
+    pixel* getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr = 0);
 
     void processSaoCu(int addr, int partIdx, int yCbCr); //!< LCU-basd SAO process without slice granularity
     void createPicSaoInfo(TComPic* pic);

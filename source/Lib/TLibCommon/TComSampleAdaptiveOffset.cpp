@@ -519,7 +519,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 {
     int x, y;
     TComDataCU *tmpCu = m_pic->getCU(addr);
-    Pel* rec;
+    pixel* rec;
     int  stride;
     int  lcuWidth  = m_maxCUWidth;
     int  lcuHeight = m_maxCUHeight;
@@ -540,10 +540,10 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     int isChroma = (yCbCr != 0) ? 1 : 0;
     int shift;
     int cuHeightTmp;
-    Pel *tmpLSwap;
-    Pel *tmpL;
-    Pel *tmpU;
-    Pel *clipTbl = NULL;
+    pixel* tmpLSwap;
+    pixel* tmpL;
+    pixel* tmpU;
+    pixel* clipTbl = NULL;
     int32_t *offsetBo = NULL;
     int32_t *tmp_swap;
 
@@ -817,7 +817,7 @@ void TComSampleAdaptiveOffset::SAOProcess(SAOParam* saoParam)
     }
 }
 
-Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr)
+pixel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr)
 {
     switch (yCbCr)
     {
@@ -843,7 +843,7 @@ Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int 
  */
 void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr)
 {
-    Pel *rec;
+    pixel *rec;
     int picWidthTmp;
 
     if (yCbCr == 0)
@@ -862,12 +862,12 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
         picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
-    memcpy(m_tmpU1[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+    memcpy(m_tmpU1[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
     int  i;
     uint32_t edgeType;
-    Pel* lumaTable = NULL;
-    Pel* clipTable = NULL;
+    pixel* lumaTable = NULL;
+    pixel* clipTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -878,7 +878,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int frameHeightInCU = m_pic->getFrameHeightInCU();
     int stride;
-    Pel *tmpUSwap;
+    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -916,7 +916,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
 
         rec -= (stride << 1);
 
-        memcpy(m_tmpU2[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+        memcpy(m_tmpU2[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
         {
@@ -1014,7 +1014,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
  */
 void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr)
 {
-    Pel *rec;
+    pixel *rec;
     int picWidthTmp;
 
     if (yCbCr == 0)
@@ -1038,8 +1038,8 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
 
     int  i;
     uint32_t edgeType;
-    Pel* lumaTable = NULL;
-    Pel* clipTable = NULL;
+    pixel* lumaTable = NULL;
+    pixel* clipTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -1048,7 +1048,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     int addr;
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int stride;
-    Pel *tmpUSwap;
+    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -1085,7 +1085,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
 
         rec -= (stride << 1);
 
-        memcpy(m_tmpU2[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+        memcpy(m_tmpU2[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
         {
@@ -1364,8 +1364,8 @@ void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, TextType ttText)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
-    Pel* src;
-    Pel* pcm;
+    pixel* src;
+    pixel* pcm;
     uint32_t stride;
     uint32_t width;
     uint32_t height;
@@ -1417,6 +1417,7 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
         }
     }
 
+    //TODO Optimized Primitives 
     for (y = 0; y < height; y++)
     {
         for (x = 0; x < width; x++)
