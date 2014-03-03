@@ -685,8 +685,8 @@ void TEncSbac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32
         WRITE_FLAG(hrd->getVclHrdParametersPresentFlag() ? 1 : 0,  "vcl_hrd_parameters_present_flag");
         if (hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag())
         {
-            WRITE_FLAG(hrd->getSubPicCpbParamsPresentFlag() ? 1 : 0,  "sub_pic_cpb_params_present_flag");
-            if (hrd->getSubPicCpbParamsPresentFlag())
+            WRITE_FLAG(hrd->getSubPicHrdParamsPresentFlag() ? 1 : 0,  "sub_pic_hrd_params_present_flag");
+            if (hrd->getSubPicHrdParamsPresentFlag())
             {
                 WRITE_CODE(hrd->getTickDivisorMinus2(), 8,              "tick_divisor_minus2");
                 WRITE_CODE(hrd->getDuCpbRemovalDelayLengthMinus1(), 5,  "du_cpb_removal_delay_length_minus1");
@@ -695,7 +695,7 @@ void TEncSbac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32
             }
             WRITE_CODE(hrd->getBitRateScale(), 4,                     "bit_rate_scale");
             WRITE_CODE(hrd->getCpbSizeScale(), 4,                     "cpb_size_scale");
-            if (hrd->getSubPicCpbParamsPresentFlag())
+            if (hrd->getSubPicHrdParamsPresentFlag())
             {
                 WRITE_CODE(hrd->getDuCpbSizeScale(), 4,                "du_cpb_size_scale");
             }
@@ -738,7 +738,7 @@ void TEncSbac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32
                 {
                     WRITE_UVLC(hrd->getBitRateValueMinus1(i, j, nalOrVcl), "bit_rate_value_minus1");
                     WRITE_UVLC(hrd->getCpbSizeValueMinus1(i, j, nalOrVcl), "cpb_size_value_minus1");
-                    if (hrd->getSubPicCpbParamsPresentFlag())
+                    if (hrd->getSubPicHrdParamsPresentFlag())
                     {
                         WRITE_UVLC(hrd->getDuCpbSizeValueMinus1(i, j, nalOrVcl), "cpb_size_du_value_minus1");
                         WRITE_UVLC(hrd->getDuBitRateValueMinus1(i, j, nalOrVcl), "bit_rate_du_value_minus1");

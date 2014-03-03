@@ -111,7 +111,7 @@ private:
     TComYuv**    m_bestMergeRecoYuv;
     TComYuv**    m_origYuv;     ///< Original Yuv at each depth
 
-    TEncCfg*     m_cfg;
+    Encoder*     m_cfg;
     TEncSearch*  m_search;
     TComTrQuant* m_trQuant;
     TComRdCost*  m_rdCost;

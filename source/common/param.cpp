@@ -205,6 +205,7 @@ void x265_param_default(x265_param *param)
     param->defDispWinBottomOffset = 0;
     param->bEnableVuiTimingInfoPresentFlag = 0;
     param->bEnableVuiHrdParametersPresentFlag = 0;
+    param->bEnableNalHrdParametersPresentFlag = 0;
     param->bEnableBitstreamRestrictionFlag = 0;
     param->bEnableSubPicHrdParamsPresentFlag = 0;
 }
@@ -704,11 +705,18 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableVuiTimingInfoPresentFlag = atobool(value);
     }
-    OPT("nal-hrd")
+    OPT("hrd")
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableVuiTimingInfoPresentFlag = 1;
         p->bEnableVuiHrdParametersPresentFlag = atobool(value);
+    }
+    OPT("nal-hrd")
+    {
+        p->bEnableVuiParametersPresentFlag = 1;
+        p->bEnableVuiTimingInfoPresentFlag = 1;
+        p->bEnableVuiHrdParametersPresentFlag = 1;
+        p->bEnableNalHrdParametersPresentFlag = parseName(value, x265_nal_hrd_names, bError);
     }
     OPT("bitstreamrestriction")
     {
@@ -719,6 +727,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->bEnableVuiParametersPresentFlag = 1;
         p->bEnableVuiHrdParametersPresentFlag = 1;
+        p->bEnableNalHrdParametersPresentFlag = 1;
         p->bEnableSubPicHrdParamsPresentFlag = atobool(value);
     }
     else
@@ -985,6 +994,9 @@ int x265_check_params(x265_param *param)
           "Default Display Window Top Offset must be 0 or greater");
     CHECK(param->defDispWinBottomOffset < 0,
           "Default Display Window Bottom Offset must be 0 or greater");
+    CHECK(param->bEnableNalHrdParametersPresentFlag
+          && param->rc.vbvBufferSize <= 0,
+          "If nal-hrd specified then vbv buffersize must also be specified");
     CHECK(param->rc.rfConstant < 0 || param->rc.rfConstant > 51,
           "Valid quality based VBR range 0 - 51");
     CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,

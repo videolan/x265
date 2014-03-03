@@ -49,9 +49,6 @@ x265_encoder *x265_encoder_open(x265_param *param)
         encoder->determineLevelAndProfile(param);
         encoder->configure(param);
 
-        // save a copy of final parameters in TEncCfg
-        memcpy(&encoder->param, param, sizeof(*param));
-
         x265_print_params(param);
         encoder->create();
         encoder->init();

@@ -613,12 +613,9 @@ void TComSPS::setHrdParameters(uint32_t fpsNum, uint32_t fpsDenom, uint32_t numD
     timingInfo->setTimeScale(fpsNum);
 
     bool rateCnt = (bitRate > 0);
-    hrd->setNalHrdParametersPresentFlag(rateCnt);
     hrd->setVclHrdParametersPresentFlag(rateCnt);
 
-    hrd->setSubPicCpbParamsPresentFlag((numDU > 1));
-
-    if (hrd->getSubPicCpbParamsPresentFlag())
+    if (hrd->getSubPicHrdParamsPresentFlag())
     {
         hrd->setTickDivisorMinus2(100 - 2);
         hrd->setDuCpbRemovalDelayLengthMinus1(7);                  // 8-bit precision ( plus 1 for last DU in AU )

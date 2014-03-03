@@ -290,6 +290,7 @@ static const char * const x265_colmatrix_names[] = { "GBR", "bt709", "undef", ""
                                                      "YCgCo", "bt2020nc", "bt2020c", 0 };
 static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11", "16:11", "40:33", "24:11", "20:11",
                                                "32:11", "80:33", "18:11", "15:11", "64:33", "160:99", "4:3", "3:2", "2:1", 0 };
+static const char * const x265_nal_hrd_names[] = { "none", "vbr", "cbr", 0 };
 
 /* x265 input parameters
  *
@@ -478,6 +479,10 @@ typedef struct x265_param
     int       bEnableBitstreamRestrictionFlag;
 
     /*== Hypothetical Reference Decoder Parameters ==*/
+
+    /* NAL HRD parameters present flag determines if NAL HRD parameters related
+     * to Type II bitstream are added to the VUI.  The default is false. */
+    int       bEnableNalHrdParametersPresentFlag;
 
     /* Sub pic HRD params present flag determines if tic_divisor_minus2,
      * du_cpb_removal_delay_increment_length_minus1,

@@ -23,7 +23,7 @@
 
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComSlice.h"
-#include "TLibEncoder/TEncCfg.h"
+#include "encoder.h"
 
 #include "PPA/ppa.h"
 #include "dpb.h"
@@ -36,7 +36,7 @@ DPB::~DPB()
     while (!m_picList.empty())
     {
         TComPic* pic = m_picList.popFront();
-        pic->destroy(m_cfg->param.bframes);
+        pic->destroy(m_cfg->param->bframes);
         delete pic;
     }
 }
@@ -380,7 +380,7 @@ NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, TComPic* pic)
     }
     if (pic->m_lowres.bKeyframe)
     {
-        if (m_cfg->param.bOpenGOP)
+        if (m_cfg->param->bOpenGOP)
         {
             return NAL_UNIT_CODED_SLICE_CRA;
         }

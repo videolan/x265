@@ -170,7 +170,8 @@ static const struct option long_options[] =
     { "no-framefieldinfo",    no_argument, NULL, 0 },
     { "crop-rect",      required_argument, NULL, 0 },
     { "timinginfo",           no_argument, NULL, 0 },
-    { "nal-hrd",              no_argument, NULL, 0 },
+    { "hrd",                  no_argument, NULL, 0 },
+    { "nal-hrd",        required_argument, NULL, 0 },
     { "bitstreamrestriction", no_argument, NULL, 0 },
     { "subpichrd",            no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
@@ -394,7 +395,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]framefieldinfo         Specify that a pic-struct will be added to the SEI timing message. Default %s\n", OPT(param->bEnableFrameFieldInfoPresentFlag));
     H0("   --crop-rect <string>          Add 'left,top,right,bottom' to the bitstream-level cropping rectangle\n");
     H0("   --timinginfo                  Add timing information to the VUI. Defaut %s\n", OPT(param->bEnableVuiTimingInfoPresentFlag));
-    H0("   --nal-hrd                     Signal HRD information. Default %s\n", OPT(param->bEnableVuiHrdParametersPresentFlag));
+    H0("   --hrd                         Signal HRD information. Default %s\n", OPT(param->bEnableVuiHrdParametersPresentFlag));
+    H0("   --nal-hrd <string>            Signal NAL HRD information (requires vbv-buffer size) Choose from none, vbr or cbr.Default none\n");
     H0("   --bitstreamrestriction        Add bit stream restriction fields to the VUI. Default %s\n", OPT(param->bEnableBitstreamRestrictionFlag));
     H0("   --subpichrd                   Add sub picture HRD parameters to the HRD. Default %s\n", OPT(param->bEnableSubPicHrdParamsPresentFlag));
 #undef OPT

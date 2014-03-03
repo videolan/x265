@@ -57,7 +57,7 @@ public:
 protected:
 
     Encoder*                    m_top;
-    TEncCfg*                    m_cfg;
+    Encoder*                    m_cfg;
     TComPic*                    m_pic;
     int                         m_hChromaShift;
     int                         m_vChromaShift;

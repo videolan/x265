@@ -298,7 +298,7 @@ private:
 
     bool m_nalHrdParametersPresentFlag;
     bool m_vclHrdParametersPresentFlag;
-    bool m_subPicCpbParamsPresentFlag;
+    bool m_subPicHrdParamsPresentFlag;
     uint32_t m_tickDivisorMinus2;
     uint32_t m_duCpbRemovalDelayLengthMinus1;
     bool m_subPicCpbParamsInPicTimingSEIFlag;
@@ -316,7 +316,7 @@ public:
     TComHRD()
         : m_nalHrdParametersPresentFlag(0)
         , m_vclHrdParametersPresentFlag(0)
-        , m_subPicCpbParamsPresentFlag(false)
+        , m_subPicHrdParamsPresentFlag(false)
         , m_tickDivisorMinus2(0)
         , m_duCpbRemovalDelayLengthMinus1(0)
         , m_subPicCpbParamsInPicTimingSEIFlag(false)
@@ -338,9 +338,9 @@ public:
 
     bool getVclHrdParametersPresentFlag() { return m_vclHrdParametersPresentFlag; }
 
-    void setSubPicCpbParamsPresentFlag(bool flag) { m_subPicCpbParamsPresentFlag = flag; }
+    void setSubPicHrdParamsPresentFlag(bool flag) { m_subPicHrdParamsPresentFlag = flag; }
 
-    bool getSubPicCpbParamsPresentFlag() { return m_subPicCpbParamsPresentFlag; }
+    bool getSubPicHrdParamsPresentFlag() { return m_subPicHrdParamsPresentFlag; }
 
     void setTickDivisorMinus2(uint32_t value) { m_tickDivisorMinus2 = value; }
 

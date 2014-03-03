@@ -49,7 +49,7 @@
 namespace x265 {
 // private namespace
 
-class TEncCfg;
+class Encoder;
 
 //! \ingroup TLibCommon
 //! \{
@@ -118,9 +118,9 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    bool          create(TEncCfg* cfg);
+    bool          create(Encoder* cfg);
     virtual void  destroy(int bframes);
-    void          reInit(TEncCfg* cfg);
+    void          reInit(Encoder* cfg);
 
     bool          getUsedByCurr()           { return m_bUsedByCurr; }
 

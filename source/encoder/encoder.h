@@ -26,7 +26,7 @@
 
 #include "x265.h"
 
-#include "TLibEncoder/TEncCfg.h"
+#include "TLibCommon/TComSlice.h"
 
 #include "piclist.h"
 
@@ -69,7 +69,7 @@ struct RateControl;
 class ThreadPool;
 struct NALUnitEBSP;
 
-class Encoder : public TEncCfg, public x265_encoder
+class Encoder : public x265_encoder
 {
 private:
 
@@ -106,6 +106,92 @@ private:
     int                m_numWPFrames;      // number of Unidirectional weighted frames used
 
 public:
+
+    int                m_conformanceMode;
+    TComVPS            m_vps;
+
+    /* profile & level */
+    Profile::Name      m_profile;
+    Level::Tier        m_levelTier;
+    Level::Name        m_level;
+
+    bool               m_progressiveSourceFlag;
+    bool               m_interlacedSourceFlag;
+    bool               m_nonPackedConstraintFlag;
+    bool               m_frameOnlyConstraintFlag;
+
+    //====== Coding Structure ========
+    int                m_maxDecPicBuffering[MAX_TLAYER];
+    int                m_numReorderPics[MAX_TLAYER];
+    int                m_maxRefPicNum;
+
+    //======= Transform =============
+    uint32_t           m_quadtreeTULog2MaxSize;
+    uint32_t           m_quadtreeTULog2MinSize;
+
+    //====== Loop/Deblock Filter ========
+    bool               m_loopFilterOffsetInPPS;
+    int                m_loopFilterBetaOffset;
+    int                m_loopFilterBetaOffsetDiv2;
+    int                m_loopFilterTcOffset;
+    int                m_loopFilterTcOffsetDiv2;
+    int                m_maxNumOffsetsPerPic;
+
+    //====== Lossless ========
+    bool               m_useLossless;
+
+    //====== Quality control ========
+    int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
+
+    //====== Tool list ========
+    bool               m_bUseASR;
+    bool               m_usePCM;
+    uint32_t           m_pcmLog2MaxSize;
+    uint32_t           m_pcmLog2MinSize;
+
+    bool               m_bPCMInputBitDepthFlag; //unused field
+    uint32_t           m_pcmBitDepthLuma;  // unused field, TComSPS has it's own version defaulted to 8
+    uint32_t           m_pcmBitDepthChroma;// unused field, TComSPS has it's own version defaulted to 8
+
+    bool               m_bPCMFilterDisableFlag;
+    bool               m_loopFilterAcrossTilesEnabledFlag;
+
+    int                m_bufferingPeriodSEIEnabled;
+    int                m_pictureTimingSEIEnabled;
+    int                m_recoveryPointSEIEnabled;
+    int                m_displayOrientationSEIAngle;
+    int                m_gradualDecodingRefreshInfoEnabled;
+    int                m_decodingUnitInfoSEIEnabled;
+    int                m_csp;
+
+    uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
+
+    int                m_useScalingListId; ///< Using quantization matrix i.e. 0=off, 1=default.
+
+    bool               m_TransquantBypassEnableFlag;   ///< transquant_bypass_enable_flag setting in PPS.
+    bool               m_CUTransquantBypassFlagValue;  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
+    int                m_activeParameterSetsSEIEnabled;///< enable active parameter set SEI message
+
+    bool               m_neutralChromaIndicationFlag;
+    bool               m_pocProportionalToTimingFlag;
+    int                m_numTicksPocDiffOneMinus1;
+    bool               m_tilesFixedStructureFlag;
+    bool               m_motionVectorsOverPicBoundariesFlag;
+    bool               m_restrictedRefPicListsFlag;
+    int                m_minSpatialSegmentationIdc;
+    int                m_maxBytesPerPicDenom;
+    int                m_maxBitsPerMinCuDenom;
+    int                m_log2MaxMvLengthHorizontal;
+    int                m_log2MaxMvLengthVertical;
+
+    x265_param         *param;
+
+    int                bEnableRDOQ;
+    int                bEnableRDOQTS;
+
+    int                m_pad[2];
+    Window             m_conformanceWindow;
+    Window             m_defaultDisplayWindow;
 
     x265_nal* m_nals;
     char*       m_packetData;

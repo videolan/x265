@@ -47,8 +47,6 @@
 #include "TLibCommon/TComPic.h"
 #include "TEncEntropy.h"
 #include "TEncSbac.h"
-#include "TEncCfg.h"
-
 #include "primitives.h"
 #include "bitcost.h"
 #include "motion.h"
@@ -68,6 +66,7 @@ namespace x265 {
 static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
 
 class TEncCu;
+class Encoder;
 
 // ====================================================================================================================
 // Class definition
@@ -99,7 +98,7 @@ protected:
     TComYuv         m_qtTempTransformSkipYuv;
 
     // interface to option
-    TEncCfg*        m_cfg;
+    Encoder*        m_cfg;
 
     // interface to classes
     TComTrQuant*    m_trQuant;
@@ -136,7 +135,7 @@ public:
     TEncSearch();
     virtual ~TEncSearch();
 
-    bool init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
+    bool init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
 
 protected:
 

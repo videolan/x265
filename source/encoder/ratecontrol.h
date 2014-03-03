@@ -34,7 +34,6 @@ namespace x265 {
 struct Lookahead;
 class Encoder;
 class TComPic;
-class TEncCfg;
 
 #define BASE_FRAME_DURATION 0.04
 
@@ -76,7 +75,7 @@ struct Predictor
 struct RateControl
 {
     TComSlice *curSlice;      /* all info about the current frame */
-    TEncCfg *cfg;
+    Encoder *cfg;
     SliceType sliceType;      /* Current frame type */
     int ncu;                  /* number of CUs in a frame */
     int keyFrameInterval;     /* TODO: need to initialize in init */
@@ -125,7 +124,7 @@ struct RateControl
     double qCompress;
     double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
     double frameSizeEstimated;  /* hold synched frameSize, updated from cu level vbv rc */
-    RateControl(TEncCfg * _cfg);
+    RateControl(Encoder * _cfg);
 
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
