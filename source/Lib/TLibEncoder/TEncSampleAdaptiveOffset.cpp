@@ -550,8 +550,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     TComDataCU *pTmpCu = m_pic->getCU(addr);
     TComSPS *pTmpSPS =  m_pic->getSlice()->getSPS();
 
-    Pel* fenc;
-    Pel* pRec;
+    pixel* fenc;
+    pixel* pRec;
     int stride;
     int iLcuHeight = pTmpSPS->getMaxCUHeight();
     int iLcuWidth  = pTmpSPS->getMaxCUWidth();
@@ -568,7 +568,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int iStartY;
     int iEndX;
     int iEndY;
-    Pel* pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
+    pixel* pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
     int32_t *tmp_swap;
 
     int iIsChroma = (yCbCr != 0) ? 1 : 0;
@@ -822,8 +822,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     int x, y;
     TComSPS *pTmpSPS =  pic->getSlice()->getSPS();
 
-    Pel* fenc;
-    Pel* pRec;
+    pixel* fenc;
+    pixel* pRec;
     int stride;
     int lcuHeight;
     int lcuWidth;
@@ -848,7 +848,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
 
     uint32_t lPelX, tPelY;
     TComDataCU *pTmpCu;
-    Pel* pTableBo;
+    pixel* pTableBo;
     int32_t *tmp_swap;
 
     {
