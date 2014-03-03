@@ -206,6 +206,7 @@ public:
     void processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr);
     void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr);
     void setSaoLcuBasedOptimization(int bVal)  { m_saoLcuBasedOptimization = bVal != 0; }
+    void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
 
     bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 
