@@ -472,7 +472,7 @@ public:
 
     uint32_t&     getTotalNumPart()               { return m_numPartitions; }
 
-    uint32_t      getCoefScanIdx(uint32_t absPartIdx, uint32_t width, uint32_t height, bool bIsLuma, bool bIsIntra);
+    uint32_t      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions to support multiple color space formats

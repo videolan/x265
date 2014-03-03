@@ -127,18 +127,18 @@ public:
 
     void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
 
-    void codeLastSignificantXY(uint32_t posx, uint32_t posy, int width, int height, TextType ttype, uint32_t scanIdx);
-    void codeCoeffNxN(TComDataCU* cu, TCoeff* coef, uint32_t absPartIdx, uint32_t width, uint32_t height, uint32_t depth, TextType ttype);
-    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, TextType ttype);
+    void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
+    void codeCoeffNxN(TComDataCU* cu, TCoeff* coef, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype);
+    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     // -------------------------------------------------------------------------------------------------------------------
     // for RD-optimizatioon
     // -------------------------------------------------------------------------------------------------------------------
 
-    void estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
+    void estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estCBFBit(estBitsSbacStruct* estBitsSbac);
     void estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
-    void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
+    void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
 
     TEncBinCABAC* getEncBinIf()  { return m_binIf; }

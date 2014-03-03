@@ -923,7 +923,7 @@ void TEncSbac::codeScalingList(TComScalingList* scalingList)
 void TEncSbac::xCodeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId)
 {
     int coefNum = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
-    const uint32_t* scan = g_scanOrder[SCAN_UNGROUPED][SCAN_DIAG][sizeId == 0 ? 2 : 3][sizeId == 0 ? 2 : 3];
+    const uint32_t* scan = g_scanOrder[SCAN_UNGROUPED][SCAN_DIAG][sizeId == 0 ? 2 : 3];
     int nextCoef = SCALING_LIST_START_VALUE;
     int data;
     int32_t *src = scalingList->getScalingListAddress(sizeId, listId);
@@ -1851,13 +1851,13 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
     DTRACE_CABAC_T("\n")
 }
 
-void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, TextType ttype)
+void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         return;
     }
-    if (width != 4)
+    if (trSize != 4)
     {
         return;
     }
@@ -2000,7 +2000,7 @@ void TEncSbac::codeQtRootCbfZero(TComDataCU*)
  * \param uiScanIdx scan type (zig-zag, hor, ver)
  * This method encodes the X and Y component within a block of the last significant coefficient.
  */
-void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, int width, int height, TextType ttype, uint32_t scanIdx)
+void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx)
 {
     assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
     // swap
@@ -2010,37 +2010,34 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, int width, in
     }
 
     uint32_t ctxLast;
-    ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X + (ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : 0)];
-    ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y + (ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : 0)];
     uint32_t groupIdxX = g_groupIdx[posx];
     uint32_t groupIdxY = g_groupIdx[posy];
 
-    int blkSizeOffsetX, blkSizeOffsetY, shiftX, shiftY;
-    blkSizeOffsetX = ttype ? 0 : (g_convertToBit[width] * 3 + ((g_convertToBit[width] + 1) >> 2));
-    blkSizeOffsetY = ttype ? 0 : (g_convertToBit[height] * 3 + ((g_convertToBit[height] + 1) >> 2));
-    shiftX = ttype ? g_convertToBit[width] : ((g_convertToBit[width] + 3) >> 2);
-    shiftY = ttype ? g_convertToBit[height] : ((g_convertToBit[height] + 3) >> 2);
+    int blkSizeOffset = ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2));
+    int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);
+    uint32_t maxGroupIdx = log2TrSize * 2 - 1;
     // posX
+    ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
     for (ctxLast = 0; ctxLast < groupIdxX; ctxLast++)
     {
-        m_binIf->encodeBin(1, *(ctxX + blkSizeOffsetX + (ctxLast >> shiftX)));
+        m_binIf->encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
     }
-
-    if (groupIdxX < g_groupIdx[width - 1])
+    if (groupIdxX < maxGroupIdx)
     {
-        m_binIf->encodeBin(0, *(ctxX + blkSizeOffsetX + (ctxLast >> shiftX)));
+        m_binIf->encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     // posY
+    ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
     for (ctxLast = 0; ctxLast < groupIdxY; ctxLast++)
     {
-        m_binIf->encodeBin(1, *(ctxY + blkSizeOffsetY + (ctxLast >> shiftY)));
+        m_binIf->encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
+    }
+    if (groupIdxY < maxGroupIdx)
+    {
+        m_binIf->encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
-    if (groupIdxY < g_groupIdx[height - 1])
-    {
-        m_binIf->encodeBin(0, *(ctxY + blkSizeOffsetY + (ctxLast >> shiftY)));
-    }
     if (groupIdxX > 3)
     {
         uint32_t count = (groupIdxX - 2) >> 1;
@@ -2055,16 +2052,16 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, int width, in
     }
 }
 
-void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, uint32_t width, uint32_t height, uint32_t depth, TextType ttype)
+void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype)
 {
 #if ENC_DEC_TRACE
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseCoeffNxN()\teType=")
     DTRACE_CABAC_V(ttype)
     DTRACE_CABAC_T("\twidth=")
-    DTRACE_CABAC_V(width)
+    DTRACE_CABAC_V(trSize)
     DTRACE_CABAC_T("\theight=")
-    DTRACE_CABAC_V(height)
+    DTRACE_CABAC_V(trSize)
     DTRACE_CABAC_T("\tdepth=")
     DTRACE_CABAC_V(depth)
     DTRACE_CABAC_T("\tabspartidx=")
@@ -2086,10 +2083,10 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     (void)depth;
 #endif // if ENC_DEC_TRACE
 
-    assert(width <= m_slice->getSPS()->getMaxTrSize());
+    assert(trSize <= m_slice->getSPS()->getMaxTrSize());
 
     // compute number of significant coefficients
-    uint32_t numSig = primitives.count_nonzero(coeff, width * height);
+    uint32_t numSig = primitives.count_nonzero(coeff, trSize * trSize);
 
     if (numSig == 0)
         return;
@@ -2105,16 +2102,15 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     }
     if (cu->getSlice()->getPPS()->getUseTransformSkip())
     {
-        codeTransformSkipFlags(cu, absPartIdx, width, ttype);
+        codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
     }
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-    const uint32_t log2BlockWidth  = g_convertToBit[width] + 2;
-    const uint32_t log2BlockHeight = g_convertToBit[height] + 2;
+    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
 
     //select scans
     TUEntropyCodingParameters codingParameters;
-    TComTrQuant::getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  width, height, ttype);
+    TComTrQuant::getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
 
     //----- encode significance map -----
 
@@ -2122,16 +2118,17 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     int scanPosLast = -1;
     int posLast;
     uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
-    memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * MLS_GRP_NUM);
+    uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
+    memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * cgNum);
     do
     {
         posLast = codingParameters.scan[++scanPosLast];
         if (coeff[posLast] != 0)
         {
             // get L1 sig map
-            uint32_t posy   = posLast >> log2BlockWidth;
-            uint32_t posx   = posLast - (posy << log2BlockWidth);
-            uint32_t blkIdx = codingParameters.widthInGroups * (posy >> MLS_CG_LOG2_HEIGHT) + (posx >> MLS_CG_LOG2_WIDTH);
+            uint32_t posy   = posLast >> log2TrSize;
+            uint32_t posx   = posLast - (posy << log2TrSize);
+            uint32_t blkIdx = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
             sigCoeffGroupFlag[blkIdx] = 1;
 
             numSig--;
@@ -2140,9 +2137,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     while (numSig > 0);
 
     // Code position of last coefficient
-    int posLastY = posLast >> log2BlockWidth;
-    int posLastX = posLast - (posLastY << log2BlockWidth);
-    codeLastSignificantXY(posLastX, posLastY, width, height, ttype, codingParameters.scanType);
+    int posLastY = posLast >> log2TrSize;
+    int posLastX = posLast - (posLastY << log2TrSize);
+    codeLastSignificantXY(posLastX, posLastY, log2TrSize, ttype, codingParameters.scanType);
     //===== code significance flag =====
     ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype ? NUM_SIG_CG_FLAG_CTX : 0)];
     ContextModel * const baseCtx = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_SIG_FLAG_CTX] : &m_contextModels[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
@@ -2171,8 +2168,8 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
         }
         // encode significant_coeffgroup_flag
         int cgBlkPos = codingParameters.scanCG[subSet];
-        int cgPosY   = cgBlkPos / codingParameters.widthInGroups;
-        int cgPosX   = cgBlkPos - (cgPosY * codingParameters.widthInGroups);
+        int cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
+        int cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
 
         if (subSet == lastScanSet || subSet == 0)
         {
@@ -2181,13 +2178,13 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
         else
         {
             uint32_t sigCoeffGroup = (sigCoeffGroupFlag[cgBlkPos] != 0);
-            uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
+            uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             m_binIf->encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag[cgBlkPos])
         {
-            const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
+            const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             uint32_t blkPos, sig, ctxSig;
             for (; scanPosSig >= subPos; scanPosSig--)
             {
@@ -2195,7 +2192,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
                 sig     = (coeff[blkPos] != 0);
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
-                    ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, codingParameters, scanPosSig, log2BlockWidth, log2BlockHeight, ttype);
+                    ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, codingParameters, scanPosSig, log2TrSize, ttype);
                     m_binIf->encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
@@ -2348,14 +2345,14 @@ void TEncSbac::codeSaoTypeIdx(uint32_t code)
  *   estimate bit cost for CBP, significant map and significant coefficients
  ****************************************************************************
  */
-void TEncSbac::estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype)
+void TEncSbac::estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype)
 {
     estCBFBit(estBitsSbac);
 
     estSignificantCoeffGroupMapBit(estBitsSbac, ttype);
 
     // encode significance map
-    estSignificantMapBit(estBitsSbac, width, height, ttype);
+    estSignificantMapBit(estBitsSbac, trSize, ttype);
 
     // encode significant coefficients
     estSignificantCoefficientsBit(estBitsSbac, ttype);
@@ -2412,16 +2409,16 @@ void TEncSbac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, Te
  *    estimate SAMBAC bit cost for significant coefficient map
  ****************************************************************************
  */
-void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype)
+void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype)
 {
     int firstCtx = 1, numCtx = 8;
 
-    if (width >= 16)
+    if (trSize >= 16)
     {
         firstCtx = (ttype == TEXT_LUMA) ? 21 : 12;
         numCtx = (ttype == TEXT_LUMA) ? 6 : 3;
     }
-    else if (width == 8)
+    else if (trSize == 8)
     {
         firstCtx = 9;
         numCtx = (ttype == TEXT_LUMA) ? 12 : 3;
@@ -2458,30 +2455,30 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, i
         }
     }
     int bitsX = 0, bitsY = 0;
-    int blkSizeOffsetX, blkSizeOffsetY, shiftX, shiftY;
 
-    blkSizeOffsetX = ttype ? 0 : (g_convertToBit[width] * 3 + ((g_convertToBit[width] + 1) >> 2));
-    blkSizeOffsetY = ttype ? 0 : (g_convertToBit[height] * 3 + ((g_convertToBit[height] + 1) >> 2));
-    shiftX = ttype ? g_convertToBit[width] : ((g_convertToBit[width] + 3) >> 2);
-    shiftY = ttype ? g_convertToBit[height] : ((g_convertToBit[height] + 3) >> 2);
+    uint32_t log2TrSize = g_convertToBit[trSize] + 2;
+    int blkSizeOffset = ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2));
+    int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);
+    uint32_t maxGroupIdx = log2TrSize * 2 - 1;
 
     assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
     int ctx;
-    for (ctx = 0; ctx < g_groupIdx[width - 1]; ctx++)
+    const ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
+    for (ctx = 0; ctx < maxGroupIdx; ctx++)
     {
-        int ctxOffset = blkSizeOffsetX + (ctx >> shiftX);
-        estBitsSbac->lastXBits[ctx] = bitsX + sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : 0) + ctxOffset)].m_state, 0);
-        bitsX += sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_X + ((ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : 0) + ctxOffset)].m_state, 1);
+        int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
+        estBitsSbac->lastXBits[ctx] = bitsX + sbacGetEntropyBits(ctxX[ctxOffset].m_state, 0);
+        bitsX += sbacGetEntropyBits(ctxX[ctxOffset].m_state, 1);
     }
-
     estBitsSbac->lastXBits[ctx] = bitsX;
-    for (ctx = 0; ctx < g_groupIdx[height - 1]; ctx++)
-    {
-        int ctxOffset = blkSizeOffsetY + (ctx >> shiftY);
-        estBitsSbac->lastYBits[ctx] = bitsY + sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : 0) + ctxOffset)].m_state, 0);
-        bitsY += sbacGetEntropyBits(m_contextModels[OFF_CTX_LAST_FLAG_Y + ((ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : 0) + ctxOffset)].m_state, 1);
-    }
 
+    const ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
+    for (ctx = 0; ctx < maxGroupIdx; ctx++)
+    {
+        int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
+        estBitsSbac->lastYBits[ctx] = bitsY + sbacGetEntropyBits(ctxY[ctxOffset].m_state, 0);
+        bitsY += sbacGetEntropyBits(ctxY[ctxOffset].m_state, 1);
+    }
     estBitsSbac->lastYBits[ctx] = bitsY;
 }
 

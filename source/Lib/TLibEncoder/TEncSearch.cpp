@@ -460,7 +460,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     //--- init rate estimation arrays for RDOQ ---
     if (useTransformSkip ? m_cfg->bEnableRDOQTS : m_cfg->bEnableRDOQ)
     {
-        m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, width, TEXT_LUMA);
+        m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, TEXT_LUMA);
     }
 
     //--- transform and quantization ---
@@ -588,7 +588,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         //--- init rate estimation arrays for RDOQ ---
         if (useTransformSkipChroma ? m_cfg->bEnableRDOQTS : m_cfg->bEnableRDOQ)
         {
-            m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, width, ttype);
+            m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, ttype);
         }
         //--- transform and quantization ---
         uint32_t absSum = 0;
@@ -3482,7 +3482,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
         if (m_cfg->bEnableRDOQ && curuseRDOQ)
         {
-            m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidth, trHeight, TEXT_LUMA);
+            m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidth, TEXT_LUMA);
         }
 
         m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0, chFmt);
@@ -3497,7 +3497,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         {
             if (m_cfg->bEnableRDOQ && curuseRDOQ)
             {
-                m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
+                m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidthC, TEXT_CHROMA);
             }
             //Cb transform
             int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
@@ -3773,7 +3773,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
             if (m_cfg->bEnableRDOQTS)
             {
-                m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidth, trHeight, TEXT_LUMA);
+                m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidth, TEXT_LUMA);
             }
 
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0, chFmt);
@@ -3852,7 +3852,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
             if (m_cfg->bEnableRDOQTS)
             {
-                m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
+                m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidthC, TEXT_CHROMA);
             }
 
             int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();

@@ -2833,7 +2833,7 @@ void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter)
                                        + (partWidth / m_pic->getMinCUWidth()) / 2];
 }
 
-uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t width, uint32_t height, bool bIsLuma, bool bIsIntra)
+uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra)
 {
     uint32_t scanIdx;
     uint32_t dirMode;
@@ -2846,57 +2846,28 @@ uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t width, uint32_
 
     if (bIsLuma)
     {
-        const uint32_t maximumWidth  = MDCS_MAXIMUM_WIDTH;
-        const uint32_t maximumHeight = MDCS_MAXIMUM_HEIGHT;
-
-        if ((width > maximumWidth) || (height > maximumHeight)) return SCAN_DIAG;
+        if (log2TrSize > MDCS_LOG2_MAX_SIZE) return SCAN_DIAG;
 
         dirMode = getLumaIntraDir(absPartIdx);
     }
     else
     {
-        const uint32_t maximumWidth  = MDCS_MAXIMUM_WIDTH  >> m_hChromaShift;
-        const uint32_t maximumHeight = MDCS_MAXIMUM_HEIGHT >> m_vChromaShift;
-
-        if ((width > maximumWidth) || (height > maximumHeight)) return SCAN_DIAG;
+        if (log2TrSize > (MDCS_LOG2_MAX_SIZE - m_hChromaShift)) return SCAN_DIAG;
 
         dirMode  = getChromaIntraDir(absPartIdx);
         if (dirMode == DM_CHROMA_IDX)
         {
             dirMode = getLumaIntraDir(absPartIdx);
         }
+        // TODO: 4:2:2
     }
 
-    switch (MDCS_MODE)
-    {
-    case MDCS_BOTH_DIRECTIONS:
-        if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
-            scanIdx = SCAN_HOR;
-        else if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
-            scanIdx = SCAN_VER;
-        else
-            scanIdx = SCAN_DIAG;
-        break;
-
-    case MDCS_VERTICAL_ONLY:
-        if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
-            scanIdx = SCAN_VER;
-        break;
-
-    case MDCS_HORIZONTAL_ONLY:
-        if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
-            scanIdx = SCAN_HOR;
-        break;
-
-    case MDCS_DISABLED:
-        scanIdx = 0;
-        break;
-
-    default:
-        assert(false);
-        x265_log(NULL, X265_LOG_ERROR, "Unrecognised MDCS mode\n");
-        break;
-    }
+    if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
+        scanIdx = SCAN_HOR;
+    else if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
+        scanIdx = SCAN_VER;
+    else
+        scanIdx = SCAN_DIAG;
 
     return scanIdx;
 }

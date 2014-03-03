@@ -158,10 +158,10 @@ public:
     void setScalingList(TComScalingList *scalingList);
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
-    static int  calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t posXCG, uint32_t posYCG, uint32_t widthInGroups, uint32_t heightInGroups);
-    static int getSigCtxInc(int patternSigCtx, const TUEntropyCodingParameters &codingParameters, const int scanPosition, const int log2BlockWidth, const int log2BlockHeight, const TextType ttype);
-    static uint32_t getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag, uint32_t cGPosX, uint32_t cGPosY, const uint32_t widthInGroups, const uint32_t heightInGroups);
-    static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype);
+    static int calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
+    static int getSigCtxInc(int patternSigCtx, const TUEntropyCodingParameters &codingParameters, const int scanPosition, const int log2TrSize, const TextType ttype);
+    static uint32_t getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag, uint32_t cgPosX, uint32_t cgPosY, const uint32_t log2TrSizeCG);
+    static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
     estBitsSbacStruct* m_estBitsSbac;
 
 protected:
