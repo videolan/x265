@@ -1258,11 +1258,11 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, wpScalingP
         int offset = wp->inputOffset << (X265_DEPTH - 8);
         int scale = wp->inputWeight;
         int denom = wp->log2WeightDenom;
-        int correction = IF_INTERNAL_PREC - X265_DEPTH;
+        int round = denom ? 1 << (denom - 1) : 0;
+        int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
 
-        // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
         primitives.weight_pp(ref->buffer[0], wbuffer[0], stride, stride, stride, paddedLines,
-                             scale, (1 << (denom - 1 + correction)), denom + correction, offset);
+                             scale, round << correction, denom + correction, offset);
         src = weightedRef.fpelPlane;
     }
 
@@ -1353,14 +1353,14 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
         int offset = w.inputOffset << (X265_DEPTH - 8);
         int scale = w.inputWeight;
         int denom = w.log2WeightDenom;
-        int correction = IF_INTERNAL_PREC - X265_DEPTH;
+        int round = denom ? 1 << (denom - 1) : 0;
+        int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
         int stride = ref->lumaStride;
 
         for (int i = 0; i < 4; i++)
         {
-            // Adding (IF_INTERNAL_PREC - X265_DEPTH) to cancel effect of pixel to short conversion inside the primitive
             primitives.weight_pp(ref->buffer[i], wbuffer[i], stride, stride, stride, paddedLines,
-                                 scale, (1 << (denom - 1 + correction)), denom + correction, offset);
+                                 scale, round << correction, denom + correction, offset);
         }
 
         weightedRef.isWeighted = true;

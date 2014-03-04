@@ -202,13 +202,14 @@ uint32_t weightCost(pixel *         fenc,
     {
         /* make a weighted copy of the reference plane */
         int offset = w->inputOffset << (X265_DEPTH - 8);
-        int scale = w->inputWeight;
+        int weight = w->inputWeight;
         int denom = w->log2WeightDenom;
+        int round = denom ? 1 << (denom - 1) : 0;
         int correction = IF_INTERNAL_PREC - X265_DEPTH; /* intermediate interpolation depth */
         int pwidth = ((width + 15) >> 4) << 4;
 
         primitives.weight_pp(ref, cache.weightTemp, stride, stride, pwidth, height,
-                             scale, (1 << (denom - 1 + correction)), denom + correction, offset);
+                             weight, round << correction, denom + correction, offset);
         ref = cache.weightTemp;
     }
 
