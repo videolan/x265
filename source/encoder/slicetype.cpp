@@ -65,6 +65,7 @@ Lookahead::Lookahead(TEncCfg *_cfg, ThreadPool* pool)
     widthInCU = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     heightInCU = ((cfg->param.sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     scratch = (int*)x265_malloc(widthInCU * sizeof(int));
+    memset(histogram, 0, sizeof(histogram));
 }
 
 Lookahead::~Lookahead() { }
@@ -312,6 +313,7 @@ void Lookahead::slicetypeDecide()
         list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
     list[bframes]->m_lowres.leadingBframes = bframes;
     lastNonB = &list[bframes]->m_lowres;
+    histogram[bframes]++;
 
     /* insert a bref into the sequence */
     if (cfg->param.bBPyramid && bframes > 1 && !brefs)

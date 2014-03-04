@@ -14,6 +14,7 @@ project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
+include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed

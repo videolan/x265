@@ -120,10 +120,6 @@ void FrameFilter::start(TComPic *pic)
 
 void FrameFilter::end()
 {
-    if (m_cfg->param.bEnableSAO)
-    {
-        m_sao.destroyPicSaoInfo();
-    }
 }
 
 void FrameFilter::processRow(int row)

@@ -63,20 +63,19 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p);
 void Setup_C_DCTPrimitives(EncoderPrimitives &p);
 void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
 void Setup_C_IPredPrimitives(EncoderPrimitives &p);
-
+void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p);
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_DCTPrimitives(p);        // dct.cpp
     Setup_C_IPFilterPrimitives(p);   // ipfilter.cpp
     Setup_C_IPredPrimitives(p);      // intrapred.cpp
+    Setup_C_LoopFilterPrimitives(p); // loopfilter.cpp
 }
 }
-
 using namespace x265;
 
-/* cpuid == 0 - auto-detect CPU type, else
- * cpuid > 0 -  force CPU type
+/* cpuid >= 0 - force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
 extern "C"
 void x265_setup_primitives(x265_param *param, int cpuid)
@@ -89,11 +88,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
         if (primitives.sad[0])
             return;
         else
-            cpuid = 0;
-    }
-    if (cpuid == 0)
-    {
-        cpuid = x265::cpu_detect();
+            cpuid = x265::cpu_detect();
     }
     if (param->logLevel >= X265_LOG_INFO)
     {
@@ -101,14 +96,20 @@ void x265_setup_primitives(x265_param *param, int cpuid)
         char *p = buf + sprintf(buf, "using cpu capabilities:");
         for (int i = 0; x265::cpu_names[i].flags; i++)
         {
+            if (!strcmp(x265::cpu_names[i].name, "SSE")
+                && (cpuid & X265_CPU_SSE2))
+                continue;
             if (!strcmp(x265::cpu_names[i].name, "SSE2")
-                && cpuid & (X265_CPU_SSE2_IS_FAST | X265_CPU_SSE2_IS_SLOW))
+                && (cpuid & (X265_CPU_SSE2_IS_FAST | X265_CPU_SSE2_IS_SLOW)))
                 continue;
             if (!strcmp(x265::cpu_names[i].name, "SSE3")
                 && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
                 continue;
             if (!strcmp(x265::cpu_names[i].name, "SSE4.1")
                 && (cpuid & X265_CPU_SSE42))
+                continue;
+            if (!strcmp(x265::cpu_names[i].name, "BMI1")
+                && (cpuid & X265_CPU_BMI2))
                 continue;
             if ((cpuid & x265::cpu_names[i].flags) == x265::cpu_names[i].flags
                 && (!i || x265::cpu_names[i].flags != x265::cpu_names[i - 1].flags))
@@ -125,24 +126,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
 
 #if ENABLE_ASSEMBLY
     Setup_Assembly_Primitives(primitives, cpuid);
-#endif
-
-    primitives.sa8d[BLOCK_4x4] = primitives.sa8d_inter[LUMA_4x4];
-    primitives.sa8d[BLOCK_8x8] = primitives.sa8d_inter[LUMA_8x8];
-    primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
-    primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
-    primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
-
-    // SA8D devolves to SATD for blocks not even multiples of 8x8
-    primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];
-    primitives.sa8d_inter[LUMA_4x8]   = primitives.satd[LUMA_4x8];
-    primitives.sa8d_inter[LUMA_4x16]  = primitives.satd[LUMA_4x16];
-    primitives.sa8d_inter[LUMA_8x4]   = primitives.satd[LUMA_8x4];
-    primitives.sa8d_inter[LUMA_16x4]  = primitives.satd[LUMA_16x4];
-    primitives.sa8d_inter[LUMA_16x12] = primitives.satd[LUMA_16x12];
-    primitives.sa8d_inter[LUMA_12x16] = primitives.satd[LUMA_12x16];
-
-#if !ENABLE_ASSEMBLY
+#else
     x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
 #endif
 }

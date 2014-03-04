@@ -59,29 +59,32 @@ class TComPattern
 public:
 
     // access functions of ADI buffers
-    static Pel* getAdiChromaBuf(int chromaId, int cuHeight, Pel* adiBuf) { return adiBuf + (chromaId == 0 ? 0 : 2 * ADI_BUF_STRIDE * (cuHeight * 2 + 1)); }
+    static pixel* getAdiChromaBuf(int chromaId, int cuHeight, pixel* adiBuf)
+    {
+        return adiBuf + (chromaId == 0 ? 0 : 2 * ADI_BUF_STRIDE * (cuHeight * 2 + 1));
+    }
 
     // -------------------------------------------------------------------------------------------------------------------
     // initialization functions
     // -------------------------------------------------------------------------------------------------------------------
 
-    /// set parameters from Pel buffers for accessing neighboring pixels
-    void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf,
-                        int strideOrig, int heightOrig, Pel* refAbove, Pel* refLeft,
-                        Pel* refAboveFlt, Pel* refLeftFlt);
+    /// set parameters from pixel buffers for accessing neighboring pixels
+    void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
+                        int strideOrig, int heightOrig, pixel* refAbove, pixel* refLeft,
+                        pixel* refAboveFlt, pixel* refLeftFlt);
 
     /// set luma parameters from CU data for accessing ADI data
-    void  initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, Pel* adiBuf,
+    void  initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
                          int strideOrig, int heightOrig);
 
     /// set chroma parameters from CU data for accessing ADI data
     void  initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
-                               Pel* adiBuf, int strideOrig, int heightOrig, int chromaId);
+                               pixel* adiBuf, int strideOrig, int heightOrig, int chromaId);
 
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
+    void fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
 
     /// constrained intra prediction
     bool  isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT);

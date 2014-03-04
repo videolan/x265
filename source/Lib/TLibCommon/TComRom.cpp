@@ -45,7 +45,7 @@ namespace x265 {
 //! \ingroup TLibCommon
 //! \{
 // scanning order table
-uint32_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH][MAX_CU_DEPTH];
+uint32_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
 
 class ScanGenerator
 {
@@ -148,64 +148,61 @@ void initROM()
     }
 
     // initialise scan orders
-    for (uint32_t log2BlockHeight = 0; log2BlockHeight < MAX_CU_DEPTH; log2BlockHeight++)
+    for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
     {
-        for (uint32_t log2BlockWidth = 0; log2BlockWidth < MAX_CU_DEPTH; log2BlockWidth++)
+        const uint32_t blockWidth  = 1 << log2BlockSize;
+        const uint32_t blockHeight = 1 << log2BlockSize;
+        const uint32_t totalValues = blockWidth * blockHeight;
+        //non-grouped scan orders
+        for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
         {
-            const uint32_t blockWidth  = 1 << log2BlockWidth;
-            const uint32_t blockHeight = 1 << log2BlockHeight;
-            const uint32_t totalValues = blockWidth * blockHeight;
-            //non-grouped scan orders
-            for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
+            const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
+            g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize] = X265_MALLOC(uint32_t, totalValues);
+            ScanGenerator fullBlockScan(blockWidth, blockHeight, blockWidth, scanType);
+
+            for (uint32_t scanPosition = 0; scanPosition < totalValues; scanPosition++)
             {
-                const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-                g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockWidth][log2BlockHeight] = X265_MALLOC(uint32_t, totalValues);
-                ScanGenerator fullBlockScan(blockWidth, blockHeight, blockWidth, scanType);
-
-                for (uint32_t scanPosition = 0; scanPosition < totalValues; scanPosition++)
-                {
-                    g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockWidth][log2BlockHeight][scanPosition] = fullBlockScan.GetNextIndex(0, 0);
-                }
+                g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize][scanPosition] = fullBlockScan.GetNextIndex(0, 0);
             }
-
-            //grouped scan orders
-            const uint32_t  groupWidth           = 1 << MLS_CG_LOG2_WIDTH;
-            const uint32_t  groupHeight          = 1 << MLS_CG_LOG2_HEIGHT;
-            const uint32_t  widthInGroups        = blockWidth  >> MLS_CG_LOG2_WIDTH;
-            const uint32_t  heightInGroups       = blockHeight >> MLS_CG_LOG2_HEIGHT;
-
-            const uint32_t  groupSize            = groupWidth    * groupHeight;
-            const uint32_t  totalGroups          = widthInGroups * heightInGroups;
-
-            for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
-            {
-                const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-
-                g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockWidth][log2BlockHeight] = X265_MALLOC(uint32_t, totalValues);
-
-                ScanGenerator fullBlockScan(widthInGroups, heightInGroups, groupWidth, scanType);
-
-                for (uint32_t groupIndex = 0; groupIndex < totalGroups; groupIndex++)
-                {
-                    const uint32_t groupPositionY  = fullBlockScan.GetCurrentY();
-                    const uint32_t groupPositionX  = fullBlockScan.GetCurrentX();
-                    const uint32_t groupOffsetX    = groupPositionX * groupWidth;
-                    const uint32_t groupOffsetY    = groupPositionY * groupHeight;
-                    const uint32_t groupOffsetScan = groupIndex     * groupSize;
-
-                    ScanGenerator groupScan(groupWidth, groupHeight, blockWidth, scanType);
-
-                    for (uint32_t scanPosition = 0; scanPosition < groupSize; scanPosition++)
-                    {
-                        g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockWidth][log2BlockHeight][groupOffsetScan + scanPosition] = groupScan.GetNextIndex(groupOffsetX, groupOffsetY);
-                    }
-
-                    fullBlockScan.GetNextIndex(0, 0);
-                }
-            }
-
-            //--------------------------------------------------------------------------------------------------
         }
+
+        //grouped scan orders
+        const uint32_t  groupWidth           = 1 << MLS_CG_LOG2_SIZE;
+        const uint32_t  groupHeight          = 1 << MLS_CG_LOG2_SIZE;
+        const uint32_t  widthInGroups        = blockWidth  >> MLS_CG_LOG2_SIZE;
+        const uint32_t  heightInGroups       = blockHeight >> MLS_CG_LOG2_SIZE;
+
+        const uint32_t  groupSize            = groupWidth    * groupHeight;
+        const uint32_t  totalGroups          = widthInGroups * heightInGroups;
+
+        for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
+        {
+            const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
+
+            g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize] = X265_MALLOC(uint32_t, totalValues);
+
+            ScanGenerator fullBlockScan(widthInGroups, heightInGroups, groupWidth, scanType);
+
+            for (uint32_t groupIndex = 0; groupIndex < totalGroups; groupIndex++)
+            {
+                const uint32_t groupPositionY  = fullBlockScan.GetCurrentY();
+                const uint32_t groupPositionX  = fullBlockScan.GetCurrentX();
+                const uint32_t groupOffsetX    = groupPositionX * groupWidth;
+                const uint32_t groupOffsetY    = groupPositionY * groupHeight;
+                const uint32_t groupOffsetScan = groupIndex     * groupSize;
+
+                ScanGenerator groupScan(groupWidth, groupHeight, blockWidth, scanType);
+
+                for (uint32_t scanPosition = 0; scanPosition < groupSize; scanPosition++)
+                {
+                    g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize][groupOffsetScan + scanPosition] = groupScan.GetNextIndex(groupOffsetX, groupOffsetY);
+                }
+
+                fullBlockScan.GetNextIndex(0, 0);
+            }
+        }
+
+        //--------------------------------------------------------------------------------------------------
     }
 }
 
@@ -218,12 +215,9 @@ void destroyROM()
     {
         for (uint32_t scanOrderIndex = 0; scanOrderIndex < SCAN_NUMBER_OF_TYPES; scanOrderIndex++)
         {
-            for (uint32_t log2BlockWidth = 0; log2BlockWidth < MAX_CU_DEPTH; log2BlockWidth++)
+            for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
             {
-                for (uint32_t log2BlockHeight = 0; log2BlockHeight < MAX_CU_DEPTH; log2BlockHeight++)
-                {
-                    X265_FREE(g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockWidth][log2BlockHeight]);
-                }
+                X265_FREE(g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockSize]);
             }
         }
     }

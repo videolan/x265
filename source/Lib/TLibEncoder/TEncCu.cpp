@@ -71,7 +71,7 @@ TEncCu::TEncCu()
  \param    uiMaxWidth    largest CU width
  \param    uiMaxHeight   largest CU height
  */
-void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
+bool TEncCu::create(UChar totalDepth, uint32_t maxWidth)
 {
     m_totalDepth   = totalDepth + 1;
     m_interCU_2Nx2N  = new TComDataCU*[m_totalDepth - 1];
@@ -84,7 +84,7 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
     m_tempCU      = new TComDataCU*[m_totalDepth - 1];
 
     m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
-    m_bestResiYuv = new TShortYUV*[m_totalDepth - 1];
+    m_bestResiYuv = new ShortYuv*[m_totalDepth - 1];
     m_bestRecoYuv = new TComYuv*[m_totalDepth - 1];
 
     m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
@@ -96,7 +96,7 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
     m_modePredYuv[4] = new TComYuv*[m_totalDepth - 1];
     m_modePredYuv[5] = new TComYuv*[m_totalDepth - 1];
 
-    m_tmpResiYuv = new TShortYUV*[m_totalDepth - 1];
+    m_tmpResiYuv = new ShortYuv*[m_totalDepth - 1];
     m_tmpRecoYuv = new TComYuv*[m_totalDepth - 1];
 
     m_bestMergeRecoYuv = new TComYuv*[m_totalDepth - 1];
@@ -105,6 +105,7 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
 
     int csp = m_cfg->param.internalCsp;
 
+    bool ok = true;
     for (int i = 0; i < m_totalDepth - 1; i++)
     {
         uint32_t numPartitions = 1 << ((m_totalDepth - i - 1) << 1);
@@ -112,61 +113,62 @@ void TEncCu::create(UChar totalDepth, uint32_t maxWidth)
         uint32_t height = maxWidth >> i;
 
         m_bestCU[i] = new TComDataCU;
-        m_bestCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_bestCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_tempCU[i] = new TComDataCU;
-        m_tempCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_tempCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_interCU_2Nx2N[i] = new TComDataCU;
-        m_interCU_2Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_interCU_2Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_interCU_2NxN[i] = new TComDataCU;
-        m_interCU_2NxN[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_interCU_2NxN[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_interCU_Nx2N[i] = new TComDataCU;
-        m_interCU_Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_interCU_Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_intraInInterCU[i] = new TComDataCU;
-        m_intraInInterCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_intraInInterCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_mergeCU[i] = new TComDataCU;
-        m_mergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_mergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_bestMergeCU[i] = new TComDataCU;
-        m_bestMergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_bestMergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
 
         m_bestPredYuv[i] = new TComYuv;
-        m_bestPredYuv[i]->create(width, height, csp);
+        ok &= m_bestPredYuv[i]->create(width, height, csp);
 
-        m_bestResiYuv[i] = new TShortYUV;
-        m_bestResiYuv[i]->create(width, height, csp);
+        m_bestResiYuv[i] = new ShortYuv;
+        ok &= m_bestResiYuv[i]->create(width, height, csp);
 
         m_bestRecoYuv[i] = new TComYuv;
-        m_bestRecoYuv[i]->create(width, height, csp);
+        ok &= m_bestRecoYuv[i]->create(width, height, csp);
 
         m_tmpPredYuv[i] = new TComYuv;
-        m_tmpPredYuv[i]->create(width, height, csp);
+        ok &= m_tmpPredYuv[i]->create(width, height, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
             m_modePredYuv[j][i] = new TComYuv;
-            m_modePredYuv[j][i]->create(width, height, csp);
+            ok &= m_modePredYuv[j][i]->create(width, height, csp);
         }
 
-        m_tmpResiYuv[i] = new TShortYUV;
-        m_tmpResiYuv[i]->create(width, height, csp);
+        m_tmpResiYuv[i] = new ShortYuv;
+        ok &= m_tmpResiYuv[i]->create(width, height, csp);
 
         m_tmpRecoYuv[i] = new TComYuv;
-        m_tmpRecoYuv[i]->create(width, height, csp);
+        ok &= m_tmpRecoYuv[i]->create(width, height, csp);
 
         m_bestMergeRecoYuv[i] = new TComYuv;
-        m_bestMergeRecoYuv[i]->create(width, height, csp);
+        ok &= m_bestMergeRecoYuv[i]->create(width, height, csp);
 
         m_origYuv[i] = new TComYuv;
-        m_origYuv[i]->create(width, height, csp);
+        ok &= m_origYuv[i]->create(width, height, csp);
     }
 
     m_bEncodeDQP = false;
+    return ok;
 }
 
 void TEncCu::destroy()
@@ -531,8 +533,16 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 
     TComPic* pic = outBestCU->getPic();
 
-    // get Original YUV data from picture
-    m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
+    if (depth == 0)
+    {
+        // get original YUV data from picture
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
+    }
+    else
+    {
+        // copy partition YUV from depth 0 CTU cache
+        m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outBestCU->getZorderIdxInCU());
+    }
 
     // variable for Early CU determination
     bool bSubBranch = true;
@@ -684,7 +694,14 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     TComPic* pic = outBestCU->getPic();
 
     // get Original YUV data from picture
-    m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
+    if (depth == 0)
+    {
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
+    }
+    else
+    {
+        m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outBestCU->getZorderIdxInCU());
+    }
 
     // variable for Early CU determination
     bool bSubBranch = true;

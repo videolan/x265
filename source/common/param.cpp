@@ -25,11 +25,59 @@
 #include "x265.h"
 #include "threading.h"
 #include "param.h"
+#include "cpu.h"
 
 #include <climits>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+
+#if _MSC_VER
+#pragma warning(disable: 4996) // POSIX functions are just fine, thanks
+#pragma warning(disable: 4706) // assignment within conditional
+#endif
+
+#if _WIN32
+#define strcasecmp _stricmp 
+#endif
+
+#if !HAVE_STROTOK_R
+/* 
+ * adapted from public domain strtok_r() by Charlie Gordon
+ *
+ *   from comp.lang.c  9/14/2007
+ *
+ *      http://groups.google.com/group/comp.lang.c/msg/2ab1ecbb86646684
+ *
+ *     (Declaration that it's public domain):
+ *      http://groups.google.com/group/comp.lang.c/msg/7c7b39328fefab9c
+ */
+
+char* strtok_r(
+    char *str, 
+    const char *delim, 
+    char **nextp)
+{
+    if (!str)
+        str = *nextp;
+
+    str += strspn(str, delim);
+
+    if (!*str)
+        return NULL;
+
+    char *ret = str;
+
+    str += strcspn(str, delim);
+
+    if (*str)
+        *str++ = '\0';
+
+    *nextp = str;
+
+    return ret;
+}
+#endif
 
 using namespace x265;
 
@@ -334,11 +382,22 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
         }
-        else if (!strcmp(tune, "zero-latency"))
+        else if (!strcmp(tune, "fastdecode") ||
+                 !strcmp(tune, "fast-decode"))
+        {
+            param->bEnableLoopFilter = 0;
+            param->bEnableSAO = 0;
+            param->bEnableWeightedPred = 0;
+            param->bEnableWeightedBiPred = 0;
+        }
+        else if (!strcmp(tune, "zerolatency") ||
+                 !strcmp(tune, "zero-latency"))
         {
             param->bFrameAdaptive = 0;
             param->bframes = 0;
             param->lookaheadDepth = 0;
+            param->scenecutThreshold = 0;
+            param->rc.cuTree = 0;
         }
         else
             return -1;
@@ -359,16 +418,6 @@ static int x265_atobool(const char *str, bool& bError)
         return 0;
     bError = true;
     return 0;
-}
-
-int x265_atoi(const char *str, bool& bError)
-{
-    char *end;
-    int v = strtol(str, &end, 0);
-
-    if (end == str || *end != '\0')
-        bError = true;
-    return v;
 }
 
 static double x265_atof(const char *str, bool& bError)
@@ -486,13 +535,29 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = atobool(value);
     OPT("constrained-intra") p->bEnableConstrainedIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
-    OPT("scenecut") p->scenecutThreshold = atoi(value);
+    OPT("scenecut")
+    {
+        p->scenecutThreshold = atobool(value);
+        if (bError || p->scenecutThreshold)
+        {
+            bError = false;
+            p->scenecutThreshold = atoi(value);
+        }
+    }
     OPT("keyint") p->keyframeMax = atoi(value);
     OPT("min-keyint") p->keyframeMin = atoi(value);
     OPT("rc-lookahead") p->lookaheadDepth = atoi(value);
     OPT("bframes") p->bframes = atoi(value);
     OPT("bframe-bias") p->bFrameBias = atoi(value);
-    OPT("b-adapt") p->bFrameAdaptive = atoi(value);
+    OPT("b-adapt")
+    {
+        p->bFrameAdaptive = atobool(value);
+        if (bError || p->bFrameAdaptive)
+        {
+            bError = false;
+            p->bFrameAdaptive = atoi(value);
+        }
+    }
     OPT("ref") p->maxNumReferences = atoi(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
@@ -670,6 +735,56 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 
 namespace x265 {
 // internal encoder functions
+
+int x265_atoi(const char *str, bool& bError)
+{
+    char *end;
+    int v = strtol(str, &end, 0);
+
+    if (end == str || *end != '\0')
+        bError = true;
+    return v;
+}
+
+/* cpu name can be:
+ *   auto || true - x265::cpu_detect()
+ *   false || no  - disabled
+ *   integer bitmap value
+ *   comma separated list of SIMD names, eg: SSE4.1,XOP */
+int parseCpuName(const char *value, bool& bError)
+{
+    if (!value)
+    {
+        bError = 1;
+        return 0;
+    }
+    int cpu;
+    if (isdigit(value[0]))
+       cpu = x265_atoi(value, bError);
+    else
+       cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
+
+    if (bError)
+    {
+        char *buf = strdup(value);
+        char *tok, *saveptr = NULL, *init;
+        bError = 0;
+        cpu = 0;
+        for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
+        {
+            int i;
+            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++);
+            cpu |= x265::cpu_names[i].flags;
+            if (!x265::cpu_names[i].flags)
+                bError = 1;
+        }
+        free(buf);
+        if ((cpu & X265_CPU_SSSE3) && !(cpu & X265_CPU_SSE2_IS_SLOW))
+            cpu |= X265_CPU_SSE2_IS_FAST;
+    }
+
+    return cpu;
+}
 
 static const int fixedRatios[][2] =
 {

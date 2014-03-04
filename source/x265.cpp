@@ -28,8 +28,9 @@
 #include "input/input.h"
 #include "output/output.h"
 #include "common.h"
-#include "x265.h"
 #include "param.h"
+#include "cpu.h"
+#include "x265.h"
 
 #if HAVE_VLD
 /* Visual Leak Detector */
@@ -65,7 +66,8 @@ static const struct option long_options[] =
 {
     { "help",                 no_argument, NULL, 'h' },
     { "version",              no_argument, NULL, 'V' },
-    { "cpuid",          required_argument, NULL, 0 },
+    { "asm",            required_argument, NULL, 0 },
+    { "no-asm",               no_argument, NULL, 0 },
     { "threads",        required_argument, NULL, 0 },
     { "preset",         required_argument, NULL, 'p' },
     { "tune",           required_argument, NULL, 't' },
@@ -119,6 +121,7 @@ static const struct option long_options[] =
     { "bframes",        required_argument, NULL, 'b' },
     { "bframe-bias",    required_argument, NULL, 0 },
     { "b-adapt",        required_argument, NULL, 0 },
+    { "no-b-adapt",           no_argument, NULL, 0 },
     { "no-b-pyramid",         no_argument, NULL, 0 },
     { "b-pyramid",            no_argument, NULL, 0 },
     { "ref",            required_argument, NULL, 0 },
@@ -288,10 +291,12 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nExecutable Options:\n");
     H0("-h/--h                           Show this help text and exit\n");
     H0("-V/--version                     Show version info and exit\n");
-    H0("   --cpuid                       Limit SIMD capability bitmap 0:auto 1:None. Default:0\n");
+    H0("   --[no-]asm                    Override CPU detection. Default: auto\n");
     H0("   --threads                     Number of threads for thread pool (0: detect CPU core count, default)\n");
-    H0("-p/--preset                      ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
-    H0("-t/--tune                        Tune the settings for a particular type of source or situation: (psnr, ssim, zero-latency)\n");
+    H0("-p/--preset                      Trade off performance for compression efficiency. Default medium\n");
+    H0("                                     ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
+    H0("-t/--tune                        Tune the settings for a particular type of source or situation:\n");
+    H0("                                     psnr, ssim, zerolatency, or fastdecode\n");
     H0("-F/--frame-threads               Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
     H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
@@ -401,7 +406,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 {
     bool bError = 0;
     int help = 0;
-    int cpuid = 0;
+    int cpuid = x265::cpu_detect();
     int inputBitDepth = 8;
     int reconFileBitDepth = 0;
     const char *inputfn = NULL;
@@ -476,20 +481,22 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             }
 #define OPT(longname) \
     else if (!strcmp(long_options[long_options_index].name, longname))
+#define OPT2(name1, name2) \
+    else if (!strcmp(long_options[long_options_index].name, name1) || \
+             !strcmp(long_options[long_options_index].name, name2))
 
             if (0) ;
-            OPT("cpuid") cpuid = x265_atoi(optarg, bError);
+            OPT2("frame-skip", "seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
+            OPT("asm") cpuid = parseCpuName(optarg, bError);
+            OPT("no-asm") cpuid = 0;
             OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
-            OPT("seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
-            OPT("frame-skip") this->seek = (uint32_t)x265_atoi(optarg, bError);
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
             OPT("input-res") bError |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
             OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
-            OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;

@@ -101,7 +101,6 @@ public:
     void disablePartTree(SAOQTPart *psQTPart, int partIdx);
     void getSaoStats(SAOQTPart *psQTPart, int yCbCr);
     void calcSaoStatsCu(int addr, int partIdx, int yCbCr);
-    void calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, int64_t** stats, int64_t** counts, uint32_t width, uint32_t height, bool* bBorderAvail, int yCbCr);
     void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int idxY);
     void destroyEncBuffer();
     void createEncBuffer();

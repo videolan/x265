@@ -97,8 +97,9 @@ void FrameEncoder::destroy()
     stop();
 }
 
-void FrameEncoder::init(Encoder *top, int numRows)
+bool FrameEncoder::init(Encoder *top, int numRows)
 {
+    bool ok = true;
     m_top = top;
     m_cfg = top;
     m_numRows = numRows;
@@ -108,7 +109,8 @@ void FrameEncoder::init(Encoder *top, int numRows)
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
     {
-        m_rows[i].create(top);
+        ok &= m_rows[i].create(top);
+
         for (int list = 0; list <= 1; list++)
         {
             for (int ref = 0; ref <= MAX_NUM_REF; ref++)
@@ -121,7 +123,7 @@ void FrameEncoder::init(Encoder *top, int numRows)
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
     if (!WaveFront::init(m_numRows * 2))
     {
-        assert(!"Unable to initialize job queue.");
+        x265_log(&m_cfg->param, X265_LOG_ERROR, "unable to initialize wavefront queue\n");
         m_pool = NULL;
     }
 
@@ -172,11 +174,12 @@ void FrameEncoder::init(Encoder *top, int numRows)
     }
     else
     {
-        printf("error : ScalingList == %d not supported\n", m_top->getUseScalingListId());
-        assert(0);
+        x265_log(&m_cfg->param, X265_LOG_ERROR, "ScalingList == %d not supported\n", m_top->getUseScalingListId());
+        ok = false;
     }
 
     start();
+    return ok;
 }
 
 int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)

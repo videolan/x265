@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Deepthi Nandakumar <deepthi@multicorewareinc.com>
+ * Authors: Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,20 +21,9 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef X265_PARAM_H
-#define X265_PARAM_H
+#ifndef X265_LOOPFILTER_H
+#define X265_LOOPFILTER_H
 
-namespace x265 {
+void x265_saoCuOrgE0_sse4(pixel * rec, int8_t * offsetEo, int endX, int8_t signLeft);
 
-int   x265_check_params(x265_param *param);
-int   x265_set_globals(x265_param *param);
-void  x265_print_params(x265_param *param);
-char* x265_param2string(x265_param *param);
-int   x265_atoi(const char *str, bool& bError);
-int   parseCpuName(const char *value, bool& bError);
-void  setParamAspectRatio(x265_param *p, int width, int height);
-void  getParamAspectRatio(x265_param *p, int& width, int& height);
-
-}
-
-#endif // ifndef X265_PARAM_H
+#endif // ifndef X265_LOOPFILTER_H

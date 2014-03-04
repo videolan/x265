@@ -31,7 +31,7 @@
 
 using namespace x265;
 
-void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  TShortYUV* outResiYuv, TComYuv* outReconYuv)
+void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  ShortYuv* outResiYuv, TComYuv* outReconYuv)
 {
     uint64_t puCost = 0;
     uint32_t puDistY = 0;
@@ -331,8 +331,16 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 {
     TComPic* pic = outTempCU->getPic();
 
-    // get Original YUV data from picture
-    m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
+    if (depth == 0)
+    {
+        // get original YUV data from picture
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
+    }
+    else
+    {
+        // copy partition YUV from depth 0 CTU cache
+        m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outTempCU->getZorderIdxInCU());
+    }
 
     // variables for fast encoder decision
     bool bSubBranch = true;
