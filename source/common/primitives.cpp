@@ -64,6 +64,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives &p);
 void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
 void Setup_C_IPredPrimitives(EncoderPrimitives &p);
 void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p);
+
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
@@ -80,20 +81,29 @@ using namespace x265;
 extern "C"
 void x265_setup_primitives(x265_param *param, int cpuid)
 {
-    // initialize global variables
-    initROM();
-
     if (cpuid < 0)
+        cpuid = x265::cpu_detect();
+
+    // initialize global variables
+    if (!primitives.sad[0])
     {
-        if (primitives.sad[0])
-            return;
-        else
-            cpuid = x265::cpu_detect();
+        Setup_C_Primitives(primitives);
+        Setup_Instrinsic_Primitives(primitives, cpuid);
+
+#if ENABLE_ASSEMBLY
+        Setup_Assembly_Primitives(primitives, cpuid);
+#else
+        x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
+#endif
+
+        initROM();
     }
+
     if (param->logLevel >= X265_LOG_INFO)
     {
         char buf[1000];
         char *p = buf + sprintf(buf, "using cpu capabilities:");
+        char *none = p;
         for (int i = 0; x265::cpu_names[i].flags; i++)
         {
             if (!strcmp(x265::cpu_names[i].name, "SSE")
@@ -116,19 +126,10 @@ void x265_setup_primitives(x265_param *param, int cpuid)
                 p += sprintf(p, " %s", x265::cpu_names[i].name);
         }
 
-        if (!cpuid)
+        if (p == none)
             sprintf(p, " none!");
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
-
-    Setup_C_Primitives(primitives);
-    Setup_Instrinsic_Primitives(primitives, cpuid);
-
-#if ENABLE_ASSEMBLY
-    Setup_Assembly_Primitives(primitives, cpuid);
-#else
-    x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
-#endif
 }
 
 #if !defined(ENABLE_ASSEMBLY)
