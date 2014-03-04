@@ -274,7 +274,7 @@ bool tryCommonDenom(TComSlice& slice, Cache& cache, int indenom)
             log2denom[2] = log2denom[1];
 
             bool bWeightRef = false;
-            for (int yuv = 0; yuv < 3; yuv++)
+            for (int yuv = 0; yuv < 3 && (!yuv || fw[0].bPresentFlag); yuv++)
             {
                 RefData *rd = &cache.ref[list][ref][yuv];
                 ChannelData *p = &cache.paramset[yuv];
