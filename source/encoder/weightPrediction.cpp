@@ -278,17 +278,12 @@ bool tryCommonDenom(TComSlice& slice, Cache& cache, int indenom)
             {
                 RefData *rd = &cache.ref[list][ref][yuv];
                 ChannelData *p = &cache.paramset[yuv];
-                fw[yuv].bPresentFlag = false;
                 x265_emms();
 
                 /* Early termination */
                 float meanDiff = rd->refMean < rd->fencMean ? rd->fencMean - rd->refMean : rd->refMean - rd->fencMean;
                 float guessVal = rd->guessScale > 1.f ? rd->guessScale - 1.f : 1.f - rd->guessScale;
-                if (meanDiff < 0.5f && guessVal < epsilon)
-                    continue;
-
-                uint32_t origscore = rd->unweightedCost;
-                if (!origscore)
+                if ((meanDiff < 0.5f && guessVal < epsilon) || !rd->unweightedCost)
                     continue;
 
                 wpScalingParam w;
@@ -297,6 +292,7 @@ bool tryCommonDenom(TComSlice& slice, Cache& cache, int indenom)
                 int minscale = w.inputWeight;
                 int minoff = 0;
 
+                uint32_t origscore = rd->unweightedCost;
                 uint32_t minscore = origscore;
                 bool bFound = false;
                 static const int sD = 4; // scale distance
