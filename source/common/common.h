@@ -114,4 +114,6 @@ int x265_exp2fix8(double x);
 void *x265_malloc(size_t size);
 void x265_free(void *ptr);
 
+double x265_ssim2dB(double ssim);
+
 #endif // ifndef X265_COMMON_H

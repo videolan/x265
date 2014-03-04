@@ -138,8 +138,7 @@ void x265_log(x265_param *param, int level, const char *fmt, ...)
     va_end(arg);
 }
 
-extern "C"
-double x265_ssim(double ssim)
+double x265_ssim2dB(double ssim)
 {
     double inv_ssim = 1 - ssim;
 

@@ -504,7 +504,7 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
     {
         sprintf(buffer + len, "  SSIM Mean: %.6lf (%.3lfdB)",
                 stat.m_globalSsim / (double)stat.m_numPics,
-                x265_ssim(stat.m_globalSsim / (double)stat.m_numPics));
+                x265_ssim2dB(stat.m_globalSsim / (double)stat.m_numPics));
     }
     return buffer;
 }
@@ -759,7 +759,7 @@ void Encoder::writeLog(int argc, char **argv)
         else
             fprintf(m_csvfpt, " -, -, -, -,");
         if (param->bEnableSsim)
-            fprintf(m_csvfpt, " %.6f, %6.3f,", stats.globalSsim, x265_ssim(stats.globalSsim));
+            fprintf(m_csvfpt, " %.6f, %6.3f,", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
         else
             fprintf(m_csvfpt, " -, -,");
 
@@ -874,7 +874,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
         if (param->bEnablePsnr)
             p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param->bEnableSsim)
-            p += sprintf(buf + p, " [SSIM: %.3lfdB]", x265_ssim(ssim));
+            p += sprintf(buf + p, " [SSIM: %.3lfdB]", x265_ssim2dB(ssim));
 
         if (!slice->isIntra())
         {
@@ -902,7 +902,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
             else
                 fprintf(m_csvfpt, " -, -, -, -,");
             if (param->bEnableSsim)
-                fprintf(m_csvfpt, " %.6f, %6.3f,", ssim, x265_ssim(ssim));
+                fprintf(m_csvfpt, " %.6f, %6.3f,", ssim, x265_ssim2dB(ssim));
             else
                 fprintf(m_csvfpt, " -, -,");
             fprintf(m_csvfpt, " %.3lf, %.3lf", pic->m_frameTime, pic->m_elapsedCompressTime);

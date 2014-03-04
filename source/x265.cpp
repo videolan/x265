@@ -765,7 +765,7 @@ int main(int argc, char **argv)
             printf(", Global PSNR: %.3f", stats.globalPsnr);
 
         if (param->bEnableSsim)
-            printf(", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim(stats.globalSsim));
+            printf(", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
 
         printf("\n");
     }

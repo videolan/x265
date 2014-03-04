@@ -973,11 +973,6 @@ void x265_encoder_close(x265_encoder *);
  */
 void x265_cleanup(void);
 
-/***
- * Convert ssim into db
- */
-double x265_ssim(double ssim);
-
 #ifdef __cplusplus
 }
 #endif
