@@ -99,6 +99,7 @@ void x265_param_default(x265_param *param)
     memset(param, 0, sizeof(x265_param));
 
     /* Applying non-zero default values to all elements in the param structure */
+    param->cpuid = x265::cpu_detect();
     param->logLevel = X265_LOG_INFO;
     param->bEnableWavefront = 1;
     param->frameNumThreads = 0;
@@ -495,6 +496,13 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 #endif
 #define OPT(STR) else if (!strcmp(name, STR))
     if (0) ;
+    OPT("asm")
+    {
+        if (bValueWasNull)
+            p->cpuid = atobool(value);
+        else
+            p->cpuid = parseCpuName(value, bError);
+    }
     OPT("fps")
     {
         if (sscanf(value, "%u/%u", &p->fpsNum, &p->fpsDenom) == 2)

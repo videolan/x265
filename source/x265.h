@@ -302,6 +302,12 @@ typedef struct x265_param
 {
     /*== Encoder Environment ==*/
 
+    /* x265_param_default() will auto-detect this cpu capability bitmap.  it is
+     * recommended to not change this value unless you know the cpu detection is
+     * somehow flawed on your target hardware. The asm function tables are
+     * process global, the first encoder configures them for all encoders */
+    int       cpuid;
+
     /* Enable wavefront parallel processing, greatly increases parallelism for
      * less than 1% compression efficiency loss */
     int       bEnableWavefront;
@@ -831,7 +837,8 @@ typedef struct x265_param
 
 /***
  * If not called, first encoder allocated will auto-detect the CPU and
- * initialize performance primitives, which are process global */
+ * initialize performance primitives, which are process global.
+ * DEPRECATED: use x265_param.cpuid to specify CPU */
 void x265_setup_primitives(x265_param *param, int cpu);
 
 /* x265_param_alloc:

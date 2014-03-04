@@ -34,7 +34,7 @@ x265_encoder *x265_encoder_open(x265_param *param)
     if (!param)
         return NULL;
 
-    x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+    x265_setup_primitives(param, param->cpuid);
 
     if (x265_check_params(param))
         return NULL;

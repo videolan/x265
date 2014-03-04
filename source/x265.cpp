@@ -408,7 +408,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 {
     bool bError = 0;
     int help = 0;
-    int cpuid = x265::cpu_detect();
     int inputBitDepth = 8;
     int reconFileBitDepth = 0;
     const char *inputfn = NULL;
@@ -489,8 +488,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
             if (0) ;
             OPT2("frame-skip", "seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
-            OPT("asm") cpuid = parseCpuName(optarg, bError);
-            OPT("no-asm") cpuid = 0;
             OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
             OPT("output") bitstreamfn = optarg;
@@ -641,7 +638,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         return true;
     }
 
-    x265_setup_primitives(param, cpuid);
     printVersion(param);
     return false;
 }
