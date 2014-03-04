@@ -1056,39 +1056,39 @@ void Encoder::initSPS(TComSPS *sps)
 
     sps->setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
-    sps->setVuiParametersPresentFlag(param->bEnableVuiParametersPresentFlag);
+    sps->setVuiParametersPresentFlag(param->vui.bEnableVuiParametersPresentFlag);
     if (sps->getVuiParametersPresentFlag())
     {
         TComVUI* vui = sps->getVuiParameters();
-        vui->setAspectRatioInfoPresentFlag(param->bEnableAspectRatioIdc);
-        vui->setAspectRatioIdc(param->aspectRatioIdc);
-        vui->setSarWidth(param->sarWidth);
-        vui->setSarHeight(param->sarHeight);
-        vui->setOverscanInfoPresentFlag(param->bEnableOverscanInfoPresentFlag);
-        vui->setOverscanAppropriateFlag(param->bEnableOverscanAppropriateFlag);
-        vui->setVideoSignalTypePresentFlag(param->bEnableVideoSignalTypePresentFlag);
-        vui->setVideoFormat(param->videoFormat);
-        vui->setVideoFullRangeFlag(param->bEnableVideoFullRangeFlag);
-        vui->setColourDescriptionPresentFlag(param->bEnableColorDescriptionPresentFlag);
-        vui->setColourPrimaries(param->colorPrimaries);
-        vui->setTransferCharacteristics(param->transferCharacteristics);
-        vui->setMatrixCoefficients(param->matrixCoeffs);
-        vui->setChromaLocInfoPresentFlag(param->bEnableChromaLocInfoPresentFlag);
-        vui->setChromaSampleLocTypeTopField(param->chromaSampleLocTypeTopField);
-        vui->setChromaSampleLocTypeBottomField(param->chromaSampleLocTypeBottomField);
+        vui->setAspectRatioInfoPresentFlag(param->vui.bEnableAspectRatioIdc);
+        vui->setAspectRatioIdc(param->vui.aspectRatioIdc);
+        vui->setSarWidth(param->vui.sarWidth);
+        vui->setSarHeight(param->vui.sarHeight);
+        vui->setOverscanInfoPresentFlag(param->vui.bEnableOverscanInfoPresentFlag);
+        vui->setOverscanAppropriateFlag(param->vui.bEnableOverscanAppropriateFlag);
+        vui->setVideoSignalTypePresentFlag(param->vui.bEnableVideoSignalTypePresentFlag);
+        vui->setVideoFormat(param->vui.videoFormat);
+        vui->setVideoFullRangeFlag(param->vui.bEnableVideoFullRangeFlag);
+        vui->setColourDescriptionPresentFlag(param->vui.bEnableColorDescriptionPresentFlag);
+        vui->setColourPrimaries(param->vui.colorPrimaries);
+        vui->setTransferCharacteristics(param->vui.transferCharacteristics);
+        vui->setMatrixCoefficients(param->vui.matrixCoeffs);
+        vui->setChromaLocInfoPresentFlag(param->vui.bEnableChromaLocInfoPresentFlag);
+        vui->setChromaSampleLocTypeTopField(param->vui.chromaSampleLocTypeTopField);
+        vui->setChromaSampleLocTypeBottomField(param->vui.chromaSampleLocTypeBottomField);
         vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
         vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
-        vui->setFrameFieldInfoPresentFlag(param->bEnableFrameFieldInfoPresentFlag);
-        vui->setFieldSeqFlag(param->bEnableFieldSeqFlag);
-        vui->setHrdParametersPresentFlag(param->bEnableVuiHrdParametersPresentFlag);
-        vui->getHrdParameters()->setNalHrdParametersPresentFlag(param->bEnableNalHrdParametersPresentFlag);
-        vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(param->bEnableSubPicHrdParamsPresentFlag);
-        vui->getTimingInfo()->setTimingInfoPresentFlag(param->bEnableVuiTimingInfoPresentFlag);
+        vui->setFrameFieldInfoPresentFlag(param->vui.bEnableFrameFieldInfoPresentFlag);
+        vui->setFieldSeqFlag(param->vui.bEnableFieldSeqFlag);
+        vui->setHrdParametersPresentFlag(param->vui.bEnableVuiHrdParametersPresentFlag);
+        vui->getHrdParameters()->setNalHrdParametersPresentFlag(param->vui.bEnableNalHrdParametersPresentFlag);
+        vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(param->vui.bEnableSubPicHrdParamsPresentFlag);
+        vui->getTimingInfo()->setTimingInfoPresentFlag(param->vui.bEnableVuiTimingInfoPresentFlag);
         vui->getTimingInfo()->setNumUnitsInTick(param->fpsDenom);
         vui->getTimingInfo()->setTimeScale(param->fpsNum);
         vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
         vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
-        vui->setBitstreamRestrictionFlag(param->bEnableBitstreamRestrictionFlag);
+        vui->setBitstreamRestrictionFlag(param->vui.bEnableBitstreamRestrictionFlag);
         vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
         vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
         vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);
@@ -1426,11 +1426,11 @@ void Encoder::configure(x265_param *p)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
 
     //========= set default display window ==================================
-    m_defaultDisplayWindow.m_enabledFlag = p->bEnableDefaultDisplayWindowFlag;
-    m_defaultDisplayWindow.m_winRightOffset = p->defDispWinRightOffset;
-    m_defaultDisplayWindow.m_winTopOffset = p->defDispWinTopOffset;
-    m_defaultDisplayWindow.m_winBottomOffset = p->defDispWinBottomOffset;
-    m_defaultDisplayWindow.m_winLeftOffset = p->defDispWinLeftOffset;
+    m_defaultDisplayWindow.m_enabledFlag = p->vui.bEnableDefaultDisplayWindowFlag;
+    m_defaultDisplayWindow.m_winRightOffset = p->vui.defDispWinRightOffset;
+    m_defaultDisplayWindow.m_winTopOffset = p->vui.defDispWinTopOffset;
+    m_defaultDisplayWindow.m_winBottomOffset = p->vui.defDispWinBottomOffset;
+    m_defaultDisplayWindow.m_winLeftOffset = p->vui.defDispWinLeftOffset;
     m_pad[0] = m_pad[1] = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
