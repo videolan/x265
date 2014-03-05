@@ -162,7 +162,6 @@ public:
     int                m_displayOrientationSEIAngle;
     int                m_gradualDecodingRefreshInfoEnabled;
     int                m_decodingUnitInfoSEIEnabled;
-    int                m_csp;
 
     uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
 

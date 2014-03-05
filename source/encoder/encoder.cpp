@@ -1415,7 +1415,6 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
     }
 
-    m_csp = p->internalCsp;
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     //====== Coding Tools ========
