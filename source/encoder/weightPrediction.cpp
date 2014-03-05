@@ -274,12 +274,18 @@ bool tryCommonDenom(TComSlice& slice, Cache& cache, int indenom)
             log2denom[2] = log2denom[1];
 
             bool bWeightRef = false;
-            for (int yuv = 0; yuv < 3 && (!yuv || fw[0].bPresentFlag); yuv++)
+            for (int yuv = 0; yuv < 3; yuv++)
             {
                 RefData *rd = &cache.ref[list][ref][yuv];
                 ChannelData *p = &cache.paramset[yuv];
-                x265_emms();
+                if (yuv && !fw[0].bPresentFlag)
+                {
+                    fw[1].inputWeight = 1 << fw[1].log2WeightDenom;
+                    fw[2].inputWeight = 1 << fw[2].log2WeightDenom;
+                    break;
+                }
 
+                x265_emms();
                 /* Early termination */
                 float meanDiff = rd->refMean < rd->fencMean ? rd->fencMean - rd->refMean : rd->refMean - rd->fencMean;
                 float guessVal = rd->guessScale > 1.f ? rd->guessScale - 1.f : 1.f - rd->guessScale;
