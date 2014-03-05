@@ -710,14 +710,113 @@ extern "C" {
     SETUP_CHROMA_ADDAVG_FUNC_DEF(32, 24, cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF(32, 32, cpu); \
 
+#define SETUP_INTRA_ANG_COMMON(mode, fno, cpu) \
+    p.intra_pred[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
+    p.intra_pred[BLOCK_8x8][mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
+    p.intra_pred[BLOCK_16x16][mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
+    p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+
+#define SETUP_INTRA_ANG(mode, fno, cpu) \
+    p.intra_pred[BLOCK_8x8][mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
+    p.intra_pred[BLOCK_16x16][mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
+    p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+
 #define SETUP_INTRA_ANG4(mode, fno, cpu) \
     p.intra_pred[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
-#define SETUP_INTRA_ANG8(mode, fno, cpu) \
-    p.intra_pred[BLOCK_8x8][mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu;
-#define SETUP_INTRA_ANG16(mode, fno, cpu) \
-    p.intra_pred[BLOCK_16x16][mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu;
-#define SETUP_INTRA_ANG32(mode, fno, cpu) \
+
+#define SETUP_INTRA_ANG16_32(mode, fno, cpu) \
+    p.intra_pred[BLOCK_16x16][mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
     p.intra_pred[BLOCK_32x32][mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+
+#define SETUP_INTRA_ANG4_8(mode, fno, cpu) \
+    p.intra_pred[BLOCK_4x4][mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
+    p.intra_pred[BLOCK_8x8][mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu;
+
+#define INTRA_ANG_SSSE3(cpu) \
+    SETUP_INTRA_ANG_COMMON(2, 2, cpu); \
+    SETUP_INTRA_ANG_COMMON(34, 2, cpu);
+
+#define INTRA_ANG_SSE4_COMMON(cpu) \
+    SETUP_INTRA_ANG_COMMON(3,  3,  cpu); \
+    SETUP_INTRA_ANG_COMMON(4,  4,  cpu); \
+    SETUP_INTRA_ANG_COMMON(5,  5,  cpu); \
+    SETUP_INTRA_ANG_COMMON(6,  6,  cpu); \
+    SETUP_INTRA_ANG_COMMON(7,  7,  cpu); \
+    SETUP_INTRA_ANG_COMMON(8,  8,  cpu); \
+    SETUP_INTRA_ANG_COMMON(9,  9,  cpu); \
+    SETUP_INTRA_ANG_COMMON(10, 10, cpu); \
+    SETUP_INTRA_ANG_COMMON(11, 11, cpu); \
+    SETUP_INTRA_ANG_COMMON(12, 12, cpu); \
+    SETUP_INTRA_ANG_COMMON(13, 13, cpu); \
+    SETUP_INTRA_ANG_COMMON(14, 14, cpu); \
+    SETUP_INTRA_ANG_COMMON(15, 15, cpu); \
+    SETUP_INTRA_ANG_COMMON(16, 16, cpu); \
+    SETUP_INTRA_ANG_COMMON(17, 17, cpu); \
+    SETUP_INTRA_ANG_COMMON(18, 18, cpu);
+
+#define INTRA_ANG_SSE4_HIGH(cpu) \
+    SETUP_INTRA_ANG(19, 19, cpu); \
+    SETUP_INTRA_ANG(20, 20, cpu); \
+    SETUP_INTRA_ANG(21, 21, cpu); \
+    SETUP_INTRA_ANG(22, 22, cpu); \
+    SETUP_INTRA_ANG(23, 23, cpu); \
+    SETUP_INTRA_ANG(24, 24, cpu); \
+    SETUP_INTRA_ANG(25, 25, cpu); \
+    SETUP_INTRA_ANG(26, 26, cpu); \
+    SETUP_INTRA_ANG(27, 27, cpu); \
+    SETUP_INTRA_ANG(28, 28, cpu); \
+    SETUP_INTRA_ANG(29, 29, cpu); \
+    SETUP_INTRA_ANG(30, 30, cpu); \
+    SETUP_INTRA_ANG(31, 31, cpu); \
+    SETUP_INTRA_ANG(32, 32, cpu); \
+    SETUP_INTRA_ANG(33, 33, cpu); \
+    SETUP_INTRA_ANG4(19, 17, cpu); \
+    SETUP_INTRA_ANG4(20, 16, cpu); \
+    SETUP_INTRA_ANG4(21, 15, cpu); \
+    SETUP_INTRA_ANG4(22, 14, cpu);\
+    SETUP_INTRA_ANG4(23, 13, cpu); \
+    SETUP_INTRA_ANG4(24, 12, cpu); \
+    SETUP_INTRA_ANG4(25, 11, cpu); \
+    SETUP_INTRA_ANG4(26, 26, cpu); \
+    SETUP_INTRA_ANG4(27, 9, cpu); \
+    SETUP_INTRA_ANG4(28, 8, cpu); \
+    SETUP_INTRA_ANG4(29, 7, cpu); \
+    SETUP_INTRA_ANG4(30, 6, cpu); \
+    SETUP_INTRA_ANG4(31, 5, cpu); \
+    SETUP_INTRA_ANG4(32, 4, cpu); \
+    SETUP_INTRA_ANG4(33, 3, cpu);
+
+#define INTRA_ANG_SSE4(cpu) \
+    SETUP_INTRA_ANG4_8(19, 17, cpu); \
+    SETUP_INTRA_ANG4_8(20, 16, cpu); \
+    SETUP_INTRA_ANG4_8(21, 15, cpu); \
+    SETUP_INTRA_ANG4_8(22, 14, cpu);\
+    SETUP_INTRA_ANG4_8(23, 13, cpu); \
+    SETUP_INTRA_ANG4_8(24, 12, cpu); \
+    SETUP_INTRA_ANG4_8(25, 11, cpu); \
+    SETUP_INTRA_ANG4_8(26, 26, cpu); \
+    SETUP_INTRA_ANG4_8(27, 9, cpu); \
+    SETUP_INTRA_ANG4_8(28, 8, cpu); \
+    SETUP_INTRA_ANG4_8(29, 7, cpu); \
+    SETUP_INTRA_ANG4_8(30, 6, cpu); \
+    SETUP_INTRA_ANG4_8(31, 5, cpu); \
+    SETUP_INTRA_ANG4_8(32, 4, cpu); \
+    SETUP_INTRA_ANG4_8(33, 3, cpu); \
+    SETUP_INTRA_ANG16_32(19, 19, cpu); \
+    SETUP_INTRA_ANG16_32(20, 20, cpu); \
+    SETUP_INTRA_ANG16_32(21, 21, cpu); \
+    SETUP_INTRA_ANG16_32(22, 22, cpu); \
+    SETUP_INTRA_ANG16_32(23, 23, cpu); \
+    SETUP_INTRA_ANG16_32(24, 24, cpu); \
+    SETUP_INTRA_ANG16_32(25, 25, cpu); \
+    SETUP_INTRA_ANG16_32(26, 26, cpu); \
+    SETUP_INTRA_ANG16_32(27, 27, cpu); \
+    SETUP_INTRA_ANG16_32(28, 28, cpu); \
+    SETUP_INTRA_ANG16_32(29, 29, cpu); \
+    SETUP_INTRA_ANG16_32(30, 30, cpu); \
+    SETUP_INTRA_ANG16_32(31, 31, cpu); \
+    SETUP_INTRA_ANG16_32(32, 32, cpu); \
+    SETUP_INTRA_ANG16_32(33, 33, cpu);
 
 #define SETUP_CHROMA_VERT_FUNC_DEF(W, H, cpu) \
     p.chroma[X265_CSP_I420].filter_vss[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu; \
@@ -898,17 +997,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
 
-        SETUP_INTRA_ANG4(2, 2, ssse3);
-        SETUP_INTRA_ANG4(34, 2, ssse3);
-
-        SETUP_INTRA_ANG8(2, 2, ssse3);
-        SETUP_INTRA_ANG8(34, 2, ssse3);
-
-        SETUP_INTRA_ANG16(2, 2, ssse3);
-        SETUP_INTRA_ANG16(34, 2, ssse3);
-
-        SETUP_INTRA_ANG32(2, 2, ssse3);
-        SETUP_INTRA_ANG32(34, 2, ssse3);
+        INTRA_ANG_SSSE3(ssse3);
 
         p.dct[DST_4x4] = x265_dst4_ssse3;
     }
@@ -934,133 +1023,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred[BLOCK_16x16][1] = x265_intra_pred_dc16_sse4;
         p.intra_pred[BLOCK_32x32][1] = x265_intra_pred_dc32_sse4;
 
-        SETUP_INTRA_ANG4(3, 3, sse4);
-        SETUP_INTRA_ANG4(4, 4, sse4);
-        SETUP_INTRA_ANG4(5, 5, sse4);
-        SETUP_INTRA_ANG4(6, 6, sse4);
-        SETUP_INTRA_ANG4(7, 7, sse4);
-        SETUP_INTRA_ANG4(8, 8, sse4);
-        SETUP_INTRA_ANG4(9, 9, sse4);
-        SETUP_INTRA_ANG4(10, 10, sse4);
-        SETUP_INTRA_ANG4(11, 11, sse4);
-        SETUP_INTRA_ANG4(12, 12, sse4);
-        SETUP_INTRA_ANG4(13, 13, sse4);
-        SETUP_INTRA_ANG4(14, 14, sse4);
-        SETUP_INTRA_ANG4(15, 15, sse4);
-        SETUP_INTRA_ANG4(16, 16, sse4);
-        SETUP_INTRA_ANG4(17, 17, sse4);
-        SETUP_INTRA_ANG4(18, 18, sse4);
-        SETUP_INTRA_ANG4(19, 17, sse4);
-        SETUP_INTRA_ANG4(20, 16, sse4);
-        SETUP_INTRA_ANG4(21, 15, sse4);
-        SETUP_INTRA_ANG4(22, 14, sse4);
-        SETUP_INTRA_ANG4(23, 13, sse4);
-        SETUP_INTRA_ANG4(24, 12, sse4);
-        SETUP_INTRA_ANG4(25, 11, sse4);
-        SETUP_INTRA_ANG4(26, 26, sse4);
-        SETUP_INTRA_ANG4(27, 9, sse4);
-        SETUP_INTRA_ANG4(28, 8, sse4);
-        SETUP_INTRA_ANG4(29, 7, sse4);
-        SETUP_INTRA_ANG4(30, 6, sse4);
-        SETUP_INTRA_ANG4(31, 5, sse4);
-        SETUP_INTRA_ANG4(32, 4, sse4);
-        SETUP_INTRA_ANG4(33, 3, sse4);
+        INTRA_ANG_SSE4_COMMON(sse4);
+        INTRA_ANG_SSE4_HIGH(sse4);
 
-        SETUP_INTRA_ANG8(3, 3, sse4);
-        SETUP_INTRA_ANG8(4, 4, sse4);
-        SETUP_INTRA_ANG8(5, 5, sse4);
-        SETUP_INTRA_ANG8(6, 6, sse4);
-        SETUP_INTRA_ANG8(7, 7, sse4);
-        SETUP_INTRA_ANG8(8, 8, sse4);
-        SETUP_INTRA_ANG8(9, 9, sse4);
-        SETUP_INTRA_ANG8(10, 10, sse4);
-        SETUP_INTRA_ANG8(11, 11, sse4);
-        SETUP_INTRA_ANG8(12, 12, sse4);
-        SETUP_INTRA_ANG8(13, 13, sse4);
-        SETUP_INTRA_ANG8(14, 14, sse4);
-        SETUP_INTRA_ANG8(15, 15, sse4);
-        SETUP_INTRA_ANG8(16, 16, sse4);
-        SETUP_INTRA_ANG8(17, 17, sse4);
-        SETUP_INTRA_ANG8(18, 18, sse4);
-        SETUP_INTRA_ANG8(19, 19, sse4);
-        SETUP_INTRA_ANG8(20, 20, sse4);
-        SETUP_INTRA_ANG8(21, 21, sse4);
-        SETUP_INTRA_ANG8(22, 22, sse4);
-        SETUP_INTRA_ANG8(23, 23, sse4);
-        SETUP_INTRA_ANG8(24, 24, sse4);
-        SETUP_INTRA_ANG8(25, 25, sse4);
-        SETUP_INTRA_ANG8(26, 26, sse4);
-        SETUP_INTRA_ANG8(27, 27, sse4);
-        SETUP_INTRA_ANG8(28, 28, sse4);
-        SETUP_INTRA_ANG8(29, 29, sse4);
-        SETUP_INTRA_ANG8(30, 30, sse4);
-        SETUP_INTRA_ANG8(31, 31, sse4);
-        SETUP_INTRA_ANG8(32, 32, sse4);
-        SETUP_INTRA_ANG8(33, 33, sse4);
-
-        SETUP_INTRA_ANG16(3,  3,  sse4);
-        SETUP_INTRA_ANG16(4,  4,  sse4);
-        SETUP_INTRA_ANG16(5,  5,  sse4);
-        SETUP_INTRA_ANG16(6,  6,  sse4);
-        SETUP_INTRA_ANG16(7,  7,  sse4);
-        SETUP_INTRA_ANG16(8,  8,  sse4);
-        SETUP_INTRA_ANG16(9,  9,  sse4);
-        SETUP_INTRA_ANG16(10, 10, sse4);
-        SETUP_INTRA_ANG16(11, 11, sse4);
-        SETUP_INTRA_ANG16(12, 12, sse4);
-        SETUP_INTRA_ANG16(13, 13, sse4);
-        SETUP_INTRA_ANG16(14, 14, sse4);
-        SETUP_INTRA_ANG16(15, 15, sse4);
-        SETUP_INTRA_ANG16(16, 16, sse4);
-        SETUP_INTRA_ANG16(17, 17, sse4);
-        SETUP_INTRA_ANG16(18, 18, sse4);
-        SETUP_INTRA_ANG16(19, 19, sse4);
-        SETUP_INTRA_ANG16(20, 20, sse4);
-        SETUP_INTRA_ANG16(21, 21, sse4);
-        SETUP_INTRA_ANG16(22, 22, sse4);
-        SETUP_INTRA_ANG16(23, 23, sse4);
-        SETUP_INTRA_ANG16(24, 24, sse4);
-        SETUP_INTRA_ANG16(25, 25, sse4);
-        SETUP_INTRA_ANG16(26, 26, sse4);
-        SETUP_INTRA_ANG16(27, 27, sse4);
-        SETUP_INTRA_ANG16(28, 28, sse4);
-        SETUP_INTRA_ANG16(29, 29, sse4);
-        SETUP_INTRA_ANG16(30, 30, sse4);
-        SETUP_INTRA_ANG16(31, 31, sse4);
-        SETUP_INTRA_ANG16(32, 32, sse4);
-        SETUP_INTRA_ANG16(33, 33, sse4);
-
-        SETUP_INTRA_ANG32(3,  3,  sse4);
-        SETUP_INTRA_ANG32(4,  4,  sse4);
-        SETUP_INTRA_ANG32(5,  5,  sse4);
-        SETUP_INTRA_ANG32(6,  6,  sse4);
-        SETUP_INTRA_ANG32(7,  7,  sse4);
-        SETUP_INTRA_ANG32(8,  8,  sse4);
-        SETUP_INTRA_ANG32(9,  9,  sse4);
-        SETUP_INTRA_ANG32(10, 10, sse4);
-        SETUP_INTRA_ANG32(11, 11, sse4);
-        SETUP_INTRA_ANG32(12, 12, sse4);
-        SETUP_INTRA_ANG32(13, 13, sse4);
-        SETUP_INTRA_ANG32(14, 14, sse4);
-        SETUP_INTRA_ANG32(15, 15, sse4);
-        SETUP_INTRA_ANG32(16, 16, sse4);
-        SETUP_INTRA_ANG32(17, 17, sse4);
-        SETUP_INTRA_ANG32(18, 18, sse4);
-        SETUP_INTRA_ANG32(19, 19, sse4);
-        SETUP_INTRA_ANG32(20, 20, sse4);
-        SETUP_INTRA_ANG32(21, 21, sse4);
-        SETUP_INTRA_ANG32(22, 22, sse4);
-        SETUP_INTRA_ANG32(23, 23, sse4);
-        SETUP_INTRA_ANG32(24, 24, sse4);
-        SETUP_INTRA_ANG32(25, 25, sse4);
-        SETUP_INTRA_ANG32(26, 26, sse4);
-        SETUP_INTRA_ANG32(27, 27, sse4);
-        SETUP_INTRA_ANG32(28, 28, sse4);
-        SETUP_INTRA_ANG32(29, 29, sse4);
-        SETUP_INTRA_ANG32(30, 30, sse4);
-        SETUP_INTRA_ANG32(31, 31, sse4);
-        SETUP_INTRA_ANG32(32, 32, sse4);
-        SETUP_INTRA_ANG32(33, 33, sse4);
     }
     if (cpuMask & X265_CPU_XOP)
     {
@@ -1207,14 +1172,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         PIXEL_AVG(ssse3);
         PIXEL_AVG_W4(ssse3);
 
-        SETUP_INTRA_ANG4(2, 2, ssse3);
-        SETUP_INTRA_ANG4(34, 2, ssse3);
-        SETUP_INTRA_ANG8(2, 2, ssse3);
-        SETUP_INTRA_ANG8(34, 2, ssse3);
-        SETUP_INTRA_ANG16(2, 2, ssse3);
-        SETUP_INTRA_ANG16(34, 2, ssse3);
-        SETUP_INTRA_ANG32(2, 2, ssse3);
-        SETUP_INTRA_ANG32(34, 2, ssse3);
+        INTRA_ANG_SSSE3(ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
@@ -1299,133 +1257,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred[BLOCK_8x8][1] = x265_intra_pred_dc8_sse4;
         p.intra_pred[BLOCK_16x16][1] = x265_intra_pred_dc16_sse4;
         p.intra_pred[BLOCK_32x32][1] = x265_intra_pred_dc32_sse4;
-        SETUP_INTRA_ANG4(3, 3, sse4);
-        SETUP_INTRA_ANG4(4, 4, sse4);
-        SETUP_INTRA_ANG4(5, 5, sse4);
-        SETUP_INTRA_ANG4(6, 6, sse4);
-        SETUP_INTRA_ANG4(7, 7, sse4);
-        SETUP_INTRA_ANG4(8, 8, sse4);
-        SETUP_INTRA_ANG4(9, 9, sse4);
-        SETUP_INTRA_ANG4(10, 10, sse4);
-        SETUP_INTRA_ANG4(11, 11, sse4);
-        SETUP_INTRA_ANG4(12, 12, sse4);
-        SETUP_INTRA_ANG4(13, 13, sse4);
-        SETUP_INTRA_ANG4(14, 14, sse4);
-        SETUP_INTRA_ANG4(15, 15, sse4);
-        SETUP_INTRA_ANG4(16, 16, sse4);
-        SETUP_INTRA_ANG4(17, 17, sse4);
-        SETUP_INTRA_ANG4(18, 18, sse4);
-        SETUP_INTRA_ANG4(19, 17, sse4);
-        SETUP_INTRA_ANG4(20, 16, sse4);
-        SETUP_INTRA_ANG4(21, 15, sse4);
-        SETUP_INTRA_ANG4(22, 14, sse4);
-        SETUP_INTRA_ANG4(23, 13, sse4);
-        SETUP_INTRA_ANG4(24, 12, sse4);
-        SETUP_INTRA_ANG4(25, 11, sse4);
-        SETUP_INTRA_ANG4(26, 26, sse4);
-        SETUP_INTRA_ANG4(27, 9, sse4);
-        SETUP_INTRA_ANG4(28, 8, sse4);
-        SETUP_INTRA_ANG4(29, 7, sse4);
-        SETUP_INTRA_ANG4(30, 6, sse4);
-        SETUP_INTRA_ANG4(31, 5, sse4);
-        SETUP_INTRA_ANG4(32, 4, sse4);
-        SETUP_INTRA_ANG4(33, 3, sse4);
 
-        SETUP_INTRA_ANG16(3, 3, sse4);
-        SETUP_INTRA_ANG16(4, 4, sse4);
-        SETUP_INTRA_ANG16(5, 5, sse4);
-        SETUP_INTRA_ANG16(6, 6, sse4);
-        SETUP_INTRA_ANG16(7, 7, sse4);
-        SETUP_INTRA_ANG16(8, 8, sse4);
-        SETUP_INTRA_ANG16(9, 9, sse4);
-        SETUP_INTRA_ANG16(10, 10, sse4);
-        SETUP_INTRA_ANG16(11, 11, sse4);
-        SETUP_INTRA_ANG16(12, 12, sse4);
-        SETUP_INTRA_ANG16(13, 13, sse4);
-        SETUP_INTRA_ANG16(14, 14, sse4);
-        SETUP_INTRA_ANG16(15, 15, sse4);
-        SETUP_INTRA_ANG16(16, 16, sse4);
-        SETUP_INTRA_ANG16(17, 17, sse4);
-        SETUP_INTRA_ANG16(18, 18, sse4);
-        SETUP_INTRA_ANG16(19, 19, sse4);
-        SETUP_INTRA_ANG16(20, 20, sse4);
-        SETUP_INTRA_ANG16(21, 21, sse4);
-        SETUP_INTRA_ANG16(22, 22, sse4);
-        SETUP_INTRA_ANG16(23, 23, sse4);
-        SETUP_INTRA_ANG16(24, 24, sse4);
-        SETUP_INTRA_ANG16(25, 25, sse4);
-        SETUP_INTRA_ANG16(26, 26, sse4);
-        SETUP_INTRA_ANG16(27, 27, sse4);
-        SETUP_INTRA_ANG16(28, 28, sse4);
-        SETUP_INTRA_ANG16(29, 29, sse4);
-        SETUP_INTRA_ANG16(30, 30, sse4);
-        SETUP_INTRA_ANG16(31, 31, sse4);
-        SETUP_INTRA_ANG16(32, 32, sse4);
-        SETUP_INTRA_ANG16(33, 33, sse4);
-
-        SETUP_INTRA_ANG8(3, 3, sse4);
-        SETUP_INTRA_ANG8(4, 4, sse4);
-        SETUP_INTRA_ANG8(5, 5, sse4);
-        SETUP_INTRA_ANG8(6, 6, sse4);
-        SETUP_INTRA_ANG8(7, 7, sse4);
-        SETUP_INTRA_ANG8(8, 8, sse4);
-        SETUP_INTRA_ANG8(9, 9, sse4);
-        SETUP_INTRA_ANG8(10, 10, sse4);
-        SETUP_INTRA_ANG8(11, 11, sse4);
-        SETUP_INTRA_ANG8(12, 12, sse4);
-        SETUP_INTRA_ANG8(13, 13, sse4);
-        SETUP_INTRA_ANG8(14, 14, sse4);
-        SETUP_INTRA_ANG8(15, 15, sse4);
-        SETUP_INTRA_ANG8(16, 16, sse4);
-        SETUP_INTRA_ANG8(17, 17, sse4);
-        SETUP_INTRA_ANG8(18, 18, sse4);
-        SETUP_INTRA_ANG8(19, 17, sse4);
-        SETUP_INTRA_ANG8(20, 16, sse4);
-        SETUP_INTRA_ANG8(21, 15, sse4);
-        SETUP_INTRA_ANG8(22, 14, sse4);
-        SETUP_INTRA_ANG8(23, 13, sse4);
-        SETUP_INTRA_ANG8(24, 12, sse4);
-        SETUP_INTRA_ANG8(25, 11, sse4);
-        SETUP_INTRA_ANG8(26, 26, sse4);
-        SETUP_INTRA_ANG8(27, 9, sse4);
-        SETUP_INTRA_ANG8(28, 8, sse4);
-        SETUP_INTRA_ANG8(29, 7, sse4);
-        SETUP_INTRA_ANG8(30, 6, sse4);
-        SETUP_INTRA_ANG8(31, 5, sse4);
-        SETUP_INTRA_ANG8(32, 4, sse4);
-        SETUP_INTRA_ANG8(33, 3, sse4);
-
-        SETUP_INTRA_ANG32(3,  3,  sse4);
-        SETUP_INTRA_ANG32(4,  4,  sse4);
-        SETUP_INTRA_ANG32(5,  5,  sse4);
-        SETUP_INTRA_ANG32(6,  6,  sse4);
-        SETUP_INTRA_ANG32(7,  7,  sse4);
-        SETUP_INTRA_ANG32(8,  8,  sse4);
-        SETUP_INTRA_ANG32(9,  9,  sse4);
-        SETUP_INTRA_ANG32(10, 10, sse4);
-        SETUP_INTRA_ANG32(11, 11, sse4);
-        SETUP_INTRA_ANG32(12, 12, sse4);
-        SETUP_INTRA_ANG32(13, 13, sse4);
-        SETUP_INTRA_ANG32(14, 14, sse4);
-        SETUP_INTRA_ANG32(15, 15, sse4);
-        SETUP_INTRA_ANG32(16, 16, sse4);
-        SETUP_INTRA_ANG32(17, 17, sse4);
-        SETUP_INTRA_ANG32(18, 18, sse4);
-        SETUP_INTRA_ANG32(19, 19, sse4);
-        SETUP_INTRA_ANG32(20, 20, sse4);
-        SETUP_INTRA_ANG32(21, 21, sse4);
-        SETUP_INTRA_ANG32(22, 22, sse4);
-        SETUP_INTRA_ANG32(23, 23, sse4);
-        SETUP_INTRA_ANG32(24, 24, sse4);
-        SETUP_INTRA_ANG32(25, 25, sse4);
-        SETUP_INTRA_ANG32(26, 26, sse4);
-        SETUP_INTRA_ANG32(27, 27, sse4);
-        SETUP_INTRA_ANG32(28, 28, sse4);
-        SETUP_INTRA_ANG32(29, 29, sse4);
-        SETUP_INTRA_ANG32(30, 30, sse4);
-        SETUP_INTRA_ANG32(31, 31, sse4);
-        SETUP_INTRA_ANG32(32, 32, sse4);
-        SETUP_INTRA_ANG32(33, 33, sse4);
+        INTRA_ANG_SSE4_COMMON(sse4);
+        INTRA_ANG_SSE4(sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
     }
