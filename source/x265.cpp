@@ -625,7 +625,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             this->recon = 0;
         }
         else
-            fprintf(stderr, "%s  [info]: reconstructed images %dx%d %d/%d fps %s\n", this->recon->getName(),
+            fprintf(stderr, "%s  [info]: reconstructed images %dx%d fps %d/%d %s\n", this->recon->getName(),
                     param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
                     x265_source_csp_names[param->internalCsp]);
     }
