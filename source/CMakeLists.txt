@@ -30,7 +30,7 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
 if("${SYSPROC}" STREQUAL "i386"   OR "${SYSPROC}" STREQUAL "amd64" OR
    "${SYSPROC}" STREQUAL "x86_64" OR "${SYSPROC}" STREQUAL "x86"   OR
-   "${SYSPROC}" STREQUAL "")
+   "${SYSPROC}" STREQUAL "i686"   OR "${SYSPROC}" STREQUAL "")
     message(STATUS "Detected x86 system processor")
     set(X86 1)
     add_definitions(-DX265_ARCH_X86=1)
