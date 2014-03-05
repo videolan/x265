@@ -161,11 +161,10 @@ void Y4MInput::pictureAlloc(int queueindex)
 {
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
-        plane_size[i] = (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
-        plane[queueindex][i] = new char[plane_size[i]];
         plane_stride[i] = (uint32_t)(width >> x265_cli_csps[colorSpace].width[i]);
-
-        if (plane[queueindex][i] == NULL)
+        plane_size[i] =   (uint32_t)(plane_stride[i] * (height >> x265_cli_csps[colorSpace].height[i]));
+        plane[queueindex][i] = new char[plane_size[i]];
+        if (!plane[queueindex][i])
         {
             x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
             threadActive = false;

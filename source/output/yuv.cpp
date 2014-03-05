@@ -73,7 +73,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
                 }
 
                 ofs.write(buf, width >> x265_cli_csps[colorSpace].width[i]);
-                src += pic.stride[i];
+                src += pic.stride[i] / sizeof(*src);
             }
         }
     }
@@ -86,7 +86,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
             {
                 ofs.write((const char*)src, (width * 2) >> x265_cli_csps[colorSpace].width[i]);
-                src += pic.stride[i];
+                src += pic.stride[i] / sizeof(*src);
             }
         }
     }
@@ -98,7 +98,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
         for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
         {
             ofs.write(src, width >> x265_cli_csps[colorSpace].width[i]);
-            src += pic.stride[i];
+            src += pic.stride[i] / sizeof(*src);
         }
     }
 

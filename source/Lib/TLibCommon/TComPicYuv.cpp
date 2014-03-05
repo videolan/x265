@@ -205,7 +205,7 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             }
 
             Y += getStride();
-            y += pic.stride[0];
+            y += pic.stride[0] / sizeof(*y);
         }
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
@@ -218,8 +218,8 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 
             U += getCStride();
             V += getCStride();
-            u += pic.stride[1];
-            v += pic.stride[2];
+            u += pic.stride[1] / sizeof(*u);
+            v += pic.stride[2] / sizeof(*v);
         }
     }
     else if (pic.bitDepth == 8)
@@ -240,7 +240,7 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             }
 
             Y += getStride();
-            y += pic.stride[0];
+            y += pic.stride[0] / sizeof(*y);
         }
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
@@ -253,8 +253,8 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 
             U += getCStride();
             V += getCStride();
-            u += pic.stride[1];
-            v += pic.stride[2];
+            u += pic.stride[1] / sizeof(*u);
+            v += pic.stride[2] / sizeof(*v);
         }
     }
     else /* pic.bitDepth > 8 */
@@ -280,7 +280,7 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
             }
 
             Y += getStride();
-            y += pic.stride[0];
+            y += pic.stride[0] / sizeof(*y);
         }
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
@@ -293,8 +293,8 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 
             U += getCStride();
             V += getCStride();
-            u += pic.stride[1];
-            v += pic.stride[2];
+            u += pic.stride[1] / sizeof(*u);
+            v += pic.stride[2] / sizeof(*v);
         }
     }
 

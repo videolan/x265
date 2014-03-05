@@ -95,6 +95,8 @@ typedef struct x265_picture
     /* Must be specified on input pictures, the number of planes is determined
      * by the colorSpace value */
     void*   planes[3];
+
+    /* Stride is the number of bytes between row starts */
     int     stride[3];
 
     /* Must be specified on input pictures. x265_picture_init() will set it to

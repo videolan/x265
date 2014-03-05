@@ -219,11 +219,12 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     pic.colorSpace = colorSpace;
     pic.bitDepth = depth;
+    pic.stride[0] = width * pixelbytes;
+    pic.stride[1] = pic.stride[0] >> x265_cli_csps[colorSpace].width[1];
+    pic.stride[2] = pic.stride[0] >> x265_cli_csps[colorSpace].width[2];
     pic.planes[0] = buf[head];
-    pic.planes[1] = (char*)(pic.planes[0]) + width * height * pixelbytes;
-    pic.planes[2] = (char*)(pic.planes[1]) + ((width * height * pixelbytes) >> 2);
-    pic.stride[0] = width;
-    pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
+    pic.planes[1] = (char*)pic.planes[0] + pic.stride[0] * height;
+    pic.planes[2] = (char*)pic.planes[1] + pic.stride[1] * (height >> x265_cli_csps[colorSpace].height[1]);
 
     head = (head + 1) % QUEUE_SIZE;
     notFull.trigger();

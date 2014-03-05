@@ -390,11 +390,11 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             }
 
             pic_out->planes[0] = recpic->getLumaAddr();
-            pic_out->stride[0] = recpic->getStride();
+            pic_out->stride[0] = recpic->getStride() * sizeof(pixel);
             pic_out->planes[1] = recpic->getCbAddr();
-            pic_out->stride[1] = recpic->getCStride();
+            pic_out->stride[1] = recpic->getCStride() * sizeof(pixel);
             pic_out->planes[2] = recpic->getCrAddr();
-            pic_out->stride[2] = recpic->getCStride();
+            pic_out->stride[2] = recpic->getCStride() * sizeof(pixel);
         }
 
         if (out->getSlice()->m_numWPRefs > 0)
