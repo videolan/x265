@@ -721,6 +721,8 @@ extern "C" {
 
 #define SETUP_CHROMA_VERT_FUNC_DEF(W, H, cpu) \
     p.chroma[X265_CSP_I420].filter_vss[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu; \
+    p.chroma[X265_CSP_I420].filter_vpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_pp_ ## W ## x ## H ## cpu; \
+    p.chroma[X265_CSP_I420].filter_vps[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_ps_ ## W ## x ## H ## cpu; \
     p.chroma[X265_CSP_I420].filter_vsp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu;
 
 #define CHROMA_VERT_FILTERS(cpu) \
