@@ -372,6 +372,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             pic_out->poc = out->getSlice()->getPOC();
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = out->m_userData;
+            pic_out->colorSpace = param->internalCsp;
 
             pic_out->pts = out->m_pts;
             pic_out->dts = out->m_dts;

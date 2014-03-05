@@ -25,6 +25,7 @@
 #include "PPA/ppa.h"
 #include "output.h"
 #include "yuv.h"
+#include <assert.h>
 
 using namespace x265;
 using namespace std;
@@ -57,6 +58,10 @@ bool YUVOutput::writePicture(const x265_picture& pic)
 
     uint64_t fileOffset = pic.poc;
     fileOffset *= frameSize;
+
+    assert(pic.colorSpace == colorSpace);
+    assert(pic.bitDepth == (int)depth);
+
 #if HIGH_BIT_DEPTH
     if (depth == 8)
     {

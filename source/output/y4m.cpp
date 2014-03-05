@@ -79,6 +79,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         x265_log(NULL, X265_LOG_WARNING, "y4m: forcing reconstructed pixels to 8 bits\n");
     }
 #endif
+    assert(pic.colorSpace == colorSpace);
 
 #if HIGH_BIT_DEPTH
 
