@@ -463,6 +463,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
         case 'V':
             printVersion(param);
+            x265_setup_primitives(param, -1);
             exit(0);
 
         default:
