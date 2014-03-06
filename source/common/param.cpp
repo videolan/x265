@@ -495,6 +495,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
 #define OPT(STR) else if (!strcmp(name, STR))
+#define OPT2(STR1, STR2) else if (!strcmp(name, STR1) || !strcmp(name, STR2))
     if (0) ;
     OPT("asm")
     {
@@ -525,7 +526,15 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("csv") p->csvfn = value;
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
-    OPT("log") p->logLevel = atoi(value);
+    OPT2("log-level", "log")
+    {
+        p->logLevel = atoi(value);
+        if (bError)
+        {
+            bError = false;
+            p->logLevel = parseName(value, logLevelNames, bError) - 1;
+        }
+    }
     OPT("wpp") p->bEnableWavefront = atobool(value);
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);
     OPT("tu-intra-depth") p->tuQTMaxIntraDepth = (uint32_t)atoi(value);
@@ -1010,7 +1019,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,
           "Valid adaptive b scheduling values 0 - none, 1 - fast, 2 - full");
     CHECK(param->logLevel < -1 || param->logLevel > X265_LOG_FULL,
-          "Valid Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG 4:FULL -1:NONE");
+          "Valid Logging level -1:none 0:error 1:warning 2:info 3:debug 4:full");
     CHECK(param->scenecutThreshold < 0,
           "scenecutThreshold must be greater than 0");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
