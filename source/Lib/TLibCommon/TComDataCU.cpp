@@ -70,7 +70,6 @@ TComDataCU::TComDataCU()
     m_cuSize = NULL;
     m_qp = NULL;
     m_bMergeFlags = NULL;
-    m_mergeIndex = NULL;
     m_lumaIntraDir = NULL;
     m_chromaIntraDir = NULL;
     m_interDir = NULL;
@@ -133,7 +132,6 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     CHECKED_MALLOC(m_cuTransquantBypass, bool, numPartition);
 
     CHECKED_MALLOC(m_bMergeFlags, bool,  numPartition);
-    CHECKED_MALLOC(m_mergeIndex, UChar, numPartition);
     CHECKED_MALLOC(m_lumaIntraDir, UChar, numPartition);
     CHECKED_MALLOC(m_chromaIntraDir, UChar, numPartition);
     CHECKED_MALLOC(m_interDir, UChar, numPartition);
@@ -147,8 +145,8 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     CHECKED_MALLOC(m_cbf[1], UChar, numPartition);
     CHECKED_MALLOC(m_cbf[2], UChar, numPartition);
 
-    CHECKED_MALLOC(m_mvpIdx[0], char, numPartition);
-    CHECKED_MALLOC(m_mvpIdx[1], char, numPartition);
+    CHECKED_MALLOC(m_mvpIdx[0], uint8_t, numPartition * 2);
+    m_mvpIdx[1] = m_mvpIdx[0] + numPartition;
 
     CHECKED_MALLOC(m_trCoeffY, TCoeff, width * height);
     CHECKED_MALLOC(m_trCoeffCb, TCoeff, (width >> m_hChromaShift) * (height >> m_vChromaShift));
@@ -178,7 +176,6 @@ void TComDataCU::destroy()
     X265_FREE(m_cbf[2]);
     X265_FREE(m_interDir);
     X265_FREE(m_bMergeFlags);
-    X265_FREE(m_mergeIndex);
     X265_FREE(m_lumaIntraDir);
     X265_FREE(m_chromaIntraDir);
     X265_FREE(m_trIdx);
@@ -193,7 +190,6 @@ void TComDataCU::destroy()
     X265_FREE(m_iPCMSampleCb);
     X265_FREE(m_iPCMSampleCr);
     X265_FREE(m_mvpIdx[0]);
-    X265_FREE(m_mvpIdx[1]);
     X265_FREE(m_cuTransquantBypass);
     X265_FREE(m_skipFlag);
     X265_FREE(m_partSizes);
@@ -256,7 +252,6 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
         memset(m_cuSize,             g_maxCUSize,   numElements * sizeof(*m_cuSize));
         memset(m_qp,                 qp,            numElements * sizeof(*m_qp));
         memset(m_bMergeFlags,        false,         numElements * sizeof(*m_bMergeFlags));
-        memset(m_mergeIndex,         0,             numElements * sizeof(*m_mergeIndex));
         memset(m_lumaIntraDir,       DC_IDX,        numElements * sizeof(*m_lumaIntraDir));
         memset(m_chromaIntraDir,     0,             numElements * sizeof(*m_chromaIntraDir));
         memset(m_interDir,           0,             numElements * sizeof(*m_interDir));
@@ -497,7 +492,6 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     memcpy(m_predModes + offset, cu->getPredictionMode(), sizeof(*m_predModes) * numPartition);
     memcpy(m_cuTransquantBypass + offset, cu->getCUTransquantBypass(), sizeof(*m_cuTransquantBypass) * numPartition);
     memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),         iSizeInBool);
-    memcpy(m_mergeIndex       + offset, cu->getMergeIndex(),        iSizeInUchar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),      iSizeInUchar);
     memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(),    iSizeInUchar);
     memcpy(m_interDir         + offset, cu->getInterDir(),          iSizeInUchar);
@@ -565,7 +559,6 @@ void TComDataCU::copyToPic(UChar uhDepth)
     memcpy(rpcCU->getPredictionMode() + m_absIdxInLCU, m_predModes, sizeof(*m_predModes) * m_numPartitions);
     memcpy(rpcCU->getCUTransquantBypass() + m_absIdxInLCU, m_cuTransquantBypass, sizeof(*m_cuTransquantBypass) * m_numPartitions);
     memcpy(rpcCU->getMergeFlag()         + m_absIdxInLCU, m_bMergeFlags,         iSizeInBool);
-    memcpy(rpcCU->getMergeIndex()        + m_absIdxInLCU, m_mergeIndex,       iSizeInUchar);
     memcpy(rpcCU->getLumaIntraDir()      + m_absIdxInLCU, m_lumaIntraDir,     iSizeInUchar);
     memcpy(rpcCU->getChromaIntraDir()    + m_absIdxInLCU, m_chromaIntraDir,   iSizeInUchar);
     memcpy(rpcCU->getInterDir()          + m_absIdxInLCU, m_interDir,         iSizeInUchar);
@@ -652,7 +645,6 @@ void TComDataCU::copyToPic(UChar depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->getPredictionMode() + partOffset, m_predModes, sizeof(*m_predModes) * qNumPart);
     memcpy(cu->getCUTransquantBypass() + partOffset, m_cuTransquantBypass, sizeof(*m_cuTransquantBypass) * qNumPart);
     memcpy(cu->getMergeFlag()         + partOffset, m_bMergeFlags,      sizeInBool);
-    memcpy(cu->getMergeIndex()        + partOffset, m_mergeIndex,       sizeInUchar);
     memcpy(cu->getLumaIntraDir()      + partOffset, m_lumaIntraDir,     sizeInUchar);
     memcpy(cu->getChromaIntraDir()    + partOffset, m_chromaIntraDir,   sizeInUchar);
     memcpy(cu->getInterDir()          + partOffset, m_interDir,         sizeInUchar);

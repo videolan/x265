@@ -143,11 +143,10 @@ private:
     // -------------------------------------------------------------------------------------------------------------------
 
     bool*         m_bMergeFlags;      ///< array of merge flags
-    UChar*        m_mergeIndex;       ///< array of merge candidate indices
     UChar*        m_lumaIntraDir;     ///< array of intra directions (luma)
     UChar*        m_chromaIntraDir;   ///< array of intra directions (chroma)
     UChar*        m_interDir;         ///< array of inter directions
-    char*         m_mvpIdx[2];        ///< array of motion vector predictor candidates
+    uint8_t*      m_mvpIdx[2];        ///< array of motion vector predictor candidates or merge candidate indices [0]
     bool*         m_iPCMFlags;        ///< array of intra_pcm flags
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -323,11 +322,11 @@ public:
 
     void          setMergeFlag(uint32_t idx, bool bMergeFlag) { m_bMergeFlags[idx] = bMergeFlag; }
 
-    UChar*        getMergeIndex()                   { return m_mergeIndex; }
+    uint8_t*      getMergeIndex()                   { return m_mvpIdx[0]; }
 
-    UChar         getMergeIndex(uint32_t idx)           { return m_mergeIndex[idx]; }
+    uint8_t       getMergeIndex(uint32_t idx)           { return m_mvpIdx[0][idx]; }
 
-    void          setMergeIndex(uint32_t idx, uint32_t mergeIndex) { m_mergeIndex[idx] = (UChar)mergeIndex; }
+    void          setMergeIndex(uint32_t idx, int mergeIndex) { m_mvpIdx[0][idx] = (uint8_t)mergeIndex; }
 
     template<typename T>
     void          setSubPart(T bParameter, T* pbBaseLCU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
@@ -374,11 +373,11 @@ public:
     void          fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info);
     bool          isDiffMER(int xN, int yN, int xP, int yP);
     void          getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, int& nPSH);
-    void          setMVPIdx(int picList, uint32_t idx, int mvpIdx) { m_mvpIdx[picList][idx] = (char)mvpIdx; }
+    void          setMVPIdx(int picList, uint32_t idx, int mvpIdx) { m_mvpIdx[picList][idx] = (uint8_t)mvpIdx; }
 
-    int           getMVPIdx(int picList, uint32_t idx)             { return m_mvpIdx[picList][idx]; }
+    uint8_t       getMVPIdx(int picList, uint32_t idx)             { return m_mvpIdx[picList][idx]; }
 
-    char*         getMVPIdx(int picList)                       { return m_mvpIdx[picList]; }
+    uint8_t*      getMVPIdx(int picList)                       { return m_mvpIdx[picList]; }
 
     void          clipMv(MV& outMV);
 
