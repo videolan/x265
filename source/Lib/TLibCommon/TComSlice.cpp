@@ -395,50 +395,6 @@ int TComSlice::getNumRpsCurrTempList()
     return numRpsCurrTempList;
 }
 
-void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRAPisBLA)
-{
-    for (int i = 0; i < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i++)
-    {
-        if (pocCRA < MAX_UINT && getPOC() > pocCRA)
-        {
-            assert(getPOC() + rps->getDeltaPOC(i) >= pocCRA);
-        }
-    }
-
-    for (int i = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i < rps->getNumberOfPictures(); i++)
-    {
-        if (pocCRA < MAX_UINT && getPOC() > pocCRA)
-        {
-            if (!rps->getCheckLTMSBPresent(i))
-            {
-                //assert(xGetLongTermRefPic(picList, rps->getPOC(i), false)->getPOC() >= pocCRA);
-            }
-            else
-            {
-                assert(rps->getPOC(i) >= pocCRA);
-            }
-        }
-    }
-
-    if (getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR picture found
-    {
-        pocCRA = getPOC();
-        prevRAPisBLA = false;
-    }
-    else if (getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA) // CRA picture found
-    {
-        pocCRA = getPOC();
-        prevRAPisBLA = false;
-    }
-    else if (getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
-             || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-             || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP) // BLA picture found
-    {
-        pocCRA = getPOC();
-        prevRAPisBLA = true;
-    }
-}
-
 /** get WP tables for weighted pred
  * \param int
  * \param refIdx

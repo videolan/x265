@@ -1466,8 +1466,6 @@ public:
 
     bool      isIRAP() const                   { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }
 
-    void      checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRAPisBLA);
-
     void      setSliceType(SliceType e)               { m_sliceType = e; }
 
     void      setSliceQp(int i)                       { m_sliceQp = i; }
