@@ -229,9 +229,9 @@ void TComSlice::setRefPicList(PicList& picList)
     m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
 
     TComPic* refPic = NULL;
-    TComPic* refPicSetStCurr0[16];
-    TComPic* refPicSetStCurr1[16];
-    TComPic* refPicSetLtCurr[16];
+    TComPic* refPicSetStCurr0[MAX_NUM_REF];
+    TComPic* refPicSetStCurr1[MAX_NUM_REF];
+    TComPic* refPicSetLtCurr[MAX_NUM_REF];
     uint32_t numPocStCurr0 = 0;
     uint32_t numPocStCurr1 = 0;
     uint32_t numPocLtCurr = 0;
