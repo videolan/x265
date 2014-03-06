@@ -1492,7 +1492,7 @@ public:
 
     void      setPic(TComPic* p)                  { m_pic = p; }
 
-    void      setRefPicList(PicList& picList, bool checkNumPocTotalCurr = false);
+    void      setRefPicList(PicList& picList);
 
     void      setRefPOCList();
 

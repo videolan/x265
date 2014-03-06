@@ -215,21 +215,18 @@ void TComSlice::setRefPOCList()
     }
 }
 
-void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
+void TComSlice::setRefPicList(PicList& picList)
 {
-    if (!checkNumPocTotalCurr)
+    if (m_sliceType == I_SLICE)
     {
-        if (m_sliceType == I_SLICE)
-        {
-            ::memset(m_refPicList, 0, sizeof(m_refPicList));
-            ::memset(m_numRefIdx,  0, sizeof(m_numRefIdx));
+        ::memset(m_refPicList, 0, sizeof(m_refPicList));
+        ::memset(m_numRefIdx,  0, sizeof(m_numRefIdx));
 
-            return;
-        }
-
-        m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
-        m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
+        return;
     }
+
+    m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
+    m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
 
     TComPic* refPic = NULL;
     TComPic* refPicSetStCurr0[16];
@@ -285,30 +282,6 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
     TComPic* rpsCurrList0[MAX_NUM_REF + 1];
     TComPic* rpsCurrList1[MAX_NUM_REF + 1];
     int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
-    if (checkNumPocTotalCurr)
-    {
-        // The variable NumPocTotalCurr is derived as specified in subclause 7.4.7.2. It is a requirement of bitstream conformance
-        // that the following applies to the value of NumPocTotalCurr:
-        // - If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
-        // - Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
-        if (getRapPicFlag())
-        {
-            assert(numPocTotalCurr == 0);
-        }
-
-        if (m_sliceType == I_SLICE)
-        {
-            ::memset(m_refPicList, 0, sizeof(m_refPicList));
-            ::memset(m_numRefIdx,   0, sizeof(m_numRefIdx));
-
-            return;
-        }
-
-        assert(numPocTotalCurr >= 0);
-
-        m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
-        m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
-    }
 
     int cIdx = 0;
     for (i = 0; i < numPocStCurr0; i++, cIdx++)
