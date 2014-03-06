@@ -684,7 +684,7 @@ typedef struct x265_param
          * Default: OFF (0) */
         int       cuTree;
 
-        /* In CRF mode, maximum CRF as caused by VBV */
+        /* In CRF mode, maximum CRF as caused by VBV. 0 implies no limit */
         double    rfConstantMax;
     } rc;
 
