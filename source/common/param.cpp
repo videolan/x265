@@ -1127,7 +1127,7 @@ void x265_print_params(x265_param *param)
     }
     if (param->rc.vbvBufferSize)
     {
-        x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %d\n",
+        x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
                  param->rc.vbvBufferSize, param->rc.vbvMaxBitrate, param->rc.vbvBufferInit);
     }
 
