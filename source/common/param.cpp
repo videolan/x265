@@ -1046,7 +1046,7 @@ int x265_set_globals(x265_param *param)
 
     if (ATOMIC_CAS32(&once, 0, 1) == 1)
     {
-        if (param->maxCUSize != g_maxCUWidth)
+        if (param->maxCUSize != g_maxCUSize)
         {
             x265_log(param, X265_LOG_ERROR, "maxCUSize must be the same for all encoders in a single process");
             return -1;
@@ -1055,8 +1055,7 @@ int x265_set_globals(x265_param *param)
     else
     {
         // set max CU width & height
-        g_maxCUWidth  = param->maxCUSize;
-        g_maxCUHeight = param->maxCUSize;
+        g_maxCUSize = param->maxCUSize;
 
         // compute actual CU depth with respect to config depth and max transform size
         g_addCUDepth = 0;
@@ -1072,10 +1071,10 @@ int x265_set_globals(x265_param *param)
         // initialize partition order
         uint32_t* tmp = &g_zscanToRaster[0];
         initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
-        initRasterToZscan(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
+        initRasterToZscan(g_maxCUSize, g_maxCUSize, g_maxCUDepth + 1);
 
         // initialize conversion matrix from partition index to pel
-        initRasterToPelXY(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
+        initRasterToPelXY(g_maxCUSize, g_maxCUSize, g_maxCUDepth + 1);
     }
     return 0;
 }

@@ -53,8 +53,8 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 {
     pixel* roiOrigin;
     pixel* adiTemp;
-    uint32_t cuWidth = cu->getWidth(0) >> partDepth;
-    uint32_t cuHeight = cu->getHeight(0) >> partDepth;
+    uint32_t cuWidth = cu->getCUSize(0) >> partDepth;
+    uint32_t cuHeight = cu->getCUSize(0) >> partDepth;
     uint32_t cuWidth2  = cuWidth << 1;
     uint32_t cuHeight2 = cuHeight << 1;
     uint32_t width;
@@ -71,7 +71,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     cu->deriveLeftRightTopIdxAdi(partIdxLT, partIdxRT, zOrderIdxInPart, partDepth);
     cu->deriveLeftBottomIdxAdi(partIdxLB,              zOrderIdxInPart, partDepth);
 
-    unitSize      = g_maxCUWidth >> g_maxCUDepth;
+    unitSize      = g_maxCUSize >> g_maxCUDepth;
     numUnitsInCU  = cuWidth / unitSize;
     totalUnits    = (numUnitsInCU << 2) + 1;
 
@@ -183,8 +183,8 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
                                  pixel* refAbove, pixel* refLeft, pixel* refAboveFlt, pixel* refLeftFlt)
 {
     initAdiPattern(cu, zOrderIdxInPart, partDepth, adiBuf, strideOrig, heightOrig);
-    uint32_t cuWidth   = cu->getWidth(0) >> partDepth;
-    uint32_t cuHeight  = cu->getHeight(0) >> partDepth;
+    uint32_t cuWidth   = cu->getCUSize(0) >> partDepth;
+    uint32_t cuHeight  = cu->getCUSize(0) >> partDepth;
     uint32_t cuWidth2  = cuWidth << 1;
     uint32_t cuHeight2 = cuHeight << 1;
 
@@ -208,8 +208,8 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
 {
     pixel*  roiOrigin;
     pixel*  adiTemp;
-    uint32_t  cuWidth  = cu->getWidth(0) >> partDepth;
-    uint32_t  cuHeight = cu->getHeight(0) >> partDepth;
+    uint32_t  cuWidth  = cu->getCUSize(0) >> partDepth;
+    uint32_t  cuHeight = cu->getCUSize(0) >> partDepth;
     uint32_t  width;
     uint32_t  height;
     int   picStride = cu->getPic()->getCStride();
@@ -225,7 +225,7 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     cu->deriveLeftRightTopIdxAdi(partIdxLT, partIdxRT, zOrderIdxInPart, partDepth);
     cu->deriveLeftBottomIdxAdi(partIdxLB,              zOrderIdxInPart, partDepth);
 
-    unitSize      = (g_maxCUWidth >> g_maxCUDepth) >> cu->getHorzChromaShift(); // for chroma
+    unitSize      = (g_maxCUSize >> g_maxCUDepth) >> cu->getHorzChromaShift(); // for chroma
     numUnitsInCU  = (cuWidth / unitSize) >> cu->getHorzChromaShift();           // for chroma
     totalUnits    = (numUnitsInCU << 2) + 1;
 

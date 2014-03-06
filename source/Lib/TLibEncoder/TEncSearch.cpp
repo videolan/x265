@@ -139,9 +139,9 @@ bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempShortYuv = new ShortYuv[numLayersToAllocate];
     for (uint32_t i = 0; i < numLayersToAllocate; ++i)
     {
-        m_qtTempCoeffY[i]  = X265_MALLOC(TCoeff, g_maxCUWidth * g_maxCUHeight);
-        m_qtTempCoeffCb[i] = X265_MALLOC(TCoeff, (g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift));
-        m_qtTempCoeffCr[i] = X265_MALLOC(TCoeff, (g_maxCUWidth >> m_hChromaShift) * (g_maxCUHeight >> m_vChromaShift));
+        m_qtTempCoeffY[i]  = X265_MALLOC(TCoeff, g_maxCUSize * g_maxCUSize);
+        m_qtTempCoeffCb[i] = X265_MALLOC(TCoeff, (g_maxCUSize >> m_hChromaShift) * (g_maxCUSize >> m_vChromaShift));
+        m_qtTempCoeffCr[i] = X265_MALLOC(TCoeff, (g_maxCUSize >> m_hChromaShift) * (g_maxCUSize >> m_vChromaShift));
         m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param->internalCsp);
     }
 
@@ -161,7 +161,7 @@ bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     CHECKED_MALLOC(m_qtTempTUCoeffCb, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     CHECKED_MALLOC(m_qtTempTUCoeffCr, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
 
-    return m_qtTempTransformSkipYuv.create(g_maxCUWidth, g_maxCUHeight, cfg->param->internalCsp) &&
+    return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->param->internalCsp) &&
            m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param->internalCsp);
 
 fail:
@@ -179,7 +179,7 @@ void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
     uint32_t trMode     = cu->getTransformIdx(absPartIdx);
     uint32_t subdiv     = (trMode > trDepth ? 1 : 0);
-    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth()] + 2 - fullDepth;
+    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize()] + 2 - fullDepth;
     int      chFmt      = cu->getChromaFormat();
 
     if (cu->getPredictionMode(0) == MODE_INTRA && cu->getPartitionSize(0) == SIZE_NxN && trDepth == 0)
@@ -241,7 +241,7 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
     uint32_t trMode     = cu->getTransformIdx(absPartIdx);
     uint32_t subdiv     = (trMode > trDepth ? 1 : 0);
-    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth()] + 2 - fullDepth;
+    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize()] + 2 - fullDepth;
     uint32_t chroma     = (ttype != TEXT_LUMA ? 1 : 0);
     int chFmt           = cu->getChromaFormat();
 
@@ -271,9 +271,9 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
     //===== coefficients =====
     int cspx = chroma ? m_hChromaShift : 0;
     int cspy = chroma ? m_vChromaShift : 0;
-    uint32_t width = cu->getWidth(0) >> (trDepth + cspx);
-    uint32_t height = cu->getHeight(0) >> (trDepth + cspy);
-    uint32_t coeffOffset = (cu->getPic()->getMinCUWidth() >> cspx) * (cu->getPic()->getMinCUHeight() >> cspy) * absPartIdx;
+    uint32_t width = cu->getCUSize(0) >> (trDepth + cspx);
+    uint32_t height = cu->getCUSize(0) >> (trDepth + cspy);
+    uint32_t coeffOffset = (cu->getPic()->getMinCUSize() >> cspx) * (cu->getPic()->getMinCUSize() >> cspy) * absPartIdx;
     uint32_t qtLayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
     TCoeff* coeff = 0;
     switch (ttype)
@@ -409,8 +409,8 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 {
     uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
     uint32_t fullDepth    = cu->getDepth(0)  + trDepth;
-    uint32_t width        = cu->getWidth(0) >> trDepth;
-    uint32_t height       = cu->getHeight(0) >> trDepth;
+    uint32_t width        = cu->getCUSize(0) >> trDepth;
+    uint32_t height       = cu->getCUSize(0) >> trDepth;
     uint32_t stride       = fencYuv->getStride();
     Pel*     fenc         = fencYuv->getLumaAddr(absPartIdx);
     Pel*     pred         = predYuv->getLumaAddr(absPartIdx);
@@ -419,9 +419,9 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     int      chFmt        = cu->getChromaFormat();
     int      part         = partitionFromSizes(width, height);
 
-    uint32_t trSizeLog2     = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+    uint32_t trSizeLog2     = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
     uint32_t qtLayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
-    uint32_t numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+    uint32_t numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
     TCoeff*  coeff          = m_qtTempCoeffY[qtLayer] + numCoeffPerInc * absPartIdx;
 
     int16_t* reconQt        = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
@@ -512,7 +512,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 {
     uint32_t origTrDepth = trDepth;
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
-    uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+    uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
     int      chFmt       = cu->getChromaFormat();
 
     if ((trSizeLog2 == 2) && !(chFmt == CHROMA_444))
@@ -529,8 +529,8 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
     TextType ttype          = (chromaId > 0 ? TEXT_CHROMA_V : TEXT_CHROMA_U);
     uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdx);
-    uint32_t width          = cu->getWidth(0) >> (trDepth + m_hChromaShift);
-    uint32_t height         = cu->getHeight(0) >> (trDepth + m_vChromaShift);
+    uint32_t width          = cu->getCUSize(0) >> (trDepth + m_hChromaShift);
+    uint32_t height         = cu->getCUSize(0) >> (trDepth + m_vChromaShift);
     uint32_t stride         = fencYuv->getCStride();
     Pel*     fenc           = (chromaId > 0 ? fencYuv->getCrAddr(absPartIdx) : fencYuv->getCbAddr(absPartIdx));
     Pel*     pred           = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
@@ -538,7 +538,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     Pel*     recon          = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
 
     uint32_t qtlayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
-    uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> (m_hChromaShift + m_vChromaShift);
+    uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> (m_hChromaShift + m_vChromaShift);
     TCoeff*  coeff          = (chromaId > 0 ? m_qtTempCoeffCr[qtlayer] : m_qtTempCoeffCb[qtlayer]) + numCoeffPerInc * absPartIdx;
     int16_t* reconQt        = (chromaId > 0 ? m_qtTempShortYuv[qtlayer].getCrAddr(absPartIdx) : m_qtTempShortYuv[qtlayer].getCbAddr(absPartIdx));
     uint32_t reconQtStride  = m_qtTempShortYuv[qtlayer].m_cwidth;
@@ -661,7 +661,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                                      uint64_t&   rdCost)
 {
     uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
-    uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+    uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
     bool     bCheckFull  = (trSizeLog2 <= cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize());
     bool     bCheckSplit = (trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
 
@@ -694,8 +694,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     uint32_t singleCbfU  = 0;
     uint32_t singleCbfV  = 0;
     bool   checkTransformSkip  = cu->getSlice()->getPPS()->getUseTransformSkip();
-    uint32_t widthTransformSkip  = cu->getWidth(0) >> trDepth;
-    uint32_t heightTransformSkip = cu->getHeight(0) >> trDepth;
+    uint32_t widthTransformSkip  = cu->getCUSize(0) >> trDepth;
+    uint32_t heightTransformSkip = cu->getCUSize(0) >> trDepth;
     int    bestModeId    = 0;
     int    bestModeIdUV[2] = { 0, 0 };
 
@@ -942,8 +942,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         }
 
         //--- set reconstruction for next intra prediction blocks ---
-        uint32_t width     = cu->getWidth(0) >> trDepth;
-        uint32_t height    = cu->getHeight(0) >> trDepth;
+        uint32_t width     = cu->getCUSize(0) >> trDepth;
+        uint32_t height    = cu->getCUSize(0) >> trDepth;
         uint32_t qtLayer   = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
         uint32_t zorder    = cu->getZorderIdxInCU() + absPartIdx;
         int16_t* src       = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
@@ -982,7 +982,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
                                              TComYuv*    reconYuv)
 {
     uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
-    uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+    uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
     bool     bCheckFull  = (trSizeLog2 <= cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize());
     bool     bCheckSplit = (trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
 
@@ -1003,8 +1003,8 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         //----- code luma block with given intra prediction mode and store Cbf-----
         uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
-        uint32_t width        = cu->getWidth(0) >> trDepth;
-        uint32_t height       = cu->getHeight(0) >> trDepth;
+        uint32_t width        = cu->getCUSize(0) >> trDepth;
+        uint32_t height       = cu->getCUSize(0) >> trDepth;
         int      chFmt        = cu->getChromaFormat();
         uint32_t stride       = fencYuv->getStride();
         Pel*     fenc         = fencYuv->getLumaAddr(absPartIdx);
@@ -1012,7 +1012,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
         Pel*     recon        = reconYuv->getLumaAddr(absPartIdx);
 
-        uint32_t numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        uint32_t numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         TCoeff*  coeff          = cu->getCoeffY() + numCoeffPerInc * absPartIdx;
 
         uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
@@ -1097,7 +1097,7 @@ void TEncSearch::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t ab
 
     if (trMode == trDepth)
     {
-        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
         uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool bSkipChroma = false;
@@ -1111,8 +1111,8 @@ void TEncSearch::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t ab
         }
 
         //===== copy transform coefficients =====
-        uint32_t numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
-        uint32_t numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        uint32_t numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullDepth << 1);
+        uint32_t numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         TCoeff* coeffSrcY = m_qtTempCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
         TCoeff* coeffDestY = cu->getCoeffY()        + (numCoeffIncY * absPartIdx);
         ::memcpy(coeffDestY, coeffSrcY, sizeof(TCoeff) * numCoeffY);
@@ -1151,7 +1151,7 @@ void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
 {
     uint32_t fullMode = cu->getDepth(0) + trDepth;
 
-    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullMode] + 2;
+    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullMode] + 2;
     uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
     bool bSkipChroma  = false;
@@ -1166,8 +1166,8 @@ void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
     }
 
     //===== copy transform coefficients =====
-    uint32_t numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullMode << 1);
-    uint32_t numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+    uint32_t numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullMode << 1);
+    uint32_t numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
     TCoeff* coeffSrcY = m_qtTempCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
     TCoeff* coeffDstY = m_qtTempTUCoeffY;
     ::memcpy(coeffDstY, coeffSrcY, sizeof(TCoeff) * numCoeffY);
@@ -1198,7 +1198,7 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
 {
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
 
-    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+    uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
     uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
     bool bSkipChroma = false;
@@ -1213,8 +1213,8 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
     }
 
     //===== copy transform coefficients =====
-    uint32_t numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
-    uint32_t numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+    uint32_t numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullDepth << 1);
+    uint32_t numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
     TCoeff* coeffDstY = m_qtTempCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
     TCoeff* coeffSrcY = m_qtTempTUCoeffY;
     ::memcpy(coeffDstY, coeffSrcY, sizeof(TCoeff) * numCoeffY);
@@ -1238,8 +1238,8 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
     pixel*     reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zOrder);
     uint32_t   reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
     int16_t*   reconQt          = m_qtTempShortYuv[qtlayer].getLumaAddr(absPartIdx);
-    uint32_t   width            = cu->getWidth(0) >> trDepth;
-    uint32_t   height           = cu->getHeight(0) >> trDepth;
+    uint32_t   width            = cu->getCUSize(0) >> trDepth;
+    uint32_t   height           = cu->getCUSize(0) >> trDepth;
     primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, MAX_CU_SIZE);
     assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
 
@@ -1266,7 +1266,7 @@ void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uin
 
     if (trMode == trDepth)
     {
-        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
         uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool bChromaSame = false;
@@ -1283,12 +1283,12 @@ void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uin
         }
 
         //===== copy transform coefficients =====
-        uint32_t numCoeffC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
+        uint32_t numCoeffC = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullDepth << 1);
         if (!bChromaSame)
         {
             numCoeffC >>= 2;
         }
-        uint32_t numCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> ((cu->getSlice()->getSPS()->getMaxCUDepth() << 1) + 2);
+        uint32_t numCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> ((cu->getSlice()->getSPS()->getMaxCUDepth() << 1) + 2);
         if (stateU0V1Both2 == 0 || stateU0V1Both2 == 2)
         {
             TCoeff* coeffSrcU = m_qtTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
@@ -1315,7 +1315,7 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
 
     if (trMode == trDepth)
     {
-        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
         uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool bChromaSame = false;
@@ -1332,12 +1332,12 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
         }
 
         //===== copy transform coefficients =====
-        uint32_t numCoeffC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
+        uint32_t numCoeffC = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullDepth << 1);
         if (!bChromaSame)
         {
             numCoeffC >>= 2;
         }
-        uint32_t numCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> ((cu->getSlice()->getSPS()->getMaxCUDepth() << 1) + 2);
+        uint32_t numCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> ((cu->getSlice()->getSPS()->getMaxCUDepth() << 1) + 2);
 
         if (stateU0V1Both2 == 0 || stateU0V1Both2 == 2)
         {
@@ -1357,8 +1357,8 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
         m_qtTempTransformSkipYuv.copyPartToPartChroma(&m_qtTempShortYuv[qtlayer], absPartIdx, lumaSize, stateU0V1Both2);
 
         uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
-        uint32_t width            = cu->getWidth(0) >> (trDepth + 1);
-        uint32_t height           = cu->getHeight(0) >> (trDepth + 1);
+        uint32_t width            = cu->getCUSize(0) >> (trDepth + 1);
+        uint32_t height           = cu->getCUSize(0) >> (trDepth + 1);
         uint32_t reconQtStride    = m_qtTempShortYuv[qtlayer].m_cwidth;
         uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
 
@@ -1391,7 +1391,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
     if (trMode == trDepth)
     {
         bool checkTransformSkip = cu->getSlice()->getPPS()->getUseTransformSkip();
-        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
 
         uint32_t actualTrDepth = trDepth;
         if ((trSizeLog2 == 2) && !(cu->getChromaFormat() == CHROMA_444))
@@ -1537,7 +1537,7 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
 
     if (trMode == trDepth)
     {
-        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
         uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool bChromaSame  = false;
@@ -1553,13 +1553,13 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
         }
 
         //===== copy transform coefficients =====
-        uint32_t numCoeffC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
+        uint32_t numCoeffC = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullDepth << 1);
         if (!bChromaSame)
         {
-            numCoeffC = ((cu->getSlice()->getSPS()->getMaxCUWidth() >> m_hChromaShift) * (cu->getSlice()->getSPS()->getMaxCUHeight() >> m_vChromaShift)) >> (fullDepth << 1);
+            numCoeffC = ((cu->getSlice()->getSPS()->getMaxCUSize() >> m_hChromaShift) * (cu->getSlice()->getSPS()->getMaxCUSize() >> m_vChromaShift)) >> (fullDepth << 1);
         }
 
-        uint32_t numCoeffIncC = ((cu->getSlice()->getSPS()->getMaxCUWidth() >> m_hChromaShift) * (cu->getSlice()->getSPS()->getMaxCUHeight() >> m_vChromaShift)) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        uint32_t numCoeffIncC = ((cu->getSlice()->getSPS()->getMaxCUSize() >> m_hChromaShift) * (cu->getSlice()->getSPS()->getMaxCUSize() >> m_vChromaShift)) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
 
         TCoeff* coeffSrcU = m_qtTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
         TCoeff* coeffSrcV = m_qtTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
@@ -1596,7 +1596,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
 
     if (trMode == trDepth)
     {
-        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+        uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
         uint32_t actualTrDepth = trDepth;
         if (trSizeLog2 == 2)
         {
@@ -1612,8 +1612,8 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
 
         cu->setTransformSkipSubParts(0, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) +  actualTrDepth);
         cu->setTransformSkipSubParts(0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) +  actualTrDepth);
-        uint32_t width          = cu->getWidth(0) >> (trDepth + m_hChromaShift);
-        uint32_t height         = cu->getHeight(0) >> (trDepth + m_vChromaShift);
+        uint32_t width          = cu->getCUSize(0) >> (trDepth + m_hChromaShift);
+        uint32_t height         = cu->getCUSize(0) >> (trDepth + m_vChromaShift);
         uint32_t stride         = fencYuv->getCStride();
 
         for (uint32_t chromaId = 0; chromaId < 2; chromaId++)
@@ -1624,7 +1624,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
             Pel*     pred           = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
             int16_t* residual       = (chromaId > 0 ? resiYuv->getCrAddr(absPartIdx) : resiYuv->getCbAddr(absPartIdx));
             Pel*     recon          = (chromaId > 0 ? reconYuv->getCrAddr(absPartIdx) : reconYuv->getCbAddr(absPartIdx));
-            uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> 2;
+            uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> 2;
             TCoeff*  coeff          = (chromaId > 0 ? cu->getCoeffCr() : cu->getCoeffCb()) + numCoeffPerInc * absPartIdx;
 
             uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
@@ -1689,7 +1689,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
             //===== reconstruction =====
             assert(((uint32_t)(size_t)residual & (width - 1)) == 0);
             assert(width <= 32);
-            int part = partitionFromSizes(cu->getWidth(0) >> (trDepth), cu->getHeight(0) >> (trDepth));
+            int part = partitionFromSizes(cu->getCUSize(0) >> (trDepth), cu->getCUSize(0) >> (trDepth));
             primitives.chroma[m_cfg->param->internalCsp].add_ps[part](recon, stride, pred, residual, stride, stride);
             primitives.chroma[m_cfg->param->internalCsp].copy_pp[part](reconIPred, reconIPredStride, recon, stride);
         }
@@ -1717,8 +1717,8 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
 
 void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
 {
-    uint32_t width  = cu->getWidth(0) >> 1;
-    uint32_t height = cu->getHeight(0) >> 1;
+    uint32_t width  = cu->getCUSize(0) >> 1;
+    uint32_t height = cu->getCUSize(0) >> 1;
     uint32_t stride = fencYuv->getCStride();
     int      chFmt  = cu->getChromaFormat();
     Pel* fencU      = fencYuv->getCbAddr(0);
@@ -1767,7 +1767,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     uint32_t depth        = cu->getDepth(0);
     uint32_t numPU        = cu->getNumPartInter();
     uint32_t initTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-    uint32_t width        = cu->getWidth(0) >> initTrDepth;
+    uint32_t width        = cu->getCUSize(0) >> initTrDepth;
     uint32_t qNumParts    = cu->getTotalNumPart() >> 2;
     uint32_t widthBit     = cu->getIntraSizeIdx(0);
     uint32_t overallDistY = 0;
@@ -2021,7 +2021,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         {
             bool bSkipChroma  = false;
             bool bChromaSame  = false;
-            uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> (cu->getDepth(0) + initTrDepth)] + 2;
+            uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getDepth(0) + initTrDepth)] + 2;
             if (!bLumaOnly && trSizeLog2 == 2)
             {
                 assert(initTrDepth  > 0);
@@ -2029,8 +2029,8 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 bChromaSame  = true;
             }
 
-            uint32_t compWidth   = cu->getWidth(0) >> initTrDepth;
-            uint32_t compHeight  = cu->getHeight(0) >> initTrDepth;
+            uint32_t compWidth   = cu->getCUSize(0) >> initTrDepth;
+            uint32_t compHeight  = cu->getCUSize(0) >> initTrDepth;
             uint32_t zorder      = cu->getZorderIdxInCU() + partOffset;
             int      part        = partitionFromSizes(compWidth, compHeight);
             Pel*     dst         = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
@@ -2105,8 +2105,8 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
     uint32_t maxMode = NUM_CHROMA_MODE;
     uint32_t modeList[NUM_CHROMA_MODE];
 
-    uint32_t width          = cu->getWidth(0) >> (trDepth + m_hChromaShift);
-    uint32_t height         = cu->getHeight(0) >> (trDepth + m_vChromaShift);
+    uint32_t width          = cu->getCUSize(0) >> (trDepth + m_hChromaShift);
+    uint32_t height         = cu->getCUSize(0) >> (trDepth + m_vChromaShift);
     int      chFmt          = cu->getChromaFormat();
     uint32_t stride         = fencYuv->getCStride();
     int scaleWidth = width;
@@ -2246,8 +2246,8 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
 
         if (!isLastSection())
         {
-            uint32_t compWidth   = (cu->getWidth(0) >> m_hChromaShift)  >> initTrDepth;
-            uint32_t compHeight  = (cu->getHeight(0) >> m_vChromaShift) >> initTrDepth;
+            uint32_t compWidth   = (cu->getCUSize(0) >> m_hChromaShift)  >> initTrDepth;
+            uint32_t compHeight  = (cu->getCUSize(0) >> m_vChromaShift) >> initTrDepth;
             uint32_t zorder      = cu->getZorderIdxInCU() + m_partOffset;
             Pel*     dst         = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
             uint32_t dststride   = cu->getPic()->getPicYuvRec()->getCStride();
@@ -2387,8 +2387,8 @@ void TEncSearch::xEncPCM(TComDataCU* cu, uint32_t absPartIdx, Pel* fenc, Pel* pc
 void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv)
 {
     uint32_t depth      = cu->getDepth(0);
-    uint32_t width      = cu->getWidth(0);
-    uint32_t height     = cu->getHeight(0);
+    uint32_t width      = cu->getCUSize(0);
+    uint32_t height     = cu->getCUSize(0);
     uint32_t stride     = predYuv->getStride();
     uint32_t strideC    = predYuv->getCStride();
     uint32_t widthC     = width  >> 1;
@@ -2398,7 +2398,7 @@ void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     uint64_t cost;
 
     uint32_t absPartIdx = 0;
-    uint32_t minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
+    uint32_t minCoeffSize = cu->getPic()->getMinCUSize() * cu->getPic()->getMinCUSize();
     uint32_t lumaOffset   = minCoeffSize * absPartIdx;
     uint32_t chromaOffset = lumaOffset >> 2;
 
@@ -2477,7 +2477,7 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
     cu->getPartIndexAndSize(puIdx, absPartIdx, width, height);
     uint32_t depth = cu->getDepth(absPartIdx);
     PartSize partSize = cu->getPartitionSize(0);
-    if (cu->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() && partSize != SIZE_2Nx2N && cu->getWidth(0) <= 8)
+    if (cu->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() && partSize != SIZE_2Nx2N && cu->getCUSize(0) <= 8)
     {
         cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
         if (puIdx == 0)
@@ -2607,7 +2607,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
         bool bTestNormalMC = true;
 
-        if (bUseMRG && cu->getWidth(0) > 8 && numPart == 2)
+        if (bUseMRG && cu->getCUSize(0) > 8 && numPart == 2)
         {
             bTestNormalMC = false;
         }
@@ -3044,8 +3044,8 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     uint32_t bits = 0, bestBits = 0;
     uint32_t distortion = 0, bdist = 0;
 
-    uint32_t width  = cu->getWidth(0);
-    uint32_t height = cu->getHeight(0);
+    uint32_t width  = cu->getCUSize(0);
+    uint32_t height = cu->getCUSize(0);
 
     //  No residual coding : SKIP mode
     if (bSkipRes)
@@ -3197,7 +3197,7 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
     if (cu->getPredictionMode(0) == MODE_INTER)
     {
         residualTransformQuantInter(cu, 0, 0, resiYuv, cu->getDepth(0), true);
-        uint32_t width  = cu->getWidth(0);
+        uint32_t width  = cu->getCUSize(0);
         if (cu->getQtRootCbf(0))
         {
             reconYuv->addClip(predYuv, resiYuv, 0, width);
@@ -3228,7 +3228,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 {
     assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
     const uint32_t trMode = depth - cu->getDepth(0);
-    const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
+    const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> depth] + 2;
     int chFmt                 = cu->getChromaFormat();
 
     bool bSplitFlag = ((cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
@@ -3257,7 +3257,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
     int lastPosY = -1, lastPosU = -1, lastPosV = -1;
     if (bCheckFull)
     {
-        const uint32_t numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        const uint32_t numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
 
         TCoeff *coeffCurY = cu->getCoeffY() + (numCoeffPerAbsPartIdxIncrement * absPartIdx);
         TCoeff *coeffCurU = cu->getCoeffCb() + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
@@ -3418,8 +3418,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 {
     assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
     const uint32_t trMode = depth - cu->getDepth(0);
-    const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
-    uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUWidth() >> m_hChromaShift) >> depth] + 2;
+    const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> depth] + 2;
+    uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUSize() >> m_hChromaShift) >> depth] + 2;
     int chFmt                 = cu->getChromaFormat();
 
     bool bSplitFlag = ((cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
@@ -3454,7 +3454,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
     if (bCheckFull)
     {
-        const uint32_t numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        const uint32_t numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         const uint32_t qtlayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
         TCoeff *coeffCurY = m_qtTempCoeffY[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx);
         TCoeff *coeffCurU = m_qtTempCoeffCb[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> (m_hChromaShift + m_vChromaShift));
@@ -4066,8 +4066,8 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     const uint32_t curTrMode   = depth - cu->getDepth(0);
     const uint32_t trMode      = cu->getTransformIdx(absPartIdx);
     const bool     bSubdiv     = curTrMode != trMode;
-    const uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
-    uint32_t       trSizeCLog2 = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUWidth() >> m_hChromaShift) >> depth] + 2;
+    const uint32_t trSizeLog2  = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> depth] + 2;
+    uint32_t       trSizeCLog2 = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUSize() >> m_hChromaShift) >> depth] + 2;
     int            chFmt       = cu->getChromaFormat();
 
     if (bSubdivAndCbf && trSizeLog2 <= cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() && trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
@@ -4110,7 +4110,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     if (!bSubdiv)
     {
         //Luma
-        const uint32_t numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        const uint32_t numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         //assert( 16 == uiNumCoeffPerAbsPartIdxIncrement ); // check
         const uint32_t qtlayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
         TCoeff *coeffCurY = m_qtTempCoeffY[qtlayer] +  numCoeffPerAbsPartIdxIncrement * absPartIdx;
@@ -4171,8 +4171,8 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
 
     if (curTrMode == trMode)
     {
-        const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
-        uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUWidth() >> cu->getHorzChromaShift()) >> depth] + 2;
+        const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> depth] + 2;
+        uint32_t  trSizeCLog2     = g_convertToBit[(cu->getSlice()->getSPS()->getMaxCUSize() >> cu->getHorzChromaShift()) >> depth] + 2;
         const uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool  bCodeChroma   = true;
@@ -4198,7 +4198,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
         }
         else
         {
-            uint32_t uiNumCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+            uint32_t uiNumCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
             uint32_t uiNumCoeffY = (1 << (trSizeLog2 << 1));
             TCoeff* pcCoeffSrcY = m_qtTempCoeffY[qtlayer] +  uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
             TCoeff* pcCoeffDstY = cu->getCoeffY() + uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
@@ -4295,7 +4295,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0), true);
         m_entropyCoder->encodePredInfo(cu, 0, true);
         bool bDummy = false;
-        m_entropyCoder->encodeCoeff(cu, 0, cu->getDepth(0), cu->getWidth(0), cu->getHeight(0), bDummy);
+        m_entropyCoder->encodeCoeff(cu, 0, cu->getDepth(0), cu->getCUSize(0), cu->getCUSize(0), bDummy);
         return m_entropyCoder->getNumberOfWrittenBits();
     }
 }

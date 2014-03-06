@@ -551,8 +551,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     pixel* fenc;
     pixel* pRec;
     int stride;
-    int iLcuHeight = pTmpSPS->getMaxCUHeight();
-    int iLcuWidth  = pTmpSPS->getMaxCUWidth();
+    int iLcuHeight = pTmpSPS->getMaxCUSize();
+    int iLcuWidth  = pTmpSPS->getMaxCUSize();
     uint32_t lpelx   = pTmpCu->getCUPelX();
     uint32_t tpely   = pTmpCu->getCUPelY();
     uint32_t rpelx;
@@ -852,8 +852,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     {
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
         {
-            lcuHeight = pTmpSPS->getMaxCUHeight();
-            lcuWidth  = pTmpSPS->getMaxCUWidth();
+            lcuHeight = pTmpSPS->getMaxCUSize();
+            lcuWidth  = pTmpSPS->getMaxCUSize();
             addr     = idxX  + frameWidthInCU * idxY;
             pTmpCu = pic->getCU(addr);
             lPelX   = pTmpCu->getCUPelX();

@@ -97,8 +97,7 @@ private:
     uint32_t      m_cuPelX;          ///< CU position in a pixel (X)
     uint32_t      m_cuPelY;          ///< CU position in a pixel (Y)
     uint32_t      m_numPartitions;   ///< total number of minimum partitions in a CU
-    UChar*        m_width;           ///< array of widths
-    UChar*        m_height;          ///< array of heights
+    uint8_t*      m_cuSize;          ///< array of cu width/height
     UChar*        m_depth;           ///< array of depths
     int           m_chromaFormat;
     int           m_hChromaShift;
@@ -254,13 +253,9 @@ public:
 
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
-    UChar*        getWidth()                     { return m_width; }
+    uint8_t*      getCUSize()                     { return m_cuSize; }
 
-    UChar         getWidth(uint32_t idx)             { return m_width[idx]; }
-
-    UChar*        getHeight()                    { return m_height; }
-
-    UChar         getHeight(uint32_t idx)            { return m_height[idx]; }
+    uint8_t       getCUSize(uint32_t idx)            { return m_cuSize[idx]; }
 
     char*         getQP()                        { return m_qp; }
 

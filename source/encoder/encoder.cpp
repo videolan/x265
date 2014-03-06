@@ -172,7 +172,7 @@ void Encoder::init()
 {
     if (m_frameEncoder)
     {
-        int numRows = (param->sourceHeight + g_maxCUHeight - 1) / g_maxCUHeight;
+        int numRows = (param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
         for (int i = 0; i < param->frameNumThreads; i++)
         {
             if (!m_frameEncoder[i].init(this, numRows))
@@ -606,7 +606,7 @@ void Encoder::printSummary()
                 }
             }
             // print statistics
-            int cuSize = g_maxCUWidth >> depth;
+            int cuSize = g_maxCUSize >> depth;
             char stats[256] = { 0 };
             int len = 0;
             if (sliceType != I_SLICE)
@@ -982,11 +982,10 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setPicHeightInLumaSamples(param->sourceHeight);
     sps->setConformanceWindow(m_conformanceWindow);
     sps->setChromaFormatIdc(param->internalCsp);
-    sps->setMaxCUWidth(g_maxCUWidth);
-    sps->setMaxCUHeight(g_maxCUHeight);
+    sps->setMaxCUSize(g_maxCUSize);
     sps->setMaxCUDepth(g_maxCUDepth);
 
-    int minCUSize = sps->getMaxCUWidth() >> (sps->getMaxCUDepth() - g_addCUDepth);
+    int minCUSize = sps->getMaxCUSize() >> (sps->getMaxCUDepth() - g_addCUDepth);
     int log2MinCUSize = 0;
     while (minCUSize > 1)
     {
@@ -1124,13 +1123,13 @@ void Encoder::initPPS(TComPPS *pps)
     {
         pps->setUseDQP(true);
         pps->setMaxCuDQPDepth(m_maxCuDQPDepth);
-        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUWidth() >> (pps->getMaxCuDQPDepth()));
+        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUSize() >> (pps->getMaxCuDQPDepth()));
     }
     else
     {
         pps->setUseDQP(false);
         pps->setMaxCuDQPDepth(0);
-        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUWidth() >> (pps->getMaxCuDQPDepth()));
+        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUSize() >> (pps->getMaxCuDQPDepth()));
     }
 
     pps->setChromaCbQpOffset(param->cbQpOffset);

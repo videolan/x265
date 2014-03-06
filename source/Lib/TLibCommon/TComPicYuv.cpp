@@ -79,15 +79,15 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_numCuInWidth = (m_picWidth + m_cuWidth - 1)  / m_cuWidth;
     m_numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
 
-    m_lumaMarginX = g_maxCUWidth  + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
-    m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
-    m_stride = (m_numCuInWidth * g_maxCUWidth) + (m_lumaMarginX << 1);
+    m_lumaMarginX = g_maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
+    m_lumaMarginY = g_maxCUSize + 16; // margin for 8-tap filter and infinite padding
+    m_stride = (m_numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
 
     m_chromaMarginX = m_lumaMarginX;    // keep 16-byte alignment for chroma CTUs
     m_chromaMarginY = m_lumaMarginY >> m_vChromaShift;
 
-    m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> m_hChromaShift) + (m_chromaMarginX * 2);
-    int maxHeight = m_numCuInHeight * g_maxCUHeight;
+    m_strideC = ((m_numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
+    int maxHeight = m_numCuInHeight * g_maxCUSize;
 
     CHECKED_MALLOC(m_picBufY, pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
     CHECKED_MALLOC(m_picBufU, pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
@@ -142,9 +142,9 @@ uint32_t TComPicYuv::getCUHeight(int rowNum)
     uint32_t height;
 
     if (rowNum == m_numCuInHeight - 1)
-        height = ((getHeight() % g_maxCUHeight) ? (getHeight() % g_maxCUHeight) : g_maxCUHeight);
+        height = ((getHeight() % g_maxCUSize) ? (getHeight() % g_maxCUSize) : g_maxCUSize);
     else
-        height = g_maxCUHeight;
+        height = g_maxCUSize;
     return height;
 }
 

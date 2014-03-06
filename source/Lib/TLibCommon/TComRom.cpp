@@ -225,8 +225,7 @@ void destroyROM()
 // Data structure related table & variable
 // ====================================================================================================================
 
-uint32_t g_maxCUWidth  = MAX_CU_SIZE;
-uint32_t g_maxCUHeight = MAX_CU_SIZE;
+uint32_t g_maxCUSize   = MAX_CU_SIZE;
 uint32_t g_maxCUDepth  = MAX_CU_DEPTH;
 uint32_t g_addCUDepth  = 0;
 uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };

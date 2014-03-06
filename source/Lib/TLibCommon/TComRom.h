@@ -87,8 +87,7 @@ extern uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 void initRasterToPelXY(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
 
 // global variable (LCU width/height, max. CU depth)
-extern uint32_t g_maxCUWidth;
-extern uint32_t g_maxCUHeight;
+extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;
 extern uint32_t g_addCUDepth;
 

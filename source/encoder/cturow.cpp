@@ -63,7 +63,7 @@ bool CTURow::create(Encoder* top)
     m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 
     return m_search.init(top, &m_rdCost, &m_trQuant) &&
-           m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth);
+           m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUSize);
 }
 
 

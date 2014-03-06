@@ -158,9 +158,7 @@ public:
 
     uint32_t      getFrameHeightInCU()    { return m_picSym->getFrameHeightInCU(); }
 
-    uint32_t      getMinCUWidth()         { return m_picSym->getMinCUWidth(); }
-
-    uint32_t      getMinCUHeight()        { return m_picSym->getMinCUHeight(); }
+    uint32_t      getMinCUSize()          { return m_picSym->getMinCUSize(); }
 
     uint32_t      getParPelX(UChar partIdx) { return getParPelX(partIdx); }
 

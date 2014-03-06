@@ -199,8 +199,8 @@ void TEncEntropy::encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t d
 void TEncEntropy::encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
 {
     if (!cu->getSlice()->getSPS()->getUsePCM()
-        || cu->getWidth(absPartIdx) > (1 << cu->getSlice()->getSPS()->getPCMLog2MaxSize())
-        || cu->getWidth(absPartIdx) < (1 << cu->getSlice()->getSPS()->getPCMLog2MinSize()))
+        || cu->getCUSize(absPartIdx) > (1 << cu->getSlice()->getSPS()->getPCMLog2MaxSize())
+        || cu->getCUSize(absPartIdx) < (1 << cu->getSlice()->getSPS()->getPCMLog2MinSize()))
     {
         return;
     }
@@ -216,7 +216,7 @@ void TEncEntropy::encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
 void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, uint32_t trIdx, bool& bCodeDQP)
 {
     const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
-    const uint32_t log2TrafoSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth()] + 2 - depth;
+    const uint32_t log2TrafoSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize()] + 2 - depth;
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
     uint32_t cbfU = cu->getCbf(absPartIdx, TEXT_CHROMA_U, trIdx);
     uint32_t cbfV = cu->getCbf(absPartIdx, TEXT_CHROMA_V, trIdx);
@@ -597,7 +597,7 @@ void TEncEntropy::encodeQP(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
  */
 void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP)
 {
-    uint32_t minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
+    uint32_t minCoeffSize = cu->getPic()->getMinCUSize() * cu->getPic()->getMinCUSize();
     uint32_t lumaOffset   = minCoeffSize * absPartIdx;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
 

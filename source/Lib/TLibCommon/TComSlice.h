@@ -790,8 +790,7 @@ private:
 
     int         m_log2MinCodingBlockSize;
     int         m_log2DiffMaxMinCodingBlockSize;
-    uint32_t    m_maxCUWidth;
-    uint32_t    m_maxCUHeight;
+    uint32_t    m_maxCUSize;
     uint32_t    m_maxCUDepth;
 
     Window      m_conformanceWindow;
@@ -907,13 +906,9 @@ public:
 
     void setLog2DiffMaxMinCodingBlockSize(int val) { m_log2DiffMaxMinCodingBlockSize = val; }
 
-    void setMaxCUWidth(uint32_t u) { m_maxCUWidth = u; }
+    void setMaxCUSize(uint32_t u) { m_maxCUSize = u; }
 
-    uint32_t getMaxCUWidth() const  { return m_maxCUWidth; }
-
-    void setMaxCUHeight(uint32_t u) { m_maxCUHeight = u; }
-
-    uint32_t getMaxCUHeight() const { return m_maxCUHeight; }
+    uint32_t getMaxCUSize() const  { return m_maxCUSize; }
 
     void setMaxCUDepth(uint32_t u) { m_maxCUDepth = u; }
 

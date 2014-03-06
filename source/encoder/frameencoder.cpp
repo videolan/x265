@@ -935,7 +935,7 @@ void FrameEncoder::compressCTURows()
     range    += 1;                        /* diamond search range check lag */
     range    += 2;                        /* subpel refine */
     range    += NTAPS_LUMA / 2;           /* subpel filter half-length */
-    uint32_t refLagRows = 1 + ((range + g_maxCUHeight - 1) / g_maxCUHeight);
+    uint32_t refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_pic->m_SSDY = 0;
@@ -1155,7 +1155,7 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
     double qp_offset = 0;
     int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
     int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
-    int noOfBlocks = g_maxCUWidth / 16;
+    int noOfBlocks = g_maxCUSize / 16;
     int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
     int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
 

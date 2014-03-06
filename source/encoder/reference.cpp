@@ -50,7 +50,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
     {
         if (!m_weightBuffer)
         {
-            size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
+            size_t padheight = (pic->m_numCuInHeight * g_maxCUSize) + pic->m_lumaMarginY * 2;
             m_weightBuffer = X265_MALLOC(pixel, lumaStride * padheight);
             if (!m_weightBuffer)
                 return -1;
@@ -82,12 +82,12 @@ void MotionReference::applyWeight(int rows, int numRows)
         return;
     int marginX = m_reconPic->m_lumaMarginX;
     int marginY = m_reconPic->m_lumaMarginY;
-    pixel* src = (pixel*)m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
-    pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUHeight) * lumaStride);
+    pixel* src = (pixel*)m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUSize * lumaStride);
+    pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUSize) * lumaStride);
     int width = m_reconPic->getWidth();
-    int height = ((rows - m_numWeightedRows) * g_maxCUHeight);
+    int height = ((rows - m_numWeightedRows) * g_maxCUSize);
     if (rows == numRows)
-        height = ((m_reconPic->getHeight() % g_maxCUHeight) ? (m_reconPic->getHeight() % g_maxCUHeight) : g_maxCUHeight);
+        height = ((m_reconPic->getHeight() % g_maxCUSize) ? (m_reconPic->getHeight() % g_maxCUSize) : g_maxCUSize);
 
     // Computing weighted CU rows
     int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth

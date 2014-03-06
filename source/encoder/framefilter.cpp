@@ -80,7 +80,7 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
         m_sao.setSaoLcuBoundary(top->param->saoLcuBoundary);
         m_sao.setSaoLcuBasedOptimization(top->param->saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->m_maxNumOffsetsPerPic);
-        m_sao.create(top->param->sourceWidth, top->param->sourceHeight, g_maxCUWidth, g_maxCUHeight, m_cfg->param->internalCsp);
+        m_sao.create(top->param->sourceWidth, top->param->sourceHeight, g_maxCUSize, g_maxCUSize, m_cfg->param->internalCsp);
         m_sao.createEncBuffer();
     }
 
@@ -216,8 +216,8 @@ void FrameFilter::processRowPost(int row)
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
     TComPicYuv *recon = m_pic->getPicYuvRec();
-    const int lastH = ((recon->getHeight() % g_maxCUHeight) ? (recon->getHeight() % g_maxCUHeight) : g_maxCUHeight);
-    const int realH = (row != m_numRows - 1) ? g_maxCUHeight : lastH;
+    const int lastH = ((recon->getHeight() % g_maxCUSize) ? (recon->getHeight() % g_maxCUSize) : g_maxCUSize);
+    const int realH = (row != m_numRows - 1) ? g_maxCUSize : lastH;
 
     // Border extend Left and Right
     primitives.extendRowBorder(recon->getLumaAddr(lineStartCUAddr), recon->getStride(), recon->getWidth(), realH, recon->getLumaMarginX());
@@ -279,9 +279,9 @@ void FrameFilter::processRowPost(int row)
         int height;
 
         if (row == m_numRows - 1)
-            height = ((recon->getHeight() % g_maxCUHeight) ? (recon->getHeight() % g_maxCUHeight) : g_maxCUHeight);
+            height = ((recon->getHeight() % g_maxCUSize) ? (recon->getHeight() % g_maxCUSize) : g_maxCUSize);
         else
-            height = g_maxCUHeight;
+            height = g_maxCUSize;
 
         uint64_t ssdY = computeSSD(orig->getLumaAddr(cuAddr), recon->getLumaAddr(cuAddr), stride, width, height);
         height >>= m_vChromaShift;
@@ -303,8 +303,8 @@ void FrameFilter::processRowPost(int row)
         int stride2 = m_pic->getPicYuvRec()->getStride();
         int bEnd = ((row + 1) == (this->m_numRows - 1));
         int bStart = (row == 0);
-        int minPixY = row * g_maxCUHeight - 4 * !bStart;
-        int maxPixY = (row + 1) * g_maxCUHeight - 4 * !bEnd;
+        int minPixY = row * g_maxCUSize - 4 * !bStart;
+        int maxPixY = (row + 1) * g_maxCUSize - 4 * !bEnd;
         int ssim_cnt;
         x265_emms();
 
@@ -360,7 +360,7 @@ void FrameFilter::processRowPost(int row)
         uint32_t width = recon->getWidth();
         uint32_t height = recon->getCUHeight(row);
         uint32_t stride = recon->getStride();
-        uint32_t cuHeight = g_maxCUHeight;
+        uint32_t cuHeight = g_maxCUSize;
         if (row == 0)
         {
             m_pic->m_checksum[0] = m_pic->m_checksum[1] = m_pic->m_checksum[2] = 0;

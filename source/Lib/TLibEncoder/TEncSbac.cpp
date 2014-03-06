@@ -463,8 +463,6 @@ void TEncSbac::codeSPS(TComSPS* sps)
         }
     }
 
-    assert(sps->getMaxCUWidth() == sps->getMaxCUHeight());
-
     WRITE_UVLC(sps->getLog2MinCodingBlockSize() - 3,    "log2_min_coding_block_size_minus3");
     WRITE_UVLC(sps->getLog2DiffMaxMinCodingBlockSize(), "log2_diff_max_min_coding_block_size");
     WRITE_UVLC(sps->getQuadtreeTULog2MinSize() - 2,     "log2_min_transform_block_size_minus2");
@@ -1486,7 +1484,7 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_nRx2N:
         m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
         m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8))
+        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
         {
             m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
@@ -1501,7 +1499,7 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         break;
 
     case SIZE_NxN:
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getWidth(absPartIdx) == 8))
+        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
         {
             m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
             m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
@@ -1725,7 +1723,7 @@ void TEncSbac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
     const uint32_t interDir = cu->getInterDir(absPartIdx) - 1;
     const uint32_t ctx      = cu->getCtxInterDir(absPartIdx);
 
-    if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getWidth(absPartIdx) != 8)
+    if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getCUSize(absPartIdx) != 8)
     {
         m_binIf->encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
     }
@@ -1894,7 +1892,7 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
     {
         m_binIf->encodePCMAlignBits();
 
-        uint32_t minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
+        uint32_t minCoeffSize = cu->getPic()->getMinCUSize() * cu->getPic()->getMinCUSize();
         uint32_t lumaOffset   = minCoeffSize * absPartIdx;
         uint32_t chromaOffset = lumaOffset >> 2;
         uint32_t width;
@@ -1903,8 +1901,8 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
         uint32_t x, y;
 
         pixel *pcmSample = cu->getPCMSampleY() + lumaOffset;
-        width = cu->getWidth(absPartIdx);
-        height = cu->getHeight(absPartIdx);
+        width = cu->getCUSize(absPartIdx);
+        height = cu->getCUSize(absPartIdx);
         sampleBits = cu->getSlice()->getSPS()->getPCMBitDepthLuma();
 
         for (y = 0; y < height; y++)
@@ -1920,8 +1918,8 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
         }
 
         pcmSample = cu->getPCMSampleCb() + chromaOffset;
-        width = cu->getWidth(absPartIdx) / 2;
-        height = cu->getHeight(absPartIdx) / 2;
+        width = cu->getCUSize(absPartIdx) / 2;
+        height = cu->getCUSize(absPartIdx) / 2;
         sampleBits = cu->getSlice()->getSPS()->getPCMBitDepthChroma();
 
         for (y = 0; y < height; y++)
