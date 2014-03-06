@@ -420,6 +420,12 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *preset = "medium";
     const char *tune = "ssim";
 
+    if (argc <= 1)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "No input file. Run x265 --help for a list of options.\n");
+        return true;
+    }
+
     /* Presets are applied before all other options. */
     for (optind = 0;; )
     {
