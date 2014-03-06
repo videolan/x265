@@ -641,6 +641,32 @@ bool PixelHarness::check_copy_ps(copy_ps_t ref, copy_ps_t opt)
     return true;
 }
 
+bool PixelHarness::check_copy_ss(copy_ss_t ref, copy_ss_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    // we don't know the partition size so we are checking the entire output buffer so
+    // we must initialize the buffers
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        opt(opt_dest, STRIDE, short_test_buff1[index] + j, STRIDE);
+        ref(ref_dest, STRIDE, short_test_buff1[index] + j, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt)
 {
     ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
@@ -1000,6 +1026,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
+    if (opt.luma_copy_ss[part])
+    {
+        if (!check_copy_ss(ref.luma_copy_ss[part], opt.luma_copy_ss[part]))
+        {
+            printf("luma_copy_ss[%s] failed\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
     if (opt.luma_sub_ps[part])
     {
         if (!check_pixel_sub_ps(ref.luma_sub_ps[part], opt.luma_sub_ps[part]))
@@ -1050,6 +1085,14 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
             if (!check_copy_ps(ref.chroma[i].copy_ps[part], opt.chroma[i].copy_ps[part]))
             {
                 printf("chroma_copy_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
+                return false;
+            }
+        }
+        if (opt.chroma[i].copy_ss[part])
+        {
+            if (!check_copy_ss(ref.chroma[i].copy_ss[part], opt.chroma[i].copy_ss[part]))
+            {
+                printf("chroma_copy_ss[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
             }
         }
@@ -1363,6 +1406,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         HEADER("luma_copy_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_copy_ps[part], ref.luma_copy_ps[part], sbuf1, 64, pbuf1, 128);
     }
+    if (opt.luma_copy_ss[part])
+    {
+        HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.luma_copy_ss[part], ref.luma_copy_ss[part], sbuf1, 64, sbuf2, 128);
+    }
     if (opt.luma_sub_ps[part])
     {
         HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
@@ -1397,6 +1445,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         {
             HEADER("[%s] copy_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].copy_ps[part], ref.chroma[i].copy_ps[part], sbuf1, 64, pbuf1, 128);
+        }
+        if (opt.chroma[i].copy_ss[part])
+        {
+            HEADER("[%s] copy_ss[%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            REPORT_SPEEDUP(opt.chroma[i].copy_ss[part], ref.chroma[i].copy_ss[part], sbuf1, 64, sbuf2, 128);
         }
         if (opt.chroma[i].sub_ps[part])
         {
