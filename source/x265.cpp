@@ -156,6 +156,7 @@ static const struct option long_options[] =
     { "no-cutree",                 no_argument, NULL, 0 },
     { "cutree",                    no_argument, NULL, 0 },
     { "vui",                  no_argument, NULL, 0 },
+    { "no-vui",               no_argument, NULL, 0 },
     { "sar",            required_argument, NULL, 0 },
     { "overscan",       required_argument, NULL, 0 },
     { "videoformat",    required_argument, NULL, 0 },
@@ -170,10 +171,14 @@ static const struct option long_options[] =
     { "no-framefieldinfo",    no_argument, NULL, 0 },
     { "crop-rect",      required_argument, NULL, 0 },
     { "timinginfo",           no_argument, NULL, 0 },
+    { "no-timinginfo",        no_argument, NULL, 0 },
     { "hrd",                  no_argument, NULL, 0 },
+    { "no-hrd",               no_argument, NULL, 0 },
     { "nal-hrd",        required_argument, NULL, 0 },
     { "bitstreamrestriction", no_argument, NULL, 0 },
+    { "no-bitstreamrestriction", no_argument, NULL, 0 },
     { "subpichrd",            no_argument, NULL, 0 },
+    { "no-subpichrd",         no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -373,7 +378,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nSEI options:\n");
     H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H0("\nVUI options:\n");
-    H0("   --vui                         Add Video Useability Information with all fields to the SPS. Default %s\n", OPT(param->vui.bEnableVuiParametersPresentFlag));
+    H0("   --[no-]vui                    Add Video Useability Information with all fields to the SPS. Default %s\n", OPT(param->vui.bEnableVuiParametersPresentFlag));
     H0("   --sar <width:height|int>      Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
@@ -393,11 +398,11 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]fieldseq               Specify that pictures are fields and an SEI timing message\n");
     H0("                                 will be added to every access unit. Default %s\n", OPT(param->vui.bEnableFieldSeqFlag));
     H0("   --[no-]framefieldinfo         Specify that a pic-struct will be added to the SEI timing message. Default %s\n", OPT(param->vui.bEnableFrameFieldInfoPresentFlag));
-    H0("   --timinginfo                  Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
-    H0("   --hrd                         Signal HRD information. Default %s\n", OPT(param->vui.bEnableVuiHrdParametersPresentFlag));
+    H0("   --[no-]timinginfo             Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
+    H0("   --[no-]hrd                    Signal HRD information. Default %s\n", OPT(param->vui.bEnableVuiHrdParametersPresentFlag));
     H0("   --nal-hrd <string>            Signal NAL HRD information (requires vbv-buffer size) Choose from none, vbr or cbr.Default none\n");
-    H0("   --bitstreamrestriction        Add bit stream restriction fields to the VUI. Default %s\n", OPT(param->vui.bEnableBitstreamRestrictionFlag));
-    H0("   --subpichrd                   Add sub picture HRD parameters to the HRD. Default %s\n", OPT(param->vui.bEnableSubPicHrdParamsPresentFlag));
+    H0("   --[no-]bitstreamrestriction   Add bit stream restriction fields to the VUI. Default %s\n", OPT(param->vui.bEnableBitstreamRestrictionFlag));
+    H0("   --[no-]subpichrd              Add sub picture HRD parameters to the HRD. Default %s\n", OPT(param->vui.bEnableSubPicHrdParamsPresentFlag));
 #undef OPT
 #undef H0
     exit(0);
