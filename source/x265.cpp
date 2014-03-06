@@ -378,7 +378,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
     H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1 or custom ratio of <int:int>. Default %d\n", param->vui.aspectRatioIdc);
-    H0("   --overscan <string>           Specify crop overscan setting from undef, show or crop. Default undef\n");
+    H0("   --crop-rect <string>          Add 'left,top,right,bottom' to the bitstream-level cropping rectangle\n");
+    H0("   --overscan <string>           Specify whether it is appropriate for decoder to show cropped region: undef, show or crop. Default undef\n");
     H0("   --videoformat <string>        Specify video format from undef, component, pal, ntsc, secam, mac. Default undef\n");
     H0("   --range <string>              Specify black level and range of luma and chroma signals as full or limited Default limited\n");
     H0("   --colorprim <string>          Specify color primaries from undef, bt709, bt470m, bt470bg, smpte170m,\n");
@@ -392,7 +393,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]fieldseq               Specify that pictures are fields and an SEI timing message\n");
     H0("                                 will be added to every access unit. Default %s\n", OPT(param->vui.bEnableFieldSeqFlag));
     H0("   --[no-]framefieldinfo         Specify that a pic-struct will be added to the SEI timing message. Default %s\n", OPT(param->vui.bEnableFrameFieldInfoPresentFlag));
-    H0("   --crop-rect <string>          Add 'left,top,right,bottom' to the bitstream-level cropping rectangle\n");
     H0("   --timinginfo                  Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
     H0("   --hrd                         Signal HRD information. Default %s\n", OPT(param->vui.bEnableVuiHrdParametersPresentFlag));
     H0("   --nal-hrd <string>            Signal NAL HRD information (requires vbv-buffer size) Choose from none, vbr or cbr.Default none\n");
