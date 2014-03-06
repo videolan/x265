@@ -42,11 +42,6 @@
 #include "shortyuv.h"
 #include "primitives.h"
 
-#include <cstdlib>
-#include <memory.h>
-#include <assert.h>
-#include <math.h>
-
 using namespace x265;
 
 //! \ingroup TLibCommon

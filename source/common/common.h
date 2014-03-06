@@ -24,9 +24,46 @@
 #ifndef X265_COMMON_H
 #define X265_COMMON_H
 
+#include <algorithm>
+#include <climits>
+#include <cmath>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
+
+#include <stdint.h>
+#include <memory.h>
+#include <assert.h>
+
 #include "x265.h"
+
+#define FENC_STRIDE 64
+#define NUM_INTRA_MODE 35
+
+#if defined(__GNUC__)
+#define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
+#define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
+#define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
+#elif defined(_MSC_VER)
+#define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
+#define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
+#define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
+#endif // if defined(__GNUC__)
+
+#if HIGH_BIT_DEPTH
+typedef uint16_t pixel;
+typedef uint32_t sum_t;
+typedef uint64_t sum2_t;
+typedef uint64_t pixel4;
+#else
+typedef uint8_t  pixel;
+typedef uint16_t sum_t;
+typedef uint32_t sum2_t;
+typedef uint32_t pixel4;
+#endif // if HIGH_BIT_DEPTH
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))

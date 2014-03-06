@@ -23,7 +23,7 @@
 
 #include "TLibEncoder/TEncCu.h"
 #include "encoder.h"
-#include <math.h>
+#include "common.h"
 
 /* Lambda Partition Select adjusts the threshold value for Early Exit in No-RDO flow */
 #define LAMBDA_PARTITION_SELECT     0.9

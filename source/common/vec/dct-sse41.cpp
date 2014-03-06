@@ -34,9 +34,6 @@
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1
 
-#include <assert.h>
-#include <string.h>
-
 using namespace x265;
 
 namespace {

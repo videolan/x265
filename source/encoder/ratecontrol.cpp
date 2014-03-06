@@ -25,10 +25,8 @@
 
 #include "TLibCommon/TComPic.h"
 #include "encoder.h"
-#include "encoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
-#include <math.h>
 
 using namespace x265;
 

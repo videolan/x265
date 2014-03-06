@@ -36,10 +36,7 @@
 */
 
 #include "TComSampleAdaptiveOffset.h"
-#include <cstdlib>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
+#include "common.h"
 
 namespace x265 {
 //! \ingroup TLibCommon

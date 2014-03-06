@@ -40,10 +40,6 @@
 #include "ContextTables.h"
 #include "primitives.h"
 
-#include <cstdlib>
-#include <math.h>
-#include <memory.h>
-
 using namespace x265;
 
 typedef struct

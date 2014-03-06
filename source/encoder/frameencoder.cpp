@@ -32,7 +32,6 @@
 #include "cturow.h"
 #include "common.h"
 #include "slicetype.h"
-#include <math.h>
 
 namespace x265 {
 void weightAnalyse(TComSlice& slice, x265_param& param);

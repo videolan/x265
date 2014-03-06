@@ -26,12 +26,6 @@
 #include "primitives.h"
 #include "common.h"
 
-#include <assert.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
-
 namespace x265 {
 // x265 private namespace
 

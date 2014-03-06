@@ -35,11 +35,9 @@
  \file     TEncSampleAdaptiveOffset.cpp
  \brief       estimation part of sample adaptive offset class
  */
+
 #include "TEncSampleAdaptiveOffset.h"
-#include <string.h>
-#include <cstdlib>
-#include <stdio.h>
-#include <math.h>
+#include "common.h"
 
 using namespace x265;
 

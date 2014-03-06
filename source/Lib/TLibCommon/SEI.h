@@ -34,7 +34,7 @@
 #ifndef X265_SEI_H
 #define X265_SEI_H
 
-#include <cstring>
+#include "common.h"
 
 namespace x265 {
 // private namespace

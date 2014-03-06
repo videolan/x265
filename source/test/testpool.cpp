@@ -21,16 +21,13 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
+#include "common.h"
 #include "threadpool.h"
 #include "wavefront.h"
 #include "threading.h"
 #include "md5.h"
 #include "PPA/ppa.h"
 
-#include <time.h>
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
 #include <sstream>
 #include <iostream>
 

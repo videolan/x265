@@ -43,9 +43,6 @@
 
 #include "PPA/ppa.h"
 
-#include <cmath>
-#include <stdio.h>
-
 using namespace x265;
 
 //! \ingroup TLibEncoder

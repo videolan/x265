@@ -25,7 +25,6 @@
 #include "PPA/ppa.h"
 #include "output.h"
 #include "yuv.h"
-#include <assert.h>
 
 using namespace x265;
 using namespace std;

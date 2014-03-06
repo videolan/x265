@@ -26,7 +26,6 @@
 #include "common.h"
 #include "output.h"
 #include "y4m.h"
-#include <assert.h>
 
 using namespace x265;
 using namespace std;

@@ -26,9 +26,8 @@
 
 #include "mbdstharness.h"
 #include "TLibCommon/TComRom.h"
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include "common.h"
+
 #define ITERS  100
 #define TEST_CASES 3
 #define IDCTMAX (1 << (BIT_DEPTH + 4)) - 1;

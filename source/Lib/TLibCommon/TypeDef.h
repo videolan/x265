@@ -38,14 +38,14 @@
 #ifndef X265_TYPEDEF_H
 #define X265_TYPEDEF_H
 
-#define REF_PIC_LIST_0 0
-#define REF_PIC_LIST_1 1
-#define REF_PIC_LIST_X 100
-
-#include <stdint.h>
+#include "common.h"
 
 namespace x265 {
 // private namespace
+
+#define REF_PIC_LIST_0 0
+#define REF_PIC_LIST_1 1
+#define REF_PIC_LIST_X 100
 
 // ====================================================================================================================
 // Basic type redefinition

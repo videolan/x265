@@ -39,7 +39,6 @@
 #define X265_TCOMPATTERN_H
 
 #include "CommonDef.h"
-#include <stdio.h>
 
 //! \ingroup TLibCommon
 //! \{

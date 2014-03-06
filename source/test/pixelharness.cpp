@@ -23,10 +23,6 @@
 
 #include "pixelharness.h"
 #include "primitives.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>   // fabs
 
 using namespace x265;
 

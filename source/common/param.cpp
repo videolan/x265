@@ -22,15 +22,11 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComSlice.h"
-#include "x265.h"
 #include "threading.h"
+#include "common.h"
 #include "param.h"
 #include "cpu.h"
-
-#include <climits>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
+#include "x265.h"
 
 #if _MSC_VER
 #pragma warning(disable: 4996) // POSIX functions are just fine, thanks

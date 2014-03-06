@@ -23,10 +23,7 @@
 
 #include "TLibCommon/TComRom.h"
 #include "intrapredharness.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
+#include "common.h"
 
 using namespace x265;
 

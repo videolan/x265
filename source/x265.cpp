@@ -38,16 +38,11 @@
 #endif
 #include "PPA/ppa.h"
 
-#include <time.h>
-
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <assert.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
+
 #include <string>
 #include <ostream>
 #include <fstream>

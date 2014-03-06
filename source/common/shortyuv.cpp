@@ -27,11 +27,6 @@
 #include "primitives.h"
 #include "x265.h"
 
-#include <cstdlib>
-#include <memory.h>
-#include <assert.h>
-#include <math.h>
-
 using namespace x265;
 
 #if _MSC_VER

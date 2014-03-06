@@ -24,8 +24,6 @@
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
-#include <cstring>
-#include <assert.h>
 
 namespace x265 {
 unsigned char IntraFilterType[][35] =

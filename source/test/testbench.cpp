@@ -23,6 +23,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "common.h"
 #include "primitives.h"
 #include "pixelharness.h"
 #include "mbdstharness.h"
@@ -30,11 +31,6 @@
 #include "intrapredharness.h"
 #include "param.h"
 #include "cpu.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
 using namespace x265;
 

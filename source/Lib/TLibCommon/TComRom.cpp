@@ -37,9 +37,7 @@
 
 #include "TComRom.h"
 #include "threading.h"
-#include <memory.h>
-#include <cstdlib>
-#include <stdio.h>
+#include "common.h"
 
 namespace x265 {
 //! \ingroup TLibCommon

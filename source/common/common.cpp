@@ -28,12 +28,6 @@
 #include "threading.h"
 #include "common.h"
 
-#include <climits>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <math.h> // log10
-
 #if _WIN32
 #include <sys/types.h>
 #include <sys/timeb.h>

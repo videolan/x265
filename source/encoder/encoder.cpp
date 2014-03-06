@@ -41,13 +41,6 @@
 
 #include "x265.h"
 
-#include <cstdlib>
-#include <climits>
-#include <math.h> // log10
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-
 #if HAVE_INT_TYPES_H
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

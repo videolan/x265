@@ -25,8 +25,9 @@
 #define X265_YUV_H
 
 #include "output.h"
+#include "common.h"
+
 #include <fstream>
-#include <stdio.h>
 
 namespace x265 {
 // private x265 namespace

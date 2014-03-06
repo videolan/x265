@@ -36,12 +36,8 @@
 */
 
 #include "TComPicYuv.h"
+#include "common.h"
 #include "primitives.h"
-
-#include <cstdlib>
-#include <assert.h>
-#include <memory.h>
-#include <stdint.h>
 
 using namespace x265;
 

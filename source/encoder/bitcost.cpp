@@ -26,9 +26,6 @@
 #include "bitcost.h"
 #include "common.h"
 
-#include <stdint.h>
-#include <math.h>
-
 using namespace x265;
 
 void BitCost::setQP(unsigned int qp)

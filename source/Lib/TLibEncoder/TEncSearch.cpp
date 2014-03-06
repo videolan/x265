@@ -39,11 +39,11 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TEncSearch.h"
-#include "primitives.h"
-#include "common.h"
-#include "PPA/ppa.h"
 #include "encoder.h"
-#include <math.h>
+
+#include "common.h"
+#include "primitives.h"
+#include "PPA/ppa.h"
 
 using namespace x265;
 

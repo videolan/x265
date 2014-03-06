@@ -25,11 +25,8 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
+#include "common.h"
 #include "ipfilterharness.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
 
 #define ITERS  100
 #define TEST_CASES 3

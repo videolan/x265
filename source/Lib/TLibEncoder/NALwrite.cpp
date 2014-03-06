@@ -31,12 +31,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "common.h"
 #include "TLibCommon/NAL.h"
 #include "TLibCommon/TComBitStream.h"
 #include "NALwrite.h"
-#include "common.h"
-
-#include <cstring>
 
 namespace x265 {
 //! \ingroup TLibEncoder

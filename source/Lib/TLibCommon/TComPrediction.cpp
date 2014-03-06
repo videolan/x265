@@ -35,9 +35,9 @@
     \brief    prediction class
 */
 
-#include <memory.h>
 #include "TComPrediction.h"
 #include "primitives.h"
+#include "common.h"
 
 using namespace x265;
 

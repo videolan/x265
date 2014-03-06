@@ -27,9 +27,6 @@
 #include "cpu.h"
 #include "common.h"
 
-#include <cstring>
-#include <assert.h>
-
 #if MACOS || SYS_FREEBSD
 #include <sys/types.h>
 #include <sys/sysctl.h>
