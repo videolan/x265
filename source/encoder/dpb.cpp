@@ -357,13 +357,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
             outPic->setUsedByCurr(0);
             outPic->setIsLongTerm(0);
         }
-        // TODO: Do we require this check here
-        // check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
-
-        /*if (this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
-        {
-            assert(outPic->getSlice()->isReferenced() == 0);
-        }*/
     }
 }
 
