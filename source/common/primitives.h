@@ -154,6 +154,7 @@ typedef void (*filter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, int w
 typedef void (*copy_pp_t)(pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*copy_sp_t)(pixel *dst, intptr_t dstStride, int16_t *src, intptr_t srcStride);
 typedef void (*copy_ps_t)(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
+typedef void (*copy_ss_t)(int16_t *dst, intptr_t dstStride, int16_t *src, intptr_t srcStride);
 
 typedef void (*pixel_sub_ps_t)(int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixel_add_ps_t)(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1);
@@ -185,6 +186,7 @@ struct EncoderPrimitives
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
+    copy_ss_t       luma_copy_ss[NUM_LUMA_PARTITIONS];
     pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
     pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
 
@@ -241,6 +243,7 @@ struct EncoderPrimitives
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
         copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
         copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
+        copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
         pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];
         addAvg_t        addAvg[NUM_LUMA_PARTITIONS];
