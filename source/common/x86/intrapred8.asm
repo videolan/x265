@@ -214,7 +214,7 @@ cglobal intra_pred_dc8, 4, 7, 3
     lea             r1,            [r1 * 3]
     pextrb          [r6 + r1],     m2, 5
 
-.end
+.end:
     RET
 
 ;-------------------------------------------------------------------------------------------
@@ -329,7 +329,7 @@ cglobal intra_pred_dc16, 5, 7, 4
     pextrb          [r6 + r1],     m3, 5
     pextrb          [r6 + r1 * 2], m3, 6
 
-.end
+.end:
     RET
 
 ;-------------------------------------------------------------------------------------------
@@ -704,7 +704,7 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
 %endmacro
 
     mov r3,         32
-.loop
+.loop:
     COMP_PRED_PLANAR_ROW 0
     COMP_PRED_PLANAR_ROW 16
     inc             r2
@@ -992,7 +992,7 @@ cglobal intra_pred_ang4_13, 4,4,5
     cmp         r4m, byte 23
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m1, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m1, 1       ; [x x x 4 3 2 1 0]
     palignr     m2, m1, 2       ; [x x x x 4 3 2 1]
@@ -1014,7 +1014,7 @@ cglobal intra_pred_ang4_14, 4,4,5
     cmp         r4m, byte 22
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
     palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
@@ -1036,7 +1036,7 @@ cglobal intra_pred_ang4_15, 4,4,5
     cmp         r4m, byte 21
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
     palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
@@ -1061,7 +1061,7 @@ cglobal intra_pred_ang4_16, 4,4,5
     cmp         r4m, byte 20
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
     palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
@@ -1086,7 +1086,7 @@ cglobal intra_pred_ang4_17, 4,4,5
     cmp         r4m, byte 19
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m3, [r2 - 1]    ; [- - 4 3 2 1 0 x]
     palignr     m0, m3, 1       ; [- - - 4 3 2 1 0]
     palignr     m1, m3, 2       ; [- - - - 4 3 2 1]

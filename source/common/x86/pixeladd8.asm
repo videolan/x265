@@ -127,7 +127,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     pxor     m4,    m4
     mov      r6d,   %2/4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movd     m0,    [r2]
     movd     m1,    [r3]
     movd     m2,    [r2 + r4]
@@ -163,7 +163,7 @@ add         r5,            r5
 
 mov         r6d,           %2/4
 
-.loop
+.loop:
       pmovzxbw    m0,            [r2]
       movd        m1,            [r3]
 
@@ -272,7 +272,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 4
     add      r5, r5
     pxor     m0, m0
     mova     m1, [pw_pixel_max]
-.loop
+.loop:
     movh     m2, [r2]
     movhps   m2, [r2 + r4]
 
@@ -308,7 +308,7 @@ add         r5,            r5
 
 mov         r6d,           %2/4
 
-.loop
+.loop:
 
     pmovzxbw    m0,            [r2]
     movh        m1,            [r3]
@@ -373,7 +373,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu        m0,    [r2]
     movu        m1,    [r3]
     movu        m2,    [r2 + r4]
@@ -416,7 +416,7 @@ add         r5,            r5
 
 mov         r6d,           %2/4
 
-.loop
+.loop:
       pmovzxbw    m0,                [r2]
       movu        m1,                [r3]
 
@@ -648,7 +648,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + r4]
@@ -684,7 +684,7 @@ add         r5,            r5
 
 mov         r6d,           %2/4
 
-.loop
+.loop:
       pmovzxbw    m0,            [r2]
       movu        m1,            [r3]
 
@@ -750,7 +750,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu        m0,    [r2]
     movu        m1,    [r3]
     movh        m2,    [r2 + 16]
@@ -809,7 +809,7 @@ add         r5,            r5
 
 mov         r6d,           %2/4
 
-.loop
+.loop:
       pmovzxbw    m0,                [r2]
       pmovzxbw    m1,                [r2 + 8]
 
@@ -899,7 +899,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -959,7 +959,7 @@ add         r5,            r5
 
 mov         r6d,           %2/4
 
-.loop
+.loop:
       pmovzxbw    m0,            [r2]
       pmovzxbw    m1,            [r2 + 8]
 
@@ -1046,7 +1046,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -1089,7 +1089,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add         r5,            r5
     mov         r6d,           %2/2
 
-.loop
+.loop:
     pmovzxbw    m0,             [r2]
     pmovzxbw    m1,             [r2 + 8]
     pmovzxbw    m2,             [r2 + 16]
@@ -1151,7 +1151,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -1206,7 +1206,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
     add         r5,            r5
     mov         r6d,           %2/2
 
-.loop
+.loop:
     pmovzxbw    m0,             [r2]
     pmovzxbw    m1,             [r2 + 8]
     pmovzxbw    m2,             [r2 + 16]
@@ -1278,7 +1278,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -1358,7 +1358,7 @@ add         r5,            r5
 
 mov         r6d,           %2/2
 
-.loop
+.loop:
       pmovzxbw    m0,             [r2]
       pmovzxbw    m1,             [r2 + 8]
       pmovzxbw    m2,             [r2 + 16]
@@ -1452,7 +1452,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
     add      r5,    r5
     pxor     m4,    m4
     mova     m5,    [pw_pixel_max]
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -1555,7 +1555,7 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
     add         r5,            r5
     mov         r6d,           %2/2
 
-.loop
+.loop:
     pmovzxbw    m0,             [r2]
     pmovzxbw    m1,             [r2 + 8]
     pmovzxbw    m2,             [r2 + 16]

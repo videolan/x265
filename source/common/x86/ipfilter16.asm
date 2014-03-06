@@ -135,7 +135,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r4d, 7
 %endif
 
-.loopH
+.loopH:
     movu        m2, [r0]                     ; m2 = src[0-7]
     movu        m3, [r0 + 16]                ; m3 = src[8-15]
 
@@ -221,7 +221,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r4d, 7
 %endif
 
-.loopH
+.loopH:
     movu        m2, [r0]                     ; m2 = src[0-7]
     movu        m3, [r0 + 16]                ; m3 = src[8-15]
 
@@ -322,7 +322,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r4d, 7
 %endif
 
-.loopH
+.loopH:
     movu        m2, [r0]                     ; m2 = src[0-7]
     movu        m3, [r0 + 16]                ; m3 = src[8-15]
 
@@ -445,7 +445,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r4d, 7
 %endif
 
-.loopH
+.loopH:
 %assign x 0
 %rep %1 / 16
     movu        m2, [r0 + x]                 ; m2 = src[0-7]
@@ -640,7 +640,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r4d, 7
 %endif
 
-.loopH
+.loopH:
     movu        m2, [r0]                     ; m2 = src[0-7]
     movu        m3, [r0 + 16]                ; m3 = src[8-15]
 
@@ -1523,9 +1523,9 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-1
     %endif
 %endif
 
-.loopH
+.loopH:
     mov       r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_CHROMA_SP_W4_4R
 
 %ifidn %3, ss
@@ -1720,7 +1720,7 @@ cglobal interp_4tap_vert_%2_2x%1, 5, 6, %3
     %endif
 %endif
 
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W2_4R r5
 %ifidn %2, ss
     psrad     m0, 6
@@ -1894,7 +1894,7 @@ cglobal interp_4tap_vert_%1_6x8, 5, 7, %2
     %endif
 %endif
 
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W4_4R
 
 %ifidn %1, ss
@@ -2057,7 +2057,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
     mova      m7, [tab_c_n32768]
 %endif
 
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W8_2R
 
 %ifidn %3, ss
@@ -2291,9 +2291,9 @@ cglobal interp_8tap_vert_pp_%1x%2, 5, 7, 8 ,0-1
     mova      m7, [pd_32]
 
     mov       byte [rsp], %2/4
-.loopH
+.loopH:
     mov       r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_LUMA_VER_W4_4R
 
     paddd     m0, m7
@@ -2387,9 +2387,9 @@ cglobal interp_8tap_vert_ps_%1x%2, 5, 7, 8 ,0-1
     mova      m7, [pd_n32768]
 
     mov       byte [rsp], %2/4
-.loopH
+.loopH:
     mov       r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_LUMA_VER_W4_4R
 
     paddd     m0, m7
@@ -2479,9 +2479,9 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
     mova      m7, [tab_c_524800]
 
     mov       byte [rsp], %2/4
-.loopH
+.loopH:
     mov       r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_LUMA_VER_W4_4R
 
     paddd     m0, m7
@@ -2573,9 +2573,9 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
 %endif
 
     mov        byte [rsp], %2/4
-.loopH
+.loopH:
     mov        r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_LUMA_VER_W4_4R
 
     psrad      m0, 6
