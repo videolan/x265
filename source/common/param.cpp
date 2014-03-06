@@ -1033,8 +1033,8 @@ int x265_check_params(x265_param *param)
           "Size of the vbv buffer can not be less than zero");
     CHECK(param->rc.vbvMaxBitrate < 0,
           "Maximum local bit rate can not be less than zero");
-    CHECK(param->rc.vbvBufferInit < 0 || param->rc.vbvBufferInit > 1,
-          "Valid VBV buffer occpancy range 0 - 1");
+    CHECK(param->rc.vbvBufferInit < 0,
+          "Valid initial VBV buffer occpancy must be a fraction 0 - 1, or size in kbits");
     CHECK(param->rc.bitrate < 0,
           "Target bitrate can not be less than zero");
     CHECK(param->bFrameBias < 0, "Bias towards B frame decisions must be 0 or greater");

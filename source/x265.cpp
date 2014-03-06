@@ -361,7 +361,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                  May cause VBV underflows!\n");
     H0("   --vbv-maxrate <integer>       Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
     H0("   --vbv-bufsize <integer>       Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
-    H0("   --vbv-init <float>            Initial VBV buffer occupancy. Default %f\n", param->rc.vbvBufferInit);
+    H0("   --vbv-init <float>            Initial VBV buffer occupancy (fraction of bufsize or in kbits). Default %f\n", param->rc.vbvBufferInit);
     H0("-q/--qp <integer>                Base QP for CQP mode. Default %d\n", param->rc.qp);
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
