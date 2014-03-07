@@ -145,7 +145,7 @@ void Encoder::destroy()
     while (!m_freeList.empty())
     {
         TComPic* pic = m_freeList.popFront();
-        pic->destroy(param->bframes);
+        pic->destroy();
         delete pic;
     }
 
@@ -296,7 +296,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
                 x265_log(param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
                 if (pic)
                 {
-                    pic->destroy(param->bframes);
+                    pic->destroy();
                     delete pic;
                 }
                 return -1;

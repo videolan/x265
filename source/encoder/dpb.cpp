@@ -36,7 +36,7 @@ DPB::~DPB()
     while (!m_picList.empty())
     {
         TComPic* pic = m_picList.popFront();
-        pic->destroy(m_cfg->param->bframes);
+        pic->destroy();
         delete pic;
     }
 }
@@ -373,7 +373,7 @@ NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, TComPic* pic)
     }
     if (pic->m_lowres.bKeyframe)
     {
-        if (m_cfg->param->bOpenGOP)
+        if (m_bOpenGOP)
         {
             return NAL_UNIT_CODED_SLICE_CRA;
         }

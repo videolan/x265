@@ -119,7 +119,7 @@ public:
     virtual ~TComPic();
 
     bool          create(Encoder* cfg);
-    virtual void  destroy(int bframes);
+    virtual void  destroy();
     void          reInit(Encoder* cfg);
 
     bool          getUsedByCurr()           { return m_bUsedByCurr; }

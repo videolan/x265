@@ -154,7 +154,7 @@ void TComPic::reInit(Encoder* cfg)
         memset(m_qpaAq, 0,  m_picSym->getFrameHeightInCU() * sizeof(double));
 }
 
-void TComPic::destroy(int bframes)
+void TComPic::destroy()
 {
     if (m_picSym)
     {
@@ -176,7 +176,7 @@ void TComPic::destroy(int bframes)
         delete m_reconPicYuv;
         m_reconPicYuv = NULL;
     }
-    m_lowres.destroy(bframes);
+    m_lowres.destroy();
 
     X265_FREE(m_rowDiagQp);
     X265_FREE(m_rowDiagQScale);
