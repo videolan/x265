@@ -34,7 +34,7 @@ x265_encoder *x265_encoder_open(x265_param *param)
     if (!param)
         return NULL;
 
-    x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+    x265_setup_primitives(param, param->cpuid);
 
     if (x265_check_params(param))
         return NULL;
@@ -48,9 +48,6 @@ x265_encoder *x265_encoder_open(x265_param *param)
         // these may change params for auto-detect, etc
         encoder->determineLevelAndProfile(param);
         encoder->configure(param);
-
-        // save a copy of final parameters in TEncCfg
-        memcpy(&encoder->param, param, sizeof(*param));
 
         x265_print_params(param);
         encoder->create();

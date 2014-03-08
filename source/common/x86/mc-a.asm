@@ -301,7 +301,7 @@ cglobal addAvg_4x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
     mov            r6d,         %1/4
 
-.loop
+.loop:
 %rep 2
     movh           m0,          [r0]
     movh           m1,          [r0 + r3]
@@ -348,7 +348,7 @@ cglobal addAvg_8x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     add         r5,          r5
     mov         r6d,         %1/4
 
-.loop
+.loop:
 %rep 2
     movu        m0,          [r0]
     movu        m2,          [r1]
@@ -395,7 +395,7 @@ cglobal addAvg_12x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     add            r5,             r5
     mov            r6d,            %1/4
 
-.loop
+.loop:
 %rep 2
     movu           m0,             [r0]
     movu           m2,             [r1]
@@ -455,7 +455,7 @@ cglobal addAvg_16x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     add         r5,              r5
     mov         r6d,             %1/4
 
-.loop
+.loop:
 %rep 2
     movu        m0,              [r0]
     movu        m2,              [r1]
@@ -523,7 +523,7 @@ cglobal addAvg_%1x%2, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
     mov         r6d,             %2/2
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -603,7 +603,7 @@ cglobal addAvg_32x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
     mov         r6d,             %1/2
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -705,7 +705,7 @@ cglobal addAvg_48x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
     mov         r6d,             %1/2
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -838,7 +838,7 @@ cglobal addAvg_64x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     add         r5,              r5
     mov         r6d,             %1
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -1087,7 +1087,7 @@ cglobal addAvg_4x%1, 6,7,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstSt
 
     mov            r6d,         %1/4
 
-.loop
+.loop:
     movh           m0,          [r0]
     movhps         m0,          [r0 + r3]
     movh           m2,          [r1]
@@ -1337,7 +1337,7 @@ cglobal addAvg_8x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstSt
 
     mov         r6d,         %1/4
 
-.loop
+.loop:
     movu        m0,          [r0]
     movu        m2,          [r1]
     paddw       m0,          m2
@@ -1406,7 +1406,7 @@ cglobal addAvg_12x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 
     mov            r6d,            %1/4
 
-.loop
+.loop:
     movu           m0,             [r0]
     movu           m2,             [r1]
     paddw          m0,             m2
@@ -1499,7 +1499,7 @@ cglobal addAvg_16x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 
     mov         r6d,             %1/4
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -1594,7 +1594,7 @@ cglobal addAvg_%1x%2, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 
     mov         r6d,             %2/2
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -1667,7 +1667,7 @@ cglobal addAvg_32x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 
     mov         r6d,             %1/2
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -1758,7 +1758,7 @@ cglobal addAvg_48x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 
     mov         r6d,             %1/2
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2
@@ -1873,7 +1873,7 @@ cglobal addAvg_64x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 
     mov         r6d,             %1
 
-.loop
+.loop:
     movu        m0,              [r0]
     movu        m2,              [r1]
     paddw       m0,              m2

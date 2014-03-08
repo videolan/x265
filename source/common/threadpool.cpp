@@ -23,11 +23,10 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
+#include "common.h"
 #include "threadpool.h"
 #include "threading.h"
-#include "common.h"
-#include <assert.h>
-#include <string.h>
+
 #include <new>
 
 #if MACOS

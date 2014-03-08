@@ -44,9 +44,6 @@
 #include "piclist.h"
 #include "common.h"
 
-#include <cstring>
-#include <assert.h>
-
 //! \ingroup TLibCommon
 //! \{
 
@@ -197,9 +194,9 @@ private:
     void     destroy();
     int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];              //!< the DC value of the matrix coefficient for 16x16
     bool     m_useDefaultScalingMatrixFlag[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< UseDefaultScalingMatrixFlag
-    uint32_t     m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                //!< RefMatrixID
+    uint32_t m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                //!< RefMatrixID
     bool     m_scalingListPresentFlag;                                              //!< flag for using default matrix
-    uint32_t     m_predMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];               //!< reference list index
+    uint32_t m_predMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];               //!< reference list index
     int      *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];           //!< quantization matrix
     bool     m_useTransformSkip;                                                    //!< transform skipping flag for setting default scaling matrix for 4x4
 };
@@ -298,7 +295,7 @@ private:
 
     bool m_nalHrdParametersPresentFlag;
     bool m_vclHrdParametersPresentFlag;
-    bool m_subPicCpbParamsPresentFlag;
+    bool m_subPicHrdParamsPresentFlag;
     uint32_t m_tickDivisorMinus2;
     uint32_t m_duCpbRemovalDelayLengthMinus1;
     bool m_subPicCpbParamsInPicTimingSEIFlag;
@@ -316,7 +313,7 @@ public:
     TComHRD()
         : m_nalHrdParametersPresentFlag(0)
         , m_vclHrdParametersPresentFlag(0)
-        , m_subPicCpbParamsPresentFlag(false)
+        , m_subPicHrdParamsPresentFlag(false)
         , m_tickDivisorMinus2(0)
         , m_duCpbRemovalDelayLengthMinus1(0)
         , m_subPicCpbParamsInPicTimingSEIFlag(false)
@@ -338,9 +335,9 @@ public:
 
     bool getVclHrdParametersPresentFlag() { return m_vclHrdParametersPresentFlag; }
 
-    void setSubPicCpbParamsPresentFlag(bool flag) { m_subPicCpbParamsPresentFlag = flag; }
+    void setSubPicHrdParamsPresentFlag(bool flag) { m_subPicHrdParamsPresentFlag = flag; }
 
-    bool getSubPicCpbParamsPresentFlag() { return m_subPicCpbParamsPresentFlag; }
+    bool getSubPicHrdParamsPresentFlag() { return m_subPicHrdParamsPresentFlag; }
 
     void setTickDivisorMinus2(uint32_t value) { m_tickDivisorMinus2 = value; }
 
@@ -793,8 +790,7 @@ private:
 
     int         m_log2MinCodingBlockSize;
     int         m_log2DiffMaxMinCodingBlockSize;
-    uint32_t    m_maxCUWidth;
-    uint32_t    m_maxCUHeight;
+    uint32_t    m_maxCUSize;
     uint32_t    m_maxCUDepth;
 
     Window      m_conformanceWindow;
@@ -910,13 +906,9 @@ public:
 
     void setLog2DiffMaxMinCodingBlockSize(int val) { m_log2DiffMaxMinCodingBlockSize = val; }
 
-    void setMaxCUWidth(uint32_t u) { m_maxCUWidth = u; }
+    void setMaxCUSize(uint32_t u) { m_maxCUSize = u; }
 
-    uint32_t getMaxCUWidth() const  { return m_maxCUWidth; }
-
-    void setMaxCUHeight(uint32_t u) { m_maxCUHeight = u; }
-
-    uint32_t getMaxCUHeight() const { return m_maxCUHeight; }
+    uint32_t getMaxCUSize() const  { return m_maxCUSize; }
 
     void setMaxCUDepth(uint32_t u) { m_maxCUDepth = u; }
 
@@ -1466,8 +1458,6 @@ public:
 
     bool      isIRAP() const                   { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }
 
-    void      checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRAPisBLA);
-
     void      setSliceType(SliceType e)               { m_sliceType = e; }
 
     void      setSliceQp(int i)                       { m_sliceQp = i; }
@@ -1494,7 +1484,7 @@ public:
 
     void      setPic(TComPic* p)                  { m_pic = p; }
 
-    void      setRefPicList(PicList& picList, bool checkNumPocTotalCurr = false);
+    void      setRefPicList(PicList& picList);
 
     void      setRefPOCList();
 

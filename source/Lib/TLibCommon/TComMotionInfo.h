@@ -39,8 +39,8 @@
 #ifndef X265_TCOMMOTIONINFO_H
 #define X265_TCOMMOTIONINFO_H
 
-#include <memory.h>
 #include "CommonDef.h"
+#include "common.h"
 #include "mv.h"
 
 //! \ingroup TLibCommon

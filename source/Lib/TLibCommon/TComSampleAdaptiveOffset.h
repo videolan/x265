@@ -143,11 +143,9 @@ protected:
     static const int m_numCulPartsLevel[5];
     static const uint32_t m_eoTable[9];
     static const int m_numClass[MAX_NUM_SAO_TYPE];
-
     int32_t *m_offsetBo;
     int32_t *m_chromaOffsetBo;
-    int m_offsetEo[LUMA_GROUP_NUM];
-
+    int8_t m_offsetEo[LUMA_GROUP_NUM];
     int  m_picWidth;
     int  m_picHeight;
     uint32_t m_maxSplitLevel;
@@ -163,21 +161,21 @@ protected:
     uint32_t m_saoBitIncreaseC; //for chroma
     uint32_t m_qp;
 
-    Pel   *m_clipTable;
-    Pel   *m_clipTableBase;
-    Pel   *m_lumaTableBo;
-    Pel   *m_chromaClipTable;
-    Pel   *m_chromaClipTableBase;
-    Pel   *m_chromaTableBo;
+    pixel* m_clipTable;
+    pixel* m_clipTableBase;
+    pixel* m_lumaTableBo;
+    pixel* m_chromaClipTable;
+    pixel* m_chromaClipTableBase;
+    pixel* m_chromaTableBo;
     int32_t    *m_upBuff1;
     int32_t    *m_upBuff2;
     int32_t    *m_upBufft;
     TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
-    Pel* m_tmpU1[3];
-    Pel* m_tmpU2[3];
-    Pel* m_tmpL1;
-    Pel* m_tmpL2;
+    pixel* m_tmpU1[3];
+    pixel* m_tmpU2[3];
+    pixel* m_tmpL1;
+    pixel* m_tmpL2;
     int     m_maxNumOffsetsPerPic;
     bool    m_saoLcuBoundary;
     bool    m_saoLcuBasedOptimization;
@@ -197,22 +195,18 @@ public:
     static void freeSaoParam(SAOParam* saoParam);
 
     void SAOProcess(SAOParam* saoParam);
-    Pel* getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr = 0);
+    pixel* getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr = 0);
 
     void processSaoCu(int addr, int partIdx, int yCbCr); //!< LCU-basd SAO process without slice granularity
     void createPicSaoInfo(TComPic* pic);
-    void destroyPicSaoInfo();
 
     void resetLcuPart(SaoLcuParam* saoLcuParam);
     void convertQT2SaoUnit(SAOParam* saoParam, uint32_t partIdx, int yCbCr);
     void convertOnePart2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int yCbCr);
     void processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr);
     void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr);
-    void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
-
-    bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
-
     void setSaoLcuBasedOptimization(int bVal)  { m_saoLcuBasedOptimization = bVal != 0; }
+    void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
 
     bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 

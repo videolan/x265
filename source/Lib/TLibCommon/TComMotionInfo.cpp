@@ -35,10 +35,8 @@
     \brief    motion information handling classes
 */
 
-#include <memory.h>
 #include "TComMotionInfo.h"
-#include "assert.h"
-#include <cstdlib>
+#include "common.h"
 
 using namespace x265;
 

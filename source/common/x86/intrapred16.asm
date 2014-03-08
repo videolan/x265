@@ -218,7 +218,7 @@ cglobal intra_pred_dc8, 4, 7, 2
     pextrw          [r6 + r1],     m0, 5
     pextrw          [r6 + r1 * 2], m0, 6
 
-.end
+.end:
     RET
 
 
@@ -355,7 +355,7 @@ cglobal intra_pred_dc16, 4, 7, 4
     lea             r6,                  [r6 + r1 * 2]
     pextrw          [r6],                m3, 6
 
-.end
+.end:
     RET
 
 
@@ -1226,7 +1226,7 @@ cglobal intra_pred_ang4_13, 4,4,8
     cmp         r4m, byte 23
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movu        m5, [r2 - 2]    ; [x x 4 3 2 1 0 x]
     palignr     m2, m5, 2       ; [x x x 4 3 2 1 0]
     palignr     m0, m5, 4       ; [x x x x 4 3 2 1]
@@ -1247,7 +1247,7 @@ cglobal intra_pred_ang4_14, 4,4,8
     cmp         r4m, byte 22
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movu        m5, [r2 - 2]    ; [x x 4 3 2 1 0 x]
     palignr     m2, m5, 2       ; [x x x 4 3 2 1 0]
     palignr     m0, m5, 4       ; [x x x x 4 3 2 1]
@@ -1269,7 +1269,7 @@ cglobal intra_pred_ang4_15, 4,4,8
     cmp         r4m, byte 21
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movu        m3, [r2 - 2]    ; [x x 4 3 2 1 0 x]
     palignr     m2, m3, 2       ; [x x x 4 3 2 1 0]
     palignr     m0, m3, 4       ; [x x x x 4 3 2 1]
@@ -1293,7 +1293,7 @@ cglobal intra_pred_ang4_16, 4,4,8
     cmp         r4m, byte 20
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movu        m3, [r2 - 2]    ; [x x 4 3 2 1 0 x]
     palignr     m2, m3, 2       ; [x x x 4 3 2 1 0]
     palignr     m0, m3, 4       ; [x x x x 4 3 2 1]
@@ -1316,7 +1316,7 @@ cglobal intra_pred_ang4_17, 4,4,8
     cmp         r4m, byte 19
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movu        m6, [r2 - 2]    ; [- - 4 3 2 1 0 x]
     palignr     m2, m6, 2       ; [- - - 4 3 2 1 0]
     palignr     m1, m6, 4       ; [- - - - 4 3 2 1]

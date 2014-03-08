@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Steve Borho <steve@borho.org>
+ * Authors: Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +21,9 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "x265.h"
+#ifndef X265_LOOPFILTER_H
+#define X265_LOOPFILTER_H
 
-/* this unreachable function forces the MSVC linker to include the encoder
- * and common libraries into the DLL */
-void dummy()
-{
-    x265_param param;
+void x265_saoCuOrgE0_sse4(pixel * rec, int8_t * offsetEo, int endX, int8_t signLeft);
 
-    x265_param_default(&param);
-    x265_encoder *enc = x265_encoder_open(&param);
-    x265_encoder_close(enc);
-}
+#endif // ifndef X265_LOOPFILTER_H

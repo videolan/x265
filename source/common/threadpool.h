@@ -26,7 +26,7 @@
 #ifndef X265_THREADPOOL_H
 #define X265_THREADPOOL_H
 
-#include <stdint.h>
+#include "common.h"
 
 namespace x265 {
 // x265 private namespace

@@ -40,9 +40,7 @@
 
 #include "CommonDef.h"
 
-#include <stdio.h>
 #include <iostream>
-#include <algorithm>
 
 namespace x265 {
 // private namespace
@@ -78,7 +76,7 @@ extern const UChar  g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
 // flexible conversion from relative to absolute index
 extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern uint32_t*  g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH][MAX_CU_DEPTH];
+extern uint32_t*  g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
 
@@ -89,8 +87,7 @@ extern uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 void initRasterToPelXY(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
 
 // global variable (LCU width/height, max. CU depth)
-extern uint32_t g_maxCUWidth;
-extern uint32_t g_maxCUHeight;
+extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;
 extern uint32_t g_addCUDepth;
 

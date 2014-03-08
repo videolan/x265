@@ -50,7 +50,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
     {
         if (!m_weightBuffer)
         {
-            size_t padheight = (pic->m_numCuInHeight * g_maxCUHeight) + pic->m_lumaMarginY * 2;
+            size_t padheight = (pic->m_numCuInHeight * g_maxCUSize) + pic->m_lumaMarginY * 2;
             m_weightBuffer = X265_MALLOC(pixel, lumaStride * padheight);
             if (!m_weightBuffer)
                 return -1;
@@ -60,7 +60,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
         weight = w->inputWeight;
         offset = w->inputOffset * (1 << (X265_DEPTH - 8));
         shift  = w->log2WeightDenom;
-        round  = (w->log2WeightDenom >= 1) ? (1 << (w->log2WeightDenom - 1)) : (0);
+        round  = shift ? 1 << (shift - 1) : 0;
         m_numWeightedRows = 0;
 
         /* use our buffer which will have weighted pixels written to it */
@@ -82,19 +82,18 @@ void MotionReference::applyWeight(int rows, int numRows)
         return;
     int marginX = m_reconPic->m_lumaMarginX;
     int marginY = m_reconPic->m_lumaMarginY;
-    pixel* src = (pixel*)m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUHeight * lumaStride);
-    pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUHeight) * lumaStride);
+    pixel* src = (pixel*)m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUSize * lumaStride);
+    pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUSize) * lumaStride);
     int width = m_reconPic->getWidth();
-    int height = ((rows - m_numWeightedRows) * g_maxCUHeight);
+    int height = ((rows - m_numWeightedRows) * g_maxCUSize);
     if (rows == numRows)
-        height = ((m_reconPic->getHeight() % g_maxCUHeight) ? (m_reconPic->getHeight() % g_maxCUHeight) : g_maxCUHeight);
+        height = ((m_reconPic->getHeight() % g_maxCUSize) ? (m_reconPic->getHeight() % g_maxCUSize) : g_maxCUSize);
 
     // Computing weighted CU rows
-    int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    int local_shift = shift + shiftNum;
-    int local_round = local_shift ? (1 << (local_shift - 1)) : 0;
+    int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
     int padwidth = (width + 15) & ~15;  // weightp assembly needs even 16 byte widths
-    primitives.weight_pp(src, dst, lumaStride, lumaStride, padwidth, height, weight, local_round, local_shift, offset);
+    primitives.weight_pp(src, dst, lumaStride, lumaStride, padwidth, height,
+                         weight, round << correction, shift + correction, offset);
 
     // Extending Left & Right
     primitives.extendRowBorder(dst, lumaStride, width, height, marginX);

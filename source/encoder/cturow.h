@@ -61,7 +61,7 @@ public:
     TEncSbac            ***m_rdSbacCoders;
     TEncBinCABAC        ***m_binCodersCABAC;
 
-    void create(Encoder* top);
+    bool create(Encoder* top);
 
     void destroy();
 

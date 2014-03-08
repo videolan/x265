@@ -64,10 +64,8 @@ private:
     uint32_t      m_widthInCU;
     uint32_t      m_heightInCU;
 
-    uint32_t      m_maxCUWidth;
-    uint32_t      m_maxCUHeight;
-    uint32_t      m_minCUWidth;
-    uint32_t      m_minCUHeight;
+    uint32_t      m_maxCUSize;
+    uint32_t      m_minCUSize;
 
     UChar         m_totalDepth;
     uint32_t      m_numPartitions;
@@ -82,7 +80,7 @@ private:
 
 public:
 
-    bool        create(int picWidth, int picHeight, int picCsp, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth);
+    bool        create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxDepth);
     void        destroy();
 
     TComPicSym();
@@ -93,9 +91,7 @@ public:
 
     uint32_t    getFrameHeightInCU()      { return m_heightInCU; }
 
-    uint32_t    getMinCUWidth()           { return m_minCUWidth; }
-
-    uint32_t    getMinCUHeight()          { return m_minCUHeight; }
+    uint32_t    getMinCUSize()            { return m_minCUSize; }
 
     uint32_t    getNumberOfCUsInFrame()   { return m_numCUsInFrame; }
 

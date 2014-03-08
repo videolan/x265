@@ -32,7 +32,7 @@ namespace x265 {
 class FrameEncoder;
 class TComPic;
 class TComSlice;
-class TEncCfg;
+class Encoder;
 
 class DPB
 {
@@ -41,18 +41,18 @@ public:
     int                m_lastIDR;
     int                m_pocCRA;
     bool               m_bRefreshPending;
-    TEncCfg*           m_cfg;
+    Encoder*           m_cfg;
     PicList            m_picList;
     int                m_maxRefL0;
     int                m_maxRefL1;
 
-    DPB(TEncCfg *cfg)
+    DPB(Encoder *cfg)
         : m_cfg(cfg)
     {
         m_lastIDR = 0;
         m_pocCRA = 0;
         m_bRefreshPending = false;
-        m_maxRefL0 = cfg->param.maxNumReferences;
+        m_maxRefL0 = cfg->param->maxNumReferences;
         m_maxRefL1 = 1;
     }
 

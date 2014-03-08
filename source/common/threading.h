@@ -34,13 +34,9 @@
 #else
 #include <pthread.h>
 #include <semaphore.h>
-#include <cstdlib>
-#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #endif
-
-#include <stdint.h>
 
 #if MACOS
 #include <sys/param.h>
@@ -51,7 +47,6 @@
 
 #include <sys/time.h>
 #include <unistd.h>
-#include <limits.h>
 
 #define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
 #define ATOMIC_OR(ptr, mask)                __sync_or_and_fetch(ptr, mask)

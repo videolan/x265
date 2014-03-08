@@ -25,7 +25,7 @@
 #ifndef X265_MD5_H
 #define X265_MD5_H
 
-#include "stdint.h"
+#include "common.h"
 
 namespace x265 {
 //private x265 namespace

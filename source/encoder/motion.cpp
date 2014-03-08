@@ -28,10 +28,6 @@
 #include "motion.h"
 #include "x265.h"
 
-#include <string.h>
-#include <stdio.h>
-#include <assert.h>
-
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional  expression is constant (macros use this construct)
 #endif

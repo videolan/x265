@@ -46,7 +46,7 @@
 namespace x265 {
 // private namespace
 
-class TShortYUV;
+class ShortYuv;
 
 //! \ingroup TLibCommon
 //! \{

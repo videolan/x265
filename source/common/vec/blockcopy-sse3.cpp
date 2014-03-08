@@ -25,7 +25,6 @@
 #include "primitives.h"
 #include <xmmintrin.h> // SSE
 #include <pmmintrin.h> // SSE3
-#include <cstring>
 
 namespace {
 #if HIGH_BIT_DEPTH

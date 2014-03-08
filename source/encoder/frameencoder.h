@@ -59,7 +59,7 @@ public:
 
     void setThreadPool(ThreadPool *p);
 
-    void init(Encoder *top, int numRows);
+    bool init(Encoder *top, int numRows);
 
     void destroy();
 
@@ -175,7 +175,7 @@ protected:
     void determineSliceBounds();
     int calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp);
     Encoder*                 m_top;
-    TEncCfg*                 m_cfg;
+    Encoder*                 m_cfg;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     TEncSbac                 m_sbacCoder;

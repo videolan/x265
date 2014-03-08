@@ -76,7 +76,7 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     mov    r4d, %%n
 %endif
     pxor    m0, m0
-.loop
+.loop:
     movu    m1, [r0]
     movu    m2, [r0+offset0_1]
     movu    m3, [r0+offset0_2]
@@ -120,7 +120,7 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     mov     r4d, %2/2
     lea     r5,  [r1 * 2]
     lea     r6,  [r3 * 2]
-.loop
+.loop:
     movu    m1,  [r0]
     movu    m2,  [r0 + 16]
     movu    m3,  [r0 + 32]
@@ -220,7 +220,7 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     mov     r4d, %2/2
     lea     r5,  [r1 * 2]
     lea     r6,  [r3 * 2]
-.loop
+.loop:
     movu    m1,  [r0]
     movu    m2,  [r0 + 16]
     movu    m3,  [r0 + 32]
@@ -266,7 +266,7 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     mov     r4d, %2/4
     lea     r5,  [r1 * 2]
     lea     r6,  [r3 * 2]
-.loop
+.loop:
     movu        m1,  [r0]
     movh        m2,  [r0 + 16]
     movu        m3,  [r0 + r1]
@@ -384,7 +384,7 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,6
     mov    r4d, %%n
 %endif
     pxor    m0, m0
-.loop
+.loop:
 %if %1 == 4
     movh    m1, [r0]
     movh    m2, [r2]
@@ -464,7 +464,7 @@ cglobal pixel_ssd_ss_12x16, 4,7,6
     FIX_STRIDES r1, r3
     mov    r4d, 8
     pxor    m0, m0
-.loop
+.loop:
     movu    m1, [r0]
     movu    m2, [r2]
     psubw   m1, m2
@@ -506,7 +506,7 @@ cglobal pixel_ssd_ss_32x%1, 4,7,6
     FIX_STRIDES r1, r3
     mov    r4d, %1/2
     pxor    m0, m0
-.loop
+.loop:
     movu    m1, [r0]
     movu    m2, [r2]
     psubw   m1, m2
@@ -572,7 +572,7 @@ cglobal pixel_ssd_ss_24x32, 4,7,6
     FIX_STRIDES r1, r3
     mov    r4d, 16
     pxor    m0, m0
-.loop
+.loop:
     movu    m1, [r0]
     movu    m2, [r2]
     psubw   m1, m2
@@ -620,7 +620,7 @@ cglobal pixel_ssd_ss_48x64, 4,7,6
     FIX_STRIDES r1, r3
     mov    r4d, 32
     pxor    m0, m0
-.loop
+.loop:
     movu    m1, [r0]
     movu    m2, [r2]
     psubw   m1, m2
@@ -698,7 +698,7 @@ cglobal pixel_ssd_ss_64x%1, 4,7,6
     FIX_STRIDES r1, r3
     mov    r4d, %1/2
     pxor    m0, m0
-.loop
+.loop:
     movu    m1, [r0]
     movu    m2, [r2]
     psubw   m1, m2
@@ -1107,7 +1107,7 @@ cglobal pixel_ssd_12x16, 4, 5, 7, src1, stride1, src2, stride2
     pxor        m6,     m6
     mov         r4d,    4
 
-.loop
+.loop:
     movu        m0,    [r0]
     movu        m1,    [r2]
     movu        m2,    [r0 + r1]
@@ -1184,7 +1184,7 @@ cglobal pixel_ssd_24x32, 4, 5, 8, src1, stride1, src2, stride2
     pxor    m6,     m6
     mov     r4d,    16
 
-.loop
+.loop:
     movu         m1,    [r0]
     pmovzxbw     m0,    m1
     punpckhbw    m1,    m6

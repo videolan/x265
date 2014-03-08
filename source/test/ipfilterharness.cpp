@@ -25,11 +25,8 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
+#include "common.h"
 #include "ipfilterharness.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
 
 #define ITERS  100
 #define TEST_CASES 3
@@ -40,35 +37,26 @@ using namespace x265;
 
 IPFilterHarness::IPFilterHarness()
 {
+    // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
     ipf_t_size = 200 * 200;
-    pixel_buff = X265_MALLOC(pixel, ipf_t_size);           // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    short_buff = X265_MALLOC(int16_t, ipf_t_size);
-    IPF_vec_output_s = X265_MALLOC(int16_t, ipf_t_size);   // Output Buffer1
-    IPF_C_output_s   = X265_MALLOC(int16_t, ipf_t_size);   // Output Buffer2
-    IPF_vec_output_p = X265_MALLOC(pixel, ipf_t_size);     // Output Buffer1
-    IPF_C_output_p   = X265_MALLOC(pixel, ipf_t_size);     // Output Buffer2
+
+    CHECKED_MALLOC(pixel_buff, pixel, ipf_t_size);
+    CHECKED_MALLOC(short_buff, int16_t, ipf_t_size);
+    CHECKED_MALLOC(IPF_vec_output_s, int16_t, ipf_t_size);
+    CHECKED_MALLOC(IPF_C_output_s, int16_t, ipf_t_size);
+    CHECKED_MALLOC(IPF_vec_output_p, pixel, ipf_t_size);
+    CHECKED_MALLOC(IPF_C_output_p, pixel, ipf_t_size);
 
     /* Array of pixel buffers */
-    pixel_test_buff = X265_MALLOC(pixel*, TEST_CASES);
+    CHECKED_MALLOC(pixel_test_buff, pixel*, TEST_CASES);
 
     /* Array of short buffers */
-    short_test_buff = X265_MALLOC(int16_t*, TEST_CASES);
-
-    if (!pixel_buff || !short_buff || !IPF_vec_output_s || !IPF_vec_output_p || !IPF_C_output_s || !IPF_C_output_p || !pixel_test_buff || !short_test_buff)
-    {
-        fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
-        exit(-1);
-    }
+    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
 
     for (int i = 0; i < TEST_CASES; i++)
     {
-        pixel_test_buff[i] = X265_MALLOC(pixel, ipf_t_size);
-        short_test_buff[i] = X265_MALLOC(int16_t, ipf_t_size);
-        if (!pixel_test_buff[i] || !short_test_buff[i])
-        {
-            fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
-            exit(-1);
-        }
+        CHECKED_MALLOC(pixel_test_buff[i], pixel, ipf_t_size);
+        CHECKED_MALLOC(short_test_buff[i], int16_t, ipf_t_size);
     }
 
     /* [0] --- Random values
@@ -98,6 +86,10 @@ IPFilterHarness::IPFilterHarness()
         pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
         short_buff[i] = (int16_t)(isPositive) * (rand() &  SHRT_MAX);
     }
+    return;
+
+fail:
+    exit(1);
 }
 
 IPFilterHarness::~IPFilterHarness()
@@ -118,11 +110,17 @@ IPFilterHarness::~IPFilterHarness()
     X265_FREE(short_test_buff);
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma)
+bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma, int csp)
 {
     intptr_t rand_srcStride;
-    const int min_size = isChroma ? 2 : 4;
-    const int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
+    int min_size = isChroma ? 2 : 4;
+    int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
+
+    if (isChroma && (csp == X265_CSP_I444))
+    {
+        min_size = 4;
+        max_size = MAX_CU_SIZE;
+    }
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -537,7 +535,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 {
     if (opt.luma_p2s)
     {
-        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s, 0))
+        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s, 0, 1))   // last parameter does not matter in case of luma
         {
             printf("luma_p2s failed\n");
             return false;
@@ -608,7 +606,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     {
         if (opt.chroma_p2s[csp])
         {
-            if (!check_IPFilter_primitive(ref.chroma_p2s[csp], opt.chroma_p2s[csp], 1))
+            if (!check_IPFilter_primitive(ref.chroma_p2s[csp], opt.chroma_p2s[csp], 1, csp))
             {
                 printf("chroma_p2s[%s]", x265_source_csp_names[csp]);
                 return false;

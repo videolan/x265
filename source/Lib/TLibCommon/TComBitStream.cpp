@@ -38,10 +38,6 @@
 #include "TComBitStream.h"
 #include "common.h"
 
-#include <stdint.h>
-#include <string.h>
-#include <memory.h>
-
 using namespace x265;
 
 //! \ingroup TLibCommon
