@@ -64,7 +64,6 @@ TEncSearch::TEncSearch()
     m_qtTempTUCoeffCr = NULL;
     for (int i = 0; i < 3; i++)
     {
-        m_sharedPredTransformSkip[i] = NULL;
         m_qtTempTransformSkipFlag[i] = NULL;
         m_qtTempCbf[i] = NULL;
     }
@@ -97,7 +96,6 @@ TEncSearch::~TEncSearch()
     for (uint32_t i = 0; i < 3; ++i)
     {
         X265_FREE(m_qtTempCbf[i]);
-        X265_FREE(m_sharedPredTransformSkip[i]);
         X265_FREE(m_qtTempTransformSkipFlag[i]);
     }
 
@@ -154,9 +152,6 @@ bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     CHECKED_MALLOC(m_qtTempTransformSkipFlag[1], uint8_t, numPartitions);
     CHECKED_MALLOC(m_qtTempTransformSkipFlag[2], uint8_t, numPartitions);
 
-    CHECKED_MALLOC(m_sharedPredTransformSkip[0], pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    CHECKED_MALLOC(m_sharedPredTransformSkip[1], pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    CHECKED_MALLOC(m_sharedPredTransformSkip[2], pixel, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     CHECKED_MALLOC(m_qtTempTUCoeffY, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     CHECKED_MALLOC(m_qtTempTUCoeffCb, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     CHECKED_MALLOC(m_qtTempTUCoeffCr, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
@@ -403,11 +398,10 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
                                      uint32_t    absPartIdx,
                                      TComYuv*    fencYuv,
                                      TComYuv*    predYuv,
-                                     ShortYuv*  resiYuv,
+                                     ShortYuv*   resiYuv,
                                      uint32_t&   outDist,
-                                     int         default0Save1Load2)
+                                     bool        bReusePred)
 {
-    uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
     uint32_t fullDepth    = cu->getDepth(0)  + trDepth;
     uint32_t width        = cu->getCUSize(0) >> trDepth;
     uint32_t height       = cu->getCUSize(0) >> trDepth;
@@ -415,7 +409,6 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     Pel*     fenc         = fencYuv->getLumaAddr(absPartIdx);
     Pel*     pred         = predYuv->getLumaAddr(absPartIdx);
     int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
-    Pel*     recon        = predYuv->getLumaAddr(absPartIdx);
     int      chFmt        = cu->getChromaFormat();
     int      part         = partitionFromSizes(width, height);
 
@@ -433,22 +426,13 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
     bool     useTransformSkip = cu->getTransformSkip(absPartIdx, TEXT_LUMA);
 
-    //===== init availability pattern =====
-
-    if (default0Save1Load2 != 2)
+    if (!bReusePred)
     {
+        //===== init availability pattern =====
         cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt);
+        uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, width);
-        // save prediction
-        if (default0Save1Load2 == 1)
-        {
-            primitives.luma_copy_pp[part](m_sharedPredTransformSkip[0], width, pred, stride);
-        }
-    }
-    else
-    {
-        primitives.luma_copy_pp[part](pred, stride, m_sharedPredTransformSkip[0], width);
     }
 
     //===== get residual signal =====
@@ -492,12 +476,19 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
         primitives.blockfill_s[size](resiTmp, stride, 0);
     }
 
-    //===== reconstruction =====
     assert(width <= 32);
+#if NEW_CALCRECON
+    //===== reconstruction =====
+    primitives.calcrecon[size](pred, residual, 0, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
+    //===== update distortion =====
+    outDist += primitives.sse_sp[part](reconQt, MAX_CU_SIZE, fenc, stride);
+#else
+    ALIGN_VAR_32(pixel, recon[MAX_CU_SIZE * MAX_CU_SIZE]);
+    //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
-
     //===== update distortion =====
     outDist += primitives.sse_pp[part](fenc, stride, recon, stride);
+#endif
 }
 
 void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
@@ -505,10 +496,10 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
                                        uint32_t    absPartIdx,
                                        TComYuv*    fencYuv,
                                        TComYuv*    predYuv,
-                                       ShortYuv*  resiYuv,
+                                       ShortYuv*   resiYuv,
                                        uint32_t&   outDist,
                                        uint32_t    chromaId,
-                                       int         default0Save1Load2)
+                                       bool        bReusePred)
 {
     uint32_t origTrDepth = trDepth;
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
@@ -528,14 +519,12 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     }
 
     TextType ttype          = (chromaId > 0 ? TEXT_CHROMA_V : TEXT_CHROMA_U);
-    uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdx);
     uint32_t width          = cu->getCUSize(0) >> (trDepth + m_hChromaShift);
     uint32_t height         = cu->getCUSize(0) >> (trDepth + m_vChromaShift);
     uint32_t stride         = fencYuv->getCStride();
     Pel*     fenc           = (chromaId > 0 ? fencYuv->getCrAddr(absPartIdx) : fencYuv->getCbAddr(absPartIdx));
     Pel*     pred           = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
     int16_t* residual       = (chromaId > 0 ? resiYuv->getCrAddr(absPartIdx) : resiYuv->getCbAddr(absPartIdx));
-    Pel*     recon          = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
 
     uint32_t qtlayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
     uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> (m_hChromaShift + m_vChromaShift);
@@ -548,33 +537,21 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     bool     useTransformSkipChroma = cu->getTransformSkip(absPartIdx, ttype);
     int      part = partitionFromSizes(width, height);
 
-    //===== update chroma mode =====
-    if (chromaPredMode == DM_CHROMA_IDX)
+    if (!bReusePred)
     {
-        chromaPredMode = cu->getLumaIntraDir(absPartIdx);
-    }
-
-    //===== init availability pattern =====
-    if (default0Save1Load2 != 2)
-    {
+        //===== init availability pattern =====
         cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, chromaId);
         Pel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
 
+        uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdx);
+        //===== update chroma mode =====
+        if (chromaPredMode == DM_CHROMA_IDX)
+        {
+            chromaPredMode = cu->getLumaIntraDir(absPartIdx);
+        }
+
         //===== get prediction signal =====
         predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
-
-        // save prediction
-        if (default0Save1Load2 == 1)
-        {
-            Pel* predbuf = m_sharedPredTransformSkip[1 + chromaId];
-            primitives.luma_copy_pp[part](predbuf, width, pred, stride);
-        }
-    }
-    else
-    {
-        // load prediction
-        Pel* predbuf = m_sharedPredTransformSkip[1 + chromaId];
-        primitives.luma_copy_pp[part](pred, stride, predbuf, width);
     }
 
     //===== get residual signal =====
@@ -628,12 +605,20 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         }
     }
 
-    //===== reconstruction =====
-    assert(((uint32_t)(size_t)residual & (width - 1)) == 0);
+    assert(((intptr_t)residual & (width - 1)) == 0);
     assert(width <= 32);
+#if NEW_CALCRECON
+    //===== reconstruction =====
+    primitives.calcrecon[size](pred, residual, 0, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
+    //===== update distortion =====
+    uint32_t dist = primitives.sse_sp[part](reconQt, reconQtStride, fenc, stride);
+#else
+    ALIGN_VAR_32(pixel, recon[MAX_CU_SIZE * MAX_CU_SIZE]);
+    //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
     //===== update distortion =====
     uint32_t dist = primitives.sse_pp[part](fenc, stride, recon, stride);
+#endif
     if (ttype == TEXT_CHROMA_U)
     {
         outDist += m_rdCost->scaleChromaDistCb(dist);
@@ -720,8 +705,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             uint32_t singleCbfUTmp      = 0;
             uint32_t singleCbfVTmp      = 0;
             uint64_t singleCostTmp      = 0;
-            int    default0Save1Load2 = 0;
-            int    firstCheckId       = 0;
+            const int firstCheckId      = 0;
 
             uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + (trDepth - 1)) << 1);
             bool   bFirstQ = ((absPartIdx % qpdiv) == 0);
@@ -731,16 +715,9 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 singleDistYTmp = 0;
                 singleDistCTmp = 0;
                 cu->setTransformSkipSubParts(modeId, TEXT_LUMA, absPartIdx, fullDepth);
-                if (modeId == firstCheckId)
-                {
-                    default0Save1Load2 = 1;
-                }
-                else
-                {
-                    default0Save1Load2 = 2;
-                }
                 //----- code luma block with given intra prediction mode and store Cbf-----
-                xIntraCodingLumaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistYTmp, default0Save1Load2);
+                bool bReusePred = modeId != firstCheckId;
+                xIntraCodingLumaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistYTmp, bReusePred);
                 singleCbfYTmp = cu->getCbf(absPartIdx, TEXT_LUMA, trDepth);
                 //----- code chroma blocks with given intra prediction mode and store Cbf-----
                 if (!bLumaOnly)
@@ -750,8 +727,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                         cu->setTransformSkipSubParts(modeId, TEXT_CHROMA_U, absPartIdx, fullDepth);
                         cu->setTransformSkipSubParts(modeId, TEXT_CHROMA_V, absPartIdx, fullDepth);
                     }
-                    xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistCTmp, 0, default0Save1Load2);
-                    xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistCTmp, 1, default0Save1Load2);
+                    xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistCTmp, 0, bReusePred);
+                    xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistCTmp, 1, bReusePred);
                     singleCbfUTmp = cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepth);
                     singleCbfVTmp = cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepth);
                 }
@@ -1437,22 +1414,14 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                 uint64_t singleCostTmp  = 0;
                 uint32_t singleCbfCTmp  = 0;
 
-                int     default0Save1Load2 = 0;
-                int     firstCheckId       = 0;
+                const int firstCheckId  = 0;
 
                 for (int chromaModeId = firstCheckId; chromaModeId < 2; chromaModeId++)
                 {
                     cu->setTransformSkipSubParts(chromaModeId, (TextType)(chromaId + TEXT_CHROMA_U), absPartIdx, cu->getDepth(0) + actualTrDepth);
-                    if (chromaModeId == firstCheckId)
-                    {
-                        default0Save1Load2 = 1;
-                    }
-                    else
-                    {
-                        default0Save1Load2 = 2;
-                    }
                     singleDistCTmp = 0;
-                    xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistCTmp, chromaId, default0Save1Load2);
+                    bool bReusePred = chromaModeId != firstCheckId;
+                    xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistCTmp, chromaId, bReusePred);
                     singleCbfCTmp = cu->getCbf(absPartIdx, (TextType)(chromaId + TEXT_CHROMA_U), trDepth);
 
                     if (chromaModeId == 1 && singleCbfCTmp == 0)

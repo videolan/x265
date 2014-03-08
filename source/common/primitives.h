@@ -32,6 +32,8 @@
 #include "common.h"
 #include "cpu.h"
 
+#define NEW_CALCRECON 1 // TODO: remove recon[] arg
+
 namespace x265 {
 // x265 private namespace
 

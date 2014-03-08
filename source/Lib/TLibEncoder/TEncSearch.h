@@ -83,7 +83,6 @@ public:
 protected:
 
     ShortYuv*      m_qtTempShortYuv;
-    pixel*          m_sharedPredTransformSkip[3];
 
     TCoeff**        m_qtTempCoeffY;
     TCoeff**        m_qtTempCoeffCb;
@@ -203,10 +202,10 @@ protected:
     uint32_t xGetIntraBitsQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, bool bLuma, bool bChroma);
     uint32_t xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t uiChromaId);
     void xIntraCodingLumaBlk(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                             ShortYuv* resiYuv, uint32_t& outDist, int default0Save1Load2 = 0);
+                             ShortYuv* resiYuv, uint32_t& outDist, bool bReusePred = false);
 
     void xIntraCodingChromaBlk(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                               ShortYuv* resiYuv, uint32_t& outDist, uint32_t uiChromaId, int default0Save1Load2 = 0);
+                               ShortYuv* resiYuv, uint32_t& outDist, uint32_t uiChromaId, bool bReusePred = false);
 
     void xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
                                    TComYuv* predYuv, ShortYuv* resiYuv, uint32_t& outDist);

@@ -347,10 +347,12 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
         {
             return false;
         }
+#if !NEW_CALCRECON
         if (memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)))
         {
             return false;
         }
+#endif
         if (memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
         {
             return false;
