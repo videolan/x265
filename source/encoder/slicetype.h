@@ -89,9 +89,9 @@ struct CostEstimate : public WaveFront
 {
     CostEstimate(ThreadPool *p);
     ~CostEstimate();
-    void init(Encoder *, TComPic *);
+    void init(x265_param *, TComPic *);
 
-    Encoder         *cfg;
+    x265_param      *param;
     EstimateRow     *rows;
     pixel           *wbuffer[4];
     Lowres         **curframes;
@@ -127,7 +127,7 @@ struct Lookahead
     PicList          inputQueue;      // input pictures in order received
     PicList          outputQueue;     // pictures to be encoded, in encode order
 
-    Encoder         *cfg;
+    x265_param      *param;
     Lowres          *lastNonB;
     int             *scratch;         // temp buffer
 

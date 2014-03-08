@@ -75,7 +75,7 @@ struct Predictor
 struct RateControl
 {
     TComSlice *curSlice;      /* all info about the current frame */
-    Encoder *cfg;
+    x265_param* param;
     SliceType sliceType;      /* Current frame type */
     int ncu;                  /* number of CUs in a frame */
     int keyFrameInterval;     /* TODO: need to initialize in init */

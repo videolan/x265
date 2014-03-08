@@ -536,7 +536,7 @@ void FrameEncoder::compressFrame()
             // Extend border after whole-frame SAO is finished
             for (int row = 0; row < m_numRows; row++)
             {
-                m_frameFilter.processRowPost(row);
+                m_frameFilter.processRowPost(row, m_cfg);
             }
         }
 

@@ -111,7 +111,7 @@ private:
     TComYuv**    m_bestMergeRecoYuv;
     TComYuv**    m_origYuv;     ///< Original Yuv at each depth
 
-    Encoder*     m_cfg;
+    x265_param*  m_param;
     TEncSearch*  m_search;
     TComTrQuant* m_trQuant;
     TComRdCost*  m_rdCost;
@@ -125,6 +125,7 @@ private:
     UChar        m_totalDepth;
 
     bool         m_bEncodeDQP;
+    bool         m_CUTransquantBypassFlagValue;
 
 public:
 

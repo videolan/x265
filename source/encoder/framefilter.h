@@ -50,14 +50,13 @@ public:
     void start(TComPic *pic);
     void end();
 
-    void processRow(int row);
-    void processRowPost(int row);
+    void processRow(int row, Encoder* cfg);
+    void processRowPost(int row, Encoder* cfg);
     void processSao(int row);
 
 protected:
 
-    Encoder*                    m_top;
-    Encoder*                    m_cfg;
+    x265_param*                 m_param;
     TComPic*                    m_pic;
     int                         m_hChromaShift;
     int                         m_vChromaShift;
