@@ -2464,16 +2464,21 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
     outCost = MAX_UINT;
     for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
     {
-        uint32_t costCand = MAX_UINT;
-        uint32_t bitsCand = 0;
+        /* Prevent TMVP candidates from using unavailable reference pixels */
+        if (m_cfg->param->frameNumThreads > 1 &&
+            (mvFieldNeighbours[0 + 2 * mergeCand].mv.y >= (m_cfg->param->searchRange + 1) * 4 ||
+             mvFieldNeighbours[1 + 2 * mergeCand].mv.y >= (m_cfg->param->searchRange + 1) * 4))
+        {
+            continue;
+        }
 
         cu->getCUMvField(REF_PIC_LIST_0)->m_mv[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].mv;
         cu->getCUMvField(REF_PIC_LIST_0)->m_refIdx[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].refIdx;
         cu->getCUMvField(REF_PIC_LIST_1)->m_mv[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].mv;
         cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].refIdx;
 
-        costCand = xGetInterPredictionError(cu, puIdx);
-        bitsCand = mergeCand + 1;
+        uint32_t costCand = xGetInterPredictionError(cu, puIdx);
+        uint32_t bitsCand = bitsCand = mergeCand + 1;
         if (mergeCand == m_cfg->param->maxNumMergeCand - 1)
         {
             bitsCand--;
@@ -2516,11 +2521,13 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNe
 
 /** search of the best candidate for inter prediction
  * \param cu
- * \param predYuv
- * \param bUseMRG
- * \returns void
+ * \param predYuv - output buffer for motion compensation prediction
+ * \param bUseMRG - try merge predictions only, do not perform motion estimation
+ * \param bLuma   - generate a luma prediction
+ * \param bChroma - generate a chroma prediction
+ * \returns true if predYuv was filled with a motion compensated prediction
  */
-void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG, bool bLuma, bool bChroma)
+bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG, bool bLuma, bool bChroma)
 {
     MV mvzero(0, 0);
     MV mv[2];
@@ -2779,7 +2786,6 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
         {
             uint32_t mrgInterDir = 0;
             TComMvField mrgMvField[2];
-            uint32_t mrgIndex = 0;
 
             uint32_t meInterDir = 0;
             TComMvField meMvField[2];
@@ -2800,9 +2806,16 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
             cu->getMvField(cu, partAddr, REF_PIC_LIST_1, meMvField[1]);
 
             // find Merge result
+            uint32_t mrgIndex = UINT_MAX;
             uint32_t mrgCost = MAX_UINT;
             uint32_t mrgBits = 0;
             xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mrgBits, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+            if (mrgCost == MAX_UINT && !bTestNormalMC)
+            {
+                /* No valid merge modes were found, there is no possible way to
+                 * perform a valid motion compensation prediction, so early-exit */
+                return false;
+            }
             if (mrgCost < meCost)
             {
                 // set Merge result
@@ -2835,6 +2848,7 @@ void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
     }
 
     cu->m_totalBits = totalmebits;
+    return true;
 }
 
 // AMVP

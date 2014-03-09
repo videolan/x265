@@ -201,14 +201,21 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
 
-    //do motion compensation only for Luma since luma cost alone is calculated
+    // do motion compensation only for Luma since luma cost alone is calculated
     outTempCU->m_totalBits = 0;
-    m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false);
-    int part =  g_convertToBit[outTempCU->getCUSize(0)];
-    uint32_t distortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                                outPredYuv->getLumaAddr(), outPredYuv->getStride());
-    outTempCU->m_totalDistortion = distortion;
-    outTempCU->m_totalCost = m_rdCost->calcRdSADCost(distortion, outTempCU->m_totalBits);
+    if (m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false))
+    {
+        int part = g_convertToBit[outTempCU->getCUSize(0)];
+        uint32_t distortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+                                                    outPredYuv->getLumaAddr(), outPredYuv->getStride());
+        outTempCU->m_totalDistortion = distortion;
+        outTempCU->m_totalCost = m_rdCost->calcRdSADCost(distortion, outTempCU->m_totalBits);
+    }
+    else
+    {
+        outTempCU->m_totalDistortion = MAX_UINT;
+        outTempCU->m_totalCost = MAX_INT64;
+    }
 }
 
 void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
@@ -241,9 +248,9 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     for (int mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
     {
-        /* TODO: check only necessary when -F>1, and ref pixels available is in units of LCU rows */
-        if (mvFieldNeighbours[0 + 2 * mergeCand].mv.y < (m_param->searchRange + 1) * 4
-            && mvFieldNeighbours[1 + 2 * mergeCand].mv.y < (m_param->searchRange + 1) * 4)
+        if (m_param->frameNumThreads <= 1 ||
+            (mvFieldNeighbours[0 + 2 * mergeCand].mv.y < (m_param->searchRange + 1) * 4 &&
+             mvFieldNeighbours[1 + 2 * mergeCand].mv.y < (m_param->searchRange + 1) * 4))
         {
             // set MC parameters, interprets depth relative to LCU level
             outTempCU->setMergeIndex(0, mergeCand);
