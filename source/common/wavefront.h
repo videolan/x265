@@ -69,6 +69,10 @@ public:
     // This provider must be enqueued in the pool before enqueuing a row
     void enqueueRow(int row);
 
+    // Mark a row as no longer having internal dependencies resolved. Returns
+    // true if bit clear was successful, false otherwise.
+    bool dequeueRow(int row);
+
     // Mark the row's external dependencies as being resolved
     void enableRow(int row);
 

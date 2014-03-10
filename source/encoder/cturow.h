@@ -87,6 +87,8 @@ public:
     void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
 
     /* Threading variables */
+
+    /* This lock must be acquired when reading or writing m_active or m_busy */
     Lock                m_lock;
 
     /* row is ready to run, has no neighbor dependencies. The row may have

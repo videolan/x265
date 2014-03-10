@@ -166,6 +166,9 @@ public:
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
+    volatile bool            m_bAllRowsStop;
+    volatile int             m_vbvResetTriggerRow;
+
 protected:
 
     void determineSliceBounds();

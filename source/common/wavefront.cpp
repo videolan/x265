@@ -103,6 +103,14 @@ bool WaveFront::checkHigherPriorityRow(int curRow)
     return false;
 }
 
+bool WaveFront::dequeueRow(int row)
+{
+    uint64_t oldval, newval;
+    oldval = m_internalDependencyBitmap[row >> 6];
+    newval = oldval & ~(1LL << (row & 63));
+    return ATOMIC_CAS(&m_internalDependencyBitmap[row >> 6], oldval, newval) == oldval;
+}
+
 bool WaveFront::findJob()
 {
     unsigned long id;

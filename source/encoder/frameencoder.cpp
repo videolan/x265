@@ -57,6 +57,8 @@ FrameEncoder::FrameEncoder()
 
     m_nalCount = 0;
     m_totalTime = 0;
+    m_bAllRowsStop = false;
+    m_vbvResetTriggerRow = -1;
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
@@ -400,6 +402,8 @@ void FrameEncoder::compressFrame()
 
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
+    m_bAllRowsStop = false;
+    m_vbvResetTriggerRow = -1;
 
     switch (slice->getSliceType())
     {
@@ -946,6 +950,7 @@ void FrameEncoder::compressCTURows()
 
     if (m_pool && m_cfg->param->bEnableWavefront)
     {
+        m_rows[0].m_active = true;
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
@@ -1020,46 +1025,53 @@ void FrameEncoder::compressCTURows()
     m_totalTime = 0;
 }
 
+// Called by worker threads
 void FrameEncoder::processRowEncoder(int row)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
-    // Called by worker threads
+    CTURow& codeRow = m_rows[m_cfg->param->bEnableWavefront ? row : 0];
     CTURow& curRow  = m_rows[row];
-    if (curRow.m_busy)
     {
-        /* On multi-socket Windows servers, we have seen problems with
-         * ATOMIC_CAS which resulted in multiple worker threads processing
-         * the same CU row, which often resulted in bad pointer accesses. We
-         * believe the problem is fixed, but are leaving this check in place
-         * to prevent crashes in case it is not. */
-        x265_log(m_cfg->param, X265_LOG_WARNING,
-                 "internal error - simulaneous row access detected. Please report HW to x265-devel@videolan.org");
-        return;
+        ScopedLock self(curRow.m_lock);
+        if (!curRow.m_active)
+        {
+            /* VBV restart is in progress, exit out */
+            return;
+        }
+        if (curRow.m_busy)
+        {
+            /* On multi-socket Windows servers, we have seen problems with
+             * ATOMIC_CAS which resulted in multiple worker threads processing
+             * the same CU row, which often resulted in bad pointer accesses. We
+             * believe the problem is fixed, but are leaving this check in place
+             * to prevent crashes in case it is not */
+            x265_log(m_cfg->param, X265_LOG_WARNING,
+                     "internal error - simulaneous row access detected. Please report HW to x265-devel@videolan.org\n");
+            return;
+        }
+        curRow.m_busy = true;
     }
-    curRow.m_busy = true;
 
     int64_t startTime = x265_mdate();
-    CTURow& codeRow = m_rows[m_cfg->param->bEnableWavefront ? row : 0];
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    bool isVbv = m_cfg->param->rc.vbvBufferSize > 0 && m_cfg->param->rc.vbvMaxBitrate > 0;
-    for (uint32_t col = curRow.m_completed; col < numCols; col++)
+    bool bIsVbv = m_cfg->param->rc.vbvBufferSize > 0 && m_cfg->param->rc.vbvMaxBitrate > 0;
+
+    while (curRow.m_completed < numCols)
     {
+        int col = curRow.m_completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_pic->getCU(cuAddr);
         cu->initCU(m_pic, cuAddr);
         cu->setQPSubParts(m_pic->getSlice()->getSliceQp(), 0, 0);
 
-        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
-        codeRow.m_entropyCoder.resetEntropy();
-        TEncSbac *bufSbac = (m_cfg->param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        if (isVbv)
+        if (bIsVbv)
         {
             if (!row)
                 m_pic->m_rowDiagQp[row] = m_pic->m_avgQpRc;
 
-            if ((uint32_t)row >= col && (row != 0))
+            if (row >= col && row && m_vbvResetTriggerRow != row)
                 cu->m_baseQp = m_pic->getCU(cuAddr - numCols + 1)->m_baseQp;
             else
                 cu->m_baseQp = m_pic->m_rowDiagQp[row];
@@ -1067,7 +1079,7 @@ void FrameEncoder::processRowEncoder(int row)
         else
             cu->m_baseQp = m_pic->m_avgQpRc;
 
-        if (m_cfg->param->rc.aqMode || isVbv)
+        if (m_cfg->param->rc.aqMode || bIsVbv)
         {
             int qp = calcQpForCu(m_pic, cuAddr, cu->m_baseQp);
             setLambda(qp, row);
@@ -1076,32 +1088,92 @@ void FrameEncoder::processRowEncoder(int row)
             if (m_cfg->param->rc.aqMode)
                 m_pic->m_qpaAq[row] += qp;
         }
+
+        TEncSbac *bufSbac = (m_cfg->param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
+        codeRow.m_entropyCoder.resetEntropy();
         codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_cfg->param->bEnableWavefront && col == 1);
-        if (isVbv)
+        // Completed CU processing
+        curRow.m_completed++;
+
+        if (bIsVbv)
         {
             // Update encoded bits, satdCost, baseQP for each CU
             m_pic->m_rowDiagSatd[row] += m_pic->m_cuCostsForVbv[cuAddr];
+            m_pic->m_rowDiagIntraSatd[row] += m_pic->m_intraCuCostsForVbv[cuAddr];
             m_pic->m_rowEncodedBits[row] += cu->m_totalBits;
             m_pic->m_numEncodedCusPerRow[row] = cuAddr;
             m_pic->m_qpaRc[row] += cu->m_baseQp;
 
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
  
-            if ((uint32_t)row == col && row != 0)
+            if (row == col && row)
             {
-                m_pic->m_rowDiagQp[row] = cu->m_baseQp;
-                m_top->m_rateControl->rowDiagonalVbvRateControl(m_pic, row, &m_rce, m_pic->m_rowDiagQp[row]);
-                m_pic->m_rowDiagQScale[row] = Clip3((double)MIN_QP, (double)MAX_QP, m_pic->m_rowDiagQScale[row]);
-                m_pic->m_rowDiagQScale[row] =  x265_qp2qScale(m_pic->m_rowDiagQp[row]);
+                double qpBase = cu->m_baseQp;
+                int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_pic, row, &m_rce, qpBase);
+                qpBase = Clip3((double)MIN_QP, (double)MAX_MAX_QP, qpBase);
+                m_pic->m_rowDiagQp[row] = qpBase;
+                m_pic->m_rowDiagQScale[row] =  x265_qp2qScale(qpBase);
+
+                if (reEncode < 0)
+                {
+                    x265_log(m_cfg->param, X265_LOG_INFO, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
+                            m_pic->getPOC(), row, qpBase, cu->m_baseQp);
+
+                    // prevent the WaveFront::findJob() method from providing new jobs
+                    m_vbvResetTriggerRow = row;
+                    m_bAllRowsStop = true;
+
+                    for (int r = m_numRows - 1; r >= row ; r--)
+                    {
+                        CTURow& stopRow = m_rows[r];
+
+                        if (r != row)
+                        {
+                            /* if row was active (ready to be run) clear active bit and bitmap bit for this row */
+                            stopRow.m_lock.acquire();
+                            while (stopRow.m_active)
+                            {
+                                if (dequeueRow(r * 2))
+                                    stopRow.m_active = false;
+                                else
+                                    GIVE_UP_TIME();
+                            }
+                            stopRow.m_lock.release();
+
+                            bool bRowBusy = true;
+                            do
+                            {
+                                stopRow.m_lock.acquire();
+                                bRowBusy = stopRow.m_busy;
+                                stopRow.m_lock.release();
+
+                                if (bRowBusy)
+                                {
+                                    GIVE_UP_TIME();
+                                }
+                            }
+                            while (bRowBusy);
+                        }
+
+                        stopRow.m_completed = 0;
+                        if (m_pic->m_qpaAq)
+                            m_pic->m_qpaAq[r] = 0;
+                        m_pic->m_qpaRc[r] = 0;
+                        m_pic->m_rowEncodedBits[r] = 0;
+                        m_pic->m_numEncodedCusPerRow[r] = 0;
+                    }
+
+                    m_bAllRowsStop = false;
+                }
             }
         }
-        // Completed CU processing
-        m_rows[row].m_completed++;
-        if (m_rows[row].m_completed >= 2 && row < m_numRows - 1)
+        if (curRow.m_completed >= 2 && row < m_numRows - 1)
         {
             ScopedLock below(m_rows[row + 1].m_lock);
             if (m_rows[row + 1].m_active == false &&
-                m_rows[row + 1].m_completed + 2 <= m_rows[row].m_completed)
+                m_rows[row + 1].m_completed + 2 <= curRow.m_completed &&
+                (!m_bAllRowsStop || row + 1 < m_vbvResetTriggerRow))
             {
                 m_rows[row + 1].m_active = true;
                 enqueueRowEncoder(row + 1);
@@ -1109,18 +1181,19 @@ void FrameEncoder::processRowEncoder(int row)
         }
 
         ScopedLock self(curRow.m_lock);
-        if (row > 0 && m_rows[row].m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2)
+        if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) || 
+            (row > 0 && curRow.m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2))
         {
             curRow.m_active = false;
             curRow.m_busy = false;
-            m_totalTime = m_totalTime + (x265_mdate() - startTime);
+            m_totalTime += x265_mdate() - startTime;
             return;
         }
     }
 
     // this row of CTUs has been encoded
 
-    // Run row-wise loop filters
+    // trigger row-wise loop filters
     if (row >= m_filterRowDelay)
     {
         enableRowFilter(row - m_filterRowDelay);
@@ -1136,7 +1209,7 @@ void FrameEncoder::processRowEncoder(int row)
             enableRowFilter(i);
         }
     }
-    m_totalTime = m_totalTime + (x265_mdate() - startTime);
+    m_totalTime += x265_mdate() - startTime;
     curRow.m_busy = false;
 }
 
