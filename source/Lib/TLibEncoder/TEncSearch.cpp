@@ -2581,7 +2581,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         cu->getMvPredAboveRight(m_mvPredictors[2]);
 
         // force ME for the smallest rect/AMP sizes (Why? the HM did this)
-        if (cu->getCUSize(0) > 8 && numPart == 2)
+        if (cu->getCUSize(0) <= 8 || numPart != 2)
             bMergeOnly = false;
 
         if (!bMergeOnly)
