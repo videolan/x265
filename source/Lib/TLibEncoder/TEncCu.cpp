@@ -64,9 +64,9 @@ TEncCu::TEncCu()
 }
 
 /**
- \param    uiTotalDepth  total number of allowable depth
- \param    uiMaxWidth    largest CU width
- \param    uiMaxHeight   largest CU height
+ \param    totalDepth  total number of allowable depth
+ \param    maxWidth    largest CU width
+ \param    maxHeight   largest CU height
  */
 bool TEncCu::create(UChar totalDepth, uint32_t maxWidth)
 {
@@ -679,10 +679,10 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     if (bBoundary || (bSliceEnd && bInsidePicture)) return;
 
     // Assert if Best prediction mode is NONE
-    // Selected mode's RD-cost must be not MAX_DOUBLE.
+    // Selected mode's RD-cost must be not MAX_INT64.
     assert(outBestCU->getPartitionSize(0) != SIZE_NONE);
     assert(outBestCU->getPredictionMode(0) != MODE_NONE);
-    assert(outBestCU->m_totalCost != MAX_DOUBLE);
+    assert(outBestCU->m_totalCost != MAX_INT64);
 }
 
 void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, PartSize parentSize)
@@ -1023,10 +1023,10 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     if (bBoundary || (bSliceEnd && bInsidePicture)) return;
 
     // Assert if Best prediction mode is NONE
-    // Selected mode's RD-cost must be not MAX_DOUBLE.
+    // Selected mode's RD-cost must be not MAX_INT64.
     assert(outBestCU->getPartitionSize(0) != SIZE_NONE);
     assert(outBestCU->getPredictionMode(0) != MODE_NONE);
-    assert(outBestCU->m_totalCost != MAX_DOUBLE);
+    assert(outBestCU->m_totalCost != MAX_INT64);
 }
 
 /** finish encoding a cu and handle end-of-slice conditions
@@ -1364,7 +1364,7 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
 
-    m_tmpRecoYuv[depth]->clear();
+    m_tmpRecoYuv[depth]->clear(); // TODO: Are either of these clears necessary?
     m_tmpResiYuv[depth]->clear();
     m_search->predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG);
     m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false);

@@ -825,10 +825,10 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     if (bBoundary || (bSliceEnd && bInsidePicture)) return;
 
     /* Assert if Best prediction mode is NONE
-     Selected mode's RD-cost must be not MAX_DOUBLE.*/
+     * Selected mode's RD-cost must be not MAX_INT64 */
     assert(outBestCU->getPartitionSize(0) != SIZE_NONE);
     assert(outBestCU->getPredictionMode(0) != MODE_NONE);
-    assert(outBestCU->m_totalCost != MAX_DOUBLE);
+    assert(outBestCU->m_totalCost != MAX_INT64);
 }
 
 void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, UChar depth)
