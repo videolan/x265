@@ -148,3 +148,15 @@ double x265_ssim(double ssim)
 
     return -10.0 * log10(inv_ssim);
 }
+
+/* The qscale - qp conversion is specified in the standards.
+ * Approx qscale increases by 12%  with every qp increment */
+double x265_qScale2qp(double qScale)
+{
+    return 12.0 + 6.0 * (double)X265_LOG2(qScale / 0.85);
+}
+
+double x265_qp2qScale(double qp)
+{
+    return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
+}
