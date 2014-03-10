@@ -158,7 +158,7 @@ public:
 
     /// encode residual and compute rd-cost for inter mode
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, ShortYuv* bestResiYuv,
-                                   TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ = true);
+                                   TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ);
 
     /// set ME search range
     void setAdaptiveSearchRange(int dir, int refIdx, int merange) { m_adaptiveRange[dir][refIdx] = merange; }

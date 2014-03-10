@@ -311,14 +311,14 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             }
 
             //No-residue mode
-            m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
+            m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true, true);
 
             TComYuv* yuv = yuvReconBest;
             yuvReconBest = m_tmpRecoYuv[depth];
             m_tmpRecoYuv[depth] = yuv;
 
             //Encode with residue
-            m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false);
+            m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
 
             if (outTempCU->m_totalCost < outBestCU->m_totalCost)    //Choose best from no-residue mode and residue mode
             {
@@ -482,7 +482,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     }
 
                     m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
-                                                        m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
+                                                        m_bestResiYuv[depth], m_bestRecoYuv[depth], false, true);
                     if (m_bestMergeCU[depth]->m_totalCost < outBestCU->m_totalCost)
                     {
                         outBestCU = m_bestMergeCU[depth];
@@ -549,7 +549,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         }
 
                         m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
-                                                            m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
+                                                            m_bestResiYuv[depth], m_bestRecoYuv[depth], false, true);
                     }
                     else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
                     {

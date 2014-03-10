@@ -1283,7 +1283,8 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                                                         m_tmpResiYuv[depth],
                                                         m_bestResiYuv[depth],
                                                         m_tmpRecoYuv[depth],
-                                                        (noResidual ? true : false));
+                                                        (noResidual ? true : false),
+                                                        true);
 
                     /* Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
                     if (noResidual == 0)
@@ -1368,7 +1369,7 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     m_tmpResiYuv[depth]->clear();
     if (m_search->predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG, true))
     {
-        m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false);
+        m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
         xCheckDQP(outTempCU);
         xCheckBestMode(outBestCU, outTempCU, depth);
     }
