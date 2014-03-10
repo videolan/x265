@@ -782,7 +782,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, double qpVbv, int32_t & enc
         if (satdCostForPendingCus  > 0)
         {
             double pred_s = predictSize(rowPred[0], qScale, satdCostForPendingCus);
-            uint32_t refRowSatdCost = 0, refRowBits = 0;
+            uint32_t refRowSatdCost = 0, refRowBits = 0, intraCost = 0;
             double refQScale = 0;
 
             if (picType != I_SLICE)
@@ -792,6 +792,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, double qpVbv, int32_t & enc
                 {
                     refRowSatdCost += refPic->m_cuCostsForVbv[cuAddr];
                     refRowBits += refPic->getCU(cuAddr)->m_totalBits;
+                    intraCost += pic->m_intraCuCostsForVbv[cuAddr];
                 }
 
                 refQScale = row == maxRows - 1 ? refPic->m_rowDiagQScale[row] : refPic->m_rowDiagQScale[row + 1];
@@ -817,7 +818,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, double qpVbv, int32_t & enc
             else
             {
                 /* Our QP is lower than the reference! */
-                double pred_intra = predictSize(rowPred[1], qScale, satdCostForPendingCus);
+                double pred_intra = predictSize(rowPred[1], qScale, intraCost);
                 /* Sum: better to overestimate than underestimate by using only one of the two predictors. */
                 totalSatdBits += int32_t(pred_intra + pred_s);
             }
@@ -847,9 +848,9 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
         if (qpVbv < refSlice->m_rowDiagQp[row])
         {
             if (row == 1)
-                updatePredictor(rowPred[1], qScaleVbv, refSlice->m_rowDiagSatd[row] + refSlice->m_rowDiagSatd[0], refSlice->m_rowEncodedBits[row] + refSlice->m_rowEncodedBits[0]);
+                updatePredictor(rowPred[1], qScaleVbv, pic->m_rowDiagIntraSatd[row] + pic->m_rowDiagIntraSatd[0], pic->m_rowEncodedBits[row] + pic->m_rowEncodedBits[0]);
             else
-                updatePredictor(rowPred[1], qScaleVbv, refSlice->m_rowDiagSatd[row], refSlice->m_rowEncodedBits[row]);
+                updatePredictor(rowPred[1], qScaleVbv, pic->m_rowDiagIntraSatd[row], pic->m_rowEncodedBits[row]);
         }
     }
 
