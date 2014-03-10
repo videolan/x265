@@ -134,19 +134,6 @@ public:
     void    setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
     void    setMvd(int idx, const MV& mvd) { m_mvd[idx] = mvd; }
 
-    void setNumPartition(int numPart)
-    {
-        m_numPartitions = numPart;
-    }
-
-    void linkToWithOffset(const TComCUMvField* src, int offset)
-    {
-        m_mv     = src->m_mv     + offset;
-        m_mvd    = src->m_mvd    + offset;
-        m_refIdx = src->m_refIdx + offset;
-    }
-
-    void compress(char* pePredMode, int scale);
 };
 }
 
