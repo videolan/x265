@@ -2521,12 +2521,12 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNe
 
 /** search of the best candidate for inter prediction
  * \param cu
- * \param predYuv - output buffer for motion compensation prediction
- * \param bUseMRG - try merge predictions only, do not perform motion estimation
- * \param bChroma - generate a chroma prediction
+ * \param predYuv    - output buffer for motion compensation prediction
+ * \param bMergeOnly - try merge predictions only, do not perform motion estimation
+ * \param bChroma    - generate a chroma prediction
  * \returns true if predYuv was filled with a motion compensated prediction
  */
-bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG, bool bChroma)
+bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, bool bChroma)
 {
     MV mvzero(0, 0);
     MV mv[2];
@@ -2580,14 +2580,11 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
         cu->getMvPredAbove(m_mvPredictors[1]);
         cu->getMvPredAboveRight(m_mvPredictors[2]);
 
-        bool bTestNormalMC = true;
+        // force ME for the smallest rect/AMP sizes (Why? the HM did this)
+        if (cu->getCUSize(0) > 8 && numPart == 2)
+            bMergeOnly = false;
 
-        if (bUseMRG && cu->getCUSize(0) > 8 && numPart == 2)
-        {
-            bTestNormalMC = false;
-        }
-
-        if (bTestNormalMC)
+        if (!bMergeOnly)
         {
             // Uni-directional prediction
             for (int list = 0; list < numPredDir; list++)
@@ -2709,7 +2706,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
                     }
                 }
             } // if (B_SLICE)
-        } //end if bTestNormalMC
+        }
 
         //  Clear Motion Field
         cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
@@ -2722,7 +2719,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
         bits[1] = bitsValidList1;
         listCost[1] = costValidList1;
 
-        if (bTestNormalMC)
+        if (!bMergeOnly)
         {
             if (costbi <= listCost[0] && costbi <= listCost[1])
             {
@@ -2779,7 +2776,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
 
                 mebits = bits[1];
             }
-        } // end if bTestNormalMC
+        }
 
         if (cu->getPartitionSize(partAddr) != SIZE_2Nx2N)
         {
@@ -2793,7 +2790,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
             uint32_t meError = MAX_UINT;
             uint32_t meCost = MAX_UINT;
 
-            if (bTestNormalMC)
+            if (!bMergeOnly)
             {
                 meError = xGetInterPredictionError(cu, partIdx);
                 meCost = meError + m_rdCost->getCost(mebits);
@@ -2809,7 +2806,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
             uint32_t mrgCost = MAX_UINT;
             uint32_t mrgBits = 0;
             xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mrgBits, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
-            if (mrgCost == MAX_UINT && !bTestNormalMC)
+            if (mrgCost == MAX_UINT && bMergeOnly)
             {
                 /* No valid merge modes were found, there is no possible way to
                  * perform a valid motion compensation prediction, so early-exit */
