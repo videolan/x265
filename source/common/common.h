@@ -152,5 +152,7 @@ void *x265_malloc(size_t size);
 void x265_free(void *ptr);
 
 double x265_ssim2dB(double ssim);
+double x265_qScale2qp(double qScale);
+double x265_qp2qScale(double qp);
 
 #endif // ifndef X265_COMMON_H
