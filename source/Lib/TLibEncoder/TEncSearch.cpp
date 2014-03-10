@@ -2478,7 +2478,7 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
         cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].refIdx;
 
         uint32_t costCand = xGetInterPredictionError(cu, puIdx);
-        uint32_t bitsCand = bitsCand = mergeCand + 1;
+        uint32_t bitsCand = mergeCand + 1;
         if (mergeCand == m_cfg->param->maxNumMergeCand - 1)
         {
             bitsCand--;
