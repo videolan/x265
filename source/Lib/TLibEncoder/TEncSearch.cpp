@@ -2523,11 +2523,10 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNe
  * \param cu
  * \param predYuv - output buffer for motion compensation prediction
  * \param bUseMRG - try merge predictions only, do not perform motion estimation
- * \param bLuma   - generate a luma prediction
  * \param bChroma - generate a chroma prediction
  * \returns true if predYuv was filled with a motion compensated prediction
  */
-bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG, bool bLuma, bool bChroma)
+bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG, bool bChroma)
 {
     MV mvzero(0, 0);
     MV mv[2];
@@ -2844,7 +2843,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bUseMRG,
         {
             totalmebits += mebits;
         }
-        motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, bLuma, bChroma);
+        motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, true, bChroma);
     }
 
     cu->m_totalBits = totalmebits;

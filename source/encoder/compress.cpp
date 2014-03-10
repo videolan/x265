@@ -203,7 +203,7 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
 
     // do motion compensation only for Luma since luma cost alone is calculated
     outTempCU->m_totalBits = 0;
-    if (m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, true, false))
+    if (m_search->predInterSearch(outTempCU, outPredYuv, bUseMRG, false))
     {
         int part = g_convertToBit[outTempCU->getCUSize(0)];
         uint32_t distortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
