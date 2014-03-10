@@ -1254,19 +1254,19 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     {
         for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
         {
-            /* TODO: check only necessary when -F>1, and ref pixels available is in units of LCU rows */
-            if (mvFieldNeighbours[0 + 2 * mergeCand].mv.y >= (m_param->searchRange + 1) * 4
-                || mvFieldNeighbours[1 + 2 * mergeCand].mv.y >= (m_param->searchRange + 1) * 4)
+            if (m_param->frameNumThreads > 1 &&
+                (mvFieldNeighbours[0 + 2 * mergeCand].mv.y >= (m_param->searchRange + 1) * 4 ||
+                 mvFieldNeighbours[1 + 2 * mergeCand].mv.y >= (m_param->searchRange + 1) * 4))
             {
                 continue;
             }
-            if (!(noResidual == 1 && mergeCandBuffer[mergeCand] == 1))
+            if (!(noResidual && mergeCandBuffer[mergeCand] == 1))
             {
-                if (!(bestIsSkip && noResidual == 0))
+                if (!(bestIsSkip && !noResidual))
                 {
                     // set MC parameters
                     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth); // interprets depth relative to LCU level
-                    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue,     0, depth);
+                    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
                     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
                     outTempCU->setMergeFlag(0, true);
                     outTempCU->setMergeIndex(0, mergeCand);
@@ -1283,19 +1283,14 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                                                         m_tmpResiYuv[depth],
                                                         m_bestResiYuv[depth],
                                                         m_tmpRecoYuv[depth],
-                                                        (noResidual ? true : false),
+                                                        !!noResidual,
                                                         true);
 
                     /* Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
-                    if (noResidual == 0)
-                    {
-                        if (outTempCU->getQtRootCbf(0) == 0)
-                        {
-                            mergeCandBuffer[mergeCand] = 1;
-                        }
-                    }
+                    if (!noResidual && !outTempCU->getQtRootCbf(0))
+                        mergeCandBuffer[mergeCand] = 1;
 
-                    outTempCU->setSkipFlagSubParts(outTempCU->getQtRootCbf(0) == 0, 0, depth);
+                    outTempCU->setSkipFlagSubParts(!outTempCU->getQtRootCbf(0), 0, depth);
                     int origQP = outTempCU->getQP(0);
                     xCheckDQP(outTempCU);
                     if (outTempCU->m_totalCost < outBestCU->m_totalCost)
@@ -1317,7 +1312,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     outTempCU->initEstData(depth, origQP);
                     if (!bestIsSkip)
                     {
-                        bestIsSkip = outBestCU->getQtRootCbf(0) == 0;
+                        bestIsSkip = !outBestCU->getQtRootCbf(0);
                     }
                 }
             }
