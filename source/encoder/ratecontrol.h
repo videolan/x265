@@ -44,6 +44,14 @@ class TEncCfg;
 
 #define CLIP_DURATION(f) Clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
+struct Predictor
+{
+    double coeff;
+    double count;
+    double decay;
+    double offset;
+};
+
 struct RateControlEntry
 {
     int64_t texBits;  /* Required in 2-pass rate control */
@@ -58,19 +66,15 @@ struct RateControlEntry
     double blurredComplexity;
     double qpaRc;
     double qRceq;
-    double frameSizePlanned;
+    double frameSizePlanned;  /* frame Size decided by RateCotrol before encoding the frame */
     double bufferRate;
     double movingAvgSum;
     double qpNoVbv;
     double bufferFill;
-};
-
-struct Predictor
-{
-    double coeff;
-    double count;
-    double decay;
-    double offset;
+    Predictor rowPreds[3][2];
+    Predictor* rowPred[2];
+    double frameSizeEstimated;  /* hold frameSize, updated from cu level vbv rc */
+    bool isActive;
 };
 
 struct RateControl
@@ -97,8 +101,6 @@ struct RateControl
     bool isVbv;
     Predictor pred[5];
     Predictor predBfromP;
-    Predictor rowPreds[4];
-    Predictor *rowPred[2];
     int bframes;
     int bframeBits;
     bool isAbrReset;
@@ -124,8 +126,7 @@ struct RateControl
     int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
     double qCompress;
     double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
-    double frameSizeEstimated;  /* hold synched frameSize, updated from cu level vbv rc */
-    RateControl(TEncCfg * _cfg);
+    RateControl(Encoder * _cfg);
 
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
@@ -147,7 +148,7 @@ protected:
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
     void checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
-    double predictRowsSizeSum(TComPic* pic, double qpm, int32_t& encodedBits);
+    double predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
 };
 }
 #endif // ifndef X265_RATECONTROL_H
