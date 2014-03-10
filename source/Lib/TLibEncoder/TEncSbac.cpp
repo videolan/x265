@@ -282,8 +282,6 @@ void TEncSbac::determineCabacInitIdx()
     }
 }
 
-#define SCALING_LIST_OUTPUT_RESULT                0 //JCTVC-G880/JCTVC-G1016 quantization matrices
-
 void TEncSbac::codeVPS(TComVPS* vps)
 {
     WRITE_CODE(vps->getVPSId(),                    4,        "vps_video_parameter_set_id");
@@ -457,9 +455,6 @@ void TEncSbac::codeSPS(TComSPS* sps)
         WRITE_FLAG(sps->getScalingListPresentFlag() ? 1 : 0, "sps_scaling_list_data_present_flag");
         if (sps->getScalingListPresentFlag())
         {
-#if SCALING_LIST_OUTPUT_RESULT
-            printf("SPS\n");
-#endif
             codeScalingList(m_slice->getScalingList());
         }
     }
@@ -561,9 +556,6 @@ void TEncSbac::codePPS(TComPPS* pps)
     WRITE_FLAG(pps->getScalingListPresentFlag() ? 1 : 0,         "pps_scaling_list_data_present_flag");
     if (pps->getScalingListPresentFlag())
     {
-#if SCALING_LIST_OUTPUT_RESULT
-        printf("PPS\n");
-#endif
         codeScalingList(m_slice->getScalingList());
     }
     WRITE_FLAG(pps->getListsModificationPresentFlag(), "lists_modification_present_flag");
