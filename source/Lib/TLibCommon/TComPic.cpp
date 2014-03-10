@@ -59,10 +59,12 @@ TComPic::TComPic()
     , m_rowDiagQp(NULL)
     , m_rowDiagQScale(NULL)
     , m_rowDiagSatd(NULL)
+    , m_rowDiagIntraSatd(NULL)
     , m_rowEncodedBits(NULL)
     , m_numEncodedCusPerRow(NULL)
     , m_rowSatdForVbv(NULL)
     , m_cuCostsForVbv(NULL)
+    , m_intraCuCostsForVbv(NULL)
 {
     m_reconRowCount = 0;
     m_countRefEncoders = 0;
@@ -119,10 +121,12 @@ bool TComPic::create(TEncCfg* cfg)
             CHECKED_MALLOC(m_rowDiagQp, double, numRows);
             CHECKED_MALLOC(m_rowDiagQScale, double, numRows);
             CHECKED_MALLOC(m_rowDiagSatd, uint32_t, numRows);
+            CHECKED_MALLOC(m_rowDiagIntraSatd, uint32_t, numRows);
             CHECKED_MALLOC(m_rowEncodedBits, uint32_t, numRows);
             CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, numRows);
             CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, numRows);
             CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, numRows * numCols);
+            CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, numRows * numCols);
             CHECKED_MALLOC(m_qpaRc, double, numRows);
         }
         reInit(cfg);
@@ -144,10 +148,12 @@ void TComPic::reInit(TEncCfg* cfg)
         memset(m_rowDiagQp, 0, numRows * sizeof(double));
         memset(m_rowDiagQScale, 0, numRows * sizeof(double));
         memset(m_rowDiagSatd, 0, numRows * sizeof(uint32_t));
+        memset(m_rowDiagIntraSatd, 0, numRows * sizeof(uint32_t));
         memset(m_rowEncodedBits, 0, numRows * sizeof(uint32_t));
         memset(m_numEncodedCusPerRow, 0, numRows * sizeof(uint32_t));
         memset(m_rowSatdForVbv, 0, numRows * sizeof(uint32_t));
         memset(m_cuCostsForVbv, 0,  numRows * numCols * sizeof(uint32_t));
+        memset(m_intraCuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_qpaRc, 0, numRows * sizeof(double));
     }
     if (cfg->param.rc.aqMode)
@@ -181,10 +187,12 @@ void TComPic::destroy(int bframes)
     X265_FREE(m_rowDiagQp);
     X265_FREE(m_rowDiagQScale);
     X265_FREE(m_rowDiagSatd);
+    X265_FREE(m_rowDiagIntraSatd);
     X265_FREE(m_rowEncodedBits);
     X265_FREE(m_numEncodedCusPerRow);
     X265_FREE(m_rowSatdForVbv);
     X265_FREE(m_cuCostsForVbv);
+    X265_FREE(m_intraCuCostsForVbv);
     X265_FREE(m_qpaAq);
     X265_FREE(m_qpaRc);
 }
