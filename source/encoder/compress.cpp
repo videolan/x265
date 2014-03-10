@@ -36,23 +36,22 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 {
     uint64_t puCost = 0;
     uint32_t puDistY = 0;
-    uint32_t puDistC = 0;
     uint32_t depth = cu->getDepth(0);
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
 
     // set context models
     m_search->m_rdGoOnSbacCoder->load(m_search->m_rdSbacCoders[depth][CI_CURR_BEST]);
 
-    m_search->xRecurIntraCodingQT(cu, initTrDepth, 0, true, fencYuv, predYuv, outResiYuv, puDistY, puDistC, false, puCost);
-    m_search->xSetIntraResultQT(cu, initTrDepth, 0, true, outReconYuv);
+    m_search->xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, puDistY, false, puCost);
+    m_search->xSetIntraResultQT(cu, initTrDepth, 0, outReconYuv);
 
     //=== update PU data ====
     cu->copyToPic(cu->getDepth(0), 0, initTrDepth);
 
     //===== set distortion (rate and r-d costs are determined later) =====
-    cu->m_totalDistortion = puDistY + puDistC;
+    cu->m_totalDistortion = puDistY;
 
-    m_search->estIntraPredChromaQT(cu, fencYuv, predYuv, outResiYuv, outReconYuv, puDistC);
+    m_search->estIntraPredChromaQT(cu, fencYuv, predYuv, outResiYuv, outReconYuv);
     m_entropyCoder->resetBits();
     if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {

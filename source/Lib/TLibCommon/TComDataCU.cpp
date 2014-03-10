@@ -2442,23 +2442,6 @@ void TComDataCU::clipMv(MV& outMV)
     outMV.y = X265_MIN(ymax, X265_MAX(ymin, (int)outMV.y));
 }
 
-uint32_t TComDataCU::getIntraSizeIdx(uint32_t absPartIdx)
-{
-    uint32_t shift = (m_partSizes[absPartIdx] == SIZE_NxN ? 1 : 0);
-
-    UChar width = m_cuSize[absPartIdx] >> shift;
-    uint32_t  cnt = 0;
-
-    while (width)
-    {
-        cnt++;
-        width >>= 1;
-    }
-
-    cnt -= 2;
-    return cnt > 6 ? 6 : cnt;
-}
-
 /** Set a I_PCM flag for all sub-partitions of a partition.
  * \param bIpcmFlag I_PCM flag
  * \param absPartIdx partition index

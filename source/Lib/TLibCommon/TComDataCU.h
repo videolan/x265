@@ -445,8 +445,6 @@ public:
     // member functions for symbol prediction (most probable / mode conversion)
     // -------------------------------------------------------------------------------------------------------------------
 
-    uint32_t      getIntraSizeIdx(uint32_t absPartIdx);
-
     void          getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList);
     int           getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDirPred);
 

@@ -189,7 +189,7 @@ void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t w
     }
 }
 
-void TComYuv::copyPartToPartShort(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, bool bChroma, bool bChromaSame)
+void TComYuv::copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize)
 {
     int part = partitionFromSizes(lumaSize, lumaSize);
 
@@ -197,24 +197,6 @@ void TComYuv::copyPartToPartShort(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_
     uint32_t dststride = dstPicYuv->m_width;
 
     primitives.luma_copy_ps[part](dst, dststride, getLumaAddr(partIdx), getStride());
-
-    if (bChroma)
-    {
-        int16_t* dstU = dstPicYuv->getCbAddr(partIdx);
-        int16_t* dstV = dstPicYuv->getCrAddr(partIdx);
-        dststride = dstPicYuv->m_cwidth;
-
-        if (bChromaSame)
-        {
-            primitives.luma_copy_ps[part](dstU, dststride, getCbAddr(partIdx), getCStride());
-            primitives.luma_copy_ps[part](dstV, dststride, getCrAddr(partIdx), getCStride());
-        }
-        else
-        {
-            primitives.chroma[m_csp].copy_ps[part](dstU, dststride, getCbAddr(partIdx), getCStride());
-            primitives.chroma[m_csp].copy_ps[part](dstV, dststride, getCrAddr(partIdx), getCStride());
-        }
-    }
 }
 
 void TComYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId)
