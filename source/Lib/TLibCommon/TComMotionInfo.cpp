@@ -51,28 +51,24 @@ using namespace x265;
 // Create / destroy
 // --------------------------------------------------------------------------------------------------------------------
 
-void TComCUMvField::create(uint32_t numPartition)
+bool TComCUMvField::create(uint32_t numPartition)
 {
-    assert(m_mv     == NULL);
-    assert(m_mvd    == NULL);
-    assert(m_refIdx == NULL);
-
-    m_mv     = new MV[numPartition];
-    m_mvd    = new MV[numPartition];
-    m_refIdx = new char[numPartition];
+    CHECKED_MALLOC(m_mv, MV, numPartition);
+    CHECKED_MALLOC(m_mvd, MV, numPartition);
+    CHECKED_MALLOC(m_refIdx, char, numPartition);
 
     m_numPartitions = numPartition;
+
+    return true;
+fail:
+    return false;
 }
 
 void TComCUMvField::destroy()
 {
-    assert(m_mv     != NULL);
-    assert(m_mvd    != NULL);
-    assert(m_refIdx != NULL);
-
-    delete[] m_mv;
-    delete[] m_mvd;
-    delete[] m_refIdx;
+    X265_FREE(m_mv);
+    X265_FREE(m_mvd);
+    X265_FREE(m_refIdx);
 
     m_mv     = NULL;
     m_mvd    = NULL;

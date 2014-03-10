@@ -120,8 +120,9 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     tmp = g_convertToBit[tmp] + 2;
     m_unitMask = ~((1 << tmp) - 1);
 
-    m_cuMvField[0].create(numPartition);
-    m_cuMvField[1].create(numPartition);
+    bool ok = true;
+    ok &= m_cuMvField[0].create(numPartition);
+    ok &= m_cuMvField[1].create(numPartition);
 
     CHECKED_MALLOC(m_qp, char,  numPartition);
     CHECKED_MALLOC(m_depth, UChar, numPartition);
@@ -159,10 +160,11 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     CHECKED_MALLOC(m_pattern, TComPattern, 1);
 
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
-    return m_pattern;
+    return ok;
 
 fail:
-    return false;
+    ok = false;
+    return ok;
 }
 
 void TComDataCU::destroy()
