@@ -488,6 +488,7 @@ void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
 {
     //set the group layout
     const uint32_t log2TrSizeCG = log2TrSize - MLS_CG_LOG2_SIZE;
+    result.log2TrSize   = log2TrSize;
     result.log2TrSizeCG = log2TrSizeCG;
 
     //set the scan orders
@@ -497,6 +498,7 @@ void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
 
     //set the significance map context selection parameters
     TextType ctype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
+    result.ctype = ctype;
     if (log2TrSize == 2)
     {
         result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4];
@@ -625,7 +627,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 }
                 else
                 {
-                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, codingParameters, scanPos, log2TrSize, ttype);
+                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, codingParameters, blkPos);
                     level           = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
                                                      levelDouble, maxAbsLevel, ctxSig, oneCtx, absCtx, goRiceParam,
                                                      c1Idx, c2Idx, qbits, scaleFactor, 0);
@@ -1026,9 +1028,7 @@ int TComTrQuant::calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t c
  */
 int TComTrQuant::getSigCtxInc(int                              patternSigCtx,
                               const TUEntropyCodingParameters &codingParameters,
-                              const int                        scanPosition,
-                              const int                        log2TrSize,
-                              const TextType                   ttype)
+                              const int                        blkPos)
 {
     static const int ctxIndMap[16] =
     {
@@ -1037,73 +1037,60 @@ int TComTrQuant::getSigCtxInc(int                              patternSigCtx,
         6, 6, 8, 8,
         7, 7, 8, 8
     };
-    const uint32_t rasterPosition = codingParameters.scan[scanPosition];
-    const uint32_t posY           = rasterPosition >> log2TrSize;
-    const uint32_t posX           = rasterPosition - (posY << log2TrSize);
 
-    if ((posX + posY) == 0) return 0; //special case for the DC context variable
+    if (blkPos == 0) return 0; //special case for the DC context variable
 
-    int offset = MAX_INT;
-
+    const int log2TrSize = codingParameters.log2TrSize;
     if (log2TrSize == 2) //4x4
     {
-        offset = ctxIndMap[(4 * posY) + posX];
+        return ctxIndMap[blkPos];
     }
-    else
+
+    const uint32_t posY           = blkPos >> log2TrSize;
+    const uint32_t posX           = blkPos - (posY << log2TrSize);
+
+    int posXinSubset = posX & 3;
+    int posYinSubset = posY & 3;
+
+    // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
+    static const uint8_t table_cnt[4][4][4] =
     {
-        int cnt = 0;
-
-        switch (patternSigCtx)
+        // patternSigCtx = 0
         {
-        case 0: //neither neighbouring group is significant
+            { 2, 1, 1, 0 },
+            { 1, 1, 0, 0 },
+            { 1, 0, 0, 0 },
+            { 0, 0, 0, 0 },
+        },
+        // patternSigCtx = 1
         {
-            const int posXinSubset     = posX & ((1 << MLS_CG_LOG2_SIZE) - 1);
-            const int posYinSubset     = posY & ((1 << MLS_CG_LOG2_SIZE) - 1);
-            const int posTotalInSubset = posXinSubset + posYinSubset;
-
-            //first N coefficients in scan order use 2; the next few use 1; the rest use 0.
-            const uint32_t context1Threshold = NEIGHBOURHOOD_00_CONTEXT_1_THRESHOLD_4x4;
-            const uint32_t context2Threshold = NEIGHBOURHOOD_00_CONTEXT_2_THRESHOLD_4x4;
-
-            cnt = (posTotalInSubset >= context1Threshold) ? 0 : ((posTotalInSubset >= context2Threshold) ? 1 : 2);
-        }
-        break;
-
-        case 1: //right group is significant, below is not
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+        },
+        // patternSigCtx = 2
         {
-            const int posYinSubset = posY & ((1 << MLS_CG_LOG2_SIZE) - 1);
-            const int groupHeight  = 1 << MLS_CG_LOG2_SIZE;
-
-            cnt = (posYinSubset >= (groupHeight >> 1)) ? 0 : ((posYinSubset >= (groupHeight >> 2)) ? 1 : 2); //top quarter uses 2; second-from-top quarter uses 1; bottom half uses 0
-        }
-        break;
-
-        case 2: //below group is significant, right is not
+            { 2, 2, 2, 2 },
+            { 1, 1, 1, 1 },
+            { 0, 0, 0, 0 },
+            { 0, 0, 0, 0 },
+        },
+        // patternSigCtx = 3
         {
-            const int posXinSubset = posX & ((1 << MLS_CG_LOG2_SIZE)  - 1);
-            const int groupWidth   = 1 << MLS_CG_LOG2_SIZE;
-
-            cnt = (posXinSubset >= (groupWidth >> 1)) ? 0 : ((posXinSubset >= (groupWidth >> 2)) ? 1 : 2); //left quarter uses 2; second-from-left quarter uses 1; right half uses 0
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
         }
-        break;
+    };
 
-        case 3: //both neighbouring groups are significant
-        {
-            cnt = 2;
-        }
-        break;
+    int cnt = table_cnt[patternSigCtx][posXinSubset][posYinSubset];
+    int offset = codingParameters.firstSignificanceMapContext;
 
-        default:
-            x265_log(NULL, X265_LOG_ERROR, "TComTrQuant: ERROR - Invalid patternSigCtx");
-            exit(1);
-            break;
-        }
+    offset += cnt;
 
-        const bool notFirstGroup = ((posX >> MLS_CG_LOG2_SIZE) + (posY >> MLS_CG_LOG2_SIZE)) > 0;
-        TextType ctype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-        offset = (notFirstGroup ? notFirstGroupNeighbourhoodContextOffset[ctype] : 0) + cnt;
-    }
-    return codingParameters.firstSignificanceMapContext + offset;
+    return (codingParameters.ctype == TEXT_LUMA && (posX | posY) >= 4) ? 3 + offset : offset;
 }
 
 /** Get the best level in RD sense

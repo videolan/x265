@@ -2164,7 +2164,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
                 sig     = (coeff[blkPos] != 0);
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
-                    ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, codingParameters, scanPosSig, log2TrSize, ttype);
+                    ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, codingParameters, blkPos);
                     m_binIf->encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)

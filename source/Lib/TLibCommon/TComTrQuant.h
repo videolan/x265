@@ -159,7 +159,7 @@ public:
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     static int calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
-    static int getSigCtxInc(int patternSigCtx, const TUEntropyCodingParameters &codingParameters, const int scanPosition, const int log2TrSize, const TextType ttype);
+    static int getSigCtxInc(int patternSigCtx, const TUEntropyCodingParameters &codingParameters, const int blkPos);
     static uint32_t getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag, uint32_t cgPosX, uint32_t cgPosY, const uint32_t log2TrSizeCG);
     static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
     estBitsSbacStruct* m_estBitsSbac;
