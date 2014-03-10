@@ -1076,8 +1076,8 @@ void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uin
         }
 
         //===== copy reconstruction =====
-        uint32_t trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
-        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(&m_qtTempTransformSkipYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2, stateU0V1Both2);
+        uint32_t lumaSize = 1 << (bChromaSame ? trSizeLog2 + 1 : trSizeLog2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartYuvChroma(&m_qtTempTransformSkipYuv, absPartIdx, lumaSize, stateU0V1Both2);
     }
 }
 
@@ -1334,8 +1334,7 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
         ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
 
         //===== copy reconstruction =====
-        uint32_t trSizeCLog2 = (bChromaSame || (chFmt == CHROMA_444))  ? trSizeLog2 : trSizeLog2 - 1;
-        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(reconYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+        m_qtTempShortYuv[qtlayer].copyPartToPartChroma(reconYuv, absPartIdx, 1 << trSizeLog2, bChromaSame);
     }
     else
     {
@@ -3844,6 +3843,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
         const uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool  bCodeChroma   = true;
+        bool bChromaSame = false;
         uint32_t  trModeC     = trMode;
         if ((trSizeLog2 == 2) && !(chFmt == CHROMA_444))
         {
@@ -3851,6 +3851,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
             trModeC--;
             uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trModeC) << 1);
             bCodeChroma  = ((absPartIdx % qpdiv) == 0);
+            bChromaSame = true;
         }
 
         if (bSpatial)
@@ -3861,7 +3862,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
 
             if (bCodeChroma)
             {
-                m_qtTempShortYuv[qtlayer].copyPartToPartChroma(resiYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+                m_qtTempShortYuv[qtlayer].copyPartToPartChroma(resiYuv, absPartIdx, 1 << trSizeLog2, bChromaSame);
             }
         }
         else
