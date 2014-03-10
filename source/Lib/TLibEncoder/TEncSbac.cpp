@@ -294,20 +294,12 @@ void TEncSbac::codeVPS(TComVPS* vps)
     assert(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag());
     WRITE_CODE(0xffff,                            16,        "vps_reserved_ffff_16bits");
     codePTL(vps->getPTL(), true, vps->getMaxTLayers() - 1);
-    const bool subLayerOrderingInfoPresentFlag = 1;
-    WRITE_FLAG(subLayerOrderingInfoPresentFlag,             "vps_sub_layer_ordering_info_present_flag");
+    WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
     for (uint32_t i = 0; i <= vps->getMaxTLayers() - 1; i++)
     {
         WRITE_UVLC(vps->getMaxDecPicBuffering(i) - 1,       "vps_max_dec_pic_buffering_minus1[i]");
         WRITE_UVLC(vps->getNumReorderPics(i),               "vps_num_reorder_pics[i]");
         WRITE_UVLC(vps->getMaxLatencyIncrease(i),           "vps_max_latency_increase_plus1[i]");
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant
-#endif
-        if (!subLayerOrderingInfoPresentFlag)
-        {
-            break;
-        }
     }
 
     assert(vps->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS);
@@ -445,17 +437,12 @@ void TEncSbac::codeSPS(TComSPS* sps)
 
     WRITE_UVLC(sps->getBitsForPOC() - 4,            "log2_max_pic_order_cnt_lsb_minus4");
 
-    const bool subLayerOrderingInfoPresentFlag = 1;
-    WRITE_FLAG(subLayerOrderingInfoPresentFlag,     "sps_sub_layer_ordering_info_present_flag");
+    WRITE_FLAG(true,     "sps_sub_layer_ordering_info_present_flag");
     for (uint32_t i = 0; i <= sps->getMaxTLayers() - 1; i++)
     {
         WRITE_UVLC(sps->getMaxDecPicBuffering(i) - 1, "sps_max_dec_pic_buffering_minus1[i]");
         WRITE_UVLC(sps->getNumReorderPics(i),       "sps_num_reorder_pics[i]");
         WRITE_UVLC(sps->getMaxLatencyIncrease(i),   "sps_max_latency_increase_plus1[i]");
-        if (!subLayerOrderingInfoPresentFlag)
-        {
-            break;
-        }
     }
 
     WRITE_UVLC(sps->getLog2MinCodingBlockSize() - 3,    "log2_min_coding_block_size_minus3");
