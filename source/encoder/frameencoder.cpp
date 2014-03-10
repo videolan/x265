@@ -453,7 +453,9 @@ void FrameEncoder::compressFrame()
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
     //------------------------------------------------------------------------------
-    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) || (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
+    bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP();
+    bool bUseweightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
+    if (bUseWeightP || bUseweightB)
     {
         assert(slice->getPPS()->getUseWP());
         weightAnalyse(*slice, *m_cfg->param);
@@ -466,11 +468,8 @@ void FrameEncoder::compressFrame()
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
             wpScalingParam *w = NULL;
-            if ((slice->isInterP() && slice->getPPS()->getUseWP() && slice->m_weightPredTable[l][ref][0].bPresentFlag))
-            {
+            if (bUseWeightP && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-                slice->m_numWPRefs++;
-            }
             m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
         }
     }

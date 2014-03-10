@@ -103,7 +103,8 @@ private:
     TComScalingList    m_scalingList;      ///< quantization matrix information
 
     // weighted prediction
-    int                m_numWPFrames;      // number of Unidirectional weighted frames used
+    int                m_numLumaWPFrames;    // number of P frames with weighted luma reference
+    int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
 
 public:
 

@@ -58,6 +58,8 @@ Encoder::Encoder()
     m_pocLast = -1;
     m_maxRefPicNum = 0;
     m_curEncoder = 0;
+    m_numLumaWPFrames = 0;
+    m_numChromaWPFrames = 0;
     m_lookahead = NULL;
     m_frameEncoder = NULL;
     m_rateControl = NULL;
@@ -101,7 +103,6 @@ void Encoder::create()
     m_lookahead = new Lookahead(this, m_threadPool);
     m_dpb = new DPB(this);
     m_rateControl = new RateControl(this);
-    m_numWPFrames = 0;
 
     /* Try to open CSV file handle */
     if (param->csvfn)
@@ -396,8 +397,14 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             pic_out->stride[2] = recpic->getCStride() * sizeof(pixel);
         }
 
-        if (out->getSlice()->m_numWPRefs > 0)
-            m_numWPFrames++;
+        if (out->getSlice()->getSliceType() == P_SLICE)
+        {
+            if (out->getSlice()->m_weightPredTable[0][0][0].bPresentFlag)
+                m_numLumaWPFrames++;
+            if (out->getSlice()->m_weightPredTable[0][0][1].bPresentFlag ||
+                out->getSlice()->m_weightPredTable[0][0][2].bPresentFlag)
+                m_numChromaWPFrames++;
+        }
 
         /* calculate the size of the access unit, excluding:
          *  - any AnnexB contributions (start_code_prefix, zero_byte, etc.,)
@@ -671,8 +678,9 @@ void Encoder::printSummary()
             x265_log(param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
         if (param->bEnableWeightedPred && m_analyzeP.m_numPics)
         {
-            x265_log(param, X265_LOG_INFO, "%d of %d (%.2f%%) P frames weighted\n",
-                     m_numWPFrames, m_analyzeP.m_numPics, (float)100.0 * m_numWPFrames / m_analyzeP.m_numPics);
+            x265_log(param, X265_LOG_INFO, "Weighted P-Frames: Y:%.1f%% UV:%.1f%%\n",
+                     (float)100.0 * m_numLumaWPFrames / m_analyzeP.m_numPics,
+                     (float)100.0 * m_numChromaWPFrames / m_analyzeP.m_numPics);
         }
         int pWithB = 0;
         for (int i = 0; i <= param->bframes; i++)
@@ -695,7 +703,7 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
         stats->globalPsnrU = m_analyzeAll.m_psnrSumU;
         stats->globalPsnrV = m_analyzeAll.m_psnrSumV;
         stats->encodedPictureCount = m_analyzeAll.m_numPics;
-        stats->totalWPFrames = m_numWPFrames;
+        stats->totalWPFrames = m_numLumaWPFrames;
         stats->accBits = m_analyzeAll.m_accBits;
         stats->elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
         if (stats->encodedPictureCount > 0)
