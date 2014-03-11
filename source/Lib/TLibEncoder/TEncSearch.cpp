@@ -2115,14 +2115,13 @@ uint32_t TEncSearch::xGetInterPredictionError(TComDataCU* cu, int partIdx)
 /** estimation of best merge coding
  * \param cu
  * \param fencYuv
- * \param iPUIdx
- * \param uiInterDir
+ * \param puIdx
+ * \param interDir
  * \param pacMvField
- * \param uiMergeIndex
+ * \param mergeIndex
  * \param outCost
  * \param outBits
- * \param puhNeighCands
- * \param bValid
+ * \param neighCands
  * \returns void
  */
 void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir, TComMvField* mvField, uint32_t& mergeIndex, uint32_t& outCost, uint32_t& outbits, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, int& numValidMergeCand)
