@@ -2216,7 +2216,6 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNe
  */
 bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, bool bChroma)
 {
-    MV mvzero(0, 0);
     MV mv[2];
     MV mvBidir[2];
     MV mvTemp[2][MAX_NUM_REF];
@@ -2352,6 +2351,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 if (mv[0].notZero() || mv[1].notZero())
                 {
+                    MV mvzero(0, 0);
                     ref0 = m_mref[0][listRefIdx[0]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref0
                     ref1 = m_mref[1][listRefIdx[1]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref1
                     intptr_t refStride = m_mref[0][listRefIdx[0]]->lumaStride;
