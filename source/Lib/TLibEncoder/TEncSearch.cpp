@@ -2246,7 +2246,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
         uint32_t listCost[3] = { MAX_UINT, MAX_UINT, MAX_UINT };
-        uint32_t bits[3];
+        uint32_t listBits[3];
         uint32_t costTemp = 0;
         uint32_t bitsTemp;
         MV   mvValidList1;
@@ -2305,7 +2305,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     if (costTemp < listCost[list])
                     {
                         listCost[list] = costTemp;
-                        bits[list] = bitsTemp; // storing for bi-prediction
+                        listBits[list] = bitsTemp; // storing for bi-prediction
 
                         // set motion
                         mv[list] = mvTemp[list][idx];
@@ -2348,8 +2348,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, m_predYuv[0].getStride(), ref1, m_predYuv[1].getStride(), 32);
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
                 x265_emms();
-                bits[2] = bits[0] + bits[1] - mbBits[0] - mbBits[1] + mbBits[2];
-                listCost[2] =  satdCost + m_rdCost->getCost(bits[2]);
+                listBits[2] = listBits[0] + listBits[1] - mbBits[0] - mbBits[1] + mbBits[2];
+                listCost[2] =  satdCost + m_rdCost->getCost(listBits[2]);
 
                 if (mv[0].notZero() || mv[1].notZero())
                 {
@@ -2363,10 +2363,10 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                     unsigned int bitsZero0, bitsZero1;
                     m_me.setMVP(mvPredBi[0][refIdxBidir[0]]);
-                    bitsZero0 = bits[0] - m_me.bitcost(mv[0]) + m_me.bitcost(mvzero);
+                    bitsZero0 = listBits[0] - m_me.bitcost(mv[0]) + m_me.bitcost(mvzero);
 
                     m_me.setMVP(mvPredBi[1][refIdxBidir[1]]);
-                    bitsZero1 = bits[1] - m_me.bitcost(mv[1]) + m_me.bitcost(mvzero);
+                    bitsZero1 = listBits[1] - m_me.bitcost(mv[1]) + m_me.bitcost(mvzero);
 
                     uint32_t costZero = satdCost + m_rdCost->getCost(bitsZero0) + m_rdCost->getCost(bitsZero1);
 
@@ -2388,7 +2388,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         mvPredBi[1][refIdxBidir[1]] = mvpZero[1];
                         mvpIdxBi[0][refIdxBidir[0]] = mvpidxZero[0];
                         mvpIdxBi[1][refIdxBidir[1]] = mvpidxZero[1];
-                        bits[2] = bitsZero0 + bitsZero1 - mbBits[0] - mbBits[1] + mbBits[2];
+                        listBits[2] = bitsZero0 + bitsZero1 - mbBits[0] - mbBits[1] + mbBits[2];
                     }
                 }
             } // if (B_SLICE)
@@ -2402,7 +2402,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         // Set Motion Field_
         mv[1] = mvValidList1;
         refIdx[1] = refIdxValidList1;
-        bits[1] = bitsValidList1;
+        listBits[1] = bitsValidList1;
         listCost[1] = costValidList1;
 
         if (!bMergeOnly)
@@ -2425,7 +2425,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 cu->setMVPIdx(REF_PIC_LIST_0, partAddr, mvpIdxBi[0][refIdxBidir[0]]);
                 cu->setMVPIdx(REF_PIC_LIST_1, partAddr, mvpIdxBi[1][refIdxBidir[1]]);
 
-                mebits = bits[2];
+                mebits = listBits[2];
             }
             else if (listCost[0] <= listCost[1])
             {
@@ -2439,7 +2439,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 cu->setInterDirSubParts(1, partAddr, partIdx, cu->getDepth(0));
                 cu->setMVPIdx(REF_PIC_LIST_0, partAddr, mvpIdx[0][refIdx[0]]);
 
-                mebits = bits[0];
+                mebits = listBits[0];
             }
             else
             {
@@ -2453,7 +2453,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 cu->setInterDirSubParts(2, partAddr, partIdx, cu->getDepth(0));
                 cu->setMVPIdx(REF_PIC_LIST_1, partAddr, mvpIdx[1][refIdx[1]]);
 
-                mebits = bits[1];
+                mebits = listBits[1];
             }
         }
 
