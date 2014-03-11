@@ -2216,15 +2216,12 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNe
  */
 bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, bool bChroma)
 {
-    MV mvBidir[2];
     MV mvPred[2][MAX_NUM_REF];
     MV mvPredBi[2][MAX_NUM_REF];
 
     int mvpIdxBi[2][MAX_NUM_REF];
     int mvpIdx[2][MAX_NUM_REF];
     AMVPInfo amvpInfo[2][MAX_NUM_REF];
-
-    int refIdxBidir[2] = { 0, 0 };
 
     // force ME for the smallest rect/AMP sizes (Why? the HM did this)
     int numPart = cu->getNumPartInter();
@@ -2249,6 +2246,9 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         int      listRefIdx[2] = { 0, 0 }; // If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
         MV       listMv[2];
         uint32_t listSelBits[3]; // cost in bits of coding a particular unidir ref list
+
+        int      refIdxBidir[2] = { 0, 0 };
+        MV       mvBidir[2];
 
         uint32_t partAddr;
         int  roiWidth, roiHeight;
