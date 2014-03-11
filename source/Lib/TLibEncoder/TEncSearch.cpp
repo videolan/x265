@@ -2410,7 +2410,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         }
 
         uint32_t mebits = 0;
-        if (listCost[2] <= listCost[0] && listCost[2] <= listCost[1])
+        if (listCost[2] < listCost[0] && listCost[2] < listCost[1])
         {
             lastMode = 2;
             cu->getCUMvField(REF_PIC_LIST_0)->setAllMv(mvBidir[0], partSize, partAddr, 0, partIdx);
