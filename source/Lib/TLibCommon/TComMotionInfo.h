@@ -39,8 +39,8 @@
 #ifndef X265_TCOMMOTIONINFO_H
 #define X265_TCOMMOTIONINFO_H
 
-#include <memory.h>
 #include "CommonDef.h"
+#include "common.h"
 #include "mv.h"
 
 //! \ingroup TLibCommon
@@ -102,7 +102,7 @@ public:
     // create / destroy
     // ------------------------------------------------------------------------------------------------------------------
 
-    void create(uint32_t numPartition);
+    bool create(uint32_t numPartition);
     void destroy();
 
     // ------------------------------------------------------------------------------------------------------------------
@@ -134,19 +134,6 @@ public:
     void    setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
     void    setMvd(int idx, const MV& mvd) { m_mvd[idx] = mvd; }
 
-    void setNumPartition(int numPart)
-    {
-        m_numPartitions = numPart;
-    }
-
-    void linkToWithOffset(const TComCUMvField* src, int offset)
-    {
-        m_mv     = src->m_mv     + offset;
-        m_mvd    = src->m_mvd    + offset;
-        m_refIdx = src->m_refIdx + offset;
-    }
-
-    void compress(char* pePredMode, int scale);
 };
 }
 

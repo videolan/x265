@@ -33,7 +33,7 @@ namespace x265 {
 
 struct Lowres;
 class TComPic;
-class TEncCfg;
+class Encoder;
 
 #define SET_WEIGHT(w, b, s, d, o) \
     { \
@@ -89,9 +89,9 @@ struct CostEstimate : public WaveFront
 {
     CostEstimate(ThreadPool *p);
     ~CostEstimate();
-    void init(TEncCfg *, TComPic *);
+    void init(x265_param *, TComPic *);
 
-    TEncCfg         *cfg;
+    x265_param      *param;
     EstimateRow     *rows;
     pixel           *wbuffer[4];
     Lowres         **curframes;
@@ -118,7 +118,7 @@ protected:
 
 struct Lookahead
 {
-    Lookahead(TEncCfg *, ThreadPool *pool);
+    Lookahead(Encoder *, ThreadPool *pool);
     ~Lookahead();
     void init();
     void destroy();
@@ -127,13 +127,14 @@ struct Lookahead
     PicList          inputQueue;      // input pictures in order received
     PicList          outputQueue;     // pictures to be encoded, in encode order
 
-    TEncCfg         *cfg;
+    x265_param      *param;
     Lowres          *lastNonB;
     int             *scratch;         // temp buffer
 
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
     int              lastKeyframe;
+    int              histogram[X265_BFRAME_MAX+1];
 
     void addPicture(TComPic*, int sliceType);
     void flush();

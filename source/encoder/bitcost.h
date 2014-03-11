@@ -24,10 +24,9 @@
 #ifndef X265_BITCOST_H
 #define X265_BITCOST_H
 
+#include "common.h"
 #include "threading.h"
 #include "mv.h"
-
-#include <stdint.h>
 
 namespace x265 {
 // private x265 namespace

@@ -35,11 +35,9 @@
  \file     TEncSampleAdaptiveOffset.cpp
  \brief       estimation part of sample adaptive offset class
  */
+
 #include "TEncSampleAdaptiveOffset.h"
-#include <string.h>
-#include <cstdlib>
-#include <stdio.h>
-#include <math.h>
+#include "common.h"
 
 using namespace x265;
 
@@ -392,36 +390,36 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
     {
         for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
         {
-            delete [] m_count[i][j];
-            delete [] m_offset[i][j];
-            delete [] m_offsetOrg[i][j];
+            X265_FREE(m_count[i][j]);
+            X265_FREE(m_offset[i][j]);
+            X265_FREE(m_offsetOrg[i][j]);
         }
 
-        delete [] m_rate[i];
-        delete [] m_dist[i];
-        delete [] m_cost[i];
-        delete [] m_count[i];
-        delete [] m_offset[i];
-        delete [] m_offsetOrg[i];
+        X265_FREE(m_rate[i]);
+        X265_FREE(m_dist[i]);
+        X265_FREE(m_cost[i]);
+        X265_FREE(m_count[i]);
+        X265_FREE(m_offset[i]);
+        X265_FREE(m_offsetOrg[i]);
     }
 
-    delete [] m_distOrg;
+    X265_FREE(m_distOrg);
     m_distOrg = NULL;
-    delete [] m_costPartBest;
+    X265_FREE(m_costPartBest);
     m_costPartBest = NULL;
-    delete [] m_typePartBest;
+    X265_FREE(m_typePartBest);
     m_typePartBest = NULL;
-    delete [] m_rate;
+    X265_FREE(m_rate);
     m_rate = NULL;
-    delete [] m_dist;
+    X265_FREE(m_dist);
     m_dist = NULL;
-    delete [] m_cost;
+    X265_FREE(m_cost);
     m_cost = NULL;
-    delete [] m_count;
+    X265_FREE(m_count);
     m_count = NULL;
-    delete [] m_offset;
+    X265_FREE(m_offset);
     m_offset = NULL;
-    delete [] m_offsetOrg;
+    X265_FREE(m_offsetOrg);
     m_offsetOrg = NULL;
 
     delete[] m_countPreDblk;
@@ -435,19 +433,19 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
     {
         for (int iCIIdx = 0; iCIIdx < CI_NUM_SAO; iCIIdx++)
         {
-            delete m_rdSbacCoders[d][iCIIdx];
-            delete m_binCoderCABAC[d][iCIIdx];
+            X265_FREE(m_rdSbacCoders[d][iCIIdx]);
+            X265_FREE(m_binCoderCABAC[d][iCIIdx]);
         }
     }
 
     for (int d = 0; d < maxDepth + 1; d++)
     {
-        delete [] m_rdSbacCoders[d];
-        delete [] m_binCoderCABAC[d];
+        X265_FREE(m_rdSbacCoders[d]);
+        X265_FREE(m_binCoderCABAC[d]);
     }
 
-    delete [] m_rdSbacCoders;
-    delete [] m_binCoderCABAC;
+    X265_FREE(m_rdSbacCoders);
+    X265_FREE(m_binCoderCABAC);
 }
 
 /** create Encoder Buffer for SAO
@@ -455,33 +453,33 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
  */
 void TEncSampleAdaptiveOffset::createEncBuffer()
 {
-    m_distOrg = new int64_t[m_numTotalParts];
-    m_costPartBest = new double[m_numTotalParts];
-    m_typePartBest = new int[m_numTotalParts];
+    m_distOrg = X265_MALLOC(int64_t, m_numTotalParts);
+    m_costPartBest = X265_MALLOC(double, m_numTotalParts);
+    m_typePartBest = X265_MALLOC(int, m_numTotalParts);
 
-    m_rate = new int64_t*[m_numTotalParts];
-    m_dist = new int64_t*[m_numTotalParts];
-    m_cost = new double*[m_numTotalParts];
+    m_rate = X265_MALLOC(int64_t*, m_numTotalParts);
+    m_dist = X265_MALLOC(int64_t*, m_numTotalParts);
+    m_cost = X265_MALLOC(double*, m_numTotalParts);
 
-    m_count  = new int64_t * *[m_numTotalParts];
-    m_offset = new int64_t * *[m_numTotalParts];
-    m_offsetOrg = new int64_t * *[m_numTotalParts];
+    m_count  = X265_MALLOC(int64_t**, m_numTotalParts);
+    m_offset = X265_MALLOC(int64_t**, m_numTotalParts);
+    m_offsetOrg = X265_MALLOC(int64_t**, m_numTotalParts);
 
     for (int i = 0; i < m_numTotalParts; i++)
     {
-        m_rate[i] = new int64_t[MAX_NUM_SAO_TYPE];
-        m_dist[i] = new int64_t[MAX_NUM_SAO_TYPE];
-        m_cost[i] = new double[MAX_NUM_SAO_TYPE];
+        m_rate[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
+        m_dist[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
+        m_cost[i] = X265_MALLOC(double, MAX_NUM_SAO_TYPE);
 
-        m_count[i] = new int64_t *[MAX_NUM_SAO_TYPE];
-        m_offset[i] = new int64_t *[MAX_NUM_SAO_TYPE];
-        m_offsetOrg[i] = new int64_t *[MAX_NUM_SAO_TYPE];
+        m_count[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+        m_offset[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+        m_offsetOrg[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
 
         for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
         {
-            m_count[i][j]   = new int64_t[MAX_NUM_SAO_CLASS];
-            m_offset[i][j]   = new int64_t[MAX_NUM_SAO_CLASS];
-            m_offsetOrg[i][j] = new int64_t[MAX_NUM_SAO_CLASS];
+            m_count[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+            m_offset[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+            m_offsetOrg[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
         }
     }
 
@@ -495,17 +493,17 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     }
 
     int maxDepth = 4;
-    m_rdSbacCoders = new TEncSbac * *[maxDepth + 1];
-    m_binCoderCABAC = new TEncBinCABAC * *[maxDepth + 1];
+    m_rdSbacCoders = X265_MALLOC(TEncSbac**, maxDepth + 1);
+    m_binCoderCABAC = X265_MALLOC(TEncBinCABAC**, maxDepth + 1);
 
     for (int d = 0; d < maxDepth + 1; d++)
     {
-        m_rdSbacCoders[d] = new TEncSbac*[CI_NUM_SAO];
-        m_binCoderCABAC[d] = new TEncBinCABAC*[CI_NUM_SAO];
+        m_rdSbacCoders[d] = X265_MALLOC(TEncSbac*, CI_NUM_SAO);
+        m_binCoderCABAC[d] = X265_MALLOC(TEncBinCABAC*, CI_NUM_SAO);
         for (int ciIdx = 0; ciIdx < CI_NUM_SAO; ciIdx++)
         {
-            m_rdSbacCoders[d][ciIdx] = new TEncSbac;
-            m_binCoderCABAC[d][ciIdx] = new TEncBinCABAC(true);
+            m_rdSbacCoders[d][ciIdx] = X265_MALLOC(TEncSbac, 1);
+            m_binCoderCABAC[d][ciIdx] = X265_MALLOC(TEncBinCABAC, true);
             m_rdSbacCoders[d][ciIdx]->init(m_binCoderCABAC[d][ciIdx]);
         }
     }
@@ -541,264 +539,6 @@ inline int xSign(int x)
     return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
 }
 
-/** Calculate SAO statistics for non-cross-slice or non-cross-tile processing
- * \param  recStart to-be-filtered block buffer pointer
- * \param  orgStart original block buffer pointer
- * \param  stride picture buffer stride
- * \param  ppStat statistics buffer
- * \param  counts counter buffer
- * \param  width block width
- * \param  height block height
- * \param  bBorderAvail availabilities of block border pixels
- */
-void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* recStart, Pel* orgStart, int stride, int64_t** stats, int64_t** counts, uint32_t width, uint32_t height, bool* bBorderAvail, int yCbCr)
-{
-    int64_t *stat, *count;
-    int classIdx, posShift, startX, endX, startY, endY, signLeft, signRight, signDown, signDown1;
-    Pel *fenc, *pRec;
-    uint32_t edgeType;
-    int x, y;
-    Pel *pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
-    int32_t *tmp_swap;
-
-    //--------- Band offset-----------//
-    stat = stats[SAO_BO];
-    count = counts[SAO_BO];
-    fenc  = orgStart;
-    pRec  = recStart;
-    for (y = 0; y < height; y++)
-    {
-        for (x = 0; x < width; x++)
-        {
-            classIdx = pTableBo[pRec[x]];
-            if (classIdx)
-            {
-                stat[classIdx] += (fenc[x] - pRec[x]);
-                count[classIdx]++;
-            }
-        }
-
-        fenc += stride;
-        pRec += stride;
-    }
-
-    //---------- Edge offset 0--------------//
-    stat = stats[SAO_EO_0];
-    count = counts[SAO_EO_0];
-    fenc  = orgStart;
-    pRec  = recStart;
-
-    startX = (bBorderAvail[SGU_L]) ? 0 : 1;
-    endX   = (bBorderAvail[SGU_R]) ? width : (width - 1);
-    for (y = 0; y < height; y++)
-    {
-        signLeft = xSign(pRec[startX] - pRec[startX - 1]);
-        for (x = startX; x < endX; x++)
-        {
-            signRight = xSign(pRec[x] - pRec[x + 1]);
-            edgeType = signRight + signLeft + 2;
-            signLeft = -signRight;
-
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-        }
-
-        pRec  += stride;
-        fenc += stride;
-    }
-
-    //---------- Edge offset 1--------------//
-    stat = stats[SAO_EO_1];
-    count = counts[SAO_EO_1];
-    fenc  = orgStart;
-    pRec  = recStart;
-
-    startY = (bBorderAvail[SGU_T]) ? 0 : 1;
-    endY   = (bBorderAvail[SGU_B]) ? height : height - 1;
-    if (!bBorderAvail[SGU_T])
-    {
-        pRec += stride;
-        fenc += stride;
-    }
-
-    for (x = 0; x < width; x++)
-    {
-        m_upBuff1[x] = xSign(pRec[x] - pRec[x - stride]);
-    }
-
-    for (y = startY; y < endY; y++)
-    {
-        for (x = 0; x < width; x++)
-        {
-            signDown = xSign(pRec[x] - pRec[x + stride]);
-            edgeType = signDown + m_upBuff1[x] + 2;
-            m_upBuff1[x] = -signDown;
-
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-        }
-
-        fenc += stride;
-        pRec += stride;
-    }
-
-    //---------- Edge offset 2--------------//
-    stat = stats[SAO_EO_2];
-    count = counts[SAO_EO_2];
-    fenc   = orgStart;
-    pRec   = recStart;
-
-    posShift = stride + 1;
-
-    startX = (bBorderAvail[SGU_L]) ? 0 : 1;
-    endX   = (bBorderAvail[SGU_R]) ? width : (width - 1);
-
-    //prepare 2nd line upper sign
-    pRec += stride;
-    for (x = startX; x < endX + 1; x++)
-    {
-        m_upBuff1[x] = xSign(pRec[x] - pRec[x - posShift]);
-    }
-
-    //1st line
-    pRec -= stride;
-    if (bBorderAvail[SGU_TL])
-    {
-        x = 0;
-        edgeType = xSign(pRec[x] - pRec[x - posShift]) - m_upBuff1[x + 1] + 2;
-        stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-        count[m_eoTable[edgeType]]++;
-    }
-    if (bBorderAvail[SGU_T])
-    {
-        for (x = 1; x < endX; x++)
-        {
-            edgeType = xSign(pRec[x] - pRec[x - posShift]) - m_upBuff1[x + 1] + 2;
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-        }
-    }
-    pRec += stride;
-    fenc += stride;
-
-    //middle lines
-    for (y = 1; y < height - 1; y++)
-    {
-        for (x = startX; x < endX; x++)
-        {
-            signDown1 = xSign(pRec[x] - pRec[x + posShift]);
-            edgeType = signDown1 + m_upBuff1[x] + 2;
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-
-            m_upBufft[x + 1] = -signDown1;
-        }
-
-        m_upBufft[startX] = xSign(pRec[stride + startX] - pRec[startX - 1]);
-
-        tmp_swap  = m_upBuff1;
-        m_upBuff1 = m_upBufft;
-        m_upBufft = tmp_swap;
-
-        pRec  += stride;
-        fenc  += stride;
-    }
-
-    //last line
-    if (bBorderAvail[SGU_B])
-    {
-        for (x = startX; x < width - 1; x++)
-        {
-            edgeType = xSign(pRec[x] - pRec[x + posShift]) + m_upBuff1[x] + 2;
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-        }
-    }
-    if (bBorderAvail[SGU_BR])
-    {
-        x = width - 1;
-        edgeType = xSign(pRec[x] - pRec[x + posShift]) + m_upBuff1[x] + 2;
-        stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-        count[m_eoTable[edgeType]]++;
-    }
-
-    //---------- Edge offset 3--------------//
-
-    stat = stats[SAO_EO_3];
-    count = counts[SAO_EO_3];
-    fenc  = orgStart;
-    pRec  = recStart;
-
-    posShift = stride - 1;
-    startX = (bBorderAvail[SGU_L]) ? 0 : 1;
-    endX   = (bBorderAvail[SGU_R]) ? width : (width - 1);
-
-    //prepare 2nd line upper sign
-    pRec += stride;
-    for (x = startX - 1; x < endX; x++)
-    {
-        m_upBuff1[x] = xSign(pRec[x] - pRec[x - posShift]);
-    }
-
-    //first line
-    pRec -= stride;
-    if (bBorderAvail[SGU_T])
-    {
-        for (x = startX; x < width - 1; x++)
-        {
-            edgeType = xSign(pRec[x] - pRec[x - posShift]) - m_upBuff1[x - 1] + 2;
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-        }
-    }
-    if (bBorderAvail[SGU_TR])
-    {
-        x = width - 1;
-        edgeType = xSign(pRec[x] - pRec[x - posShift]) - m_upBuff1[x - 1] + 2;
-        stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-        count[m_eoTable[edgeType]]++;
-    }
-    pRec += stride;
-    fenc += stride;
-
-    //middle lines
-    for (y = 1; y < height - 1; y++)
-    {
-        for (x = startX; x < endX; x++)
-        {
-            signDown1 = xSign(pRec[x] - pRec[x + posShift]);
-            edgeType = signDown1 + m_upBuff1[x] + 2;
-
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-            m_upBuff1[x - 1] = -signDown1;
-        }
-
-        m_upBuff1[endX - 1] = xSign(pRec[endX - 1 + stride] - pRec[endX]);
-
-        pRec  += stride;
-        fenc  += stride;
-    }
-
-    //last line
-    if (bBorderAvail[SGU_BL])
-    {
-        x = 0;
-        edgeType = xSign(pRec[x] - pRec[x + posShift]) + m_upBuff1[x] + 2;
-        stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-        count[m_eoTable[edgeType]]++;
-    }
-    if (bBorderAvail[SGU_B])
-    {
-        for (x = 1; x < endX; x++)
-        {
-            edgeType = xSign(pRec[x] - pRec[x + posShift]) + m_upBuff1[x] + 2;
-            stat[m_eoTable[edgeType]] += (fenc[x] - pRec[x]);
-            count[m_eoTable[edgeType]]++;
-        }
-    }
-}
-
 /** Calculate SAO statistics for current LCU without non-crossing slice
  * \param  addr,  partIdx,  yCbCr
  */
@@ -808,11 +548,11 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     TComDataCU *pTmpCu = m_pic->getCU(addr);
     TComSPS *pTmpSPS =  m_pic->getSlice()->getSPS();
 
-    Pel* fenc;
-    Pel* pRec;
+    pixel* fenc;
+    pixel* pRec;
     int stride;
-    int iLcuHeight = pTmpSPS->getMaxCUHeight();
-    int iLcuWidth  = pTmpSPS->getMaxCUWidth();
+    int iLcuHeight = pTmpSPS->getMaxCUSize();
+    int iLcuWidth  = pTmpSPS->getMaxCUSize();
     uint32_t lpelx   = pTmpCu->getCUPelX();
     uint32_t tpely   = pTmpCu->getCUPelY();
     uint32_t rpelx;
@@ -826,7 +566,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int iStartY;
     int iEndX;
     int iEndY;
-    Pel* pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
+    pixel* pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
     int32_t *tmp_swap;
 
     int iIsChroma = (yCbCr != 0) ? 1 : 0;
@@ -1080,8 +820,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     int x, y;
     TComSPS *pTmpSPS =  pic->getSlice()->getSPS();
 
-    Pel* fenc;
-    Pel* pRec;
+    pixel* fenc;
+    pixel* pRec;
     int stride;
     int lcuHeight;
     int lcuWidth;
@@ -1106,14 +846,14 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
 
     uint32_t lPelX, tPelY;
     TComDataCU *pTmpCu;
-    Pel* pTableBo;
+    pixel* pTableBo;
     int32_t *tmp_swap;
 
     {
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
         {
-            lcuHeight = pTmpSPS->getMaxCUHeight();
-            lcuWidth  = pTmpSPS->getMaxCUWidth();
+            lcuHeight = pTmpSPS->getMaxCUSize();
+            lcuWidth  = pTmpSPS->getMaxCUSize();
             addr     = idxX  + frameWidthInCU * idxY;
             pTmpCu = pic->getCU(addr);
             lPelX   = pTmpCu->getCUPelX();

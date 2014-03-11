@@ -22,8 +22,8 @@
  * For more information, contact us at chenm003@163.com.
  *****************************************************************************/
 
+#include "common.h"
 #include "md5.h"
-#include <string.h>
 
 namespace x265 {
 // private x265 namespace

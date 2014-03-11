@@ -504,7 +504,7 @@ cglobal pixel_sad_16x12, 4,4,3
 cglobal pixel_sad_16x32, 4,5,3
     pxor m0,  m0
     mov  r4d, 4
-.loop
+.loop:
     PROCESS_SAD_16x4
     PROCESS_SAD_16x4
     dec  r4d
@@ -521,7 +521,7 @@ cglobal pixel_sad_16x32, 4,5,3
 cglobal pixel_sad_16x64, 4,5,3
     pxor m0,  m0
     mov  r4d, 8
-.loop
+.loop:
     PROCESS_SAD_16x4
     PROCESS_SAD_16x4
     dec  r4d
@@ -576,7 +576,7 @@ cglobal pixel_sad_32x8, 4,4,3
 cglobal pixel_sad_32x24, 4,5,3
     pxor  m0,  m0
     mov   r4d, 3
-.loop
+.loop:
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
     dec r4d
@@ -593,7 +593,7 @@ cglobal pixel_sad_32x24, 4,5,3
 cglobal pixel_sad_32x32, 4,5,3
     pxor  m0,  m0
     mov   r4d, 4
-.loop
+.loop:
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
     dec r4d
@@ -626,7 +626,7 @@ cglobal pixel_sad_32x16, 4,4,3
 cglobal pixel_sad_32x64, 4,5,3
     pxor  m0,  m0
     mov   r4d, 8
-.loop
+.loop:
     PROCESS_SAD_32x4
     PROCESS_SAD_32x4
     dec  r4d
@@ -643,7 +643,7 @@ cglobal pixel_sad_32x64, 4,5,3
 cglobal pixel_sad_8x32, 4,5,3
     pxor  m0,  m0
     mov   r4d, 4
-.loop
+.loop:
     PROCESS_SAD_8x4
     PROCESS_SAD_8x4
     dec  r4d
@@ -677,7 +677,7 @@ cglobal pixel_sad_64x32, 4,5,5
     pxor  m0,  m0
     mov   r4,  4
 
-.loop
+.loop:
     PROCESS_SAD_64x4
     PROCESS_SAD_64x4
 
@@ -696,7 +696,7 @@ cglobal pixel_sad_64x48, 4,5,5
     pxor  m0,  m0
     mov   r4,  6
 
-.loop
+.loop:
     PROCESS_SAD_64x4
     PROCESS_SAD_64x4
     dec     r4d
@@ -714,7 +714,7 @@ cglobal pixel_sad_64x64, 4,5,5
     pxor  m0,  m0
     mov   r4,  8
 
-.loop
+.loop:
     PROCESS_SAD_64x4
     PROCESS_SAD_64x4
     dec   r4
@@ -732,7 +732,7 @@ cglobal pixel_sad_48x64, 4,5,5
     pxor  m0,  m0
     mov   r4,  64
 
-.loop
+.loop:
     PROCESS_SAD_48x4
     lea     r2,  [r2 + r3]
     lea     r0,  [r0 + r1]
@@ -762,7 +762,7 @@ cglobal pixel_sad_24x32, 4,5,4
     pxor  m0,  m0
     mov   r4,  32
 
-.loop
+.loop:
     PROCESS_SAD_24x4
     lea         r2,  [r2 + r3]
     lea         r0,  [r0 + r1]
@@ -2862,7 +2862,7 @@ cglobal pixel_sad_x3_24x32, 5, 7, 8
     pxor  m2, m2
     mov   r6, 32
 
-.loop
+.loop:
     SAD_X3_24x4
     SAD_X3_24x4
     SAD_X3_24x4
@@ -2888,7 +2888,7 @@ cglobal pixel_sad_x4_24x32, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 32
 
-.loop
+.loop:
     SAD_X4_24x4
     SAD_X4_24x4
     SAD_X4_24x4
@@ -2940,7 +2940,7 @@ cglobal pixel_sad_x3_32x32, 5, 7, 8
     pxor  m2, m2
     mov   r6, 32
 
-.loop
+.loop:
     SAD_X3_32x4
     SAD_X3_32x4
     SAD_X3_32x4
@@ -2957,7 +2957,7 @@ cglobal pixel_sad_x3_32x64, 5, 7, 8
     pxor  m2, m2
     mov   r6, 64
 
-.loop1
+.loop1:
     SAD_X3_32x4
     SAD_X3_32x4
     SAD_X3_32x4
@@ -3019,7 +3019,7 @@ cglobal pixel_sad_x4_32x32, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 32
 
-.loop
+.loop:
     SAD_X4_32x4
     SAD_X4_32x4
     SAD_X4_32x4
@@ -3042,7 +3042,7 @@ cglobal pixel_sad_x4_32x64, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 64
 
-.loop
+.loop:
     SAD_X4_32x4
     SAD_X4_32x4
     SAD_X4_32x4
@@ -3061,7 +3061,7 @@ cglobal pixel_sad_x3_48x64, 5, 7, 8
     pxor  m2, m2
     mov   r6, 64
 
-.loop
+.loop:
     SAD_X3_48x4
     SAD_X3_48x4
     SAD_X3_48x4
@@ -3086,7 +3086,7 @@ cglobal pixel_sad_x4_48x64, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 64
 
-.loop
+.loop:
     SAD_X4_48x4
     SAD_X4_48x4
     SAD_X4_48x4
@@ -3104,7 +3104,7 @@ cglobal pixel_sad_x3_64x16, 5, 7, 7
     pxor  m2, m2
     mov   r6, 16
 
-.loop
+.loop:
     SAD_X3_64x4
     SAD_X3_64x4
 
@@ -3118,7 +3118,7 @@ cglobal pixel_sad_x3_64x32, 5, 7, 7
     pxor  m2, m2
     mov   r6, 32
 
-.loop
+.loop:
     SAD_X3_64x4
     SAD_X3_64x4
 
@@ -3132,7 +3132,7 @@ cglobal pixel_sad_x3_64x48, 5, 7, 7
     pxor  m2, m2
     mov   r6, 48
 
-.loop
+.loop:
     SAD_X3_64x4
     SAD_X3_64x4
 
@@ -3146,7 +3146,7 @@ cglobal pixel_sad_x3_64x64, 5, 7, 7
     pxor  m2, m2
     mov   r6, 64
 
-.loop
+.loop:
     SAD_X3_64x4
     SAD_X3_64x4
 
@@ -3169,7 +3169,7 @@ cglobal pixel_sad_x4_64x16, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 16
 
-.loop
+.loop:
     SAD_X4_64x4
     SAD_X4_64x4
 
@@ -3190,7 +3190,7 @@ cglobal pixel_sad_x4_64x32, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 32
 
-.loop
+.loop:
     SAD_X4_64x4
     SAD_X4_64x4
 
@@ -3211,7 +3211,7 @@ cglobal pixel_sad_x4_64x48, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 48
 
-.loop
+.loop:
     SAD_X4_64x4
     SAD_X4_64x4
 
@@ -3232,7 +3232,7 @@ cglobal pixel_sad_x4_64x64, 6, 7, 8, 0-4
     pxor  m3, m3
     mov   count, 64
 
-.loop
+.loop:
     SAD_X4_64x4
     SAD_X4_64x4
 

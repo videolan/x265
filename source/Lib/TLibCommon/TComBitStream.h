@@ -40,10 +40,6 @@
 
 #include "CommonDef.h"
 
-#include <stdint.h>
-#include <stdio.h>
-#include <assert.h>
-
 //! \ingroup TLibCommon
 //! \{
 

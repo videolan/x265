@@ -460,20 +460,33 @@ void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 }
 
 template<int blockSize>
-void calcRecons(pixel* pred, int16_t* residual, pixel* recon, int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
+void calcRecons(pixel* pred, int16_t* residual,
+#if NEW_CALCRECON
+                pixel*,
+#else
+                pixel* recon,
+#endif
+                int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
 {
     for (int uiY = 0; uiY < blockSize; uiY++)
     {
         for (int uiX = 0; uiX < blockSize; uiX++)
         {
+#if NEW_CALCRECON
+            recqt[uiX] = (int16_t)ClipY(static_cast<int16_t>(pred[uiX]) + residual[uiX]);
+            recipred[uiX] = (pixel)recqt[uiX];
+#else
             recon[uiX] = (pixel)ClipY(static_cast<int16_t>(pred[uiX]) + residual[uiX]);
             recqt[uiX] = (int16_t)recon[uiX];
             recipred[uiX] = recon[uiX];
+#endif
         }
 
         pred += stride;
         residual += stride;
+#if !NEW_CALCRECON
         recon += stride;
+#endif
         recqt += qtstride;
         recipred += ipredstride;
     }
@@ -741,6 +754,21 @@ void blockcopy_pp_c(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 }
 
 template<int bx, int by>
+void blockcopy_ss_c(int16_t *a, intptr_t stridea, int16_t *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = b[x];
+        }
+
+        a += stridea;
+        b += strideb;
+    }
+}
+
+template<int bx, int by>
 void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
@@ -892,6 +920,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I420].copy_ss[CHROMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
     p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
@@ -900,6 +929,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I444].copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I444].copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
     p.chroma[X265_CSP_I444].sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.chroma[X265_CSP_I444].add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
@@ -908,6 +938,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.luma_copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
     p.luma_sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.luma_add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 

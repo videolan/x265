@@ -295,7 +295,7 @@ void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
     TComHRD *hrd = vui->getHrdParameters();
 
     WRITE_UVLC(sei.m_bpSeqParameterSetId, "bp_seq_parameter_set_id");
-    if (!hrd->getSubPicCpbParamsPresentFlag())
+    if (!hrd->getSubPicHrdParamsPresentFlag())
     {
         WRITE_FLAG(sei.m_rapCpbParamsPresentFlag, "rap_cpb_params_present_flag");
     }
@@ -315,7 +315,7 @@ void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
             {
                 WRITE_CODE(sei.m_initialCpbRemovalDelay[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),           "initial_cpb_removal_delay");
                 WRITE_CODE(sei.m_initialCpbRemovalDelayOffset[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),      "initial_cpb_removal_delay_offset");
-                if (hrd->getSubPicCpbParamsPresentFlag() || sei.m_rapCpbParamsPresentFlag)
+                if (hrd->getSubPicHrdParamsPresentFlag() || sei.m_rapCpbParamsPresentFlag)
                 {
                     WRITE_CODE(sei.m_initialAltCpbRemovalDelay[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),     "initial_alt_cpb_removal_delay");
                     WRITE_CODE(sei.m_initialAltCpbRemovalDelayOffset[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1), "initial_alt_cpb_removal_delay_offset");
@@ -344,11 +344,11 @@ void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps
     {
         WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_minus1");
         WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1), "pic_dpb_output_delay");
-        if (hrd->getSubPicCpbParamsPresentFlag())
+        if (hrd->getSubPicHrdParamsPresentFlag())
         {
             WRITE_CODE(sei.m_picDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_dpb_output_du_delay");
         }
-        if (hrd->getSubPicCpbParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag())
+        if (hrd->getSubPicHrdParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag())
         {
             WRITE_UVLC(sei.m_numDecodingUnitsMinus1,     "num_decoding_units_minus1");
             WRITE_FLAG(sei.m_duCommonCpbRemovalDelayFlag, "du_common_cpb_removal_delay_flag");

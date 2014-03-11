@@ -27,9 +27,9 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "common.h"
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
-#include <string.h>
 
 using namespace x265;
 

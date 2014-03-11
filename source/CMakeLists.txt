@@ -14,10 +14,11 @@ project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
+include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 7)
+set(X265_BUILD 9)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -27,9 +28,9 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
 # System architecture detection
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
-if("${SYSPROC}" STREQUAL "i386"   OR "${SYSPROC}" STREQUAL "amd64" OR
-   "${SYSPROC}" STREQUAL "x86_64" OR "${SYSPROC}" STREQUAL "x86"   OR
-   "${SYSPROC}" STREQUAL "")
+set(X86_ALIASES x86 i386 i686 x86_64 amd64)
+list(FIND X86_ALIASES "${SYSPROC}" X86MATCH)
+if("${SYSPROC}" STREQUAL "" OR X86MATCH GREATER "-1")
     message(STATUS "Detected x86 system processor")
     set(X86 1)
     add_definitions(-DX265_ARCH_X86=1)
@@ -37,7 +38,7 @@ if("${SYSPROC}" STREQUAL "i386"   OR "${SYSPROC}" STREQUAL "amd64" OR
         set(X64 1)
         add_definitions(-DX86_64=1)
     endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv6l")
+elseif(${SYSPROC} STREQUAL "armv6l")
     message(STATUS "Detected ARM system processor")
     set(ARM 1)
     add_definitions(-DX265_ARCH_ARM=1 -DHAVE_ARMV6=1)
@@ -267,7 +268,7 @@ endif()
 
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
-    add_library(x265-shared SHARED dllmain.cpp "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
+    add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
                 ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
     target_link_libraries(x265-shared ${PLATFORM_LIBS})
     if(MSVC)
