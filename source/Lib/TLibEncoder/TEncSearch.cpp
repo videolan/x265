@@ -2294,6 +2294,10 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         cu->getMvPredAbove(m_mvPredictors[1]);
         cu->getMvPredAboveRight(m_mvPredictors[2]);
 
+        // Clear Motion Field
+        cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
+        cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
+
         // Uni-directional prediction
         for (int list = 0; list < numPredDir; list++)
         {
@@ -2404,14 +2408,9 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     listBits[2] = bitsZero0 + bitsZero1 - listSelBits[0] - listSelBits[1] + listSelBits[2];
                 }
             }
-        } // if (B_SLICE)
-
-        //  Clear Motion Field
-        cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
-        cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
+        }
 
         uint32_t mebits = 0;
-
         if (listCost[2] <= listCost[0] && listCost[2] <= listCost[1])
         {
             lastMode = 2;
@@ -2461,7 +2460,12 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             mebits = listBits[1];
         }
 
-        if (cu->getPartitionSize(partAddr) != SIZE_2Nx2N)
+        if (cu->getPartitionSize(partAddr) == SIZE_2Nx2N)
+        {
+            /* 2Nx2N merge is tested earlier */
+            totalmebits += mebits;
+        }
+        else
         {
             /* TODO: isn't the part cost already calculated above? */
             uint32_t meCost = xGetInterPredictionError(cu, partIdx) + m_rdCost->getCost(mebits);
@@ -2500,10 +2504,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 totalmebits += mebits;
             }
-        }
-        else
-        {
-            totalmebits += mebits;
         }
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, true, bChroma);
     }
