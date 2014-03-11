@@ -2248,7 +2248,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         uint32_t listCost[3] = { MAX_UINT, MAX_UINT, MAX_UINT };
         uint32_t listBits[3];
         uint32_t costTemp = 0;
-        uint32_t bitsTemp;
         MV   mvValidList1;
         int  refIdxValidList1 = 0;
         uint32_t bitsValidList1 = MAX_UINT;
@@ -2277,16 +2276,16 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             {
                 for (int idx = 0; idx < cu->getSlice()->getNumRefIdx(list); idx++)
                 {
-                    bitsTemp = mbBits[list];
+                    uint32_t bitsTemp = mbBits[list] + MVP_IDX_BITS;
                     if (cu->getSlice()->getNumRefIdx(list) > 1)
                     {
                         bitsTemp += idx + 1;
-                        if (idx == cu->getSlice()->getNumRefIdx(list) - 1) bitsTemp--;
+                        if (idx == cu->getSlice()->getNumRefIdx(list) - 1)
+                            bitsTemp--;
                     }
                     xEstimateMvPredAMVP(cu, partIdx, list, idx, mvPred[list][idx], &amvpInfo[list][idx]);
                     mvpIdx[list][idx] = cu->getMVPIdx(list, partAddr);
 
-                    bitsTemp += MVP_IDX_BITS;
                     int merange = m_adaptiveRange[list][idx];
                     MV& mvp = mvPred[list][idx];
                     MV& outmv = mvTemp[list][idx];
