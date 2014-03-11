@@ -2247,7 +2247,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     {
         uint32_t listCost[3] = { MAX_UINT, MAX_UINT, MAX_UINT };
         uint32_t listBits[3];
-        uint32_t costTemp = 0;
         MV   mvValidList1;
         int  refIdxValidList1 = 0;
         uint32_t bitsValidList1 = MAX_UINT;
@@ -2297,7 +2296,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                     /* Get total cost of partition, but only include MV bit cost once */
                     bitsTemp += m_me.bitcost(outmv);
-                    costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
+                    uint32_t costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
 
                     xCheckBestMVP(&amvpInfo[list][idx], mvTemp[list][idx], mvPred[list][idx], mvpIdx[list][idx], bitsTemp, costTemp);
 
