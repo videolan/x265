@@ -2224,7 +2224,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     int mvpIdx[2][MAX_NUM_REF];
     AMVPInfo amvpInfo[2][MAX_NUM_REF];
 
-    uint32_t mbBits[3] = { 1, 1, 0 };
     int refIdxBidir[2] = { 0, 0 };
 
     PartSize partSize = cu->getPartitionSize(0);
@@ -2245,6 +2244,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         uint32_t listBits[3];
         int      listRefIdx[2] = { 0, 0 }; // If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
         MV       listMv[2];
+        uint32_t listSelBits[3]; // cost in bits of coding a particular unidir ref list
 
         MV   mvValidList1;
         int  refIdxValidList1 = 0;
@@ -2253,7 +2253,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
         uint32_t partAddr;
         int  roiWidth, roiHeight;
-        xGetBlkBits(partSize, cu->getSlice()->isInterP(), partIdx, lastMode, mbBits);
+        xGetBlkBits(partSize, cu->getSlice()->isInterP(), partIdx, lastMode, listSelBits);
         cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
         Pel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
@@ -2274,7 +2274,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             {
                 for (int idx = 0; idx < cu->getSlice()->getNumRefIdx(list); idx++)
                 {
-                    uint32_t bitsTemp = mbBits[list] + MVP_IDX_BITS;
+                    uint32_t bitsTemp = listSelBits[list] + MVP_IDX_BITS;
                     if (cu->getSlice()->getNumRefIdx(list) > 1)
                     {
                         bitsTemp += idx + 1;
@@ -2344,7 +2344,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, m_predYuv[0].getStride(), ref1, m_predYuv[1].getStride(), 32);
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
                 x265_emms();
-                listBits[2] = listBits[0] + listBits[1] - mbBits[0] - mbBits[1] + mbBits[2];
+                listBits[2] = listBits[0] + listBits[1] - listSelBits[0] - listSelBits[1] + listSelBits[2];
                 listCost[2] =  satdCost + m_rdCost->getCost(listBits[2]);
 
                 if (listMv[0].notZero() || listMv[1].notZero())
@@ -2385,7 +2385,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         mvPredBi[1][refIdxBidir[1]] = mvpZero[1];
                         mvpIdxBi[0][refIdxBidir[0]] = mvpidxZero[0];
                         mvpIdxBi[1][refIdxBidir[1]] = mvpidxZero[1];
-                        listBits[2] = bitsZero0 + bitsZero1 - mbBits[0] - mbBits[1] + mbBits[2];
+                        listBits[2] = bitsZero0 + bitsZero1 - listSelBits[0] - listSelBits[1] + listSelBits[2];
                     }
                 }
             } // if (B_SLICE)
