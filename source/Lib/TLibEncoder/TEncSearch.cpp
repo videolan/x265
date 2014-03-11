@@ -2217,7 +2217,6 @@ void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNe
 bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, bool bChroma)
 {
     MV mvBidir[2];
-    MV mvTemp[2][MAX_NUM_REF];
     MV mvPred[2][MAX_NUM_REF];
     MV mvPredBi[2][MAX_NUM_REF];
 
@@ -2287,9 +2286,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                     int merange = m_adaptiveRange[list][idx];
                     MV& mvp = mvPred[list][idx];
-                    MV& outmv = mvTemp[list][idx];
 
-                    MV mvmin, mvmax;
+                    MV mvmin, mvmax, outmv;
                     xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
                     int satdCost = m_me.motionEstimate(m_mref[list][idx],
                                                        mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
@@ -2298,7 +2296,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     bitsTemp += m_me.bitcost(outmv);
                     uint32_t costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
 
-                    xCheckBestMVP(&amvpInfo[list][idx], mvTemp[list][idx], mvPred[list][idx], mvpIdx[list][idx], bitsTemp, costTemp);
+                    xCheckBestMVP(&amvpInfo[list][idx], outmv, mvPred[list][idx], mvpIdx[list][idx], bitsTemp, costTemp);
 
                     if (costTemp < listCost[list])
                     {
@@ -2306,7 +2304,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         listBits[list] = bitsTemp; // storing for bi-prediction
 
                         // set motion
-                        listMv[list] = mvTemp[list][idx];
+                        listMv[list] = outmv;
                         listRefIdx[list] = idx;
                     }
 
@@ -2316,7 +2314,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         bitsValidList1 = bitsTemp;
 
                         // set motion
-                        mvValidList1     = mvTemp[list][idx];
+                        mvValidList1     = outmv;
                         refIdxValidList1 = idx;
                     }
                 }
