@@ -2245,9 +2245,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
-        uint32_t listCost[2] = { MAX_UINT, MAX_UINT };
+        uint32_t listCost[3] = { MAX_UINT, MAX_UINT, MAX_UINT };
         uint32_t bits[3];
-        uint32_t costbi = MAX_UINT;
         uint32_t costTemp = 0;
         uint32_t bitsTemp;
         MV   mvValidList1;
@@ -2350,7 +2349,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 int satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
                 x265_emms();
                 bits[2] = bits[0] + bits[1] - mbBits[0] - mbBits[1] + mbBits[2];
-                costbi =  satdCost + m_rdCost->getCost(bits[2]);
+                listCost[2] =  satdCost + m_rdCost->getCost(bits[2]);
 
                 if (mv[0].notZero() || mv[1].notZero())
                 {
@@ -2380,9 +2379,9 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     mvpidxZero[1] = mvpIdxBi[1][refIdxBidir[1]];
                     xCheckBestMVP(&amvpInfo[1][refIdxBidir[1]], mvzero, mvpZero[1], mvpidxZero[1], bitsZero1, costZero);
 
-                    if (costZero < costbi)
+                    if (costZero < listCost[2])
                     {
-                        costbi = costZero;
+                        listCost[2] = costZero;
                         mvBidir[0].x = mvBidir[0].y = 0;
                         mvBidir[1].x = mvBidir[1].y = 0;
                         mvPredBi[0][refIdxBidir[0]] = mvpZero[0];
@@ -2408,7 +2407,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
         if (!bMergeOnly)
         {
-            if (costbi <= listCost[0] && costbi <= listCost[1])
+            if (listCost[2] <= listCost[0] && listCost[2] <= listCost[1])
             {
                 lastMode = 2;
                 cu->getCUMvField(REF_PIC_LIST_0)->setAllMv(mvBidir[0], partSize, partAddr, 0, partIdx);
