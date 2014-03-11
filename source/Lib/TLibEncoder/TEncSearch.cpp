@@ -2246,11 +2246,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         MV       listMv[2];
         uint32_t listSelBits[3]; // cost in bits of coding a particular unidir ref list
 
-        MV   mvValidList1;
-        int  refIdxValidList1 = 0;
-        uint32_t bitsValidList1 = MAX_UINT;
-        uint32_t costValidList1 = MAX_UINT;
-
         uint32_t partAddr;
         int  roiWidth, roiHeight;
         xGetBlkBits(partSize, cu->getSlice()->isInterP(), partIdx, lastMode, listSelBits);
@@ -2307,21 +2302,12 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         listMv[list] = outmv;
                         listRefIdx[list] = idx;
                     }
-
-                    if (list == 1 && costTemp < costValidList1)
-                    {
-                        costValidList1 = costTemp;
-                        bitsValidList1 = bitsTemp;
-
-                        // set motion
-                        mvValidList1     = outmv;
-                        refIdxValidList1 = idx;
-                    }
                 }
             }
 
             // Bi-directional prediction
-            if ((cu->getSlice()->isInterB()) && (cu->isBipredRestriction() == false))
+            if (cu->getSlice()->isInterB() && !cu->isBipredRestriction() &&
+                listCost[0] != MAX_UINT && listCost[1] != MAX_UINT)
             {
                 mvBidir[0] = listMv[0];
                 mvBidir[1] = listMv[1];
@@ -2396,11 +2382,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
 
         uint32_t mebits = 0;
-        // Set Motion Field_
-        listMv[1] = mvValidList1;
-        listRefIdx[1] = refIdxValidList1;
-        listBits[1] = bitsValidList1;
-        listCost[1] = costValidList1;
 
         if (!bMergeOnly)
         {
