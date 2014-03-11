@@ -670,7 +670,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
                     totalDuration += frameDuration;
                     bufferFillCur += vbvMaxRate * frameDuration;
                     int type = pic->m_lowres.plannedType[j];
-                    int64_t satd = pic->m_lowres.plannedSatd[j];
+                    int64_t satd = pic->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
                     if (type == X265_TYPE_AUTO)
                         break;
                     type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
@@ -774,6 +774,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, doub
         encodedBitsSoFar += pic->m_rowEncodedBits[row];
         rowSatdCostSoFar = pic->m_rowDiagSatd[row];
         uint32_t satdCostForPendingCus = pic->m_rowSatdForVbv[row] - rowSatdCostSoFar;
+        satdCostForPendingCus >>= X265_DEPTH - 8;
         if (satdCostForPendingCus  > 0)
         {
             double pred_s = predictSize(rce->rowPred[0], qScale, satdCostForPendingCus);
@@ -790,6 +791,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, doub
                     intraCost += pic->m_intraCuCostsForVbv[cuAddr];
                 }
 
+                refRowSatdCost >>= X265_DEPTH - 8;
                 refQScale = row == maxRows - 1 ? refPic->m_rowDiagQScale[row] : refPic->m_rowDiagQScale[row + 1];
             }
 
@@ -829,23 +831,26 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
 
     pic->m_rowDiagQp[row] = qpVbv;
     pic->m_rowDiagQScale[row] = qScaleVbv;
-    double rowSatdCost = pic->m_rowDiagSatd[row];
+    uint64_t rowSatdCost = pic->m_rowDiagSatd[row];
     double encodedBits = pic->m_rowEncodedBits[row];
     if (row == 1)
     {
         rowSatdCost += pic->m_rowDiagSatd[0];
         encodedBits += pic->m_rowEncodedBits[0];
     }
-    updatePredictor(rce->rowPred[0], qScaleVbv, rowSatdCost, encodedBits);
+    rowSatdCost >>= X265_DEPTH - 8;
+    updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
     if (pic->getSlice()->getSliceType() == P_SLICE)
     {
         TComPic* refSlice = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
         if (qpVbv < refSlice->m_rowDiagQp[row])
         {
+            uint64_t intraRowSatdCost = pic->m_rowDiagIntraSatd[row];
             if (row == 1)
-                updatePredictor(rce->rowPred[1], qScaleVbv, pic->m_rowDiagIntraSatd[row] + pic->m_rowDiagIntraSatd[0], pic->m_rowEncodedBits[row] + pic->m_rowEncodedBits[0]);
-            else
-                updatePredictor(rce->rowPred[1], qScaleVbv, pic->m_rowDiagIntraSatd[row], pic->m_rowEncodedBits[row]);
+            {
+                intraRowSatdCost += pic->m_rowDiagIntraSatd[0];
+            }
+            updatePredictor(rce->rowPred[1], qScaleVbv, (double)intraRowSatdCost, encodedBits);
         }
     }
 
