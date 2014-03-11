@@ -2226,9 +2226,13 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
     int refIdxBidir[2] = { 0, 0 };
 
+    // force ME for the smallest rect/AMP sizes (Why? the HM did this)
+    int numPart = cu->getNumPartInter();
+    if (cu->getCUSize(0) <= 8 || numPart != 2)
+        bMergeOnly = false;
+
     PartSize partSize = cu->getPartitionSize(0);
     uint32_t lastMode = 0;
-    int numPart = cu->getNumPartInter();
     int numPredDir = cu->getSlice()->isInterP() ? 1 : 2;
 
     TComPicYuv *fenc = cu->getSlice()->getPic()->getPicYuvOrg();
@@ -2257,10 +2261,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         cu->getMvPredLeft(m_mvPredictors[0]);
         cu->getMvPredAbove(m_mvPredictors[1]);
         cu->getMvPredAboveRight(m_mvPredictors[2]);
-
-        // force ME for the smallest rect/AMP sizes (Why? the HM did this)
-        if (cu->getCUSize(0) <= 8 || numPart != 2)
-            bMergeOnly = false;
 
         if (!bMergeOnly)
         {
