@@ -2228,7 +2228,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     AMVPInfo amvpInfo[2][MAX_NUM_REF];
 
     uint32_t mbBits[3] = { 1, 1, 0 };
-    int refIdx[2] = { 0, 0 }; // If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
     int refIdxBidir[2] = { 0, 0 };
 
     PartSize partSize = cu->getPartitionSize(0);
@@ -2247,6 +2246,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     {
         uint32_t listCost[3] = { MAX_UINT, MAX_UINT, MAX_UINT };
         uint32_t listBits[3];
+        int      listRefIdx[2] = { 0, 0 }; // If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
+
         MV   mvValidList1;
         int  refIdxValidList1 = 0;
         uint32_t bitsValidList1 = MAX_UINT;
@@ -2307,7 +2308,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                         // set motion
                         mv[list] = mvTemp[list][idx];
-                        refIdx[list] = idx;
+                        listRefIdx[list] = idx;
                     }
 
                     if (list == 1 && costTemp < costValidList1)
@@ -2327,15 +2328,15 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             {
                 mvBidir[0] = mv[0];
                 mvBidir[1] = mv[1];
-                refIdxBidir[0] = refIdx[0];
-                refIdxBidir[1] = refIdx[1];
+                refIdxBidir[0] = listRefIdx[0];
+                refIdxBidir[1] = listRefIdx[1];
 
                 ::memcpy(mvPredBi, mvPred, sizeof(mvPred));
                 ::memcpy(mvpIdxBi, mvpIdx, sizeof(mvpIdx));
 
                 // Generate reference subpels
-                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx[0])->getPicYuvRec(), partAddr, &mv[0], roiWidth, roiHeight, &m_predYuv[0]);
-                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(REF_PIC_LIST_1, refIdx[1])->getPicYuvRec(), partAddr, &mv[1], roiWidth, roiHeight, &m_predYuv[1]);
+                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(REF_PIC_LIST_0, listRefIdx[0])->getPicYuvRec(), partAddr, &mv[0], roiWidth, roiHeight, &m_predYuv[0]);
+                xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(REF_PIC_LIST_1, listRefIdx[1])->getPicYuvRec(), partAddr, &mv[1], roiWidth, roiHeight, &m_predYuv[1]);
 
                 pixel *ref0 = m_predYuv[0].getLumaAddr(partAddr);
                 pixel *ref1 = m_predYuv[1].getLumaAddr(partAddr);
@@ -2351,9 +2352,9 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 if (mv[0].notZero() || mv[1].notZero())
                 {
-                    ref0 = m_mref[0][refIdx[0]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref0
-                    ref1 = m_mref[1][refIdx[1]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref1
-                    intptr_t refStride = m_mref[0][refIdx[0]]->lumaStride;
+                    ref0 = m_mref[0][listRefIdx[0]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref0
+                    ref1 = m_mref[1][listRefIdx[1]]->fpelPlane + (pu - fenc->getLumaAddr());  //MV(0,0) of ref1
+                    intptr_t refStride = m_mref[0][listRefIdx[0]]->lumaStride;
 
                     primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, refStride, ref1, refStride, 32);
                     satdCost = primitives.satd[partEnum](pu, fenc->getStride(), avg, roiWidth);
@@ -2399,7 +2400,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         uint32_t mebits = 0;
         // Set Motion Field_
         mv[1] = mvValidList1;
-        refIdx[1] = refIdxValidList1;
+        listRefIdx[1] = refIdxValidList1;
         listBits[1] = bitsValidList1;
         listCost[1] = costValidList1;
 
@@ -2429,13 +2430,13 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             {
                 lastMode = 0;
                 cu->getCUMvField(REF_PIC_LIST_0)->setAllMv(mv[0], partSize, partAddr, 0, partIdx);
-                cu->getCUMvField(REF_PIC_LIST_0)->setAllRefIdx(refIdx[0], partSize, partAddr, 0, partIdx);
+                cu->getCUMvField(REF_PIC_LIST_0)->setAllRefIdx(listRefIdx[0], partSize, partAddr, 0, partIdx);
 
-                MV mvtmp = mv[0] - mvPred[0][refIdx[0]];
+                MV mvtmp = mv[0] - mvPred[0][listRefIdx[0]];
                 cu->getCUMvField(REF_PIC_LIST_0)->setMvd(partAddr, mvtmp);
 
                 cu->setInterDirSubParts(1, partAddr, partIdx, cu->getDepth(0));
-                cu->setMVPIdx(REF_PIC_LIST_0, partAddr, mvpIdx[0][refIdx[0]]);
+                cu->setMVPIdx(REF_PIC_LIST_0, partAddr, mvpIdx[0][listRefIdx[0]]);
 
                 mebits = listBits[0];
             }
@@ -2443,13 +2444,13 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             {
                 lastMode = 1;
                 cu->getCUMvField(REF_PIC_LIST_1)->setAllMv(mv[1], partSize, partAddr, 0, partIdx);
-                cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(refIdx[1], partSize, partAddr, 0, partIdx);
+                cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(listRefIdx[1], partSize, partAddr, 0, partIdx);
 
-                MV mvtmp = mv[1] - mvPred[1][refIdx[1]];
+                MV mvtmp = mv[1] - mvPred[1][listRefIdx[1]];
                 cu->getCUMvField(REF_PIC_LIST_1)->setMvd(partAddr, mvtmp);
 
                 cu->setInterDirSubParts(2, partAddr, partIdx, cu->getDepth(0));
-                cu->setMVPIdx(REF_PIC_LIST_1, partAddr, mvpIdx[1][refIdx[1]]);
+                cu->setMVPIdx(REF_PIC_LIST_1, partAddr, mvpIdx[1][listRefIdx[1]]);
 
                 mebits = listBits[1];
             }
