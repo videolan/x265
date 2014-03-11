@@ -2235,7 +2235,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     uint32_t lastMode = 0;
     int numPart = cu->getNumPartInter();
     int numPredDir = cu->getSlice()->isInterP() ? 1 : 2;
-    uint32_t biPDistTemp = MAX_INT;
 
     TComPicYuv *fenc = cu->getSlice()->getPic()->getPicYuvOrg();
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
@@ -2285,7 +2284,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         bitsTemp += idx + 1;
                         if (idx == cu->getSlice()->getNumRefIdx(list) - 1) bitsTemp--;
                     }
-                    xEstimateMvPredAMVP(cu, partIdx, list, idx, mvPred[list][idx], &amvpInfo[list][idx], &biPDistTemp);
+                    xEstimateMvPredAMVP(cu, partIdx, list, idx, mvPred[list][idx], &amvpInfo[list][idx]);
                     mvpIdx[list][idx] = cu->getMVPIdx(list, partAddr);
 
                     bitsTemp += MVP_IDX_BITS;
@@ -2522,7 +2521,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 }
 
 // AMVP
-void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list, int refIdx, MV& mvPred, AMVPInfo* amvpInfo, uint32_t* distBiP)
+void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list, int refIdx, MV& mvPred, AMVPInfo* amvpInfo)
 {
     MV   bestMv;
     int  bestIdx = 0;
@@ -2547,7 +2546,6 @@ void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list,
             bestCost = cost;
             bestMv   = amvpInfo->m_mvCand[i];
             bestIdx  = i;
-            (*distBiP) = cost;
         }
     }
 

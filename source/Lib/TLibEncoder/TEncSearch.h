@@ -226,7 +226,7 @@ protected:
     // --------------------------------------------------------------------------------------------
 
     void xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int picList, int refIdx,
-                             MV& mvPred, AMVPInfo* amvpInfo, uint32_t* distBiP = NULL);
+                             MV& mvPred, AMVPInfo* amvpInfo);
 
     void xCheckBestMVP(AMVPInfo* amvpInfo, MV cMv, MV& mvPred, int& mvpIdx,
                        uint32_t& outBits, uint32_t& outCost);
