@@ -2284,10 +2284,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         Pel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
 
-        cu->getMvPredLeft(m_mvPredictors[0]);
-        cu->getMvPredAbove(m_mvPredictors[1]);
-        cu->getMvPredAboveRight(m_mvPredictors[2]);
-
         // Clear Motion Field
         cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
         cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
@@ -2308,9 +2304,19 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 xEstimateMvPredAMVP(cu, partIdx, l, ref, mvp, &amvpInfo[l][ref]);
                 int mvpIdx = cu->getMVPIdx(l, partAddr);
 
+                /* pass non-zero MVP candidates as motion candidates */
+                MV mvc[AMVP_MAX_NUM_CANDS];
+                int numMvc = 0;
+                for (int i = 0; i < amvpInfo[l][ref].m_num; i++)
+                {
+                    MV& mv = amvpInfo[l][ref].m_mvCand[i];
+                    if (mv.notZero())
+                        mvc[numMvc++] = mv;
+                }
+
                 int merange = m_cfg->param->searchRange;
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                int satdCost = m_me.motionEstimate(m_mref[l][ref], mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
+                int satdCost = m_me.motionEstimate(m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
