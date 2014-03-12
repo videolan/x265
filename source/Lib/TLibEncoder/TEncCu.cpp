@@ -1354,7 +1354,7 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
 {
     UChar depth = outTempCU->getDepth(0);
 
-    outTempCU->setDepthSubParts(depth, 0);
+    outTempCU->setDepthSubParts(depth);
     outTempCU->setSkipFlagSubParts(false, 0, depth);
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);

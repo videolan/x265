@@ -1288,11 +1288,11 @@ void TComDataCU::setCbfSubParts(uint32_t uiCbf, TextType ttype, uint32_t absPart
     setSubPart<UChar>(uiCbf, m_cbf[ttype], absPartIdx, depth, partIdx);
 }
 
-void TComDataCU::setDepthSubParts(uint32_t depth, uint32_t absPartIdx)
+void TComDataCU::setDepthSubParts(uint32_t depth)
 {
+    /*All 4x4 partitions in current CU have the CU depth saved*/
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
-
-    memset(m_depth + absPartIdx, depth, sizeof(UChar) * curPartNum);
+    memset(m_depth, depth, sizeof(UChar) * curPartNum);
 }
 
 bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth)

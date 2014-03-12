@@ -223,7 +223,7 @@ public:
 
     UChar         getDepth(uint32_t idx)           { return m_depth[idx]; }
 
-    void          setDepthSubParts(uint32_t depth, uint32_t absPartIdx);
+    void          setDepthSubParts(uint32_t depth);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU data
