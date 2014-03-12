@@ -64,7 +64,7 @@ typedef uint16_t Pel;          // 16-bit pixel type
 typedef uint8_t  Pel;          // 8-bit pixel type
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif
-typedef int    TCoeff;         // transform coefficient
+typedef int32_t  TCoeff;       // transform coefficient
 
 // ====================================================================================================================
 // Enumeration
