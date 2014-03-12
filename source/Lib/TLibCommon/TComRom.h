@@ -69,7 +69,7 @@ void destroyROM();
 // ====================================================================================================================
 static const int chromaQPMappingTableSize = 58;
 
-extern const UChar  g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
+extern const uint8_t g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
 // Data structure related table & variable
 // ====================================================================================================================
 
@@ -153,7 +153,7 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 // Misc.
 // ====================================================================================================================
 
-extern UChar g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
+extern uint8_t g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
 #ifndef ENC_DEC_TRACE
 # define ENC_DEC_TRACE 0
@@ -271,9 +271,9 @@ extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 extern const double x265_lambda2_tab_I[MAX_MAX_QP + 1];
 extern const double x265_lambda2_non_I[MAX_MAX_QP + 1];
 // CABAC tables
-extern const UChar g_lpsTable[64][4];
-extern const UChar g_renormTable[32];
-extern const UChar x265_exp2_lut[64];
+extern const uint8_t g_lpsTable[64][4];
+extern const uint8_t g_renormTable[32];
+extern const uint8_t x265_exp2_lut[64];
 }
 
 #endif  //ifndef X265_TCOMROM_H
