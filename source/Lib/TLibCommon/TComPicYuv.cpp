@@ -185,83 +185,83 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         /* 8bit input, 10bit internal depth. Do a simple up-shift of 2 bits */
         assert(X265_DEPTH == 10);
 
-        pixel *Y = getLumaAddr();
-        pixel *U = getCbAddr();
-        pixel *V = getCrAddr();
+        pixel *yPixel = getLumaAddr();
+        pixel *uPixel = getCbAddr();
+        pixel *vPixel = getCrAddr();
 
-        uint8_t *y = (uint8_t*)pic.planes[0];
-        uint8_t *u = (uint8_t*)pic.planes[1];
-        uint8_t *v = (uint8_t*)pic.planes[2];
+        uint8_t *yChar = (uint8_t*)pic.planes[0];
+        uint8_t *uChar = (uint8_t*)pic.planes[1];
+        uint8_t *vChar = (uint8_t*)pic.planes[2];
 
         for (int r = 0; r < height; r++)
         {
             for (int c = 0; c < width; c++)
             {
-                Y[c] = ((pixel)y[c]) << 2;
+                yPixel[c] = ((pixel)yChar[c]) << 2;
             }
 
-            Y += getStride();
-            y += pic.stride[0] / sizeof(*y);
+            yPixel += getStride();
+            yChar += pic.stride[0] / sizeof(*yChar);
         }
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {
             for (int c = 0; c < width >> m_hChromaShift; c++)
             {
-                U[c] = ((pixel)u[c]) << 2;
-                V[c] = ((pixel)v[c]) << 2;
+                uPixel[c] = ((pixel)uChar[c]) << 2;
+                vPixel[c] = ((pixel)vChar[c]) << 2;
             }
 
-            U += getCStride();
-            V += getCStride();
-            u += pic.stride[1] / sizeof(*u);
-            v += pic.stride[2] / sizeof(*v);
+            uPixel += getCStride();
+            vPixel += getCStride();
+            uChar += pic.stride[1] / sizeof(*uChar);
+            vChar += pic.stride[2] / sizeof(*vChar);
         }
     }
     else if (pic.bitDepth == 8)
     {
-        pixel *Y = getLumaAddr();
-        pixel *U = getCbAddr();
-        pixel *V = getCrAddr();
+        pixel *yPixel = getLumaAddr();
+        pixel *uPixel = getCbAddr();
+        pixel *vPixel = getCrAddr();
 
-        uint8_t *y = (uint8_t*)pic.planes[0];
-        uint8_t *u = (uint8_t*)pic.planes[1];
-        uint8_t *v = (uint8_t*)pic.planes[2];
+        uint8_t *yChar = (uint8_t*)pic.planes[0];
+        uint8_t *uChar = (uint8_t*)pic.planes[1];
+        uint8_t *vChar = (uint8_t*)pic.planes[2];
 
         for (int r = 0; r < height; r++)
         {
             for (int c = 0; c < width; c++)
             {
-                Y[c] = (pixel)y[c];
+                yPixel[c] = (pixel)yChar[c];
             }
 
-            Y += getStride();
-            y += pic.stride[0] / sizeof(*y);
+            yPixel += getStride();
+            yChar += pic.stride[0] / sizeof(*yChar);
         }
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {
             for (int c = 0; c < width >> m_hChromaShift; c++)
             {
-                U[c] = (pixel)u[c];
-                V[c] = (pixel)v[c];
+                uPixel[c] = (pixel)uChar[c];
+                vPixel[c] = (pixel)vChar[c];
             }
 
-            U += getCStride();
-            V += getCStride();
-            u += pic.stride[1] / sizeof(*u);
-            v += pic.stride[2] / sizeof(*v);
+            uPixel += getCStride();
+            vPixel += getCStride();
+            uChar += pic.stride[1] / sizeof(*uChar);
+            vChar += pic.stride[2] / sizeof(*vChar);
         }
     }
     else /* pic.bitDepth > 8 */
     {
-        pixel *Y = getLumaAddr();
-        pixel *U = getCbAddr();
-        pixel *V = getCrAddr();
+        pixel *yPixel = getLumaAddr();
+        pixel *uPixel = getCbAddr();
+        pixel *vPixel = getCrAddr();
 
-        uint16_t *y = (uint16_t*)pic.planes[0];
-        uint16_t *u = (uint16_t*)pic.planes[1];
-        uint16_t *v = (uint16_t*)pic.planes[2];
+        uint16_t *yShort = (uint16_t*)pic.planes[0];
+        uint16_t *uShort = (uint16_t*)pic.planes[1];
+        uint16_t *vShort = (uint16_t*)pic.planes[2];
 
         /* defensive programming, mask off bits that are supposed to be zero */
         uint16_t mask = (1 << X265_DEPTH) - 1;
@@ -272,25 +272,25 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         {
             for (int c = 0; c < width; c++)
             {
-                Y[c] = (pixel)((y[c] >> shift) & mask);
+                yPixel[c] = (pixel)((yShort[c] >> shift) & mask);
             }
 
-            Y += getStride();
-            y += pic.stride[0] / sizeof(*y);
+            yPixel += getStride();
+            yShort += pic.stride[0] / sizeof(*yShort);
         }
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {
             for (int c = 0; c < width >> m_hChromaShift; c++)
             {
-                U[c] = (pixel)((u[c] >> shift) & mask);
-                V[c] = (pixel)((v[c] >> shift) & mask);
+                uPixel[c] = (pixel)((uShort[c] >> shift) & mask);
+                vPixel[c] = (pixel)((vShort[c] >> shift) & mask);
             }
 
-            U += getCStride();
-            V += getCStride();
-            u += pic.stride[1] / sizeof(*u);
-            v += pic.stride[2] / sizeof(*v);
+            uPixel += getCStride();
+            vPixel += getCStride();
+            uShort += pic.stride[1] / sizeof(*uShort);
+            vShort += pic.stride[2] / sizeof(*vShort);
         }
     }
 
