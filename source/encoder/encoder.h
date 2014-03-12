@@ -145,7 +145,6 @@ public:
     int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
 
     //====== Tool list ========
-    bool               m_bUseASR;
     bool               m_usePCM;
     uint32_t           m_pcmLog2MaxSize;
     uint32_t           m_pcmLog2MinSize;

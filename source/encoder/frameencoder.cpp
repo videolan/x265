@@ -426,26 +426,6 @@ void FrameEncoder::compressFrame()
     TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
 
-    if (m_cfg->m_bUseASR && !slice->isIntra())
-    {
-        int pocCurr = slice->getPOC();
-        int maxSR = m_cfg->param->searchRange;
-        int numPredDir = slice->isInterP() ? 1 : 2;
-
-        for (int dir = 0; dir <= numPredDir; dir++)
-        {
-            for (int refIdx = 0; refIdx < slice->getNumRefIdx(dir); refIdx++)
-            {
-                int refPOC = slice->getRefPic(dir, refIdx)->getPOC();
-                int newSR = Clip3(8, maxSR, (maxSR * ADAPT_SR_SCALE * abs(pocCurr - refPOC) + 4) >> 3);
-                for (int i = 0; i < m_numRows; i++)
-                {
-                    m_rows[i].m_search.setAdaptiveSearchRange(dir, refIdx, newSR);
-                }
-            }
-        }
-    }
-
     slice->setSliceSegmentBits(0);
     determineSliceBounds();
     slice->setNextSlice(false);

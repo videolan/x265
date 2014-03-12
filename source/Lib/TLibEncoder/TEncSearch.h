@@ -106,7 +106,6 @@ protected:
 
     // ME parameters
     int             m_refLagPixels;
-    int             m_adaptiveRange[2][MAX_NUM_REF];
     MV              m_mvPredictors[3];
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
@@ -158,9 +157,6 @@ public:
     /// encode residual and compute rd-cost for inter mode
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, ShortYuv* bestResiYuv,
                                    TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ);
-
-    /// set ME search range
-    void setAdaptiveSearchRange(int dir, int refIdx, int merange) { m_adaptiveRange[dir][refIdx] = merange; }
 
     void xEncPCM(TComDataCU* cu, uint32_t absPartIdx, Pel* fenc, Pel* pcm, Pel* pred, int16_t* residual, Pel* recon, uint32_t stride,
                  uint32_t width, uint32_t height, TextType ttype);

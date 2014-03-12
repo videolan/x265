@@ -1495,7 +1495,6 @@ void Encoder::configure(x265_param *p)
     m_interlacedSourceFlag = false;
     m_nonPackedConstraintFlag = false;
     m_frameOnlyConstraintFlag = false;
-    m_bUseASR = false; // adapt search range based on temporal distances
     m_recoveryPointSEIEnabled = 0;
     m_bufferingPeriodSEIEnabled = 0;
     m_pictureTimingSEIEnabled = 0;

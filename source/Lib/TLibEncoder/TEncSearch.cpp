@@ -119,15 +119,6 @@ bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
     m_refLagPixels = cfg->param->frameNumThreads > 1 ? cfg->param->searchRange : cfg->param->sourceHeight;
 
-    // default to no adaptive range
-    for (int dir = 0; dir < 2; dir++)
-    {
-        for (int ref = 0; ref < MAX_NUM_REF; ref++)
-        {
-            m_adaptiveRange[dir][ref] = cfg->param->searchRange;
-        }
-    }
-
     const uint32_t numLayersToAllocate = cfg->m_quadtreeTULog2MaxSize - cfg->m_quadtreeTULog2MinSize + 1;
     m_qtTempCoeffY  = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCb = new TCoeff*[numLayersToAllocate];
@@ -2317,7 +2308,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 xEstimateMvPredAMVP(cu, partIdx, l, ref, mvp, &amvpInfo[l][ref]);
                 int mvpIdx = cu->getMVPIdx(l, partAddr);
 
-                int merange = m_adaptiveRange[l][ref];
+                int merange = m_cfg->param->searchRange;
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(m_mref[l][ref], mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
