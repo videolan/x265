@@ -2089,9 +2089,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     // Find position of last coefficient
     int scanPosLast = -1;
     int posLast;
-    uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
-    uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
-    memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * cgNum);
+    uint64_t sigCoeffGroupFlag64 = 0;
     const uint32_t maskPosXY = (1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1;
     do
     {
@@ -2104,7 +2102,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
             //uint32_t posx   = posLast - (posy << log2TrSize);
             //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
             uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
-            sigCoeffGroupFlag[blkIdx] = 1;
+            sigCoeffGroupFlag64 |= ((uint64_t)1 << blkIdx);
 
             numSig--;
         }
@@ -2142,24 +2140,25 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
             scanPosSig--;
         }
         // encode significant_coeffgroup_flag
-        int cgBlkPos = codingParameters.scanCG[subSet];
-        int cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
-        int cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
+        const int cgBlkPos = codingParameters.scanCG[subSet];
+        const int cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
+        const int cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
+        const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
 
         if (subSet == lastScanSet || subSet == 0)
         {
-            sigCoeffGroupFlag[cgBlkPos] = 1;
+            sigCoeffGroupFlag64 |= cgBlkPosMask;
         }
         else
         {
-            uint32_t sigCoeffGroup = (sigCoeffGroupFlag[cgBlkPos] != 0);
-            uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
+            uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             m_binIf->encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
         // encode significant_coeff_flag
-        if (sigCoeffGroupFlag[cgBlkPos])
+        if (sigCoeffGroupFlag64 & cgBlkPosMask)
         {
-            const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             uint32_t blkPos, sig, ctxSig;
             for (; scanPosSig >= subPos; scanPosSig--)
             {

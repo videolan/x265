@@ -559,7 +559,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
 
     const uint32_t cgSize = (1 << MLS_CG_SIZE); // 16
     double costCoeffGroupSig[MLS_GRP_NUM];
-    uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
+    uint64_t sigCoeffGroupFlag64 = 0;
     uint32_t   ctxSet    = 0;
     int    c1            = 1;
     int    c2            = 0;
@@ -570,18 +570,18 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     int    cgLastScanPos = -1;
     int    baseLevel;
     uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
-    memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * cgNum);
 
     int scanPos;
     coeffGroupRDStats rdStats;
 
     for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
     {
-        uint32_t cgBlkPos = codingParameters.scanCG[cgScanPos];
-        uint32_t cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
-        uint32_t cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
+        const uint32_t cgBlkPos = codingParameters.scanCG[cgScanPos];
+        const uint32_t cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
+        const uint32_t cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
+        const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
         memset(&rdStats, 0, sizeof(coeffGroupRDStats));
-        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
             scanPos = cgScanPos * cgSize + scanPosinCG;
@@ -700,7 +700,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             }
             if (dstCoeff[blkPos])
             {
-                sigCoeffGroupFlag[cgBlkPos] = 1;
+                sigCoeffGroupFlag64 |= cgBlkPosMask;
                 rdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
                 rdStats.uncodedDist += costCoeff0[scanPos];
                 if (scanPosinCG != 0)
@@ -715,9 +715,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             costCoeffGroupSig[cgScanPos] = 0;
             if (cgScanPos)
             {
-                if (sigCoeffGroupFlag[cgBlkPos] == 0)
+                if ((sigCoeffGroupFlag64 & cgBlkPosMask) == 0)
                 {
-                    uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+                    uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                     baseCost += xGetRateSigCoeffGroup(0, ctxSig) - rdStats.sigCost;
                     costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(0, ctxSig);
                 }
@@ -734,7 +734,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                         double costZeroCG = baseCost;
 
                         // add SigCoeffGroupFlag cost to total cost
-                        uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+                        uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                         if (cgScanPos < cgLastScanPos)
                         {
                             baseCost  += xGetRateSigCoeffGroup(1, ctxSig);
@@ -750,7 +750,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                         // if we can save cost, change this block to all-zero block
                         if (costZeroCG < baseCost)
                         {
-                            sigCoeffGroupFlag[cgBlkPos] = 0;
+                            sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                             baseCost = costZeroCG;
                             if (cgScanPos < cgLastScanPos)
                             {
@@ -774,7 +774,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             }
             else
             {
-                sigCoeffGroupFlag[cgBlkPos] = 1;
+                sigCoeffGroupFlag64 |= cgBlkPosMask;
             }
         }
     } //end for (cgScanPos)
@@ -806,7 +806,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     {
         uint32_t cgBlkPos = codingParameters.scanCG[cgScanPos];
         baseCost -= costCoeffGroupSig[cgScanPos];
-        if (sigCoeffGroupFlag[cgBlkPos])
+        if (sigCoeffGroupFlag64 & ((uint64_t)1 << cgBlkPos))
         {
             for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
             {
@@ -1004,14 +1004,15 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
  * \param height height of the block
  * \returns pattern for current coefficient group
  */
-int TComTrQuant::calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
+int TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
 {
     if (log2TrSizeCG == 0) return 0;
 
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
-    const uint32_t* sigPos = &sigCoeffGroupFlag[(cgPosY << log2TrSizeCG) + cgPosX];
-    uint32_t sigRight = (cgPosX < (trSizeCG - 1)) && (sigPos[1] != 0);
-    uint32_t sigLower = (cgPosY < (trSizeCG - 1)) && (sigPos[trSizeCG] != 0);
+    assert(trSizeCG <= 32);
+    const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
+    uint32_t sigRight = (cgPosX < (trSizeCG - 1)) && ((sigPos & 1) != 0);
+    uint32_t sigLower = (cgPosY < (trSizeCG - 1)) && ((sigPos & (1 << (trSizeCG - 1))) != 0);
 
     return sigRight + (sigLower << 1);
 }
@@ -1319,15 +1320,16 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
  * \param uiLog2BlkSize log2 value of block size
  * \returns ctxInc for current scan position
  */
-uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag,
+uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint64_t  sigCoeffGroupFlag64,
                                              const uint32_t  cgPosX,
                                              const uint32_t  cgPosY,
                                              const uint32_t  log2TrSizeCG)
 {
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
-    const uint32_t* sigPos = &sigCoeffGroupFlag[(cgPosY << log2TrSizeCG) + cgPosX];
-    uint32_t sigRight = (cgPosX < (trSizeCG - 1)) && (sigPos[1] != 0);
-    uint32_t sigLower = (cgPosY < (trSizeCG - 1)) && (sigPos[trSizeCG] != 0);
+    assert(trSizeCG <= 32);
+    const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
+    uint32_t sigRight = (cgPosX < (trSizeCG - 1)) && ((sigPos & 1) != 0);
+    uint32_t sigLower = (cgPosY < (trSizeCG - 1)) && ((sigPos & (1 << (trSizeCG - 1))) != 0);
 
     return sigRight | sigLower;
 }
