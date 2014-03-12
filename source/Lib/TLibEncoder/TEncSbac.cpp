@@ -895,7 +895,7 @@ void TEncSbac::codeScalingList(TComScalingList* scalingList)
 void TEncSbac::xCodeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId)
 {
     int coefNum = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
-    const uint32_t* scan = g_scanOrder[SCAN_UNGROUPED][SCAN_DIAG][sizeId == 0 ? 2 : 3];
+    const uint16_t* scan = g_scanOrder[SCAN_UNGROUPED][SCAN_DIAG][sizeId == 0 ? 2 : 3];
     int nextCoef = SCALING_LIST_START_VALUE;
     int data;
     int32_t *src = scalingList->getScalingListAddress(sizeId, listId);

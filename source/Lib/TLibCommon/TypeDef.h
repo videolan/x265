@@ -173,8 +173,8 @@ enum COEFF_SCAN_GROUP_TYPE
 //TU settings for entropy encoding
 struct TUEntropyCodingParameters
 {
-    const uint32_t            *scan;
-    const uint32_t            *scanCG;
+    const uint16_t            *scan;
+    const uint16_t            *scanCG;
     COEFF_SCAN_TYPE      scanType;
     TextType             ctype;
     uint32_t             log2TrSize;

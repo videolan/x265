@@ -43,7 +43,7 @@ namespace x265 {
 //! \ingroup TLibCommon
 //! \{
 // scanning order table
-uint32_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
+uint16_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
 
 class ScanGenerator
 {
@@ -155,7 +155,7 @@ void initROM()
         for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
         {
             const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-            g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize] = X265_MALLOC(uint32_t, totalValues);
+            g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize] = X265_MALLOC(uint16_t, totalValues);
             ScanGenerator fullBlockScan(blockWidth, blockHeight, blockWidth, scanType);
 
             for (uint32_t scanPosition = 0; scanPosition < totalValues; scanPosition++)
@@ -177,7 +177,7 @@ void initROM()
         {
             const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
 
-            g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize] = X265_MALLOC(uint32_t, totalValues);
+            g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize] = X265_MALLOC(uint16_t, totalValues);
 
             ScanGenerator fullBlockScan(widthInGroups, heightInGroups, groupWidth, scanType);
 
