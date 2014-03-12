@@ -2407,7 +2407,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     bidir[0].mvpIdx = mvpIdx0;
                     bidir[1].mvpIdx = mvpIdx1;
                     bidir[0].cost = cost;
-                    bidir[0].bits = bits0 + bits1 + listSelBits[2] - (listSelBits[0] + listSelBits[1]);
+                    bidir[0].bits = bits0 + bits1 + listSelBits[2];
                 }
             }
             if (bidir[0].cost < list[0].cost && bidir[0].cost < list[1].cost)
