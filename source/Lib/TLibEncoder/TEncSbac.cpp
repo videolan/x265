@@ -2092,15 +2092,18 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
     uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
     uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
     memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * cgNum);
+    const uint32_t maskPosXY = (1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1;
     do
     {
         posLast = codingParameters.scan[++scanPosLast];
         if (coeff[posLast] != 0)
         {
             // get L1 sig map
-            uint32_t posy   = posLast >> log2TrSize;
-            uint32_t posx   = posLast - (posy << log2TrSize);
-            uint32_t blkIdx = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
+            // NOTE: the new algorithm is complicated, so I keep reference code here
+            //uint32_t posy   = posLast >> log2TrSize;
+            //uint32_t posx   = posLast - (posy << log2TrSize);
+            //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
+            uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
             sigCoeffGroupFlag[blkIdx] = 1;
 
             numSig--;
