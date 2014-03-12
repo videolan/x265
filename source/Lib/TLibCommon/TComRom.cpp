@@ -418,7 +418,7 @@ const UChar g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize] =
 // Misc.
 // ====================================================================================================================
 
-char g_convertToBit[MAX_CU_SIZE + 1];
+UChar g_convertToBit[MAX_CU_SIZE + 1];
 
 #if ENC_DEC_TRACE
 FILE*  g_hTrace = NULL;

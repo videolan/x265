@@ -153,7 +153,7 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 // Misc.
 // ====================================================================================================================
 
-extern char g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
+extern UChar g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
 #ifndef ENC_DEC_TRACE
 # define ENC_DEC_TRACE 0
