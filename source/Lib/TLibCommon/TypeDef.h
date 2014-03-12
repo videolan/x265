@@ -61,7 +61,7 @@ typedef unsigned char  UChar;
 typedef uint16_t Pel;          // 16-bit pixel type
 #define X265_DEPTH 10          // compile time configurable bit depth
 #else
-typedef UChar  Pel;            // 8-bit pixel type
+typedef uint8_t  Pel;          // 8-bit pixel type
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif
 typedef int    TCoeff;         // transform coefficient
