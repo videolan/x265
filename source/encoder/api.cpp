@@ -122,8 +122,6 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     return numEncoded;
 }
 
-EXTERN_CYCLE_COUNTER(ME);
-
 extern "C"
 void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t statsSizeBytes)
 {
@@ -150,8 +148,6 @@ void x265_encoder_close(x265_encoder *enc)
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-
-        REPORT_CYCLE_COUNTER(ME);
 
         encoder->printSummary();
         encoder->destroy();

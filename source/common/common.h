@@ -119,23 +119,6 @@ typedef uint32_t pixel4;
         } \
     }
 
-#define ENABLE_CYCLE_COUNTERS 0
-#if ENABLE_CYCLE_COUNTERS
-#include <intrin.h>
-#define DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME) uint64_t SUBSYSTEM_NAME ## _cycle_count, SUBSYSTEM_NAME ## _num_calls
-#define CYCLE_COUNTER_START(SUBSYSTEM_NAME)   uint64_t start_time = __rdtsc(); SUBSYSTEM_NAME ## _num_calls++
-#define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)    SUBSYSTEM_NAME ## _cycle_count += __rdtsc() - start_time
-#define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)  extern DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)  printf("Subsystem: %s\tTotal Cycles: %lld Ave Cycles: %lf Num Calls: %ld\n", #SUBSYSTEM_NAME, \
-                                                     SUBSYSTEM_NAME ## _cycle_count, (double)SUBSYSTEM_NAME ## _cycle_count / SUBSYSTEM_NAME ## _num_calls, SUBSYSTEM_NAME ## _num_calls);
-#else
-#define DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#define CYCLE_COUNTER_START(SUBSYSTEM_NAME)
-#define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)
-#define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#endif // if ENABLE_CYCLE_COUNTERS
-
 #if defined(_MSC_VER)
 #define X265_LOG2F(x) (logf((float)(x)) * 1.44269504088896405f)
 #define X265_LOG2(x) (log((double)(x)) * 1.4426950408889640513713538072172)
