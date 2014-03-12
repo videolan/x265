@@ -82,7 +82,7 @@ public:
 
 protected:
 
-    ShortYuv*      m_qtTempShortYuv;
+    ShortYuv*       m_qtTempShortYuv;
 
     TCoeff**        m_qtTempCoeffY;
     TCoeff**        m_qtTempCoeffCb;
