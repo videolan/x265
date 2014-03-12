@@ -47,8 +47,6 @@
 
 using namespace x265;
 
-DECLARE_CYCLE_COUNTER(ME);
-
 //! \ingroup TLibEncoder
 //! \{
 
