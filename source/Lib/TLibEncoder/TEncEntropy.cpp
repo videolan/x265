@@ -576,13 +576,8 @@ void TEncEntropy::encodeQtRootCbfZero(TComDataCU* cu)
 }
 
 // dQP
-void TEncEntropy::encodeQP(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodeQP(TComDataCU* cu, uint32_t absPartIdx)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
-
     m_entropyCoderIf->codeDeltaQP(cu, absPartIdx);
 }
 

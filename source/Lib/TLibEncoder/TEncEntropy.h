@@ -172,7 +172,7 @@ public:
     void encodeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
-    void encodeQP(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeQP(TComDataCU* cu, uint32_t absPartIdx);
 
     void encodeScalingList(TComScalingList* scalingList);
 
