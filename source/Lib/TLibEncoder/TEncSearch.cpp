@@ -2230,6 +2230,11 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             int roiWidth, roiHeight;
             cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
+            /* xMergeEstimation calls xGetInterPredictionError(), which uses
+             * m_me.bufSAD(), which requires the PB size to be initialized */
+            Pel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
+            m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
+
             assert(cu->getPartitionSize(partAddr) != SIZE_2Nx2N);
 
             // find merge cost
