@@ -147,7 +147,7 @@ private:
 
     void xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
     void xWriteEpExGolomb(uint32_t symbol, uint32_t count);
-    void xWriteCoefRemainExGolomb(uint32_t symbol, uint32_t &param);
+    void xWriteCoefRemainExGolomb(uint32_t symbol, const uint32_t param);
 
     void xCopyFrom(TEncSbac* src);
     void xCopyContextsFrom(TEncSbac* src);

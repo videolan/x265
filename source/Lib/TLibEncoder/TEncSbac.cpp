@@ -1355,7 +1355,7 @@ void TEncSbac::xWriteEpExGolomb(uint32_t symbol, uint32_t count)
  * \param ruiGoRiceParam reference to Rice parameter
  * \returns void
  */
-void TEncSbac::xWriteCoefRemainExGolomb(uint32_t symbol, uint32_t &param)
+void TEncSbac::xWriteCoefRemainExGolomb(uint32_t symbol, const uint32_t param)
 {
     int codeNumber  = (int)symbol;
     uint32_t length;
