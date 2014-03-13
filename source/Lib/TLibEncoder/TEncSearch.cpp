@@ -2276,11 +2276,15 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 cu->fillMvpCand(partIdx, partAddr, l, ref, &amvpInfo[l][ref]);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
-                int mvpIdx;
+                MV mvc[AMVP_MAX_NUM_CANDS];
                 uint32_t bestCost = MAX_INT;
-                for (int i = 0; i < AMVP_MAX_NUM_CANDS; i++)
+                int mvpIdx;
+                int numMvc = 0;
+                for (int i = 0; i < amvpInfo[l][ref].m_num; i++)
                 {
                     MV mvCand = amvpInfo[l][ref].m_mvCand[i];
+                    if (mvCand.notZero())
+                        mvc[numMvc++] = mvCand;
 
                     // TODO: skip mvCand if Y is > merange and -FN>1
                     cu->clipMv(mvCand);
@@ -2297,16 +2301,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 }
 
                 MV mvmin, mvmax, outmv, mvp = amvpInfo[l][ref].m_mvCand[mvpIdx];
-
-                /* pass non-zero MVP candidates as motion candidates */
-                MV mvc[AMVP_MAX_NUM_CANDS];
-                int numMvc = 0;
-                for (int i = 0; i < amvpInfo[l][ref].m_num; i++)
-                {
-                    MV& mv = amvpInfo[l][ref].m_mvCand[i];
-                    if (mv.notZero())
-                        mvc[numMvc++] = mv;
-                }
 
                 int merange = m_cfg->param->searchRange;
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
