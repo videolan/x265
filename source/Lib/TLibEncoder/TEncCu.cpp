@@ -366,6 +366,10 @@ void TEncCu::init(Encoder* top)
 
 void TEncCu::compressCU(TComDataCU* cu)
 {
+    if (cu->getSlice()->getPPS()->getUseDQP())
+    {
+        setdQPFlag(true);
+    }
     // initialize CU data
     m_bestCU[0]->initCU(cu->getPic(), cu->getAddr());
     m_tempCU[0]->initCU(cu->getPic(), cu->getAddr());
@@ -374,7 +378,7 @@ void TEncCu::compressCU(TComDataCU* cu)
 #if LOG_CU_STATISTICS
     int numPartition = cu->getTotalNumPart();
 #endif
-
+    
     if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
     {
         xCompressIntraCU(m_bestCU[0], m_tempCU[0], 0);
