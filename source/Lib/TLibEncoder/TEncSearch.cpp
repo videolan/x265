@@ -102,7 +102,6 @@ TEncSearch::~TEncSearch()
     delete[] m_qtTempCoeffCr;
     delete[] m_qtTempShortYuv;
     m_qtTempTransformSkipYuv.destroy();
-    m_tmpYuvPred.destroy();
 }
 
 bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
@@ -145,8 +144,7 @@ bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     CHECKED_MALLOC(m_qtTempTUCoeffCb, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
     CHECKED_MALLOC(m_qtTempTUCoeffCr, TCoeff, MAX_TS_WIDTH * MAX_TS_HEIGHT);
 
-    return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->param->internalCsp) &&
-           m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param->internalCsp);
+    return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->param->internalCsp);
 
 fail:
     return false;
@@ -2143,8 +2141,8 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
         cu->getCUMvField(REF_PIC_LIST_1)->m_mv[m.absPartIdx] = m.mvFieldNeighbours[1 + 2 * mergeCand].mv;
         cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[m.absPartIdx] = m.mvFieldNeighbours[1 + 2 * mergeCand].refIdx;
 
-        motionCompensation(cu, &m_tmpYuvPred, REF_PIC_LIST_X, puIdx, true, false);
-        uint32_t costCand = m_me.bufSATD(m_tmpYuvPred.getLumaAddr(m.absPartIdx), m_tmpYuvPred.getStride());
+        motionCompensation(cu, &m_predTempYuv, REF_PIC_LIST_X, puIdx, true, false);
+        uint32_t costCand = m_me.bufSATD(m_predTempYuv.getLumaAddr(m.absPartIdx), m_predTempYuv.getStride());
         uint32_t bitsCand = mergeCand + 1;
         if (mergeCand == m_cfg->param->maxNumMergeCand - 1)
         {

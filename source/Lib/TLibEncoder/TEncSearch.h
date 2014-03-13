@@ -136,8 +136,6 @@ protected:
     // ME parameters
     int             m_refLagPixels;
 
-    TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xMergeEstimation
-
     // Color space parameters
     uint32_t        m_section;
     uint32_t        m_splitMode;

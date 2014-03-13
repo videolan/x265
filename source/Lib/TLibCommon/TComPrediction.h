@@ -65,7 +65,7 @@ protected:
 
     // references sample for IntraPrediction
     TComYuv   m_predYuv[2];
-    ShortYuv m_predShortYuv[2];
+    ShortYuv  m_predShortYuv[2];
     TComYuv   m_predTempYuv;
 
     int16_t*  m_immedVals;
