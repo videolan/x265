@@ -129,7 +129,6 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 static const MV hex2[8] = { MV(-1, -2), MV(-2, 0), MV(-1, 2), MV(1, 2), MV(2, 0), MV(1, -2), MV(-1, -2), MV(-2, 0) };
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
 static const MV square1[9] = { MV(0, 0), MV(0, -1), MV(0, 1), MV(-1, 0), MV(1, 0), MV(-1, -1), MV(-1, 1), MV(1, -1), MV(1, 1) };
-static const int square1_dir[9] = { 0, 1, 1, 2, 2, 1, 1, 1, 1 };
 static const MV hex4[16] =
 {
     MV(0, -4),  MV(0, 4),  MV(-2, -3), MV(2, -3),
