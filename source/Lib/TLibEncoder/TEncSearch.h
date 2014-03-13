@@ -222,9 +222,6 @@ protected:
     void xCheckBestMVP(AMVPInfo* amvpInfo, MV cMv, MV& mvPred, int& mvpIdx,
                        uint32_t& outBits, uint32_t& outCost);
 
-    uint32_t xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand,
-                              int picList, int refIdx, int sizex, int sizey);
-
     void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     void xMergeEstimation(TComDataCU* cu, int partIdx, uint32_t& uiInterDir,

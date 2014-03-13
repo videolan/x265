@@ -2454,27 +2454,32 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     return true;
 }
 
-// AMVP
+// Pick the best possible MVP from candidates based on least residual
 void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list, int refIdx, MV& mvPred, AMVPInfo* amvpInfo)
 {
-    MV   bestMv;
     int  bestIdx = 0;
     uint32_t bestCost = MAX_INT;
-    uint32_t partAddr = 0;
-    int  roiWidth, roiHeight;
-    int  i;
 
+    uint32_t partAddr = 0;
+    int roiWidth, roiHeight;
     cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
     // Fill the MV Candidates
     cu->fillMvpCand(partIdx, partAddr, list, refIdx, amvpInfo);
+    MV bestMv;
 
-    bestMv = amvpInfo->m_mvCand[0];
-
-    //-- Check Minimum Cost.
-    for (i = 0; i < AMVP_MAX_NUM_CANDS; i++)
+    for (int i = 0; i < AMVP_MAX_NUM_CANDS; i++)
     {
-        uint32_t cost = xGetTemplateCost(cu, partAddr, &m_predTempYuv, amvpInfo->m_mvCand[i], list, refIdx, roiWidth, roiHeight);
+        MV mvCand = amvpInfo->m_mvCand[i];
+
+        // TODO: skip mvCand if Y is > merange and -FN>1
+        cu->clipMv(mvCand);
+
+        xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(list, refIdx)->getPicYuvRec(), partAddr, &mvCand, roiWidth, roiHeight, &m_predTempYuv);
+
+        uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
+        cost = m_rdCost->calcRdSADCost(cost, MVP_IDX_BITS);
+
         if (bestCost > cost)
         {
             bestCost = cost;
@@ -2571,21 +2576,6 @@ void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMv
         outBits = origOutBits - mvBitsOrig + bestMvBits;
         outCost = (outCost - m_rdCost->getCost(origOutBits))  + m_rdCost->getCost(outBits);
     }
-}
-
-uint32_t TEncSearch::xGetTemplateCost(TComDataCU* cu, uint32_t partAddr, TComYuv* templateCand, MV mvCand,
-                                      int list, int refIdx, int sizex, int sizey)
-{
-    // TODO: does it clip with m_referenceRowsAvailable?
-    cu->clipMv(mvCand);
-
-    // prediction pattern
-    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(list, refIdx)->getPicYuvRec(), partAddr, &mvCand, sizex, sizey, templateCand);
-
-    // calc distortion
-    uint32_t cost = m_me.bufSAD(templateCand->getLumaAddr(partAddr), templateCand->getStride());
-    x265_emms();
-    return m_rdCost->calcRdSADCost(cost, MVP_IDX_BITS);
 }
 
 void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax)
