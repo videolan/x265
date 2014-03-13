@@ -2492,7 +2492,10 @@ void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_
     }
     else if ((cuMode == SIZE_2NxN || cuMode == SIZE_2NxnU) || cuMode == SIZE_2NxnD)
     {
-        static const uint32_t aauiMbBits[2][3][3] = { { { 0, 0, 3 }, { 0, 0, 0 }, { 0, 0, 0 } }, { { 5, 7, 7 }, { 7, 5, 7 }, { 9 - 3, 9 - 3, 9 - 3 } } };
+        static const uint32_t listBits[2][3][3] = {
+            { { 0, 0, 3 }, { 0, 0, 0 }, { 0, 0, 0 } },
+            { { 5, 7, 7 }, { 7, 5, 7 }, { 9 - 3, 9 - 3, 9 - 3 } }
+        };
         if (bPSlice)
         {
             blockBit[0] = 3;
@@ -2501,12 +2504,15 @@ void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_
         }
         else
         {
-            ::memcpy(blockBit, aauiMbBits[partIdx][lastMode], 3 * sizeof(uint32_t));
+            ::memcpy(blockBit, listBits[partIdx][lastMode], 3 * sizeof(uint32_t));
         }
     }
     else if ((cuMode == SIZE_Nx2N || cuMode == SIZE_nLx2N) || cuMode == SIZE_nRx2N)
     {
-        static const uint32_t aauiMbBits[2][3][3] = { { { 0, 2, 3 }, { 0, 0, 0 }, { 0, 0, 0 } }, { { 5, 7, 7 }, { 7 - 2, 7 - 2, 9 - 2 }, { 9 - 3, 9 - 3, 9 - 3 } } };
+        static const uint32_t listBits[2][3][3] = {
+            { { 0, 2, 3 }, { 0, 0, 0 }, { 0, 0, 0 } },
+            { { 5, 7, 7 }, { 7 - 2, 7 - 2, 9 - 2 }, { 9 - 3, 9 - 3, 9 - 3 } }
+        };
         if (bPSlice)
         {
             blockBit[0] = 3;
@@ -2515,7 +2521,7 @@ void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_
         }
         else
         {
-            ::memcpy(blockBit, aauiMbBits[partIdx][lastMode], 3 * sizeof(uint32_t));
+            ::memcpy(blockBit, listBits[partIdx][lastMode], 3 * sizeof(uint32_t));
         }
     }
     else if (cuMode == SIZE_NxN)
