@@ -1056,7 +1056,7 @@ void FrameEncoder::processRowEncoder(int row)
             int qp = calcQpForCu(m_pic, cuAddr, qpBase);
             setLambda(qp, row);
             qp = X265_MIN(qp, MAX_QP);
-            cu->setQP(0, char(qp));
+            cu->setQPSubParts(char(qp), 0, 0);
             cu->m_baseQp = qpBase;
             if (m_cfg->param->rc.aqMode)
                 m_pic->m_qpaAq[row] += qp;
