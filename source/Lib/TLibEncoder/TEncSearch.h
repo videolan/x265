@@ -107,7 +107,7 @@ protected:
     // ME parameters
     int             m_refLagPixels;
 
-    TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
+    TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xMergeEstimation
 
     // Color space parameters
     uint32_t        m_section;
@@ -133,10 +133,6 @@ public:
     virtual ~TEncSearch();
 
     bool init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
-
-protected:
-
-    uint32_t xGetInterPredictionError(TComDataCU* cu, int partIdx);
 
 public:
 

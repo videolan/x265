@@ -2089,18 +2089,6 @@ void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     cu->copyToPic(depth, 0, 0);
 }
 
-uint32_t TEncSearch::xGetInterPredictionError(TComDataCU* cu, int partIdx)
-{
-    uint32_t absPartIdx;
-    int width, height;
-
-    motionCompensation(cu, &m_tmpYuvPred, REF_PIC_LIST_X, partIdx, true, false);
-    cu->getPartIndexAndSize(partIdx, absPartIdx, width, height);
-    uint32_t cost = m_me.bufSATD(m_tmpYuvPred.getLumaAddr(absPartIdx), m_tmpYuvPred.getStride());
-    x265_emms();
-    return cost;
-}
-
 /** estimation of best merge coding
  * \param cu
  * \param fencYuv
@@ -2113,7 +2101,9 @@ uint32_t TEncSearch::xGetInterPredictionError(TComDataCU* cu, int partIdx)
  * \param neighCands
  * \returns void
  */
-void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir, TComMvField* mvField, uint32_t& mergeIndex, uint32_t& outCost, uint32_t& outbits, TComMvField* mvFieldNeighbours, uint8_t* interDirNeighbours, int& numValidMergeCand)
+void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir, TComMvField* mvField, uint32_t& mergeIndex,
+                                  uint32_t& outCost, uint32_t& outbits, TComMvField* mvFieldNeighbours, uint8_t* interDirNeighbours,
+                                  int& numValidMergeCand)
 {
     uint32_t absPartIdx = 0;
     int width = 0;
@@ -2153,7 +2143,8 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
         cu->getCUMvField(REF_PIC_LIST_1)->m_mv[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].mv;
         cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].refIdx;
 
-        uint32_t costCand = xGetInterPredictionError(cu, puIdx);
+        motionCompensation(cu, &m_tmpYuvPred, REF_PIC_LIST_X, puIdx, true, false);
+        uint32_t costCand = m_me.bufSATD(m_tmpYuvPred.getLumaAddr(absPartIdx), m_tmpYuvPred.getStride());
         uint32_t bitsCand = mergeCand + 1;
         if (mergeCand == m_cfg->param->maxNumMergeCand - 1)
         {
@@ -2222,12 +2213,11 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             int roiWidth, roiHeight;
             cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
-            /* xMergeEstimation calls xGetInterPredictionError(), which uses
-             * m_me.bufSAD(), which requires the PB size to be initialized */
+            /* xMergeEstimation uses m_me.bufSAD(), which requires the PB size to be initialized */
             Pel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
             m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
 
-            assert(cu->getPartitionSize(partAddr) != SIZE_2Nx2N);
+            assert(cu->getPartitionSize(partAddr) != SIZE_2Nx2N); // TODO: impossible when numPart == 2
 
             // find merge cost
             TComMvField mrgMvField[2];
@@ -2235,7 +2225,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             uint32_t mrgIndex = MAX_UINT;
             uint32_t mrgCost = MAX_UINT;
             uint32_t mrgBits = 0;
-            xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mrgBits, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+            xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mrgBits, mvFieldNeighbours,
+                             interDirNeighbours, numValidMergeCand);
             if (mrgCost == MAX_UINT)
             {
                 /* No valid merge modes were found, there is no possible way to
@@ -2474,6 +2465,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, true, bChroma);
     }
 
+    x265_emms();
     cu->m_totalBits = totalmebits;
     return true;
 }
