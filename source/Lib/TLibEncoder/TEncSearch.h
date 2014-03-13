@@ -68,6 +68,35 @@ static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
 class TEncCu;
 class Encoder;
 
+struct MotionData
+{
+    MV  mv;
+    MV  mvp;
+    int mvpIdx;
+    int ref;
+    uint32_t cost;
+    int bits;
+};
+
+struct MergeData
+{
+    /* merge candidate data, cached between calls to xMergeEstimation */
+    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1];
+    uint8_t     interDirNeighbours[MRG_MAX_NUM_CANDS];
+    int         numValidMergeCand;
+
+    /* data updated for each partition */
+    uint32_t    absPartIdx;
+    int         width;
+    int         height;
+
+    /* outputs */
+    TComMvField mvField[2];
+    uint32_t    interDir;
+    uint32_t    index;
+    uint32_t    bits;
+};
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -221,9 +250,7 @@ protected:
 
     void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
-    void xMergeEstimation(TComDataCU* cu, int partIdx, uint32_t& uiInterDir,
-                          TComMvField* pacMvField, uint32_t& mergeIndex, uint32_t& outCost, uint32_t& outbits,
-                          TComMvField* mvFieldNeighbors, uint8_t* interDirNeighbors, int& numValidMergeCand);
+    uint32_t xMergeEstimation(TComDataCU* cu, int partIdx, MergeData& m);
 
     // -------------------------------------------------------------------------------------------------------------------
     // motion estimation

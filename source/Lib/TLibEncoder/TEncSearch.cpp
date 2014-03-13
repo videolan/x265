@@ -2091,72 +2091,60 @@ void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
 /** estimation of best merge coding
  * \param cu
- * \param fencYuv
  * \param puIdx
- * \param interDir
- * \param pacMvField
- * \param mergeIndex
- * \param outCost
- * \param outBits
- * \param neighCands
+ * \param m
  * \returns void
  */
-void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir, TComMvField* mvField, uint32_t& mergeIndex,
-                                  uint32_t& outCost, uint32_t& outbits, TComMvField* mvFieldNeighbours, uint8_t* interDirNeighbours,
-                                  int& numValidMergeCand)
+uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
 {
-    uint32_t absPartIdx = 0;
-    int width = 0;
-    int height = 0;
-
-    cu->getPartIndexAndSize(puIdx, absPartIdx, width, height);
-    uint32_t depth = cu->getDepth(absPartIdx);
+    uint32_t depth    = cu->getDepth(m.absPartIdx);
     PartSize partSize = cu->getPartitionSize(0);
+
     if (cu->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() && partSize != SIZE_2Nx2N && cu->getCUSize(0) <= 8)
     {
         cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
         if (puIdx == 0)
         {
-            cu->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+            cu->getInterMergeCandidates(0, 0, m.mvFieldNeighbours, m.interDirNeighbours, m.numValidMergeCand);
         }
         cu->setPartSizeSubParts(partSize, 0, depth);
     }
     else
     {
-        cu->getInterMergeCandidates(absPartIdx, puIdx, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+        cu->getInterMergeCandidates(m.absPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours, m.numValidMergeCand);
     }
     /* convert bidir merge candidates into unidir
      * TODO: why did the HM do this?, why use MV pairs below? */
     if (cu->isBipredRestriction())
     {
-        for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
+        for (uint32_t mergeCand = 0; mergeCand < m.numValidMergeCand; ++mergeCand)
         {
-            if (interDirNeighbours[mergeCand] == 3)
+            if (m.interDirNeighbours[mergeCand] == 3)
             {
-                interDirNeighbours[mergeCand] = 1;
-                mvFieldNeighbours[(mergeCand << 1) + 1].setMvField(MV(0, 0), -1);
+                m.interDirNeighbours[mergeCand] = 1;
+                m.mvFieldNeighbours[(mergeCand << 1) + 1].setMvField(MV(0, 0), -1);
             }
         }
     }
 
-    outCost = MAX_UINT;
-    for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
+    uint32_t outCost = MAX_UINT;
+    for (uint32_t mergeCand = 0; mergeCand < m.numValidMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
         if (m_cfg->param->frameNumThreads > 1 &&
-            (mvFieldNeighbours[0 + 2 * mergeCand].mv.y >= (m_cfg->param->searchRange + 1) * 4 ||
-             mvFieldNeighbours[1 + 2 * mergeCand].mv.y >= (m_cfg->param->searchRange + 1) * 4))
+            (m.mvFieldNeighbours[0 + 2 * mergeCand].mv.y >= (m_cfg->param->searchRange + 1) * 4 ||
+             m.mvFieldNeighbours[1 + 2 * mergeCand].mv.y >= (m_cfg->param->searchRange + 1) * 4))
         {
             continue;
         }
 
-        cu->getCUMvField(REF_PIC_LIST_0)->m_mv[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].mv;
-        cu->getCUMvField(REF_PIC_LIST_0)->m_refIdx[absPartIdx] = mvFieldNeighbours[0 + 2 * mergeCand].refIdx;
-        cu->getCUMvField(REF_PIC_LIST_1)->m_mv[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].mv;
-        cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[absPartIdx] = mvFieldNeighbours[1 + 2 * mergeCand].refIdx;
+        cu->getCUMvField(REF_PIC_LIST_0)->m_mv[m.absPartIdx] = m.mvFieldNeighbours[0 + 2 * mergeCand].mv;
+        cu->getCUMvField(REF_PIC_LIST_0)->m_refIdx[m.absPartIdx] = m.mvFieldNeighbours[0 + 2 * mergeCand].refIdx;
+        cu->getCUMvField(REF_PIC_LIST_1)->m_mv[m.absPartIdx] = m.mvFieldNeighbours[1 + 2 * mergeCand].mv;
+        cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[m.absPartIdx] = m.mvFieldNeighbours[1 + 2 * mergeCand].refIdx;
 
         motionCompensation(cu, &m_tmpYuvPred, REF_PIC_LIST_X, puIdx, true, false);
-        uint32_t costCand = m_me.bufSATD(m_tmpYuvPred.getLumaAddr(absPartIdx), m_tmpYuvPred.getStride());
+        uint32_t costCand = m_me.bufSATD(m_tmpYuvPred.getLumaAddr(m.absPartIdx), m_tmpYuvPred.getStride());
         uint32_t bitsCand = mergeCand + 1;
         if (mergeCand == m_cfg->param->maxNumMergeCand - 1)
         {
@@ -2166,13 +2154,15 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
         if (costCand < outCost)
         {
             outCost = costCand;
-            outbits = bitsCand;
-            mvField[0] = mvFieldNeighbours[0 + 2 * mergeCand];
-            mvField[1] = mvFieldNeighbours[1 + 2 * mergeCand];
-            interDir = interDirNeighbours[mergeCand];
-            mergeIndex = mergeCand;
+            m.bits = bitsCand;
+            m.mvField[0] = m.mvFieldNeighbours[0 + 2 * mergeCand];
+            m.mvField[1] = m.mvFieldNeighbours[1 + 2 * mergeCand];
+            m.interDir = m.interDirNeighbours[mergeCand];
+            m.index = mergeCand;
         }
     }
+
+    return outCost;
 }
 
 /** search of the best candidate for inter prediction
@@ -2186,17 +2176,15 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 {
     AMVPInfo amvpInfo[2][MAX_NUM_REF];
 
-    /* merge candidate data, cached between calls to xMergeEstimation */
-    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1];
-    uint8_t     interDirNeighbours[MRG_MAX_NUM_CANDS];
-    int         numValidMergeCand = 0;
-
     TComPicYuv *fenc    = cu->getSlice()->getPic()->getPicYuvOrg();
     PartSize partSize   = cu->getPartitionSize(0);
     int      numPart    = cu->getNumPartInter();
     int      numPredDir = cu->getSlice()->isInterP() ? 1 : 2;
     uint32_t lastMode = 0;
     int      totalmebits = 0;
+
+    MergeData merge;
+    memset(&merge, 0, sizeof(merge));
 
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
@@ -2207,17 +2195,15 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         Pel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
 
-        /* find best cost merge candidate */
-        TComMvField mrgMvField[2];
-        uint32_t mrgInterDir = 0;
-        uint32_t mrgIndex = MAX_UINT;
         uint32_t mrgCost = MAX_UINT;
-        uint32_t mrgBits = 0;
 
+        /* find best cost merge candidate */
         if (cu->getPartitionSize(partAddr) != SIZE_2Nx2N)
         {
-            xMergeEstimation(cu, partIdx, mrgInterDir, mrgMvField, mrgIndex, mrgCost, mrgBits, mvFieldNeighbours,
-                             interDirNeighbours, numValidMergeCand);
+            merge.absPartIdx = partAddr;
+            merge.width = roiWidth;
+            merge.height = roiHeight;
+            mrgCost = xMergeEstimation(cu, partIdx, merge);
 
             if (bMergeOnly && cu->getCUSize(0) > 8)
             {
@@ -2229,26 +2215,17 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 }
                 // set merge result
                 cu->setMergeFlag(partAddr, true);
-                cu->setMergeIndex(partAddr, mrgIndex);
-                cu->setInterDirSubParts(mrgInterDir, partAddr, partIdx, cu->getDepth(partAddr));
-                cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mrgMvField[0], partSize, partAddr, 0, partIdx);
-                cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mrgMvField[1], partSize, partAddr, 0, partIdx);
-                totalmebits += mrgBits;
+                cu->setMergeIndex(partAddr, merge.index);
+                cu->setInterDirSubParts(merge.interDir, partAddr, partIdx, cu->getDepth(partAddr));
+                cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(merge.mvField[0], partSize, partAddr, 0, partIdx);
+                cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
+                totalmebits += merge.bits;
 
                 motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, true, bChroma);
                 continue;
             }
         }
 
-        struct MotionData
-        {
-            MV  mv;
-            MV  mvp;
-            int mvpIdx;
-            int ref;
-            uint32_t cost;
-            int bits;
-        };
         MotionData list[2];
         MotionData bidir[2];
         uint32_t listSelBits[3]; // cost in bits of selecting a particular ref list
@@ -2397,14 +2374,14 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         if (mrgCost < bidirCost && mrgCost < list[0].cost && mrgCost < list[1].cost)
         {
             cu->setMergeFlag(partAddr, true);
-            cu->setMergeIndex(partAddr, mrgIndex);
-            cu->setInterDirSubParts(mrgInterDir, partAddr, partIdx, cu->getDepth(partAddr));
-            cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mrgMvField[0], partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mrgMvField[1], partSize, partAddr, 0, partIdx);
+            cu->setMergeIndex(partAddr, merge.index);
+            cu->setInterDirSubParts(merge.interDir, partAddr, partIdx, cu->getDepth(partAddr));
+            cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(merge.mvField[0], partSize, partAddr, 0, partIdx);
+            cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
             cu->setMVPIdx(REF_PIC_LIST_0, partAddr, list[0].mvpIdx);
             cu->setMVPIdx(REF_PIC_LIST_1, partAddr, list[1].mvpIdx);
 
-            totalmebits += mrgBits;
+            totalmebits += merge.bits;
         }
         else if (bidirCost < list[0].cost && bidirCost < list[1].cost)
         {
