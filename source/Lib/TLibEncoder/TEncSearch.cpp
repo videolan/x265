@@ -2125,7 +2125,19 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
     {
         cu->getInterMergeCandidates(absPartIdx, puIdx, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
     }
-    xRestrictBipredMergeCand(cu, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+    /* convert bidir merge candidates into unidir
+     * TODO: why did the HM do this?, why use MV pairs below? */
+    if (cu->isBipredRestriction())
+    {
+        for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
+        {
+            if (interDirNeighbours[mergeCand] == 3)
+            {
+                interDirNeighbours[mergeCand] = 1;
+                mvFieldNeighbours[(mergeCand << 1) + 1].setMvField(MV(0, 0), -1);
+            }
+        }
+    }
 
     outCost = MAX_UINT;
     for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
@@ -2159,29 +2171,6 @@ void TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, uint32_t& interDir,
             mvField[1] = mvFieldNeighbours[1 + 2 * mergeCand];
             interDir = interDirNeighbours[mergeCand];
             mergeIndex = mergeCand;
-        }
-    }
-}
-
-/** convert bi-pred merge candidates to uni-pred
- * \param cu
- * \param puIdx
- * \param mvFieldNeighbours
- * \param interDirNeighbours
- * \param numValidMergeCand
- * \returns void
- */
-void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNeighbours, uint8_t* interDirNeighbours, int numValidMergeCand)
-{
-    if (cu->isBipredRestriction())
-    {
-        for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
-        {
-            if (interDirNeighbours[mergeCand] == 3)
-            {
-                interDirNeighbours[mergeCand] = 1;
-                mvFieldNeighbours[(mergeCand << 1) + 1].setMvField(MV(0, 0), -1);
-            }
         }
     }
 }

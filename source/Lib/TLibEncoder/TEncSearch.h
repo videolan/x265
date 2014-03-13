@@ -228,9 +228,6 @@ protected:
                           TComMvField* pacMvField, uint32_t& mergeIndex, uint32_t& outCost, uint32_t& outbits,
                           TComMvField* mvFieldNeighbors, uint8_t* interDirNeighbors, int& numValidMergeCand);
 
-    void xRestrictBipredMergeCand(TComDataCU* cu, TComMvField* mvFieldNeighbours,
-                                  uint8_t* interDirNeighbours, int numValidMergeCand);
-
     // -------------------------------------------------------------------------------------------------------------------
     // motion estimation
     // -------------------------------------------------------------------------------------------------------------------
