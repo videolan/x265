@@ -1169,13 +1169,15 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         bBoundary = true;
     }
 
+    if ((g_maxCUSize >> depth) >= cu->getSlice()->getPPS()->getMinCuDQPSize() && cu->getSlice()->getPPS()->getUseDQP())
+    {
+        setdQPFlag(true);
+    }
+
     if (((depth < cu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth))) || bBoundary)
     {
         uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
-        if ((g_maxCUSize >> depth) == cu->getSlice()->getPPS()->getMinCuDQPSize() && cu->getSlice()->getPPS()->getUseDQP())
-        {
-            setdQPFlag(true);
-        }
+        
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
             lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
@@ -1190,10 +1192,7 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         return;
     }
 
-    if ((g_maxCUSize >> depth) >= cu->getSlice()->getPPS()->getMinCuDQPSize() && cu->getSlice()->getPPS()->getUseDQP())
-    {
-        setdQPFlag(true);
-    }
+    
     if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
         m_entropyCoder->encodeCUTransquantBypassFlag(cu, absPartIdx);
