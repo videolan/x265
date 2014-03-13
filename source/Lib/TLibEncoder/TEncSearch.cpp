@@ -2272,9 +2272,31 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     if (ref == cu->getSlice()->getNumRefIdx(l) - 1)
                         bits--;
                 }
-                MV mvmin, mvmax, outmv, mvp;
-                xEstimateMvPredAMVP(cu, partIdx, l, ref, mvp, &amvpInfo[l][ref]);
-                int mvpIdx = cu->getMVPIdx(l, partAddr);
+
+                cu->fillMvpCand(partIdx, partAddr, l, ref, &amvpInfo[l][ref]);
+
+                // Pick the best possible MVP from AMVP candidates based on least residual
+                int mvpIdx;
+                uint32_t bestCost = MAX_INT;
+                for (int i = 0; i < AMVP_MAX_NUM_CANDS; i++)
+                {
+                    MV mvCand = amvpInfo[l][ref].m_mvCand[i];
+
+                    // TODO: skip mvCand if Y is > merange and -FN>1
+                    cu->clipMv(mvCand);
+
+                    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(l, ref)->getPicYuvRec(), partAddr, &mvCand, roiWidth, roiHeight, &m_predTempYuv);
+                    uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
+                    cost = m_rdCost->calcRdSADCost(cost, MVP_IDX_BITS);
+
+                    if (bestCost > cost)
+                    {
+                        bestCost = cost;
+                        mvpIdx  = i;
+                    }
+                }
+
+                MV mvmin, mvmax, outmv, mvp = amvpInfo[l][ref].m_mvCand[mvpIdx];
 
                 /* pass non-zero MVP candidates as motion candidates */
                 MV mvc[AMVP_MAX_NUM_CANDS];
@@ -2441,45 +2463,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     x265_emms();
     cu->m_totalBits = totalmebits;
     return true;
-}
-
-// Pick the best possible MVP from candidates based on least residual
-void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, uint32_t partIdx, int list, int refIdx, MV& mvPred, AMVPInfo* amvpInfo)
-{
-    int  bestIdx = 0;
-    uint32_t bestCost = MAX_INT;
-
-    uint32_t partAddr = 0;
-    int roiWidth, roiHeight;
-    cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
-
-    // Fill the MV Candidates
-    cu->fillMvpCand(partIdx, partAddr, list, refIdx, amvpInfo);
-    MV bestMv;
-
-    for (int i = 0; i < AMVP_MAX_NUM_CANDS; i++)
-    {
-        MV mvCand = amvpInfo->m_mvCand[i];
-
-        // TODO: skip mvCand if Y is > merange and -FN>1
-        cu->clipMv(mvCand);
-
-        xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(list, refIdx)->getPicYuvRec(), partAddr, &mvCand, roiWidth, roiHeight, &m_predTempYuv);
-
-        uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
-        cost = m_rdCost->calcRdSADCost(cost, MVP_IDX_BITS);
-
-        if (bestCost > cost)
-        {
-            bestCost = cost;
-            bestMv   = amvpInfo->m_mvCand[i];
-            bestIdx  = i;
-        }
-    }
-
-    // Setting Best MVP
-    mvPred = bestMv;
-    cu->setMVPIdx(list, partAddr, bestIdx);
 }
 
 void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
