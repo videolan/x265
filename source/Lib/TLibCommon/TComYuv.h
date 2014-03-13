@@ -140,14 +140,9 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Clip(srcYuv0 + srcYuv1) -> m_apiBuf
-    void    addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void    addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
-    void    addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part);
-
-    //  srcYuv0 - srcYuv1 -> m_apiBuf
-    void    subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void    subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void    subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void    addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize);
+    void    addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part);
+    void    addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part);
 
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
     void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);

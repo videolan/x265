@@ -2049,10 +2049,10 @@ void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     uint32_t chromaOffset = lumaOffset >> 2;
 
     // Luminance
-    Pel*   fenc = fencYuv->getLumaAddr(0, width);
-    int16_t* resi = resiYuv->getLumaAddr(0, width);
-    Pel*   pred = predYuv->getLumaAddr(0, width);
-    Pel*   recon = reconYuv->getLumaAddr(0, width);
+    Pel*   fenc = fencYuv->getLumaAddr();
+    int16_t* resi = resiYuv->getLumaAddr();
+    Pel*   pred = predYuv->getLumaAddr();
+    Pel*   recon = reconYuv->getLumaAddr();
     Pel*   pcm  = cu->getPCMSampleY() + lumaOffset;
 
     xEncPCM(cu, 0, fenc, pcm, pred, resi, recon, stride, width, height, TEXT_LUMA);
@@ -2730,7 +2730,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     qp = bHighPass ? Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, (int)cu->getQP(0)) : cu->getQP(0);
 
-    outResiYuv->subtract(fencYuv, predYuv, 0, width);
+    outResiYuv->subtract(fencYuv, predYuv, width);
 
     cost = 0;
     bits = 0;
@@ -2795,7 +2795,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     if (cu->getQtRootCbf(0))
     {
-        outReconYuv->addClip(predYuv, outBestResiYuv, 0, width);
+        outReconYuv->addClip(predYuv, outBestResiYuv, width);
     }
     else
     {
@@ -2838,7 +2838,7 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
         uint32_t width  = cu->getCUSize(0);
         if (cu->getQtRootCbf(0))
         {
-            reconYuv->addClip(predYuv, resiYuv, 0, width);
+            reconYuv->addClip(predYuv, resiYuv, width);
         }
         else
         {

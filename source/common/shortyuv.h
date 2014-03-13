@@ -94,8 +94,8 @@ public:
 
     int16_t* getCrAddr(uint32_t partIdx, uint32_t size) { return m_bufCr + getAddrOffset(partIdx, size, m_cwidth); }
 
-    void subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
-    void addClip(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize);
+    void subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partSize);
+    void addClip(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize);
 
     void copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
     void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, bool bChromaSame);

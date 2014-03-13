@@ -145,15 +145,15 @@ void TComYuv::copyToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 {
     pixel* srcY = getLumaAddr(partIdx);
-    pixel* dstY = dstPicYuv->getLumaAddr(0);
+    pixel* dstY = dstPicYuv->getLumaAddr();
 
     int part = dstPicYuv->m_part;
     primitives.luma_copy_pp[part](dstY, dstPicYuv->getStride(), srcY, getStride());
 
     pixel* srcU = getCbAddr(partIdx);
     pixel* srcV = getCrAddr(partIdx);
-    pixel* dstU = dstPicYuv->getCbAddr(0);
-    pixel* dstV = dstPicYuv->getCrAddr(0);
+    pixel* dstU = dstPicYuv->getCbAddr();
+    pixel* dstV = dstPicYuv->getCrAddr();
     primitives.chroma[m_csp].copy_pp[part](dstU, dstPicYuv->getCStride(), srcU, getCStride());
     primitives.chroma[m_csp].copy_pp[part](dstV, dstPicYuv->getCStride(), srcV, getCStride());
 }
@@ -240,19 +240,19 @@ void TComYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32
     }
 }
 
-void TComYuv::addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
+void TComYuv::addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize)
 {
     int part = partitionFromSizes(partSize, partSize);
 
-    addClipLuma(srcYuv0, srcYuv1, trUnitIdx, partSize, part);
-    addClipChroma(srcYuv0, srcYuv1, trUnitIdx, partSize >> m_hChromaShift, part);
+    addClipLuma(srcYuv0, srcYuv1, part);
+    addClipChroma(srcYuv0, srcYuv1, part);
 }
 
-void TComYuv::addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part)
+void TComYuv::addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part)
 {
-    pixel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
-    int16_t* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    pixel* dst = getLumaAddr(trUnitIdx, partSize);
+    pixel* src0 = srcYuv0->getLumaAddr();
+    int16_t* src1 = srcYuv1->getLumaAddr();
+    pixel* dst = getLumaAddr();
 
     uint32_t src0Stride = srcYuv0->getStride();
     uint32_t src1Stride = srcYuv1->m_width;
@@ -261,14 +261,14 @@ void TComYuv::addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitId
     primitives.luma_add_ps[part](dst, dststride, src0, src1, src0Stride, src1Stride);
 }
 
-void TComYuv::addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize, uint32_t part)
+void TComYuv::addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part)
 {
-    pixel* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
-    int16_t* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
-    pixel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
-    int16_t* srcV1 = srcYuv1->getCrAddr(trUnitIdx, partSize);
-    pixel* dstU = getCbAddr(trUnitIdx, partSize);
-    pixel* dstV = getCrAddr(trUnitIdx, partSize);
+    pixel* srcU0 = srcYuv0->getCbAddr();
+    int16_t* srcU1 = srcYuv1->getCbAddr();
+    pixel* srcV0 = srcYuv0->getCrAddr();
+    int16_t* srcV1 = srcYuv1->getCrAddr();
+    pixel* dstU = getCbAddr();
+    pixel* dstV = getCrAddr();
 
     uint32_t src0Stride = srcYuv0->getCStride();
     uint32_t src1Stride = srcYuv1->m_cwidth;
@@ -276,69 +276,6 @@ void TComYuv::addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t trUnit
 
     primitives.chroma[m_csp].add_ps[part](dstU, dststride, srcU0, srcU1, src0Stride, src1Stride);
     primitives.chroma[m_csp].add_ps[part](dstV, dststride, srcV0, srcV1, src0Stride, src1Stride);
-}
-
-void TComYuv::subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
-{
-    subtractLuma(srcYuv0, srcYuv1,  trUnitIdx, partSize);
-    subtractChroma(srcYuv0, srcYuv1,  trUnitIdx, partSize >> 1);
-}
-
-void TComYuv::subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
-{
-    int x, y;
-
-    pixel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
-    pixel* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    pixel* dst  = getLumaAddr(trUnitIdx, partSize);
-
-    int src0Stride = srcYuv0->getStride();
-    int src1Stride = srcYuv1->getStride();
-    int dststride  = getStride();
-
-    for (y = partSize - 1; y >= 0; y--)
-    {
-        for (x = partSize - 1; x >= 0; x--)
-        {
-            dst[x] = src0[x] - src1[x];
-        }
-
-        src0 += src0Stride;
-        src1 += src1Stride;
-        dst  += dststride;
-    }
-}
-
-void TComYuv::subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t trUnitIdx, uint32_t partSize)
-{
-    int x, y;
-
-    pixel* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
-    pixel* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
-    pixel* srcV0 = srcYuv0->getCrAddr(trUnitIdx, partSize);
-    pixel* srcV1 = srcYuv1->getCrAddr(trUnitIdx, partSize);
-    pixel* dstU  = getCbAddr(trUnitIdx, partSize);
-    pixel* dstV  = getCrAddr(trUnitIdx, partSize);
-
-    int src0Stride = srcYuv0->getCStride();
-    int src1Stride = srcYuv1->getCStride();
-    int dststride  = getCStride();
-
-    for (y = partSize - 1; y >= 0; y--)
-    {
-        for (x = partSize - 1; x >= 0; x--)
-        {
-            dstU[x] = srcU0[x] - srcU1[x];
-            dstV[x] = srcV0[x] - srcV1[x];
-        }
-
-        srcU0 += src0Stride;
-        srcU1 += src1Stride;
-        srcV0 += src0Stride;
-        srcV1 += src1Stride;
-        dstU  += dststride;
-        dstV  += dststride;
-    }
 }
 
 void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
