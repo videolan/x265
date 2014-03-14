@@ -2253,7 +2253,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 // Pick the best possible MVP from AMVP candidates based on least residual
                 MV mvc[AMVP_MAX_NUM_CANDS];
                 uint32_t bestCost = MAX_INT;
-                int mvpIdx;
+                int mvpIdx = 0;
                 int numMvc = 0;
                 for (int i = 0; i < amvpInfo[l][ref].m_num; i++)
                 {
