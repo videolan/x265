@@ -30,7 +30,6 @@
 
 #define ITERS  100
 #define TEST_CASES 3
-#define IDCTMAX (1 << (BIT_DEPTH + 4)) - 1;
 using namespace x265;
 struct DctConf_t
 {
@@ -94,13 +93,13 @@ MBDstHarness::MBDstHarness()
     {
         short_test_buff[0][i]    = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
         int_test_buff[0][i]      = rand() % PIXEL_MAX;
-        int_idct_test_buff[0][i] = rand() % IDCTMAX;
+        int_idct_test_buff[0][i] = (rand() % (SHORT_MAX - SHORT_MIN)) - SHORT_MAX;
         short_test_buff[1][i]    = -PIXEL_MAX;
         int_test_buff[1][i]      = -PIXEL_MAX;
-        int_idct_test_buff[1][i] = 0;
+        int_idct_test_buff[1][i] = SHORT_MIN;
         short_test_buff[2][i]    = PIXEL_MAX;
         int_test_buff[2][i]      = PIXEL_MAX;
-        int_idct_test_buff[2][i] = IDCTMAX;
+        int_idct_test_buff[2][i] = SHORT_MAX;
     }
 
     for (int i = 0; i < mb_t_size; i++)

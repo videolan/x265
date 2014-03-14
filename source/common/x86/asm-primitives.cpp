@@ -1048,6 +1048,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INTRA_ANG_SSSE3(ssse3);
 
         p.dct[DST_4x4] = x265_dst4_ssse3;
+        p.idct[IDCT_8x8] = x265_idct8_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
@@ -1200,6 +1201,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma_p2s[X265_CSP_I444] = x265_luma_p2s_ssse3; // for i444 , chroma_p2s can be replaced by luma_p2s
 
         p.dct[DST_4x4] = x265_dst4_ssse3;
+        p.idct[IDCT_8x8] = x265_idct8_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
