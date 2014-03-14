@@ -321,6 +321,7 @@ SAD  16,  8
 SAD  16, 12
 SAD  16, 16
 SAD  16, 32
+SAD  16, 64
 
 INIT_XMM sse2
 SAD  8,  4

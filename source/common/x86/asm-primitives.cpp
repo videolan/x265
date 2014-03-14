@@ -126,6 +126,25 @@ extern "C" {
     p.sad_x4[LUMA_64x48] = x265_pixel_sad_x4_64x48_ ## cpu; \
     p.sad_x4[LUMA_64x64] = x265_pixel_sad_x4_64x64_ ## cpu
 
+#define SAD(cpu) \
+    p.sad[LUMA_8x32]  = x265_pixel_sad_8x32_ ## cpu; \
+    p.sad[LUMA_16x4]  = x265_pixel_sad_16x4_ ## cpu; \
+    p.sad[LUMA_16x12] = x265_pixel_sad_16x12_ ## cpu; \
+    p.sad[LUMA_16x32] = x265_pixel_sad_16x32_ ## cpu; \
+    p.sad[LUMA_16x64] = x265_pixel_sad_16x64_ ## cpu; \
+    p.sad[LUMA_32x8]  = x265_pixel_sad_32x8_ ## cpu; \
+    p.sad[LUMA_32x16] = x265_pixel_sad_32x16_ ## cpu; \
+    p.sad[LUMA_32x24] = x265_pixel_sad_32x24_ ## cpu; \
+    p.sad[LUMA_32x32] = x265_pixel_sad_32x32_ ## cpu; \
+    p.sad[LUMA_32x64] = x265_pixel_sad_32x64_ ## cpu; \
+    p.sad[LUMA_64x16] = x265_pixel_sad_64x16_ ## cpu; \
+    p.sad[LUMA_64x32] = x265_pixel_sad_64x32_ ## cpu; \
+    p.sad[LUMA_64x48] = x265_pixel_sad_64x48_ ## cpu; \
+    p.sad[LUMA_64x64] = x265_pixel_sad_64x64_ ## cpu; \
+    p.sad[LUMA_48x64] = x265_pixel_sad_48x64_ ## cpu; \
+    p.sad[LUMA_24x32] = x265_pixel_sad_24x32_ ## cpu; \
+    p.sad[LUMA_12x16] = x265_pixel_sad_12x16_ ## cpu
+
 #define ASSGN_SSE(cpu) \
     p.sse_pp[LUMA_8x8]   = x265_pixel_ssd_8x8_ ## cpu; \
     p.sse_pp[LUMA_8x4]   = x265_pixel_ssd_8x4_ ## cpu; \
@@ -914,6 +933,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #if HIGH_BIT_DEPTH
     if (cpuMask & X265_CPU_SSE2)
     {
+        INIT8(sad, _mmx2);
+        INIT2(sad, _sse2);
+        SAD(sse2);
+
         INIT6(satd, _sse2);
         HEVC_SATD(sse2);
         p.satd[LUMA_4x4] = x265_pixel_satd_4x4_mmx2;
@@ -1096,29 +1119,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         LUMA_VAR(_sse2);
 
-        p.sad[LUMA_8x32]  = x265_pixel_sad_8x32_sse2;
-        p.sad[LUMA_16x4]  = x265_pixel_sad_16x4_sse2;
-        p.sad[LUMA_16x12] = x265_pixel_sad_16x12_sse2;
-        p.sad[LUMA_16x32] = x265_pixel_sad_16x32_sse2;
-        p.sad[LUMA_16x64] = x265_pixel_sad_16x64_sse2;
-
-        p.sad[LUMA_32x8]  = x265_pixel_sad_32x8_sse2;
-        p.sad[LUMA_32x16] = x265_pixel_sad_32x16_sse2;
-        p.sad[LUMA_32x24] = x265_pixel_sad_32x24_sse2;
-        p.sad[LUMA_32x32] = x265_pixel_sad_32x32_sse2;
-        p.sad[LUMA_32x64] = x265_pixel_sad_32x64_sse2;
-
-        p.sad[LUMA_64x16] = x265_pixel_sad_64x16_sse2;
-        p.sad[LUMA_64x32] = x265_pixel_sad_64x32_sse2;
-        p.sad[LUMA_64x48] = x265_pixel_sad_64x48_sse2;
-        p.sad[LUMA_64x64] = x265_pixel_sad_64x64_sse2;
-
-        p.sad[LUMA_48x64] = x265_pixel_sad_48x64_sse2;
-        p.sad[LUMA_24x32] = x265_pixel_sad_24x32_sse2;
-        p.sad[LUMA_12x16] = x265_pixel_sad_12x16_sse2;
-
         ASSGN_SSE(sse2);
         INIT2(sad, _sse2);
+        SAD(sse2);
         INIT2(sad_x3, _sse2);
         INIT2(sad_x4, _sse2);
         HEVC_SATD(sse2);
