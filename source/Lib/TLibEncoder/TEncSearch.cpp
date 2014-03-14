@@ -2376,8 +2376,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             cu->setInterDirSubParts(merge.interDir, partAddr, partIdx, cu->getDepth(partAddr));
             cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(merge.mvField[0], partSize, partAddr, 0, partIdx);
             cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
-            cu->setMVPIdx(REF_PIC_LIST_0, partAddr, list[0].mvpIdx);
-            cu->setMVPIdx(REF_PIC_LIST_1, partAddr, list[1].mvpIdx);
 
             totalmebits += merge.bits;
         }
