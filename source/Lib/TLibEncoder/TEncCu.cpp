@@ -54,6 +54,29 @@ using namespace x265;
 
 TEncCu::TEncCu()
 {
+    m_interCU_2Nx2N   = NULL;
+    m_interCU_2NxN    = NULL;
+    m_interCU_Nx2N    = NULL;
+    m_intraInInterCU  = NULL;
+    m_mergeCU         = NULL;
+    m_bestMergeCU     = NULL;
+    m_bestCU          = NULL;
+    m_tempCU          = NULL;
+
+    m_bestPredYuv     = NULL;
+    m_bestResiYuv     = NULL;
+    m_bestRecoYuv     = NULL;
+
+    m_tmpPredYuv      = NULL;
+    m_tmpResiYuv      = NULL;
+    m_tmpRecoYuv      = NULL;
+    m_bestMergeRecoYuv = NULL;
+    m_origYuv         = NULL;
+    for (int i = 0; i < MAX_PRED_TYPES; i++)
+    {
+        m_modePredYuv[i] = NULL;
+    }
+
     m_search          = NULL;
     m_trQuant         = NULL;
     m_rdCost          = NULL;
@@ -172,75 +195,75 @@ void TEncCu::destroy()
 {
     for (int i = 0; i < m_totalDepth - 1; i++)
     {
-        if (m_interCU_2Nx2N[i])
+        if (m_interCU_2Nx2N && m_interCU_2Nx2N[i])
         {
             m_interCU_2Nx2N[i]->destroy();
             delete m_interCU_2Nx2N[i];
             m_interCU_2Nx2N[i] = NULL;
         }
-        if (m_interCU_2NxN[i])
+        if (m_interCU_2NxN && m_interCU_2NxN[i])
         {
             m_interCU_2NxN[i]->destroy();
             delete m_interCU_2NxN[i];
             m_interCU_2NxN[i] = NULL;
         }
-        if (m_interCU_Nx2N[i])
+        if (m_interCU_Nx2N && m_interCU_Nx2N[i])
         {
             m_interCU_Nx2N[i]->destroy();
             delete m_interCU_Nx2N[i];
             m_interCU_Nx2N[i] = NULL;
         }
-        if (m_intraInInterCU[i])
+        if (m_intraInInterCU && m_intraInInterCU[i])
         {
             m_intraInInterCU[i]->destroy();
             delete m_intraInInterCU[i];
             m_intraInInterCU[i] = NULL;
         }
-        if (m_mergeCU[i])
+        if (m_mergeCU && m_mergeCU[i])
         {
             m_mergeCU[i]->destroy();
             delete m_mergeCU[i];
             m_mergeCU[i] = NULL;
         }
-        if (m_bestMergeCU[i])
+        if (m_bestMergeCU && m_bestMergeCU[i])
         {
             m_bestMergeCU[i]->destroy();
             delete m_bestMergeCU[i];
             m_bestMergeCU[i] = NULL;
         }
-        if (m_bestCU[i])
+        if (m_bestCU && m_bestCU[i])
         {
             m_bestCU[i]->destroy();
             delete m_bestCU[i];
             m_bestCU[i] = NULL;
         }
-        if (m_tempCU[i])
+        if (m_tempCU && m_tempCU[i])
         {
             m_tempCU[i]->destroy();
             delete m_tempCU[i];
             m_tempCU[i] = NULL;
         }
 
-        if (m_bestPredYuv[i])
+        if (m_bestPredYuv && m_bestPredYuv[i])
         {
             m_bestPredYuv[i]->destroy();
             delete m_bestPredYuv[i];
             m_bestPredYuv[i] = NULL;
         }
-        if (m_bestResiYuv[i])
+        if (m_bestResiYuv && m_bestResiYuv[i])
         {
             m_bestResiYuv[i]->destroy();
             delete m_bestResiYuv[i];
             m_bestResiYuv[i] = NULL;
         }
-        if (m_bestRecoYuv[i])
+        if (m_bestRecoYuv && m_bestRecoYuv[i])
         {
             m_bestRecoYuv[i]->destroy();
             delete m_bestRecoYuv[i];
             m_bestRecoYuv[i] = NULL;
         }
 
-        if (m_tmpPredYuv[i])
+        if (m_tmpPredYuv && m_tmpPredYuv[i])
         {
             m_tmpPredYuv[i]->destroy();
             delete m_tmpPredYuv[i];
@@ -248,7 +271,7 @@ void TEncCu::destroy()
         }
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            if (m_modePredYuv[j][i])
+            if (m_modePredYuv[j] && m_modePredYuv[j][i])
             {
                 m_modePredYuv[j][i]->destroy();
                 delete m_modePredYuv[j][i];
@@ -256,26 +279,26 @@ void TEncCu::destroy()
             }
         }
 
-        if (m_tmpResiYuv[i])
+        if (m_tmpResiYuv && m_tmpResiYuv[i])
         {
             m_tmpResiYuv[i]->destroy();
             delete m_tmpResiYuv[i];
             m_tmpResiYuv[i] = NULL;
         }
-        if (m_tmpRecoYuv[i])
+        if (m_tmpRecoYuv && m_tmpRecoYuv[i])
         {
             m_tmpRecoYuv[i]->destroy();
             delete m_tmpRecoYuv[i];
             m_tmpRecoYuv[i] = NULL;
         }
-        if (m_bestMergeRecoYuv[i])
+        if (m_bestMergeRecoYuv && m_bestMergeRecoYuv[i])
         {
             m_bestMergeRecoYuv[i]->destroy();
             delete m_bestMergeRecoYuv[i];
             m_bestMergeRecoYuv[i] = NULL;
         }
 
-        if (m_origYuv[i])
+        if (m_origYuv && m_origYuv[i])
         {
             m_origYuv[i]->destroy();
             delete m_origYuv[i];
