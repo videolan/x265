@@ -1355,29 +1355,35 @@ void TEncSbac::xWriteEpExGolomb(uint32_t symbol, uint32_t count)
  * \param ruiGoRiceParam reference to Rice parameter
  * \returns void
  */
-void TEncSbac::xWriteCoefRemainExGolomb(uint32_t symbol, const uint32_t param)
+void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absGoRice)
 {
-    int codeNumber  = (int)symbol;
     uint32_t length;
+    const uint32_t codeRemain = codeNumber & ((1 << absGoRice) - 1);
 
-    if (codeNumber < (COEF_REMAIN_BIN_REDUCTION << param))
+    if ((codeNumber >> absGoRice) < COEF_REMAIN_BIN_REDUCTION)
     {
-        length = codeNumber >> param;
-        codeNumber -= length << param;
-        m_binIf->encodeBinsEP((1 << (length + 1)) - 2, length + 1);
-        m_binIf->encodeBinsEP(codeNumber, param);
+        length = codeNumber >> absGoRice;
+
+        assert(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)));
+
+        assert(length + 1 + absGoRice < 32);
+        m_binIf->encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
     }
     else
     {
-        length = param;
-        codeNumber  = codeNumber - (COEF_REMAIN_BIN_REDUCTION << param);
-        while (codeNumber >= (1 << length))
+        length = 0;
+        codeNumber = (codeNumber >> absGoRice) - COEF_REMAIN_BIN_REDUCTION;
+        if (codeNumber != 0)
         {
-            codeNumber -=  (1 << (length++));
+            unsigned long idx;
+            CLZ32(idx, codeNumber + 1);
+            length = idx;
+            codeNumber -= (1 << idx) - 1;
         }
+        codeNumber = (codeNumber << absGoRice) + codeRemain;
 
-        m_binIf->encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1 - param)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1 - param);
-        m_binIf->encodeBinsEP(codeNumber, length);
+        m_binIf->encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
+        m_binIf->encodeBinsEP(codeNumber, length + absGoRice);
     }
 }
 
