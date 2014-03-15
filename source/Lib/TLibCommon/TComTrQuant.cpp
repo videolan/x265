@@ -60,6 +60,11 @@ typedef struct
 
 #define RDOQ_CHROMA 1  ///< use of RDOQ in chroma
 
+inline static int x265_min_fast(int x, int y)
+{
+    return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
+}
+
 // ====================================================================================================================
 // TComTrQuant class member functions
 // ====================================================================================================================
@@ -568,7 +573,6 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     uint32_t   c1Idx     = 0;
     uint32_t   c2Idx     = 0;
     int    cgLastScanPos = -1;
-    int    baseLevel;
     uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
 
     int scanPos;
@@ -609,6 +613,13 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
 
             if (lastScanPos >= 0)
             {
+                const uint32_t c1c2Idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
+                const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2Idx * 2)) & 3;  // {1, 2, 1, 3}
+                assert(C2FLAG_NUMBER == 1);
+                assert(!!(c1Idx < C1FLAG_NUMBER) == ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)));
+                assert(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1);
+                assert(baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1));
+
                 rateIncUp[blkPos] = 0;
                 rateIncDown[blkPos] = 0;
                 deltaU[blkPos] = 0;
@@ -636,9 +647,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
                 if (level > 0)
                 {
-                    int rateNow = xGetICRate(level, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx);
-                    rateIncUp[blkPos] = xGetICRate(level + 1, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx) - rateNow;
-                    rateIncDown[blkPos] = xGetICRate(level - 1, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx) - rateNow;
+                    int rateNow = xGetICRate(level, level - baseLevel, oneCtx, absCtx, goRiceParam, c1c2Idx);
+                    rateIncUp[blkPos] = xGetICRate(level + 1, level + 1 - baseLevel, oneCtx, absCtx, goRiceParam, c1c2Idx) - rateNow;
+                    rateIncDown[blkPos] = xGetICRate(level - 1, level - 1 - baseLevel, oneCtx, absCtx, goRiceParam, c1c2Idx) - rateNow;
                 }
                 else // level == 0
                 {
@@ -647,7 +658,6 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 dstCoeff[blkPos] = level;
                 baseCost           += costCoeff[scanPos];
 
-                baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
                 if (level >= baseLevel)
                 {
                     if (goRiceParam < 4 && level > (3 << goRiceParam))
@@ -1229,64 +1239,74 @@ inline double TComTrQuant::xGetICRateCost(uint32_t absLevel,
 }
 
 inline int TComTrQuant::xGetICRate(uint32_t absLevel,
-                                   uint16_t ctxNumOne,
-                                   uint16_t ctxNumAbs,
-                                   uint16_t absGoRice,
-                                   uint32_t c1Idx,
-                                   uint32_t c2Idx) const
+                                    int32_t diffLevel,
+                                   uint32_t ctxNumOne,
+                                   uint32_t ctxNumAbs,
+                                   uint32_t absGoRice,
+                                   uint32_t c1c2Idx) const
 {
-    int rate = 0;
-    uint32_t baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
-
-    if (absLevel >= baseLevel)
+    assert(c1c2Idx <= 3);
+    assert(absGoRice <= 4);
+    if (absLevel == 0)
     {
-        uint32_t symbol   = absLevel - baseLevel;
-        uint32_t maxVlc   = g_goRiceRange[absGoRice];
+        assert(diffLevel < 0);
+        return 0;
+    }
+    int rate = 0;
+    const int *greaterOneBits = m_estBitsSbac->greaterOneBits[ctxNumOne];
+    const int *levelAbsBits = m_estBitsSbac->levelAbsBits[ctxNumAbs];
+
+    if (diffLevel < 0)
+    {
+        assert(absLevel >= 0 && absLevel <= 2);
+        rate += greaterOneBits[(absLevel == 2)];
+
+        if (absLevel == 2)
+        {
+            rate += levelAbsBits[0];
+        }
+    }
+    else
+    {
+        uint32_t symbol   = diffLevel;
+        const uint32_t maxVlc   = g_goRiceRange[absGoRice];
         bool expGolomb = (symbol > maxVlc);
 
         if (expGolomb)
         {
             absLevel = symbol - maxVlc;
-            int egs = 1;
-            for (uint32_t max = 2; absLevel >= max; max <<= 1, egs += 2)
-            {
-            }
+
+            // NOTE: mapping to x86 hardware instruction BSR
+            unsigned long size;
+            CLZ32(size, absLevel);
+            int egs = size * 2 + 1;
+            //int egs = 1;
+            //for (uint32_t max = 2; absLevel >= max; max <<= 1, egs += 2)
+            //{
+            //}
+            //assert(egs == size * 2 + 1);
 
             rate   += egs << 15;
-            symbol = std::min<uint32_t>(symbol, (maxVlc + 1));
+
+            // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
+            assert(x265_min_fast(symbol, (maxVlc + 1)) == maxVlc + 1);
+            symbol = maxVlc + 1;
         }
 
-        uint16_t prefLen = uint16_t(symbol >> absGoRice) + 1;
-        uint16_t numBins = std::min<uint32_t>(prefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
+        uint32_t prefLen = (symbol >> absGoRice) + 1;
+        uint32_t numBins = x265_min_fast(prefLen + absGoRice, 8/*g_goRicePrefixLen[absGoRice] + absGoRice*/);
 
         rate += numBins << 15;
 
-        if (c1Idx < C1FLAG_NUMBER)
+        if (c1c2Idx & 1)
         {
-            rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-
-            if (c2Idx < C2FLAG_NUMBER)
-            {
-                rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
-            }
+            rate += greaterOneBits[1];
         }
-    }
-    else if (absLevel == 0)
-    {
-        return 0;
-    }
-    else if (absLevel == 1)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
-    }
-    else if (absLevel == 2)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-        rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
-    }
-    else
-    {
-        assert(0);
+
+        if (c1c2Idx == 3)
+        {
+            rate += levelAbsBits[1];
+        }
     }
     return rate;
 }

@@ -199,7 +199,7 @@ private:
 
     inline double xGetICRateCost(uint32_t absLevel, uint16_t ctxNumOne, uint16_t ctxNumAbs, uint16_t absGoRice, uint32_t c1Idx, uint32_t c2Idx) const;
 
-    inline int    xGetICRate(uint32_t absLevel, uint16_t ctxNumOne, uint16_t ctxNumAbs, uint16_t absGoRice, uint32_t c1Idx, uint32_t c2Idx) const;
+    inline int    xGetICRate(uint32_t absLevel, int32_t diffLevel, uint32_t ctxNumOne, uint32_t ctxNumAbs, uint32_t absGoRice, uint32_t c1c2Idx) const;
 
     inline double xGetRateLast(uint32_t posx, uint32_t posy) const;
 

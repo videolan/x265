@@ -48,6 +48,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#define CLZ32(id, x)                        id = (unsigned long)__builtin_clz(x) ^ 31
 #define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
 #define ATOMIC_OR(ptr, mask)                __sync_or_and_fetch(ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval)     __sync_val_compare_and_swap(ptr, oldval, newval)
@@ -121,6 +122,7 @@ FORCEINLINE LONGLONG x265_interlocked_OR64(__inout LONGLONG volatile *Destinatio
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
 #endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 
+#define CLZ32(id, x)                        _BitScanReverse(&id, x)
 #define CTZ64(id, x)                        _BitScanForward64(&id, x)
 #define ATOMIC_CAS(ptr, oldval, newval)     (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 #define ATOMIC_CAS32(ptr, oldval, newval)   (uint64_t)_InterlockedCompareExchange((volatile LONG*)ptr, newval, oldval)
