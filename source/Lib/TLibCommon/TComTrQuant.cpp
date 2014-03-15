@@ -638,7 +638,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 }
                 else
                 {
-                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, codingParameters, blkPos);
+                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, codingParameters);
                     level           = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
                                                      levelDouble, maxAbsLevel, baseLevel, ctxSig, oneCtx, absCtx, goRiceParam,
                                                      c1c2Idx, qbits, scaleFactor, 0);
@@ -1014,7 +1014,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
  * \param height height of the block
  * \returns pattern for current coefficient group
  */
-int TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
+uint32_t TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
 {
     if (log2TrSizeCG == 0) return 0;
 
@@ -1037,11 +1037,13 @@ int TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t 
  * \param textureType texture type (TEXT_LUMA...)
  * \returns ctxInc for current scan position
  */
-int TComTrQuant::getSigCtxInc(int                              patternSigCtx,
-                              const TUEntropyCodingParameters &codingParameters,
-                              const int                        blkPos)
+uint32_t TComTrQuant::getSigCtxInc(const uint32_t                   patternSigCtx,
+                                   const uint32_t                   log2TrSize,
+                                   const uint32_t                   trSize,
+                                   const uint32_t                   blkPos,
+                                   const TUEntropyCodingParameters &codingParameters)
 {
-    static const int ctxIndMap[16] =
+    static const uint8_t ctxIndMap[16] =
     {
         0, 1, 4, 5,
         2, 3, 4, 5,
@@ -1051,16 +1053,17 @@ int TComTrQuant::getSigCtxInc(int                              patternSigCtx,
 
     if (blkPos == 0) return 0; //special case for the DC context variable
 
-    const int log2TrSize = codingParameters.log2TrSize;
     if (log2TrSize == 2) //4x4
     {
         return ctxIndMap[blkPos];
     }
 
     const uint32_t posY           = blkPos >> log2TrSize;
-    const uint32_t posX           = blkPos - (posY << log2TrSize);
+    const uint32_t posX           = blkPos & (trSize - 1);
+    assert((blkPos - (posY << log2TrSize)) == posX);
 
-    int posXinSubset = posX & 3;
+    int posXinSubset = blkPos & 3;
+    assert((posX & 3) == (blkPos & 3));
     int posYinSubset = posY & 3;
 
     // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
