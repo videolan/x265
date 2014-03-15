@@ -633,15 +633,15 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 if (scanPos == lastScanPos)
                 {
                     level = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
-                                           levelDouble, maxAbsLevel, 0, oneCtx, absCtx, goRiceParam,
-                                           c1Idx, c2Idx, qbits, scaleFactor, 1);
+                                           levelDouble, maxAbsLevel, baseLevel, 0, oneCtx, absCtx, goRiceParam,
+                                           c1c2Idx, qbits, scaleFactor, 1);
                 }
                 else
                 {
                     uint16_t ctxSig = getSigCtxInc(patternSigCtx, codingParameters, blkPos);
                     level           = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
-                                                     levelDouble, maxAbsLevel, ctxSig, oneCtx, absCtx, goRiceParam,
-                                                     c1Idx, c2Idx, qbits, scaleFactor, 0);
+                                                     levelDouble, maxAbsLevel, baseLevel, ctxSig, oneCtx, absCtx, goRiceParam,
+                                                     c1c2Idx, qbits, scaleFactor, 0);
                     sigRateDelta[blkPos] = m_estBitsSbac->significantBits[ctxSig][1] - m_estBitsSbac->significantBits[ctxSig][0];
                 }
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
@@ -1125,12 +1125,12 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
                                             double&  codedCostSig,
                                             int      levelDouble,
                                             uint32_t maxAbsLevel,
-                                            uint16_t ctxNumSig,
-                                            uint16_t ctxNumOne,
-                                            uint16_t ctxNumAbs,
-                                            uint16_t absGoRice,
-                                            uint32_t c1Idx,
-                                            uint32_t c2Idx,
+                                            uint32_t baseLevel,
+                                            uint32_t ctxNumSig,
+                                            uint32_t ctxNumOne,
+                                            uint32_t ctxNumAbs,
+                                            uint32_t absGoRice,
+                                            uint32_t c1c2Idx,
                                             int      qbits,
                                             double   scaleFactor,
                                             bool     last) const
@@ -1161,7 +1161,7 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
         double err     = double(levelDouble  - (absLevel << qbits));
-        double curCost = err * err * scaleFactor + xGetICRateCost(absLevel, ctxNumOne, ctxNumAbs, absGoRice, c1Idx, c2Idx);
+        double curCost = err * err * scaleFactor + xGetICRateCost(absLevel, absLevel - baseLevel, ctxNumOne, ctxNumAbs, absGoRice, c1c2Idx);
         curCost       += curCostSig;
 
         if (curCost < codedCost)
@@ -1183,58 +1183,60 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
  * \returns cost of given absolute transform level
  */
 inline double TComTrQuant::xGetICRateCost(uint32_t absLevel,
-                                          uint16_t ctxNumOne,
-                                          uint16_t ctxNumAbs,
-                                          uint16_t absGoRice,
-                                          uint32_t c1Idx,
-                                          uint32_t c2Idx) const
+                                          int32_t  diffLevel,
+                                          uint32_t ctxNumOne,
+                                          uint32_t ctxNumAbs,
+                                          uint32_t absGoRice,
+                                          uint32_t c1c2Idx) const
 {
-    double rate = xGetIEPRate();
-    uint32_t baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
+    assert(absLevel > 0);
+    uint32_t rate = xGetIEPRate();
+    const int *greaterOneBits = m_estBitsSbac->greaterOneBits[ctxNumOne];
+    const int *levelAbsBits = m_estBitsSbac->levelAbsBits[ctxNumAbs];
 
-    if (absLevel >= baseLevel)
+    if (diffLevel < 0)
     {
-        uint32_t symbol = absLevel - baseLevel;
+        assert((absLevel == 1) || (absLevel == 2));
+        rate += greaterOneBits[(absLevel == 2)];
+
+        if (absLevel == 2)
+        {
+            rate += levelAbsBits[0];
+        }
+    }
+    else
+    {
+        uint32_t symbol = diffLevel;
         uint32_t length;
-        if (symbol < (COEF_REMAIN_BIN_REDUCTION << absGoRice))
+        if ((symbol >> absGoRice) < COEF_REMAIN_BIN_REDUCTION)
         {
             length = symbol >> absGoRice;
             rate += (length + 1 + absGoRice) << 15;
         }
         else
         {
-            length = absGoRice;
-            symbol  = symbol - (COEF_REMAIN_BIN_REDUCTION << absGoRice);
-            while (symbol >= (1 << length))
+            length = 0;
+            symbol = (symbol >> absGoRice) - COEF_REMAIN_BIN_REDUCTION;
+            if (symbol != 0)
             {
-                symbol -=  (1 << (length++));
+                unsigned long idx;
+                CLZ32(idx, symbol + 1);
+                length = idx;
             }
 
-            rate += (COEF_REMAIN_BIN_REDUCTION + length + 1 - absGoRice + length) << 15;
+            rate += (COEF_REMAIN_BIN_REDUCTION + length + absGoRice + 1 + length) << 15;
         }
-        if (c1Idx < C1FLAG_NUMBER)
+        if (c1c2Idx & 1)
         {
-            rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+            rate += greaterOneBits[1];
+        }
 
-            if (c2Idx < C2FLAG_NUMBER)
-            {
-                rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
-            }
+        if (c1c2Idx == 3)
+        {
+            rate += levelAbsBits[1];
         }
     }
-    else if (absLevel == 1)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
-    }
-    else if (absLevel == 2)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-        rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
-    }
-    else
-    {
-        assert(0);
-    }
+
     return xGetICost(rate);
 }
 
