@@ -402,18 +402,19 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
 
         const uint32_t log2BlockSize = log2TrSize - 2;
 
-#if HIGH_BIT_DEPTH
-        lastPos = !lastPos; // prevent warning
-#else
         // DC only
         if (lastPos == 0 && !((trSize == 4) && (mode != REG_DCT)))
         {
-            int dc_val = (((m_tmpCoeff[0] * 64 + 64) >> 7) * 64 + 2048) >> 12;
+            const int shift_1st = 7;
+            const int add_1st = 1 << (shift_1st - 1);
+            const int shift_2nd = 12 - (X265_DEPTH - 8);
+            const int add_2nd = 1 << (shift_2nd - 1);
+
+            int dc_val = (((m_tmpCoeff[0] * 64 + add_1st) >> shift_1st) * 64 + add_2nd) >> shift_2nd;
             primitives.blockfill_s[log2BlockSize](residual, stride, dc_val);
 
             return;
         }
-#endif
 
         // TODO: this may need larger data types for X265_DEPTH > 8
         primitives.idct[IDCT_4x4 + log2BlockSize - ((trSize == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
