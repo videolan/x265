@@ -39,7 +39,7 @@
 #ifndef X265_CONTEXTTABLES_H
 #define X265_CONTEXTTABLES_H
 
-#include <stdint.h>
+#include "common.h"
 
 //! \ingroup TLibCommon
 //! \{

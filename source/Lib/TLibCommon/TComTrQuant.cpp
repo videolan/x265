@@ -40,10 +40,6 @@
 #include "ContextTables.h"
 #include "primitives.h"
 
-#include <cstdlib>
-#include <math.h>
-#include <memory.h>
-
 using namespace x265;
 
 typedef struct
@@ -63,6 +59,11 @@ typedef struct
 // ====================================================================================================================
 
 #define RDOQ_CHROMA 1  ///< use of RDOQ in chroma
+
+inline static int x265_min_fast(int x, int y)
+{
+    return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
+}
 
 // ====================================================================================================================
 // TComTrQuant class member functions
@@ -131,14 +132,13 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
 // To minimize the distortion only. No rate is considered.
 void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters)
 {
-    const uint32_t width     = codingParameters.widthInGroups << MLS_CG_LOG2_WIDTH;
-    const uint32_t height    = codingParameters.heightInGroups << MLS_CG_LOG2_HEIGHT;
+    const uint32_t log2TrSizeCG = codingParameters.log2TrSizeCG;
 
     int lastCG = -1;
     int absSum = 0;
     int n;
 
-    for (int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+    for (int subSet = (1 << log2TrSizeCG * 2) - 1; subSet >= 0; subSet--)
     {
         int  subPos = subSet << LOG2_SCAN_SET_SIZE;
         int  firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
@@ -255,29 +255,27 @@ void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, int32_t* deltaU,
     } // TU loop
 }
 
-uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int width, int height,
+uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int trSize,
                              TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ)
 {
     uint32_t acSum = 0;
     int add = 0;
     bool useRDOQ = (cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ) && curUseRDOQ;
 
-    assert(width == height);
-
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
     {
-        acSum = xRateDistOptQuant(cu, coef, qCoef, width, height, ttype, absPartIdx, lastPos);
+        acSum = xRateDistOptQuant(cu, coef, qCoef, trSize, ttype, absPartIdx, lastPos);
     }
     else
     {
+        const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
         TUEntropyCodingParameters codingParameters;
-        getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  width, height, ttype);
+        getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
         int deltaU[32 * 32];
 
-        uint32_t log2TrSize = g_convertToBit[width] + 2;
         int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
         assert(scalingListType < 6);
         int32_t *quantCoeff = 0;
@@ -288,7 +286,7 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int w
         int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
 
-        int numCoeff = width * height;
+        int numCoeff = 1 << log2TrSize * 2;
         acSum += primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
 
         if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
@@ -311,8 +309,7 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
                                    int16_t*    residual,
                                    uint32_t    stride,
                                    TCoeff*     coeff,
-                                   uint32_t    width,
-                                   uint32_t    height,
+                                   uint32_t    trSize,
                                    TextType    ttype,
                                    uint32_t    absPartIdx,
                                    int32_t*    lastPos,
@@ -322,11 +319,11 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         uint32_t absSum = 0;
-        for (uint32_t k = 0; k < height; k++)
+        for (uint32_t k = 0; k < trSize; k++)
         {
-            for (uint32_t j = 0; j < width; j++)
+            for (uint32_t j = 0; j < trSize; j++)
             {
-                coeff[k * width + j] = ((int16_t)residual[k * stride + j]);
+                coeff[k * trSize + j] = ((int16_t)residual[k * stride + j]);
                 absSum += abs(residual[k * stride + j]);
             }
         }
@@ -344,29 +341,29 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         mode = REG_DCT;
     }
 
-    assert((cu->getSlice()->getSPS()->getMaxTrSize() >= width));
+    assert((cu->getSlice()->getSPS()->getMaxTrSize() >= trSize));
     if (useTransformSkip)
     {
-        xTransformSkip(residual, stride, m_tmpCoeff, width, height);
+        xTransformSkip(residual, stride, m_tmpCoeff, trSize);
     }
     else
     {
         // TODO: this may need larger data types for X265_DEPTH > 8
-        const uint32_t log2BlockSize = g_convertToBit[width];
-        primitives.dct[DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
+        const uint32_t log2BlockSize = g_convertToBit[trSize];
+        primitives.dct[DCT_4x4 + log2BlockSize - ((trSize == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
-    return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx, lastPos, curUseRDOQ);
+    return xQuant(cu, m_tmpCoeff, coeff, trSize, ttype, absPartIdx, lastPos, curUseRDOQ);
 }
 
-void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t width, uint32_t height, int scalingListType, bool useTransformSkip, int lastPos)
+void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip, int lastPos)
 {
     if (transQuantBypass)
     {
-        for (uint32_t k = 0; k < height; k++)
+        for (uint32_t k = 0; k < trSize; k++)
         {
-            for (uint32_t j = 0; j < width; j++)
+            for (uint32_t j = 0; j < trSize; j++)
             {
-                residual[k * stride + j] = (int16_t)(coeff[k * width + j]);
+                residual[k * stride + j] = (int16_t)(coeff[k * trSize + j]);
             }
         }
 
@@ -377,7 +374,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
     int per = m_qpParam.m_per;
     int rem = m_qpParam.m_rem;
     bool useScalingList = getUseScalingList();
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int32_t *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
@@ -386,30 +383,30 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
     {
         static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
         int scale = invQuantScales[rem] << per;
-        primitives.dequant_normal(coeff, m_tmpCoeff, width * height, scale, shift);
+        primitives.dequant_normal(coeff, m_tmpCoeff, trSize * trSize, scale, shift);
     }
     else
     {
         // CHECK_ME: the code is not verify since this is DEAD path
-        primitives.dequant_scaling(coeff, dequantCoef, m_tmpCoeff, width * height, per, shift);
+        primitives.dequant_scaling(coeff, dequantCoef, m_tmpCoeff, trSize * trSize, per, shift);
     }
 
     if (useTransformSkip == true)
     {
-        xITransformSkip(m_tmpCoeff, residual, stride, width, height);
+        xITransformSkip(m_tmpCoeff, residual, stride, trSize);
     }
     else
     {
         // CHECK_ME: we can't here when no any coeff
         assert(lastPos >= 0);
 
-        const uint32_t log2BlockSize = g_convertToBit[width];
+        const uint32_t log2BlockSize = log2TrSize - 2;
 
 #if HIGH_BIT_DEPTH
         lastPos = !lastPos; // prevent warning
 #else
         // DC only
-        if (lastPos == 0 && !((width == 4) && (mode != REG_DCT)))
+        if (lastPos == 0 && !((trSize == 4) && (mode != REG_DCT)))
         {
             int dc_val = (((m_tmpCoeff[0] * 64 + 64) >> 7) * 64 + 2048) >> 12;
             primitives.blockfill_s[log2BlockSize](residual, stride, dc_val);
@@ -419,7 +416,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
 #endif
 
         // TODO: this may need larger data types for X265_DEPTH > 8
-        primitives.idct[IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
+        primitives.idct[IDCT_4x4 + log2BlockSize - ((trSize == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
     }
 }
 
@@ -433,16 +430,15 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t*
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int width, int height)
+void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int trSize)
 {
-    assert(width == height);
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     uint32_t transformSkipShift;
     int  j, k;
     if (shift >= 0)
     {
-        primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, width);
+        primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, trSize);
     }
     else
     {
@@ -450,11 +446,11 @@ void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* c
         int offset;
         transformSkipShift = -shift;
         offset = (1 << (transformSkipShift - 1));
-        for (j = 0; j < height; j++)
+        for (j = 0; j < trSize; j++)
         {
-            for (k = 0; k < width; k++)
+            for (k = 0; k < trSize; k++)
             {
-                coeff[j * height + k] = (resiBlock[j * stride + k] + offset) >> transformSkipShift;
+                coeff[j * trSize + k] = (resiBlock[j * stride + k] + offset) >> transformSkipShift;
             }
         }
     }
@@ -466,26 +462,24 @@ void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* c
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t stride, int width, int height)
+void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t stride, int trSize)
 {
-    assert(width == height);
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int  j, k;
     if (shift > 0)
     {
-        assert(width == height);
-        primitives.cvt32to16_shr(residual, coef, stride, shift, width);
+        primitives.cvt32to16_shr(residual, coef, stride, shift, trSize);
     }
     else
     {
         //The case when X265_DEPTH >= 13
         uint32_t transformSkipShift = -shift;
-        for (j = 0; j < height; j++)
+        for (j = 0; j < trSize; j++)
         {
-            for (k = 0; k < width; k++)
+            for (k = 0; k < trSize; k++)
             {
-                residual[j * stride + k] =  coef[j * width + k] << transformSkipShift;
+                residual[j * stride + k] =  coef[j * trSize + k] << transformSkipShift;
             }
         }
     }
@@ -494,34 +488,27 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
 void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
                                                TUEntropyCodingParameters &result,
                                                uint32_t                   absPartIdx,
-                                               uint32_t                   width,
-                                               uint32_t                   height,
+                                               uint32_t                   log2TrSize,
                                                TextType                   ttype)
 {
-    //set the local parameters
-    const uint32_t                 log2BlockWidth  = g_convertToBit[width]  + 2;
-    const uint32_t                 log2BlockHeight = g_convertToBit[height] + 2;
-
-    result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, width, height, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
-
     //set the group layout
-    result.widthInGroups  = width  >> MLS_CG_LOG2_WIDTH;
-    result.heightInGroups = height >> MLS_CG_LOG2_HEIGHT;
+    const uint32_t log2TrSizeCG = log2TrSize - MLS_CG_LOG2_SIZE;
+    result.log2TrSize   = log2TrSize;
+    result.log2TrSizeCG = log2TrSizeCG;
 
     //set the scan orders
-    const uint32_t log2WidthInGroups  = g_convertToBit[result.widthInGroups  * 4];
-    const uint32_t log2HeightInGroups = g_convertToBit[result.heightInGroups * 4];
-
-    result.scan   = g_scanOrder[SCAN_GROUPED_4x4][result.scanType][log2BlockWidth][log2BlockHeight];
-    result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2WidthInGroups][log2HeightInGroups];
+    result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
+    result.scan   = g_scanOrder[SCAN_GROUPED_4x4][result.scanType][log2TrSize];
+    result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2TrSizeCG];
 
     //set the significance map context selection parameters
     TextType ctype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-    if ((width == 4) && (height == 4))
+    result.ctype = ctype;
+    if (log2TrSize == 2)
     {
         result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4];
     }
-    else if ((width == 8) && (height == 8))
+    else if (log2TrSize == 3)
     {
         result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8];
         if (result.scanType != SCAN_DIAG)
@@ -546,10 +533,10 @@ void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
-uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t width, uint32_t height,
+uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t trSize,
                                         TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
-    uint32_t log2TrSize = g_convertToBit[width] + 2;
+    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     uint32_t absSum = 0;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     uint32_t       goRiceParam      = 0;
@@ -573,13 +560,11 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     int sigRateDelta[32 * 32];
     int deltaU[32 * 32];
     TUEntropyCodingParameters codingParameters;
-    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx,  width, height, ttype);
+    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
 
     const uint32_t cgSize = (1 << MLS_CG_SIZE); // 16
     double costCoeffGroupSig[MLS_GRP_NUM];
-    uint32_t sigCoeffGroupFlag[MLS_GRP_NUM];
-    const uint32_t log2BlockWidth    = g_convertToBit[width] + 2;
-    const uint32_t log2BlockHeight   = g_convertToBit[height] + 2;
+    uint64_t sigCoeffGroupFlag64 = 0;
     uint32_t   ctxSet    = 0;
     int    c1            = 1;
     int    c2            = 0;
@@ -588,20 +573,19 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     uint32_t   c1Idx     = 0;
     uint32_t   c2Idx     = 0;
     int    cgLastScanPos = -1;
-    int    baseLevel;
-    ::memset(sigCoeffGroupFlag, 0, sizeof(uint32_t) * MLS_GRP_NUM);
+    uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
 
-    uint32_t cgNum = width * height >> MLS_CG_SIZE;
     int scanPos;
     coeffGroupRDStats rdStats;
 
     for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
     {
-        uint32_t cgBlkPos = codingParameters.scanCG[cgScanPos];
-        uint32_t cgPosY   = cgBlkPos / codingParameters.widthInGroups;
-        uint32_t cgPosX   = cgBlkPos - (cgPosY * codingParameters.widthInGroups);
-        ::memset(&rdStats, 0, sizeof(coeffGroupRDStats));
-        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
+        const uint32_t cgBlkPos = codingParameters.scanCG[cgScanPos];
+        const uint32_t cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
+        const uint32_t cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
+        const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
+        memset(&rdStats, 0, sizeof(coeffGroupRDStats));
+        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
             scanPos = cgScanPos * cgSize + scanPosinCG;
@@ -629,6 +613,13 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
 
             if (lastScanPos >= 0)
             {
+                const uint32_t c1c2Idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
+                const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2Idx * 2)) & 3;  // {1, 2, 1, 3}
+                assert(C2FLAG_NUMBER == 1);
+                assert(!!(c1Idx < C1FLAG_NUMBER) == ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)));
+                assert(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1);
+                assert(baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1));
+
                 rateIncUp[blkPos] = 0;
                 rateIncDown[blkPos] = 0;
                 deltaU[blkPos] = 0;
@@ -642,23 +633,23 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 if (scanPos == lastScanPos)
                 {
                     level = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
-                                           levelDouble, maxAbsLevel, 0, oneCtx, absCtx, goRiceParam,
-                                           c1Idx, c2Idx, qbits, scaleFactor, 1);
+                                           levelDouble, maxAbsLevel, baseLevel, 0, oneCtx, absCtx, goRiceParam,
+                                           c1c2Idx, qbits, scaleFactor, 1);
                 }
                 else
                 {
-                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, codingParameters, scanPos, log2BlockWidth, log2BlockHeight, ttype);
+                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, codingParameters);
                     level           = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
-                                                     levelDouble, maxAbsLevel, ctxSig, oneCtx, absCtx, goRiceParam,
-                                                     c1Idx, c2Idx, qbits, scaleFactor, 0);
+                                                     levelDouble, maxAbsLevel, baseLevel, ctxSig, oneCtx, absCtx, goRiceParam,
+                                                     c1c2Idx, qbits, scaleFactor, 0);
                     sigRateDelta[blkPos] = m_estBitsSbac->significantBits[ctxSig][1] - m_estBitsSbac->significantBits[ctxSig][0];
                 }
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
                 if (level > 0)
                 {
-                    int rateNow = xGetICRate(level, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx);
-                    rateIncUp[blkPos] = xGetICRate(level + 1, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx) - rateNow;
-                    rateIncDown[blkPos] = xGetICRate(level - 1, oneCtx, absCtx, goRiceParam, c1Idx, c2Idx) - rateNow;
+                    int rateNow = xGetICRate(level, level - baseLevel, oneCtx, absCtx, goRiceParam, c1c2Idx);
+                    rateIncUp[blkPos] = xGetICRate(level + 1, level + 1 - baseLevel, oneCtx, absCtx, goRiceParam, c1c2Idx) - rateNow;
+                    rateIncDown[blkPos] = xGetICRate(level - 1, level - 1 - baseLevel, oneCtx, absCtx, goRiceParam, c1c2Idx) - rateNow;
                 }
                 else // level == 0
                 {
@@ -667,7 +658,6 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 dstCoeff[blkPos] = level;
                 baseCost           += costCoeff[scanPos];
 
-                baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
                 if (level >= baseLevel)
                 {
                     if (goRiceParam < 4 && level > (3 << goRiceParam))
@@ -720,7 +710,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             }
             if (dstCoeff[blkPos])
             {
-                sigCoeffGroupFlag[cgBlkPos] = 1;
+                sigCoeffGroupFlag64 |= cgBlkPosMask;
                 rdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
                 rdStats.uncodedDist += costCoeff0[scanPos];
                 if (scanPosinCG != 0)
@@ -735,9 +725,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             costCoeffGroupSig[cgScanPos] = 0;
             if (cgScanPos)
             {
-                if (sigCoeffGroupFlag[cgBlkPos] == 0)
+                if ((sigCoeffGroupFlag64 & cgBlkPosMask) == 0)
                 {
-                    uint32_t  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
+                    uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                     baseCost += xGetRateSigCoeffGroup(0, ctxSig) - rdStats.sigCost;
                     costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(0, ctxSig);
                 }
@@ -754,7 +744,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                         double costZeroCG = baseCost;
 
                         // add SigCoeffGroupFlag cost to total cost
-                        uint32_t  ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag, cgPosX, cgPosY, codingParameters.widthInGroups, codingParameters.heightInGroups);
+                        uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                         if (cgScanPos < cgLastScanPos)
                         {
                             baseCost  += xGetRateSigCoeffGroup(1, ctxSig);
@@ -770,7 +760,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                         // if we can save cost, change this block to all-zero block
                         if (costZeroCG < baseCost)
                         {
-                            sigCoeffGroupFlag[cgBlkPos] = 0;
+                            sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                             baseCost = costZeroCG;
                             if (cgScanPos < cgLastScanPos)
                             {
@@ -794,7 +784,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
             }
             else
             {
-                sigCoeffGroupFlag[cgBlkPos] = 1;
+                sigCoeffGroupFlag64 |= cgBlkPosMask;
             }
         }
     } //end for (cgScanPos)
@@ -826,7 +816,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
     {
         uint32_t cgBlkPos = codingParameters.scanCG[cgScanPos];
         baseCost -= costCoeffGroupSig[cgScanPos];
-        if (sigCoeffGroupFlag[cgBlkPos])
+        if (sigCoeffGroupFlag64 & ((uint64_t)1 << cgBlkPos))
         {
             for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
             {
@@ -835,8 +825,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 uint32_t blkPos = codingParameters.scan[scanPos];
                 if (dstCoeff[blkPos])
                 {
-                    uint32_t posY = blkPos >> log2BlockWidth;
-                    uint32_t posX = blkPos - (posY << log2BlockWidth);
+                    uint32_t posY = blkPos >> log2TrSize;
+                    uint32_t posX = blkPos - (posY << log2TrSize);
                     double costLast = codingParameters.scanType == SCAN_VER ? xGetRateLast(posY, posX) : xGetRateLast(posX, posY);
                     double totalCost = baseCost + costLast - costSig[scanPos];
 
@@ -892,7 +882,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
         int tmpSum = 0;
         int n;
 
-        for (int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+        for (int subSet = (trSize * trSize - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
             int firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
@@ -1018,23 +1008,22 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
 
 /** Pattern decision for context derivation process of significant_coeff_flag
  * \param sigCoeffGroupFlag pointer to prior coded significant coeff group
- * \param posXCG column of current coefficient group
- * \param posYCG row of current coefficient group
+ * \param cgPosX column of current coefficient group
+ * \param cgPosY row of current coefficient group
  * \param width width of the block
  * \param height height of the block
  * \returns pattern for current coefficient group
  */
-int TComTrQuant::calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t posXCG, uint32_t posYCG, uint32_t widthInGroups, uint32_t heightInGroups)
+uint32_t TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
 {
-    if ((widthInGroups <= 1) && (heightInGroups <= 1)) return 0;
-    const bool rightAvailable = posXCG < (widthInGroups  - 1);
-    const bool belowAvailable = posYCG < (heightInGroups - 1);
-    uint32_t sigRight = 0;
-    uint32_t sigLower = 0;
-    if (rightAvailable)
-        sigRight = ((sigCoeffGroupFlag[(posYCG * widthInGroups) + posXCG + 1] != 0) ? 1 : 0);
-    if (belowAvailable)
-        sigLower = ((sigCoeffGroupFlag[(posYCG + 1) * widthInGroups + posXCG] != 0) ? 1 : 0);
+    if (log2TrSizeCG == 0) return 0;
+
+    const uint32_t trSizeCG = 1 << log2TrSizeCG;
+    assert(trSizeCG <= 32);
+    const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
+    uint32_t sigRight = (cgPosX < (trSizeCG - 1)) && ((sigPos & 1) != 0);
+    uint32_t sigLower = (cgPosY < (trSizeCG - 1)) && ((sigPos & (1 << (trSizeCG - 1))) != 0);
+
     return sigRight + (sigLower << 1);
 }
 
@@ -1048,87 +1037,74 @@ int TComTrQuant::calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t p
  * \param textureType texture type (TEXT_LUMA...)
  * \returns ctxInc for current scan position
  */
-int TComTrQuant::getSigCtxInc(int                              patternSigCtx,
-                              const TUEntropyCodingParameters &codingParameters,
-                              const int                        scanPosition,
-                              const int                        log2BlockWidth,
-                              const int                        log2BlockHeight,
-                              const TextType                   ttype)
+uint32_t TComTrQuant::getSigCtxInc(const uint32_t                   patternSigCtx,
+                                   const uint32_t                   log2TrSize,
+                                   const uint32_t                   trSize,
+                                   const uint32_t                   blkPos,
+                                   const TUEntropyCodingParameters &codingParameters)
 {
-    static const int ctxIndMap[16] =
+    static const uint8_t ctxIndMap[16] =
     {
         0, 1, 4, 5,
         2, 3, 4, 5,
         6, 6, 8, 8,
         7, 7, 8, 8
     };
-    const uint32_t rasterPosition = codingParameters.scan[scanPosition];
-    const uint32_t posY           = rasterPosition >> log2BlockWidth;
-    const uint32_t posX           = rasterPosition - (posY << log2BlockWidth);
 
-    if ((posX + posY) == 0) return 0; //special case for the DC context variable
+    if (blkPos == 0) return 0; //special case for the DC context variable
 
-    int offset = MAX_INT;
-
-    if ((log2BlockWidth == 2) && (log2BlockHeight == 2)) //4x4
+    if (log2TrSize == 2) //4x4
     {
-        offset = ctxIndMap[(4 * posY) + posX];
+        return ctxIndMap[blkPos];
     }
-    else
+
+    const uint32_t posY           = blkPos >> log2TrSize;
+    const uint32_t posX           = blkPos & (trSize - 1);
+    assert((blkPos - (posY << log2TrSize)) == posX);
+
+    int posXinSubset = blkPos & 3;
+    assert((posX & 3) == (blkPos & 3));
+    int posYinSubset = posY & 3;
+
+    // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
+    static const uint8_t table_cnt[4][4][4] =
     {
-        int cnt = 0;
-
-        switch (patternSigCtx)
+        // patternSigCtx = 0
         {
-        case 0: //neither neighbouring group is significant
+            { 2, 1, 1, 0 },
+            { 1, 1, 0, 0 },
+            { 1, 0, 0, 0 },
+            { 0, 0, 0, 0 },
+        },
+        // patternSigCtx = 1
         {
-            const int posXinSubset     = posX & ((1 << MLS_CG_LOG2_WIDTH)  - 1);
-            const int posYinSubset     = posY & ((1 << MLS_CG_LOG2_HEIGHT) - 1);
-            const int posTotalInSubset = posXinSubset + posYinSubset;
-
-            //first N coefficients in scan order use 2; the next few use 1; the rest use 0.
-            const uint32_t context1Threshold = NEIGHBOURHOOD_00_CONTEXT_1_THRESHOLD_4x4;
-            const uint32_t context2Threshold = NEIGHBOURHOOD_00_CONTEXT_2_THRESHOLD_4x4;
-
-            cnt = (posTotalInSubset >= context1Threshold) ? 0 : ((posTotalInSubset >= context2Threshold) ? 1 : 2);
-        }
-        break;
-
-        case 1: //right group is significant, below is not
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+            { 2, 1, 0, 0 },
+        },
+        // patternSigCtx = 2
         {
-            const int posYinSubset = posY & ((1 << MLS_CG_LOG2_HEIGHT) - 1);
-            const int groupHeight  = 1 << MLS_CG_LOG2_HEIGHT;
-
-            cnt = (posYinSubset >= (groupHeight >> 1)) ? 0 : ((posYinSubset >= (groupHeight >> 2)) ? 1 : 2); //top quarter uses 2; second-from-top quarter uses 1; bottom half uses 0
-        }
-        break;
-
-        case 2: //below group is significant, right is not
+            { 2, 2, 2, 2 },
+            { 1, 1, 1, 1 },
+            { 0, 0, 0, 0 },
+            { 0, 0, 0, 0 },
+        },
+        // patternSigCtx = 3
         {
-            const int posXinSubset = posX & ((1 << MLS_CG_LOG2_WIDTH)  - 1);
-            const int groupWidth   = 1 << MLS_CG_LOG2_WIDTH;
-
-            cnt = (posXinSubset >= (groupWidth >> 1)) ? 0 : ((posXinSubset >= (groupWidth >> 2)) ? 1 : 2); //left quarter uses 2; second-from-left quarter uses 1; right half uses 0
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
+            { 2, 2, 2, 2 },
         }
-        break;
+    };
 
-        case 3: //both neighbouring groups are significant
-        {
-            cnt = 2;
-        }
-        break;
+    int cnt = table_cnt[patternSigCtx][posXinSubset][posYinSubset];
+    int offset = codingParameters.firstSignificanceMapContext;
 
-        default:
-            x265_log(NULL, X265_LOG_ERROR, "TComTrQuant: ERROR - Invalid patternSigCtx");
-            exit(1);
-            break;
-        }
+    offset += cnt;
 
-        const bool notFirstGroup = ((posX >> MLS_CG_LOG2_WIDTH) + (posY >> MLS_CG_LOG2_HEIGHT)) > 0;
-        TextType ctype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-        offset = (notFirstGroup ? notFirstGroupNeighbourhoodContextOffset[ctype] : 0) + cnt;
-    }
-    return codingParameters.firstSignificanceMapContext + offset;
+    return (codingParameters.ctype == TEXT_LUMA && (posX | posY) >= 4) ? 3 + offset : offset;
 }
 
 /** Get the best level in RD sense
@@ -1152,12 +1128,12 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
                                             double&  codedCostSig,
                                             int      levelDouble,
                                             uint32_t maxAbsLevel,
-                                            uint16_t ctxNumSig,
-                                            uint16_t ctxNumOne,
-                                            uint16_t ctxNumAbs,
-                                            uint16_t absGoRice,
-                                            uint32_t c1Idx,
-                                            uint32_t c2Idx,
+                                            uint32_t baseLevel,
+                                            uint32_t ctxNumSig,
+                                            uint32_t ctxNumOne,
+                                            uint32_t ctxNumAbs,
+                                            uint32_t absGoRice,
+                                            uint32_t c1c2Idx,
                                             int      qbits,
                                             double   scaleFactor,
                                             bool     last) const
@@ -1188,7 +1164,7 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
         double err     = double(levelDouble  - (absLevel << qbits));
-        double curCost = err * err * scaleFactor + xGetICRateCost(absLevel, ctxNumOne, ctxNumAbs, absGoRice, c1Idx, c2Idx);
+        double curCost = err * err * scaleFactor + xGetICRateCost(absLevel, absLevel - baseLevel, ctxNumOne, ctxNumAbs, absGoRice, c1c2Idx);
         curCost       += curCostSig;
 
         if (curCost < codedCost)
@@ -1210,120 +1186,132 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
  * \returns cost of given absolute transform level
  */
 inline double TComTrQuant::xGetICRateCost(uint32_t absLevel,
-                                          uint16_t ctxNumOne,
-                                          uint16_t ctxNumAbs,
-                                          uint16_t absGoRice,
-                                          uint32_t c1Idx,
-                                          uint32_t c2Idx) const
+                                          int32_t  diffLevel,
+                                          uint32_t ctxNumOne,
+                                          uint32_t ctxNumAbs,
+                                          uint32_t absGoRice,
+                                          uint32_t c1c2Idx) const
 {
-    double rate = xGetIEPRate();
-    uint32_t baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
+    assert(absLevel > 0);
+    uint32_t rate = xGetIEPRate();
+    const int *greaterOneBits = m_estBitsSbac->greaterOneBits[ctxNumOne];
+    const int *levelAbsBits = m_estBitsSbac->levelAbsBits[ctxNumAbs];
 
-    if (absLevel >= baseLevel)
+    if (diffLevel < 0)
     {
-        uint32_t symbol = absLevel - baseLevel;
+        assert((absLevel == 1) || (absLevel == 2));
+        rate += greaterOneBits[(absLevel == 2)];
+
+        if (absLevel == 2)
+        {
+            rate += levelAbsBits[0];
+        }
+    }
+    else
+    {
+        uint32_t symbol = diffLevel;
         uint32_t length;
-        if (symbol < (COEF_REMAIN_BIN_REDUCTION << absGoRice))
+        if ((symbol >> absGoRice) < COEF_REMAIN_BIN_REDUCTION)
         {
             length = symbol >> absGoRice;
             rate += (length + 1 + absGoRice) << 15;
         }
         else
         {
-            length = absGoRice;
-            symbol  = symbol - (COEF_REMAIN_BIN_REDUCTION << absGoRice);
-            while (symbol >= (1 << length))
+            length = 0;
+            symbol = (symbol >> absGoRice) - COEF_REMAIN_BIN_REDUCTION;
+            if (symbol != 0)
             {
-                symbol -=  (1 << (length++));
+                unsigned long idx;
+                CLZ32(idx, symbol + 1);
+                length = idx;
             }
 
-            rate += (COEF_REMAIN_BIN_REDUCTION + length + 1 - absGoRice + length) << 15;
+            rate += (COEF_REMAIN_BIN_REDUCTION + length + absGoRice + 1 + length) << 15;
         }
-        if (c1Idx < C1FLAG_NUMBER)
+        if (c1c2Idx & 1)
         {
-            rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+            rate += greaterOneBits[1];
+        }
 
-            if (c2Idx < C2FLAG_NUMBER)
-            {
-                rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
-            }
+        if (c1c2Idx == 3)
+        {
+            rate += levelAbsBits[1];
         }
     }
-    else if (absLevel == 1)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
-    }
-    else if (absLevel == 2)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-        rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
-    }
-    else
-    {
-        assert(0);
-    }
+
     return xGetICost(rate);
 }
 
 inline int TComTrQuant::xGetICRate(uint32_t absLevel,
-                                   uint16_t ctxNumOne,
-                                   uint16_t ctxNumAbs,
-                                   uint16_t absGoRice,
-                                   uint32_t c1Idx,
-                                   uint32_t c2Idx) const
+                                    int32_t diffLevel,
+                                   uint32_t ctxNumOne,
+                                   uint32_t ctxNumAbs,
+                                   uint32_t absGoRice,
+                                   uint32_t c1c2Idx) const
 {
-    int rate = 0;
-    uint32_t baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
-
-    if (absLevel >= baseLevel)
+    assert(c1c2Idx <= 3);
+    assert(absGoRice <= 4);
+    if (absLevel == 0)
     {
-        uint32_t symbol   = absLevel - baseLevel;
-        uint32_t maxVlc   = g_goRiceRange[absGoRice];
+        assert(diffLevel < 0);
+        return 0;
+    }
+    int rate = 0;
+    const int *greaterOneBits = m_estBitsSbac->greaterOneBits[ctxNumOne];
+    const int *levelAbsBits = m_estBitsSbac->levelAbsBits[ctxNumAbs];
+
+    if (diffLevel < 0)
+    {
+        assert(absLevel >= 0 && absLevel <= 2);
+        rate += greaterOneBits[(absLevel == 2)];
+
+        if (absLevel == 2)
+        {
+            rate += levelAbsBits[0];
+        }
+    }
+    else
+    {
+        uint32_t symbol   = diffLevel;
+        const uint32_t maxVlc   = g_goRiceRange[absGoRice];
         bool expGolomb = (symbol > maxVlc);
 
         if (expGolomb)
         {
             absLevel = symbol - maxVlc;
-            int egs = 1;
-            for (uint32_t max = 2; absLevel >= max; max <<= 1, egs += 2)
-            {
-            }
+
+            // NOTE: mapping to x86 hardware instruction BSR
+            unsigned long size;
+            CLZ32(size, absLevel);
+            int egs = size * 2 + 1;
+            //int egs = 1;
+            //for (uint32_t max = 2; absLevel >= max; max <<= 1, egs += 2)
+            //{
+            //}
+            //assert(egs == size * 2 + 1);
 
             rate   += egs << 15;
-            symbol = std::min<uint32_t>(symbol, (maxVlc + 1));
+
+            // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
+            assert(x265_min_fast(symbol, (maxVlc + 1)) == maxVlc + 1);
+            symbol = maxVlc + 1;
         }
 
-        uint16_t prefLen = uint16_t(symbol >> absGoRice) + 1;
-        uint16_t numBins = std::min<uint32_t>(prefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
+        uint32_t prefLen = (symbol >> absGoRice) + 1;
+        uint32_t numBins = x265_min_fast(prefLen + absGoRice, 8/*g_goRicePrefixLen[absGoRice] + absGoRice*/);
 
         rate += numBins << 15;
 
-        if (c1Idx < C1FLAG_NUMBER)
+        if (c1c2Idx & 1)
         {
-            rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-
-            if (c2Idx < C2FLAG_NUMBER)
-            {
-                rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
-            }
+            rate += greaterOneBits[1];
         }
-    }
-    else if (absLevel == 0)
-    {
-        return 0;
-    }
-    else if (absLevel == 1)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
-    }
-    else if (absLevel == 2)
-    {
-        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-        rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
-    }
-    else
-    {
-        assert(0);
+
+        if (c1c2Idx == 3)
+        {
+            rate += levelAbsBits[1];
+        }
     }
     return rate;
 }
@@ -1357,24 +1345,18 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
  * \param uiLog2BlkSize log2 value of block size
  * \returns ctxInc for current scan position
  */
-uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag,
+uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint64_t  sigCoeffGroupFlag64,
                                              const uint32_t  cgPosX,
                                              const uint32_t  cgPosY,
-                                             const uint32_t  widthInGroups,
-                                             const uint32_t  heightInGroups)
+                                             const uint32_t  log2TrSizeCG)
 {
-    uint32_t sigRight = 0;
-    uint32_t sigLower = 0;
+    const uint32_t trSizeCG = 1 << log2TrSizeCG;
+    assert(trSizeCG <= 32);
+    const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
+    uint32_t sigRight = (cgPosX < (trSizeCG - 1)) && ((sigPos & 1) != 0);
+    uint32_t sigLower = (cgPosY < (trSizeCG - 1)) && ((sigPos & (1 << (trSizeCG - 1))) != 0);
 
-    if (cgPosX < (widthInGroups  - 1))
-    {
-        sigRight = ((sigCoeffGroupFlag[(cgPosY * widthInGroups) + cgPosX + 1] != 0) ? 1 : 0);
-    }
-    if (cgPosY < (heightInGroups - 1))
-    {
-        sigLower = ((sigCoeffGroupFlag[(cgPosY + 1) * widthInGroups + cgPosX] != 0) ? 1 : 0);
-    }
-    return ((sigRight + sigLower) != 0) ? 1 : 0;
+    return sigRight | sigLower;
 }
 
 /** set quantized matrix coefficient for encode

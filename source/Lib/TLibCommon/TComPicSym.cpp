@@ -50,10 +50,8 @@ using namespace x265;
 TComPicSym::TComPicSym()
     : m_widthInCU(0)
     , m_heightInCU(0)
-    , m_maxCUWidth(0)
-    , m_maxCUHeight(0)
-    , m_minCUWidth(0)
-    , m_minCUHeight(0)
+    , m_maxCUSize(0)
+    , m_minCUSize(0)
     , m_totalDepth(0)
     , m_numPartitions(0)
     , m_numPartInWidth(0)
@@ -63,7 +61,7 @@ TComPicSym::TComPicSym()
     , m_cuData(NULL)
 {}
 
-bool TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth)
+bool TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxDepth)
 {
     uint32_t i;
 
@@ -71,17 +69,15 @@ bool TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxWid
     m_totalDepth      = maxDepth;
     m_numPartitions   = 1 << (m_totalDepth << 1);
 
-    m_maxCUWidth      = maxWidth;
-    m_maxCUHeight     = maxHeight;
+    m_maxCUSize       = maxCUSize;
 
-    m_minCUWidth      = maxWidth  >> m_totalDepth;
-    m_minCUHeight     = maxHeight >> m_totalDepth;
+    m_minCUSize       = maxCUSize  >> m_totalDepth;
 
-    m_numPartInWidth  = m_maxCUWidth / m_minCUWidth;
-    m_numPartInHeight = m_maxCUHeight / m_minCUHeight;
+    m_numPartInWidth  = m_maxCUSize / m_minCUSize;
+    m_numPartInHeight = m_maxCUSize / m_minCUSize;
 
-    m_widthInCU       = (picWidth % m_maxCUWidth) ? picWidth / m_maxCUWidth  + 1 : picWidth / m_maxCUWidth;
-    m_heightInCU      = (picHeight % m_maxCUHeight) ? picHeight / m_maxCUHeight + 1 : picHeight / m_maxCUHeight;
+    m_widthInCU       = (picWidth % m_maxCUSize) ? picWidth / m_maxCUSize  + 1 : picWidth / m_maxCUSize;
+    m_heightInCU      = (picHeight % m_maxCUSize) ? picHeight / m_maxCUSize + 1 : picHeight / m_maxCUSize;
 
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
 
@@ -95,7 +91,7 @@ bool TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxWid
         m_cuData[i] = new TComDataCU;
         if (!m_cuData[i])
             return false;
-        if (!m_cuData[i]->create(m_numPartitions, m_maxCUWidth, m_maxCUHeight, m_maxCUWidth >> m_totalDepth, picCsp))
+        if (!m_cuData[i]->create(m_numPartitions, m_maxCUSize, m_maxCUSize, m_maxCUSize >> m_totalDepth, picCsp))
             return false;
     }
 

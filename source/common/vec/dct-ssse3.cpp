@@ -34,9 +34,6 @@
 #include <pmmintrin.h> // SSE3
 #include <tmmintrin.h> // SSSE3
 
-#include <assert.h>
-#include <string.h>
-
 using namespace x265;
 
 #if !HIGH_BIT_DEPTH

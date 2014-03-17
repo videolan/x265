@@ -44,7 +44,7 @@
 #include "TComPattern.h"
 #include "TComTrQuant.h"
 #include "TComWeightPrediction.h"
-#include "TShortYUV.h"
+#include "shortyuv.h"
 
 namespace x265 {
 // private namespace
@@ -65,7 +65,7 @@ protected:
 
     // references sample for IntraPrediction
     TComYuv   m_predYuv[2];
-    TShortYUV m_predShortYuv[2];
+    ShortYuv  m_predShortYuv[2];
     TComYuv   m_predTempYuv;
 
     int16_t*  m_immedVals;
@@ -74,11 +74,11 @@ protected:
 
     // motion compensation functions
     void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
-    void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, TShortYUV* outPredYuv, bool bLuma, bool bChroma);
+    void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
     void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
+    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
     void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TShortYUV *dstPic);
+    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
 
     void xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, int height, TComYuv* outPredYuv, bool bLuma, bool bChroma);
 

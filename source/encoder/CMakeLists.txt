@@ -4,7 +4,6 @@ set(LIBENCODER_HDR
     ../Lib/TLibEncoder/SEIwrite.h
     ../Lib/TLibEncoder/SyntaxElementWriter.h
     ../Lib/TLibEncoder/TEncBinCoderCABAC.h
-    ../Lib/TLibEncoder/TEncCfg.h
     ../Lib/TLibEncoder/TEncCu.h
     ../Lib/TLibEncoder/TEncEntropy.h
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.h

@@ -504,7 +504,7 @@ mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
 mova        Tm1,         [tab_Tm + 16]
 
-.loop
+.loop:
 FILTER_H4_w%1   t0, t1, t2
 add         srcq,        srcstrideq
 add         dstq,        dststrideq
@@ -555,7 +555,7 @@ mova        t2,          [tab_c_512]
 mova        Tm0,         [tab_Tm]
 mova        Tm1,         [tab_Tm + 16]
 
-.loop
+.loop:
 FILTER_H4_w%1   t0, t1, t2, t3
 add         srcq,        srcstrideq
 add         dstq,        dststrideq
@@ -641,7 +641,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,7,6
     add       r4d, 7
 %endif
 
-.loopH
+.loopH:
     xor       r5, r5
 %rep %1 / 8
   %ifidn %3, pp 
@@ -703,7 +703,7 @@ cglobal interp_8tap_horiz_pp_%1x%2, 4,6,7
     mova        m2, [pw_512]                    ; m2 = 512
 
     mov         r4d, %2
-.loopH
+.loopH:
 %assign x 0
 %rep %1 / 8
     movu        m3, [r0 - 3 + x]                ; m3 = [F E D C B A 9 8 7 6 5 4 3 2 1 0]
@@ -1006,7 +1006,7 @@ mova        m1,        [tab_c_512]
 mov         r4d,       %2
 lea         r5,        [3 * r1]
 
-.loop
+.loop:
 movd        m2,        [r0]
 movd        m3,        [r0 + r1]
 movd        m4,        [r0 + 2 * r1]
@@ -1212,7 +1212,7 @@ mov         r4d,       %2
 
 lea         r5,        [3 * r1]
 
-.loop
+.loop:
 movd        m2,        [r0]
 movd        m3,        [r0 + r1]
 movd        m4,        [r0 + 2 * r1]
@@ -1580,7 +1580,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     mov        r4d, %2/4
     lea        r5, [3 * r1]
 
-.loop
+.loop:
     movd       m2, [r0]
     movd       m3, [r0 + r1]
     movd       m4, [r0 + 2 * r1]
@@ -1665,7 +1665,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 7
     mov        r4d, %2/2
     lea        r5, [3 * r1]
 
-.loopH
+.loopH:
     movq       m0, [r0]
     movq       m1, [r0 + r1]
     movq       m2, [r0 + 2 * r1]
@@ -1733,7 +1733,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     mov        r4d, %2/4
     lea        r5, [3 * r1]
 
-.loop
+.loop:
     movq       m0, [r0]
     movq       m1, [r0 + r1]
     movq       m2, [r0 + 2 * r1]
@@ -1823,7 +1823,7 @@ cglobal interp_4tap_vert_ps_6x8, 4, 6, 8
     lea        r5, [3 * r1]
     mov        r4d, 2
 
-.loop
+.loop:
     movq       m0, [r0]
     movq       m1, [r0 + r1]
     movq       m2, [r0 + 2 * r1]
@@ -1912,7 +1912,7 @@ cglobal interp_4tap_vert_ps_12x16, 4, 6, 8
 
     mov        r4d, 16/2
 
-.loop
+.loop:
     movu       m2, [r0]
     movu       m3, [r0 + r1]
 
@@ -1993,7 +1993,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     pshufb     m0, [tab_Vm + 16]
     mov        r4d, %2/2
 
-.loop
+.loop:
     movu       m2, [r0]
     movu       m3, [r0 + r1]
 
@@ -2081,7 +2081,7 @@ cglobal interp_4tap_vert_ps_24x32, 4, 6, 8
 
     mov        r4d, 32/2
 
-.loop
+.loop:
     movu       m2, [r0]
     movu       m3, [r0 + r1]
 
@@ -2196,7 +2196,7 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
 
     mov        r4d, %2
 
-.loop
+.loop:
     movu       m2, [r0]
     movu       m3, [r0 + r1]
 
@@ -2289,7 +2289,7 @@ lea         r5,        [r1 * 3]
 
 mov         r4d,       %2
 
-.loop
+.loop:
 movq        m0,        [r0]
 movq        m1,        [r0 + r1]
 movq        m2,        [r0 + 2 * r1]
@@ -2383,7 +2383,7 @@ mova        m4,        [tab_c_512]
 mov         r4d,       %2
 lea         r5,        [3 * r1]
 
-.loop
+.loop:
 movq        m0,        [r0]
 movq        m1,        [r0 + r1]
 movq        m2,        [r0 + 2 * r1]
@@ -2477,7 +2477,7 @@ pshufb      m0,        [tab_Vm + 16]
 
 mov         r4d,       %2
 
-.loop
+.loop:
 movu        m2,        [r0]
 movu        m3,        [r0 + r1]
 
@@ -2565,7 +2565,7 @@ pshufb      m0,        [tab_Vm + 16]
 
 mov         r4d,       %2
 
-.loop
+.loop:
 movu        m2,        [r0]
 movu        m3,        [r0 + r1]
 
@@ -2655,7 +2655,7 @@ pshufb      m0,        [tab_Vm + 16]
 
 mov         r4d,       %2
 
-.loop
+.loop:
 movu        m2,        [r0]
 movu        m3,        [r0 + r1]
 
@@ -2778,7 +2778,7 @@ mova        m7,        [tab_c_512]
 
 mov         r4d,       %2
 
-.loop
+.loop:
 movu        m2,        [r0]
 movu        m3,        [r0 + r1]
 
@@ -3058,7 +3058,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 6
     mov       r4d, %2/4
     lea       r5, [4 * r1]
 
-.loopH
+.loopH:
     PROCESS_LUMA_W4_4R
 
 %ifidn %3,pp
@@ -3152,7 +3152,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
     mov       r4d, %2/4
     lea       r5, [4 * r1]
 
-.loopH
+.loopH:
     PROCESS_LUMA_W8_4R
 
 %ifidn %3,pp
@@ -3259,7 +3259,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 
     mov       r4d, %2/4
 
-.loopH
+.loopH:
     PROCESS_LUMA_W8_4R
 
 %ifidn %3,pp
@@ -3372,9 +3372,9 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
 %endif
     mov       byte [rsp], %2/4
 
-.loopH
+.loopH:
     mov       r4d, (%1/8)
-.loopW
+.loopW:
     PROCESS_LUMA_W8_4R
 %ifidn %3,pp
     pmulhrsw  m7, m3
@@ -3549,9 +3549,9 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
     mova      m7, [tab_c_526336]
 
     mov       byte [rsp], %2/4
-.loopH
+.loopH:
     mov       r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_LUMA_SP_W4_4R
 
     paddd     m0, m7
@@ -3680,64 +3680,6 @@ cglobal chroma_p2s, 3, 7, 4
 
     RET
 
-INIT_XMM ssse3
-cglobal chroma_p2s_i444, 3, 7, 4
-
-    ; load width and height
-    mov         r3d, r3m
-    mov         r4d, r4m
-
-    ; load constant
-    mova        m2, [tab_c_128]
-    mova        m3, [tab_c_64_n64]
-
-.loopH:
-
-    xor         r5d, r5d
-.loopW:
-    lea         r6, [r0 + r5]
-
-    movh        m0, [r6]
-    punpcklbw   m0, m2
-    pmaddubsw   m0, m3
-
-    movh        m1, [r6 + r1]
-    punpcklbw   m1, m2
-    pmaddubsw   m1, m3
-
-    add         r5d, 8
-    cmp         r5d, r3d
-    lea         r6, [r2 + r5 * 2]
-    jg          .width4
-    movu        [r6 + FENC_STRIDE * 0 - 16], m0
-    movu        [r6 + FENC_STRIDE * 2 - 16], m1
-    je          .nextH
-    jmp         .loopW
-
-.width4:
-    test        r3d, 4
-    jz          .width2
-    test        r3d, 2
-    movh        [r6 + FENC_STRIDE * 0 - 16], m0
-    movh        [r6 + FENC_STRIDE * 2 - 16], m1
-    lea         r6, [r6 + 8]
-    pshufd      m0, m0, 2
-    pshufd      m1, m1, 2
-    jz          .nextH
-
-.width2:
-    movd        [r6 + FENC_STRIDE * 0 - 16], m0
-    movd        [r6 + FENC_STRIDE * 2 - 16], m1
-
-.nextH:
-    lea         r0, [r0 + r1 * 2]
-    add         r2, FENC_STRIDE * 4
-
-    sub         r4d, 2
-    jnz         .loopH
-
-    RET
-
 %macro PROCESS_CHROMA_SP_W4_4R 0
     movq       m0, [r0]
     movq       m1, [r0 + r1]
@@ -3795,9 +3737,9 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
 
     mov       byte [rsp], %2/4
 
-.loopH
+.loopH:
     mov       r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_CHROMA_SP_W4_4R
 
     paddd     m0, m6
@@ -3908,7 +3850,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 6
 
     mov       r4d, (%2/4)
 
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W2_4R r5
 
     paddd     m0, m5
@@ -4009,7 +3951,7 @@ cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
 
     mov       r4d, 8/4
 
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W4_4R
 
     paddd     m0, m6
@@ -4115,7 +4057,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 8
     mova      m7, [tab_c_526336]
 
     mov       r4d, %2/2
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W8_2R
 
     paddd     m0, m7
@@ -4183,7 +4125,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 4, src, srcstride, dst, dststride
     sub        srcq, srcstrideq
     add        r4d, 3
 
-.loopH
+.loopH:
     movh       t0, [srcq]
     pshufb     t0, t0, Tm0
     pmaddubsw  t0, coef2
@@ -4235,7 +4177,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 4, src, srcstride, dst, dststride
     sub        srcq, srcstrideq
     add        r4d, 3
 
-.loopH
+.loopH:
     movh       t0, [srcq]
     pshufb     t0, t0, Tm0
     pmaddubsw  t0, coef2
@@ -4321,7 +4263,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 6, src, srcstride, dst, dststride
     sub     srcq, srcstrideq
     add     r4d, 3
 
-.loopH
+.loopH:
     PROCESS_CHROMA_W%1  t0, t1, t2
     add     srcq, srcstrideq
     add     dstq, dststrideq
@@ -4381,7 +4323,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 6, src, srcstride, dst, dststride
     sub     srcq, srcstrideq
     add     r4d, 3
 
-.loopH
+.loopH:
     PROCESS_CHROMA_W8  t0, t1, t2
     add     srcq, srcstrideq
     add     dstq, dststrideq
@@ -4516,7 +4458,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 7, src, srcstride, dst, dststride
     sub     srcq, srcstrideq
     add     r4d, 3
 
-.loopH
+.loopH:
     PROCESS_CHROMA_W%1   t0, t1, t2, t3
     add     srcq, srcstrideq
     add     dstq, dststrideq
@@ -4633,7 +4575,7 @@ cglobal interp_4tap_vert_ps_2x8, 4, 6, 8
     mova       m1, [pw_2000]
     lea        r5, [3 * r1]
     mov        r4d, 2
-.loop
+.loop:
     movd       m2, [r0]
     movd       m3, [r0 + r1]
     movd       m4, [r0 + 2 * r1]
@@ -4715,9 +4657,9 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
 
     mov       byte [rsp], %2/4
 
-.loopH
+.loopH:
     mov       r4d, (%1/4)
-.loopW
+.loopW:
     PROCESS_CHROMA_SP_W4_4R
 
     psrad     m0, 6
@@ -4786,7 +4728,7 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 6, 5
 
     mov       r4d, (%2/4)
 
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W2_4R r5
 
     psrad     m0, 6
@@ -4878,7 +4820,7 @@ cglobal interp_4tap_vert_ss_6x8, 5, 7, 6
 
     mov       r4d, 8/4
 
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W4_4R
 
     psrad     m0, 6
@@ -4940,7 +4882,7 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 6, 7
 %endif
 
     mov       r4d, %2/2
-.loopH
+.loopH:
     PROCESS_CHROMA_SP_W8_2R
 
     psrad     m0, 6
@@ -4990,9 +4932,9 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
 %endif
 
     mov        byte [rsp], %2/4
-.loopH
+.loopH:
     mov        r4d, (%1/4)
-.loopW
+.loopW:
     movq       m0, [r0]
     movq       m1, [r0 + r1]
     punpcklwd  m0, m1                          ;m0=[0 1]

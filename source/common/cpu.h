@@ -25,7 +25,7 @@
 #ifndef X265_CPU_H
 #define X265_CPU_H
 
-#include <stdint.h>
+#include "common.h"
 
 // from cpu-a.asm, if ASM primitives are compiled, else primitives.cpp
 extern "C" void x265_cpu_emms(void);

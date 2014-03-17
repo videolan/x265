@@ -118,7 +118,6 @@ void TComSlice::initSlice()
     m_cabacInitFlag = false;
     m_numEntryPointOffsets = 0;
     m_enableTMVPFlag = true;
-    m_numWPRefs = 0;
 }
 
 bool TComSlice::getRapPicFlag()
@@ -215,26 +214,23 @@ void TComSlice::setRefPOCList()
     }
 }
 
-void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
+void TComSlice::setRefPicList(PicList& picList)
 {
-    if (!checkNumPocTotalCurr)
+    if (m_sliceType == I_SLICE)
     {
-        if (m_sliceType == I_SLICE)
-        {
-            ::memset(m_refPicList, 0, sizeof(m_refPicList));
-            ::memset(m_numRefIdx,  0, sizeof(m_numRefIdx));
+        ::memset(m_refPicList, 0, sizeof(m_refPicList));
+        ::memset(m_numRefIdx,  0, sizeof(m_numRefIdx));
 
-            return;
-        }
-
-        m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
-        m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
+        return;
     }
 
+    m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
+    m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
+
     TComPic* refPic = NULL;
-    TComPic* refPicSetStCurr0[16];
-    TComPic* refPicSetStCurr1[16];
-    TComPic* refPicSetLtCurr[16];
+    TComPic* refPicSetStCurr0[MAX_NUM_REF];
+    TComPic* refPicSetStCurr1[MAX_NUM_REF];
+    TComPic* refPicSetLtCurr[MAX_NUM_REF];
     uint32_t numPocStCurr0 = 0;
     uint32_t numPocStCurr1 = 0;
     uint32_t numPocLtCurr = 0;
@@ -285,30 +281,6 @@ void TComSlice::setRefPicList(PicList& picList, bool checkNumPocTotalCurr)
     TComPic* rpsCurrList0[MAX_NUM_REF + 1];
     TComPic* rpsCurrList1[MAX_NUM_REF + 1];
     int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
-    if (checkNumPocTotalCurr)
-    {
-        // The variable NumPocTotalCurr is derived as specified in subclause 7.4.7.2. It is a requirement of bitstream conformance
-        // that the following applies to the value of NumPocTotalCurr:
-        // - If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
-        // - Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
-        if (getRapPicFlag())
-        {
-            assert(numPocTotalCurr == 0);
-        }
-
-        if (m_sliceType == I_SLICE)
-        {
-            ::memset(m_refPicList, 0, sizeof(m_refPicList));
-            ::memset(m_numRefIdx,   0, sizeof(m_numRefIdx));
-
-            return;
-        }
-
-        assert(numPocTotalCurr >= 0);
-
-        m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
-        m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
-    }
 
     int cIdx = 0;
     for (i = 0; i < numPocStCurr0; i++, cIdx++)
@@ -393,50 +365,6 @@ int TComSlice::getNumRpsCurrTempList()
     }
 
     return numRpsCurrTempList;
-}
-
-void TComSlice::checkCRA(TComReferencePictureSet *rps, int& pocCRA, bool& prevRAPisBLA)
-{
-    for (int i = 0; i < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i++)
-    {
-        if (pocCRA < MAX_UINT && getPOC() > pocCRA)
-        {
-            assert(getPOC() + rps->getDeltaPOC(i) >= pocCRA);
-        }
-    }
-
-    for (int i = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i < rps->getNumberOfPictures(); i++)
-    {
-        if (pocCRA < MAX_UINT && getPOC() > pocCRA)
-        {
-            if (!rps->getCheckLTMSBPresent(i))
-            {
-                //assert(xGetLongTermRefPic(picList, rps->getPOC(i), false)->getPOC() >= pocCRA);
-            }
-            else
-            {
-                assert(rps->getPOC(i) >= pocCRA);
-            }
-        }
-    }
-
-    if (getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR picture found
-    {
-        pocCRA = getPOC();
-        prevRAPisBLA = false;
-    }
-    else if (getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA) // CRA picture found
-    {
-        pocCRA = getPOC();
-        prevRAPisBLA = false;
-    }
-    else if (getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
-             || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-             || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP) // BLA picture found
-    {
-        pocCRA = getPOC();
-        prevRAPisBLA = true;
-    }
 }
 
 /** get WP tables for weighted pred
@@ -543,8 +471,7 @@ TComSPS::TComSPS()
     , m_picHeightInLumaSamples(288)
     , m_log2MinCodingBlockSize(0)
     , m_log2DiffMaxMinCodingBlockSize(0)
-    , m_maxCUWidth(32)
-    , m_maxCUHeight(32)
+    , m_maxCUSize(32)
     , m_maxCUDepth(3)
     , m_bLongTermRefsPresent(false)
     , m_quadtreeTULog2MaxSize(0)
@@ -613,12 +540,9 @@ void TComSPS::setHrdParameters(uint32_t fpsNum, uint32_t fpsDenom, uint32_t numD
     timingInfo->setTimeScale(fpsNum);
 
     bool rateCnt = (bitRate > 0);
-    hrd->setNalHrdParametersPresentFlag(rateCnt);
     hrd->setVclHrdParametersPresentFlag(rateCnt);
 
-    hrd->setSubPicCpbParamsPresentFlag((numDU > 1));
-
-    if (hrd->getSubPicCpbParamsPresentFlag())
+    if (hrd->getSubPicHrdParamsPresentFlag())
     {
         hrd->setTickDivisorMinus2(100 - 2);
         hrd->setDuCpbRemovalDelayLengthMinus1(7);                  // 8-bit precision ( plus 1 for last DU in AU )

@@ -34,7 +34,7 @@ x265_encoder *x265_encoder_open(x265_param *param)
     if (!param)
         return NULL;
 
-    x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+    x265_setup_primitives(param, param->cpuid);
 
     if (x265_check_params(param))
         return NULL;
@@ -48,9 +48,6 @@ x265_encoder *x265_encoder_open(x265_param *param)
         // these may change params for auto-detect, etc
         encoder->determineLevelAndProfile(param);
         encoder->configure(param);
-
-        // save a copy of final parameters in TEncCfg
-        memcpy(&encoder->param, param, sizeof(*param));
 
         x265_print_params(param);
         encoder->create();
@@ -125,8 +122,6 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     return numEncoded;
 }
 
-EXTERN_CYCLE_COUNTER(ME);
-
 extern "C"
 void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t statsSizeBytes)
 {
@@ -153,8 +148,6 @@ void x265_encoder_close(x265_encoder *enc)
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-
-        REPORT_CYCLE_COUNTER(ME);
 
         encoder->printSummary();
         encoder->destroy();

@@ -30,8 +30,13 @@ int   x265_check_params(x265_param *param);
 int   x265_set_globals(x265_param *param);
 void  x265_print_params(x265_param *param);
 char* x265_param2string(x265_param *param);
+int   x265_atoi(const char *str, bool& bError);
+int   parseCpuName(const char *value, bool& bError);
 void  setParamAspectRatio(x265_param *p, int width, int height);
 void  getParamAspectRatio(x265_param *p, int& width, int& height);
+
+/* this table is kept internal to avoid confusion, since log level indices start at -1 */
+static const char * const logLevelNames[] = { "none", "error", "warning", "info", "debug", "full", 0 };
 
 }
 

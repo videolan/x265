@@ -24,8 +24,8 @@
 #ifndef X265_WAVEFRONT_H
 #define X265_WAVEFRONT_H
 
+#include "common.h"
 #include "threadpool.h"
-#include <stdint.h>
 
 namespace x265 {
 // x265 private namespace

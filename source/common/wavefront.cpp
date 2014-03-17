@@ -25,8 +25,6 @@
 #include "threading.h"
 #include "wavefront.h"
 #include "common.h"
-#include <assert.h>
-#include <string.h>
 
 namespace x265 {
 // x265 private namespace

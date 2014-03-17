@@ -123,6 +123,7 @@ struct Lowres : public ReferencePlanes
     MV*       lowresMvs[2][X265_BFRAME_MAX + 1];
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
     int64_t   plannedSatd[X265_LOOKAHEAD_MAX + 1];
+    int       bframes;
 
     /* rate control / adaptive quant data */
     double*   qpAqOffset;      // qp Aq offset values for each Cu
@@ -134,9 +135,9 @@ struct Lowres : public ReferencePlanes
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
 
-    bool create(TComPicYuv *orig, int bframes, bool bAqEnabled);
-    void destroy(int bframes);
-    void init(TComPicYuv *orig, int poc, int sliceType, int bframes);
+    bool create(TComPicYuv *orig, int _bframes, bool bAqEnabled);
+    void destroy();
+    void init(TComPicYuv *orig, int poc, int sliceType);
 };
 }
 

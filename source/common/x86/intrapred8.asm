@@ -214,7 +214,7 @@ cglobal intra_pred_dc8, 4, 7, 3
     lea             r1,            [r1 * 3]
     pextrb          [r6 + r1],     m2, 5
 
-.end
+.end:
     RET
 
 ;-------------------------------------------------------------------------------------------
@@ -329,7 +329,7 @@ cglobal intra_pred_dc16, 5, 7, 4
     pextrb          [r6 + r1],     m3, 5
     pextrb          [r6 + r1 * 2], m3, 6
 
-.end
+.end:
     RET
 
 ;-------------------------------------------------------------------------------------------
@@ -704,7 +704,7 @@ cglobal intra_pred_planar32, 4,7,8,0-(4*mmsize)
 %endmacro
 
     mov r3,         32
-.loop
+.loop:
     COMP_PRED_PLANAR_ROW 0
     COMP_PRED_PLANAR_ROW 16
     inc             r2
@@ -992,7 +992,7 @@ cglobal intra_pred_ang4_13, 4,4,5
     cmp         r4m, byte 23
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m1, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m1, 1       ; [x x x 4 3 2 1 0]
     palignr     m2, m1, 2       ; [x x x x 4 3 2 1]
@@ -1014,7 +1014,7 @@ cglobal intra_pred_ang4_14, 4,4,5
     cmp         r4m, byte 22
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
     palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
@@ -1036,7 +1036,7 @@ cglobal intra_pred_ang4_15, 4,4,5
     cmp         r4m, byte 21
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
     palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
@@ -1061,7 +1061,7 @@ cglobal intra_pred_ang4_16, 4,4,5
     cmp         r4m, byte 20
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m2, [r2 - 1]    ; [x x 4 3 2 1 0 x]
     palignr     m0, m2, 1       ; [x x x 4 3 2 1 0]
     palignr     m1, m2, 2       ; [x x x x 4 3 2 1]
@@ -1086,7 +1086,7 @@ cglobal intra_pred_ang4_17, 4,4,5
     cmp         r4m, byte 19
     jnz        .load
     xchg        r2, r3
-.load
+.load:
     movh        m3, [r2 - 1]    ; [- - 4 3 2 1 0 x]
     palignr     m0, m3, 1       ; [- - - 4 3 2 1 0]
     palignr     m1, m3, 2       ; [- - - - 4 3 2 1]
@@ -23689,8 +23689,6 @@ pinsrb        m1,    [r3 + 6],    0
 pmaddubsw     m3,    m1,          m6
 pmulhrsw      m3,    m7
 pslldq        m4,    2
-;pinsrb        m4,    [r4 + 4],    1
-;pinsrb        m4,    [r4 + 3],    0
 pinsrw        m4,     [r4 + 3],   0
 pmaddubsw     m5,    m4,          m6
 pmulhrsw      m5,    m7
@@ -24461,13 +24459,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 +  1120 * 16],    m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 4],      1
-pinsrb        m1,    [r3 + 3],      0
+pinsrw        m1,    [r3 + 3],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 12],     1
-pinsrb        m3,    [r3 + 11],     0
+pinsrw        m3,    [r3 + 11],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24488,13 +24484,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 +  1122 * 16],    m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 3],      1
-pinsrb        m1,    [r3 + 2],      0
+pinsrw        m1,    [r3 + 2],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 11],     1
-pinsrb        m3,    [r3 + 10],     0
+pinsrw        m3,    [r3 + 10],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24515,13 +24509,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 +  1124 * 16],    m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 2],      1
-pinsrb        m1,    [r3 + 1],      0
+pinsrw        m1,    [r3 + 1],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 10],     1
-pinsrb        m3,    [r3 +  9],     0
+pinsrw        m3,    [r3 +  9],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24542,13 +24534,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 +  1126 * 16],    m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 1],      1
-pinsrb        m1,    [r3 + 0],      0
+pinsrw        m1,    [r3 + 0],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 9],      1
-pinsrb        m3,    [r3 + 8],      0
+pinsrw        m3,    [r3 + 8],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24616,8 +24606,7 @@ pinsrb        m1,    [r4 + 2],     0
 pmaddubsw     m4,    m1,           m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 7],     1
-pinsrb        m3,    [r3 + 6],     0
+pinsrw        m3,    [r3 + 6],      0
 pmaddubsw     m5,    m3,           m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24643,8 +24632,7 @@ pinsrb        m1,    [r4 + 4],     0
 pmaddubsw     m4,    m1,           m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 6],     1
-pinsrb        m3,    [r3 + 5],     0
+pinsrw        m3,    [r3 + 5],      0
 pmaddubsw     m5,    m3,           m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24670,8 +24658,7 @@ pinsrb        m1,    [r4 + 5],     0
 pmaddubsw     m4,    m1,           m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 5],     1
-pinsrb        m3,    [r3 + 4],     0
+pinsrw        m3,    [r3 + 4],      0
 pmaddubsw     m5,    m3,           m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24697,8 +24684,7 @@ pinsrb        m1,    [r4 + 6],     0
 pmaddubsw     m4,    m1,           m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 4],     1
-pinsrb        m3,    [r3 + 3],     0
+pinsrw        m3,    [r3 + 3],      0
 pmaddubsw     m5,    m3,           m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24739,8 +24725,7 @@ pinsrb        m1,    [r4 + 7],     0
 pmaddubsw     m4,    m1,           m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 3],     1
-pinsrb        m3,    [r3 + 2],     0
+pinsrw        m3,    [r3 + 2],      0
 pmaddubsw     m5,    m3,           m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24766,8 +24751,7 @@ pinsrb        m1,    [r4 + 9],     0
 pmaddubsw     m4,    m1,           m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 2],     1
-pinsrb        m3,    [r3 + 1],     0
+pinsrw        m3,    [r3 + 1],      0
 pmaddubsw     m5,    m3,           m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24793,8 +24777,7 @@ pinsrb        m1,    [r4 + 10],    0
 pmaddubsw     m4,    m1,           m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 1],     1
-pinsrb        m3,    [r3 + 0],     0
+pinsrw        m3,    [r3 + 0],      0
 pmaddubsw     m5,    m3,           m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24873,20 +24856,17 @@ pinsrb        m0,    [r4 + 2],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 8],      1
-pinsrb        m2,    [r3 + 7],      0
+pinsrw        m2,    [r3 + 7],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1154 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 16],     1
-pinsrb        m1,    [r3 + 15],     0
+pinsrw        m1,    [r3 + 15],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 24],     1
-pinsrb        m3,    [r3 + 23],     0
+pinsrw        m3,    [r3 + 23],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24915,20 +24895,17 @@ pinsrb        m0,    [r4 + 3],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 7],      1
-pinsrb        m2,    [r3 + 6],      0
+pinsrw        m2,    [r3 + 6],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1158 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 15],     1
-pinsrb        m1,    [r3 + 14],     0
+pinsrw        m1,    [r3 + 14],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 23],     1
-pinsrb        m3,    [r3 + 22],     0
+pinsrw        m3,    [r3 + 22],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24942,20 +24919,17 @@ pinsrb        m0,    [r4 + 5],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 6],      1
-pinsrb        m2,    [r3 + 5],      0
+pinsrw        m2,    [r3 + 5],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1160 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 14],     1
-pinsrb        m1,    [r3 + 13],     0
+pinsrw        m1,    [r3 + 13],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 22],     1
-pinsrb        m3,    [r3 + 21],     0
+pinsrw        m3,    [r3 + 21],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -24984,20 +24958,17 @@ pinsrb        m0,    [r4 + 6],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 5],      1
-pinsrb        m2,    [r3 + 4],      0
+pinsrw        m2,    [r3 + 4],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1164 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 13],     1
-pinsrb        m1,    [r3 + 12],     0
+pinsrw        m1,    [r3 + 12],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 21],     1
-pinsrb        m3,    [r3 + 20],     0
+pinsrw        m3,    [r3 + 20],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25011,20 +24982,17 @@ pinsrb        m0,    [r4 + 8],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 4],      1
-pinsrb        m2,    [r3 + 3],      0
+pinsrw        m2,    [r3 + 3],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1166 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 12],     1
-pinsrb        m1,    [r3 + 11],     0
+pinsrw        m1,    [r3 + 11],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 20],     1
-pinsrb        m3,    [r3 + 19],     0
+pinsrw        m3,    [r3 + 19],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25060,13 +25028,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1170 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 11],     1
-pinsrb        m1,    [r3 + 10],     0
+pinsrw        m1,    [r3 + 10],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 19],     1
-pinsrb        m3,    [r3 + 18],     0
+pinsrw        m3,    [r3 + 18],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25080,20 +25046,17 @@ pinsrb        m0,    [r4 + 11],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 2],      1
-pinsrb        m2,    [r3 + 1],      0
+pinsrw        m2,    [r3 + 1],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1172 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 10],     1
-pinsrb        m1,    [r3 + 9],     0
+pinsrw        m1,    [r3 + 9],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 18],     1
-pinsrb        m3,    [r3 + 17],     0
+pinsrw        m3,    [r3 + 17],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25129,13 +25092,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1176 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 9],      1
-pinsrb        m1,    [r3 + 8],      0
+pinsrw        m1,    [r3 + 8],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 17],     1
-pinsrb        m3,    [r3 + 16],     0
+pinsrw        m3,    [r3 + 16],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25156,13 +25117,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1178 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 8],      1
-pinsrb        m1,    [r3 + 7],      0
+pinsrw        m1,    [r3 + 7],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 16],     1
-pinsrb        m3,    [r3 + 15],     0
+pinsrw        m3,    [r3 + 15],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25198,13 +25157,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1182 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 7],      1
-pinsrb        m1,    [r3 + 6],      0
+pinsrw        m1,    [r3 + 6],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 15],     1
-pinsrb        m3,    [r3 + 14],     0
+pinsrw        m3,    [r3 + 14],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25225,13 +25182,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1184 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 6],      1
-pinsrb        m1,    [r3 + 5],      0
+pinsrw        m1,    [r3 + 5],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 14],     1
-pinsrb        m3,    [r3 + 13],     0
+pinsrw        m3,    [r3 + 13],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25267,13 +25222,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1188 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 5],      1
-pinsrb        m1,    [r3 + 4],      0
+pinsrw        m1,    [r3 + 4],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 13],     1
-pinsrb        m3,    [r3 + 12],     0
+pinsrw        m3,    [r3 + 12],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25294,13 +25247,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1190 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 4],      1
-pinsrb        m1,    [r3 + 3],      0
+pinsrw        m1,    [r3 + 3],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 12],     1
-pinsrb        m3,    [r3 + 11],     0
+pinsrw        m3,    [r3 + 11],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25336,13 +25287,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1194 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 3],      1
-pinsrb        m1,    [r3 + 2],      0
+pinsrw        m1,    [r3 + 2],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 11],     1
-pinsrb        m3,    [r3 + 10],     0
+pinsrw        m3,    [r3 + 10],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25363,13 +25312,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1196 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 2],      1
-pinsrb        m1,    [r3 + 1],      0
+pinsrw        m1,    [r3 + 1],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 10],     1
-pinsrb        m3,    [r3 +  9],     0
+pinsrw        m3,    [r3 + 9],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25405,13 +25352,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1200 * 16],      m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 1],       1
-pinsrb        m1,    [r3 + 0],       0
+pinsrw        m1,    [r3 + 0],      0
 pmaddubsw     m4,    m1,             m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 9],       1
-pinsrb        m3,    [r3 + 8],       0
+pinsrw        m3,    [r3 + 8],       0
 pmaddubsw     m5,    m3,             m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25437,8 +25382,7 @@ pinsrb        m1,    [r4 + 2],       0
 pmaddubsw     m4,    m1,             m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 8],       1
-pinsrb        m3,    [r3 + 7],       0
+pinsrw        m3,    [r3 + 7],      0
 pmaddubsw     m5,    m3,             m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25479,8 +25423,7 @@ pinsrb        m1,    [r4 + 3],       0
 pmaddubsw     m4,    m1,             m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 7],       1
-pinsrb        m3,    [r3 + 6],       0
+pinsrw        m3,    [r3 + 6],      0
 pmaddubsw     m5,    m3,             m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25506,8 +25449,7 @@ pinsrb        m1,    [r4 + 5],       0
 pmaddubsw     m4,    m1,             m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 6],       1
-pinsrb        m3,    [r3 + 5],       0
+pinsrw        m3,    [r3 + 5],      0
 pmaddubsw     m5,    m3,             m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25548,8 +25490,7 @@ pinsrb        m1,    [r4 + 6],       0
 pmaddubsw     m4,    m1,             m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 5],       1
-pinsrb        m3,    [r3 + 4],       0
+pinsrw        m3,    [r3 + 4],      0
 pmaddubsw     m5,    m3,             m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25601,20 +25542,17 @@ pinsrb        m0,    [r4 + 2],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 8],      1
-pinsrb        m2,    [r3 + 7],      0
+pinsrw        m2,    [r3 + 7],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1218 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 16],     1
-pinsrb        m1,    [r3 + 15],     0
+pinsrw        m1,    [r3 + 15],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 24],     1
-pinsrb        m3,    [r3 + 23],     0
+pinsrw        m3,    [r3 + 23],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25643,20 +25581,17 @@ pinsrb        m0,    [r4 + 4],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 7],      1
-pinsrb        m2,    [r3 + 6],      0
+pinsrw        m2,    [r3 + 6],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1222 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 15],     1
-pinsrb        m1,    [r3 + 14],     0
+pinsrw        m1,    [r3 + 14],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 23],     1
-pinsrb        m3,    [r3 + 22],     0
+pinsrw        m3,    [r3 + 22],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25685,20 +25620,17 @@ pinsrb        m0,    [r4 + 6],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 6],      1
-pinsrb        m2,    [r3 + 5],      0
+pinsrw        m2,    [r3 + 5],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1226 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 14],     1
-pinsrb        m1,    [r3 + 13],     0
+pinsrw        m1,    [r3 + 13],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 22],     1
-pinsrb        m3,    [r3 + 21],     0
+pinsrw        m3,    [r3 + 21],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25727,20 +25659,17 @@ pinsrb        m0,    [r4 + 8],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 5],      1
-pinsrb        m2,    [r3 + 4],      0
+pinsrw        m2,    [r3 + 4],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1230 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 13],     1
-pinsrb        m1,    [r3 + 12],     0
+pinsrw        m1,    [r3 + 12],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 21],     1
-pinsrb        m3,    [r3 + 20],     0
+pinsrw        m3,    [r3 + 20],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25769,20 +25698,17 @@ pinsrb        m0,    [r4 + 9],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 4],      1
-pinsrb        m2,    [r3 + 3],      0
+pinsrw        m2,    [r3 + 3],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1234 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 12],     1
-pinsrb        m1,    [r3 + 11],     0
+pinsrw        m1,    [r3 + 11],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 20],     1
-pinsrb        m3,    [r3 + 19],     0
+pinsrw        m3,    [r3 + 19],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25811,20 +25737,17 @@ pinsrb        m0,    [r4 + 11],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 3],      1
-pinsrb        m2,    [r3 + 2],      0
+pinsrw        m2,    [r3 + 2],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1238 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 11],     1
-pinsrb        m1,    [r3 + 10],     0
+pinsrw        m1,    [r3 + 10],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 19],     1
-pinsrb        m3,    [r3 + 18],     0
+pinsrw        m3,    [r3 + 18],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25853,20 +25776,17 @@ pinsrb        m0,    [r4 + 13],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 2],      1
-pinsrb        m2,    [r3 + 1],      0
+pinsrw        m2,    [r3 + 1],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1242 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 10],     1
-pinsrb        m1,    [r3 +  9],     0
+pinsrw        m1,    [r3 + 9],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 18],     1
-pinsrb        m3,    [r3 + 17],     0
+pinsrw        m3,    [r3 + 17],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25895,20 +25815,17 @@ pinsrb        m0,    [r4 + 15],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 1],      1
-pinsrb        m2,    [r3 + 0],      0
+pinsrw        m2,    [r3 + 0],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1246 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 9],      1
-pinsrb        m1,    [r3 + 8],      0
+pinsrw        m1,    [r3 + 8],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 17],     1
-pinsrb        m3,    [r3 + 16],     0
+pinsrw        m3,    [r3 + 16],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -25929,13 +25846,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1248 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 8],      1
-pinsrb        m1,    [r3 + 7],      0
+pinsrw        m1,    [r3 + 7],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 16],     1
-pinsrb        m3,    [r3 + 15],     0
+pinsrw        m3,    [r3 + 15],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26013,13 +25928,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1256 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 6],      1
-pinsrb        m1,    [r3 + 5],      0
+pinsrw        m1,    [r3 + 5],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 14],     1
-pinsrb        m3,    [r3 + 13],     0
+pinsrw        m3,    [r3 + 13],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26055,13 +25968,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1260 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 5],      1
-pinsrb        m1,    [r3 + 4],      0
+pinsrw        m1,    [r3 + 4],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 13],     1
-pinsrb        m3,    [r3 + 12],     0
+pinsrw        m3,    [r3 + 12],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26097,13 +26008,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1264 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 4],      1
-pinsrb        m1,    [r3 + 3],      0
+pinsrw        m1,    [r3 + 3],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 12],     1
-pinsrb        m3,    [r3 + 11],     0
+pinsrw        m3,    [r3 + 11],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26139,13 +26048,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1268 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 3],      1
-pinsrb        m1,    [r3 + 2],      0
+pinsrw        m1,    [r3 + 2],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 11],     1
-pinsrb        m3,    [r3 + 10],     0
+pinsrw        m3,    [r3 + 10],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26181,13 +26088,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1272 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 2],      1
-pinsrb        m1,    [r3 + 1],      0
+pinsrw        m1,    [r3 + 1],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 10],     1
-pinsrb        m3,    [r3 +  9],     0
+pinsrw        m3,    [r3 + 9],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26223,13 +26128,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1276 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 1],      1
-pinsrb        m1,    [r3 + 0],      0
+pinsrw        m1,    [r3 + 0],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 9],      1
-pinsrb        m3,    [r3 + 8],      0
+pinsrw        m3,    [r3 + 8],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26296,20 +26199,17 @@ pinsrb        m0,    [r4 + 2],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 8],      1
-pinsrb        m2,    [r3 + 7],      0
+pinsrw        m2,    [r3 + 7],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1284 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 16],     1
-pinsrb        m1,    [r3 + 15],     0
+pinsrw        m1,    [r3 + 15],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 24],     1
-pinsrb        m3,    [r3 + 23],     0
+pinsrw        m3,    [r3 + 23],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26338,20 +26238,17 @@ pinsrb        m0,    [r4 + 5],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 7],      1
-pinsrb        m2,    [r3 + 6],      0
+pinsrw        m2,    [r3 + 6],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1288 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 15],     1
-pinsrb        m1,    [r3 + 14],     0
+pinsrw        m1,    [r3 + 14],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 23],     1
-pinsrb        m3,    [r3 + 22],     0
+pinsrw        m3,    [r3 + 22],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26395,20 +26292,17 @@ pinsrb        m0,    [r4 + 7],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 6],      1
-pinsrb        m2,    [r3 + 5],      0
+pinsrw        m2,    [r3 + 5],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1294 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 14],     1
-pinsrb        m1,    [r3 + 13],     0
+pinsrw        m1,    [r3 + 13],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 22],     1
-pinsrb        m3,    [r3 + 21],     0
+pinsrw        m3,    [r3 + 21],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26437,20 +26331,17 @@ pinsrb        m0,    [r4 + 10],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 5],      1
-pinsrb        m2,    [r3 + 4],      0
+pinsrw        m2,    [r3 + 4],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1298 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 13],     1
-pinsrb        m1,    [r3 + 12],     0
+pinsrw        m1,    [r3 + 12],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 21],     1
-pinsrb        m3,    [r3 + 20],     0
+pinsrw        m3,    [r3 + 20],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26494,20 +26385,17 @@ pinsrb        m0,    [r4 + 12],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 4],      1
-pinsrb        m2,    [r3 + 3],      0
+pinsrw        m2,    [r3 + 3],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1304 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 12],     1
-pinsrb        m1,    [r3 + 11],     0
+pinsrw        m1,    [r3 + 11],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 20],     1
-pinsrb        m3,    [r3 + 19],     0
+pinsrw        m3,    [r3 + 19],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26536,20 +26424,17 @@ pinsrb        m0,    [r4 + 15],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 3],      1
-pinsrb        m2,    [r3 + 2],      0
+pinsrw        m2,    [r3 + 2],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1308 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 11],     1
-pinsrb        m1,    [r3 + 10],     0
+pinsrw        m1,    [r3 + 10],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 19],     1
-pinsrb        m3,    [r3 + 18],     0
+pinsrw        m3,    [r3 + 18],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26593,20 +26478,17 @@ pinsrb        m0,    [r4 + 17],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 2],      1
-pinsrb        m2,    [r3 + 1],      0
+pinsrw        m2,    [r3 + 1],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1314 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 10],     1
-pinsrb        m1,    [r3 +  9],     0
+pinsrw        m1,    [r3 + 9],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 18],     1
-pinsrb        m3,    [r3 + 17],     0
+pinsrw        m3,    [r3 + 17],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26635,20 +26517,17 @@ pinsrb        m0,    [r4 + 20],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 1],      1
-pinsrb        m2,    [r3 + 0],      0
+pinsrw        m2,    [r3 + 0],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1318 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 9],      1
-pinsrb        m1,    [r3 + 8],      0
+pinsrw        m1,    [r3 + 8],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 17],     1
-pinsrb        m3,    [r3 + 16],     0
+pinsrw        m3,    [r3 + 16],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26699,13 +26578,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1324 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 8],      1
-pinsrb        m1,    [r3 + 7],      0
+pinsrw        m1,    [r3 + 7],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 16],     1
-pinsrb        m3,    [r3 + 15],     0
+pinsrw        m3,    [r3 + 15],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26741,13 +26618,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1328 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 7],      1
-pinsrb        m1,    [r3 + 6],      0
+pinsrw        m1,    [r3 + 6],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 15],     1
-pinsrb        m3,    [r3 + 14],     0
+pinsrw        m3,    [r3 + 14],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26798,13 +26673,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1334 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 6],      1
-pinsrb        m1,    [r3 + 5],      0
+pinsrw        m1,    [r3 +  5],     0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 14],     1
-pinsrb        m3,    [r3 + 13],     0
+pinsrw        m3,    [r3 + 13],     0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26840,13 +26713,11 @@ pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1338 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 5],      1
-pinsrb        m1,    [r3 + 4],      0
+pinsrw        m1,    [r3 +  4],     0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 13],     1
-pinsrb        m3,    [r3 + 12],     0
+pinsrw        m3,    [r3 + 12],     0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -26943,20 +26814,17 @@ pinsrb        m0,    [r4 + 4],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 8],      1
-pinsrb        m2,    [r3 + 7],      0
+pinsrw        m2,    [r3 + 7],     0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1350 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 16],     1
-pinsrb        m1,    [r3 + 15],     0
+pinsrw        m1,    [r3 + 15],     0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 24],     1
-pinsrb        m3,    [r3 + 23],     0
+pinsrw        m3,    [r3 + 23],     0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27015,20 +26883,17 @@ pinsrb        m0,    [r4 + 7],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 7],      1
-pinsrb        m2,    [r3 + 6],      0
+pinsrw        m2,    [r3 + 6],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1358 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 15],     1
-pinsrb        m1,    [r3 + 14],     0
+pinsrw        m1,    [r3 + 14],     0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 23],     1
-pinsrb        m3,    [r3 + 22],     0
+pinsrw        m3,    [r3 + 22],     0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27072,20 +26937,17 @@ pinsrb        m0,    [r4 + 11],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 6],      1
-pinsrb        m2,    [r3 + 5],      0
+pinsrw        m2,    [r3 + 5],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1364 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 14],     1
-pinsrb        m1,    [r3 + 13],     0
+pinsrw        m1,    [r3 + 13],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 22],     1
-pinsrb        m3,    [r3 + 21],     0
+pinsrw        m3,    [r3 + 21],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27144,20 +27006,17 @@ pinsrb        m0,    [r4 + 14],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 5],      1
-pinsrb        m2,    [r3 + 4],      0
+pinsrw        m2,    [r3 + 4],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1372 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 13],     1
-pinsrb        m1,    [r3 + 12],     0
+pinsrw        m1,    [r3 + 12],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 21],     1
-pinsrb        m3,    [r3 + 20],     0
+pinsrw        m3,    [r3 + 20],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27201,20 +27060,17 @@ pinsrb        m0,    [r4 + 18],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 4],      1
-pinsrb        m2,    [r3 + 3],      0
+pinsrw        m2,    [r3 + 3],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1378 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 12],     1
-pinsrb        m1,    [r3 + 11],     0
+pinsrw        m1,    [r3 + 11],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 20],     1
-pinsrb        m3,    [r3 + 19],     0
+pinsrw        m3,    [r3 + 19],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27273,20 +27129,17 @@ pinsrb        m0,    [r4 + 21],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 3],      1
-pinsrb        m2,    [r3 + 2],      0
+pinsrw        m2,    [r3 + 2],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1386 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 11],     1
-pinsrb        m1,    [r3 + 10],     0
+pinsrw        m1,    [r3 + 10],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 19],     1
-pinsrb        m3,    [r3 + 18],     0
+pinsrw        m3,    [r3 + 18],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27330,20 +27183,17 @@ pinsrb        m0,    [r4 + 25],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 2],      1
-pinsrb        m2,    [r3 + 1],      0
+pinsrw        m2,    [r3 + 1],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1392 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 10],     1
-pinsrb        m1,    [r3 +  9],     0
+pinsrw        m1,    [r3 + 9],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 18],     1
-pinsrb        m3,    [r3 + 17],     0
+pinsrw        m3,    [r3 + 17],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27402,20 +27252,17 @@ pinsrb        m0,    [r4 + 28],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 1],      1
-pinsrb        m2,    [r3 + 0],      0
+pinsrw        m2,    [r3 + 0],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1400 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 9],     1
-pinsrb        m1,    [r3 + 8],     0
+pinsrw        m1,    [r3 + 8],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 17],     1
-pinsrb        m3,    [r3 + 16],     0
+pinsrw        m3,    [r3 + 16],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27572,20 +27419,17 @@ pinsrb        m0,    [r4 + 6],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 8],      1
-pinsrb        m2,    [r3 + 7],      0
+pinsrw        m2,    [r3 + 7],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1420 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 16],     1
-pinsrb        m1,    [r3 + 15],     0
+pinsrw        m1,    [r3 + 15],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 24],     1
-pinsrb        m3,    [r3 + 23],     0
+pinsrw        m3,    [r3 + 23],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27674,20 +27518,17 @@ pinsrb        m0,    [r4 + 13],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 7],      1
-pinsrb        m2,    [r3 + 6],      0
+pinsrw        m2,    [r3 + 6],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1432 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 15],     1
-pinsrb        m1,    [r3 + 14],     0
+pinsrw        m1,    [r3 + 14],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 23],     1
-pinsrb        m3,    [r3 + 22],     0
+pinsrw        m3,    [r3 + 22],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27791,20 +27632,17 @@ pinsrb        m0,    [r4 + 19],      0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 6],      1
-pinsrb        m2,    [r3 + 5],      0
+pinsrw        m2,    [r3 + 5],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1446 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 14],     1
-pinsrb        m1,    [r3 + 13],     0
+pinsrw        m1,    [r3 + 13],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 22],     1
-pinsrb        m3,    [r3 + 21],     0
+pinsrw        m3,    [r3 + 21],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -27893,20 +27731,17 @@ pinsrb        m0,    [r4 + 26],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 5],      1
-pinsrb        m2,    [r3 + 4],      0
+pinsrw        m2,    [r3 + 4],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1458 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 13],     1
-pinsrb        m1,    [r3 + 12],     0
+pinsrw        m1,    [r3 + 12],      0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 21],     1
-pinsrb        m3,    [r3 + 20],     0
+pinsrw        m3,    [r3 + 20],      0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
@@ -28249,24 +28084,21 @@ movh          [r0 + 1503 * 16 + 8], m5
 movu          m6,    [r5 + 30 * 16]
 pslldq        m0,    2
 pinsrb        m0,    [r4 + 0],      1
-pinsrb        m0,    [r4 + 16],      0
+pinsrb        m0,    [r4 + 16],     0
 pmaddubsw     m4,    m0,            m6
 pmulhrsw      m4,    m7
 pslldq        m2,    2
-pinsrb        m2,    [r3 + 8],      1
-pinsrb        m2,    [r3 + 7],      0
+pinsrw        m2,    [r3 + 7],      0
 pmaddubsw     m5,    m2,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5
 movu          [r0 + 1504 * 16],     m4
 pslldq        m1,    2
-pinsrb        m1,    [r3 + 16],     1
-pinsrb        m1,    [r3 + 15],     0
+pinsrw        m1,    [r3 + 15],     0
 pmaddubsw     m4,    m1,            m6
 pmulhrsw      m4,    m7
 pslldq        m3,    2
-pinsrb        m3,    [r3 + 24],     1
-pinsrb        m3,    [r3 + 23],     0
+pinsrw        m3,    [r3 + 23],     0
 pmaddubsw     m5,    m3,            m6
 pmulhrsw      m5,    m7
 packuswb      m4,    m5

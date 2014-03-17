@@ -24,9 +24,46 @@
 #ifndef X265_COMMON_H
 #define X265_COMMON_H
 
+#include <algorithm>
+#include <climits>
+#include <cmath>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
+
+#include <stdint.h>
+#include <memory.h>
+#include <assert.h>
+
 #include "x265.h"
+
+#define FENC_STRIDE 64
+#define NUM_INTRA_MODE 35
+
+#if defined(__GNUC__)
+#define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
+#define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
+#define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
+#elif defined(_MSC_VER)
+#define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
+#define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
+#define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
+#endif // if defined(__GNUC__)
+
+#if HIGH_BIT_DEPTH
+typedef uint16_t pixel;
+typedef uint32_t sum_t;
+typedef uint64_t sum2_t;
+typedef uint64_t pixel4;
+#else
+typedef uint8_t  pixel;
+typedef uint16_t sum_t;
+typedef uint32_t sum2_t;
+typedef uint32_t pixel4;
+#endif // if HIGH_BIT_DEPTH
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -67,8 +104,6 @@
 #define X265_LOWRES_CU_SIZE   8
 #define X265_LOWRES_CU_BITS   3
 
-#define X265_BFRAME_MAX      16
-
 #define MAX_NAL_UNITS 5
 #define MIN_FIFO_SIZE 1000
 
@@ -84,23 +119,6 @@
         } \
     }
 
-#define ENABLE_CYCLE_COUNTERS 0
-#if ENABLE_CYCLE_COUNTERS
-#include <intrin.h>
-#define DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME) uint64_t SUBSYSTEM_NAME ## _cycle_count, SUBSYSTEM_NAME ## _num_calls
-#define CYCLE_COUNTER_START(SUBSYSTEM_NAME)   uint64_t start_time = __rdtsc(); SUBSYSTEM_NAME ## _num_calls++
-#define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)    SUBSYSTEM_NAME ## _cycle_count += __rdtsc() - start_time
-#define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)  extern DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)  printf("Subsystem: %s\tTotal Cycles: %lld Ave Cycles: %lf Num Calls: %ld\n", #SUBSYSTEM_NAME, \
-                                                     SUBSYSTEM_NAME ## _cycle_count, (double)SUBSYSTEM_NAME ## _cycle_count / SUBSYSTEM_NAME ## _num_calls, SUBSYSTEM_NAME ## _num_calls);
-#else
-#define DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#define CYCLE_COUNTER_START(SUBSYSTEM_NAME)
-#define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)
-#define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#endif // if ENABLE_CYCLE_COUNTERS
-
 #if defined(_MSC_VER)
 #define X265_LOG2F(x) (logf((float)(x)) * 1.44269504088896405f)
 #define X265_LOG2(x) (log((double)(x)) * 1.4426950408889640513713538072172)
@@ -115,7 +133,6 @@ void x265_log(x265_param *param, int level, const char *fmt, ...);
 int x265_exp2fix8(double x);
 void *x265_malloc(size_t size);
 void x265_free(void *ptr);
-int x265_atoi(const char *str, bool& bError);
 
 double x265_ssim2dB(double ssim);
 double x265_qScale2qp(double qScale);

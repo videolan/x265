@@ -27,8 +27,6 @@
 #include "TLibCommon/CommonDef.h"
 #include "common.h"
 #include "primitives.h"
-#include <stddef.h>
-#include <algorithm>
 
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
