@@ -1156,13 +1156,13 @@ public:
 
     int       getChromaCrQpOffset() const { return m_chromaCrQpOffset; }
 
-    void      setNumRefIdxL0DefaultActive(uint32_t i)    { m_numRefIdxL0DefaultActive = i; }
+    void      setNumRefIdxL0DefaultActive(uint32_t i) { m_numRefIdxL0DefaultActive = i; }
 
-    uint32_t      getNumRefIdxL0DefaultActive() const     { return m_numRefIdxL0DefaultActive; }
+    uint32_t  getNumRefIdxL0DefaultActive() const     { return m_numRefIdxL0DefaultActive; }
 
-    void      setNumRefIdxL1DefaultActive(uint32_t i)    { m_numRefIdxL1DefaultActive = i; }
+    void      setNumRefIdxL1DefaultActive(uint32_t i) { m_numRefIdxL1DefaultActive = i; }
 
-    uint32_t      getNumRefIdxL1DefaultActive() const     { return m_numRefIdxL1DefaultActive; }
+    uint32_t  getNumRefIdxL1DefaultActive() const     { return m_numRefIdxL1DefaultActive; }
 
     bool getUseWP() const    { return m_bUseWeightPred; }
 
@@ -1202,7 +1202,7 @@ public:
 
     bool     getCabacInitPresentFlag() const        { return m_cabacInitPresentFlag; }
 
-    uint32_t     getEncCABACTableIdx() const            { return m_encCABACTableIdx; }
+    uint32_t getEncCABACTableIdx() const            { return m_encCABACTableIdx; }
 
     void     setDeblockingFilterControlPresentFlag(bool val)  { m_deblockingFilterControlPresentFlag = val; }
 
