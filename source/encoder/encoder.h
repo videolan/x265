@@ -183,7 +183,8 @@ public:
     int                m_log2MaxMvLengthHorizontal;
     int                m_log2MaxMvLengthVertical;
 
-    x265_param         *param;
+    x265_param*        param;
+    RateControl*       m_rateControl;
 
     int                bEnableRDOQ;
     int                bEnableRDOQTS;
@@ -192,8 +193,8 @@ public:
     Window             m_conformanceWindow;
     Window             m_defaultDisplayWindow;
 
-    x265_nal* m_nals;
-    char*       m_packetData;
+    x265_nal*          m_nals;
+    char*              m_packetData;
 
     Encoder();
 
@@ -229,8 +230,6 @@ public:
     int  extractNalData(NALUnitEBSP **nalunits);
 
     void updateVbvPlan(RateControl* rc);
-    void signalReconRowCompleted(int poc);
-    RateControl*       m_rateControl;
 
 protected:
 
