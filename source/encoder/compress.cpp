@@ -86,9 +86,9 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     uint32_t partOffset  = 0;
 
     // Reference sample smoothing
-    cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_search->m_predBuf, m_search->m_predBufStride,
-                                     m_search->m_predBufHeight, m_search->m_refAbove, m_search->m_refLeft,
-                                     m_search->m_refAboveFlt, m_search->m_refLeftFlt);
+    TComPattern::initAdiPattern(cu, partOffset, initTrDepth, m_search->m_predBuf, m_search->m_predBufStride,
+                                m_search->m_predBufHeight, m_search->m_refAbove, m_search->m_refLeft,
+                                m_search->m_refAboveFlt, m_search->m_refLeftFlt);
 
     Pel* fenc   = m_origYuv[depth]->getLumaAddr();
     uint32_t stride = m_modePredYuv[5][depth]->getStride();

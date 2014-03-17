@@ -87,7 +87,6 @@ TComDataCU::TComDataCU()
     m_iPCMSampleY = NULL;
     m_iPCMSampleCb = NULL;
     m_iPCMSampleCr = NULL;
-    m_pattern = NULL;
     m_cuAboveLeft = NULL;
     m_cuAboveRight = NULL;
     m_cuAbove = NULL;
@@ -157,7 +156,6 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     CHECKED_MALLOC(m_iPCMSampleY, Pel, width * height);
     CHECKED_MALLOC(m_iPCMSampleCb, Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
     CHECKED_MALLOC(m_iPCMSampleCr, Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
-    CHECKED_MALLOC(m_pattern, TComPattern, 1);
 
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
     return ok;
@@ -169,7 +167,6 @@ fail:
 
 void TComDataCU::destroy()
 {
-    X265_FREE(m_pattern);
     X265_FREE(m_qp);
     X265_FREE(m_depth);
     X265_FREE(m_cuSize);

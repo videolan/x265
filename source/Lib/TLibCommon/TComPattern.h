@@ -68,29 +68,29 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     /// set parameters from pixel buffers for accessing neighboring pixels
-    void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
-                        int strideOrig, int heightOrig, pixel* refAbove, pixel* refLeft,
-                        pixel* refAboveFlt, pixel* refLeftFlt);
+    static void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
+                               int strideOrig, int heightOrig, pixel* refAbove, pixel* refLeft,
+                               pixel* refAboveFlt, pixel* refLeftFlt);
 
     /// set luma parameters from CU data for accessing ADI data
-    void  initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
-                         int strideOrig, int heightOrig);
+    static void  initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
+                                int strideOrig, int heightOrig);
 
     /// set chroma parameters from CU data for accessing ADI data
-    void  initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
-                               pixel* adiBuf, int strideOrig, int heightOrig, int chromaId);
+    static void  initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
+                                      pixel* adiBuf, int strideOrig, int heightOrig, int chromaId);
 
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    void fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
+    static void fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
 
     /// constrained intra prediction
-    bool  isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT);
-    int   isAboveAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
-    int   isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
-    int   isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
-    int   isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+    static bool  isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT);
+    static int   isAboveAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    static int   isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+    static int   isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    static int   isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
 };
 }
 //! \}

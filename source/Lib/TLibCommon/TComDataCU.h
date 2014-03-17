@@ -86,7 +86,6 @@ private:
 
     TComPic*      m_pic;            ///< picture class pointer
     TComSlice*    m_slice;          ///< slice header pointer
-    TComPattern*  m_pattern;        ///< neighbor access class pointer
 
     // -------------------------------------------------------------------------------------------------------------------
     // CU description
@@ -213,8 +212,6 @@ public:
     uint32_t      getCUPelX()                      { return m_cuPelX; }
 
     uint32_t      getCUPelY()                      { return m_cuPelY; }
-
-    TComPattern*  getPattern()                     { return m_pattern; }
 
     UChar*        getDepth()                       { return m_depth; }
 
