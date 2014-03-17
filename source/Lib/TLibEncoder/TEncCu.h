@@ -162,7 +162,6 @@ protected:
     void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
     void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, uint32_t partitionIndex, UChar minDepth);
     void xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    int  xComputeQP(TComDataCU* cu);
     void xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
 
     void xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
