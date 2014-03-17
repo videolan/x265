@@ -112,7 +112,7 @@ public:
         }
     }
 
-    int          m_blockRefPOC;
+    volatile int m_blockRefPOC;
 
     Event        m_reconRowWait;
 

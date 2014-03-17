@@ -270,8 +270,7 @@ void FrameFilter::processRowPost(int row)
 
     // Notify other FrameEncoders that this row of reconstructed pixels is available
     m_pic->m_reconRowCount++;
-    if (m_pic->m_countRefEncoders)
-        m_top->signalReconRowCompleted(m_pic->getPOC());
+    m_top->signalReconRowCompleted(m_pic->getPOC());
 
     int cuAddr = lineStartCUAddr;
     if (m_cfg->param.bEnablePsnr)
