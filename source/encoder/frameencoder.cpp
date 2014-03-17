@@ -55,7 +55,6 @@ FrameEncoder::FrameEncoder()
         m_nalList[i] = NULL;
     }
 
-    m_blockRefPOC = -1;
     m_nalCount = 0;
     m_totalTime = 0;
     memset(&m_rce, 0, sizeof(RateControlEntry));
@@ -698,7 +697,6 @@ void FrameEncoder::compressFrame()
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
-    m_top->signalReconRowCompleted(m_pic->getPOC());
 
     m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
     delete[] outStreams;
@@ -915,7 +913,7 @@ void FrameEncoder::compressCTURows()
     range    += 1;                        /* diamond search range check lag */
     range    += 2;                        /* subpel refine */
     range    += NTAPS_LUMA / 2;           /* subpel filter half-length */
-    uint32_t refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
+    int refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_pic->m_SSDY = 0;
@@ -929,7 +927,7 @@ void FrameEncoder::compressCTURows()
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        for (uint32_t row = 0; row < (uint32_t)m_numRows; row++)
+        for (int row = 0; row < m_numRows; row++)
         {
             // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
@@ -938,16 +936,9 @@ void FrameEncoder::compressCTURows()
                 {
                     TComPic *refpic = slice->getRefPic(l, ref);
 
-                    /* indicate which reference picture we might wait for,
-                     * prior to checking recon row count */
-                    m_blockRefPOC = refpic->getPOC();
-                    while ((refpic->m_reconRowCount != (uint32_t)m_numRows) &&
-                           (refpic->m_reconRowCount < row + refLagRows))
-                    {
-                        m_reconRowWait.wait();
-                    }
-
-                    m_blockRefPOC = -1;
+                    int reconRowCount = refpic->m_reconRowCount.get();
+                    while ((reconRowCount != m_numRows) && (reconRowCount < row + refLagRows))
+                        reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
                     if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
                     {
@@ -982,16 +973,9 @@ void FrameEncoder::compressCTURows()
                     {
                         TComPic *refpic = slice->getRefPic(list, ref);
 
-                        /* indicate which reference picture we might wait for,
-                         * prior to checking recon row count */
-                        m_blockRefPOC = refpic->getPOC();
-                        while ((refpic->m_reconRowCount != (uint32_t)m_numRows) &&
-                               (refpic->m_reconRowCount < i + refLagRows))
-                        {
-                            m_reconRowWait.wait();
-                        }
-
-                        m_blockRefPOC = -1;
+                        int reconRowCount = refpic->m_reconRowCount.get();
+                        while ((reconRowCount != m_numRows) && (reconRowCount < i + refLagRows))
+                            reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
                         if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
                         {

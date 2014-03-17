@@ -204,6 +204,59 @@ protected:
     HANDLE handle;
 };
 
+/* This class is intended for use in signaling state changes safely between CPU
+ * cores. One thread should be a writer and multiple threads may be readers. The
+ * mutex's main purpose is to serve as a memory fence to ensure writes made by
+ * the writer thread are visible prior to readers seeing the m_val change. Its
+ * secondary purpose is for use with the condition variable for blocking waits */
+class ThreadSafeInteger
+{
+public:
+
+    ThreadSafeInteger()
+    {
+        m_val = 0;
+        InitializeCriticalSection(&m_cs);
+        InitializeConditionVariable(&m_cv);
+    }
+
+    ~ThreadSafeInteger()
+    {
+        DeleteCriticalSection(&m_cs);
+    }
+
+    int waitForChange(int prev)
+    {
+        EnterCriticalSection(&m_cs);
+        if (m_val == prev)
+            SleepConditionVariableCS(&m_cv, &m_cs, INFINITE);
+        LeaveCriticalSection(&m_cs);
+        return m_val;
+    }
+
+    int get()
+    {
+        EnterCriticalSection(&m_cs);
+        int ret = m_val;
+        LeaveCriticalSection(&m_cs);
+        return ret;
+    }
+
+    void set(int newval)
+    {
+        EnterCriticalSection(&m_cs);
+        m_val = newval;
+        WakeAllConditionVariable(&m_cv);
+        LeaveCriticalSection(&m_cs);
+    }
+
+protected:
+
+    CRITICAL_SECTION   m_cs;
+    CONDITION_VARIABLE m_cv;
+    int                m_val;
+};
+
 #else /* POSIX / pthreads */
 
 typedef pthread_t ThreadHandle;
@@ -312,6 +365,64 @@ protected:
     pthread_mutex_t m_mutex;
     pthread_cond_t  m_cond;
     uint32_t        m_counter;
+};
+
+
+/* This class is intended for use in signaling state changes safely between CPU
+ * cores. One thread should be a writer and multiple threads may be readers. The
+ * mutex's main purpose is to serve as a memory fence to ensure writes made by
+ * the writer thread are visible prior to readers seeing the m_val change. Its
+ * secondary purpose is for use with the condition variable for blocking waits */
+class ThreadSafeInteger
+{
+public:
+
+    ThreadSafeInteger()
+    {
+        m_val = 0;
+        if (pthread_mutex_init(&m_mutex, NULL) ||
+            pthread_cond_init(&m_cond, NULL))
+        {
+            x265_log(NULL, X265_LOG_ERROR, "fatal: unable to initialize conditional variable\n");
+        }
+    }
+
+    ~ThreadSafeInteger()
+    {
+        pthread_cond_destroy(&m_cond);
+        pthread_mutex_destroy(&m_mutex);
+    }
+
+    int waitForChange(int prev)
+    {
+        pthread_mutex_lock(&m_mutex);
+        if (m_val == prev)
+            pthread_cond_wait(&m_cond, &m_mutex);
+        pthread_mutex_unlock(&m_mutex);
+        return m_val;
+    }
+
+    int get()
+    {
+        pthread_mutex_lock(&m_mutex);
+        int ret = m_val;
+        pthread_mutex_unlock(&m_mutex);
+        return ret;
+    }
+
+    void set(int newval)
+    {
+        pthread_mutex_lock(&m_mutex);
+        m_val = newval;
+        pthread_cond_broadcast(&m_cond);
+        pthread_mutex_unlock(&m_mutex);
+    }
+
+protected:
+
+    pthread_mutex_t m_mutex;
+    pthread_cond_t  m_cond;
+    int             m_val;
 };
 
 #endif // ifdef _WIN32

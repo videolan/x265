@@ -66,7 +66,7 @@ TComPic::TComPic()
     , m_cuCostsForVbv(NULL)
     , m_intraCuCostsForVbv(NULL)
 {
-    m_reconRowCount = 0;
+    m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_next = NULL;
