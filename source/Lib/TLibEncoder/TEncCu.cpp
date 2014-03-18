@@ -1128,17 +1128,6 @@ void TEncCu::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
 }
 
-/** Compute QP for each CU
- * \param cu Target CU
- * \returns quantization parameter
- */
-int TEncCu::xComputeQP(TComDataCU* cu)
-{
-    int baseQP = cu->getSlice()->getSliceQp();
-
-    return Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, baseQP);
-}
-
 /** encode a CU block recursively
  * \param cu
  * \param absPartIdx
