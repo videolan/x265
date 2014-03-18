@@ -401,7 +401,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         {
             uint32_t numRBSPBytes_nal = nalunits[count]->m_packetSize;
 #if VERBOSE_RATE
-            printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString((*it)->m_nalUnitType), numRBSPBytes_nal);
+            printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString(nalunits[count]->m_nalUnitType), numRBSPBytes_nal);
 #endif
             if (nalunits[count]->m_nalUnitType != NAL_UNIT_PREFIX_SEI && nalunits[count]->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
             {
