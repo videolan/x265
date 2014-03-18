@@ -37,6 +37,7 @@
 
 #include "TEncBinCoderCABAC.h"
 #include "TLibCommon/TComRom.h"
+#include "threading.h"  // CLZ32
 
 using namespace x265;
 
@@ -180,7 +181,7 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 
     uint32_t mstate = ctxModel.m_state;
 
-    ctxModel.m_state = sbacNext(ctxModel.m_state, binValue);
+    ctxModel.m_state = sbacNext(mstate, binValue);
 
     if (m_bIsCounter)
     {
@@ -194,25 +195,32 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
     uint32_t lps = g_lpsTable[state][(m_range >> 6) & 3];
     m_range -= lps;
 
-    int numBits = g_renormTable[lps >> 3];
+    assert(lps != 0);
+
+    int numBits = (uint32_t)(m_range - 256) >> 31;
+    uint32_t low = m_low;
+    uint32_t range = m_range;
     if (binValue != mps)
     {
-        m_low     = (m_low + m_range) << numBits;
-        m_range   = lps << numBits;
+        // NOTE: lps is non-zero and the maximum of idx is 8 because lps less than 256
+        //numBits   = g_renormTable[lps >> 3];
+        unsigned long idx;
+        CLZ32(idx, lps);
+        numBits = 8 - idx;
+        if (numBits >= 6)
+            numBits = 6;
+
+        low    += range;
+        range   = lps;
     }
-    else
-    {
-        if (m_range >= 256)
-        {
-            return;
-        }
-        numBits = 1;
-        m_low <<= 1;
-        m_range <<= 1;
-    }
+    m_low = (low << numBits);
+    m_range = (range << numBits);
     m_bitsLeft += numBits;
 
-    testAndWriteOut();
+    if (m_bitsLeft >= 0)
+    {
+        writeOut();
+    }
 }
 
 /**
@@ -240,7 +248,10 @@ void TEncBinCABAC::encodeBinEP(uint32_t binValue)
     }
     m_bitsLeft++;
 
-    testAndWriteOut();
+    if (m_bitsLeft >= 0)
+    {
+        writeOut();
+    }
 }
 
 /**
@@ -274,14 +285,20 @@ void TEncBinCABAC::encodeBinsEP(uint32_t binValues, int numBins)
         binValues -= pattern << numBins;
         m_bitsLeft += 8;
 
-        testAndWriteOut();
+        if (m_bitsLeft >= 0)
+        {
+            writeOut();
+        }
     }
 
     m_low <<= numBins;
     m_low += m_range * binValues;
     m_bitsLeft += numBins;
 
-    testAndWriteOut();
+    if (m_bitsLeft >= 0)
+    {
+        writeOut();
+    }
 }
 
 /**
@@ -316,11 +333,6 @@ void TEncBinCABAC::encodeBinTrm(uint32_t binValue)
         m_bitsLeft++;
     }
 
-    testAndWriteOut();
-}
-
-void TEncBinCABAC::testAndWriteOut()
-{
     if (m_bitsLeft >= 0)
     {
         writeOut();

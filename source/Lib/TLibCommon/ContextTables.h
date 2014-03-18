@@ -136,7 +136,7 @@ typedef struct ContextModel
     uint8_t bBinsCoded;
 } ContextModel;
 
-extern const int     g_entropyBits[128];
+extern const uint32_t g_entropyBits[128];
 extern const uint8_t g_nextState[128][2];
 uint8_t sbacInit(int qp, int initValue);   ///< initialize state with initial probability
 

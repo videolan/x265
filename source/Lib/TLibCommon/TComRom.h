@@ -272,7 +272,6 @@ extern const double x265_lambda2_tab_I[MAX_MAX_QP + 1];
 extern const double x265_lambda2_non_I[MAX_MAX_QP + 1];
 // CABAC tables
 extern const uint8_t g_lpsTable[64][4];
-extern const uint8_t g_renormTable[32];
 extern const uint8_t x265_exp2_lut[64];
 }
 

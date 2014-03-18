@@ -58,6 +58,8 @@ namespace x265 {
 class TEncSbac : public SyntaxElementWriter, public TEncEntropyIf
 {
 public:
+    uint64_t pad;
+    ContextModel m_contextModels[MAX_OFF_CTX_MOD];
 
     TComSlice*    m_slice;
     TEncBinCABAC* m_binIf;
@@ -153,8 +155,6 @@ private:
     void xCopyContextsFrom(TEncSbac* src);
     void xCodePredWeightTable(TComSlice* slice);
     void xCodeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
-
-    ContextModel         m_contextModels[MAX_OFF_CTX_MOD];
 };
 }
 //! \}

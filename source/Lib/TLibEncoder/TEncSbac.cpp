@@ -61,7 +61,7 @@ void  xTraceSliceHeader(TComSlice *)
 
 #endif // if ENC_DEC_TRACE
 
-const int g_entropyBits[128] =
+const uint32_t g_entropyBits[128] =
 {
     // Corrected table, most notably for last state
     0x07b23, 0x085f9, 0x074a0, 0x08cbc, 0x06ee4, 0x09354, 0x067f4, 0x09c1b, 0x060b0, 0x0a62a, 0x05a9c, 0x0af5b, 0x0548d, 0x0b955, 0x04f56, 0x0c2a9,
