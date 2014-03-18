@@ -244,7 +244,7 @@ typedef struct
     int height[3];
 } x265_cli_csp;
 
-const x265_cli_csp x265_cli_csps[] =
+static const x265_cli_csp x265_cli_csps[] =
 {
     { 1, { 0, 0, 0 }, { 0, 0, 0 } }, /* i400 */
     { 3, { 0, 1, 1 }, { 0, 1, 1 } }, /* i420 */
