@@ -2560,7 +2560,6 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         return;
     }
 
-    bool bHighPass = cu->getSlice()->getSliceType() == B_SLICE;
     uint32_t bits = 0, bestBits = 0;
     uint32_t distortion = 0, bdist = 0;
 
@@ -2607,11 +2606,8 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     }
 
     //  Residual coding.
-    int      qp, qpBest = 0;
     uint64_t cost, bcost = MAX_INT64;
-
-    qp = bHighPass ? Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, (int)cu->getQP(0)) : cu->getQP(0);
-
+    
     outResiYuv->subtract(fencYuv, predYuv, width);
 
     cost = 0;
@@ -2669,7 +2665,6 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
         bestBits = bits;
         bcost    = cost;
-        qpBest   = qp;
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
     }
 
@@ -2700,8 +2695,11 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     {
         cu->setCbfSubParts(0, 0, 0, 0, cu->getDepth(0));
     }
-
-    cu->setQPSubParts(qpBest, 0, cu->getDepth(0));
+    
+    /* Clipping QP for B-slices */
+    bool bHighPass = cu->getSlice()->getSliceType() == B_SLICE;
+    int qp = bHighPass ? Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, (int)cu->getQP(0)) : cu->getQP(0);
+    cu->setQPSubParts(qp, 0, cu->getDepth(0));
 }
 
 void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, bool skipRes)
