@@ -1791,7 +1791,7 @@ void TEncSbac::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
 {
     int dqp = cu->getQP(absPartIdx) - cu->getRefQP(absPartIdx);
 
-    int qpBdOffsetY = cu->getSlice()->getSPS()->getQpBDOffsetY();
+    int qpBdOffsetY = QP_BD_OFFSET;
 
     dqp = (dqp + 78 + qpBdOffsetY + (qpBdOffsetY / 2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY / 2);
 

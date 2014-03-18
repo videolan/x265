@@ -1107,7 +1107,7 @@ void Encoder::initPPS(TComPPS *pps)
     /* TODO: This variable m_maxCuDQPDepth needs to be a CLI option to allow us to choose AQ granularity */
     bool bUseDQP = (m_maxCuDQPDepth > 0 || param->rc.aqMode || isVbv) ? true : false;
 
-    int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
+    int lowestQP = -QP_BD_OFFSET; 
 
     if (m_useLossless)
     {
