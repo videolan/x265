@@ -139,6 +139,8 @@ if(YASM_FOUND AND X86)
 endif()
 
 # Build options
+set(LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries")
+set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
 
 if(X64)
     # NOTE: We only officially support 16bit-per-pixel compiles of x265
@@ -245,9 +247,8 @@ if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
 endif()
 install(TARGETS x265-static
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
 
 if(CMAKE_RC_COMPILER)
@@ -283,9 +284,8 @@ if(ENABLE_SHARED)
         # shared library is not installed if a tag is not found
         set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG} SOVERSION ${X265_BUILD})
         install(TARGETS x265-shared
-                RUNTIME DESTINATION bin
-                LIBRARY DESTINATION lib
-                ARCHIVE DESTINATION lib)
+                LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+                ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
     endif()
 endif()
 
@@ -349,7 +349,7 @@ if(ENABLE_CLI)
     endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 
-    install(TARGETS cli DESTINATION bin)
+    install(TARGETS cli DESTINATION ${BIN_INSTALL_DIR})
 endif(ENABLE_CLI)
 
 if(ENABLE_ASSEMBLY AND NOT XCODE)
