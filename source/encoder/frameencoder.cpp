@@ -413,7 +413,7 @@ void FrameEncoder::compressFrame()
     }
 
     /* Clip qps back to 0-51 range before encoding */
-    qp = X265_MIN(qp, MAX_QP);
+    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
     slice->setSliceQp(qp);
     m_pic->m_avgQpAq = qp;
     slice->setSliceQpDelta(0);
