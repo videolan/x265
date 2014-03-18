@@ -2694,12 +2694,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     if (cu->isSkipped(0))
     {
         cu->setCbfSubParts(0, 0, 0, 0, cu->getDepth(0));
-    }
-    
-    /* Clipping QP for B-slices */
-    bool bHighPass = cu->getSlice()->getSliceType() == B_SLICE;
-    int qp = bHighPass ? Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, (int)cu->getQP(0)) : cu->getQP(0);
-    cu->setQPSubParts(qp, 0, cu->getDepth(0));
+    }    
 }
 
 void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, bool skipRes)
