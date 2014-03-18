@@ -1480,16 +1480,6 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     uint32_t puSizeIdx    = g_convertToBit[puSize]; // log2(puSize) - 2
     static const uint8_t intraModeNumFast[] = { 8, 8, 3, 3, 3 }; // 4x4, 8x8, 16x16, 32x32, 64x64
 
-    //===== set QP and clear Cbf =====
-    if (cu->getSlice()->getPPS()->getUseDQP() == true)
-    {
-        cu->setQPSubParts(cu->getQP(0), 0, depth);
-    }
-    else
-    {
-        cu->setQPSubParts(cu->getSlice()->getSliceQp(), 0, depth);
-    }
-
     //===== loop over partitions =====
     uint32_t partOffset = 0;
     for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
