@@ -334,12 +334,18 @@ if(ENABLE_CLI)
     endif(NOT HAVE_GETOPT_H)
 
     if(XCODE)
+        # Xcode seems unable to link the CLI with libs, so link as one targget
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h
                            $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
     else()
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE}
-                           x265.cpp x265.h)
-        target_link_libraries(cli x265-static ${PLATFORM_LIBS})
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h)
+        if(WIN32 OR NOT ENABLE_SHARED)
+            # The CLI cannot link to the shared library on Windows, it
+            # requires internal APIs not exported from the DLL
+            target_link_libraries(cli x265-static ${PLATFORM_LIBS})
+        else()
+            target_link_libraries(cli x265-shared ${PLATFORM_LIBS})
+        endif()
     endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
 
