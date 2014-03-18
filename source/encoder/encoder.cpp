@@ -1024,8 +1024,8 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setBitDepthY(X265_DEPTH);
     sps->setBitDepthC(X265_DEPTH);
 
-    sps->setQpBDOffsetY(6 * (X265_DEPTH - 8));
-    sps->setQpBDOffsetC(6 * (X265_DEPTH - 8));
+    sps->setQpBDOffsetY(QP_BD_OFFSET);
+    sps->setQpBDOffsetC(QP_BD_OFFSET);
 
     sps->setUseSAO(param->bEnableSAO);
 
