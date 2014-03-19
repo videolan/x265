@@ -463,6 +463,76 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_cuColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 }
 
+// initialize Sub partition
+void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
+{
+    assert(partUnitIdx < 4);
+
+    uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
+
+    m_pic              = cu->getPic();
+    m_slice            = m_pic->getSlice();
+    m_cuAddr           = cu->getAddr();
+    m_absIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
+
+    m_cuPelX           = cu->getCUPelX() + (g_maxCUSize >> depth) * (partUnitIdx &  1);
+    m_cuPelY           = cu->getCUPelY() + (g_maxCUSize >> depth) * (partUnitIdx >> 1);
+
+    m_totalCost        = MAX_INT64;
+    m_sa8dCost         = MAX_INT64;
+    m_totalDistortion  = 0;
+    m_totalBits        = 0;
+    m_numPartitions    = cu->getTotalNumPart() >> 2;
+
+    for (int i = 0; i < 4; i++)
+    {
+        m_avgCost[i] = cu->m_avgCost[i];
+        m_count[i] = cu->m_count[i];
+    }
+
+    int iSizeInUchar = sizeof(UChar) * m_numPartitions;
+    int iSizeInBool  = sizeof(bool) * m_numPartitions;
+
+    int sizeInChar = sizeof(char) * m_numPartitions;
+
+    memcpy(m_qp, cu->getQP() + m_absIdxInLCU, sizeInChar);
+    memset(m_bMergeFlags,     0, iSizeInBool);
+    memset(m_lumaIntraDir,    DC_IDX, iSizeInUchar);
+    memset(m_chromaIntraDir,  0, iSizeInUchar);
+    memset(m_interDir,        0, iSizeInUchar);
+    memset(m_trIdx,           0, iSizeInUchar);
+    memset(m_transformSkip[0], 0, iSizeInUchar);
+    memset(m_transformSkip[1], 0, iSizeInUchar);
+    memset(m_transformSkip[2], 0, iSizeInUchar);
+    memset(m_cbf[0],          0, iSizeInUchar);
+    memset(m_cbf[1],          0, iSizeInUchar);
+    memset(m_cbf[2],          0, iSizeInUchar);
+    memset(m_depth, depth, iSizeInUchar);
+
+    UChar cuSize = g_maxCUSize >> depth;
+    memset(m_cuSize,    cuSize,  iSizeInUchar);
+    memset(m_iPCMFlags, 0, iSizeInBool);
+    for (uint32_t i = 0; i < m_numPartitions; i++)
+    {
+        m_skipFlag[i]   = false;
+        m_partSizes[i] = SIZE_NONE;
+        m_predModes[i] = MODE_NONE;
+        m_cuTransquantBypass[i] = false;
+    }
+
+    m_cuMvField[0].clearMvField();
+    m_cuMvField[1].clearMvField();
+
+    m_cuLeft        = cu->getCULeft();
+    m_cuAbove       = cu->getCUAbove();
+    m_cuAboveLeft   = cu->getCUAboveLeft();
+    m_cuAboveRight  = cu->getCUAboveRight();
+
+    m_cuColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
+    m_cuColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
+}
+
+
 void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
 {
     assert(partUnitIdx < 4);
