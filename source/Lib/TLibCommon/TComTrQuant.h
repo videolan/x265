@@ -62,7 +62,7 @@ namespace x265 {
 typedef struct
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
-    int significantBits[NUM_SIG_FLAG_CTX][2];
+    uint32_t significantBits[NUM_SIG_FLAG_CTX][2];
     int lastXBits[10];
     int lastYBits[10];
     int greaterOneBits[NUM_ONE_FLAG_CTX][2];
@@ -193,8 +193,8 @@ private:
     // RDOQ functions
     uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
 
-    inline uint32_t xGetCodedLevel(double& codedCost, double& codedCost0, double& codedCostSig, int levelDouble,
-                                   uint32_t maxAbsLevel, uint32_t baseLevel, uint32_t ctxNumSig, uint32_t ctxNumOne, uint32_t ctxNumAbs, uint32_t absGoRice,
+    inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
+                                   uint32_t maxAbsLevel, uint32_t baseLevel, uint32_t ctxNumOne, uint32_t ctxNumAbs, uint32_t absGoRice,
                                    uint32_t c1c2Idx, int qbits, double scale, bool bLast) const;
 
     inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, uint32_t ctxNumOne, uint32_t ctxNumAbs, uint32_t absGoRice, uint32_t c1c2Idx) const;
@@ -205,7 +205,7 @@ private:
 
     inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
 
-    inline double xGetRateSigCoef(uint16_t sig, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
+    inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
 
     inline double xGetICost(double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
 

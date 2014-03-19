@@ -630,19 +630,34 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 uint32_t level;
                 uint32_t oneCtx = 4 * ctxSet + c1;
                 uint32_t absCtx = ctxSet + c2;
+                double curCostSig = 0;
 
+                costCoeff[scanPos] = MAX_DOUBLE;
                 if (scanPos == lastScanPos)
                 {
-                    level = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
-                                           levelDouble, maxAbsLevel, baseLevel, 0, oneCtx, absCtx, goRiceParam,
+                    level = xGetCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
+                                           levelDouble, maxAbsLevel, baseLevel, oneCtx, absCtx, goRiceParam,
                                            c1c2Idx, qbits, scaleFactor, 1);
                 }
                 else
                 {
-                    uint16_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, codingParameters);
-                    level           = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
-                                                     levelDouble, maxAbsLevel, baseLevel, ctxSig, oneCtx, absCtx, goRiceParam,
-                                                     c1c2Idx, qbits, scaleFactor, 0);
+                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, codingParameters);
+                    if (maxAbsLevel < 3)
+                    {
+                        costSig[scanPos] = xGetRateSigCoef(0, ctxSig);
+                        costCoeff[scanPos] = costCoeff0[scanPos] + costSig[scanPos];
+                    }
+                    if (maxAbsLevel != 0)
+                    {
+                        curCostSig = xGetRateSigCoef(1, ctxSig);
+                        level = xGetCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
+                                               levelDouble, maxAbsLevel, baseLevel, oneCtx, absCtx, goRiceParam,
+                                               c1c2Idx, qbits, scaleFactor, 0);
+                    }
+                    else
+                    {
+                        level = 0;
+                    }
                     sigRateDelta[blkPos] = m_estBitsSbac->significantBits[ctxSig][1] - m_estBitsSbac->significantBits[ctxSig][0];
                 }
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
@@ -1125,12 +1140,11 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t                   patternSigCt
  * This method calculates the best quantized transform level for a given scan position.
  */
 inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
-                                            double&  codedCost0,
+                                            const double curCostSig,
                                             double&  codedCostSig,
                                             int      levelDouble,
                                             uint32_t maxAbsLevel,
                                             uint32_t baseLevel,
-                                            uint32_t ctxNumSig,
                                             uint32_t ctxNumOne,
                                             uint32_t ctxNumAbs,
                                             uint32_t absGoRice,
@@ -1139,43 +1153,45 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
                                             double   scaleFactor,
                                             bool     last) const
 {
-    double curCostSig   = 0;
     uint32_t   bestAbsLevel = 0;
 
-    if (!last && maxAbsLevel < 3)
+    if (!last && maxAbsLevel == 0)
     {
-        codedCostSig = xGetRateSigCoef(0, ctxNumSig);
-        codedCost    = codedCost0 + codedCostSig;
-        if (maxAbsLevel == 0)
-        {
-            return bestAbsLevel;
-        }
-    }
-    else
-    {
-        codedCost = MAX_DOUBLE;
+        assert(0);
     }
 
-    if (!last)
-    {
-        curCostSig = xGetRateSigCoef(1, ctxNumSig);
-    }
+    int32_t minAbsLevel = maxAbsLevel - 1;
+    if (minAbsLevel < 1)
+        minAbsLevel = 1;
 
-    uint32_t minAbsLevel = (maxAbsLevel > 1 ? maxAbsLevel - 1 : 1);
+    // NOTE: (A + B) ^ 2 = (A ^ 2) + 2 * A * B + (B ^ 2)
+    assert(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX);
+    const int32_t err1 = levelDouble - (maxAbsLevel << qbits);            // A
+          double err2 = (double)((int64_t)err1 * err1);                   // A^ 2
+    const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
+    const int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);   // B ^ 2
+    const double errInc = (err3 + err4) * scaleFactor;
+
+    err2 *= scaleFactor;
+
+    double bestCodedCost = codedCost;
+    double bestCodedCostSig = codedCostSig;
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
-        double err     = double(levelDouble  - (absLevel << qbits));
-        double curCost = err * err * scaleFactor + xGetICRateCost(absLevel, absLevel - baseLevel, ctxNumOne, ctxNumAbs, absGoRice, c1c2Idx);
+        assert(fabs((double)err2 - double(levelDouble  - (absLevel << qbits)) * double(levelDouble  - (absLevel << qbits)) * scaleFactor) < 1e-5);
+        double curCost = err2 + xGetICRateCost(absLevel, absLevel - baseLevel, ctxNumOne, ctxNumAbs, absGoRice, c1c2Idx);
         curCost       += curCostSig;
 
-        if (curCost < codedCost)
+        if (curCost < bestCodedCost)
         {
             bestAbsLevel = absLevel;
-            codedCost    = curCost;
-            codedCostSig = curCostSig;
+            bestCodedCost = curCost;
+            bestCodedCostSig = curCostSig;
         }
+        err2 += errInc;
     }
-
+    codedCost = bestCodedCost;
+    codedCostSig = bestCodedCostSig;
     return bestAbsLevel;
 }
 
