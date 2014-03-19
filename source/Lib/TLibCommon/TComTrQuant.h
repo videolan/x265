@@ -194,12 +194,12 @@ private:
     uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
 
     inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
-                                   uint32_t maxAbsLevel, uint32_t baseLevel, uint32_t ctxNumOne, uint32_t ctxNumAbs, uint32_t absGoRice,
+                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice,
                                    uint32_t c1c2Idx, int qbits, double scale, bool bLast) const;
 
-    inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, uint32_t ctxNumOne, uint32_t ctxNumAbs, uint32_t absGoRice, uint32_t c1c2Idx) const;
+    inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
 
-    inline int    xGetICRate(uint32_t absLevel, int32_t diffLevel, uint32_t ctxNumOne, uint32_t ctxNumAbs, uint32_t absGoRice, uint32_t c1c2Idx) const;
+    inline int    xGetICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
 
     inline double xGetRateLast(uint32_t posx, uint32_t posy) const;
 
@@ -207,7 +207,7 @@ private:
 
     inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
 
-    inline double xGetICost(double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
+    inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
 
     inline uint32_t xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
