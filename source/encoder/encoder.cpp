@@ -68,6 +68,7 @@ Encoder::Encoder()
     m_packetData = NULL;
     m_outputCount = 0;
     m_csvfpt = NULL;
+    param = NULL;
 
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
@@ -165,6 +166,7 @@ void Encoder::destroy()
 
     X265_FREE(m_nals);
     X265_FREE(m_packetData);
+    X265_FREE(param);
     if (m_csvfpt)
         fclose(m_csvfpt);
 }
@@ -1510,8 +1512,6 @@ void Encoder::configure(x265_param *p)
     m_useLossless = false;  // x264 configures this via --qp=0
     m_TransquantBypassEnableFlag = false;
     m_CUTransquantBypassFlagValue = false;
-
-    param = p;
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits)

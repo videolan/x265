@@ -49,6 +49,14 @@ x265_encoder *x265_encoder_open(x265_param *param)
         encoder->determineLevelAndProfile(param);
         encoder->configure(param);
 
+        encoder->param = X265_MALLOC(x265_param, 1);
+        if (!encoder->param)
+        {
+            encoder->destroy();
+            return NULL;
+        }
+
+        memcpy(encoder->param, param, sizeof(x265_param));
         x265_print_params(param);
         encoder->create();
         encoder->init();
