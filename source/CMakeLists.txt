@@ -337,7 +337,7 @@ if(ENABLE_CLI)
                            $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
     else()
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h)
-        if(WIN32 OR NOT ENABLE_SHARED)
+		if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL
             target_link_libraries(cli x265-static ${PLATFORM_LIBS})
