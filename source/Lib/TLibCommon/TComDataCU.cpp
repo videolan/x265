@@ -227,7 +227,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     m_totalDistortion  = 0;
     m_totalBits        = 0;
     m_numPartitions    = pic->getNumPartInCU();
-    int qp             = pic->m_lowres.invQscaleFactor ? pic->getCU(getAddr())->getQP(0) : m_slice->getSliceQp();
+    char* qp           = pic->getCU(getAddr())->getQP();
     m_baseQp           = pic->getCU(getAddr())->m_baseQp;
     for (int i = 0; i < 4; i++)
     {
@@ -249,7 +249,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
         memset(m_transformSkip[1],   0,             numElements * sizeof(*m_transformSkip[1]));
         memset(m_transformSkip[2],   0,             numElements * sizeof(*m_transformSkip[2]));
         memset(m_cuSize,             g_maxCUSize,   numElements * sizeof(*m_cuSize));
-        memset(m_qp,                 qp,            numElements * sizeof(*m_qp));
+        memcpy(m_qp,                 qp,            numElements * sizeof(*m_qp));
         memset(m_bMergeFlags,        false,         numElements * sizeof(*m_bMergeFlags));
         memset(m_lumaIntraDir,       DC_IDX,        numElements * sizeof(*m_lumaIntraDir));
         memset(m_chromaIntraDir,     0,             numElements * sizeof(*m_chromaIntraDir));

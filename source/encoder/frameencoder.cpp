@@ -1028,6 +1028,7 @@ void FrameEncoder::processRowEncoder(int row)
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_pic->getCU(cuAddr);
         cu->initCU(m_pic, cuAddr);
+        cu->setQPSubParts(m_pic->getSlice()->getSliceQp(), 0, 0);
 
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
