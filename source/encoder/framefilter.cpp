@@ -263,7 +263,7 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
     }
 
     // Notify other FrameEncoders that this row of reconstructed pixels is available
-    m_pic->m_reconRowCount.set(m_pic->m_reconRowCount.get() + 1);
+    m_pic->m_reconRowCount.incr();
 
     int cuAddr = lineStartCUAddr;
     if (m_param->bEnablePsnr)

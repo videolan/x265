@@ -250,6 +250,14 @@ public:
         LeaveCriticalSection(&m_cs);
     }
 
+    void incr()
+    {
+        EnterCriticalSection(&m_cs);
+        m_val++;
+        WakeAllConditionVariable(&m_cv);
+        LeaveCriticalSection(&m_cs);
+    }
+
 protected:
 
     CRITICAL_SECTION   m_cs;
@@ -414,6 +422,14 @@ public:
     {
         pthread_mutex_lock(&m_mutex);
         m_val = newval;
+        pthread_cond_broadcast(&m_cond);
+        pthread_mutex_unlock(&m_mutex);
+    }
+
+    void incr()
+    {
+        pthread_mutex_lock(&m_mutex);
+        m_val++;
         pthread_cond_broadcast(&m_cond);
         pthread_mutex_unlock(&m_mutex);
     }
