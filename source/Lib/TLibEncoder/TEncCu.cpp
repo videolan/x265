@@ -579,8 +579,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     uint32_t rpelx = lpelx + outBestCU->getCUSize(0) - 1;
     uint32_t tpelx = outBestCU->getCUPelY();
     uint32_t bpely = tpelx + outBestCU->getCUSize(0) - 1;
-    int qp = outTempCU->getQP(0);
-
+    
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
     bool bSliceEnd = (slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() && slice->getSliceCurEndCUAddr() < outTempCU->getSCUAddr() + outTempCU->getTotalNumPart());
@@ -594,10 +593,10 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     //We need to split; so dont try these modes
     if (!bSliceEnd && bInsidePicture)
     {
-        outTempCU->initEstData(depth, qp);
+        outTempCU->initEstData(depth);
 
         xCheckRDCostIntra(outBestCU, outTempCU, SIZE_2Nx2N);
-        outTempCU->initEstData(depth, qp);
+        outTempCU->initEstData(depth);
 
         if (depth == g_maxCUDepth - g_addCUDepth)
         {
@@ -623,7 +622,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
         bBoundary = true;
     }
 
-    outTempCU->initEstData(depth, qp);
+    outTempCU->initEstData(depth);
 
     // further split
     if (bSubBranch && depth < g_maxCUDepth - g_addCUDepth)
@@ -633,8 +632,8 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
             subBestPartCU[partUnitIdx]     = m_bestCU[nextDepth];
             subTempPartCU[partUnitIdx]     = m_tempCU[nextDepth];
 
-            subBestPartCU[partUnitIdx]->initSubCU(outTempCU, partUnitIdx, nextDepth, qp);     // clear sub partition datas or init.
-            subTempPartCU[partUnitIdx]->initSubCU(outTempCU, partUnitIdx, nextDepth, qp);     // clear sub partition datas or init.
+            subBestPartCU[partUnitIdx]->initSubCU(outTempCU, partUnitIdx, nextDepth);     // clear sub partition datas or init.
+            subTempPartCU[partUnitIdx]->initSubCU(outTempCU, partUnitIdx, nextDepth);     // clear sub partition datas or init.
 
             bool bInSlice = subBestPartCU[partUnitIdx]->getSCUAddr() < slice->getSliceCurEndCUAddr();
             if (bInSlice && (subBestPartCU[partUnitIdx]->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) && (subBestPartCU[partUnitIdx]->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples()))
