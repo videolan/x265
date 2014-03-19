@@ -358,14 +358,14 @@ void TEncBinCABAC::writeOut()
         if (m_numBufferedBytes > 0)
         {
             uint32_t carry = leadByte >> 8;
-            uint32_t byte = m_bufferedByte + carry;
+            uint32_t byteTowrite = m_bufferedByte + carry;
             m_bufferedByte = leadByte & 0xff;
-            m_bitIf->writeByte(byte);
+            m_bitIf->writeByte(byteTowrite);
 
-            byte = (0xff + carry) & 0xff;
+            byteTowrite = (0xff + carry) & 0xff;
             while (m_numBufferedBytes > 1)
             {
-                m_bitIf->writeByte(byte);
+                m_bitIf->writeByte(byteTowrite);
                 m_numBufferedBytes--;
             }
         }
