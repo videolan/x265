@@ -179,7 +179,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV(mx, my) \
     do \
     { \
-        int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
+        int cost = sad(fenc, FENC_STRIDE, fref + (mx) + (my) * stride, stride); \
         cost += mvcost(MV(mx, my) << 2); \
         COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
     } while (0)
