@@ -217,6 +217,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 
 #define COST_MV_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y) \
     { \
+        pixel *pix_base = fref + omv.x + omv.y * stride; \
         sad_x4(fenc, \
                pix_base + (m0x) + (m0y) * stride, \
                pix_base + (m1x) + (m1y) * stride, \
@@ -705,7 +706,6 @@ me_hex2:
 
         /* refine predictors */
         omv = bmv;
-        pixel *pix_base = fref + omv.x + omv.y * stride;
         ucost1 = bcost;
         DIA1_ITER(pmv.x, pmv.y);
         if (pmv.notZero())
