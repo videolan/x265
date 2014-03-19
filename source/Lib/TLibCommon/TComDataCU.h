@@ -185,6 +185,7 @@ public:
     void          destroy();
 
     void          initCU(TComPic* pic, uint32_t cuAddr);
+    void          initEstData(uint32_t depth);
     void          initEstData(uint32_t depth, int qp);
     void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp);
 

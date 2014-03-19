@@ -359,6 +359,41 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
     m_cuMvField[1].clearMvField();
 }
 
+void TComDataCU::initEstData(uint32_t depth)
+{
+    m_totalCost        = MAX_INT64;
+    m_sa8dCost         = MAX_INT64;
+    m_totalDistortion  = 0;
+    m_totalBits        = 0;
+
+    UChar cuSize = g_maxCUSize >> depth;
+
+    for (uint32_t i = 0; i < m_numPartitions; i++)
+    {
+        m_depth[i] = depth;
+        m_cuSize[i] = cuSize;
+        m_trIdx[i] = 0;
+        m_transformSkip[0][i] = 0;
+        m_transformSkip[1][i] = 0;
+        m_transformSkip[2][i] = 0;
+        m_skipFlag[i]   = false;
+        m_partSizes[i] = SIZE_NONE;
+        m_predModes[i] = MODE_NONE;
+        m_cuTransquantBypass[i] = false;
+        m_iPCMFlags[i] = 0;
+        m_bMergeFlags[i] = 0;
+        m_lumaIntraDir[i] = DC_IDX;
+        m_chromaIntraDir[i] = 0;
+        m_interDir[i] = 0;
+        m_cbf[0][i] = 0;
+        m_cbf[1][i] = 0;
+        m_cbf[2][i] = 0;
+    }
+
+    m_cuMvField[0].clearMvField();
+    m_cuMvField[1].clearMvField();
+}
+
 // initialize Sub partition
 void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp)
 {
