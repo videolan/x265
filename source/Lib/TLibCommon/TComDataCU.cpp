@@ -495,7 +495,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
 
     int sizeInChar = sizeof(char) * m_numPartitions;
 
-    memcpy(m_qp, cu->getQP() + m_absIdxInLCU, sizeInChar);
+    memcpy(m_qp, cu->getQP() + partOffset, sizeInChar);
     memset(m_bMergeFlags,     0, iSizeInBool);
     memset(m_lumaIntraDir,    DC_IDX, iSizeInUchar);
     memset(m_chromaIntraDir,  0, iSizeInUchar);
