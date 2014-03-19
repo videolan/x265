@@ -86,7 +86,6 @@ if(MSVC)
     endif (STATIC_LINK_CRT)
     add_definitions(/W4)  # Full warnings
     add_definitions(/Ob2) # always inline
-    add_definitions(/Oi)  # enable intrinsics
     add_definitions(/MP)  # multithreaded build
 
     # disable Microsofts suggestions for proprietary secure APIs
