@@ -959,8 +959,8 @@ void Encoder::initSPS(TComSPS *sps)
     profileTierLevel.setTierFlag(m_levelTier ? true : false);
     profileTierLevel.setProfileIdc(m_profile);
     profileTierLevel.setProfileCompatibilityFlag(m_profile, 1);
-    profileTierLevel.setProgressiveSourceFlag(m_progressiveSourceFlag);
-    profileTierLevel.setInterlacedSourceFlag(m_interlacedSourceFlag);
+    profileTierLevel.setProgressiveSourceFlag(!param->interlaceMode);
+    profileTierLevel.setInterlacedSourceFlag(!!param->interlaceMode);
     profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
     profileTierLevel.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
 
@@ -1072,8 +1072,8 @@ void Encoder::initSPS(TComSPS *sps)
         vui->setChromaSampleLocTypeBottomField(param->vui.chromaSampleLocTypeBottomField);
         vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
         vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
-        vui->setFrameFieldInfoPresentFlag(param->vui.bEnableFrameFieldInfoPresentFlag);
-        vui->setFieldSeqFlag(param->vui.bEnableFieldSeqFlag);
+        vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
+        vui->setFieldSeqFlag(!!param->interlaceMode);
         vui->setHrdParametersPresentFlag(param->vui.bEnableVuiHrdParametersPresentFlag);
         vui->getHrdParameters()->setNalHrdParametersPresentFlag(param->vui.bEnableNalHrdParametersPresentFlag);
         vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(param->vui.bEnableSubPicHrdParamsPresentFlag);
@@ -1411,6 +1411,10 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
         x265_log(p, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
     }
+    if (p->interlaceMode)
+    {
+        x265_log(p, X265_LOG_WARNING, "Support for interlaced video is experimental\n");
+    }
 
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
@@ -1482,13 +1486,10 @@ void Encoder::configure(x265_param *p)
     m_maxNumOffsetsPerPic = 2048;
     m_log2ParallelMergeLevelMinus2 = 0;
 
-    m_progressiveSourceFlag = true;
-    m_interlacedSourceFlag = false;
     m_nonPackedConstraintFlag = false;
     m_frameOnlyConstraintFlag = false;
     m_recoveryPointSEIEnabled = 0;
     m_bufferingPeriodSEIEnabled = 0;
-    m_pictureTimingSEIEnabled = 0;
     m_displayOrientationSEIAngle = 0;
     m_gradualDecodingRefreshInfoEnabled = 0;
     m_decodingUnitInfoSEIEnabled = 0;

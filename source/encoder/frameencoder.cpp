@@ -136,11 +136,11 @@ bool FrameEncoder::init(Encoder *top, int numRows)
     top->initPPS(&m_pps);
 
     m_sps.setNumLongTermRefPicSPS(0);
-    if (m_cfg->m_pictureTimingSEIEnabled || m_cfg->m_decodingUnitInfoSEIEnabled)
+    if (m_cfg->m_decodingUnitInfoSEIEnabled)
     {
         m_sps.setHrdParameters(m_cfg->param->fpsNum, m_cfg->param->fpsDenom, 0, m_cfg->param->rc.bitrate, m_cfg->param->bframes > 0);
     }
-    if (m_cfg->m_bufferingPeriodSEIEnabled || m_cfg->m_pictureTimingSEIEnabled || m_cfg->m_decodingUnitInfoSEIEnabled)
+    if (m_cfg->m_bufferingPeriodSEIEnabled || m_cfg->m_decodingUnitInfoSEIEnabled)
     {
         m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
     }
@@ -491,6 +491,26 @@ void FrameEncoder::compressFrame()
         sei_recovery_point.m_brokenLinkFlag    = false;
 
         m_seiWriter.writeSEImessage(nalu.m_bitstream, sei_recovery_point, slice->getSPS());
+        writeRBSPTrailingBits(nalu.m_bitstream);
+        m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
+        if (m_nalList[m_nalCount])
+        {
+            m_nalList[m_nalCount]->init(nalu);
+            m_nalCount++;
+        }
+    }
+
+    if (!!m_cfg->param->interlaceMode)
+    {
+        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
+
+        SEIPictureTiming sei;
+        sei.m_picStruct = (slice->getPOC() & 1) && m_cfg->param->interlaceMode == 2 ? 1 /* top */ : 2 /* bot */;
+        sei.m_sourceScanType = 1;
+        sei.m_duplicateFlag = 0;
+
+        entropyCoder->setBitstream(&nalu.m_bitstream);
+        m_seiWriter.writeSEImessage(nalu.m_bitstream, sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_bitstream);
         m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
         if (m_nalList[m_nalCount])

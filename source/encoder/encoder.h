@@ -116,8 +116,6 @@ public:
     Level::Tier        m_levelTier;
     Level::Name        m_level;
 
-    bool               m_progressiveSourceFlag;
-    bool               m_interlacedSourceFlag;
     bool               m_nonPackedConstraintFlag;
     bool               m_frameOnlyConstraintFlag;
 
@@ -157,7 +155,6 @@ public:
     bool               m_loopFilterAcrossTilesEnabledFlag;
 
     int                m_bufferingPeriodSEIEnabled;
-    int                m_pictureTimingSEIEnabled;
     int                m_recoveryPointSEIEnabled;
     int                m_displayOrientationSEIAngle;
     int                m_gradualDecodingRefreshInfoEnabled;

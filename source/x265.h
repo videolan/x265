@@ -293,6 +293,7 @@ static const char * const x265_colmatrix_names[] = { "GBR", "bt709", "undef", ""
 static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11", "16:11", "40:33", "24:11", "20:11",
                                                "32:11", "80:33", "18:11", "15:11", "64:33", "160:99", "4:3", "3:2", "2:1", 0 };
 static const char * const x265_nal_hrd_names[] = { "none", "vbr", "cbr", 0 };
+static const char * const x265_interlace_names[] = { "prog", "tff", "bff", 0 };
 
 /* x265 input parameters
  *
@@ -381,6 +382,12 @@ typedef struct x265_param
      * multiple of 4, the encoder will pad the pictures internally to meet this
      * minimum requirement. All valid HEVC heights are supported */
     int       sourceHeight;
+
+    /* Interlace type of source pictures. 0 - progressive pictures (default).
+     * 1 - top field first, 2 - bottom field first. HEVC encodes interlaced
+     * content as fields, they must be provided to the encoder in the correct
+     * temporal order. EXPERIMENTAL */
+    int       interlaceMode;
 
     /*== Coding Unit (CU) definitions ==*/
 
@@ -768,16 +775,6 @@ typedef struct x265_param
         /* Chroma sample location type bottom field holds the chroma location in
          * the bottom field. The default is 0 */
         int chromaSampleLocTypeBottomField;
-
-        /* Field seq flag specifies that the pictures are fields and each one
-         * has a timing SEI message. The default is false */
-        int bEnableFieldSeqFlag;
-
-        /* Frame field info present flag indicates that each picture has a
-         * timing SEI message wich includes a pic_struct, source_scan_type and
-         * duplicate_flag elements. If not set then the pic_struct element is
-         * not included. The default is false */
-        int bEnableFrameFieldInfoPresentFlag;
 
         /* Default display window flag adds def_disp_win_left_offset,
          * def_disp_win_right_offset, def_disp_win_top_offset and

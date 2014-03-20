@@ -193,8 +193,6 @@ void x265_param_default(x265_param *param)
     param->vui.bEnableChromaLocInfoPresentFlag = 0;
     param->vui.chromaSampleLocTypeTopField = 0;
     param->vui.chromaSampleLocTypeBottomField = 0;
-    param->vui.bEnableFieldSeqFlag = 0;
-    param->vui.bEnableFrameFieldInfoPresentFlag = 0;
     param->vui.bEnableDefaultDisplayWindowFlag = 0;
     param->vui.defDispWinLeftOffset = 0;
     param->vui.defDispWinRightOffset = 0;
@@ -572,6 +570,16 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->bFrameAdaptive = atoi(value);
         }
     }
+    OPT("interlace")
+    {
+        p->interlaceMode = atobool(value);
+        if (bError || p->interlaceMode)
+        {
+            bError = false;
+            p->interlaceMode = parseName(value, x265_interlace_names, bError);
+        }
+        p->vui.bEnableVuiParametersPresentFlag |= !!p->interlaceMode;
+    }
     OPT("ref") p->maxNumReferences = atoi(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
@@ -620,8 +628,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->vui.bEnableVideoSignalTypePresentFlag = bvalue;
         p->vui.bEnableColorDescriptionPresentFlag = bvalue;
         p->vui.bEnableChromaLocInfoPresentFlag = bvalue;
-        p->vui.bEnableFieldSeqFlag = bvalue;
-        p->vui.bEnableFrameFieldInfoPresentFlag = bvalue;
         p->vui.bEnableDefaultDisplayWindowFlag = bvalue;
         p->vui.bEnableVuiTimingInfoPresentFlag = bvalue;
         p->vui.bEnableVuiHrdParametersPresentFlag = bvalue;
@@ -693,16 +699,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->vui.bEnableChromaLocInfoPresentFlag = 1;
         p->vui.chromaSampleLocTypeTopField = atoi(value);
         p->vui.chromaSampleLocTypeBottomField = p->vui.chromaSampleLocTypeTopField;
-    }
-    OPT("fieldseq")
-    {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableFieldSeqFlag = atobool(value);
-    }
-    OPT("framefieldinfo")
-    {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableFrameFieldInfoPresentFlag = atobool(value);
     }
     OPT("crop-rect")
     {
@@ -909,6 +905,8 @@ int x265_check_params(x265_param *param)
           "QP exceeds supported range (-QpBDOffsety to 51)");
     CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
           "Frame rate numerator and denominator must be specified");
+    CHECK(param->interlaceMode < 0 || param->interlaceMode > 2,
+          "Interlace mode must be 0 (progressive) 1 (top-field first) or 2 (bottom field first)");
     CHECK(param->searchMethod<0 || param->searchMethod> X265_FULL_SEARCH,
           "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 5:FULL)");
     CHECK(param->searchRange < 0,
@@ -1086,6 +1084,10 @@ void x265_print_params(x265_param *param)
 #if HIGH_BIT_DEPTH
     x265_log(param, X265_LOG_INFO, "Internal bit depth                  : %d\n", param->internalBitDepth);
 #endif
+    if (param->interlaceMode)
+    {
+        x265_log(param, X265_LOG_INFO, "Interlaced field inputs             : %s\n", x265_interlace_names[param->interlaceMode]);
+    }
     x265_log(param, X265_LOG_INFO, "CU size                             : %d\n", param->maxCUSize);
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra         : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
@@ -1190,6 +1192,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
     BOOL(p->bOpenGOP, "open-gop");
+    s += sprintf(s, " interlace=%d", p->interlaceMode);
     s += sprintf(s, " keyint=%d", p->keyframeMax);
     s += sprintf(s, " min-keyint=%d", p->keyframeMin);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);

@@ -76,6 +76,8 @@ static const struct option long_options[] =
     { "input-depth",    required_argument, NULL, 0 },
     { "input-res",      required_argument, NULL, 0 },
     { "input-csp",      required_argument, NULL, 0 },
+    { "interlace",      required_argument, NULL, 0 },
+    { "no-interlace",         no_argument, NULL, 0 },
     { "fps",            required_argument, NULL, 0 },
     { "seek",           required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
@@ -306,6 +308,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp <string>          Source color space: i420 or i444, auto-detected if Y4M. Default: i420\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
+    H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
     H0("   --seek <integer>              First frame to encode\n");
     H0("\nPresets:\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
@@ -388,9 +391,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
     H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
-    H0("   --[no-]fieldseq               Specify that pictures are fields and an SEI timing message\n");
-    H0("                                 will be added to every access unit. Default %s\n", OPT(param->vui.bEnableFieldSeqFlag));
-    H0("   --[no-]framefieldinfo         Specify that a pic-struct will be added to the SEI timing message. Default %s\n", OPT(param->vui.bEnableFrameFieldInfoPresentFlag));
     H0("   --[no-]timinginfo             Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
     H0("   --[no-]hrd                    Signal HRD information. Default %s\n", OPT(param->vui.bEnableVuiHrdParametersPresentFlag));
     H0("   --nal-hrd <string>            Signal NAL HRD information (requires vbv-buffer size) Choose from none, vbr or cbr.Default none\n");
