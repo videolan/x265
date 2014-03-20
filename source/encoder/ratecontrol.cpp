@@ -792,7 +792,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, doub
                 }
 
                 refRowSatdCost >>= X265_DEPTH - 8;
-                refQScale = row == maxRows - 1 ? refPic->m_rowDiagQScale[row] : refPic->m_rowDiagQScale[row + 1];
+                refQScale = refPic->m_rowDiagQScale[row];
             }
 
             if (picType == I_SLICE || qScale >= refQScale)
@@ -828,9 +828,6 @@ double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, doub
 int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv)
 {
     double qScaleVbv = x265_qp2qScale(qpVbv);
-
-    pic->m_rowDiagQp[row] = qpVbv;
-    pic->m_rowDiagQScale[row] = qScaleVbv;
     uint64_t rowSatdCost = pic->m_rowDiagSatd[row];
     double encodedBits = pic->m_rowEncodedBits[row];
     if (row == 1)
