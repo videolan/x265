@@ -2314,9 +2314,24 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             bidirBits = list[0].bits + list[1].bits + listSelBits[2] - (listSelBits[0] + listSelBits[1]);
             bidirCost = satdCost + m_rdCost->getCost(bidirBits);
 
-            if (list[0].mv.notZero() || list[1].mv.notZero())
+            MV mvzero(0, 0);
+            bool bTryZero = list[0].mv.notZero() || list[1].mv.notZero();
+            if (bTryZero)
             {
-                MV mvzero(0, 0);
+                /* Do not try zero MV if unidir motion predictors are beyond
+                 * valid search area */
+                MV mvmin, mvmax;
+                int merange = X265_MAX(m_cfg->param->sourceWidth, m_cfg->param->sourceHeight);
+                xSetSearchRange(cu, mvzero, merange, mvmin, mvmax);
+                mvmax.y += 2; // there is some pad for subpel refine
+                mvmin <<= 2;
+                mvmax <<= 2;
+
+                bTryZero &= list[0].mvp.checkRange(mvmin, mvmax);
+                bTryZero &= list[1].mvp.checkRange(mvmin, mvmax);
+            }
+            if (bTryZero)
+            {
                 // coincident blocks of the two reference pictures
                 pixel *ref0 = m_mref[0][list[0].ref]->fpelPlane + (pu - fenc->getLumaAddr());
                 pixel *ref1 = m_mref[1][list[1].ref]->fpelPlane + (pu - fenc->getLumaAddr());
