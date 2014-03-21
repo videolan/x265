@@ -1164,7 +1164,7 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
     // NOTE: (A + B) ^ 2 = (A ^ 2) + 2 * A * B + (B ^ 2)
     assert(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX);
     const int32_t err1 = levelDouble - (maxAbsLevel << qbits);            // A
-          double err2 = (double)((int64_t)err1 * err1);                   // A^ 2
+           double err2 = (double)((int64_t)err1 * err1);                  // A^ 2
     const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
     const int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);   // B ^ 2
     const double errInc = (err3 + err4) * scaleFactor;
@@ -1258,7 +1258,7 @@ inline double TComTrQuant::xGetICRateCost(uint32_t absLevel,
 }
 
 inline int TComTrQuant::xGetICRate(uint32_t absLevel,
-                                    int32_t diffLevel,
+                                   int32_t  diffLevel,
                                    const int *greaterOneBits,
                                    const int *levelAbsBits,
                                    uint32_t absGoRice,
@@ -1272,8 +1272,6 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
         return 0;
     }
     int rate = 0;
-    //const int *greaterOneBits = m_estBitsSbac->greaterOneBits[ctxNumOne];
-    //const int *levelAbsBits = m_estBitsSbac->levelAbsBits[ctxNumAbs];
 
     if (diffLevel < 0)
     {
@@ -1299,11 +1297,6 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
             unsigned long size;
             CLZ32(size, absLevel);
             int egs = size * 2 + 1;
-            //int egs = 1;
-            //for (uint32_t max = 2; absLevel >= max; max <<= 1, egs += 2)
-            //{
-            //}
-            //assert(egs == size * 2 + 1);
 
             rate   += egs << 15;
 
@@ -1313,7 +1306,7 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
         }
 
         uint32_t prefLen = (symbol >> absGoRice) + 1;
-        uint32_t numBins = x265_min_fast(prefLen + absGoRice, 8/*g_goRicePrefixLen[absGoRice] + absGoRice*/);
+        uint32_t numBins = x265_min_fast(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
 
         rate += numBins << 15;
 
@@ -1408,8 +1401,8 @@ void TComTrQuant::setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp)
     quantCoeff   = getQuantCoeff(list, qp, size);
     errScale     = getErrScaleCoeff(list, size, qp);
 
-    double scalingBits = (double)(1 << SCALE_BITS);                          // Compensate for scaling of bitcount in Lagrange cost function
-    scalingBits = scalingBits * pow(2.0, -2.0 * transformShift);              // Compensate for scaling through forward transform
+    double scalingBits = (double)(1 << SCALE_BITS);               // Compensate for scaling of bitcount in Lagrange cost function
+    scalingBits = scalingBits * pow(2.0, -2.0 * transformShift);  // Compensate for scaling through forward transform
     for (i = 0; i < maxNumCoeff; i++)
     {
         errScale[i] = scalingBits / quantCoeff[i] / quantCoeff[i] / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)));
@@ -1507,8 +1500,8 @@ void TComTrQuant::xsetFlatScalingList(uint32_t list, uint32_t size, uint32_t qp)
  */
 void TComTrQuant::processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc)
 {
-    int nsqth = (height < width) ? 4 : 1; //height ratio for NSQT
-    int nsqtw = (width < height) ? 4 : 1; //width ratio for NSQT
+    int nsqth = (height < width) ? 4 : 1; // height ratio for NSQT
+    int nsqtw = (width < height) ? 4 : 1; // width ratio for NSQT
 
     for (uint32_t j = 0; j < height; j++)
     {
