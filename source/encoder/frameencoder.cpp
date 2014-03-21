@@ -1056,7 +1056,6 @@ void FrameEncoder::processRowEncoder(int row)
     CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    double qpBase = m_pic->m_avgQpRc;
     bool isVbv = m_cfg->param.rc.vbvBufferSize > 0 && m_cfg->param.rc.vbvMaxBitrate > 0;
     for (uint32_t col = curRow.m_completed; col < numCols; col++)
     {
@@ -1067,17 +1066,24 @@ void FrameEncoder::processRowEncoder(int row)
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
         TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-
-        if ((uint32_t)row >= col && (row != 0) && isVbv)
-            qpBase = m_pic->getCU(cuAddr - numCols + 1)->m_baseQp;
+        if (isVbv)
+        {
+            if (!row)
+                m_pic->m_rowDiagQp[row] = m_pic->m_avgQpRc;
+            if ((uint32_t)row >= col && (row != 0))
+                cu->m_baseQp = m_pic->getCU(cuAddr - numCols + 1)->m_baseQp;
+            else
+                cu->m_baseQp = m_pic->m_rowDiagQp[row];
+        }
+        else
+            cu->m_baseQp = m_pic->m_avgQpRc;
 
         if (m_cfg->param.rc.aqMode || isVbv)
         {
-            int qp = calcQpForCu(m_pic, cuAddr, qpBase);
+            int qp = calcQpForCu(m_pic, cuAddr, cu->m_baseQp);
             setLambda(qp, row);
             qp = X265_MIN(qp, MAX_QP);
             cu->setQP(0, char(qp));
-            cu->m_baseQp = qpBase;
             if (m_cfg->param.rc.aqMode)
                 m_pic->m_qpaAq[row] += qp;
         }
@@ -1090,14 +1096,14 @@ void FrameEncoder::processRowEncoder(int row)
             m_pic->m_numEncodedCusPerRow[row] = cuAddr;
             m_pic->m_qpaRc[row] += cu->m_baseQp;
 
-            if ((uint32_t)row == col)
-                m_pic->m_rowDiagQp[row] = qpBase;
-
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
+ 
             if ((uint32_t)row == col && row != 0)
             {
-                m_top->m_rateControl->rowDiagonalVbvRateControl(m_pic, row, &m_rce, qpBase);
-                qpBase = Clip3((double)MIN_QP, (double)MAX_MAX_QP, qpBase);
+                m_pic->m_rowDiagQp[row] = cu->m_baseQp;
+                m_top->m_rateControl->rowDiagonalVbvRateControl(m_pic, row, &m_rce, m_pic->m_rowDiagQp[row]);
+                m_pic->m_rowDiagQScale[row] = Clip3((double)MIN_QP, (double)MAX_QP, m_pic->m_rowDiagQScale[row]);
+                m_pic->m_rowDiagQScale[row] =  x265_qp2qScale(m_pic->m_rowDiagQp[row]);
             }
         }
         // Completed CU processing
