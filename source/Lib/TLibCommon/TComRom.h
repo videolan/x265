@@ -129,7 +129,7 @@ extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 // ====================================================================================================================
 
 extern const uint8_t g_groupIdx[32];
-extern const uint32_t g_minInGroup[10];
+extern const uint8_t g_minInGroup[10];
 
 extern const uint8_t g_goRiceRange[5];      //!< maximum value coded with Rice codes
 //extern const uint8_t g_goRicePrefixLen[5];  //!< prefix length for each maximum value
