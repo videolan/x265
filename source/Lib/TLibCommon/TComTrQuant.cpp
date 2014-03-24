@@ -876,7 +876,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
         absSum += level;
         if (level)
             *lastPos = blkPos;
-        dstCoeff[blkPos] = (srcCoeff[blkPos] < 0) ? -level : level;
+        uint32_t mask = (int32_t)srcCoeff[blkPos] >> 31;
+        dstCoeff[blkPos] = (level ^ mask) - mask;
     }
 
     //===== clean uncoded coefficients =====
@@ -895,7 +896,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
         int tmpSum = 0;
         int n;
 
-        for (int subSet = (trSize * trSize - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+        for (int subSet = ((1 << (log2TrSize * 2)) - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
             int firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
