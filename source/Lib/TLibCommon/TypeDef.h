@@ -176,8 +176,6 @@ struct TUEntropyCodingParameters
     const uint16_t            *scan;
     const uint16_t            *scanCG;
     COEFF_SCAN_TYPE      scanType;
-    TextType             ctype;
-    uint32_t             log2TrSize;
     uint32_t             log2TrSizeCG;
     uint32_t             firstSignificanceMapContext;
 };

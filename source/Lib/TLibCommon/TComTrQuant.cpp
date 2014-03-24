@@ -486,41 +486,6 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
     }
 }
 
-void TComTrQuant::getTUEntropyCodingParameters(TComDataCU*                cu,
-                                               TUEntropyCodingParameters &result,
-                                               uint32_t                   absPartIdx,
-                                               uint32_t                   log2TrSize,
-                                               TextType                   ttype)
-{
-    //set the group layout
-    const uint32_t log2TrSizeCG = log2TrSize - MLS_CG_LOG2_SIZE;
-    result.log2TrSize   = log2TrSize;
-    result.log2TrSizeCG = log2TrSizeCG;
-
-    //set the scan orders
-    result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
-    result.scan   = g_scanOrder[SCAN_GROUPED_4x4][result.scanType][log2TrSize];
-    result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2TrSizeCG];
-
-    //set the significance map context selection parameters
-    TextType ctype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-    result.ctype = ctype;
-    if (log2TrSize == 2)
-    {
-        result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4];
-    }
-    else if (log2TrSize == 3)
-    {
-        result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8];
-        if (result.scanType != SCAN_DIAG)
-            result.firstSignificanceMapContext += nonDiagonalScan8x8ContextOffset[ctype];
-    }
-    else
-    {
-        result.firstSignificanceMapContext = significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN];
-    }
-}
-
 /** RDOQ with CABAC
  * \param cu pointer to coding unit structure
  * \param plSrcCoeff pointer to input buffer
@@ -643,7 +608,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoef
                 }
                 else
                 {
-                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, codingParameters);
+                    // NOTE: ttype is different to ctype, but getSigCtxInc may safety use it 
+                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
                         costSig[scanPos] = xGetRateSigCoef(0, ctxSig);
@@ -1055,7 +1021,8 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t                   patternSigCt
                                    const uint32_t                   log2TrSize,
                                    const uint32_t                   trSize,
                                    const uint32_t                   blkPos,
-                                   const TUEntropyCodingParameters &codingParameters)
+                                   const TextType                   ctype,
+                                   const uint32_t                   firstSignificanceMapContext)
 {
     static const uint8_t ctxIndMap[16] =
     {
@@ -1114,11 +1081,11 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t                   patternSigCt
     };
 
     int cnt = table_cnt[patternSigCtx][posXinSubset][posYinSubset];
-    int offset = codingParameters.firstSignificanceMapContext;
+    int offset = firstSignificanceMapContext;
 
     offset += cnt;
 
-    return (codingParameters.ctype == TEXT_LUMA && (posX | posY) >= 4) ? 3 + offset : offset;
+    return (ctype == TEXT_LUMA && (posX | posY) >= 4) ? 3 + offset : offset;
 }
 
 /** Get the best level in RD sense

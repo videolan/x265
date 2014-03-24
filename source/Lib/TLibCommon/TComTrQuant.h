@@ -159,9 +159,42 @@ public:
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     static uint32_t calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
-    static uint32_t getSigCtxInc(uint32_t patternSigCtx, const uint32_t log2TrSize, const uint32_t trSize, const uint32_t blkPos, const TUEntropyCodingParameters &codingParameters);
+    static uint32_t getSigCtxInc(uint32_t patternSigCtx, const uint32_t log2TrSize, const uint32_t trSize, const uint32_t blkPos, const TextType ctype, const uint32_t firstSignificanceMapContext);
     static uint32_t getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, const uint32_t log2TrSizeCG);
-    static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
+    inline static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
+    {
+        //set the group layout
+        const uint32_t log2TrSizeCG = log2TrSize - MLS_CG_LOG2_SIZE;
+        result.log2TrSizeCG = log2TrSizeCG;
+
+        //set the scan orders
+        result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
+        result.scan   = g_scanOrder[SCAN_GROUPED_4x4][result.scanType][log2TrSize];
+        result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2TrSizeCG];
+
+        //set the significance map context selection parameters
+        TextType ctype = (ttype == TEXT_LUMA) ? TEXT_LUMA : TEXT_CHROMA;
+        if (log2TrSize == 2)
+        {
+            result.firstSignificanceMapContext = 0;
+            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4] == 0);
+        }
+        else if (log2TrSize == 3)
+        {
+            result.firstSignificanceMapContext = 9;
+            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8] == 9);
+            if (result.scanType != SCAN_DIAG && !ctype)
+            {
+                result.firstSignificanceMapContext += 6;
+                assert(nonDiagonalScan8x8ContextOffset[ctype] == 6);
+            }
+        }
+        else
+        {
+            result.firstSignificanceMapContext = (ctype ? 12 : 21);
+            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (ctype ? 12 : 21));
+        }
+    }
     estBitsSbacStruct* m_estBitsSbac;
 
 protected:
