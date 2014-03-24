@@ -313,9 +313,9 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nPresets:\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
-    H0("                                     ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
+    H0("                                 ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
     H0("-t/--tune <string>               Tune the settings for a particular type of source or situation:\n");
-    H0("                                     psnr, ssim, zerolatency, or fastdecode\n");
+    H0("                                 psnr, ssim, zerolatency, or fastdecode\n");
     H0("\nQuality reporting metrics:\n");
     H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
