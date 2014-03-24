@@ -350,9 +350,10 @@ void TEncBinCABAC::encodeBinTrm(uint32_t binValue)
 void TEncBinCABAC::writeOut()
 {
     uint32_t leadByte = m_low >> (13 + m_bitsLeft);
+    uint32_t low_mask = (uint32_t)(~0) >> (11 + 8 - m_bitsLeft);
 
     m_bitsLeft -= 8;
-    m_low &= 0xffffffffu >> (11 - m_bitsLeft);
+    m_low &= low_mask;
 
     if (leadByte == 0xff)
     {
@@ -360,25 +361,22 @@ void TEncBinCABAC::writeOut()
     }
     else
     {
-        if (m_numBufferedBytes > 0)
+        uint32_t numBufferedBytes = m_numBufferedBytes;
+        if (numBufferedBytes > 0)
         {
             uint32_t carry = leadByte >> 8;
             uint32_t byteTowrite = m_bufferedByte + carry;
-            m_bufferedByte = leadByte & 0xff;
             m_bitIf->writeByte(byteTowrite);
 
             byteTowrite = (0xff + carry) & 0xff;
-            while (m_numBufferedBytes > 1)
+            while (numBufferedBytes > 1)
             {
                 m_bitIf->writeByte(byteTowrite);
-                m_numBufferedBytes--;
+                numBufferedBytes--;
             }
         }
-        else
-        {
-            m_numBufferedBytes = 1;
-            m_bufferedByte = leadByte;
-        }
+        m_numBufferedBytes = 1;
+        m_bufferedByte = (uint8_t)leadByte;
     }
 }
 
