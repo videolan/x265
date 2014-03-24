@@ -2117,7 +2117,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
 
     // Code position of last coefficient
     int posLastY = posLast >> log2TrSize;
-    int posLastX = posLast - (posLastY << log2TrSize);
+    int posLastX = posLast & (trSize - 1);
     codeLastSignificantXY(posLastX, posLastY, log2TrSize, ttype, codingParameters.scanType);
     //===== code significance flag =====
     ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype ? NUM_SIG_CG_FLAG_CTX : 0)];
@@ -2178,9 +2178,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, 
                 if (sig)
                 {
                     absCoeff[numNonZero] = int(abs(coeff[blkPos]));
-                    coeffSigns = 2 * coeffSigns + (coeff[blkPos] < 0);
+                    coeffSigns = 2 * coeffSigns + ((uint32_t)coeff[blkPos] >> 31);
                     numNonZero++;
-                    if (lastNZPosInCG == -1)
+                    if (lastNZPosInCG < 0)
                     {
                         lastNZPosInCG = scanPosSig;
                     }
