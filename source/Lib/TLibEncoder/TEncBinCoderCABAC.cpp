@@ -190,25 +190,30 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
     }
     ctxModel.bBinsCoded = 1;
 
-    uint32_t mps = sbacGetMps(mstate);
-    uint32_t state = sbacGetState(mstate);
-    uint32_t lps = g_lpsTable[state][(m_range >> 6) & 3];
-    m_range -= lps;
-
-    assert(lps != 0);
-
-    int numBits = (uint32_t)(m_range - 256) >> 31;
-    uint32_t low = m_low;
     uint32_t range = m_range;
-    if (binValue != mps)
+    uint32_t state = sbacGetState(mstate);
+    uint32_t lps = g_lpsTable[state][((uint8_t)range >> 6)];
+    range -= lps;
+
+    assert(lps >= 2);
+
+    int numBits = (uint32_t)(range - 256) >> 31;
+    uint32_t low = m_low;
+
+    // NOTE: MPS must be LOWEST bit in mstate
+    assert(((binValue ^ mstate) & 1) == (binValue != sbacGetMps(mstate)));
+    if ((binValue ^ mstate) & 1)
     {
         // NOTE: lps is non-zero and the maximum of idx is 8 because lps less than 256
         //numBits   = g_renormTable[lps >> 3];
         unsigned long idx;
         CLZ32(idx, lps);
+        assert(state != 63 || idx == 1);
+
         numBits = 8 - idx;
-        if (numBits >= 6)
+        if (state >= 63)
             numBits = 6;
+        assert(numBits <= 6);
 
         low    += range;
         range   = lps;
