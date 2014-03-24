@@ -231,8 +231,8 @@ if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     endif()
     foreach(ASM ${MSVC_ASMS})
         set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
-        set(YASM_SRCS ${YASM_SRCS} ${YASM_SRC})
-        set(YASM_OBJS ${YASM_OBJS} ${ASM}.${SUFFIX})
+        list(APPEND YASM_SRCS ${YASM_SRC})
+        list(APPEND YASM_OBJS ${ASM}.${SUFFIX})
         add_custom_command(
             OUTPUT ${ASM}.${SUFFIX}
             COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
@@ -240,6 +240,7 @@ if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     endforeach()
 endif()
 
+source_group(ASM FILES ${YASM_SRCS})
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
