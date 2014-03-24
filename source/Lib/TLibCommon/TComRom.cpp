@@ -434,7 +434,6 @@ uint64_t g_nSymbolCounter = 0;
 // ====================================================================================================================
 
 const uint8_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
-const uint8_t g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
 
 // Rice parameters for absolute transform levels
 const uint8_t g_goRiceRange[5] = { 7, 14, 26, 46, 78 };

@@ -1988,8 +1988,8 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     }
 
     uint32_t ctxLast;
-    uint32_t groupIdxX = g_groupIdx[posx];
-    uint32_t groupIdxY = g_groupIdx[posy];
+    uint32_t groupIdxX = getGroupIdx(posx);
+    uint32_t groupIdxY = getGroupIdx(posy);
 
     int blkSizeOffset = ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2));
     int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);

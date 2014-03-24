@@ -1330,8 +1330,8 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
  */
 inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
 {
-    uint32_t ctxX = g_groupIdx[posx];
-    uint32_t ctxY = g_groupIdx[posy];
+    uint32_t ctxX = getGroupIdx(posx);
+    uint32_t ctxY = getGroupIdx(posy);
     uint32_t cost = m_estBitsSbac->lastXBits[ctxX] + m_estBitsSbac->lastYBits[ctxY];
 
     int32_t maskX = (int32_t)(2 - posx) >> 31;
