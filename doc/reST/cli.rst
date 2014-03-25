@@ -15,6 +15,19 @@ fields. The CLI does this for the user implicitly, so all CLI options
 are applied after the user's preset and tune choices, regarless of the
 order of the options on the command line.
 
+If there is an extra command line argument (not an option or an option
+value) the CLI will treat it as the input filename.  This effectively
+makes the :option:`--input` specifier optional for the input file. If
+there are two extra arguments, the second is treated as the output
+bitstream filename, making :option:`--output` also optional if the input
+filename was implied. This makes :command:`x265 in.yuv out.hevc` a valid
+command line. If there are more than two extra arguments, the CLI will
+consider this an error and abort.
+
+Generally, when an option expects a string value from a list of strings
+the user may specify the integer ordinal of the value they desire. ie:
+:option:`--log-level` 3 is equivalent to :option:`--log-level` debug.
+
 Standalone Executable Options
 =============================
 
@@ -44,7 +57,8 @@ Standalone Executable Options
 
 .. option:: --threads <integer>
 
-	Number of threads for thread pool; 0: detect CPU core count **(Default)**
+	Number of threads for thread pool. Default 0 (detected CPU core
+	count)
 
 .. option:: --preset, -p <integer|string>
 
@@ -52,7 +66,16 @@ Standalone Executable Options
 	encoding speed. These parameters are applied before all other input parameters are 
 	applied, and so you can override any parameters that these values control. Default medium
 
-	**Values:** ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
+	0. ultrafast
+	1. superfast
+	2. veryfast
+	3. faster
+	4. fast
+	5. medium
+	6. slow
+	7. slower
+	8. veryslow
+	9. placebo
 
 .. option:: --tune, -t <string>
 
@@ -72,9 +95,23 @@ Standalone Executable Options
 .. option:: --log-level <int|string>
 
 	Logging level. Debug level enables per-frame QP, metric, and bitrate
-	logging. Full level enables hash and weight logging. Default: 2 (info)
+	logging. If a CSV file is being generated, debug level makes the log
+	be per-frame rather than per-encode. Full level enables hash and
+	weight logging. -1 disables all logging, except certain fatal
+	errors, and can be specified by the string "none". Default: 2 (info)
 
-	**Values:** none(-1) error(0) warning info debug full
+	0. error
+	1. warning
+	2. info
+	3. debug
+	4. full
+
+.. option:: --csv <filename>
+
+	Writes encoding results to a comma separated value log file Creates
+	the file if it doesnt already exist, else adds one line per run.  if
+	:option:`--log-level` is debug or above, it writes one line per
+	frame. Default none
 
 .. option:: --output, -o <filename>
 
@@ -88,34 +125,29 @@ Standalone Executable Options
 
 	**CLI ONLY**
 
-.. option:: --csv <filename>
-
-	Writes encoding results to a comma separated value log file Creates
-	the file if it doesnt already exist, else adds one line per run.  if
-	:option:`--log-level` level is debug or above, it writes one line per
-	frame. Default none
-
-.. option:: --y4m
-
-	Parse input stream as YUV4MPEG2 regardless of file extension,
-	primarily intended for use with stdin
-	(ie: :option:`--input` - :option:`--y4m`)
-
-	**CLI ONLY**
-
 Input Options
 =============
 
 .. option:: --input <filename>
 
 	Input filename, only raw YUV or Y4M supported. Use single dash for
-	stdin.
+	stdin. This option name will be implied for the first "extra"
+	command line argument.
+
+	**CLI ONLY**
+
+.. option:: --y4m
+
+	Parse input stream as YUV4MPEG2 regardless of file extension,
+	primarily intended for use with stdin. This option is implied if
+	the input filename has a ".y4m" extension
+	(ie: :option:`--input` - :option:`--y4m`)
 
 	**CLI ONLY**
 
 .. option:: --input-depth <integer>
 
-	Bit-depth of input file or stream (YUV only).
+	YUV only: Bit-depth of input file or stream
 
 	**Values:** any value between 8 and 16. Default is internal depth.
 
@@ -123,27 +155,31 @@ Input Options
 
 .. option:: --input-res <wxh>
 
-	Source picture size [w x h], auto-detected if Y4M
+	YUV only: Source picture size [w x h]
 
 	**CLI ONLY**
 
 .. option:: --input-csp <integer|string>
 
-	Source color space parameter, auto detected if Y4M
+	YUV only: Source color space. Only i420 and i444 are supported at
+	this time.
 
-	**Values:** 1:"i420" **(Default)**, or 3:"i444"
+	0. i400
+	1. i420
+	2. i422
+	3. i444
+	4. nv12
+	5. nv16
 
 .. option:: --fps <integer|float|numerator/denominator>
 
-	Source frame rate; auto-detected if Y4M
+	YUV only: Source frame rate
 
 	**Range of values:** positive int or float, or num/denom
 
 .. option:: --seek <integer>
 
 	Number of frames to skip at start of input file. Default 0
-
-	**Range of values:** 0 to the number of frames in the video
 
 	**CLI ONLY**
 
@@ -179,9 +215,14 @@ Temporal / motion search options
 
 .. option:: --me <integer|string>
 
-	Motion search method. Default: hex
+	Motion search method. Generally, the higher the number the harder
+	the ME method will try to find an optimal match. Default: hex
 
-	**Values** dia, hex, umh, star, full
+	0. dia
+	1. hex
+	2. umh
+	3. star
+	4. full
 
 .. option:: --subme, -m <0..7>
 
@@ -207,11 +248,19 @@ Temporal / motion search options
 
 .. option:: --early-skip, --no-early-skip
 
-	Enable early SKIP detection, Default disabled
+	Enable early SKIP detection. Default disabled
 
 .. option:: --fast-cbf, --no-fast-cbf
 
 	Enable Cbf fast mode. Default disabled
+
+.. option:: --ref <1..16>
+
+	Max number of L0 references to be allowed. Default 3
+
+.. option:: --weightp, -w, --no-weightp
+
+	Enable weighted prediction in P slices. Default enabled
 
 
 Spatial/intra options
@@ -264,7 +313,7 @@ Slice decision options
 
 	How aggressively I-frames need to be inserted. The higher the
 	threshold value, the more aggressive the I-frame placement.
-	:option:`--scenecut`=0 or :option:`--no-scenecut` disables adaptive
+	:option:`--scenecut` 0 or :option:`--no-scenecut` disables adaptive
 	I frame placement. Default 40
 
 .. option:: --rc-lookahead <integer>
@@ -293,20 +342,9 @@ Slice decision options
 
 	**Range of values:** usually >=0 (increase the value for referring more B Frames e.g. 40-50)
 
-.. option:: --b-pyramid <0|1>
+.. option:: --b-pyramid, --no-b-pyramid
 
-	Use B-frames as references 0: Disabled, 1: Enabled **(Default)**
-
-.. option:: --ref <integer>
-
-	Max number of L0 references to be allowed. Default 3
-
-	**Range of values:** 1 to 16
-
-.. option:: --weightp, -w, --no-weightp
-
-	Enable weighted prediction in P slices. Default enabled
-
+	Use B-frames as references, when possible. Default enabled
 
 Quality, rate control and rate distortion options
 =================================================
@@ -409,12 +447,14 @@ Quality reporting metrics
 .. option:: --ssim, --no-ssim
 
 	Calculate and report Structural Similarity values. Default disabled
+	It is recommended to use :option:`--tune` ssim if you are measuring
+	ssim, else the results should not be used for comparison purposes.
 
 .. option:: --psnr, --no-psnr
 
 	Calculate and report Peak Signal to Noise Ratio. Default disabled
-
-------------------------------
+	It is recommended to use :option:`--tune` psnr if you are measuring
+	PSNR, else the results should not be used for comparison purposes.
 
 VUI (Video Usability Information) options
 =========================================
@@ -535,24 +575,24 @@ parts (sar or color primitives) the VUI itself is also enabled.
 
 .. option:: --chromalocs <0..5>
 
-	Specify chroma sample location, default undefined
+	Specify chroma sample location for 4:2:0 inputs. Default undefined
 
 .. option:: --timinginfo, --no-timinginfo
 
-	Add timing information (fps, timebase) to the VUI
+	Add timing information (fps, timebase) to the VUI. Default disabled
 
 .. option:: --nal-hrd, --no-nal-hrd
 
-	Add signal HRD information [NOT IMPLEMENTED]
+	Enable signaling of HRD information. Default disabled [NOT IMPLEMENTED]
 
 .. option:: --bitstreamrestriction, --no-bitstreamrestriction
 
 	Specifies whether that the bitstream restriction parameters for the
-	CVS are present. [NOT IMPLEMENTED]
+	CVS are present. Default disabled [NOT IMPLEMENTED]
 
 .. option:: --subpichrd, --no-subpichrd
 
-	Add sub picture HRD parameters to the HRD. [NOT IMPLEMENTED]
+	Add sub picture HRD parameters to the HRD. Default disabled [NOT IMPLEMENTED]
 
 
 Debugging options
