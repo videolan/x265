@@ -5,11 +5,11 @@ Command line Options
 Standalone Executable Options
 =============================
 
-.. option:: --help/-h
+.. option:: --help, -h
 
    Display help text
 
-.. option:: --version/-V
+.. option:: --version, -V
 
    Display version details
 
@@ -23,7 +23,7 @@ Standalone Executable Options
    
    Number of threads for thread pool; 0: detect CPU core count **(Default)**
    
-.. option:: --preset/-p
+.. option:: --preset, -p
    
    Sets parameters to preselected values, trading off compression efficiency against 
    encoding speed. These parameters are applied before all other input parameters are 
@@ -31,14 +31,14 @@ Standalone Executable Options
    
    **Values:**  ultrafast, superfast, veryfast, faster, fast, medium **(Default)**, slow, slower, veryslow, placebo
 
-.. option:: --tune/-t
+.. option:: --tune, -t
 
    Tune the settings for a particular type of source or situation. The changes will
    be applied after --preset but before all other parameters.
    
    **Values:** psnr, ssim **(Default)**, zero-latency.
 
-.. option:: --frame-threads/-F
+.. option:: --frame-threads, -F
     
    Number of concurrently encoded frames
   
@@ -54,7 +54,7 @@ Standalone Executable Options
 
    produces a log file that records results per frame
 
-.. option:: --output/-o
+.. option:: --output, -o
 
    Bitstream output file name
 
@@ -109,7 +109,7 @@ Input Options
     **Range of values:** 0 to the number of frames in the video
     **Default**: 0
 
-.. option:: --frames/-f
+.. option:: --frames, -f
 
     Number of frames to be encoded; 0 implies all **(Default)**
 
@@ -120,7 +120,7 @@ Input Options
 Reconstructed video options (debugging)
 =======================================
 
-.. option:: --recon/-r
+.. option:: --recon, -r
 
     Re-constructed image YUV or Y4M output file name
 
@@ -141,7 +141,7 @@ Quad-Tree analysis
 
     Enable Wavefront Parallel Processing **(Default)**
 
-.. option:: --ctu/-s
+.. option:: --ctu, -s
 
     Maximum CU size (width and height)
    
@@ -168,7 +168,7 @@ Temporal / motion search options
 
     Motion search method 0: dia; 1: hex **(Default)**; 2: umh; 3: star; 4: full
 
-.. option:: --subme/-m
+.. option:: --subme, -m
 
     Amount of subpel refinement to perform
 
@@ -276,14 +276,14 @@ Slice decision options
 
     Disable open GOP. All I-slices are IDR.
 
-.. option:: --keyint/-I
+.. option:: --keyint, -I
 
     Max intra period in frames. A special case of infinite-gop (single keyframe at the beginning of the stream)
     can be triggered with argument -1.
 
     **Range of values:** >= -1 (-1: infinite-gop, 0: auto; 1: intra only) **Default: 250**
 
-.. option:: --min-keyint/-i
+.. option:: --min-keyint, -i
 
     Minimum GOP size. Scenecuts closer together than this are coded as I, not IDR. 
 
@@ -312,7 +312,7 @@ Slice decision options
 
     **Values:** 0:none; 1:fast; 2:full(trellis) **(Default)**
 
-.. option:: --bframes/-b
+.. option:: --bframes, -b
 
     Maximum number of consecutive b-frames 
 
@@ -334,7 +334,7 @@ Slice decision options
 
     **Range of values:** 1 to 16  **Default: 3**
 
-.. option:: --weightp/-w
+.. option:: --weightp, -w
 
     Enable weighted prediction in P slices**(Default)**
 
@@ -373,7 +373,7 @@ Quality, rate control and rate distortion options
 
    **Range of values:** 0-1 **Default: 0.9**
 
-.. option:: --qp/-q
+.. option:: --qp, -q
 
    Base Quantization Parameter for Constant QP mode. Using this option causes x265 to use Constant QP rate control **(Default)**
 
