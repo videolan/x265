@@ -40,19 +40,19 @@ Standalone Executable Options
 
 .. option:: --frame-threads, -F
     
-   Number of concurrently encoded frames
+   Number of concurrently encoded frames. Using a single frame thred
+   gives a slight improvement in compression, since the entire reference
+   frames are always available for motion compensation, but it has
+   severe performance implications.
   
-   **Range of values:** >=0.  **Default** = auto-determined from a formula based on the number of CPU cores
+   **Range of values:** >=0. **Default** = auto-determined based on the number of CPU cores
 
-.. option::--log
+.. option:: --log
     
-   Logging level
+   Logging level. Debug level enables per-frame QP, metric, and bitrate
+   logging. Full level enables hash and weight logging.
 
    **Values:**  0:ERROR; 1:WARNING; 2:INFO **(Default)**; 3:DEBUG; 4:FULL -1:NONE
-
-.. option:: --log 3
-
-   produces a log file that records results per frame
 
 .. option:: --output, -o
 
@@ -66,6 +66,7 @@ Standalone Executable Options
 
    Writes encoding results to a comma separated value log file
    Creates the file if it doesnt already exist, else adds one line per run
+   if :option:`--log` level is debug or above, it writes one line per frame
 
 .. option:: --y4m
     
@@ -116,19 +117,6 @@ Input Options
     **Range of values:** 0 to the number of frames in the video
 
 ------------------------------
-
-Reconstructed video options (debugging)
-=======================================
-
-.. option:: --recon, -r
-
-    Re-constructed image YUV or Y4M output file name
-
-.. option:: --recon-depth
-
-    Bit-depth of output file 
-
-    **Default:** same as input bit depth
 
 Quad-Tree analysis
 ==================
@@ -303,7 +291,7 @@ Slice decision options
 
     Number of frames for frame-type lookahead (determines encoder latency) 
 
-    **Range of values:** an integer less than or equal to 250 and greater than maximum consecutive bframe count (--bframes)
+    **Range of values:** an integer less than or equal to 250 and greater than maximum consecutive bframe count (:option:`--bframes`)
     **Default: 20**
 
 .. option:: --b-adapt
@@ -346,6 +334,7 @@ Slice decision options
 
 Quality, rate control and rate distortion options
 =================================================
+
 .. option:: --bitrate
 
    Enables ABR rate control.  Specify the target bitrate in kbps.  
@@ -588,3 +577,19 @@ VUI options
    Add sub picture HRD parameters to the HRD
 
    **values:** 0 **(Default)** or 1 [NOT IMPLEMENTED]
+
+------------------------------
+
+Reconstructed video options (debugging)
+=======================================
+
+.. option:: --recon, -r
+
+    Re-constructed image YUV or Y4M output file name
+
+.. option:: --recon-depth
+
+    Bit-depth of output file 
+
+    **Default:** same as input bit depth
+
