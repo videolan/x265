@@ -244,7 +244,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
         CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
         nalunits[count]->init(nalu);
     }
-    return 0;
+    return count;
 
 fail:
     return -1;
@@ -357,7 +357,10 @@ void FrameEncoder::compressFrame()
     TComSlice*   slice             = m_pic->getSlice();
     int          chFmt             = slice->getSPS()->getChromaFormatIdc();
 
-    m_nalCount = 0;
+    if (m_cfg->param->bRepeatHeaders && m_pic->m_lowres.bKeyframe)
+        m_nalCount = getStreamHeaders(m_nalList);
+    else
+        m_nalCount = 0;
 
     int qp = slice->getSliceQp();
     double lambda = 0;

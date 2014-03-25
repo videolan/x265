@@ -75,7 +75,7 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 
     int ret = 0;
     NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
-    if (!encoder->getStreamHeaders(nalunits))
+    if (encoder->getStreamHeaders(nalunits) > 0)
     {
         int nalcount = encoder->extractNalData(nalunits);
         *pp_nal = &encoder->m_nals[0];

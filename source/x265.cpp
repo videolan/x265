@@ -688,9 +688,10 @@ int main(int argc, char **argv)
     x265_stats stats;
     uint32_t nal;
 
-    if (!x265_encoder_headers(encoder, &p_nal, &nal))
+    if (!param->bRepeatHeaders)
     {
-        cliopt.writeNALs(p_nal, nal);
+        if (!x265_encoder_headers(encoder, &p_nal, &nal))
+            cliopt.writeNALs(p_nal, nal);
     }
 
     x265_picture_init(param, pic_in);

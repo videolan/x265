@@ -389,6 +389,10 @@ typedef struct x265_param
      * temporal order. EXPERIMENTAL */
     int       interlaceMode;
 
+    /* Flag indicating whether VPS, SPS and PPS headers should be output with
+     * each keyframe. Default false */
+    int       bRepeatHeaders;
+
     /*== Coding Unit (CU) definitions ==*/
 
     /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.

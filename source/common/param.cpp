@@ -529,6 +529,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->logLevel = parseName(value, logLevelNames, bError) - 1;
         }
     }
+    OPT("repeat-headers") p->bRepeatHeaders = atobool(value);
     OPT("wpp") p->bEnableWavefront = atobool(value);
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);
     OPT("tu-intra-depth") p->tuQTMaxIntraDepth = (uint32_t)atoi(value);

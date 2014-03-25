@@ -104,7 +104,7 @@ typedef uint32_t pixel4;
 #define X265_LOWRES_CU_SIZE   8
 #define X265_LOWRES_CU_BITS   3
 
-#define MAX_NAL_UNITS 6
+#define MAX_NAL_UNITS 12
 #define MIN_FIFO_SIZE 1000
 
 #define X265_MALLOC(type, count)    (type*)x265_malloc(sizeof(type) * (count))
