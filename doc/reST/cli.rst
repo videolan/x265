@@ -115,7 +115,12 @@ Standalone Executable Options
 
 .. option:: --output, -o <filename>
 
-	Bitstream output file name
+	Bitstream output file name. If there are two extra CLI options, the
+	first is implicitly the input filename and the second is the output
+	filename, making the :option:`--output` option optional.
+
+	The output file will always contain a raw HEVC bitstream, the CLI
+	does not support any container file formats.
 
 	**CLI ONLY**
 
@@ -707,5 +712,19 @@ Debugging options
 	depth and is not currently allowed to be modified.
 
 	**CLI ONLY**
+
+API-only Options
+================
+
+These options are not exposed in the CLI because they are only useful to
+applications which use libx265 as a shared library.  These are available
+via x265_param_parse()
+
+.. option:: --repeat-headers
+
+	If enabled, x265 will emit VPS, SPS, and PPS headers with every
+	keyframe. This is intended for use when you do not have a container
+	to keep the stream headers for you and you want keyframes to be
+	random access points.
 
 .. vim: noet
