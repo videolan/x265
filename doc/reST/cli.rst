@@ -293,15 +293,15 @@ Temporal / motion search options
 .. option:: --rect, --no-rect
 
 	Enable analysis of rectangular motion partitions Nx2N and 2NxN
-	(50/50 splits, two directions).  Default enabled
+	(50/50 splits, two directions). Default enabled
 
 .. option:: --amp, --no-amp
 
 	Enable analysis of asymmetric motion partitions (75/25 splits, four
 	directions). This setting has no effect if rectangular partitions
-	are disabled. Even there are four possible AMP partitions, only the
-	most likely candidate is tested, based on the results of the
-	rectangular mode tests. Default enabled
+	are disabled. Even though there are four possible AMP partitions,
+	only the most likely candidate is tested, based on the results of
+	the rectangular mode tests. Default enabled
 
 .. option:: --max-merge <1..5>
 
@@ -311,7 +311,7 @@ Temporal / motion search options
 	as a "skip".  Otherwise the merge candidates are tested as part of
 	motion estimation when searching for the least cost inter option.
 	The max candidate number is encoded in the SPS and determines the
-	bit cost of signaling merge CUs.  Default 2
+	bit cost of signaling merge CUs. Default 2
 
 .. option:: --early-skip, --no-early-skip
 
