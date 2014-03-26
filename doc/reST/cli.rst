@@ -64,14 +64,14 @@ Standalone Executable Options
 
 	Sets parameters to preselected values, trading off compression efficiency against 
 	encoding speed. These parameters are applied before all other input parameters are 
-	applied, and so you can override any parameters that these values control. Default medium
+	applied, and so you can override any parameters that these values control.
 
 	0. ultrafast
 	1. superfast
 	2. veryfast
 	3. faster
 	4. fast
-	5. medium
+	5. medium **(default)**
 	6. slow
 	7. slower
 	8. veryslow
@@ -80,13 +80,13 @@ Standalone Executable Options
 .. option:: --tune, -t <string>
 
 	Tune the settings for a particular type of source or situation. The changes will
-	be applied after --preset but before all other parameters. Default none
+	be applied after :option:`--preset` but before all other parameters. Default none
 
 	**Values:** psnr, ssim, zero-latency, fast-decode.
 
 .. option:: --frame-threads, -F <integer>
 
-	Number of concurrently encoded frames. Using a single frame thred
+	Number of concurrently encoded frames. Using a single frame thread
 	gives a slight improvement in compression, since the entire reference
 	frames are always available for motion compensation, but it has
 	severe performance implications. Default is an autodetected count
@@ -98,17 +98,17 @@ Standalone Executable Options
 	logging. If a CSV file is being generated, debug level makes the log
 	be per-frame rather than per-encode. Full level enables hash and
 	weight logging. -1 disables all logging, except certain fatal
-	errors, and can be specified by the string "none". Default: 2 (info)
+	errors, and can be specified by the string "none".
 
 	0. error
 	1. warning
-	2. info
+	2. info **(default)**
 	3. debug
 	4. full
 
 .. option:: --csv <filename>
 
-	Writes encoding results to a comma separated value log file Creates
+	Writes encoding results to a comma separated value log file. Creates
 	the file if it doesnt already exist, else adds one line per run.  if
 	:option:`--log-level` is debug or above, it writes one line per
 	frame. Default none
@@ -165,7 +165,7 @@ Input Options
 	this time.
 
 	0. i400
-	1. i420
+	1. i420 **(default)**
 	2. i422
 	3. i444
 	4. nv12
@@ -176,6 +176,20 @@ Input Options
 	YUV only: Source frame rate
 
 	**Range of values:** positive int or float, or num/denom
+
+.. option:: --interlaceMode <false|tff|bff>, --no-interlaceMode
+
+	**EXPERIMENTAL** Specify interlace type of source pictures. 
+	
+	0. progressive pictures **(default)**
+	1. top field first 
+	2. bottom field first
+
+	HEVC encodes interlaced content as fields. Fields must be provided to
+	the encoder in the correct temporal order. The source dimensions
+	must be field dimensions and the FPS must be in units of fields per
+	second. The decoder must re-combine the fields in their correct
+	orientation for display.
 
 .. option:: --seek <integer>
 
@@ -195,11 +209,19 @@ Quad-Tree analysis
 
 .. option:: --wpp, --no-wpp
 
-	Enable Wavefront Parallel Processing. Default: Enabled
+	Enable Wavefront Parallel Processing. The encoder may begin encoding
+	a row as soon as the row above it is at least two LCUs ahead in the
+	encode process. This gives a 3-5x gain in parallelism for about 1%
+	overhead in compression efficiency. Default: Enabled
 
 .. option:: --ctu, -s <64|32|16>
 
-	Maximum CU size (width and height). Default: 64
+	Maximum CU size (width and height). The larger the maximum CU size,
+	the more efficiently x265 can encode flat areas of the picture,
+	giving large reductions in bitrate. However this comes at a loss of
+	parallelism with fewer rows of CUs that can be encoded in parallel,
+	and less frame parallelism as well. Because of this the faster
+	presets use a CU size of 32. Default: 64
 
 .. option:: --tu-intra-depth <1..4>
 
@@ -216,10 +238,10 @@ Temporal / motion search options
 .. option:: --me <integer|string>
 
 	Motion search method. Generally, the higher the number the harder
-	the ME method will try to find an optimal match. Default: hex
+	the ME method will try to find an optimal match.
 
 	0. dia
-	1. hex
+	1. hex **(default)**
 	2. umh
 	3. star
 	4. full
@@ -244,7 +266,13 @@ Temporal / motion search options
 
 .. option:: --max-merge <1..5>
 
-	Maximum number of merge candidates. Default 2
+	Maximum number of neighbor (spatial and temporal) candidate blocks
+	that the encoder may consider for merging motion predictions. If a
+	merge candidate results in no residual, it is immediately selected
+	as a "skip".  Otherwise the merge candidates are tested as part of
+	motion estimation when searching for the least cost inter option.
+	The max candidate number is encoded in the SPS and determines the
+	bit cost of signaling merge CUs.  Default 2
 
 .. option:: --early-skip, --no-early-skip
 
@@ -252,7 +280,10 @@ Temporal / motion search options
 
 .. option:: --fast-cbf, --no-fast-cbf
 
-	Enable Cbf fast mode. Default disabled
+	Short circuit analysis if a prediction is found that does not set
+	the coded block flag (aka: no residual was encoded).  It prevents
+	the encoder from perhaps finding other predictions that also have no
+	residual but perhaps require less signaling bits.  Default disabled
 
 .. option:: --ref <1..16>
 
@@ -268,21 +299,23 @@ Spatial/intra options
 
 .. option:: --rdpenalty <0..2>
 
-	Penalty for 32x32 intra TU in non-I slices.  Default 0
+	Penalty for 32x32 intra TU in non-I slices. Default 0
 
 	**Values:** 0:disabled 1:RD-penalty 2:maximum
 
 .. option:: --tskip, --no-tskip
 
-	Enable intra transform skipping. Default disabled
+	Enable intra transform skipping (encode residual as coefficients)
+	for intra coded TU. Default disabled
 
 .. option:: --tskip-fast, --no-tskip-fast
 
-	Enable fast intra transform skip decisions. Default disabled
+	Enable fast intra transform skip decisions. Only applicable if
+	transform skip is enabled. Default disabled
 
 .. option:: --strong-intra-smoothing, --no-strong-intra-smoothing
 
-	Enable strong intra smoothing for 32x32 blocks. Default enabled
+	Enable strong intra smoothing for 32x32 intra blocks. Default enabled
 
 .. option:: --constrained-intra, --no-constrained-intra
 
@@ -318,9 +351,14 @@ Slice decision options
 
 .. option:: --rc-lookahead <integer>
 
-	Number of frames for frame-type lookahead (determines encoder latency). Default 20
+	Number of frames for slice-type decision lookahead (a key
+	determining factor for encoder latency). The longer the lookahead
+	buffer the more accurate scenecut decisions will be, and the more
+	effective cuTree will be at improving adaptive quant. Having a
+	lookahead larger than the max keyframe interval is not helpful.
+	Default 20
 
-	**Range of values:** an integer less than or equal to 250 and greater than maximum consecutive bframe count (:option:`--bframes`)
+	**Range of values:** Between the maximum consecutive bframe count (:option:`--bframes`) and 250
 
 .. option:: --b-adapt <integer>
 
@@ -328,19 +366,19 @@ Slice decision options
 
 	**Values:** 0:none; 1:fast; 2:full(trellis)
 
-.. option:: --bframes, -b <integer>
+.. option:: --bframes, -b <0..16>
 
 	Maximum number of consecutive b-frames. Use :option:`--bframes` 0 to
-	force all P/I low-latency encodes. Default 4
-
-	**Range of values:** 0 to 16
+	force all P/I low-latency encodes. Default 4. This parameter has a
+	quadratic effect on the amount of memory allocated and the amount of
+	work performed by the full trellis version of :option:`--b-adapt`
+	lookahead.
 
 .. option:: --bframe-bias <integer>
 
 	Bias towards B frames in slicetype decision. The higher the bias the
-	more likely x265 is to use B frames. Default 0
-
-	**Range of values:** usually >=0 (increase the value for referring more B Frames e.g. 40-50)
+	more likely x265 is to use B frames. Can be any value between -20
+	and 100, but is typically between 10 and 30. Default 0
 
 .. option:: --b-pyramid, --no-b-pyramid
 
@@ -352,13 +390,20 @@ Quality, rate control and rate distortion options
 .. option:: --bitrate <integer>
 
 	Enables ABR rate control. Specify the target bitrate in kbps.  
-	Default is 0 (CRF, no ABR)
+	Default is 0 (CRF)
 
 	**Range of values:** An integer greater than 0
 
 .. option:: --crf <0..51>
 
 	Quality-controlled VBR. Default rate factor is 28
+
+.. option:: --max-crf <0..51>
+
+	Specify an upper limit for which the adaptive rate factor algorithm
+	can assign a rate factor for any given frame (ensuring a max QP).
+	This is dangerous when CRF is used with VBV as it may result in
+	buffer underruns. Default disabled
 
 .. option:: --vbv-bufsize <integer>
 
@@ -388,10 +433,10 @@ Quality, rate control and rate distortion options
 
 .. option:: --aq-mode <0|1|2>
 
-	Mode for Adaptive Quantization. Default 1
+	Adaptive Quantization operating mode.
 
 	0. disabled
-	1. AQ enabled
+	1. AQ enabled **(default)**
 	2. AQ enabled with auto-variance
 
 .. option:: --aq-strength <float>
@@ -400,15 +445,29 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** 0.0 to 3.0
 
+.. option:: --cutree, --no-cutree
+
+	Enable the use of lookahead's lowres motion vector fields to
+	determine the amount of reuse of each block to tune the quantization
+	factors. CU blocks which are heavily reused as motion reference for
+	later frames are given a lower QP (more bits) while CU blocks which
+	are quickly changed and are not referenced are given less bits. This
+	tends to improve detail in the backgrounds of video with less detail
+	in areas of high motion. Default enabled
+
 .. option:: --cbqpoffs <integer>
 
-	Chroma Cb QP Offset. Default 0
+	Offset of Cb chroma QP from the luma QP selected by rate control.
+	This is a general way to more or less bits to the chroma channel.
+	Default 0
 
 	**Range of values:** -12 to 12
 
 .. option:: --crqpoffs <integer>
 
-	Chroma Cr QP Offset. Default 0
+	Offset of Cr chroma QP from the luma QP selected by rate control.
+	This is a general way to more or less bits to the chroma channel.
+	Default 0
 
 	**Range of values:**  -12 to 12
 
@@ -435,11 +494,18 @@ Loop filter
 
 .. option:: --sao-lcu-bounds <0|1>
 
-	0: right/bottom boundary areas skipped **(Default)**; 1: non-deblocked pixels are used
+	How to handle depencency with deblocking filter
+
+	0. right/bottom boundary areas skipped **(default)**
+	1. non-deblocked pixels are used
 
 .. option:: --sao-lcu-opt <0|1>
 
-	0: SAO picture-based optimization (requires -F1); 1: SAO LCU-based optimization **(Default)**
+	Frame level or block level optimization
+
+	0. SAO picture-based optimization (prevents frame parallelism,
+	   effectively causes :option:`--frame-threads` 1)
+	1. SAO LCU-based optimization **(default)**
 
 Quality reporting metrics
 =========================
@@ -472,10 +538,10 @@ parts (sar or color primitives) the VUI itself is also enabled.
 
 .. option:: --sar <integer|w:h>
 
-	Sample Aspect Ratio <int:int|int>, the ratio of width to height of an
-	individual sample (pixel). The user may supply the width and height
-	explicitly or specify an integer for the predefined list of aspect
-	ratios defined in the HEVC specification.  Default undefined
+	Sample Aspect Ratio, the ratio of width to height of an individual
+	sample (pixel). The user may supply the width and height explicitly
+	or specify an integer from the predefined list of aspect ratios
+	defined in the HEVC specification.  Default undefined
 
 	1. 1:1 (square)
 	2. 12:11
