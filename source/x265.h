@@ -670,7 +670,7 @@ typedef struct x265_param
         /* Enable adaptive quantization. This mode distributes available bits between all
          * macroblocks of a frame, assigning more bits to low complexity areas. Turning
          * this ON will usually affect PSNR negatively, however SSIM and visual quality
-         * generally improves. Default: OFF (0) */
+         * generally improves. Default: X265_AQ_VARIANCE */
         int       aqMode;
 
         /* Sets the strength of AQ bias towards low detail macroblocks. Valid only if
@@ -691,7 +691,7 @@ typedef struct x265_param
 
         /* Enable CUTree ratecontrol. This keeps track of the CUs that propagate temporally
          * across frames and assigns more bits to these CUs. Improves encode efficiency.
-         * Default: OFF (0) */
+         * Default: enabled */
         int       cuTree;
 
         /* In CRF mode, maximum CRF as caused by VBV. 0 implies no limit */
