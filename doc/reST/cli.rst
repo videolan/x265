@@ -279,11 +279,16 @@ Temporal / motion search options
 
 .. option:: --rect, --no-rect
 
-	Enable rectangular motion partitions Nx2N and 2NxN. Default enabled
+	Enable analysis of rectangular motion partitions Nx2N and 2NxN
+	(50/50 splits, two directions).  Default enabled
 
 .. option:: --amp, --no-amp
 
-	Enable asymmetric motion partitions, requires rect. Default enabled
+	Enable analysis of asymmetric motion partitions (75/25 splits, four
+	directions). This setting has no effect if rectangular partitions
+	are disabled. Even there are four possible AMP partitions, only the
+	most likely candidate is tested, based on the results of the
+	rectangular mode tests. Default enabled
 
 .. option:: --max-merge <1..5>
 
