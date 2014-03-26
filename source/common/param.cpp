@@ -453,6 +453,10 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     if (!name)
         return X265_PARAM_BAD_NAME;
 
+    // skip -- prefix if provided
+    if (name[0] == '-' && name[1] == '-')
+        name += 2;
+
     // s/_/-/g
     if (strlen(name) + 1 < sizeof(nameBuf) && strchr(name, '_'))
     {
