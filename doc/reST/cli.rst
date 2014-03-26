@@ -225,11 +225,19 @@ Quad-Tree analysis
 
 .. option:: --tu-intra-depth <1..4>
 
-	Max TU recursive depth for intra CUs. Default: 1
+	The transform unit (residual) quad-tree begins with the same depth
+	as the coding unit quad-tree, but the encoder may decide to further
+	split the transform unit tree if it improves compression efficiency.
+	This setting limits the number of extra recursion depth which can be
+	attempted for intra coded units. Default: 1
 
 .. option:: --tu-inter-depth <1..4>
 
-	Max TU recursive depth for inter CUs. Default: 1
+	The transform unit (residual) quad-tree begins with the same depth
+	as the coding unit quad-tree, but the encoder may decide to further
+	split the transform unit tree if it improves compression efficiency.
+	This setting limits the number of extra recursion depth which can be
+	attempted for inter coded units. Default: 1
 
 
 Temporal / motion search options
@@ -313,7 +321,10 @@ Temporal / motion search options
 
 .. option:: --ref <1..16>
 
-	Max number of L0 references to be allowed. Default 3
+	Max number of L0 references to be allowed. This number has a linear
+	multiplier effect on the amount of work performed in motion search,
+	but will generally have a beneficial affect on compression and
+	distortion. Default 3
 
 .. option:: --weightp, -w, --no-weightp
 
@@ -332,7 +343,7 @@ Spatial/intra options
 .. option:: --tskip, --no-tskip
 
 	Enable intra transform skipping (encode residual as coefficients)
-	for intra coded TU. Default disabled
+	for intra coded blocks. Default disabled
 
 .. option:: --tskip-fast, --no-tskip-fast
 
