@@ -292,7 +292,6 @@ static const char * const x265_colmatrix_names[] = { "GBR", "bt709", "undef", ""
                                                      "YCgCo", "bt2020nc", "bt2020c", 0 };
 static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11", "16:11", "40:33", "24:11", "20:11",
                                                "32:11", "80:33", "18:11", "15:11", "64:33", "160:99", "4:3", "3:2", "2:1", 0 };
-static const char * const x265_nal_hrd_names[] = { "none", "vbr", "cbr", 0 };
 static const char * const x265_interlace_names[] = { "prog", "tff", "bff", 0 };
 
 /* x265 input parameters
@@ -807,33 +806,6 @@ typedef struct x265_param
          * vui_time_scale and vui_poc_proportional_to_timing_flag are derived
          * from processing the input video. The default is false */
         int bEnableVuiTimingInfoPresentFlag;
-
-        /* VUI hrd parameters present flag adds the HRD to the VUI */
-        int bEnableVuiHrdParametersPresentFlag;
-
-        /* Bitstream restriction flag adds tiles_fixed_structure_flag,
-         * motion_vectors_over_pic_boundaries_flag,
-         * restricted_ref_pic_lists_flag, min_spatial_segmentation_idc,
-         * max_bytes_per_pic_denom, max_bit_per_min_cu_denom,
-         * log2_max_mv_length_horizontal and log2_max_mv_length_vertical to the
-         * VUI. All values are derived from processing the input video. The
-         * default is false */
-        int bEnableBitstreamRestrictionFlag;
-
-        /*== Hypothetical Reference Decoder Parameters ==*/
-
-        /* NAL HRD parameters present flag determines if NAL HRD parameters
-         * related to Type II bitstream are added to the VUI. The default is
-         * false */
-        int bEnableNalHrdParametersPresentFlag;
-
-        /* Sub pic HRD params present flag determines if tic_divisor_minus2,
-         * du_cpb_removal_delay_increment_length_minus1,
-         * sub_pic_cpb_params_in_pic_timing_sei_flag,
-         * dpb_output_delay_du_length_minus1 and cpb_size_du_scale are added to
-         * the HRD. All are derived from processing the input video. The default
-         * is false */
-        int bEnableSubPicHrdParamsPresentFlag;
     } vui;
 
 } x265_param;

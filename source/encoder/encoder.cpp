@@ -1074,15 +1074,18 @@ void Encoder::initSPS(TComSPS *sps)
         vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
         vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
         vui->setFieldSeqFlag(!!param->interlaceMode);
-        vui->setHrdParametersPresentFlag(param->vui.bEnableVuiHrdParametersPresentFlag);
-        vui->getHrdParameters()->setNalHrdParametersPresentFlag(param->vui.bEnableNalHrdParametersPresentFlag);
-        vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(param->vui.bEnableSubPicHrdParamsPresentFlag);
+
+        vui->setHrdParametersPresentFlag(false);
+        vui->getHrdParameters()->setNalHrdParametersPresentFlag(false);
+        vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
+
         vui->getTimingInfo()->setTimingInfoPresentFlag(param->vui.bEnableVuiTimingInfoPresentFlag);
         vui->getTimingInfo()->setNumUnitsInTick(param->fpsDenom);
         vui->getTimingInfo()->setTimeScale(param->fpsNum);
         vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
         vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
-        vui->setBitstreamRestrictionFlag(param->vui.bEnableBitstreamRestrictionFlag);
+
+        vui->setBitstreamRestrictionFlag(false);
         vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
         vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
         vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);

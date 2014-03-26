@@ -170,13 +170,6 @@ static const struct option long_options[] =
     { "crop-rect",      required_argument, NULL, 0 },
     { "timinginfo",           no_argument, NULL, 0 },
     { "no-timinginfo",        no_argument, NULL, 0 },
-    { "hrd",                  no_argument, NULL, 0 },
-    { "no-hrd",               no_argument, NULL, 0 },
-    { "nal-hrd",        required_argument, NULL, 0 },
-    { "bitstreamrestriction", no_argument, NULL, 0 },
-    { "no-bitstreamrestriction", no_argument, NULL, 0 },
-    { "subpichrd",            no_argument, NULL, 0 },
-    { "no-subpichrd",         no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -392,10 +385,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("   --[no-]timinginfo             Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
-    H0("   --[no-]hrd                    Signal HRD information. Default %s\n", OPT(param->vui.bEnableVuiHrdParametersPresentFlag));
-    H0("   --nal-hrd <string>            Signal NAL HRD information (requires vbv-buffer size) Choose from none, vbr or cbr.Default none\n");
-    H0("   --[no-]bitstreamrestriction   Add bit stream restriction fields to the VUI. Default %s\n", OPT(param->vui.bEnableBitstreamRestrictionFlag));
-    H0("   --[no-]subpichrd              Add sub picture HRD parameters to the HRD. Default %s\n", OPT(param->vui.bEnableSubPicHrdParamsPresentFlag));
     H0("\nReconstructed video options (debugging):\n");
     H0("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H0("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");

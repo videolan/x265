@@ -647,20 +647,6 @@ parts (sar or color primitives) the VUI itself is also enabled.
 
 	Add timing information (fps, timebase) to the VUI. Default disabled
 
-.. option:: --nal-hrd, --no-nal-hrd
-
-	Enable signaling of HRD information. Default disabled [NOT IMPLEMENTED]
-
-.. option:: --bitstreamrestriction, --no-bitstreamrestriction
-
-	Specifies whether that the bitstream restriction parameters for the
-	CVS are present. Default disabled [NOT IMPLEMENTED]
-
-.. option:: --subpichrd, --no-subpichrd
-
-	Add sub picture HRD parameters to the HRD. Default disabled [NOT IMPLEMENTED]
-
-
 Debugging options
 =======================================
 

@@ -199,10 +199,6 @@ void x265_param_default(x265_param *param)
     param->vui.defDispWinTopOffset = 0;
     param->vui.defDispWinBottomOffset = 0;
     param->vui.bEnableVuiTimingInfoPresentFlag = 0;
-    param->vui.bEnableVuiHrdParametersPresentFlag = 0;
-    param->vui.bEnableNalHrdParametersPresentFlag = 0;
-    param->vui.bEnableBitstreamRestrictionFlag = 0;
-    param->vui.bEnableSubPicHrdParamsPresentFlag = 0;
 }
 
 extern "C"
@@ -631,9 +627,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->vui.bEnableChromaLocInfoPresentFlag = bvalue;
         p->vui.bEnableDefaultDisplayWindowFlag = bvalue;
         p->vui.bEnableVuiTimingInfoPresentFlag = bvalue;
-        p->vui.bEnableVuiHrdParametersPresentFlag = bvalue;
-        p->vui.bEnableBitstreamRestrictionFlag = bvalue;
-        p->vui.bEnableSubPicHrdParamsPresentFlag = bvalue;
     }
     OPT("sar")
     {
@@ -715,31 +708,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->vui.bEnableVuiParametersPresentFlag = 1;
         p->vui.bEnableVuiTimingInfoPresentFlag = atobool(value);
-    }
-    OPT("hrd")
-    {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableVuiTimingInfoPresentFlag = 1;
-        p->vui.bEnableVuiHrdParametersPresentFlag = atobool(value);
-    }
-    OPT("nal-hrd")
-    {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableVuiTimingInfoPresentFlag = 1;
-        p->vui.bEnableVuiHrdParametersPresentFlag = 1;
-        p->vui.bEnableNalHrdParametersPresentFlag = parseName(value, x265_nal_hrd_names, bError);
-    }
-    OPT("bitstreamrestriction")
-    {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableBitstreamRestrictionFlag = atobool(value);
-    }
-    OPT("subpichrd")
-    {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableVuiHrdParametersPresentFlag = 1;
-        p->vui.bEnableNalHrdParametersPresentFlag = 1;
-        p->vui.bEnableSubPicHrdParamsPresentFlag = atobool(value);
     }
     else
         return X265_PARAM_BAD_NAME;
@@ -1007,9 +975,6 @@ int x265_check_params(x265_param *param)
           "Default Display Window Top Offset must be 0 or greater");
     CHECK(param->vui.defDispWinBottomOffset < 0,
           "Default Display Window Bottom Offset must be 0 or greater");
-    CHECK(param->vui.bEnableNalHrdParametersPresentFlag
-          && param->rc.vbvBufferSize <= 0,
-          "If nal-hrd specified then vbv buffersize must also be specified");
     CHECK(param->rc.rfConstant < 0 || param->rc.rfConstant > 51,
           "Valid quality based VBR range 0 - 51");
     CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,
