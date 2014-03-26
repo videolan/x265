@@ -394,11 +394,11 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** An integer greater than 0
 
-.. option:: --crf <0..51>
+.. option:: --crf <0..51.0>
 
-	Quality-controlled VBR. Default rate factor is 28
+	Quality-controlled VBR. Default rate factor is 28.0
 
-.. option:: --max-crf <0..51>
+.. option:: --max-crf <0..51.0>
 
 	Specify an upper limit for which the adaptive rate factor algorithm
 	can assign a rate factor for any given frame (ensuring a max QP).
