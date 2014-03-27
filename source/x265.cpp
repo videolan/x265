@@ -388,6 +388,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
 #undef OPT
 #undef H0
+    printf("\n\nFull documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");
     exit(0);
 }
 
