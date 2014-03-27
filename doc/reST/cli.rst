@@ -12,8 +12,8 @@ Preset and tune have special implications. The API user must call
 x265_param_default_preset() with the preset and tune parameters they
 wish to use, prior to calling x265_param_parse() to set any additional
 fields. The CLI does this for the user implicitly, so all CLI options
-are applied after the user's preset and tune choices, regarless of the
-order of the options on the command line.
+are applied after the user's preset and tune choices, regardless of the
+order of the arguments on the command line.
 
 If there is an extra command line argument (not an option or an option
 value) the CLI will treat it as the input filename.  This effectively
