@@ -445,26 +445,32 @@ Quality, rate control and rate distortion options
 
 .. option:: --bitrate <integer>
 
-	Enables ABR rate control. Specify the target bitrate in kbps.  
-	Default is 0 (CRF)
+	Enables single-pass ABR rate control. Specify the target bitrate in
+	kbps. Default is 0 (CRF)
 
 	**Range of values:** An integer greater than 0
 
 .. option:: --crf <0..51.0>
 
-	Quality-controlled VBR. Default rate factor is 28.0
+	Quality-controlled variable bitrate. CRF is the default rate control
+	method; it does not try to reach any particular bitrate target,
+	instead it tries to achieve a given uniform quality and the size of
+	the bitstream is determined by the complexity of the source video.
+	The higher the rate factor the higher the quantization and the lower
+	the quality. Default rate factor is 28.0.
 
 .. option:: --max-crf <0..51.0>
 
-	Specify an upper limit for which the adaptive rate factor algorithm
-	can assign a rate factor for any given frame (ensuring a max QP).
-	This is dangerous when CRF is used with VBV as it may result in
-	buffer underruns. Default disabled
+	Specify an upper limit to the rate factor which may be assigned to
+	any given frame (ensuring a max QP).  This is dangerous when CRF is
+	used in combination with VBV as it may result in buffer underruns.
+	Default disabled
 
 .. option:: --vbv-bufsize <integer>
 
-	Enables VBV in ABR mode. Sets the size of the VBV buffer (kbits).
-	Default 0 (disabled)
+	Specify the size of the VBV buffer (kbits). Enables VBV in ABR
+	mode.  In CRF mode, :option:`--vbv-maxrate` must also be specified.
+	Default 0 (vbv disabled)
 
 .. option:: --vbv-maxrate <integer>
 
@@ -474,22 +480,29 @@ Quality, rate control and rate distortion options
 
 .. option:: --vbv-init <float>
 
-	Initial VBV buffer occupancy. The portion of the VBV which must be
-	full before the decoder will begin decoding.  Determines absolute
-	maximum frame size. Default 0.9
+	Initial buffer occupancy. The portion of the decode buffer which
+	must be full before the decoder will begin decoding.  Determines
+	absolute maximum frame size. Default 0.9
 
 	**Range of values:** 0 - 1.0
 
 .. option:: --qp, -q <integer>
 
-	Base Quantization Parameter for Constant QP mode. Using this option
-	causes x265 to use Constant QP rate control. Default 0 (CRF)
+	Specify base quantization parameter for Constant QP rate control.
+	Using this option enables Constant QP rate control. The specified QP
+	is assigned to P slices. I and B slices are given QPs relative to P
+	slices using param->rc.ipFactor and param->rc.pbFactor.  Default 0
+	(CRF)
 
 	**Range of values:** an integer from 0 to 51
 
 .. option:: --aq-mode <0|1|2>
 
-	Adaptive Quantization operating mode.
+	Adaptive Quantization operating mode. Raise or lower per-block
+	quantization based on complexity analysis of the source image. The
+	more complex the block, the more quantization is used. This offsets
+	the tendency of the encoder to spend too many bits on complex areas
+	and not enough in flat areas.
 
 	0. disabled
 	1. AQ enabled **(default)**
@@ -497,39 +510,43 @@ Quality, rate control and rate distortion options
 
 .. option:: --aq-strength <float>
 
-	Reduces blocking and blurring in flat and textured areas. Default 1.0
+	Adjust the strength of the adaptive quantization offsets. Setting
+	:option:`--aq-strength` to 0 disables AQ. Default 1.0.
 
 	**Range of values:** 0.0 to 3.0
 
 .. option:: --cutree, --no-cutree
 
 	Enable the use of lookahead's lowres motion vector fields to
-	determine the amount of reuse of each block to tune the quantization
-	factors. CU blocks which are heavily reused as motion reference for
-	later frames are given a lower QP (more bits) while CU blocks which
-	are quickly changed and are not referenced are given less bits. This
-	tends to improve detail in the backgrounds of video with less detail
-	in areas of high motion. Default enabled
+	determine the amount of reuse of each block to tune adaptive
+	quantization factors. CU blocks which are heavily reused as motion
+	reference for later frames are given a lower QP (more bits) while CU
+	blocks which are quickly changed and are not referenced are given
+	less bits. This tends to improve detail in the backgrounds of video
+	with less detail in areas of high motion. Default enabled
 
 .. option:: --cbqpoffs <integer>
 
 	Offset of Cb chroma QP from the luma QP selected by rate control.
-	This is a general way to more or less bits to the chroma channel.
-	Default 0
+	This is a general way to spend more or less bits on the chroma
+	channel.  Default 0
 
 	**Range of values:** -12 to 12
 
 .. option:: --crqpoffs <integer>
 
 	Offset of Cr chroma QP from the luma QP selected by rate control.
-	This is a general way to more or less bits to the chroma channel.
-	Default 0
+	This is a general way to spend more or less bits on the chroma
+	channel.  Default 0
 
 	**Range of values:**  -12 to 12
 
 .. option:: --rd <0..6>
 
-	Level of RDO in mode decision. Default 3
+	Level of RDO in mode decision. The higher the value, the more
+	exhaustive the analysis and the more rate distortion optimization is
+	used. The lower the value the faster the encode, the higher the
+	value the smaller the bitstream (in general). Default 3
 
 	**Range of values:** 0: least .. 6: full RDO analysis
 
