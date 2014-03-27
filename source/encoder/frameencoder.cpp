@@ -329,19 +329,7 @@ void FrameEncoder::threadMain()
 void FrameEncoder::setLambda(int qp, int row)
 {
     TComSlice*  slice = m_pic->getSlice();
-    TComPicYuv* fenc  = slice->getPic()->getPicYuvOrg();
     int         chFmt = slice->getSPS()->getChromaFormatIdc();
-
-    double lambda = 0;
-
-    if (m_pic->getSlice()->getSliceType() == I_SLICE)
-    {
-        lambda = X265_MAX(1, x265_lambda2_tab_I[qp]);
-    }
-    else
-    {
-        lambda = X265_MAX(1, x265_lambda2_non_I[qp]);
-    }
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
@@ -349,16 +337,12 @@ void FrameEncoder::setLambda(int qp, int row)
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     int qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    double chromaLambda = lambda / crWeight;
 
-    m_rows[row].m_search.setQPLambda(qp, lambda, chromaLambda);
-    m_rows[row].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-    m_rows[row].m_rdCost.setLambda(lambda);
-    m_rows[row].m_rdCost.setCbDistortionWeight(cbWeight);
-    m_rows[row].m_rdCost.setCrDistortionWeight(crWeight);
+    m_rows[row].m_search.setQP(qp, crWeight, cbWeight);
 }
 
 void FrameEncoder::compressFrame()
@@ -392,15 +376,6 @@ void FrameEncoder::compressFrame()
         m_nalCount += getStreamHeaders(m_nalList + m_nalCount);
 
     int qp = slice->getSliceQp();
-    double lambda = 0;
-    if (slice->getSliceType() == I_SLICE)
-    {
-        lambda = X265_MAX(1, x265_lambda2_tab_I[qp]);
-    }
-    else
-    {
-        lambda = X265_MAX(1, x265_lambda2_non_I[qp]);
-    }
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
@@ -409,9 +384,12 @@ void FrameEncoder::compressFrame()
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
+    double lambda = x265_lambda2_tab[qp];
     double chromaLambda = lambda / crWeight;
 
     // NOTE: set SAO lambda every Frame
@@ -421,11 +399,8 @@ void FrameEncoder::compressFrame()
     TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
     for (int i = 0; i < m_numRows; i++)
     {
-        m_rows[i].m_search.setQPLambda(qp, lambda, chromaLambda);
         m_rows[i].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-        m_rows[i].m_rdCost.setLambda(lambda);
-        m_rows[i].m_rdCost.setCbDistortionWeight(cbWeight);
-        m_rows[i].m_rdCost.setCrDistortionWeight(crWeight);
+        m_rows[i].m_search.setQP(qp, crWeight, cbWeight);
     }
 
     m_frameFilter.m_sao.lumaLambda = lambda;

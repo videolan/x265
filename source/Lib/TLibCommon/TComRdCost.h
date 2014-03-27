@@ -54,10 +54,6 @@ class TComRdCost
 {
 private:
 
-    double    m_lambda2;
-
-    double    m_lambda;
-
     uint64_t  m_lambdaMotionSSE;  // m_lambda2 w/ 16 bits of fraction
 
     uint64_t  m_lambdaMotionSAD;  // m_lambda w/ 16 bits of fraction
@@ -68,12 +64,10 @@ private:
 
 public:
 
-    void setLambda(double lambda)
+    void setLambda(double lambda2, double lambda)
     {
-        m_lambda2         = lambda;
-        m_lambda          = sqrt(m_lambda2);
-        m_lambdaMotionSAD = (uint64_t)floor(65536.0 * m_lambda);
-        m_lambdaMotionSSE = (uint64_t)floor(65536.0 * m_lambda2);
+        m_lambdaMotionSSE = (uint64_t)floor(65536.0 * lambda2);
+        m_lambdaMotionSAD = (uint64_t)floor(65536.0 * lambda);
     }
 
     void setCbDistortionWeight(double cbDistortionWeight)
@@ -95,8 +89,6 @@ public:
     inline uint32_t scaleChromaDistCb(uint32_t dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
 
     inline uint32_t scaleChromaDistCr(uint32_t dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
-
-    inline double   getSADLambda() const                       { return m_lambda; }
 };
 }
 //! \}

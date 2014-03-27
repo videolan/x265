@@ -238,7 +238,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
         return;
     pixel *weightTemp = mcbuf + fencYuv->getStride() * fencYuv->getHeight();
 
-    int lambda = (int)x265_lambda2_non_I[X265_LOOKAHEAD_QP];
+    int lambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
     int curPoc = slice.getPOC();
     const float epsilon = 1.f / 128.f;
 

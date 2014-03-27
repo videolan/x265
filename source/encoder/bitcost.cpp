@@ -42,7 +42,7 @@ void BitCost::setQP(unsigned int qp)
 
             CalculateLogs();
             s_costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
-            double lambda = sqrt(x265_lambda2_non_I[qp]);
+            double lambda = x265_lambda_tab[qp];
 
             // estimate same cost for negative and positive MVD
             for (int i = 0; i < BC_MAX_MV; i++)
