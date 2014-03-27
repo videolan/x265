@@ -134,47 +134,44 @@ void TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* delta
 {
     const uint32_t log2TrSizeCG = codingParameters.log2TrSizeCG;
 
-    int lastCG = -1;
-    int absSum = 0;
-    int n;
+    int lastCG = 1;
 
     for (int subSet = (1 << log2TrSizeCG * 2) - 1; subSet >= 0; subSet--)
     {
-        int  subPos = subSet << LOG2_SCAN_SET_SIZE;
-        int  firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
-        absSum = 0;
+        int subPos = subSet << LOG2_SCAN_SET_SIZE;
+        int n;
 
         for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
         {
             if (qCoef[codingParameters.scan[n + subPos]])
             {
-                lastNZPosInCG = n;
                 break;
             }
         }
+        if (n < 0) continue;
 
-        for (n = 0; n < SCAN_SET_SIZE; n++)
+        int  lastNZPosInCG = n;
+        
+        for (n = 0; ; n++)
         {
             if (qCoef[codingParameters.scan[n + subPos]])
             {
-                firstNZPosInCG = n;
                 break;
             }
         }
 
-        for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
-        {
-            absSum += qCoef[codingParameters.scan[n + subPos]];
-        }
-
-        if (lastNZPosInCG >= 0 && lastCG == -1)
-        {
-            lastCG = 1;
-        }
+        int  firstNZPosInCG = n;
 
         if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
         {
             uint32_t signbit = (qCoef[codingParameters.scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
+            int  absSum = 0;
+
+            for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
+            {
+                absSum += qCoef[codingParameters.scan[n + subPos]];
+            }
+
             if (signbit != (absSum & 0x1)) //compare signbit with sum_parity
             {
                 int minCostInc = MAX_INT,  minPos = -1, finalChange = 0, curCost = MAX_INT, curChange = 0;
@@ -248,10 +245,7 @@ void TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* delta
                 }
             } // Hide
         }
-        if (lastCG == 1)
-        {
-            lastCG = 0;
-        }
+        lastCG = 0;
     } // TU loop
 }
 
@@ -858,47 +852,44 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                 g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))
                 / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)))
                 + 0.5);
-        int lastCG = -1;
-        int tmpSum = 0;
-        int n;
+        int lastCG = 1;
 
-        for (int subSet = ((1 << (log2TrSize * 2)) - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
+        for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
-            int firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
-            tmpSum = 0;
+            int n;
 
             for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
             {
                 if (dstCoeff[codingParameters.scan[n + subPos]])
                 {
-                    lastNZPosInCG = n;
                     break;
                 }
             }
+            if (n < 0) continue;
 
-            for (n = 0; n < SCAN_SET_SIZE; n++)
+            int lastNZPosInCG = n;
+
+            for (n = 0; ; n++)
             {
                 if (dstCoeff[codingParameters.scan[n + subPos]])
                 {
-                    firstNZPosInCG = n;
                     break;
                 }
             }
 
-            for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
-            {
-                tmpSum += dstCoeff[codingParameters.scan[n + subPos]];
-            }
-
-            if (lastNZPosInCG >= 0 && lastCG == -1)
-            {
-                lastCG = 1;
-            }
+            int firstNZPosInCG = n;
 
             if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
             {
                 uint32_t signbit = (dstCoeff[codingParameters.scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
+                int tmpSum = 0;
+
+                for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
+                {
+                    tmpSum += dstCoeff[codingParameters.scan[n + subPos]];
+                }
+
                 if (signbit != (tmpSum & 0x1)) // hide but need tune
                 {
                     // calculate the cost
@@ -975,11 +966,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                     }
                 }
             }
-
-            if (lastCG == 1)
-            {
-                lastCG = 0;
-            }
+            lastCG = 0;
         }
     }
 
