@@ -251,7 +251,14 @@ Temporal / motion search options
 .. option:: --me <integer|string>
 
 	Motion search method. Generally, the higher the number the harder
-	the ME method will try to find an optimal match.
+	the ME method will try to find an optimal match. Diamond search is
+	the simplest. Hexagon search is a little better. Uneven
+	Multi-Hexegon is an adaption of the search method used by x264 for
+	slower presets. Star is a three step search adapted from the HM
+	encoder: a star-pattern search followed by an optional radix scan
+	followed by an optional star-search refinement. Full is an
+	exhaustive search; an order of magnitude slower than all other
+	searches but not much better than umh or star.
 
 	0. dia
 	1. hex **(default)**
@@ -288,6 +295,12 @@ Temporal / motion search options
 
 	Motion search range. Default 57
 
+	The default is derived from the default CTU size (64) minus the luma
+	interpolation half-length (4) minus maximum subpel distance (2)
+	minus one extra pixel just in case the hex search method is used. If
+	the search range were any larger than this, another CTU row of
+	latency would be required for reference frames.
+
 	**Range of values:** an integer from 0 to 32768
 
 .. option:: --rect, --no-rect
@@ -315,14 +328,15 @@ Temporal / motion search options
 
 .. option:: --early-skip, --no-early-skip
 
-	Enable early SKIP detection. Default disabled
+	Measure full CU size (2Nx2N) merge candidates first; if no residual
+	is found the analysis is short circuited. Default disabled
 
 .. option:: --fast-cbf, --no-fast-cbf
 
 	Short circuit analysis if a prediction is found that does not set
 	the coded block flag (aka: no residual was encoded).  It prevents
 	the encoder from perhaps finding other predictions that also have no
-	residual but require less signaling bits.  Default disabled
+	residual but require less signaling bits. Default disabled
 
 .. option:: --ref <1..16>
 
