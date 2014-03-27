@@ -67,7 +67,7 @@ typedef uint32_t pixel4;
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif // if HIGH_BIT_DEPTH
 
-typedef int32_t  TCoeff;       // transform coefficient
+typedef int32_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))

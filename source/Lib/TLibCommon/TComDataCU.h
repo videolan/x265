@@ -114,9 +114,9 @@ private:
     uint8_t*      m_transformSkip[3];   ///< array of transform skipping flags
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
-    TCoeff*       m_trCoeffY;           ///< transformed coefficient buffer (Y)
-    TCoeff*       m_trCoeffCb;          ///< transformed coefficient buffer (Cb)
-    TCoeff*       m_trCoeffCr;          ///< transformed coefficient buffer (Cr)
+    coeff_t*      m_trCoeffY;           ///< transformed coefficient buffer (Y)
+    coeff_t*      m_trCoeffCb;          ///< transformed coefficient buffer (Cb)
+    coeff_t*      m_trCoeffCr;          ///< transformed coefficient buffer (Cr)
 
     pixel*        m_iPCMSampleY;        ///< PCM sample buffer (Y)
     pixel*        m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
@@ -230,11 +230,11 @@ public:
     void          setPartSizeSubParts(PartSize eMode, uint32_t absPartIdx, uint32_t depth);
     void          setCUTransquantBypassSubParts(bool flag, uint32_t absPartIdx, uint32_t depth);
 
-    bool*        getSkipFlag()                        { return m_skipFlag; }
+    bool*         getSkipFlag()                        { return m_skipFlag; }
 
-    bool         getSkipFlag(uint32_t idx)            { return m_skipFlag[idx]; }
+    bool          getSkipFlag(uint32_t idx)            { return m_skipFlag[idx]; }
 
-    void         setSkipFlagSubParts(bool skip, uint32_t absPartIdx, uint32_t depth);
+    void          setSkipFlagSubParts(bool skip, uint32_t absPartIdx, uint32_t depth);
 
     char*         getPredictionMode()                 { return m_predModes; }
 
@@ -280,11 +280,11 @@ public:
 
     TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
 
-    TCoeff*&      getCoeffY()                 { return m_trCoeffY; }
+    coeff_t*&     getCoeffY()                 { return m_trCoeffY; }
 
-    TCoeff*&      getCoeffCb()                { return m_trCoeffCb; }
+    coeff_t*&     getCoeffCb()                { return m_trCoeffCb; }
 
-    TCoeff*&      getCoeffCr()                { return m_trCoeffCr; }
+    coeff_t*&     getCoeffCr()                { return m_trCoeffCr; }
 
     pixel*&       getPCMSampleY()             { return m_iPCMSampleY; }
 

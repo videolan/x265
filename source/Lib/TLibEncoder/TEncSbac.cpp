@@ -2030,7 +2030,7 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     }
 }
 
-void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype)
+void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype)
 {
 #if ENC_DEC_TRACE
     DTRACE_CABAC_VL(g_nSymbolCounter++)

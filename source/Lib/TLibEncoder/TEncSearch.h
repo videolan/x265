@@ -109,19 +109,22 @@ public:
     MotionEstimate   m_me;
     MotionReference* m_mref[2][MAX_NUM_REF + 1];
 
+    TEncSbac***     m_rdSbacCoders;
+    TEncSbac*       m_rdGoOnSbacCoder;
+
 protected:
 
     ShortYuv*       m_qtTempShortYuv;
 
-    TCoeff**        m_qtTempCoeffY;
-    TCoeff**        m_qtTempCoeffCb;
-    TCoeff**        m_qtTempCoeffCr;
+    coeff_t**       m_qtTempCoeffY;
+    coeff_t**       m_qtTempCoeffCb;
+    coeff_t**       m_qtTempCoeffCr;
     uint8_t*        m_qtTempTrIdx;
     uint8_t*        m_qtTempCbf[3];
 
-    TCoeff*         m_qtTempTUCoeffY;
-    TCoeff*         m_qtTempTUCoeffCb;
-    TCoeff*         m_qtTempTUCoeffCr;
+    coeff_t*        m_qtTempTUCoeffY;
+    coeff_t*        m_qtTempTUCoeffCb;
+    coeff_t*        m_qtTempTUCoeffCr;
     uint8_t*        m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipYuv;
 
@@ -145,9 +148,6 @@ protected:
 
 public:
 
-    TEncSbac***     m_rdSbacCoders;
-    TEncSbac*       m_rdGoOnSbacCoder;
-
     void setRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
 
     void setEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
@@ -160,8 +160,6 @@ public:
     virtual ~TEncSearch();
 
     bool init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
-
-public:
 
     uint32_t xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth, uint32_t initTrDepth);
     uint32_t xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fastCandNum, uint32_t* CandModeList, uint64_t* CandCostList);

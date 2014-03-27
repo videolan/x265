@@ -130,7 +130,7 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
 }
 
 // To minimize the distortion only. No rate is considered.
-void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters)
+void TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters)
 {
     const uint32_t log2TrSizeCG = codingParameters.log2TrSizeCG;
 
@@ -255,7 +255,7 @@ void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, int32_t* deltaU,
     } // TU loop
 }
 
-uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, TCoeff* qCoef, int trSize,
+uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, int trSize,
                              TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ)
 {
     uint32_t acSum = 0;
@@ -308,7 +308,7 @@ void TComTrQuant::init(uint32_t maxTrSize, int useRDOQ, int useRDOQTS, int useTr
 uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
                                    int16_t*    residual,
                                    uint32_t    stride,
-                                   TCoeff*     coeff,
+                                   coeff_t*     coeff,
                                    uint32_t    trSize,
                                    TextType    ttype,
                                    uint32_t    absPartIdx,
@@ -355,7 +355,7 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, trSize, ttype, absPartIdx, lastPos, curUseRDOQ);
 }
 
-void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip, int lastPos)
+void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip, int lastPos)
 {
     if (transQuantBypass)
     {
@@ -499,7 +499,7 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
-uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t trSize,
+uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize,
                                         TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
     const uint32_t log2TrSize = g_convertToBit[trSize] + 2;

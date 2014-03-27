@@ -127,10 +127,10 @@ public:
     void init(uint32_t maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast);
 
     // transform & inverse transform functions
-    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t trSize,
+    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize,
                           TextType ttype, uint32_t absPartIdx, int32_t* lastPos, bool useTransformSkip = false, bool curUseRDOQ = true);
 
-    void invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
+    void invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
 
     // Misc functions
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt);
@@ -220,11 +220,11 @@ protected:
 private:
 
     void xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int trSize);
-    void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters);
-    uint32_t xQuant(TComDataCU* cu, int32_t* src, TCoeff* dst, int trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ = true);
+    void signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters);
+    uint32_t xQuant(TComDataCU* cu, int32_t* src, coeff_t* dst, int trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ = true);
 
     // RDOQ functions
-    uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
+    uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
 
     inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
                                    uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice,

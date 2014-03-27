@@ -29,7 +29,6 @@
  *****************************************************************************/
 
 #include "primitives.h"
-#include "TLibCommon/TypeDef.h"    // TCoeff, int, uint32_t
 #include "TLibCommon/TComRom.h"
 #include <xmmintrin.h> // SSE
 #include <pmmintrin.h> // SSE3

@@ -618,7 +618,7 @@ void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t dept
     xEncodeTransform(cu, lumaOffset, chromaOffset, absPartIdx, depth, width, height, 0, bCodeDQP);
 }
 
-void TEncEntropy::encodeCoeffNxN(TComDataCU* cu, TCoeff* coeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t, uint32_t depth, TextType ttype)
+void TEncEntropy::encodeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t, uint32_t depth, TextType ttype)
 {
     // This is for Transform unit processing. This may be used at mode selection stage for Inter.
     // TODO: 4:2:2
