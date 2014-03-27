@@ -48,17 +48,6 @@ namespace x265 {
 #define REF_PIC_LIST_X 100
 
 // ====================================================================================================================
-// Type definition
-// ====================================================================================================================
-
-#if HIGH_BIT_DEPTH
-#define X265_DEPTH 10          // compile time configurable bit depth
-#else
-#define X265_DEPTH 8           // compile time configurable bit depth
-#endif
-typedef int32_t  TCoeff;       // transform coefficient
-
-// ====================================================================================================================
 // Enumeration
 // ====================================================================================================================
 #define MDCS_ANGLE_LIMIT                                  4         ///< (default 4) 0 = Horizontal/vertical only, 1 = Horizontal/vertical +/- 1, 2 = Horizontal/vertical +/- 2 etc...
