@@ -54,12 +54,12 @@ using namespace x265;
 // Tables
 // ====================================================================================================================
 
-const UChar TComLoopFilter::sm_tcTable[54] =
+const uint8_t TComLoopFilter::sm_tcTable[54] =
 {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 8, 9, 10, 11, 13, 14, 16, 18, 20, 22, 24
 };
 
-const UChar TComLoopFilter::sm_betaTable[52] =
+const uint8_t TComLoopFilter::sm_betaTable[52] =
 {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64
 };
@@ -96,7 +96,7 @@ void TComLoopFilter::create(uint32_t maxCuDepth)
     m_numPartitions = 1 << (maxCuDepth << 1);
     for (uint32_t dir = 0; dir < 2; dir++)
     {
-        m_blockingStrength[dir] = new UChar[m_numPartitions];
+        m_blockingStrength[dir] = new uint8_t[m_numPartitions];
         m_bEdgeFilter[dir] = new bool[m_numPartitions];
     }
 }
@@ -125,7 +125,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
     {
         TComDataCU* cu = pic->getCU(cuAddr);
 
-        ::memset(m_blockingStrength[EDGE_VER], 0, sizeof(UChar) * m_numPartitions);
+        ::memset(m_blockingStrength[EDGE_VER], 0, sizeof(uint8_t) * m_numPartitions);
         ::memset(m_bEdgeFilter[EDGE_VER], 0, sizeof(bool) * m_numPartitions);
 
         // CU-based deblocking
@@ -136,7 +136,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
         if (cuAddr > 0)
         {
             cu = pic->getCU(cuAddr - 1);
-            ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(UChar) * m_numPartitions);
+            ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(uint8_t) * m_numPartitions);
             ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(bool) * m_numPartitions);
 
             xDeblockCU(cu, 0, 0, EDGE_HOR);
@@ -146,7 +146,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
     // Last H-Filter
     {
         TComDataCU* cu = pic->getCU(pic->getNumCUsInFrame() - 1);
-        ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(UChar) * m_numPartitions);
+        ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(uint8_t) * m_numPartitions);
         ::memset(m_bEdgeFilter[EDGE_HOR], 0, sizeof(bool) * m_numPartitions);
 
         xDeblockCU(cu, 0, 0, EDGE_HOR);
@@ -155,7 +155,7 @@ void TComLoopFilter::loopFilterPic(TComPic* pic)
 
 void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir)
 {
-    ::memset(m_blockingStrength[dir], 0, sizeof(UChar) * m_numPartitions);
+    ::memset(m_blockingStrength[dir], 0, sizeof(uint8_t) * m_numPartitions);
     ::memset(m_bEdgeFilter[dir], 0, sizeof(bool) * m_numPartitions);
 
     // CU-based deblocking
@@ -668,7 +668,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t numParts = cu->getPic()->getNumPartInWidth() >> depth;
 
     uint32_t bsAbsIdx;
-    UChar bs;
+    uint8_t bs;
 
     Pel* tmpSrcCb = srcCb;
     Pel* tmpSrcCr = srcCr;

@@ -91,17 +91,17 @@ TEncCu::TEncCu()
  \param    maxWidth    largest CU width
  \param    maxHeight   largest CU height
  */
-bool TEncCu::create(UChar totalDepth, uint32_t maxWidth)
+bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
 {
-    m_totalDepth   = totalDepth + 1;
+    m_totalDepth     = totalDepth + 1;
     m_interCU_2Nx2N  = new TComDataCU*[m_totalDepth - 1];
     m_interCU_2NxN   = new TComDataCU*[m_totalDepth - 1];
     m_interCU_Nx2N   = new TComDataCU*[m_totalDepth - 1];
     m_intraInInterCU = new TComDataCU*[m_totalDepth - 1];
     m_mergeCU        = new TComDataCU*[m_totalDepth - 1];
     m_bestMergeCU    = new TComDataCU*[m_totalDepth - 1];
-    m_bestCU      = new TComDataCU*[m_totalDepth - 1];
-    m_tempCU      = new TComDataCU*[m_totalDepth - 1];
+    m_bestCU         = new TComDataCU*[m_totalDepth - 1];
+    m_tempCU         = new TComDataCU*[m_totalDepth - 1];
 
     m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
     m_bestResiYuv = new ShortYuv*[m_totalDepth - 1];
@@ -586,7 +586,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     bool bInsidePicture = (rpelx < outBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (bpely < outBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     //Data for splitting
-    UChar nextDepth = depth + 1;
+    uint8_t nextDepth = depth + 1;
     uint32_t partUnitIdx = 0;
     TComDataCU* subBestPartCU[4], *subTempPartCU[4];
 
@@ -629,8 +629,8 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     {
         for (; partUnitIdx < 4; partUnitIdx++)
         {
-            subBestPartCU[partUnitIdx]     = m_bestCU[nextDepth];
-            subTempPartCU[partUnitIdx]     = m_tempCU[nextDepth];
+            subBestPartCU[partUnitIdx] = m_bestCU[nextDepth];
+            subTempPartCU[partUnitIdx] = m_tempCU[nextDepth];
 
             subBestPartCU[partUnitIdx]->initSubCU(outTempCU, partUnitIdx, nextDepth);     // clear sub partition datas or init.
             subTempPartCU[partUnitIdx]->initSubCU(outTempCU, partUnitIdx, nextDepth);     // clear sub partition datas or init.
@@ -968,7 +968,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     // further split
     if (bSubBranch && depth < g_maxCUDepth - g_addCUDepth)
     {
-        UChar       nextDepth     = depth + 1;
+        uint8_t     nextDepth     = depth + 1;
         TComDataCU* subBestPartCU = m_bestCU[nextDepth];
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         uint32_t partUnitIdx = 0;
@@ -1231,7 +1231,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 {
     assert(outTempCU->getSlice()->getSliceType() != I_SLICE);
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
-    UChar interDirNeighbours[MRG_MAX_NUM_CANDS];
+    uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
     int numValidMergeCand = 0;
 
     for (uint32_t i = 0; i < outTempCU->getSlice()->getMaxNumMergeCand(); ++i)
@@ -1239,7 +1239,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         interDirNeighbours[i] = 0;
     }
 
-    UChar depth = outTempCU->getDepth(0);
+    uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
@@ -1364,7 +1364,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
 void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, bool bUseMRG)
 {
-    UChar depth = outTempCU->getDepth(0);
+    uint8_t depth = outTempCU->getDepth(0);
 
     outTempCU->setDepthSubParts(depth);
     outTempCU->setSkipFlagSubParts(false, 0, depth);

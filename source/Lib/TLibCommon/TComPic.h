@@ -162,9 +162,9 @@ public:
 
     uint32_t      getMinCUSize()          { return m_picSym->getMinCUSize(); }
 
-    uint32_t      getParPelX(UChar partIdx) { return getParPelX(partIdx); }
+    uint32_t      getParPelX(uint8_t partIdx) { return getParPelX(partIdx); }
 
-    uint32_t      getParPelY(UChar partIdx) { return getParPelX(partIdx); }
+    uint32_t      getParPelY(uint8_t partIdx) { return getParPelX(partIdx); }
 
     int           getStride()             { return m_reconPicYuv->getStride(); }
 

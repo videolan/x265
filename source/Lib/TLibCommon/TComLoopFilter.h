@@ -67,12 +67,12 @@ class TComLoopFilter
 {
 private:
 
-    uint32_t      m_numPartitions;
-    UChar*    m_blockingStrength[2];            ///< Bs for [Ver/Hor][Y/U/V][Blk_Idx]
-    bool*     m_bEdgeFilter[2];
-    LFCUParam m_lfcuParam;                ///< status structure
+    uint32_t    m_numPartitions;
+    uint8_t*    m_blockingStrength[2]; ///< Bs for [Ver/Hor][Y/U/V][Blk_Idx]
+    bool*       m_bEdgeFilter[2];
+    LFCUParam   m_lfcuParam;           ///< status structure
 
-    bool      m_bLFCrossTileBoundary;
+    bool        m_bLFCrossTileBoundary;
 
 protected:
 
@@ -112,8 +112,8 @@ protected:
     inline int xCalcDP(Pel* src, int offset);
     inline int xCalcDQ(Pel* src, int offset);
 
-    static const UChar sm_tcTable[54];
-    static const UChar sm_betaTable[52];
+    static const uint8_t sm_tcTable[54];
+    static const uint8_t sm_betaTable[52];
 
 public:
 

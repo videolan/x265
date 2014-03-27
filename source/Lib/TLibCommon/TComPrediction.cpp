@@ -44,7 +44,7 @@ using namespace x265;
 //! \ingroup TLibCommon
 //! \{
 
-static const UChar intraFilterThreshold[5] =
+static const uint8_t intraFilterThreshold[5] =
 {
     10, //4x4
     7,  //8x8

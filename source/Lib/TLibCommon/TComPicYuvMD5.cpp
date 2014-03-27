@@ -46,7 +46,7 @@ template<uint32_t OUTPUT_BITDEPTH_DIV8>
 static void md5_block(MD5Context& md5, const Pel* plane, uint32_t n)
 {
     /* create a 64 byte buffer for packing Pel's into */
-    UChar buf[64 / OUTPUT_BITDEPTH_DIV8][OUTPUT_BITDEPTH_DIV8];
+    uint8_t buf[64 / OUTPUT_BITDEPTH_DIV8][OUTPUT_BITDEPTH_DIV8];
 
     for (uint32_t i = 0; i < n; i++)
     {
@@ -58,7 +58,7 @@ static void md5_block(MD5Context& md5, const Pel* plane, uint32_t n)
         }
     }
 
-    MD5Update(&md5, (UChar*)buf, n * OUTPUT_BITDEPTH_DIV8);
+    MD5Update(&md5, (uint8_t*)buf, n * OUTPUT_BITDEPTH_DIV8);
 }
 
 /**
@@ -123,7 +123,7 @@ void updateCRC(const Pel* plane, uint32_t& crcVal, uint32_t height, uint32_t wid
     }
 }
 
-void crcFinish(uint32_t& crcVal, UChar digest[16])
+void crcFinish(uint32_t& crcVal, uint8_t digest[16])
 {
     uint32_t crcMsb;
 
@@ -139,7 +139,7 @@ void crcFinish(uint32_t& crcVal, UChar digest[16])
 
 void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cuHeight)
 {
-    UChar xor_mask;
+    uint8_t xor_mask;
 
     for (uint32_t y = row * cuHeight; y < ((row * cuHeight) + height); y++)
     {
@@ -156,7 +156,7 @@ void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, ui
     }
 }
 
-void checksumFinish(uint32_t& checksum, UChar digest[16])
+void checksumFinish(uint32_t& checksum, uint8_t digest[16])
 {
     digest[0] = (checksum >> 24) & 0xff;
     digest[1] = (checksum >> 16) & 0xff;

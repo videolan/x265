@@ -166,8 +166,8 @@ public:
 
 void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cuHeight);
 void updateCRC(const Pel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, uint32_t stride);
-void crcFinish(uint32_t & crc, UChar digest[16]);
-void checksumFinish(uint32_t & checksum, UChar digest[16]);
+void crcFinish(uint32_t & crc, uint8_t digest[16]);
+void checksumFinish(uint32_t & checksum, uint8_t digest[16]);
 void updateMD5Plane(MD5Context& md5, const Pel* plane, uint32_t width, uint32_t height, uint32_t stride);
 }
 //! \}

@@ -124,7 +124,7 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     ok &= m_cuMvField[1].create(numPartition);
 
     CHECKED_MALLOC(m_qp, char,  numPartition);
-    CHECKED_MALLOC(m_depth, UChar, numPartition);
+    CHECKED_MALLOC(m_depth, uint8_t, numPartition);
     CHECKED_MALLOC(m_cuSize, uint8_t, numPartition);
     CHECKED_MALLOC(m_skipFlag, bool, numPartition);
     CHECKED_MALLOC(m_partSizes, char, numPartition);
@@ -132,18 +132,18 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     CHECKED_MALLOC(m_cuTransquantBypass, bool, numPartition);
 
     CHECKED_MALLOC(m_bMergeFlags, bool,  numPartition);
-    CHECKED_MALLOC(m_lumaIntraDir, UChar, numPartition);
-    CHECKED_MALLOC(m_chromaIntraDir, UChar, numPartition);
-    CHECKED_MALLOC(m_interDir, UChar, numPartition);
+    CHECKED_MALLOC(m_lumaIntraDir, uint8_t, numPartition);
+    CHECKED_MALLOC(m_chromaIntraDir, uint8_t, numPartition);
+    CHECKED_MALLOC(m_interDir, uint8_t, numPartition);
 
-    CHECKED_MALLOC(m_trIdx, UChar, numPartition);
-    CHECKED_MALLOC(m_transformSkip[0], UChar, numPartition);
-    CHECKED_MALLOC(m_transformSkip[1], UChar, numPartition);
-    CHECKED_MALLOC(m_transformSkip[2], UChar, numPartition);
+    CHECKED_MALLOC(m_trIdx, uint8_t, numPartition);
+    CHECKED_MALLOC(m_transformSkip[0], uint8_t, numPartition);
+    CHECKED_MALLOC(m_transformSkip[1], uint8_t, numPartition);
+    CHECKED_MALLOC(m_transformSkip[2], uint8_t, numPartition);
 
-    CHECKED_MALLOC(m_cbf[0], UChar, numPartition);
-    CHECKED_MALLOC(m_cbf[1], UChar, numPartition);
-    CHECKED_MALLOC(m_cbf[2], UChar, numPartition);
+    CHECKED_MALLOC(m_cbf[0], uint8_t, numPartition);
+    CHECKED_MALLOC(m_cbf[1], uint8_t, numPartition);
+    CHECKED_MALLOC(m_cbf[2], uint8_t, numPartition);
 
     CHECKED_MALLOC(m_mvpIdx[0], uint8_t, numPartition * 2);
     m_mvpIdx[1] = m_mvpIdx[0] + numPartition;
@@ -330,7 +330,7 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
     m_totalDistortion  = 0;
     m_totalBits        = 0;
 
-    UChar cuSize = g_maxCUSize >> depth;
+    uint8_t cuSize = g_maxCUSize >> depth;
 
     for (uint32_t i = 0; i < m_numPartitions; i++)
     {
@@ -366,7 +366,7 @@ void TComDataCU::initEstData(uint32_t depth)
     m_totalDistortion  = 0;
     m_totalBits        = 0;
 
-    UChar cuSize = g_maxCUSize >> depth;
+    uint8_t cuSize = g_maxCUSize >> depth;
 
     for (uint32_t i = 0; i < m_numPartitions; i++)
     {
@@ -421,7 +421,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
         m_count[i] = cu->m_count[i];
     }
 
-    int iSizeInUchar = sizeof(UChar) * m_numPartitions;
+    int iSizeInUchar = sizeof(uint8_t) * m_numPartitions;
     int iSizeInBool  = sizeof(bool) * m_numPartitions;
 
     int sizeInChar = sizeof(char) * m_numPartitions;
@@ -440,7 +440,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     memset(m_cbf[2],          0, iSizeInUchar);
     memset(m_depth, depth, iSizeInUchar);
 
-    UChar cuSize = g_maxCUSize >> depth;
+    uint8_t cuSize = g_maxCUSize >> depth;
     memset(m_cuSize,    cuSize,  iSizeInUchar);
     memset(m_iPCMFlags, 0, iSizeInBool);
     for (uint32_t i = 0; i < m_numPartitions; i++)
@@ -490,7 +490,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
         m_count[i] = cu->m_count[i];
     }
 
-    int iSizeInUchar = sizeof(UChar) * m_numPartitions;
+    int iSizeInUchar = sizeof(uint8_t) * m_numPartitions;
     int iSizeInBool  = sizeof(bool) * m_numPartitions;
 
     int sizeInChar = sizeof(char) * m_numPartitions;
@@ -509,7 +509,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
     memset(m_cbf[2],          0, iSizeInUchar);
     memset(m_depth, depth, iSizeInUchar);
 
-    UChar cuSize = g_maxCUSize >> depth;
+    uint8_t cuSize = g_maxCUSize >> depth;
     memset(m_cuSize,    cuSize,  iSizeInUchar);
     memset(m_iPCMFlags, 0, iSizeInBool);
     for (uint32_t i = 0; i < m_numPartitions; i++)
@@ -554,7 +554,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
     m_numPartitions    = cu->getTotalNumPart() >> 2;
 
     TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
-    int iSizeInUchar  = sizeof(UChar) * m_numPartitions;
+    int iSizeInUchar  = sizeof(uint8_t) * m_numPartitions;
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
     memcpy(m_skipFlag, rpcCU->getSkipFlag() + m_absIdxInLCU, sizeof(*m_skipFlag) * m_numPartitions);
@@ -586,7 +586,7 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     uint32_t offset         = cu->getTotalNumPart() * partUnitIdx;
 
     uint32_t numPartition = cu->getTotalNumPart();
-    int iSizeInUchar  = sizeof(UChar) * numPartition;
+    int iSizeInUchar  = sizeof(uint8_t) * numPartition;
     int iSizeInBool   = sizeof(bool) * numPartition;
 
     int sizeInChar  = sizeof(char) * numPartition;
@@ -642,7 +642,7 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
 
 // Copy current predicted part to a CU in picture.
 // It is used to predict for next part
-void TComDataCU::copyToPic(UChar uhDepth)
+void TComDataCU::copyToPic(uint8_t uhDepth)
 {
     TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
 
@@ -650,7 +650,7 @@ void TComDataCU::copyToPic(UChar uhDepth)
     rpcCU->m_totalDistortion = m_totalDistortion;
     rpcCU->m_totalBits       = m_totalBits;
 
-    int iSizeInUchar  = sizeof(UChar) * m_numPartitions;
+    int iSizeInUchar  = sizeof(uint8_t) * m_numPartitions;
     int iSizeInBool   = sizeof(bool) * m_numPartitions;
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
@@ -698,11 +698,11 @@ void TComDataCU::copyToPic(UChar uhDepth)
     memcpy(rpcCU->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
 }
 
-void TComDataCU::copyCodedToPic(UChar depth)
+void TComDataCU::copyCodedToPic(uint8_t depth)
 {
     TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
 
-    int iSizeInUchar  = sizeof(UChar) * m_numPartitions;
+    int iSizeInUchar  = sizeof(uint8_t) * m_numPartitions;
 
     memcpy(rpcCU->getSkipFlag() + m_absIdxInLCU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
     memcpy(rpcCU->getTransformIdx() + m_absIdxInLCU, m_trIdx, iSizeInUchar);
@@ -726,7 +726,7 @@ void TComDataCU::copyCodedToPic(UChar depth)
     memcpy(rpcCU->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
 }
 
-void TComDataCU::copyToPic(UChar depth, uint32_t partIdx, uint32_t partDepth)
+void TComDataCU::copyToPic(uint8_t depth, uint32_t partIdx, uint32_t partDepth)
 {
     TComDataCU* cu = m_pic->getCU(m_cuAddr);
     uint32_t qNumPart  = m_numPartitions >> (partDepth << 1);
@@ -738,7 +738,7 @@ void TComDataCU::copyToPic(UChar depth, uint32_t partIdx, uint32_t partDepth)
     cu->m_totalDistortion = m_totalDistortion;
     cu->m_totalBits       = m_totalBits;
 
-    int sizeInUchar = sizeof(UChar) * qNumPart;
+    int sizeInUchar = sizeof(uint8_t) * qNumPart;
     int sizeInBool  = sizeof(bool) * qNumPart;
 
     int sizeInChar  = sizeof(char) * qNumPart;
@@ -1365,16 +1365,16 @@ void TComDataCU::setCbfSubParts(uint32_t cbfY, uint32_t cbfU, uint32_t cbfV, uin
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_cbf[0] + absPartIdx, cbfY, sizeof(UChar) * curPartNum);
-    memset(m_cbf[1] + absPartIdx, cbfU, sizeof(UChar) * curPartNum);
-    memset(m_cbf[2] + absPartIdx, cbfV, sizeof(UChar) * curPartNum);
+    memset(m_cbf[0] + absPartIdx, cbfY, sizeof(uint8_t) * curPartNum);
+    memset(m_cbf[1] + absPartIdx, cbfU, sizeof(uint8_t) * curPartNum);
+    memset(m_cbf[2] + absPartIdx, cbfV, sizeof(uint8_t) * curPartNum);
 }
 
 void TComDataCU::setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(UChar) * curPartNum);
+    memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(uint8_t) * curPartNum);
 }
 
 /** Sets a coded block flag for all sub-partitions of a partition
@@ -1387,14 +1387,14 @@ void TComDataCU::setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartId
  */
 void TComDataCU::setCbfSubParts(uint32_t uiCbf, TextType ttype, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
 {
-    setSubPart<UChar>(uiCbf, m_cbf[ttype], absPartIdx, depth, partIdx);
+    setSubPart<uint8_t>(uiCbf, m_cbf[ttype], absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setDepthSubParts(uint32_t depth)
 {
     /*All 4x4 partitions in current CU have the CU depth saved*/
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
-    memset(m_depth, depth, sizeof(UChar) * curPartNum);
+    memset(m_depth, depth, sizeof(uint8_t) * curPartNum);
 }
 
 bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth)
@@ -1469,7 +1469,7 @@ void TComDataCU::setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_lumaIntraDir + absPartIdx, dir, sizeof(UChar) * curPartNum);
+    memset(m_lumaIntraDir + absPartIdx, dir, sizeof(uint8_t) * curPartNum);
 }
 
 template<typename T>
@@ -1574,40 +1574,40 @@ void TComDataCU::setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uin
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_chromaIntraDir + absPartIdx, dir, sizeof(UChar) * curPartNum);
+    memset(m_chromaIntraDir + absPartIdx, dir, sizeof(uint8_t) * curPartNum);
 }
 
 void TComDataCU::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
 {
-    setSubPart<UChar>(dir, m_interDir, absPartIdx, depth, partIdx);
+    setSubPart<uint8_t>(dir, m_interDir, absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_trIdx + absPartIdx, trIdx, sizeof(UChar) * curPartNum);
+    memset(m_trIdx + absPartIdx, trIdx, sizeof(uint8_t) * curPartNum);
 }
 
 void TComDataCU::setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_transformSkip[0] + absPartIdx, useTransformSkipY, sizeof(UChar) * curPartNum);
-    memset(m_transformSkip[1] + absPartIdx, useTransformSkipU, sizeof(UChar) * curPartNum);
-    memset(m_transformSkip[2] + absPartIdx, useTransformSkipV, sizeof(UChar) * curPartNum);
+    memset(m_transformSkip[0] + absPartIdx, useTransformSkipY, sizeof(uint8_t) * curPartNum);
+    memset(m_transformSkip[1] + absPartIdx, useTransformSkipU, sizeof(uint8_t) * curPartNum);
+    memset(m_transformSkip[2] + absPartIdx, useTransformSkipV, sizeof(uint8_t) * curPartNum);
 }
 
 void TComDataCU::setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(UChar) * curPartNum);
+    memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * curPartNum);
 }
 
-UChar TComDataCU::getNumPartInter()
+uint8_t TComDataCU::getNumPartInter()
 {
-    UChar numPart = 0;
+    uint8_t numPart = 0;
 
     switch (m_partSizes[0])
     {
@@ -1975,7 +1975,7 @@ bool TComDataCU::hasEqualMotion(uint32_t absPartIdx, TComDataCU* candCU, uint32_
  * \param puhInterDirNeighbours
  * \param numValidMergeCand
  */
-void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours,
+void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField* mvFieldNeighbours, uint8_t* interDirNeighbours,
                                          int& numValidMergeCand)
 {
     uint32_t absPartAddr = m_absIdxInLCU + absPartIdx;

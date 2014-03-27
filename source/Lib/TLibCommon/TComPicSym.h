@@ -67,7 +67,7 @@ private:
     uint32_t      m_maxCUSize;
     uint32_t      m_minCUSize;
 
-    UChar         m_totalDepth;
+    uint8_t       m_totalDepth;
     uint32_t      m_numPartitions;
     uint32_t      m_numPartInWidth;
     uint32_t      m_numPartInHeight;

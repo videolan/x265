@@ -113,7 +113,7 @@ uint8_t sbacInit(int qp, int initValue)
     return m_state;
 }
 
-static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, UChar* ctxModel, int size)
+static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, uint8_t* ctxModel, int size)
 {
     ctxModel += sliceType * size;
 
@@ -124,7 +124,7 @@ static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, 
     }
 }
 
-static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp, UChar* ctxModel, int size)
+static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp, uint8_t* ctxModel, int size)
 {
     uint32_t cost = 0;
 
@@ -191,32 +191,32 @@ void TEncSbac::resetEntropy()
         sliceType = (SliceType)encCABACTableIdx;
     }
 
-    initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (UChar*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_SKIP_FLAG_CTX], sliceType, qp, (UChar*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], sliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
-    initBuffer(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], sliceType, qp, (UChar*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
-    initBuffer(&m_contextModels[OFF_PART_SIZE_CTX], sliceType, qp, (UChar*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
-    initBuffer(&m_contextModels[OFF_PRED_MODE_CTX], sliceType, qp, (UChar*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
-    initBuffer(&m_contextModels[OFF_ADI_CTX], sliceType, qp, (UChar*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
-    initBuffer(&m_contextModels[OFF_CHROMA_PRED_CTX], sliceType, qp, (UChar*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
-    initBuffer(&m_contextModels[OFF_DELTA_QP_CTX], sliceType, qp, (UChar*)INIT_DQP, NUM_DELTA_QP_CTX);
-    initBuffer(&m_contextModels[OFF_INTER_DIR_CTX], sliceType, qp, (UChar*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
-    initBuffer(&m_contextModels[OFF_REF_NO_CTX], sliceType, qp, (UChar*)INIT_REF_PIC, NUM_REF_NO_CTX);
-    initBuffer(&m_contextModels[OFF_MV_RES_CTX], sliceType, qp, (UChar*)INIT_MVD, NUM_MV_RES_CTX);
-    initBuffer(&m_contextModels[OFF_QT_CBF_CTX], sliceType, qp, (UChar*)INIT_QT_CBF, NUM_QT_CBF_CTX);
-    initBuffer(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], sliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_QT_ROOT_CBF_CTX], sliceType, qp, (UChar*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
-    initBuffer(&m_contextModels[OFF_SIG_CG_FLAG_CTX], sliceType, qp, (UChar*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_SIG_FLAG_CTX], sliceType, qp, (UChar*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_X], sliceType, qp, (UChar*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_Y], sliceType, qp, (UChar*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-    initBuffer(&m_contextModels[OFF_ONE_FLAG_CTX], sliceType, qp, (UChar*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_ABS_FLAG_CTX], sliceType, qp, (UChar*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_MVP_IDX_CTX], sliceType, qp, (UChar*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
-    initBuffer(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], sliceType, qp, (UChar*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], sliceType, qp, (UChar*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
-    initBuffer(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], sliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_SKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], sliceType, qp, (uint8_t*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
+    initBuffer(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], sliceType, qp, (uint8_t*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
+    initBuffer(&m_contextModels[OFF_PART_SIZE_CTX], sliceType, qp, (uint8_t*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
+    initBuffer(&m_contextModels[OFF_PRED_MODE_CTX], sliceType, qp, (uint8_t*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
+    initBuffer(&m_contextModels[OFF_ADI_CTX], sliceType, qp, (uint8_t*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
+    initBuffer(&m_contextModels[OFF_CHROMA_PRED_CTX], sliceType, qp, (uint8_t*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
+    initBuffer(&m_contextModels[OFF_DELTA_QP_CTX], sliceType, qp, (uint8_t*)INIT_DQP, NUM_DELTA_QP_CTX);
+    initBuffer(&m_contextModels[OFF_INTER_DIR_CTX], sliceType, qp, (uint8_t*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
+    initBuffer(&m_contextModels[OFF_REF_NO_CTX], sliceType, qp, (uint8_t*)INIT_REF_PIC, NUM_REF_NO_CTX);
+    initBuffer(&m_contextModels[OFF_MV_RES_CTX], sliceType, qp, (uint8_t*)INIT_MVD, NUM_MV_RES_CTX);
+    initBuffer(&m_contextModels[OFF_QT_CBF_CTX], sliceType, qp, (uint8_t*)INIT_QT_CBF, NUM_QT_CBF_CTX);
+    initBuffer(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_QT_ROOT_CBF_CTX], sliceType, qp, (uint8_t*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
+    initBuffer(&m_contextModels[OFF_SIG_CG_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_SIG_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_X], sliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
+    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_Y], sliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
+    initBuffer(&m_contextModels[OFF_ONE_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_ABS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_MVP_IDX_CTX], sliceType, qp, (uint8_t*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
+    initBuffer(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], sliceType, qp, (uint8_t*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
+    initBuffer(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
+    initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
     // new structure
 
     m_binIf->start();
@@ -241,32 +241,32 @@ void TEncSbac::determineCabacInitIdx()
             uint32_t curCost = 0;
             SliceType curSliceType = aSliceTypeChoices[idx];
 
-            curCost  = calcCost(&m_contextModels[OFF_SPLIT_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SKIP_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], curSliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], curSliceType, qp, (UChar*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
-            curCost += calcCost(&m_contextModels[OFF_PART_SIZE_CTX], curSliceType, qp, (UChar*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
-            curCost += calcCost(&m_contextModels[OFF_PRED_MODE_CTX], curSliceType, qp, (UChar*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
-            curCost += calcCost(&m_contextModels[OFF_ADI_CTX], curSliceType, qp, (UChar*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
-            curCost += calcCost(&m_contextModels[OFF_CHROMA_PRED_CTX], curSliceType, qp, (UChar*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
-            curCost += calcCost(&m_contextModels[OFF_DELTA_QP_CTX], curSliceType, qp, (UChar*)INIT_DQP, NUM_DELTA_QP_CTX);
-            curCost += calcCost(&m_contextModels[OFF_INTER_DIR_CTX], curSliceType, qp, (UChar*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
-            curCost += calcCost(&m_contextModels[OFF_REF_NO_CTX], curSliceType, qp, (UChar*)INIT_REF_PIC, NUM_REF_NO_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MV_RES_CTX], curSliceType, qp, (UChar*)INIT_MVD, NUM_MV_RES_CTX);
-            curCost += calcCost(&m_contextModels[OFF_QT_CBF_CTX], curSliceType, qp, (UChar*)INIT_QT_CBF, NUM_QT_CBF_CTX);
-            curCost += calcCost(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], curSliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_QT_ROOT_CBF_CTX], curSliceType, qp, (UChar*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SIG_CG_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SIG_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_X], curSliceType, qp, (UChar*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_Y], curSliceType, qp, (UChar*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-            curCost += calcCost(&m_contextModels[OFF_ONE_FLAG_CTX], curSliceType, qp, (UChar*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_ABS_FLAG_CTX], curSliceType, qp, (UChar*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MVP_IDX_CTX], curSliceType, qp, (UChar*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], curSliceType, qp, (UChar*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], curSliceType, qp, (UChar*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
-            curCost += calcCost(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], curSliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], curSliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
+            curCost  = calcCost(&m_contextModels[OFF_SPLIT_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SKIP_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], curSliceType, qp, (uint8_t*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], curSliceType, qp, (uint8_t*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
+            curCost += calcCost(&m_contextModels[OFF_PART_SIZE_CTX], curSliceType, qp, (uint8_t*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
+            curCost += calcCost(&m_contextModels[OFF_PRED_MODE_CTX], curSliceType, qp, (uint8_t*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
+            curCost += calcCost(&m_contextModels[OFF_ADI_CTX], curSliceType, qp, (uint8_t*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
+            curCost += calcCost(&m_contextModels[OFF_CHROMA_PRED_CTX], curSliceType, qp, (uint8_t*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
+            curCost += calcCost(&m_contextModels[OFF_DELTA_QP_CTX], curSliceType, qp, (uint8_t*)INIT_DQP, NUM_DELTA_QP_CTX);
+            curCost += calcCost(&m_contextModels[OFF_INTER_DIR_CTX], curSliceType, qp, (uint8_t*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
+            curCost += calcCost(&m_contextModels[OFF_REF_NO_CTX], curSliceType, qp, (uint8_t*)INIT_REF_PIC, NUM_REF_NO_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MV_RES_CTX], curSliceType, qp, (uint8_t*)INIT_MVD, NUM_MV_RES_CTX);
+            curCost += calcCost(&m_contextModels[OFF_QT_CBF_CTX], curSliceType, qp, (uint8_t*)INIT_QT_CBF, NUM_QT_CBF_CTX);
+            curCost += calcCost(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_QT_ROOT_CBF_CTX], curSliceType, qp, (uint8_t*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SIG_CG_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SIG_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_X], curSliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
+            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_Y], curSliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
+            curCost += calcCost(&m_contextModels[OFF_ONE_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_ABS_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_MVP_IDX_CTX], curSliceType, qp, (uint8_t*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], curSliceType, qp, (uint8_t*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
+            curCost += calcCost(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
+            curCost += calcCost(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
             if (curCost < bestCost)
             {
                 bestSliceType = curSliceType;
