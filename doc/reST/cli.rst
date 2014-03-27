@@ -1,5 +1,5 @@
 *********************
-Command line Options
+Command Line Options
 *********************
 
 Note that unless an option is listed as **CLI ONLY** the option is also
