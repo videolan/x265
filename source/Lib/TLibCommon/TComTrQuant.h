@@ -192,7 +192,7 @@ public:
         else
         {
             result.firstSignificanceMapContext = (ctype ? 12 : 21);
-            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (ctype ? 12 : 21));
+            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21));
         }
     }
     estBitsSbacStruct* m_estBitsSbac;
