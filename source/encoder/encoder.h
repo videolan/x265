@@ -224,7 +224,7 @@ public:
 
     void determineLevelAndProfile(x265_param *param);
 
-    int  extractNalData(NALUnitEBSP **nalunits);
+    int  extractNalData(NALUnitEBSP **nalunits, int& memsize);
 
     void updateVbvPlan(RateControl* rc);
 

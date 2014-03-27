@@ -69,7 +69,7 @@ extern "C"
 int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
     if (!pp_nal || !enc)
-        return 0;
+        return -1;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
 
@@ -77,7 +77,7 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
     if (encoder->getStreamHeaders(nalunits) > 0)
     {
-        int nalcount = encoder->extractNalData(nalunits);
+        int nalcount = encoder->extractNalData(nalunits, ret);
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal = nalcount;
     }
@@ -111,7 +111,8 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
 
     if (pp_nal && numEncoded > 0)
     {
-        int nalcount = encoder->extractNalData(nalunits);
+        int memsize;
+        int nalcount = encoder->extractNalData(nalunits, memsize);
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal = nalcount;
     }

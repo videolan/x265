@@ -1523,14 +1523,13 @@ void Encoder::configure(x265_param *p)
     m_CUTransquantBypassFlagValue = false;
 }
 
-int Encoder::extractNalData(NALUnitEBSP **nalunits)
+int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)
 {
-    uint32_t memsize = 0;
-    uint32_t offset = 0;
+    int offset = 0;
     int nalcount = 0;
-
     int num = 0;
 
+    memsize = 0;
     for (; num < MAX_NAL_UNITS && nalunits[num] != NULL; num++)
     {
         const NALUnitEBSP& temp = *nalunits[num];
@@ -1548,7 +1547,7 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits)
     for (; nalcount < num; nalcount++)
     {
         const NALUnitEBSP& nalu = *nalunits[nalcount];
-        uint32_t size; /* size of annexB unit in bytes */
+        int size; /* size of annexB unit in bytes */
 
         static const char start_code_prefix[] = { 0, 0, 0, 1 };
         if (nalcount == 0 || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)

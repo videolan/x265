@@ -669,21 +669,26 @@ int main(int argc, char **argv)
     x265_picture pic_orig, pic_out;
     x265_picture *pic_in = &pic_orig;
     x265_picture *pic_recon = cliopt.recon ? &pic_out : NULL;
+    uint32_t inFrameCount = 0;
+    uint32_t outFrameCount = 0;
     x265_nal *p_nal;
     x265_stats stats;
     uint32_t nal;
 
     if (!param->bRepeatHeaders)
     {
-        if (!x265_encoder_headers(encoder, &p_nal, &nal))
+        if (x265_encoder_headers(encoder, &p_nal, &nal) < 0)
+        {
+            x265_log(param, X265_LOG_ERROR, "Failure generating stream headers\n");
+            goto fail;
+        }
+        else
             cliopt.writeNALs(p_nal, nal);
     }
 
     x265_picture_init(param, pic_in);
 
     // main encoder loop
-    uint32_t inFrameCount = 0;
-    uint32_t outFrameCount = 0;
     while (pic_in && !b_ctrl_c)
     {
         pic_orig.poc = inFrameCount;
@@ -737,6 +742,7 @@ int main(int argc, char **argv)
     if (cliopt.bProgress)
         fprintf(stderr, "%*s\r", 80, " ");
 
+fail:
     x265_encoder_get_stats(encoder, &stats, sizeof(stats));
     if (param->csvfn && !b_ctrl_c)
         x265_encoder_log(encoder, argc, argv);
