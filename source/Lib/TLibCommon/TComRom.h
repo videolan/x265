@@ -78,13 +78,13 @@ extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint16_t*  g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
-void initRasterToZscan(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
+void initRasterToZscan(uint32_t maxCUSize, uint32_t maxCUDepth);
 
 // conversion of partition index to picture pel position
 extern uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-void initRasterToPelXY(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
+void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxCUDepth);
 
 // global variable (LCU width/height, max. CU depth)
 extern uint32_t g_maxCUSize;

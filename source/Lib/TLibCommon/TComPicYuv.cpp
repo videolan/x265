@@ -64,7 +64,7 @@ TComPicYuv::~TComPicYuv()
 {
 }
 
-bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
+bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -73,11 +73,10 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_picCsp = picCsp;
 
     // --> After config finished!
-    m_cuWidth  = maxCUWidth;
-    m_cuHeight = maxCUHeight;
+    m_cuSize = maxCUSize;
 
-    m_numCuInWidth = (m_picWidth + m_cuWidth - 1)  / m_cuWidth;
-    m_numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
+    m_numCuInWidth = (m_picWidth + m_cuSize - 1)  / m_cuSize;
+    m_numCuInHeight = (m_picHeight + m_cuSize - 1) / m_cuSize;
 
     m_lumaMarginX = g_maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
     m_lumaMarginY = g_maxCUSize + 16; // margin for 8-tap filter and infinite padding
@@ -104,8 +103,8 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     {
         for (int cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
         {
-            m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
-            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight >> m_vChromaShift) + cuCol * (m_cuWidth >> m_hChromaShift);
+            m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = getStride() * cuRow * m_cuSize + cuCol * m_cuSize;
+            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuSize >> m_vChromaShift) + cuCol * (m_cuSize >> m_hChromaShift);
         }
     }
 
@@ -115,8 +114,8 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     {
         for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
         {
-            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
-            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * ((maxCUHeight >> m_vChromaShift) >> maxCUDepth) + buCol * ((maxCUWidth >> m_hChromaShift) >> maxCUDepth);
+            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUSize >> maxCUDepth) + buCol * (maxCUSize  >> maxCUDepth);
+            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * (maxCUSize >> maxCUDepth >> m_vChromaShift) + buCol * (maxCUSize >> maxCUDepth >> m_hChromaShift);
         }
     }
 

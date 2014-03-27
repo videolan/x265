@@ -1039,10 +1039,10 @@ int x265_set_globals(x265_param *param)
         // initialize partition order
         uint32_t* tmp = &g_zscanToRaster[0];
         initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
-        initRasterToZscan(g_maxCUSize, g_maxCUSize, g_maxCUDepth + 1);
+        initRasterToZscan(g_maxCUSize, g_maxCUDepth + 1);
 
         // initialize conversion matrix from partition index to pel
-        initRasterToPelXY(g_maxCUSize, g_maxCUSize, g_maxCUDepth + 1);
+        initRasterToPelXY(g_maxCUSize, g_maxCUDepth + 1);
     }
     return 0;
 }

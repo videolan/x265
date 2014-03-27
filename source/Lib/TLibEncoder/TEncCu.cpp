@@ -123,68 +123,68 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
 
     m_origYuv = new TComYuv*[m_totalDepth - 1];
 
+    int unitSize = maxWidth >> (m_totalDepth - 1);
     int csp = m_param->internalCsp;
 
     bool ok = true;
     for (int i = 0; i < m_totalDepth - 1; i++)
     {
         uint32_t numPartitions = 1 << ((m_totalDepth - i - 1) << 1);
-        uint32_t width  = maxWidth  >> i;
-        uint32_t height = maxWidth >> i;
+        uint32_t cuSize = maxWidth >> i;
 
         m_bestCU[i] = new TComDataCU;
-        ok &= m_bestCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_bestCU[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_tempCU[i] = new TComDataCU;
-        ok &= m_tempCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_tempCU[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_interCU_2Nx2N[i] = new TComDataCU;
-        ok &= m_interCU_2Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_interCU_2Nx2N[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_interCU_2NxN[i] = new TComDataCU;
-        ok &= m_interCU_2NxN[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_interCU_2NxN[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_interCU_Nx2N[i] = new TComDataCU;
-        ok &= m_interCU_Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_interCU_Nx2N[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_intraInInterCU[i] = new TComDataCU;
-        ok &= m_intraInInterCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_intraInInterCU[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_mergeCU[i] = new TComDataCU;
-        ok &= m_mergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_mergeCU[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_bestMergeCU[i] = new TComDataCU;
-        ok &= m_bestMergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1), csp);
+        ok &= m_bestMergeCU[i]->create(numPartitions, cuSize, unitSize, csp);
 
         m_bestPredYuv[i] = new TComYuv;
-        ok &= m_bestPredYuv[i]->create(width, height, csp);
+        ok &= m_bestPredYuv[i]->create(cuSize, cuSize, csp);
 
         m_bestResiYuv[i] = new ShortYuv;
-        ok &= m_bestResiYuv[i]->create(width, height, csp);
+        ok &= m_bestResiYuv[i]->create(cuSize, cuSize, csp);
 
         m_bestRecoYuv[i] = new TComYuv;
-        ok &= m_bestRecoYuv[i]->create(width, height, csp);
+        ok &= m_bestRecoYuv[i]->create(cuSize, cuSize, csp);
 
         m_tmpPredYuv[i] = new TComYuv;
-        ok &= m_tmpPredYuv[i]->create(width, height, csp);
+        ok &= m_tmpPredYuv[i]->create(cuSize, cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
             m_modePredYuv[j][i] = new TComYuv;
-            ok &= m_modePredYuv[j][i]->create(width, height, csp);
+            ok &= m_modePredYuv[j][i]->create(cuSize, cuSize, csp);
         }
 
         m_tmpResiYuv[i] = new ShortYuv;
-        ok &= m_tmpResiYuv[i]->create(width, height, csp);
+        ok &= m_tmpResiYuv[i]->create(cuSize, cuSize, csp);
 
         m_tmpRecoYuv[i] = new TComYuv;
-        ok &= m_tmpRecoYuv[i]->create(width, height, csp);
+        ok &= m_tmpRecoYuv[i]->create(cuSize, cuSize, csp);
 
         m_bestMergeRecoYuv[i] = new TComYuv;
-        ok &= m_bestMergeRecoYuv[i]->create(width, height, csp);
+        ok &= m_bestMergeRecoYuv[i]->create(cuSize, cuSize, csp);
 
         m_origYuv[i] = new TComYuv;
-        ok &= m_origYuv[i]->create(width, height, csp);
+        ok &= m_origYuv[i]->create(cuSize, cuSize, csp);
     }
 
     m_bEncodeDQP = false;
@@ -1554,10 +1554,10 @@ void TEncCu::xCopyYuv2Pic(TComPic* outPic, uint32_t cuAddr, uint32_t absPartIdx,
     if (!bSliceEnd && (rpelx < slice->getSPS()->getPicWidthInLumaSamples()) && (bpely < slice->getSPS()->getPicHeightInLumaSamples()))
     {
         uint32_t absPartIdxInRaster = g_zscanToRaster[absPartIdx];
-        uint32_t srcBlkWidth = outPic->getNumPartInWidth() >> (srcDepth);
-        uint32_t blkWidth    = outPic->getNumPartInWidth() >> (depth);
-        uint32_t partIdxX = ((absPartIdxInRaster % outPic->getNumPartInWidth()) % srcBlkWidth) / blkWidth;
-        uint32_t partIdxY = ((absPartIdxInRaster / outPic->getNumPartInWidth()) % srcBlkWidth) / blkWidth;
+        uint32_t srcBlkWidth = outPic->getNumPartInCUSize() >> (srcDepth);
+        uint32_t blkWidth    = outPic->getNumPartInCUSize() >> (depth);
+        uint32_t partIdxX = ((absPartIdxInRaster % outPic->getNumPartInCUSize()) % srcBlkWidth) / blkWidth;
+        uint32_t partIdxY = ((absPartIdxInRaster / outPic->getNumPartInCUSize()) % srcBlkWidth) / blkWidth;
         uint32_t partIdx = partIdxY * (srcBlkWidth / blkWidth) + partIdxX;
         m_bestRecoYuv[srcDepth]->copyToPicYuv(outPic->getPicYuvRec(), cuAddr, absPartIdx, depth - srcDepth, partIdx);
     }

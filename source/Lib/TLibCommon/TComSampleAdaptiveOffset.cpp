@@ -1368,9 +1368,9 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
     uint32_t height;
     uint32_t pcmLeftShiftBit;
     uint32_t x, y;
-    uint32_t minCoeffSize = cu->getPic()->getMinCUSize() * cu->getPic()->getMinCUSize();
-    uint32_t lumaOffset   = minCoeffSize * absZOrderIdx;
+    uint32_t lumaOffset   = absZOrderIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> 2;
+    //uint32_t chromaOffset = lumaOffset >> (m_hChromaShift + m_vChromaShift);
 
     if (ttText == TEXT_LUMA)
     {
@@ -1402,8 +1402,10 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
         }
 
         stride = pcPicYuvRec->getCStride();
-        width  = ((g_maxCUSize >> depth) / 2);
-        height = ((g_maxCUSize >> depth) / 2);
+        //width  = ((g_maxCUSize >> depth) >> m_hChromaShift);
+        //height = ((g_maxCUSize >> depth) >> m_vhChromaShift);
+        width  = ((g_maxCUSize >> depth) >> 1);
+        height = ((g_maxCUSize >> depth) >> 1);
         if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
             pcmLeftShiftBit = 0;

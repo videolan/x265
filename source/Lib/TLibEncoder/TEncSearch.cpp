@@ -126,8 +126,8 @@ bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     for (uint32_t i = 0; i < numLayersToAllocate; ++i)
     {
         m_qtTempCoeffY[i]  = X265_MALLOC(coeff_t, g_maxCUSize * g_maxCUSize);
-        m_qtTempCoeffCb[i] = X265_MALLOC(coeff_t, (g_maxCUSize >> m_hChromaShift) * (g_maxCUSize >> m_vChromaShift));
-        m_qtTempCoeffCr[i] = X265_MALLOC(coeff_t, (g_maxCUSize >> m_hChromaShift) * (g_maxCUSize >> m_vChromaShift));
+        m_qtTempCoeffCb[i] = X265_MALLOC(coeff_t, g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift));
+        m_qtTempCoeffCr[i] = X265_MALLOC(coeff_t, g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift));
         m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param->internalCsp);
     }
 
@@ -255,7 +255,7 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
     int cspy = chroma ? m_vChromaShift : 0;
     uint32_t width = cu->getCUSize(0) >> (trDepth + cspx);
     uint32_t height = cu->getCUSize(0) >> (trDepth + cspy);
-    uint32_t coeffOffset = (cu->getPic()->getMinCUSize() >> cspx) * (cu->getPic()->getMinCUSize() >> cspy) * absPartIdx;
+    uint32_t coeffOffset = absPartIdx << (cu->getPic()->getLog2UnitSize() * 2 - (cspx + cspy));
     uint32_t qtLayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
     coeff_t* coeff = 0;
     switch (ttype)
@@ -1308,10 +1308,10 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
         uint32_t numCoeffC = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullDepth << 1);
         if (!bChromaSame)
         {
-            numCoeffC = ((cu->getSlice()->getSPS()->getMaxCUSize() >> m_hChromaShift) * (cu->getSlice()->getSPS()->getMaxCUSize() >> m_vChromaShift)) >> (fullDepth << 1);
+            numCoeffC = ((cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (m_hChromaShift + m_vChromaShift)) >> (fullDepth << 1));
         }
 
-        uint32_t numCoeffIncC = ((cu->getSlice()->getSPS()->getMaxCUSize() >> m_hChromaShift) * (cu->getSlice()->getSPS()->getMaxCUSize() >> m_vChromaShift)) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        uint32_t numCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (m_hChromaShift + m_vChromaShift)) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
 
         coeff_t* coeffSrcU = m_qtTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
         coeff_t* coeffSrcV = m_qtTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
@@ -2031,9 +2031,8 @@ void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     uint64_t cost;
 
     uint32_t absPartIdx = 0;
-    uint32_t minCoeffSize = cu->getPic()->getMinCUSize() * cu->getPic()->getMinCUSize();
-    uint32_t lumaOffset   = minCoeffSize * absPartIdx;
-    uint32_t chromaOffset = lumaOffset >> 2;
+    uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
+    uint32_t chromaOffset = lumaOffset >> (m_hChromaShift + m_vChromaShift);
 
     // Luminance
     pixel*   fenc = fencYuv->getLumaAddr();
@@ -3597,7 +3596,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     bool mCodeAll = true;
     int width  = 1 << trSizeLog2;
     int height = 1 << trSizeLog2;
-    const uint32_t numPels = (width >> cu->getHorzChromaShift()) * (height >> cu->getHorzChromaShift());
+    const uint32_t numPels = width * height >> (cu->getHorzChromaShift() + cu->getHorzChromaShift());
     if (numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
     {
         mCodeAll = false;

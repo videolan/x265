@@ -88,7 +88,7 @@ protected:
     uint32_t xCalcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int dir, int edgeIdx, int baseUnitIdx)
     {
         TComPic* const pic = cu->getPic();
-        const uint32_t lcuWidthInBaseUnits = pic->getNumPartInWidth();
+        const uint32_t lcuWidthInBaseUnits = pic->getNumPartInCUSize();
 
         if (dir == 0)
         {

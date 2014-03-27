@@ -148,23 +148,19 @@ public:
 
     TComPicYuv*   getPicYuvRec()          { return m_reconPicYuv; }
 
-    uint32_t      getNumCUsInFrame()      { return m_picSym->getNumberOfCUsInFrame(); }
+    uint32_t      getNumCUsInFrame() const { return m_picSym->getNumberOfCUsInFrame(); }
 
-    uint32_t      getNumPartInWidth()     { return m_picSym->getNumPartInWidth(); }
+    uint32_t      getNumPartInCUSize() const { return m_picSym->getNumPartInCUSize(); }
 
-    uint32_t      getNumPartInHeight()    { return m_picSym->getNumPartInHeight(); }
+    uint32_t      getNumPartInCU() const  { return m_picSym->getNumPartition(); }
 
-    uint32_t      getNumPartInCU()        { return m_picSym->getNumPartition(); }
+    uint32_t      getFrameWidthInCU() const { return m_picSym->getFrameWidthInCU(); }
 
-    uint32_t      getFrameWidthInCU()     { return m_picSym->getFrameWidthInCU(); }
+    uint32_t      getFrameHeightInCU() const { return m_picSym->getFrameHeightInCU(); }
 
-    uint32_t      getFrameHeightInCU()    { return m_picSym->getFrameHeightInCU(); }
+    uint32_t      getUnitSize() const     { return m_picSym->getUnitSize(); }
 
-    uint32_t      getMinCUSize()          { return m_picSym->getMinCUSize(); }
-
-    uint32_t      getParPelX(uint8_t partIdx) { return getParPelX(partIdx); }
-
-    uint32_t      getParPelY(uint8_t partIdx) { return getParPelX(partIdx); }
+    uint32_t      getLog2UnitSize() const   { return m_picSym->getLog2UnitSize(); }
 
     int           getStride()             { return m_reconPicYuv->getStride(); }
 

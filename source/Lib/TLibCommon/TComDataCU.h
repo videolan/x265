@@ -99,7 +99,6 @@ private:
     int           m_chromaFormat;
     int           m_hChromaShift;
     int           m_vChromaShift;
-    int           m_unitSize;        ///< size of a "minimum partition"
     uint32_t      m_unitMask;        ///< mask for mapping index to CompressMV field
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -179,7 +178,7 @@ public:
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
 
-    bool          create(uint32_t numPartition, uint32_t width, uint32_t height, int unitSize, int csp);
+    bool          create(uint32_t numPartition, uint32_t cuSize, int unitSize, int csp);
     void          destroy();
 
     void          initCU(TComPic* pic, uint32_t cuAddr);

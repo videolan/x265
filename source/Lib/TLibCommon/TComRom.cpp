@@ -254,50 +254,46 @@ void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& cu
     }
 }
 
-void initRasterToZscan(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxDepth)
+void initRasterToZscan(uint32_t maxCUSize, uint32_t maxDepth)
 {
-    uint32_t  minWidth  = maxCUWidth  >> (maxDepth - 1);
-    uint32_t  minHeight = maxCUHeight >> (maxDepth - 1);
+    uint32_t  unitSize = maxCUSize  >> (maxDepth - 1);
 
-    uint32_t  numPartInWidth  = (uint32_t)maxCUWidth  / minWidth;
-    uint32_t  numPartInHeight = (uint32_t)maxCUHeight / minHeight;
+    uint32_t  numPartInCUSize  = (uint32_t)maxCUSize / unitSize;
 
-    for (uint32_t i = 0; i < numPartInWidth * numPartInHeight; i++)
+    for (uint32_t i = 0; i < numPartInCUSize * numPartInCUSize; i++)
     {
         g_rasterToZscan[g_zscanToRaster[i]] = i;
     }
 }
 
-void initRasterToPelXY(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxDepth)
+void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxDepth)
 {
     uint32_t i;
 
     uint32_t* tempX = &g_rasterToPelX[0];
     uint32_t* tempY = &g_rasterToPelY[0];
 
-    uint32_t  minWidth  = maxCUWidth  >> (maxDepth - 1);
-    uint32_t  minHeight = maxCUHeight >> (maxDepth - 1);
+    uint32_t  unitSize  = maxCUSize >> (maxDepth - 1);
 
-    uint32_t  numPartInWidth  = maxCUWidth  / minWidth;
-    uint32_t  numPartInHeight = maxCUHeight / minHeight;
+    uint32_t  numPartInCUSize = maxCUSize / unitSize;
 
     tempX[0] = 0;
     tempX++;
-    for (i = 1; i < numPartInWidth; i++)
+    for (i = 1; i < numPartInCUSize; i++)
     {
-        tempX[0] = tempX[-1] + minWidth;
+        tempX[0] = tempX[-1] + unitSize;
         tempX++;
     }
 
-    for (i = 1; i < numPartInHeight; i++)
+    for (i = 1; i < numPartInCUSize; i++)
     {
-        memcpy(tempX, tempX - numPartInWidth, sizeof(uint32_t) * numPartInWidth);
-        tempX += numPartInWidth;
+        memcpy(tempX, tempX - numPartInCUSize, sizeof(uint32_t) * numPartInCUSize);
+        tempX += numPartInCUSize;
     }
 
-    for (i = 1; i < numPartInWidth * numPartInHeight; i++)
+    for (i = 1; i < numPartInCUSize * numPartInCUSize; i++)
     {
-        tempY[i] = (i / numPartInWidth) * minWidth;
+        tempY[i] = (i / numPartInCUSize) * unitSize;
     }
 }
 

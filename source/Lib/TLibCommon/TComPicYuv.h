@@ -81,8 +81,7 @@ public:
     int   m_hChromaShift;
     int   m_vChromaShift;
 
-    int   m_cuWidth;           ///< Width of Coding Unit (CU)
-    int   m_cuHeight;          ///< Height of Coding Unit (CU)
+    int   m_cuSize;            ///< Width/Height of Coding Unit (CU)
     int32_t*  m_cuOffsetY;
     int32_t*  m_cuOffsetC;
     int32_t*  m_buOffsetY;
@@ -105,7 +104,7 @@ public:
     //  Memory management
     // ------------------------------------------------------------------------------------------------
 
-    bool  create(int picWidth, int picHeight, int csp, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
+    bool  create(int picWidth, int picHeight, int csp, uint32_t maxCUSize, uint32_t maxCUDepth);
     void  destroy();
 
     // ------------------------------------------------------------------------------------------------

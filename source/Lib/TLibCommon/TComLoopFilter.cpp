@@ -223,7 +223,7 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
     uint32_t pelsInPart = g_maxCUSize >> g_maxCUDepth;
     uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK / pelsInPart ? DEBLOCK_SMALLEST_BLOCK / pelsInPart : 1;
 
-    uint32_t sizeInPU = pic->getNumPartInWidth() >> (depth);
+    uint32_t sizeInPU = pic->getNumPartInCUSize() >> (depth);
     const bool bAlwaysDoChroma = (cu->getChromaFormat() == CHROMA_444);
     for (uint32_t e = 0; e < sizeInPU; e += partIdxIncr)
     {
@@ -239,11 +239,11 @@ void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, ui
 {
     if (widthInBaseUnits == 0)
     {
-        widthInBaseUnits  = cu->getPic()->getNumPartInWidth() >> depth;
+        widthInBaseUnits  = cu->getPic()->getNumPartInCUSize() >> depth;
     }
     if (heightInBaseUnits == 0)
     {
-        heightInBaseUnits = cu->getPic()->getNumPartInHeight() >> depth;
+        heightInBaseUnits = cu->getPic()->getNumPartInCUSize() >> depth;
     }
     const uint32_t numElem = dir == 0 ? heightInBaseUnits : widthInBaseUnits;
     assert(numElem > 0);
@@ -288,8 +288,8 @@ void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uin
 void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx)
 {
     const uint32_t depth = cu->getDepth(absZOrderIdx);
-    const uint32_t widthInBaseUnits  = cu->getPic()->getNumPartInWidth() >> depth;
-    const uint32_t heightInBaseUnits = cu->getPic()->getNumPartInHeight() >> depth;
+    const uint32_t widthInBaseUnits  = cu->getPic()->getNumPartInCUSize() >> depth;
+    const uint32_t heightInBaseUnits = cu->getPic()->getNumPartInCUSize() >> depth;
     const uint32_t hWidthInBaseUnits  = widthInBaseUnits  >> 1;
     const uint32_t hHeightInBaseUnits = heightInBaseUnits >> 1;
     const uint32_t qWidthInBaseUnits  = widthInBaseUnits  >> 2;
@@ -529,7 +529,7 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
     int qp = 0;
     int qpP = 0;
     int qpQ = 0;
-    uint32_t numParts = cu->getPic()->getNumPartInWidth() >> depth;
+    uint32_t numParts = cu->getPic()->getNumPartInCUSize() >> depth;
 
     uint32_t pelsInPart = g_maxCUSize >> g_maxCUDepth;
     uint32_t bsAbsIdx = 0, bs = 0;
@@ -643,7 +643,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t  pelsInPartChroma = g_maxCUSize >> (g_maxCUDepth + cu->getHorzChromaShift());
     int   offset, srcStep;
 
-    const uint32_t lcuWidthInBaseUnits = cu->getPic()->getNumPartInWidth();
+    const uint32_t lcuWidthInBaseUnits = cu->getPic()->getNumPartInCUSize();
 
     bool  bPCMFilter = (cu->getSlice()->getSPS()->getUsePCM() && cu->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
     bool  bPartPNoFilter = false;
@@ -665,7 +665,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
         return;
     }
 
-    uint32_t numParts = cu->getPic()->getNumPartInWidth() >> depth;
+    uint32_t numParts = cu->getPic()->getNumPartInCUSize() >> depth;
 
     uint32_t bsAbsIdx;
     uint8_t bs;

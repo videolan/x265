@@ -476,7 +476,7 @@ int TComPattern::isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t pa
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu->getPic()->getNumPartInWidth();
+    const uint32_t idxStep = cu->getPic()->getNumPartInCUSize();
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -556,7 +556,7 @@ int TComPattern::isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint3
 
 int TComPattern::isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu->getPic()->getNumPartInWidth() + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu->getPic()->getNumPartInCUSize() + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 

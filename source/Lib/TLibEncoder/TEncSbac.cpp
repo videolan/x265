@@ -1872,9 +1872,9 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
     {
         m_binIf->encodePCMAlignBits();
 
-        uint32_t minCoeffSize = cu->getPic()->getMinCUSize() * cu->getPic()->getMinCUSize();
-        uint32_t lumaOffset   = minCoeffSize * absPartIdx;
+        uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
         uint32_t chromaOffset = lumaOffset >> 2;
+        //uint32_t chromaOffset = lumaOffset >> (m_hChromaShift + m_vChromaShift);
         uint32_t width;
         uint32_t height;
         uint32_t sampleBits;

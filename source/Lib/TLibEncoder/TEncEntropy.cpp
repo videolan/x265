@@ -592,8 +592,7 @@ void TEncEntropy::encodeQP(TComDataCU* cu, uint32_t absPartIdx)
  */
 void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP)
 {
-    uint32_t minCoeffSize = cu->getPic()->getMinCUSize() * cu->getPic()->getMinCUSize();
-    uint32_t lumaOffset   = minCoeffSize * absPartIdx;
+    uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
 
     if (cu->isIntra(absPartIdx))
