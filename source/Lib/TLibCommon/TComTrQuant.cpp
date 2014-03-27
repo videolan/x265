@@ -308,7 +308,7 @@ void TComTrQuant::init(uint32_t maxTrSize, int useRDOQ, int useRDOQTS, int useTr
 uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
                                    int16_t*    residual,
                                    uint32_t    stride,
-                                   coeff_t*     coeff,
+                                   coeff_t*    coeff,
                                    uint32_t    trSize,
                                    TextType    ttype,
                                    uint32_t    absPartIdx,

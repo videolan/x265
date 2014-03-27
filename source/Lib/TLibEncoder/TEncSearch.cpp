@@ -958,8 +958,8 @@ void TEncSearch::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t ab
         //===== copy transform coefficients =====
         uint32_t numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (fullDepth << 1);
         uint32_t numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
-        coeff_t* coeffSrcY = m_qtTempCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
-        coeff_t* coeffDestY = cu->getCoeffY()        + (numCoeffIncY * absPartIdx);
+        coeff_t* coeffSrcY    = m_qtTempCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
+        coeff_t* coeffDestY   = cu->getCoeffY()         + (numCoeffIncY * absPartIdx);
         ::memcpy(coeffDestY, coeffSrcY, sizeof(coeff_t) * numCoeffY);
 
         //===== copy reconstruction =====
@@ -1338,7 +1338,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                                        uint32_t    absPartIdx,
                                        TComYuv*    fencYuv,
                                        TComYuv*    predYuv,
-                                       ShortYuv*  resiYuv,
+                                       ShortYuv*   resiYuv,
                                        TComYuv*    reconYuv)
 {
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
@@ -1376,7 +1376,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
             int16_t* residual       = (chromaId > 0 ? resiYuv->getCrAddr(absPartIdx) : resiYuv->getCbAddr(absPartIdx));
             pixel*   recon          = (chromaId > 0 ? reconYuv->getCrAddr(absPartIdx) : reconYuv->getCbAddr(absPartIdx));
             uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> 2;
-            coeff_t*  coeff          = (chromaId > 0 ? cu->getCoeffCr() : cu->getCoeffCb()) + numCoeffPerInc * absPartIdx;
+            coeff_t*  coeff         = (chromaId > 0 ? cu->getCoeffCr() : cu->getCoeffCb()) + numCoeffPerInc * absPartIdx;
 
             uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
             pixel*   reconIPred       = (chromaId > 0 ? cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder) : cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder));
