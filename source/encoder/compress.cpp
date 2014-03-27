@@ -90,20 +90,20 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
                                 m_search->m_predBufHeight, m_search->m_refAbove, m_search->m_refLeft,
                                 m_search->m_refAboveFlt, m_search->m_refLeftFlt);
 
-    Pel* fenc   = m_origYuv[depth]->getLumaAddr();
+    pixel* fenc     = m_origYuv[depth]->getLumaAddr();
     uint32_t stride = m_modePredYuv[5][depth]->getStride();
 
-    Pel *above         = m_search->m_refAbove    + width - 1;
-    Pel *aboveFiltered = m_search->m_refAboveFlt + width - 1;
-    Pel *left          = m_search->m_refLeft     + width - 1;
-    Pel *leftFiltered  = m_search->m_refLeftFlt  + width - 1;
+    pixel *above         = m_search->m_refAbove    + width - 1;
+    pixel *aboveFiltered = m_search->m_refAboveFlt + width - 1;
+    pixel *left          = m_search->m_refLeft     + width - 1;
+    pixel *leftFiltered  = m_search->m_refLeftFlt  + width - 1;
     int sad, bsad;
     uint32_t bits, bbits, mode, bmode;
     uint64_t cost, bcost;
 
     // 33 Angle modes once
-    ALIGN_VAR_32(Pel, buf_trans[32 * 32]);
-    ALIGN_VAR_32(Pel, tmp[33 * 32 * 32]);
+    ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
+    ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
     int scaleWidth = width;
     int scaleStride = stride;
     int costMultiplier = 1;
@@ -111,16 +111,16 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     if (width > 32)
     {
         // origin is 64x64, we scale to 32x32 and setup required parameters
-        ALIGN_VAR_32(Pel, bufScale[32 * 32]);
+        ALIGN_VAR_32(pixel, bufScale[32 * 32]);
         primitives.scale2D_64to32(bufScale, fenc, stride);
         fenc = bufScale;
 
         // reserve space in case primitives need to store data in above
         // or left buffers
-        Pel _above[4 * 32 + 1];
-        Pel _left[4 * 32 + 1];
-        Pel *aboveScale  = _above + 2 * 32;
-        Pel *leftScale   = _left + 2 * 32;
+        pixel _above[4 * 32 + 1];
+        pixel _left[4 * 32 + 1];
+        pixel *aboveScale  = _above + 2 * 32;
+        pixel *leftScale   = _left + 2 * 32;
         aboveScale[0] = leftScale[0] = above[0];
         primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
         primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
@@ -146,8 +146,8 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     bbits  = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
     bcost = m_rdCost->calcRdSADCost(bsad, bbits);
 
-    Pel *abovePlanar   = above;
-    Pel *leftPlanar    = left;
+    pixel *abovePlanar   = above;
+    pixel *leftPlanar    = left;
 
     if (width >= 8 && width <= 32)
     {
@@ -171,7 +171,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     for (mode = 2; mode < 35; mode++)
     {
         bool modeHor = (mode < 18);
-        Pel *cmp = (modeHor ? buf_trans : fenc);
+        pixel *cmp = (modeHor ? buf_trans : fenc);
         intptr_t srcStride = (modeHor ? scaleWidth : scaleStride);
         sad  = costMultiplier * sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleWidth * scaleWidth)], scaleWidth);
         bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
@@ -865,8 +865,8 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
         if (!lcu->getSkipFlag(absPartIdx))
         {
             //Calculate Residue
-            Pel* src2 = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
-            Pel* src1 = m_origYuv[0]->getLumaAddr(absPartIdx);
+            pixel* src2 = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
+            pixel* src1 = m_origYuv[0]->getLumaAddr(absPartIdx);
             int16_t* dst = m_tmpResiYuv[depth]->getLumaAddr();
             uint32_t src2stride = m_bestPredYuv[0]->getStride();
             uint32_t src1stride = m_origYuv[0]->getStride();
@@ -902,9 +902,9 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
                 cu->copyCodedToPic(depth);
 
                 //Generate Recon
-                Pel* pred = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
+                pixel* pred = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
                 int16_t* res = m_tmpResiYuv[depth]->getLumaAddr();
-                Pel* reco = m_bestRecoYuv[depth]->getLumaAddr();
+                pixel* reco = m_bestRecoYuv[depth]->getLumaAddr();
                 dststride = m_bestRecoYuv[depth]->getStride();
                 src1stride = m_bestPredYuv[0]->getStride();
                 src2stride = m_tmpResiYuv[depth]->m_width;
@@ -931,8 +931,8 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
         //Generate Recon
         TComPicYuv* rec = lcu->getPic()->getPicYuvRec();
         int part = partitionFromSizes(cu->getCUSize(0), cu->getCUSize(0));
-        Pel* src = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
-        Pel* dst = rec->getLumaAddr(cu->getAddr(), absPartIdx);
+        pixel* src = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
+        pixel* dst = rec->getLumaAddr(cu->getAddr(), absPartIdx);
         uint32_t srcstride = m_bestPredYuv[0]->getStride();
         uint32_t dststride = rec->getStride();
         primitives.luma_copy_pp[part](dst, dststride, src, srcstride);

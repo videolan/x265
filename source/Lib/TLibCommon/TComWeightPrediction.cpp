@@ -43,22 +43,22 @@
 
 using namespace x265;
 
-static inline Pel weightBidirY(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
+static inline pixel weightBidirY(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
     return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
 }
 
-static inline Pel weightBidirC(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
+static inline pixel weightBidirC(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
     return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
 }
 
-static inline Pel weightUnidirY(int w0, int16_t P0, int round, int shift, int offset)
+static inline pixel weightUnidirY(int w0, int16_t P0, int round, int shift, int offset)
 {
     return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
-static inline Pel weightUnidirC(int w0, int16_t P0, int round, int shift, int offset)
+static inline pixel weightUnidirC(int w0, int16_t P0, int round, int shift, int offset)
 {
     return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
@@ -84,17 +84,17 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
 {
     int x, y;
 
-    Pel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
-    Pel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
-    Pel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
+    pixel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    pixel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    pixel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* srcY1  = srcYuv1->getLumaAddr(partUnitIdx);
-    Pel* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
-    Pel* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
+    pixel* srcY1  = srcYuv1->getLumaAddr(partUnitIdx);
+    pixel* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
+    pixel* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* pDstY  = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* pDstY  = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     if (bLuma)
     {
@@ -215,9 +215,9 @@ void TComWeightPrediction::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uin
     int16_t* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
     int16_t* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     if (bLuma)
     {
@@ -328,13 +328,13 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, 
     int w0, offset, shiftNum, shift, round;
     uint32_t src0Stride, dststride;
 
-    Pel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
-    Pel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
-    Pel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
+    pixel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    pixel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    pixel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     if (bLuma)
     {
@@ -436,9 +436,9 @@ void TComWeightPrediction::addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx,
     int16_t* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
     int16_t* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     int w0, offset, shiftNum, shift, round;
     uint32_t srcStride, dstStride;

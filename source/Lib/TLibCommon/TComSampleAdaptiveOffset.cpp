@@ -1031,7 +1031,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     }
 
     if (idxY == 0)
-        memcpy(m_tmpU1[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+        memcpy(m_tmpU1[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
     int  i;
     uint32_t edgeType;

@@ -1594,8 +1594,8 @@ void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
     uint32_t width = cu->getCUSize(0);
     uint32_t height = cu->getCUSize(0);
 
-    Pel* srcY = fencYuv->getLumaAddr();
-    Pel* dstY = cu->getPCMSampleY();
+    pixel* srcY = fencYuv->getLumaAddr();
+    pixel* dstY = cu->getPCMSampleY();
     uint32_t srcStride = fencYuv->getStride();
 
     for (int y = 0; y < height; y++)
@@ -1609,11 +1609,11 @@ void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
         srcY += srcStride;
     }
 
-    Pel* srcCb = fencYuv->getCbAddr();
-    Pel* srcCr = fencYuv->getCrAddr();
+    pixel* srcCb = fencYuv->getCbAddr();
+    pixel* srcCr = fencYuv->getCrAddr();
 
-    Pel* dstCb = cu->getPCMSampleCb();
-    Pel* dstCr = cu->getPCMSampleCr();
+    pixel* dstCb = cu->getPCMSampleCb();
+    pixel* dstCr = cu->getPCMSampleCr();
 
     uint32_t srcStrideC = fencYuv->getCStride();
     uint32_t heightC = height >> 1;

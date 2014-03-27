@@ -153,9 +153,9 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t width, uint32_t height, 
     CHECKED_MALLOC(m_trCoeffCr, TCoeff, (width >> m_hChromaShift) * (height >> m_vChromaShift));
 
     CHECKED_MALLOC(m_iPCMFlags, bool, numPartition);
-    CHECKED_MALLOC(m_iPCMSampleY, Pel, width * height);
-    CHECKED_MALLOC(m_iPCMSampleCb, Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
-    CHECKED_MALLOC(m_iPCMSampleCr, Pel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    CHECKED_MALLOC(m_iPCMSampleY, pixel, width * height);
+    CHECKED_MALLOC(m_iPCMSampleCb, pixel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
+    CHECKED_MALLOC(m_iPCMSampleCr, pixel, (width >> m_hChromaShift) * (height >> m_vChromaShift));
 
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
     return ok;
@@ -269,9 +269,9 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
         // TODO: can be remove, but I haven't data to verify it, remove later
         if (getSlice()->getSPS()->getUsePCM())
         {
-            memset(m_iPCMSampleY, 0, sizeof(Pel) * y_tmp);
-            memset(m_iPCMSampleCb, 0, sizeof(Pel) * c_tmp);
-            memset(m_iPCMSampleCr, 0, sizeof(Pel) * c_tmp);
+            memset(m_iPCMSampleY, 0, sizeof(pixel) * y_tmp);
+            memset(m_iPCMSampleCb, 0, sizeof(pixel) * c_tmp);
+            memset(m_iPCMSampleCr, 0, sizeof(pixel) * c_tmp);
         }
     }
 
@@ -630,14 +630,14 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     uint32_t tmp  = g_maxCUSize * g_maxCUSize >> (depth << 1);
     uint32_t tmp2 = partUnitIdx * tmp;
     memcpy(m_trCoeffY  + tmp2, cu->getCoeffY(),  sizeof(TCoeff) * tmp);
-    memcpy(m_iPCMSampleY + tmp2, cu->getPCMSampleY(), sizeof(Pel) * tmp);
+    memcpy(m_iPCMSampleY + tmp2, cu->getPCMSampleY(), sizeof(pixel) * tmp);
 
     tmp  = (g_maxCUSize >> m_hChromaShift) * (g_maxCUSize >> m_vChromaShift) >> (depth << 1);
     tmp2 = partUnitIdx * tmp;
     memcpy(m_trCoeffCb + tmp2, cu->getCoeffCb(), sizeof(TCoeff) * tmp);
     memcpy(m_trCoeffCr + tmp2, cu->getCoeffCr(), sizeof(TCoeff) * tmp);
-    memcpy(m_iPCMSampleCb + tmp2, cu->getPCMSampleCb(), sizeof(Pel) * tmp);
-    memcpy(m_iPCMSampleCr + tmp2, cu->getPCMSampleCr(), sizeof(Pel) * tmp);
+    memcpy(m_iPCMSampleCb + tmp2, cu->getPCMSampleCb(), sizeof(pixel) * tmp);
+    memcpy(m_iPCMSampleCr + tmp2, cu->getPCMSampleCr(), sizeof(pixel) * tmp);
 }
 
 // Copy current predicted part to a CU in picture.
@@ -689,13 +689,13 @@ void TComDataCU::copyToPic(uint8_t uhDepth)
     uint32_t tmp  = (g_maxCUSize * g_maxCUSize) >> (uhDepth << 1);
     uint32_t tmp2 = m_absIdxInLCU * m_pic->getMinCUSize() * m_pic->getMinCUSize();
     memcpy(rpcCU->getCoeffY()     + tmp2, m_trCoeffY,    sizeof(TCoeff) * tmp);
-    memcpy(rpcCU->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(Pel) * tmp);
+    memcpy(rpcCU->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(pixel) * tmp);
     tmp  = ((g_maxCUSize >> m_hChromaShift) * (g_maxCUSize >> m_vChromaShift)) >> (uhDepth << 1);
     tmp2 = m_absIdxInLCU * (m_pic->getMinCUSize() >> m_hChromaShift) * (m_pic->getMinCUSize() >> m_vChromaShift);
     memcpy(rpcCU->getCoeffCb() + tmp2, m_trCoeffCb, sizeof(TCoeff) * tmp);
     memcpy(rpcCU->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
-    memcpy(rpcCU->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
-    memcpy(rpcCU->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
+    memcpy(rpcCU->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(pixel) * tmp);
+    memcpy(rpcCU->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(pixel) * tmp);
 }
 
 void TComDataCU::copyCodedToPic(uint8_t depth)
@@ -773,14 +773,14 @@ void TComDataCU::copyToPic(uint8_t depth, uint32_t partIdx, uint32_t partDepth)
     uint32_t tmp  = (g_maxCUSize * g_maxCUSize) >> ((depth + partDepth) << 1);
     uint32_t tmp2 = partOffset * m_pic->getMinCUSize() * m_pic->getMinCUSize();
     memcpy(cu->getCoeffY()  + tmp2, m_trCoeffY,  sizeof(TCoeff) * tmp);
-    memcpy(cu->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(Pel) * tmp);
+    memcpy(cu->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(pixel) * tmp);
 
     tmp  = ((g_maxCUSize >> m_hChromaShift) * (g_maxCUSize >> m_vChromaShift)) >> ((depth + partDepth) << 1);
     tmp2 = partOffset * (m_pic->getMinCUSize() >> m_hChromaShift) * (m_pic->getMinCUSize() >> m_vChromaShift);
     memcpy(cu->getCoeffCb() + tmp2, m_trCoeffCb, sizeof(TCoeff) * tmp);
     memcpy(cu->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
-    memcpy(cu->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
-    memcpy(cu->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
+    memcpy(cu->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(pixel) * tmp);
+    memcpy(cu->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(pixel) * tmp);
 }
 
 // --------------------------------------------------------------------------------------------------------------------

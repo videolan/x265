@@ -52,10 +52,8 @@ namespace x265 {
 // ====================================================================================================================
 
 #if HIGH_BIT_DEPTH
-typedef uint16_t Pel;          // 16-bit pixel type
 #define X265_DEPTH 10          // compile time configurable bit depth
 #else
-typedef uint8_t  Pel;          // 8-bit pixel type
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif
 typedef int32_t  TCoeff;       // transform coefficient

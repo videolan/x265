@@ -45,8 +45,6 @@
 #include "TComRdCost.h"
 #include "TComPattern.h"
 
-#include <assert.h>
-
 namespace x265 {
 // private namespace
 
@@ -120,9 +118,9 @@ private:
     TCoeff*       m_trCoeffCb;          ///< transformed coefficient buffer (Cb)
     TCoeff*       m_trCoeffCr;          ///< transformed coefficient buffer (Cr)
 
-    Pel*          m_iPCMSampleY;        ///< PCM sample buffer (Y)
-    Pel*          m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
-    Pel*          m_iPCMSampleCr;       ///< PCM sample buffer (Cr)
+    pixel*        m_iPCMSampleY;        ///< PCM sample buffer (Y)
+    pixel*        m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
+    pixel*        m_iPCMSampleCr;       ///< PCM sample buffer (Cr)
 
     // -------------------------------------------------------------------------------------------------------------------
     // neighbor access variables
@@ -278,7 +276,7 @@ public:
     void          setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void          setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth);
 
-    uint32_t          getQuadtreeTULog2MinSizeInCU(uint32_t absPartIdx);
+    uint32_t      getQuadtreeTULog2MinSizeInCU(uint32_t absPartIdx);
 
     TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
 
@@ -288,11 +286,11 @@ public:
 
     TCoeff*&      getCoeffCr()                { return m_trCoeffCr; }
 
-    Pel*&         getPCMSampleY()             { return m_iPCMSampleY; }
+    pixel*&       getPCMSampleY()             { return m_iPCMSampleY; }
 
-    Pel*&         getPCMSampleCb()            { return m_iPCMSampleCb; }
+    pixel*&       getPCMSampleCb()            { return m_iPCMSampleCb; }
 
-    Pel*&         getPCMSampleCr()            { return m_iPCMSampleCr; }
+    pixel*&       getPCMSampleCr()            { return m_iPCMSampleCr; }
 
     uint8_t       getCbf(uint32_t idx, TextType ttype) { return m_cbf[ttype][idx]; }
 
