@@ -144,9 +144,9 @@ Input Options
 .. option:: --y4m
 
 	Parse input stream as YUV4MPEG2 regardless of file extension,
-	primarily intended for use with stdin. This option is implied if
-	the input filename has a ".y4m" extension
-	(ie: :option:`--input` - :option:`--y4m`)
+	primarily intended for use with stdin (ie: :option:`--input` -
+	:option:`--y4m`).  This option is implied if the input filename has
+	a ".y4m" extension
 
 	**CLI ONLY**
 
