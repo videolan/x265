@@ -585,29 +585,30 @@ Quality reporting metrics
 
 .. option:: --ssim, --no-ssim
 
-	Calculate and report Structural Similarity values. Default disabled
-	It is recommended to use :option:`--tune` ssim if you are measuring
-	ssim, else the results should not be used for comparison purposes.
+	Calculate and report Structural Similarity values. It is
+	recommended to use :option:`--tune` ssim if you are measuring ssim,
+	else the results should not be used for comparison purposes.
+	Default disabled
 
 .. option:: --psnr, --no-psnr
 
-	Calculate and report Peak Signal to Noise Ratio. Default disabled
-	It is recommended to use :option:`--tune` psnr if you are measuring
-	PSNR, else the results should not be used for comparison purposes.
+	Calculate and report Peak Signal to Noise Ratio.  It is recommended
+	to use :option:`--tune` psnr if you are measuring PSNR, else the
+	results should not be used for comparison purposes.  Default
+	disabled
 
 VUI (Video Usability Information) options
 =========================================
 
-By default, no VUI will be emitted by x265. If you enable any of the VUI
-parts (sar or color primitives) the VUI itself is also enabled.
+By default x265 does not emit a VUI in the SPS, but if you specify any
+of the VUI fields (:option:`--sar`, :option:`--range`, etc) the VUI is
+implicitly enabled.
 
 .. option:: --vui, --no-vui
 
-	Enable video usability Information with all fields in the SPS. It is
-	generally unnecessary to enable the VUI itself. Enabling any of the
-	VUI properties will enable the VUI. This is mostly a debugging
-	feature and will likely be removed in a later release.  Default
-	disabled
+	Enable video usability information with all fields in the SPS. This
+	is a debugging feature and will likely be removed in a later
+	release.  Default disabled
 
 .. option:: --sar <integer|w:h>
 
@@ -635,18 +636,21 @@ parts (sar or color primitives) the VUI itself is also enabled.
 
 .. option:: --crop-rect <left,top,right,bottom>
 
-	Region of image that does not contain information was added to achieve
-	certain resolution or aspect ratio. Default undefined
+	Define the (overscan) region of the image that does not contain
+	information because it was added to achieve certain resolution or
+	aspect ratio. The decoder may be directed to crop away this region
+	before displaying the images via the :option:`--overscan` option.
+	Default undefined
 
 .. option:: --overscan <show|crop>
 
-	Specify whether it is appropriate for the decoder to display the
-	overscan area
+	Specify whether it is appropriate for the decoder to display or crop
+	the overscan area. Default unspecified
 
 .. option:: --videoformat <integer|string>
 
-	Specify format of original analog video prior to digitizing and
-	encoding. Default undefined
+	Specify the source format of the original analog video prior to
+	digitizing and encoding. Default undefined
 
 	0. component
 	1. pal
@@ -715,10 +719,13 @@ parts (sar or color primitives) the VUI itself is also enabled.
 .. option:: --chromalocs <0..5>
 
 	Specify chroma sample location for 4:2:0 inputs. Default undefined
+	Consult the HEVC specification for a description of these values.
 
 .. option:: --timinginfo, --no-timinginfo
 
-	Add timing information (fps, timebase) to the VUI. Default disabled
+	Add timing information to the VUI. This is identical to the timing
+	info reported in the PPS header but is sometimes required.  Default
+	disabled
 
 Debugging options
 =======================================
@@ -733,14 +740,17 @@ Debugging options
 
 .. option:: --recon, -r <filename>
 
-	Reconstructed image YUV or Y4M output file name
+	Output file containing reconstructed images in display order. If the
+	file extension is ".y4m" the file will contain a YUV4MPEG2 stream
+	header and frame headers. Otherwise it will be a raw YUV file in the
+	encoder's internal bit depth.
 
 	**CLI ONLY**
 
 .. option:: --recon-depth <integer>
 
 	Bit-depth of output file. This value defaults to the internal bit
-	depth and is not currently allowed to be modified.
+	depth and currently cannot to be modified.
 
 	**CLI ONLY**
 
