@@ -446,11 +446,11 @@ void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, i
 template<int blockSize>
 void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 {
-    for (int uiY = 0; uiY < blockSize; uiY++)
+    for (int y = 0; y < blockSize; y++)
     {
-        for (int uiX = 0; uiX < blockSize; uiX++)
+        for (int x = 0; x < blockSize; x++)
         {
-            residual[uiX] = static_cast<int16_t>(fenc[uiX]) - static_cast<int16_t>(pred[uiX]);
+            residual[x] = static_cast<int16_t>(fenc[x]) - static_cast<int16_t>(pred[x]);
         }
 
         fenc += stride;
@@ -468,17 +468,17 @@ void calcRecons(pixel* pred, int16_t* residual,
 #endif
                 int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
 {
-    for (int uiY = 0; uiY < blockSize; uiY++)
+    for (int y = 0; y < blockSize; y++)
     {
-        for (int uiX = 0; uiX < blockSize; uiX++)
+        for (int x = 0; x < blockSize; x++)
         {
 #if NEW_CALCRECON
-            recqt[uiX] = (int16_t)ClipY(static_cast<int16_t>(pred[uiX]) + residual[uiX]);
-            recipred[uiX] = (pixel)recqt[uiX];
+            recqt[x] = (int16_t)Clip(static_cast<int16_t>(pred[x]) + residual[x]);
+            recipred[x] = (pixel)recqt[x];
 #else
-            recon[uiX] = (pixel)ClipY(static_cast<int16_t>(pred[uiX]) + residual[uiX]);
-            recqt[uiX] = (int16_t)recon[uiX];
-            recipred[uiX] = recon[uiX];
+            recon[x] = Clip(static_cast<int16_t>(pred[x]) + residual[x]);
+            recqt[x] = (int16_t)recon[x];
+            recipred[x] = recon[x];
 #endif
         }
 
@@ -549,7 +549,7 @@ void pixeladd_ss_c(int bx, int by, int16_t *a, intptr_t dstride, int16_t *b0, in
     {
         for (int x = 0; x < bx; x++)
         {
-            a[x] = (int16_t)ClipY(b0[x] + b1[x]);
+            a[x] = (int16_t)Clip(b0[x] + b1[x]);
         }
 
         b0 += sstride0;
@@ -822,7 +822,7 @@ void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t
     {
         for (int x = 0; x < bx; x++)
         {
-            a[x] = (pixel)ClipY(b0[x] + b1[x]);
+            a[x] = Clip(b0[x] + b1[x]);
         }
 
         b0 += sstride0;
@@ -843,8 +843,8 @@ void addAvg(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intpt
     {
         for (int x = 0; x < bx; x += 2)
         {
-            dst[x + 0] = (pixel)ClipY((src0[x + 0] + src1[x + 0] + offset) >> shiftNum);
-            dst[x + 1] = (pixel)ClipY((src0[x + 1] + src1[x + 1] + offset) >> shiftNum);
+            dst[x + 0] = Clip((src0[x + 0] + src1[x + 0] + offset) >> shiftNum);
+            dst[x + 1] = Clip((src0[x + 1] + src1[x + 1] + offset) >> shiftNum);
         }
 
         src0 += src0Stride;

@@ -45,22 +45,22 @@ using namespace x265;
 
 static inline pixel weightBidirY(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
-    return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
+    return Clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift);
 }
 
 static inline pixel weightBidirC(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
-    return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
+    return Clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift);
 }
 
 static inline pixel weightUnidirY(int w0, int16_t P0, int round, int shift, int offset)
 {
-    return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+    return Clip(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
 static inline pixel weightUnidirC(int w0, int16_t P0, int round, int shift, int offset)
 {
-    return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+    return Clip(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
 // ====================================================================================================================

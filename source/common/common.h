@@ -68,15 +68,9 @@ typedef uint32_t pixel4;
 #endif // if HIGH_BIT_DEPTH
 
 template<typename T>
-inline T ClipY(T x)
+inline pixel Clip(T x)
 {
-    return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x));
-}
-
-template<typename T>
-inline T ClipC(T x)
-{
-    return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x));
+    return (pixel)std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x));
 }
 
 template<typename T>

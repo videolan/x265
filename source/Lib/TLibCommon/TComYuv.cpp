@@ -308,10 +308,10 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, u
         {
             for (x = 0; x < width; x += 4)
             {
-                dstY[x + 0] = ClipY((srcY0[x + 0] + srcY1[x + 0] + offset) >> shiftNum);
-                dstY[x + 1] = ClipY((srcY0[x + 1] + srcY1[x + 1] + offset) >> shiftNum);
-                dstY[x + 2] = ClipY((srcY0[x + 2] + srcY1[x + 2] + offset) >> shiftNum);
-                dstY[x + 3] = ClipY((srcY0[x + 3] + srcY1[x + 3] + offset) >> shiftNum);
+                dstY[x + 0] = Clip((srcY0[x + 0] + srcY1[x + 0] + offset) >> shiftNum);
+                dstY[x + 1] = Clip((srcY0[x + 1] + srcY1[x + 1] + offset) >> shiftNum);
+                dstY[x + 2] = Clip((srcY0[x + 2] + srcY1[x + 2] + offset) >> shiftNum);
+                dstY[x + 3] = Clip((srcY0[x + 3] + srcY1[x + 3] + offset) >> shiftNum);
             }
 
             srcY0 += src0Stride;
@@ -336,11 +336,11 @@ void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, u
             for (x = width - 1; x >= 0; )
             {
                 // note: chroma min width is 2
-                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
+                dstU[x] = Clip((srcU0[x] + srcU1[x] + offset) >> shiftNum);
+                dstV[x] = Clip((srcV0[x] + srcV1[x] + offset) >> shiftNum);
                 x--;
-                dstU[x] = ClipC((srcU0[x] + srcU1[x] + offset) >> shiftNum);
-                dstV[x] = ClipC((srcV0[x] + srcV1[x] + offset) >> shiftNum);
+                dstU[x] = Clip((srcU0[x] + srcU1[x] + offset) >> shiftNum);
+                dstV[x] = Clip((srcV0[x] + srcV1[x] + offset) >> shiftNum);
                 x--;
             }
 
