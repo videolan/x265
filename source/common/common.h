@@ -67,6 +67,24 @@ typedef uint32_t pixel4;
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif // if HIGH_BIT_DEPTH
 
+template<typename T>
+inline T ClipY(T x)
+{
+    return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x));
+}
+
+template<typename T>
+inline T ClipC(T x)
+{
+    return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x));
+}
+
+template<typename T>
+inline T Clip3(T minVal, T maxVal, T a)
+{
+    return std::min<T>(std::max<T>(minVal, a), maxVal);
+}
+
 typedef int32_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))

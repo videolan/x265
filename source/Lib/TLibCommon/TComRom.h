@@ -152,21 +152,6 @@ extern const uint8_t g_goRiceRange[5];      //!< maximum value coded with Rice c
 //extern const uint8_t g_goRicePrefixLen[5];  //!< prefix length for each maximum value
 
 // ====================================================================================================================
-// Bit-depth
-// ====================================================================================================================
-
-/** clip x, such that 0 <= x <= #g_maxLumaVal */
-template<typename T>
-inline T ClipY(T x) { return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x)); }
-
-template<typename T>
-inline T ClipC(T x) { return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x)); }
-
-/** clip a, such that minVal <= a <= maxVal */
-template<typename T>
-inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
-
-// ====================================================================================================================
 // Misc.
 // ====================================================================================================================
 
