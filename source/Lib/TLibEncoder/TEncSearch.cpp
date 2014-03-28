@@ -1515,6 +1515,11 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             // 33 Angle modes once
             ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
             ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
+            ALIGN_VAR_32(pixel, bufScale[32 * 32]);
+            pixel _above[4 * 32 + 1];
+            pixel _left[4 * 32 + 1];
+            pixel *aboveScale  = _above + 2 * 32;
+            pixel *leftScale   = _left + 2 * 32;
             int scaleSize = puSize;
             int scaleStride = stride;
             int costShift = 0;
@@ -1522,16 +1527,11 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             if (puSize > 32)
             {
                 // origin is 64x64, we scale to 32x32 and setup required parameters
-                ALIGN_VAR_32(pixel, bufScale[32 * 32]);
                 primitives.scale2D_64to32(bufScale, fenc, stride);
                 fenc = bufScale;
 
                 // reserve space in case primitives need to store data in above
                 // or left buffers
-                pixel _above[4 * 32 + 1];
-                pixel _left[4 * 32 + 1];
-                pixel *aboveScale  = _above + 2 * 32;
-                pixel *leftScale   = _left + 2 * 32;
                 aboveScale[0] = leftScale[0] = above[0];
                 primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
                 primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
