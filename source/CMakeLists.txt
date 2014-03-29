@@ -191,10 +191,16 @@ if (WIN32)
         set(PLATFORM_LIBS ${PLATFORM_LIBS} ${VLD_LIBRARIES})
         link_directories(${VLD_LIBRARY_DIRS})
     endif()
-    if(MINGW)
-        # MinGW requires a forced Windows version in order to use CONDITION_VARIABLE
+    option(WINXP_SUPPORT "Make binaries compatible with Windows XP" OFF)
+    if(WINXP_SUPPORT)
+        # force use of workarounds for CONDITION_VARIABLE and atomic
+        # intrinsics introduced after XP
+        add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WINXP)
+    elseif(MINGW)
+        # Unless the user requires XP support, allow MinGW builds to use
+        # native condition variables introduced in Vista
         add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_VISTA)
-    endif(MINGW)
+    endif()
 endif()
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG

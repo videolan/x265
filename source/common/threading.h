@@ -31,6 +31,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include "winxp.h"  // XP workarounds for CONDITION_VARIABLE and ATOMIC_OR
 #else
 #include <pthread.h>
 #include <semaphore.h>
@@ -98,29 +99,9 @@ inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
 
 #endif // if !_WIN64
 
-#if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-/* Windows XP did not define this intrinsic */
-FORCEINLINE LONGLONG x265_interlocked_OR64(__inout LONGLONG volatile *Destination,
-                                           __in    LONGLONG           Value)
-{
-    LONGLONG Old;
-
-    do
-    {
-        Old = *Destination;
-    }
-    while (_InterlockedCompareExchange64(Destination, Old | Value, Old) != Old);
-
-    return Old;
-}
-
-#define ATOMIC_OR(ptr, mask)            x265_interlocked_OR64((volatile LONG64*)ptr, mask)
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-#pragma intrinsic(_InterlockedCompareExchange64)
+#ifndef ATOMIC_OR
+#define ATOMIC_OR(ptr, mask)                InterlockedOr64((volatile LONG64*)ptr, mask)
 #endif
-#else // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
-#endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 
 #define CLZ32(id, x)                        _BitScanReverse(&id, x)
 #define CTZ64(id, x)                        _BitScanForward64(&id, x)
@@ -223,6 +204,7 @@ public:
     ~ThreadSafeInteger()
     {
         DeleteCriticalSection(&m_cs);
+        XP_CONDITION_VAR_FREE(&m_cv);
     }
 
     int waitForChange(int prev)

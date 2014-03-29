@@ -135,6 +135,9 @@ set_source_files_properties(param.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=$
 if(GCC AND GCC_HAS_NO_NARROWING)
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
 endif()
+if(WIN32)
+    set(WINXP winxp.cpp)
+endif(WIN32)
 
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
@@ -145,6 +148,7 @@ add_library(common OBJECT
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
+    winxp.h ${WINXP}
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h
