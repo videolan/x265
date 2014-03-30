@@ -196,10 +196,6 @@ if (WIN32)
         # force use of workarounds for CONDITION_VARIABLE and atomic
         # intrinsics introduced after XP
         add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WINXP)
-    elseif(MINGW)
-        # Unless the user requires XP support, allow MinGW builds to use
-        # native condition variables introduced in Vista
-        add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_VISTA)
     endif()
 endif()
 
