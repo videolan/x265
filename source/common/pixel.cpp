@@ -852,6 +852,34 @@ void addAvg(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intpt
         dst  += dstStride;
     }
 }
+
+void planecopy_cp_c(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
+{
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+        {
+            dst[c] = ((pixel)src[c]) << shift;
+        }
+
+        dst += dstStride;
+        src += srcStride;
+    }
+}
+
+void planecopy_sp_c(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+{
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+        {
+            dst[c] = (pixel)((src[c] >> shift) & mask);
+        }
+
+        dst += dstStride;
+        src += srcStride;
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -1099,5 +1127,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.var[BLOCK_32x32] = pixel_var<32>;
     p.var[BLOCK_64x64] = pixel_var<64>;
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
+    p.planecopy_cp = planecopy_cp_c;
+    p.planecopy_sp = planecopy_sp_c;
 }
 }

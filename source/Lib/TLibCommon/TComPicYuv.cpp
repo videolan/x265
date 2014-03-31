@@ -181,9 +181,6 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 
     if (pic.bitDepth < X265_DEPTH)
     {
-        /* 8bit input, 10bit internal depth. Do a simple up-shift of 2 bits */
-        assert(X265_DEPTH == 10);
-
         pixel *yPixel = getLumaAddr();
         pixel *uPixel = getCbAddr();
         pixel *vPixel = getCrAddr();
@@ -191,31 +188,11 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         uint8_t *yChar = (uint8_t*)pic.planes[0];
         uint8_t *uChar = (uint8_t*)pic.planes[1];
         uint8_t *vChar = (uint8_t*)pic.planes[2];
+        int shift = X265_MAX(0, X265_DEPTH - pic.bitDepth);
 
-        for (int r = 0; r < height; r++)
-        {
-            for (int c = 0; c < width; c++)
-            {
-                yPixel[c] = ((pixel)yChar[c]) << 2;
-            }
-
-            yPixel += getStride();
-            yChar += pic.stride[0] / sizeof(*yChar);
-        }
-
-        for (int r = 0; r < height >> m_vChromaShift; r++)
-        {
-            for (int c = 0; c < width >> m_hChromaShift; c++)
-            {
-                uPixel[c] = ((pixel)uChar[c]) << 2;
-                vPixel[c] = ((pixel)vChar[c]) << 2;
-            }
-
-            uPixel += getCStride();
-            vPixel += getCStride();
-            uChar += pic.stride[1] / sizeof(*uChar);
-            vChar += pic.stride[2] / sizeof(*vChar);
-        }
+        primitives.planecopy_cp(yChar, pic.stride[0] / sizeof(*yChar), yPixel, getStride(), width, height, shift);
+        primitives.planecopy_cp(uChar, pic.stride[1] / sizeof(*uChar), uPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift);
+        primitives.planecopy_cp(vChar, pic.stride[2] / sizeof(*vChar), vPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift);
     }
     else if (pic.bitDepth == 8)
     {
@@ -267,30 +244,10 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
         int shift = X265_MAX(0, pic.bitDepth - X265_DEPTH);
 
         /* shift and mask pixels to final size */
-        for (int r = 0; r < height; r++)
-        {
-            for (int c = 0; c < width; c++)
-            {
-                yPixel[c] = (pixel)((yShort[c] >> shift) & mask);
-            }
 
-            yPixel += getStride();
-            yShort += pic.stride[0] / sizeof(*yShort);
-        }
-
-        for (int r = 0; r < height >> m_vChromaShift; r++)
-        {
-            for (int c = 0; c < width >> m_hChromaShift; c++)
-            {
-                uPixel[c] = (pixel)((uShort[c] >> shift) & mask);
-                vPixel[c] = (pixel)((vShort[c] >> shift) & mask);
-            }
-
-            uPixel += getCStride();
-            vPixel += getCStride();
-            uShort += pic.stride[1] / sizeof(*uShort);
-            vShort += pic.stride[2] / sizeof(*vShort);
-        }
+        primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, getStride(), width, height, shift, mask);
+        primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+        primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
     }
 
     /* extend the right edge if width was not multiple of the minimum CU size */

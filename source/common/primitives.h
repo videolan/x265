@@ -163,6 +163,8 @@ typedef void (*pixel_add_ps_t)(pixel *a, intptr_t dstride, pixel *b0, int16_t *b
 typedef void (*addAvg_t)(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
 
 typedef void (*saoCuOrgE0_t)(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t signLeft);
+typedef void (*planecopy_cp_t) (uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift);
+typedef void (*planecopy_sp_t) (uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -233,6 +235,8 @@ struct EncoderPrimitives
     extendCURowBorder_t extendRowBorder;
     // sao primitives
     saoCuOrgE0_t      saoCuOrgE0;
+    planecopy_cp_t    planecopy_cp;
+    planecopy_sp_t    planecopy_sp;
 
     struct
     {
