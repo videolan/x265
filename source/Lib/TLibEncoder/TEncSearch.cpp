@@ -464,18 +464,10 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     }
 
     assert(width <= 32);
-#if NEW_CALCRECON
     //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, 0, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
     //===== update distortion =====
     outDist += primitives.sse_sp[part](reconQt, MAX_CU_SIZE, fenc, stride);
-#else
-    ALIGN_VAR_32(pixel, recon[MAX_CU_SIZE * MAX_CU_SIZE]);
-    //===== reconstruction =====
-    primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
-    //===== update distortion =====
-    outDist += primitives.sse_pp[part](fenc, stride, recon, stride);
-#endif
 }
 
 void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
@@ -594,18 +586,10 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
     assert(((intptr_t)residual & (width - 1)) == 0);
     assert(width <= 32);
-#if NEW_CALCRECON
     //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, 0, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
     //===== update distortion =====
     uint32_t dist = primitives.sse_sp[part](reconQt, reconQtStride, fenc, stride);
-#else
-    ALIGN_VAR_32(pixel, recon[MAX_CU_SIZE * MAX_CU_SIZE]);
-    //===== reconstruction =====
-    primitives.calcrecon[size](pred, residual, recon, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
-    //===== update distortion =====
-    uint32_t dist = primitives.sse_pp[part](fenc, stride, recon, stride);
-#endif
     if (ttype == TEXT_CHROMA_U)
     {
         outDist += m_rdCost->scaleChromaDistCb(dist);

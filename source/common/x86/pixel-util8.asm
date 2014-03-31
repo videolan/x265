@@ -57,7 +57,6 @@ cextern pw_00ff
 cextern pw_2000
 cextern pw_pixel_max
 
-%define NEW_CALCRECON 1 ; TODO: remove recon[] arg
 ;-----------------------------------------------------------------------------
 ; void calcrecon(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred)
 ;-----------------------------------------------------------------------------
@@ -102,9 +101,6 @@ cglobal calcRecons4
     CLIPW       m0, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movh        [t2], m0
-%endif
     movh        [t4], m0
 %if ARCH_X86_64 == 0
     add         t4, t7
@@ -116,9 +112,6 @@ cglobal calcRecons4
     movhps      [t4 + t7], m0
     lea         t4, [t4 + t7 * 2]
 %endif
-%if NEW_CALCRECON == 0
-    movhps      [t2 + t5], m0
-%endif
 
     ; store recqt[]
     movh        [t3], m0
@@ -128,9 +121,6 @@ cglobal calcRecons4
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-%if NEW_CALCRECON == 0
-    lea         t2, [t2 + t5 * 2]
-%endif
 
     dec         t8d
     jnz        .loop
@@ -172,15 +162,9 @@ cglobal calcRecons4
     packuswb    m1, m1
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movd        [t2], m1
-%endif
     movd        [t4], m1
     add         t4, t7
     pshufd      m2, m1, 1
-%if NEW_CALCRECON == 0
-    movd        [t2 + t5], m2
-%endif
     movd        [t4], m2
     add         t4, t7
 
@@ -193,9 +177,6 @@ cglobal calcRecons4
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 4]
-%if NEW_CALCRECON == 0
-    lea         t2, [t2 + t5 * 2]
-%endif
 
     dec         t8d
     jnz        .loop
@@ -244,10 +225,6 @@ cglobal calcRecons8
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2], m0
-    movu        [t2 + t5], m1
-%endif
     movu        [t4], m0
 %if ARCH_X86_64 == 0
     add         t4, t7
@@ -268,9 +245,6 @@ cglobal calcRecons8
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-%if NEW_CALCRECON == 0
-    lea         t2, [t2 + t5 * 2]
-%endif
 
     dec         t8d
     jnz        .loop
@@ -312,10 +286,6 @@ cglobal calcRecons8
     packuswb    m1, m2
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movlps      [t2], m1
-    movhps      [t2 + t5], m1
-%endif
     movlps      [t4], m1
 %if ARCH_X86_64 == 0
     add         t4, t7
@@ -336,9 +306,6 @@ cglobal calcRecons8
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 4]
-%if NEW_CALCRECON == 0
-    lea         t2, [t2 + t5 * 2]
-%endif
 
     dec         t8d
     jnz        .loop
@@ -388,10 +355,6 @@ cglobal calcRecons16
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2], m0
-    movu        [t2 + 16], m1
-%endif
     movu        [t4], m0
     movu        [t4 + 16], m1
 %if ARCH_X86_64 == 0
@@ -414,10 +377,6 @@ cglobal calcRecons16
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2 + t5], m0
-    movu        [t2 + t5 + 16], m1
-%endif
 %if ARCH_X86_64 == 0
     movu        [t4], m0
     movu        [t4 + 16], m1
@@ -436,9 +395,6 @@ cglobal calcRecons16
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-%if NEW_CALCRECON == 0
-    lea         t2, [t2 + t5 * 2]
-%endif
 
     dec         t8d
     jnz        .loop
@@ -478,9 +434,6 @@ cglobal calcRecons16
     packuswb    m1, m2
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2], m1
-%endif
     movu        [t4], m1
 
     ; store recqt[]
@@ -493,9 +446,6 @@ cglobal calcRecons16
     add         t4, t7
     add         t0, t5
     lea         t1, [t1 + t5 * 2]
-%if NEW_CALCRECON == 0
-    add         t2, t5
-%endif
 
     dec         t8d
     jnz        .loop
@@ -544,10 +494,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2], m0
-    movu        [t2 + 16], m1
-%endif
     movu        [t4], m0
     movu        [t4 + 16], m1
 
@@ -565,10 +511,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2 + 32], m0
-    movu        [t2 + 48], m1
-%endif
     movu        [t4 + 32], m0
     movu        [t4 + 48], m1
 %if ARCH_X86_64 == 0
@@ -591,10 +533,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2 + t5], m0
-    movu        [t2 + t5 + 16], m1
-%endif
 %if ARCH_X86_64 == 0
     movu        [t4], m0
     movu        [t4 + 16], m1
@@ -617,10 +555,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2 + t5 + 32], m0
-    movu        [t2 + t5 + 48], m1
-%endif
 %if ARCH_X86_64 == 0
     movu        [t4 + 32], m0
     movu        [t4 + 48], m1
@@ -639,9 +573,6 @@ cglobal calcRecons32
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-%if NEW_CALCRECON == 0
-    lea         t2, [t2 + t5 * 2]
-%endif
 
     dec         t8d
     jnz        .loop
@@ -689,10 +620,6 @@ cglobal calcRecons32
     packuswb    m3, m4
 
     ; store recon[] and recipred[]
-%if NEW_CALCRECON == 0
-    movu        [t2], m1
-    movu        [t2 + 16], m3
-%endif
     movu        [t4], m1
     movu        [t4 + 16], m3
 
@@ -710,9 +637,6 @@ cglobal calcRecons32
     add         t4, t7
     add         t0, t5
     lea         t1, [t1 + t5 * 2]
-%if NEW_CALCRECON == 0
-    add         t2, t5
-%endif
 
     dec         t8d
     jnz        .loop

@@ -461,32 +461,19 @@ void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 
 template<int blockSize>
 void calcRecons(pixel* pred, int16_t* residual,
-#if NEW_CALCRECON
                 pixel*,
-#else
-                pixel* recon,
-#endif
                 int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
 {
     for (int y = 0; y < blockSize; y++)
     {
         for (int x = 0; x < blockSize; x++)
         {
-#if NEW_CALCRECON
             recqt[x] = (int16_t)Clip(static_cast<int16_t>(pred[x]) + residual[x]);
             recipred[x] = (pixel)recqt[x];
-#else
-            recon[x] = Clip(static_cast<int16_t>(pred[x]) + residual[x]);
-            recqt[x] = (int16_t)recon[x];
-            recipred[x] = recon[x];
-#endif
         }
 
         pred += stride;
         residual += stride;
-#if !NEW_CALCRECON
-        recon += stride;
-#endif
         recqt += qtstride;
         recipred += ipredstride;
     }
