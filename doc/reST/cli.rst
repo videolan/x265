@@ -158,6 +158,15 @@ Input Options
 
 	**CLI ONLY**
 
+.. option:: --dither
+
+	Enable high quality downscaling. Dithering is based on the diffusion
+	of errors from one row of pixels to the next row of pixels in a
+	picture. Only applicable when the input bit depth is larger than
+	8bits and internal bit depth is 8bits. Default disabled
+
+	**CLI ONLY**
+
 .. option:: --input-res <wxh>
 
 	YUV only: Source picture size [w x h]
@@ -207,7 +216,6 @@ Input Options
 	Number of frames to be encoded. Default 0 (all)
 
 	**CLI ONLY**
-
 
 Quad-Tree analysis
 ==================

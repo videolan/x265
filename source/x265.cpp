@@ -27,6 +27,7 @@
 
 #include "input/input.h"
 #include "output/output.h"
+#include "filters/filters.h"
 #include "common.h"
 #include "param.h"
 #include "cpu.h"
@@ -166,6 +167,7 @@ static const struct option long_options[] =
     { "crop-rect",      required_argument, NULL, 0 },
     { "timinginfo",           no_argument, NULL, 0 },
     { "no-timinginfo",        no_argument, NULL, 0 },
+    { "dither",               no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -188,6 +190,8 @@ struct CLIOptions
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
 
+    bool dither;
+
     int64_t startTime;
     int64_t prevUpdateTime;
     float   frameRate;
@@ -205,6 +209,7 @@ struct CLIOptions
         bForceY4m = false;
         startTime = x265_mdate();
         prevUpdateTime = 0;
+        dither = false;
     }
 
     void destroy();
@@ -294,6 +299,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
     H0("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless of file extension\n");
     H0("   --input-depth <integer>       Bit-depth of input file. Default 8\n");
+    H0("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp <string>          Source color space: i420 or i444, auto-detected if Y4M. Default: i420\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
@@ -490,6 +496,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("recon") reconfn = optarg;
             OPT("input-res") bError |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
             OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
+            OPT("dither") this->dither = true;
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
             OPT("y4m") bForceY4m = true;
             OPT("preset") /* handled above */;
@@ -675,6 +682,7 @@ int main(int argc, char **argv)
     x265_nal *p_nal;
     x265_stats stats;
     uint32_t nal;
+    int16_t *errorBuf = NULL;
 
     if (!param->bRepeatHeaders)
     {
@@ -689,6 +697,15 @@ int main(int argc, char **argv)
 
     x265_picture_init(param, pic_in);
 
+    if (cliopt.dither)
+    {
+        errorBuf = X265_MALLOC(int16_t, param->sourceWidth + 1);
+        if (errorBuf)
+            memset(errorBuf, 0, (param->sourceWidth + 1) * sizeof(int16_t));
+        else
+            cliopt.dither = false;
+    }
+
     // main encoder loop
     while (pic_in && !b_ctrl_c)
     {
@@ -700,6 +717,12 @@ int main(int argc, char **argv)
             inFrameCount++;
         else
             pic_in = NULL;
+
+        if (pic_in != NULL && pic_in->bitDepth > X265_DEPTH && cliopt.dither)
+        {
+            ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
+            pic_in->bitDepth = X265_DEPTH;
+        }
 
         int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
         if (numEncoded < 0)
@@ -777,6 +800,8 @@ fail:
     cliopt.destroy();
 
     x265_param_free(param);
+
+    X265_FREE(errorBuf);
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
