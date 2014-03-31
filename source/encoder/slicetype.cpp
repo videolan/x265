@@ -290,7 +290,7 @@ void Lookahead::slicetypeDecide()
             frm.bKeyframe = true;
             if (bframes > 0)
             {
-                frames[bframes]->sliceType = X265_TYPE_P;
+                list[bframes - 1]->m_lowres.sliceType = X265_TYPE_P;
                 bframes--;
             }
         }
