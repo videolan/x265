@@ -153,3 +153,9 @@ double x265_qp2qScale(double qp)
 {
     return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
 }
+
+uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane)
+{
+    uint32_t size = (uint32_t)(width >> x265_cli_csps[csp].width[plane]) * (height >> x265_cli_csps[csp].height[plane]);
+    return size;
+}

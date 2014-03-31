@@ -323,8 +323,10 @@ option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
     file(GLOB InputFiles input/*.cpp input/*.h)
     file(GLOB OutputFiles output/*.cpp output/*.h)
+    file(GLOB FilterFiles filters/*.cpp filters/*.h)
     source_group(input FILES ${InputFiles})
     source_group(output FILES ${OutputFiles})
+    source_group(filters FILES ${FilterFiles})
 
     check_include_files(getopt.h HAVE_GETOPT_H)
     if(NOT HAVE_GETOPT_H)
@@ -337,10 +339,10 @@ if(ENABLE_CLI)
 
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one targget
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} x265.cpp x265.h
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} x265.cpp x265.h
                            $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
     else()
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h)
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h)
         if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL

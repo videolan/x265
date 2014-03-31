@@ -154,4 +154,6 @@ double x265_ssim2dB(double ssim);
 double x265_qScale2qp(double qScale);
 double x265_qp2qScale(double qp);
 
+uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane);
+
 #endif // ifndef X265_COMMON_H
