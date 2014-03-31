@@ -1071,6 +1071,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred[BLOCK_8x8][1] = x265_intra_pred_dc8_sse4;
         p.intra_pred[BLOCK_16x16][1] = x265_intra_pred_dc16_sse4;
         p.intra_pred[BLOCK_32x32][1] = x265_intra_pred_dc32_sse4;
+        p.planecopy_cp = x265_upShift_8_sse4;
 
         INTRA_ANG_SSE4_COMMON(sse4);
         INTRA_ANG_SSE4_HIGH(sse4);
@@ -1169,6 +1170,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.idct[IDCT_4x4] = x265_idct4_sse2;
         p.idct[IDST_4x4] = x265_idst4_sse2;
         p.count_nonzero = x265_count_nonzero_sse2;
+        p.planecopy_sp = x265_downShift_16_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

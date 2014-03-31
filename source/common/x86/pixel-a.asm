@@ -6356,3 +6356,190 @@ cglobal pixel_sa8d_8x8, 4,6,8
     RET
 %endif ; HIGH_BIT_DEPTH
 
+; Input 16bpp, Output 8bpp
+;------------------------------------------------------------------------------------------------------------------------
+;void planecopy_sp(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+;------------------------------------------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal downShift_16, 7,7,3
+    movd        m0, r6d        ; m0 = shift
+    add         r1, r1
+    dec         r5d
+.loopH:
+    xor         r6, r6
+.loopW:
+    movu        m1, [r0 + r6 * 2]
+    movu        m2, [r0 + r6 * 2 + 16]
+    psrlw       m1, m0
+    psrlw       m2, m0
+    packuswb    m1, m2
+    movu        [r2 + r6], m1
+
+    add         r6, 16
+    cmp         r6d, r4d
+    jl          .loopW
+
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz         .loopH
+
+;processing last row of every frame [To handle width which not a multiple of 16]
+
+.loop16:
+    movu        m1, [r0]
+    movu        m2, [r0 + 16]
+    psrlw       m1, m0
+    psrlw       m2, m0
+    packuswb    m1, m2
+    movu        [r2], m1
+
+    add         r0, 2 * mmsize
+    add         r2, mmsize
+    sub         r4d, 16
+    jz          .end
+    cmp         r4d, 15
+    jg          .loop16
+
+    cmp         r4d, 8
+    jl          .process4
+    movu        m1, [r0]
+    psrlw       m1, m0
+    packuswb    m1, m1
+    movh        [r2], m1
+
+    add         r0, mmsize
+    add         r2, 8
+    sub         r4d, 8
+    jz          .end
+
+.process4:
+    cmp         r4d, 4
+    jl          .process2
+    movh        m1,[r0]
+    psrlw       m1, m0
+    packuswb    m1, m1
+    movd        [r2], m1
+
+    add         r0, 8
+    add         r2, 4
+    sub         r4d, 4
+    jz          .end
+
+.process2:
+    cmp         r4d, 2
+    jl          .process1
+    movd        m1, [r0]
+    psrlw       m1, m0
+    packuswb    m1, m1
+    movd        r6, m1
+    mov         [r2], r6w
+
+    add         r0, 4
+    add         r2, 2
+    sub         r4d, 2
+    jz          .end
+
+.process1:
+    movd        m1, [r0]
+    psrlw       m1, m0
+    packuswb    m1, m1
+    movd        r6, m1
+    mov         [r2], r6b
+.end:
+    RET
+
+; Input 8bpp, Output 16bpp
+;---------------------------------------------------------------------------------------------------------------------
+;void planecopy_cp(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
+;---------------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal upShift_8, 7,7,3
+
+    movd        m2, r6d        ; m0 = shift
+    add         r3, r3
+    dec         r5d
+
+.loopH:
+    xor         r6, r6
+.loopW:
+    pmovzxbw    m0,[r0 + r6]
+    pmovzxbw    m1,[r0 + r6 + 8]
+    psllw       m0, m2
+    psllw       m1, m2
+    movu        [r2 + r6 * 2], m0
+    movu        [r2 + r6 * 2 + 16], m1
+
+    add         r6, 16
+    cmp         r6d, r4d
+    jl          .loopW
+
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz         .loopH
+
+;processing last row of every frame [To handle width which not a multiple of 16]
+
+.loop16:
+    pmovzxbw    m0,[r0]
+    pmovzxbw    m1,[r0 + 8]
+    psllw       m0, m2
+    psllw       m1, m2
+    movu        [r2], m0
+    movu        [r2 + 16], m1
+
+    add         r0, mmsize
+    add         r2, 2 * mmsize
+    sub         r4d, 16
+    jz          .end
+    cmp         r4d, 15
+    jg          .loop16
+
+    cmp         r4d, 8
+    jl          .process4
+    pmovzxbw    m0,[r0]
+    psllw       m0, m2
+    movu        [r2], m0
+
+    add         r0, 8
+    add         r2, mmsize
+    sub         r4d, 8
+    jz          .end
+
+.process4:
+    cmp         r4d, 4
+    jl          .process2
+    movd        m0,[r0]
+    pmovzxbw    m0,m0
+    psllw       m0, m2
+    movh        [r2], m0
+
+    add         r0, 4
+    add         r2, 8
+    sub         r4d, 4
+    jz          .end
+
+.process2:
+    cmp         r4d, 2
+    jl          .process1
+    movd        m0,[r0]
+    pmovzxbw    m0,m0
+    psllw       m0, m2
+    movd        [r2], m0
+
+    add         r0, 2
+    add         r2, 4
+    sub         r4d, 2
+    jz          .end
+
+.process1:
+    movd        m0,[r0]
+    pmovzxbw    m0,m0
+    psllw       m0, m2
+    movd        r6, m0
+    mov         [r2], r6w
+.end:
+    RET
