@@ -24,7 +24,7 @@
 #ifndef X265_WINXP_H
 #define X265_WINXP_H
 
-#if defined(_WIN32) && (_WIN32_WINNT <= _WIN32_WINNT_WINXP)
+#if defined(_WIN32) && (_WIN32_WINNT < _WIN32_WINNT_VISTA)
 
 namespace x265
 {
