@@ -59,6 +59,8 @@ PixelHarness::PixelHarness()
     CHECKED_MALLOC(short_test_buff1, int16_t*, TEST_CASES);
     CHECKED_MALLOC(short_test_buff2, int16_t*, TEST_CASES);
     CHECKED_MALLOC(int_test_buff, int*, TEST_CASES);
+    CHECKED_MALLOC(ushort_test_buff, uint16_t*, TEST_CASES);
+    CHECKED_MALLOC(uchar_test_buff, uint8_t*, TEST_CASES);
 
     for (int i = 0; i < TEST_CASES; i++)
     {
@@ -67,6 +69,8 @@ PixelHarness::PixelHarness()
         CHECKED_MALLOC(short_test_buff1[i], int16_t, BUFFSIZE);
         CHECKED_MALLOC(short_test_buff2[i], int16_t, BUFFSIZE);
         CHECKED_MALLOC(int_test_buff[i], int, BUFFSIZE);
+        CHECKED_MALLOC(ushort_test_buff[i], uint16_t, BUFFSIZE);
+        CHECKED_MALLOC(uchar_test_buff[i], uint8_t, BUFFSIZE);
     }
 
     /* [0] --- Random values
@@ -79,16 +83,22 @@ PixelHarness::PixelHarness()
         short_test_buff1[0][i]  = rand() & PIXEL_MAX;                   // For block copy only
         short_test_buff2[0][i]  = rand() % 16383;                       // for addAvg
         int_test_buff[0][i]     = rand() % SHORT_MAX;
+        ushort_test_buff[0][i]  = rand() % ((1 << 16) - 1);
+        uchar_test_buff[0][i]  = rand() % ((1 << 8) - 1);
         pixel_test_buff[1][i]   = PIXEL_MIN;
         short_test_buff[1][i]   = SMIN;
         short_test_buff1[1][i]  = PIXEL_MIN;
         short_test_buff2[1][i]  = -16384;
         int_test_buff[1][i]     = SHORT_MIN;
+        ushort_test_buff[1][i]  = PIXEL_MIN;
+        uchar_test_buff[1][i]  = PIXEL_MIN;
         pixel_test_buff[2][i]   = PIXEL_MAX;
         short_test_buff[2][i]   = SMAX;
         short_test_buff1[2][i]  = PIXEL_MAX;
         short_test_buff2[2][i]  = 16383;
         int_test_buff[2][i]     = SHORT_MAX;
+        ushort_test_buff[2][i]  = ((1 << 16) - 1);
+        uchar_test_buff[2][i]  = 255;
     }
     for (int i = 0; i < bufsize; i++)
     {
@@ -122,13 +132,19 @@ PixelHarness::~PixelHarness()
         X265_FREE(pixel_test_buff[i]);
         X265_FREE(short_test_buff[i]);
         X265_FREE(short_test_buff1[i]);
+        X265_FREE(short_test_buff2[i]);
         X265_FREE(int_test_buff[i]);
+        X265_FREE(ushort_test_buff[i]);
+        X265_FREE(uchar_test_buff[i]);
     }
 
     X265_FREE(pixel_test_buff);
     X265_FREE(short_test_buff);
     X265_FREE(short_test_buff1);
+    X265_FREE(short_test_buff2);
     X265_FREE(int_test_buff);
+    X265_FREE(ushort_test_buff);
+    X265_FREE(uchar_test_buff);
 }
 
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
@@ -918,6 +934,64 @@ bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
     return true;
 }
 
+bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int srcStride = 64;
+    int width = rand() % 64;
+    int height = rand() % 64;
+    int dstStride = width;
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        opt(ushort_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, 8, 255);
+        ref(ushort_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, 8, 255);
+
+        if (memcmp(ref_dest, opt_dest, width * height * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int srcStride = 64;
+    int width = rand() % 64;
+    int height = rand() % 64;
+    int dstStride = width;
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        opt(uchar_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, 2);
+        ref(uchar_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, 2);
+
+        if (memcmp(ref_dest, opt_dest, width * height * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -1327,6 +1401,24 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.planecopy_sp)
+    {
+        if (!check_planecopy_sp(ref.planecopy_sp, opt.planecopy_sp))
+        {
+            printf("planecopy_sp failed\n");
+            return false;
+        }
+    }
+
+    if (opt.planecopy_cp)
+    {
+        if (!check_planecopy_cp(ref.planecopy_cp, opt.planecopy_cp))
+        {
+            printf("planecopy_cp failed\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -1619,7 +1711,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     if (opt.saoCuOrgE0)
     {
-        printf("SAO_EO_0");
+        HEADER0("SAO_EO_0");
         REPORT_SPEEDUP(opt.saoCuOrgE0, ref.saoCuOrgE0, pbuf1, psbuf1, 64, 1);
+    }
+
+    if (opt.planecopy_sp)
+    {
+        HEADER0("planecopy_sp");
+        REPORT_SPEEDUP(opt.planecopy_sp, ref.planecopy_sp, ushort_test_buff[0], 64, pbuf1, 64, 64, 64, 8, 255);
+    }
+
+    if (opt.planecopy_cp)
+    {
+        HEADER0("planecopy_cp");
+        REPORT_SPEEDUP(opt.planecopy_cp, ref.planecopy_cp, uchar_test_buff[0], 64, pbuf1, 64, 64, 64, 2);
     }
 }

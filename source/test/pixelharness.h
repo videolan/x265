@@ -35,6 +35,8 @@ protected:
     int *ibuf1, **int_test_buff;
     int8_t *psbuf1;
     int16_t *sbuf1, *sbuf2, *sbuf3, **short_test_buff, **short_test_buff1, **short_test_buff2;
+    uint16_t **ushort_test_buff;
+    uint8_t **uchar_test_buff;
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt);
     bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
@@ -65,6 +67,8 @@ protected:
     bool check_ssim_end(ssim_end4_t ref, ssim_end4_t opt);
     bool check_addAvg(addAvg_t, addAvg_t);
     bool check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt);
+    bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);
+    bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
 public:
 
     PixelHarness();
