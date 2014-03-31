@@ -948,9 +948,9 @@ void FrameEncoder::compressCTURows()
 
     m_frameFilter.start(m_pic);
 
+    m_rows[0].m_active = true;
     if (m_pool && m_cfg->param->bEnableWavefront)
     {
-        m_rows[0].m_active = true;
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
