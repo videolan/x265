@@ -8,6 +8,7 @@ endif()
 message(STATUS "cmake version ${CMAKE_VERSION}")
 if(NOT CMAKE_VERSION VERSION_LESS "2.8.12.20131121")
     cmake_policy(SET CMP0025 OLD) # report Apple's Clang as just Clang
+    cmake_policy(SET CMP0042 OLD) # do not require MACOSX_RPATH
 endif()
 
 project (x265)
