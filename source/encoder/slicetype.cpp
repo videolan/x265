@@ -174,7 +174,9 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
     }
     if (param->rc.cuTree)
     {
+        /* update row satds */
         pic->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
+        /* update intra row satds */
         if (b && param->rc.vbvBufferSize)
             frameCostRecalculate(frames, b, b, b);
     }
@@ -184,7 +186,7 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
     else
         pic->m_lowres.satdCost = pic->m_lowres.costEst[b - p0][p1 - b];
 
-    if (param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0)
+    if (param->rc.vbvBufferSize && param->rc.vbvMaxBitrate)
     {
         pic->m_lowres.lowresCostForRc = pic->m_lowres.lowresCosts[b - p0][p1 - b];
         uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0;
@@ -200,7 +202,7 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
                 lowresCuIdx = lowresRow * widthInLowresCu;
                 for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
                 {
-                    sum +=  pic->m_lowres.lowresCostForRc[lowresCuIdx];
+                    sum += pic->m_lowres.lowresCostForRc[lowresCuIdx];
                 }
 
                 pic->m_rowSatdForVbv[row] += sum;
@@ -354,7 +356,6 @@ void Lookahead::slicetypeDecide()
                     {
                         p1++;
                     }
-
                 else
                     p1 = bframes + 1;
                 est.estimateFrameCost(frames, p0, p1, b, 0);
