@@ -6445,8 +6445,8 @@ cglobal downShift_16, 7,7,3
     movd        m1, [r0]
     psrlw       m1, m0
     packuswb    m1, m1
-    movd        r6, m1
-    mov         [r2], r6b
+    movd        r3, m1
+    mov         [r2], r3b
 .end:
     RET
 
