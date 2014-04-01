@@ -1117,7 +1117,7 @@ void FrameEncoder::processRowEncoder(int row)
 
                 if (reEncode < 0)
                 {
-                    x265_log(m_cfg->param, X265_LOG_INFO, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
+                    x265_log(m_cfg->param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
                             m_pic->getPOC(), row, qpBase, cu->m_baseQp);
 
                     // prevent the WaveFront::findJob() method from providing new jobs
