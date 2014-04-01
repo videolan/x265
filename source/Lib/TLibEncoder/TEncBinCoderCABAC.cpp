@@ -37,6 +37,7 @@
 
 #include "TEncBinCoderCABAC.h"
 #include "TLibCommon/TComRom.h"
+#include "threading.h"  // CLZ32
 
 using namespace x265;
 
@@ -180,7 +181,7 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 
     uint32_t mstate = ctxModel.m_state;
 
-    ctxModel.m_state = sbacNext(ctxModel.m_state, binValue);
+    ctxModel.m_state = sbacNext(mstate, binValue);
 
     if (m_bIsCounter)
     {
@@ -189,30 +190,42 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
     }
     ctxModel.bBinsCoded = 1;
 
-    uint32_t mps = sbacGetMps(mstate);
+    uint32_t range = m_range;
     uint32_t state = sbacGetState(mstate);
-    uint32_t lps = g_lpsTable[state][(m_range >> 6) & 3];
-    m_range -= lps;
+    uint32_t lps = g_lpsTable[state][((uint8_t)range >> 6)];
+    range -= lps;
 
-    int numBits = g_renormTable[lps >> 3];
-    if (binValue != mps)
+    assert(lps >= 2);
+
+    int numBits = (uint32_t)(range - 256) >> 31;
+    uint32_t low = m_low;
+
+    // NOTE: MPS must be LOWEST bit in mstate
+    assert(((binValue ^ mstate) & 1) == (binValue != sbacGetMps(mstate)));
+    if ((binValue ^ mstate) & 1)
     {
-        m_low     = (m_low + m_range) << numBits;
-        m_range   = lps << numBits;
+        // NOTE: lps is non-zero and the maximum of idx is 8 because lps less than 256
+        //numBits   = g_renormTable[lps >> 3];
+        unsigned long idx;
+        CLZ32(idx, lps);
+        assert(state != 63 || idx == 1);
+
+        numBits = 8 - idx;
+        if (state >= 63)
+            numBits = 6;
+        assert(numBits <= 6);
+
+        low    += range;
+        range   = lps;
     }
-    else
-    {
-        if (m_range >= 256)
-        {
-            return;
-        }
-        numBits = 1;
-        m_low <<= 1;
-        m_range <<= 1;
-    }
+    m_low = (low << numBits);
+    m_range = (range << numBits);
     m_bitsLeft += numBits;
 
-    testAndWriteOut();
+    if (m_bitsLeft >= 0)
+    {
+        writeOut();
+    }
 }
 
 /**
@@ -240,7 +253,10 @@ void TEncBinCABAC::encodeBinEP(uint32_t binValue)
     }
     m_bitsLeft++;
 
-    testAndWriteOut();
+    if (m_bitsLeft >= 0)
+    {
+        writeOut();
+    }
 }
 
 /**
@@ -274,14 +290,20 @@ void TEncBinCABAC::encodeBinsEP(uint32_t binValues, int numBins)
         binValues -= pattern << numBins;
         m_bitsLeft += 8;
 
-        testAndWriteOut();
+        if (m_bitsLeft >= 0)
+        {
+            writeOut();
+        }
     }
 
     m_low <<= numBins;
     m_low += m_range * binValues;
     m_bitsLeft += numBins;
 
-    testAndWriteOut();
+    if (m_bitsLeft >= 0)
+    {
+        writeOut();
+    }
 }
 
 /**
@@ -316,11 +338,6 @@ void TEncBinCABAC::encodeBinTrm(uint32_t binValue)
         m_bitsLeft++;
     }
 
-    testAndWriteOut();
-}
-
-void TEncBinCABAC::testAndWriteOut()
-{
     if (m_bitsLeft >= 0)
     {
         writeOut();
@@ -333,9 +350,10 @@ void TEncBinCABAC::testAndWriteOut()
 void TEncBinCABAC::writeOut()
 {
     uint32_t leadByte = m_low >> (13 + m_bitsLeft);
+    uint32_t low_mask = (uint32_t)(~0) >> (11 + 8 - m_bitsLeft);
 
     m_bitsLeft -= 8;
-    m_low &= 0xffffffffu >> (11 - m_bitsLeft);
+    m_low &= low_mask;
 
     if (leadByte == 0xff)
     {
@@ -343,25 +361,22 @@ void TEncBinCABAC::writeOut()
     }
     else
     {
-        if (m_numBufferedBytes > 0)
+        uint32_t numBufferedBytes = m_numBufferedBytes;
+        if (numBufferedBytes > 0)
         {
             uint32_t carry = leadByte >> 8;
-            uint32_t byte = m_bufferedByte + carry;
-            m_bufferedByte = leadByte & 0xff;
-            m_bitIf->writeByte(byte);
+            uint32_t byteTowrite = m_bufferedByte + carry;
+            m_bitIf->writeByte(byteTowrite);
 
-            byte = (0xff + carry) & 0xff;
-            while (m_numBufferedBytes > 1)
+            byteTowrite = (0xff + carry) & 0xff;
+            while (numBufferedBytes > 1)
             {
-                m_bitIf->writeByte(byte);
-                m_numBufferedBytes--;
+                m_bitIf->writeByte(byteTowrite);
+                numBufferedBytes--;
             }
         }
-        else
-        {
-            m_numBufferedBytes = 1;
-            m_bufferedByte = leadByte;
-        }
+        m_numBufferedBytes = 1;
+        m_bufferedByte = (uint8_t)leadByte;
     }
 }
 

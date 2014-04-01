@@ -36,12 +36,8 @@
 */
 
 #include "TComPicYuv.h"
+#include "common.h"
 #include "primitives.h"
-
-#include <cstdlib>
-#include <assert.h>
-#include <memory.h>
-#include <stdint.h>
 
 using namespace x265;
 
@@ -68,7 +64,7 @@ TComPicYuv::~TComPicYuv()
 {
 }
 
-bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth)
+bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxCUDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -77,21 +73,20 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     m_picCsp = picCsp;
 
     // --> After config finished!
-    m_cuWidth  = maxCUWidth;
-    m_cuHeight = maxCUHeight;
+    m_cuSize = maxCUSize;
 
-    m_numCuInWidth = (m_picWidth + m_cuWidth - 1)  / m_cuWidth;
-    m_numCuInHeight = (m_picHeight + m_cuHeight - 1) / m_cuHeight;
+    m_numCuInWidth = (m_picWidth + m_cuSize - 1)  / m_cuSize;
+    m_numCuInHeight = (m_picHeight + m_cuSize - 1) / m_cuSize;
 
-    m_lumaMarginX = g_maxCUWidth  + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
-    m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
-    m_stride = (m_numCuInWidth * g_maxCUWidth) + (m_lumaMarginX << 1);
+    m_lumaMarginX = g_maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
+    m_lumaMarginY = g_maxCUSize + 16; // margin for 8-tap filter and infinite padding
+    m_stride = (m_numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
 
     m_chromaMarginX = m_lumaMarginX;    // keep 16-byte alignment for chroma CTUs
     m_chromaMarginY = m_lumaMarginY >> m_vChromaShift;
 
-    m_strideC = ((m_numCuInWidth * g_maxCUWidth) >> m_hChromaShift) + (m_chromaMarginX * 2);
-    int maxHeight = m_numCuInHeight * g_maxCUHeight;
+    m_strideC = ((m_numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
+    int maxHeight = m_numCuInHeight * g_maxCUSize;
 
     CHECKED_MALLOC(m_picBufY, pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
     CHECKED_MALLOC(m_picBufU, pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
@@ -108,8 +103,8 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     {
         for (int cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
         {
-            m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
-            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight >> m_vChromaShift) + cuCol * (m_cuWidth >> m_hChromaShift);
+            m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = getStride() * cuRow * m_cuSize + cuCol * m_cuSize;
+            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuSize >> m_vChromaShift) + cuCol * (m_cuSize >> m_hChromaShift);
         }
     }
 
@@ -119,8 +114,8 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUW
     {
         for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
         {
-            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
-            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * ((maxCUHeight >> m_vChromaShift) >> maxCUDepth) + buCol * ((maxCUWidth >> m_hChromaShift) >> maxCUDepth);
+            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUSize >> maxCUDepth) + buCol * (maxCUSize  >> maxCUDepth);
+            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * (maxCUSize >> maxCUDepth >> m_vChromaShift) + buCol * (maxCUSize >> maxCUDepth >> m_hChromaShift);
         }
     }
 
@@ -146,9 +141,9 @@ uint32_t TComPicYuv::getCUHeight(int rowNum)
     uint32_t height;
 
     if (rowNum == m_numCuInHeight - 1)
-        height = ((getHeight() % g_maxCUHeight) ? (getHeight() % g_maxCUHeight) : g_maxCUHeight);
+        height = ((getHeight() % g_maxCUSize) ? (getHeight() % g_maxCUSize) : g_maxCUSize);
     else
-        height = g_maxCUHeight;
+        height = g_maxCUSize;
     return height;
 }
 
@@ -186,116 +181,73 @@ void TComPicYuv::copyFromPicture(const x265_picture& pic, int32_t *pad)
 
     if (pic.bitDepth < X265_DEPTH)
     {
-        /* 8bit input, 10bit internal depth. Do a simple up-shift of 2 bits */
-        assert(X265_DEPTH == 10);
+        pixel *yPixel = getLumaAddr();
+        pixel *uPixel = getCbAddr();
+        pixel *vPixel = getCrAddr();
 
-        pixel *Y = getLumaAddr();
-        pixel *U = getCbAddr();
-        pixel *V = getCrAddr();
+        uint8_t *yChar = (uint8_t*)pic.planes[0];
+        uint8_t *uChar = (uint8_t*)pic.planes[1];
+        uint8_t *vChar = (uint8_t*)pic.planes[2];
+        int shift = X265_MAX(0, X265_DEPTH - pic.bitDepth);
 
-        uint8_t *y = (uint8_t*)pic.planes[0];
-        uint8_t *u = (uint8_t*)pic.planes[1];
-        uint8_t *v = (uint8_t*)pic.planes[2];
-
-        for (int r = 0; r < height; r++)
-        {
-            for (int c = 0; c < width; c++)
-            {
-                Y[c] = ((pixel)y[c]) << 2;
-            }
-
-            Y += getStride();
-            y += pic.stride[0];
-        }
-
-        for (int r = 0; r < height >> m_vChromaShift; r++)
-        {
-            for (int c = 0; c < width >> m_hChromaShift; c++)
-            {
-                U[c] = ((pixel)u[c]) << 2;
-                V[c] = ((pixel)v[c]) << 2;
-            }
-
-            U += getCStride();
-            V += getCStride();
-            u += pic.stride[1];
-            v += pic.stride[2];
-        }
+        primitives.planecopy_cp(yChar, pic.stride[0] / sizeof(*yChar), yPixel, getStride(), width, height, shift);
+        primitives.planecopy_cp(uChar, pic.stride[1] / sizeof(*uChar), uPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift);
+        primitives.planecopy_cp(vChar, pic.stride[2] / sizeof(*vChar), vPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift);
     }
     else if (pic.bitDepth == 8)
     {
-        pixel *Y = getLumaAddr();
-        pixel *U = getCbAddr();
-        pixel *V = getCrAddr();
+        pixel *yPixel = getLumaAddr();
+        pixel *uPixel = getCbAddr();
+        pixel *vPixel = getCrAddr();
 
-        uint8_t *y = (uint8_t*)pic.planes[0];
-        uint8_t *u = (uint8_t*)pic.planes[1];
-        uint8_t *v = (uint8_t*)pic.planes[2];
+        uint8_t *yChar = (uint8_t*)pic.planes[0];
+        uint8_t *uChar = (uint8_t*)pic.planes[1];
+        uint8_t *vChar = (uint8_t*)pic.planes[2];
 
         for (int r = 0; r < height; r++)
         {
             for (int c = 0; c < width; c++)
             {
-                Y[c] = (pixel)y[c];
+                yPixel[c] = (pixel)yChar[c];
             }
 
-            Y += getStride();
-            y += pic.stride[0];
+            yPixel += getStride();
+            yChar += pic.stride[0] / sizeof(*yChar);
         }
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {
             for (int c = 0; c < width >> m_hChromaShift; c++)
             {
-                U[c] = (pixel)u[c];
-                V[c] = (pixel)v[c];
+                uPixel[c] = (pixel)uChar[c];
+                vPixel[c] = (pixel)vChar[c];
             }
 
-            U += getCStride();
-            V += getCStride();
-            u += pic.stride[1];
-            v += pic.stride[2];
+            uPixel += getCStride();
+            vPixel += getCStride();
+            uChar += pic.stride[1] / sizeof(*uChar);
+            vChar += pic.stride[2] / sizeof(*vChar);
         }
     }
     else /* pic.bitDepth > 8 */
     {
-        pixel *Y = getLumaAddr();
-        pixel *U = getCbAddr();
-        pixel *V = getCrAddr();
+        pixel *yPixel = getLumaAddr();
+        pixel *uPixel = getCbAddr();
+        pixel *vPixel = getCrAddr();
 
-        uint16_t *y = (uint16_t*)pic.planes[0];
-        uint16_t *u = (uint16_t*)pic.planes[1];
-        uint16_t *v = (uint16_t*)pic.planes[2];
+        uint16_t *yShort = (uint16_t*)pic.planes[0];
+        uint16_t *uShort = (uint16_t*)pic.planes[1];
+        uint16_t *vShort = (uint16_t*)pic.planes[2];
 
         /* defensive programming, mask off bits that are supposed to be zero */
         uint16_t mask = (1 << X265_DEPTH) - 1;
         int shift = X265_MAX(0, pic.bitDepth - X265_DEPTH);
 
         /* shift and mask pixels to final size */
-        for (int r = 0; r < height; r++)
-        {
-            for (int c = 0; c < width; c++)
-            {
-                Y[c] = (pixel)((y[c] >> shift) & mask);
-            }
 
-            Y += getStride();
-            y += pic.stride[0];
-        }
-
-        for (int r = 0; r < height >> m_vChromaShift; r++)
-        {
-            for (int c = 0; c < width >> m_hChromaShift; c++)
-            {
-                U[c] = (pixel)((u[c] >> shift) & mask);
-                V[c] = (pixel)((v[c] >> shift) & mask);
-            }
-
-            U += getCStride();
-            V += getCStride();
-            u += pic.stride[1];
-            v += pic.stride[2];
-        }
+        primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, getStride(), width, height, shift, mask);
+        primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+        primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, getCStride(), width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
     }
 
     /* extend the right edge if width was not multiple of the minimum CU size */

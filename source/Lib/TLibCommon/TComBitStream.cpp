@@ -38,10 +38,6 @@
 #include "TComBitStream.h"
 #include "common.h"
 
-#include <stdint.h>
-#include <string.h>
-#include <memory.h>
-
 using namespace x265;
 
 //! \ingroup TLibCommon
@@ -100,7 +96,7 @@ void TComOutputBitstream::write(uint32_t bits, uint32_t numBits)
      * len(H)=7, len(V)=1: ... ---- HHHH HHHV . 0000 0000, next_num_held_bits=0
      * len(H)=7, len(V)=2: ... ---- HHHH HHHV . V000 0000, next_num_held_bits=1
      * if total_bits < 8, the value of v_ is not used */
-    UChar next_held_bits = bits << (8 - next_num_held_bits);
+    uint8_t next_held_bits = bits << (8 - next_num_held_bits);
 
     if (!(num_total_bits >> 3))
     {

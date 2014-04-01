@@ -67,12 +67,12 @@ class TComLoopFilter
 {
 private:
 
-    uint32_t      m_numPartitions;
-    UChar*    m_blockingStrength[2];            ///< Bs for [Ver/Hor][Y/U/V][Blk_Idx]
-    bool*     m_bEdgeFilter[2];
-    LFCUParam m_lfcuParam;                ///< status structure
+    uint32_t    m_numPartitions;
+    uint8_t*    m_blockingStrength[2]; ///< Bs for [Ver/Hor][Y/U/V][Blk_Idx]
+    bool*       m_bEdgeFilter[2];
+    LFCUParam   m_lfcuParam;           ///< status structure
 
-    bool      m_bLFCrossTileBoundary;
+    bool        m_bLFCrossTileBoundary;
 
 protected:
 
@@ -88,7 +88,7 @@ protected:
     uint32_t xCalcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int dir, int edgeIdx, int baseUnitIdx)
     {
         TComPic* const pic = cu->getPic();
-        const uint32_t lcuWidthInBaseUnits = pic->getNumPartInWidth();
+        const uint32_t lcuWidthInBaseUnits = pic->getNumPartInCUSize();
 
         if (dir == 0)
         {
@@ -105,15 +105,15 @@ protected:
     void xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edge);
     void xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edge);
 
-    inline void xPelFilterLuma(Pel* src, int offset, int tc, bool sw, bool bPartPNoFilter, bool bPartQNoFilter, int iThrCut, bool bFilterSecondP, bool bFilterSecondQ);
-    inline void xPelFilterChroma(Pel* src, int offset, int tc, bool bPartPNoFilter, bool bPartQNoFilter);
+    inline void xPelFilterLuma(pixel* src, int offset, int tc, bool sw, bool bPartPNoFilter, bool bPartQNoFilter, int iThrCut, bool bFilterSecondP, bool bFilterSecondQ);
+    inline void xPelFilterChroma(pixel* src, int offset, int tc, bool bPartPNoFilter, bool bPartQNoFilter);
 
-    inline bool xUseStrongFiltering(int offset, int d, int beta, int tc, Pel* src);
-    inline int xCalcDP(Pel* src, int offset);
-    inline int xCalcDQ(Pel* src, int offset);
+    inline bool xUseStrongFiltering(int offset, int d, int beta, int tc, pixel* src);
+    inline int xCalcDP(pixel* src, int offset);
+    inline int xCalcDQ(pixel* src, int offset);
 
-    static const UChar sm_tcTable[54];
-    static const UChar sm_betaTable[52];
+    static const uint8_t sm_tcTable[54];
+    static const uint8_t sm_betaTable[52];
 
 public:
 

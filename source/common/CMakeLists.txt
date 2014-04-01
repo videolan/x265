@@ -41,7 +41,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComYuv.cpp)
 source_group(TLibCommon FILES ${LIBCOMMON_SRC})
 source_group(TLibCommonH FILES ${LIBCOMMON_HDR})
-
 if(GCC)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-sign-compare")
@@ -102,14 +101,14 @@ source_group(Intrinsics FILES ${VEC_PRIMITIVES})
 
 if(ENABLE_ASSEMBLY)
     set_source_files_properties(primitives.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
-    set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h)
+    set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h loopfilter.h)
     set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm ssd-a.asm mc-a.asm
                mc-a2.asm pixel-util8.asm blockcopy8.asm
                pixeladd8.asm dct8.asm)
     if(HIGH_BIT_DEPTH)
         set(A_SRCS ${A_SRCS} sad16-a.asm intrapred16.asm ipfilter16.asm)
     else()
-        set(A_SRCS ${A_SRCS} sad-a.asm intrapred8.asm ipfilter8.asm)
+        set(A_SRCS ${A_SRCS} sad-a.asm intrapred8.asm ipfilter8.asm loopfilter.asm)
     endif()
 
     if(NOT X64)
@@ -130,9 +129,15 @@ if(ENABLE_ASSEMBLY)
     source_group(Assembly FILES ${ASM_PRIMITIVES})
 endif(ENABLE_ASSEMBLY)
 
+check_symbol_exists(strtok_r "string.h" HAVE_STRTOK_R)
+set_source_files_properties(param.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=${HAVE_STRTOK_R})
+
 if(GCC AND GCC_HAS_NO_NARROWING)
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
 endif()
+if(WIN32)
+    set(WINXP winxp.cpp)
+endif(WIN32)
 
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
@@ -143,11 +148,14 @@ add_library(common OBJECT
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
+    winxp.h ${WINXP}
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h
-    TShortYUV.cpp TShortYUV.h mv.h
+    bitstream.h mv.h
+    shortyuv.cpp shortyuv.h
     common.cpp common.h
     param.cpp param.h
     lowres.cpp lowres.h
-    piclist.cpp piclist.h)
+    piclist.cpp piclist.h
+    loopfilter.cpp)

@@ -29,11 +29,11 @@
 
 using namespace x265;
 
-void CTURow::create(Encoder* top)
+bool CTURow::create(Encoder* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
-    m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->bEnableRDOQ, top->bEnableRDOQTS, top->param.bEnableTSkipFast);
+    m_trQuant.init(1 << top->m_quadtreeTULog2MaxSize, top->bEnableRDOQ, top->bEnableRDOQTS, top->param->bEnableTSkipFast);
 
     m_rdSbacCoders = new TEncSbac * *[g_maxCUDepth + 1];
     m_binCodersCABAC = new TEncBinCABAC * *[g_maxCUDepth + 1];
@@ -51,20 +51,21 @@ void CTURow::create(Encoder* top)
         }
     }
 
-    m_search.init(top, &m_rdCost, &m_trQuant);
-    m_search.setRDSbacCoder(m_rdSbacCoders);
-    m_search.setEntropyCoder(&m_entropyCoder);
-    m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
-
     m_cuCoder.init(top);
-    m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth);
     m_cuCoder.setRdCost(&m_rdCost);
     m_cuCoder.setRDSbacCoder(m_rdSbacCoders);
     m_cuCoder.setEntropyCoder(&m_entropyCoder);
     m_cuCoder.setPredSearch(&m_search);
     m_cuCoder.setTrQuant(&m_trQuant);
     m_cuCoder.setRdCost(&m_rdCost);
+    m_search.setRDSbacCoder(m_rdSbacCoders);
+    m_search.setEntropyCoder(&m_entropyCoder);
+    m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
+
+    return m_search.init(top, &m_rdCost, &m_trQuant) &&
+           m_cuCoder.create((uint8_t)g_maxCUDepth, g_maxCUSize);
 }
+
 
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
 {

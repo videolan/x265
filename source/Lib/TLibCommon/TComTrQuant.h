@@ -62,7 +62,7 @@ namespace x265 {
 typedef struct
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
-    int significantBits[NUM_SIG_FLAG_CTX][2];
+    uint32_t significantBits[NUM_SIG_FLAG_CTX][2];
     int lastXBits[10];
     int lastYBits[10];
     int greaterOneBits[NUM_ONE_FLAG_CTX][2];
@@ -127,10 +127,10 @@ public:
     void init(uint32_t maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast);
 
     // transform & inverse transform functions
-    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t width, uint32_t height,
+    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize,
                           TextType ttype, uint32_t absPartIdx, int32_t* lastPos, bool useTransformSkip = false, bool curUseRDOQ = true);
 
-    void invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, TCoeff* coeff, uint32_t width, uint32_t height, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
+    void invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
 
     // Misc functions
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt);
@@ -158,10 +158,43 @@ public:
     void setScalingList(TComScalingList *scalingList);
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
-    static int  calcPatternSigCtx(const uint32_t* sigCoeffGroupFlag, uint32_t posXCG, uint32_t posYCG, uint32_t widthInGroups, uint32_t heightInGroups);
-    static int getSigCtxInc(int patternSigCtx, const TUEntropyCodingParameters &codingParameters, const int scanPosition, const int log2BlockWidth, const int log2BlockHeight, const TextType ttype);
-    static uint32_t getSigCoeffGroupCtxInc(const uint32_t* sigCoeffGroupFlag, uint32_t cGPosX, uint32_t cGPosY, const uint32_t widthInGroups, const uint32_t heightInGroups);
-    static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t width, uint32_t height, TextType ttype);
+    static uint32_t calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
+    static uint32_t getSigCtxInc(uint32_t patternSigCtx, const uint32_t log2TrSize, const uint32_t trSize, const uint32_t blkPos, const TextType ctype, const uint32_t firstSignificanceMapContext);
+    static uint32_t getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, const uint32_t log2TrSizeCG);
+    inline static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
+    {
+        //set the group layout
+        const uint32_t log2TrSizeCG = log2TrSize - MLS_CG_LOG2_SIZE;
+        result.log2TrSizeCG = log2TrSizeCG;
+
+        //set the scan orders
+        result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
+        result.scan   = g_scanOrder[SCAN_GROUPED_4x4][result.scanType][log2TrSize];
+        result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2TrSizeCG];
+
+        //set the significance map context selection parameters
+        TextType ctype = (ttype == TEXT_LUMA) ? TEXT_LUMA : TEXT_CHROMA;
+        if (log2TrSize == 2)
+        {
+            result.firstSignificanceMapContext = 0;
+            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4] == 0);
+        }
+        else if (log2TrSize == 3)
+        {
+            result.firstSignificanceMapContext = 9;
+            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8] == 9);
+            if (result.scanType != SCAN_DIAG && !ctype)
+            {
+                result.firstSignificanceMapContext += 6;
+                assert(nonDiagonalScan8x8ContextOffset[ctype] == 6);
+            }
+        }
+        else
+        {
+            result.firstSignificanceMapContext = (ctype ? 12 : 21);
+            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21));
+        }
+    }
     estBitsSbacStruct* m_estBitsSbac;
 
 protected:
@@ -186,32 +219,32 @@ protected:
 
 private:
 
-    void xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int width, int height);
-    void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters);
-    uint32_t xQuant(TComDataCU* cu, int32_t* src, TCoeff* dst, int width, int height, TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ = true);
+    void xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int trSize);
+    void signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters);
+    uint32_t xQuant(TComDataCU* cu, int32_t* src, coeff_t* dst, int trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ = true);
 
     // RDOQ functions
-    uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, TCoeff* dstCoeff, uint32_t width, uint32_t height, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
+    uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
 
-    inline uint32_t xGetCodedLevel(double& codedCost, double& codedCost0, double& codedCostSig, int levelDouble,
-                                   uint32_t maxAbsLevel, uint16_t ctxNumSig, uint16_t ctxNumOne, uint16_t ctxNumAbs, uint16_t absGoRice,
-                                   uint32_t c1Idx, uint32_t c2Idx, int qbits, double scale, bool bLast) const;
+    inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
+                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice,
+                                   uint32_t c1c2Idx, int qbits, double scale, bool bLast) const;
 
-    inline double xGetICRateCost(uint32_t absLevel, uint16_t ctxNumOne, uint16_t ctxNumAbs, uint16_t absGoRice, uint32_t c1Idx, uint32_t c2Idx) const;
+    inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
 
-    inline int    xGetICRate(uint32_t absLevel, uint16_t ctxNumOne, uint16_t ctxNumAbs, uint16_t absGoRice, uint32_t c1Idx, uint32_t c2Idx) const;
+    inline int    xGetICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
 
     inline double xGetRateLast(uint32_t posx, uint32_t posy) const;
 
     inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
 
-    inline double xGetRateSigCoef(uint16_t sig, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
+    inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
 
-    inline double xGetICost(double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
+    inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
 
     inline uint32_t xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
-    void xITransformSkip(int32_t* coeff, int16_t* residual, uint32_t stride, int width, int height);
+    void xITransformSkip(int32_t* coeff, int16_t* residual, uint32_t stride, int trSize);
 };
 }
 //! \}

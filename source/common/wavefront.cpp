@@ -25,8 +25,6 @@
 #include "threading.h"
 #include "wavefront.h"
 #include "common.h"
-#include <assert.h>
-#include <string.h>
 
 namespace x265 {
 // x265 private namespace
@@ -103,6 +101,14 @@ bool WaveFront::checkHigherPriorityRow(int curRow)
     if (m_internalDependencyBitmap[fullwords] & m_externalDependencyBitmap[fullwords] & mask)
         return true;
     return false;
+}
+
+bool WaveFront::dequeueRow(int row)
+{
+    uint64_t oldval, newval;
+    oldval = m_internalDependencyBitmap[row >> 6];
+    newval = oldval & ~(1LL << (row & 63));
+    return ATOMIC_CAS(&m_internalDependencyBitmap[row >> 6], oldval, newval) == oldval;
 }
 
 bool WaveFront::findJob()

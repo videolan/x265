@@ -29,36 +29,8 @@
 #ifndef X265_PRIMITIVES_H
 #define X265_PRIMITIVES_H
 
-#include <stdint.h>
-#include <assert.h>
+#include "common.h"
 #include "cpu.h"
-#include "x265.h"
-
-#define FENC_STRIDE 64
-
-#define NUM_INTRA_MODE 35
-
-#if defined(__GNUC__)
-#define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
-#define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
-#define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
-#elif defined(_MSC_VER)
-#define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
-#define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
-#define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
-#endif // if defined(__GNUC__)
-
-#if HIGH_BIT_DEPTH
-typedef uint16_t pixel;
-typedef uint32_t sum_t;
-typedef uint64_t sum2_t;
-typedef uint64_t pixel4;
-#else
-typedef uint8_t pixel;
-typedef uint16_t sum_t;
-typedef uint32_t sum2_t;
-typedef uint32_t pixel4;
-#endif // if HIGH_BIT_DEPTH
 
 namespace x265 {
 // x265 private namespace
@@ -182,11 +154,15 @@ typedef void (*filter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, int w
 typedef void (*copy_pp_t)(pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*copy_sp_t)(pixel *dst, intptr_t dstStride, int16_t *src, intptr_t srcStride);
 typedef void (*copy_ps_t)(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
+typedef void (*copy_ss_t)(int16_t *dst, intptr_t dstStride, int16_t *src, intptr_t srcStride);
 
 typedef void (*pixel_sub_ps_t)(int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixel_add_ps_t)(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1);
-
 typedef void (*addAvg_t)(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
+
+typedef void (*saoCuOrgE0_t)(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t signLeft);
+typedef void (*planecopy_cp_t) (uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift);
+typedef void (*planecopy_sp_t) (uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -212,6 +188,7 @@ struct EncoderPrimitives
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
+    copy_ss_t       luma_copy_ss[NUM_LUMA_PARTITIONS];
     pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
     pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
 
@@ -254,6 +231,10 @@ struct EncoderPrimitives
     downscale_t     frame_init_lowres_core;
     plane_copy_deinterleave_t plane_copy_deinterleave_c;
     extendCURowBorder_t extendRowBorder;
+    // sao primitives
+    saoCuOrgE0_t      saoCuOrgE0;
+    planecopy_cp_t    planecopy_cp;
+    planecopy_sp_t    planecopy_sp;
 
     struct
     {
@@ -266,6 +247,7 @@ struct EncoderPrimitives
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
         copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
         copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
+        copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
         pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];
         addAvg_t        addAvg[NUM_LUMA_PARTITIONS];

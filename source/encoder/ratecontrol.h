@@ -34,7 +34,6 @@ namespace x265 {
 struct Lookahead;
 class Encoder;
 class TComPic;
-class TEncCfg;
 
 #define BASE_FRAME_DURATION 0.04
 
@@ -80,7 +79,7 @@ struct RateControlEntry
 struct RateControl
 {
     TComSlice *curSlice;      /* all info about the current frame */
-    TEncCfg *cfg;
+    x265_param* param;
     SliceType sliceType;      /* Current frame type */
     int ncu;                  /* number of CUs in a frame */
     int keyFrameInterval;     /* TODO: need to initialize in init */

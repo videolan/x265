@@ -24,8 +24,7 @@
 #include "y4m.h"
 #include "PPA/ppa.h"
 #include "common.h"
-#include <stdio.h>
-#include <string.h>
+
 #include <iostream>
 
 #define ENABLE_THREADING 1
@@ -48,9 +47,11 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
         plane[i][2] = plane[i][1] = plane[i][0] = NULL;
+        frameStat[i] = false;
     }
 
-    head = tail = 0;
+    head.set(0);
+    tail.set(0);
 
     colorSpace = info.csp;
     sarWidth = info.sarWidth;
@@ -161,11 +162,10 @@ void Y4MInput::pictureAlloc(int queueindex)
 {
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
-        plane_size[i] = (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
-        plane[queueindex][i] = new char[plane_size[i]];
         plane_stride[i] = (uint32_t)(width >> x265_cli_csps[colorSpace].width[i]);
-
-        if (plane[queueindex][i] == NULL)
+        plane_size[i] =   (uint32_t)(plane_stride[i] * (height >> x265_cli_csps[colorSpace].height[i]));
+        plane[queueindex][i] = new char[plane_size[i]];
+        if (!plane[queueindex][i])
         {
             x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
             threadActive = false;
@@ -346,7 +346,7 @@ bool Y4MInput::parseHeader()
     }
 
     if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
-        height < MIN_FRAME_HEIGHT || width > MAX_FRAME_HEIGHT ||
+        height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT ||
         (rateNum / rateDenom) < 1 || (rateNum / rateDenom) > MAX_FRAME_RATE ||
         colorSpace <= X265_CSP_I400 || colorSpace >= X265_CSP_COUNT)
         return false;
@@ -371,38 +371,46 @@ void Y4MInput::threadMain()
     }
     while (threadActive);
 
+    /* "open the throttle" at the end, allow reader to consume
+     * remaining valid queue entries */
     threadActive = false;
-    notEmpty.trigger();
+    frameStat[tail.get()] = false;
+    tail.set(QUEUE_SIZE);
 }
 
 bool Y4MInput::readPicture(x265_picture& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
+    int curHead = head.get();
+    int curTail = tail.get();
+
 #if ENABLE_THREADING
-    while (head == tail)
+
+    while (curHead == curTail)
     {
-        notEmpty.wait();
+        curTail = tail.waitForChange(curTail);
         if (!threadActive)
             return false;
     }
 
 #else
+
     populateFrameQueue();
+
 #endif
 
-    if (!frameStat[head])
+    if (!frameStat[curHead])
         return false;
 
     pic.bitDepth = 8;
     pic.colorSpace = colorSpace;
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
-        pic.planes[i] = plane[head][i];
+        pic.planes[i] = plane[curHead][i];
         pic.stride[i] = plane_stride[i];
     }
 
-    head = (head + 1) % QUEUE_SIZE;
-    notFull.trigger();
+    head.set((curHead + 1) % QUEUE_SIZE);
 
     PPAStopCpuEventFunc(read_yuv);
     return true;
@@ -432,28 +440,29 @@ bool Y4MInput::populateFrameQueue()
         c = ifs->get();
     }
 
-    while ((tail + 1) % QUEUE_SIZE == head)
+    int curTail = tail.get();
+    int curHead = head.get();
+    while ((curTail + 1) % QUEUE_SIZE == curHead)
     {
-        notFull.wait();
+        curHead = head.waitForChange(curHead);
         if (!threadActive)
             return false;
     }
 
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
-        ifs->read(plane[tail][i], plane_size[i]);
+        ifs->read(plane[curTail][i], plane_size[i]);
     }
 
-    frameStat[tail] = !ifs->fail();
-    tail = (tail + 1) % QUEUE_SIZE;
-    notEmpty.trigger();
+    frameStat[curTail] = !ifs->fail();
+    tail.set((curTail + 1) % QUEUE_SIZE);
     return !ifs->fail();
 }
 
 void Y4MInput::release()
 {
     threadActive = false;
-    notFull.trigger();
+    head.set(QUEUE_SIZE); // unblock file reader
     stop();
     delete this;
 }

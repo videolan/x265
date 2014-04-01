@@ -34,7 +34,7 @@ x265_encoder *x265_encoder_open(x265_param *param)
     if (!param)
         return NULL;
 
-    x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+    x265_setup_primitives(param, param->cpuid);
 
     if (x265_check_params(param))
         return NULL;
@@ -49,9 +49,14 @@ x265_encoder *x265_encoder_open(x265_param *param)
         encoder->determineLevelAndProfile(param);
         encoder->configure(param);
 
-        // save a copy of final parameters in TEncCfg
-        memcpy(&encoder->param, param, sizeof(*param));
+        encoder->param = X265_MALLOC(x265_param, 1);
+        if (!encoder->param)
+        {
+            encoder->destroy();
+            return NULL;
+        }
 
+        memcpy(encoder->param, param, sizeof(x265_param));
         x265_print_params(param);
         encoder->create();
         encoder->init();
@@ -64,15 +69,15 @@ extern "C"
 int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
     if (!pp_nal || !enc)
-        return 0;
+        return -1;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
 
     int ret = 0;
     NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
-    if (!encoder->getStreamHeaders(nalunits))
+    if (encoder->getStreamHeaders(nalunits) > 0)
     {
-        int nalcount = encoder->extractNalData(nalunits);
+        int nalcount = encoder->extractNalData(nalunits, ret);
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal = nalcount;
     }
@@ -106,7 +111,8 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
 
     if (pp_nal && numEncoded > 0)
     {
-        int nalcount = encoder->extractNalData(nalunits);
+        int memsize;
+        int nalcount = encoder->extractNalData(nalunits, memsize);
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal = nalcount;
     }
@@ -124,8 +130,6 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
 
     return numEncoded;
 }
-
-EXTERN_CYCLE_COUNTER(ME);
 
 extern "C"
 void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t statsSizeBytes)
@@ -153,8 +157,6 @@ void x265_encoder_close(x265_encoder *enc)
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-
-        REPORT_CYCLE_COUNTER(ME);
 
         encoder->printSummary();
         encoder->destroy();

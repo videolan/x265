@@ -23,7 +23,7 @@
 
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComSlice.h"
-#include "TLibEncoder/TEncCfg.h"
+#include "encoder.h"
 
 #include "PPA/ppa.h"
 #include "dpb.h"
@@ -36,7 +36,7 @@ DPB::~DPB()
     while (!m_picList.empty())
     {
         TComPic* pic = m_picList.popFront();
-        pic->destroy(m_cfg->param.bframes);
+        pic->destroy();
         delete pic;
     }
 }
@@ -52,7 +52,7 @@ void DPB::recycleUnreferenced(PicList& freeList)
         iterPic = iterPic->m_next;
         if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
         {
-            pic->m_reconRowCount = 0;
+            pic->m_reconRowCount.set(0);
             pic->m_bChromaPlanesExtended = false;
 
             // iterator is invalidated by remove, restart scan
@@ -357,13 +357,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
             outPic->setUsedByCurr(0);
             outPic->setIsLongTerm(0);
         }
-        // TODO: Do we require this check here
-        // check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
-
-        /*if (this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
-        {
-            assert(outPic->getSlice()->isReferenced() == 0);
-        }*/
     }
 }
 
@@ -380,7 +373,7 @@ NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, TComPic* pic)
     }
     if (pic->m_lowres.bKeyframe)
     {
-        if (m_cfg->param.bOpenGOP)
+        if (m_bOpenGOP)
         {
             return NAL_UNIT_CODED_SLICE_CRA;
         }

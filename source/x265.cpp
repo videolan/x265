@@ -27,9 +27,11 @@
 
 #include "input/input.h"
 #include "output/output.h"
+#include "filters/filters.h"
 #include "common.h"
-#include "x265.h"
 #include "param.h"
+#include "cpu.h"
+#include "x265.h"
 
 #if HAVE_VLD
 /* Visual Leak Detector */
@@ -37,16 +39,11 @@
 #endif
 #include "PPA/ppa.h"
 
-#include <time.h>
-
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <assert.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
+
 #include <string>
 #include <ostream>
 #include <fstream>
@@ -65,12 +62,13 @@ static const struct option long_options[] =
 {
     { "help",                 no_argument, NULL, 'h' },
     { "version",              no_argument, NULL, 'V' },
-    { "cpuid",          required_argument, NULL, 0 },
+    { "asm",            required_argument, NULL, 0 },
+    { "no-asm",               no_argument, NULL, 0 },
     { "threads",        required_argument, NULL, 0 },
     { "preset",         required_argument, NULL, 'p' },
     { "tune",           required_argument, NULL, 't' },
     { "frame-threads",  required_argument, NULL, 'F' },
-    { "log",            required_argument, NULL, 0 },
+    { "log-level",      required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
     { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
@@ -79,6 +77,8 @@ static const struct option long_options[] =
     { "input-depth",    required_argument, NULL, 0 },
     { "input-res",      required_argument, NULL, 0 },
     { "input-csp",      required_argument, NULL, 0 },
+    { "interlace",      required_argument, NULL, 0 },
+    { "no-interlace",         no_argument, NULL, 0 },
     { "fps",            required_argument, NULL, 0 },
     { "seek",           required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
@@ -119,12 +119,16 @@ static const struct option long_options[] =
     { "bframes",        required_argument, NULL, 'b' },
     { "bframe-bias",    required_argument, NULL, 0 },
     { "b-adapt",        required_argument, NULL, 0 },
+    { "no-b-adapt",           no_argument, NULL, 0 },
     { "no-b-pyramid",         no_argument, NULL, 0 },
     { "b-pyramid",            no_argument, NULL, 0 },
     { "ref",            required_argument, NULL, 0 },
     { "no-weightp",           no_argument, NULL, 0 },
     { "weightp",              no_argument, NULL, 'w' },
+    { "no-weightb",           no_argument, NULL, 0 },
+    { "weightb",              no_argument, NULL, 0 },
     { "crf",            required_argument, NULL, 0 },
+    { "crf-max",        required_argument, NULL, 0 },
     { "vbv-maxrate",    required_argument, NULL, 0 },
     { "vbv-bufsize",    required_argument, NULL, 0 },
     { "vbv-init",       required_argument, NULL, 0 },
@@ -153,6 +157,7 @@ static const struct option long_options[] =
     { "no-cutree",                 no_argument, NULL, 0 },
     { "cutree",                    no_argument, NULL, 0 },
     { "vui",                  no_argument, NULL, 0 },
+    { "no-vui",               no_argument, NULL, 0 },
     { "sar",            required_argument, NULL, 0 },
     { "overscan",       required_argument, NULL, 0 },
     { "videoformat",    required_argument, NULL, 0 },
@@ -161,15 +166,10 @@ static const struct option long_options[] =
     { "transfer",       required_argument, NULL, 0 },
     { "colormatrix",    required_argument, NULL, 0 },
     { "chromaloc",      required_argument, NULL, 0 },
-    { "fieldseq",             no_argument, NULL, 0 },
-    { "no-fieldseq",          no_argument, NULL, 0 },
-    { "framefieldinfo",       no_argument, NULL, 0 },
-    { "no-framefieldinfo",    no_argument, NULL, 0 },
     { "crop-rect",      required_argument, NULL, 0 },
     { "timinginfo",           no_argument, NULL, 0 },
-    { "nal-hrd",              no_argument, NULL, 0 },
-    { "bitstreamrestriction", no_argument, NULL, 0 },
-    { "subpichrd",            no_argument, NULL, 0 },
+    { "no-timinginfo",        no_argument, NULL, 0 },
+    { "dither",               no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -192,6 +192,8 @@ struct CLIOptions
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
 
+    bool dither;
+
     int64_t startTime;
     int64_t prevUpdateTime;
     float   frameRate;
@@ -209,6 +211,7 @@ struct CLIOptions
         bForceY4m = false;
         startTime = x265_mdate();
         prevUpdateTime = 0;
+        dither = false;
     }
 
     void destroy();
@@ -272,7 +275,6 @@ void CLIOptions::printVersion(x265_param *param)
 {
     x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
     x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
-    x265_setup_primitives(param, -1);
 }
 
 void CLIOptions::showHelp(x265_param *param)
@@ -288,92 +290,95 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nExecutable Options:\n");
     H0("-h/--h                           Show this help text and exit\n");
     H0("-V/--version                     Show version info and exit\n");
-    H0("   --cpuid                       Limit SIMD capability bitmap 0:auto 1:None. Default:0\n");
-    H0("   --threads                     Number of threads for thread pool (0: detect CPU core count, default)\n");
-    H0("-p/--preset                      ultrafast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
-    H0("-t/--tune                        Tune the settings for a particular type of source or situation: (psnr, ssim, zero-latency)\n");
-    H0("-F/--frame-threads               Number of concurrently encoded frames. 0: auto-determined by core count\n");
-    H0("   --log                         Logging level 0:ERROR 1:WARNING 2:INFO 3:DEBUG -1:NONE. Default %d\n", param->logLevel);
-    H0("   --csv                         Comma separated log file, log level >= 3 frame log, else one line per run\n");
-    H0("   --y4m                         Parse input stream as YUV4MPEG2 regardless of file extension\n");
+    H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
+    H0("   --threads <integer>           Number of threads for thread pool (0: detect CPU core count, default)\n");
+    H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
+    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", logLevelNames[param->logLevel+1]);
+    H0("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("   --no-progress                 Disable CLI progress reports\n");
-    H0("-o/--output                      Bitstream output file name\n");
+    H0("-o/--output <filename>           Bitstream output file name\n");
     H0("\nInput Options:\n");
-    H0("   --input                       Raw YUV or Y4M input file name\n");
-    H0("   --input-depth                 Bit-depth of input file. Default 8\n");
-    H0("   --input-res                   Source picture size [w x h], auto-detected if Y4M\n");
-    H0("   --input-csp                   Source color space parameter, auto-detected if Y4M. 1:i420 3:i444. Default: 1\n");
-    H0("   --fps                         Source frame rate (float or num/denom), auto-detected if Y4M\n");
-    H0("   --seek                        First frame to encode\n");
-    H0("-f/--frames                      Maximum number of frames to encode. Default all\n");
+    H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
+    H0("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless of file extension\n");
+    H0("   --input-depth <integer>       Bit-depth of input file. Default 8\n");
+    H0("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
+    H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
+    H0("   --input-csp <string>          Source color space: i420 or i444, auto-detected if Y4M. Default: i420\n");
+    H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
+    H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
+    H0("   --seek <integer>              First frame to encode\n");
+    H0("\nPresets:\n");
+    H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
+    H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
+    H0("                                 ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
+    H0("-t/--tune <string>               Tune the settings for a particular type of source or situation:\n");
+    H0("                                 psnr, ssim, zerolatency, or fastdecode\n");
+    H0("\nQuality reporting metrics:\n");
+    H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
+    H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nQuad-Tree analysis:\n");
     H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
-    H0("-s/--ctu                         Maximum CU size (default: 64x64). Default %d\n", param->maxCUSize);
-    H0("   --tu-intra-depth              Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);
-    H0("   --tu-inter-depth              Max TU recursive depth for inter CUs. Default %d\n", param->tuQTMaxInterDepth);
+    H0("-s/--ctu <64|32|16>              Maximum CU size (default: 64x64). Default %d\n", param->maxCUSize);
+    H0("   --tu-intra-depth <integer>    Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);
+    H0("   --tu-inter-depth <integer>    Max TU recursive depth for inter CUs. Default %d\n", param->tuQTMaxInterDepth);
     H0("\nTemporal / motion search options:\n");
-    H0("   --me                          Motion search method 0:dia 1:hex 2:umh 3:star 4:full. Default %d\n", param->searchMethod);
-    H0("-m/--subme                       Amount of subpel refinement to perform (0:least .. 7:most). Default %d \n", param->subpelRefine);
-    H0("   --merange                     Motion search range. Default %d\n", param->searchRange);
+    H0("   --me <string>                 Motion search method dia hex umh star full. Default %d\n", param->searchMethod);
+    H0("-m/--subme <integer>             Amount of subpel refinement to perform (0:least .. 7:most). Default %d \n", param->subpelRefine);
+    H0("   --merange <integer>           Motion search range. Default %d\n", param->searchRange);
     H0("   --[no-]rect                   Enable rectangular motion partitions Nx2N and 2NxN. Default %s\n", OPT(param->bEnableRectInter));
     H0("   --[no-]amp                    Enable asymmetric motion partitions, requires --rect. Default %s\n", OPT(param->bEnableAMP));
-    H0("   --max-merge                   Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
+    H0("   --max-merge <1..5>            Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
     H0("   --[no-]fast-cbf               Enable Cbf fast mode. Default %s\n", OPT(param->bEnableCbfFastMode));
     H0("\nSpatial / intra options:\n");
-    H0("   --rdpenalty                   penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum. Default %d\n", param->rdPenalty);
+    H0("   --rdpenalty <0..2>            penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum. Default %d\n", param->rdPenalty);
     H0("   --[no-]tskip                  Enable intra transform skipping. Default %s\n", OPT(param->bEnableTransformSkip));
     H0("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
     H0("\nSlice decision options:\n");
     H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
-    H0("-I/--keyint                      Max IDR period in frames. -1 for infinite-gop. Default %d\n", param->keyframeMax);
-    H0("-i/--min-keyint                  Scenecuts closer together than this are coded as I, not IDR. Default: auto\n");
+    H0("-I/--keyint <integer>            Max IDR period in frames. -1 for infinite-gop. Default %d\n", param->keyframeMax);
+    H0("-i/--min-keyint <integer>        Scenecuts closer together than this are coded as I, not IDR. Default: auto\n");
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
-    H0("   --scenecut                    How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
-    H0("   --rc-lookahead                Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
-    H0("   --bframes                     Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
-    H0("   --bframe-bias                 Bias towards B frame decisions. Default %d\n", param->bFrameBias);
-    H0("   --b-adapt                     0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
+    H0("   --scenecut <integer>          How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
+    H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
+    H0("   --bframes <integer>           Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
+    H0("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
+    H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
     H0("   --[no-]b-pyramid              Use B-frames as references. Default %s\n", OPT(param->bBPyramid));
-    H0("   --ref                         max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
+    H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
-    H0("\nQP, rate control and rate distortion options:\n");
-    H0("   --bitrate                     Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
-    H0("   --crf                         Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
-    H0("   --vbv-maxrate                 Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
-    H0("   --vbv-bufsize                 Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
-    H0("   --vbv-init                    Initial VBV buffer occupancy. Default %f\n", param->rc.vbvBufferInit);
-    H0("-q/--qp                          Base QP for CQP mode. Default %d\n", param->rc.qp);
-    H0("   --aq-mode                     Mode for Adaptive Quantization - 0:none 1:aqVariance Default %d\n", param->rc.aqMode);
-    H0("   --aq-strength                 Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
+    H0("   --[no-]weightb                Enable weighted prediction in B slices. Default %s\n", OPT(param->bEnableWeightedBiPred));
+    H0("\nRate control and rate distortion options:\n");
+    H0("   --bitrate <integer>           Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
+    H0("   --crf <float>                 Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
+    H0("   --crf-max <float>             With CRF+VBV, limit RF to this value. 0 for no limit (default)\n");
+    H0("                                  May cause VBV underflows!\n");
+    H0("   --vbv-maxrate <integer>       Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
+    H0("   --vbv-bufsize <integer>       Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
+    H0("   --vbv-init <float>            Initial VBV buffer occupancy (fraction of bufsize or in kbits). Default %f\n", param->rc.vbvBufferInit);
+    H0("-q/--qp <integer>                Base QP for CQP mode. Default %d\n", param->rc.qp);
+    H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);
+    H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
-    H0("   --cbqpoffs                    Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
-    H0("   --crqpoffs                    Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
-    H0("   --rd                          Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
+    H0("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
+    H0("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
+    H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
-    H0("\nLoop filter:\n");
-    H0("   --[no-]lft                    Enable Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));
-    H0("\nSample Adaptive Offset loop filter:\n");
+    H0("\nLoop filters (deblock and SAO):\n");
+    H0("   --[no-]lft                    Enable Deblocking Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));
     H0("   --[no-]sao                    Enable Sample Adaptive Offset. Default %s\n", OPT(param->bEnableSAO));
-    H0("   --sao-lcu-bounds              0: right/bottom boundary areas skipped  1: non-deblocked pixels are used. Default %d\n", param->saoLcuBoundary);
-    H0("   --sao-lcu-opt                 0: SAO picture-based optimization, 1: SAO LCU-based optimization. Default %d\n", param->saoLcuBasedOptimization);
-    H0("\nQuality reporting metrics:\n");
-    H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
-    H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
-    H0("\nReconstructed video options (debugging):\n");
-    H0("-r/--recon                       Reconstructed raw image YUV or Y4M output file name\n");
-    H0("   --recon-depth                 Bit-depth of reconstructed raw image file. Defaults to input bit depth\n");
-    H0("\nSEI options:\n");
-    H0("   --hash                        Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
+    H0("   --sao-lcu-bounds <integer>    0: right/bottom boundary areas skipped  1: non-deblocked pixels are used. Default %d\n", param->saoLcuBoundary);
+    H0("   --sao-lcu-opt <integer>       0: SAO picture-based optimization, 1: SAO LCU-based optimization. Default %d\n", param->saoLcuBasedOptimization);
     H0("\nVUI options:\n");
-    H0("   --vui                         Add Video Useability Information with all fields to the SPS. Default %s\n", OPT(param->bEnableVuiParametersPresentFlag));
-    H0("   --sar <int:int|int>           Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
+    H0("   --[no-]vui                    Add Video Useability Information with all fields to the SPS. Default %s\n", OPT(param->vui.bEnableVuiParametersPresentFlag));
+    H0("   --sar <width:height|int>      Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
-    H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1 or custom ratio of <int:int>. Default %d\n", param->aspectRatioIdc);
-    H0("   --overscan <string>           Specify crop overscan setting from undef, show or crop. Default undef\n");
+    H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1 or custom ratio of <int:int>. Default %d\n", param->vui.aspectRatioIdc);
+    H0("   --crop-rect <string>          Add 'left,top,right,bottom' to the bitstream-level cropping rectangle\n");
+    H0("   --overscan <string>           Specify whether it is appropriate for decoder to show cropped region: undef, show or crop. Default undef\n");
     H0("   --videoformat <string>        Specify video format from undef, component, pal, ntsc, secam, mac. Default undef\n");
     H0("   --range <string>              Specify black level and range of luma and chroma signals as full or limited Default limited\n");
     H0("   --colorprim <string>          Specify color primaries from undef, bt709, bt470m, bt470bg, smpte170m,\n");
@@ -383,17 +388,16 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 bt2020-10, bt2020-12. Default undef\n");
     H0("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
     H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
-    H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->chromaSampleLocTypeTopField);
-    H0("   --[no-]fieldseq               Specify that pictures are fields and an SEI timing message\n");
-    H0("                                 will be added to every access unit. Default %s\n", OPT(param->bEnableFieldSeqFlag));
-    H0("   --[no-]framefieldinfo         Specify that a pic-struct will be added to the SEI timing message. Default %s\n", OPT(param->bEnableFrameFieldInfoPresentFlag));
-    H0("   --crop-rect <string>          Add 'left,top,right,bottom' to the bitstream-level cropping rectangle\n");
-    H0("   --timinginfo                  Add timing information to the VUI. Defaut %s\n", OPT(param->bEnableVuiTimingInfoPresentFlag));
-    H0("   --nal-hrd                     Signal HRD information. Default %s\n", OPT(param->bEnableVuiHrdParametersPresentFlag));
-    H0("   --bitstreamrestriction        Add bit stream restriction fields to the VUI. Default %s\n", OPT(param->bEnableBitstreamRestrictionFlag));
-    H0("   --subpichrd                   Add sub picture HRD parameters to the HRD. Default %s\n", OPT(param->bEnableSubPicHrdParamsPresentFlag));
+    H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
+    H0("   --[no-]timinginfo             Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
+    H0("\nReconstructed video options (debugging):\n");
+    H0("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
+    H0("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
+    H0("\nSEI options:\n");
+    H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
 #undef OPT
 #undef H0
+    printf("\n\nFull documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");
     exit(0);
 }
 
@@ -401,7 +405,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 {
     bool bError = 0;
     int help = 0;
-    int cpuid = 0;
     int inputBitDepth = 8;
     int reconFileBitDepth = 0;
     const char *inputfn = NULL;
@@ -409,6 +412,12 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *bitstreamfn = NULL;
     const char *preset = "medium";
     const char *tune = "ssim";
+
+    if (argc <= 1)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "No input file. Run x265 --help for a list of options.\n");
+        return true;
+    }
 
     /* Presets are applied before all other options. */
     for (optind = 0;; )
@@ -426,7 +435,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
     if (x265_param_default_preset(param, preset, tune) < 0)
     {
-        x265_log(NULL, X265_LOG_WARNING, "preset or tune unrecognized\n");
+        x265_log(NULL, X265_LOG_ERROR, "preset or tune unrecognized\n");
         return true;
     }
 
@@ -447,6 +456,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
         case 'V':
             printVersion(param);
+            x265_setup_primitives(param, -1);
             exit(0);
 
         default:
@@ -476,20 +486,21 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             }
 #define OPT(longname) \
     else if (!strcmp(long_options[long_options_index].name, longname))
+#define OPT2(name1, name2) \
+    else if (!strcmp(long_options[long_options_index].name, name1) || \
+             !strcmp(long_options[long_options_index].name, name2))
 
             if (0) ;
-            OPT("cpuid") cpuid = x265_atoi(optarg, bError);
+            OPT2("frame-skip", "seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
             OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
-            OPT("seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
-            OPT("frame-skip") this->seek = (uint32_t)x265_atoi(optarg, bError);
             OPT("output") bitstreamfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
             OPT("input-res") bError |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
             OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
+            OPT("dither") this->dither = true;
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
-            OPT("no-scenecut") param->scenecutThreshold = 0; // special handling
             OPT("y4m") bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
@@ -547,8 +558,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     info.height = param->sourceHeight;
     info.fpsNum = param->fpsNum;
     info.fpsDenom = param->fpsDenom;
-    info.sarWidth = param->sarWidth;
-    info.sarHeight = param->sarHeight;
+    info.sarWidth = param->vui.sarWidth;
+    info.sarHeight = param->vui.sarHeight;
     info.skipFrames = seek;
     info.frameCount = 0;
     getParamAspectRatio(param, info.sarWidth, info.sarHeight);
@@ -581,7 +592,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         param->fpsDenom = info.fpsDenom;
         param->fpsNum = info.fpsNum;
     }
-    if (!param->bEnableAspectRatioIdc && info.sarWidth && info.sarHeight)
+    if (!param->vui.bEnableAspectRatioIdc && info.sarWidth && info.sarHeight)
         setParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
     if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
@@ -620,7 +631,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             this->recon = 0;
         }
         else
-            fprintf(stderr, "%s  [info]: reconstructed images %dx%d %d/%d fps %s\n", this->recon->getName(),
+            fprintf(stderr, "%s  [info]: reconstructed images %dx%d fps %d/%d %s\n", this->recon->getName(),
                     param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
                     x265_source_csp_names[param->internalCsp]);
     }
@@ -632,7 +643,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         return true;
     }
 
-    x265_setup_primitives(param, cpuid);
     printVersion(param);
     return false;
 }
@@ -670,20 +680,36 @@ int main(int argc, char **argv)
     x265_picture pic_orig, pic_out;
     x265_picture *pic_in = &pic_orig;
     x265_picture *pic_recon = cliopt.recon ? &pic_out : NULL;
+    uint32_t inFrameCount = 0;
+    uint32_t outFrameCount = 0;
     x265_nal *p_nal;
     x265_stats stats;
     uint32_t nal;
+    int16_t *errorBuf = NULL;
 
-    if (!x265_encoder_headers(encoder, &p_nal, &nal))
+    if (!param->bRepeatHeaders)
     {
-        cliopt.writeNALs(p_nal, nal);
+        if (x265_encoder_headers(encoder, &p_nal, &nal) < 0)
+        {
+            x265_log(param, X265_LOG_ERROR, "Failure generating stream headers\n");
+            goto fail;
+        }
+        else
+            cliopt.writeNALs(p_nal, nal);
     }
 
     x265_picture_init(param, pic_in);
 
+    if (cliopt.dither)
+    {
+        errorBuf = X265_MALLOC(int16_t, param->sourceWidth + 1);
+        if (errorBuf)
+            memset(errorBuf, 0, (param->sourceWidth + 1) * sizeof(int16_t));
+        else
+            cliopt.dither = false;
+    }
+
     // main encoder loop
-    uint32_t inFrameCount = 0;
-    uint32_t outFrameCount = 0;
     while (pic_in && !b_ctrl_c)
     {
         pic_orig.poc = inFrameCount;
@@ -694,6 +720,12 @@ int main(int argc, char **argv)
             inFrameCount++;
         else
             pic_in = NULL;
+
+        if (pic_in != NULL && pic_in->bitDepth > X265_DEPTH && cliopt.dither)
+        {
+            ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
+            pic_in->bitDepth = X265_DEPTH;
+        }
 
         int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
         if (numEncoded < 0)
@@ -737,6 +769,7 @@ int main(int argc, char **argv)
     if (cliopt.bProgress)
         fprintf(stderr, "%*s\r", 80, " ");
 
+fail:
     x265_encoder_get_stats(encoder, &stats, sizeof(stats));
     if (param->csvfn && !b_ctrl_c)
         x265_encoder_log(encoder, argc, argv);
@@ -756,7 +789,7 @@ int main(int argc, char **argv)
             printf(", Global PSNR: %.3f", stats.globalPsnr);
 
         if (param->bEnableSsim)
-            printf(", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim(stats.globalSsim));
+            printf(", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
 
         printf("\n");
     }
@@ -770,6 +803,8 @@ int main(int argc, char **argv)
     cliopt.destroy();
 
     x265_param_free(param);
+
+    X265_FREE(errorBuf);
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);

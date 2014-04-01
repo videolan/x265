@@ -38,7 +38,7 @@
 #include "TComPic.h"
 #include "SEI.h"
 #include "mv.h"
-#include "TLibEncoder/TEncCfg.h"
+#include "encoder.h"
 
 using namespace x265;
 
@@ -66,7 +66,7 @@ TComPic::TComPic()
     , m_cuCostsForVbv(NULL)
     , m_intraCuCostsForVbv(NULL)
 {
-    m_reconRowCount = 0;
+    m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_next = NULL;
@@ -88,13 +88,13 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-bool TComPic::create(TEncCfg* cfg)
+bool TComPic::create(Encoder* cfg)
 {
     /* store conformance window parameters with picture */
     m_conformanceWindow = cfg->m_conformanceWindow;
 
     /* store display window parameters with picture */
-    m_defaultDisplayWindow = cfg->getDefaultDisplayWindow();
+    m_defaultDisplayWindow = cfg->m_defaultDisplayWindow;
 
     m_picSym = new TComPicSym;
     m_origPicYuv = new TComPicYuv;
@@ -103,18 +103,18 @@ bool TComPic::create(TEncCfg* cfg)
         return false;
 
     bool ok = true;
-    ok &= m_picSym->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
-    ok &= m_origPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
-    ok &= m_reconPicYuv->create(cfg->param.sourceWidth, cfg->param.sourceHeight, cfg->param.internalCsp, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth);
-    ok &= m_lowres.create(m_origPicYuv, cfg->param.bframes, !!cfg->param.rc.aqMode);
+    ok &= m_picSym->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    ok &= m_origPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    ok &= m_reconPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize,g_maxCUDepth);
+    ok &= m_lowres.create(m_origPicYuv, cfg->param->bframes, !!cfg->param->rc.aqMode);
 
-    bool isVbv = cfg->param.rc.vbvBufferSize > 0 && cfg->param.rc.vbvMaxBitrate > 0;
-    if (ok && (isVbv || cfg->param.rc.aqMode))
+    bool isVbv = cfg->param->rc.vbvBufferSize > 0 && cfg->param->rc.vbvMaxBitrate > 0;
+    if (ok && (isVbv || cfg->param->rc.aqMode))
     {
         int numRows = m_picSym->getFrameHeightInCU();
         int numCols = m_picSym->getFrameWidthInCU();
 
-        if (cfg->param.rc.aqMode)
+        if (cfg->param->rc.aqMode)
             CHECKED_MALLOC(m_qpaAq, double, numRows);
         if (isVbv)
         {
@@ -139,9 +139,9 @@ fail:
     return ok;
 }
 
-void TComPic::reInit(TEncCfg* cfg)
+void TComPic::reInit(Encoder* cfg)
 {
-    if (cfg->param.rc.vbvBufferSize > 0 && cfg->param.rc.vbvMaxBitrate > 0)
+    if (cfg->param->rc.vbvBufferSize > 0 && cfg->param->rc.vbvMaxBitrate > 0)
     {
         int numRows = m_picSym->getFrameHeightInCU();
         int numCols = m_picSym->getFrameWidthInCU();
@@ -156,11 +156,11 @@ void TComPic::reInit(TEncCfg* cfg)
         memset(m_intraCuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_qpaRc, 0, numRows * sizeof(double));
     }
-    if (cfg->param.rc.aqMode)
+    if (cfg->param->rc.aqMode)
         memset(m_qpaAq, 0,  m_picSym->getFrameHeightInCU() * sizeof(double));
 }
 
-void TComPic::destroy(int bframes)
+void TComPic::destroy()
 {
     if (m_picSym)
     {
@@ -182,7 +182,7 @@ void TComPic::destroy(int bframes)
         delete m_reconPicYuv;
         m_reconPicYuv = NULL;
     }
-    m_lowres.destroy(bframes);
+    m_lowres.destroy();
 
     X265_FREE(m_rowDiagQp);
     X265_FREE(m_rowDiagQScale);

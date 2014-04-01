@@ -27,9 +27,10 @@
 
 using namespace x265;
 
-bool Lowres::create(TComPicYuv *orig, int bframes, bool bAQEnabled)
+bool Lowres::create(TComPicYuv *orig, int _bframes, bool bAQEnabled)
 {
     isLowres = true;
+    bframes = _bframes;
     width = orig->getWidth() / 2;
     lines = orig->getHeight() / 2;
     lumaStride = width + 2 * orig->getLumaMarginX();
@@ -92,7 +93,7 @@ fail:
     return false;
 }
 
-void Lowres::destroy(int bframes)
+void Lowres::destroy()
 {
     for (int i = 0; i < 4; i++)
     {
@@ -125,7 +126,7 @@ void Lowres::destroy(int bframes)
 }
 
 // (re) initialize lowres state
-void Lowres::init(TComPicYuv *orig, int poc, int type, int bframes)
+void Lowres::init(TComPicYuv *orig, int poc, int type)
 {
     bIntraCalculated = false;
     bLastMiniGopBFrame = false;

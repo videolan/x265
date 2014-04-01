@@ -43,7 +43,7 @@ The x265 software is available for free under the GNU GPL 2 license,
 from https://bitbucket.org/multicoreware/x265.  For commercial companies
 that wish to distribute x265 without being subject to the open source
 requirements of the GPL 2 license, commercial licenses are available
-with competitive terms.  Contact licensing@x265.com to inquire about
+with competitive terms.  Contact license @ x265.com to inquire about
 commercial license terms.  
 
 While x265 is primarily designed as a video encoder software library, a

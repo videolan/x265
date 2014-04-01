@@ -40,9 +40,7 @@
 
 #include "CommonDef.h"
 
-#include <stdio.h>
 #include <iostream>
-#include <algorithm>
 
 namespace x265 {
 // private namespace
@@ -71,26 +69,25 @@ void destroyROM();
 // ====================================================================================================================
 static const int chromaQPMappingTableSize = 58;
 
-extern const UChar  g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
+extern const uint8_t g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
 // Data structure related table & variable
 // ====================================================================================================================
 
 // flexible conversion from relative to absolute index
 extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern uint32_t*  g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH][MAX_CU_DEPTH];
+extern uint16_t*  g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
-void initRasterToZscan(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
+void initRasterToZscan(uint32_t maxCUSize, uint32_t maxCUDepth);
 
 // conversion of partition index to picture pel position
 extern uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-void initRasterToPelXY(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxCUDepth);
+void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxCUDepth);
 
 // global variable (LCU width/height, max. CU depth)
-extern uint32_t g_maxCUWidth;
-extern uint32_t g_maxCUHeight;
+extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;
 extern uint32_t g_addCUDepth;
 
@@ -131,32 +128,34 @@ extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 // Scanning order & context mapping table
 // ====================================================================================================================
 
-extern const uint32_t g_groupIdx[32];
-extern const uint32_t g_minInGroup[10];
+//extern const uint8_t g_groupIdx[32];
+static inline uint32_t getGroupIdx(const uint32_t idx)
+{
+    uint32_t group = (idx >> 3);
+    if (idx >= 24)
+        group = 2;
+    uint32_t groupIdx = ((idx >> (group + 1)) - 2) + 4 + (group << 1);
+    if (idx <= 3)
+        groupIdx = idx;
 
-extern const uint32_t g_goRiceRange[5];      //!< maximum value coded with Rice codes
-extern const uint32_t g_goRicePrefixLen[5];  //!< prefix length for each maximum value
+#ifdef _DEBUG
+    static const uint8_t g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
+    assert(groupIdx == g_groupIdx[idx]);
+#endif
 
-// ====================================================================================================================
-// Bit-depth
-// ====================================================================================================================
+    return groupIdx;
+}
 
-/** clip x, such that 0 <= x <= #g_maxLumaVal */
-template<typename T>
-inline T ClipY(T x) { return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x)); }
+extern const uint8_t g_minInGroup[10];
 
-template<typename T>
-inline T ClipC(T x) { return std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x)); }
-
-/** clip a, such that minVal <= a <= maxVal */
-template<typename T>
-inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
+extern const uint8_t g_goRiceRange[5];      //!< maximum value coded with Rice codes
+//extern const uint8_t g_goRicePrefixLen[5];  //!< prefix length for each maximum value
 
 // ====================================================================================================================
 // Misc.
 // ====================================================================================================================
 
-extern char g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
+extern uint8_t g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
 #ifndef ENC_DEC_TRACE
 # define ENC_DEC_TRACE 0
@@ -274,9 +273,8 @@ extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 extern const double x265_lambda2_tab_I[MAX_MAX_QP + 1];
 extern const double x265_lambda2_non_I[MAX_MAX_QP + 1];
 // CABAC tables
-extern const UChar g_lpsTable[64][4];
-extern const UChar g_renormTable[32];
-extern const UChar x265_exp2_lut[64];
+extern const uint8_t g_lpsTable[64][4];
+extern const uint8_t x265_exp2_lut[64];
 }
 
 #endif  //ifndef X265_TCOMROM_H

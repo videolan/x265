@@ -24,8 +24,8 @@
 #ifndef X265_MV_H
 #define X265_MV_H
 
+#include "common.h"
 #include "primitives.h"
-#include <stdint.h>
 
 namespace x265 {
 // private x265 namespace

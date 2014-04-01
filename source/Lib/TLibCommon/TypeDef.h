@@ -38,41 +38,21 @@
 #ifndef X265_TYPEDEF_H
 #define X265_TYPEDEF_H
 
-#define REF_PIC_LIST_0 0
-#define REF_PIC_LIST_1 1
-#define REF_PIC_LIST_X 100
-
-#include <stdint.h>
+#include "common.h"
 
 namespace x265 {
 // private namespace
 
-// ====================================================================================================================
-// Basic type redefinition
-// ====================================================================================================================
-
-typedef unsigned char  UChar;
-
-// ====================================================================================================================
-// Type definition
-// ====================================================================================================================
-
-#if HIGH_BIT_DEPTH
-typedef uint16_t Pel;          // 16-bit pixel type
-#define X265_DEPTH 10          // compile time configurable bit depth
-#else
-typedef UChar  Pel;            // 8-bit pixel type
-#define X265_DEPTH 8           // compile time configurable bit depth
-#endif
-typedef int    TCoeff;         // transform coefficient
+#define REF_PIC_LIST_0 0
+#define REF_PIC_LIST_1 1
+#define REF_PIC_LIST_X 100
 
 // ====================================================================================================================
 // Enumeration
 // ====================================================================================================================
-#define MDCS_MODE                       MDCS_BOTH_DIRECTIONS        ///< Name taken from definition of MDCSMode enumeration below
 #define MDCS_ANGLE_LIMIT                                  4         ///< (default 4) 0 = Horizontal/vertical only, 1 = Horizontal/vertical +/- 1, 2 = Horizontal/vertical +/- 2 etc...
-#define MDCS_MAXIMUM_WIDTH                                8         ///< (default 8) (measured in pixels) TUs with width greater than this can only use diagonal scan
-#define MDCS_MAXIMUM_HEIGHT                               8         ///< (default 8) (measured in pixels) TUs with height greater than this can only use diagonal scan
+#define MDCS_LOG2_MAX_SIZE                                3         ///< (default 3) TUs with log2 of size greater than this can only use diagonal scan
+
 /// supported slice type
 enum SliceType
 {
@@ -89,16 +69,6 @@ enum ChromaFormat
     CHROMA_422  = 2,
     CHROMA_444  = 3,
     NUM_CHROMA_FORMAT = 4
-};
-
-///MDCS modes
-enum MDCSMode
-{
-    MDCS_DISABLED        = 0,
-    MDCS_HORIZONTAL_ONLY = 1,
-    MDCS_VERTICAL_ONLY   = 2,
-    MDCS_BOTH_DIRECTIONS = 3,
-    MDCS_NUMBER_OF_MODES = 4
 };
 
 #define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
@@ -184,11 +154,10 @@ enum COEFF_SCAN_GROUP_TYPE
 //TU settings for entropy encoding
 struct TUEntropyCodingParameters
 {
-    const uint32_t            *scan;
-    const uint32_t            *scanCG;
+    const uint16_t            *scan;
+    const uint16_t            *scanCG;
     COEFF_SCAN_TYPE      scanType;
-    uint32_t             widthInGroups;
-    uint32_t             heightInGroups;
+    uint32_t             log2TrSizeCG;
     uint32_t             firstSignificanceMapContext;
 };
 

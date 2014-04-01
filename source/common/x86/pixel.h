@@ -200,6 +200,9 @@ ADDAVG(addAvg_64x32)
 ADDAVG(addAvg_64x48)
 ADDAVG(addAvg_64x64)
 
+void x265_downShift_16_sse2(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+void x265_upShift_8_sse4(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift);
+
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD
 #undef DECL_X1

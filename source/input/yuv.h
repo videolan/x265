@@ -51,17 +51,13 @@ protected:
 
     bool threadActive;
 
-    volatile int head;
+    ThreadSafeInteger head;
 
-    volatile int tail;
+    ThreadSafeInteger tail;
 
     bool frameStat[QUEUE_SIZE];
 
     char* buf[QUEUE_SIZE];
-
-    Event notFull;
-
-    Event notEmpty;
 
     std::istream *ifs;
 

@@ -24,7 +24,6 @@
 #include "input.h"
 #include "yuv.h"
 #include "y4m.h"
-#include <string.h>
 
 using namespace x265;
 

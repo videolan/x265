@@ -35,16 +35,16 @@
     \brief    prediction class
 */
 
-#include <memory.h>
 #include "TComPrediction.h"
 #include "primitives.h"
+#include "common.h"
 
 using namespace x265;
 
 //! \ingroup TLibCommon
 //! \{
 
-static const UChar intraFilterThreshold[5] =
+static const uint8_t intraFilterThreshold[5] =
 {
     10, //4x4
     7,  //8x8
@@ -279,7 +279,7 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int li
         {
             if (cu->getSlice()->getPPS()->getUseWP())
             {
-                TShortYUV* shortYuv = &m_predShortYuv[0];
+                ShortYuv* shortYuv = &m_predShortYuv[0];
                 int refId = cu->getCUMvField(list)->getRefIdx(partAddr);
                 assert(refId >= 0);
 
@@ -327,7 +327,7 @@ void TComPrediction::xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width,
         xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(list, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
 }
 
-void TComPrediction::xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int list, TShortYUV* outPredYuv, bool bLuma, bool bChroma)
+void TComPrediction::xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int list, ShortYuv* outPredYuv, bool bLuma, bool bChroma)
 {
     int refIdx = cu->getCUMvField(list)->getRefIdx(partAddr);
 
@@ -448,7 +448,7 @@ void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint3
 }
 
 //Motion compensated block for biprediction
-void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TShortYUV *dstPic)
+void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic)
 {
     int refStride = refPic->getStride();
     int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
@@ -550,7 +550,7 @@ void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uin
 }
 
 // Generate motion compensated block when biprediction
-void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TShortYUV *dstPic)
+void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic)
 {
     int refStride = refPic->getCStride();
     int dstStride = dstPic->m_cwidth;

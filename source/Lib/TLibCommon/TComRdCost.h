@@ -39,7 +39,7 @@
 #define X265_TCOMRDCOST_H
 
 #include "CommonDef.h"
-#include <math.h>
+#include "common.h"
 
 //! \ingroup TLibCommon
 //! \{

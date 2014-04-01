@@ -43,14 +43,14 @@ namespace x265 {
  * OUTBIT_BITDEPTH_DIV8.
  */
 template<uint32_t OUTPUT_BITDEPTH_DIV8>
-static void md5_block(MD5Context& md5, const Pel* plane, uint32_t n)
+static void md5_block(MD5Context& md5, const pixel* plane, uint32_t n)
 {
-    /* create a 64 byte buffer for packing Pel's into */
-    UChar buf[64 / OUTPUT_BITDEPTH_DIV8][OUTPUT_BITDEPTH_DIV8];
+    /* create a 64 byte buffer for packing pixel's into */
+    uint8_t buf[64 / OUTPUT_BITDEPTH_DIV8][OUTPUT_BITDEPTH_DIV8];
 
     for (uint32_t i = 0; i < n; i++)
     {
-        Pel pel = plane[i];
+        pixel pel = plane[i];
         /* perform bitdepth and endian conversion */
         for (uint32_t d = 0; d < OUTPUT_BITDEPTH_DIV8; d++)
         {
@@ -58,7 +58,7 @@ static void md5_block(MD5Context& md5, const Pel* plane, uint32_t n)
         }
     }
 
-    MD5Update(&md5, (UChar*)buf, n * OUTPUT_BITDEPTH_DIV8);
+    MD5Update(&md5, (uint8_t*)buf, n * OUTPUT_BITDEPTH_DIV8);
 }
 
 /**
@@ -66,7 +66,7 @@ static void md5_block(MD5Context& md5, const Pel* plane, uint32_t n)
  * is adjusted to OUTBIT_BITDEPTH_DIV8.
  */
 template<uint32_t OUTPUT_BITDEPTH_DIV8>
-static void md5_plane(MD5Context& md5, const Pel* plane, uint32_t width, uint32_t height, uint32_t stride)
+static void md5_plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, uint32_t stride)
 {
     /* N is the number of samples to process per md5 update.
      * All N samples must fit in buf */
@@ -88,7 +88,7 @@ static void md5_plane(MD5Context& md5, const Pel* plane, uint32_t width, uint32_
     }
 }
 
-void updateCRC(const Pel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, uint32_t stride)
+void updateCRC(const pixel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, uint32_t stride)
 {
     uint32_t crcMsb;
     uint32_t bitVal;
@@ -123,7 +123,7 @@ void updateCRC(const Pel* plane, uint32_t& crcVal, uint32_t height, uint32_t wid
     }
 }
 
-void crcFinish(uint32_t& crcVal, UChar digest[16])
+void crcFinish(uint32_t& crcVal, uint8_t digest[16])
 {
     uint32_t crcMsb;
 
@@ -137,9 +137,9 @@ void crcFinish(uint32_t& crcVal, UChar digest[16])
     digest[1] =  crcVal        & 0xff;
 }
 
-void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cuHeight)
+void updateChecksum(const pixel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cuHeight)
 {
-    UChar xor_mask;
+    uint8_t xor_mask;
 
     for (uint32_t y = row * cuHeight; y < ((row * cuHeight) + height); y++)
     {
@@ -156,7 +156,7 @@ void updateChecksum(const Pel* plane, uint32_t& checksumVal, uint32_t height, ui
     }
 }
 
-void checksumFinish(uint32_t& checksum, UChar digest[16])
+void checksumFinish(uint32_t& checksum, uint8_t digest[16])
 {
     digest[0] = (checksum >> 24) & 0xff;
     digest[1] = (checksum >> 16) & 0xff;
@@ -164,10 +164,10 @@ void checksumFinish(uint32_t& checksum, UChar digest[16])
     digest[3] =  checksum        & 0xff;
 }
 
-void updateMD5Plane(MD5Context& md5, const Pel* plane, uint32_t width, uint32_t height, uint32_t stride)
+void updateMD5Plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, uint32_t stride)
 {
     /* choose an md5_plane packing function based on the system bitdepth */
-    typedef void (*MD5PlaneFunc)(MD5Context&, const Pel*, uint32_t, uint32_t, uint32_t);
+    typedef void (*MD5PlaneFunc)(MD5Context&, const pixel*, uint32_t, uint32_t, uint32_t);
     MD5PlaneFunc md5_plane_func;
     md5_plane_func = X265_DEPTH <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
 

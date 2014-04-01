@@ -59,7 +59,7 @@ public:
 
     void setThreadPool(ThreadPool *p);
 
-    void init(Encoder *top, int numRows);
+    bool init(Encoder *top, int numRows);
 
     void destroy();
 
@@ -67,7 +67,7 @@ public:
 
     void processRowFilter(int row)
     {
-        m_frameFilter.processRow(row);
+        m_frameFilter.processRow(row, m_cfg);
     }
 
     void enqueueRowEncoder(int row)
@@ -111,10 +111,6 @@ public:
                 m_completionEvent.trigger();
         }
     }
-
-    volatile int m_blockRefPOC;
-
-    Event        m_reconRowWait;
 
     TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
 
@@ -170,12 +166,15 @@ public:
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
+    volatile bool            m_bAllRowsStop;
+    volatile int             m_vbvResetTriggerRow;
+
 protected:
 
     void determineSliceBounds();
     int calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp);
     Encoder*                 m_top;
-    TEncCfg*                 m_cfg;
+    Encoder*                 m_cfg;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     TEncSbac                 m_sbacCoder;

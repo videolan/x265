@@ -27,9 +27,6 @@
 #include "TLibCommon/TComRom.h"
 #include "x265.h"
 
-#include <cstring>
-#include <assert.h>
-
 using namespace x265;
 
 #if _MSC_VER

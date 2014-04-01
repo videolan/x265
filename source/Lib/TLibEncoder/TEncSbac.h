@@ -58,6 +58,8 @@ namespace x265 {
 class TEncSbac : public SyntaxElementWriter, public TEncEntropyIf
 {
 public:
+    uint64_t pad;
+    ContextModel m_contextModels[MAX_OFF_CTX_MOD];
 
     TComSlice*    m_slice;
     TEncBinCABAC* m_binIf;
@@ -127,18 +129,18 @@ public:
 
     void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
 
-    void codeLastSignificantXY(uint32_t posx, uint32_t posy, int width, int height, TextType ttype, uint32_t scanIdx);
-    void codeCoeffNxN(TComDataCU* cu, TCoeff* coef, uint32_t absPartIdx, uint32_t width, uint32_t height, uint32_t depth, TextType ttype);
-    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t width, TextType ttype);
+    void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
+    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype);
+    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     // -------------------------------------------------------------------------------------------------------------------
     // for RD-optimizatioon
     // -------------------------------------------------------------------------------------------------------------------
 
-    void estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
+    void estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estCBFBit(estBitsSbacStruct* estBitsSbac);
     void estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
-    void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
+    void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
 
     TEncBinCABAC* getEncBinIf()  { return m_binIf; }
@@ -147,14 +149,12 @@ private:
 
     void xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
     void xWriteEpExGolomb(uint32_t symbol, uint32_t count);
-    void xWriteCoefRemainExGolomb(uint32_t symbol, uint32_t &param);
+    void xWriteCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
 
     void xCopyFrom(TEncSbac* src);
     void xCopyContextsFrom(TEncSbac* src);
     void xCodePredWeightTable(TComSlice* slice);
     void xCodeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
-
-    ContextModel         m_contextModels[MAX_OFF_CTX_MOD];
 };
 }
 //! \}

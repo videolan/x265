@@ -29,13 +29,9 @@
  *****************************************************************************/
 
 #include "primitives.h"
-#include "TLibCommon/TypeDef.h"    // TCoeff, int, uint32_t
 #include "TLibCommon/TComRom.h"
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1
-
-#include <assert.h>
-#include <string.h>
 
 using namespace x265;
 

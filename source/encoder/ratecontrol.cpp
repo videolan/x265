@@ -24,25 +24,12 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComPic.h"
-#include "TLibEncoder/TEncCfg.h"
 #include "encoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
-#include <math.h>
 
 using namespace x265;
 
-/* The qscale - qp conversion is specified in the standards.
- * Approx qscale increases by 12%  with every qp increment */
-static inline double qScale2qp(double qScale)
-{
-    return 12.0 + 6.0 * (double)X265_LOG2(qScale / 0.85);
-}
-
-static inline double qp2qScale(double qp)
-{
-    return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
-}
 
 /* Compute variance to derive AC energy of each block */
 static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, int i)
@@ -75,7 +62,7 @@ uint32_t RateControl::acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_
     int stride = pic->getPicYuvOrg()->getStride();
     int cStride = pic->getPicYuvOrg()->getCStride();
     uint32_t blockOffsetLuma = block_x + (block_y * stride);
-    int colorFormat = cfg->param.internalCsp;
+    int colorFormat = param->internalCsp;
     int hShift = CHROMA_H_SHIFT(colorFormat);
     int vShift = CHROMA_V_SHIFT(colorFormat);
     uint32_t blockOffsetChroma = (block_x >> hShift) + ((block_y >> vShift) * cStride);
@@ -105,14 +92,14 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     int block_xy = 0;
     int block_x = 0, block_y = 0;
     double strength = 0.f;
-    if (cfg->param.rc.aqMode == X265_AQ_NONE || cfg->param.rc.aqStrength == 0)
+    if (param->rc.aqMode == X265_AQ_NONE || param->rc.aqStrength == 0)
     {
         /* Need to init it anyways for CU tree */
         int cuWidth = ((maxCol / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
         int cuHeight = ((maxRow / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
         int cuCount = cuWidth * cuHeight;
 
-        if (cfg->param.rc.aqMode && cfg->param.rc.aqStrength == 0)
+        if (param->rc.aqMode && param->rc.aqStrength == 0)
         {
             memset(pic->m_lowres.qpOffset, 0, cuCount * sizeof(double));
             memset(pic->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
@@ -123,7 +110,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
         }
 
         /* Need variance data for weighted prediction */
-        if (cfg->param.bEnableWeightedPred)
+        if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
         {
             for (block_y = 0; block_y < maxRow; block_y += 16)
             {
@@ -138,7 +125,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     {
         block_xy = 0;
         double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
-        if (cfg->param.rc.aqMode == X265_AQ_AUTO_VARIANCE)
+        if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
         {
             double bit_depth_correction = pow(1 << (X265_DEPTH - 8), 0.5);
             for (block_y = 0; block_y < maxRow; block_y += 16)
@@ -156,18 +143,18 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
 
             avg_adj /= ncu;
             avg_adj_pow2 /= ncu;
-            strength = cfg->param.rc.aqStrength * avg_adj / bit_depth_correction;
+            strength = param->rc.aqStrength * avg_adj / bit_depth_correction;
             avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (14.f * bit_depth_correction)) / avg_adj;
         }
         else
-            strength = cfg->param.rc.aqStrength * 1.0397f;
+            strength = param->rc.aqStrength * 1.0397f;
 
         block_xy = 0;
         for (block_y = 0; block_y < maxRow; block_y += 16)
         {
             for (block_x = 0; block_x < maxCol; block_x += 16)
             {
-                if (cfg->param.rc.aqMode == X265_AQ_AUTO_VARIANCE)
+                if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
                 {
                     qp_adj = pic->m_lowres.qpOffset[block_xy];
                     qp_adj = strength * (qp_adj - avg_adj);
@@ -185,10 +172,10 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
         }
     }
 
-    if (cfg->param.bEnableWeightedPred)
+    if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
     {
-        int hShift = CHROMA_H_SHIFT(cfg->param.internalCsp);
-        int vShift = CHROMA_V_SHIFT(cfg->param.internalCsp);
+        int hShift = CHROMA_H_SHIFT(param->internalCsp);
+        int vShift = CHROMA_V_SHIFT(param->internalCsp);
         maxCol = ((maxCol + 8) >> 4) << 4;
         maxRow = ((maxRow + 8) >> 4) << 4;
         int width[3]  = { maxCol, maxCol >> hShift, maxCol >> hShift };
@@ -206,48 +193,48 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
 
 RateControl::RateControl(Encoder * _cfg)
 {
-    this->cfg = _cfg;
-    int lowresCuWidth = ((cfg->param.sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    int lowresCuHeight = ((cfg->param.sourceHeight / 2)  + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    param = _cfg->param;
+    int lowresCuWidth = ((param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    int lowresCuHeight = ((param->sourceHeight / 2)  + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     ncu = lowresCuWidth * lowresCuHeight;
-    if (cfg->param.rc.cuTree)
+    if (param->rc.cuTree)
     {
         qCompress = 1;
-        cfg->param.rc.pbFactor = 1;
+        param->rc.pbFactor = 1;
     }
     else
-        qCompress = cfg->param.rc.qCompress;
+        qCompress = param->rc.qCompress;
 
-    // validate for cfg->param.rc, maybe it is need to add a function like x265_parameters_valiate()
-    cfg->param.rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, cfg->param.rc.rfConstant);
-    cfg->param.rc.rfConstantMax = Clip3((double)-QP_BD_OFFSET, (double)51, cfg->param.rc.rfConstantMax);
+    // validate for param->rc, maybe it is need to add a function like x265_parameters_valiate()
+    param->rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstant);
+    param->rc.rfConstantMax = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstantMax);
     rateFactorMaxIncrement = 0;
     vbvMinRate = 0;
 
-    if (cfg->param.rc.rateControlMode == X265_RC_CRF)
+    if (param->rc.rateControlMode == X265_RC_CRF)
     {
-        cfg->param.rc.qp = (int)cfg->param.rc.rfConstant + QP_BD_OFFSET;
-        cfg->param.rc.bitrate = 0;
+        param->rc.qp = (int)param->rc.rfConstant + QP_BD_OFFSET;
+        param->rc.bitrate = 0;
 
-        double baseCplx = ncu * (cfg->param.bframes ? 120 : 80);
-        double mbtree_offset = cfg->param.rc.cuTree ? (1.0 - cfg->param.rc.qCompress) * 13.5 : 0;
+        double baseCplx = ncu * (param->bframes ? 120 : 80);
+        double mbtree_offset = param->rc.cuTree ? (1.0 - param->rc.qCompress) * 13.5 : 0;
         rateFactorConstant = pow(baseCplx, 1 - qCompress) /
-            qp2qScale(cfg->param.rc.rfConstant + mbtree_offset);
-        if (cfg->param.rc.rfConstantMax)
+            x265_qp2qScale(param->rc.rfConstant + mbtree_offset);
+        if (param->rc.rfConstantMax)
         {
-            rateFactorMaxIncrement = cfg->param.rc.rfConstantMax - cfg->param.rc.rfConstant;
+            rateFactorMaxIncrement = param->rc.rfConstantMax - param->rc.rfConstant;
             if (rateFactorMaxIncrement <= 0)
             {
-                x265_log(&cfg->param, X265_LOG_WARNING, "CRF max must be greater than CRF\n");
+                x265_log(param, X265_LOG_WARNING, "CRF max must be greater than CRF\n");
                 rateFactorMaxIncrement = 0;
             }
         }
     }
 
-    isAbr = cfg->param.rc.rateControlMode != X265_RC_CQP; // later add 2pass option
-    bitrate = cfg->param.rc.bitrate * 1000;
-    frameDuration = (double)cfg->param.fpsDenom / cfg->param.fpsNum;
-    qp = cfg->param.rc.qp;
+    isAbr = param->rc.rateControlMode != X265_RC_CQP; // later add 2pass option
+    bitrate = param->rc.bitrate * 1000;
+    frameDuration = (double)param->fpsDenom / param->fpsNum;
+    qp = param->rc.qp;
     lastRceq = 1; /* handles the cmplxrsum when the previous frame cost is zero */
     shortTermCplxSum = 0;
     shortTermCplxCount = 0;
@@ -255,97 +242,97 @@ RateControl::RateControl(Encoder * _cfg)
     isAbrReset = false;
     lastAbrResetPoc = -1;
     // vbv initialization
-    cfg->param.rc.vbvBufferSize = Clip3(0, 2000000, cfg->param.rc.vbvBufferSize);
-    cfg->param.rc.vbvMaxBitrate = Clip3(0, 2000000, cfg->param.rc.vbvMaxBitrate);
-    cfg->param.rc.vbvBufferInit = Clip3(0.0, 2000000.0, cfg->param.rc.vbvBufferInit);
+    param->rc.vbvBufferSize = Clip3(0, 2000000, param->rc.vbvBufferSize);
+    param->rc.vbvMaxBitrate = Clip3(0, 2000000, param->rc.vbvMaxBitrate);
+    param->rc.vbvBufferInit = Clip3(0.0, 2000000.0, param->rc.vbvBufferInit);
     vbvMinRate = 0;
-    if (cfg->param.rc.vbvBufferSize)
+    if (param->rc.vbvBufferSize)
     {
-        if (cfg->param.rc.rateControlMode == X265_RC_CQP)
+        if (param->rc.rateControlMode == X265_RC_CQP)
         {
-            x265_log(&cfg->param, X265_LOG_WARNING, "VBV is incompatible with constant QP, ignored.\n");
-            cfg->param.rc.vbvBufferSize = 0;
-            cfg->param.rc.vbvMaxBitrate = 0;
+            x265_log(param, X265_LOG_WARNING, "VBV is incompatible with constant QP, ignored.\n");
+            param->rc.vbvBufferSize = 0;
+            param->rc.vbvMaxBitrate = 0;
         }
-        else if (cfg->param.rc.vbvMaxBitrate == 0)
+        else if (param->rc.vbvMaxBitrate == 0)
         {
-            if (cfg->param.rc.rateControlMode == X265_RC_ABR)
+            if (param->rc.rateControlMode == X265_RC_ABR)
             {
-                x265_log(&cfg->param, X265_LOG_WARNING, "VBV maxrate unspecified, assuming CBR\n");
-                cfg->param.rc.vbvMaxBitrate = cfg->param.rc.bitrate;
+                x265_log(param, X265_LOG_WARNING, "VBV maxrate unspecified, assuming CBR\n");
+                param->rc.vbvMaxBitrate = param->rc.bitrate;
             }
             else
             {
-                x265_log(&cfg->param, X265_LOG_WARNING, "VBV bufsize set but maxrate unspecified, ignored\n");
-                cfg->param.rc.vbvBufferSize = 0;
+                x265_log(param, X265_LOG_WARNING, "VBV bufsize set but maxrate unspecified, ignored\n");
+                param->rc.vbvBufferSize = 0;
             }
         }
-        else if (cfg->param.rc.vbvMaxBitrate < cfg->param.rc.bitrate &&
-                 cfg->param.rc.rateControlMode == X265_RC_ABR)
+        else if (param->rc.vbvMaxBitrate < param->rc.bitrate &&
+                 param->rc.rateControlMode == X265_RC_ABR)
         {
-            x265_log(&cfg->param, X265_LOG_WARNING, "max bitrate less than average bitrate, assuming CBR\n");
-            cfg->param.rc.bitrate = cfg->param.rc.vbvMaxBitrate;
+            x265_log(param, X265_LOG_WARNING, "max bitrate less than average bitrate, assuming CBR\n");
+            param->rc.bitrate = param->rc.vbvMaxBitrate;
         }
     }
-    else if (cfg->param.rc.vbvMaxBitrate)
+    else if (param->rc.vbvMaxBitrate)
     {
-        x265_log(&cfg->param, X265_LOG_WARNING, "VBV maxrate specified, but no bufsize, ignored\n");
-        cfg->param.rc.vbvMaxBitrate = 0;
+        x265_log(param, X265_LOG_WARNING, "VBV maxrate specified, but no bufsize, ignored\n");
+        param->rc.vbvMaxBitrate = 0;
     }
 
-    isVbv = cfg->param.rc.vbvMaxBitrate > 0 && cfg->param.rc.vbvBufferSize > 0;
-    double fps = (double)cfg->param.fpsNum / cfg->param.fpsDenom;
+    isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
+    double fps = (double)param->fpsNum / param->fpsDenom;
     if (isVbv)
     {
         /* We don't support changing the ABR bitrate right now,
            so if the stream starts as CBR, keep it CBR. */
-        if (cfg->param.rc.vbvBufferSize < (int)(cfg->param.rc.vbvMaxBitrate / fps))
+        if (param->rc.vbvBufferSize < (int)(param->rc.vbvMaxBitrate / fps))
         {
-            cfg->param.rc.vbvBufferSize = (int)(cfg->param.rc.vbvMaxBitrate / fps);
-            x265_log(&cfg->param, X265_LOG_WARNING, "VBV buffer size cannot be smaller than one frame, using %d kbit\n",
-                     cfg->param.rc.vbvBufferSize);
+            param->rc.vbvBufferSize = (int)(param->rc.vbvMaxBitrate / fps);
+            x265_log(param, X265_LOG_WARNING, "VBV buffer size cannot be smaller than one frame, using %d kbit\n",
+                     param->rc.vbvBufferSize);
         }
-        int vbvBufferSize = cfg->param.rc.vbvBufferSize * 1000;
-        int vbvMaxBitrate = cfg->param.rc.vbvMaxBitrate * 1000;
+        int vbvBufferSize = param->rc.vbvBufferSize * 1000;
+        int vbvMaxBitrate = param->rc.vbvMaxBitrate * 1000;
 
         bufferRate = vbvMaxBitrate / fps;
         vbvMaxRate = vbvMaxBitrate;
         bufferSize = vbvBufferSize;
         singleFrameVbv = bufferRate * 1.1 > bufferSize;
 
-        if (cfg->param.rc.vbvBufferInit > 1.)
-            cfg->param.rc.vbvBufferInit = Clip3(0.0, 1.0, cfg->param.rc.vbvBufferInit / cfg->param.rc.vbvBufferSize);
-        cfg->param.rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(cfg->param.rc.vbvBufferInit, bufferRate / bufferSize));
-        bufferFillFinal = bufferSize * cfg->param.rc.vbvBufferInit;
-        vbvMinRate = /*!rc->b_2pass && */ cfg->param.rc.rateControlMode == X265_RC_ABR
-            && cfg->param.rc.vbvMaxBitrate <= cfg->param.rc.bitrate;
+        if (param->rc.vbvBufferInit > 1.)
+            param->rc.vbvBufferInit = Clip3(0.0, 1.0, param->rc.vbvBufferInit / param->rc.vbvBufferSize);
+        param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(param->rc.vbvBufferInit, bufferRate / bufferSize));
+        bufferFillFinal = bufferSize * param->rc.vbvBufferInit;
+        vbvMinRate = /*!rc->b_2pass && */ param->rc.rateControlMode == X265_RC_ABR
+            && param->rc.vbvMaxBitrate <= param->rc.bitrate;
     }
 
-    bframes = cfg->param.bframes;
+    bframes = param->bframes;
     bframeBits = 0;
     leadingNoBSatd = 0;
-    if (cfg->param.rc.rateControlMode == X265_RC_ABR)
+    if (param->rc.rateControlMode == X265_RC_ABR)
     {
         /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
 #define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
     }
-    else if (cfg->param.rc.rateControlMode == X265_RC_CRF)
+    else if (param->rc.rateControlMode == X265_RC_CRF)
     {
-#define ABR_INIT_QP ((int)cfg->param.rc.rfConstant)
+#define ABR_INIT_QP ((int)param->rc.rfConstant)
     }
     reInit();
 
-    ipOffset = 6.0 * X265_LOG2(cfg->param.rc.ipFactor);
-    pbOffset = 6.0 * X265_LOG2(cfg->param.rc.pbFactor);
+    ipOffset = 6.0 * X265_LOG2(param->rc.ipFactor);
+    pbOffset = 6.0 * X265_LOG2(param->rc.pbFactor);
     for (int i = 0; i < 3; i++)
     {
-        lastQScaleFor[i] = qp2qScale(cfg->param.rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN);
-        lmin[i] = qp2qScale(MIN_QP);
-        lmax[i] = qp2qScale(MAX_MAX_QP);
+        lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN);
+        lmin[i] = x265_qp2qScale(MIN_QP);
+        lmax[i] = x265_qp2qScale(MAX_MAX_QP);
     }
 
-    if (cfg->param.rc.rateControlMode == X265_RC_CQP)
+    if (param->rc.rateControlMode == X265_RC_CQP)
     {
         qpConstant[P_SLICE] = qp;
         qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp - ipOffset + 0.5));
@@ -353,7 +340,7 @@ RateControl::RateControl(Encoder * _cfg)
     }
 
     /* qstep - value set as encoder specific */
-    lstep = pow(2, cfg->param.rc.qpStep / 6.0);
+    lstep = pow(2, param->rc.qpStep / 6.0);
 }
 
 void RateControl::reInit()
@@ -365,7 +352,7 @@ void RateControl::reInit()
     cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
     wantedBitsWindow = bitrate * frameDuration;
     accumPNorm = .01;
-    accumPQp = (cfg->param.rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN) * accumPNorm;
+    accumPQp = (param->rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN) * accumPNorm;
 
     /* Frame Predictors and Row predictors used in vbv */
     for (int i = 0; i < 5; i++)
@@ -419,7 +406,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         currentSatd = l->getEstimatedPictureCost(pic) >> (X265_DEPTH - 8);
         /* Update rce for use in rate control VBV later */
         rce->lastSatd = currentSatd;
-        double q = qScale2qp(rateEstimateQscale(pic, rce));
+        double q = x265_qScale2qp(rateEstimateQscale(pic, rce));
         q = Clip3((double)MIN_QP, (double)MAX_MAX_QP, q);
         qp = int(q + 0.5);
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = q;
@@ -503,14 +490,14 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         else
             q += pbOffset;
         qpNoVbv = q;
-        double qScale = qp2qScale(qpNoVbv);
+        double qScale = x265_qp2qScale(qpNoVbv);
         rce->frameSizePlanned = predictSize(&predBfromP, qScale, (double)leadingNoBSatd);
         rce->frameSizeEstimated = rce->frameSizePlanned;
         return qScale;
     }
     else
     {
-        double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
+        double abrBuffer = 2 * param->rc.rateTolerance * bitrate;
 
         /* 1pass ABR */
 
@@ -536,7 +523,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         rce->mvBits = 0;
         rce->sliceType = sliceType;
 
-        if (cfg->param.rc.rateControlMode == X265_RC_CRF)
+        if (param->rc.rateControlMode == X265_RC_CRF)
         {
             q = getQScale(rce, rateFactorConstant);
         }
@@ -552,7 +539,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             if (!vbvMinRate && currentSatd)
             {
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
-                double timeDone = (double)(framesDone - cfg->param.frameNumThreads + 1) * frameDuration;
+                double timeDone = (double)(framesDone - param->frameNumThreads + 1) * frameDuration;
                 wantedBits = timeDone * bitrate;
                 if (wantedBits > 0 && totalBits > 0)
                 {
@@ -563,20 +550,20 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             }
         }
 
-        if (sliceType == I_SLICE && cfg->param.keyframeMax > 1
+        if (sliceType == I_SLICE && param->keyframeMax > 1
             && lastNonBPictType != I_SLICE && !isAbrReset)
         {
-            q = qp2qScale(accumPQp / accumPNorm);
-            q /= fabs(cfg->param.rc.ipFactor);
+            q = x265_qp2qScale(accumPQp / accumPNorm);
+            q /= fabs(param->rc.ipFactor);
         }
 
-        if (cfg->param.rc.rateControlMode != X265_RC_CRF)
+        if (param->rc.rateControlMode != X265_RC_CRF)
         {
             double lqmin = 0, lqmax = 0;
             if (totalBits == 0 && !isVbv)
             {
-                lqmin = qp2qScale(ABR_INIT_QP_MIN) / lstep;
-                lqmax = qp2qScale(ABR_INIT_QP_MAX) * lstep;
+                lqmin = x265_qp2qScale(ABR_INIT_QP_MIN) / lstep;
+                lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * lstep;
                 q = Clip3(lqmin, lqmax, q);
             }
             else if (totalBits > 0 || (isVbv && framesDone > 0))
@@ -593,19 +580,19 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         else
         {
             if (qCompress != 1 && framesDone == 0)
-                q = qp2qScale(ABR_INIT_QP) / fabs(cfg->param.rc.ipFactor);
+                q = x265_qp2qScale(ABR_INIT_QP) / fabs(param->rc.ipFactor);
         }
         double lmin1 = lmin[sliceType];
         double lmax1 = lmax[sliceType];
         q = Clip3(lmin1, lmax1, q);
-        qpNoVbv = qScale2qp(q);
+        qpNoVbv = x265_qScale2qp(q);
 
         q = clipQscale(pic, q);
 
         lastQScaleFor[sliceType] = q;
 
         if (curSlice->getPOC() == 0 || (isAbrReset && sliceType == I_SLICE))
-            lastQScaleFor[P_SLICE] = q * fabs(cfg->param.rc.ipFactor);
+            lastQScaleFor[P_SLICE] = q * fabs(param->rc.ipFactor);
 
         rce->frameSizePlanned = predictSize(&pred[sliceType], q, (double)currentSatd);
 
@@ -615,7 +602,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
 
 void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 {
-    double abrBuffer = 2 * cfg->param.rc.rateTolerance * bitrate;
+    double abrBuffer = 2 * param->rc.rateTolerance * bitrate;
 
     // Check if current Slice is a scene cut that follows low detailed/blank frames
     if (rce->lastSatd > 4 * rce->movingAvgSum)
@@ -662,7 +649,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
     // since they are controlled by the P-frames' QPs.
     if (isVbv && currentSatd > 0)
     {
-        if (cfg->param.lookaheadDepth)
+        if (param->lookaheadDepth)
         {
             int terminate = 0;
 
@@ -674,9 +661,9 @@ double RateControl::clipQscale(TComPic* pic, double q)
                 double bufferFillCur = bufferFill - curBits;
                 double targetFill;
                 double totalDuration = 0;
-                frameQ[P_SLICE] = sliceType == I_SLICE ? q * cfg->param.rc.ipFactor : q;
-                frameQ[B_SLICE] = frameQ[P_SLICE] * cfg->param.rc.pbFactor;
-                frameQ[I_SLICE] = frameQ[P_SLICE] / cfg->param.rc.ipFactor;
+                frameQ[P_SLICE] = sliceType == I_SLICE ? q * param->rc.ipFactor : q;
+                frameQ[B_SLICE] = frameQ[P_SLICE] * param->rc.pbFactor;
+                frameQ[I_SLICE] = frameQ[P_SLICE] / param->rc.ipFactor;
                 /* Loop over the planned future frames. */
                 for (int j = 0; bufferFillCur >= 0 && bufferFillCur <= bufferSize; j++)
                 {
@@ -750,7 +737,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
         {
             int nb = bframes;
             double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
-            double bbits = predictSize(&predBfromP, q * cfg->param.rc.pbFactor, (double)currentSatd);
+            double bbits = predictSize(&predBfromP, q * param->rc.pbFactor, (double)currentSatd);
             double space;
             if (bbits > bufferRate)
                 nb = 0;
@@ -778,7 +765,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, doub
     uint32_t rowSatdCostSoFar = 0, totalSatdBits = 0;
 
     encodedBitsSoFar = 0;
-    double qScale = qp2qScale(qpVbv);
+    double qScale = x265_qp2qScale(qpVbv);
     int picType = pic->getSlice()->getSliceType();
     TComPic* refPic = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
     int maxRows = pic->getPicSym()->getFrameHeightInCU();
@@ -840,7 +827,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, doub
 
 int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv)
 {
-    double qScaleVbv = qp2qScale(qpVbv);
+    double qScaleVbv = x265_qp2qScale(qpVbv);
     uint64_t rowSatdCost = pic->m_rowDiagSatd[row];
     double encodedBits = pic->m_rowEncodedBits[row];
     if (row == 1)
@@ -870,8 +857,8 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
     double qpAbsoluteMax = MAX_MAX_QP;
     if (rateFactorMaxIncrement)
         qpAbsoluteMax = X265_MIN(qpAbsoluteMax, rce->qpNoVbv + rateFactorMaxIncrement);
-    double qpMax = X265_MIN(prevRowQp + cfg->param.rc.qpStep, qpAbsoluteMax);
-    double qpMin = X265_MAX(prevRowQp - cfg->param.rc.qpStep, MIN_QP);
+    double qpMax = X265_MIN(prevRowQp + param->rc.qpStep, qpAbsoluteMax);
+    double qpMin = X265_MAX(prevRowQp - param->rc.qpStep, MIN_QP);
     double stepSize = 0.5;
     double bufferLeftPlanned = rce->bufferFill - rce->frameSizePlanned;
 
@@ -888,7 +875,7 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
             qpVbv = X265_MAX(qpVbv, qpMin);
         }
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
-        double rcTol = bufferLeftPlanned / cfg->param.frameNumThreads * cfg->param.rc.rateTolerance;
+        double rcTol = bufferLeftPlanned / param->frameNumThreads * param->rc.rateTolerance;
         int32_t encodedBitsSoFar = 0;
         double accFrameBits = predictRowsSizeSum(pic, rce, qpVbv, encodedBitsSoFar);
 
@@ -962,14 +949,14 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 {
     double q;
 
-    if (cfg->param.rc.cuTree)
+    if (param->rc.cuTree)
     {
         // Scale and units are obtained from rateNum and rateDenom for videos with fixed frame rates.
-        double timescale = (double)cfg->param.fpsDenom / (2 * cfg->param.fpsNum);
-        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * timescale), 1 - cfg->param.rc.qCompress);
+        double timescale = (double)param->fpsDenom / (2 * param->fpsNum);
+        q = pow(BASE_FRAME_DURATION / CLIP_DURATION(2 * timescale), 1 - param->rc.qCompress);
     }
     else
-        q = pow(rce->blurredComplexity, 1 - cfg->param.rc.qCompress);
+        q = pow(rce->blurredComplexity, 1 - param->rc.qCompress);
 
     // avoid NaN's in the rc_eq
     if (rce->texBits + rce->mvBits == 0)
@@ -1006,14 +993,14 @@ void RateControl::updatePredictor(Predictor *p, double q, double var, double bit
 void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 {
     if (rce->lastSatd >= ncu)
-        updatePredictor(&pred[rce->sliceType], qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bits);
+        updatePredictor(&pred[rce->sliceType], x265_qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bits);
     if (!isVbv)
         return;
 
     bufferFillFinal -= bits;
 
     if (bufferFillFinal < 0)
-        x265_log(&cfg->param, X265_LOG_WARNING, "poc:%d, VBV underflow (%.0f bits)\n", rce->poc, bufferFillFinal);
+        x265_log(param, X265_LOG_WARNING, "poc:%d, VBV underflow (%.0f bits)\n", rce->poc, bufferFillFinal);
 
     bufferFillFinal = X265_MAX(bufferFillFinal, 0);
     bufferFillFinal += bufferRate;
@@ -1025,13 +1012,13 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
 {
     if (isAbr)
     {
-        if (cfg->param.rc.rateControlMode == X265_RC_ABR)
+        if (param->rc.rateControlMode == X265_RC_ABR)
         {
             checkAndResetABR(rce, true);
         }
         if (!isAbrReset)
         {
-            if (cfg->param.rc.aqMode || isVbv)
+            if (param->rc.aqMode || isVbv)
             {
                 if (pic->m_qpaRc)
                 {
@@ -1054,12 +1041,12 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
             if (rce->sliceType != B_SLICE)
                 /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
                  * to improve short term compensation for next frame. */
-                cplxrSum += bits * qp2qScale(rce->qpaRc) / rce->qRceq;
+                cplxrSum += bits * x265_qp2qScale(rce->qpaRc) / rce->qRceq;
             else
             {
                 /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
                  * Not perfectly accurate with B-refs, but good enough. */
-                cplxrSum += bits * qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(cfg->param.rc.pbFactor));
+                cplxrSum += bits * x265_qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(param->rc.pbFactor));
             }
             wantedBitsWindow += frameDuration * bitrate;
             totalBits += bits;
@@ -1074,7 +1061,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
             if (rce->bLastMiniGopBFrame)
             {
                 if (rce->bframes != 0)
-                    updatePredictor(&predBfromP, qp2qScale(rce->qpaRc), (double)rce->leadingNoBSatd, (double)bframeBits / rce->bframes);
+                    updatePredictor(&predBfromP, x265_qp2qScale(rce->qpaRc), (double)rce->leadingNoBSatd, (double)bframeBits / rce->bframes);
                 bframeBits = 0;
             }
         }

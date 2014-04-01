@@ -24,9 +24,7 @@
 #include "yuv.h"
 #include "PPA/ppa.h"
 #include "common.h"
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+
 #include <iostream>
 
 #define ENABLE_THREADING 1
@@ -47,10 +45,11 @@ YUVInput::YUVInput(InputFileInfo& info)
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
         buf[i] = NULL;
+        frameStat[i] = false;
     }
 
-    head = 0;
-    tail = 0;
+    head.set(0);
+    tail.set(0);
     framesize = 0;
     depth = info.depth;
     width = info.width;
@@ -156,7 +155,7 @@ YUVInput::~YUVInput()
 void YUVInput::release()
 {
     threadActive = false;
-    notFull.trigger();
+    head.set(QUEUE_SIZE);
     stop();
     delete this;
 }
@@ -178,23 +177,26 @@ void YUVInput::threadMain()
     }
 
     threadActive = false;
-    notEmpty.trigger();
+    frameStat[tail.get()] = false;
+    tail.set(QUEUE_SIZE);
 }
 
 bool YUVInput::populateFrameQueue()
 {
-    while ((tail + 1) % QUEUE_SIZE == head)
+    int curTail = tail.get();
+    int curHead = head.get();
+
+    while ((curTail + 1) % QUEUE_SIZE == curHead)
     {
-        notFull.wait();
+        curHead = head.waitForChange(curHead);
         if (!threadActive)
             return false;
     }
 
     PPAStartCpuEventFunc(read_yuv);
-    ifs->read(buf[tail], framesize);
-    frameStat[tail] = !ifs->fail();
-    tail = (tail + 1) % QUEUE_SIZE;
-    notEmpty.trigger();
+    ifs->read(buf[curTail], framesize);
+    frameStat[curTail] = !ifs->fail();
+    tail.set((curTail + 1) % QUEUE_SIZE);
     PPAStopCpuEventFunc(read_yuv);
 
     return !ifs->fail();
@@ -202,31 +204,37 @@ bool YUVInput::populateFrameQueue()
 
 bool YUVInput::readPicture(x265_picture& pic)
 {
+    int curHead = head.get();
+    int curTail = tail.get();
+
 #if ENABLE_THREADING
-    while (head == tail)
+
+    while (curHead == curTail)
     {
-        notEmpty.wait();
+        curTail = tail.waitForChange(curTail);
         if (!threadActive)
             return false;
     }
 
 #else
+
     populateFrameQueue();
+
 #endif
 
-    if (!frameStat[head])
+    if (!frameStat[curHead])
         return false;
 
     pic.colorSpace = colorSpace;
     pic.bitDepth = depth;
-    pic.planes[0] = buf[head];
-    pic.planes[1] = (char*)(pic.planes[0]) + width * height * pixelbytes;
-    pic.planes[2] = (char*)(pic.planes[1]) + ((width * height * pixelbytes) >> 2);
-    pic.stride[0] = width;
-    pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
+    pic.stride[0] = width * pixelbytes;
+    pic.stride[1] = pic.stride[0] >> x265_cli_csps[colorSpace].width[1];
+    pic.stride[2] = pic.stride[0] >> x265_cli_csps[colorSpace].width[2];
+    pic.planes[0] = buf[curHead];
+    pic.planes[1] = (char*)pic.planes[0] + pic.stride[0] * height;
+    pic.planes[2] = (char*)pic.planes[1] + pic.stride[1] * (height >> x265_cli_csps[colorSpace].height[1]);
 
-    head = (head + 1) % QUEUE_SIZE;
-    notFull.trigger();
+    head.set((curHead + 1) % QUEUE_SIZE);
 
     return true;
 }

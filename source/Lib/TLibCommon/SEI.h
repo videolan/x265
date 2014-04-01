@@ -34,7 +34,7 @@
 #ifndef X265_SEI_H
 #define X265_SEI_H
 
-#include <cstring>
+#include "common.h"
 
 namespace x265 {
 // private namespace
@@ -99,9 +99,9 @@ public:
         delete userData;
     }
 
-    UChar uuid_iso_iec_11578[16];
+    uint8_t uuid_iso_iec_11578[16];
     uint32_t userDataLength;
-    UChar *userData;
+    uint8_t *userData;
 };
 
 class SEIDecodedPictureHash : public SEI
@@ -122,7 +122,7 @@ public:
         RESERVED,
     } method;
 
-    UChar digest[3][16];
+    uint8_t digest[3][16];
 };
 
 class SEIActiveParameterSets : public SEI

@@ -28,12 +28,6 @@
 #include "threading.h"
 #include "common.h"
 
-#include <climits>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <math.h> // log10
-
 #if _WIN32
 #include <sys/types.h>
 #include <sys/timeb.h>
@@ -138,8 +132,7 @@ void x265_log(x265_param *param, int level, const char *fmt, ...)
     va_end(arg);
 }
 
-extern "C"
-double x265_ssim(double ssim)
+double x265_ssim2dB(double ssim)
 {
     double inv_ssim = 1 - ssim;
 
@@ -159,4 +152,10 @@ double x265_qScale2qp(double qScale)
 double x265_qp2qScale(double qp)
 {
     return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
+}
+
+uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane)
+{
+    uint32_t size = (uint32_t)(width >> x265_cli_csps[csp].width[plane]) * (height >> x265_cli_csps[csp].height[plane]);
+    return size;
 }

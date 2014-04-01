@@ -23,10 +23,6 @@
 
 #include "pixelharness.h"
 #include "primitives.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>   // fabs
 
 using namespace x265;
 
@@ -45,42 +41,36 @@ PixelHarness::PixelHarness()
     int bufsize = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS;
 
     /* 64 pixels wide, 2k deep */
-    pbuf1 = X265_MALLOC(pixel, bufsize);
-    pbuf2 = X265_MALLOC(pixel, bufsize);
-    pbuf3 = X265_MALLOC(pixel, bufsize);
-    pbuf4 = X265_MALLOC(pixel, bufsize);
+    CHECKED_MALLOC(pbuf1, pixel, bufsize);
+    CHECKED_MALLOC(pbuf2, pixel, bufsize);
+    CHECKED_MALLOC(pbuf3, pixel, bufsize);
+    CHECKED_MALLOC(pbuf4, pixel, bufsize);
 
-    ibuf1 = X265_MALLOC(int, bufsize);
+    CHECKED_MALLOC(ibuf1, int, bufsize);
+    CHECKED_MALLOC(psbuf1, int8_t, bufsize);
 
-    sbuf1 = X265_MALLOC(int16_t, bufsize);
-    sbuf2 = X265_MALLOC(int16_t, bufsize);
-    sbuf3 = X265_MALLOC(int16_t, bufsize);
+    CHECKED_MALLOC(sbuf1, int16_t, bufsize);
+    CHECKED_MALLOC(sbuf2, int16_t, bufsize);
+    CHECKED_MALLOC(sbuf3, int16_t, bufsize);
 
-    /*Test Case buffer array */
-    pixel_test_buff  = X265_MALLOC(pixel*, TEST_CASES);
-    short_test_buff  = X265_MALLOC(int16_t*, TEST_CASES);
-    short_test_buff1 = X265_MALLOC(int16_t*, TEST_CASES);
-    short_test_buff2 = X265_MALLOC(int16_t*, TEST_CASES);
-    int_test_buff    = X265_MALLOC(int*, TEST_CASES);
-    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2 || !sbuf3 || !ibuf1 ||
-        !pixel_test_buff || !short_test_buff || !int_test_buff || !short_test_buff1 || !short_test_buff2)
-    {
-        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
-        exit(1);
-    }
+    /* Test Case buffer array */
+    CHECKED_MALLOC(pixel_test_buff, pixel*, TEST_CASES);
+    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
+    CHECKED_MALLOC(short_test_buff1, int16_t*, TEST_CASES);
+    CHECKED_MALLOC(short_test_buff2, int16_t*, TEST_CASES);
+    CHECKED_MALLOC(int_test_buff, int*, TEST_CASES);
+    CHECKED_MALLOC(ushort_test_buff, uint16_t*, TEST_CASES);
+    CHECKED_MALLOC(uchar_test_buff, uint8_t*, TEST_CASES);
 
     for (int i = 0; i < TEST_CASES; i++)
     {
-        pixel_test_buff[i]  = X265_MALLOC(pixel, BUFFSIZE);
-        short_test_buff[i]  = X265_MALLOC(int16_t, BUFFSIZE);
-        short_test_buff1[i] = X265_MALLOC(int16_t, BUFFSIZE);
-        short_test_buff2[i] = X265_MALLOC(int16_t, BUFFSIZE);
-        int_test_buff[i]    = X265_MALLOC(int, BUFFSIZE);
-        if (!pixel_test_buff[i] || !short_test_buff[i] || !int_test_buff[i] || !short_test_buff1[i])
-        {
-            fprintf(stderr, "Init_Test_Case_buffers: malloc failed, unable to initiate tests!\n");
-            exit(-1);
-        }
+        CHECKED_MALLOC(pixel_test_buff[i], pixel, BUFFSIZE);
+        CHECKED_MALLOC(short_test_buff[i], int16_t, BUFFSIZE);
+        CHECKED_MALLOC(short_test_buff1[i], int16_t, BUFFSIZE);
+        CHECKED_MALLOC(short_test_buff2[i], int16_t, BUFFSIZE);
+        CHECKED_MALLOC(int_test_buff[i], int, BUFFSIZE);
+        CHECKED_MALLOC(ushort_test_buff[i], uint16_t, BUFFSIZE);
+        CHECKED_MALLOC(uchar_test_buff[i], uint8_t, BUFFSIZE);
     }
 
     /* [0] --- Random values
@@ -93,16 +83,22 @@ PixelHarness::PixelHarness()
         short_test_buff1[0][i]  = rand() & PIXEL_MAX;                   // For block copy only
         short_test_buff2[0][i]  = rand() % 16383;                       // for addAvg
         int_test_buff[0][i]     = rand() % SHORT_MAX;
+        ushort_test_buff[0][i]  = rand() % ((1 << 16) - 1);
+        uchar_test_buff[0][i]  = rand() % ((1 << 8) - 1);
         pixel_test_buff[1][i]   = PIXEL_MIN;
         short_test_buff[1][i]   = SMIN;
         short_test_buff1[1][i]  = PIXEL_MIN;
         short_test_buff2[1][i]  = -16384;
         int_test_buff[1][i]     = SHORT_MIN;
+        ushort_test_buff[1][i]  = PIXEL_MIN;
+        uchar_test_buff[1][i]  = PIXEL_MIN;
         pixel_test_buff[2][i]   = PIXEL_MAX;
         short_test_buff[2][i]   = SMAX;
         short_test_buff1[2][i]  = PIXEL_MAX;
         short_test_buff2[2][i]  = 16383;
         int_test_buff[2][i]     = SHORT_MAX;
+        ushort_test_buff[2][i]  = ((1 << 16) - 1);
+        uchar_test_buff[2][i]  = 255;
     }
     for (int i = 0; i < bufsize; i++)
     {
@@ -113,9 +109,13 @@ PixelHarness::PixelHarness()
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
-
+        psbuf1[i] = (rand() %65) - 32;                   // range is between -32 to 32
         sbuf3[i] = rand() % PIXEL_MAX; // for blockcopy only
     }
+    return;
+
+fail:
+    exit(1);
 }
 
 PixelHarness::~PixelHarness()
@@ -132,13 +132,19 @@ PixelHarness::~PixelHarness()
         X265_FREE(pixel_test_buff[i]);
         X265_FREE(short_test_buff[i]);
         X265_FREE(short_test_buff1[i]);
+        X265_FREE(short_test_buff2[i]);
         X265_FREE(int_test_buff[i]);
+        X265_FREE(ushort_test_buff[i]);
+        X265_FREE(uchar_test_buff[i]);
     }
 
     X265_FREE(pixel_test_buff);
     X265_FREE(short_test_buff);
     X265_FREE(short_test_buff1);
+    X265_FREE(short_test_buff2);
     X265_FREE(int_test_buff);
+    X265_FREE(ushort_test_buff);
+    X265_FREE(uchar_test_buff);
 }
 
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
@@ -354,10 +360,6 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
             opt_reco, opt_recq, opt_pred, stride, stride, stride);
 
         if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
-        {
-            return false;
-        }
-        if (memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)))
         {
             return false;
         }
@@ -651,6 +653,32 @@ bool PixelHarness::check_copy_ps(copy_ps_t ref, copy_ps_t opt)
     return true;
 }
 
+bool PixelHarness::check_copy_ss(copy_ss_t ref, copy_ss_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    // we don't know the partition size so we are checking the entire output buffer so
+    // we must initialize the buffers
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        opt(opt_dest, STRIDE, short_test_buff1[index] + j, STRIDE);
+        ref(ref_dest, STRIDE, short_test_buff1[index] + j, STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt)
 {
     ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
@@ -869,6 +897,95 @@ bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
     return true;
 }
 
+bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int width = 16 * (rand() % 4 + 1);
+        int8_t sign = rand () % 3;
+        if (sign == 2)
+        {
+            sign = -1;
+        }
+
+        ref(ref_dest, psbuf1 + j, width, sign);
+        opt(opt_dest, psbuf1 + j, width, sign);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int srcStride = 64;
+    int width = rand() % 64;
+    int height = rand() % 64;
+    int dstStride = width;
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        opt(ushort_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, 8, 255);
+        ref(ushort_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, 8, 255);
+
+        if (memcmp(ref_dest, opt_dest, width * height * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int srcStride = 64;
+    int width = rand() % 64;
+    int height = rand() % 64;
+    int dstStride = width;
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        opt(uchar_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, 2);
+        ref(uchar_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, 2);
+
+        if (memcmp(ref_dest, opt_dest, width * height * sizeof(pixel)))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -979,6 +1096,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
+    if (opt.luma_copy_ss[part])
+    {
+        if (!check_copy_ss(ref.luma_copy_ss[part], opt.luma_copy_ss[part]))
+        {
+            printf("luma_copy_ss[%s] failed\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+
     if (opt.luma_sub_ps[part])
     {
         if (!check_pixel_sub_ps(ref.luma_sub_ps[part], opt.luma_sub_ps[part]))
@@ -1029,6 +1155,14 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
             if (!check_copy_ps(ref.chroma[i].copy_ps[part], opt.chroma[i].copy_ps[part]))
             {
                 printf("chroma_copy_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
+                return false;
+            }
+        }
+        if (opt.chroma[i].copy_ss[part])
+        {
+            if (!check_copy_ss(ref.chroma[i].copy_ss[part], opt.chroma[i].copy_ss[part]))
+            {
+                printf("chroma_copy_ss[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[part]);
                 return false;
             }
         }
@@ -1252,6 +1386,33 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.saoCuOrgE0)
+    {
+        if (!check_saoCuOrgE0_t(ref.saoCuOrgE0, opt.saoCuOrgE0))
+        {
+            printf("SAO_EO_0 failed\n");
+            return false;
+        }
+    }
+
+    if (opt.planecopy_sp)
+    {
+        if (!check_planecopy_sp(ref.planecopy_sp, opt.planecopy_sp))
+        {
+            printf("planecopy_sp failed\n");
+            return false;
+        }
+    }
+
+    if (opt.planecopy_cp)
+    {
+        if (!check_planecopy_cp(ref.planecopy_cp, opt.planecopy_cp))
+        {
+            printf("planecopy_cp failed\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -1333,6 +1494,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         HEADER("luma_copy_ps[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_copy_ps[part], ref.luma_copy_ps[part], sbuf1, 64, pbuf1, 128);
     }
+    if (opt.luma_copy_ss[part])
+    {
+        HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.luma_copy_ss[part], ref.luma_copy_ss[part], sbuf1, 64, sbuf2, 128);
+    }
     if (opt.luma_sub_ps[part])
     {
         HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
@@ -1367,6 +1533,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         {
             HEADER("[%s] copy_ps[%s]", x265_source_csp_names[i], chromaPartStr[part]);
             REPORT_SPEEDUP(opt.chroma[i].copy_ps[part], ref.chroma[i].copy_ps[part], sbuf1, 64, pbuf1, 128);
+        }
+        if (opt.chroma[i].copy_ss[part])
+        {
+            HEADER("[%s] copy_ss[%s]", x265_source_csp_names[i], chromaPartStr[part]);
+            REPORT_SPEEDUP(opt.chroma[i].copy_ss[part], ref.chroma[i].copy_ss[part], sbuf1, 64, sbuf2, 128);
         }
         if (opt.chroma[i].sub_ps[part])
         {
@@ -1530,5 +1701,23 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("ssim_end_4");
         REPORT_SPEEDUP(opt.ssim_end_4, ref.ssim_end_4, (int(*)[4])pbuf2, (int(*)[4])pbuf1, 4);
+    }
+
+    if (opt.saoCuOrgE0)
+    {
+        HEADER0("SAO_EO_0");
+        REPORT_SPEEDUP(opt.saoCuOrgE0, ref.saoCuOrgE0, pbuf1, psbuf1, 64, 1);
+    }
+
+    if (opt.planecopy_sp)
+    {
+        HEADER0("planecopy_sp");
+        REPORT_SPEEDUP(opt.planecopy_sp, ref.planecopy_sp, ushort_test_buff[0], 64, pbuf1, 64, 64, 64, 8, 255);
+    }
+
+    if (opt.planecopy_cp)
+    {
+        HEADER0("planecopy_cp");
+        REPORT_SPEEDUP(opt.planecopy_cp, ref.planecopy_cp, uchar_test_buff[0], 64, pbuf1, 64, 64, 64, 2);
     }
 }

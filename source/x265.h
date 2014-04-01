@@ -95,6 +95,8 @@ typedef struct x265_picture
     /* Must be specified on input pictures, the number of planes is determined
      * by the colorSpace value */
     void*   planes[3];
+
+    /* Stride is the number of bytes between row starts */
     int     stride[3];
 
     /* Must be specified on input pictures. x265_picture_init() will set it to
@@ -198,6 +200,8 @@ typedef enum
 #define X265_B_ADAPT_FAST       1
 #define X265_B_ADAPT_TRELLIS    2
 
+#define X265_BFRAME_MAX         16
+
 #define X265_TYPE_AUTO          0x0000  /* Let x265 choose the right type */
 #define X265_TYPE_IDR           0x0001
 #define X265_TYPE_I             0x0002
@@ -240,7 +244,7 @@ typedef struct
     int height[3];
 } x265_cli_csp;
 
-const x265_cli_csp x265_cli_csps[] =
+static const x265_cli_csp x265_cli_csps[] =
 {
     { 1, { 0, 0, 0 }, { 0, 0, 0 } }, /* i400 */
     { 3, { 0, 1, 1 }, { 0, 1, 1 } }, /* i420 */
@@ -288,6 +292,7 @@ static const char * const x265_colmatrix_names[] = { "GBR", "bt709", "undef", ""
                                                      "YCgCo", "bt2020nc", "bt2020c", 0 };
 static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11", "16:11", "40:33", "24:11", "20:11",
                                                "32:11", "80:33", "18:11", "15:11", "64:33", "160:99", "4:3", "3:2", "2:1", 0 };
+static const char * const x265_interlace_names[] = { "prog", "tff", "bff", 0 };
 
 /* x265 input parameters
  *
@@ -298,6 +303,12 @@ static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11",
 typedef struct x265_param
 {
     /*== Encoder Environment ==*/
+
+    /* x265_param_default() will auto-detect this cpu capability bitmap.  it is
+     * recommended to not change this value unless you know the cpu detection is
+     * somehow flawed on your target hardware. The asm function tables are
+     * process global, the first encoder configures them for all encoders */
+    int       cpuid;
 
     /* Enable wavefront parallel processing, greatly increases parallelism for
      * less than 1% compression efficiency loss */
@@ -344,147 +355,6 @@ typedef struct x265_param
      * types are MD5(1), CRC(2), Checksum(3).  Default is 0, none */
     int       decodedPictureHashSEI;
 
-    /*== Video Usability Information ==*/
-
-    /* Enable the generation of a VUI with all fields in the SPS.  VUI fields
-     * that are not specified on the command line will have default values. */
-    int       bEnableVuiParametersPresentFlag;
-
-    /* Enable aspect ratio in VUI.  Causes the aspect_ratio_idc to be added
-     * to the VUI.  The default is false. */
-    int bEnableAspectRatioIdc;
-
-    /* Aspect ratio idc to be added to the VUI.  The default is 0 indicating
-     * the apsect ratio is unspecified.  If set to X265_EXTENDED_SAR then
-     * sarWidth and sarHeight must also be set. */
-    int       aspectRatioIdc;
-
-    /* Sample Aspect Ratio width in arbitrary units to be added to the VUI
-     * only if aspectRatioIdc is set to X265_EXTENDED_SAR.  This is the width
-     * of an individual pixel.  If this is set then sarHeight must also be set.
-     */
-    int       sarWidth;
-
-    /* Sample Aspect Ratio height in arbitrary units to be added to the VUI.
-     * only if aspectRatioIdc is set to X265_EXTENDED_SAR.  This is the width
-     * of an individual pixel.  If this is set then sarWidth must also be set.
-     */
-    int       sarHeight;
-
-    /* Enable overscan info present flag in the VUI.  If this is set then
-     * bEnabledOverscanAppropriateFlag will be added to the VUI. The default
-     * is false. */
-    int       bEnableOverscanInfoPresentFlag;
-
-    /* Enable overscan appropriate flag.  The status of this flag is added to
-     * the VUI only if bEnableOverscanInfoPresentFlag is set.  If this flag is
-     * set then cropped decoded pictures may be output for display. The default
-     * is false. */
-    int       bEnableOverscanAppropriateFlag;
-
-    /* Video signal type present flag of the VUI.  If this is set then
-     * videoFormat, bEnableVideoFullRangeFlag and
-     * bEnableColorDescriptionPresentFlag will be added to the VUI.  The default
-     * is false. */
-    int       bEnableVideoSignalTypePresentFlag;
-
-    /* Video format of the source video.  0 = component, 1 = PAL, 2 = NTSC,
-     * 3 = SECAM, 4 = MAC, 5 = unspecified video format is the default. */
-    int       videoFormat;
-
-    /* Video full range flag indicates the black level and range of the luma
-     * and chroma signals as derived from E′Y, E′PB, and E′PR or E′R, E′G, and
-     * E′B real-valued component signals.  False is the default. */
-    int       bEnableVideoFullRangeFlag;
-
-    /* Color description present flag in the VUI.  If this is set then
-     * color_primaries, transfer_characteristics and matrix_coeffs are to be added
-     * to the VUI.  The default is false. */
-    int       bEnableColorDescriptionPresentFlag;
-
-    /* Color primaries holds the chromacity coordinates of the source primaries.
-     * The default is 2. */
-    int       colorPrimaries;
-
-    /* Transfer characteristics indicates the opto-electronic transfer characteristic
-     * of the source picture.  The default is 2. */
-    int       transferCharacteristics;
-
-    /* Matrix coefficients used to derive the luma and chroma signals from the red,
-     * blue and green primaries.  The default is 2. */
-    int       matrixCoeffs;
-
-    /* Chroma location info present flag adds chroma_sample_loc_type_top_field and
-     * chroma_sample_loc_type_bottom_field to the VUI.  The default is false. */
-    int       bEnableChromaLocInfoPresentFlag;
-
-    /* Chroma sample location type top field holds the chroma location in the top
-     * field.  The default is 0. */
-    int       chromaSampleLocTypeTopField;
-
-    /* Chroma sample location type bottom field holds the chroma location in the bottom
-     * field.  The default is 0. */
-    int       chromaSampleLocTypeBottomField;
-
-    /* Field seq flag specifies that the pictures are fields and each one has a
-     * timing SEI message.  The default is false */
-    int       bEnableFieldSeqFlag;
-
-    /* Frame field info present flag indicates that each picture has a timing SEI
-     * message wich includes a pic_struct, source_scan_type and duplicate_flag
-     * elements.  If not set then the pic_struct element is not included.  The
-     * default is false. */
-    int       bEnableFrameFieldInfoPresentFlag;
-
-    /* Default display window flag adds def_disp_win_left_offset ,
-     * def_disp_win_right_offset, def_disp_win_top_offset and
-     * def_disp_win_bottom_offset to the VUI.  The default is false. */
-    int       bEnableDefaultDisplayWindowFlag;
-
-    /* Default display window left offset holds the left offset with the
-     * conformance cropping window to further crop the displayed window. */
-    int       defDispWinLeftOffset;
-
-    /* Default display window right offset holds the right offset with the
-     * conformance cropping window to further crop the displayed window. */
-    int       defDispWinRightOffset;
-
-    /* Default display window top offset holds the top offset with the
-     * conformance cropping window to further crop the displayed window. */
-    int       defDispWinTopOffset;
-
-    /* Default display window bottom offset holds the bottom offset with the
-     * conformance cropping window to further crop the displayed window. */
-    int       defDispWinBottomOffset;
-
-    /* VUI timing info present flag adds vui_num_units_in_tick, vui_time_scale,
-     * vui_poc_proportional_to_timing_flag and vui_hrd_parameters_present_flag
-     * to the VUI.  vui_num_units_in_tick, vui_time_scale and
-     * vui_poc_proportional_to_timing_flag are derived from processing the input
-     * video.  The default is false. */
-    int       bEnableVuiTimingInfoPresentFlag;
-
-    /* VUI hrd parameters present flag adds the HRD to the VUI */
-    int       bEnableVuiHrdParametersPresentFlag;
-
-    /* Bitstream restriction flag adds tiles_fixed_structure_flag,
-     * motion_vectors_over_pic_boundaries_flag, restricted_ref_pic_lists_flag,
-     * min_spatial_segmentation_idc, max_bytes_per_pic_denom,
-     * max_bit_per_min_cu_denom, log2_max_mv_length_horizontal and
-     * log2_max_mv_length_vertical to the VUI. All values are derived from
-     * processing the input video.  The default is false.  */
-    int       bEnableBitstreamRestrictionFlag;
-
-    /*== Hypothetical Reference Decoder Parameters ==*/
-
-    /* Sub pic HRD params present flag determines if tic_divisor_minus2,
-     * du_cpb_removal_delay_increment_length_minus1,
-     * sub_pic_cpb_params_in_pic_timing_sei_flag,
-     * dpb_output_delay_du_length_minus1 and cpb_size_du_scale
-     * are added to the HRD.  All are derived from processing the input video.
-     * The default is false. */
-    int       bEnableSubPicHrdParamsPresentFlag;
-
     /*== Internal Picture Specification ==*/
 
     /* Internal encoder bit depth. If x265 was compiled to use 8bit pixels
@@ -511,6 +381,16 @@ typedef struct x265_param
      * multiple of 4, the encoder will pad the pictures internally to meet this
      * minimum requirement. All valid HEVC heights are supported */
     int       sourceHeight;
+
+    /* Interlace type of source pictures. 0 - progressive pictures (default).
+     * 1 - top field first, 2 - bottom field first. HEVC encodes interlaced
+     * content as fields, they must be provided to the encoder in the correct
+     * temporal order. EXPERIMENTAL */
+    int       interlaceMode;
+
+    /* Flag indicating whether VPS, SPS and PPS headers should be output with
+     * each keyframe. Default false */
+    int       bRepeatHeaders;
 
     /*== Coding Unit (CU) definitions ==*/
 
@@ -645,15 +525,14 @@ typedef struct x265_param
     uint32_t  maxNumMergeCand;
 
     /* Enable weighted prediction in P slices.  This enables weighting analysis
-     * in the lookahead, which influences slice decitions, and enables weighting
+     * in the lookahead, which influences slice decisions, and enables weighting
      * analysis in the main encoder which allows P reference samples to have a
      * weight function applied to them prior to using them for motion
      * compensation.  In video which has lighting changes, it can give a large
      * improvement in compression efficiency. Default is enabled */
     int       bEnableWeightedPred;
 
-    /* Enable weighted bi-prediction in B slices. This option currently has no
-     * effect */
+    /* Enable weighted prediction in B slices. Default is disabled */
     int       bEnableWeightedBiPred;
 
     /*== Analysis tools ==*/
@@ -790,7 +669,7 @@ typedef struct x265_param
         /* Enable adaptive quantization. This mode distributes available bits between all
          * macroblocks of a frame, assigning more bits to low complexity areas. Turning
          * this ON will usually affect PSNR negatively, however SSIM and visual quality
-         * generally improves. Default: OFF (0) */
+         * generally improves. Default: X265_AQ_VARIANCE */
         int       aqMode;
 
         /* Sets the strength of AQ bias towards low detail macroblocks. Valid only if
@@ -811,16 +690,129 @@ typedef struct x265_param
 
         /* Enable CUTree ratecontrol. This keeps track of the CUs that propagate temporally
          * across frames and assigns more bits to these CUs. Improves encode efficiency.
-         * Default: OFF (0) */
+         * Default: enabled */
         int       cuTree;
-        /* In CRF mode, maximum CRF as caused by VBV */
+
+        /* In CRF mode, maximum CRF as caused by VBV. 0 implies no limit */
         double    rfConstantMax;
     } rc;
+
+    /*== Video Usability Information ==*/
+    struct
+    {
+        /* Enable the generation of a VUI with all fields in the SPS.  VUI fields
+         * that are not specified on the command line will have default values */
+        int bEnableVuiParametersPresentFlag;
+
+        /* Enable aspect ratio in VUI.  Causes the aspect_ratio_idc to be added
+         * to the VUI. The default is false */
+        int bEnableAspectRatioIdc;
+
+        /* Aspect ratio idc to be added to the VUI.  The default is 0 indicating
+         * the apsect ratio is unspecified. If set to X265_EXTENDED_SAR then
+         * sarWidth and sarHeight must also be set */
+        int aspectRatioIdc;
+
+        /* Sample Aspect Ratio width in arbitrary units to be added to the VUI
+         * only if aspectRatioIdc is set to X265_EXTENDED_SAR.  This is the width
+         * of an individual pixel. If this is set then sarHeight must also be set */
+        int sarWidth;
+
+        /* Sample Aspect Ratio height in arbitrary units to be added to the VUI.
+         * only if aspectRatioIdc is set to X265_EXTENDED_SAR.  This is the width
+         * of an individual pixel. If this is set then sarWidth must also be set */
+        int sarHeight;
+
+        /* Enable overscan info present flag in the VUI.  If this is set then
+         * bEnabledOverscanAppropriateFlag will be added to the VUI. The default
+         * is false */
+        int bEnableOverscanInfoPresentFlag;
+
+        /* Enable overscan appropriate flag.  The status of this flag is added
+         * to the VUI only if bEnableOverscanInfoPresentFlag is set. If this
+         * flag is set then cropped decoded pictures may be output for display.
+         * The default is false */
+        int bEnableOverscanAppropriateFlag;
+
+        /* Video signal type present flag of the VUI.  If this is set then
+         * videoFormat, bEnableVideoFullRangeFlag and
+         * bEnableColorDescriptionPresentFlag will be added to the VUI. The
+         * default is false */
+        int bEnableVideoSignalTypePresentFlag;
+
+        /* Video format of the source video.  0 = component, 1 = PAL, 2 = NTSC,
+         * 3 = SECAM, 4 = MAC, 5 = unspecified video format is the default */
+        int videoFormat;
+
+        /* Video full range flag indicates the black level and range of the luma
+         * and chroma signals as derived from E′Y, E′PB, and E′PR or E′R, E′G,
+         * and E′B real-valued component signals. The default is false */
+        int bEnableVideoFullRangeFlag;
+
+        /* Color description present flag in the VUI. If this is set then
+         * color_primaries, transfer_characteristics and matrix_coeffs are to be
+         * added to the VUI. The default is false */
+        int bEnableColorDescriptionPresentFlag;
+
+        /* Color primaries holds the chromacity coordinates of the source
+         * primaries. The default is 2 */
+        int colorPrimaries;
+
+        /* Transfer characteristics indicates the opto-electronic transfer
+         * characteristic of the source picture. The default is 2 */
+        int transferCharacteristics;
+
+        /* Matrix coefficients used to derive the luma and chroma signals from
+         * the red, blue and green primaries. The default is 2 */
+        int matrixCoeffs;
+
+        /* Chroma location info present flag adds chroma_sample_loc_type_top_field and
+         * chroma_sample_loc_type_bottom_field to the VUI. The default is false */
+        int bEnableChromaLocInfoPresentFlag;
+
+        /* Chroma sample location type top field holds the chroma location in
+         * the top field. The default is 0 */
+        int chromaSampleLocTypeTopField;
+
+        /* Chroma sample location type bottom field holds the chroma location in
+         * the bottom field. The default is 0 */
+        int chromaSampleLocTypeBottomField;
+
+        /* Default display window flag adds def_disp_win_left_offset,
+         * def_disp_win_right_offset, def_disp_win_top_offset and
+         * def_disp_win_bottom_offset to the VUI. The default is false */
+        int bEnableDefaultDisplayWindowFlag;
+
+        /* Default display window left offset holds the left offset with the
+         * conformance cropping window to further crop the displayed window */
+        int defDispWinLeftOffset;
+
+        /* Default display window right offset holds the right offset with the
+         * conformance cropping window to further crop the displayed window */
+        int defDispWinRightOffset;
+
+        /* Default display window top offset holds the top offset with the
+         * conformance cropping window to further crop the displayed window */
+        int defDispWinTopOffset;
+
+        /* Default display window bottom offset holds the bottom offset with the
+         * conformance cropping window to further crop the displayed window */
+        int defDispWinBottomOffset;
+
+        /* VUI timing info present flag adds vui_num_units_in_tick,
+         * vui_time_scale, vui_poc_proportional_to_timing_flag and
+         * vui_hrd_parameters_present_flag to the VUI. vui_num_units_in_tick,
+         * vui_time_scale and vui_poc_proportional_to_timing_flag are derived
+         * from processing the input video. The default is false */
+        int bEnableVuiTimingInfoPresentFlag;
+    } vui;
+
 } x265_param;
 
 /***
  * If not called, first encoder allocated will auto-detect the CPU and
- * initialize performance primitives, which are process global */
+ * initialize performance primitives, which are process global.
+ * DEPRECATED: use x265_param.cpuid to specify CPU */
 void x265_setup_primitives(x265_param *param, int cpu);
 
 /* x265_param_alloc:
@@ -877,7 +869,7 @@ static const char * const x265_preset_names[] = { "ultrafast", "superfast", "ver
  *      100 times faster than placebo!
  *
  *      Currently available tunings are: */
-static const char * const x265_tune_names[] = { "psnr", "ssim", "zero-latency", 0 };
+static const char * const x265_tune_names[] = { "psnr", "ssim", "zerolatency", "fastdecode", 0 };
 
 /*      returns 0 on success, negative on failure (e.g. invalid preset/tune name). */
 int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
@@ -932,7 +924,7 @@ x265_encoder* x265_encoder_open(x265_param *);
 /* x265_encoder_headers:
  *      return the SPS and PPS that will be used for the whole stream.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
- *      returns negative on error.
+ *      returns negative on error, total byte size of payload data on success
  *      the payloads of all output NALs are guaranteed to be sequential in memory. */
 int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, uint32_t *pi_nal);
 
@@ -961,11 +953,6 @@ void x265_encoder_close(x265_encoder *);
  * Release library static allocations
  */
 void x265_cleanup(void);
-
-/***
- * Convert ssim into db
- */
-double x265_ssim(double ssim);
 
 #ifdef __cplusplus
 }

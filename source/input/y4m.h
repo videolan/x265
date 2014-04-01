@@ -57,17 +57,13 @@ protected:
 
     bool threadActive;
 
-    volatile int head;
+    ThreadSafeInteger head;
 
-    volatile int tail;
+    ThreadSafeInteger tail;
 
     bool frameStat[QUEUE_SIZE];
 
     char* plane[QUEUE_SIZE][3];
-
-    Event notFull;
-
-    Event notEmpty;
 
     std::istream *ifs;
 

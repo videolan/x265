@@ -23,17 +23,14 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "common.h"
 #include "primitives.h"
 #include "pixelharness.h"
 #include "mbdstharness.h"
 #include "ipfilterharness.h"
 #include "intrapredharness.h"
+#include "param.h"
 #include "cpu.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
 using namespace x265;
 
@@ -55,22 +52,56 @@ const char* chromaPartStr[NUM_CHROMA_PARTITIONS] =
     "32x32", "32x16", "16x32", "32x24", "24x32", " 32x8", " 8x32",
 };
 
+void do_help()
+{
+    printf("x265 optimized primitive testbench\n\n");
+    printf("usage: TestBench [--cpuid CPU] [--testbench BENCH] [--help]\n\n");
+    printf("       CPU is comma separated SIMD arch list, example: SSE4,AVX\n");
+    printf("       BENCH is one of (pixel,transforms,interp,intrapred)\n\n");
+    printf("By default, the test bench will test all benches on detected CPU architectures\n");
+    printf("Options and testbench name may be truncated.\n");
+}
+
 int main(int argc, char *argv[])
 {
     int cpuid = x265::cpu_detect();
     const char *testname = 0;
-    int cpuid_user = -1;
 
+    if (!(argc & 1))
+    {
+        do_help();
+        return 0;
+    }
     for (int i = 1; i < argc - 1; i += 2)
     {
-        if (!strcmp(argv[i], "--cpuid"))
+        if (strncmp(argv[i], "--", 2))
         {
-            cpuid_user = atoi(argv[i + 1]);
+            printf("** invalid long argument: %s\n\n", argv[i]);
+            do_help();
+            return 1;
         }
-        if (!strcmp(argv[i], "--test"))
+        const char *name = argv[i] + 2;
+        const char *value = argv[i + 1];
+        if (!strncmp(name, "cpuid", strlen(name)))
         {
-            testname = argv[i + 1];
+            bool bError = false;
+            cpuid = parseCpuName(value, bError);
+            if (bError)
+            {
+                printf("Invalid CPU name: %s\n", value);
+                return 1;
+            }
+        }
+        else if (!strncmp(name, "testbench", strlen(name)))
+        {
+            testname = value;
             printf("Testing only harnesses that match name <%s>\n", testname);
+        }
+        else
+        {
+            printf("** invalid long argument: %s\n\n", name);
+            do_help();
+            return 1;
         }
     }
 
@@ -119,8 +150,6 @@ int main(int argc, char *argv[])
             printf("Testing primitives: %s\n", test_arch[i].name);
         else
             continue;
-        if (cpuid_user == i)
-            break;
 
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));

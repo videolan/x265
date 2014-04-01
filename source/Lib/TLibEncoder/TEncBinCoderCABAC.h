@@ -85,7 +85,6 @@ public:
 
 protected:
 
-    void testAndWriteOut();
     void writeOut();
 
 public:

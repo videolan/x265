@@ -446,11 +446,11 @@ void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, i
 template<int blockSize>
 void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 {
-    for (int uiY = 0; uiY < blockSize; uiY++)
+    for (int y = 0; y < blockSize; y++)
     {
-        for (int uiX = 0; uiX < blockSize; uiX++)
+        for (int x = 0; x < blockSize; x++)
         {
-            residual[uiX] = static_cast<int16_t>(fenc[uiX]) - static_cast<int16_t>(pred[uiX]);
+            residual[x] = static_cast<int16_t>(fenc[x]) - static_cast<int16_t>(pred[x]);
         }
 
         fenc += stride;
@@ -460,20 +460,20 @@ void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 }
 
 template<int blockSize>
-void calcRecons(pixel* pred, int16_t* residual, pixel* recon, int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
+void calcRecons(pixel* pred, int16_t* residual,
+                pixel*,
+                int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
 {
-    for (int uiY = 0; uiY < blockSize; uiY++)
+    for (int y = 0; y < blockSize; y++)
     {
-        for (int uiX = 0; uiX < blockSize; uiX++)
+        for (int x = 0; x < blockSize; x++)
         {
-            recon[uiX] = (pixel)ClipY(static_cast<int16_t>(pred[uiX]) + residual[uiX]);
-            recqt[uiX] = (int16_t)recon[uiX];
-            recipred[uiX] = recon[uiX];
+            recqt[x] = (int16_t)Clip(static_cast<int16_t>(pred[x]) + residual[x]);
+            recipred[x] = (pixel)recqt[x];
         }
 
         pred += stride;
         residual += stride;
-        recon += stride;
         recqt += qtstride;
         recipred += ipredstride;
     }
@@ -536,7 +536,7 @@ void pixeladd_ss_c(int bx, int by, int16_t *a, intptr_t dstride, int16_t *b0, in
     {
         for (int x = 0; x < bx; x++)
         {
-            a[x] = (int16_t)ClipY(b0[x] + b1[x]);
+            a[x] = (int16_t)Clip(b0[x] + b1[x]);
         }
 
         b0 += sstride0;
@@ -741,6 +741,21 @@ void blockcopy_pp_c(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 }
 
 template<int bx, int by>
+void blockcopy_ss_c(int16_t *a, intptr_t stridea, int16_t *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = b[x];
+        }
+
+        a += stridea;
+        b += strideb;
+    }
+}
+
+template<int bx, int by>
 void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
@@ -794,7 +809,7 @@ void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t
     {
         for (int x = 0; x < bx; x++)
         {
-            a[x] = (pixel)ClipY(b0[x] + b1[x]);
+            a[x] = Clip(b0[x] + b1[x]);
         }
 
         b0 += sstride0;
@@ -815,13 +830,41 @@ void addAvg(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intpt
     {
         for (int x = 0; x < bx; x += 2)
         {
-            dst[x + 0] = (pixel)ClipY((src0[x + 0] + src1[x + 0] + offset) >> shiftNum);
-            dst[x + 1] = (pixel)ClipY((src0[x + 1] + src1[x + 1] + offset) >> shiftNum);
+            dst[x + 0] = Clip((src0[x + 0] + src1[x + 0] + offset) >> shiftNum);
+            dst[x + 1] = Clip((src0[x + 1] + src1[x + 1] + offset) >> shiftNum);
         }
 
         src0 += src0Stride;
         src1 += src1Stride;
         dst  += dstStride;
+    }
+}
+
+void planecopy_cp_c(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
+{
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+        {
+            dst[c] = ((pixel)src[c]) << shift;
+        }
+
+        dst += dstStride;
+        src += srcStride;
+    }
+}
+
+void planecopy_sp_c(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+{
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+        {
+            dst[c] = (pixel)((src[c] >> shift) & mask);
+        }
+
+        dst += dstStride;
+        src += srcStride;
     }
 }
 }  // end anonymous namespace
@@ -892,6 +935,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I420].copy_ss[CHROMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
     p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
@@ -900,6 +944,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I444].copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I444].copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
     p.chroma[X265_CSP_I444].sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.chroma[X265_CSP_I444].add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
@@ -908,6 +953,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
+    p.luma_copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
     p.luma_sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.luma_add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
@@ -1068,5 +1114,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.var[BLOCK_32x32] = pixel_var<32>;
     p.var[BLOCK_64x64] = pixel_var<64>;
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
+    p.planecopy_cp = planecopy_cp_c;
+    p.planecopy_sp = planecopy_sp_c;
 }
 }

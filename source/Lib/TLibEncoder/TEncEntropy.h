@@ -104,13 +104,13 @@ public:
     virtual void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int eRefList) = 0;
     virtual void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int eRefList) = 0;
     virtual void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx) = 0;
-    virtual void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, uint32_t absPartIdx, uint32_t width, uint32_t height, uint32_t depth, TextType ttype) = 0;
+    virtual void codeCoeffNxN(TComDataCU* cu, coeff_t* pcCoef, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype) = 0;
     virtual void codeSAOSign(uint32_t code) = 0;
     virtual void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol) = 0;
     virtual void codeSaoMerge(uint32_t code) = 0;
     virtual void codeSaoTypeIdx(uint32_t code) = 0;
     virtual void codeSaoUflc(uint32_t length, uint32_t code) = 0;
-    virtual void estBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype) = 0;
+    virtual void estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype) = 0;
 
     virtual ~TEncEntropyIf() {}
 };
@@ -172,7 +172,7 @@ public:
     void encodeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
-    void encodeQP(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeQP(TComDataCU* cu, uint32_t absPartIdx);
 
     void encodeScalingList(TComScalingList* scalingList);
 
@@ -184,9 +184,9 @@ public:
 
     void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP);
 
-    void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t trHeight, uint32_t depth, TextType ttype);
+    void encodeCoeffNxN(TComDataCU* cu, coeff_t* pcCoeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t trHeight, uint32_t depth, TextType ttype);
 
-    void estimateBit(estBitsSbacStruct* estBitsSbac, int width, int height, TextType ttype);
+    void estimateBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
 }; // END CLASS DEFINITION TEncEntropy

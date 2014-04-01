@@ -43,24 +43,24 @@
 
 using namespace x265;
 
-static inline Pel weightBidirY(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
+static inline pixel weightBidirY(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
-    return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
+    return Clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift);
 }
 
-static inline Pel weightBidirC(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
+static inline pixel weightBidirC(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
-    return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
+    return Clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift);
 }
 
-static inline Pel weightUnidirY(int w0, int16_t P0, int round, int shift, int offset)
+static inline pixel weightUnidirY(int w0, int16_t P0, int round, int shift, int offset)
 {
-    return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+    return Clip(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
-static inline Pel weightUnidirC(int w0, int16_t P0, int round, int shift, int offset)
+static inline pixel weightUnidirC(int w0, int16_t P0, int round, int shift, int offset)
 {
-    return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+    return Clip(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
 // ====================================================================================================================
@@ -84,25 +84,25 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
 {
     int x, y;
 
-    Pel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
-    Pel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
-    Pel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
+    pixel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    pixel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    pixel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* srcY1  = srcYuv1->getLumaAddr(partUnitIdx);
-    Pel* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
-    Pel* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
+    pixel* srcY1  = srcYuv1->getLumaAddr(partUnitIdx);
+    pixel* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
+    pixel* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* pDstY  = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* pDstY  = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     if (bLuma)
     {
         // Luma : --------------------------------------------
         int w0      = wp0[0].w;
-        int offset  = wp0[0].offset;
+        int offset  = wp0[0].o + wp1[0].o;
         int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-        int shift   = wp0[0].shift + shiftNum;
+        int shift   = wp0[0].shift + shiftNum + 1;
         int round   = shift ? (1 << (shift - 1)) * bRound : 0;
         int w1      = wp1[0].w;
 
@@ -135,9 +135,9 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
     {
         // Chroma U : --------------------------------------------
         int w0      = wp0[1].w;
-        int offset  = wp0[1].offset;
+        int offset  = wp0[1].o + wp1[1].o;
         int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-        int shift   = wp0[1].shift + shiftNum;
+        int shift   = wp0[1].shift + shiftNum + 1;
         int round   = shift ? (1 << (shift - 1)) : 0;
         int w1      = wp1[1].w;
 
@@ -166,8 +166,8 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
 
         // Chroma V : --------------------------------------------
         w0      = wp0[2].w;
-        offset  = wp0[2].offset;
-        shift   = wp0[2].shift + shiftNum;
+        offset  = wp0[2].o + wp1[2].o;;
+        shift   = wp0[2].shift + shiftNum + 1;
         round   = shift ? (1 << (shift - 1)) : 0;
         w1      = wp1[2].w;
 
@@ -200,7 +200,7 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
+void TComWeightPrediction::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* outDstYuv, bool bRound, bool bLuma, bool bChroma)
 {
     int x, y;
 
@@ -215,17 +215,17 @@ void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, u
     int16_t* srcU1  = srcYuv1->getCbAddr(partUnitIdx);
     int16_t* srcV1  = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     if (bLuma)
     {
         // Luma : --------------------------------------------
         w0      = wp0[0].w;
-        offset  = wp0[0].offset;
+        offset  = wp0[0].o + wp1[0].o;
         shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-        shift   = wp0[0].shift + shiftNum;
+        shift   = wp0[0].shift + shiftNum + 1;
         round   = shift ? (1 << (shift - 1)) * bRound : 0;
         w1      = wp1[0].w;
 
@@ -258,9 +258,9 @@ void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, u
     {
         // Chroma U : --------------------------------------------
         w0      = wp0[1].w;
-        offset  = wp0[1].offset;
+        offset  = wp0[1].o + wp1[1].o;
         shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-        shift   = wp0[1].shift + shiftNum;
+        shift   = wp0[1].shift + shiftNum + 1;
         round   = shift ? (1 << (shift - 1)) : 0;
         w1      = wp1[1].w;
 
@@ -289,8 +289,8 @@ void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, u
 
         // Chroma V : --------------------------------------------
         w0      = wp0[2].w;
-        offset  = wp0[2].offset;
-        shift   = wp0[2].shift + shiftNum;
+        offset  = wp0[2].o + wp1[2].o;
+        shift   = wp0[2].shift + shiftNum + 1;
         round   = shift ? (1 << (shift - 1)) : 0;
         w1      = wp1[2].w;
 
@@ -328,13 +328,13 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, 
     int w0, offset, shiftNum, shift, round;
     uint32_t src0Stride, dststride;
 
-    Pel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
-    Pel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
-    Pel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
+    pixel* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    pixel* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    pixel* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     if (bLuma)
     {
@@ -430,15 +430,15 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, 
  * \returns void
  */
 
-void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
+void TComWeightPrediction::addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx, uint32_t width, uint32_t height, wpScalingParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     int16_t* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     int16_t* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
     int16_t* srcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
-    Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
-    Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
+    pixel* dstY   = outDstYuv->getLumaAddr(partUnitIdx);
+    pixel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
+    pixel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
     int w0, offset, shiftNum, shift, round;
     uint32_t srcStride, dstStride;
@@ -539,10 +539,8 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
             wp0[yuv].o      = wp0[yuv].inputOffset * (1 << (X265_DEPTH - 8));
             wp1[yuv].w      = wp1[yuv].inputWeight;
             wp1[yuv].o      = wp1[yuv].inputOffset * (1 << (X265_DEPTH - 8));
-            wp0[yuv].offset = wp0[yuv].o + wp1[yuv].o;
-            wp0[yuv].shift  = wp0[yuv].log2WeightDenom + 1;
+            wp0[yuv].shift  = wp0[yuv].log2WeightDenom;
             wp0[yuv].round  = (1 << wp0[yuv].log2WeightDenom);
-            wp1[yuv].offset = wp0[yuv].offset;
             wp1[yuv].shift  = wp0[yuv].shift;
             wp1[yuv].round  = wp0[yuv].round;
         }
@@ -608,7 +606,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
  * \param TComYuv* outDstYuv
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
+void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, ShortYuv* srcYuv0, ShortYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp0, *pwp1;
 
@@ -677,7 +675,7 @@ void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYu
  * \param refIdx
  * \returns void
  */
-void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* srcYuv, uint32_t partAddr, int width, int height, int picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
+void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, ShortYuv* srcYuv, uint32_t partAddr, int width, int height, int picList, TComYuv*& outPredYuv, int refIdx, bool bLuma, bool bChroma)
 {
     wpScalingParam  *pwp, *pwpTmp;
 

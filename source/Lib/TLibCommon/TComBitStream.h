@@ -40,10 +40,6 @@
 
 #include "CommonDef.h"
 
-#include <stdint.h>
-#include <stdio.h>
-#include <assert.h>
-
 //! \ingroup TLibCommon
 //! \{
 
@@ -88,7 +84,7 @@ class TComOutputBitstream : public TComBitIf
     uint32_t m_buffsize;
 
     uint32_t m_num_held_bits; /// number of bits not flushed to bytestream.
-    UChar m_held_bits; /// the bits held and not flushed to bytestream.
+    uint8_t m_held_bits; /// the bits held and not flushed to bytestream.
     /// this value is always msb-aligned, bigendian.
 
 public:
@@ -151,7 +147,7 @@ public:
      */
     uint8_t* getFIFO() { return m_fifo; }
 
-    UChar getHeldBits()          { return m_held_bits; }
+    uint8_t getHeldBits()          { return m_held_bits; }
 
     /** Return a reference to the internal fifo */
     uint8_t* getFIFO() const { return m_fifo; }

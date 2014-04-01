@@ -28,10 +28,6 @@
 #include "motion.h"
 #include "x265.h"
 
-#include <string.h>
-#include <stdio.h>
-#include <assert.h>
-
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional  expression is constant (macros use this construct)
 #endif
@@ -133,7 +129,6 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 static const MV hex2[8] = { MV(-1, -2), MV(-2, 0), MV(-1, 2), MV(1, 2), MV(2, 0), MV(1, -2), MV(-1, -2), MV(-2, 0) };
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
 static const MV square1[9] = { MV(0, 0), MV(0, -1), MV(0, 1), MV(-1, 0), MV(1, 0), MV(-1, -1), MV(-1, 1), MV(1, -1), MV(1, 1) };
-static const int square1_dir[9] = { 0, 1, 1, 2, 2, 1, 1, 1, 1 };
 static const MV hex4[16] =
 {
     MV(0, -4),  MV(0, 4),  MV(-2, -3), MV(2, -3),
@@ -184,7 +179,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV(mx, my) \
     do \
     { \
-        int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
+        int cost = sad(fenc, FENC_STRIDE, fref + (mx) + (my) * stride, stride); \
         cost += mvcost(MV(mx, my) << 2); \
         COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
     } while (0)
@@ -222,6 +217,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 
 #define COST_MV_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y) \
     { \
+        pixel *pix_base = fref + omv.x + omv.y * stride; \
         sad_x4(fenc, \
                pix_base + (m0x) + (m0y) * stride, \
                pix_base + (m1x) + (m1y) * stride, \
@@ -710,7 +706,6 @@ me_hex2:
 
         /* refine predictors */
         omv = bmv;
-        pixel *pix_base = fref + omv.x + omv.y * stride;
         ucost1 = bcost;
         DIA1_ITER(pmv.x, pmv.y);
         if (pmv.notZero())

@@ -31,16 +31,13 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include "winxp.h"  // XP workarounds for CONDITION_VARIABLE and ATOMIC_OR
 #else
 #include <pthread.h>
 #include <semaphore.h>
-#include <cstdlib>
-#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #endif
-
-#include <stdint.h>
 
 #if MACOS
 #include <sys/param.h>
@@ -51,8 +48,8 @@
 
 #include <sys/time.h>
 #include <unistd.h>
-#include <limits.h>
 
+#define CLZ32(id, x)                        id = (unsigned long)__builtin_clz(x) ^ 31
 #define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
 #define ATOMIC_OR(ptr, mask)                __sync_or_and_fetch(ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval)     __sync_val_compare_and_swap(ptr, oldval, newval)
@@ -102,30 +99,11 @@ inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
 
 #endif // if !_WIN64
 
-#if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-/* Windows XP did not define this intrinsic */
-FORCEINLINE LONGLONG x265_interlocked_OR64(__inout LONGLONG volatile *Destination,
-                                           __in    LONGLONG           Value)
-{
-    LONGLONG Old;
-
-    do
-    {
-        Old = *Destination;
-    }
-    while (_InterlockedCompareExchange64(Destination, Old | Value, Old) != Old);
-
-    return Old;
-}
-
-#define ATOMIC_OR(ptr, mask)            x265_interlocked_OR64((volatile LONG64*)ptr, mask)
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-#pragma intrinsic(_InterlockedCompareExchange64)
+#ifndef ATOMIC_OR
+#define ATOMIC_OR(ptr, mask)                InterlockedOr64((volatile LONG64*)ptr, mask)
 #endif
-#else // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
-#endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 
+#define CLZ32(id, x)                        _BitScanReverse(&id, x)
 #define CTZ64(id, x)                        _BitScanForward64(&id, x)
 #define ATOMIC_CAS(ptr, oldval, newval)     (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 #define ATOMIC_CAS32(ptr, oldval, newval)   (uint64_t)_InterlockedCompareExchange((volatile LONG*)ptr, newval, oldval)
@@ -205,6 +183,68 @@ public:
 protected:
 
     HANDLE handle;
+};
+
+/* This class is intended for use in signaling state changes safely between CPU
+ * cores. One thread should be a writer and multiple threads may be readers. The
+ * mutex's main purpose is to serve as a memory fence to ensure writes made by
+ * the writer thread are visible prior to readers seeing the m_val change. Its
+ * secondary purpose is for use with the condition variable for blocking waits */
+class ThreadSafeInteger
+{
+public:
+
+    ThreadSafeInteger()
+    {
+        m_val = 0;
+        InitializeCriticalSection(&m_cs);
+        InitializeConditionVariable(&m_cv);
+    }
+
+    ~ThreadSafeInteger()
+    {
+        DeleteCriticalSection(&m_cs);
+        XP_CONDITION_VAR_FREE(&m_cv);
+    }
+
+    int waitForChange(int prev)
+    {
+        EnterCriticalSection(&m_cs);
+        if (m_val == prev)
+            SleepConditionVariableCS(&m_cv, &m_cs, INFINITE);
+        LeaveCriticalSection(&m_cs);
+        return m_val;
+    }
+
+    int get()
+    {
+        EnterCriticalSection(&m_cs);
+        int ret = m_val;
+        LeaveCriticalSection(&m_cs);
+        return ret;
+    }
+
+    void set(int newval)
+    {
+        EnterCriticalSection(&m_cs);
+        m_val = newval;
+        WakeAllConditionVariable(&m_cv);
+        LeaveCriticalSection(&m_cs);
+    }
+
+    void incr()
+    {
+        EnterCriticalSection(&m_cs);
+        m_val++;
+        WakeAllConditionVariable(&m_cv);
+        LeaveCriticalSection(&m_cs);
+    }
+
+protected:
+
+    CRITICAL_SECTION   m_cs;
+    CONDITION_VARIABLE m_cv;
+    int                m_val;
 };
 
 #else /* POSIX / pthreads */
@@ -315,6 +355,72 @@ protected:
     pthread_mutex_t m_mutex;
     pthread_cond_t  m_cond;
     uint32_t        m_counter;
+};
+
+
+/* This class is intended for use in signaling state changes safely between CPU
+ * cores. One thread should be a writer and multiple threads may be readers. The
+ * mutex's main purpose is to serve as a memory fence to ensure writes made by
+ * the writer thread are visible prior to readers seeing the m_val change. Its
+ * secondary purpose is for use with the condition variable for blocking waits */
+class ThreadSafeInteger
+{
+public:
+
+    ThreadSafeInteger()
+    {
+        m_val = 0;
+        if (pthread_mutex_init(&m_mutex, NULL) ||
+            pthread_cond_init(&m_cond, NULL))
+        {
+            x265_log(NULL, X265_LOG_ERROR, "fatal: unable to initialize conditional variable\n");
+        }
+    }
+
+    ~ThreadSafeInteger()
+    {
+        pthread_cond_destroy(&m_cond);
+        pthread_mutex_destroy(&m_mutex);
+    }
+
+    int waitForChange(int prev)
+    {
+        pthread_mutex_lock(&m_mutex);
+        if (m_val == prev)
+            pthread_cond_wait(&m_cond, &m_mutex);
+        pthread_mutex_unlock(&m_mutex);
+        return m_val;
+    }
+
+    int get()
+    {
+        pthread_mutex_lock(&m_mutex);
+        int ret = m_val;
+        pthread_mutex_unlock(&m_mutex);
+        return ret;
+    }
+
+    void set(int newval)
+    {
+        pthread_mutex_lock(&m_mutex);
+        m_val = newval;
+        pthread_cond_broadcast(&m_cond);
+        pthread_mutex_unlock(&m_mutex);
+    }
+
+    void incr()
+    {
+        pthread_mutex_lock(&m_mutex);
+        m_val++;
+        pthread_cond_broadcast(&m_cond);
+        pthread_mutex_unlock(&m_mutex);
+    }
+
+protected:
+
+    pthread_mutex_t m_mutex;
+    pthread_cond_t  m_cond;
+    int             m_val;
 };
 
 #endif // ifdef _WIN32

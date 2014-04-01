@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Steve Borho <steve@borho.org>
+ * Authors: Selvakumar Nithiyaruban <selvakumar@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +21,11 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#ifndef X265_FILTERS_H
+#define X265_FILTERS_H
+
 #include "x265.h"
 
-/* this unreachable function forces the MSVC linker to include the encoder
- * and common libraries into the DLL */
-void dummy()
-{
-    x265_param param;
+void ditherImage(x265_picture&, int picWidth, int picHeight, int16_t *errorBuf, int bitDepth);
 
-    x265_param_default(&param);
-    x265_encoder *enc = x265_encoder_open(&param);
-    x265_encoder_close(enc);
-}
+#endif //X265_FILTERS_H

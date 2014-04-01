@@ -101,7 +101,6 @@ cglobal calcRecons4
     CLIPW       m0, m4, m5
 
     ; store recon[] and recipred[]
-    movh        [t2], m0
     movh        [t4], m0
 %if ARCH_X86_64 == 0
     add         t4, t7
@@ -113,7 +112,6 @@ cglobal calcRecons4
     movhps      [t4 + t7], m0
     lea         t4, [t4 + t7 * 2]
 %endif
-    movhps      [t2 + t5], m0
 
     ; store recqt[]
     movh        [t3], m0
@@ -123,7 +121,6 @@ cglobal calcRecons4
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-    lea         t2, [t2 + t5 * 2]
 
     dec         t8d
     jnz        .loop
@@ -165,11 +162,9 @@ cglobal calcRecons4
     packuswb    m1, m1
 
     ; store recon[] and recipred[]
-    movd        [t2], m1
     movd        [t4], m1
     add         t4, t7
     pshufd      m2, m1, 1
-    movd        [t2 + t5], m2
     movd        [t4], m2
     add         t4, t7
 
@@ -182,7 +177,6 @@ cglobal calcRecons4
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 4]
-    lea         t2, [t2 + t5 * 2]
 
     dec         t8d
     jnz        .loop
@@ -231,8 +225,6 @@ cglobal calcRecons8
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t2], m0
-    movu        [t2 + t5], m1
     movu        [t4], m0
 %if ARCH_X86_64 == 0
     add         t4, t7
@@ -253,7 +245,6 @@ cglobal calcRecons8
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-    lea         t2, [t2 + t5 * 2]
 
     dec         t8d
     jnz        .loop
@@ -295,8 +286,6 @@ cglobal calcRecons8
     packuswb    m1, m2
 
     ; store recon[] and recipred[]
-    movlps      [t2], m1
-    movhps      [t2 + t5], m1
     movlps      [t4], m1
 %if ARCH_X86_64 == 0
     add         t4, t7
@@ -317,7 +306,6 @@ cglobal calcRecons8
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 4]
-    lea         t2, [t2 + t5 * 2]
 
     dec         t8d
     jnz        .loop
@@ -367,8 +355,6 @@ cglobal calcRecons16
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t2], m0
-    movu        [t2 + 16], m1
     movu        [t4], m0
     movu        [t4 + 16], m1
 %if ARCH_X86_64 == 0
@@ -391,8 +377,6 @@ cglobal calcRecons16
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t2 + t5], m0
-    movu        [t2 + t5 + 16], m1
 %if ARCH_X86_64 == 0
     movu        [t4], m0
     movu        [t4 + 16], m1
@@ -411,7 +395,6 @@ cglobal calcRecons16
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-    lea         t2, [t2 + t5 * 2]
 
     dec         t8d
     jnz        .loop
@@ -451,7 +434,6 @@ cglobal calcRecons16
     packuswb    m1, m2
 
     ; store recon[] and recipred[]
-    movu        [t2], m1
     movu        [t4], m1
 
     ; store recqt[]
@@ -464,7 +446,6 @@ cglobal calcRecons16
     add         t4, t7
     add         t0, t5
     lea         t1, [t1 + t5 * 2]
-    add         t2, t5
 
     dec         t8d
     jnz        .loop
@@ -513,8 +494,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t2], m0
-    movu        [t2 + 16], m1
     movu        [t4], m0
     movu        [t4 + 16], m1
 
@@ -532,8 +511,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t2 + 32], m0
-    movu        [t2 + 48], m1
     movu        [t4 + 32], m0
     movu        [t4 + 48], m1
 %if ARCH_X86_64 == 0
@@ -556,8 +533,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t2 + t5], m0
-    movu        [t2 + t5 + 16], m1
 %if ARCH_X86_64 == 0
     movu        [t4], m0
     movu        [t4 + 16], m1
@@ -580,8 +555,6 @@ cglobal calcRecons32
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t2 + t5 + 32], m0
-    movu        [t2 + t5 + 48], m1
 %if ARCH_X86_64 == 0
     movu        [t4 + 32], m0
     movu        [t4 + 48], m1
@@ -600,7 +573,6 @@ cglobal calcRecons32
 
     lea         t0, [t0 + t5 * 2]
     lea         t1, [t1 + t5 * 2]
-    lea         t2, [t2 + t5 * 2]
 
     dec         t8d
     jnz        .loop
@@ -648,8 +620,6 @@ cglobal calcRecons32
     packuswb    m3, m4
 
     ; store recon[] and recipred[]
-    movu        [t2], m1
-    movu        [t2 + 16], m3
     movu        [t4], m1
     movu        [t4 + 16], m3
 
@@ -667,7 +637,6 @@ cglobal calcRecons32
     add         t4, t7
     add         t0, t5
     lea         t1, [t1 + t5 * 2]
-    add         t2, t5
 
     dec         t8d
     jnz        .loop
@@ -1247,7 +1216,7 @@ cglobal count_nonzero, 2,2,4
     pshuflw     m1, m1, 0
     punpcklqdq  m1, m1
 
-.loop
+.loop:
     mova        m2, [r0]
     mova        m3, [r0 + 16]
     add         r0, 32
@@ -1288,7 +1257,7 @@ cglobal weight_pp, 6, 7, 6
     sub         r2d, r4d
     sub         r3d, r4d
 
-.loopH
+.loopH:
     mov         r6d, r4d
     shr         r6d, 4
 .loopW:
@@ -1372,7 +1341,7 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
 
     add         r2d, r2d
 
-.loopH
+.loopH:
     mov         r6d, r4d
 
     ; save old src and dst
@@ -1404,7 +1373,7 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
 
     jmp         .loopW
 
-.width4
+.width4:
     cmp         r6d, -4
     jl          .width2
     movd        [r1], m6
@@ -1412,10 +1381,10 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
     add         r1, 4
     pshufd      m6, m6, 1
 
-.width2
+.width2:
     pextrw      [r1], m6, 0
 
-.nextH
+.nextH:
     mov         r0, tmp_r0
     mov         r1, tmp_r1
     lea         r0, [r0 + r2]
@@ -2401,7 +2370,7 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     mov       r3d,    32
     mova      m7,    [deinterleave_word_shuf]
     add       r2,    r2
-.loop
+.loop:
     movu      m0,    [r1]                  ;i
     psrld     m1,    m0,    16             ;j
     movu      m2,    [r1 + r2]             ;k
@@ -2572,7 +2541,7 @@ INIT_XMM ssse3
 cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     mov       r3d,    32
     mova        m7,      [deinterleave_shuf]
-.loop
+.loop:
 
     movu        m0,      [r1]                  ;i
     psrlw       m1,      m0,    8              ;j
@@ -3055,7 +3024,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
 %if HIGH_BIT_DEPTH
     add      r4,    r4
     add      r5,    r5
-.loop
+.loop:
     movh     m0,    [r2]
     movh     m1,    [r3]
     movh     m2,    [r2 + r4]
@@ -3077,7 +3046,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
     lea      r0,             [r0 + 2 * r1]
     movh     [r0 + r1],      m6
 %else
-.loop
+.loop:
     movd         m0,    [r2]
     movd         m1,    [r3]
     movd         m2,    [r2 + r4]
@@ -3133,7 +3102,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 2
 %if HIGH_BIT_DEPTH
     add         r4, r4
     add         r5, r5
-.loop
+.loop:
     movu        m0, [r2]
     movu        m1, [r3]
     psubw       m0, m1
@@ -3166,7 +3135,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 2
     movhlps     m0, m0
     movd        [r0 + r1 + 8], m0
 %else
-.loop
+.loop:
     movh        m0, [r2]
     pmovzxbw    m0, m0
     movh        m1, [r3]
@@ -3353,7 +3322,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
 %if HIGH_BIT_DEPTH
     add     r4,    r4
     add     r5,    r5
-.loop
+.loop:
     movu    m0,    [r2]
     movu    m1,    [r3]
     movu    m2,    [r2 + r4]
@@ -3366,7 +3335,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
     movu    m7,    [r3 + r5]
 %else
 
-.loop
+.loop:
     movh        m0,    [r2]
     movh        m1,    [r3]
     pmovzxbw    m0,    m0
@@ -3429,7 +3398,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
 %if HIGH_BIT_DEPTH
     add     r4,    r4
     add     r5,    r5
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movh     m2,    [r2 + 16]
@@ -3469,7 +3438,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
     movu    [r0 + r1],         m4
     movh    [r0 + r1 + 16],    m6
 %else
-.loop
+.loop:
     movu        m0,    [r2]
     movu        m1,    [r3]
     movu        m2,    [r2 + r4]
@@ -3545,7 +3514,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 6, dest, deststride, src0, src1, srcstride0, s
     mov    r6d,    %2/4
     add     r4,    r4
     add     r5,    r5
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -3589,7 +3558,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 7, dest, deststride, src0, src1, srcstride0, s
     add    r1,     r1
     mov    r6d,    %2/4
     pxor   m6,     m6
-.loop
+.loop:
     movu         m1,    [r2]
     pmovzxbw     m0,    m1
     punpckhbw    m1,    m6
@@ -3675,7 +3644,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 6, dest, deststride, src0, src1, srcstride0, s
     mov     r6d,    %2/2
     add     r4,     r4
     add     r5,     r5
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -3708,7 +3677,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 7, dest, deststride, src0, src1, srcstride0, s
     add    r1,     r1
     mov    r6d,    %2/2
     pxor   m6,     m6
-.loop
+.loop:
     movu         m1,    [r2]
     pmovzxbw     m0,    m1
     punpckhbw    m1,    m6
@@ -3773,7 +3742,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 6, dest, deststride, src0, src1, srcstride0, s
 %if HIGH_BIT_DEPTH
     add     r4,     r4
     add     r5,     r5
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -3810,7 +3779,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 6, dest, deststride, src0, src1, srcstride0, s
     movu    [r0 + r1 + 32],    m4
     movu    [r0 + r1 + 48],    m3
 %else
-.loop
+.loop:
     movh        m0,    [r2]
     movh        m1,    [r2 + 8]
     movh        m2,    [r2 + 16]
@@ -3897,7 +3866,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 6, dest, deststride, src0, src1, srcstride0, s
     mov     r6d,    %2/2
     add     r4,     r4
     add     r5,     r5
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -3959,7 +3928,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 7, dest, deststride, src0, src1, srcstride0, s
     add     r1,     r1
     mov     r6d,    %2/2
     pxor    m6,     m6
-.loop
+.loop:
     movu         m1,    [r2]
     pmovzxbw     m0,    m1
     punpckhbw    m1,    m6
@@ -4059,7 +4028,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 6, dest, deststride, src0, src1, srcstride0, s
     mov     r6d,    %2/2
     add     r4,     r4
     add     r5,     r5
-.loop
+.loop:
     movu     m0,    [r2]
     movu     m1,    [r3]
     movu     m2,    [r2 + 16]
@@ -4138,7 +4107,7 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 7, dest, deststride, src0, src1, srcstride0, s
     add     r1,     r1
     mov     r6d,    %2/2
     pxor    m6,     m6
-.loop
+.loop:
     movu         m1,    [r2]
     pmovzxbw     m0,    m1
     punpckhbw    m1,    m6

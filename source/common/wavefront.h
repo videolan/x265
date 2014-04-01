@@ -24,8 +24,8 @@
 #ifndef X265_WAVEFRONT_H
 #define X265_WAVEFRONT_H
 
+#include "common.h"
 #include "threadpool.h"
-#include <stdint.h>
 
 namespace x265 {
 // x265 private namespace
@@ -68,6 +68,10 @@ public:
     // A worker thread will later call processRow(row).
     // This provider must be enqueued in the pool before enqueuing a row
     void enqueueRow(int row);
+
+    // Mark a row as no longer having internal dependencies resolved. Returns
+    // true if bit clear was successful, false otherwise.
+    bool dequeueRow(int row);
 
     // Mark the row's external dependencies as being resolved
     void enableRow(int row);

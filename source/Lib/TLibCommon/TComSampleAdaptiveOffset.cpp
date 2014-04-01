@@ -36,15 +36,11 @@
 */
 
 #include "TComSampleAdaptiveOffset.h"
-#include <cstdlib>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
+#include "common.h"
 
 namespace x265 {
 //! \ingroup TLibCommon
 //! \{
-
 SAOParam::~SAOParam()
 {
     for (int i = 0; i < 3; i++)
@@ -180,7 +176,7 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
     uint32_t pixelRangeY = 1 << X265_DEPTH;
     uint32_t boRangeShiftY = X265_DEPTH - SAO_BO_BITS;
 
-    m_lumaTableBo = new Pel[pixelRangeY];
+    m_lumaTableBo = X265_MALLOC(pixel, pixelRangeY);
     for (int k2 = 0; k2 < pixelRangeY; k2++)
     {
         m_lumaTableBo[k2] = 1 + (k2 >> boRangeShiftY);
@@ -189,15 +185,15 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
     uint32_t pixelRangeC = 1 << X265_DEPTH;
     uint32_t boRangeShiftC = X265_DEPTH - SAO_BO_BITS;
 
-    m_chromaTableBo = new Pel[pixelRangeC];
+    m_chromaTableBo = X265_MALLOC(pixel, pixelRangeC);
     for (int k2 = 0; k2 < pixelRangeC; k2++)
     {
         m_chromaTableBo[k2] = 1 + (k2 >> boRangeShiftC);
     }
 
-    m_upBuff1 = new int[m_picWidth + 2];
-    m_upBuff2 = new int[m_picWidth + 2];
-    m_upBufft = new int[m_picWidth + 2];
+    m_upBuff1 = X265_MALLOC(int, m_picWidth + 2);
+    m_upBuff2 = X265_MALLOC(int, m_picWidth + 2);
+    m_upBufft = X265_MALLOC(int, m_picWidth + 2);
 
     m_upBuff1++;
     m_upBuff2++;
@@ -209,8 +205,8 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
 
     int rangeExt = maxY >> 1;
 
-    m_clipTableBase = new Pel[maxY + 2 * rangeExt];
-    m_offsetBo      = new int[maxY + 2 * rangeExt];
+    m_clipTableBase = X265_MALLOC(pixel, maxY + 2 * rangeExt);
+    m_offsetBo      = X265_MALLOC(int, maxY + 2 * rangeExt);
 
     for (i = 0; i < (minY + rangeExt); i++)
     {
@@ -234,8 +230,8 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
 
     int rangeExtC = maxC >> 1;
 
-    m_chromaClipTableBase = new Pel[maxC + 2 * rangeExtC];
-    m_chromaOffsetBo      = new int[maxC + 2 * rangeExtC];
+    m_chromaClipTableBase = X265_MALLOC(pixel, maxC + 2 * rangeExtC);
+    m_chromaOffsetBo      = X265_MALLOC(int, maxC + 2 * rangeExtC);
 
     for (i = 0; i < (minC + rangeExtC); i++)
     {
@@ -254,16 +250,16 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
 
     m_chromaClipTable = &(m_chromaClipTableBase[rangeExtC]);
 
-    m_tmpL1 = new Pel[m_maxCUHeight + 1];
-    m_tmpL2 = new Pel[m_maxCUHeight + 1];
+    m_tmpL1 = X265_MALLOC(pixel, m_maxCUHeight + 1);
+    m_tmpL2 = X265_MALLOC(pixel, m_maxCUHeight + 1);
 
-    m_tmpU1[0] = new Pel[m_picWidth];
-    m_tmpU1[1] = new Pel[m_picWidth];
-    m_tmpU1[2] = new Pel[m_picWidth];
+    m_tmpU1[0] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU1[1] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU1[2] = X265_MALLOC(pixel, m_picWidth);
 
-    m_tmpU2[0] = new Pel[m_picWidth];
-    m_tmpU2[1] = new Pel[m_picWidth];
-    m_tmpU2[2] = new Pel[m_picWidth];
+    m_tmpU2[0] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU2[1] = X265_MALLOC(pixel, m_picWidth);
+    m_tmpU2[2] = X265_MALLOC(pixel, m_picWidth);
 }
 
 /** destroy SampleAdaptiveOffset memory.
@@ -271,53 +267,50 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
  */
 void TComSampleAdaptiveOffset::destroy()
 {
-    delete [] m_clipTableBase;
+    X265_FREE(m_clipTableBase);
     m_clipTableBase = NULL;
-    delete [] m_offsetBo;
+    X265_FREE(m_offsetBo);
     m_offsetBo = NULL;
-    delete[] m_lumaTableBo;
+    X265_FREE(m_lumaTableBo);
     m_lumaTableBo = NULL;
-    delete [] m_chromaClipTableBase;
+    X265_FREE(m_chromaClipTableBase);
     m_chromaClipTableBase = NULL;
-    delete [] m_chromaOffsetBo;
+    X265_FREE(m_chromaOffsetBo);
     m_chromaOffsetBo = NULL;
-    delete[] m_chromaTableBo;
+    X265_FREE(m_chromaTableBo);
     m_chromaTableBo = NULL;
 
-    if (m_upBuff1)
-    {
-        m_upBuff1--;
-        delete [] m_upBuff1;
-        m_upBuff1 = NULL;
-    }
-    if (m_upBuff2)
-    {
-        m_upBuff2--;
-        delete [] m_upBuff2;
-        m_upBuff2 = NULL;
-    }
-    if (m_upBufft)
-    {
-        m_upBufft--;
-        delete [] m_upBufft;
-        m_upBufft = NULL;
-    }
-    delete [] m_tmpL1;
+    m_upBuff1--;
+    X265_FREE(m_upBuff1);
+    m_upBuff1 = NULL;
+
+    m_upBuff2--;
+    X265_FREE(m_upBuff2);
+    m_upBuff2 = NULL;
+
+    m_upBufft--;
+    X265_FREE(m_upBufft);
+    m_upBufft = NULL;
+
+    X265_FREE(m_tmpL1);
     m_tmpL1 = NULL;
-    delete [] m_tmpL2;
+    X265_FREE(m_tmpL2);
     m_tmpL2 = NULL;
-    delete [] m_tmpU1[0];
-    delete [] m_tmpU1[1];
-    delete [] m_tmpU1[2];
+    X265_FREE(m_tmpU1[0]);
+
     m_tmpU1[0] = NULL;
+    X265_FREE(m_tmpU1[1]);
     m_tmpU1[1] = NULL;
+    X265_FREE(m_tmpU1[2]);
     m_tmpU1[2] = NULL;
-    delete [] m_tmpU2[0];
-    delete [] m_tmpU2[1];
-    delete [] m_tmpU2[2];
+
+    X265_FREE(m_tmpU2[0]);
     m_tmpU2[0] = NULL;
+    X265_FREE(m_tmpU2[1]);
     m_tmpU2[1] = NULL;
+    X265_FREE(m_tmpU2[2]);
     m_tmpU2[2] = NULL;
+
 }
 
 /** allocate memory for SAO parameters
@@ -516,10 +509,6 @@ void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pic)
     m_pic = pic;
 }
 
-void TComSampleAdaptiveOffset::destroyPicSaoInfo()
-{
-}
-
 /** sample adaptive offset process for one LCU crossing LCU boundary
  * \param   addr, iSaoType, yCbCr
  */
@@ -527,7 +516,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 {
     int x, y;
     TComDataCU *tmpCu = m_pic->getCU(addr);
-    Pel* rec;
+    pixel* rec;
     int  stride;
     int  lcuWidth  = m_maxCUWidth;
     int  lcuHeight = m_maxCUHeight;
@@ -535,12 +524,10 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     uint32_t tpely     = tmpCu->getCUPelY();
     uint32_t rpelx;
     uint32_t bpely;
-    int  signLeft;
-    int  signRight;
+    int  edgeType;
     int  signDown;
     int  signDown1;
     int  signDown2;
-    uint32_t edgeType;
     int picWidthTmp;
     int picHeightTmp;
     int startX;
@@ -550,10 +537,10 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     int isChroma = (yCbCr != 0) ? 1 : 0;
     int shift;
     int cuHeightTmp;
-    Pel *tmpLSwap;
-    Pel *tmpL;
-    Pel *tmpU;
-    Pel *clipTbl = NULL;
+    pixel* tmpLSwap;
+    pixel* tmpL;
+    pixel* tmpU;
+    pixel* clipTbl = NULL;
     int32_t *offsetBo = NULL;
     int32_t *tmp_swap;
 
@@ -614,23 +601,56 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     {
     case SAO_EO_0: // dir: -
     {
-        startX = (lpelx == 0) ? 1 : 0;
-        endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
-        for (y = 0; y < lcuHeight; y++)
-        {
-            signLeft = xSign(rec[startX] - tmpL[y]);
-            for (x = startX; x < endX; x++)
-            {
-                signRight =  xSign(rec[x] - rec[x + 1]);
-                edgeType =  signRight + signLeft + 2;
-                signLeft  = -signRight;
+      pixel firstPxl = 0, lastPxl = 0;
+      startX = (lpelx == 0) ? 1 : 0;
+      endX   = (rpelx == picWidthTmp) ? lcuWidth-1 : lcuWidth;
+      if (lcuWidth % 16)
+      {
+          int8_t signRight;
+          for (y = 0; y < lcuHeight; y++)
+          {
+              int8_t signLeft = xSign(rec[startX] - tmpL[y]);
+              for (x = startX; x < endX; x++)
+              {
+                  signRight = xSign(rec[x] - rec[x+1]);
+                  edgeType = signRight + signLeft + 2;
+                  signLeft  = -signRight;
 
-                rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
-            }
+                  rec[x] =  Clip3(0, (1 << X265_DEPTH) - 1, rec[x] + m_offsetEo[edgeType]);
+              }
+              rec += stride;
+          }
+      }
+      else
+      {
+          for (y = 0; y < lcuHeight; y++)
+          {
+              int8_t signLeft = xSign(rec[startX] - tmpL[y]);
 
-            rec += stride;
-        }
+              if (lpelx == 0)
+              {
+                  firstPxl = rec[0];
+              }
 
+              if (rpelx == picWidthTmp)
+              {
+                  lastPxl = rec[lcuWidth - 1];
+              }
+
+              primitives.saoCuOrgE0(rec, m_offsetEo, lcuWidth, signLeft);
+
+              if (lpelx == 0)
+              {
+                  rec[0] = firstPxl;
+              }
+
+              if (rpelx == picWidthTmp)
+              {
+                  rec[lcuWidth - 1] = lastPxl;
+              }
+              rec += stride;
+          }
+      }
         break;
     }
     case SAO_EO_1: // dir: |
@@ -794,7 +814,7 @@ void TComSampleAdaptiveOffset::SAOProcess(SAOParam* saoParam)
     }
 }
 
-Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr)
+pixel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int addr)
 {
     switch (yCbCr)
     {
@@ -820,7 +840,7 @@ Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* picYuv, int yCbCr, int 
  */
 void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int yCbCr)
 {
-    Pel *rec;
+    pixel *rec;
     int picWidthTmp;
 
     if (yCbCr == 0)
@@ -839,12 +859,12 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
         picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
-    memcpy(m_tmpU1[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+    memcpy(m_tmpU1[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
     int  i;
     uint32_t edgeType;
-    Pel* lumaTable = NULL;
-    Pel* clipTable = NULL;
+    pixel* lumaTable = NULL;
+    pixel* clipTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -855,7 +875,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int frameHeightInCU = m_pic->getFrameHeightInCU();
     int stride;
-    Pel *tmpUSwap;
+    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -893,7 +913,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
 
         rec -= (stride << 1);
 
-        memcpy(m_tmpU2[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+        memcpy(m_tmpU2[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
         {
@@ -991,7 +1011,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
  */
 void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int yCbCr)
 {
-    Pel *rec;
+    pixel *rec;
     int picWidthTmp;
 
     if (yCbCr == 0)
@@ -1011,12 +1031,12 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     }
 
     if (idxY == 0)
-        memcpy(m_tmpU1[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+        memcpy(m_tmpU1[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
     int  i;
     uint32_t edgeType;
-    Pel* lumaTable = NULL;
-    Pel* clipTable = NULL;
+    pixel* lumaTable = NULL;
+    pixel* clipTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -1025,7 +1045,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     int addr;
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int stride;
-    Pel *tmpUSwap;
+    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -1062,7 +1082,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
 
         rec -= (stride << 1);
 
-        memcpy(m_tmpU2[yCbCr], rec, sizeof(Pel) * picWidthTmp);
+        memcpy(m_tmpU2[yCbCr], rec, sizeof(pixel) * picWidthTmp);
 
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
         {
@@ -1341,24 +1361,24 @@ void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, TextType ttText)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
-    Pel* src;
-    Pel* pcm;
+    pixel* src;
+    pixel* pcm;
     uint32_t stride;
     uint32_t width;
     uint32_t height;
     uint32_t pcmLeftShiftBit;
     uint32_t x, y;
-    uint32_t minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
-    uint32_t lumaOffset   = minCoeffSize * absZOrderIdx;
+    uint32_t lumaOffset   = absZOrderIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> 2;
+    //uint32_t chromaOffset = lumaOffset >> (m_hChromaShift + m_vChromaShift);
 
     if (ttText == TEXT_LUMA)
     {
         src = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
         pcm = cu->getPCMSampleY() + lumaOffset;
         stride  = pcPicYuvRec->getStride();
-        width  = (g_maxCUWidth >> depth);
-        height = (g_maxCUHeight >> depth);
+        width  = (g_maxCUSize >> depth);
+        height = (g_maxCUSize >> depth);
         if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
             pcmLeftShiftBit = 0;
@@ -1382,8 +1402,10 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
         }
 
         stride = pcPicYuvRec->getCStride();
-        width  = ((g_maxCUWidth >> depth) / 2);
-        height = ((g_maxCUWidth >> depth) / 2);
+        //width  = ((g_maxCUSize >> depth) >> m_hChromaShift);
+        //height = ((g_maxCUSize >> depth) >> m_vhChromaShift);
+        width  = ((g_maxCUSize >> depth) >> 1);
+        height = ((g_maxCUSize >> depth) >> 1);
         if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
             pcmLeftShiftBit = 0;
@@ -1394,6 +1416,7 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
         }
     }
 
+    //TODO Optimized Primitives 
     for (y = 0; y < height; y++)
     {
         for (x = 0; x < width; x++)

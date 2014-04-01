@@ -37,15 +37,13 @@
 
 #include "TComRom.h"
 #include "threading.h"
-#include <memory.h>
-#include <cstdlib>
-#include <stdio.h>
+#include "common.h"
 
 namespace x265 {
 //! \ingroup TLibCommon
 //! \{
 // scanning order table
-uint32_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH][MAX_CU_DEPTH];
+uint16_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
 
 class ScanGenerator
 {
@@ -148,64 +146,61 @@ void initROM()
     }
 
     // initialise scan orders
-    for (uint32_t log2BlockHeight = 0; log2BlockHeight < MAX_CU_DEPTH; log2BlockHeight++)
+    for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
     {
-        for (uint32_t log2BlockWidth = 0; log2BlockWidth < MAX_CU_DEPTH; log2BlockWidth++)
+        const uint32_t blockWidth  = 1 << log2BlockSize;
+        const uint32_t blockHeight = 1 << log2BlockSize;
+        const uint32_t totalValues = blockWidth * blockHeight;
+        //non-grouped scan orders
+        for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
         {
-            const uint32_t blockWidth  = 1 << log2BlockWidth;
-            const uint32_t blockHeight = 1 << log2BlockHeight;
-            const uint32_t totalValues = blockWidth * blockHeight;
-            //non-grouped scan orders
-            for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
+            const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
+            g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize] = X265_MALLOC(uint16_t, totalValues);
+            ScanGenerator fullBlockScan(blockWidth, blockHeight, blockWidth, scanType);
+
+            for (uint32_t scanPosition = 0; scanPosition < totalValues; scanPosition++)
             {
-                const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-                g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockWidth][log2BlockHeight] = X265_MALLOC(uint32_t, totalValues);
-                ScanGenerator fullBlockScan(blockWidth, blockHeight, blockWidth, scanType);
-
-                for (uint32_t scanPosition = 0; scanPosition < totalValues; scanPosition++)
-                {
-                    g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockWidth][log2BlockHeight][scanPosition] = fullBlockScan.GetNextIndex(0, 0);
-                }
+                g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize][scanPosition] = fullBlockScan.GetNextIndex(0, 0);
             }
-
-            //grouped scan orders
-            const uint32_t  groupWidth           = 1 << MLS_CG_LOG2_WIDTH;
-            const uint32_t  groupHeight          = 1 << MLS_CG_LOG2_HEIGHT;
-            const uint32_t  widthInGroups        = blockWidth  >> MLS_CG_LOG2_WIDTH;
-            const uint32_t  heightInGroups       = blockHeight >> MLS_CG_LOG2_HEIGHT;
-
-            const uint32_t  groupSize            = groupWidth    * groupHeight;
-            const uint32_t  totalGroups          = widthInGroups * heightInGroups;
-
-            for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
-            {
-                const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-
-                g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockWidth][log2BlockHeight] = X265_MALLOC(uint32_t, totalValues);
-
-                ScanGenerator fullBlockScan(widthInGroups, heightInGroups, groupWidth, scanType);
-
-                for (uint32_t groupIndex = 0; groupIndex < totalGroups; groupIndex++)
-                {
-                    const uint32_t groupPositionY  = fullBlockScan.GetCurrentY();
-                    const uint32_t groupPositionX  = fullBlockScan.GetCurrentX();
-                    const uint32_t groupOffsetX    = groupPositionX * groupWidth;
-                    const uint32_t groupOffsetY    = groupPositionY * groupHeight;
-                    const uint32_t groupOffsetScan = groupIndex     * groupSize;
-
-                    ScanGenerator groupScan(groupWidth, groupHeight, blockWidth, scanType);
-
-                    for (uint32_t scanPosition = 0; scanPosition < groupSize; scanPosition++)
-                    {
-                        g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockWidth][log2BlockHeight][groupOffsetScan + scanPosition] = groupScan.GetNextIndex(groupOffsetX, groupOffsetY);
-                    }
-
-                    fullBlockScan.GetNextIndex(0, 0);
-                }
-            }
-
-            //--------------------------------------------------------------------------------------------------
         }
+
+        //grouped scan orders
+        const uint32_t  groupWidth           = 1 << MLS_CG_LOG2_SIZE;
+        const uint32_t  groupHeight          = 1 << MLS_CG_LOG2_SIZE;
+        const uint32_t  widthInGroups        = blockWidth  >> MLS_CG_LOG2_SIZE;
+        const uint32_t  heightInGroups       = blockHeight >> MLS_CG_LOG2_SIZE;
+
+        const uint32_t  groupSize            = groupWidth    * groupHeight;
+        const uint32_t  totalGroups          = widthInGroups * heightInGroups;
+
+        for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
+        {
+            const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
+
+            g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize] = X265_MALLOC(uint16_t, totalValues);
+
+            ScanGenerator fullBlockScan(widthInGroups, heightInGroups, groupWidth, scanType);
+
+            for (uint32_t groupIndex = 0; groupIndex < totalGroups; groupIndex++)
+            {
+                const uint32_t groupPositionY  = fullBlockScan.GetCurrentY();
+                const uint32_t groupPositionX  = fullBlockScan.GetCurrentX();
+                const uint32_t groupOffsetX    = groupPositionX * groupWidth;
+                const uint32_t groupOffsetY    = groupPositionY * groupHeight;
+                const uint32_t groupOffsetScan = groupIndex     * groupSize;
+
+                ScanGenerator groupScan(groupWidth, groupHeight, blockWidth, scanType);
+
+                for (uint32_t scanPosition = 0; scanPosition < groupSize; scanPosition++)
+                {
+                    g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize][groupOffsetScan + scanPosition] = groupScan.GetNextIndex(groupOffsetX, groupOffsetY);
+                }
+
+                fullBlockScan.GetNextIndex(0, 0);
+            }
+        }
+
+        //--------------------------------------------------------------------------------------------------
     }
 }
 
@@ -218,12 +213,9 @@ void destroyROM()
     {
         for (uint32_t scanOrderIndex = 0; scanOrderIndex < SCAN_NUMBER_OF_TYPES; scanOrderIndex++)
         {
-            for (uint32_t log2BlockWidth = 0; log2BlockWidth < MAX_CU_DEPTH; log2BlockWidth++)
+            for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
             {
-                for (uint32_t log2BlockHeight = 0; log2BlockHeight < MAX_CU_DEPTH; log2BlockHeight++)
-                {
-                    X265_FREE(g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockWidth][log2BlockHeight]);
-                }
+                X265_FREE(g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockSize]);
             }
         }
     }
@@ -233,8 +225,7 @@ void destroyROM()
 // Data structure related table & variable
 // ====================================================================================================================
 
-uint32_t g_maxCUWidth  = MAX_CU_SIZE;
-uint32_t g_maxCUHeight = MAX_CU_SIZE;
+uint32_t g_maxCUSize   = MAX_CU_SIZE;
 uint32_t g_maxCUDepth  = MAX_CU_DEPTH;
 uint32_t g_addCUDepth  = 0;
 uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
@@ -263,50 +254,46 @@ void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& cu
     }
 }
 
-void initRasterToZscan(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxDepth)
+void initRasterToZscan(uint32_t maxCUSize, uint32_t maxDepth)
 {
-    uint32_t  minWidth  = maxCUWidth  >> (maxDepth - 1);
-    uint32_t  minHeight = maxCUHeight >> (maxDepth - 1);
+    uint32_t  unitSize = maxCUSize  >> (maxDepth - 1);
 
-    uint32_t  numPartInWidth  = (uint32_t)maxCUWidth  / minWidth;
-    uint32_t  numPartInHeight = (uint32_t)maxCUHeight / minHeight;
+    uint32_t  numPartInCUSize  = (uint32_t)maxCUSize / unitSize;
 
-    for (uint32_t i = 0; i < numPartInWidth * numPartInHeight; i++)
+    for (uint32_t i = 0; i < numPartInCUSize * numPartInCUSize; i++)
     {
         g_rasterToZscan[g_zscanToRaster[i]] = i;
     }
 }
 
-void initRasterToPelXY(uint32_t maxCUWidth, uint32_t maxCUHeight, uint32_t maxDepth)
+void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxDepth)
 {
     uint32_t i;
 
     uint32_t* tempX = &g_rasterToPelX[0];
     uint32_t* tempY = &g_rasterToPelY[0];
 
-    uint32_t  minWidth  = maxCUWidth  >> (maxDepth - 1);
-    uint32_t  minHeight = maxCUHeight >> (maxDepth - 1);
+    uint32_t  unitSize  = maxCUSize >> (maxDepth - 1);
 
-    uint32_t  numPartInWidth  = maxCUWidth  / minWidth;
-    uint32_t  numPartInHeight = maxCUHeight / minHeight;
+    uint32_t  numPartInCUSize = maxCUSize / unitSize;
 
     tempX[0] = 0;
     tempX++;
-    for (i = 1; i < numPartInWidth; i++)
+    for (i = 1; i < numPartInCUSize; i++)
     {
-        tempX[0] = tempX[-1] + minWidth;
+        tempX[0] = tempX[-1] + unitSize;
         tempX++;
     }
 
-    for (i = 1; i < numPartInHeight; i++)
+    for (i = 1; i < numPartInCUSize; i++)
     {
-        memcpy(tempX, tempX - numPartInWidth, sizeof(uint32_t) * numPartInWidth);
-        tempX += numPartInWidth;
+        memcpy(tempX, tempX - numPartInCUSize, sizeof(uint32_t) * numPartInCUSize);
+        tempX += numPartInCUSize;
     }
 
-    for (i = 1; i < numPartInWidth * numPartInHeight; i++)
+    for (i = 1; i < numPartInCUSize * numPartInCUSize; i++)
     {
-        tempY[i] = (i / numPartInWidth) * minWidth;
+        tempY[i] = (i / numPartInCUSize) * unitSize;
     }
 }
 
@@ -415,7 +402,7 @@ const int16_t g_t32[32][32] =
     {  9, -25, 43, -57, 70, -80, 87, -90, 90, -87, 80, -70, 57, -43, 25, -9, -9, 25, -43, 57, -70, 80, -87, 90, -90, 87, -80, 70, -57, 43, -25,  9 },
     {  4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90, 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4 }
 };
-const UChar g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize] =
+const uint8_t g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize] =
 {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 },
@@ -427,7 +414,7 @@ const UChar g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize] =
 // Misc.
 // ====================================================================================================================
 
-char g_convertToBit[MAX_CU_SIZE + 1];
+uint8_t g_convertToBit[MAX_CU_SIZE + 1];
 
 #if ENC_DEC_TRACE
 FILE*  g_hTrace = NULL;
@@ -442,13 +429,12 @@ uint64_t g_nSymbolCounter = 0;
 // Scanning order & context model mapping
 // ====================================================================================================================
 
-const uint32_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
-const uint32_t g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
+const uint8_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
 
 // Rice parameters for absolute transform levels
-const uint32_t g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
+const uint8_t g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
 
-const uint32_t g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
+//const uint8_t g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
 
 int g_quantTSDefault4x4[16] =
 {
@@ -514,7 +500,7 @@ const double x265_lambda2_non_I[MAX_MAX_QP + 1] =
     288625.9859, 363645.9408, 458165.1574, 577251.9032, 727291.7952
 };
 
-const UChar g_lpsTable[64][4] =
+const uint8_t g_lpsTable[64][4] =
 {
     { 128, 176, 208, 240 },
     { 128, 167, 197, 227 },
@@ -582,19 +568,7 @@ const UChar g_lpsTable[64][4] =
     {   2,   2,   2,   2 }
 };
 
-const UChar g_renormTable[32] =
-{
-    6,  5,  4,  4,
-    3,  3,  3,  3,
-    2,  2,  2,  2,
-    2,  2,  2,  2,
-    1,  1,  1,  1,
-    1,  1,  1,  1,
-    1,  1,  1,  1,
-    1,  1,  1,  1
-};
-
-const UChar x265_exp2_lut[64] =
+const uint8_t x265_exp2_lut[64] =
 {
     0,  3,  6,  8,  11, 14,  17,  20,  23,  26,  29,  32,  36,  39,  42,  45,
     48,  52,  55,  58,  62,  65,  69,  72,  76,  80,  83,  87,  91,  94,  98,  102,

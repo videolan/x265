@@ -61,7 +61,25 @@ tab_dct8_2:     times 2 dd 83, 36
                 times 1 dd 50, -89, 18, 75
                 times 1 dd 18, -50, 75, -89
 
+tab_idct8_3:    times 4 dw 89, 75
+                times 4 dw 50, 18
+                times 4 dw 75, -18
+                times 4 dw -89, -50
+                times 4 dw 50, -89
+                times 4 dw 18, 75
+                times 4 dw 18, -50
+                times 4 dw 75, -89
+
 pb_unpackhlw1:  db 0,1,8,9,2,3,10,11,4,5,12,13,6,7,14,15
+
+pb_idct8even:   db 0, 1, 8, 9, 4, 5, 12, 13, 0, 1, 8, 9, 4, 5, 12, 13
+
+tab_idct8_1:    times 1 dw 64, -64, 36, -83, 64, 64, 83, 36
+
+tab_idct8_2:    times 1 dw 89, 75, 50, 18, 75, -18, -89, -50
+                times 1 dw 50, -89, 18, 75, 18, -50, 75, -89
+
+pb_idct8odd:    db 2, 3, 6, 7, 10, 11, 14, 15, 2, 3, 6, 7, 10, 11, 14, 15
 
 SECTION .text
 cextern pd_1
@@ -664,4 +682,188 @@ cglobal dct8, 3,6,7,0-16*mmsize
 
     dec         r2
     jnz        .pass2
+    RET
+
+;-------------------------------------------------------
+; void idct8(int32_t *src, int16_t *dst, intptr_t stride)
+;-------------------------------------------------------
+INIT_XMM ssse3
+
+cglobal patial_butterfly_inverse_internal_pass1
+    movu        m0, [r0]
+    movu        m1, [r0 + 4 * 32]
+    movu        m2, [r0 + 2 * 32]
+    movu        m3, [r0 + 6 * 32]
+    packssdw    m0, m2
+    packssdw    m1, m3
+    punpckhwd   m2, m0, m1                  ; [2 6]
+    punpcklwd   m0, m1                      ; [0 4]
+    pmaddwd     m1, m0, [r6]                ; EE[0]
+    pmaddwd     m0, [r6 + 32]               ; EE[1]
+    pmaddwd     m3, m2, [r6 + 16]           ; EO[0]
+    pmaddwd     m2, [r6 + 48]               ; EO[1]
+
+    paddd       m4, m1, m3                  ; E[0]
+    psubd       m1, m3                      ; E[3]
+    paddd       m3, m0, m2                  ; E[1]
+    psubd       m0, m2                      ; E[2]
+
+    ;E[K] = E[k] + add
+    mova        m5, [pd_64]
+    paddd       m0, m5
+    paddd       m1, m5
+    paddd       m3, m5
+    paddd       m4, m5
+
+    movu        m2, [r0 + 32]
+    movu        m5, [r0 + 5 * 32]
+    packssdw    m2, m5
+    movu        m5, [r0 + 3 * 32]
+    movu        m6, [r0 + 7 * 32]
+    packssdw    m5, m6
+    punpcklwd   m6, m2, m5                  ;[1 3]
+    punpckhwd   m2, m5                      ;[5 7]
+
+    pmaddwd     m5, m6, [r4]
+    pmaddwd     m7, m2, [r4 + 16]
+    paddd       m5, m7                      ; O[0]
+
+    paddd       m7, m4, m5
+    psrad       m7, 7
+
+    psubd       m4, m5
+    psrad       m4, 7
+
+    packssdw    m7, m4
+    movh        [r5 + 0 * 16], m7
+    movhps      [r5 + 7 * 16], m7
+
+    pmaddwd     m5, m6, [r4 + 32]
+    pmaddwd     m4, m2, [r4 + 48]
+    paddd       m5, m4                      ; O[1]
+
+    paddd       m4, m3, m5
+    psrad       m4, 7
+
+    psubd       m3, m5
+    psrad       m3, 7
+
+    packssdw    m4, m3
+    movh        [r5 + 1 * 16], m4
+    movhps      [r5 + 6 * 16], m4
+
+    pmaddwd     m5, m6, [r4 + 64]
+    pmaddwd     m4, m2, [r4 + 80]
+    paddd       m5, m4                      ; O[2]
+
+    paddd       m4, m0, m5
+    psrad       m4, 7
+
+    psubd       m0, m5
+    psrad       m0, 7
+
+    packssdw    m4, m0
+    movh        [r5 + 2 * 16], m4
+    movhps      [r5 + 5 * 16], m4
+
+    pmaddwd     m5, m6, [r4 + 96]
+    pmaddwd     m4, m2, [r4 + 112]
+    paddd       m5, m4                      ; O[3]
+
+    paddd       m4, m1, m5
+    psrad       m4, 7
+
+    psubd       m1, m5
+    psrad       m1, 7
+
+    packssdw    m4, m1
+    movh        [r5 + 3 * 16], m4
+    movhps      [r5 + 4 * 16], m4
+
+    ret
+
+%macro PARTIAL_BUTTERFLY_PROCESS_ROW 1
+%if BIT_DEPTH == 10
+    %define     IDCT_SHIFT 10
+%elif BIT_DEPTH == 8
+    %define     IDCT_SHIFT 12
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    pshufb      m4, %1, [pb_idct8even]
+    pmaddwd     m4, [tab_idct8_1]
+    phsubd      m5, m4
+    pshufd      m4, m4, 0x4E
+    phaddd      m4, m4
+    punpckhqdq  m4, m5                      ;m4 = dd e[ 0 1 2 3]
+    paddd       m4, m6
+
+    pshufb      %1, %1, [r6]
+    pmaddwd     m5, %1, [r4]
+    pmaddwd     %1, [r4 + 16]
+    phaddd      m5, %1                      ; m5 = dd O[0, 1, 2, 3]
+
+    paddd       %1, m4, m5
+    psrad       %1, IDCT_SHIFT
+
+    psubd       m4, m5
+    psrad       m4, IDCT_SHIFT
+    pshufd      m4, m4, 0x1B
+
+    packssdw    %1, m4
+%undef IDCT_SHIFT
+%endmacro
+
+cglobal patial_butterfly_inverse_internal_pass2
+
+    mova        m0, [r5]
+    PARTIAL_BUTTERFLY_PROCESS_ROW m0
+    movu        [r1], m0
+
+    mova        m2, [r5 + 16]
+    PARTIAL_BUTTERFLY_PROCESS_ROW m2
+    movu        [r1 + r2], m2
+
+    mova        m1, [r5 + 32]
+    PARTIAL_BUTTERFLY_PROCESS_ROW m1
+    movu        [r1 + 2 * r2], m1
+
+    mova        m3, [r5 + 48]
+    PARTIAL_BUTTERFLY_PROCESS_ROW m3
+    movu        [r1 + r3], m3
+
+    ret
+
+cglobal idct8, 3,7,8,0-16*mmsize
+    mov         r5, rsp
+    lea         r4, [tab_idct8_3]
+    lea         r6, [tab_dct4]
+
+    call        patial_butterfly_inverse_internal_pass1
+
+    add         r0, 16
+    add         r5, 8
+
+    call        patial_butterfly_inverse_internal_pass1
+
+%if BIT_DEPTH == 10
+    mova        m6, [pd_512]
+%elif BIT_DEPTH == 8
+    mova        m6, [pd_2048]
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
+    add         r2, r2
+    lea         r3, [r2 * 3]
+    lea         r4, [tab_idct8_2]
+    lea         r6, [pb_idct8odd]
+    sub         r5, 8
+
+    call        patial_butterfly_inverse_internal_pass2
+
+    lea         r1, [r1 + 4 * r2]
+    add         r5, 64
+
+    call        patial_butterfly_inverse_internal_pass2
+
     RET
