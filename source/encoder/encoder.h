@@ -105,6 +105,8 @@ private:
     // weighted prediction
     int                m_numLumaWPFrames;    // number of P frames with weighted luma reference
     int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
+    int                m_numLumaWPBiFrames;  // number of B frames with weighted luma reference
+    int                m_numChromaWPBiFrames;// number of B frames with weighted chroma reference
 
 public:
 

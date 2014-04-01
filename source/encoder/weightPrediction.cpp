@@ -232,17 +232,6 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
     cache.hshift = CHROMA_H_SHIFT(cache.csp);
     cache.vshift = CHROMA_V_SHIFT(cache.csp);
 
-    /* reset weight states */
-    for (int list = 0; list < cache.numPredDir; list++)
-    {
-        for (int ref = 0; ref < slice.getNumRefIdx(list); ref++)
-        {
-            SET_WEIGHT(wp[list][ref][0], false, 1, 0, 0);
-            SET_WEIGHT(wp[list][ref][1], false, 1, 0, 0);
-            SET_WEIGHT(wp[list][ref][2], false, 1, 0, 0);
-        }
-    }
-
     /* Use single allocation for motion compensated ref and weight buffers */
     pixel *mcbuf = X265_MALLOC(pixel, 2 * fencYuv->getStride() * fencYuv->getHeight());
     if (!mcbuf)
@@ -253,6 +242,8 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
     int curPoc = slice.getPOC();
     const float epsilon = 1.f / 128.f;
 
+    int chromaDenom, lumaDenom, denom;
+    chromaDenom = lumaDenom = 7;
     int numpixels[3];
     int w = ((fencYuv->getWidth()  + 15) >> 4) << 4;
     int h = ((fencYuv->getHeight() + 15) >> 4) << 4;
@@ -270,6 +261,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
         float guessScale[3], fencMean[3], refMean[3];
         for (int plane = 0; plane < 3; plane++)
         {
+            SET_WEIGHT(weights[plane], false, 1, 0, 0);
             uint64_t fencVar = fenc.wp_ssd[plane] + !refLowres.wp_ssd[plane];
             uint64_t refVar  = refLowres.wp_ssd[plane] + !refLowres.wp_ssd[plane];
             guessScale[plane] = sqrt((float)fencVar / refVar);
@@ -278,8 +270,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
         }
 
         /* make sure both our scale factors fit */
-        int chromaDenom = 7;
-        while (chromaDenom > 0)
+        while (!list && chromaDenom > 0)
         {
             float thresh = 127.f / (1 << chromaDenom);
             if (guessScale[1] < thresh && guessScale[2] < thresh)
@@ -293,6 +284,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
 
         for (int plane = 0; plane < 3; plane++)
         {
+            denom = plane ? chromaDenom : lumaDenom;
             if (plane && !weights[0].bPresentFlag)
                 break;
 
@@ -300,20 +292,20 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
             x265_emms();
             if (fabsf(refMean[plane] - fencMean[plane]) < 0.5f && fabsf(1.f - guessScale[plane]) < epsilon)
             {
-                SET_WEIGHT(weights[plane], 0, 1, 0, 0);
+                SET_WEIGHT(weights[plane], 0, 1 << denom, denom, 0);
                 continue;
             }
 
             if (plane)
             {
-                int scale = Clip3(0, 255, (int)(guessScale[plane] * (1 << chromaDenom) + 0.5f));
+                int scale = Clip3(0, 255, (int)(guessScale[plane] * (1 << denom) + 0.5f));
                 if (scale > 127)
                     continue;
                 weights[plane].inputWeight = scale;
             }
             else
             {
-                weights[plane].setFromWeightAndOffset((int)(guessScale[plane] * 128 + 0.5f), 0, 7);
+                weights[plane].setFromWeightAndOffset((int)(guessScale[plane] * (1 << denom) + 0.5f), 0, denom, !list);
             }
 
             int mindenom = weights[plane].log2WeightDenom;
@@ -452,7 +444,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
             }
 
             /* Use a smaller luma denominator if possible */
-            if (!plane)
+            if (!(plane || list))
             {
                 while (mindenom > 0 && !(minscale & 1))
                 {
@@ -463,7 +455,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
 
             if (!bFound || (minscale == (1 << mindenom) && minoff == 0) || (float)minscore / origscore > 0.998f)
             {
-                SET_WEIGHT(weights[plane], false, 1, 0, 0);
+                SET_WEIGHT(weights[plane], false, 1 << denom, denom, 0);
             }
             else
             {
@@ -481,6 +473,17 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
                 else
                     weights[1] = weights[2];
             }
+        }
+
+        lumaDenom = weights[0].log2WeightDenom;
+        chromaDenom = weights[1].log2WeightDenom;
+
+        /* reset weight states */
+        for (int ref = 1; ref < slice.getNumRefIdx(list); ref++)
+        {
+            SET_WEIGHT(wp[list][ref][0], false, 1 << lumaDenom, lumaDenom, 0);
+            SET_WEIGHT(wp[list][ref][1], false, 1 << chromaDenom, chromaDenom, 0);
+            SET_WEIGHT(wp[list][ref][2], false, 1 << chromaDenom, chromaDenom, 0);
         }
     }
 

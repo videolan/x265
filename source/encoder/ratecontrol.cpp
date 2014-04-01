@@ -110,7 +110,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
         }
 
         /* Need variance data for weighted prediction */
-        if (param->bEnableWeightedPred)
+        if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
         {
             for (block_y = 0; block_y < maxRow; block_y += 16)
             {
@@ -172,7 +172,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
         }
     }
 
-    if (param->bEnableWeightedPred)
+    if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
     {
         int hShift = CHROMA_H_SHIFT(param->internalCsp);
         int vShift = CHROMA_V_SHIFT(param->internalCsp);

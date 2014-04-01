@@ -1262,12 +1262,12 @@ typedef struct wpScalingParam
     int         w, o, offset, shift, round;
 
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
-    void setFromWeightAndOffset(int weight, int _offset, int denom = 7)
+    void setFromWeightAndOffset(int weight, int _offset, int denom, bool bNormalize)
     {
         inputOffset = _offset;
         log2WeightDenom = denom;
         inputWeight = weight;
-        while (log2WeightDenom > 0 && (inputWeight > 127))
+        while (bNormalize && log2WeightDenom > 0 && (inputWeight > 127))
         {
             log2WeightDenom--;
             inputWeight >>= 1;

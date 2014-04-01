@@ -439,8 +439,8 @@ void FrameEncoder::compressFrame()
     //  Weighted Prediction parameters estimation.
     //------------------------------------------------------------------------------
     bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP();
-    bool bUseweightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
-    if (bUseWeightP || bUseweightB)
+    bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
+    if (bUseWeightP || bUseWeightB)
     {
         assert(slice->getPPS()->getUseWP());
         weightAnalyse(*slice, *m_cfg->param);
@@ -453,7 +453,7 @@ void FrameEncoder::compressFrame()
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
             wpScalingParam *w = NULL;
-            if (bUseWeightP && slice->m_weightPredTable[l][ref][0].bPresentFlag)
+            if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
             m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
         }
@@ -935,6 +935,8 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_busy = false;
     }
 
+    bool bUseWeightP = slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE;
+    bool bUseWeightB = slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE;
     int range = m_cfg->param->searchRange; /* fpel search */
     range    += 1;                        /* diamond search range check lag */
     range    += 2;                        /* subpel refine */
@@ -967,7 +969,7 @@ void FrameEncoder::compressCTURows()
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + refLagRows))
                         reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
-                    if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
+                    if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                     {
                         m_mref[l][ref].applyWeight(row + refLagRows, m_numRows);
                     }
@@ -1004,7 +1006,7 @@ void FrameEncoder::compressCTURows()
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + refLagRows))
                             reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
-                        if (slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE && m_mref[l][ref].isWeighted)
+                        if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                         {
                             m_mref[list][ref].applyWeight(i + refLagRows, m_numRows);
                         }

@@ -583,6 +583,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     }
     OPT("ref") p->maxNumReferences = atoi(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
+    OPT("weightb") p->bEnableWeightedBiPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
@@ -1080,7 +1081,8 @@ void x265_print_params(x265_param *param)
         x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
     x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
-    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / refs          : %d / %d / %d\n", param->bBPyramid, param->bEnableWeightedPred, param->maxNumReferences);
+    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb / refs: %d / %d / %d / %d\n",
+             param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred, param->maxNumReferences);
     switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
@@ -1172,6 +1174,7 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " b-adapt=%d", p->bFrameAdaptive);
     s += sprintf(s, " ref=%d", p->maxNumReferences);
     BOOL(p->bEnableWeightedPred, "weightp");
+    BOOL(p->bEnableWeightedBiPred, "weightb");
     s += sprintf(s, " bitrate=%d", p->rc.bitrate);
     s += sprintf(s, " qp=%d", p->rc.qp);
     s += sprintf(s, " aq-mode=%d", p->rc.aqMode);

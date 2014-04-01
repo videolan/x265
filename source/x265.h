@@ -525,15 +525,14 @@ typedef struct x265_param
     uint32_t  maxNumMergeCand;
 
     /* Enable weighted prediction in P slices.  This enables weighting analysis
-     * in the lookahead, which influences slice decitions, and enables weighting
+     * in the lookahead, which influences slice decisions, and enables weighting
      * analysis in the main encoder which allows P reference samples to have a
      * weight function applied to them prior to using them for motion
      * compensation.  In video which has lighting changes, it can give a large
      * improvement in compression efficiency. Default is enabled */
     int       bEnableWeightedPred;
 
-    /* Enable weighted bi-prediction in B slices. This option currently has no
-     * effect */
+    /* Enable weighted prediction in B slices. Default is disabled */
     int       bEnableWeightedBiPred;
 
     /*== Analysis tools ==*/

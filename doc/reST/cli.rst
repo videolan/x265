@@ -355,7 +355,18 @@ Temporal / motion search options
 
 .. option:: --weightp, -w, --no-weightp
 
-	Enable weighted prediction in P slices. Default enabled
+	Enable weighted prediction in P slices. This enables weighting
+	analysis in the lookahead, which influences slice decisions, and
+	enables weighting analysis in the main encoder which allows P
+	reference samples to have a weight function applied to them prior to
+	using them for motion compensation.  In video which has lighting
+	changes, it can give a large improvement in compression efficiency.
+	Default is enabled
+
+
+.. option:: --weightb, --no-weightb
+
+	Enable weighted prediction in B slices. Default disabled
 
 
 Spatial/intra options

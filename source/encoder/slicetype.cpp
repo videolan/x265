@@ -1311,7 +1311,7 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
     unsigned int minscore = 0, origscore = 1;
     int found = 0;
 
-    w.setFromWeightAndOffset((int)(guessScale * 128 + 0.5f), 0);
+    w.setFromWeightAndOffset((int)(guessScale * 128 + 0.5f), 0, 7, true);
     mindenom = w.log2WeightDenom;
     minscale = w.inputWeight;
 

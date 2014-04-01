@@ -60,6 +60,8 @@ Encoder::Encoder()
     m_curEncoder = 0;
     m_numLumaWPFrames = 0;
     m_numChromaWPFrames = 0;
+    m_numLumaWPBiFrames = 0;
+    m_numChromaWPBiFrames = 0;
     m_lookahead = NULL;
     m_frameEncoder = NULL;
     m_rateControl = NULL;
@@ -318,7 +320,8 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 
         // Encoder holds a reference count until collecting stats
         ATOMIC_INC(&pic->m_countRefEncoders);
-        if (param->rc.aqMode || param->bEnableWeightedPred)
+        bool bEnableWP = param->bEnableWeightedPred || param->bEnableWeightedBiPred;
+        if (param->rc.aqMode || bEnableWP)
             m_rateControl->calcAdaptiveQuantFrame(pic);
         m_lookahead->addPicture(pic, pic_in->sliceType);
     }
@@ -392,6 +395,22 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
             if (out->getSlice()->m_weightPredTable[0][0][1].bPresentFlag ||
                 out->getSlice()->m_weightPredTable[0][0][2].bPresentFlag)
                 m_numChromaWPFrames++;
+        }
+        else if (out->getSlice()->getSliceType() == B_SLICE)
+        {
+            bool bLuma = false, bChroma = false;
+            for (int l = 0; l < 2; l++)
+            {
+                if (out->getSlice()->m_weightPredTable[l][0][0].bPresentFlag)
+                    bLuma = true;
+                if (out->getSlice()->m_weightPredTable[l][0][1].bPresentFlag ||
+                    out->getSlice()->m_weightPredTable[l][0][2].bPresentFlag)
+                    bChroma = true;
+            }
+            if (bLuma)
+                m_numLumaWPBiFrames++;
+            if (bChroma)
+                m_numChromaWPBiFrames++;
         }
 
         /* calculate the size of the access unit, excluding:
@@ -669,6 +688,12 @@ void Encoder::printSummary()
             x265_log(param, X265_LOG_INFO, "Weighted P-Frames: Y:%.1f%% UV:%.1f%%\n",
                      (float)100.0 * m_numLumaWPFrames / m_analyzeP.m_numPics,
                      (float)100.0 * m_numChromaWPFrames / m_analyzeP.m_numPics);
+        }
+        if (param->bEnableWeightedBiPred && m_analyzeB.m_numPics)
+        {
+            x265_log(param, X265_LOG_INFO, "Weighted B-Frames: Y:%.1f%% UV:%.1f%%\n",
+                     (float)100.0 * m_numLumaWPBiFrames / m_analyzeB.m_numPics,
+                     (float)100.0 * m_numChromaWPBiFrames / m_analyzeB.m_numPics);
         }
         int pWithB = 0;
         for (int i = 0; i <= param->bframes; i++)
