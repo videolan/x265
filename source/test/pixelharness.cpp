@@ -332,36 +332,39 @@ bool PixelHarness::check_calresidual(calcresidual_t ref, calcresidual_t opt)
 
 bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
 {
-    ALIGN_VAR_16(int16_t, ref_recq[64 * 64]);
-    ALIGN_VAR_16(int16_t, opt_recq[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_recq[64 * 64 * 2]);
+    ALIGN_VAR_16(int16_t, opt_recq[64 * 64 * 2]);
 
-    ALIGN_VAR_16(pixel, ref_reco[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_reco[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_reco[64 * 64 * 2]);
+    ALIGN_VAR_16(pixel, opt_reco[64 * 64 * 2]);
 
-    ALIGN_VAR_16(pixel, ref_pred[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_pred[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_pred[64 * 64 * 2]);
+    ALIGN_VAR_16(pixel, opt_pred[64 * 64 * 2]);
 
-    memset(ref_recq, 0, 64 * 64 * sizeof(int16_t));
-    memset(opt_recq, 0, 64 * 64 * sizeof(int16_t));
-    memset(ref_reco, 0, 64 * 64 * sizeof(pixel));
-    memset(opt_reco, 0, 64 * 64 * sizeof(pixel));
-    memset(ref_pred, 0, 64 * 64 * sizeof(pixel));
-    memset(opt_pred, 0, 64 * 64 * sizeof(pixel));
+    memset(ref_recq, 0xCD, 64 * 64 * 2 * sizeof(int16_t));
+    memset(opt_recq, 0xCD, 64 * 64 * 2 * sizeof(int16_t));
+    memset(ref_reco, 0xCD, 64 * 64 * 2 * sizeof(pixel));
+    memset(opt_reco, 0xCD, 64 * 64 * 2 * sizeof(pixel));
+    memset(ref_pred, 0xCD, 64 * 64 * 2 * sizeof(pixel));
+    memset(opt_pred, 0xCD, 64 * 64 * 2 * sizeof(pixel));
 
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        int stride = STRIDE;
+        // NOTE: stride must be multiple of 16, because minimum block is 4x4
+        int stride0 = (STRIDE + (rand() % STRIDE)) & ~15;
+        int stride1 = (STRIDE + (rand() % STRIDE)) & ~15;
+        int stride2 = (STRIDE + (rand() % STRIDE)) & ~15;
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        ref(pixel_test_buff[index1] + j, short_test_buff[index2] + j, ref_recq, ref_pred, stride, stride, stride);
-        opt(pixel_test_buff[index1] + j, short_test_buff[index2] + j, opt_recq, opt_pred, stride, stride, stride);
+        ref(pixel_test_buff[index1] + j, short_test_buff[index2] + j, ref_recq, ref_pred, stride0, stride1, stride2);
+        opt(pixel_test_buff[index1] + j, short_test_buff[index2] + j, opt_recq, opt_pred, stride0, stride1, stride2);
 
-        if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
+        if (memcmp(ref_recq, opt_recq, 64 * stride0 * sizeof(int16_t)))
         {
             return false;
         }
-        if (memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_pred, opt_pred, 64 * stride2 * sizeof(pixel)))
         {
             return false;
         }
