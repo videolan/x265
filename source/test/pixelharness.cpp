@@ -354,8 +354,10 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
         int stride = STRIDE;
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        ref(pixel_test_buff[index1] + j, short_test_buff[index2] + j, ref_recq, ref_pred, stride, stride, stride);
-        opt(pixel_test_buff[index1] + j, short_test_buff[index2] + j, opt_recq, opt_pred, stride, stride, stride);
+        ref(pixel_test_buff[index1] + j, short_test_buff[index2] + j,
+            ref_reco, ref_recq, ref_pred, stride, stride, stride);
+        opt(pixel_test_buff[index1] + j, short_test_buff[index2] + j,
+            opt_reco, opt_recq, opt_pred, stride, stride, stride);
 
         if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(int16_t)))
         {
@@ -1607,7 +1609,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.calcrecon[i])
         {
             HEADER("recon[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, sbuf1, pbuf1, 64, 64, 64);
+            REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
         }
 
         if (opt.blockfill_s[i])
