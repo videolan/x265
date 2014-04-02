@@ -129,7 +129,6 @@ private:
     TComDataCU*   m_cuAboveRight;    ///< pointer of above-right CU
     TComDataCU*   m_cuAbove;         ///< pointer of above CU
     TComDataCU*   m_cuLeft;          ///< pointer of left CU
-    TComDataCU*   m_cuColocated[2];  ///< pointer of temporally colocated CU's for both directions
 
     // -------------------------------------------------------------------------------------------------------------------
     // coding tool information
@@ -386,8 +385,6 @@ public:
     TComDataCU*   getCUAboveLeft() { return m_cuAboveLeft; }
 
     TComDataCU*   getCUAboveRight() { return m_cuAboveRight; }
-
-    TComDataCU*   getCUColocated(int picList) { return m_cuColocated[picList]; }
 
     TComDataCU*   getPULeft(uint32_t& lPartUnitIdx,
                             uint32_t  curPartUnitIdx,

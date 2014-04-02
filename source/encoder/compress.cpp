@@ -372,13 +372,13 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     // We need to split, so don't try these modes.
     TComYuv* tempYuv = NULL;
 #if TOPSKIP
-    TComDataCU* colocated0 = outTempCU->getCUColocated(REF_PIC_LIST_0);
-    TComDataCU* colocated1 = outTempCU->getCUColocated(REF_PIC_LIST_1);
-    char currentQP = outTempCU->getQP(0);
-    char previousQP = colocated0->getQP(0);
-    uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
     if (depth == 0)
     {
+        TComDataCU* colocated0 = outTempCU->getSlice()->getNumRefIdx(REF_PIC_LIST_0) > 0 ? outTempCU->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->getCU(outTempCU->getAddr()) : NULL;
+        TComDataCU* colocated1 = outTempCU->getSlice()->getNumRefIdx(REF_PIC_LIST_1) > 0 ? outTempCU->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->getCU(outTempCU->getAddr()) : NULL;
+        char currentQP = outTempCU->getQP(0);
+        char previousQP = colocated0->getQP(0);
+        uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
         double sum0 = 0, sum1 = 0, avgDepth0 = 0, avgDepth1 = 0, avgDepth = 0;
         for (uint32_t i = 0; i < outTempCU->getTotalNumPart(); i = i + 4)
         {
