@@ -1228,7 +1228,8 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
     int block_y = (cuAddr / m_pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
     int block_x = (cuAddr * noOfBlocks) - block_y * m_pic->getPicSym()->getFrameWidthInCU();
 
-    double *qpoffs = (m_pic->getSlice()->isReferenced() && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpOffset : m_pic->m_lowres.qpAqOffset;
+    double *qpoffs = ((m_pic->getSlice()->isReferenced() ||  m_pic->getSlice()->getSliceType() == P_SLICE) && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpOffset : m_pic->m_lowres.qpAqOffset;
+
     int cnt = 0, idx = 0;
     for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
     {
