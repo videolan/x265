@@ -1435,7 +1435,7 @@ void Encoder::configure(x265_param *p)
         p->rc.aqMode = X265_AQ_NONE;
     }
 
-    if (p->rc.aqMode = X265_AQ_NONE && p->rc.cuTree == 0)
+    if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
     {
         p->rc.aqStrength = 0;
     }
