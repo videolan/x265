@@ -398,7 +398,10 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
 
             uint32_t origscore = weightCost(orig, fref, weightTemp, stride, cache, width, height, NULL, !plane);
             if (!origscore)
+            {
+                SET_WEIGHT(weights[plane], 0, 1 << denom, denom, 0);
                 continue;
+            }
 
             uint32_t minscore = origscore;
             bool bFound = false;
