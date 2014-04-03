@@ -6525,10 +6525,12 @@ cglobal upShift_8, 7,7,3
 .process2:
     cmp         r4d, 2
     jl          .process1
-    movd        m0,[r0]
-    pmovzxbw    m0,m0
-    psllw       m0, m2
-    movd        [r2], m0
+    movzx       r3d, byte [r0]
+    shl         r3d, 2
+    mov         [r2], r3w
+    movzx       r3d, byte [r0 + 1]
+    shl         r3d, 2
+    mov         [r2 + 2], r3w
 
     add         r0, 2
     add         r2, 4
@@ -6536,10 +6538,8 @@ cglobal upShift_8, 7,7,3
     jz          .end
 
 .process1:
-    movd        m0,[r0]
-    pmovzxbw    m0,m0
-    psllw       m0, m2
-    movd        r6, m0
-    mov         [r2], r6w
+    movzx       r3d, byte [r0]
+    shl         r3d, 2
+    mov         [r2], r3w
 .end:
     RET
