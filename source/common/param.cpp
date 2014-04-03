@@ -923,7 +923,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->sourceHeight % TComSPS::getWinUnitY(param->internalCsp) != 0,
           "Picture height must be an integer multiple of the specified chroma subsampling");
 
-    CHECK(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
+    CHECK(param->rc.rateControlMode > X265_RC_CRF || param->rc.rateControlMode < X265_RC_ABR,
           "Rate control mode is out of range");
     CHECK(param->rdLevel < 0 || param->rdLevel > 6,
           "RD Level is out of range");
