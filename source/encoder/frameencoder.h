@@ -190,6 +190,7 @@ protected:
     int                      m_filterRowDelay;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
+    bool                     m_isReferenced;
 };
 }
 
