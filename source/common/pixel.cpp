@@ -460,9 +460,7 @@ void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 }
 
 template<int blockSize>
-void calcRecons(pixel* pred, int16_t* residual,
-                pixel*,
-                int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
+void calcRecons(pixel* pred, int16_t* residual, int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
 {
     for (int y = 0; y < blockSize; y++)
     {

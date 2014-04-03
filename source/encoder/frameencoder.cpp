@@ -265,7 +265,18 @@ void FrameEncoder::initSlice(TComPic* pic)
     int type = pic->m_lowres.sliceType;
     SliceType sliceType = IS_X265_TYPE_B(type) ? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE : I_SLICE);
     slice->setSliceType(sliceType);
-    slice->setReferenced(true);
+
+    if (sliceType != B_SLICE)
+        m_isReferenced = true;
+    else
+    {
+        if (pic->m_lowres.sliceType == X265_TYPE_BREF)
+            m_isReferenced = true;
+        else
+            m_isReferenced = false;
+    }
+    slice->setReferenced(m_isReferenced);
+
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
 #if LOG_CU_STATISTICS
@@ -1083,7 +1094,7 @@ void FrameEncoder::processRowEncoder(int row)
 
         if (m_cfg->param->rc.aqMode || bIsVbv)
         {
-            int qp = calcQpForCu(m_pic, cuAddr, cu->m_baseQp);
+            int qp = calcQpForCu(cuAddr, cu->m_baseQp);
             setLambda(qp, row);
             qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
             cu->setQPSubParts(char(qp), 0, 0);
@@ -1215,20 +1226,23 @@ void FrameEncoder::processRowEncoder(int row)
     curRow.m_busy = false;
 }
 
-int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
+int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
 {
     x265_emms();
     double qp = baseQp;
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
-    int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
+    int maxBlockCols = (m_pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
+    int maxBlockRows = (m_pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
     int noOfBlocks = g_maxCUSize / 16;
-    int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
-    int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
+    int block_y = (cuAddr / m_pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
+    int block_x = (cuAddr * noOfBlocks) - block_y * m_pic->getPicSym()->getFrameWidthInCU();
 
-    double *qpoffs = ((pic->getSlice()->isReferenced() ||  m_pic->getSlice()->getSliceType() == P_SLICE) && m_cfg->param->rc.cuTree) ? pic->m_lowres.qpOffset : pic->m_lowres.qpAqOffset;
+    /* Use cuTree offsets in m_pic->m_lowres.qpOffset if cuTree enabled and
+     * frame is referenced Else use AQ offsets */
+    double *qpoffs = (m_isReferenced && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpOffset : m_pic->m_lowres.qpAqOffset;
+
     int cnt = 0, idx = 0;
     for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
     {
