@@ -414,7 +414,7 @@ void FrameEncoder::compressFrame()
         m_frameFilter.m_sao.depth = 1;
         break;
     case B_SLICE:
-        m_frameFilter.m_sao.depth = 2 + !slice->isReferenced();
+        m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
         break;
     }
 
