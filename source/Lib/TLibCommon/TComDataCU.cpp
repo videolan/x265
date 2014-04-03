@@ -91,8 +91,6 @@ TComDataCU::TComDataCU()
     m_cuAboveRight = NULL;
     m_cuAbove = NULL;
     m_cuLeft = NULL;
-    m_cuColocated[0] = NULL;
-    m_cuColocated[1] = NULL;
     m_mvpIdx[0] = NULL;
     m_mvpIdx[1] = NULL;
     m_chromaFormat = 0;
@@ -280,9 +278,6 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     m_cuAboveLeft   = NULL;
     m_cuAboveRight  = NULL;
 
-    m_cuColocated[0] = NULL;
-    m_cuColocated[1] = NULL;
-
     uint32_t uiWidthInCU = pic->getFrameWidthInCU();
     if (m_cuAddr % uiWidthInCU)
     {
@@ -302,16 +297,6 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     if (m_cuAbove && ((m_cuAddr % uiWidthInCU) < (uiWidthInCU - 1)))
     {
         m_cuAboveRight = pic->getCU(m_cuAddr - uiWidthInCU + 1);
-    }
-
-    if (getSlice()->getNumRefIdx(REF_PIC_LIST_0) > 0)
-    {
-        m_cuColocated[0] = getSlice()->getRefPic(REF_PIC_LIST_0, 0)->getCU(m_cuAddr);
-    }
-
-    if (getSlice()->getNumRefIdx(REF_PIC_LIST_1) > 0)
-    {
-        m_cuColocated[1] = getSlice()->getRefPic(REF_PIC_LIST_1, 0)->getCU(m_cuAddr);
     }
 }
 
@@ -457,9 +442,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_cuAbove       = cu->getCUAbove();
     m_cuAboveLeft   = cu->getCUAboveLeft();
     m_cuAboveRight  = cu->getCUAboveRight();
-
-    m_cuColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
-    m_cuColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 }
 
 // initialize Sub partition
@@ -526,9 +508,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
     m_cuAbove       = cu->getCUAbove();
     m_cuAboveLeft   = cu->getCUAboveLeft();
     m_cuAboveRight  = cu->getCUAboveRight();
-
-    m_cuColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
-    m_cuColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 }
 
 
@@ -619,9 +598,6 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     m_cuAboveRight     = cu->getCUAboveRight();
     m_cuAbove          = cu->getCUAbove();
     m_cuLeft           = cu->getCULeft();
-
-    m_cuColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
-    m_cuColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 
     m_cuMvField[0].copyFrom(cu->getCUMvField(REF_PIC_LIST_0), cu->getTotalNumPart(), offset);
     m_cuMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cu->getTotalNumPart(), offset);
