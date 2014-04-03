@@ -916,7 +916,9 @@ int x265_check_params(x265_param *param)
     CHECK(param->maxNumReferences < 1, "maxNumReferences must be 1 or greater.");
     CHECK(param->maxNumReferences > MAX_NUM_REF, "maxNumReferences must be 16 or smaller.");
 
-    CHECK(param->sourceWidth  % TComSPS::getWinUnitX(param->internalCsp) != 0,
+    CHECK(param->sourceWidth < (int)param->maxCUSize || param->sourceWidth < (int)param->maxCUSize,
+          "Picture size must be at least one CTU");
+    CHECK(param->sourceWidth % TComSPS::getWinUnitX(param->internalCsp) != 0,
           "Picture width must be an integer multiple of the specified chroma subsampling");
     CHECK(param->sourceHeight % TComSPS::getWinUnitY(param->internalCsp) != 0,
           "Picture height must be an integer multiple of the specified chroma subsampling");
