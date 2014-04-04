@@ -939,7 +939,7 @@ bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
 
     int srcStride = 64;
     int width = rand() % 64;
-    int height = rand() % 64;
+    int height = 1 + rand() % 63;
     int dstStride = width;
     int j = 0;
 
@@ -968,7 +968,7 @@ bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
 
     int srcStride = 64;
     int width = rand() % 64;
-    int height = rand() % 64;
+    int height = 1 + rand() % 63;
     int dstStride = width;
     int j = 0;
 
