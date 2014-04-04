@@ -92,7 +92,7 @@ Standalone Executable Options
 	severe performance implications. Default is an autodetected count
 	based on the number of CPU cores and whether WPP is enabled or not.
 
-.. option:: --log-level <int|string>
+.. option:: --log-level <integer|string>
 
 	Logging level. Debug level enables per-frame QP, metric, and bitrate
 	logging. If a CSV file is being generated, debug level makes the log
