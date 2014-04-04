@@ -747,7 +747,7 @@ implicitly enabled.
 	disabled
 
 Debugging options
-=======================================
+=================
 
 .. option:: --hash <integer>
 
