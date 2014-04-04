@@ -219,6 +219,9 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     }
     else if (!strcmp(profile, "mainstillpicture"))
     {
+        /* technically the stream should only have one picture, but we do not
+         * enforce this */
+        param->bRepeatHeaders = 1;
         param->keyframeMax = 1;
         param->bOpenGOP = 0;
     }
