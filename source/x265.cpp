@@ -169,6 +169,7 @@ static const struct option long_options[] =
     { "crop-rect",      required_argument, NULL, 0 },
     { "timinginfo",           no_argument, NULL, 0 },
     { "no-timinginfo",        no_argument, NULL, 0 },
+    { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
