@@ -34,6 +34,9 @@ x265_encoder *x265_encoder_open(x265_param *param)
     if (!param)
         return NULL;
 
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
+    x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
+
     x265_setup_primitives(param, param->cpuid);
 
     if (x265_check_params(param))

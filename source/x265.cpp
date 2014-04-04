@@ -648,7 +648,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         return true;
     }
 
-    printVersion(param);
     return false;
 }
 
