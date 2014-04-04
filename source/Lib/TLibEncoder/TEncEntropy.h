@@ -131,7 +131,7 @@ public:
 
     void    resetBits() { m_entropyCoderIf->resetBits();      }
 
-    uint32_t    getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
+    uint32_t getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
 
     void    resetEntropy() { m_entropyCoderIf->resetEntropy();  }
 
