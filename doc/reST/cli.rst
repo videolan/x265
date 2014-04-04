@@ -20,7 +20,7 @@ value) the CLI will treat it as the input filename.  This effectively
 makes the :option:`--input` specifier optional for the input file. If
 there are two extra arguments, the second is treated as the output
 bitstream filename, making :option:`--output` also optional if the input
-filename was implied. This makes :command:`x265 in.yuv out.hevc` a valid
+filename was implied. This makes :command:`x265 in.y4m out.hevc` a valid
 command line. If there are more than two extra arguments, the CLI will
 consider this an error and abort.
 
