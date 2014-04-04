@@ -88,6 +88,7 @@ public:
     void codeSPS(TComSPS* sps);
     void codePPS(TComPPS* pps);
     void codeVUI(TComVUI* vui, TComSPS* sps);
+    void codeAUD(TComSlice *slice);
     void codeSliceHeader(TComSlice* slice);
     void codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1);
     void codeProfileTier(ProfileTierLevel* ptl);

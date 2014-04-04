@@ -649,6 +649,28 @@ void TEncSbac::codeVUI(TComVUI *vui, TComSPS* sps)
     }
 }
 
+void TEncSbac::codeAUD(TComSlice* slice)
+{
+    int picType;
+
+    switch (slice->getSliceType())
+    {
+    case I_SLICE:
+        picType = 0;
+        break;
+    case P_SLICE:
+        picType = 1;
+        break;
+    case B_SLICE:
+        picType = 2;
+        break;
+    default:
+        picType = 7;
+        break;
+    }
+    WRITE_CODE(picType, 3, "pic_type");
+}
+
 void TEncSbac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1)
 {
     if (commonInfPresentFlag)

@@ -595,6 +595,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("ssim") p->bEnableSsim = atobool(value);
     OPT("psnr") p->bEnablePsnr = atobool(value);
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
+    OPT("aud") p->bEnableAccessUnitDelimiters = atobool(value);
     OPT("b-pyramid") p->bBPyramid = atobool(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);

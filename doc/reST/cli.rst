@@ -746,6 +746,17 @@ implicitly enabled.
 	info reported in the PPS header but is sometimes required.  Default
 	disabled
 
+Bitstream options
+=================
+
+.. option:: --aud, --no-aud
+
+	Emit an access unit delimiter NAL at the start of each slice access
+	unit. If option:`--repeat-headers` is not enabled (indicating the
+	user will be writing headers manually at the start of the stream)
+	the very first AUD will be skipped since it cannot be placed at the
+	start of the access unit, where it belongs. Default disabled
+
 Debugging options
 =================
 

@@ -71,6 +71,7 @@ public:
     virtual void codeVPS(TComVPS* vps) = 0;
     virtual void codeSPS(TComSPS* sps) = 0;
     virtual void codePPS(TComPPS* pps) = 0;
+    virtual void codeAUD(TComSlice* slice) = 0;
     virtual void codeSliceHeader(TComSlice* slice) = 0;
 
     virtual void codeTilesWPPEntryPoint(TComSlice* slice) = 0;
@@ -149,6 +150,7 @@ public:
     // SPS
     void encodeSPS(TComSPS* sps);
     void encodePPS(TComPPS* pps);
+    void encodeAUD(TComSlice* pps);
     void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD = false);
     void encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
     void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);

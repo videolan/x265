@@ -171,6 +171,8 @@ static const struct option long_options[] =
     { "no-timinginfo",        no_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
+    { "aud",                  no_argument, NULL, 0 },
+    { "no-aud",               no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -391,6 +393,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("   --[no-]timinginfo             Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
+    H0("\nBitstream options:\n");
+    H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H0("\nReconstructed video options (debugging):\n");
     H0("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H0("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");

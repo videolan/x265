@@ -369,10 +369,27 @@ void FrameEncoder::compressFrame()
     TComSlice*   slice             = m_pic->getSlice();
     int          chFmt             = slice->getSPS()->getChromaFormatIdc();
 
+    m_nalCount = 0;
+    entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
+
+    /* Emit access unit delimiter unless this is the first frame and the user is
+     * not repeating headers (since AUD is supposed to be the first NAL in the access
+     * unit) */
+    if (m_cfg->param->bEnableAccessUnitDelimiters && (m_pic->getPOC() || m_cfg->param->bRepeatHeaders))
+    {
+        OutputNALUnit nalu(NAL_UNIT_ACCESS_UNIT_DELIMITER);
+        entropyCoder->setBitstream(&nalu.m_bitstream);
+        entropyCoder->encodeAUD(slice);
+        writeRBSPTrailingBits(nalu.m_bitstream);
+        m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
+        if (m_nalList[m_nalCount])
+        {
+            m_nalList[m_nalCount]->init(nalu);
+            m_nalCount++;
+        }
+    }
     if (m_cfg->param->bRepeatHeaders && m_pic->m_lowres.bKeyframe)
-        m_nalCount = getStreamHeaders(m_nalList);
-    else
-        m_nalCount = 0;
+        m_nalCount += getStreamHeaders(m_nalList + m_nalCount);
 
     int qp = slice->getSliceQp();
     double lambda = 0;

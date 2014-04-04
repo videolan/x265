@@ -392,6 +392,10 @@ typedef struct x265_param
      * each keyframe. Default false */
     int       bRepeatHeaders;
 
+    /* Flag indicating whether the encoder should emit an Access Unit Delimiter
+     * NAL at the start of every access unit. Default false */
+    int       bEnableAccessUnitDelimiters;
+
     /*== Coding Unit (CU) definitions ==*/
 
     /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.

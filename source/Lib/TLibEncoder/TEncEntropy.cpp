@@ -89,6 +89,11 @@ void TEncEntropy::encodeSPS(TComSPS* sps)
     m_entropyCoderIf->codeSPS(sps);
 }
 
+void TEncEntropy::encodeAUD(TComSlice* slice)
+{
+    m_entropyCoderIf->codeAUD(slice);
+}
+
 void TEncEntropy::encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
 {
     if (bRD)
