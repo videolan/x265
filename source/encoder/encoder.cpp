@@ -1075,16 +1075,24 @@ void Encoder::initSPS(TComSPS *sps)
 
     sps->setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
-    sps->setVuiParametersPresentFlag(param->vui.bEnableVuiParametersPresentFlag);
+    bool bVui = param->vui.aspectRatioIdc ||
+        param->vui.bEnableVideoSignalTypePresentFlag ||
+        param->vui.bEnableOverscanInfoPresentFlag ||
+        param->vui.bEnableVuiTimingInfoPresentFlag ||
+        param->interlaceMode;
+    sps->setVuiParametersPresentFlag(bVui);
+
     if (sps->getVuiParametersPresentFlag())
     {
         TComVUI* vui = sps->getVuiParameters();
-        vui->setAspectRatioInfoPresentFlag(param->vui.bEnableAspectRatioIdc);
+        vui->setAspectRatioInfoPresentFlag(!!param->vui.aspectRatioIdc);
         vui->setAspectRatioIdc(param->vui.aspectRatioIdc);
         vui->setSarWidth(param->vui.sarWidth);
         vui->setSarHeight(param->vui.sarHeight);
+
         vui->setOverscanInfoPresentFlag(param->vui.bEnableOverscanInfoPresentFlag);
         vui->setOverscanAppropriateFlag(param->vui.bEnableOverscanAppropriateFlag);
+
         vui->setVideoSignalTypePresentFlag(param->vui.bEnableVideoSignalTypePresentFlag);
         vui->setVideoFormat(param->vui.videoFormat);
         vui->setVideoFullRangeFlag(param->vui.bEnableVideoFullRangeFlag);
@@ -1097,6 +1105,7 @@ void Encoder::initSPS(TComSPS *sps)
         vui->setChromaSampleLocTypeBottomField(param->vui.chromaSampleLocTypeBottomField);
         vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
         vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
+
         vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
         vui->setFieldSeqFlag(!!param->interlaceMode);
 

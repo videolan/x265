@@ -623,12 +623,6 @@ By default x265 does not emit a VUI in the SPS, but if you specify any
 of the VUI fields (:option:`--sar`, :option:`--range`, etc) the VUI is
 implicitly enabled.
 
-.. option:: --vui, --no-vui
-
-	Enable video usability information with all fields in the SPS. This
-	is a debugging feature and will likely be removed in a later
-	release.  Default disabled
-
 .. option:: --sar <integer|w:h>
 
 	Sample Aspect Ratio, the ratio of width to height of an individual

@@ -156,8 +156,6 @@ static const struct option long_options[] =
     { "strong-intra-smoothing",    no_argument, NULL, 0 },
     { "no-cutree",                 no_argument, NULL, 0 },
     { "cutree",                    no_argument, NULL, 0 },
-    { "vui",                  no_argument, NULL, 0 },
-    { "no-vui",               no_argument, NULL, 0 },
     { "sar",            required_argument, NULL, 0 },
     { "overscan",       required_argument, NULL, 0 },
     { "videoformat",    required_argument, NULL, 0 },
@@ -375,7 +373,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --sao-lcu-bounds <integer>    0: right/bottom boundary areas skipped  1: non-deblocked pixels are used. Default %d\n", param->saoLcuBoundary);
     H0("   --sao-lcu-opt <integer>       0: SAO picture-based optimization, 1: SAO LCU-based optimization. Default %d\n", param->saoLcuBasedOptimization);
     H0("\nVUI options:\n");
-    H0("   --[no-]vui                    Add Video Useability Information with all fields to the SPS. Default %s\n", OPT(param->vui.bEnableVuiParametersPresentFlag));
     H0("   --sar <width:height|int>      Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
@@ -597,7 +594,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         param->fpsDenom = info.fpsDenom;
         param->fpsNum = info.fpsNum;
     }
-    if (!param->vui.bEnableAspectRatioIdc && info.sarWidth && info.sarHeight)
+    if (!param->vui.aspectRatioIdc && info.sarWidth && info.sarHeight)
         setParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
     if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)

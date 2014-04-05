@@ -704,14 +704,6 @@ typedef struct x265_param
     /*== Video Usability Information ==*/
     struct
     {
-        /* Enable the generation of a VUI with all fields in the SPS.  VUI fields
-         * that are not specified on the command line will have default values */
-        int bEnableVuiParametersPresentFlag;
-
-        /* Enable aspect ratio in VUI.  Causes the aspect_ratio_idc to be added
-         * to the VUI. The default is false */
-        int bEnableAspectRatioIdc;
-
         /* Aspect ratio idc to be added to the VUI.  The default is 0 indicating
          * the apsect ratio is unspecified. If set to X265_EXTENDED_SAR then
          * sarWidth and sarHeight must also be set */
