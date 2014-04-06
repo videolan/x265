@@ -37,7 +37,7 @@
 #define strcasecmp _stricmp 
 #endif
 
-#if !HAVE_STROTOK_R
+#if !defined(HAVE_STRTOK_R)
 /* 
  * adapted from public domain strtok_r() by Charlie Gordon
  *
@@ -49,6 +49,7 @@
  *      http://groups.google.com/group/comp.lang.c/msg/7c7b39328fefab9c
  */
 
+#undef strtok_r
 char* strtok_r(
     char *str, 
     const char *delim, 
