@@ -151,23 +151,23 @@ public:
     void encodeSPS(TComSPS* sps);
     void encodePPS(TComPPS* pps);
     void encodeAUD(TComSlice* pps);
-    void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD = false);
-    void encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePUWise(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
+    void encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePUWise(TComDataCU* cu, uint32_t absPartIdx);
     void encodeInterDirPU(TComDataCU* pcSubCU, uint32_t absPartIdx);
     void encodeRefFrmIdxPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
     void encodeMvdPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
     void encodeMVPIdxPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
     void encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
-    void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePredMode(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD = false);
-    void encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePredMode(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
+    void encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU = false);
 
-    void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx);
 
     void encodeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);

@@ -285,17 +285,17 @@ void TEncSearch::xEncIntraHeader(TComDataCU* cu, uint32_t trDepth, uint32_t absP
             {
                 if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
                 {
-                    m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
+                    m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
                 }
-                m_entropyCoder->encodeSkipFlag(cu, 0, true);
-                m_entropyCoder->encodePredMode(cu, 0, true);
+                m_entropyCoder->encodeSkipFlag(cu, 0);
+                m_entropyCoder->encodePredMode(cu, 0);
             }
 
-            m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0), true);
+            m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0));
 
             if (cu->isIntra(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
             {
-                m_entropyCoder->encodeIPCMInfo(cu, 0, true);
+                m_entropyCoder->encodeIPCMInfo(cu, 0);
 
                 if (cu->getIPCMFlag(0))
                 {
@@ -335,7 +335,7 @@ void TEncSearch::xEncIntraHeader(TComDataCU* cu, uint32_t trDepth, uint32_t absP
         {
             if (absPartIdx == 0)
             {
-                m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx, true);
+                m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx);
             }
         }
         else
@@ -343,7 +343,7 @@ void TEncSearch::xEncIntraHeader(TComDataCU* cu, uint32_t trDepth, uint32_t absP
             uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
             assert(trDepth > 0);
             if ((absPartIdx % qtNumParts) == 0)
-                m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx, true);
+                m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx);
         }
     }
 }
@@ -2573,10 +2573,10 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         m_entropyCoder->resetBits();
         if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
         {
-            m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
+            m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
         }
-        m_entropyCoder->encodeSkipFlag(cu, 0, true);
-        m_entropyCoder->encodeMergeIndex(cu, 0, true);
+        m_entropyCoder->encodeSkipFlag(cu, 0);
+        m_entropyCoder->encodeMergeIndex(cu, 0);
 
         bits = m_entropyCoder->getNumberOfWrittenBits();
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
@@ -3778,10 +3778,10 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         m_entropyCoder->resetBits();
         if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
         {
-            m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
+            m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
         }
-        m_entropyCoder->encodeSkipFlag(cu, 0, true);
-        m_entropyCoder->encodeMergeIndex(cu, 0, true);
+        m_entropyCoder->encodeSkipFlag(cu, 0);
+        m_entropyCoder->encodeMergeIndex(cu, 0);
         return m_entropyCoder->getNumberOfWrittenBits();
     }
     else
@@ -3789,12 +3789,12 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         m_entropyCoder->resetBits();
         if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
         {
-            m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
+            m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
         }
-        m_entropyCoder->encodeSkipFlag(cu, 0, true);
-        m_entropyCoder->encodePredMode(cu, 0, true);
-        m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0), true);
-        m_entropyCoder->encodePredInfo(cu, 0, true);
+        m_entropyCoder->encodeSkipFlag(cu, 0);
+        m_entropyCoder->encodePredMode(cu, 0);
+        m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0));
+        m_entropyCoder->encodePredInfo(cu, 0);
         bool bDummy = false;
         m_entropyCoder->encodeCoeff(cu, 0, cu->getDepth(0), cu->getCUSize(0), cu->getCUSize(0), bDummy);
         return m_entropyCoder->getNumberOfWrittenBits();

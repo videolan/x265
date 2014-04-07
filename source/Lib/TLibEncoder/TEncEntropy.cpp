@@ -94,12 +94,8 @@ void TEncEntropy::encodeAUD(TComSlice* slice)
     m_entropyCoderIf->codeAUD(slice);
 }
 
-void TEncEntropy::encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
     m_entropyCoderIf->codeCUTransquantBypassFlag(cu, absPartIdx);
 }
 
@@ -108,15 +104,11 @@ void TEncEntropy::encodeVPS(TComVPS* vps)
     m_entropyCoderIf->codeVPS(vps);
 }
 
-void TEncEntropy::encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     if (cu->getSlice()->isIntra())
     {
         return;
-    }
-    if (bRD)
-    {
-        absPartIdx = 0;
     }
     m_entropyCoderIf->codeSkipFlag(cu, absPartIdx);
 }
@@ -136,31 +128,20 @@ void TEncEntropy::encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
  * \param cu
  * \param absPartIdx
  * \param uiPUIdx
- * \param bRD
  * \returns void
  */
-void TEncEntropy::encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-        assert(cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N);
-    }
     m_entropyCoderIf->codeMergeIndex(cu, absPartIdx);
 }
 
 /** encode prediction mode
  * \param cu
  * \param absPartIdx
- * \param bRD
  * \returns void
  */
-void TEncEntropy::encodePredMode(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodePredMode(TComDataCU* cu, uint32_t absPartIdx)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
     if (cu->getSlice()->isIntra())
     {
         return;
@@ -170,12 +151,8 @@ void TEncEntropy::encodePredMode(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
 }
 
 // Split mode
-void TEncEntropy::encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD)
+void TEncEntropy::encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
     m_entropyCoderIf->codeSplitFlag(cu, absPartIdx, depth);
 }
 
@@ -183,36 +160,25 @@ void TEncEntropy::encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t 
  * \param cu
  * \param absPartIdx
  * \param depth
- * \param bRD
  * \returns void
  */
-void TEncEntropy::encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD)
+void TEncEntropy::encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
     m_entropyCoderIf->codePartSize(cu, absPartIdx, depth);
 }
 
 /** Encode I_PCM information.
  * \param cu pointer to CU
  * \param absPartIdx CU index
- * \param bRD flag indicating estimation or encoding
  * \returns void
  */
-void TEncEntropy::encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
 {
     if (!cu->getSlice()->getSPS()->getUsePCM()
         || cu->getCUSize(absPartIdx) > (1 << cu->getSlice()->getSPS()->getPCMLog2MaxSize())
         || cu->getCUSize(absPartIdx) < (1 << cu->getSlice()->getSPS()->getPCMLog2MinSize()))
     {
         return;
-    }
-
-    if (bRD)
-    {
-        absPartIdx = 0;
     }
 
     m_entropyCoderIf->codeIPCMInfo(cu, absPartIdx);
@@ -417,57 +383,42 @@ void TEncEntropy::encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bo
 }
 
 // Intra direction for Chroma
-void TEncEntropy::encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
-
     m_entropyCoderIf->codeIntraDirChroma(cu, absPartIdx);
 }
 
-void TEncEntropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
     if (cu->isIntra(absPartIdx)) // If it is Intra mode, encode intra prediction mode.
     {
         encodeIntraDirModeLuma(cu, absPartIdx, true);
         if (cu->getChromaFormat() != CHROMA_400)
         {
-            encodeIntraDirModeChroma(cu, absPartIdx, bRD);
+            encodeIntraDirModeChroma(cu, absPartIdx);
 
             if ((cu->getChromaFormat() == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
             {
                 uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset, bRD);
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 2, bRD);
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 3, bRD);
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset);
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 2);
+                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 3);
             }
         }
     }
     else                        // if it is Inter mode, encode motion vector and reference index
     {
-        encodePUWise(cu, absPartIdx, bRD);
+        encodePUWise(cu, absPartIdx);
     }
 }
 
 /** encode motion information for every PU block
  * \param cu
  * \param absPartIdx
- * \param bRD
  * \returns void
  */
-void TEncEntropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx, bool bRD)
+void TEncEntropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx)
 {
-    if (bRD)
-    {
-        absPartIdx = 0;
-    }
-
     PartSize partSize = cu->getPartitionSize(absPartIdx);
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
     uint32_t depth = cu->getDepth(absPartIdx);

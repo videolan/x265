@@ -55,13 +55,13 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     m_entropyCoder->resetBits();
     if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
+        m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
     }
-    m_entropyCoder->encodeSkipFlag(cu, 0, true);
-    m_entropyCoder->encodePredMode(cu, 0, true);
-    m_entropyCoder->encodePartSize(cu, 0, depth, true);
-    m_entropyCoder->encodePredInfo(cu, 0, true);
-    m_entropyCoder->encodeIPCMInfo(cu, 0, true);
+    m_entropyCoder->encodeSkipFlag(cu, 0);
+    m_entropyCoder->encodePredMode(cu, 0);
+    m_entropyCoder->encodePartSize(cu, 0, depth);
+    m_entropyCoder->encodePredInfo(cu, 0);
+    m_entropyCoder->encodeIPCMInfo(cu, 0);
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
@@ -618,7 +618,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             if (m_param->rdLevel > 1)
             {
                 m_entropyCoder->resetBits();
-                m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
+                m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth);
                 outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
                 outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
             }
@@ -740,7 +740,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             if (m_param->rdLevel > 1)
             {
                 m_entropyCoder->resetBits();
-                m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth, true);
+                m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth);
                 outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
             }
         }
