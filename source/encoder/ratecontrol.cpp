@@ -1015,6 +1015,8 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
 
                     pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
                     rce->qpaRc = pic->m_avgQpRc;
+                    // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
+                    pic->m_avgQpAq = pic->m_avgQpRc;
                 }
 
                 if (pic->m_qpaAq)
