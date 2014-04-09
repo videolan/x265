@@ -884,7 +884,6 @@ TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPar
 
     if ((m_pic->getCU(m_cuAddr)->getCUPelX() + g_rasterToPelX[absPartIdxRT] + m_pic->getUnitSize()) >= m_slice->getSPS()->getPicWidthInLumaSamples())
     {
-        arPartUnitIdx = MAX_UINT;
         return NULL;
     }
 
@@ -905,7 +904,6 @@ TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPar
                     return this;
                 }
             }
-            arPartUnitIdx = MAX_UINT;
             return NULL;
         }
         arPartUnitIdx = g_rasterToZscan[absPartIdxRT + m_pic->getNumPartInCU() - numPartInCUSize + 1];
@@ -918,7 +916,6 @@ TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPar
 
     if (!RasterAddress::isZeroRow(absPartIdxRT, numPartInCUSize))
     {
-        arPartUnitIdx = MAX_UINT;
         return NULL;
     }
 
@@ -939,7 +936,6 @@ TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPart
 
     if ((m_pic->getCU(m_cuAddr)->getCUPelY() + g_rasterToPelY[absPartIdxLB] + m_pic->getUnitSize()) >= m_slice->getSPS()->getPicHeightInLumaSamples())
     {
-        blPartUnitIdx = MAX_UINT;
         return NULL;
     }
 
@@ -960,7 +956,6 @@ TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPart
                     return this;
                 }
             }
-            blPartUnitIdx = MAX_UINT;
             return NULL;
         }
         blPartUnitIdx = g_rasterToZscan[absPartIdxLB + numPartInCUSize * 2 - 1];
@@ -971,7 +966,6 @@ TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPart
         return m_cuLeft;
     }
 
-    blPartUnitIdx = MAX_UINT;
     return NULL;
 }
 
@@ -984,7 +978,6 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t cur
     if ((m_pic->getCU(m_cuAddr)->getCUPelY() + g_rasterToPelY[absPartIdxLB] + (partUnitOffset << m_pic->getPicSym()->getLog2UnitSize())) >=
         m_slice->getSPS()->getPicHeightInLumaSamples())
     {
-        blPartUnitIdx = MAX_UINT;
         return NULL;
     }
 
@@ -1005,7 +998,6 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t cur
                     return this;
                 }
             }
-            blPartUnitIdx = MAX_UINT;
             return NULL;
         }
         blPartUnitIdx = g_rasterToZscan[absPartIdxLB + (1 + partUnitOffset) * numPartInCUSize - 1];
@@ -1016,7 +1008,6 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t cur
         return m_cuLeft;
     }
 
-    blPartUnitIdx = MAX_UINT;
     return NULL;
 }
 
@@ -1029,7 +1020,6 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
     if ((m_pic->getCU(m_cuAddr)->getCUPelX() + g_rasterToPelX[absPartIdxRT] + (partUnitOffset << m_pic->getPicSym()->getLog2UnitSize())) >=
         m_slice->getSPS()->getPicWidthInLumaSamples())
     {
-        arPartUnitIdx = MAX_UINT;
         return NULL;
     }
 
@@ -1050,7 +1040,6 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
                     return this;
                 }
             }
-            arPartUnitIdx = MAX_UINT;
             return NULL;
         }
         arPartUnitIdx = g_rasterToZscan[absPartIdxRT + m_pic->getNumPartInCU() - numPartInCUSize + partUnitOffset];
@@ -1063,7 +1052,6 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
 
     if (!RasterAddress::isZeroRow(absPartIdxRT, numPartInCUSize))
     {
-        arPartUnitIdx = MAX_UINT;
         return NULL;
     }
 
