@@ -102,9 +102,9 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
             continue;
         else if (bitrate > levels[i].maxBitrateHigh)
             continue;
-        else if (param.sourceWidth > sqrt(levels[i].maxLumaSamples * 8))
+        else if (param.sourceWidth > sqrt(levels[i].maxLumaSamples * 8.0f))
             continue;
-        else if (param.sourceHeight > sqrt(levels[i].maxLumaSamples * 8))
+        else if (param.sourceHeight > sqrt(levels[i].maxLumaSamples * 8.0f))
             continue;
 
         int maxDpbSize = MaxDpbPicBuf;
@@ -154,9 +154,9 @@ void enforceLevel(x265_param& param, int level, bool bHighTier)
     bool ok = true;
     if (lumaSamples > l.maxLumaSamples)
         ok = false;
-    else if (param.sourceWidth > sqrt(l.maxLumaSamples * 8))
+    else if (param.sourceWidth > sqrt(l.maxLumaSamples * 8.0f))
         ok = false;
-    else if (param.sourceHeight > sqrt(l.maxLumaSamples * 8))
+    else if (param.sourceHeight > sqrt(l.maxLumaSamples * 8.0f))
         ok = false;
     if (!ok)
         x265_log(&param, X265_LOG_WARNING, "picture dimensions are out of range for specified level\n");
