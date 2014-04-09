@@ -754,9 +754,6 @@ double RateControl::clipQscale(TComPic* pic, double q)
             q = X265_MAX(q0, q);
     }
 
-    if (lmin1 == lmax1)
-        return lmin1;
-
     return Clip3(lmin1, lmax1, q);
 }
 
