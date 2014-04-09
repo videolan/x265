@@ -184,7 +184,8 @@ void enforceLevel(x265_param& param, int level, bool bHighTier)
         maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
     int savedRefCount = param.maxNumReferences;
 
-    do {
+    for(; ;)
+    {
         int numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
         int maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(numReorderPics + 1, param.maxNumReferences) + numReorderPics);
 
@@ -193,7 +194,6 @@ void enforceLevel(x265_param& param, int level, bool bHighTier)
         else
             break;
     }
-    while (1);
 
     if (param.maxNumReferences != savedRefCount)
     {
