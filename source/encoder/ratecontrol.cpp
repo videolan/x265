@@ -439,8 +439,6 @@ void RateControl::accumPQpUpdate()
     accumPQp   *= .95;
     accumPNorm *= .95;
     accumPNorm += 1;
-    /* What is the logic here? Possible explanation: we're normalising the QPs to P-slice QPs,
-    and maintaining a running average of P-equivalent updates. But then what about B-frames? */ 
     if (sliceType == I_SLICE)
         accumPQp += qp + ipOffset;
     else
@@ -538,16 +536,11 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             /* ABR code can potentially be counterproductive in CBR, so just
              * don't bother.  Don't run it if the frame complexity is zero
              * either. */
-
-            /* We dont know why currentSatd is in this condition */
             if (!vbvMinRate && currentSatd)
             {
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
                 double timeDone = (double)(framesDone - param->frameNumThreads + 1) * frameDuration;
                 wantedBits = timeDone * bitrate;
-                /* This part needs explanation. abrBuffer = 2*bitrate*sqrt(timeDone). 
-                As time increases, we are allowing a larger deviation between
-                totalBits(encoded) and wantedbits (expected bits)? */  
                 if (wantedBits > 0 && totalBits > 0)
                 {
                     abrBuffer *= X265_MAX(1, sqrt(timeDone));
@@ -967,6 +960,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 
     lastRceq = q;
     q /= rateFactor;
+   
     return q;
 }
 
