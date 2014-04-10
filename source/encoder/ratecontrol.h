@@ -133,7 +133,7 @@ struct RateControl
 
 protected:
 
-    void reInit();
+    void init();
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();

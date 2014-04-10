@@ -321,7 +321,7 @@ RateControl::RateControl(Encoder * _cfg)
     {
 #define ABR_INIT_QP ((int)param->rc.rfConstant)
     }
-    reInit();
+    init();
 
     ipOffset = 6.0 * X265_LOG2(param->rc.ipFactor);
     pbOffset = 6.0 * X265_LOG2(param->rc.pbFactor);
@@ -341,7 +341,7 @@ RateControl::RateControl(Encoder * _cfg)
     lstep = pow(2, param->rc.qpStep / 6.0);
 }
 
-void RateControl::reInit()
+void RateControl::init()
 {
     totalBits = 0;
     framesDone = 0;
@@ -610,7 +610,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
             double underflow = 1.0 + (totalBits - wantedBitsWindow) / abrBuffer;
             if (underflow < 0.9 && !isFrameDone)
             {
-                reInit();
+                init();
                 shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
                 shortTermCplxCount = 1;
                 isAbrReset = true;
