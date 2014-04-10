@@ -327,9 +327,7 @@ RateControl::RateControl(Encoder * _cfg)
     pbOffset = 6.0 * X265_LOG2(param->rc.pbFactor);
     for (int i = 0; i < 3; i++)
     {
-        lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN);
-        lmin[i] = x265_qp2qScale(MIN_QP);
-        lmax[i] = x265_qp2qScale(MAX_MAX_QP);
+        lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN);      
     }
 
     if (param->rc.rateControlMode == X265_RC_CQP)
@@ -582,9 +580,8 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             if (qCompress != 1 && framesDone == 0)
                 q = x265_qp2qScale(ABR_INIT_QP) / fabs(param->rc.ipFactor);
         }
-        double lmin1 = lmin[sliceType];
-        double lmax1 = lmax[sliceType];
-        q = Clip3(lmin1, lmax1, q);
+        
+        q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
         qpNoVbv = x265_qScale2qp(q);
 
         q = clipQscale(pic, q);
@@ -641,8 +638,6 @@ double RateControl::predictSize(Predictor *p, double q, double var)
 
 double RateControl::clipQscale(TComPic* pic, double q)
 {
-    double lmin1 = lmin[sliceType];
-    double lmax1 = lmax[sliceType];
     double q0 = q;
 
     // B-frames are not directly subject to VBV,
@@ -754,7 +749,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
             q = X265_MAX(q0, q);
     }
 
-    return Clip3(lmin1, lmax1, q);
+    return Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
 }
 
 double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, double qpVbv, int32_t & encodedBitsSoFar)
