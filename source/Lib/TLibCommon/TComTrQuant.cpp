@@ -1230,7 +1230,7 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
 
     if (diffLevel < 0)
     {
-        assert(absLevel >= 0 && absLevel <= 2);
+        assert(absLevel <= 2);
         rate += greaterOneBits[(absLevel == 2)];
 
         if (absLevel == 2)
