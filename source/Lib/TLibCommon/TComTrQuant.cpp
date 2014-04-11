@@ -1240,8 +1240,8 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
     }
     else
     {
-        uint32_t symbol   = diffLevel;
-        const uint32_t maxVlc   = g_goRiceRange[absGoRice];
+        uint32_t symbol = diffLevel;
+        const uint32_t maxVlc = g_goRiceRange[absGoRice];
         bool expGolomb = (symbol > maxVlc);
 
         if (expGolomb)
@@ -1253,7 +1253,7 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
             CLZ32(size, absLevel);
             int egs = size * 2 + 1;
 
-            rate   += egs << 15;
+            rate += egs << 15;
 
             // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
             assert(x265_min_fast(symbol, (maxVlc + 1)) == maxVlc + 1);
