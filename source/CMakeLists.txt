@@ -101,7 +101,7 @@ endif(MSVC)
 if(INTEL_CXX AND UNIX)
     # treat icpc roughly like gcc
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Wshadow -no-vec)
+    add_definitions(-Wall -Wextra -Wshadow)
 elseif(CLANG)
     # treat clang roughly like gcc
     set(GCC 1)
