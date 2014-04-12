@@ -640,7 +640,8 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     int qp = 0;
     int qpP = 0;
     int qpQ = 0;
-    uint32_t  pelsInPartChroma = g_maxCUSize >> (g_maxCUDepth + cu->getHorzChromaShift());
+    uint32_t  pelsInPartChromaH = g_maxCUSize >> (g_maxCUDepth + cu->getHorzChromaShift());
+    uint32_t  pelsInPartChromaV = g_maxCUSize >> (g_maxCUDepth + cu->getVertChromaShift());
     int   offset, srcStep;
 
     const uint32_t lcuWidthInBaseUnits = cu->getPic()->getNumPartInCUSize();
@@ -658,9 +659,9 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t edgeNumInLCUVert = g_zscanToRaster[absZOrderIdx] % lcuWidthInBaseUnits + edge;
     uint32_t edgeNumInLCUHor = g_zscanToRaster[absZOrderIdx] / lcuWidthInBaseUnits + edge;
 
-    if ((pelsInPartChroma < DEBLOCK_SMALLEST_BLOCK) &&
-        (((edgeNumInLCUVert % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChroma)) && (dir == 0)) ||
-         ((edgeNumInLCUHor % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChroma)) && dir)))
+    if ((pelsInPartChromaH < DEBLOCK_SMALLEST_BLOCK) && (pelsInPartChromaV < DEBLOCK_SMALLEST_BLOCK) && 
+        (((edgeNumInLCUVert % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChromaH)) && (dir == 0)) ||
+         ((edgeNumInLCUHor % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChromaV)) && dir)))
     {
         return;
     }
@@ -672,20 +673,23 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
     pixel* tmpSrcCb = srcCb;
     pixel* tmpSrcCr = srcCr;
+    uint32_t loopLength;
 
     if (dir == EDGE_VER)
     {
-        offset   = 1;
-        srcStep  = stride;
-        tmpSrcCb += edge * pelsInPartChroma;
-        tmpSrcCr += edge * pelsInPartChroma;
+        offset     = 1;
+        srcStep    = stride;
+        tmpSrcCb   += edge * pelsInPartChromaH;
+        tmpSrcCr   += edge * pelsInPartChromaH;
+        loopLength = pelsInPartChromaV;
     }
     else // (dir == EDGE_HOR)
     {
-        offset   = stride;
-        srcStep  = 1;
-        tmpSrcCb += edge * stride * pelsInPartChroma;
-        tmpSrcCr += edge * stride * pelsInPartChroma;
+        offset     = stride;
+        srcStep    = 1;
+        tmpSrcCb   += edge * stride * pelsInPartChromaV;
+        tmpSrcCr   += edge * stride * pelsInPartChromaV;
+        loopLength = pelsInPartChromaH;
     }
 
     for (uint32_t idx = 0; idx < numParts; idx++)
@@ -730,9 +734,9 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
                 int iIndexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + (tcOffsetDiv2 << 1));
                 int iTc =  sm_tcTable[iIndexTC] * iBitdepthScale;
 
-                for (uint32_t uiStep = 0; uiStep < pelsInPartChroma; uiStep++)
+                for (uint32_t uiStep = 0; uiStep < loopLength; uiStep++)
                 {
-                    xPelFilterChroma(piTmpSrcChroma + srcStep * (uiStep + idx * pelsInPartChroma), offset, iTc, bPartPNoFilter, bPartQNoFilter);
+                    xPelFilterChroma(piTmpSrcChroma + srcStep * (uiStep + idx * loopLength), offset, iTc, bPartPNoFilter, bPartQNoFilter);
                 }
             }
         }
