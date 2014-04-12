@@ -117,7 +117,7 @@ public:
     void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
     void codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
-    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
+    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel);
     void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
