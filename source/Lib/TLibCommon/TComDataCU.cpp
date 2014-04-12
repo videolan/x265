@@ -1353,6 +1353,10 @@ void TComDataCU::setCbfSubParts(uint32_t uiCbf, TextType ttype, uint32_t absPart
     setSubPart<uint8_t>(uiCbf, m_cbf[ttype], absPartIdx, depth, partIdx);
 }
 
+void TComDataCU::setCbfPartRange (uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes)
+{
+    memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(uint8_t) * coveredPartIdxes);
+}
 void TComDataCU::setDepthSubParts(uint32_t depth)
 {
     /*All 4x4 partitions in current CU have the CU depth saved*/
@@ -1568,6 +1572,10 @@ void TComDataCU::setTransformSkipSubParts(uint32_t useTransformSkip, TextType tt
     memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * curPartNum);
 }
 
+void TComDataCU::setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes)
+{
+    memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * coveredPartIdxes);
+}
 uint8_t TComDataCU::getNumPartInter()
 {
     uint8_t numPart = 0;
@@ -1896,16 +1904,6 @@ void TComDataCU::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outP
 
     outPartIdxLT = m_absIdxInLCU + partOffset;
     outPartIdxRT = g_rasterToZscan[g_zscanToRaster[outPartIdxLT] + numPartInWidth - 1];
-}
-
-void TComDataCU::deriveLeftBottomIdxAdi(uint32_t& outPartIdxLB, uint32_t partOffset, uint32_t partDepth)
-{
-    uint32_t absIdx;
-    uint32_t numPartInWidth = m_cuSize[0] >> (m_pic->getLog2UnitSize() + partDepth);
-
-    absIdx        = getZorderIdxInCU() + partOffset + (m_numPartitions >> (partDepth << 1)) - 1;
-    absIdx        = g_zscanToRaster[absIdx] - (numPartInWidth - 1);
-    outPartIdxLB    = g_rasterToZscan[absIdx];
 }
 
 bool TComDataCU::hasEqualMotion(uint32_t absPartIdx, TComDataCU* candCU, uint32_t candAbsPartIdx)
@@ -2889,7 +2887,9 @@ uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         dirMode  = getChromaIntraDir(absPartIdx);
         if (dirMode == DM_CHROMA_IDX)
         {
-            dirMode = getLumaIntraDir(absPartIdx);
+            uint32_t lumaLCUIdx  = (m_chromaFormat == CHROMA_444) ? absPartIdx : absPartIdx & (~((1<<(2*g_addCUDepth))-1));
+            dirMode = getLumaIntraDir(lumaLCUIdx );
+            dirMode = (m_chromaFormat == CHROMA_422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
         }
         // TODO: 4:2:2
     }

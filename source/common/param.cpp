@@ -839,8 +839,7 @@ int x265_check_params(x265_param *param)
 
     CHECK((param->maxCUSize >> maxCUDepth) < 4,
           "Minimum partition width size should be larger than or equal to 8");
-    CHECK(param->internalCsp != X265_CSP_I420 && param->internalCsp != X265_CSP_I444,
-          "Only 4:2:0 and 4:4:4 color spaces is supported at this time");
+   
 
     /* These checks might be temporary */
 #if HIGH_BIT_DEPTH

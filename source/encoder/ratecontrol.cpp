@@ -45,8 +45,7 @@ static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, in
 /* Find the energy of each block in Y/Cb/Cr plane */
 static inline uint32_t acEnergyPlane(TComPic *pic, pixel* src, int srcStride, int bChroma, int colorFormat)
 {
-    /* Support only 420 and 444 color spaces */
-    if (colorFormat == X265_CSP_I420 && bChroma)
+    if ((colorFormat != X265_CSP_I444) && bChroma)
     {
         ALIGN_VAR_8(pixel, pix[8 * 8]);
         primitives.luma_copy_pp[LUMA_8x8](pix, 8, src, srcStride);

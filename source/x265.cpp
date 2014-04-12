@@ -572,11 +572,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
         return true;
     }
-    if (info.csp != X265_CSP_I420 && info.csp != X265_CSP_I444)
-    {
-        x265_log(param, X265_LOG_ERROR, "Only i420 and i444 color spaces are supported in this build\n");
-        return true;
-    }
+
     if (info.depth < 8 || info.depth > 16)
     {
         x265_log(param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n", inputBitDepth);
