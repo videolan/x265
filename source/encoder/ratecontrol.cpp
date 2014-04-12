@@ -319,7 +319,7 @@ RateControl::RateControl(Encoder * _cfg)
     }
     else if (param->rc.rateControlMode == X265_RC_CRF)
     {
-#define ABR_INIT_QP ((int)param->rc.rfConstant)
+#define CRF_INIT_QP ((int)param->rc.rfConstant) + QP_BD_OFFSET
     }
     init();
 
@@ -327,7 +327,7 @@ RateControl::RateControl(Encoder * _cfg)
     pbOffset = 6.0 * X265_LOG2(param->rc.pbFactor);
     for (int i = 0; i < 3; i++)
     {
-        lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN);      
+        lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN);      
     }
 
     if (param->rc.rateControlMode == X265_RC_CQP)
@@ -350,7 +350,7 @@ void RateControl::init()
     cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
     wantedBitsWindow = bitrate * frameDuration;
     accumPNorm = .01;
-    accumPQp = (param->rc.rateControlMode == X265_RC_CRF ? ABR_INIT_QP : ABR_INIT_QP_MIN) * accumPNorm;
+    accumPQp = (param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN) * accumPNorm;
 
     /* Frame Predictors and Row predictors used in vbv */
     for (int i = 0; i < 5; i++)
@@ -527,7 +527,6 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         }
         else
         {
-
             checkAndResetABR(rce, false);
             q = getQScale(rce, wantedBitsWindow / cplxrSum);
 
@@ -579,7 +578,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         }
         else if (qCompress != 1 && param->rc.rateControlMode == X265_RC_CRF)
         {
-            q = x265_qp2qScale(ABR_INIT_QP) / fabs(param->rc.ipFactor);
+            q = x265_qp2qScale(CRF_INIT_QP) / fabs(param->rc.ipFactor);
         }
                 
         q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
