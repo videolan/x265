@@ -135,6 +135,7 @@ void ShortYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t
 void ShortYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, bool bChromaSame)
 {
     int part = partitionFromSizes(lumaSize, lumaSize);
+    part = ((part == 0) && (m_csp == CHROMA_422)) ? 1 : part;
     int16_t* srcU = getCbAddr(partIdx);
     int16_t* srcV = getCrAddr(partIdx);
     int16_t* dstU = dstPicYuv->getCbAddr(partIdx);
@@ -178,6 +179,7 @@ void ShortYuv::copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32
 void ShortYuv::copyPartToPartShortChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId)
 {
     int part = partitionFromSizes(lumaSize, lumaSize);
+
     if (chromaId == 0)
     {
         int16_t* srcU = getCbAddr(partIdx);
@@ -207,10 +209,11 @@ void ShortYuv::copyPartToPartShortChroma(ShortYuv* dstPicYuv, uint32_t partIdx, 
     }
 }
 
-void ShortYuv::copyPartToPartYuvChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId)
+void ShortYuv::copyPartToPartYuvChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs)
 {
-    int part = partitionFromSizes(lumaSize, lumaSize);
-    if (chromaId == 0)
+    int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS : partitionFromSizes(lumaSize, lumaSize);
+
+    if (chromaId == 1)
     {
         int16_t* srcU = getCbAddr(partIdx);
         pixel* dstU = dstPicYuv->getCbAddr(partIdx);
@@ -218,7 +221,7 @@ void ShortYuv::copyPartToPartYuvChroma(TComYuv* dstPicYuv, uint32_t partIdx, uin
         uint32_t dstStride = dstPicYuv->getCStride();
         primitives.chroma[m_csp].copy_sp[part](dstU, dstStride, srcU, srcStride);
     }
-    else if (chromaId == 1)
+    else if (chromaId == 2)
     {
         int16_t* srcV = getCrAddr(partIdx);
         pixel* dstV = dstPicYuv->getCrAddr(partIdx);
