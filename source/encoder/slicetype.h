@@ -116,7 +116,7 @@ protected:
     uint32_t weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *w);
 };
 
-struct Lookahead
+struct Lookahead : public JobProvider
 {
     Lookahead(Encoder *, ThreadPool *pool);
     ~Lookahead();
@@ -138,10 +138,21 @@ struct Lookahead
 
     void addPicture(TComPic*, int sliceType);
     void flush();
+    TComPic* getDecidedPicture();
 
     int64_t getEstimatedPictureCost(TComPic *pic);
 
 protected:
+
+    Lock  inputQueueLock;
+    Lock  outputQueueLock;
+    Lock  decideLock;
+    Event outputAvailable;
+    volatile int  bReady;
+    volatile bool bFilling;
+    volatile bool bFlushed;
+
+    bool findJob();
 
     /* called by addPicture() or flush() to trigger slice decisions */
     void slicetypeDecide();

@@ -439,12 +439,11 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         ret = 1;
     }
 
-    if (!m_lookahead->outputQueue.empty())
+    // pop a single frame from decided list, then provide to frame encoder
+    // curEncoder is guaranteed to be idle at this point
+    TComPic* fenc = m_lookahead->getDecidedPicture();
+    if (fenc)
     {
-        // pop a single frame from decided list, then provide to frame encoder
-        // curEncoder is guaranteed to be idle at this point
-        TComPic *fenc = m_lookahead->outputQueue.popFront();
-
         m_encodedFrameNum++;
         if (m_bframeDelay)
         {
