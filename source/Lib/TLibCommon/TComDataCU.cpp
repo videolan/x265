@@ -510,7 +510,6 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
     m_cuAboveRight  = cu->getCUAboveRight();
 }
 
-
 void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
 {
     assert(partUnitIdx < 4);
@@ -1357,6 +1356,7 @@ void TComDataCU::setCbfPartRange (uint32_t cbf, TextType ttype, uint32_t absPart
 {
     memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(uint8_t) * coveredPartIdxes);
 }
+
 void TComDataCU::setDepthSubParts(uint32_t depth)
 {
     /*All 4x4 partitions in current CU have the CU depth saved*/
@@ -1576,6 +1576,7 @@ void TComDataCU::setTransformSkipPartRange(uint32_t useTransformSkip, TextType t
 {
     memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * coveredPartIdxes);
 }
+
 uint8_t TComDataCU::getNumPartInter()
 {
     uint8_t numPart = 0;
