@@ -304,7 +304,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input-depth <integer>       Bit-depth of input file. Default 8\n");
     H0("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
-    H0("   --input-csp <string>          Source color space: i420 or i444, auto-detected if Y4M. Default: i420\n");
+    H0("   --input-csp <string>          Source color space: i420, i444 or i422, auto-detected if Y4M. Default: i420\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
     H0("   --seek <integer>              First frame to encode\n");
