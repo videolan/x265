@@ -1334,7 +1334,7 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
         x265_log(p, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
     }
-    if (p->internalCsp == X265_CSP_I444 && p->bEnableWeightedPred)
+    if ((p->internalCsp == X265_CSP_I444 || p->internalCsp == X265_CSP_I422) && p->bEnableWeightedPred)
     {
         x265_log(p, X265_LOG_WARNING, "Weightp not supported for 4:4:4 internal color space, weightp disabled\n");
         p->bEnableWeightedPred = false;
