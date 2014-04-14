@@ -951,9 +951,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].copy_pp[0] = blockcopy_pp_c<W, H * 2>; \
     p.chroma[X265_CSP_I422].copy_sp[0] = blockcopy_sp_c<W, H * 2>; \
     p.chroma[X265_CSP_I422].copy_ps[0] = blockcopy_ps_c<W, H * 2>; \
-    p.chroma[X265_CSP_I422].copy_ss[0] = blockcopy_ss_c<W, H * 2>; \
-    p.chroma[X265_CSP_I422].copy_sp[NUM_CHROMA_PARTITIONS] = blockcopy_sp_c<W, H>; \
-    p.chroma[X265_CSP_I422].copy_ps[NUM_CHROMA_PARTITIONS] = blockcopy_ps_c<W, H>;
+    p.chroma[X265_CSP_I422].copy_ss[0] = blockcopy_ss_c<W, H * 2>;
 
 #define CHROMA_444(W, H) \
     p.chroma[X265_CSP_I444].addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
