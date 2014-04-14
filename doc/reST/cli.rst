@@ -175,8 +175,10 @@ Input Options
 
 .. option:: --input-csp <integer|string>
 
-	YUV only: Source color space. Only i420 and i444 are supported at
-	this time.
+	YUV only: Source color space. Only i420, i422, and i444 are
+	supported at this time. The internal color space is always the
+	same as the source color space (libx265 does not support any color
+	space conversions).
 
 	0. i400
 	1. i420 **(default)**
