@@ -79,12 +79,24 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     int  leftUnits       = cuHeightInUnits << 1;
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((cuHeightInUnits - 1) * partIdxStride)];
 
-    bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
-    numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);
-    numIntraNeighbor += isAboveAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1));
-    numIntraNeighbor += isAboveRightAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1 + cuWidthInUnits));
-    numIntraNeighbor += isLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1));
-    numIntraNeighbor += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits   - 1 - cuHeightInUnits));
+    if (!cu->getSlice()->getPPS()->getConstrainedIntraPred())
+    {
+        bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
+        numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);
+        numIntraNeighbor += isAboveAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1));
+        numIntraNeighbor += isAboveRightAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1 + cuWidthInUnits));
+        numIntraNeighbor += isLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1));
+        numIntraNeighbor += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits   - 1 - cuHeightInUnits));
+    }
+    else
+    {
+        bNeighborFlags[leftUnits] = isAboveLeftAvailableCIP(cu, partIdxLT);
+        numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);
+        numIntraNeighbor += isAboveAvailableCIP(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1));
+        numIntraNeighbor += isAboveRightAvailableCIP(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1 + cuWidthInUnits));
+        numIntraNeighbor += isLeftAvailableCIP(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1));
+        numIntraNeighbor += isBelowLeftAvailableCIP(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits   - 1 - cuHeightInUnits));
+    }
 
     width = cuWidth2 + 1;
     height = cuHeight2 + 1;
@@ -238,12 +250,24 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     int  leftUnits       = cuHeightInUnits << 1;
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((cuHeightInUnits - 1) * partIdxStride)];
 
-    bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
-    numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);
-    numIntraNeighbor += isAboveAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1));
-    numIntraNeighbor += isAboveRightAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1 + cuWidthInUnits));
-    numIntraNeighbor += isLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1));
-    numIntraNeighbor += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits   - 1 - cuHeightInUnits));
+    if (!cu->getSlice()->getPPS()->getConstrainedIntraPred())
+    {
+        bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
+        numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);
+        numIntraNeighbor += isAboveAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1));
+        numIntraNeighbor += isAboveRightAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1 + cuWidthInUnits));
+        numIntraNeighbor += isLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1));
+        numIntraNeighbor += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits   - 1 - cuHeightInUnits));
+    }
+    else
+    {
+        bNeighborFlags[leftUnits] = isAboveLeftAvailableCIP(cu, partIdxLT);
+        numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);
+        numIntraNeighbor += isAboveAvailableCIP(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1));
+        numIntraNeighbor += isAboveRightAvailableCIP(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1 + cuWidthInUnits));
+        numIntraNeighbor += isLeftAvailableCIP(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1));
+        numIntraNeighbor += isBelowLeftAvailableCIP(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits   - 1 - cuHeightInUnits));
+    }
 
     width = cuWidth * 2 + 1;
     height = cuHeight * 2 + 1;
