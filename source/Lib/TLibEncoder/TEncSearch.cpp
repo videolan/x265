@@ -1440,8 +1440,8 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 chromaPredMode = cu->getLumaIntraDir(0);
             }
             //===== init availability pattern =====
-            TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, chromaId);
-            pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
+            TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, chromaId + 1);
+            pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId + 1, height, m_predBuf);
 
             //===== get prediction signal =====
             predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
@@ -1807,8 +1807,8 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
         costShift = 2;
     }
 
-    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, 0);
     TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, 1);
+    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, 2);
     cu->getAllowedChromaDir(0, modeList);
     //----- check chroma modes -----
     for (uint32_t mode = minMode; mode < maxMode; mode++)
@@ -1822,7 +1822,7 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
                 chromaPredMode = cu->getLumaIntraDir(0);
             pixel* fenc = (chromaId > 0 ? fencYuv->getCrAddr(absPartIdx) : fencYuv->getCbAddr(absPartIdx));
             pixel* pred = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
-            pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
+            pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId + 1, height, m_predBuf);
 
             //===== get prediction signal =====
             predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
