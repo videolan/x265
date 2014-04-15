@@ -382,16 +382,16 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     {
         if (rce->rowPreds[0][0].count == 0)
         {
-             for (int i = 0; i < 3; i++)
-             {
-                 for(int j = 0; j < 2; j++)
+            for (int i = 0; i < 3; i++)
+            {
+                for(int j = 0; j < 2; j++)
                 {
                     rce->rowPreds[i][j].coeff = 0.25;
                     rce->rowPreds[i][j].count = 1.0;
                     rce->rowPreds[i][j].decay = 0.5;
                     rce->rowPreds[i][j].offset = 0.0;
                 }
-             }
+            }
         }
         rce->rowPred[0] = &rce->rowPreds[sliceType][0];
         rce->rowPred[1] = &rce->rowPreds[sliceType][1];
