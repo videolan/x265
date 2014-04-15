@@ -287,7 +287,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("    infile can be YUV or Y4M\n");
     H0("    outfile is raw HEVC bitstream\n");
     H0("\nExecutable Options:\n");
-    H0("-h/--h                           Show this help text and exit\n");
+    H0("-h/--help                        Show this help text and exit\n");
     H0("-V/--version                     Show version info and exit\n");
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
     H0("   --threads <integer>           Number of threads for thread pool (0: detect CPU core count, default)\n");
@@ -353,7 +353,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --bitrate <integer>           Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
     H0("   --crf <float>                 Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
     H0("   --crf-max <float>             With CRF+VBV, limit RF to this value. 0 for no limit (default)\n");
-    H0("                                  May cause VBV underflows!\n");
+    H0("                                 May cause VBV underflows!\n");
     H0("   --vbv-maxrate <integer>       Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
     H0("   --vbv-bufsize <integer>       Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
     H0("   --vbv-init <float>            Initial VBV buffer occupancy (fraction of bufsize or in kbits). Default %f\n", param->rc.vbvBufferInit);
