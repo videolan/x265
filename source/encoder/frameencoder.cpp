@@ -1164,6 +1164,8 @@ void FrameEncoder::processRowEncoder(int row)
                         m_pic->m_qpaRc[r] = 0;
                         m_pic->m_rowEncodedBits[r] = 0;
                         m_pic->m_numEncodedCusPerRow[r] = 0;
+                        m_pic->m_rowDiagSatd[r] = 0;
+                        m_pic->m_rowDiagIntraSatd[r] = 0;
                     }
 
                     m_bAllRowsStop = false;
@@ -1220,6 +1222,14 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
     x265_emms();
     double qp = baseQp;
 
+    /* clear cuCostsForVbv from when vbv row reset was triggered */
+    bool bIsVbv = m_cfg->param->rc.vbvBufferSize > 0 && m_cfg->param->rc.vbvMaxBitrate > 0;
+    if (bIsVbv)
+    {
+        m_pic->m_cuCostsForVbv[cuAddr] = 0;
+        m_pic->m_intraCuCostsForVbv[cuAddr] = 0;
+    }
+
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
     int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
@@ -1237,7 +1247,7 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
             idx = block_x + w + (block_y * maxBlockCols);
             if (m_cfg->param->rc.aqMode)
                 qp_offset += qpoffs[idx];
-            if (m_cfg->param->rc.vbvBufferSize > 0 && m_cfg->param->rc.vbvMaxBitrate > 0)
+            if (bIsVbv)
             {
                 m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.lowresCostForRc[idx];
                 m_pic->m_intraCuCostsForVbv[cuAddr] += m_pic->m_lowres.intraCost[idx];
