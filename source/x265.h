@@ -794,13 +794,6 @@ typedef struct x265_param
         /* Default display window bottom offset holds the bottom offset with the
          * conformance cropping window to further crop the displayed window */
         int defDispWinBottomOffset;
-
-        /* VUI timing info present flag adds vui_num_units_in_tick,
-         * vui_time_scale, vui_poc_proportional_to_timing_flag and
-         * vui_hrd_parameters_present_flag to the VUI. vui_num_units_in_tick,
-         * vui_time_scale and vui_poc_proportional_to_timing_flag are derived
-         * from processing the input video. The default is false */
-        int bEnableVuiTimingInfoPresentFlag;
     } vui;
 
 } x265_param;

@@ -197,7 +197,6 @@ void x265_param_default(x265_param *param)
     param->vui.defDispWinRightOffset = 0;
     param->vui.defDispWinTopOffset = 0;
     param->vui.defDispWinBottomOffset = 0;
-    param->vui.bEnableVuiTimingInfoPresentFlag = 0;
 }
 
 extern "C"
@@ -687,10 +686,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
                          &p->vui.defDispWinTopOffset,
                          &p->vui.defDispWinRightOffset,
                          &p->vui.defDispWinBottomOffset) != 4;
-    }
-    OPT("timinginfo")
-    {
-        p->vui.bEnableVuiTimingInfoPresentFlag = atobool(value);
     }
     else
         return X265_PARAM_BAD_NAME;

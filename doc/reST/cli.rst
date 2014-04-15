@@ -621,9 +621,9 @@ Quality reporting metrics
 VUI (Video Usability Information) options
 =========================================
 
-By default x265 does not emit a VUI in the SPS, but if you specify any
-of the VUI fields (:option:`--sar`, :option:`--range`, etc) the VUI is
-implicitly enabled.
+x265 emits a VUI with only the timing info by default. If the SAR is
+specified (or read from a Y4M header) it is also included.  All other
+VUI fields must be manually specified.
 
 .. option:: --sar <integer|w:h>
 
@@ -735,12 +735,6 @@ implicitly enabled.
 
 	Specify chroma sample location for 4:2:0 inputs. Default undefined
 	Consult the HEVC specification for a description of these values.
-
-.. option:: --timinginfo, --no-timinginfo
-
-	Add timing information to the VUI. This is identical to the timing
-	info reported in the PPS header but is sometimes required.  Default
-	disabled
 
 Bitstream options
 =================

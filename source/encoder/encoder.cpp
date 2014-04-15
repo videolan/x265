@@ -999,10 +999,14 @@ void Encoder::initSPS(TComSPS *sps)
         /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
         profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN10, 1);
     }
+
     /* XXX: should Main be marked as compatible with still picture? */
 
     /* XXX: may be a good idea to refactor the above into a function
      * that chooses the actual compatibility based upon options */
+
+    /* set the VPS profile information */
+    *m_vps.getPTL() = *sps->getPTL();
 
     sps->setPicWidthInLumaSamples(param->sourceWidth);
     sps->setPicHeightInLumaSamples(param->sourceHeight);
@@ -1068,74 +1072,55 @@ void Encoder::initSPS(TComSPS *sps)
     // TODO: it is recommended for this to match the input bit depth
     sps->setPCMBitDepthLuma(X265_DEPTH);
     sps->setPCMBitDepthChroma(X265_DEPTH);
-
     sps->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
-
     sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
-
     sps->setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
-    bool bVui = param->vui.aspectRatioIdc ||
-        param->vui.bEnableVideoSignalTypePresentFlag ||
-        param->vui.bEnableOverscanInfoPresentFlag ||
-        param->vui.bEnableVuiTimingInfoPresentFlag ||
-        param->interlaceMode;
-    sps->setVuiParametersPresentFlag(bVui);
+    sps->setVuiParametersPresentFlag(true);
+    TComVUI* vui = sps->getVuiParameters();
+    vui->setAspectRatioInfoPresentFlag(!!param->vui.aspectRatioIdc);
+    vui->setAspectRatioIdc(param->vui.aspectRatioIdc);
+    vui->setSarWidth(param->vui.sarWidth);
+    vui->setSarHeight(param->vui.sarHeight);
 
-    if (sps->getVuiParametersPresentFlag())
-    {
-        TComVUI* vui = sps->getVuiParameters();
-        vui->setAspectRatioInfoPresentFlag(!!param->vui.aspectRatioIdc);
-        vui->setAspectRatioIdc(param->vui.aspectRatioIdc);
-        vui->setSarWidth(param->vui.sarWidth);
-        vui->setSarHeight(param->vui.sarHeight);
+    vui->setOverscanInfoPresentFlag(param->vui.bEnableOverscanInfoPresentFlag);
+    vui->setOverscanAppropriateFlag(param->vui.bEnableOverscanAppropriateFlag);
 
-        vui->setOverscanInfoPresentFlag(param->vui.bEnableOverscanInfoPresentFlag);
-        vui->setOverscanAppropriateFlag(param->vui.bEnableOverscanAppropriateFlag);
+    vui->setVideoSignalTypePresentFlag(param->vui.bEnableVideoSignalTypePresentFlag);
+    vui->setVideoFormat(param->vui.videoFormat);
+    vui->setVideoFullRangeFlag(param->vui.bEnableVideoFullRangeFlag);
+    vui->setColourDescriptionPresentFlag(param->vui.bEnableColorDescriptionPresentFlag);
+    vui->setColourPrimaries(param->vui.colorPrimaries);
+    vui->setTransferCharacteristics(param->vui.transferCharacteristics);
+    vui->setMatrixCoefficients(param->vui.matrixCoeffs);
+    vui->setChromaLocInfoPresentFlag(param->vui.bEnableChromaLocInfoPresentFlag);
+    vui->setChromaSampleLocTypeTopField(param->vui.chromaSampleLocTypeTopField);
+    vui->setChromaSampleLocTypeBottomField(param->vui.chromaSampleLocTypeBottomField);
+    vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
+    vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
 
-        vui->setVideoSignalTypePresentFlag(param->vui.bEnableVideoSignalTypePresentFlag);
-        vui->setVideoFormat(param->vui.videoFormat);
-        vui->setVideoFullRangeFlag(param->vui.bEnableVideoFullRangeFlag);
-        vui->setColourDescriptionPresentFlag(param->vui.bEnableColorDescriptionPresentFlag);
-        vui->setColourPrimaries(param->vui.colorPrimaries);
-        vui->setTransferCharacteristics(param->vui.transferCharacteristics);
-        vui->setMatrixCoefficients(param->vui.matrixCoeffs);
-        vui->setChromaLocInfoPresentFlag(param->vui.bEnableChromaLocInfoPresentFlag);
-        vui->setChromaSampleLocTypeTopField(param->vui.chromaSampleLocTypeTopField);
-        vui->setChromaSampleLocTypeBottomField(param->vui.chromaSampleLocTypeBottomField);
-        vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
-        vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
+    vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
+    vui->setFieldSeqFlag(!!param->interlaceMode);
 
-        vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
-        vui->setFieldSeqFlag(!!param->interlaceMode);
+    vui->setHrdParametersPresentFlag(false);
+    vui->getHrdParameters()->setNalHrdParametersPresentFlag(false);
+    vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
 
-        vui->setHrdParametersPresentFlag(false);
-        vui->getHrdParameters()->setNalHrdParametersPresentFlag(false);
-        vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
+    vui->getTimingInfo()->setTimingInfoPresentFlag(true);
+    vui->getTimingInfo()->setNumUnitsInTick(param->fpsDenom);
+    vui->getTimingInfo()->setTimeScale(param->fpsNum);
+    vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
+    vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
 
-        vui->getTimingInfo()->setTimingInfoPresentFlag(param->vui.bEnableVuiTimingInfoPresentFlag);
-        vui->getTimingInfo()->setNumUnitsInTick(param->fpsDenom);
-        vui->getTimingInfo()->setTimeScale(param->fpsNum);
-        vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
-        vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
-
-        vui->setBitstreamRestrictionFlag(false);
-        vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
-        vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
-        vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);
-        vui->setMinSpatialSegmentationIdc(m_minSpatialSegmentationIdc);
-        vui->setMaxBytesPerPicDenom(m_maxBytesPerPicDenom);
-        vui->setMaxBitsPerMinCuDenom(m_maxBitsPerMinCuDenom);
-        vui->setLog2MaxMvLengthHorizontal(m_log2MaxMvLengthHorizontal);
-        vui->setLog2MaxMvLengthVertical(m_log2MaxMvLengthVertical);
-    }
-
-    /* set the VPS profile information */
-    *m_vps.getPTL() = *sps->getPTL();
-    TimingInfo *t = m_vps.getTimingInfo();
-    t->setTimingInfoPresentFlag(true);
-    t->setNumUnitsInTick(param->fpsDenom);
-    t->setTimeScale(param->fpsNum);
+    vui->setBitstreamRestrictionFlag(false);
+    vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
+    vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
+    vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);
+    vui->setMinSpatialSegmentationIdc(m_minSpatialSegmentationIdc);
+    vui->setMaxBytesPerPicDenom(m_maxBytesPerPicDenom);
+    vui->setMaxBitsPerMinCuDenom(m_maxBitsPerMinCuDenom);
+    vui->setLog2MaxMvLengthHorizontal(m_log2MaxMvLengthHorizontal);
+    vui->setLog2MaxMvLengthVertical(m_log2MaxMvLengthVertical);
 }
 
 void Encoder::initPPS(TComPPS *pps)

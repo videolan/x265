@@ -165,8 +165,6 @@ static const struct option long_options[] =
     { "colormatrix",    required_argument, NULL, 0 },
     { "chromaloc",      required_argument, NULL, 0 },
     { "crop-rect",      required_argument, NULL, 0 },
-    { "timinginfo",           no_argument, NULL, 0 },
-    { "no-timinginfo",        no_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "aud",                  no_argument, NULL, 0 },
@@ -389,7 +387,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
     H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
-    H0("   --[no-]timinginfo             Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
     H0("\nBitstream options:\n");
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H0("\nReconstructed video options (debugging):\n");
