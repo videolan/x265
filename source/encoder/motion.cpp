@@ -1048,7 +1048,9 @@ me_hex2:
 
     if (!bcost)
     {
-        /* subpel refine isn't going to improve this */
+        /* if there was zero residual at the clipped MVP, we can skip subpel
+         * refine, but we do need to include the mvcost in the returned cost */
+        bcost = mvcost(bmv);
     }
     else if (ref->isLowres)
     {
