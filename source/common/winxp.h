@@ -24,7 +24,11 @@
 #ifndef X265_WINXP_H
 #define X265_WINXP_H
 
-#if defined(_WIN32) && (_WIN32_WINNT < _WIN32_WINNT_VISTA)
+#if defined(_WIN32) && (_WIN32_WINNT < 0x0600) // _WIN32_WINNT_VISTA
+
+#ifdef _MSC_VER
+#include <intrin.h> // _InterlockedCompareExchange64
+#endif
 
 namespace x265
 {

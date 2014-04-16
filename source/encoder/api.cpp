@@ -25,6 +25,7 @@
 #include "param.h"
 #include "encoder.h"
 #include "frameencoder.h"
+#include "level.h"
 
 using namespace x265;
 
@@ -33,6 +34,9 @@ x265_encoder *x265_encoder_open(x265_param *param)
 {
     if (!param)
         return NULL;
+
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
+    x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
 
     x265_setup_primitives(param, param->cpuid);
 
@@ -46,8 +50,8 @@ x265_encoder *x265_encoder_open(x265_param *param)
     if (encoder)
     {
         // these may change params for auto-detect, etc
-        encoder->determineLevelAndProfile(param);
         encoder->configure(param);
+        determineLevel(*param, encoder->m_profile, encoder->m_level, encoder->m_levelTier);
 
         encoder->param = X265_MALLOC(x265_param, 1);
         if (!encoder->param)

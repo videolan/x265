@@ -52,7 +52,7 @@ public:
         m_pocCRA = 0;
         m_bRefreshPending = false;
         m_maxRefL0 = cfg->param->maxNumReferences;
-        m_maxRefL1 = 1;
+        m_maxRefL1 = cfg->param->bBPyramid ? 2 : 1;
         m_bOpenGOP = cfg->param->bOpenGOP;
     }
 

@@ -60,7 +60,7 @@ public:
     // access functions of ADI buffers
     static pixel* getAdiChromaBuf(int chromaId, int cuHeight, pixel* adiBuf)
     {
-        return adiBuf + (chromaId == 0 ? 0 : 2 * ADI_BUF_STRIDE * (cuHeight * 2 + 1));
+        return adiBuf + (chromaId == 1 ? 0 : 2 * ADI_BUF_STRIDE * (cuHeight * 2 + 1));
     }
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ public:
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    static void fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitSize, int numUnitsInCU, int totalUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
+    static void fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitWidth, int unitHeight, int aboveUnits, int leftUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
 
     /// constrained intra prediction
     static bool  isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT);
@@ -91,6 +91,12 @@ private:
     static int   isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
     static int   isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
     static int   isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+
+    static bool  isAboveLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT);
+    static int   isAboveAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    static int   isLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+    static int   isAboveRightAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    static int   isBelowLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
 };
 }
 //! \}

@@ -129,7 +129,6 @@ private:
     TComDataCU*   m_cuAboveRight;    ///< pointer of above-right CU
     TComDataCU*   m_cuAbove;         ///< pointer of above CU
     TComDataCU*   m_cuLeft;          ///< pointer of left CU
-    TComDataCU*   m_cuColocated[2];  ///< pointer of temporally colocated CU's for both directions
 
     // -------------------------------------------------------------------------------------------------------------------
     // coding tool information
@@ -304,6 +303,8 @@ public:
     void          setCbfSubParts(uint32_t cbfY, uint32_t cbfU, uint32_t cbfV, uint32_t absPartIdx, uint32_t depth);
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
+    void          setCbfPartRange (uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
+    void          setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for coding tool information
@@ -387,8 +388,6 @@ public:
 
     TComDataCU*   getCUAboveRight() { return m_cuAboveRight; }
 
-    TComDataCU*   getCUColocated(int picList) { return m_cuColocated[picList]; }
-
     TComDataCU*   getPULeft(uint32_t& lPartUnitIdx,
                             uint32_t  curPartUnitIdx,
                             bool      bEnforceSliceRestriction = true,
@@ -411,9 +410,7 @@ public:
 
     void          deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT);
     void          deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB);
-
     void          deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth);
-    void          deriveLeftBottomIdxAdi(uint32_t& partIdxLB, uint32_t partOffset, uint32_t partDepth);
 
     bool          hasEqualMotion(uint32_t absPartIdx, TComDataCU* candCU, uint32_t candAbsPartIdx);
     void          getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField* mFieldNeighbours, uint8_t* interDirNeighbours, int& numValidMergeCand);

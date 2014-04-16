@@ -20,7 +20,7 @@ VS_VERSION_INFO VERSIONINFO
         VALUE "FileVersion",      "@X265_VERSION@"
         VALUE "InternalName",     "x265"
         VALUE "LegalCopyright",   "Multicoreware: GPLv2 or commercial"
-        VALUE "OriginalFilename", "x265.dll"
+        VALUE "OriginalFilename", "libx265.dll"
         VALUE "ProductName",      "x265"
         VALUE "ProductVersion",   "@X265_VERSION@"
       END

@@ -172,7 +172,7 @@ public:
 protected:
 
     void determineSliceBounds();
-    int calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp);
+    int calcQpForCu(uint32_t cuAddr, double baseQp);
     Encoder*                 m_top;
     Encoder*                 m_cfg;
 
@@ -190,6 +190,7 @@ protected:
     int                      m_filterRowDelay;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
+    bool                     m_isReferenced;
 };
 }
 

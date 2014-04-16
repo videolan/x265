@@ -19,7 +19,7 @@ include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 13)
+set(X265_BUILD 16)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -101,7 +101,7 @@ endif(MSVC)
 if(INTEL_CXX AND UNIX)
     # treat icpc roughly like gcc
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Wshadow -no-vec)
+    add_definitions(-Wall -Wextra -Wshadow)
 elseif(CLANG)
     # treat clang roughly like gcc
     set(GCC 1)

@@ -130,7 +130,9 @@ if(ENABLE_ASSEMBLY)
 endif(ENABLE_ASSEMBLY)
 
 check_symbol_exists(strtok_r "string.h" HAVE_STRTOK_R)
-set_source_files_properties(param.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=${HAVE_STRTOK_R})
+if(HAVE_STRTOK_R)
+    set_source_files_properties(param.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=1)
+endif()
 
 if(GCC AND GCC_HAS_NO_NARROWING)
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)

@@ -20,7 +20,7 @@ value) the CLI will treat it as the input filename.  This effectively
 makes the :option:`--input` specifier optional for the input file. If
 there are two extra arguments, the second is treated as the output
 bitstream filename, making :option:`--output` also optional if the input
-filename was implied. This makes :command:`x265 in.yuv out.hevc` a valid
+filename was implied. This makes :command:`x265 in.y4m out.hevc` a valid
 command line. If there are more than two extra arguments, the CLI will
 consider this an error and abort.
 
@@ -92,7 +92,7 @@ Standalone Executable Options
 	severe performance implications. Default is an autodetected count
 	based on the number of CPU cores and whether WPP is enabled or not.
 
-.. option:: --log-level <int|string>
+.. option:: --log-level <integer|string>
 
 	Logging level. Debug level enables per-frame QP, metric, and bitrate
 	logging. If a CSV file is being generated, debug level makes the log
@@ -175,8 +175,10 @@ Input Options
 
 .. option:: --input-csp <integer|string>
 
-	YUV only: Source color space. Only i420 and i444 are supported at
-	this time.
+	YUV only: Source color space. Only i420, i422, and i444 are
+	supported at this time. The internal color space is always the
+	same as the source color space (libx265 does not support any color
+	space conversions).
 
 	0. i400
 	1. i420 **(default)**
@@ -619,15 +621,9 @@ Quality reporting metrics
 VUI (Video Usability Information) options
 =========================================
 
-By default x265 does not emit a VUI in the SPS, but if you specify any
-of the VUI fields (:option:`--sar`, :option:`--range`, etc) the VUI is
-implicitly enabled.
-
-.. option:: --vui, --no-vui
-
-	Enable video usability information with all fields in the SPS. This
-	is a debugging feature and will likely be removed in a later
-	release.  Default disabled
+x265 emits a VUI with only the timing info by default. If the SAR is
+specified (or read from a Y4M header) it is also included.  All other
+VUI fields must be manually specified.
 
 .. option:: --sar <integer|w:h>
 
@@ -740,14 +736,19 @@ implicitly enabled.
 	Specify chroma sample location for 4:2:0 inputs. Default undefined
 	Consult the HEVC specification for a description of these values.
 
-.. option:: --timinginfo, --no-timinginfo
+Bitstream options
+=================
 
-	Add timing information to the VUI. This is identical to the timing
-	info reported in the PPS header but is sometimes required.  Default
-	disabled
+.. option:: --aud, --no-aud
+
+	Emit an access unit delimiter NAL at the start of each slice access
+	unit. If option:`--repeat-headers` is not enabled (indicating the
+	user will be writing headers manually at the start of the stream)
+	the very first AUD will be skipped since it cannot be placed at the
+	start of the access unit, where it belongs. Default disabled
 
 Debugging options
-=======================================
+=================
 
 .. option:: --hash <integer>
 

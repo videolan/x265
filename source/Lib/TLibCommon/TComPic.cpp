@@ -78,8 +78,8 @@ TComPic::TComPic()
     m_ssimCnt = 0;
     m_frameTime = 0.0;
     m_elapsedCompressTime = 0.0;
-    m_qpaAq = 0;
-    m_qpaRc = 0;
+    m_qpaAq = NULL;
+    m_qpaRc = NULL;
     m_avgQpRc = 0;
     m_avgQpAq = 0;
     m_bChromaPlanesExtended = false;
