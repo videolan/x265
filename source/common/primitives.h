@@ -58,6 +58,17 @@ enum Chroma420Partitions
     NUM_CHROMA_PARTITIONS
 };
 
+enum Chroma422Partitions
+{
+    CHROMA422X_4x8,
+    CHROMA422_4x8,   CHROMA422_4x4,   CHROMA422_2x8,
+    CHROMA422_8x16,  CHROMA422_8x8,   CHROMA422_4x16,  CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
+    CHROMA422_16x32, CHROMA422_16x16, CHROMA422_8x32,  CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
+    CHROMA422_32x64, CHROMA422_32x32, CHROMA422_16x64, CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
+    NUM_CHROMA_PARTITIONS422
+};
+
+
 enum SquareBlocks   // Routines can be indexed using log2n(width)-2
 {
     BLOCK_4x4,
@@ -245,8 +256,8 @@ struct EncoderPrimitives
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
         filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
-        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
-        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
+        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS + 1];
+        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS + 1];
         copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
         pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];

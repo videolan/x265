@@ -201,7 +201,7 @@ void TComYuv::copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t
 
 void TComYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs)
 {
-    int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS : partitionFromSizes(lumaSize, lumaSize);
+    int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS422 : partitionFromSizes(lumaSize, lumaSize);
 
     assert(lumaSize != 4);
 
