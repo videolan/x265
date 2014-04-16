@@ -21,7 +21,8 @@ else()
     endif()
 endif()
 
-if (GCC)
+# we cannot assume 16-byte stack alignment on x86_32 even with GCC
+if(GCC AND X64)
     set(ASM_FLAGS "${ASM_FLAGS} -DHAVE_ALIGNED_STACK=1")
 else()
     set(ASM_FLAGS "${ASM_FLAGS} -DHAVE_ALIGNED_STACK=0")
