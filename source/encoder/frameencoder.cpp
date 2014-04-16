@@ -192,7 +192,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     /* headers for start of bitstream */
     OutputNALUnit nalu(NAL_UNIT_VPS);
     entropyCoder->setBitstream(&nalu.m_bitstream);
-    entropyCoder->encodeVPS(&m_cfg->m_vps);
+    entropyCoder->encodeVPS(&m_top->m_vps);
     writeRBSPTrailingBits(nalu.m_bitstream);
     CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
     nalunits[count]->init(nalu);
@@ -217,7 +217,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     if (m_cfg->m_activeParameterSetsSEIEnabled)
     {
         SEIActiveParameterSets sei;
-        sei.activeVPSId = m_cfg->m_vps.getVPSId();
+        sei.activeVPSId = m_top->m_vps.getVPSId();
         sei.m_fullRandomAccessFlag = false;
         sei.m_noParamSetUpdateFlag = false;
         sei.numSpsIdsMinus1 = 0;
