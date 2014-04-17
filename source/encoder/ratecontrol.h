@@ -82,7 +82,6 @@ struct RateControl
     x265_param* param;
     SliceType sliceType;      /* Current frame type */
     int ncu;                  /* number of CUs in a frame */
-    int keyFrameInterval;     /* TODO: need to initialize in init */
     int qp;                   /* updated qp for current frame */
 
     double frameDuration;     /* current frame duration in seconds */
