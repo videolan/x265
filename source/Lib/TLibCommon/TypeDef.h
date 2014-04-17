@@ -103,6 +103,7 @@ enum TextType
     TEXT_CHROMA   = 1,  ///< chroma (U+V)
     TEXT_CHROMA_U = 1,  ///< chroma U
     TEXT_CHROMA_V = 2,  ///< chroma V
+    MAX_NUM_COMPONENT = 3
 };
 
 /// index for SBAC based RD optimization

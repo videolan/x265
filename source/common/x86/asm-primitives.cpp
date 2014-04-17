@@ -1079,6 +1079,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_XOP)
     {
+        p.frame_init_lowres_core = x265_frame_init_lowres_core_xop;
+        SA8D_INTER_FROM_BLOCK(xop);
+        INIT7(satd, _xop);
+        HEVC_SATD(xop);
     }
     if (cpuMask & X265_CPU_AVX2)
     {

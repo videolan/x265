@@ -834,8 +834,14 @@ cglobal patial_butterfly_inverse_internal_pass2
 
     ret
 
-cglobal idct8, 3,7,8,0-16*mmsize
+cglobal idct8, 3,7,8 ;,0-16*mmsize
+    ; alignment stack to 64-bytes
     mov         r5, rsp
+    sub         rsp, 16*mmsize + gprsize
+    and         rsp, ~(64-1)
+    mov         [rsp + 16*mmsize], r5
+    mov         r5, rsp
+
     lea         r4, [tab_idct8_3]
     lea         r6, [tab_dct4]
 
@@ -865,5 +871,8 @@ cglobal idct8, 3,7,8,0-16*mmsize
     add         r5, 64
 
     call        patial_butterfly_inverse_internal_pass2
+
+    ; restore origin stack pointer
+    mov         rsp, [rsp + 16*mmsize]
 
     RET

@@ -298,11 +298,16 @@
     paddd   %1, %2
 %endif
 %if mmsize >= 16
+%if cpuflag(xop) && sizeof%1 == 16
+    vphadddq %1, %1
+%endif
     movhlps %2, %1
     paddd   %1, %2
 %endif
+%if notcpuflag(xop)
     PSHUFLW %2, %1, q0032
     paddd   %1, %2
+%endif
 %undef %1
 %undef %2
 %endmacro

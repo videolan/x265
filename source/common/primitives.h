@@ -58,6 +58,17 @@ enum Chroma420Partitions
     NUM_CHROMA_PARTITIONS
 };
 
+enum Chroma422Partitions
+{
+    CHROMA422X_4x8,
+    CHROMA422_4x8,   CHROMA422_4x4,   CHROMA422_2x8,
+    CHROMA422_8x16,  CHROMA422_8x8,   CHROMA422_4x16,  CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
+    CHROMA422_16x32, CHROMA422_16x16, CHROMA422_8x32,  CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
+    CHROMA422_32x64, CHROMA422_32x32, CHROMA422_16x64, CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
+    NUM_CHROMA_PARTITIONS422
+};
+
+
 enum SquareBlocks   // Routines can be indexed using log2n(width)-2
 {
     BLOCK_4x4,
@@ -125,7 +136,7 @@ typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
-typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
 typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);
 typedef void (*dequant_scaling_t)(const int32_t* src, const int32_t *dequantCoef, int32_t* dst, int num, int mcqp_miper, int shift);
@@ -245,8 +256,8 @@ struct EncoderPrimitives
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
         filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
-        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
-        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
+        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS + 1];
+        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS + 1];
         copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
         pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];

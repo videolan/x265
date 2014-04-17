@@ -23,7 +23,7 @@
 
 #include "threading.h"
 
-#if defined(_WIN32) && (_WIN32_WINNT <_WIN32_WINNT_VISTA)
+#if defined(_WIN32) && (_WIN32_WINNT < 0x0600) // _WIN32_WINNT_VISTA
 
 namespace x265
 {

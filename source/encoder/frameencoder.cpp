@@ -192,7 +192,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     /* headers for start of bitstream */
     OutputNALUnit nalu(NAL_UNIT_VPS);
     entropyCoder->setBitstream(&nalu.m_bitstream);
-    entropyCoder->encodeVPS(&m_cfg->m_vps);
+    entropyCoder->encodeVPS(&m_top->m_vps);
     writeRBSPTrailingBits(nalu.m_bitstream);
     CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
     nalunits[count]->init(nalu);
@@ -217,7 +217,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     if (m_cfg->m_activeParameterSetsSEIEnabled)
     {
         SEIActiveParameterSets sei;
-        sei.activeVPSId = m_cfg->m_vps.getVPSId();
+        sei.activeVPSId = m_top->m_vps.getVPSId();
         sei.m_fullRandomAccessFlag = false;
         sei.m_noParamSetUpdateFlag = false;
         sei.numSpsIdsMinus1 = 0;
@@ -369,10 +369,27 @@ void FrameEncoder::compressFrame()
     TComSlice*   slice             = m_pic->getSlice();
     int          chFmt             = slice->getSPS()->getChromaFormatIdc();
 
+    m_nalCount = 0;
+    entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
+
+    /* Emit access unit delimiter unless this is the first frame and the user is
+     * not repeating headers (since AUD is supposed to be the first NAL in the access
+     * unit) */
+    if (m_cfg->param->bEnableAccessUnitDelimiters && (m_pic->getPOC() || m_cfg->param->bRepeatHeaders))
+    {
+        OutputNALUnit nalu(NAL_UNIT_ACCESS_UNIT_DELIMITER);
+        entropyCoder->setBitstream(&nalu.m_bitstream);
+        entropyCoder->encodeAUD(slice);
+        writeRBSPTrailingBits(nalu.m_bitstream);
+        m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
+        if (m_nalList[m_nalCount])
+        {
+            m_nalList[m_nalCount]->init(nalu);
+            m_nalCount++;
+        }
+    }
     if (m_cfg->param->bRepeatHeaders && m_pic->m_lowres.bKeyframe)
-        m_nalCount = getStreamHeaders(m_nalList);
-    else
-        m_nalCount = 0;
+        m_nalCount += getStreamHeaders(m_nalList + m_nalCount);
 
     int qp = slice->getSliceQp();
     double lambda = 0;
@@ -1094,7 +1111,7 @@ void FrameEncoder::processRowEncoder(int row)
 
         if (m_cfg->param->rc.aqMode || bIsVbv)
         {
-            int qp = calcQpForCu(m_pic, cuAddr, cu->m_baseQp);
+            int qp = calcQpForCu(cuAddr, cu->m_baseQp);
             setLambda(qp, row);
             qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
             cu->setQPSubParts(char(qp), 0, 0);
@@ -1228,7 +1245,7 @@ void FrameEncoder::processRowEncoder(int row)
     curRow.m_busy = false;
 }
 
-int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
+int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
 {
     x265_emms();
     double qp = baseQp;
@@ -1243,13 +1260,16 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
-    int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
+    int maxBlockCols = (m_pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
+    int maxBlockRows = (m_pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
     int noOfBlocks = g_maxCUSize / 16;
-    int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
-    int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
+    int block_y = (cuAddr / m_pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
+    int block_x = (cuAddr * noOfBlocks) - block_y * m_pic->getPicSym()->getFrameWidthInCU();
 
+    /* Use cuTree offsets in m_pic->m_lowres.qpOffset if cuTree enabled and
+     * frame is referenced, else use AQ offsets */
     double *qpoffs = (m_isReferenced && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpOffset : m_pic->m_lowres.qpAqOffset;
+
     int cnt = 0, idx = 0;
     for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
     {

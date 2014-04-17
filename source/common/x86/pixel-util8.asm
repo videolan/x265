@@ -58,590 +58,452 @@ cextern pw_2000
 cextern pw_pixel_max
 
 ;-----------------------------------------------------------------------------
-; void calcrecon(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred)
+; void calcrecon(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal calcRecons4
 %if HIGH_BIT_DEPTH
 %if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,6
+cglobal calcRecons4, 5,8,4
+    %define t7b     r7b
 %else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,6
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
+cglobal calcRecons4, 5,7,4,0-1
+    %define t7b     byte [rsp]
 %endif
-
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
-%else
+    mov         r4d, r4m
     mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
-    add         t7, t7
-%endif
+    mov         r6d, r6m
+    add         r4d, r4d
+    add         r5d, r5d
+    add         r6d, r6d
 
     pxor        m4, m4
     mova        m5, [pw_pixel_max]
-    add         t5, t5
-    mov         t8d, 4/2
+    mov         t7b, 4/2
 .loop:
-    movh        m0, [t0]
-    movh        m1, [t0 + t5]
+    movh        m0, [r0]
+    movh        m1, [r0 + r4]
     punpcklqdq  m0, m1
-    movh        m2, [t1]
-    movh        m3, [t1 + t5]
+    movh        m2, [r1]
+    movh        m3, [r1 + r4]
     punpcklqdq  m2, m3
     paddw       m0, m2
     CLIPW       m0, m4, m5
 
-    ; store recon[] and recipred[]
-    movh        [t4], m0
-%if ARCH_X86_64 == 0
-    add         t4, t7
-    add         t4, t7
-    movhps      [t4], m0
-    add         t4, t7
-    add         t4, t7
-%else
-    movhps      [t4 + t7], m0
-    lea         t4, [t4 + t7 * 2]
-%endif
+    ; store recipred[]
+    movh        [r3], m0
+    movhps      [r3 + r6], m0
 
     ; store recqt[]
-    movh        [t3], m0
-    add         t3, t6
-    movhps      [t3], m0
-    add         t3, t6
+    movh        [r2], m0
+    movhps      [r2 + r5], m0
 
-    lea         t0, [t0 + t5 * 2]
-    lea         t1, [t1 + t5 * 2]
+    lea         r0, [r0 + r4 * 2]
+    lea         r1, [r1 + r4 * 2]
+    lea         r2, [r2 + r5 * 2]
+    lea         r3, [r3 + r6 * 2]
 
-    dec         t8d
+    dec         t7b
     jnz        .loop
-
+    RET
 %else          ;HIGH_BIT_DEPTH
-%if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,4
-%else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,4
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
-%endif
 
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
+%if ARCH_X86_64 == 1
+cglobal calcRecons4, 5,8,4
+    %define t7b     r7b
 %else
-    mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
+cglobal calcRecons4, 5,7,4,0-1
+    %define t7b     byte [rsp]
 %endif
+    mov         r4d, r4m
+    mov         r5d, r5m
+    mov         r6d, r6m
+    add         r5d, r5d
 
     pxor        m0, m0
-    mov         t8d, 4/2
+    mov         t7b, 4/2
 .loop:
-    movd        m1, [t0]
-    movd        m2, [t0 + t5]
+    movd        m1, [r0]
+    movd        m2, [r0 + r4]
     punpckldq   m1, m2
     punpcklbw   m1, m0
-    movh        m2, [t1]
-    movh        m3, [t1 + t5 * 2]
+    movh        m2, [r1]
+    movh        m3, [r1 + r4 * 2]
     punpcklqdq  m2, m3
     paddw       m1, m2
     packuswb    m1, m1
 
     ; store recon[] and recipred[]
-    movd        [t4], m1
-    add         t4, t7
+    movd        [r3], m1
     pshufd      m2, m1, 1
-    movd        [t4], m2
-    add         t4, t7
+    movd        [r3 + r6], m2
 
     ; store recqt[]
     punpcklbw   m1, m0
-    movlps      [t3], m1
-    add         t3, t6
-    movhps      [t3], m1
-    add         t3, t6
+    movlps      [r2], m1
+    movhps      [r2 + r5], m1
 
-    lea         t0, [t0 + t5 * 2]
-    lea         t1, [t1 + t5 * 4]
+    lea         r0, [r0 + r4 * 2]
+    lea         r1, [r1 + r4 * 4]
+    lea         r2, [r2 + r5 * 2]
+    lea         r3, [r3 + r6 * 2]
 
-    dec         t8d
+    dec         t7b
     jnz        .loop
-%endif          ;HIGH_BIT_DEPTH
     RET
+%endif          ;HIGH_BIT_DEPTH
 
 
 INIT_XMM sse2
-cglobal calcRecons8
-%if HIGH_BIT_DEPTH
 %if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,6
+cglobal calcRecons8, 5,8,4
+    %define t7b     r7b
 %else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,6
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
+cglobal calcRecons8, 5,7,4,0-1
+    %define t7b     byte [rsp]
 %endif
 
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
-%else
+%if HIGH_BIT_DEPTH
+    mov         r4d, r4m
     mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
-    add         t7, t7
-%endif
+    mov         r6d, r6m
+    add         r4d, r4d
+    add         r5d, r5d
+    add         r6d, r6d
 
     pxor        m4, m4
     mova        m5, [pw_pixel_max]
-    add         t5, t5
-    mov         t8d, 8/2
+    mov         t7b, 8/2
 .loop:
-    movu        m0, [t0]
-    movu        m1, [t0 + t5]
-    movu        m2, [t1]
-    movu        m3, [t1 + t5]
+    movu        m0, [r0]
+    movu        m1, [r0 + r4]
+    movu        m2, [r1]
+    movu        m3, [r1 + r4]
     paddw       m0, m2
     paddw       m1, m3
     CLIPW       m0, m4, m5
     CLIPW       m1, m4, m5
 
-    ; store recon[] and recipred[]
-    movu        [t4], m0
-%if ARCH_X86_64 == 0
-    add         t4, t7
-    add         t4, t7
-    movu        [t4], m1
-    add         t4, t7
-    add         t4, t7
-%else
-    movu        [t4 + t7], m1
-    lea         t4, [t4 + t7 * 2]
-%endif
+    ; store recipred[]
+    movu        [r3], m0
+    movu        [r3 + r6], m1
 
     ; store recqt[]
-    movu        [t3], m0
-    add         t3, t6
-    movu        [t3], m1
-    add         t3, t6
+    movu        [r2], m0
+    movu        [r2 + r5], m1
 
-    lea         t0, [t0 + t5 * 2]
-    lea         t1, [t1 + t5 * 2]
+    lea         r0, [r0 + r4 * 2]
+    lea         r1, [r1 + r4 * 2]
+    lea         r2, [r2 + r5 * 2]
+    lea         r3, [r3 + r6 * 2]
 
-    dec         t8d
+    dec         t7b
     jnz        .loop
+    RET
 %else          ;HIGH_BIT_DEPTH
 
-%if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,5
-%else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,5
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
-%endif
-
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
-%else
+    mov         r4d, r4m
     mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
-%endif
+    mov         r6d, r6m
+    add         r5d, r5d
 
     pxor        m0, m0
-    mov         t8d, 8/2
+    mov         t7b, 8/2
 .loop:
-    movh        m1, [t0]
-    movh        m2, [t0 + t5]
+    movh        m1, [r0]
+    movh        m2, [r0 + r4]
     punpcklbw   m1, m0
     punpcklbw   m2, m0
-    movu        m3, [t1]
-    movu        m4, [t1 + t5 * 2]
+    movu        m3, [r1]
+    movu        m4, [r1 + r4 * 2]
     paddw       m1, m3
     paddw       m2, m4
     packuswb    m1, m2
 
     ; store recon[] and recipred[]
-    movlps      [t4], m1
-%if ARCH_X86_64 == 0
-    add         t4, t7
-    movhps      [t4], m1
-    add         t4, t7
-%else
-    movhps      [t4 + t7], m1
-    lea         t4, [t4 + t7 * 2]
-%endif
+    movlps      [r3], m1
+    movhps      [r3 + r6], m1
 
     ; store recqt[]
     punpcklbw   m2, m1, m0
     punpckhbw   m1, m0
-    movu        [t3], m2
-    add         t3, t6
-    movu        [t3], m1
-    add         t3, t6
+    movu        [r2], m2
+    movu        [r2 + r5], m1
 
-    lea         t0, [t0 + t5 * 2]
-    lea         t1, [t1 + t5 * 4]
+    lea         r0, [r0 + r4 * 2]
+    lea         r1, [r1 + r4 * 4]
+    lea         r2, [r2 + r5 * 2]
+    lea         r3, [r3 + r6 * 2]
 
-    dec         t8d
+    dec         t7b
     jnz        .loop
-%endif          ;HIGH_BIT_DEPTH
     RET
+%endif          ;HIGH_BIT_DEPTH
 
 
 
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
-cglobal calcRecons16
 %if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,6
+cglobal calcRecons16, 5,8,4
+    %define t7b     r7b
 %else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,6
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
+cglobal calcRecons16, 5,7,4,0-1
+    %define t7b     byte [rsp]
 %endif
 
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
-%else
+    mov         r4d, r4m
     mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
-    add         t7, t7
-%endif
+    mov         r6d, r6m
+    add         r4d, r4d
+    add         r5d, r5d
+    add         r6d, r6d
 
     pxor        m4, m4
     mova        m5, [pw_pixel_max]
-    add         t5, t5
-    mov         t8d, 16/2
+    mov         t7b, 16/2
 .loop:
-    movu        m0, [t0]
-    movu        m1, [t0 + 16]
-    movu        m2, [t1]
-    movu        m3, [t1 + 16]
+    movu        m0, [r0]
+    movu        m1, [r0 + 16]
+    movu        m2, [r1]
+    movu        m3, [r1 + 16]
+    paddw       m0, m2
+    paddw       m1, m3
+    CLIPW       m0, m4, m5
+    CLIPW       m1, m4, m5
+
+    ; store recipred[]
+    movu        [r3], m0
+    movu        [r3 + 16], m1
+
+    ; store recqt[]
+    movu        [r2], m0
+    movu        [r2 + 16], m1
+
+    movu        m0, [r0 + r4]
+    movu        m1, [r0 + r4 + 16]
+    movu        m2, [r1 + r4]
+    movu        m3, [r1 + r4 + 16]
     paddw       m0, m2
     paddw       m1, m3
     CLIPW       m0, m4, m5
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t4], m0
-    movu        [t4 + 16], m1
-%if ARCH_X86_64 == 0
-    add         t4, t7
-    add         t4, t7
-%endif
+    movu        [r3 + r6], m0
+    movu        [r3 + r6 + 16], m1
 
     ; store recqt[]
-    movu        [t3], m0
-    movu        [t3 + 16], m1
-    add         t3, t6
+    movu        [r2 + r5], m0
+    movu        [r2 + r5 + 16], m1
 
-    movu        m0, [t0 + t5]
-    movu        m1, [t0 + t5 + 16]
-    movu        m2, [t1 + t5]
-    movu        m3, [t1 + t5 + 16]
-    paddw       m0, m2
-    paddw       m1, m3
-    CLIPW       m0, m4, m5
-    CLIPW       m1, m4, m5
+    lea         r0, [r0 + r4 * 2]
+    lea         r1, [r1 + r4 * 2]
+    lea         r2, [r2 + r5 * 2]
+    lea         r3, [r3 + r6 * 2]
 
-    ; store recon[] and recipred[]
-%if ARCH_X86_64 == 0
-    movu        [t4], m0
-    movu        [t4 + 16], m1
-    add         t4, t7
-    add         t4, t7
-%else
-    movu        [t4 + t7], m0
-    movu        [t4 + t7 + 16], m1
-    lea         t4, [t4 + t7 * 2]
-%endif
-
-    ; store recqt[]
-    movu        [t3], m0
-    movu        [t3 + 16], m1
-    add         t3, t6
-
-    lea         t0, [t0 + t5 * 2]
-    lea         t1, [t1 + t5 * 2]
-
-    dec         t8d
+    dec         t7b
     jnz        .loop
+    RET
 %else          ;HIGH_BIT_DEPTH
+
 INIT_XMM sse4
-cglobal calcRecons16
 %if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,3
+cglobal calcRecons16, 5,8,4
+    %define t7b     r7b
 %else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,3
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
+cglobal calcRecons16, 5,7,4,0-1
+    %define t7b     byte [rsp]
 %endif
 
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
-%else
+    mov         r4d, r4m
     mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
-%endif
+    mov         r6d, r6m
+    add         r5d, r5d
 
     pxor        m0, m0
-    mov         t8d, 16
+    mov         t7b, 16
 .loop:
-    movu        m2, [t0]
+    movu        m2, [r0]
     pmovzxbw    m1, m2
     punpckhbw   m2, m0
-    paddw       m1, [t1]
-    paddw       m2, [t1 + 16]
+    paddw       m1, [r1]
+    paddw       m2, [r1 + 16]
     packuswb    m1, m2
 
     ; store recon[] and recipred[]
-    movu        [t4], m1
+    movu        [r3], m1
 
     ; store recqt[]
     pmovzxbw    m2, m1
     punpckhbw   m1, m0
-    movu        [t3], m2
-    movu        [t3 + 16], m1
+    movu        [r2], m2
+    movu        [r2 + 16], m1
 
-    add         t3, t6
-    add         t4, t7
-    add         t0, t5
-    lea         t1, [t1 + t5 * 2]
+    add         r2, r5
+    add         r3, r6
+    add         r0, r4
+    lea         r1, [r1 + r4 * 2]
 
-    dec         t8d
+    dec         t7b
     jnz        .loop
-%endif          ;HIGH_BIT_DEPTH
     RET
+%endif          ;HIGH_BIT_DEPTH
 
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
-cglobal calcRecons32
 %if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,6
+cglobal calcRecons32, 5,8,4
+    %define t7b     r7b
 %else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,6
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
+cglobal calcRecons32, 5,7,4,0-1
+    %define t7b     byte [rsp]
 %endif
 
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
-%else
+    mov         r4d, r4m
     mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
-    add         t7, t7
-%endif
+    mov         r6d, r6m
+    add         r4d, r4d
+    add         r5d, r5d
+    add         r6d, r6d
 
     pxor        m4, m4
     mova        m5, [pw_pixel_max]
-    add         t5, t5
-    mov         t8d, 32/2
+    mov         t7b, 32/2
 .loop:
 
-    movu        m0, [t0]
-    movu        m1, [t0 + 16]
-    movu        m2, [t1]
-    movu        m3, [t1 + 16]
+    movu        m0, [r0]
+    movu        m1, [r0 + 16]
+    movu        m2, [r1]
+    movu        m3, [r1 + 16]
+    paddw       m0, m2
+    paddw       m1, m3
+    CLIPW       m0, m4, m5
+    CLIPW       m1, m4, m5
+
+    ; store recipred[]
+    movu        [r3], m0
+    movu        [r3 + 16], m1
+
+    ; store recqt[]
+    movu        [r2], m0
+    movu        [r2 + 16], m1
+
+    movu        m0, [r0 + 32]
+    movu        m1, [r0 + 48]
+    movu        m2, [r1 + 32]
+    movu        m3, [r1 + 48]
     paddw       m0, m2
     paddw       m1, m3
     CLIPW       m0, m4, m5
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t4], m0
-    movu        [t4 + 16], m1
+    movu        [r3 + 32], m0
+    movu        [r3 + 48], m1
 
     ; store recqt[]
-    movu        [t3], m0
-    movu        [t3 + 16], m1
+    movu        [r2 + 32], m0
+    movu        [r2 + 48], m1
+    add         r2, r5
 
-    movu        m0, [t0 + 32]
-    movu        m1, [t0 + 48]
-    movu        m2, [t1 + 32]
-    movu        m3, [t1 + 48]
+    movu        m0, [r0 + r4]
+    movu        m1, [r0 + r4 + 16]
+    movu        m2, [r1 + r4]
+    movu        m3, [r1 + r4 + 16]
     paddw       m0, m2
     paddw       m1, m3
     CLIPW       m0, m4, m5
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-    movu        [t4 + 32], m0
-    movu        [t4 + 48], m1
-%if ARCH_X86_64 == 0
-    add         t4, t7
-    add         t4, t7
-%endif
+    movu        [r3 + r6], m0
+    movu        [r3 + r6 + 16], m1
 
     ; store recqt[]
-    movu        [t3 + 32], m0
-    movu        [t3 + 48], m1
-    add         t3, t6
+    movu        [r2], m0
+    movu        [r2 + 16], m1
 
-    movu        m0, [t0 + t5]
-    movu        m1, [t0 + t5 + 16]
-    movu        m2, [t1 + t5]
-    movu        m3, [t1 + t5 + 16]
+    movu        m0, [r0 + r4 + 32]
+    movu        m1, [r0 + r4 + 48]
+    movu        m2, [r1 + r4 + 32]
+    movu        m3, [r1 + r4 + 48]
     paddw       m0, m2
     paddw       m1, m3
     CLIPW       m0, m4, m5
     CLIPW       m1, m4, m5
 
     ; store recon[] and recipred[]
-%if ARCH_X86_64 == 0
-    movu        [t4], m0
-    movu        [t4 + 16], m1
-%else
-    movu        [t4 + t7], m0
-    movu        [t4 + t7 + 16], m1
-%endif
+    movu        [r3 + r6 + 32], m0
+    movu        [r3 + r6 + 48], m1
+    lea         r3, [r3 + r6 * 2]
 
     ; store recqt[]
-    movu        [t3], m0
-    movu        [t3 + 16], m1
+    movu        [r2 + 32], m0
+    movu        [r2 + 48], m1
+    add         r2, r5
 
-    movu        m0, [t0 + t5 + 32]
-    movu        m1, [t0 + t5 + 48]
-    movu        m2, [t1 + t5 + 32]
-    movu        m3, [t1 + t5 + 48]
-    paddw       m0, m2
-    paddw       m1, m3
-    CLIPW       m0, m4, m5
-    CLIPW       m1, m4, m5
+    lea         r0, [r0 + r4 * 2]
+    lea         r1, [r1 + r4 * 2]
 
-    ; store recon[] and recipred[]
-%if ARCH_X86_64 == 0
-    movu        [t4 + 32], m0
-    movu        [t4 + 48], m1
-    add         t4, t7
-    add         t4, t7
-%else
-    movu        [t4 + t7 + 32], m0
-    movu        [t4 + t7 + 48], m1
-    lea         t4, [t4 + t7 * 2]
-%endif
-
-    ; store recqt[]
-    movu        [t3 + 32], m0
-    movu        [t3 + 48], m1
-    add         t3, t6
-
-    lea         t0, [t0 + t5 * 2]
-    lea         t1, [t1 + t5 * 2]
-
-    dec         t8d
+    dec         t7b
     jnz        .loop
+    RET
 %else          ;HIGH_BIT_DEPTH
 INIT_XMM sse4
-cglobal calcRecons32
 %if ARCH_X86_64 == 1
-    DECLARE_REG_TMP 0,1,2,3,4,5,6,7,8
-    PROLOGUE 6,9,5
+cglobal calcRecons32, 5,8,4
+    %define t7b     r7b
 %else
-    DECLARE_REG_TMP 0,1,2,3,4,5
-    PROLOGUE 6,7,5
-    %define t6      r6m
-    %define t6d     r6d
-    %define t7      r7m
-    %define t8d     r6d
+cglobal calcRecons32, 5,7,4,0-1
+    %define t7b     byte [rsp]
 %endif
 
-    mov         t6d, r6m
-%if ARCH_X86_64 == 0
-    add         t6d, t6d
-    mov         r6m, t6d
-%else
+    mov         r4d, r4m
     mov         r5d, r5m
-    mov         r7d, r7m
-    add         t6d, t6d
-%endif
+    mov         r6d, r6m
+    add         r5d, r5d
 
     pxor        m0, m0
-    mov         t8d, 32
+    mov         t7b, 32
 .loop:
-    movu        m2, [t0]
-    movu        m4, [t0 + 16]
+    movu        m2, [r0]
+    movu        m4, [r0 + 16]
     pmovzxbw    m1, m2
     punpckhbw   m2, m0
     pmovzxbw    m3, m4
     punpckhbw   m4, m0
 
-    paddw       m1, [t1 + 0 * 16]
-    paddw       m2, [t1 + 1 * 16]
+    paddw       m1, [r1 + 0 * 16]
+    paddw       m2, [r1 + 1 * 16]
     packuswb    m1, m2
 
-    paddw       m3, [t1 + 2 * 16]
-    paddw       m4, [t1 + 3 * 16]
+    paddw       m3, [r1 + 2 * 16]
+    paddw       m4, [r1 + 3 * 16]
     packuswb    m3, m4
 
     ; store recon[] and recipred[]
-    movu        [t4], m1
-    movu        [t4 + 16], m3
+    movu        [r3], m1
+    movu        [r3 + 16], m3
 
     ; store recqt[]
     pmovzxbw    m2, m1
     punpckhbw   m1, m0
-    movu        [t3 + 0 * 16], m2
-    movu        [t3 + 1 * 16], m1
+    movu        [r2 + 0 * 16], m2
+    movu        [r2 + 1 * 16], m1
     pmovzxbw    m4, m3
     punpckhbw   m3, m0
-    movu        [t3 + 2 * 16], m4
-    movu        [t3 + 3 * 16], m3
+    movu        [r2 + 2 * 16], m4
+    movu        [r2 + 3 * 16], m3
 
-    add         t3, t6
-    add         t4, t7
-    add         t0, t5
-    lea         t1, [t1 + t5 * 2]
+    add         r2, r5
+    add         r3, r6
+    add         r0, r4
+    lea         r1, [r1 + r4 * 2]
 
-    dec         t8d
+    dec         t7b
     jnz        .loop
-%endif          ;HIGH_BIT_DEPTH
     RET
+%endif          ;HIGH_BIT_DEPTH
 
 
 ;-----------------------------------------------------------------------------
