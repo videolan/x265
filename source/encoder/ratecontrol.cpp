@@ -331,9 +331,16 @@ RateControl::RateControl(Encoder * _cfg)
 
     if (param->rc.rateControlMode == X265_RC_CQP)
     {
-        qpConstant[P_SLICE] = qp;
-        qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp - ipOffset + 0.5));
-        qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp + pbOffset + 0.5));
+        if (qp)
+        {
+            qpConstant[P_SLICE] = qp;
+            qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp - ipOffset + 0.5));
+            qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(qp + pbOffset + 0.5));
+        }
+        else
+        {
+            qpConstant[P_SLICE] = qpConstant[I_SLICE] = qpConstant[B_SLICE] = 0;
+        }
     }
 
     /* qstep - value set as encoder specific */
