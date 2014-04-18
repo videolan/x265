@@ -2297,18 +2297,16 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         bits--;
                 }
 
-                cu->fillMvpCand(partIdx, partAddr, l, ref, &amvpInfo[l][ref]);
+                MV mvc[(MD_ABOVE_LEFT + 1) * 2];
+                int numMvc = cu->fillMvpCand(partIdx, partAddr, l, ref, &amvpInfo[l][ref], mvc);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
-                MV mvc[AMVP_MAX_NUM_CANDS];
                 uint32_t bestCost = MAX_INT;
                 int mvpIdx = 0;
-                int numMvc = 0;
+                
                 for (int i = 0; i < amvpInfo[l][ref].m_num; i++)
                 {
                     MV mvCand = amvpInfo[l][ref].m_mvCand[i];
-                    if (mvCand.notZero())
-                        mvc[numMvc++] = mvCand;
 
                     // TODO: skip mvCand if Y is > merange and -FN>1
                     cu->clipMv(mvCand);

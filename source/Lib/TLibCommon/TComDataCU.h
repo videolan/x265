@@ -148,16 +148,16 @@ private:
 protected:
 
     /// add possible motion vector predictor candidates
-    bool          xAddMVPCand(AMVPInfo* info, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir);
+    bool xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir);
 
-    bool          xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir);
+    bool xAddMVPCandOrder(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir);
 
-    void          deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB);
+    void deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB);
 
-    bool          xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx);
+    bool xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx);
 
     /// compute scaling factor from POC difference
-    int           xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC);
+    int  xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC);
 
     void xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter);
 
@@ -365,7 +365,7 @@ public:
 
     void          getMvField(TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& rcMvField);
 
-    void          fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info);
+    int           fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info, MV *mvc);
     bool          isDiffMER(int xN, int yN, int xP, int yP);
     void          getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, int& nPSH);
     void          setMVPIdx(int picList, uint32_t idx, int mvpIdx) { m_mvpIdx[picList][idx] = (uint8_t)mvpIdx; }

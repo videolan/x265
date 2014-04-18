@@ -2339,28 +2339,23 @@ void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, 
  * \param picList
  * \param refIdx
  * \param info
+ * \param mvc
  */
-void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info)
+int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info, MV *mvc)
 {
-    bool bAddedSmvp = false;
-
     info->m_num = 0;
     if (refIdx < 0)
-    {
-        return;
-    }
+        return 0;
 
     //-- Get Spatial MV
     uint32_t partIdxLT, partIdxRT, partIdxLB;
-    bool bAdded = false;
 
     deriveLeftRightTopIdx(partIdx, partIdxLT, partIdxRT);
     deriveLeftBottomIdx(partIdx, partIdxLB);
 
-    TComDataCU* tmpCU = NULL;
     uint32_t idx;
-    tmpCU = getPUBelowLeft(idx, partIdxLB);
-    bAddedSmvp = (tmpCU != NULL) && (tmpCU->getPredictionMode(idx) != MODE_INTRA);
+    TComDataCU* tmpCU = getPUBelowLeft(idx, partIdxLB);
+    bool bAddedSmvp = (tmpCU != NULL) && (tmpCU->getPredictionMode(idx) != MODE_INTRA);
 
     if (!bAddedSmvp)
     {
@@ -2368,45 +2363,61 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         bAddedSmvp = (tmpCU != NULL) && (tmpCU->getPredictionMode(idx) != MODE_INTRA);
     }
 
+    MV mv[MD_ABOVE_LEFT + 1];
+    MV mvOrder[MD_ABOVE_LEFT + 1];
+    bool valid[MD_ABOVE_LEFT + 1];
+    bool validOrder[MD_ABOVE_LEFT + 1];
+
+    valid[MD_BELOW_LEFT]  = xAddMVPCand(mv[MD_BELOW_LEFT], picList, refIdx, partIdxLB, MD_BELOW_LEFT);
+    valid[MD_LEFT]        = xAddMVPCand(mv[MD_LEFT], picList, refIdx, partIdxLB, MD_LEFT);
+    valid[MD_ABOVE_RIGHT] = xAddMVPCand(mv[MD_ABOVE_RIGHT], picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
+    valid[MD_ABOVE]       = xAddMVPCand(mv[MD_ABOVE], picList, refIdx, partIdxRT, MD_ABOVE);
+    valid[MD_ABOVE_LEFT]  = xAddMVPCand(mv[MD_ABOVE_LEFT], picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
+
+    validOrder[MD_BELOW_LEFT]  = xAddMVPCandOrder(mvOrder[MD_BELOW_LEFT], picList, refIdx, partIdxLB, MD_BELOW_LEFT);
+    validOrder[MD_LEFT]        = xAddMVPCandOrder(mvOrder[MD_LEFT], picList, refIdx, partIdxLB, MD_LEFT);
+    validOrder[MD_ABOVE_RIGHT] = xAddMVPCandOrder(mvOrder[MD_ABOVE_RIGHT], picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
+    validOrder[MD_ABOVE]       = xAddMVPCandOrder(mvOrder[MD_ABOVE], picList, refIdx, partIdxRT, MD_ABOVE);
+    validOrder[MD_ABOVE_LEFT]  = xAddMVPCandOrder(mvOrder[MD_ABOVE_LEFT], picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
+
     // Left predictor search
-    bAdded = xAddMVPCand(info, picList, refIdx, partIdxLB, MD_BELOW_LEFT);
-    if (!bAdded)
-    {
-        bAdded = xAddMVPCand(info, picList, refIdx, partIdxLB, MD_LEFT);
-    }
+    if (valid[MD_BELOW_LEFT])
+        info->m_mvCand[info->m_num++] = mv[MD_BELOW_LEFT];
+    else if (valid[MD_LEFT])
+        info->m_mvCand[info->m_num++] = mv[MD_LEFT];
+    else if (validOrder[MD_BELOW_LEFT])
+        info->m_mvCand[info->m_num++] = mvOrder[MD_BELOW_LEFT];
+    else if (validOrder[MD_LEFT])
+        info->m_mvCand[info->m_num++] = mvOrder[MD_LEFT];
 
-    if (!bAdded)
-    {
-        bAdded = xAddMVPCandOrder(info, picList, refIdx, partIdxLB, MD_BELOW_LEFT);
-        if (!bAdded)
-        {
-            xAddMVPCandOrder(info, picList, refIdx, partIdxLB, MD_LEFT);
-        }
-    }
     // Above predictor search
-    bAdded = xAddMVPCand(info, picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
-
-    if (!bAdded)
-    {
-        bAdded = xAddMVPCand(info, picList, refIdx, partIdxRT, MD_ABOVE);
-    }
-
-    if (!bAdded)
-    {
-        xAddMVPCand(info, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
-    }
+    if (valid[MD_ABOVE_RIGHT])
+        info->m_mvCand[info->m_num++] = mv[MD_ABOVE_RIGHT];
+    else if (valid[MD_ABOVE])
+        info->m_mvCand[info->m_num++] = mv[MD_ABOVE];
+    else if (valid[MD_ABOVE_LEFT])
+        info->m_mvCand[info->m_num++] = mv[MD_ABOVE_LEFT];
 
     if (!bAddedSmvp)
     {
-        bAdded = xAddMVPCandOrder(info, picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
-        if (!bAdded)
-        {
-            bAdded = xAddMVPCandOrder(info, picList, refIdx, partIdxRT, MD_ABOVE);
-        }
+        if (validOrder[MD_ABOVE_RIGHT])
+            info->m_mvCand[info->m_num++] = mvOrder[MD_ABOVE_RIGHT];
+        else if (validOrder[MD_ABOVE])
+            info->m_mvCand[info->m_num++] = mvOrder[MD_ABOVE];
+        else if (validOrder[MD_ABOVE_LEFT])
+            info->m_mvCand[info->m_num++] = mvOrder[MD_ABOVE_LEFT];
+    }
 
-        if (!bAdded)
+    int numMvc = 0;
+    for (int dir = MD_LEFT ; dir <= MD_ABOVE_LEFT; dir++)
+    {
+        if (valid[dir] && mv[dir].notZero())
         {
-            xAddMVPCandOrder(info, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
+            mvc[numMvc++] = mv[dir];
+        }
+        if (validOrder[dir] && mvOrder[dir].notZero())
+        {
+            mvc[numMvc++] = mvOrder[dir];
         }
     }
 
@@ -2418,7 +2429,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         }
         else
         {
-            return;
+            return numMvc;
         }
     }
 
@@ -2426,7 +2437,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
     {
         // Get Temporal Motion Predictor
         int refIdxCol = refIdx;
-        MV   colmv;
+        MV  colmv;
         uint32_t partIdxRB;
         uint32_t absPartIdx;
         uint32_t absPartAddr;
@@ -2446,13 +2457,13 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         else
         {
             uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
-            if ((absPartIdx % numPartInCUSize < numPartInCUSize - 1) &&        // is not at the last column of LCU
-                (absPartIdx / numPartInCUSize < numPartInCUSize - 1)) // is not at the last row    of LCU
+            if ((absPartIdx % numPartInCUSize < numPartInCUSize - 1) && // is not at the last column of LCU
+                (absPartIdx / numPartInCUSize < numPartInCUSize - 1))   // is not at the last row    of LCU
             {
                 absPartAddr = g_rasterToZscan[absPartIdx + numPartInCUSize + 1];
                 lcuIdx = getAddr();
             }
-            else if (absPartIdx % numPartInCUSize < numPartInCUSize - 1)       // is not at the last column of LCU But is last row of LCU
+            else if (absPartIdx % numPartInCUSize < numPartInCUSize - 1) // is not at the last column of LCU But is last row of LCU
             {
                 absPartAddr = g_rasterToZscan[(absPartIdx + numPartInCUSize + 1) % m_pic->getNumPartInCU()];
             }
@@ -2461,7 +2472,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
                 absPartAddr = g_rasterToZscan[absPartIdx + 1];
                 lcuIdx = getAddr() + 1;
             }
-            else //is the right bottom corner of LCU
+            else // is the right bottom corner of LCU
             {
                 absPartAddr = 0;
             }
@@ -2469,6 +2480,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         if (lcuIdx >= 0 && xGetColMVP(picList, lcuIdx, absPartAddr, colmv, refIdxCol))
         {
             info->m_mvCand[info->m_num++] = colmv;
+            mvc[numMvc++] = colmv;
         }
         else
         {
@@ -2478,6 +2490,7 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
             if (xGetColMVP(picList, curLCUIdx, partIdxCenter, colmv, refIdxCol))
             {
                 info->m_mvCand[info->m_num++] = colmv;
+                mvc[numMvc++] = colmv;
             }
         }
         //----  co-located RightBottom Temporal Predictor  ---//
@@ -2488,6 +2501,8 @@ void TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, i
         info->m_mvCand[info->m_num] = 0;
         info->m_num++;
     }
+
+    return numMvc;
 }
 
 bool TComDataCU::isBipredRestriction()
@@ -2535,11 +2550,7 @@ bool TComDataCU::isSkipped(uint32_t partIdx)
 // Protected member functions
 // ====================================================================================================================
 
-#if _MSC_VER
-#pragma warning(disable: 4701) // potentially uninitialized local variables
-#endif
-
-bool TComDataCU::xAddMVPCand(AMVPInfo* info, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir)
+bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir)
 {
     TComDataCU* tmpCU = NULL;
     uint32_t idx = 0;
@@ -2547,45 +2558,30 @@ bool TComDataCU::xAddMVPCand(AMVPInfo* info, int picList, int refIdx, uint32_t p
     switch (dir)
     {
     case MD_LEFT:
-    {
         tmpCU = getPULeft(idx, partUnitIdx);
         break;
-    }
     case MD_ABOVE:
-    {
         tmpCU = getPUAbove(idx, partUnitIdx);
         break;
-    }
     case MD_ABOVE_RIGHT:
-    {
         tmpCU = getPUAboveRight(idx, partUnitIdx);
         break;
-    }
     case MD_BELOW_LEFT:
-    {
         tmpCU = getPUBelowLeft(idx, partUnitIdx);
         break;
-    }
     case MD_ABOVE_LEFT:
-    {
         tmpCU = getPUAboveLeft(idx, partUnitIdx);
         break;
-    }
     default:
-    {
-        break;
-    }
-    }
-
-    if (tmpCU == NULL)
-    {
         return false;
     }
 
+    if (!tmpCU)
+        return false;
+
     if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0 && m_slice->getRefPic(picList, refIdx)->getPOC() == tmpCU->getSlice()->getRefPOC(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx)))
     {
-        MV mvp = tmpCU->getCUMvField(picList)->getMv(idx);
-        info->m_mvCand[info->m_num++] = mvp;
+        mvp = tmpCU->getCUMvField(picList)->getMv(idx);
         return true;
     }
 
@@ -2607,8 +2603,7 @@ bool TComDataCU::xAddMVPCand(AMVPInfo* info, int picList, int refIdx, uint32_t p
         neibRefPOC = tmpCU->getSlice()->getRefPOC(refPicList2nd, tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx));
         if (neibRefPOC == curRefPOC) // Same Reference Frame But Diff List//
         {
-            MV mvp = tmpCU->getCUMvField(refPicList2nd)->getMv(idx);
-            info->m_mvCand[info->m_num++] = mvp;
+            mvp = tmpCU->getCUMvField(refPicList2nd)->getMv(idx);
             return true;
         }
     }
@@ -2623,7 +2618,7 @@ bool TComDataCU::xAddMVPCand(AMVPInfo* info, int picList, int refIdx, uint32_t p
  * \param dir
  * \returns bool
  */
-bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir)
+bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir)
 {
     TComDataCU* tmpCU = NULL;
     uint32_t idx = 0;
@@ -2631,40 +2626,26 @@ bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, uint3
     switch (dir)
     {
     case MD_LEFT:
-    {
         tmpCU = getPULeft(idx, partUnitIdx);
         break;
-    }
     case MD_ABOVE:
-    {
         tmpCU = getPUAbove(idx, partUnitIdx);
         break;
-    }
     case MD_ABOVE_RIGHT:
-    {
         tmpCU = getPUAboveRight(idx, partUnitIdx);
         break;
-    }
     case MD_BELOW_LEFT:
-    {
         tmpCU = getPUBelowLeft(idx, partUnitIdx);
         break;
-    }
     case MD_ABOVE_LEFT:
-    {
         tmpCU = getPUAboveLeft(idx, partUnitIdx);
         break;
-    }
     default:
-    {
-        break;
-    }
-    }
-
-    if (tmpCU == NULL)
-    {
         return false;
     }
+
+    if (!tmpCU)
+        return false;
 
     int refPicList2nd = REF_PIC_LIST_0;
     if (picList == REF_PIC_LIST_0)
@@ -2689,7 +2670,6 @@ bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, uint3
     {
         neibRefPOC = tmpCU->getSlice()->getRefPOC(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx));
         MV mvp = tmpCU->getCUMvField(picList)->getMv(idx);
-        MV outMV;
 
         bIsNeibRefLongTerm = tmpCU->getSlice()->getRefPic(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx))->getIsLongTerm();
         if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
@@ -2710,7 +2690,6 @@ bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, uint3
                     outMV = scaleMv(mvp, iScale);
                 }
             }
-            info->m_mvCand[info->m_num++] = outMV;
             return true;
         }
     }
@@ -2720,7 +2699,6 @@ bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, uint3
     {
         neibRefPOC = tmpCU->getSlice()->getRefPOC(refPicList2nd, tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx));
         MV mvp = tmpCU->getCUMvField(refPicList2nd)->getMv(idx);
-        MV outMV;
 
         bIsNeibRefLongTerm = tmpCU->getSlice()->getRefPic(refPicList2nd, tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx))->getIsLongTerm();
         if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
@@ -2741,7 +2719,6 @@ bool TComDataCU::xAddMVPCandOrder(AMVPInfo* info, int picList, int refIdx, uint3
                     outMV = scaleMv(mvp, iScale);
                 }
             }
-            info->m_mvCand[info->m_num++] = outMV;
             return true;
         }
     }
