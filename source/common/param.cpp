@@ -1103,7 +1103,6 @@ void x265_print_params(x265_param *param)
         else
             fprintf(stderr, "tskip ");
     }
-    TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
     fprintf(stderr, "\n");
     fflush(stderr);
 }
