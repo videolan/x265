@@ -2988,9 +2988,9 @@ BLOCKCOPY_SS_W64_H4 64, 64
 ; void cvt32to16_shr(short *dst, int *src, intptr_t stride, int shift, int size)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal cvt32to16_shr, 5, 7, 1, dst, src, stride
-%define rnd     m7
-%define shift   m6
+cglobal cvt32to16_shr, 5, 7, 3, dst, src, stride
+%define rnd     m2
+%define shift   m1
 
     ; make shift
     mov         r5d, r3m
