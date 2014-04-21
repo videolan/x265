@@ -512,8 +512,11 @@ Quality, rate control and rate distortion options
 	Specify base quantization parameter for Constant QP rate control.
 	Using this option enables Constant QP rate control. The specified QP
 	is assigned to P slices. I and B slices are given QPs relative to P
-	slices using param->rc.ipFactor and param->rc.pbFactor.  Default 0
-	(CRF)
+	slices using param->rc.ipFactor and param->rc.pbFactor unless QP 0
+	is specified, in which case QP 0 is used for all slice types.  Note
+	that QP 0 does not cause lossless encoding, it only disables
+	quantization. A truly lossless option may be added in a later
+	release. Default disabled (CRF)
 
 	**Range of values:** an integer from 0 to 51
 
