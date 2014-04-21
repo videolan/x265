@@ -637,7 +637,7 @@ VUI fields must be manually specified.
 	Sample Aspect Ratio, the ratio of width to height of an individual
 	sample (pixel). The user may supply the width and height explicitly
 	or specify an integer from the predefined list of aspect ratios
-	defined in the HEVC specification.  Default undefined
+	defined in the HEVC specification.  Default undefined (not signaled)
 
 	1. 1:1 (square)
 	2. 12:11
@@ -662,17 +662,17 @@ VUI fields must be manually specified.
 	information because it was added to achieve certain resolution or
 	aspect ratio. The decoder may be directed to crop away this region
 	before displaying the images via the :option:`--overscan` option.
-	Default undefined
+	Default undefined (not signaled)
 
 .. option:: --overscan <show|crop>
 
 	Specify whether it is appropriate for the decoder to display or crop
-	the overscan area. Default unspecified
+	the overscan area. Default unspecified (not signaled)
 
 .. option:: --videoformat <integer|string>
 
 	Specify the source format of the original analog video prior to
-	digitizing and encoding. Default undefined
+	digitizing and encoding. Default undefined (not signaled)
 
 	0. component
 	1. pal
@@ -684,12 +684,12 @@ VUI fields must be manually specified.
 .. option:: --range <full|limited>
 
 	Specify output range of black level and range of luma and chroma
-	signals. Default undefined
+	signals. Default undefined (not signaled)
 
 .. option:: --colorprim <integer|string>
 
 	Specify color primitive to use when converting to RGB. Default
-	undefined
+	undefined (not signaled)
 
 	1. bt709
 	2. undef
@@ -703,7 +703,7 @@ VUI fields must be manually specified.
 
 .. option:: --transfer <integer|string>
 
-	Specify transfer characteristics. Default undefined
+	Specify transfer characteristics. Default undefined (not signaled)
 
 	1. bt709
 	2. undef
@@ -724,7 +724,7 @@ VUI fields must be manually specified.
 .. option:: --colormatrix <integer|string>
 
 	Specify color matrix setting i.e set the matrix coefficients used in
-	deriving the luma and chroma. Default undefined
+	deriving the luma and chroma. Default undefined (not signaled)
 
 	0. GBR
 	1. bt709
@@ -740,8 +740,9 @@ VUI fields must be manually specified.
 
 .. option:: --chromalocs <0..5>
 
-	Specify chroma sample location for 4:2:0 inputs. Default undefined
-	Consult the HEVC specification for a description of these values.
+	Specify chroma sample location for 4:2:0 inputs. Consult the HEVC
+	specification for a description of these values. Default undefined
+	(not signaled)
 
 Bitstream options
 =================
