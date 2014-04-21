@@ -239,6 +239,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     {
         memset(m_skipFlag,           false,         numElements * sizeof(*m_skipFlag));
         memset(m_predModes,          MODE_NONE,     numElements * sizeof(*m_predModes));
+        memset(m_partSizes,          SIZE_NONE,     numElements * sizeof(*m_partSizes));
         memset(m_cuTransquantBypass, false,         numElements * sizeof(*m_cuTransquantBypass));
         memset(m_depth,              0,             numElements * sizeof(*m_depth));
         memset(m_trIdx,              0,             numElements * sizeof(*m_trIdx));
