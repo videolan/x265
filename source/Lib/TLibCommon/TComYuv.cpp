@@ -203,8 +203,6 @@ void TComYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32
 {
     int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS422 : partitionFromSizes(lumaSize, lumaSize);
 
-    assert(lumaSize != 4);
-
     if (chromaId == 1)
     {
         pixel*   srcU = getCbAddr(partIdx);

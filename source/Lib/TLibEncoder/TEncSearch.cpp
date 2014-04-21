@@ -1032,7 +1032,7 @@ void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uin
         uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool bChromaSame = false;
-        if (trSizeLog2 == 2)
+        if (trSizeLog2 == 2 && !(cu->getChromaFormat() == CHROMA_444))
         {
             assert(trDepth > 0);
             trDepth--;
@@ -1081,7 +1081,7 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
         uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         bool bChromaSame = false;
-        if (trSizeLog2 == 2)
+        if (trSizeLog2 == 2 && !(cu->getChromaFormat() == CHROMA_444))
         {
             assert(trDepth > 0);
             trDepth--;
@@ -1204,10 +1204,15 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
             }
         }
 
-        checkTransformSkip &= (trSizeLog2 <= 3);
+        uint32_t width  = cu->getCUSize(0)  >> (actualTrDepth + m_hChromaShift);
+        uint32_t height = cu->getCUSize(0)  >> (actualTrDepth + m_vChromaShift);
+        const bool splitIntoSubTUs = width != height;
+
+        checkTransformSkip &= (width <= 4);
+
         if (m_cfg->param->bEnableTSkipFast)
         {
-            checkTransformSkip &= (trSizeLog2 < 3);
+            checkTransformSkip &= ((cu->getCUSize(0) >> trDepth) <= 4);
             if (checkTransformSkip)
             {
                 int nbLumaSkip = 0;
@@ -1222,9 +1227,6 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
 
         for (int chromaId = TEXT_CHROMA; chromaId < MAX_NUM_COMPONENT; chromaId++)
         {
-            uint32_t width          = cu->getCUSize(0)  >> (actualTrDepth + m_hChromaShift);
-            uint32_t height         = cu->getCUSize(0)  >> (actualTrDepth + m_vChromaShift);
-            const bool splitIntoSubTUs = width != height;
             TComTURecurse tuIterator;
             uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) +  actualTrDepth) << 1);
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
