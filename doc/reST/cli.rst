@@ -396,8 +396,12 @@ Spatial/intra options
 
 .. option:: --constrained-intra, --no-constrained-intra
 
-	Constrained intra prediction (use only intra coded reference pixels)
-	Default disabled
+	Constrained intra prediction. When generating intra predictions in
+	for blocks in inter slices, only intra-coded reference pixels are
+	used.  Inter-coded reference pixels are replaced with intra-coded
+	neighbor pixels or default values. The general idea is to block the
+	propagation of reference errors that may have resulted from lossy
+	signals. Default disabled
 
 
 Slice decision options
