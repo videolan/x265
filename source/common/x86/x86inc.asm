@@ -42,6 +42,14 @@
     %define public_prefix private_prefix
 %endif
 
+%ifndef STACK_ALIGNMENT
+    %if ARCH_X86_64
+        %define STACK_ALIGNMENT 16
+    %else
+        %define STACK_ALIGNMENT 4
+    %endif
+%endif
+
 %define WIN64  0
 %define UNIX64 0
 %if ARCH_X86_64
@@ -304,26 +312,26 @@ DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
     %assign n_arg_names %0
 %endmacro
 
+%define required_stack_alignment ((mmsize + 15) & ~15)
 %macro ALLOC_STACK 1-2 0 ; stack_size, n_xmm_regs (for win64 only)
     %ifnum %1
         %if %1 != 0
-            %assign %%stack_alignment ((mmsize + 15) & ~15)
+            %assign %%pad 0
             %assign stack_size %1
             %if stack_size < 0
                 %assign stack_size -stack_size
             %endif
-            %assign stack_size_padded stack_size
             %if WIN64
-                %assign stack_size_padded stack_size_padded + 32 ; reserve 32 bytes for shadow space
+                %assign %%pad %%pad + 32 ; shadow space
                 %if mmsize != 8
                     %assign xmm_regs_used %2
                     %if xmm_regs_used > 8
-                        %assign stack_size_padded stack_size_padded + (xmm_regs_used-8)*16
+                        %assign %%pad %%pad + (xmm_regs_used-8)*16 ; callee-saved xmm registers
                     %endif
                 %endif
             %endif
-            %if mmsize <= 16 && HAVE_ALIGNED_STACK
-                %assign stack_size_padded stack_size_padded + %%stack_alignment - gprsize - (stack_offset & (%%stack_alignment - 1))
+            %if required_stack_alignment <= STACK_ALIGNMENT
+                %assign stack_size_padded stack_size + %%pad + ((-%%pad-stack_offset-gprsize) & (STACK_ALIGNMENT-1))
                 SUB rsp, stack_size_padded
             %else
                 %assign %%reg_num (regs_used - 1)
@@ -332,17 +340,17 @@ DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
                 ; it, i.e. in [rsp+stack_size_padded], so we can restore the
                 ; stack in a single instruction (i.e. mov rsp, rstk or mov
                 ; rsp, [rsp+stack_size_padded])
-                mov  rstk, rsp
                 %if %1 < 0 ; need to store rsp on stack
-                    sub  rsp, gprsize+stack_size_padded
-                    and  rsp, ~(%%stack_alignment-1)
-                    %xdefine rstkm [rsp+stack_size_padded]
-                    mov rstkm, rstk
+                    %xdefine rstkm [rsp + stack_size + %%pad]
+                    %assign %%pad %%pad + gprsize
                 %else ; can keep rsp in rstk during whole function
-                    sub  rsp, stack_size_padded
-                    and  rsp, ~(%%stack_alignment-1)
                     %xdefine rstkm rstk
                 %endif
+                %assign stack_size_padded stack_size + ((%%pad + required_stack_alignment-1) & ~(required_stack_alignment-1))
+                mov rstk, rsp
+                and rsp, ~(required_stack_alignment-1)
+                sub rsp, stack_size_padded
+                movifnidn rstkm, rstk
             %endif
             WIN64_PUSH_XMM
         %endif
@@ -351,7 +359,7 @@ DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
 
 %macro SETUP_STACK_POINTER 1
     %ifnum %1
-        %if %1 != 0 && (HAVE_ALIGNED_STACK == 0 || mmsize == 32)
+        %if %1 != 0 && required_stack_alignment > STACK_ALIGNMENT
             %if %1 > 0
                 %assign regs_used (regs_used + 1)
             %elif ARCH_X86_64 && regs_used == num_args && num_args <= 4 + UNIX64 * 2
@@ -425,7 +433,8 @@ DECLARE_REG 14, R15, 120
     %assign xmm_regs_used %1
     ASSERT xmm_regs_used <= 16
     %if xmm_regs_used > 8
-        %assign stack_size_padded (xmm_regs_used-8)*16 + (~stack_offset&8) + 32
+        %assign %%pad (xmm_regs_used-8)*16 + 32
+        %assign stack_size_padded %%pad + ((-%%pad-stack_offset-gprsize) & (STACK_ALIGNMENT-1))
         SUB rsp, stack_size_padded
     %endif
     WIN64_PUSH_XMM
@@ -441,7 +450,7 @@ DECLARE_REG 14, R15, 120
         %endrep
     %endif
     %if stack_size_padded > 0
-        %if stack_size > 0 && (mmsize == 32 || HAVE_ALIGNED_STACK == 0)
+        %if stack_size > 0 && required_stack_alignment > STACK_ALIGNMENT
             mov rsp, rstkm
         %else
             add %1, stack_size_padded
@@ -507,7 +516,7 @@ DECLARE_REG 14, R15, 72
 
 %macro RET 0
 %if stack_size_padded > 0
-%if mmsize == 32 || HAVE_ALIGNED_STACK == 0
+%if required_stack_alignment > STACK_ALIGNMENT
     mov rsp, rstkm
 %else
     add rsp, stack_size_padded
@@ -563,7 +572,7 @@ DECLARE_ARG 7, 8, 9, 10, 11, 12, 13, 14
 
 %macro RET 0
 %if stack_size_padded > 0
-%if mmsize == 32 || HAVE_ALIGNED_STACK == 0
+%if required_stack_alignment > STACK_ALIGNMENT
     mov rsp, rstkm
 %else
     add rsp, stack_size_padded
@@ -803,12 +812,12 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
     %assign %%i 0
     %rep 8
     CAT_XDEFINE m, %%i, mm %+ %%i
-    CAT_XDEFINE nmm, %%i, %%i
+    CAT_XDEFINE nnmm, %%i, %%i
     %assign %%i %%i+1
     %endrep
     %rep 8
     CAT_UNDEF m, %%i
-    CAT_UNDEF nmm, %%i
+    CAT_UNDEF nnmm, %%i
     %assign %%i %%i+1
     %endrep
     INIT_CPUFLAGS %1
@@ -829,7 +838,7 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
     %assign %%i 0
     %rep num_mmregs
     CAT_XDEFINE m, %%i, xmm %+ %%i
-    CAT_XDEFINE nxmm, %%i, %%i
+    CAT_XDEFINE nnxmm, %%i, %%i
     %assign %%i %%i+1
     %endrep
     INIT_CPUFLAGS %1
@@ -899,7 +908,7 @@ INIT_XMM
 %endrep
 %rep %0/2
     %xdefine m%1 %%tmp%2
-    CAT_XDEFINE n, m%1, %1
+    CAT_XDEFINE nn, m%1, %1
     %rotate 2
 %endrep
 %endmacro
@@ -917,16 +926,16 @@ INIT_XMM
         %xdefine %%tmp m%1
         %xdefine m%1 m%2
         %xdefine m%2 %%tmp
-        CAT_XDEFINE n, m%1, %1
-        CAT_XDEFINE n, m%2, %2
+        CAT_XDEFINE nn, m%1, %1
+        CAT_XDEFINE nn, m%2, %2
     %rotate 1
     %endrep
 %endmacro
 
 %macro SWAP_INTERNAL_NAME 2-*
-    %xdefine %%args n %+ %1
+    %xdefine %%args nn %+ %1
     %rep %0-1
-        %xdefine %%args %%args, n %+ %2
+        %xdefine %%args %%args, nn %+ %2
     %rotate 1
     %endrep
     SWAP_INTERNAL_NUM %%args
@@ -953,7 +962,7 @@ INIT_XMM
         %assign %%i 0
         %rep num_mmregs
             CAT_XDEFINE m, %%i, %1_m %+ %%i
-            CAT_XDEFINE n, m %+ %%i, %%i
+            CAT_XDEFINE nn, m %+ %%i, %%i
         %assign %%i %%i+1
         %endrep
     %endif
@@ -1385,15 +1394,18 @@ AVX_INSTR pfmul, 1, 0, 1
     %macro %1 4-7 %1, %2, %3
         %if cpuflag(xop)
             v%5 %1, %2, %3, %4
-        %else
+        %elifnidn %1, %4
             %6 %1, %2, %3
             %7 %1, %4
+        %else
+            %error non-xop emulation of ``%5 %1, %2, %3, %4'' is not supported
         %endif
     %endmacro
 %endmacro
 
-FMA_INSTR  pmacsdd,  pmulld, paddd
 FMA_INSTR  pmacsww,  pmullw, paddw
+FMA_INSTR  pmacsdd,  pmulld, paddd
+FMA_INSTR pmacsdql,  pmuldq, paddq ; sse4 emulation
 FMA_INSTR pmadcswd, pmaddwd, paddd
 
 ; convert FMA4 to FMA3 if possible
