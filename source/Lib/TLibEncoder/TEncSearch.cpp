@@ -2305,7 +2305,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                         bits--;
                 }
 
-                MV* mvc = X265_MALLOC(MV, (MD_ABOVE_LEFT + 1) * 2);
+                MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
                 int numMvc = cu->fillMvpCand(partIdx, partAddr, l, ref, &amvpInfo[l][ref], mvc);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
@@ -2352,7 +2352,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     list[l].cost = cost;
                     list[l].bits = bits;
                 }
-                X265_FREE(mvc);
             }
         }
 
