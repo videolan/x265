@@ -1066,8 +1066,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     for (uint16_t blocky = 0; blocky < heightInCU; blocky++)
     {
         int cuIndex = blocky * StrideInCU;
-        /* TODO This function go into ASM */
-        estimateCUPropagateCost(scratch, propagateCost,
+        primitives.propagateCost(scratch, propagateCost,
                                 frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
                                 frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
 
@@ -1167,23 +1166,6 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
             double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
             frame->qpOffset[cuIndex] = frame->qpAqOffset[cuIndex] - strength * log2_ratio;
         }
-    }
-}
-
-/* Estimate the total amount of influence on future quality that could be had if we
- * were to improve the reference samples used to inter predict any given macroblock. */
-void Lookahead::estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
-                                        int32_t *invQscales, double *fpsFactor, int len)
-{
-    double fps = *fpsFactor / 256;
-
-    for (int i = 0; i < len; i++)
-    {
-        double intraCost       = intraCosts[i] * invQscales[i];
-        double propagateAmount = (double)propagateIn[i] + intraCost * fps;
-        double propagateNum    = (double)intraCosts[i] - (interCosts[i] & LOWRES_COST_MASK);
-        double propagateDenom  = (double)intraCosts[i];
-        dst[i] = (int)(propagateAmount * propagateNum / propagateDenom + 0.5);
     }
 }
 

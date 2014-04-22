@@ -865,6 +865,22 @@ void planecopy_sp_c(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstS
         src += srcStride;
     }
 }
+
+/* Estimate the total amount of influence on future quality that could be had if we
+ * were to improve the reference samples used to inter predict any given CU. */
+void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
+                                        int32_t *invQscales, double *fpsFactor, int len)
+{
+    double fps = *fpsFactor / 256;
+    for (int i = 0; i < len; i++)
+    {
+        double intraCost       = intraCosts[i] * invQscales[i];
+        double propagateAmount = (double)propagateIn[i] + intraCost * fps;
+        double propagateNum    = (double)intraCosts[i] - (interCosts[i] & ((1 << 14) - 1));
+        double propagateDenom  = (double)intraCosts[i];
+        dst[i] = (int)(propagateAmount * propagateNum / propagateDenom + 0.5);
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -1158,5 +1174,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
+    p.propagateCost = estimateCUPropagateCost;
 }
 }

@@ -175,6 +175,8 @@ typedef void (*saoCuOrgE0_t)(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_
 typedef void (*planecopy_cp_t) (uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
+typedef void (*cutree_propagate_cost) (int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts, int32_t *invQscales, double *fpsFactor, int len);
+
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
  * a vectorized primitive, or a C function. */
@@ -246,6 +248,8 @@ struct EncoderPrimitives
     saoCuOrgE0_t      saoCuOrgE0;
     planecopy_cp_t    planecopy_cp;
     planecopy_sp_t    planecopy_sp;
+
+    cutree_propagate_cost    propagateCost;
 
     struct
     {

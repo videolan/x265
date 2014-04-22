@@ -170,8 +170,6 @@ protected:
      * quant offsets */
     void cuTree(Lowres **frames, int numframes, bool bintra);
     void estimateCUPropagate(Lowres **frames, double average_duration, int p0, int p1, int b, int referenced);
-    void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
-                                 int32_t *invQscales, double *fpsFactor, int len);
     void cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */
