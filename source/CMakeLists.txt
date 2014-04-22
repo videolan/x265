@@ -294,7 +294,11 @@ endif()
 if(X265_LATEST_TAG)
     # convert lists of link libraries into -lstdc++ -lm etc..
     foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
-        list(APPEND PLIBLIST "-l${LIB}")
+        if(IS_ABSOLUTE ${LIB} AND EXISTS ${LIB})
+            list(APPEND PLIBLIST "${LIB}")
+        else()
+            list(APPEND PLIBLIST "-l${LIB}")
+        endif()
     endforeach()
     if(PLIBLIST)
         # blacklist of libraries that should not be in Libs.private
