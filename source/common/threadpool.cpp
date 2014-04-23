@@ -219,8 +219,10 @@ ThreadPool *ThreadPool::allocThreadPool(int numthreads)
     /* acquire the lock to create the instance */
     ThreadPoolImpl::s_createLock.acquire();
 
-    /* now that the lock is acquired, check again */
-    if (!ThreadPoolImpl::s_instance)
+    if (ThreadPoolImpl::s_instance)
+        /* pool was allocated while we waited for the lock */
+        ThreadPoolImpl::s_instance->AddReference();
+    else
         ThreadPoolImpl::s_instance = new ThreadPoolImpl(numthreads);
     ThreadPoolImpl::s_createLock.release();
 
