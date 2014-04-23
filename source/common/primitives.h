@@ -152,7 +152,7 @@ typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int 
 typedef void (*ssim_4x4x2_core_t)(const pixel *pix1, intptr_t stride1, const pixel *pix2, intptr_t stride2, int sums[2][4]);
 typedef float (*ssim_end4_t)(int sum0[5][4], int sum1[5][4], int width);
 typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
-typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
+typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src, intptr_t srcStride, int w, int h);
 
 typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt);
