@@ -870,7 +870,6 @@ extern "C" {
 
 #define CHROMA_VERT_FILTERS(cpu) \
     SETUP_CHROMA_VERT_FUNC_DEF(4, 4, cpu); \
-    SETUP_CHROMA_VERT_FUNC_DEF(4, 2, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(8, 8, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(8, 4, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(4, 8, cpu); \
@@ -894,6 +893,7 @@ extern "C" {
 #define CHROMA_VERT_FILTERS_SSE4(cpu) \
     SETUP_CHROMA_VERT_FUNC_DEF(2, 4, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 2, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(6, 8, cpu);
 
 #define SETUP_CHROMA_HORIZ_FUNC_DEF(W, H, cpu) \
