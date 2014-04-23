@@ -2988,7 +2988,7 @@ BLOCKCOPY_SS_W64_H4 64, 64
 ; void cvt32to16_shr(short *dst, int *src, intptr_t stride, int shift, int size)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal cvt32to16_shr, 5, 7, 3, dst, src, stride
+cglobal cvt32to16_shr, 4, 7, 3, dst, src, stride
 %define rnd     m2
 %define shift   m1
 
@@ -3012,13 +3012,13 @@ cglobal cvt32to16_shr, 5, 7, 3, dst, src, stride
     ; r4 - size
     ; r5 - ly
     ; r6 - diff
-    lea         r2, [r2 * 2]
+    add         r2d, r2d
 
     mov         r4d, r4m
     mov         r5, r4
     mov         r6, r2
     sub         r6, r4
-    lea         r6, [r6 * 2]
+    add         r6, r6
 
     shr         r5, 1
 .loop_row:
