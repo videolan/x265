@@ -56,6 +56,13 @@ public:
     virtual void measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt) = 0;
 
     virtual const char *getName() const = 0;
+
+protected:
+
+    /* Temporary variables for stack checks */
+    int      m_ok;
+
+    uint64_t m_rand;
 };
 
 #ifdef _MSC_VER
@@ -106,5 +113,44 @@ static inline uint32_t __rdtsc(void)
         printf("\t%3.2fx ", refperf / optperf); \
         printf("\t %-8.2lf \t %-8.2lf\n", optperf, refperf); \
     }
+
+extern "C" {
+#if X265_ARCH_X86
+int x265_stack_pagealign(int (*func)(), int align);
+
+/* detect when callee-saved regs aren't saved
+ * needs an explicit asm check because it only sometimes crashes in normal use. */
+intptr_t x265_checkasm_call(intptr_t (*func)(), int *ok, ...);
+#else
+#define x265_stack_pagealign( func, align ) func()
+#endif
+
+
+#if X86_64
+/* Evil hack: detect incorrect assumptions that 32-bit ints are zero-extended to 64-bit.
+ * This is done by clobbering the stack with junk around the stack pointer and calling the
+ * assembly function through x264_checkasm_call with added dummy arguments which forces all
+ * real arguments to be passed on the stack and not in registers. For 32-bit argument the
+ * upper half of the 64-bit register location on the stack will now contain junk. Note that
+ * this is dependent on compiler behavior and that interrupts etc. at the wrong time may
+ * overwrite the junk written to the stack so there's no guarantee that it will always
+ * detect all functions that assumes zero-extension.
+ */
+void x265_checkasm_stack_clobber( uint64_t clobber, ... );
+#define checked(func,...) ( \
+    m_ok = 1, m_rand = (rand() & 0xffff) * 0x0001000100010001ULL, \
+    x265_checkasm_stack_clobber(m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,\
+                                m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,\
+                                m_rand,m_rand,m_rand,m_rand,m_rand), /* max_args+6 */ \
+    x265_checkasm_call((intptr_t(*)())func, &m_ok, 0, 0, 0, 0, __VA_ARGS__))
+#define reportfail() if (!m_ok) { fprintf(stderr, "stack clobber check failed at %s:%d", __FILE__, __LINE__); abort(); }
+#elif ARCH_X86
+#define checked(func,...) x265_checkasm_call((intptr_t(*)())func, &m_ok, __VA_ARGS__);
+
+#else
+#define checked(func,...) func(__VA_ARGS__)
+#define reportfail()
+#endif
+}
 
 #endif // ifndef _TESTHARNESS_H_
