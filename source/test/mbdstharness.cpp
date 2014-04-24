@@ -306,7 +306,7 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         int index2 = rand() % TEST_CASES;
 
         refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff, &refLastPos);
-        optReturnValue = checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff, &optLastPos);
+        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff, &optLastPos);
 
         if (memcmp(mintbuf3, mintbuf5, cmp_size))
             return false;
@@ -353,7 +353,7 @@ bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonz
             }
 
             int refval = ref(qcoeff, num);
-            int optval = checked(opt, qcoeff, num);
+            int optval = (int)checked(opt, qcoeff, num);
 
             if (refval != optval)
                 return false;
