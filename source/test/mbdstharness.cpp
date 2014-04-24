@@ -163,60 +163,46 @@ MBDstHarness::~MBDstHarness()
     X265_FREE(int_idct_test_buff);
 }
 
-bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
+bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, intptr_t width)
 {
     int j = 0;
-    int cmp_size = sizeof(int) * width * width;
+    intptr_t cmp_size = sizeof(int) * width * width;
+
     for (int i = 0; i <= 100; i++)
     {
         int index = rand() % TEST_CASES;
+
         ref(short_test_buff[index] + j, mintbuf3, width);
-        opt(short_test_buff[index] + j, mintbuf4, width);
+        checked(opt, short_test_buff[index] + j, mintbuf4, width);
 
         if (memcmp(mintbuf3, mintbuf4, cmp_size))
-        {
-#if _DEBUG
-            // redo for debug
-            ref(short_test_buff[index] + j, mintbuf3, width);
-            opt(short_test_buff[index] + j, mintbuf4, width);
-#endif
-
             return false;
-        }
+
+        reportfail();
         j += 16;
-#if _DEBUG
-        memset(mbuf2, 0xCD, mem_cmp_size);
-        memset(mbuf3, 0xCD, mem_cmp_size);
-#endif
     }
 
     return true;
 }
 
-bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
+bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, intptr_t width)
 {
     int j = 0;
-    int cmp_size = sizeof(int16_t) * width * width;
+    intptr_t cmp_size = sizeof(int16_t) * width * width;
+
+
     for (int i = 0; i <= 100; i++)
     {
         int index = rand() % TEST_CASES;
-        ref(int_idct_test_buff[index] + j, mbuf2, width);
-        opt(int_idct_test_buff[index] + j, mbuf3, width);
-        if (memcmp(mbuf2, mbuf3, cmp_size))
-        {
-#if _DEBUG
-            // redo for debug
-            ref(int_idct_test_buff[index] + j, mbuf2, width);
-            opt(int_idct_test_buff[index] + j, mbuf3, width);
-#endif
 
+        ref(int_idct_test_buff[index] + j, mbuf2, width);
+        checked(opt, int_idct_test_buff[index] + j, mbuf3, width);
+
+        if (memcmp(mbuf2, mbuf3, cmp_size))
             return false;
-        }
+
+        reportfail();
         j += 16;
-#if _DEBUG
-        memset(mbuf2, 0xCD, mem_cmp_size);
-        memset(mbuf3, 0xCD, mem_cmp_size);
-#endif
     }
 
     return true;
@@ -248,16 +234,13 @@ bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_
         int index = rand() % TEST_CASES;
 
         ref(int_test_buff[index] + j, mintbuf3, width * height, scale, shift);
-        opt(int_test_buff[index] + j, mintbuf4, width * height, scale, shift);
+        checked(opt, int_test_buff[index] + j, mintbuf4, width * height, scale, shift);
 
         if (memcmp(mintbuf3, mintbuf4, cmp_size))
             return false;
 
+        reportfail();
         j += 16;
-#if _DEBUG
-        memset(mintbuf3, 0xCD, mem_cmp_size);
-        memset(mintbuf4, 0xCD, mem_cmp_size);
-#endif
     }
 
     return true;
@@ -284,16 +267,13 @@ bool MBDstHarness::check_dequant_primitive(dequant_scaling_t ref, dequant_scalin
         int index2 = rand() % TEST_CASES;
 
         ref(int_test_buff[index1] + j, mintbuf3, int_test_buff[index2] + j, width * height, per, shift);
-        opt(int_test_buff[index1] + j, mintbuf4, int_test_buff[index2] + j, width * height, per, shift);
+        checked(opt, int_test_buff[index1] + j, mintbuf4, int_test_buff[index2] + j, width * height, per, shift);
 
         if (memcmp(mintbuf3, mintbuf4, cmp_size))
             return false;
 
+        reportfail();
         j += 16;
-#if _DEBUG
-        memset(mintbuf3, 0xCD, mem_cmp_size);
-        memset(mintbuf4, 0xCD, mem_cmp_size);
-#endif
     }
 
     return true;
@@ -326,7 +306,7 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         int index2 = rand() % TEST_CASES;
 
         refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff, &refLastPos);
-        optReturnValue = opt(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff, &optLastPos);
+        optReturnValue = checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff, &optLastPos);
 
         if (memcmp(mintbuf3, mintbuf5, cmp_size))
             return false;
@@ -340,14 +320,8 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         if (optLastPos != refLastPos)
             return false;
 
+        reportfail();
         j += 16;
-
-#if _DEBUG
-        memset(mintbuf3, 0xCD, mem_cmp_size);
-        memset(mintbuf4, 0xCD, mem_cmp_size);
-        memset(mintbuf5, 0xCD, mem_cmp_size);
-        memset(mintbuf6, 0xCD, mem_cmp_size);
-#endif
     }
 
     return true;
@@ -379,10 +353,12 @@ bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonz
             }
 
             int refval = ref(qcoeff, num);
-            int optval = opt(qcoeff, num);
+            int optval = checked(opt, qcoeff, num);
 
             if (refval != optval)
                 return false;
+
+            reportfail();
         }
     }
 
