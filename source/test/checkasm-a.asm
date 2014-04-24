@@ -24,7 +24,7 @@
 ;* For more information, contact us at licensing@x264.com.
 ;*****************************************************************************
 
-%include "x86inc.asm"
+%include "../common/x86/x86inc.asm"
 
 SECTION_RODATA
 
