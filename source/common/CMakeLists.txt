@@ -119,9 +119,9 @@ if(ENABLE_ASSEMBLY)
         # MSVC requires custom build rules in the main cmake script for yasm
         set(MSVC_ASMS "${A_SRCS}" CACHE INTERNAL "yasm sources")
         set(A_SRCS)
-    else()
-        enable_language(ASM_YASM)
     endif()
+
+    enable_language(ASM_YASM)
 
     foreach(SRC ${A_SRCS} ${C_SRCS})
         set(ASM_PRIMITIVES ${ASM_PRIMITIVES} x86/${SRC})

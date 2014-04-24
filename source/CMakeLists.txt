@@ -206,31 +206,12 @@ add_subdirectory(encoder)
 add_subdirectory(common)
 
 if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
-    # this is horrible. ugly, and hacky, and it reproduces logic found
-    # in the yasm CMake modules, but this is required because of this cmake bug
+    # this is required because of this cmake bug
     # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
-    if (X64)
-        if(APPLE)
-            set(FLAGS -f macho64 -m amd64 -DPREFIX -DPIC -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=1)
-        else()
-            set(FLAGS -f win64 -m amd64 -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
-        endif()
-    else()
-        if(APPLE)
-            set(FLAGS -f macho -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=1 -DPREFIX)
-        else()
-            set(FLAGS -f win32 -DARCH_X86_64=0 -DHAVE_ALIGNED_STACK=0 -DPREFIX)
-        endif()
-    endif()
     if(WIN32)
         set(SUFFIX obj)
     else()
         set(SUFFIX o)
-    endif()
-    if (HIGH_BIT_DEPTH)
-        set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=1 -DBIT_DEPTH=10)
-    else()
-        set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8)
     endif()
     foreach(ASM ${MSVC_ASMS})
         set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
@@ -238,7 +219,7 @@ if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
         list(APPEND YASM_OBJS ${ASM}.${SUFFIX})
         add_custom_command(
             OUTPUT ${ASM}.${SUFFIX}
-            COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
+            COMMAND ${YASM_EXECUTABLE} ARGS ${YASM_FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
             DEPENDS ${YASM_SRC})
     endforeach()
 endif()
