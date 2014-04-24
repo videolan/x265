@@ -582,8 +582,8 @@ Quality, rate control and rate distortion options
 
 	Hide sign bit of one coeff per TU (rdo). Default enabled
  
-Loop filter
-===========
+Loop filters
+============
 
 .. option:: --lft, --no-lft
 
