@@ -915,9 +915,11 @@ bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
 
         int width = (rand() % 4) + 1; // range[1-4]
         float cres = ref(sum0, sum1, width);
-        float vres = opt(sum0, sum1, width);
+        float vres = (float)checked(opt, sum0, sum1, width);
         if (fabs(vres - cres) > 0.00001)
             return false;
+
+        reportfail();
     }
 
     return true;
