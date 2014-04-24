@@ -130,6 +130,23 @@ Standalone Executable Options
 
 	**CLI ONLY**
 
+Quality reporting metrics
+=========================
+
+.. option:: --ssim, --no-ssim
+
+	Calculate and report Structural Similarity values. It is
+	recommended to use :option:`--tune` ssim if you are measuring ssim,
+	else the results should not be used for comparison purposes.
+	Default disabled
+
+.. option:: --psnr, --no-psnr
+
+	Calculate and report Peak Signal to Noise Ratio.  It is recommended
+	to use :option:`--tune` psnr if you are measuring PSNR, else the
+	results should not be used for comparison purposes.  Default
+	disabled
+
 Input Options
 =============
 
@@ -607,23 +624,6 @@ Loop filters
 	0. SAO picture-based optimization (prevents frame parallelism,
 	   effectively causes :option:`--frame-threads` 1)
 	1. SAO LCU-based optimization **(default)**
-
-Quality reporting metrics
-=========================
-
-.. option:: --ssim, --no-ssim
-
-	Calculate and report Structural Similarity values. It is
-	recommended to use :option:`--tune` ssim if you are measuring ssim,
-	else the results should not be used for comparison purposes.
-	Default disabled
-
-.. option:: --psnr, --no-psnr
-
-	Calculate and report Peak Signal to Noise Ratio.  It is recommended
-	to use :option:`--tune` psnr if you are measuring PSNR, else the
-	results should not be used for comparison purposes.  Default
-	disabled
 
 VUI (Video Usability Information) options
 =========================================
