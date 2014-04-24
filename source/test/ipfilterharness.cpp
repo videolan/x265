@@ -144,7 +144,7 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
             rand_width,
             rand_height);
 
-        opt(pixel_test_buff[index],
+        checked(opt, pixel_test_buff[index],
             rand_srcStride,
             IPF_vec_output_s,
             rand_width,
@@ -152,6 +152,8 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
 
         if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size))
             return false;
+
+        reportfail();
     }
 
     return true;
@@ -159,7 +161,7 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
 
 bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -170,7 +172,7 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
             rand_srcStride = rand() % 100 + 2;          // Randomly generated srcStride
             rand_dstStride = rand() % 100 + 32;         // Randomly generated dstStride
 
-            opt(pixel_test_buff[index] + 3 * rand_srcStride,
+            checked(opt, pixel_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_vec_output_p,
                 rand_dstStride,
@@ -184,6 +186,8 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
 
             if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
                 return false;
+
+            reportfail();
         }
     }
 
@@ -192,7 +196,7 @@ bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_
 
 bool IPFilterHarness::check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_ps_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -209,7 +213,7 @@ bool IPFilterHarness::check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_
                 rand_dstStride,
                 coeffIdx);
 
-            opt(pixel_test_buff[index] + 3 * rand_srcStride,
+            checked(opt, pixel_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_vec_output_s,
                 rand_dstStride,
@@ -217,6 +221,8 @@ bool IPFilterHarness::check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_
 
             if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
                 return false;
+
+            reportfail();
         }
     }
 
@@ -225,7 +231,7 @@ bool IPFilterHarness::check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_
 
 bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filter_hps_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -245,7 +251,7 @@ bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filte
                     coeffIdx,
                     isRowExt);
 
-                opt(pixel_test_buff[index] + 3 * rand_srcStride,
+                checked(opt, pixel_test_buff[index] + 3 * rand_srcStride,
                     rand_srcStride,
                     IPF_vec_output_s,
                     rand_dstStride,
@@ -254,6 +260,8 @@ bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filte
 
                 if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
                     return false;
+
+                reportfail();
             }
         }
     }
@@ -263,7 +271,7 @@ bool IPFilterHarness::check_IPFilterChroma_hps_primitive(filter_hps_t ref, filte
 
 bool IPFilterHarness::check_IPFilterChroma_sp_primitive(filter_sp_t ref, filter_sp_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -280,7 +288,7 @@ bool IPFilterHarness::check_IPFilterChroma_sp_primitive(filter_sp_t ref, filter_
                 rand_dstStride,
                 coeffIdx);
 
-            opt(short_test_buff[index] + 3 * rand_srcStride,
+            checked(opt, short_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_vec_output_p,
                 rand_dstStride,
@@ -288,6 +296,8 @@ bool IPFilterHarness::check_IPFilterChroma_sp_primitive(filter_sp_t ref, filter_
 
             if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
                 return false;
+
+            reportfail();
         }
     }
 
@@ -296,7 +306,7 @@ bool IPFilterHarness::check_IPFilterChroma_sp_primitive(filter_sp_t ref, filter_
 
 bool IPFilterHarness::check_IPFilterChroma_ss_primitive(filter_ss_t ref, filter_ss_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -313,7 +323,7 @@ bool IPFilterHarness::check_IPFilterChroma_ss_primitive(filter_ss_t ref, filter_
                 rand_dstStride,
                 coeffIdx);
 
-            opt(short_test_buff[index] + 3 * rand_srcStride,
+            checked(opt, short_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_vec_output_s,
                 rand_dstStride,
@@ -321,6 +331,8 @@ bool IPFilterHarness::check_IPFilterChroma_ss_primitive(filter_ss_t ref, filter_
 
             if (memcmp(IPF_C_output_s, IPF_vec_output_s, ipf_t_size * sizeof(int16_t)))
                 return false;
+
+            reportfail();
         }
     }
 
@@ -329,7 +341,7 @@ bool IPFilterHarness::check_IPFilterChroma_ss_primitive(filter_ss_t ref, filter_
 
 bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -340,11 +352,12 @@ bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t 
             rand_srcStride = rand() % 100;             // Randomly generated srcStride
             rand_dstStride = rand() % 100 + 64;        // Randomly generated dstStride
 
-            opt(pixel_test_buff[index] + 3 * rand_srcStride + 6,
+            checked(opt, pixel_test_buff[index] + 3 * rand_srcStride + 6,
                 rand_srcStride,
                 IPF_vec_output_p,
                 rand_dstStride,
                 coeffIdx);
+
             ref(pixel_test_buff[index] + 3 * rand_srcStride + 6,
                 rand_srcStride,
                 IPF_C_output_p,
@@ -353,6 +366,8 @@ bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t 
 
             if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
                 return false;
+
+            reportfail();
         }
     }
 
@@ -361,7 +376,7 @@ bool IPFilterHarness::check_IPFilterLuma_primitive(filter_pp_t ref, filter_pp_t 
 
 bool IPFilterHarness::check_IPFilterLuma_ps_primitive(filter_ps_t ref, filter_ps_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -377,7 +392,8 @@ bool IPFilterHarness::check_IPFilterLuma_ps_primitive(filter_ps_t ref, filter_ps
                 IPF_C_output_s,
                 rand_dstStride,
                 coeffIdx);
-            opt(pixel_test_buff[index] + 3 * rand_srcStride,
+
+            checked(opt, pixel_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_vec_output_s,
                 rand_dstStride,
@@ -385,6 +401,8 @@ bool IPFilterHarness::check_IPFilterLuma_ps_primitive(filter_ps_t ref, filter_ps
 
             if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
                 return false;
+            
+            reportfail();
         }
     }
 
@@ -393,7 +411,7 @@ bool IPFilterHarness::check_IPFilterLuma_ps_primitive(filter_ps_t ref, filter_ps
 
 bool IPFilterHarness::check_IPFilterLuma_hps_primitive(filter_hps_t ref, filter_hps_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -412,7 +430,8 @@ bool IPFilterHarness::check_IPFilterLuma_hps_primitive(filter_hps_t ref, filter_
                     rand_dstStride,
                     coeffIdx,
                     isRowExt);
-                opt(pixel_test_buff[index] + 3 * rand_srcStride + 6,
+
+                checked(opt, pixel_test_buff[index] + 3 * rand_srcStride + 6,
                     rand_srcStride,
                     IPF_vec_output_s,
                     rand_dstStride,
@@ -421,6 +440,8 @@ bool IPFilterHarness::check_IPFilterLuma_hps_primitive(filter_hps_t ref, filter_
 
                 if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size * sizeof(int16_t)))
                     return false;
+
+                reportfail();
             }
         }
     }
@@ -430,7 +451,7 @@ bool IPFilterHarness::check_IPFilterLuma_hps_primitive(filter_hps_t ref, filter_
 
 bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -447,7 +468,7 @@ bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp
                 rand_dstStride,
                 coeffIdx);
 
-            opt(short_test_buff[index] + 3 * rand_srcStride,
+            checked(opt, short_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_vec_output_p,
                 rand_dstStride,
@@ -455,6 +476,8 @@ bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp
 
             if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
                 return false;
+
+            reportfail();
         }
     }
 
@@ -463,7 +486,7 @@ bool IPFilterHarness::check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp
 
 bool IPFilterHarness::check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -480,7 +503,7 @@ bool IPFilterHarness::check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss
                 rand_dstStride,
                 coeffIdx);
 
-            opt(short_test_buff[index] + 3 * rand_srcStride,
+            checked(opt, short_test_buff[index] + 3 * rand_srcStride,
                 rand_srcStride,
                 IPF_vec_output_s,
                 rand_dstStride,
@@ -488,6 +511,8 @@ bool IPFilterHarness::check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss
 
             if (memcmp(IPF_C_output_s, IPF_vec_output_s, ipf_t_size * sizeof(int16_t)))
                 return false;
+
+            reportfail();
         }
     }
 
@@ -496,7 +521,7 @@ bool IPFilterHarness::check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss
 
 bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_hv_pp_t opt)
 {
-    int rand_srcStride, rand_dstStride;
+    intptr_t rand_srcStride, rand_dstStride;
 
     for (int i = 0; i < ITERS; i++)
     {
@@ -515,7 +540,8 @@ bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_
                     rand_dstStride,
                     coeffIdxX,
                     coeffIdxY);
-                opt(pixel_test_buff[index] + 3 * rand_srcStride,
+
+                checked(opt, pixel_test_buff[index] + 3 * rand_srcStride,
                     rand_srcStride,
                     IPF_vec_output_p,
                     rand_dstStride,
@@ -524,6 +550,8 @@ bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_
 
                 if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
                     return false;
+
+                reportfail();
             }
         }
     }
