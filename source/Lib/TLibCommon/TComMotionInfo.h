@@ -54,11 +54,11 @@ namespace x265 {
 // ====================================================================================================================
 
 /// parameters for AMVP
-typedef struct _AMVPInfo
+struct AMVPInfo
 {
-    MV m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
-    int      m_num;                             ///< number of motion vector predictor candidates
-} AMVPInfo;
+    MV  m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
+    int m_num;                             ///< number of motion vector predictor candidates
+};
 
 // ====================================================================================================================
 // Class definition
