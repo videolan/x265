@@ -156,7 +156,7 @@ bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        int vres = checked(opt, pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+        int vres = (int)checked(opt, pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
         int cres = ref(pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
         if (vres != cres)
             return false;
@@ -177,7 +177,7 @@ bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        int vres = checked(opt, short_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+        int vres = (int)checked(opt, short_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
         int cres = ref(short_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
         if (vres != cres)
             return false;
@@ -198,7 +198,7 @@ bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        int vres = checked(opt, short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+        int vres = (int)checked(opt, short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
         int cres = ref(short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
         if (vres != cres)
             return false;
@@ -566,8 +566,8 @@ bool PixelHarness::check_cvt16to32_shl_t(cvt16to32_shl_t ref, cvt16to32_shl_t op
         int shift = (rand() % 7 + 1);
 
         int index = i % TEST_CASES;
-        checked(opt, opt_dest, short_test_buff[index] + j, stride, shift, stride);
-        ref(ref_dest, short_test_buff[index] + j, stride, shift, stride);
+        checked(opt, opt_dest, short_test_buff[index] + j, stride, shift, (int)stride);
+        ref(ref_dest, short_test_buff[index] + j, stride, shift, (int)stride);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int32_t)))
             return false;
