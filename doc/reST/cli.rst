@@ -755,16 +755,18 @@ Bitstream options
 	the very first AUD will be skipped since it cannot be placed at the
 	start of the access unit, where it belongs. Default disabled
 
-Debugging options
-=================
-
 .. option:: --hash <integer>
 
-	Emit decoded picture hash SEI, to validate encoder state. Default None
+	Emit decoded picture hash SEI, so the decoder may validate the
+	reconstructed pictures and detect data loss. Also useful as a
+	debug feature to validate the encoder state. Default None
 
 	1. MD5
 	2. CRC
 	3. Checksum
+
+Debugging options
+=================
 
 .. option:: --recon, -r <filename>
 
