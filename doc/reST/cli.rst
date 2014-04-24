@@ -747,6 +747,15 @@ VUI fields must be manually specified.
 Bitstream options
 =================
 
+.. option:: --repeat-headers
+
+	If enabled, x265 will emit VPS, SPS, and PPS headers with every
+	keyframe. This is intended for use when you do not have a container
+	to keep the stream headers for you and you want keyframes to be
+	random access points.
+
+	**API ONLY**
+
 .. option:: --aud, --no-aud
 
 	Emit an access unit delimiter NAL at the start of each slice access
@@ -783,19 +792,5 @@ Debugging options
 	depth and currently cannot to be modified.
 
 	**CLI ONLY**
-
-API-only Options
-================
-
-These options are not exposed in the CLI because they are only useful to
-applications which use libx265 as a shared library.  These are available
-via x265_param_parse()
-
-.. option:: --repeat-headers
-
-	If enabled, x265 will emit VPS, SPS, and PPS headers with every
-	keyframe. This is intended for use when you do not have a container
-	to keep the stream headers for you and you want keyframes to be
-	random access points.
 
 .. vim: noet
