@@ -128,7 +128,7 @@ typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
 
 typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
+typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma);
 
 typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
 typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);

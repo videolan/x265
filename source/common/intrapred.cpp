@@ -258,7 +258,7 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *ref
 }
 
 template<int size>
-void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma)
+void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma)
 {
     for (int mode = 2; mode <= 34; mode++)
     {
