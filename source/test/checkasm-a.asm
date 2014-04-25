@@ -87,6 +87,7 @@ cglobal checkasm_stack_clobber, 1,2
 ;-----------------------------------------------------------------------------
 ; intptr_t x265_checkasm_call( intptr_t (*func)(), int *ok, ... )
 ;-----------------------------------------------------------------------------
+cglobal checkasm_call_float
 INIT_XMM
 cglobal checkasm_call, 2,15,16,max_args*8+8
     mov  r6, r0
@@ -170,6 +171,7 @@ cglobal checkasm_call, 2,15,16,max_args*8+8
 ;-----------------------------------------------------------------------------
 ; intptr_t x264_checkasm_call( intptr_t (*func)(), int *ok, ... )
 ;-----------------------------------------------------------------------------
+cglobal checkasm_call_float
 cglobal checkasm_call, 1,7
     mov  r3, n3
     mov  r4, n4

@@ -121,6 +121,7 @@ int x265_stack_pagealign(int (*func)(), int align);
 /* detect when callee-saved regs aren't saved
  * needs an explicit asm check because it only sometimes crashes in normal use. */
 intptr_t x265_checkasm_call(intptr_t (*func)(), int *ok, ...);
+float x265_checkasm_call_float(float (*func)(), int *ok, ...);
 #else
 #define x265_stack_pagealign( func, align ) func()
 #endif
@@ -143,12 +144,21 @@ void x265_checkasm_stack_clobber( uint64_t clobber, ... );
                                 m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,\
                                 m_rand,m_rand,m_rand,m_rand,m_rand), /* max_args+6 */ \
     x265_checkasm_call((intptr_t(*)())func, &m_ok, 0, 0, 0, 0, __VA_ARGS__))
+
+#define checked_float(func,...) ( \
+    m_ok = 1, m_rand = (rand() & 0xffff) * 0x0001000100010001ULL, \
+    x265_checkasm_stack_clobber(m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,\
+                                m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,m_rand,\
+                                m_rand,m_rand,m_rand,m_rand,m_rand), /* max_args+6 */ \
+    x265_checkasm_call_float((float(*)())func, &m_ok, 0, 0, 0, 0, __VA_ARGS__))
 #define reportfail() if (!m_ok) { fprintf(stderr, "stack clobber check failed at %s:%d", __FILE__, __LINE__); abort(); }
 #elif ARCH_X86
 #define checked(func,...) x265_checkasm_call((intptr_t(*)())func, &m_ok, __VA_ARGS__);
+#define checked_float(func,...) x265_checkasm_call_float((float(*)())func, &m_ok, __VA_ARGS__);
 
 #else
 #define checked(func,...) func(__VA_ARGS__)
+#define checked_float(func,...) func(__VA_ARGS__)
 #define reportfail()
 #endif
 }
