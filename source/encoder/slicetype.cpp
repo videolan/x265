@@ -1485,7 +1485,6 @@ void CostEstimate::processRow(int row)
 {
     int realrow = heightInCU - 1 - row;
     Lowres **frames = curframes;
-    Lowres *fenc = frames[curb];
     ReferencePlanes *wfref0 = weightedRef.isWeighted ? &weightedRef : frames[curp0];
 
     /* Lowres lookahead goes backwards because the MVs are used as
