@@ -1210,7 +1210,7 @@ CostEstimate::CostEstimate(ThreadPool *p)
     paddedLines = widthInCU = heightInCU = 0;
     bDoSearch[0] = bDoSearch[1] = false;
     curb = curp0 = curp1 = 0;
-    rowsCompleted = 0;
+    bFrameCompleted = false;
 }
 
 CostEstimate::~CostEstimate()
@@ -1305,7 +1305,7 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
             fenc->rowSatds[b - p0][p1 - b][i] = 0;
         }
 
-        rowsCompleted = false;
+        bFrameCompleted = false;
 
         if (m_pool)
         {
@@ -1313,7 +1313,7 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
 
             // enableAllRows must be already called
             enqueueRow(0);
-            while (!rowsCompleted)
+            while (!bFrameCompleted)
             {
                 WaveFront::findJob();
             }
@@ -1509,7 +1509,8 @@ void CostEstimate::processRow(int row)
         }
 
         ScopedLock self(rows[row].lock);
-        if (row > 0 && (int32_t)rows[row].completed < widthInCU - 1 && rows[row - 1].completed < rows[row].completed + 2)
+        if (row > 0 && (int32_t)rows[row].completed < widthInCU - 1 &&
+            rows[row - 1].completed < rows[row].completed + 2)
         {
             rows[row].active = false;
             x265_emms();
@@ -1519,7 +1520,7 @@ void CostEstimate::processRow(int row)
 
     if (row == heightInCU - 1)
     {
-        rowsCompleted = true;
+        bFrameCompleted = true;
     }
     x265_emms();
 }

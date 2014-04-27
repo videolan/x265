@@ -104,7 +104,7 @@ struct CostEstimate : public WaveFront
     int              heightInCU;      // height of lowres frame in downscale CUs
 
     bool             bDoSearch[2];
-    volatile bool    rowsCompleted;
+    volatile bool    bFrameCompleted;
     int              curb, curp0, curp1;
 
     void     processRow(int row);
