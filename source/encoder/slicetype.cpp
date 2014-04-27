@@ -1300,6 +1300,9 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
         {
             rows[i].init();
             rows[i].me.setSourcePlane(fenc->lowresPlane[0], fenc->lumaStride);
+            if (!fenc->bIntraCalculated)
+                fenc->rowSatds[0][0][i] = 0;
+            fenc->rowSatds[b - p0][p1 - b][i] = 0;
         }
 
         rowsCompleted = false;
@@ -1484,10 +1487,6 @@ void CostEstimate::processRow(int row)
     Lowres **frames = curframes;
     Lowres *fenc = frames[curb];
     ReferencePlanes *wfref0 = weightedRef.isWeighted ? &weightedRef : frames[curp0];
-
-    if (!fenc->bIntraCalculated)
-        fenc->rowSatds[0][0][realrow] = 0;
-    fenc->rowSatds[curb - curp0][curp1 - curb][realrow] = 0;
 
     /* Lowres lookahead goes backwards because the MVs are used as
      * predictors in the main encode.  This considerably improves MV
