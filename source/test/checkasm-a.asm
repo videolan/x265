@@ -64,7 +64,7 @@ cextern_naked puts
 %if ARCH_X86_64
 
 ;-----------------------------------------------------------------------------
-; void x264_checkasm_stack_clobber( uint64_t clobber, ... )
+; void x265_checkasm_stack_clobber( uint64_t clobber, ... )
 ;-----------------------------------------------------------------------------
 cglobal checkasm_stack_clobber, 1,2
     ; Clobber the stack with junk below the stack pointer
@@ -169,7 +169,7 @@ cglobal checkasm_call, 2,15,16,max_args*8+8
 %define n6 dword 0x33627ba7
 
 ;-----------------------------------------------------------------------------
-; intptr_t x264_checkasm_call( intptr_t (*func)(), int *ok, ... )
+; intptr_t x265_checkasm_call( intptr_t (*func)(), int *ok, ... )
 ;-----------------------------------------------------------------------------
 cglobal checkasm_call_float
 cglobal checkasm_call, 1,7
@@ -204,7 +204,7 @@ cglobal checkasm_call, 1,7
 %endif ; ARCH_X86_64
 
 ;-----------------------------------------------------------------------------
-; int x264_stack_pagealign( int (*func)(), int align )
+; int x265_stack_pagealign( int (*func)(), int align )
 ;-----------------------------------------------------------------------------
 cglobal stack_pagealign, 2,2
     movsxdifnidn r1, r1d

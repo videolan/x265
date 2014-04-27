@@ -130,7 +130,7 @@ float x265_checkasm_call_float(float (*func)(), int *ok, ...);
 #if X86_64
 /* Evil hack: detect incorrect assumptions that 32-bit ints are zero-extended to 64-bit.
  * This is done by clobbering the stack with junk around the stack pointer and calling the
- * assembly function through x264_checkasm_call with added dummy arguments which forces all
+ * assembly function through x265_checkasm_call with added dummy arguments which forces all
  * real arguments to be passed on the stack and not in registers. For 32-bit argument the
  * upper half of the 64-bit register location on the stack will now contain junk. Note that
  * this is dependent on compiler behavior and that interrupts etc. at the wrong time may
