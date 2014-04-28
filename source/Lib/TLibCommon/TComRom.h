@@ -67,7 +67,7 @@ void initROM();
 void destroyROM();
 
 // ====================================================================================================================
-static const int chromaQPMappingTableSize = 58;
+static const int chromaQPMappingTableSize = 70;
 
 extern const uint8_t g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
 extern const uint8_t g_chroma422IntraAngleMappingTable[36];
