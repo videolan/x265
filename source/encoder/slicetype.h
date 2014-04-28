@@ -35,6 +35,9 @@ struct Lowres;
 class TComPic;
 class Encoder;
 
+#define LOWRES_COST_MASK  ((1 << 14) - 1)
+#define LOWRES_COST_SHIFT 14
+
 #define SET_WEIGHT(w, b, s, d, o) \
     { \
         (w).inputWeight = (s); \

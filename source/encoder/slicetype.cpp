@@ -33,8 +33,6 @@
 #include "mv.h"
 #include "ratecontrol.h"
 
-#define LOWRES_COST_MASK  ((1 << 14) - 1)
-#define LOWRES_COST_SHIFT 14
 #define NUM_CUS (widthInCU > 2 && heightInCU > 2 ? (widthInCU - 2) * (heightInCU - 2) : widthInCU * heightInCU)
 
 using namespace x265;
@@ -295,7 +293,7 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
                 lowresCuIdx = lowresRow * widthInLowresCu;
                 for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
                 {
-                    sum += pic->m_lowres.lowresCostForRc[lowresCuIdx];
+                    sum += pic->m_lowres.lowresCostForRc[lowresCuIdx] & LOWRES_COST_MASK;
                 }
 
                 pic->m_rowSatdForVbv[row] += sum;

@@ -1255,7 +1255,7 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
                 qp_offset += qpoffs[idx];
             if (bIsVbv)
             {
-                m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.lowresCostForRc[idx];
+                m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
                 m_pic->m_intraCuCostsForVbv[cuAddr] += m_pic->m_lowres.intraCost[idx];
             }
             cnt++;
