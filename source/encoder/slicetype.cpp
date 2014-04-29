@@ -271,7 +271,6 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
         if (b && param->rc.vbvBufferSize)
             frameCostRecalculate(frames, b, b, b);
     }
-
     else if (param->rc.aqMode)
         pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
     else
