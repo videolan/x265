@@ -28,12 +28,18 @@
 namespace x265 {
 // x265 private namespace
 
+/* C shim for forced stack alignment */
+static void stackAlignMain(Thread *instance)
+{
+    instance->threadMain();
+}
+
 #if _WIN32
 
 static DWORD WINAPI ThreadShim(Thread *instance)
 {
     // defer processing to the virtual function implemented in the derived class
-    instance->threadMain();
+    x265_stack_align(stackAlignMain, instance);
 
     return 0;
 }
@@ -70,7 +76,7 @@ static void *ThreadShim(void *opaque)
     // defer processing to the virtual function implemented in the derived class
     Thread *instance = reinterpret_cast<Thread *>(opaque);
 
-    instance->threadMain();
+    x265_stack_align(stackAlignMain, instance);
 
     return NULL;
 }

@@ -52,6 +52,23 @@ class TEncSbac;
 class TEncCavlc;
 class SEI;
 
+#define DONT_SPLIT            0
+#define VERTICAL_SPLIT        1
+#define QUAD_SPLIT            2
+#define NUMBER_OF_SPLIT_MODES 3
+
+static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
+static const uint32_t NUMBER_OF_SECTIONS[NUMBER_OF_SPLIT_MODES] = { 1, 2, 4 };
+
+struct TComTURecurse
+{
+    uint32_t          m_section;
+    uint32_t          m_splitMode;
+    uint32_t          m_absPartIdxTURelCU;
+    uint32_t          m_absPartIdxStep;
+    uint32_t          m_partOffset;
+};
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -71,6 +88,7 @@ public:
     virtual void codeVPS(TComVPS* vps) = 0;
     virtual void codeSPS(TComSPS* sps) = 0;
     virtual void codePPS(TComPPS* pps) = 0;
+    virtual void codeAUD(TComSlice* slice) = 0;
     virtual void codeSliceHeader(TComSlice* slice) = 0;
 
     virtual void codeTilesWPPEntryPoint(TComSlice* slice) = 0;
@@ -93,7 +111,8 @@ public:
     virtual void codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx) = 0;
 
     virtual void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx) = 0;
-    virtual void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth) = 0;
+    virtual void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel) = 0;
+
     virtual void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx) = 0;
     virtual void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth) = 0;
     virtual void codeQtRootCbfZero(TComDataCU* cu) = 0;
@@ -131,7 +150,7 @@ public:
 
     void    resetBits() { m_entropyCoderIf->resetBits();      }
 
-    uint32_t    getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
+    uint32_t getNumberOfWrittenBits() { return m_entropyCoderIf->getNumberOfWrittenBits(); }
 
     void    resetEntropy() { m_entropyCoderIf->resetEntropy();  }
 
@@ -149,26 +168,27 @@ public:
     // SPS
     void encodeSPS(TComSPS* sps);
     void encodePPS(TComPPS* pps);
-    void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD = false);
-    void encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePUWise(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeAUD(TComSlice* pps);
+    void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
+    void encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePUWise(TComDataCU* cu, uint32_t absPartIdx);
     void encodeInterDirPU(TComDataCU* pcSubCU, uint32_t absPartIdx);
     void encodeRefFrmIdxPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
     void encodeMvdPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
     void encodeMVPIdxPU(TComDataCU* pcSubCU, uint32_t absPartIdx, int eRefList);
     void encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
-    void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePredMode(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bRD = false);
-    void encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
-    void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePredMode(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
+    void encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx);
+    void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU = false);
 
-    void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx, bool bRD = false);
+    void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx);
 
     void encodeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
-    void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
+    void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void encodeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
@@ -178,7 +198,7 @@ public:
 
 private:
 
-    void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, uint32_t uiTrIdx, bool& bCodeDQP);
+    void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t width, uint32_t height, uint32_t uiTrIdx, bool& bCodeDQP);
 
 public:
 
@@ -189,6 +209,8 @@ public:
     void estimateBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+    void initTUEntropySection(TComTURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU);
+    bool isNextTUSection(TComTURecurse *TUIterator);
 }; // END CLASS DEFINITION TEncEntropy
 }
 //! \}

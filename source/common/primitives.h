@@ -58,6 +58,16 @@ enum Chroma420Partitions
     NUM_CHROMA_PARTITIONS
 };
 
+enum Chroma422Partitions
+{
+    CHROMA422X_4x8,
+    CHROMA422_4x8,   CHROMA422_4x4,   CHROMA422_2x8,
+    CHROMA422_8x16,  CHROMA422_8x8,   CHROMA422_4x16,  CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
+    CHROMA422_16x32, CHROMA422_16x16, CHROMA422_8x32,  CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
+    CHROMA422_32x64, CHROMA422_32x32, CHROMA422_16x64, CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
+    NUM_CHROMA_PARTITIONS422
+};
+
 enum SquareBlocks   // Routines can be indexed using log2n(width)-2
 {
     BLOCK_4x4,
@@ -117,7 +127,7 @@ typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
 
 typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
+typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma);
 
 typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
 typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
@@ -125,7 +135,7 @@ typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
-typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, pixel* recon, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
 typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);
 typedef void (*dequant_scaling_t)(const int32_t* src, const int32_t *dequantCoef, int32_t* dst, int num, int mcqp_miper, int shift);
@@ -141,7 +151,7 @@ typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int 
 typedef void (*ssim_4x4x2_core_t)(const pixel *pix1, intptr_t stride1, const pixel *pix2, intptr_t stride2, int sums[2][4]);
 typedef float (*ssim_end4_t)(int sum0[5][4], int sum1[5][4], int width);
 typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
-typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src,  intptr_t srcStride, int w, int h);
+typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src, intptr_t srcStride, int w, int h);
 
 typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt);
@@ -163,6 +173,8 @@ typedef void (*addAvg_t)(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0
 typedef void (*saoCuOrgE0_t)(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t signLeft);
 typedef void (*planecopy_cp_t) (uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+
+typedef void (*cutree_propagate_cost) (int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts, int32_t *invQscales, double *fpsFactor, int len);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -236,6 +248,8 @@ struct EncoderPrimitives
     planecopy_cp_t    planecopy_cp;
     planecopy_sp_t    planecopy_sp;
 
+    cutree_propagate_cost    propagateCost;
+
     struct
     {
         filter_pp_t     filter_vpp[NUM_LUMA_PARTITIONS];
@@ -245,8 +259,8 @@ struct EncoderPrimitives
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
         filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
-        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
-        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
+        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS + 1];
+        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS + 1];
         copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
         pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];

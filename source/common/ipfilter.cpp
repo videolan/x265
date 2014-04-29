@@ -380,6 +380,14 @@ namespace x265 {
     p.chroma[X265_CSP_I420].filter_vsp[CHROMA_ ## W ## x ## H] = interp_vert_sp_c<4, W, H>;  \
     p.chroma[X265_CSP_I420].filter_vss[CHROMA_ ## W ## x ## H] = interp_vert_ss_c<4, W, H>;
 
+#define CHROMA_422(W, H) \
+    p.chroma[X265_CSP_I422].filter_hpp[CHROMA422_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>; \
+    p.chroma[X265_CSP_I422].filter_hps[CHROMA422_ ## W ## x ## H] = interp_horiz_ps_c<4, W, H>; \
+    p.chroma[X265_CSP_I422].filter_vpp[CHROMA422_ ## W ## x ## H] = interp_vert_pp_c<4, W, H>;  \
+    p.chroma[X265_CSP_I422].filter_vps[CHROMA422_ ## W ## x ## H] = interp_vert_ps_c<4, W, H>;  \
+    p.chroma[X265_CSP_I422].filter_vsp[CHROMA422_ ## W ## x ## H] = interp_vert_sp_c<4, W, H>;  \
+    p.chroma[X265_CSP_I422].filter_vss[CHROMA422_ ## W ## x ## H] = interp_vert_ss_c<4, W, H>;
+
 #define CHROMA_444(W, H) \
     p.chroma[X265_CSP_I444].filter_hpp[LUMA_ ## W ## x ## H] = interp_horiz_pp_c<4, W, H>; \
     p.chroma[X265_CSP_I444].filter_hps[LUMA_ ## W ## x ## H] = interp_horiz_ps_c<4, W, H>; \
@@ -449,6 +457,31 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     LUMA(16, 64);
     CHROMA_420(8,  32);
 
+    CHROMA_422(4, 8);
+    CHROMA_422(4, 4);
+    CHROMA_422(2, 8);
+    CHROMA_422(8,  16);
+    CHROMA_422(8,  8);
+    CHROMA_422(4,  16);
+    CHROMA_422(8,  12);
+    CHROMA_422(6,  16);
+    CHROMA_422(8,  4);
+    CHROMA_422(2,  16);
+    CHROMA_422(16, 32);
+    CHROMA_422(16, 16);
+    CHROMA_422(8,  32);
+    CHROMA_422(16, 24);
+    CHROMA_422(12, 32);
+    CHROMA_422(16, 8);
+    CHROMA_422(4,  32);
+    CHROMA_422(32, 64);
+    CHROMA_422(32, 32);
+    CHROMA_422(16, 64);
+    CHROMA_422(32, 48);
+    CHROMA_422(24, 64);
+    CHROMA_422(32, 16);
+    CHROMA_422(8,  64);
+
     CHROMA_444(4,  4);
     CHROMA_444(8,  8);
     CHROMA_444(4,  8);
@@ -478,6 +511,7 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 
     p.chroma_p2s[X265_CSP_I444] = filterConvertPelToShort_c<MAX_CU_SIZE>;
     p.chroma_p2s[X265_CSP_I420] = filterConvertPelToShort_c<MAX_CU_SIZE / 2>;
+    p.chroma_p2s[X265_CSP_I422] = filterConvertPelToShort_c<MAX_CU_SIZE / 2>;
 
     p.extendRowBorder = extendCURowColBorder;
 }

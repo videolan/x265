@@ -82,7 +82,6 @@ struct RateControl
     x265_param* param;
     SliceType sliceType;      /* Current frame type */
     int ncu;                  /* number of CUs in a frame */
-    int keyFrameInterval;     /* TODO: need to initialize in init */
     int qp;                   /* updated qp for current frame */
 
     double frameDuration;     /* current frame duration in seconds */
@@ -116,8 +115,6 @@ struct RateControl
     double accumPNorm;
     double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
     double lstep;
-    double lmin[3];           /* min qscale by frame type */
-    double lmax[3];
     double shortTermCplxSum;
     double shortTermCplxCount;
     int64_t totalBits;        /* totalbits used for already encoded frames */
@@ -135,7 +132,7 @@ struct RateControl
 
 protected:
 
-    void reInit();
+    void init();
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();

@@ -31,7 +31,8 @@ void ditherPlane(pixel *dst, int dstStride, uint16_t *src, int srcStride,
     const int lShift = 16 - bitDepth;
     const int rShift = 16 - bitDepth + 2;
     const int half = (1 << (16 - bitDepth + 1));
-    const int pixelMax = (1 << bitDepth) - 1 ;
+    const int pixelMax = (1 << bitDepth) - 1;
+
     memset(errors, 0, (width + 1) * sizeof(int16_t));
     int pitch = 1;
     for (int y = 0; y < height; y++, src += srcStride, dst += dstStride)
@@ -57,10 +58,13 @@ void ditherImage(x265_picture& picIn, int picWidth, int picHeight, int16_t *erro
             uint16_t *plane = (uint16_t*)picIn.planes[i];
             uint32_t pixelCount = x265_picturePlaneSize(picIn.colorSpace, picWidth, picHeight, i);
             int lShift = 16 - picIn.bitDepth;
+
             /* This loop assumes width is equal to stride which
                happens to be true for file reader outputs */
             for (uint32_t j = 0; j < pixelCount; j++)
+            {
                 plane[j] = plane[j] << lShift;
+            }
         }
     }
 
@@ -70,6 +74,6 @@ void ditherImage(x265_picture& picIn, int picWidth, int picHeight, int16_t *erro
         int width = (int)(picWidth >> x265_cli_csps[picIn.colorSpace].width[i]);
 
         ditherPlane(((pixel*)picIn.planes[i]), picIn.stride[i] / sizeof(pixel), ((uint16_t*)picIn.planes[i]),
-                      picIn.stride[i] / 2, width, height, errorBuf, bitDepth);
+                    picIn.stride[i] / 2, width, height, errorBuf, bitDepth);
     }
 }

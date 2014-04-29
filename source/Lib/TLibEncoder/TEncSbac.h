@@ -58,6 +58,7 @@ namespace x265 {
 class TEncSbac : public SyntaxElementWriter, public TEncEntropyIf
 {
 public:
+
     uint64_t pad;
     ContextModel m_contextModels[MAX_OFF_CTX_MOD];
 
@@ -68,10 +69,12 @@ public:
     virtual ~TEncSbac();
 
     void  init(TEncBinCABAC* p)       { m_binIf = p; }
-    void  setSlice(TComSlice* p)      { m_slice = p; }
-    void  resetBits()                 { m_binIf->resetBits(); m_bitIf->resetBits(); }
-    uint32_t getNumberOfWrittenBits() { return m_binIf->getNumWrittenBits(); }
 
+    void  setSlice(TComSlice* p)      { m_slice = p; }
+
+    void  resetBits()                 { m_binIf->resetBits(); m_bitIf->resetBits(); }
+
+    uint32_t getNumberOfWrittenBits() { return m_binIf->getNumWrittenBits(); }
 
     //  Virtual list
     void resetEntropy();
@@ -88,6 +91,7 @@ public:
     void codeSPS(TComSPS* sps);
     void codePPS(TComPPS* pps);
     void codeVUI(TComVUI* vui, TComSPS* sps);
+    void codeAUD(TComSlice *slice);
     void codeSliceHeader(TComSlice* slice);
     void codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1);
     void codeProfileTier(ProfileTierLevel* ptl);
@@ -103,6 +107,7 @@ public:
     bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
 
     void codeSAOSign(uint32_t code) { m_binIf->encodeBinEP(code); }
+
     void codeScalingList(TComScalingList*);
 
     void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
@@ -116,7 +121,7 @@ public:
     void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
     void codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
-    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
+    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel);
     void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);

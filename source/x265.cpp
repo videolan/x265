@@ -156,8 +156,6 @@ static const struct option long_options[] =
     { "strong-intra-smoothing",    no_argument, NULL, 0 },
     { "no-cutree",                 no_argument, NULL, 0 },
     { "cutree",                    no_argument, NULL, 0 },
-    { "vui",                  no_argument, NULL, 0 },
-    { "no-vui",               no_argument, NULL, 0 },
     { "sar",            required_argument, NULL, 0 },
     { "overscan",       required_argument, NULL, 0 },
     { "videoformat",    required_argument, NULL, 0 },
@@ -167,9 +165,10 @@ static const struct option long_options[] =
     { "colormatrix",    required_argument, NULL, 0 },
     { "chromaloc",      required_argument, NULL, 0 },
     { "crop-rect",      required_argument, NULL, 0 },
-    { "timinginfo",           no_argument, NULL, 0 },
-    { "no-timinginfo",        no_argument, NULL, 0 },
+    { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
+    { "aud",                  no_argument, NULL, 0 },
+    { "no-aud",               no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -252,9 +251,9 @@ void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
         return;
     int64_t elapsed = time - startTime;
     double fps = elapsed > 0 ? frameNum * 1000000. / elapsed : 0;
+    float bitrate = 0.008f * totalbytes * (param->fpsNum / param->fpsDenom) / ((float)frameNum);
     if (framesToBeEncoded)
     {
-        float bitrate = 0.008f * totalbytes / ((float)frameNum / ((float)param->fpsNum / param->fpsDenom));
         int eta = (int)(elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
         sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
                 100. * frameNum / framesToBeEncoded, frameNum, framesToBeEncoded, fps, bitrate,
@@ -262,7 +261,6 @@ void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
     }
     else
     {
-        float bitrate = (float)totalbytes * 8 / ((float)1000 * param->fpsNum / param->fpsDenom);
         sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", frameNum, fps, bitrate);
     }
     fprintf(stderr, "%s  \r", buf + 5);
@@ -288,12 +286,12 @@ void CLIOptions::showHelp(x265_param *param)
     H0("    infile can be YUV or Y4M\n");
     H0("    outfile is raw HEVC bitstream\n");
     H0("\nExecutable Options:\n");
-    H0("-h/--h                           Show this help text and exit\n");
+    H0("-h/--help                        Show this help text and exit\n");
     H0("-V/--version                     Show version info and exit\n");
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
     H0("   --threads <integer>           Number of threads for thread pool (0: detect CPU core count, default)\n");
     H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
-    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", logLevelNames[param->logLevel+1]);
+    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", logLevelNames[param->logLevel + 1]);
     H0("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("   --no-progress                 Disable CLI progress reports\n");
     H0("-o/--output <filename>           Bitstream output file name\n");
@@ -303,7 +301,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input-depth <integer>       Bit-depth of input file. Default 8\n");
     H0("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
-    H0("   --input-csp <string>          Source color space: i420 or i444, auto-detected if Y4M. Default: i420\n");
+    H0("   --input-csp <string>          Source color space: i420, i444 or i422, auto-detected if Y4M. Default: i420\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
     H0("   --seek <integer>              First frame to encode\n");
@@ -354,7 +352,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --bitrate <integer>           Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
     H0("   --crf <float>                 Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
     H0("   --crf-max <float>             With CRF+VBV, limit RF to this value. 0 for no limit (default)\n");
-    H0("                                  May cause VBV underflows!\n");
+    H0("                                 May cause VBV underflows!\n");
     H0("   --vbv-maxrate <integer>       Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
     H0("   --vbv-bufsize <integer>       Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
     H0("   --vbv-init <float>            Initial VBV buffer occupancy (fraction of bufsize or in kbits). Default %f\n", param->rc.vbvBufferInit);
@@ -372,7 +370,6 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --sao-lcu-bounds <integer>    0: right/bottom boundary areas skipped  1: non-deblocked pixels are used. Default %d\n", param->saoLcuBoundary);
     H0("   --sao-lcu-opt <integer>       0: SAO picture-based optimization, 1: SAO LCU-based optimization. Default %d\n", param->saoLcuBasedOptimization);
     H0("\nVUI options:\n");
-    H0("   --[no-]vui                    Add Video Useability Information with all fields to the SPS. Default %s\n", OPT(param->vui.bEnableVuiParametersPresentFlag));
     H0("   --sar <width:height|int>      Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
@@ -389,7 +386,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
     H0("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
-    H0("   --[no-]timinginfo             Add timing information to the VUI. Defaut %s\n", OPT(param->vui.bEnableVuiTimingInfoPresentFlag));
+    H0("\nBitstream options:\n");
+    H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H0("\nReconstructed video options (debugging):\n");
     H0("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H0("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
@@ -570,11 +568,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
         return true;
     }
-    if (info.csp != X265_CSP_I420 && info.csp != X265_CSP_I444)
-    {
-        x265_log(param, X265_LOG_ERROR, "Only i420 and i444 color spaces are supported in this build\n");
-        return true;
-    }
+
     if (info.depth < 8 || info.depth > 16)
     {
         x265_log(param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n", inputBitDepth);
@@ -592,7 +586,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         param->fpsDenom = info.fpsDenom;
         param->fpsNum = info.fpsNum;
     }
-    if (!param->vui.bEnableAspectRatioIdc && info.sarWidth && info.sarHeight)
+    if (!param->vui.aspectRatioIdc && info.sarWidth && info.sarHeight)
         setParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
     if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
@@ -643,7 +637,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         return true;
     }
 
-    printVersion(param);
     return false;
 }
 

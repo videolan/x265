@@ -1776,7 +1776,7 @@ FILTER_VER_CHROMA_W2 8, sp, 8
 ; void interp_4tap_vert_%1_4x2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_W4 2
-INIT_XMM sse2
+INIT_XMM sse4
 cglobal interp_4tap_vert_%1_4x2, 5, 6, %2
 
     add        r1d, r1d

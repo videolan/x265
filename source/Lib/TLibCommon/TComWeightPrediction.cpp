@@ -166,7 +166,7 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
 
         // Chroma V : --------------------------------------------
         w0      = wp0[2].w;
-        offset  = wp0[2].o + wp1[2].o;;
+        offset  = wp0[2].o + wp1[2].o;
         shift   = wp0[2].shift + shiftNum + 1;
         round   = shift ? (1 << (shift - 1)) : 0;
         w1      = wp1[2].w;

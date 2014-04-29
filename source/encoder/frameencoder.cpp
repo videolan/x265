@@ -100,6 +100,7 @@ void FrameEncoder::destroy()
 bool FrameEncoder::init(Encoder *top, int numRows)
 {
     bool ok = true;
+
     m_top = top;
     m_cfg = top;
     m_numRows = numRows;
@@ -192,7 +193,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     /* headers for start of bitstream */
     OutputNALUnit nalu(NAL_UNIT_VPS);
     entropyCoder->setBitstream(&nalu.m_bitstream);
-    entropyCoder->encodeVPS(&m_cfg->m_vps);
+    entropyCoder->encodeVPS(&m_top->m_vps);
     writeRBSPTrailingBits(nalu.m_bitstream);
     CHECKED_MALLOC(nalunits[count], NALUnitEBSP, 1);
     nalunits[count]->init(nalu);
@@ -217,7 +218,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     if (m_cfg->m_activeParameterSetsSEIEnabled)
     {
         SEIActiveParameterSets sei;
-        sei.activeVPSId = m_cfg->m_vps.getVPSId();
+        sei.activeVPSId = m_top->m_vps.getVPSId();
         sei.m_fullRandomAccessFlag = false;
         sei.m_noParamSetUpdateFlag = false;
         sei.numSpsIdsMinus1 = 0;
@@ -329,19 +330,7 @@ void FrameEncoder::threadMain()
 void FrameEncoder::setLambda(int qp, int row)
 {
     TComSlice*  slice = m_pic->getSlice();
-    TComPicYuv* fenc  = slice->getPic()->getPicYuvOrg();
     int         chFmt = slice->getSPS()->getChromaFormatIdc();
-
-    double lambda = 0;
-
-    if (m_pic->getSlice()->getSliceType() == I_SLICE)
-    {
-        lambda = X265_MAX(1, x265_lambda2_tab_I[qp]);
-    }
-    else
-    {
-        lambda = X265_MAX(1, x265_lambda2_non_I[qp]);
-    }
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
@@ -349,16 +338,12 @@ void FrameEncoder::setLambda(int qp, int row)
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     int qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    double chromaLambda = lambda / crWeight;
 
-    m_rows[row].m_search.setQPLambda(qp, lambda, chromaLambda);
-    m_rows[row].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-    m_rows[row].m_rdCost.setLambda(lambda);
-    m_rows[row].m_rdCost.setCbDistortionWeight(cbWeight);
-    m_rows[row].m_rdCost.setCrDistortionWeight(crWeight);
+    m_rows[row].m_search.setQP(qp, crWeight, cbWeight);
 }
 
 void FrameEncoder::compressFrame()
@@ -369,21 +354,29 @@ void FrameEncoder::compressFrame()
     TComSlice*   slice             = m_pic->getSlice();
     int          chFmt             = slice->getSPS()->getChromaFormatIdc();
 
+    m_nalCount = 0;
+    entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
+
+    /* Emit access unit delimiter unless this is the first frame and the user is
+     * not repeating headers (since AUD is supposed to be the first NAL in the access
+     * unit) */
+    if (m_cfg->param->bEnableAccessUnitDelimiters && (m_pic->getPOC() || m_cfg->param->bRepeatHeaders))
+    {
+        OutputNALUnit nalu(NAL_UNIT_ACCESS_UNIT_DELIMITER);
+        entropyCoder->setBitstream(&nalu.m_bitstream);
+        entropyCoder->encodeAUD(slice);
+        writeRBSPTrailingBits(nalu.m_bitstream);
+        m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
+        if (m_nalList[m_nalCount])
+        {
+            m_nalList[m_nalCount]->init(nalu);
+            m_nalCount++;
+        }
+    }
     if (m_cfg->param->bRepeatHeaders && m_pic->m_lowres.bKeyframe)
-        m_nalCount = getStreamHeaders(m_nalList);
-    else
-        m_nalCount = 0;
+        m_nalCount += getStreamHeaders(m_nalList + m_nalCount);
 
     int qp = slice->getSliceQp();
-    double lambda = 0;
-    if (slice->getSliceType() == I_SLICE)
-    {
-        lambda = X265_MAX(1, x265_lambda2_tab_I[qp]);
-    }
-    else
-    {
-        lambda = X265_MAX(1, x265_lambda2_non_I[qp]);
-    }
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated,
@@ -392,9 +385,12 @@ void FrameEncoder::compressFrame()
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
+    double lambda = x265_lambda2_tab[qp];
     double chromaLambda = lambda / crWeight;
 
     // NOTE: set SAO lambda every Frame
@@ -404,11 +400,8 @@ void FrameEncoder::compressFrame()
     TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
     for (int i = 0; i < m_numRows; i++)
     {
-        m_rows[i].m_search.setQPLambda(qp, lambda, chromaLambda);
         m_rows[i].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-        m_rows[i].m_rdCost.setLambda(lambda);
-        m_rows[i].m_rdCost.setCbDistortionWeight(cbWeight);
-        m_rows[i].m_rdCost.setCrDistortionWeight(crWeight);
+        m_rows[i].m_search.setQP(qp, crWeight, cbWeight);
     }
 
     m_frameFilter.m_sao.lumaLambda = lambda;
@@ -978,7 +971,9 @@ void FrameEncoder::compressCTURows()
 
                     int reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + refLagRows))
+                    {
                         reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+                    }
 
                     if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                     {
@@ -1015,7 +1010,9 @@ void FrameEncoder::compressCTURows()
 
                         int reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + refLagRows))
+                        {
                             reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+                        }
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                         {
@@ -1094,7 +1091,7 @@ void FrameEncoder::processRowEncoder(int row)
 
         if (m_cfg->param->rc.aqMode || bIsVbv)
         {
-            int qp = calcQpForCu(m_pic, cuAddr, cu->m_baseQp);
+            int qp = calcQpForCu(cuAddr, cu->m_baseQp);
             setLambda(qp, row);
             qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
             cu->setQPSubParts(char(qp), 0, 0);
@@ -1119,7 +1116,7 @@ void FrameEncoder::processRowEncoder(int row)
             m_pic->m_qpaRc[row] += cu->m_baseQp;
 
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
- 
+
             if (row == col && row)
             {
                 double qpBase = cu->m_baseQp;
@@ -1131,13 +1128,13 @@ void FrameEncoder::processRowEncoder(int row)
                 if (reEncode < 0)
                 {
                     x265_log(m_cfg->param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
-                            m_pic->getPOC(), row, qpBase, cu->m_baseQp);
+                             m_pic->getPOC(), row, qpBase, cu->m_baseQp);
 
                     // prevent the WaveFront::findJob() method from providing new jobs
                     m_vbvResetTriggerRow = row;
                     m_bAllRowsStop = true;
 
-                    for (int r = m_numRows - 1; r >= row ; r--)
+                    for (int r = m_numRows - 1; r >= row; r--)
                     {
                         CTURow& stopRow = m_rows[r];
 
@@ -1152,6 +1149,7 @@ void FrameEncoder::processRowEncoder(int row)
                                 else
                                     GIVE_UP_TIME();
                             }
+
                             stopRow.m_lock.release();
 
                             bool bRowBusy = true;
@@ -1196,7 +1194,7 @@ void FrameEncoder::processRowEncoder(int row)
         }
 
         ScopedLock self(curRow.m_lock);
-        if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) || 
+        if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) ||
             (row > 0 && curRow.m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2))
         {
             curRow.m_active = false;
@@ -1228,7 +1226,7 @@ void FrameEncoder::processRowEncoder(int row)
     curRow.m_busy = false;
 }
 
-int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
+int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
 {
     x265_emms();
     double qp = baseQp;
@@ -1243,13 +1241,16 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    int maxBlockCols = (pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
-    int maxBlockRows = (pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
+    int maxBlockCols = (m_pic->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
+    int maxBlockRows = (m_pic->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
     int noOfBlocks = g_maxCUSize / 16;
-    int block_y = (cuAddr / pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
-    int block_x = (cuAddr * noOfBlocks) - block_y * pic->getPicSym()->getFrameWidthInCU();
+    int block_y = (cuAddr / m_pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
+    int block_x = (cuAddr * noOfBlocks) - block_y * m_pic->getPicSym()->getFrameWidthInCU();
 
+    /* Use cuTree offsets in m_pic->m_lowres.qpOffset if cuTree enabled and
+     * frame is referenced, else use AQ offsets */
     double *qpoffs = (m_isReferenced && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpOffset : m_pic->m_lowres.qpAqOffset;
+
     int cnt = 0, idx = 0;
     for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
     {
@@ -1260,7 +1261,7 @@ int FrameEncoder::calcQpForCu(TComPic *pic, uint32_t cuAddr, double baseQp)
                 qp_offset += qpoffs[idx];
             if (bIsVbv)
             {
-                m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.lowresCostForRc[idx];
+                m_pic->m_cuCostsForVbv[cuAddr] += m_pic->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
                 m_pic->m_intraCuCostsForVbv[cuAddr] += m_pic->m_lowres.intraCost[idx];
             }
             cnt++;

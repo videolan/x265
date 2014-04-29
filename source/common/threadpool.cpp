@@ -97,7 +97,8 @@ private:
 
 public:
 
-    static ThreadPoolImpl *instance;
+    static ThreadPoolImpl *s_instance;
+    static Lock s_createLock;
 
     JobProvider *m_firstProvider;
     JobProvider *m_lastProvider;
@@ -206,30 +207,40 @@ void ThreadPoolImpl::pokeIdleThread()
     }
 }
 
-ThreadPoolImpl *ThreadPoolImpl::instance;
+ThreadPoolImpl *ThreadPoolImpl::s_instance;
+Lock ThreadPoolImpl::s_createLock;
 
 /* static */
 ThreadPool *ThreadPool::allocThreadPool(int numthreads)
 {
-    if (ThreadPoolImpl::instance)
-        return ThreadPoolImpl::instance->AddReference();
+    if (ThreadPoolImpl::s_instance)
+        return ThreadPoolImpl::s_instance->AddReference();
 
-    ThreadPoolImpl::instance = new ThreadPoolImpl(numthreads);
-    return ThreadPoolImpl::instance;
+    /* acquire the lock to create the instance */
+    ThreadPoolImpl::s_createLock.acquire();
+
+    if (ThreadPoolImpl::s_instance)
+        /* pool was allocated while we waited for the lock */
+        ThreadPoolImpl::s_instance->AddReference();
+    else
+        ThreadPoolImpl::s_instance = new ThreadPoolImpl(numthreads);
+    ThreadPoolImpl::s_createLock.release();
+
+    return ThreadPoolImpl::s_instance;
 }
 
 ThreadPool *ThreadPool::getThreadPool()
 {
-    assert(ThreadPoolImpl::instance);
-    return ThreadPoolImpl::instance;
+    assert(ThreadPoolImpl::s_instance);
+    return ThreadPoolImpl::s_instance;
 }
 
 void ThreadPoolImpl::release()
 {
     if (--m_referenceCount == 0)
     {
-        assert(this == ThreadPoolImpl::instance);
-        ThreadPoolImpl::instance = NULL;
+        assert(this == ThreadPoolImpl::s_instance);
+        ThreadPoolImpl::s_instance = NULL;
         this->Stop();
         delete this;
     }

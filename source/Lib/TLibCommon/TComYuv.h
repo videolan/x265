@@ -82,6 +82,14 @@ private:
     int m_vChromaShift;
     int m_csp;
 
+    int getChromaAddrOffset(uint32_t partUnitIdx, uint32_t width)
+    {
+        int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]] >> m_hChromaShift;
+        int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]] >> m_vChromaShift;
+
+        return blkX + blkY * width;
+    }
+
     static int getAddrOffset(uint32_t partUnitIdx, uint32_t width)
     {
         int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
@@ -94,6 +102,16 @@ private:
     {
         int blkX = (unitIdx * size) &  (width - 1);
         int blkY = (unitIdx * size) & ~(width - 1);
+
+        return blkX + blkY * size;
+    }
+
+    int getChromaAddrOffset(uint32_t unitIdx, uint32_t size, uint32_t width)
+    {
+        int blkX = (unitIdx * size) &  (width - 1);
+        int blkY = (unitIdx * size) & ~(width - 1);
+
+        if (m_csp == CHROMA_422) blkY <<= 1;
 
         return blkX + blkY * size;
     }
@@ -133,7 +151,7 @@ public:
     void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
     void    copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize);
-    void    copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId);
+    void    copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
@@ -162,16 +180,16 @@ public:
     //  Access starting position of YUV partition unit buffer
     pixel* getLumaAddr(uint32_t partUnitIdx) { return m_bufY + getAddrOffset(partUnitIdx, m_width); }
 
-    pixel* getCbAddr(uint32_t partUnitIdx) { return m_bufU + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
+    pixel* getCbAddr(uint32_t partUnitIdx) { return m_bufU + getChromaAddrOffset(partUnitIdx, m_cwidth); }
 
-    pixel* getCrAddr(uint32_t partUnitIdx) { return m_bufV + (getAddrOffset(partUnitIdx, m_cwidth) >> m_hChromaShift); }
+    pixel* getCrAddr(uint32_t partUnitIdx) { return m_bufV + getChromaAddrOffset(partUnitIdx, m_cwidth); }
 
     //  Access starting position of YUV transform unit buffer
     pixel* getLumaAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufY + getAddrOffset(transUnitIdx, blkSize, m_width); }
 
-    pixel* getCbAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufU + getAddrOffset(transUnitIdx, blkSize, m_cwidth); }
+    pixel* getCbAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufU + getChromaAddrOffset(transUnitIdx, blkSize, m_cwidth); }
 
-    pixel* getCrAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufV + getAddrOffset(transUnitIdx, blkSize, m_cwidth); }
+    pixel* getCrAddr(uint32_t transUnitIdx, uint32_t blkSize) { return m_bufV + getChromaAddrOffset(transUnitIdx, blkSize, m_cwidth); }
 
     //  Get stride value of YUV buffer
     uint32_t getStride()    { return m_width;   }

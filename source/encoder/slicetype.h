@@ -35,6 +35,9 @@ struct Lowres;
 class TComPic;
 class Encoder;
 
+#define LOWRES_COST_MASK  ((1 << 14) - 1)
+#define LOWRES_COST_SHIFT 14
+
 #define SET_WEIGHT(w, b, s, d, o) \
     { \
         (w).inputWeight = (s); \
@@ -70,7 +73,7 @@ struct EstimateRow
         me.setSubpelRefine(1);
         predictions = X265_MALLOC(pixel, 35 * 8 * 8);
         merange = 16;
-        lookAheadLambda = (int)x265_lambda2_non_I[X265_LOOKAHEAD_QP];
+        lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
     }
 
     ~EstimateRow()
@@ -104,7 +107,7 @@ struct CostEstimate : public WaveFront
     int              heightInCU;      // height of lowres frame in downscale CUs
 
     bool             bDoSearch[2];
-    bool             rowsCompleted;
+    volatile bool    bFrameCompleted;
     int              curb, curp0, curp1;
 
     void     processRow(int row);
@@ -116,7 +119,7 @@ protected:
     uint32_t weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *w);
 };
 
-struct Lookahead
+struct Lookahead : public JobProvider
 {
     Lookahead(Encoder *, ThreadPool *pool);
     ~Lookahead();
@@ -134,14 +137,25 @@ struct Lookahead
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
     int              lastKeyframe;
-    int              histogram[X265_BFRAME_MAX+1];
+    int              histogram[X265_BFRAME_MAX + 1];
 
     void addPicture(TComPic*, int sliceType);
     void flush();
+    TComPic* getDecidedPicture();
 
     int64_t getEstimatedPictureCost(TComPic *pic);
 
 protected:
+
+    Lock  inputQueueLock;
+    Lock  outputQueueLock;
+    Lock  decideLock;
+    Event outputAvailable;
+    volatile int  bReady;
+    volatile bool bFilling;
+    volatile bool bFlushed;
+
+    bool findJob();
 
     /* called by addPicture() or flush() to trigger slice decisions */
     void slicetypeDecide();
@@ -159,8 +173,6 @@ protected:
      * quant offsets */
     void cuTree(Lowres **frames, int numframes, bool bintra);
     void estimateCUPropagate(Lowres **frames, double average_duration, int p0, int p1, int b, int referenced);
-    void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
-                                 int32_t *invQscales, double *fpsFactor, int len);
     void cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */

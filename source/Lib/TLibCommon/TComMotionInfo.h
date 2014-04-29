@@ -54,11 +54,11 @@ namespace x265 {
 // ====================================================================================================================
 
 /// parameters for AMVP
-typedef struct _AMVPInfo
+struct AMVPInfo
 {
-    MV m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
-    int      m_num;                             ///< number of motion vector predictor candidates
-} AMVPInfo;
+    MV  m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
+    int m_num;                             ///< number of motion vector predictor candidates
+};
 
 // ====================================================================================================================
 // Class definition
@@ -133,7 +133,6 @@ public:
     void    setAllRefIdx(int refIdx,                  PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
     void    setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
     void    setMvd(int idx, const MV& mvd) { m_mvd[idx] = mvd; }
-
 };
 }
 

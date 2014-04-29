@@ -119,9 +119,9 @@ if(ENABLE_ASSEMBLY)
         # MSVC requires custom build rules in the main cmake script for yasm
         set(MSVC_ASMS "${A_SRCS}" CACHE INTERNAL "yasm sources")
         set(A_SRCS)
-    else()
-        enable_language(ASM_YASM)
     endif()
+
+    enable_language(ASM_YASM)
 
     foreach(SRC ${A_SRCS} ${C_SRCS})
         set(ASM_PRIMITIVES ${ASM_PRIMITIVES} x86/${SRC})
@@ -130,7 +130,9 @@ if(ENABLE_ASSEMBLY)
 endif(ENABLE_ASSEMBLY)
 
 check_symbol_exists(strtok_r "string.h" HAVE_STRTOK_R)
-set_source_files_properties(param.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=${HAVE_STRTOK_R})
+if(HAVE_STRTOK_R)
+    set_source_files_properties(param.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=1)
+endif()
 
 if(GCC AND GCC_HAS_NO_NARROWING)
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)

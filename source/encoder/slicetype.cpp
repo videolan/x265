@@ -33,8 +33,6 @@
 #include "mv.h"
 #include "ratecontrol.h"
 
-#define LOWRES_COST_MASK  ((1 << 14) - 1)
-#define LOWRES_COST_SHIFT 14
 #define NUM_CUS (widthInCU > 2 && heightInCU > 2 ? (widthInCU - 2) * (heightInCU - 2) : widthInCU * heightInCU)
 
 using namespace x265;
@@ -57,11 +55,14 @@ static inline void median_mv(MV &dst, MV a, MV b, MV c)
 }
 
 Lookahead::Lookahead(Encoder *_cfg, ThreadPool* pool)
-    : est(pool)
+    : JobProvider(pool)
+    , est(pool)
 {
     param = _cfg->param;
     lastKeyframe = -param->keyframeMax;
     lastNonB = NULL;
+    bFilling = true;
+    bFlushed = false;
     widthInCU = ((param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     heightInCU = ((param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     scratch = (int*)x265_malloc(widthInCU * sizeof(int));
@@ -70,10 +71,23 @@ Lookahead::Lookahead(Encoder *_cfg, ThreadPool* pool)
 
 Lookahead::~Lookahead() { }
 
-void Lookahead::init() { }
+void Lookahead::init()
+{
+    if (m_pool && m_pool->getThreadCount() >= 4 &&
+        ((param->bFrameAdaptive && param->bframes) ||
+         param->rc.cuTree || param->scenecutThreshold ||
+         (param->lookaheadDepth && param->rc.vbvBufferSize)))
+        m_pool = m_pool; /* allow use of worker thread */
+    else
+        m_pool = NULL; /* disable use of worker thread */
+}
 
 void Lookahead::destroy()
 {
+    if (m_pool)
+        // flush will dequeue, if it is necessary
+        JobProvider::flush();
+
     // these two queues will be empty unless the encode was aborted
     while (!inputQueue.empty())
     {
@@ -92,26 +106,103 @@ void Lookahead::destroy()
     x265_free(scratch);
 }
 
+/* Called by API thread */
 void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
 
     pic->m_lowres.init(orig, pic->getSlice()->getPOC(), sliceType);
+
+    inputQueueLock.acquire();
     inputQueue.pushBack(*pic);
 
     if (inputQueue.size() >= param->lookaheadDepth)
-        slicetypeDecide();
+    {
+        /* when queue fills the first time, run slicetypeDecide synchronously,
+         * since the encoder will always be blocked here */
+        if (m_pool && !bFilling)
+        {
+            inputQueueLock.release();
+            bReady = 1;
+            m_pool->pokeIdleThread();
+        }
+        else
+            slicetypeDecide();
+
+        if (bFilling && m_pool)
+            JobProvider::enqueue();
+        bFilling = false;
+    }
+    else
+        inputQueueLock.release();
 }
 
+/* Called by API thread */
 void Lookahead::flush()
 {
+    /* flush synchronously */
+    inputQueueLock.acquire();
     if (!inputQueue.empty())
+    {
         slicetypeDecide();
+    }
+    else
+        inputQueueLock.release();
+
+    /* just in case the input queue is never allowed to fill */
+    bFilling = false;
+
+    inputQueueLock.acquire();
+
+    /* bFlushed indicates that an empty output queue actually means all frames
+     * have been decided (no more inputs for the encoder) */
+    if (inputQueue.empty())
+        bFlushed = true;
+    inputQueueLock.release();
 }
 
-// Called by RateControl to get the estimated SATD cost for a given picture.
-// It assumes dpb->prepareEncode() has already been called for the picture and
-// all the references are established
+/* Called by API thread. If the lookahead queue has not yet been filled the
+ * first time, it immediately returns NULL.  Else the function blocks until
+ * outputs are available and then pops the first frame from the output queue. If
+ * flush() has been called and the output queue is empty, NULL is returned. */
+TComPic* Lookahead::getDecidedPicture()
+{
+    outputQueueLock.acquire();
+
+    if (bFilling)
+    {
+        outputQueueLock.release();
+        return NULL;
+    }
+
+    while (outputQueue.empty() && !bFlushed)
+    {
+        outputQueueLock.release();
+        outputAvailable.wait();
+        outputQueueLock.acquire();
+    }
+
+    TComPic *fenc = outputQueue.popFront();
+    outputQueueLock.release();
+    return fenc;
+}
+
+/* Called by pool worker threads */
+bool Lookahead::findJob()
+{
+    if (bReady && ATOMIC_CAS32(&bReady, 1, 0) == 1)
+    {
+        inputQueueLock.acquire();
+        slicetypeDecide();
+        return true;
+    }
+    else
+        return false;
+}
+
+/* Called by rate-control to get the estimated SATD cost for a given picture.
+ * It assumes dpb->prepareEncode() has already been called for the picture and
+ * all the references are established */
 int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
 {
     Lowres *frames[X265_LOOKAHEAD_MAX];
@@ -180,7 +271,6 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
         if (b && param->rc.vbvBufferSize)
             frameCostRecalculate(frames, b, b, b);
     }
-
     else if (param->rc.aqMode)
         pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
     else
@@ -202,7 +292,7 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
                 lowresCuIdx = lowresRow * widthInLowresCu;
                 for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
                 {
-                    sum += pic->m_lowres.lowresCostForRc[lowresCuIdx];
+                    sum += pic->m_lowres.lowresCostForRc[lowresCuIdx] & LOWRES_COST_MASK;
                 }
 
                 pic->m_rowSatdForVbv[row] += sum;
@@ -212,32 +302,52 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
     return pic->m_lowres.satdCost;
 }
 
+/* called by API thread or worker thread with inputQueueLock acquired */
 void Lookahead::slicetypeDecide()
 {
+    ScopedLock lock(decideLock);
+
     Lowres *frames[X265_LOOKAHEAD_MAX];
     TComPic *list[X265_LOOKAHEAD_MAX];
-    TComPic *ipic = inputQueue.first();
-    bool isKeyFrameAnalyse = (param->rc.cuTree || (param->rc.vbvBufferSize && param->lookaheadDepth));
+    int maxSearch = X265_MIN(param->lookaheadDepth, X265_LOOKAHEAD_MAX);
 
-    if (!est.rows && ipic)
-        est.init(param, ipic);
+    memset(frames, 0, sizeof(frames));
+    memset(list, 0, sizeof(list));
 
-    if ((param->bFrameAdaptive && param->bframes) ||
-        param->rc.cuTree || param->scenecutThreshold ||
-        (param->lookaheadDepth && param->rc.vbvBufferSize))
+    {
+        TComPic *pic = inputQueue.first();
+        int j;
+        for (j = 0; j < param->bframes + 2; j++)
+        {
+            if (!pic) break;
+            list[j] = pic;
+            pic = pic->m_next;
+        }
+
+        pic = inputQueue.first();
+        frames[0] = lastNonB;
+        for (j = 0; j < maxSearch; j++)
+        {
+            if (!pic) break;
+            frames[j + 1] = &pic->m_lowres;
+            pic = pic->m_next;
+        }
+
+        maxSearch = j;
+    }
+
+    inputQueueLock.release();
+
+    if (!est.rows && list[0])
+        est.init(param, list[0]);
+
+    if (lastNonB &&
+        ((param->bFrameAdaptive && param->bframes) ||
+         param->rc.cuTree || param->scenecutThreshold ||
+         (param->lookaheadDepth && param->rc.vbvBufferSize)))
     {
         slicetypeAnalyse(frames, false);
     }
-    else
-        frames[0] = lastNonB;
-
-    int j;
-    for (j = 0; ipic && j < param->bframes + 2; ipic = ipic->m_next)
-    {
-        list[j++] = ipic;
-    }
-
-    list[j] = NULL;
 
     int bframes, brefs;
     for (bframes = 0, brefs = 0;; bframes++)
@@ -324,7 +434,7 @@ void Lookahead::slicetypeDecide()
         brefs++;
     }
 
-    /* calculate the frame costs ahead of time for x264_rc_analyse_slice while we still have lowres */
+    /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
     if (param->rc.rateControlMode != X265_RC_CQP)
     {
         int p0, p1, b;
@@ -356,6 +466,7 @@ void Lookahead::slicetypeDecide()
                     {
                         p1++;
                     }
+
                 else
                     p1 = bframes + 1;
                 est.estimateFrameCost(frames, p0, p1, b, 0);
@@ -364,6 +475,8 @@ void Lookahead::slicetypeDecide()
             }
         }
     }
+
+    inputQueueLock.acquire();
 
     /* dequeue all frames from inputQueue that are about to be enqueued
      * in the output queue. The order is important because TComPic can
@@ -374,8 +487,12 @@ void Lookahead::slicetypeDecide()
         TComPic *pic;
         pic = inputQueue.popFront();
         pts[i] = pic->m_pts;
+        maxSearch--;
     }
 
+    inputQueueLock.release();
+
+    outputQueueLock.acquire();
     /* add non-B to output queue */
     int idx = 0;
     list[bframes]->m_reorderedPts = pts[idx++];
@@ -405,10 +522,26 @@ void Lookahead::slicetypeDecide()
         }
     }
 
+    bool isKeyFrameAnalyse = (param->rc.cuTree || (param->rc.vbvBufferSize && param->lookaheadDepth));
     if (isKeyFrameAnalyse && IS_X265_TYPE_I(lastNonB->sliceType))
     {
+        inputQueueLock.acquire();
+        TComPic *pic = inputQueue.first();
+        frames[0] = lastNonB;
+        int j;
+        for (j = 0; j < maxSearch; j++)
+        {
+            frames[j + 1] = &pic->m_lowres;
+            pic = pic->m_next;
+        }
+
+        frames[j + 1] = NULL;
+        inputQueueLock.release();
         slicetypeAnalyse(frames, true);
     }
+
+    outputQueueLock.release();
+    outputAvailable.trigger();
 }
 
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
@@ -472,15 +605,12 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     int resetStart;
     bool bIsVbvLookahead = param->rc.vbvBufferSize && param->lookaheadDepth;
 
-    if (!lastNonB)
-        return;
-
-    frames[0] = lastNonB;
-    TComPic* pic = inputQueue.first();
-    for (framecnt = 0; (framecnt < maxSearch) && pic && pic->m_lowres.sliceType == X265_TYPE_AUTO; framecnt++)
+    /* count undecided frames */
+    for (framecnt = 0; framecnt < maxSearch; framecnt++)
     {
-        frames[framecnt + 1] = &pic->m_lowres;
-        pic = pic->m_next;
+        Lowres *fenc = frames[framecnt + 1];
+        if (!fenc || fenc->sliceType != X265_TYPE_AUTO)
+            break;
     }
 
     if (!framecnt)
@@ -938,10 +1068,9 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     for (uint16_t blocky = 0; blocky < heightInCU; blocky++)
     {
         int cuIndex = blocky * StrideInCU;
-        /* TODO This function go into ASM */
-        estimateCUPropagateCost(scratch, propagateCost,
-                                frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
-                                frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
+        primitives.propagateCost(scratch, propagateCost,
+                                 frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
+                                 frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
 
         if (referenced)
             propagateCost += widthInCU;
@@ -1042,23 +1171,6 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
     }
 }
 
-/* Estimate the total amount of influence on future quality that could be had if we
- * were to improve the reference samples used to inter predict any given macroblock. */
-void Lookahead::estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
-                                        int32_t *invQscales, double *fpsFactor, int len)
-{
-    double fps = *fpsFactor / 256;
-
-    for (int i = 0; i < len; i++)
-    {
-        double intraCost       = intraCosts[i] * invQscales[i];
-        double propagateAmount = (double)propagateIn[i] + intraCost * fps;
-        double propagateNum    = (double)intraCosts[i] - (interCosts[i] & LOWRES_COST_MASK);
-        double propagateDenom  = (double)intraCosts[i];
-        dst[i] = (int)(propagateAmount * propagateNum / propagateDenom + 0.5);
-    }
-}
-
 /* If MB-tree changes the quantizers, we need to recalculate the frame cost without
  * re-running lookahead. */
 int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
@@ -1100,7 +1212,7 @@ CostEstimate::CostEstimate(ThreadPool *p)
     paddedLines = widthInCU = heightInCU = 0;
     bDoSearch[0] = bDoSearch[1] = false;
     curb = curp0 = curp1 = 0;
-    rowsCompleted = 0;
+    bFrameCompleted = false;
 }
 
 CostEstimate::~CostEstimate()
@@ -1190,9 +1302,12 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
         {
             rows[i].init();
             rows[i].me.setSourcePlane(fenc->lowresPlane[0], fenc->lumaStride);
+            if (!fenc->bIntraCalculated)
+                fenc->rowSatds[0][0][i] = 0;
+            fenc->rowSatds[b - p0][p1 - b][i] = 0;
         }
 
-        rowsCompleted = false;
+        bFrameCompleted = false;
 
         if (m_pool)
         {
@@ -1200,7 +1315,7 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
 
             // enableAllRows must be already called
             enqueueRow(0);
-            while (!rowsCompleted)
+            while (!bFrameCompleted)
             {
                 WaveFront::findJob();
             }
@@ -1372,12 +1487,7 @@ void CostEstimate::processRow(int row)
 {
     int realrow = heightInCU - 1 - row;
     Lowres **frames = curframes;
-    Lowres *fenc = frames[curb];
     ReferencePlanes *wfref0 = weightedRef.isWeighted ? &weightedRef : frames[curp0];
-
-    if (!fenc->bIntraCalculated)
-        fenc->rowSatds[0][0][realrow] = 0;
-    fenc->rowSatds[curb - curp0][curp1 - curb][realrow] = 0;
 
     /* Lowres lookahead goes backwards because the MVs are used as
      * predictors in the main encode.  This considerably improves MV
@@ -1400,7 +1510,8 @@ void CostEstimate::processRow(int row)
         }
 
         ScopedLock self(rows[row].lock);
-        if (row > 0 && (int32_t)rows[row].completed < widthInCU - 1 && rows[row - 1].completed < rows[row].completed + 2)
+        if (row > 0 && (int32_t)rows[row].completed < widthInCU - 1 &&
+            rows[row - 1].completed < rows[row].completed + 2)
         {
             rows[row].active = false;
             x265_emms();
@@ -1410,7 +1521,7 @@ void CostEstimate::processRow(int row)
 
     if (row == heightInCU - 1)
     {
-        rowsCompleted = true;
+        bFrameCompleted = true;
     }
     x265_emms();
 }

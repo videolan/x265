@@ -148,11 +148,12 @@ void TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* delta
                 break;
             }
         }
+
         if (n < 0) continue;
 
         int  lastNZPosInCG = n;
-        
-        for (n = 0; ; n++)
+
+        for (n = 0;; n++)
         {
             if (qCoef[codingParameters.scan[n + subPos]])
             {
@@ -431,6 +432,7 @@ void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* c
     int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     uint32_t transformSkipShift;
     int  j, k;
+
     if (shift >= 0)
     {
         primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, trSize);
@@ -462,6 +464,7 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
     uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int  j, k;
+
     if (shift > 0)
     {
         primitives.cvt32to16_shr(residual, coef, stride, shift, trSize);
@@ -602,7 +605,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                 }
                 else
                 {
-                    // NOTE: ttype is different to ctype, but getSigCtxInc may safety use it 
+                    // NOTE: ttype is different to ctype, but getSigCtxInc may safety use it
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
@@ -866,11 +869,12 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                     break;
                 }
             }
+
             if (n < 0) continue;
 
             int lastNZPosInCG = n;
 
-            for (n = 0; ; n++)
+            for (n = 0;; n++)
             {
                 if (dstCoeff[codingParameters.scan[n + subPos]])
                 {
@@ -1004,12 +1008,12 @@ uint32_t TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, cons
  * \param textureType texture type (TEXT_LUMA...)
  * \returns ctxInc for current scan position
  */
-uint32_t TComTrQuant::getSigCtxInc(const uint32_t                   patternSigCtx,
-                                   const uint32_t                   log2TrSize,
-                                   const uint32_t                   trSize,
-                                   const uint32_t                   blkPos,
-                                   const TextType                   ctype,
-                                   const uint32_t                   firstSignificanceMapContext)
+uint32_t TComTrQuant::getSigCtxInc(const uint32_t patternSigCtx,
+                                   const uint32_t log2TrSize,
+                                   const uint32_t trSize,
+                                   const uint32_t blkPos,
+                                   const TextType ctype,
+                                   const uint32_t firstSignificanceMapContext)
 {
     static const uint8_t ctxIndMap[16] =
     {
@@ -1091,19 +1095,19 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t                   patternSigCt
  * \returns best quantized transform level for given scan position
  * This method calculates the best quantized transform level for a given scan position.
  */
-inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
+inline uint32_t TComTrQuant::xGetCodedLevel(double&      codedCost,
                                             const double curCostSig,
-                                            double&  codedCostSig,
-                                            int      levelDouble,
-                                            uint32_t maxAbsLevel,
-                                            uint32_t baseLevel,
-                                            const int *greaterOneBits,
-                                            const int *levelAbsBits,
-                                            uint32_t absGoRice,
-                                            uint32_t c1c2Idx,
-                                            int      qbits,
-                                            double   scaleFactor,
-                                            bool     last) const
+                                            double&      codedCostSig,
+                                            int          levelDouble,
+                                            uint32_t     maxAbsLevel,
+                                            uint32_t     baseLevel,
+                                            const int *  greaterOneBits,
+                                            const int *  levelAbsBits,
+                                            uint32_t     absGoRice,
+                                            uint32_t     c1c2Idx,
+                                            int          qbits,
+                                            double       scaleFactor,
+                                            bool         last) const
 {
     uint32_t   bestAbsLevel = 0;
 
@@ -1119,7 +1123,7 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
     // NOTE: (A + B) ^ 2 = (A ^ 2) + 2 * A * B + (B ^ 2)
     assert(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX);
     const int32_t err1 = levelDouble - (maxAbsLevel << qbits);            // A
-           double err2 = (double)((int64_t)err1 * err1);                  // A^ 2
+    double err2 = (double)((int64_t)err1 * err1);                         // A^ 2
     const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
     const int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);   // B ^ 2
     const double errInc = (err3 + err4) * scaleFactor;
@@ -1144,6 +1148,7 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
         err2 += errInc;
         diffLevel--;
     }
+
     codedCost = bestCodedCost;
     codedCostSig = bestCodedCostSig;
     return bestAbsLevel;
@@ -1156,12 +1161,12 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&  codedCost,
  * \param absGoRice Rice parameter for coeff_abs_level_minus3
  * \returns cost of given absolute transform level
  */
-inline double TComTrQuant::xGetICRateCost(uint32_t absLevel,
-                                          int32_t  diffLevel,
+inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
+                                          int32_t    diffLevel,
                                           const int *greaterOneBits,
                                           const int *levelAbsBits,
-                                          uint32_t absGoRice,
-                                          uint32_t c1c2Idx) const
+                                          uint32_t   absGoRice,
+                                          uint32_t   c1c2Idx) const
 {
     assert(absLevel > 0);
     uint32_t rate = xGetIEPRate();
@@ -1212,12 +1217,12 @@ inline double TComTrQuant::xGetICRateCost(uint32_t absLevel,
     return xGetICost(rate);
 }
 
-inline int TComTrQuant::xGetICRate(uint32_t absLevel,
-                                   int32_t  diffLevel,
+inline int TComTrQuant::xGetICRate(uint32_t   absLevel,
+                                   int32_t    diffLevel,
                                    const int *greaterOneBits,
                                    const int *levelAbsBits,
-                                   uint32_t absGoRice,
-                                   uint32_t c1c2Idx) const
+                                   uint32_t   absGoRice,
+                                   uint32_t   c1c2Idx) const
 {
     assert(c1c2Idx <= 3);
     assert(absGoRice <= 4);
@@ -1230,7 +1235,7 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
 
     if (diffLevel < 0)
     {
-        assert(absLevel >= 0 && absLevel <= 2);
+        assert(absLevel <= 2);
         rate += greaterOneBits[(absLevel == 2)];
 
         if (absLevel == 2)
@@ -1240,8 +1245,8 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
     }
     else
     {
-        uint32_t symbol   = diffLevel;
-        const uint32_t maxVlc   = g_goRiceRange[absGoRice];
+        uint32_t symbol = diffLevel;
+        const uint32_t maxVlc = g_goRiceRange[absGoRice];
         bool expGolomb = (symbol > maxVlc);
 
         if (expGolomb)
@@ -1253,7 +1258,7 @@ inline int TComTrQuant::xGetICRate(uint32_t absLevel,
             CLZ32(size, absLevel);
             int egs = size * 2 + 1;
 
-            rate   += egs << 15;
+            rate += egs << 15;
 
             // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
             assert(x265_min_fast(symbol, (maxVlc + 1)) == maxVlc + 1);
@@ -1291,6 +1296,7 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
 
     int32_t maskX = (int32_t)(2 - posx) >> 31;
     int32_t maskY = (int32_t)(2 - posy) >> 31;
+
     cost += maskX & (xGetIEPRate() * ((ctxX - 2) >> 1));
     cost += maskY & (xGetIEPRate() * ((ctxY - 2) >> 1));
     return xGetICost(cost);
@@ -1303,12 +1309,13 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
  * \param uiLog2BlkSize log2 value of block size
  * \returns ctxInc for current scan position
  */
-uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint64_t  sigCoeffGroupFlag64,
-                                             const uint32_t  cgPosX,
-                                             const uint32_t  cgPosY,
-                                             const uint32_t  log2TrSizeCG)
+uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64,
+                                             const uint32_t cgPosX,
+                                             const uint32_t cgPosY,
+                                             const uint32_t log2TrSizeCG)
 {
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
+
     assert(trSizeCG <= 32);
     const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
     const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;

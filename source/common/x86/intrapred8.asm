@@ -1156,7 +1156,7 @@ cglobal intra_pred_ang8_2, 3,5,2
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang8_3, 3,5,7
+cglobal intra_pred_ang8_3, 3,5,8
     cmp         r4m,       byte 33
     cmove       r2,        r3mp
     lea         r3,        [ang_table + 14 * 16]
@@ -1240,7 +1240,7 @@ cglobal intra_pred_ang8_3, 3,5,7
 
     RET
 
-cglobal intra_pred_ang8_4, 3,5,7
+cglobal intra_pred_ang8_4, 3,5,8
     cmp         r4m,       byte 32
     cmove       r2,        r3mp
     lea         r3,        [ang_table + 19 * 16]
@@ -1724,7 +1724,7 @@ cglobal intra_pred_ang8_13, 4,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_14, 4,5,7
+cglobal intra_pred_ang8_14, 4,5,8
     cmp         r4m,       byte 22
     jnz         .skip
     xchg        r2,        r3
@@ -1773,7 +1773,7 @@ cglobal intra_pred_ang8_14, 4,5,7
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_15, 4,5,7
+cglobal intra_pred_ang8_15, 4,5,8
     cmp         r4m,       byte 21
     jnz         .skip
     xchg        r2,        r3
@@ -1877,7 +1877,7 @@ cglobal intra_pred_ang8_16, 4,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_17, 4,5,7
+cglobal intra_pred_ang8_17, 4,5,8
     cmp         r4m,       byte 19
     jnz         .skip
     xchg        r2,        r3

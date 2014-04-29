@@ -127,7 +127,6 @@
 
 #define CHROMA_VERT_FILTERS(cpu) \
     SETUP_CHROMA_VERT_FUNC_DEF(4, 4, cpu); \
-    SETUP_CHROMA_VERT_FUNC_DEF(4, 2, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(8, 8, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(8, 4, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(4, 8, cpu); \
@@ -151,6 +150,7 @@
 #define CHROMA_VERT_FILTERS_SSE4(cpu) \
     SETUP_CHROMA_VERT_FUNC_DEF(2, 4, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(2, 8, cpu); \
+    SETUP_CHROMA_VERT_FUNC_DEF(4, 2, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF(6, 8, cpu);
 
 #define SETUP_CHROMA_HORIZ_FUNC_DEF(W, H, cpu) \
@@ -196,7 +196,7 @@ CHROMA_VERT_FILTERS_SSE4(_sse4);
 #undef CHROMA_HORIZ_FILTERS
 #undef SETUP_CHROMA_HORIZ_FUNC_DEF
 
-#else
+#else // if HIGH_BIT_DEPTH
 
 #define SETUP_CHROMA_FUNC_DEF(W, H, cpu) \
     void x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu(pixel * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx); \
@@ -229,7 +229,6 @@ CHROMA_VERT_FILTERS_SSE4(_sse4);
     SETUP_CHROMA_FUNC_DEF(24, 32, cpu); \
     SETUP_CHROMA_FUNC_DEF(32, 8, cpu); \
     SETUP_CHROMA_FUNC_DEF(8, 32, cpu)
-
 
 #define SETUP_CHROMA_SP_FUNC_DEF(W, H, cpu) \
     void x265_interp_4tap_vert_sp_ ## W ## x ## H ## cpu(int16_t * src, intptr_t srcStride, pixel * dst, intptr_t dstStride, int coeffIdx);
@@ -309,7 +308,7 @@ void x265_chroma_p2s_ssse3(pixel *src, intptr_t srcStride, int16_t *dst, int wid
 #undef CHROMA_SS_FILTERS
 #undef CHROMA_SS_FILTERS_SSE4
 #undef CHROMA_SP_FILTERS_SSE4
-#endif
+#endif // if HIGH_BIT_DEPTH
 
 LUMA_FILTERS(_sse4);
 LUMA_SP_FILTERS(_sse4);

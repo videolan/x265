@@ -24,11 +24,13 @@
 #ifndef X265_WINXP_H
 #define X265_WINXP_H
 
-#if defined(_WIN32) && (_WIN32_WINNT < _WIN32_WINNT_VISTA)
+#if defined(_WIN32) && (_WIN32_WINNT < 0x0600) // _WIN32_WINNT_VISTA
 
-namespace x265
-{
+#ifdef _MSC_VER
+#include <intrin.h> // _InterlockedCompareExchange64
+#endif
 
+namespace x265 {
 /* non-native condition variable */
 typedef struct
 {
@@ -55,6 +57,7 @@ void cond_destroy(ConditionVariable *cond);
 #define XP_CONDITION_VAR_FREE       x265::cond_destroy
 
 #if defined(_MSC_VER)
+
 /* Windows XP did not define atomic OR 64, but gcc has a good version, so
  * only use this workaround when targeting XP with MSVC */
 FORCEINLINE LONGLONG interlocked_OR64(__inout LONGLONG volatile *Destination,
@@ -70,16 +73,16 @@ FORCEINLINE LONGLONG interlocked_OR64(__inout LONGLONG volatile *Destination,
 
     return Old;
 }
+
 #define ATOMIC_OR(ptr, mask) x265::interlocked_OR64((volatile LONG64*)ptr, mask)
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma intrinsic(_InterlockedCompareExchange64)
 #endif
 #endif // defined(_MSC_VER)
-
 } // namespace x265
 
-#else
+#else // if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
 
 #define XP_CONDITION_VAR_FREE(x)
 

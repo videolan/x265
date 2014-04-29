@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Deepthi Nandakumar <deepthi@multicorewareinc.com>
+ * Authors: Steve Borho <steve@borho.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,21 +21,16 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef X265_PARAM_H
-#define X265_PARAM_H
+#ifndef X265_LEVEL_H
+#define X265_LEVEL_H 1
+
+#include "common.h"
+#include "TLibCommon/CommonDef.h"
+#include "x265.h"
 
 namespace x265 {
-int   x265_check_params(x265_param *param);
-int   x265_set_globals(x265_param *param);
-void  x265_print_params(x265_param *param);
-char* x265_param2string(x265_param *param);
-int   x265_atoi(const char *str, bool& bError);
-int   parseCpuName(const char *value, bool& bError);
-void  setParamAspectRatio(x265_param *p, int width, int height);
-void  getParamAspectRatio(x265_param *p, int& width, int& height);
-
-/* this table is kept internal to avoid confusion, since log level indices start at -1 */
-static const char * const logLevelNames[] = { "none", "error", "warning", "info", "debug", "full", 0 };
+void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name& level, Level::Tier& tier);
+void enforceLevel(x265_param& param, int level, bool bHighTier);
 }
 
-#endif // ifndef X265_PARAM_H
+#endif // ifndef X265_LEVEL_H

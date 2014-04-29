@@ -55,18 +55,18 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     m_entropyCoder->resetBits();
     if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
+        m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
     }
-    m_entropyCoder->encodeSkipFlag(cu, 0, true);
-    m_entropyCoder->encodePredMode(cu, 0, true);
-    m_entropyCoder->encodePartSize(cu, 0, depth, true);
-    m_entropyCoder->encodePredInfo(cu, 0, true);
-    m_entropyCoder->encodeIPCMInfo(cu, 0, true);
+    m_entropyCoder->encodeSkipFlag(cu, 0);
+    m_entropyCoder->encodePredMode(cu, 0);
+    m_entropyCoder->encodePartSize(cu, 0, depth);
+    m_entropyCoder->encodePredInfo(cu, 0);
+    m_entropyCoder->encodeIPCMInfo(cu, 0);
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
     m_entropyCoder->encodeCoeff(cu, 0, depth, cu->getCUSize(0), cu->getCUSize(0), bCodeDQP);
-    
+
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
@@ -372,13 +372,13 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     // We need to split, so don't try these modes.
     TComYuv* tempYuv = NULL;
 #if TOPSKIP
-    TComDataCU* colocated0 = outTempCU->getCUColocated(REF_PIC_LIST_0);
-    TComDataCU* colocated1 = outTempCU->getCUColocated(REF_PIC_LIST_1);
-    char currentQP = outTempCU->getQP(0);
-    char previousQP = colocated0->getQP(0);
-    uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
     if (depth == 0)
     {
+        TComDataCU* colocated0 = outTempCU->getSlice()->getNumRefIdx(REF_PIC_LIST_0) > 0 ? outTempCU->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->getCU(outTempCU->getAddr()) : NULL;
+        TComDataCU* colocated1 = outTempCU->getSlice()->getNumRefIdx(REF_PIC_LIST_1) > 0 ? outTempCU->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->getCU(outTempCU->getAddr()) : NULL;
+        char currentQP = outTempCU->getQP(0);
+        char previousQP = colocated0->getQP(0);
+        uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
         double sum0 = 0, sum1 = 0, avgDepth0 = 0, avgDepth1 = 0, avgDepth = 0;
         for (uint32_t i = 0; i < outTempCU->getTotalNumPart(); i = i + 4)
         {
@@ -498,7 +498,11 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 if (outBestCU->getSlice()->getSliceType() == P_SLICE)
                 {
                     /*compute intra cost */
-                    bool bdoIntra = true;
+
+                    // TODO: residualQTIntrachroma is broken for 4:2:2
+                    bool bdoIntra = (m_param->internalCsp != X265_CSP_I422);
+                    // bool bdoIntra = true;
+
                     if (m_param->rdLevel > 2)
                     {
                         bdoIntra = (outBestCU->getCbf(0, TEXT_LUMA) ||  outBestCU->getCbf(0, TEXT_CHROMA_U) ||
@@ -618,7 +622,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             if (m_param->rdLevel > 1)
             {
                 m_entropyCoder->resetBits();
-                m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
+                m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth);
                 outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
                 outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
             }
@@ -740,7 +744,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             if (m_param->rdLevel > 1)
             {
                 m_entropyCoder->resetBits();
-                m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth, true);
+                m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth);
                 outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
             }
         }

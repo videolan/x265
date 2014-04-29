@@ -78,8 +78,8 @@ TComPic::TComPic()
     m_ssimCnt = 0;
     m_frameTime = 0.0;
     m_elapsedCompressTime = 0.0;
-    m_qpaAq = 0;
-    m_qpaRc = 0;
+    m_qpaAq = NULL;
+    m_qpaRc = NULL;
     m_avgQpRc = 0;
     m_avgQpAq = 0;
     m_bChromaPlanesExtended = false;
@@ -105,7 +105,7 @@ bool TComPic::create(Encoder* cfg)
     bool ok = true;
     ok &= m_picSym->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
     ok &= m_origPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_reconPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize,g_maxCUDepth);
+    ok &= m_reconPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
     ok &= m_lowres.create(m_origPicYuv, cfg->param->bframes, !!cfg->param->rc.aqMode);
 
     bool isVbv = cfg->param->rc.vbvBufferSize > 0 && cfg->param->rc.vbvMaxBitrate > 0;

@@ -98,7 +98,7 @@ int x265_exp2fix8(double x)
     return (x265_exp2_lut[i & 63] + 256) << (i >> 6) >> 8;
 }
 
-void x265_log(x265_param *param, int level, const char *fmt, ...)
+void x265_log(const x265_param *param, int level, const char *fmt, ...)
 {
     if (param && level > param->logLevel)
         return;
@@ -157,5 +157,6 @@ double x265_qp2qScale(double qp)
 uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane)
 {
     uint32_t size = (uint32_t)(width >> x265_cli_csps[csp].width[plane]) * (height >> x265_cli_csps[csp].height[plane]);
+
     return size;
 }

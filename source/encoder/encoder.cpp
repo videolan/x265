@@ -253,6 +253,7 @@ static const char* nalUnitTypeToString(NalUnitType type)
     default:                              return "UNK";
     }
 }
+
 #endif // if VERBOSE_RATE
 
 /**
@@ -407,6 +408,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
                     out->getSlice()->m_weightPredTable[l][0][2].bPresentFlag)
                     bChroma = true;
             }
+
             if (bLuma)
                 m_numLumaWPBiFrames++;
             if (bChroma)
@@ -429,6 +431,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
                 numRBSPBytes += numRBSPBytes_nal;
             }
         }
+
         uint64_t bits = numRBSPBytes * 8;
         m_rateControl->rateControlEnd(out, bits, &curEncoder->m_rce);
         finishFrameStats(out, curEncoder, bits);
@@ -439,12 +442,11 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         ret = 1;
     }
 
-    if (!m_lookahead->outputQueue.empty())
+    // pop a single frame from decided list, then provide to frame encoder
+    // curEncoder is guaranteed to be idle at this point
+    TComPic* fenc = m_lookahead->getDecidedPicture();
+    if (fenc)
     {
-        // pop a single frame from decided list, then provide to frame encoder
-        // curEncoder is guaranteed to be idle at this point
-        TComPic *fenc = m_lookahead->outputQueue.popFront();
-
         m_encodedFrameNum++;
         if (m_bframeDelay)
         {
@@ -495,7 +497,6 @@ void EncStats::addQP(double aveQp)
 {
     m_totalQp += aveQp;
 }
-
 
 char* Encoder::statsString(EncStats& stat, char* buffer)
 {
@@ -697,12 +698,18 @@ void Encoder::printSummary()
         }
         int pWithB = 0;
         for (int i = 0; i <= param->bframes; i++)
+        {
             pWithB += m_lookahead->histogram[i];
+        }
+
         if (pWithB)
         {
             int p = 0;
             for (int i = 0; i <= param->bframes; i++)
+            {
                 p += sprintf(buffer + p, "%.1f%% ", 100. * m_lookahead->histogram[i] / pWithB);
+            }
+
             x265_log(param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
         }
     }
@@ -999,10 +1006,14 @@ void Encoder::initSPS(TComSPS *sps)
         /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
         profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN10, 1);
     }
+
     /* XXX: should Main be marked as compatible with still picture? */
 
     /* XXX: may be a good idea to refactor the above into a function
      * that chooses the actual compatibility based upon options */
+
+    /* set the VPS profile information */
+    *m_vps.getPTL() = *sps->getPTL();
 
     sps->setPicWidthInLumaSamples(param->sourceWidth);
     sps->setPicHeightInLumaSamples(param->sourceHeight);
@@ -1068,65 +1079,55 @@ void Encoder::initSPS(TComSPS *sps)
     // TODO: it is recommended for this to match the input bit depth
     sps->setPCMBitDepthLuma(X265_DEPTH);
     sps->setPCMBitDepthChroma(X265_DEPTH);
-
     sps->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
-
     sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
-
     sps->setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
-    sps->setVuiParametersPresentFlag(param->vui.bEnableVuiParametersPresentFlag);
-    if (sps->getVuiParametersPresentFlag())
-    {
-        TComVUI* vui = sps->getVuiParameters();
-        vui->setAspectRatioInfoPresentFlag(param->vui.bEnableAspectRatioIdc);
-        vui->setAspectRatioIdc(param->vui.aspectRatioIdc);
-        vui->setSarWidth(param->vui.sarWidth);
-        vui->setSarHeight(param->vui.sarHeight);
-        vui->setOverscanInfoPresentFlag(param->vui.bEnableOverscanInfoPresentFlag);
-        vui->setOverscanAppropriateFlag(param->vui.bEnableOverscanAppropriateFlag);
-        vui->setVideoSignalTypePresentFlag(param->vui.bEnableVideoSignalTypePresentFlag);
-        vui->setVideoFormat(param->vui.videoFormat);
-        vui->setVideoFullRangeFlag(param->vui.bEnableVideoFullRangeFlag);
-        vui->setColourDescriptionPresentFlag(param->vui.bEnableColorDescriptionPresentFlag);
-        vui->setColourPrimaries(param->vui.colorPrimaries);
-        vui->setTransferCharacteristics(param->vui.transferCharacteristics);
-        vui->setMatrixCoefficients(param->vui.matrixCoeffs);
-        vui->setChromaLocInfoPresentFlag(param->vui.bEnableChromaLocInfoPresentFlag);
-        vui->setChromaSampleLocTypeTopField(param->vui.chromaSampleLocTypeTopField);
-        vui->setChromaSampleLocTypeBottomField(param->vui.chromaSampleLocTypeBottomField);
-        vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
-        vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
-        vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
-        vui->setFieldSeqFlag(!!param->interlaceMode);
+    sps->setVuiParametersPresentFlag(true);
+    TComVUI* vui = sps->getVuiParameters();
+    vui->setAspectRatioInfoPresentFlag(!!param->vui.aspectRatioIdc);
+    vui->setAspectRatioIdc(param->vui.aspectRatioIdc);
+    vui->setSarWidth(param->vui.sarWidth);
+    vui->setSarHeight(param->vui.sarHeight);
 
-        vui->setHrdParametersPresentFlag(false);
-        vui->getHrdParameters()->setNalHrdParametersPresentFlag(false);
-        vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
+    vui->setOverscanInfoPresentFlag(param->vui.bEnableOverscanInfoPresentFlag);
+    vui->setOverscanAppropriateFlag(param->vui.bEnableOverscanAppropriateFlag);
 
-        vui->getTimingInfo()->setTimingInfoPresentFlag(param->vui.bEnableVuiTimingInfoPresentFlag);
-        vui->getTimingInfo()->setNumUnitsInTick(param->fpsDenom);
-        vui->getTimingInfo()->setTimeScale(param->fpsNum);
-        vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
-        vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
+    vui->setVideoSignalTypePresentFlag(param->vui.bEnableVideoSignalTypePresentFlag);
+    vui->setVideoFormat(param->vui.videoFormat);
+    vui->setVideoFullRangeFlag(param->vui.bEnableVideoFullRangeFlag);
+    vui->setColourDescriptionPresentFlag(param->vui.bEnableColorDescriptionPresentFlag);
+    vui->setColourPrimaries(param->vui.colorPrimaries);
+    vui->setTransferCharacteristics(param->vui.transferCharacteristics);
+    vui->setMatrixCoefficients(param->vui.matrixCoeffs);
+    vui->setChromaLocInfoPresentFlag(param->vui.bEnableChromaLocInfoPresentFlag);
+    vui->setChromaSampleLocTypeTopField(param->vui.chromaSampleLocTypeTopField);
+    vui->setChromaSampleLocTypeBottomField(param->vui.chromaSampleLocTypeBottomField);
+    vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
+    vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
 
-        vui->setBitstreamRestrictionFlag(false);
-        vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
-        vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
-        vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);
-        vui->setMinSpatialSegmentationIdc(m_minSpatialSegmentationIdc);
-        vui->setMaxBytesPerPicDenom(m_maxBytesPerPicDenom);
-        vui->setMaxBitsPerMinCuDenom(m_maxBitsPerMinCuDenom);
-        vui->setLog2MaxMvLengthHorizontal(m_log2MaxMvLengthHorizontal);
-        vui->setLog2MaxMvLengthVertical(m_log2MaxMvLengthVertical);
-    }
+    vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
+    vui->setFieldSeqFlag(!!param->interlaceMode);
 
-    /* set the VPS profile information */
-    *m_vps.getPTL() = *sps->getPTL();
-    TimingInfo *t = m_vps.getTimingInfo();
-    t->setTimingInfoPresentFlag(true);
-    t->setNumUnitsInTick(param->fpsDenom);
-    t->setTimeScale(param->fpsNum);
+    vui->setHrdParametersPresentFlag(false);
+    vui->getHrdParameters()->setNalHrdParametersPresentFlag(false);
+    vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
+
+    vui->getTimingInfo()->setTimingInfoPresentFlag(true);
+    vui->getTimingInfo()->setNumUnitsInTick(param->fpsDenom);
+    vui->getTimingInfo()->setTimeScale(param->fpsNum);
+    vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
+    vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
+
+    vui->setBitstreamRestrictionFlag(false);
+    vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
+    vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
+    vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);
+    vui->setMinSpatialSegmentationIdc(m_minSpatialSegmentationIdc);
+    vui->setMaxBytesPerPicDenom(m_maxBytesPerPicDenom);
+    vui->setMaxBitsPerMinCuDenom(m_maxBitsPerMinCuDenom);
+    vui->setLog2MaxMvLengthHorizontal(m_log2MaxMvLengthHorizontal);
+    vui->setLog2MaxMvLengthVertical(m_log2MaxMvLengthVertical);
 }
 
 void Encoder::initPPS(TComPPS *pps)
@@ -1137,7 +1138,7 @@ void Encoder::initPPS(TComPPS *pps)
     /* TODO: This variable m_maxCuDQPDepth needs to be a CLI option to allow us to choose AQ granularity */
     bool bUseDQP = (m_maxCuDQPDepth > 0 || param->rc.aqMode || isVbv) ? true : false;
 
-    int lowestQP = -QP_BD_OFFSET; 
+    int lowestQP = -QP_BD_OFFSET;
 
     if (m_useLossless)
     {
@@ -1184,126 +1185,6 @@ void Encoder::initPPS(TComPPS *pps)
     pps->setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
     pps->setUseTransformSkip(param->bEnableTransformSkip);
     pps->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
-}
-
-void Encoder::determineLevelAndProfile(x265_param *_param)
-{
-    // this is all based on the table at on Wikipedia at
-    // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
-
-    // TODO: there are minimum CTU sizes for higher levels, needs to be enforced
-
-    uint32_t lumaSamples = _param->sourceWidth * _param->sourceHeight;
-    uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)_param->fpsNum / _param->fpsDenom));
-    uint32_t bitrate = _param->rc.bitrate;
-
-    m_level = Level::LEVEL1;
-    const char *level = "1";
-    if (samplesPerSec > 552960 || lumaSamples > 36864 || bitrate > 128)
-    {
-        m_level = Level::LEVEL2;
-        level = "2";
-    }
-    if (samplesPerSec > 3686400 || lumaSamples > 122880 || bitrate > 1500)
-    {
-        m_level = Level::LEVEL2_1;
-        level = "2.1";
-    }
-    if (samplesPerSec > 7372800 || lumaSamples > 245760 || bitrate > 3000)
-    {
-        m_level = Level::LEVEL3;
-        level = "3";
-    }
-    if (samplesPerSec > 16588800 || lumaSamples > 552960 || bitrate > 6000)
-    {
-        m_level = Level::LEVEL3_1;
-        level = "3.1";
-    }
-    if (samplesPerSec > 33177600 || lumaSamples > 983040 || bitrate > 10000)
-    {
-        m_level = Level::LEVEL4;
-        level = "4";
-    }
-    if (samplesPerSec > 66846720 || bitrate > 30000)
-    {
-        m_level = Level::LEVEL4_1;
-        level = "4.1";
-    }
-    if (samplesPerSec > 133693440 || lumaSamples > 2228224 || bitrate > 50000)
-    {
-        m_level = Level::LEVEL5;
-        level = "5";
-    }
-    if (samplesPerSec > 267386880 || bitrate > 100000)
-    {
-        m_level = Level::LEVEL5_1;
-        level = "5.1";
-    }
-    if (samplesPerSec > 534773760 || bitrate > 160000)
-    {
-        m_level = Level::LEVEL5_2;
-        level = "5.2";
-    }
-    if (samplesPerSec > 1069547520 || lumaSamples > 8912896 || bitrate > 240000)
-    {
-        m_level = Level::LEVEL6;
-        level = "6";
-    }
-    if (samplesPerSec > 1069547520 || bitrate > 240000)
-    {
-        m_level = Level::LEVEL6_1;
-        level = "6.1";
-    }
-    if (samplesPerSec > 2139095040 || bitrate > 480000)
-    {
-        m_level = Level::LEVEL6_2;
-        level = "6.2";
-    }
-    if (samplesPerSec > 4278190080U || lumaSamples > 35651584 || bitrate > 800000)
-        x265_log(_param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
-
-    /* Within a given level, we might be at a high tier, depending on bitrate */
-    m_levelTier = Level::MAIN;
-    switch (m_level)
-    {
-    case Level::LEVEL4:
-        if (bitrate > 12000) m_levelTier = Level::HIGH;
-        break;
-    case Level::LEVEL4_1:
-        if (bitrate > 20000) m_levelTier = Level::HIGH;
-        break;
-    case Level::LEVEL5:
-        if (bitrate > 25000) m_levelTier = Level::HIGH;
-        break;
-    case Level::LEVEL5_1:
-        if (bitrate > 40000) m_levelTier = Level::HIGH;
-        break;
-    case Level::LEVEL5_2:
-        if (bitrate > 60000) m_levelTier = Level::HIGH;
-        break;
-    case Level::LEVEL6:
-        if (bitrate > 60000) m_levelTier = Level::HIGH;
-        break;
-    case Level::LEVEL6_1:
-        if (bitrate > 120000) m_levelTier = Level::HIGH;
-        break;
-    case Level::LEVEL6_2:
-        if (bitrate > 240000) m_levelTier = Level::HIGH;
-        break;
-    default:
-        break;
-    }
-
-    if (_param->internalBitDepth > 8)
-        m_profile = Profile::MAIN10;
-    else if (_param->keyframeMax == 1)
-        m_profile = Profile::MAINSTILLPICTURE;
-    else
-        m_profile = Profile::MAIN;
-
-    static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
-    static const char *tiers[]    = { "Main", "High" };
-    x265_log(_param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
 }
 
 void Encoder::configure(x265_param *p)
@@ -1415,6 +1296,7 @@ void Encoder::configure(x265_param *p)
         p->rc.aqMode = X265_AQ_NONE;
         p->rc.bitrate = 0;
         p->rc.cuTree = 0;
+        p->rc.aqStrength = 0;
     }
 
     if (p->rc.aqMode == 0 && p->rc.cuTree)
@@ -1434,14 +1316,19 @@ void Encoder::configure(x265_param *p)
         p->rc.aqMode = X265_AQ_NONE;
     }
 
+    if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
+    {
+        p->rc.aqStrength = 0;
+    }
+
     if (p->internalCsp != X265_CSP_I420)
     {
         x265_log(p, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
         x265_log(p, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
     }
-    if (p->internalCsp == X265_CSP_I444 && p->bEnableWeightedPred)
+    if ((p->internalCsp == X265_CSP_I444 || p->internalCsp == X265_CSP_I422) && p->bEnableWeightedPred)
     {
-        x265_log(p, X265_LOG_WARNING, "Weightp not supported for 4:4:4 internal color space, weightp disabled\n");
+        x265_log(p, X265_LOG_WARNING, "Weightp not supported for 4:4:4/4:2:2 internal color space, weightp disabled\n");
         p->bEnableWeightedPred = false;
     }
     if (p->interlaceMode)

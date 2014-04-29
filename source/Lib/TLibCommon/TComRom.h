@@ -67,9 +67,10 @@ void initROM();
 void destroyROM();
 
 // ====================================================================================================================
-static const int chromaQPMappingTableSize = 58;
+static const int chromaQPMappingTableSize = 70;
 
 extern const uint8_t g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize];
+extern const uint8_t g_chroma422IntraAngleMappingTable[36];
 // Data structure related table & variable
 // ====================================================================================================================
 
@@ -132,6 +133,7 @@ extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 static inline uint32_t getGroupIdx(const uint32_t idx)
 {
     uint32_t group = (idx >> 3);
+
     if (idx >= 24)
         group = 2;
     uint32_t groupIdx = ((idx >> (group + 1)) - 2) + 4 + (group << 1);
@@ -265,13 +267,14 @@ extern int g_quantTSDefault4x4[16];
 extern const uint32_t g_scalingListSize[SCALING_LIST_SIZE_NUM];
 extern const uint32_t g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
 extern const uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM];
-//! \}
 
 // Map Luma samples to chroma samples
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
 extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
-extern const double x265_lambda2_tab_I[MAX_MAX_QP + 1];
-extern const double x265_lambda2_non_I[MAX_MAX_QP + 1];
+
+extern const double x265_lambda_tab[MAX_MAX_QP + 1];
+extern const double x265_lambda2_tab[MAX_MAX_QP + 1];
+
 // CABAC tables
 extern const uint8_t g_lpsTable[64][4];
 extern const uint8_t x265_exp2_lut[64];

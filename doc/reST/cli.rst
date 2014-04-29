@@ -20,7 +20,7 @@ value) the CLI will treat it as the input filename.  This effectively
 makes the :option:`--input` specifier optional for the input file. If
 there are two extra arguments, the second is treated as the output
 bitstream filename, making :option:`--output` also optional if the input
-filename was implied. This makes :command:`x265 in.yuv out.hevc` a valid
+filename was implied. This makes :command:`x265 in.y4m out.hevc` a valid
 command line. If there are more than two extra arguments, the CLI will
 consider this an error and abort.
 
@@ -92,7 +92,7 @@ Standalone Executable Options
 	severe performance implications. Default is an autodetected count
 	based on the number of CPU cores and whether WPP is enabled or not.
 
-.. option:: --log-level <int|string>
+.. option:: --log-level <integer|string>
 
 	Logging level. Debug level enables per-frame QP, metric, and bitrate
 	logging. If a CSV file is being generated, debug level makes the log
@@ -129,6 +129,23 @@ Standalone Executable Options
 	Disable CLI periodic progress reports
 
 	**CLI ONLY**
+
+Quality reporting metrics
+=========================
+
+.. option:: --ssim, --no-ssim
+
+	Calculate and report Structural Similarity values. It is
+	recommended to use :option:`--tune` ssim if you are measuring ssim,
+	else the results should not be used for comparison purposes.
+	Default disabled
+
+.. option:: --psnr, --no-psnr
+
+	Calculate and report Peak Signal to Noise Ratio.  It is recommended
+	to use :option:`--tune` psnr if you are measuring PSNR, else the
+	results should not be used for comparison purposes.  Default
+	disabled
 
 Input Options
 =============
@@ -175,8 +192,10 @@ Input Options
 
 .. option:: --input-csp <integer|string>
 
-	YUV only: Source color space. Only i420 and i444 are supported at
-	this time.
+	YUV only: Source color space. Only i420, i422, and i444 are
+	supported at this time. The internal color space is always the
+	same as the source color space (libx265 does not support any color
+	space conversions).
 
 	0. i400
 	1. i420 **(default)**
@@ -394,8 +413,12 @@ Spatial/intra options
 
 .. option:: --constrained-intra, --no-constrained-intra
 
-	Constrained intra prediction (use only intra coded reference pixels)
-	Default disabled
+	Constrained intra prediction. When generating intra predictions for
+	blocks in inter slices, only intra-coded reference pixels are used.
+	Inter-coded reference pixels are replaced with intra-coded neighbor
+	pixels or default values. The general idea is to block the
+	propagation of reference errors that may have resulted from lossy
+	signals. Default disabled
 
 
 Slice decision options
@@ -510,8 +533,11 @@ Quality, rate control and rate distortion options
 	Specify base quantization parameter for Constant QP rate control.
 	Using this option enables Constant QP rate control. The specified QP
 	is assigned to P slices. I and B slices are given QPs relative to P
-	slices using param->rc.ipFactor and param->rc.pbFactor.  Default 0
-	(CRF)
+	slices using param->rc.ipFactor and param->rc.pbFactor unless QP 0
+	is specified, in which case QP 0 is used for all slice types.  Note
+	that QP 0 does not cause lossless encoding, it only disables
+	quantization. A truly lossless option may be added in a later
+	release. Default disabled (CRF)
 
 	**Range of values:** an integer from 0 to 51
 
@@ -573,8 +599,8 @@ Quality, rate control and rate distortion options
 
 	Hide sign bit of one coeff per TU (rdo). Default enabled
  
-Loop filter
-===========
+Loop filters
+============
 
 .. option:: --lft, --no-lft
 
@@ -599,42 +625,19 @@ Loop filter
 	   effectively causes :option:`--frame-threads` 1)
 	1. SAO LCU-based optimization **(default)**
 
-Quality reporting metrics
-=========================
-
-.. option:: --ssim, --no-ssim
-
-	Calculate and report Structural Similarity values. It is
-	recommended to use :option:`--tune` ssim if you are measuring ssim,
-	else the results should not be used for comparison purposes.
-	Default disabled
-
-.. option:: --psnr, --no-psnr
-
-	Calculate and report Peak Signal to Noise Ratio.  It is recommended
-	to use :option:`--tune` psnr if you are measuring PSNR, else the
-	results should not be used for comparison purposes.  Default
-	disabled
-
 VUI (Video Usability Information) options
 =========================================
 
-By default x265 does not emit a VUI in the SPS, but if you specify any
-of the VUI fields (:option:`--sar`, :option:`--range`, etc) the VUI is
-implicitly enabled.
-
-.. option:: --vui, --no-vui
-
-	Enable video usability information with all fields in the SPS. This
-	is a debugging feature and will likely be removed in a later
-	release.  Default disabled
+x265 emits a VUI with only the timing info by default. If the SAR is
+specified (or read from a Y4M header) it is also included.  All other
+VUI fields must be manually specified.
 
 .. option:: --sar <integer|w:h>
 
 	Sample Aspect Ratio, the ratio of width to height of an individual
 	sample (pixel). The user may supply the width and height explicitly
 	or specify an integer from the predefined list of aspect ratios
-	defined in the HEVC specification.  Default undefined
+	defined in the HEVC specification.  Default undefined (not signaled)
 
 	1. 1:1 (square)
 	2. 12:11
@@ -659,17 +662,17 @@ implicitly enabled.
 	information because it was added to achieve certain resolution or
 	aspect ratio. The decoder may be directed to crop away this region
 	before displaying the images via the :option:`--overscan` option.
-	Default undefined
+	Default undefined (not signaled)
 
 .. option:: --overscan <show|crop>
 
 	Specify whether it is appropriate for the decoder to display or crop
-	the overscan area. Default unspecified
+	the overscan area. Default unspecified (not signaled)
 
 .. option:: --videoformat <integer|string>
 
 	Specify the source format of the original analog video prior to
-	digitizing and encoding. Default undefined
+	digitizing and encoding. Default undefined (not signaled)
 
 	0. component
 	1. pal
@@ -681,12 +684,12 @@ implicitly enabled.
 .. option:: --range <full|limited>
 
 	Specify output range of black level and range of luma and chroma
-	signals. Default undefined
+	signals. Default undefined (not signaled)
 
 .. option:: --colorprim <integer|string>
 
 	Specify color primitive to use when converting to RGB. Default
-	undefined
+	undefined (not signaled)
 
 	1. bt709
 	2. undef
@@ -700,7 +703,7 @@ implicitly enabled.
 
 .. option:: --transfer <integer|string>
 
-	Specify transfer characteristics. Default undefined
+	Specify transfer characteristics. Default undefined (not signaled)
 
 	1. bt709
 	2. undef
@@ -721,7 +724,7 @@ implicitly enabled.
 .. option:: --colormatrix <integer|string>
 
 	Specify color matrix setting i.e set the matrix coefficients used in
-	deriving the luma and chroma. Default undefined
+	deriving the luma and chroma. Default undefined (not signaled)
 
 	0. GBR
 	1. bt709
@@ -737,25 +740,42 @@ implicitly enabled.
 
 .. option:: --chromalocs <0..5>
 
-	Specify chroma sample location for 4:2:0 inputs. Default undefined
-	Consult the HEVC specification for a description of these values.
+	Specify chroma sample location for 4:2:0 inputs. Consult the HEVC
+	specification for a description of these values. Default undefined
+	(not signaled)
 
-.. option:: --timinginfo, --no-timinginfo
+Bitstream options
+=================
 
-	Add timing information to the VUI. This is identical to the timing
-	info reported in the PPS header but is sometimes required.  Default
-	disabled
+.. option:: --repeat-headers
 
-Debugging options
-=======================================
+	If enabled, x265 will emit VPS, SPS, and PPS headers with every
+	keyframe. This is intended for use when you do not have a container
+	to keep the stream headers for you and you want keyframes to be
+	random access points.
+
+	**API ONLY**
+
+.. option:: --aud, --no-aud
+
+	Emit an access unit delimiter NAL at the start of each slice access
+	unit. If option:`--repeat-headers` is not enabled (indicating the
+	user will be writing headers manually at the start of the stream)
+	the very first AUD will be skipped since it cannot be placed at the
+	start of the access unit, where it belongs. Default disabled
 
 .. option:: --hash <integer>
 
-	Emit decoded picture hash SEI, to validate encoder state. Default None
+	Emit decoded picture hash SEI, so the decoder may validate the
+	reconstructed pictures and detect data loss. Also useful as a
+	debug feature to validate the encoder state. Default None
 
 	1. MD5
 	2. CRC
 	3. Checksum
+
+Debugging options
+=================
 
 .. option:: --recon, -r <filename>
 
@@ -772,19 +792,5 @@ Debugging options
 	depth and currently cannot to be modified.
 
 	**CLI ONLY**
-
-API-only Options
-================
-
-These options are not exposed in the CLI because they are only useful to
-applications which use libx265 as a shared library.  These are available
-via x265_param_parse()
-
-.. option:: --repeat-headers
-
-	If enabled, x265 will emit VPS, SPS, and PPS headers with every
-	keyframe. This is intended for use when you do not have a container
-	to keep the stream headers for you and you want keyframes to be
-	random access points.
 
 .. vim: noet

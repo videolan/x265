@@ -392,6 +392,10 @@ typedef struct x265_param
      * each keyframe. Default false */
     int       bRepeatHeaders;
 
+    /* Flag indicating whether the encoder should emit an Access Unit Delimiter
+     * NAL at the start of every access unit. Default false */
+    int       bEnableAccessUnitDelimiters;
+
     /*== Coding Unit (CU) definitions ==*/
 
     /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.
@@ -700,14 +704,6 @@ typedef struct x265_param
     /*== Video Usability Information ==*/
     struct
     {
-        /* Enable the generation of a VUI with all fields in the SPS.  VUI fields
-         * that are not specified on the command line will have default values */
-        int bEnableVuiParametersPresentFlag;
-
-        /* Enable aspect ratio in VUI.  Causes the aspect_ratio_idc to be added
-         * to the VUI. The default is false */
-        int bEnableAspectRatioIdc;
-
         /* Aspect ratio idc to be added to the VUI.  The default is 0 indicating
          * the apsect ratio is unspecified. If set to X265_EXTENDED_SAR then
          * sarWidth and sarHeight must also be set */
@@ -798,15 +794,7 @@ typedef struct x265_param
         /* Default display window bottom offset holds the bottom offset with the
          * conformance cropping window to further crop the displayed window */
         int defDispWinBottomOffset;
-
-        /* VUI timing info present flag adds vui_num_units_in_tick,
-         * vui_time_scale, vui_poc_proportional_to_timing_flag and
-         * vui_hrd_parameters_present_flag to the VUI. vui_num_units_in_tick,
-         * vui_time_scale and vui_poc_proportional_to_timing_flag are derived
-         * from processing the input video. The default is false */
-        int bEnableVuiTimingInfoPresentFlag;
     } vui;
-
 } x265_param;
 
 /***

@@ -34,11 +34,12 @@
 #endif
 
 #if _WIN32
-#define strcasecmp _stricmp 
+#define strcasecmp _stricmp
 #endif
 
-#if !HAVE_STROTOK_R
-/* 
+#if !defined(HAVE_STRTOK_R)
+
+/*
  * adapted from public domain strtok_r() by Charlie Gordon
  *
  *   from comp.lang.c  9/14/2007
@@ -49,10 +50,10 @@
  *      http://groups.google.com/group/comp.lang.c/msg/7c7b39328fefab9c
  */
 
-char* strtok_r(
-    char *str, 
-    const char *delim, 
-    char **nextp)
+#undef strtok_r
+char* strtok_r(char *      str,
+               const char *delim,
+               char **     nextp)
 {
     if (!str)
         str = *nextp;
@@ -73,7 +74,8 @@ char* strtok_r(
 
     return ret;
 }
-#endif
+
+#endif // if !defined(HAVE_STRTOK_R)
 
 using namespace x265;
 
@@ -177,8 +179,6 @@ void x265_param_default(x265_param *param)
     param->bEnableSsim = 0;
 
     /* Video Usability Information (VUI) */
-    param->vui.bEnableVuiParametersPresentFlag = 0;
-    param->vui.bEnableAspectRatioIdc = 0;
     param->vui.aspectRatioIdc = 0;
     param->vui.sarWidth = 0;
     param->vui.sarHeight = 0;
@@ -198,7 +198,6 @@ void x265_param_default(x265_param *param)
     param->vui.defDispWinRightOffset = 0;
     param->vui.defDispWinTopOffset = 0;
     param->vui.defDispWinBottomOffset = 0;
-    param->vui.bEnableVuiTimingInfoPresentFlag = 0;
 }
 
 extern "C"
@@ -219,6 +218,9 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     }
     else if (!strcmp(profile, "mainstillpicture"))
     {
+        /* technically the stream should only have one picture, but we do not
+         * enforce this */
+        param->bRepeatHeaders = 1;
         param->keyframeMax = 1;
         param->bOpenGOP = 0;
     }
@@ -579,7 +581,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             bError = false;
             p->interlaceMode = parseName(value, x265_interlace_names, bError);
         }
-        p->vui.bEnableVuiParametersPresentFlag |= !!p->interlaceMode;
     }
     OPT("ref") p->maxNumReferences = atoi(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
@@ -595,6 +596,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("ssim") p->bEnableSsim = atobool(value);
     OPT("psnr") p->bEnablePsnr = atobool(value);
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
+    OPT("aud") p->bEnableAccessUnitDelimiters = atobool(value);
     OPT("b-pyramid") p->bBPyramid = atobool(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
@@ -620,23 +622,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, bError);
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, bError);
     OPT("cutree")    p->rc.cuTree = atobool(value);
-    OPT("vui")
-    {
-        int bvalue = atobool(value);
-
-        p->vui.bEnableVuiParametersPresentFlag = bvalue;
-        p->vui.bEnableAspectRatioIdc = bvalue;
-        p->vui.bEnableOverscanInfoPresentFlag = bvalue;
-        p->vui.bEnableVideoSignalTypePresentFlag = bvalue;
-        p->vui.bEnableColorDescriptionPresentFlag = bvalue;
-        p->vui.bEnableChromaLocInfoPresentFlag = bvalue;
-        p->vui.bEnableDefaultDisplayWindowFlag = bvalue;
-        p->vui.bEnableVuiTimingInfoPresentFlag = bvalue;
-    }
     OPT("sar")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableAspectRatioIdc = 1;
         p->vui.aspectRatioIdc = parseName(value, x265_sar_names, bError);
         if (bError)
         {
@@ -646,7 +633,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     }
     OPT("overscan")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
         if (!strcmp(value, "show"))
             p->vui.bEnableOverscanInfoPresentFlag = 1;
         else if (!strcmp(value, "crop"))
@@ -661,58 +647,46 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     }
     OPT("videoformat")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
         p->vui.bEnableVideoSignalTypePresentFlag = 1;
         p->vui.videoFormat = parseName(value, x265_video_format_names, bError);
     }
     OPT("range")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableVideoSignalTypePresentFlag = 1; 
+        p->vui.bEnableVideoSignalTypePresentFlag = 1;
         p->vui.bEnableVideoFullRangeFlag = parseName(value, x265_fullrange_names, bError);
     }
     OPT("colorprim")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
         p->vui.bEnableVideoSignalTypePresentFlag = 1;
         p->vui.bEnableColorDescriptionPresentFlag = 1;
         p->vui.colorPrimaries = parseName(value, x265_colorprim_names, bError);
     }
     OPT("transfer")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
         p->vui.bEnableVideoSignalTypePresentFlag = 1;
         p->vui.bEnableColorDescriptionPresentFlag = 1;
         p->vui.transferCharacteristics = parseName(value, x265_transfer_names, bError);
     }
     OPT("colormatrix")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
         p->vui.bEnableVideoSignalTypePresentFlag = 1;
         p->vui.bEnableColorDescriptionPresentFlag = 1;
         p->vui.matrixCoeffs = parseName(value, x265_colmatrix_names, bError);
     }
     OPT("chromaloc")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
         p->vui.bEnableChromaLocInfoPresentFlag = 1;
         p->vui.chromaSampleLocTypeTopField = atoi(value);
         p->vui.chromaSampleLocTypeBottomField = p->vui.chromaSampleLocTypeTopField;
     }
     OPT("crop-rect")
     {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
         p->vui.bEnableDefaultDisplayWindowFlag = 1;
         bError |= sscanf(value, "%d,%d,%d,%d",
                          &p->vui.defDispWinLeftOffset,
                          &p->vui.defDispWinTopOffset,
                          &p->vui.defDispWinRightOffset,
                          &p->vui.defDispWinBottomOffset) != 4;
-    }
-    OPT("timinginfo")
-    {
-        p->vui.bEnableVuiParametersPresentFlag = 1;
-        p->vui.bEnableVuiTimingInfoPresentFlag = atobool(value);
     }
     else
         return X265_PARAM_BAD_NAME;
@@ -724,7 +698,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     bError |= bValueWasNull && !bNameWasBool;
     return bError ? X265_PARAM_BAD_VALUE : 0;
 }
-
 
 namespace x265 {
 // internal encoder functions
@@ -753,9 +726,9 @@ int parseCpuName(const char *value, bool& bError)
     }
     int cpu;
     if (isdigit(value[0]))
-       cpu = x265_atoi(value, bError);
+        cpu = x265_atoi(value, bError);
     else
-       cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
+        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
 
     if (bError)
     {
@@ -766,11 +739,15 @@ int parseCpuName(const char *value, bool& bError)
         for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
         {
             int i;
-            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++);
+            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++)
+            {
+            }
+
             cpu |= x265::cpu_names[i].flags;
             if (!x265::cpu_names[i].flags)
                 bError = 1;
         }
+
         free(buf);
         if ((cpu & X265_CPU_SSSE3) && !(cpu & X265_CPU_SSE2_IS_SLOW))
             cpu |= X265_CPU_SSE2_IS_FAST;
@@ -801,8 +778,6 @@ static const int fixedRatios[][2] =
 
 void setParamAspectRatio(x265_param *p, int width, int height)
 {
-    p->vui.bEnableVuiParametersPresentFlag = 1;
-    p->vui.bEnableAspectRatioIdc = 1;
     p->vui.aspectRatioIdc = X265_EXTENDED_SAR;
     p->vui.sarWidth = width;
     p->vui.sarHeight = height;
@@ -818,7 +793,7 @@ void setParamAspectRatio(x265_param *p, int width, int height)
 
 void getParamAspectRatio(x265_param *p, int& width, int& height)
 {
-    if (!p->vui.bEnableVuiParametersPresentFlag || !p->vui.bEnableAspectRatioIdc || !p->vui.aspectRatioIdc)
+    if (!p->vui.aspectRatioIdc)
     {
         width = height = 0;
     }
@@ -863,8 +838,6 @@ int x265_check_params(x265_param *param)
 
     CHECK((param->maxCUSize >> maxCUDepth) < 4,
           "Minimum partition width size should be larger than or equal to 8");
-    CHECK(param->internalCsp != X265_CSP_I420 && param->internalCsp != X265_CSP_I444,
-          "Only 4:2:0 and 4:4:4 color spaces is supported at this time");
 
     /* These checks might be temporary */
 #if HIGH_BIT_DEPTH
@@ -916,12 +889,16 @@ int x265_check_params(x265_param *param)
     CHECK(param->maxNumReferences < 1, "maxNumReferences must be 1 or greater.");
     CHECK(param->maxNumReferences > MAX_NUM_REF, "maxNumReferences must be 16 or smaller.");
 
-    CHECK(param->sourceWidth  % TComSPS::getWinUnitX(param->internalCsp) != 0,
+    CHECK(param->sourceWidth < (int)param->maxCUSize || param->sourceWidth < (int)param->maxCUSize,
+          "Picture size must be at least one CTU");
+    CHECK(param->internalCsp < X265_CSP_I420 || X265_CSP_I444 < param->internalCsp,
+          "Color space must be i420, i422, or i444");
+    CHECK(param->sourceWidth % TComSPS::getWinUnitX(param->internalCsp) != 0,
           "Picture width must be an integer multiple of the specified chroma subsampling");
     CHECK(param->sourceHeight % TComSPS::getWinUnitY(param->internalCsp) != 0,
           "Picture height must be an integer multiple of the specified chroma subsampling");
 
-    CHECK(param->rc.rateControlMode<X265_RC_ABR || param->rc.rateControlMode> X265_RC_CRF,
+    CHECK(param->rc.rateControlMode > X265_RC_CRF || param->rc.rateControlMode < X265_RC_ABR,
           "Rate control mode is out of range");
     CHECK(param->rdLevel < 0 || param->rdLevel > 6,
           "RD Level is out of range");
@@ -984,14 +961,14 @@ int x265_check_params(x265_param *param)
           "Valid quality based VBR range 0 - 51");
     CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,
           "Valid adaptive b scheduling values 0 - none, 1 - fast, 2 - full");
-    CHECK(param->logLevel < -1 || param->logLevel > X265_LOG_FULL,
+    CHECK(param->logLevel<-1 || param->logLevel> X265_LOG_FULL,
           "Valid Logging level -1:none 0:error 1:warning 2:info 3:debug 4:full");
     CHECK(param->scenecutThreshold < 0,
           "scenecutThreshold must be greater than 0");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
-          "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum"); 
+          "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum");
     CHECK(param->keyframeMax < -1,
-          "Invalid max IDR period in frames. value should be greater than -1"); 
+          "Invalid max IDR period in frames. value should be greater than -1");
     CHECK(param->decodedPictureHashSEI < 0 || param->decodedPictureHashSEI > 3,
           "Invalid hash option. Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum");
     CHECK(param->rc.vbvBufferSize < 0,
@@ -1098,6 +1075,7 @@ void x265_print_params(x265_param *param)
                  param->rc.aqStrength, param->rc.cuTree);
         break;
     }
+
     if (param->rc.vbvBufferSize)
     {
         x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
@@ -1129,7 +1107,6 @@ void x265_print_params(x265_param *param)
         else
             fprintf(stderr, "tskip ");
     }
-    TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
     fprintf(stderr, "\n");
     fflush(stderr);
 }
@@ -1193,5 +1170,4 @@ char *x265_param2string(x265_param *p)
 
     return buf;
 }
-
 }

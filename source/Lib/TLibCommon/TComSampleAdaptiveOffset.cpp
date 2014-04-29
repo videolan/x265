@@ -310,7 +310,6 @@ void TComSampleAdaptiveOffset::destroy()
     m_tmpU2[1] = NULL;
     X265_FREE(m_tmpU2[2]);
     m_tmpU2[2] = NULL;
-
 }
 
 /** allocate memory for SAO parameters
@@ -601,56 +600,57 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     {
     case SAO_EO_0: // dir: -
     {
-      pixel firstPxl = 0, lastPxl = 0;
-      startX = (lpelx == 0) ? 1 : 0;
-      endX   = (rpelx == picWidthTmp) ? lcuWidth-1 : lcuWidth;
-      if (lcuWidth % 16)
-      {
-          int8_t signRight;
-          for (y = 0; y < lcuHeight; y++)
-          {
-              int8_t signLeft = xSign(rec[startX] - tmpL[y]);
-              for (x = startX; x < endX; x++)
-              {
-                  signRight = xSign(rec[x] - rec[x+1]);
-                  edgeType = signRight + signLeft + 2;
-                  signLeft  = -signRight;
+        pixel firstPxl = 0, lastPxl = 0;
+        startX = (lpelx == 0) ? 1 : 0;
+        endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
+        if (lcuWidth % 16)
+        {
+            int8_t signRight;
+            for (y = 0; y < lcuHeight; y++)
+            {
+                int8_t signLeft = xSign(rec[startX] - tmpL[y]);
+                for (x = startX; x < endX; x++)
+                {
+                    signRight = xSign(rec[x] - rec[x + 1]);
+                    edgeType = signRight + signLeft + 2;
+                    signLeft  = -signRight;
 
-                  rec[x] =  Clip3(0, (1 << X265_DEPTH) - 1, rec[x] + m_offsetEo[edgeType]);
-              }
-              rec += stride;
-          }
-      }
-      else
-      {
-          for (y = 0; y < lcuHeight; y++)
-          {
-              int8_t signLeft = xSign(rec[startX] - tmpL[y]);
+                    rec[x] =  Clip3(0, (1 << X265_DEPTH) - 1, rec[x] + m_offsetEo[edgeType]);
+                }
 
-              if (lpelx == 0)
-              {
-                  firstPxl = rec[0];
-              }
+                rec += stride;
+            }
+        }
+        else
+        {
+            for (y = 0; y < lcuHeight; y++)
+            {
+                int8_t signLeft = xSign(rec[startX] - tmpL[y]);
 
-              if (rpelx == picWidthTmp)
-              {
-                  lastPxl = rec[lcuWidth - 1];
-              }
+                if (lpelx == 0)
+                {
+                    firstPxl = rec[0];
+                }
 
-              primitives.saoCuOrgE0(rec, m_offsetEo, lcuWidth, signLeft);
+                if (rpelx == picWidthTmp)
+                {
+                    lastPxl = rec[lcuWidth - 1];
+                }
 
-              if (lpelx == 0)
-              {
-                  rec[0] = firstPxl;
-              }
+                primitives.saoCuOrgE0(rec, m_offsetEo, lcuWidth, signLeft);
 
-              if (rpelx == picWidthTmp)
-              {
-                  rec[lcuWidth - 1] = lastPxl;
-              }
-              rec += stride;
-          }
-      }
+                if (lpelx == 0)
+                {
+                    rec[0] = firstPxl;
+                }
+
+                if (rpelx == picWidthTmp)
+                {
+                    rec[lcuWidth - 1] = lastPxl;
+                }
+                rec += stride;
+            }
+        }
         break;
     }
     case SAO_EO_1: // dir: |
@@ -1370,6 +1370,7 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
     uint32_t x, y;
     uint32_t lumaOffset   = absZOrderIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> 2;
+
     //uint32_t chromaOffset = lumaOffset >> (m_hChromaShift + m_vChromaShift);
 
     if (ttText == TEXT_LUMA)
@@ -1416,7 +1417,7 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
         }
     }
 
-    //TODO Optimized Primitives 
+    //TODO Optimized Primitives
     for (y = 0; y < height; y++)
     {
         for (x = 0; x < width; x++)
