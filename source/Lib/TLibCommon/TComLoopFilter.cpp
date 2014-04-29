@@ -660,7 +660,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t edgeNumInLCUVert = g_zscanToRaster[absZOrderIdx] % lcuWidthInBaseUnits + edge;
     uint32_t edgeNumInLCUHor = g_zscanToRaster[absZOrderIdx] / lcuWidthInBaseUnits + edge;
 
-    if ((pelsInPartChromaH < DEBLOCK_SMALLEST_BLOCK) && (pelsInPartChromaV < DEBLOCK_SMALLEST_BLOCK) && 
+    if ((pelsInPartChromaH < DEBLOCK_SMALLEST_BLOCK) && (pelsInPartChromaV < DEBLOCK_SMALLEST_BLOCK) &&
         (((edgeNumInLCUVert % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChromaH)) && (dir == 0)) ||
          ((edgeNumInLCUHor % (DEBLOCK_SMALLEST_BLOCK / pelsInPartChromaV)) && dir)))
     {

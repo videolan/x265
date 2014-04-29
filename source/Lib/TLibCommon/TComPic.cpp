@@ -105,7 +105,7 @@ bool TComPic::create(Encoder* cfg)
     bool ok = true;
     ok &= m_picSym->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
     ok &= m_origPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_reconPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize,g_maxCUDepth);
+    ok &= m_reconPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
     ok &= m_lowres.create(m_origPicYuv, cfg->param->bframes, !!cfg->param->rc.aqMode);
 
     bool isVbv = cfg->param->rc.vbvBufferSize > 0 && cfg->param->rc.vbvMaxBitrate > 0;

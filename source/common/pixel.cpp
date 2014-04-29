@@ -869,9 +869,10 @@ void planecopy_sp_c(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 /* Estimate the total amount of influence on future quality that could be had if we
  * were to improve the reference samples used to inter predict any given CU. */
 void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
-                                        int32_t *invQscales, double *fpsFactor, int len)
+                             int32_t *invQscales, double *fpsFactor, int len)
 {
     double fps = *fpsFactor / 256;
+
     for (int i = 0; i < len; i++)
     {
         double intraCost       = intraCosts[i] * invQscales[i];
@@ -954,16 +955,16 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
 #define CHROMA_422(W, H) \
-    p.chroma[X265_CSP_I422].addAvg [CHROMA422_ ## W ## x ## H] = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I422].addAvg[CHROMA422_ ## W ## x ## H] = addAvg<W, H>;         \
     p.chroma[X265_CSP_I422].copy_pp[CHROMA422_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_sp[CHROMA422_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_ps[CHROMA422_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_ss[CHROMA422_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I422].sub_ps [CHROMA422_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].add_ps [CHROMA422_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I422].sub_ps[CHROMA422_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I422].add_ps[CHROMA422_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
 
 #define CHROMA_422_X(W, H) \
-    p.chroma[X265_CSP_I422].addAvg [CHROMA422X_ ## W ## x ## H]  = addAvg<W, H>;        \
+    p.chroma[X265_CSP_I422].addAvg[CHROMA422X_ ## W ## x ## H]  = addAvg<W, H>;        \
     p.chroma[X265_CSP_I422].copy_pp[CHROMA422X_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_sp[CHROMA422X_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_ps[CHROMA422X_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \

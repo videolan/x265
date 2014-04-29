@@ -55,13 +55,12 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     pixel* adiTemp;
     uint32_t cuWidth = cu->getCUSize(0) >> partDepth;
     uint32_t cuHeight = cu->getCUSize(0) >> partDepth;
-    uint32_t cuWidth2  = cuWidth << 1;
+    uint32_t cuWidth2 = cuWidth << 1;
     uint32_t cuHeight2 = cuHeight << 1;
 
     uint32_t width;
     uint32_t height;
     int  picStride = cu->getPic()->getStride();
-
     bool bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
     int  numIntraNeighbor = 0;
 
@@ -71,11 +70,11 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 
     int  partIdxStride   = cu->getPic()->getNumPartInCUSize();
     int  baseUnitSize    = g_maxCUSize >> g_maxCUDepth;
-    int  unitWidth       =  baseUnitSize ;
-    int  unitHeight      = baseUnitSize ;
+    int  unitWidth       = baseUnitSize;
+    int  unitHeight      = baseUnitSize;
     int  cuHeightInUnits = cuHeight / unitHeight;
     int  cuWidthInUnits  = cuWidth / unitWidth;
-    int  iAboveUnits     = cuWidthInUnits  << 1;
+    int  iAboveUnits     = cuWidthInUnits << 1;
     int  leftUnits       = cuHeightInUnits << 1;
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((cuHeightInUnits - 1) * partIdxStride)];
 
@@ -227,6 +226,7 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     pixel*  adiTemp;
     uint32_t  cuWidth  = cu->getCUSize(0) >> (partDepth + cu->getHorzChromaShift());
     uint32_t  cuHeight = cu->getCUSize(0) >> (partDepth + cu->getVertChromaShift());
+
     cuHeight = (cuWidth != cuHeight) ? cuHeight >> 1 : cuHeight;
 
     uint32_t  width;
@@ -246,7 +246,7 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     int  unitHeight      = baseUnitSize  >> cu->getVertChromaShift();
     int  cuHeightInUnits = cuHeight / unitHeight;
     int  cuWidthInUnits  = cuWidth  / unitWidth;
-    int  aboveUnits      = cuWidthInUnits  << 1;
+    int  aboveUnits      = cuWidthInUnits << 1;
     int  leftUnits       = cuHeightInUnits << 1;
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((cuHeightInUnits - 1) * partIdxStride)];
 
@@ -323,7 +323,6 @@ void TComPattern::fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* b
         // Fill top right border with rec. samples
         roiTemp = roiOrigin - picStride;
         memcpy(&adiTemp[1], roiTemp, 2 * cuWidth * sizeof(*adiTemp));
-
     }
     else // reference samples are partially available
     {
@@ -397,6 +396,7 @@ void TComPattern::fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* b
             {
                 next++;
             }
+
             pixel *pAdiLineNext = pAdiLine + ((next < leftUnits) ? (next * unitHeight) : (pAdiLineTopRowOffset + (next * unitWidth)));
             const pixel refSample = *pAdiLineNext;
             // Pad unavailable samples with new value
@@ -408,9 +408,11 @@ void TComPattern::fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* b
                 {
                     pAdiLineTemp[i] = refSample;
                 }
+
                 pAdiLineTemp += unitHeight;
                 curr++;
             }
+
             // fill top row
             while (curr < next)
             {
@@ -418,6 +420,7 @@ void TComPattern::fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* b
                 {
                     pAdiLineTemp[i] = refSample;
                 }
+
                 pAdiLineTemp += unitWidth;
                 curr++;
             }
@@ -429,11 +432,12 @@ void TComPattern::fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* b
             if (!bNeighborFlags[curr]) // samples not available
             {
                 int numSamplesInCurrUnit = (curr >= leftUnits) ? unitWidth : unitHeight;
-                const pixel refSample = *(pAdiLineTemp-1);
-                for (i=0; i<numSamplesInCurrUnit; i++)
+                const pixel refSample = *(pAdiLineTemp - 1);
+                for (i = 0; i < numSamplesInCurrUnit; i++)
                 {
                     pAdiLineTemp[i] = refSample;
                 }
+
                 pAdiLineTemp += numSamplesInCurrUnit;
                 curr++;
             }
@@ -461,7 +465,7 @@ bool TComPattern::isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT)
     uint32_t partAboveLeft;
     TComDataCU* pcCUAboveLeft = cu->getPUAboveLeft(partAboveLeft, partIdxLT);
 
-    return (pcCUAboveLeft ? true : false);
+    return pcCUAboveLeft ? true : false;
 }
 
 int TComPattern::isAboveAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)
@@ -573,7 +577,7 @@ bool TComPattern::isAboveLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT)
     uint32_t partAboveLeft;
     TComDataCU* pcCUAboveLeft = cu->getPUAboveLeft(partAboveLeft, partIdxLT);
 
-    return (pcCUAboveLeft && pcCUAboveLeft->isIntra(partAboveLeft));
+    return pcCUAboveLeft && pcCUAboveLeft->isIntra(partAboveLeft);
 }
 
 int TComPattern::isAboveAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)

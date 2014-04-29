@@ -30,7 +30,6 @@
 
 using namespace x265;
 
-
 /* Compute variance to derive AC energy of each block */
 static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, int i)
 {
@@ -326,7 +325,7 @@ RateControl::RateControl(Encoder * _cfg)
     pbOffset = 6.0 * X265_LOG2(param->rc.pbFactor);
     for (int i = 0; i < 3; i++)
     {
-        lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN);      
+        lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN);
     }
 
     if (param->rc.rateControlMode == X265_RC_CQP)
@@ -366,10 +365,9 @@ void RateControl::init()
         pred[i].decay = 0.5;
         pred[i].offset = 0.0;
     }
-   
+
     predBfromP = pred[0];
 }
-
 
 void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
 {
@@ -391,7 +389,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         {
             for (int i = 0; i < 3; i++)
             {
-                for(int j = 0; j < 2; j++)
+                for (int j = 0; j < 2; j++)
                 {
                     rce->rowPreds[i][j].coeff = 0.25;
                     rce->rowPreds[i][j].count = 1.0;
@@ -559,7 +557,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             q = x265_qp2qScale(accumPQp / accumPNorm);
             q /= fabs(param->rc.ipFactor);
         }
-        else if(framesDone > 0)
+        else if (framesDone > 0)
         {
             if (param->rc.rateControlMode != X265_RC_CRF)
             {
@@ -586,7 +584,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         {
             q = x265_qp2qScale(CRF_INIT_QP) / fabs(param->rc.ipFactor);
         }
-                
+
         q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
         qpNoVbv = x265_qScale2qp(q);
 
@@ -828,6 +826,7 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
     double qScaleVbv = x265_qp2qScale(qpVbv);
     uint64_t rowSatdCost = pic->m_rowDiagSatd[row];
     double encodedBits = pic->m_rowEncodedBits[row];
+
     if (row == 1)
     {
         rowSatdCost += pic->m_rowDiagSatd[0];
@@ -958,7 +957,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 
     lastRceq = q;
     q /= rateFactor;
-   
+
     return q;
 }
 
@@ -1016,7 +1015,9 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
                 if (pic->m_qpaRc)
                 {
                     for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
+                    {
                         pic->m_avgQpRc += pic->m_qpaRc[i];
+                    }
 
                     pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
                     rce->qpaRc = pic->m_avgQpRc;
@@ -1027,7 +1028,9 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
                 if (pic->m_qpaAq)
                 {
                     for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
+                    {
                         pic->m_avgQpAq += pic->m_qpaAq[i];
+                    }
 
                     pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
                 }

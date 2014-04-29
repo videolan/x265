@@ -49,7 +49,7 @@ struct NALUnit
     uint32_t    m_temporalId;        ///< temporal_id
     uint32_t    m_reservedZero6Bits; ///< reserved_zero_6bits
 
-    NALUnit() : m_nalUnitType(NAL_UNIT_INVALID), m_temporalId(0), m_reservedZero6Bits(0){}
+    NALUnit() : m_nalUnitType(NAL_UNIT_INVALID), m_temporalId(0), m_reservedZero6Bits(0) {}
 
     NALUnit(NalUnitType nalUnitType)
     {

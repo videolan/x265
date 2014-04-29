@@ -113,9 +113,9 @@ Y4MInput::Y4MInput(InputFileInfo& info)
 
 #if defined(_MSC_VER) && _MSC_VER < 1700
         /* Older MSVC versions cannot handle 64bit file sizes properly, so go native */
-        HANDLE hFile = CreateFileA(info.filename, GENERIC_READ, 
-            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 
-            FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE hFile = CreateFileA(info.filename, GENERIC_READ,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                                   FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFile != INVALID_HANDLE_VALUE)
         {
             LARGE_INTEGER size;
@@ -123,7 +123,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
                 info.frameCount = (int)((size.QuadPart - (int64_t)cur) / frameSize);
             CloseHandle(hFile);
         }
-#else
+#else // if defined(_MSC_VER) && _MSC_VER < 1700
         if (cur >= 0)
         {
             ifs->seekg(0, ios::end);
@@ -132,7 +132,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
             if (size > 0)
                 info.frameCount = (int)((size - cur) / frameSize);
         }
-#endif
+#endif // if defined(_MSC_VER) && _MSC_VER < 1700
     }
 
     if (info.skipFrames)
@@ -397,7 +397,7 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     populateFrameQueue();
 
-#endif
+#endif // if ENABLE_THREADING
 
     if (!frameStat[curHead])
         return false;

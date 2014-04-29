@@ -165,6 +165,7 @@ public:
     {
         //set the group layout
         const uint32_t log2TrSizeCG = log2TrSize - MLS_CG_LOG2_SIZE;
+
         result.log2TrSizeCG = log2TrSizeCG;
 
         //set the scan orders
@@ -195,6 +196,7 @@ public:
             assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21));
         }
     }
+
     estBitsSbacStruct* m_estBitsSbac;
 
 protected:

@@ -58,6 +58,7 @@ const DctConf_t IDctConf_infos[] =
 MBDstHarness::MBDstHarness()
 {
     const int idct_max = (1 << (BIT_DEPTH + 4)) - 1;
+
     CHECKED_MALLOC(mbuf1, int16_t, mb_t_size);
     CHECKED_MALLOC(mbufdct, int16_t, mb_t_size);
     CHECKED_MALLOC(mbufidct, int, mb_t_size);
@@ -189,7 +190,6 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, intptr_t width)
 {
     int j = 0;
     intptr_t cmp_size = sizeof(int16_t) * width * width;
-
 
     for (int i = 0; i <= 100; i++)
     {

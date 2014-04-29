@@ -35,7 +35,7 @@ void processSaoCUE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t signLef
 
     for (x = 0; x < lcuWidth; x++)
     {
-        signRight = ((rec[x] - rec[x+1]) < 0) ? -1 : ((rec[x] - rec[x+1]) > 0) ? 1 : 0;
+        signRight = ((rec[x] - rec[x + 1]) < 0) ? -1 : ((rec[x] - rec[x + 1]) > 0) ? 1 : 0;
         edgeType = signRight + signLeft + 2;
         signLeft  = -signRight;
 

@@ -137,7 +137,7 @@ struct Lookahead : public JobProvider
     int              widthInCU;       // width of lowres frame in downscale CUs
     int              heightInCU;      // height of lowres frame in downscale CUs
     int              lastKeyframe;
-    int              histogram[X265_BFRAME_MAX+1];
+    int              histogram[X265_BFRAME_MAX + 1];
 
     void addPicture(TComPic*, int sliceType);
     void flush();

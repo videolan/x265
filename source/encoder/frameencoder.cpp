@@ -100,6 +100,7 @@ void FrameEncoder::destroy()
 bool FrameEncoder::init(Encoder *top, int numRows)
 {
     bool ok = true;
+
     m_top = top;
     m_cfg = top;
     m_numRows = numRows;
@@ -970,7 +971,9 @@ void FrameEncoder::compressCTURows()
 
                     int reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + refLagRows))
+                    {
                         reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+                    }
 
                     if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                     {
@@ -1007,7 +1010,9 @@ void FrameEncoder::compressCTURows()
 
                         int reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + refLagRows))
+                        {
                             reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+                        }
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                         {
@@ -1111,7 +1116,7 @@ void FrameEncoder::processRowEncoder(int row)
             m_pic->m_qpaRc[row] += cu->m_baseQp;
 
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
- 
+
             if (row == col && row)
             {
                 double qpBase = cu->m_baseQp;
@@ -1123,13 +1128,13 @@ void FrameEncoder::processRowEncoder(int row)
                 if (reEncode < 0)
                 {
                     x265_log(m_cfg->param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
-                            m_pic->getPOC(), row, qpBase, cu->m_baseQp);
+                             m_pic->getPOC(), row, qpBase, cu->m_baseQp);
 
                     // prevent the WaveFront::findJob() method from providing new jobs
                     m_vbvResetTriggerRow = row;
                     m_bAllRowsStop = true;
 
-                    for (int r = m_numRows - 1; r >= row ; r--)
+                    for (int r = m_numRows - 1; r >= row; r--)
                     {
                         CTURow& stopRow = m_rows[r];
 
@@ -1144,6 +1149,7 @@ void FrameEncoder::processRowEncoder(int row)
                                 else
                                     GIVE_UP_TIME();
                             }
+
                             stopRow.m_lock.release();
 
                             bool bRowBusy = true;
@@ -1188,7 +1194,7 @@ void FrameEncoder::processRowEncoder(int row)
         }
 
         ScopedLock self(curRow.m_lock);
-        if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) || 
+        if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) ||
             (row > 0 && curRow.m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2))
         {
             curRow.m_active = false;

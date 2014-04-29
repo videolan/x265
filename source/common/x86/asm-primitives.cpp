@@ -420,7 +420,7 @@ extern "C" {
     p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu; \
     p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu;
-#endif
+#endif // if HIGH_BIT_DEPTH
 
 #define SETUP_LUMA_SUB_FUNC_DEF(W, H, cpu) \
     p.luma_sub_ps[LUMA_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
@@ -436,9 +436,9 @@ extern "C" {
     p.luma_copy_ ## type[LUMA_ ## W ## x ## H] = x265_blockcopy_ ## type ## _ ## W ## x ## H ## cpu;
 
 #define SETUP_CHROMA_BLOCKCOPY(type, W, H, cpu) \
-    p.chroma[X265_CSP_I420].copy_ ## type[CHROMA_ ## W ## x ## H] = x265_blockcopy_ ## type ##_ ## W ## x ## H ## cpu;
+    p.chroma[X265_CSP_I420].copy_ ## type[CHROMA_ ## W ## x ## H] = x265_blockcopy_ ## type ## _ ## W ## x ## H ## cpu;
 
-#define CHROMA_BLOCKCOPY(type ,cpu) \
+#define CHROMA_BLOCKCOPY(type, cpu) \
     SETUP_CHROMA_BLOCKCOPY(type, 2,  4,  cpu); \
     SETUP_CHROMA_BLOCKCOPY(type, 2,  8,  cpu); \
     SETUP_CHROMA_BLOCKCOPY(type, 4,  2,  cpu); \
@@ -516,7 +516,6 @@ extern "C" {
     SETUP_CHROMA_BLOCKCOPY_SP(32, 16, cpu); \
     SETUP_CHROMA_BLOCKCOPY_SP(32, 24, cpu); \
     SETUP_CHROMA_BLOCKCOPY_SP(32, 32, cpu);
-
 
 #define SETUP_CHROMA_LUMA(W1, H1, W2, H2, cpu) \
     p.chroma[X265_CSP_I420].sub_ps[LUMA_ ## W1 ## x ## H1] = x265_pixel_sub_ps_ ## W2 ## x ## H2 ## cpu; \
@@ -817,7 +816,7 @@ extern "C" {
     SETUP_INTRA_ANG4(19, 17, cpu); \
     SETUP_INTRA_ANG4(20, 16, cpu); \
     SETUP_INTRA_ANG4(21, 15, cpu); \
-    SETUP_INTRA_ANG4(22, 14, cpu);\
+    SETUP_INTRA_ANG4(22, 14, cpu); \
     SETUP_INTRA_ANG4(23, 13, cpu); \
     SETUP_INTRA_ANG4(24, 12, cpu); \
     SETUP_INTRA_ANG4(25, 11, cpu); \
@@ -834,7 +833,7 @@ extern "C" {
     SETUP_INTRA_ANG4_8(19, 17, cpu); \
     SETUP_INTRA_ANG4_8(20, 16, cpu); \
     SETUP_INTRA_ANG4_8(21, 15, cpu); \
-    SETUP_INTRA_ANG4_8(22, 14, cpu);\
+    SETUP_INTRA_ANG4_8(22, 14, cpu); \
     SETUP_INTRA_ANG4_8(23, 13, cpu); \
     SETUP_INTRA_ANG4_8(24, 12, cpu); \
     SETUP_INTRA_ANG4_8(25, 11, cpu); \
@@ -1075,7 +1074,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         INTRA_ANG_SSE4_COMMON(sse4);
         INTRA_ANG_SSE4_HIGH(sse4);
-
     }
     if (cpuMask & X265_CPU_XOP)
     {

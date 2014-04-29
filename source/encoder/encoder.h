@@ -106,7 +106,7 @@ private:
     int                m_numLumaWPFrames;    // number of P frames with weighted luma reference
     int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
     int                m_numLumaWPBiFrames;  // number of B frames with weighted luma reference
-    int                m_numChromaWPBiFrames;// number of B frames with weighted chroma reference
+    int                m_numChromaWPBiFrames; // number of B frames with weighted chroma reference
 
 public:
 
@@ -151,7 +151,7 @@ public:
 
     bool               m_bPCMInputBitDepthFlag; //unused field
     uint32_t           m_pcmBitDepthLuma;  // unused field, TComSPS has it's own version defaulted to 8
-    uint32_t           m_pcmBitDepthChroma;// unused field, TComSPS has it's own version defaulted to 8
+    uint32_t           m_pcmBitDepthChroma; // unused field, TComSPS has it's own version defaulted to 8
 
     bool               m_bPCMFilterDisableFlag;
     bool               m_loopFilterAcrossTilesEnabledFlag;
@@ -168,7 +168,7 @@ public:
 
     bool               m_TransquantBypassEnableFlag;   ///< transquant_bypass_enable_flag setting in PPS.
     bool               m_CUTransquantBypassFlagValue;  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-    int                m_activeParameterSetsSEIEnabled;///< enable active parameter set SEI message
+    int                m_activeParameterSetsSEIEnabled; ///< enable active parameter set SEI message
 
     bool               m_neutralChromaIndicationFlag;
     bool               m_pocProportionalToTimingFlag;

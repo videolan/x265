@@ -251,7 +251,7 @@ void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
         return;
     int64_t elapsed = time - startTime;
     double fps = elapsed > 0 ? frameNum * 1000000. / elapsed : 0;
-    float bitrate = 0.008f * totalbytes * (param->fpsNum / param->fpsDenom) / ( (float) frameNum);	
+    float bitrate = 0.008f * totalbytes * (param->fpsNum / param->fpsDenom) / ((float)frameNum);
     if (framesToBeEncoded)
     {
         int eta = (int)(elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
@@ -291,7 +291,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
     H0("   --threads <integer>           Number of threads for thread pool (0: detect CPU core count, default)\n");
     H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
-    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", logLevelNames[param->logLevel+1]);
+    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", logLevelNames[param->logLevel + 1]);
     H0("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("   --no-progress                 Disable CLI progress reports\n");
     H0("-o/--output <filename>           Bitstream output file name\n");

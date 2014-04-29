@@ -668,6 +668,7 @@ void TEncSbac::codeAUD(TComSlice* slice)
         picType = 7;
         break;
     }
+
     WRITE_CODE(picType, 3, "pic_type");
 }
 
@@ -1834,7 +1835,6 @@ void TEncSbac::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
 
 void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel)
 {
-
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
     bool canQuadSplit       = (width >= (MIN_TU_SIZE * 2)) && (height >= (MIN_TU_SIZE * 2));
@@ -1842,7 +1842,7 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
 
     if ((width != height) && (lowestLevel || !canQuadSplit)) //if sub-TUs are present
     {
-        uint32_t subTUDepth        = lowestTUDepth + 1;   //if this is the lowest level of the TU-tree, the sub-TUs are directly below. 
+        uint32_t subTUDepth        = lowestTUDepth + 1;   //if this is the lowest level of the TU-tree, the sub-TUs are directly below.
                                                           //Otherwise, this must be the level above the lowest level (as specified above)
         uint32_t partIdxesPerSubTU = absPartIdxStep >> 1;
 
@@ -1852,19 +1852,19 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
             uint32_t cbf = cu->getCbf(subTUAbsPartIdx, ttype, subTUDepth);
 
             m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
-            DTRACE_CABAC_VL( g_nSymbolCounter++ )
-            DTRACE_CABAC_T( "\tparseQtCbf()" )
-            DTRACE_CABAC_T( "\tsub-TU=" )
-            DTRACE_CABAC_V( subTU )
-            DTRACE_CABAC_T( "\tsymbol=" )
-            DTRACE_CABAC_V( cbf )
-            DTRACE_CABAC_T( "\tctx=" )
-            DTRACE_CABAC_V( ctx )
-            DTRACE_CABAC_T( "\tetype=" )
-            DTRACE_CABAC_V( ttype )
-            DTRACE_CABAC_T( "\tuiAbsPartIdx=" )
-            DTRACE_CABAC_V( subTUAbsPartIdx )
-            DTRACE_CABAC_T( "\n" )
+            DTRACE_CABAC_VL(g_nSymbolCounter++)
+            DTRACE_CABAC_T("\tparseQtCbf()")
+            DTRACE_CABAC_T("\tsub-TU=")
+            DTRACE_CABAC_V(subTU)
+            DTRACE_CABAC_T("\tsymbol=")
+            DTRACE_CABAC_V(cbf)
+            DTRACE_CABAC_T("\tctx=")
+            DTRACE_CABAC_V(ctx)
+            DTRACE_CABAC_T("\tetype=")
+            DTRACE_CABAC_V(ttype)
+            DTRACE_CABAC_T("\tuiAbsPartIdx=")
+            DTRACE_CABAC_V(subTUAbsPartIdx)
+            DTRACE_CABAC_T("\n")
         }
     }
     else
@@ -2057,6 +2057,7 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     {
         m_binIf->encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
     }
+
     if (groupIdxX < maxGroupIdx)
     {
         m_binIf->encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
@@ -2068,6 +2069,7 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     {
         m_binIf->encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
     }
+
     if (groupIdxY < maxGroupIdx)
     {
         m_binIf->encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
@@ -2507,6 +2509,7 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, 
         estBitsSbac->lastXBits[ctx] = bitsX + sbacGetEntropyBits(ctxX[ctxOffset].m_state, 0);
         bitsX += sbacGetEntropyBits(ctxX[ctxOffset].m_state, 1);
     }
+
     estBitsSbac->lastXBits[ctx] = bitsX;
 
     const ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
@@ -2516,6 +2519,7 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, 
         estBitsSbac->lastYBits[ctx] = bitsY + sbacGetEntropyBits(ctxY[ctxOffset].m_state, 0);
         bitsY += sbacGetEntropyBits(ctxY[ctxOffset].m_state, 1);
     }
+
     estBitsSbac->lastYBits[ctx] = bitsY;
 }
 

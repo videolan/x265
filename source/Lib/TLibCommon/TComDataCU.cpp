@@ -1350,6 +1350,7 @@ void TComDataCU::setDepthSubParts(uint32_t depth)
 {
     /*All 4x4 partitions in current CU have the CU depth saved*/
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
+
     memset(m_depth, depth, sizeof(uint8_t) * curPartNum);
 }
 
@@ -1598,6 +1599,7 @@ uint8_t TComDataCU::getNumPartInter()
 void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight)
 {
     int cuSize = getCUSize(0);
+
     switch (m_partSizes[0])
     {
     case SIZE_2NxN:
@@ -2397,7 +2399,7 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
     }
 
     int numMvc = 0;
-    for (int dir = MD_LEFT ; dir <= MD_ABOVE_LEFT; dir++)
+    for (int dir = MD_LEFT; dir <= MD_ABOVE_LEFT; dir++)
     {
         if (valid[dir] && mv[dir].notZero())
         {
@@ -2855,8 +2857,8 @@ uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         dirMode  = getChromaIntraDir(absPartIdx);
         if (dirMode == DM_CHROMA_IDX)
         {
-            uint32_t lumaLCUIdx = (m_chromaFormat == CHROMA_444) ? absPartIdx : absPartIdx & (~((1<<(2*g_addCUDepth))-1));
-            dirMode = getLumaIntraDir(lumaLCUIdx );
+            uint32_t lumaLCUIdx = (m_chromaFormat == CHROMA_444) ? absPartIdx : absPartIdx & (~((1 << (2 * g_addCUDepth)) - 1));
+            dirMode = getLumaIntraDir(lumaLCUIdx);
             dirMode = (m_chromaFormat == CHROMA_422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
         }
         // TODO: 4:2:2

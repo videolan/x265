@@ -79,7 +79,7 @@ void Lookahead::init()
          (param->lookaheadDepth && param->rc.vbvBufferSize)))
         m_pool = m_pool; /* allow use of worker thread */
     else
-        m_pool = NULL;   /* disable use of worker thread */
+        m_pool = NULL; /* disable use of worker thread */
 }
 
 void Lookahead::destroy()
@@ -332,6 +332,7 @@ void Lookahead::slicetypeDecide()
             frames[j + 1] = &pic->m_lowres;
             pic = pic->m_next;
         }
+
         maxSearch = j;
     }
 
@@ -465,6 +466,7 @@ void Lookahead::slicetypeDecide()
                     {
                         p1++;
                     }
+
                 else
                     p1 = bframes + 1;
                 est.estimateFrameCost(frames, p0, p1, b, 0);
@@ -475,6 +477,7 @@ void Lookahead::slicetypeDecide()
     }
 
     inputQueueLock.acquire();
+
     /* dequeue all frames from inputQueue that are about to be enqueued
      * in the output queue. The order is important because TComPic can
      * only be in one list at a time */
@@ -486,6 +489,7 @@ void Lookahead::slicetypeDecide()
         pts[i] = pic->m_pts;
         maxSearch--;
     }
+
     inputQueueLock.release();
 
     outputQueueLock.acquire();
@@ -530,6 +534,7 @@ void Lookahead::slicetypeDecide()
             frames[j + 1] = &pic->m_lowres;
             pic = pic->m_next;
         }
+
         frames[j + 1] = NULL;
         inputQueueLock.release();
         slicetypeAnalyse(frames, true);
@@ -1064,8 +1069,8 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     {
         int cuIndex = blocky * StrideInCU;
         primitives.propagateCost(scratch, propagateCost,
-                                frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
-                                frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
+                                 frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
+                                 frames[b]->invQscaleFactor + cuIndex, &fpsFactor, widthInCU);
 
         if (referenced)
             propagateCost += widthInCU;

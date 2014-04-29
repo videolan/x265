@@ -253,6 +253,7 @@ static const char* nalUnitTypeToString(NalUnitType type)
     default:                              return "UNK";
     }
 }
+
 #endif // if VERBOSE_RATE
 
 /**
@@ -407,6 +408,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
                     out->getSlice()->m_weightPredTable[l][0][2].bPresentFlag)
                     bChroma = true;
             }
+
             if (bLuma)
                 m_numLumaWPBiFrames++;
             if (bChroma)
@@ -429,6 +431,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
                 numRBSPBytes += numRBSPBytes_nal;
             }
         }
+
         uint64_t bits = numRBSPBytes * 8;
         m_rateControl->rateControlEnd(out, bits, &curEncoder->m_rce);
         finishFrameStats(out, curEncoder, bits);
@@ -494,7 +497,6 @@ void EncStats::addQP(double aveQp)
 {
     m_totalQp += aveQp;
 }
-
 
 char* Encoder::statsString(EncStats& stat, char* buffer)
 {
@@ -696,12 +698,18 @@ void Encoder::printSummary()
         }
         int pWithB = 0;
         for (int i = 0; i <= param->bframes; i++)
+        {
             pWithB += m_lookahead->histogram[i];
+        }
+
         if (pWithB)
         {
             int p = 0;
             for (int i = 0; i <= param->bframes; i++)
+            {
                 p += sprintf(buffer + p, "%.1f%% ", 100. * m_lookahead->histogram[i] / pWithB);
+            }
+
             x265_log(param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
         }
     }
@@ -1130,7 +1138,7 @@ void Encoder::initPPS(TComPPS *pps)
     /* TODO: This variable m_maxCuDQPDepth needs to be a CLI option to allow us to choose AQ granularity */
     bool bUseDQP = (m_maxCuDQPDepth > 0 || param->rc.aqMode || isVbv) ? true : false;
 
-    int lowestQP = -QP_BD_OFFSET; 
+    int lowestQP = -QP_BD_OFFSET;
 
     if (m_useLossless)
     {

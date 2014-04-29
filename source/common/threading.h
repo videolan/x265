@@ -113,7 +113,6 @@ inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
 
 #endif // ifdef __GNUC__
 
-
 namespace x265 {
 // x265 private namespace
 
@@ -303,10 +302,14 @@ public:
     void wait()
     {
         pthread_mutex_lock(&m_mutex);
+
         /* blocking wait on conditional variable, mutex is atomically released
          * while blocked. When condition is signaled, mutex is re-acquired */
         while (m_counter == 0)
+        {
             pthread_cond_wait(&m_cond, &m_mutex);
+        }
+
         m_counter--;
         pthread_mutex_unlock(&m_mutex);
     }
@@ -314,6 +317,7 @@ public:
     bool timedWait(uint32_t waitms)
     {
         bool bTimedOut = false;
+
         pthread_mutex_lock(&m_mutex);
         if (m_counter == 0)
         {
@@ -356,7 +360,6 @@ protected:
     pthread_cond_t  m_cond;
     uint32_t        m_counter;
 };
-
 
 /* This class is intended for use in signaling state changes safely between CPU
  * cores. One thread should be a writer and multiple threads may be readers. The

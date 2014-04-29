@@ -132,8 +132,6 @@ protected:
     // ME parameters
     int             m_refLagPixels;
 
-  
-
 public:
 
     void setRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }

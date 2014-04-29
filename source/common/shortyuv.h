@@ -81,6 +81,7 @@ public:
     {
         int blkX = (unitIdx * size) &  (width - 1);
         int blkY = (unitIdx * size) & ~(width - 1);
+
         if (m_csp == CHROMA_422) blkY <<= 1;
 
         return blkX + blkY * size;

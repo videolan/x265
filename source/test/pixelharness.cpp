@@ -100,6 +100,7 @@ PixelHarness::PixelHarness()
         ushort_test_buff[2][i]  = ((1 << 16) - 1);
         uchar_test_buff[2][i]  = 255;
     }
+
     for (int i = 0; i < bufsize; i++)
     {
         pbuf1[i] = rand() & PIXEL_MAX;
@@ -109,9 +110,10 @@ PixelHarness::PixelHarness()
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
-        psbuf1[i] = (rand() %65) - 32;                   // range is between -32 to 32
+        psbuf1[i] = (rand() % 65) - 32;                   // range is between -32 to 32
         sbuf3[i] = rand() % PIXEL_MAX; // for blockcopy only
     }
+
     return;
 
 fail:
@@ -221,9 +223,9 @@ bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
         checked(opt, pixel_test_buff[index1],
-            pixel_test_buff[index2] + j,
-            pixel_test_buff[index2] + j + 1,
-            pixel_test_buff[index2] + j + 2, stride, &vres[0]);
+                pixel_test_buff[index2] + j,
+                pixel_test_buff[index2] + j + 1,
+                pixel_test_buff[index2] + j + 2, stride, &vres[0]);
         ref(pixel_test_buff[index1],
             pixel_test_buff[index2] + j,
             pixel_test_buff[index2] + j + 1,
@@ -249,10 +251,10 @@ bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
         checked(opt, pixel_test_buff[index1],
-            pixel_test_buff[index2] + j,
-            pixel_test_buff[index2] + j + 1,
-            pixel_test_buff[index2] + j + 2,
-            pixel_test_buff[index2] + j + 3, stride, &vres[0]);
+                pixel_test_buff[index2] + j,
+                pixel_test_buff[index2] + j + 1,
+                pixel_test_buff[index2] + j + 2,
+                pixel_test_buff[index2] + j + 3, stride, &vres[0]);
         ref(pixel_test_buff[index1],
             pixel_test_buff[index2] + j,
             pixel_test_buff[index2] + j + 1,
@@ -467,7 +469,7 @@ bool PixelHarness::check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
         checked(opt, bx, by, opt_dest, stride, short_test_buff[index1] + j,
-            short_test_buff[index2] + j, stride, stride);
+                short_test_buff[index2] + j, stride, stride);
         ref(bx, by, ref_dest, stride, short_test_buff[index1] + j,
             short_test_buff[index2] + j, stride, stride);
 
@@ -508,7 +510,7 @@ bool PixelHarness::check_downscale_t(downscale_t ref, downscale_t opt)
         ref(pixel_test_buff[index] + j, ref_destf, ref_desth, ref_destv,
             ref_destc, src_stride, dst_stride, bx, by);
         checked(opt, pixel_test_buff[index] + j, opt_destf, opt_desth, opt_destv,
-            opt_destc, src_stride, dst_stride, bx, by);
+                opt_destc, src_stride, dst_stride, bx, by);
 
         if (memcmp(ref_destf, opt_destf, 32 * 32 * sizeof(pixel)))
             return false;
@@ -595,7 +597,7 @@ bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
         checked(ref, ref_dest, stride, pixel_test_buff[index1] + j,
-            stride, pixel_test_buff[index2] + j, stride, 32);
+                stride, pixel_test_buff[index2] + j, stride, 32);
         opt(opt_dest, stride, pixel_test_buff[index1] + j,
             stride, pixel_test_buff[index2] + j, stride, 32);
 
@@ -761,7 +763,7 @@ bool PixelHarness::check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
         checked(opt, opt_dest, stride2, pixel_test_buff[index1] + j,
-            pixel_test_buff[index2] + j, stride, stride);
+                pixel_test_buff[index2] + j, stride, stride);
         ref(ref_dest, stride2, pixel_test_buff[index1] + j,
             pixel_test_buff[index2] + j, stride, stride);
 
@@ -859,6 +861,7 @@ bool PixelHarness::check_pixel_var(var_t ref, var_t opt)
     int j = 0;
 
     intptr_t stride = STRIDE;
+
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
@@ -965,7 +968,7 @@ bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
     for (int i = 0; i < ITERS; i++)
     {
         int width = 16 * (rand() % 4 + 1);
-        int8_t sign = rand () % 3;
+        int8_t sign = rand() % 3;
         if (sign == 2)
         {
             sign = -1;

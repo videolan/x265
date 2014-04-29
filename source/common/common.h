@@ -49,10 +49,10 @@
 #define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
 
 #if X265_ARCH_X86 && !defined(X86_64)
-extern "C" intptr_t x265_stack_align( void (*func)(), ... );
-#define x265_stack_align(func,...) x265_stack_align((void (*)())func, __VA_ARGS__)
+extern "C" intptr_t x265_stack_align(void (*func)(), ...);
+#define x265_stack_align(func, ...) x265_stack_align((void (*)())func, __VA_ARGS__)
 #else
-#define x265_stack_align(func,...) func(__VA_ARGS__)
+#define x265_stack_align(func, ...) func(__VA_ARGS__)
 #endif
 
 #elif defined(_MSC_VER)
@@ -60,7 +60,7 @@ extern "C" intptr_t x265_stack_align( void (*func)(), ... );
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
-#define x265_stack_align(func,...) func(__VA_ARGS__)
+#define x265_stack_align(func, ...) func(__VA_ARGS__)
 
 #endif // if defined(__GNUC__)
 

@@ -57,7 +57,7 @@ class SEI;
 #define QUAD_SPLIT            2
 #define NUMBER_OF_SPLIT_MODES 3
 
-static const uint32_t partIdxStepShift  [NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
+static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
 static const uint32_t NUMBER_OF_SECTIONS[NUMBER_OF_SPLIT_MODES] = { 1, 2, 4 };
 
 struct TComTURecurse
@@ -112,7 +112,7 @@ public:
 
     virtual void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx) = 0;
     virtual void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel) = 0;
-   
+
     virtual void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx) = 0;
     virtual void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth) = 0;
     virtual void codeQtRootCbfZero(TComDataCU* cu) = 0;
@@ -197,8 +197,9 @@ public:
     void encodeScalingList(TComScalingList* scalingList);
 
 private:
+
     void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t width, uint32_t height, uint32_t uiTrIdx, bool& bCodeDQP);
-    
+
 public:
 
     void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP);

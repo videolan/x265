@@ -88,6 +88,7 @@ void ShortYuv::subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partSize)
 
     pixel* srcY0 = srcYuv0->getLumaAddr();
     pixel* srcY1 = srcYuv1->getLumaAddr();
+
     primitives.luma_sub_ps[part](getLumaAddr(), m_width, srcY0, srcY1, srcYuv0->getStride(), srcYuv1->getStride());
 
     pixel* srcU0 = srcYuv0->getCbAddr();
@@ -103,6 +104,7 @@ void ShortYuv::addClip(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize)
 {
     int16_t* srcY0 = srcYuv0->getLumaAddr();
     int16_t* srcY1 = srcYuv1->getLumaAddr();
+
     primitives.pixeladd_ss(partSize, partSize, getLumaAddr(), m_width, srcY0, srcY1, srcYuv0->m_width, srcYuv1->m_width);
 
     uint32_t cpartSize = partSize >> m_hChromaShift;
@@ -135,6 +137,7 @@ void ShortYuv::copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t
 void ShortYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, bool bChromaSame)
 {
     int part = partitionFromSizes(lumaSize, lumaSize);
+
     part = ((part == 0) && (m_csp == CHROMA_422)) ? 1 : part;
     int16_t* srcU = getCbAddr(partIdx);
     int16_t* srcV = getCrAddr(partIdx);

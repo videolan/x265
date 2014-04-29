@@ -66,7 +66,6 @@ bool CTURow::create(Encoder* top)
            m_cuCoder.create((uint8_t)g_maxCUDepth, g_maxCUSize);
 }
 
-
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
 {
     if (bufferSbac)

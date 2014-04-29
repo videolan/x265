@@ -795,7 +795,6 @@ typedef struct x265_param
          * conformance cropping window to further crop the displayed window */
         int defDispWinBottomOffset;
     } vui;
-
 } x265_param;
 
 /***

@@ -31,7 +31,6 @@
 
 using namespace x265;
 namespace weightp {
-
 struct Cache
 {
     const int * intraCost;
@@ -61,6 +60,7 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
     MV mvmin, mvmax;
 
     int cu = 0;
+
     for (int y = 0; y < ref.lines; y += cuSize)
     {
         int pixoff = y * stride;
@@ -206,12 +206,21 @@ uint32_t weightCost(pixel *         fenc,
     }
     else if (cache.csp == X265_CSP_I444)
         for (int y = 16; y < height; y += 16, r += 16 * stride, f += 16 * stride)
+        {
             for (int x = 16; x < width; x += 16)
+            {
                 cost += primitives.satd[LUMA_16x16](r + x, stride, f + x, stride);
+            }
+        }
+
     else
         for (int y = 8; y < height; y += 8, r += 8 * stride, f += 8 * stride)
+        {
             for (int x = 8; x < width; x += 8)
+            {
                 cost += primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
+            }
+        }
 
     x265_emms();
     return cost;
@@ -223,6 +232,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
     Lowres& fenc        = slice.getPic()->m_lowres;
 
     weightp::Cache cache;
+
     memset(&cache, 0, sizeof(cache));
     cache.intraCost = fenc.intraCost;
     cache.numPredDir = slice.isInterP() ? 1 : 2;
@@ -277,6 +287,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
                 break;
             chromaDenom--;
         }
+
         SET_WEIGHT(weights[1], false, 1 << chromaDenom, chromaDenom, 0);
         SET_WEIGHT(weights[2], false, 1 << chromaDenom, chromaDenom, 0);
 
@@ -437,7 +448,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
                     wpScalingParam wsp;
                     SET_WEIGHT(wsp, true, curScale, mindenom, off);
                     uint32_t s = weightCost(orig, fref, weightTemp, stride, cache, width, height, &wsp, !plane) +
-                                 sliceHeaderCost(&wsp, lambda, !!plane);
+                        sliceHeaderCost(&wsp, lambda, !!plane);
                     COPY4_IF_LT(minscore, s, minscale, curScale, minoff, off, bFound, true);
 
                     /* Don't check any more offsets if the previous one had a lower cost than the current one */

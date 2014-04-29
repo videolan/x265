@@ -29,7 +29,7 @@ void x265_cvt16to32_shl_sse4(int32_t * dst, int16_t * src, intptr_t, int32_t, in
 
 #define SETUP_BLOCKCOPY_FUNC(W, H, cpu) \
     void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb); \
-    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb);\
+    void x265_blockcopy_sp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, int16_t * b, intptr_t strideb); \
     void x265_blockcopy_ss_ ## W ## x ## H ## cpu(int16_t * a, intptr_t stridea, int16_t * b, intptr_t strideb);
 
 #define SETUP_BLOCKCOPY_PS(W, H, cpu) \
@@ -114,7 +114,6 @@ void x265_cvt16to32_shl_sse4(int32_t * dst, int16_t * src, intptr_t, int32_t, in
     SETUP_BLOCKCOPY_PS(64, 32, cpu); \
     SETUP_BLOCKCOPY_PS(64, 48, cpu); \
     SETUP_BLOCKCOPY_PS(64, 64, cpu);
-
 
 BLOCKCOPY_COMMON(_sse2);
 BLOCKCOPY_SS_PP(_sse2);

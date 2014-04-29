@@ -58,6 +58,7 @@ namespace x265 {
 class TEncSbac : public SyntaxElementWriter, public TEncEntropyIf
 {
 public:
+
     uint64_t pad;
     ContextModel m_contextModels[MAX_OFF_CTX_MOD];
 
@@ -68,10 +69,12 @@ public:
     virtual ~TEncSbac();
 
     void  init(TEncBinCABAC* p)       { m_binIf = p; }
-    void  setSlice(TComSlice* p)      { m_slice = p; }
-    void  resetBits()                 { m_binIf->resetBits(); m_bitIf->resetBits(); }
-    uint32_t getNumberOfWrittenBits() { return m_binIf->getNumWrittenBits(); }
 
+    void  setSlice(TComSlice* p)      { m_slice = p; }
+
+    void  resetBits()                 { m_binIf->resetBits(); m_bitIf->resetBits(); }
+
+    uint32_t getNumberOfWrittenBits() { return m_binIf->getNumWrittenBits(); }
 
     //  Virtual list
     void resetEntropy();
@@ -104,6 +107,7 @@ public:
     bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
 
     void codeSAOSign(uint32_t code) { m_binIf->encodeBinEP(code); }
+
     void codeScalingList(TComScalingList*);
 
     void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);

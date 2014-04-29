@@ -148,6 +148,7 @@ void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
     pixel* dstY = dstPicYuv->getLumaAddr();
 
     int part = dstPicYuv->m_part;
+
     primitives.luma_copy_pp[part](dstY, dstPicYuv->getStride(), srcY, getStride());
 
     pixel* srcU = getCbAddr(partIdx);

@@ -26,7 +26,6 @@
 #include "level.h"
 
 namespace x265 {
-
 typedef struct
 {
     uint32_t maxLumaSamples;
@@ -38,7 +37,8 @@ typedef struct
     const char* name;
 } LevelSpec;
 
-LevelSpec levels[] = {
+LevelSpec levels[] =
+{
     { MAX_UINT, MAX_UINT,   MAX_UINT, MAX_UINT, 0, Level::NONE,     "none" },
     { 36864,    552960,     128,      MAX_UINT, 2, Level::LEVEL1,   "1" },
     { 122880,   3686400,    1500,     MAX_UINT, 2, Level::LEVEL2,   "2" },
@@ -53,7 +53,7 @@ LevelSpec levels[] = {
     { 35651584, 1069547520, 60000,    240000,   8, Level::LEVEL6,   "6" },
     { 35651584, 2139095040, 120000,   480000,   8, Level::LEVEL6_1, "6.1" },
     { 35651584, 4278190080U, 240000,  800000,   6, Level::LEVEL6_2, "6.2" },
-    { 0, 0, 0, 0, 0, Level::NONE, "\0"}
+    { 0, 0, 0, 0, 0, Level::NONE, "\0" }
 };
 
 /* determine minimum decoder level requiremented to decode the described video */
@@ -77,7 +77,6 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
             profile = Profile::MAIN;
         else if (param.internalBitDepth == 10)
             profile = Profile::MAIN10;
-
     }
     /* TODO: Range extension profiles */
 
@@ -114,6 +113,7 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
             maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
         else if (lumaSamples <= ((3 * levels[i].maxLumaSamples) >> 2))
             maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
+
         /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than
          * or equal to MaxDpbSize */
         if (maxDecPicBuffering > maxDpbSize)
@@ -152,6 +152,7 @@ void enforceLevel(x265_param& param, int level, bool bHighTier)
     LevelSpec& l = levels[level];
 
     bool ok = true;
+
     if (lumaSamples > l.maxLumaSamples)
         ok = false;
     else if (param.sourceWidth > sqrt(l.maxLumaSamples * 8.0f))
@@ -184,7 +185,7 @@ void enforceLevel(x265_param& param, int level, bool bHighTier)
         maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
     int savedRefCount = param.maxNumReferences;
 
-    for(; ;)
+    for (;; )
     {
         int numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
         int maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(numReorderPics + 1, param.maxNumReferences) + numReorderPics);

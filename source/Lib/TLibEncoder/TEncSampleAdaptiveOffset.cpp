@@ -461,9 +461,9 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     m_dist = X265_MALLOC(int64_t*, m_numTotalParts);
     m_cost = X265_MALLOC(double*, m_numTotalParts);
 
-    m_count  = X265_MALLOC(int64_t**, m_numTotalParts);
-    m_offset = X265_MALLOC(int64_t**, m_numTotalParts);
-    m_offsetOrg = X265_MALLOC(int64_t**, m_numTotalParts);
+    m_count  = X265_MALLOC(int64_t * *, m_numTotalParts);
+    m_offset = X265_MALLOC(int64_t * *, m_numTotalParts);
+    m_offsetOrg = X265_MALLOC(int64_t * *, m_numTotalParts);
 
     for (int i = 0; i < m_numTotalParts; i++)
     {
@@ -493,8 +493,8 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     }
 
     int maxDepth = 4;
-    m_rdSbacCoders = X265_MALLOC(TEncSbac**, maxDepth + 1);
-    m_binCoderCABAC = X265_MALLOC(TEncBinCABAC**, maxDepth + 1);
+    m_rdSbacCoders = X265_MALLOC(TEncSbac * *, maxDepth + 1);
+    m_binCoderCABAC = X265_MALLOC(TEncBinCABAC * *, maxDepth + 1);
 
     for (int d = 0; d < maxDepth + 1; d++)
     {

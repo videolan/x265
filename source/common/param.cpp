@@ -34,11 +34,12 @@
 #endif
 
 #if _WIN32
-#define strcasecmp _stricmp 
+#define strcasecmp _stricmp
 #endif
 
 #if !defined(HAVE_STRTOK_R)
-/* 
+
+/*
  * adapted from public domain strtok_r() by Charlie Gordon
  *
  *   from comp.lang.c  9/14/2007
@@ -50,10 +51,9 @@
  */
 
 #undef strtok_r
-char* strtok_r(
-    char *str, 
-    const char *delim, 
-    char **nextp)
+char* strtok_r(char *      str,
+               const char *delim,
+               char **     nextp)
 {
     if (!str)
         str = *nextp;
@@ -74,7 +74,8 @@ char* strtok_r(
 
     return ret;
 }
-#endif
+
+#endif // if !defined(HAVE_STRTOK_R)
 
 using namespace x265;
 
@@ -651,7 +652,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     }
     OPT("range")
     {
-        p->vui.bEnableVideoSignalTypePresentFlag = 1; 
+        p->vui.bEnableVideoSignalTypePresentFlag = 1;
         p->vui.bEnableVideoFullRangeFlag = parseName(value, x265_fullrange_names, bError);
     }
     OPT("colorprim")
@@ -698,7 +699,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     return bError ? X265_PARAM_BAD_VALUE : 0;
 }
 
-
 namespace x265 {
 // internal encoder functions
 
@@ -726,9 +726,9 @@ int parseCpuName(const char *value, bool& bError)
     }
     int cpu;
     if (isdigit(value[0]))
-       cpu = x265_atoi(value, bError);
+        cpu = x265_atoi(value, bError);
     else
-       cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
+        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
 
     if (bError)
     {
@@ -739,11 +739,15 @@ int parseCpuName(const char *value, bool& bError)
         for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
         {
             int i;
-            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++);
+            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++)
+            {
+            }
+
             cpu |= x265::cpu_names[i].flags;
             if (!x265::cpu_names[i].flags)
                 bError = 1;
         }
+
         free(buf);
         if ((cpu & X265_CPU_SSSE3) && !(cpu & X265_CPU_SSE2_IS_SLOW))
             cpu |= X265_CPU_SSE2_IS_FAST;
@@ -834,7 +838,6 @@ int x265_check_params(x265_param *param)
 
     CHECK((param->maxCUSize >> maxCUDepth) < 4,
           "Minimum partition width size should be larger than or equal to 8");
-   
 
     /* These checks might be temporary */
 #if HIGH_BIT_DEPTH
@@ -958,14 +961,14 @@ int x265_check_params(x265_param *param)
           "Valid quality based VBR range 0 - 51");
     CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,
           "Valid adaptive b scheduling values 0 - none, 1 - fast, 2 - full");
-    CHECK(param->logLevel < -1 || param->logLevel > X265_LOG_FULL,
+    CHECK(param->logLevel<-1 || param->logLevel> X265_LOG_FULL,
           "Valid Logging level -1:none 0:error 1:warning 2:info 3:debug 4:full");
     CHECK(param->scenecutThreshold < 0,
           "scenecutThreshold must be greater than 0");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
-          "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum"); 
+          "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum");
     CHECK(param->keyframeMax < -1,
-          "Invalid max IDR period in frames. value should be greater than -1"); 
+          "Invalid max IDR period in frames. value should be greater than -1");
     CHECK(param->decodedPictureHashSEI < 0 || param->decodedPictureHashSEI > 3,
           "Invalid hash option. Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum");
     CHECK(param->rc.vbvBufferSize < 0,
@@ -1072,6 +1075,7 @@ void x265_print_params(x265_param *param)
                  param->rc.aqStrength, param->rc.cuTree);
         break;
     }
+
     if (param->rc.vbvBufferSize)
     {
         x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
@@ -1166,5 +1170,4 @@ char *x265_param2string(x265_param *p)
 
     return buf;
 }
-
 }

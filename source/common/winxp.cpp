@@ -25,8 +25,7 @@
 
 #if defined(_WIN32) && (_WIN32_WINNT < 0x0600) // _WIN32_WINNT_VISTA
 
-namespace x265
-{
+namespace x265 {
 /* Mimic CONDITION_VARIABLE functions only supported on Vista+ */
 
 int WINAPI cond_init(ConditionVariable *cond)
@@ -122,7 +121,6 @@ void cond_destroy(ConditionVariable *cond)
     DeleteCriticalSection(&cond->broadcastMutex);
     DeleteCriticalSection(&cond->waiterCountMutex);
 }
-
 } // namespace x265
 
 #endif // _WIN32_WINNT <= _WIN32_WINNT_WINXP
