@@ -749,9 +749,9 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
 
 void Encoder::writeLog(int argc, char **argv)
 {
-    if (param->logLevel <= X265_LOG_DEBUG && m_csvfpt)
+    if (m_csvfpt)
     {
-        if (param->logLevel == X265_LOG_DEBUG)
+        if (param->logLevel >= X265_LOG_DEBUG)
         {
             fprintf(m_csvfpt, "Summary\n");
             fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
