@@ -242,7 +242,7 @@ Quad-Tree analysis
 .. option:: --wpp, --no-wpp
 
 	Enable Wavefront Parallel Processing. The encoder may begin encoding
-	a row as soon as the row above it is at least two LCUs ahead in the
+	a row as soon as the row above it is at least two CTUs ahead in the
 	encode process. This gives a 3-5x gain in parallelism for about 1%
 	overhead in compression efficiency. Default: Enabled
 
