@@ -99,12 +99,12 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
     if (bLuma)
     {
         // Luma : --------------------------------------------
-        int w0      = wp0[0].w;
-        int offset  = wp0[0].o + wp1[0].o;
+        int w0       = wp0[0].w;
+        int offset   = wp0[0].o + wp1[0].o;
         int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-        int shift   = wp0[0].shift + shiftNum + 1;
-        int round   = shift ? (1 << (shift - 1)) * bRound : 0;
-        int w1      = wp1[0].w;
+        int shift    = wp0[0].shift + shiftNum + 1;
+        int round    = shift ? (1 << (shift - 1)) * bRound : 0;
+        int w1       = wp1[0].w;
 
         uint32_t  src0Stride = srcYuv0->getStride();
         uint32_t  src1Stride = srcYuv1->getStride();
@@ -145,8 +145,8 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
         uint32_t src1Stride = srcYuv1->getCStride();
         uint32_t dststride  = outDstYuv->getCStride();
 
-        width  >>= 1;
-        height >>= 1;
+        width  >>= srcYuv0->getHorzChromaShift();
+        height >>= srcYuv0->getVertChromaShift();
 
         for (y = height - 1; y >= 0; y--)
         {
@@ -268,8 +268,8 @@ void TComWeightPrediction::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uin
         src1Stride = srcYuv1->m_cwidth;
         dststride  = outDstYuv->getCStride();
 
-        width  >>= 1;
-        height >>= 1;
+        width  >>= srcYuv0->getHorzChromaShift();
+        height >>= srcYuv0->getVertChromaShift();
 
         for (y = height - 1; y >= 0; y--)
         {
@@ -379,8 +379,8 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, 
         src0Stride = srcYuv0->getCStride();
         dststride  = outDstYuv->getCStride();
 
-        width  >>= 1;
-        height >>= 1;
+        width  >>= srcYuv0->getHorzChromaShift();
+        height >>= srcYuv0->getVertChromaShift();
 
         for (y = height - 1; y >= 0; y--)
         {
@@ -469,8 +469,8 @@ void TComWeightPrediction::addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx,
         srcStride = srcYuv0->m_cwidth;
         dstStride  = outDstYuv->getCStride();
 
-        width  >>= 1;
-        height >>= 1;
+        width  >>= srcYuv0->getHorzChromaShift();
+        height >>= srcYuv0->getVertChromaShift();
 
         primitives.weight_sp(srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset);
 
