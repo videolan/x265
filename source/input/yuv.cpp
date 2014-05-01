@@ -136,10 +136,14 @@ YUVInput::YUVInput(InputFileInfo& info)
 
     if (info.skipFrames)
     {
+#if X86_64
+        ifs->seekg((uint64_t)framesize * info.skipFrames, ios::cur);
+#else
         for (int i = 0; i < info.skipFrames; i++)
         {
             ifs->ignore(framesize);
         }
+#endif
     }
 }
 

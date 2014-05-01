@@ -137,10 +137,14 @@ Y4MInput::Y4MInput(InputFileInfo& info)
 
     if (info.skipFrames)
     {
+#if X86_64
+        ifs->seekg((uint64_t)frameSize * info.skipFrames, ios::cur);
+#else
         for (int i = 0; i < info.skipFrames; i++)
         {
             ifs->ignore(frameSize);
         }
+#endif
     }
 }
 
