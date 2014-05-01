@@ -208,7 +208,7 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
     Lowres *frames[X265_LOOKAHEAD_MAX];
 
     // POC distances to each reference
-    int d0, d1, p0, p1, b;
+    int p0 = 0, p1, b;
     int poc = pic->getSlice()->getPOC();
     int l0poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
     int l1poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_1, 0);
@@ -216,58 +216,34 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
     switch (pic->getSlice()->getSliceType())
     {
     case I_SLICE:
-        frames[0] = &pic->m_lowres;
-        p0 = p1 = b = 0;
+        frames[p0] = &pic->m_lowres;
+        b = p1 = 0;
         break;
 
     case P_SLICE:
-        d0 = poc - l0poc;
-        frames[0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
-        frames[d0] = &pic->m_lowres;
-        p0 = 0;
-        p1 = d0;
-        b = d0;
+        b = p1 = poc - l0poc;
+        frames[p0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[b] = &pic->m_lowres;
         break;
 
     case B_SLICE:
-        d0 = poc - l0poc;
-        if (l1poc > poc)
-        {
-            // L1 reference is truly in the future
-            d1 = l1poc - poc;
-            frames[0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
-            frames[d0] = &pic->m_lowres;
-            frames[d0 + d1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
-            p0 = 0;
-            p1 = d0 + d1;
-            b = d0;
-        }
-        else
-        {
-            frames[0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
-            frames[d0] = &pic->m_lowres;
-            p0 = 0;
-            p1 = d0;
-            b = d0;
-        }
+        b = poc - l0poc;
+        p1 = b + l1poc - poc;
+        frames[p0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[b] = &pic->m_lowres;
+        frames[p1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
         break;
 
     default:
         return 0;
     }
 
-    if (pic->m_lowres.costEst[b - p0][p1 - b] < 0)
-    {
-        CostEstimate cost(ThreadPool::getThreadPool());
-        cost.init(param, pic);
-        cost.estimateFrameCost(frames, p0, p1, b, false);
-        cost.flush();
-    }
     if (param->rc.cuTree)
     {
-        /* update row satds */
+        /* update row satds based on cutree offsets */
         pic->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-        /* update intra row satds */
+
+        /* update intra row satds on P or B frames */
         if (b && param->rc.vbvBufferSize)
             frameCostRecalculate(frames, b, b, b);
     }
@@ -278,6 +254,7 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
 
     if (param->rc.vbvBufferSize && param->rc.vbvMaxBitrate)
     {
+        /* aggregate lowres row satds to CTU resolution */
         pic->m_lowres.lowresCostForRc = pic->m_lowres.lowresCosts[b - p0][p1 - b];
         uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0;
         uint32_t scale = param->maxCUSize / (2 * X265_LOWRES_CU_SIZE);
@@ -438,38 +415,25 @@ void Lookahead::slicetypeDecide()
     if (param->rc.rateControlMode != X265_RC_CQP)
     {
         int p0, p1, b;
+
+        /* estimate new non-B cost */
         p1 = b = bframes + 1;
-
-        for (int i = 0; i <= bframes; i++)
-        {
-            frames[i + 1] = &list[i]->m_lowres;
-        }
-
-        if (IS_X265_TYPE_I(frames[bframes + 1]->sliceType))
-            p0 = bframes + 1;
-        else // P
-            p0 = 0;
-
+        p0 = (IS_X265_TYPE_I(frames[bframes + 1]->sliceType)) ? b : 0;
         est.estimateFrameCost(frames, p0, p1, b, 0);
 
-        if ((p0 != p1 || bframes) && param->rc.vbvBufferSize)
+        if (bframes)
         {
-            // We need the intra costs for row SATDs
-            est.estimateFrameCost(frames, b, b, b, 0);
-
-            // We need B-frame costs for row SATDs
-            p0 = 0;
+            p0 = 0; // last nonb
             for (b = 1; b <= bframes; b++)
             {
                 if (frames[b]->sliceType == X265_TYPE_B)
-                    for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; )
-                    {
-                        p1++;
-                    }
-
+                    for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; p1++)
+                        ; // find new nonb or bref
                 else
                     p1 = bframes + 1;
+
                 est.estimateFrameCost(frames, p0, p1, b, 0);
+
                 if (frames[b]->sliceType == X265_TYPE_BREF)
                     p0 = b;
             }
