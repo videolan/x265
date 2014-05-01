@@ -250,6 +250,10 @@ if(CMAKE_RC_COMPILER)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/x265.rc.in" "${X265_RC_FILE}" @ONLY)
 endif()
 
+if(NOT (MSVC_IDE OR XCODE))
+    add_custom_target(clean-generated COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/clean-generated.cmake)
+endif()
+
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
     add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
