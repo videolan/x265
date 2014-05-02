@@ -516,7 +516,7 @@ void FrameEncoder::compressFrame()
 
         SEIPictureTiming sei;
         sei.m_picStruct = (slice->getPOC() & 1) && m_cfg->param->interlaceMode == 2 ? 1 /* top */ : 2 /* bot */;
-        sei.m_sourceScanType = 1;
+        sei.m_sourceScanType = 0;
         sei.m_duplicateFlag = 0;
 
         entropyCoder->setBitstream(&nalu.m_bitstream);
