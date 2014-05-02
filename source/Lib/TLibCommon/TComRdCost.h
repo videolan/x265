@@ -58,33 +58,33 @@ private:
 
     uint64_t  m_lambdaMotionSAD;  // m_lambda w/ 16 bits of fraction
 
-    uint32_t  m_cbDistortionWeight;
+    uint64_t  m_cbDistortionWeight;
 
-    uint32_t  m_crDistortionWeight;
+    uint64_t  m_crDistortionWeight;
 
 public:
 
     void setLambda(double lambda2, double lambda)
     {
-        m_lambdaMotionSSE = (uint64_t)floor(65536.0 * lambda2);
-        m_lambdaMotionSAD = (uint64_t)floor(65536.0 * lambda);
+        m_lambdaMotionSSE = (uint64_t)floor(256.0 * lambda2);
+        m_lambdaMotionSAD = (uint64_t)floor(256.0 * lambda);
     }
 
     void setCbDistortionWeight(double cbDistortionWeight)
     {
-        m_cbDistortionWeight = (uint32_t)floor(256.0 * cbDistortionWeight);
+        m_cbDistortionWeight = (uint64_t)floor(256.0 * cbDistortionWeight);
     }
 
     void setCrDistortionWeight(double crDistortionWeight)
     {
-        m_crDistortionWeight = (uint32_t)floor(256.0 * crDistortionWeight);
+        m_crDistortionWeight = (uint64_t)floor(256.0 * crDistortionWeight);
     }
 
-    inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits) { return distortion + ((bits * m_lambdaMotionSSE + 32768) >> 16); }
+    inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits) { return distortion + ((bits * m_lambdaMotionSSE + 128) >> 8); }
 
-    inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) { return sadCost + ((bits * m_lambdaMotionSAD + 32768) >> 16); }
+    inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) { return sadCost + ((bits * m_lambdaMotionSAD + 128) >> 8); }
 
-    inline uint32_t getCost(uint32_t bits)                     { return (uint32_t)((bits * m_lambdaMotionSAD + 32768) >> 16); }
+    inline uint32_t getCost(uint32_t bits)                     { return (uint32_t)((bits * m_lambdaMotionSAD + 128) >> 8); }
 
     inline uint32_t scaleChromaDistCb(uint32_t dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
 
