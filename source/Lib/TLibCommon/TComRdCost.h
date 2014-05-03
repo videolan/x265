@@ -86,9 +86,9 @@ public:
 
     inline uint32_t getCost(uint32_t bits)                     { return (uint32_t)((bits * m_lambdaMotionSAD + 128) >> 8); }
 
-    inline uint32_t scaleChromaDistCb(uint32_t dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
+    inline uint32_t scaleChromaDistCb(uint32_t dist)           { return (uint32_t)(((dist * m_cbDistortionWeight) + 128) >> 8); }
 
-    inline uint32_t scaleChromaDistCr(uint32_t dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
+    inline uint32_t scaleChromaDistCr(uint32_t dist)           { return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8); }
 };
 }
 //! \}
