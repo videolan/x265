@@ -496,10 +496,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 if (slice->getSliceType() == P_SLICE)
                 {
                     /*compute intra cost */
-
-                    // TODO: residualQTIntrachroma is broken for 4:2:2
-                    bool bdoIntra = (m_param->internalCsp != X265_CSP_I422);
-                    // bool bdoIntra = true;
+                    bool bdoIntra = true;
 
                     if (m_param->rdLevel > 2)
                     {

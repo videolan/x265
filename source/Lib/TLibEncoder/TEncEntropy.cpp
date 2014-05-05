@@ -367,13 +367,14 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
             m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, width, depth, TEXT_LUMA);
         }
 
-        if ((log2TrafoSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
+        int chFmt = cu->getChromaFormat();
+        if ((log2TrafoSize == 2) && !(chFmt == CHROMA_444))
         {
             uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
             if ((absPartIdx % partNum) == (partNum - 1))
             {
                 uint32_t trWidthC          = log2TrafoSize << 1;
-                const bool splitIntoSubTUs = (cu->getChromaFormat() == CHROMA_422) ? true : false;
+                const bool splitIntoSubTUs = (chFmt == CHROMA_422);
 
                 uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
 
@@ -399,7 +400,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         {
             uint32_t trWidthC  = width  >> hChromaShift;
             uint32_t trHeightC = height >> vChromaShift;
-            const bool splitIntoSubTUs = trWidthC != trHeightC;
+            const bool splitIntoSubTUs = (chFmt == CHROMA_422);
             trHeightC = splitIntoSubTUs ? trHeightC >> 1 : trHeightC;
             uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
             for (uint32_t chromaId = TEXT_CHROMA; chromaId < MAX_NUM_COMPONENT; chromaId++)
@@ -439,11 +440,12 @@ void TEncEntropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx)
     if (cu->isIntra(absPartIdx)) // If it is Intra mode, encode intra prediction mode.
     {
         encodeIntraDirModeLuma(cu, absPartIdx, true);
-        if (cu->getChromaFormat() != CHROMA_400)
+        int chFmt = cu->getChromaFormat();
+        if (chFmt != CHROMA_400)
         {
             encodeIntraDirModeChroma(cu, absPartIdx);
 
-            if ((cu->getChromaFormat() == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
+            if ((chFmt == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
             {
                 uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
                 encodeIntraDirModeChroma(cu, absPartIdx + partOffset);
