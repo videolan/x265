@@ -207,7 +207,6 @@ RateControl::RateControl(Encoder * _cfg)
     param->rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstant);
     param->rc.rfConstantMax = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstantMax);
     rateFactorMaxIncrement = 0;
-    vbvMinRate = 0;
 
     if (param->rc.rateControlMode == X265_RC_CRF)
     {
