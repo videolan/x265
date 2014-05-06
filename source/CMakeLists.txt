@@ -27,6 +27,11 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
+option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
+if(CHECKED_BUILD)
+    add_definitions(-DCHECKED_BUILD=1)
+endif()
+
 # System architecture detection
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
 set(X86_ALIASES x86 i386 i686 x86_64 amd64)

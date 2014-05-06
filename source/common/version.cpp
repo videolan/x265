@@ -68,9 +68,15 @@
 #endif
 
 #if X86_64
-#define NVM_BITS          "[64 bit] "
+#define NVM_BITS        "[64 bit]"
 #else
-#define NVM_BITS          "[32 bit] "
+#define NVM_BITS        "[32 bit]"
+#endif
+
+#if CHECKED_BUILD
+#define CHECKED         "[CHECKED] "
+#else
+#define CHECKED         " "
 #endif
 
 #if HIGH_BIT_DEPTH
@@ -82,4 +88,4 @@ const int x265_max_bit_depth = 8;
 #endif
 
 const char *x265_version_str = XSTR(X265_VERSION);
-const char *x265_build_info_str = NVM_ONOS NVM_COMPILEDBY NVM_BITS BITDEPTH;
+const char *x265_build_info_str = NVM_ONOS NVM_COMPILEDBY NVM_BITS CHECKED BITDEPTH;
