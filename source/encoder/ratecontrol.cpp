@@ -1008,6 +1008,19 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
         {
             checkAndResetABR(rce, true);
         }
+        if (param->rc.rateControlMode == X265_RC_CRF)
+        {
+            if (int(pic->m_avgQpRc + 0.5) == pic->getSlice()->getSliceQp())
+                pic->m_rateFactor = rateFactorConstant;
+            else
+            {
+                /* If vbv changed the frame QP recalculate the rate-factor */
+                double baseCplx = ncu * (param->bframes ? 120 : 80);
+                double mbtree_offset = param->rc.cuTree ? (1.0 - param->rc.qCompress) * 13.5 : 0;
+                pic->m_rateFactor = pow(baseCplx, 1 - qCompress) /
+                    x265_qp2qScale(int(pic->m_avgQpRc + 0.5) + mbtree_offset);
+            }
+        }
         if (!isAbrReset)
         {
             if (param->rc.aqMode || isVbv)

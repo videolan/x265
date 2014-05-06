@@ -124,7 +124,12 @@ void Encoder::create()
             if (m_csvfpt)
             {
                 if (param->logLevel >= X265_LOG_DEBUG)
-                    fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
+                {
+                    fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, ");
+                    if (param->rc.rateControlMode == X265_RC_CRF)
+                        fprintf(m_csvfpt, "RateFactor, ");
+                    fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
+                }
                 else
                     fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
             }
@@ -898,6 +903,8 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
         char buf[1024];
         int p;
         p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpAq, slice->getSliceQp(), (int)bits);
+        if (param->rc.rateControlMode == X265_RC_CRF)
+            p += sprintf(buf + p, " RF:%.3lf", pic->m_rateFactor);
         if (param->bEnablePsnr)
             p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param->bEnableSsim)
@@ -923,6 +930,8 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
         if (m_csvfpt)
         {
             fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, pic->m_avgQpAq, (int)bits);
+            if (param->rc.rateControlMode == X265_RC_CRF)
+                fprintf(m_csvfpt, "%.3lf,", pic->m_rateFactor);
             double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
             if (param->bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
