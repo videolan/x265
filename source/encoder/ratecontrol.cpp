@@ -588,7 +588,8 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
         qpNoVbv = x265_qScale2qp(q);
 
-        q = clipQscale(pic, q);
+        if (isVbv && currentSatd > 0)
+            q = clipQscale(pic, q);
 
         lastQScaleFor[sliceType] = q;
 
@@ -642,117 +643,112 @@ double RateControl::predictSize(Predictor *p, double q, double var)
 
 double RateControl::clipQscale(TComPic* pic, double q)
 {
-    double q0 = q;
-
     // B-frames are not directly subject to VBV,
     // since they are controlled by the P-frames' QPs.
-    if (isVbv && currentSatd > 0)
+    double q0 = q;
+    if (param->lookaheadDepth)
     {
-        if (param->lookaheadDepth)
+        int terminate = 0;
+
+        /* Avoid an infinite loop. */
+        for (int iterations = 0; iterations < 1000 && terminate != 3; iterations++)
         {
-            int terminate = 0;
-
-            /* Avoid an infinite loop. */
-            for (int iterations = 0; iterations < 1000 && terminate != 3; iterations++)
+            double frameQ[3];
+            double curBits = predictSize(&pred[sliceType], q, (double)currentSatd);
+            double bufferFillCur = bufferFill - curBits;
+            double targetFill;
+            double totalDuration = 0;
+            frameQ[P_SLICE] = sliceType == I_SLICE ? q * param->rc.ipFactor : q;
+            frameQ[B_SLICE] = frameQ[P_SLICE] * param->rc.pbFactor;
+            frameQ[I_SLICE] = frameQ[P_SLICE] / param->rc.ipFactor;
+            /* Loop over the planned future frames. */
+            for (int j = 0; bufferFillCur >= 0 && bufferFillCur <= bufferSize; j++)
             {
-                double frameQ[3];
-                double curBits = predictSize(&pred[sliceType], q, (double)currentSatd);
-                double bufferFillCur = bufferFill - curBits;
-                double targetFill;
-                double totalDuration = 0;
-                frameQ[P_SLICE] = sliceType == I_SLICE ? q * param->rc.ipFactor : q;
-                frameQ[B_SLICE] = frameQ[P_SLICE] * param->rc.pbFactor;
-                frameQ[I_SLICE] = frameQ[P_SLICE] / param->rc.ipFactor;
-                /* Loop over the planned future frames. */
-                for (int j = 0; bufferFillCur >= 0 && bufferFillCur <= bufferSize; j++)
-                {
-                    totalDuration += frameDuration;
-                    bufferFillCur += vbvMaxRate * frameDuration;
-                    int type = pic->m_lowres.plannedType[j];
-                    int64_t satd = pic->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
-                    if (type == X265_TYPE_AUTO)
-                        break;
-                    type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
-                    curBits = predictSize(&pred[type], frameQ[type], (double)satd);
-                    bufferFillCur -= curBits;
-                }
-
-                /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
-                targetFill = X265_MIN(bufferFill + totalDuration * vbvMaxRate * 0.5, bufferSize * 0.5);
-                if (bufferFillCur < targetFill)
-                {
-                    q *= 1.01;
-                    terminate |= 1;
-                    continue;
-                }
-                /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
-                targetFill = Clip3(bufferSize * 0.8, bufferSize, bufferFill - totalDuration * vbvMaxRate * 0.5);
-                if (vbvMinRate && bufferFillCur > targetFill)
-                {
-                    q /= 1.01;
-                    terminate |= 2;
-                    continue;
-                }
-                break;
+                totalDuration += frameDuration;
+                bufferFillCur += vbvMaxRate * frameDuration;
+                int type = pic->m_lowres.plannedType[j];
+                int64_t satd = pic->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
+                if (type == X265_TYPE_AUTO)
+                    break;
+                type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
+                curBits = predictSize(&pred[type], frameQ[type], (double)satd);
+                bufferFillCur -= curBits;
             }
+
+            /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
+            targetFill = X265_MIN(bufferFill + totalDuration * vbvMaxRate * 0.5, bufferSize * 0.5);
+            if (bufferFillCur < targetFill)
+            {
+                q *= 1.01;
+                terminate |= 1;
+                continue;
+            }
+            /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
+            targetFill = Clip3(bufferSize * 0.8, bufferSize, bufferFill - totalDuration * vbvMaxRate * 0.5);
+            if (vbvMinRate && bufferFillCur > targetFill)
+            {
+                q /= 1.01;
+                terminate |= 2;
+                continue;
+            }
+            break;
         }
-        else
+    }
+    else
+    {
+        if ((sliceType == P_SLICE ||
+                (sliceType == I_SLICE && lastNonBPictType == I_SLICE)) &&
+            bufferFill / bufferSize < 0.5)
         {
-            if ((sliceType == P_SLICE ||
-                 (sliceType == I_SLICE && lastNonBPictType == I_SLICE)) &&
-                bufferFill / bufferSize < 0.5)
-            {
-                q /= Clip3(0.5, 1.0, 2.0 * bufferFill / bufferSize);
-            }
-
-            // Now a hard threshold to make sure the frame fits in VBV.
-            // This one is mostly for I-frames.
-            double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
-
-            // For small VBVs, allow the frame to use up the entire VBV.
-            double maxFillFactor;
-            maxFillFactor = bufferSize >= 5 * bufferRate ? 2 : 1;
-            // For single-frame VBVs, request that the frame use up the entire VBV.
-            double minFillFactor = singleFrameVbv ? 1 : 2;
-
-            for (int iterations = 0; iterations < 10; iterations++)
-            {
-                double qf = 1.0;
-                if (bits > bufferFill / maxFillFactor)
-                    qf = Clip3(0.2, 1.0, bufferFill / (maxFillFactor * bits));
-                q /= qf;
-                bits *= qf;
-                if (bits < bufferRate / minFillFactor)
-                    q *= bits * minFillFactor / bufferRate;
-                bits = predictSize(&pred[sliceType], q, (double)currentSatd);
-            }
-
-            q = X265_MAX(q0, q);
+            q /= Clip3(0.5, 1.0, 2.0 * bufferFill / bufferSize);
         }
 
-        // Check B-frame complexity, and use up any bits that would
-        // overflow before the next P-frame.
-        if (sliceType == P_SLICE)
-        {
-            int nb = bframes;
-            double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
-            double bbits = predictSize(&predBfromP, q * param->rc.pbFactor, (double)currentSatd);
-            double space;
-            if (bbits > bufferRate)
-                nb = 0;
-            double pbbits = nb * bbits;
+        // Now a hard threshold to make sure the frame fits in VBV.
+        // This one is mostly for I-frames.
+        double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
 
-            space = bufferFill + (1 + nb) * bufferRate - bufferSize;
-            if (pbbits < space)
-            {
-                q *= X265_MAX(pbbits / space, bits / (0.5 * bufferSize));
-            }
-            q = X265_MAX(q0 / 2, q);
+        // For small VBVs, allow the frame to use up the entire VBV.
+        double maxFillFactor;
+        maxFillFactor = bufferSize >= 5 * bufferRate ? 2 : 1;
+        // For single-frame VBVs, request that the frame use up the entire VBV.
+        double minFillFactor = singleFrameVbv ? 1 : 2;
+
+        for (int iterations = 0; iterations < 10; iterations++)
+        {
+            double qf = 1.0;
+            if (bits > bufferFill / maxFillFactor)
+                qf = Clip3(0.2, 1.0, bufferFill / (maxFillFactor * bits));
+            q /= qf;
+            bits *= qf;
+            if (bits < bufferRate / minFillFactor)
+                q *= bits * minFillFactor / bufferRate;
+            bits = predictSize(&pred[sliceType], q, (double)currentSatd);
         }
-        if (!vbvMinRate)
-            q = X265_MAX(q0, q);
+
+        q = X265_MAX(q0, q);
     }
 
+    // Check B-frame complexity, and use up any bits that would
+    // overflow before the next P-frame.
+    if (sliceType == P_SLICE)
+    {
+        int nb = bframes;
+        double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
+        double bbits = predictSize(&predBfromP, q * param->rc.pbFactor, (double)currentSatd);
+        double space;
+        if (bbits > bufferRate)
+            nb = 0;
+        double pbbits = nb * bbits;
+
+        space = bufferFill + (1 + nb) * bufferRate - bufferSize;
+        if (pbbits < space)
+        {
+            q *= X265_MAX(pbbits / space, bits / (0.5 * bufferSize));
+        }
+        q = X265_MAX(q0 / 2, q);
+    }
+    if (!vbvMinRate)
+        q = X265_MAX(q0, q);
     return Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
 }
 
