@@ -121,7 +121,6 @@ struct RateControl
     double lastRceq;
     int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
     double qCompress;
-    double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
     RateControl(Encoder * _cfg);
 
     // to be called for each frame to process RateControl and set QP

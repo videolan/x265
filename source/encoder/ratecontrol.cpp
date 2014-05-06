@@ -414,7 +414,6 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
         rce->qRceq = lastRceq;
-        rce->qpNoVbv = qpNoVbv;
         accumPQpUpdate();
     }
     else //CQP
@@ -491,8 +490,8 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             q += pbOffset / 2;
         else
             q += pbOffset;
-        qpNoVbv = q;
-        double qScale = x265_qp2qScale(qpNoVbv);
+        rce->qpNoVbv = q;
+        double qScale = x265_qp2qScale(q);
         rce->frameSizePlanned = predictSize(&predBfromP, qScale, (double)leadingNoBSatd);
         rce->frameSizeEstimated = rce->frameSizePlanned;
         return qScale;
@@ -586,7 +585,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         }
 
         q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
-        qpNoVbv = x265_qScale2qp(q);
+        rce->qpNoVbv = x265_qScale2qp(q);
 
         if (isVbv && currentSatd > 0)
             q = clipQscale(pic, q);
