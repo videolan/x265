@@ -236,6 +236,21 @@ Input Options
 
 	**CLI ONLY**
 
+.. option:: --qpfile <filename>
+
+	Specify a text file which contains frametypes and QPs for some or
+	all frames. The format of each line is:
+
+	framenumber frametype QP
+
+	Frametype can be one of [I,i,P,B,b]. **B** is a referenced B frame,
+	**b** is an unreferenced B frame.  **I** is a keyframe (random
+	access point) while **i** is a I frame that is not a keyframe
+	(references are not broken).
+
+	Specifying QP (integer) is optional, and if specified they are
+	clamped within the encoder to qpmin/qpmax.
+
 Quad-Tree analysis
 ==================
 
