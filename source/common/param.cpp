@@ -1099,7 +1099,7 @@ void x265_print_params(x265_param *param)
         else
             fprintf(stderr, "sao-frame ");
     }
-    TOOLOPT(param->bEnableSignHiding, "sign-hide");
+    TOOLOPT(param->bEnableSignHiding, "signhide");
     if (param->bEnableTransformSkip)
     {
         if (param->bEnableTSkipFast)
