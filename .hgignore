@@ -8,3 +8,4 @@ build/
 **.y4m
 **.out
 **.swp
+.DS_Store

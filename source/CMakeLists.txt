@@ -27,6 +27,11 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
+option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
+if(CHECKED_BUILD)
+    add_definitions(-DCHECKED_BUILD=1)
+endif()
+
 # System architecture detection
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
 set(X86_ALIASES x86 i386 i686 x86_64 amd64)
@@ -248,6 +253,10 @@ if(CMAKE_RC_COMPILER)
     set(X265_BRANCH_ID 0) # TODO: 0 - stable, 1 - default or other
     set(X265_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/x265.rc")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/x265.rc.in" "${X265_RC_FILE}" @ONLY)
+endif()
+
+if(NOT (MSVC_IDE OR XCODE))
+    add_custom_target(clean-generated COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/clean-generated.cmake)
 endif()
 
 option(ENABLE_SHARED "Build shared library" ON)

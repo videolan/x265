@@ -594,8 +594,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (param->logLevel >= X265_LOG_INFO)
     {
         char buf[128];
-        int p = sprintf(buf, "%dx%d fps %d/%d %s", param->sourceWidth, param->sourceHeight,
-                        param->fpsNum, param->fpsDenom, x265_source_csp_names[param->internalCsp]);
+        int p = sprintf(buf, "%dx%d fps %d/%d %sp%d", param->sourceWidth, param->sourceHeight,
+                        param->fpsNum, param->fpsDenom, x265_source_csp_names[param->internalCsp], info.depth);
 
         int width, height;
         getParamAspectRatio(param, width, height);

@@ -158,10 +158,10 @@ public:
 protected:
 
     void finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    void xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, PartSize parentSize = SIZE_NONE);
-    void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
-    void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, uint32_t partitionIndex, uint8_t minDepth);
-    void xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
+    void xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, PartSize parentSize = SIZE_NONE);
+    void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture);
+    void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, bool bInsidePicture, uint32_t partitionIndex, uint8_t minDepth);
+    void xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bInsidePicture);
     void xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
 
     void xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
@@ -177,8 +177,7 @@ protected:
     void xCheckDQP(TComDataCU* cu);
 
     void xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU);
-    void xCopyYuv2Pic(TComPic* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth, uint32_t uiSrcDepth, TComDataCU* cu,
-                      uint32_t lpelx, uint32_t tpely);
+    void xCopyYuv2Pic(TComPic* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
     void xCopyYuv2Tmp(uint32_t uhPartUnitIdx, uint32_t depth);
 
     bool getdQPFlag()        { return m_bEncodeDQP; }

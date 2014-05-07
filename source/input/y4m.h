@@ -45,6 +45,8 @@ protected:
 
     uint32_t sarHeight;
 
+    int depth;
+
     int width;
 
     int height;
@@ -68,8 +70,6 @@ protected:
     std::istream *ifs;
 
     bool parseHeader();
-
-    void pictureAlloc(int index);
 
     void threadMain();
 

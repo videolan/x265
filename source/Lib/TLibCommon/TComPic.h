@@ -116,6 +116,7 @@ public:
     double*               m_qpaRc;
     double                m_avgQpRc; //avg QP as decided by ratecontrol
     double                m_avgQpAq; //avg QP as decided by AQ in addition to ratecontrol
+    double                m_rateFactor; //calculated based on the Frame QP
 
     TComPic();
     virtual ~TComPic();
