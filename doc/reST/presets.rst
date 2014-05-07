@@ -6,7 +6,7 @@ x265 has a number of predefined :option:`--preset` options that make
 trade-offs between encode speed (encoded frames per second) and
 compression efficiency (quality per bit in the bitstream).  The default
 preset is medium, it does a reasonably good job of finding the best
-possible quality without spending enourmous CPU cycles looking for the
+possible quality without spending enormous CPU cycles looking for the
 absolute most efficient way to achieve that quality.  As you go higher
 than medium, the encoder takes shortcuts to improve performance at the
 expense of quality and compression efficiency.  As you go lower than
