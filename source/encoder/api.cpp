@@ -188,6 +188,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 
     pic->bitDepth = param->internalBitDepth;
     pic->colorSpace = param->internalCsp;
+    pic->forceqp = X265_QP_AUTO;
 }
 
 extern "C"

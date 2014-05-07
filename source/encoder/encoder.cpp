@@ -318,6 +318,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_pad);
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
+        pic->m_forceqp = pic_in->forceqp;
 
         if (m_pocLast == 0)
             m_firstPts = pic->m_pts;

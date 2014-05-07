@@ -131,6 +131,9 @@ typedef struct x265_picture
      * output */
     void*   userData;
 
+    /* force quantizer for != X265_QP_AUTO */
+    int     forceqp;
+
     /* new data members to this structure must be added to the end so that
      * users of x265_picture_alloc/free() can be assured of future safety */
 } x265_picture;
@@ -208,6 +211,7 @@ typedef enum
 #define X265_TYPE_P             0x0003
 #define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
 #define X265_TYPE_B             0x0005
+#define X265_QP_AUTO                 0
 
 #define X265_AQ_NONE                 0
 #define X265_AQ_VARIANCE             1

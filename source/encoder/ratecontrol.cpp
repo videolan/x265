@@ -429,6 +429,11 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
         leadingNoBSatd = currentSatd;
     }
     rce->leadingNoBSatd = leadingNoBSatd;
+    if (pic->m_forceqp)
+    {
+        qp = int32_t(pic->m_forceqp + 0.5) - 1;
+        rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = qp;
+    }
     framesDone++;
     /* set the final QP to slice structure */
     curSlice->setSliceQp(qp);

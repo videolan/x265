@@ -169,6 +169,7 @@ static const struct option long_options[] =
     { "dither",               no_argument, NULL, 0 },
     { "aud",                  no_argument, NULL, 0 },
     { "no-aud",               no_argument, NULL, 0 },
+    { "qpfile",         required_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -196,6 +197,7 @@ struct CLIOptions
     int64_t startTime;
     int64_t prevUpdateTime;
     float   frameRate;
+    FILE*   qpfile;
 
     /* in microseconds */
     static const int UPDATE_INTERVAL = 250000;
@@ -211,6 +213,7 @@ struct CLIOptions
         startTime = x265_mdate();
         prevUpdateTime = 0;
         dither = false;
+        qpfile = NULL;
     }
 
     void destroy();
@@ -219,6 +222,7 @@ struct CLIOptions
     void printVersion(x265_param *param);
     void showHelp(x265_param *param);
     bool parse(int argc, char **argv, x265_param* param);
+    bool parseQPFile(x265_picture &pic_org);
 };
 
 void CLIOptions::destroy()
@@ -229,6 +233,9 @@ void CLIOptions::destroy()
     if (recon)
         recon->release();
     recon = NULL;
+    if (qpfile)
+        fclose(qpfile);
+    qpfile = NULL;
 }
 
 void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
@@ -393,6 +400,10 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
     H0("\nSEI options:\n");
     H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
+    H0("   --qpfile <string>             Force frametypes and QPs for some or all frames\n");
+    H0("                                 Format of each line: framenumber frametype QP\n");
+    H0("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
+    H0("                                 QPs are restricted by qpmin/qpmax.\n");
 #undef OPT
 #undef H0
     printf("\n\nFull documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");
@@ -502,6 +513,15 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("y4m") bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
+            OPT("qpfile")
+            {
+                this->qpfile = fopen(optarg, "rb");
+                if (!this->qpfile)
+                {
+                    x265_log(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file \n", optarg);
+                    return false;
+                }
+            }
             else
                 bError |= !!x265_param_parse(param, long_options[long_options_index].name, optarg);
 
@@ -640,6 +660,40 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     return false;
 }
 
+bool CLIOptions::parseQPFile(x265_picture &pic_org)
+{
+    int32_t num = -1, qp, ret;
+    char type;
+    uint32_t filePos;
+    pic_org.forceqp = 0;
+    pic_org.sliceType = X265_TYPE_AUTO;
+    while (num < pic_org.poc)
+    {
+        filePos = ftell(qpfile);
+        qp = -1;
+        ret = fscanf(qpfile, "%d %c%*[ \t]%d\n", &num, &type, &qp);
+
+        if (num > pic_org.poc || ret == EOF)
+        {
+            fseek(qpfile, filePos, SEEK_SET);
+            break;
+        }
+        if (num < pic_org.poc && ret >= 2)
+            continue;
+        if (ret == 3 && qp >= 0)
+            pic_org.forceqp = qp + 1;
+        if (type == 'I') pic_org.sliceType = X265_TYPE_IDR;
+        else if (type == 'i') pic_org.sliceType = X265_TYPE_I;
+        else if (type == 'P') pic_org.sliceType = X265_TYPE_P;
+        else if (type == 'B') pic_org.sliceType = X265_TYPE_BREF;
+        else if (type == 'b') pic_org.sliceType = X265_TYPE_B;
+        else ret = 0;
+        if (ret < 2 || qp < -1 || qp > 51)
+            return 0;
+    }
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
 #if HAVE_VLD
@@ -706,6 +760,15 @@ int main(int argc, char **argv)
     while (pic_in && !b_ctrl_c)
     {
         pic_orig.poc = inFrameCount;
+        if (cliopt.qpfile)
+        {
+            if (!cliopt.parseQPFile(pic_orig))
+            {
+                x265_log(NULL, X265_LOG_ERROR, "can't parse qpfile for frame %d\n", pic_in->poc);
+                fclose(cliopt.qpfile);
+                cliopt.qpfile = NULL;
+            }
+        }
 
         if (cliopt.framesToBeEncoded && inFrameCount >= cliopt.framesToBeEncoded)
             pic_in = NULL;
