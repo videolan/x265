@@ -604,6 +604,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("vbv-bufsize") p->rc.vbvBufferSize = atoi(value);
     OPT("vbv-init")    p->rc.vbvBufferInit = atof(value);
     OPT("crf-max")     p->rc.rfConstantMax = atof(value);
+    OPT("crf-min")     p->rc.rfConstantMin = atof(value);
     OPT("crf")
     {
         p->rc.rfConstant = atof(value);

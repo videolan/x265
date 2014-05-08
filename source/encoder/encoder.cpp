@@ -1342,6 +1342,12 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Support for interlaced video is experimental\n");
     }
 
+    if (p->rc.rfConstantMin > p->rc.rfConstant)
+    {
+        x265_log(param, X265_LOG_WARNING, "CRF min must be less than CRF\n");
+        p->rc.rfConstantMin = 0;
+    }
+
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     //====== Coding Tools ========

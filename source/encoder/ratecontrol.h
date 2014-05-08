@@ -96,6 +96,7 @@ struct RateControl
     double vbvMinRate;       /* in kbps */
     bool singleFrameVbv;
     double rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
+    double rateFactorMaxDecrement; /* don't allow RF below (this value). */
     bool isVbv;
     Predictor pred[5];
     Predictor predBfromP;

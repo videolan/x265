@@ -522,6 +522,13 @@ Quality, rate control and rate distortion options
 	any given frame (ensuring a max QP).  This is dangerous when CRF is
 	used in combination with VBV as it may result in buffer underruns.
 	Default disabled
+        
+.. option:: --min-crf <0..51.0>
+
+        Specify an lower limit to the rate factor which may be assigned to
+        any given frame (ensuring a min QP).  This is dangerous when CRF is
+        used in combination with VBV as it may result in buffer underruns.
+        Default disabled
 
 .. option:: --vbv-bufsize <integer>
 

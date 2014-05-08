@@ -703,6 +703,9 @@ typedef struct x265_param
 
         /* In CRF mode, maximum CRF as caused by VBV. 0 implies no limit */
         double    rfConstantMax;
+
+        /* In CRF mode, minimum CRF as caused by VBV */
+        double    rfConstantMin;
     } rc;
 
     /*== Video Usability Information ==*/

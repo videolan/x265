@@ -207,6 +207,7 @@ RateControl::RateControl(Encoder * _cfg)
     param->rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstant);
     param->rc.rfConstantMax = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstantMax);
     rateFactorMaxIncrement = 0;
+    rateFactorMaxDecrement = 0;
 
     if (param->rc.rateControlMode == X265_RC_CRF)
     {
@@ -226,6 +227,8 @@ RateControl::RateControl(Encoder * _cfg)
                 rateFactorMaxIncrement = 0;
             }
         }
+        if (param->rc.rfConstantMin)
+            rateFactorMaxDecrement = param->rc.rfConstant - param->rc.rfConstantMin;
     }
 
     isAbr = param->rc.rateControlMode != X265_RC_CQP; // later add 2pass option
@@ -851,10 +854,15 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
     /* tweak quality based on difference from predicted size */
     double prevRowQp = qpVbv;
     double qpAbsoluteMax = MAX_MAX_QP;
+    double qpAbsoluteMin = MIN_QP;
     if (rateFactorMaxIncrement)
         qpAbsoluteMax = X265_MIN(qpAbsoluteMax, rce->qpNoVbv + rateFactorMaxIncrement);
+
+    if (rateFactorMaxDecrement)
+        qpAbsoluteMin = X265_MAX(qpAbsoluteMin, rce->qpNoVbv - rateFactorMaxIncrement);
+
     double qpMax = X265_MIN(prevRowQp + param->rc.qpStep, qpAbsoluteMax);
-    double qpMin = X265_MAX(prevRowQp - param->rc.qpStep, MIN_QP);
+    double qpMin = X265_MAX(prevRowQp - param->rc.qpStep, qpAbsoluteMin);
     double stepSize = 0.5;
     double bufferLeftPlanned = rce->bufferFill - rce->frameSizePlanned;
 
@@ -920,6 +928,12 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
         {
             /* Bump QP to halfway in between... close enough. */
             qpVbv = Clip3(prevRowQp + 1.0f, qpMax, (prevRowQp + qpVbv) * 0.5);
+            return -1;
+        }
+
+        if (qpVbv < qpMin && prevRowQp > qpMin && canReencodeRow)
+        {
+            qpVbv = Clip3(prevRowQp + 1.0f, (prevRowQp + qpVbv) * 0.5, qpMin);
             return -1;
         }
     }
