@@ -82,24 +82,15 @@ TEncSearch::~TEncSearch()
         for (uint32_t i = 0; i < numLayersToAllocate; ++i)
         {
             X265_FREE(m_qtTempCoeffY[i]);
-            X265_FREE(m_qtTempCoeffCb[i]);
-            X265_FREE(m_qtTempCoeffCr[i]);
             m_qtTempShortYuv[i].destroy();
         }
     }
     X265_FREE(m_qtTempTUCoeffY);
-    X265_FREE(m_qtTempTUCoeffCb);
-    X265_FREE(m_qtTempTUCoeffCr);
     X265_FREE(m_qtTempTrIdx);
-    for (uint32_t i = 0; i < 3; ++i)
-    {
-        X265_FREE(m_qtTempCbf[i]);
-        X265_FREE(m_qtTempTransformSkipFlag[i]);
-    }
+    X265_FREE(m_qtTempCbf[0]);
+    X265_FREE(m_qtTempTransformSkipFlag[0]);
 
     delete[] m_qtTempCoeffY;
-    delete[] m_qtTempCoeffCb;
-    delete[] m_qtTempCoeffCr;
     delete[] m_qtTempShortYuv;
     m_qtTempTransformSkipYuv.destroy();
 }
@@ -119,30 +110,32 @@ bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_refLagPixels = cfg->param->frameNumThreads > 1 ? cfg->param->searchRange : cfg->param->sourceHeight;
 
     const uint32_t numLayersToAllocate = cfg->m_quadtreeTULog2MaxSize - cfg->m_quadtreeTULog2MinSize + 1;
-    m_qtTempCoeffY   = new coeff_t*[numLayersToAllocate];
-    m_qtTempCoeffCb  = new coeff_t*[numLayersToAllocate];
-    m_qtTempCoeffCr  = new coeff_t*[numLayersToAllocate];
+    m_qtTempCoeffY   = new coeff_t*[numLayersToAllocate * 3];
+    m_qtTempCoeffCb  = m_qtTempCoeffY + numLayersToAllocate;
+    m_qtTempCoeffCr  = m_qtTempCoeffY + numLayersToAllocate * 2;
     m_qtTempShortYuv = new ShortYuv[numLayersToAllocate];
+    uint32_t sizeL = g_maxCUSize * g_maxCUSize;
+    uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
     for (uint32_t i = 0; i < numLayersToAllocate; ++i)
     {
-        m_qtTempCoeffY[i]  = X265_MALLOC(coeff_t, g_maxCUSize * g_maxCUSize);
-        m_qtTempCoeffCb[i] = X265_MALLOC(coeff_t, g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift));
-        m_qtTempCoeffCr[i] = X265_MALLOC(coeff_t, g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift));
+        m_qtTempCoeffY[i]  = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
+        m_qtTempCoeffCb[i] = m_qtTempCoeffY[i] + sizeL;
+        m_qtTempCoeffCr[i] = m_qtTempCoeffY[i] + sizeL + sizeC;
         m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxCUDepth << 1);
     CHECKED_MALLOC(m_qtTempTrIdx, uint8_t, numPartitions);
-    CHECKED_MALLOC(m_qtTempCbf[0], uint8_t, numPartitions);
-    CHECKED_MALLOC(m_qtTempCbf[1], uint8_t, numPartitions);
-    CHECKED_MALLOC(m_qtTempCbf[2], uint8_t, numPartitions);
-    CHECKED_MALLOC(m_qtTempTransformSkipFlag[0], uint8_t, numPartitions);
-    CHECKED_MALLOC(m_qtTempTransformSkipFlag[1], uint8_t, numPartitions);
-    CHECKED_MALLOC(m_qtTempTransformSkipFlag[2], uint8_t, numPartitions);
+    CHECKED_MALLOC(m_qtTempCbf[0], uint8_t, numPartitions * 3);
+    m_qtTempCbf[1] = m_qtTempCbf[0] + numPartitions;
+    m_qtTempCbf[2] = m_qtTempCbf[0] + numPartitions * 2;
+    CHECKED_MALLOC(m_qtTempTransformSkipFlag[0], uint8_t, numPartitions * 3);
+    m_qtTempTransformSkipFlag[1] = m_qtTempTransformSkipFlag[0] + numPartitions;
+    m_qtTempTransformSkipFlag[2] = m_qtTempTransformSkipFlag[0] + numPartitions * 2;
 
-    CHECKED_MALLOC(m_qtTempTUCoeffY, coeff_t, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    CHECKED_MALLOC(m_qtTempTUCoeffCb, coeff_t, MAX_TS_WIDTH * MAX_TS_HEIGHT);
-    CHECKED_MALLOC(m_qtTempTUCoeffCr, coeff_t, MAX_TS_WIDTH * MAX_TS_HEIGHT);
+    CHECKED_MALLOC(m_qtTempTUCoeffY, coeff_t, MAX_TS_WIDTH * MAX_TS_HEIGHT * 3);
+    m_qtTempTUCoeffCb = m_qtTempTUCoeffY + MAX_TS_WIDTH * MAX_TS_HEIGHT;
+    m_qtTempTUCoeffCr = m_qtTempTUCoeffY + MAX_TS_WIDTH * MAX_TS_HEIGHT * 2;
 
     return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->param->internalCsp);
 

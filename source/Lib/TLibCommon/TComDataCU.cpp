@@ -116,6 +116,9 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t cuSize, int unitSize, in
     tmp = g_convertToBit[tmp] + 2;
     m_unitMask = ~((1 << tmp) - 1);
 
+    uint32_t sizeL = cuSize * cuSize;
+    uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
+
     bool ok = true;
     ok &= m_cuMvField[0].create(numPartition);
     ok &= m_cuMvField[1].create(numPartition);
@@ -134,25 +137,25 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t cuSize, int unitSize, in
     CHECKED_MALLOC(m_interDir, uint8_t, numPartition);
 
     CHECKED_MALLOC(m_trIdx, uint8_t, numPartition);
-    CHECKED_MALLOC(m_transformSkip[0], uint8_t, numPartition);
-    CHECKED_MALLOC(m_transformSkip[1], uint8_t, numPartition);
-    CHECKED_MALLOC(m_transformSkip[2], uint8_t, numPartition);
+    CHECKED_MALLOC(m_transformSkip[0], uint8_t, numPartition * 3);
+    m_transformSkip[1] = m_transformSkip[0] + numPartition;
+    m_transformSkip[2] = m_transformSkip[0] + numPartition * 2;
 
-    CHECKED_MALLOC(m_cbf[0], uint8_t, numPartition);
-    CHECKED_MALLOC(m_cbf[1], uint8_t, numPartition);
-    CHECKED_MALLOC(m_cbf[2], uint8_t, numPartition);
+    CHECKED_MALLOC(m_cbf[0], uint8_t, numPartition * 3);
+    m_cbf[1] = m_cbf[0] + numPartition;
+    m_cbf[2] = m_cbf[0] + numPartition * 2;
 
     CHECKED_MALLOC(m_mvpIdx[0], uint8_t, numPartition * 2);
     m_mvpIdx[1] = m_mvpIdx[0] + numPartition;
 
-    CHECKED_MALLOC(m_trCoeffY, coeff_t, cuSize * cuSize);
-    CHECKED_MALLOC(m_trCoeffCb, coeff_t, cuSize * cuSize >> (m_hChromaShift + m_vChromaShift));
-    CHECKED_MALLOC(m_trCoeffCr, coeff_t, cuSize * cuSize >> (m_hChromaShift + m_vChromaShift));
+    CHECKED_MALLOC(m_trCoeffY, coeff_t, sizeL + sizeC * 2);
+    m_trCoeffCb = m_trCoeffY + sizeL;
+    m_trCoeffCr = m_trCoeffY + sizeL + sizeC;
 
     CHECKED_MALLOC(m_iPCMFlags, bool, numPartition);
-    CHECKED_MALLOC(m_iPCMSampleY, pixel, cuSize * cuSize);
-    CHECKED_MALLOC(m_iPCMSampleCb, pixel, cuSize * cuSize >> (m_hChromaShift + m_vChromaShift));
-    CHECKED_MALLOC(m_iPCMSampleCr, pixel, cuSize * cuSize >> (m_hChromaShift + m_vChromaShift));
+    CHECKED_MALLOC(m_iPCMSampleY, pixel, sizeL + sizeC * 2);
+    m_iPCMSampleCb = m_iPCMSampleY + sizeL;
+    m_iPCMSampleCr = m_iPCMSampleY + sizeL + sizeC;
 
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
     return ok;
@@ -168,23 +171,15 @@ void TComDataCU::destroy()
     X265_FREE(m_depth);
     X265_FREE(m_cuSize);
     X265_FREE(m_cbf[0]);
-    X265_FREE(m_cbf[1]);
-    X265_FREE(m_cbf[2]);
     X265_FREE(m_interDir);
     X265_FREE(m_bMergeFlags);
     X265_FREE(m_lumaIntraDir);
     X265_FREE(m_chromaIntraDir);
     X265_FREE(m_trIdx);
     X265_FREE(m_transformSkip[0]);
-    X265_FREE(m_transformSkip[1]);
-    X265_FREE(m_transformSkip[2]);
     X265_FREE(m_trCoeffY);
-    X265_FREE(m_trCoeffCb);
-    X265_FREE(m_trCoeffCr);
     X265_FREE(m_iPCMFlags);
     X265_FREE(m_iPCMSampleY);
-    X265_FREE(m_iPCMSampleCb);
-    X265_FREE(m_iPCMSampleCr);
     X265_FREE(m_mvpIdx[0]);
     X265_FREE(m_cuTransquantBypass);
     X265_FREE(m_skipFlag);
@@ -258,8 +253,6 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
         memset(m_iPCMFlags,          false,         numElements * sizeof(*m_iPCMFlags));
     }
 
-    uint32_t y_tmp = g_maxCUSize * g_maxCUSize;
-    uint32_t c_tmp = g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift);
     {
         m_cuMvField[0].clearMvField();
         m_cuMvField[1].clearMvField();
@@ -267,6 +260,8 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
         // TODO: can be remove, but I haven't data to verify it, remove later
         if (getSlice()->getSPS()->getUsePCM())
         {
+            uint32_t y_tmp = g_maxCUSize * g_maxCUSize;
+            uint32_t c_tmp = g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift);
             memset(m_iPCMSampleY, 0, sizeof(pixel) * y_tmp);
             memset(m_iPCMSampleCb, 0, sizeof(pixel) * c_tmp);
             memset(m_iPCMSampleCr, 0, sizeof(pixel) * c_tmp);
@@ -598,9 +593,8 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     uint32_t tmp2 = partUnitIdx * tmp;
     memcpy(m_trCoeffY  + tmp2, cu->getCoeffY(),  sizeof(coeff_t) * tmp);
     memcpy(m_iPCMSampleY + tmp2, cu->getPCMSampleY(), sizeof(pixel) * tmp);
-
     tmp  >>= m_hChromaShift + m_vChromaShift;
-    tmp2 = partUnitIdx * tmp;
+    tmp2 >>= m_hChromaShift + m_vChromaShift;
     memcpy(m_trCoeffCb + tmp2, cu->getCoeffCb(), sizeof(coeff_t) * tmp);
     memcpy(m_trCoeffCr + tmp2, cu->getCoeffCr(), sizeof(coeff_t) * tmp);
     memcpy(m_iPCMSampleCb + tmp2, cu->getPCMSampleCb(), sizeof(pixel) * tmp);
@@ -684,7 +678,6 @@ void TComDataCU::copyCodedToPic(uint8_t depth)
     uint32_t tmp  = (g_maxCUSize * g_maxCUSize) >> (depth << 1);
     uint32_t tmp2 = m_absIdxInLCU << m_pic->getLog2UnitSize() * 2;
     memcpy(rpcCU->getCoeffY() + tmp2, m_trCoeffY, sizeof(coeff_t) * tmp);
-
     tmp  >>= m_hChromaShift + m_vChromaShift;
     tmp2 >>= m_hChromaShift + m_vChromaShift;
     memcpy(rpcCU->getCoeffCb() + tmp2, m_trCoeffCb, sizeof(coeff_t) * tmp);
@@ -737,7 +730,6 @@ void TComDataCU::copyToPic(uint8_t depth, uint32_t partIdx, uint32_t partDepth)
     uint32_t tmp2 = partOffset << m_pic->getLog2UnitSize() * 2;
     memcpy(cu->getCoeffY()  + tmp2, m_trCoeffY,  sizeof(coeff_t) * tmp);
     memcpy(cu->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(pixel) * tmp);
-
     tmp  >>= m_hChromaShift + m_vChromaShift;
     tmp2 >>= m_hChromaShift + m_vChromaShift;
     memcpy(cu->getCoeffCb() + tmp2, m_trCoeffCb, sizeof(coeff_t) * tmp);
