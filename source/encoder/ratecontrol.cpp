@@ -859,7 +859,7 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
         qpAbsoluteMax = X265_MIN(qpAbsoluteMax, rce->qpNoVbv + rateFactorMaxIncrement);
 
     if (rateFactorMaxDecrement)
-        qpAbsoluteMin = X265_MAX(qpAbsoluteMin, rce->qpNoVbv - rateFactorMaxIncrement);
+        qpAbsoluteMin = X265_MAX(qpAbsoluteMin, rce->qpNoVbv - rateFactorMaxDecrement);
 
     double qpMax = X265_MIN(prevRowQp + param->rc.qpStep, qpAbsoluteMax);
     double qpMin = X265_MAX(prevRowQp - param->rc.qpStep, qpAbsoluteMin);
@@ -931,10 +931,13 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
             return -1;
         }
 
-        if (qpVbv < qpMin && prevRowQp > qpMin && canReencodeRow)
+        if (param->rc.rfConstantMin)
         {
-            qpVbv = Clip3(prevRowQp + 1.0f, (prevRowQp + qpVbv) * 0.5, qpMin);
-            return -1;
+            if (qpVbv < qpMin && prevRowQp > qpMin && canReencodeRow)
+            {
+                qpVbv = Clip3(qpMin, prevRowQp, (prevRowQp + qpVbv) * 0.5);
+                return -1;
+            }
         }
     }
     else
