@@ -619,6 +619,14 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** 0: least .. 6: full RDO analysis
 
+.. option:: --psy-rd <float>
+
+	Influence rate distortion optimizations to try to preserve the
+	energy of the source image in the encoded image, at the expense of
+	compression efficiency. 1.0 is a typical value. Default disabled
+
+	**Range of values:** 0 .. 2.0
+
 .. option:: --signhide, --no-signhide
 
 	Hide sign bit of one coeff per TU (rdo). Default enabled

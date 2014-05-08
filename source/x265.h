@@ -579,6 +579,11 @@ typedef struct x265_param
      * efficiency at a major cost of performance. Default is no RDO (0) */
     int       rdLevel;
 
+    /* Psycho-visual rate-distortion strength. Only has an effect in presets
+     * which use RDO. It makes mode decision favor options which preserve the
+     * energy of the source, at the cost of lost compression. Default 0.0 */
+    double     psyRd;
+
     /*== Coding tools ==*/
 
     /* Enable the implicit signaling of the sign bit of the last coefficient of

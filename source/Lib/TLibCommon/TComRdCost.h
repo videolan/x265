@@ -62,7 +62,11 @@ private:
 
     uint64_t  m_crDistortionWeight;
 
+    uint64_t  m_psyRdScale;            // Psy RD strength w/ 8 bits of fraction
+
 public:
+
+    static const pixel zeroPel[MAX_CU_SIZE * MAX_CU_SIZE];
 
     void setLambda(double lambda2, double lambda)
     {
@@ -80,12 +84,47 @@ public:
         m_crDistortionWeight = (uint64_t)floor(256.0 * crDistortionWeight);
     }
 
+    void setPsyRdScale(double scale)
+    {
+        m_psyRdScale = (uint64_t)floor(256.0 * scale);
+    }
+
+    inline bool psyRdEnabled() const
+    {
+        return !!m_psyRdScale;
+    }
+
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
     {
         X265_CHECK(abs((float)((bits * m_lambdaMotionSSE + 128) >> 8) -
                        (float)bits * m_lambdaMotionSSE / 256.0) < 2,
                    "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambdaMotionSSE);
         return distortion + ((bits * m_lambdaMotionSSE + 128) >> 8);
+    }
+
+    /* return the difference in energy between the source block and the recon block */
+    inline uint32_t psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+    {
+        int width, height;
+        width = height = 1 << (size * 2);
+        int part = partitionFromSizes(width, height);
+        int dc = 2 * primitives.sad[part](source, sstride, (pixel*)zeroPel, MAX_CU_SIZE) / (width * height);
+        int sEnergy = primitives.sa8d[size](source, sstride, (pixel*)zeroPel, MAX_CU_SIZE) - dc;
+
+        dc = 2 * primitives.sad[part](recon, rstride, (pixel*)zeroPel, MAX_CU_SIZE) / (width * height);
+        int rEnergy = primitives.sa8d[size](recon, rstride, (pixel*)zeroPel, MAX_CU_SIZE) - dc;
+
+        return abs(sEnergy - rEnergy);
+    }
+
+    /* return the RD cost of this prediction, including the effect of psy-rd */
+    inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
+    {
+        uint64_t tot = bits + (((psycost * m_psyRdScale) + 128) >> 8);
+        X265_CHECK(abs((float)((tot * m_lambdaMotionSSE + 128) >> 8) -
+                       (float)tot * m_lambdaMotionSSE / 256.0) < 2,
+                   "calcPsyRdCost wrap detected dist: %d, tot %d, lambda: %d\n", distortion, (int)tot, (int)m_lambdaMotionSSE);
+        return distortion + ((tot * m_lambdaMotionSSE + 128) >> 8);
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)

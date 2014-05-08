@@ -140,6 +140,7 @@ static const struct option long_options[] =
     { "cbqpoffs",       required_argument, NULL, 0 },
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
+    { "psy-rd",         required_argument, NULL, 0 },
     { "no-signhide",          no_argument, NULL, 0 },
     { "signhide",             no_argument, NULL, 0 },
     { "no-lft",               no_argument, NULL, 0 },
@@ -379,6 +380,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
+    H0("   --psy-rd <0..2.0>             Strength of psycho-visual optimization. Default %f\n", param->psyRd);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
     H0("\nLoop filters (deblock and SAO):\n");
     H0("   --[no-]lft                    Enable Deblocking Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));

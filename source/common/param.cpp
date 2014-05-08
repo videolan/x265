@@ -156,6 +156,7 @@ void x265_param_default(x265_param *param)
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
+    param->psyRd = 0.0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -588,6 +589,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
+    OPT("psy-rd") p->psyRd = atof(value);
     OPT("signhide") p->bEnableSignHiding = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value);
     OPT("sao") p->bEnableSAO = atobool(value);
@@ -915,7 +917,7 @@ int x265_check_params(x265_param *param)
           "Aq-Mode is out of range");
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
-
+    CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->vui.aspectRatioIdc < 0
            || param->vui.aspectRatioIdc > 16)
@@ -1061,6 +1063,7 @@ void x265_print_params(x265_param *param)
     x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
     x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb / refs: %d / %d / %d / %d\n",
              param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred, param->maxNumReferences);
+
     switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
@@ -1091,6 +1094,7 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
     fprintf(stderr, "rd=%d ", param->rdLevel);
+    fprintf(stderr, "psyrd=%.1lf ", param->psyRd);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
