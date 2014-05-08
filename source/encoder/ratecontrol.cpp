@@ -435,6 +435,7 @@ void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry*
     if (pic->m_forceqp)
     {
         qp = int32_t(pic->m_forceqp + 0.5) - 1;
+        qp = Clip3(MIN_QP, MAX_MAX_QP, qp);
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = qp;
     }
     framesDone++;
@@ -568,27 +569,25 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             if (param->rc.rateControlMode != X265_RC_CRF)
             {
                 double lqmin = 0, lqmax = 0;
-                if (totalBits == 0 && !isVbv)
-                {
-                    lqmin = x265_qp2qScale(ABR_INIT_QP_MIN) / lstep;
-                    lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * lstep;
-                    q = Clip3(lqmin, lqmax, q);
-                }
-                else if (totalBits > 0 || (isVbv && framesDone > 0))
-                {
-                    lqmin = lastQScaleFor[sliceType] / lstep;
-                    lqmax = lastQScaleFor[sliceType] * lstep;
-                    if (overflow > 1.1 && framesDone > 3)
-                        lqmax *= lstep;
-                    else if (overflow < 0.9)
-                        lqmin /= lstep;
-                    q = Clip3(lqmin, lqmax, q);
-                }
+                lqmin = lastQScaleFor[sliceType] / lstep;
+                lqmax = lastQScaleFor[sliceType] * lstep;
+                if (overflow > 1.1 && framesDone > 3)
+                    lqmax *= lstep;
+                else if (overflow < 0.9)
+                    lqmin /= lstep;
+                q = Clip3(lqmin, lqmax, q);
             }
         }
         else if (qCompress != 1 && param->rc.rateControlMode == X265_RC_CRF)
         {
             q = x265_qp2qScale(CRF_INIT_QP) / fabs(param->rc.ipFactor);
+        }
+        else if (framesDone == 0 && !isVbv)
+        {
+            /* for ABR alone, clipe the first I frame qp within the range (ABR_INIT_QP_MIN, ABR_INIT_QP_MAX) to ensure quality. */
+            double lqmin = x265_qp2qScale(ABR_INIT_QP_MIN) / lstep;
+            double lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * lstep;
+            q = Clip3(lqmin, lqmax, q);
         }
 
         q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
