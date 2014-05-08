@@ -168,6 +168,8 @@ static const struct option long_options[] =
     { "crop-rect",      required_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
+    { "no-repeat-headers",    no_argument, NULL, 0 },
+    { "repeat-headers",       no_argument, NULL, 0 },
     { "aud",                  no_argument, NULL, 0 },
     { "no-aud",               no_argument, NULL, 0 },
     { "qpfile",         required_argument, NULL, 0 },
@@ -313,6 +315,10 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
     H0("   --seek <integer>              First frame to encode\n");
+    H0("   --qpfile <string>             Force frametypes and QPs for some or all frames\n");
+    H0("                                 Format of each line: framenumber frametype QP\n");
+    H0("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
+    H0("                                 QPs are restricted by qpmin/qpmax.\n");
     H0("\nPresets:\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
@@ -398,15 +404,11 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("\nBitstream options:\n");
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
+    H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
+    H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H0("\nReconstructed video options (debugging):\n");
     H0("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H0("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
-    H0("\nSEI options:\n");
-    H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
-    H0("   --qpfile <string>             Force frametypes and QPs for some or all frames\n");
-    H0("                                 Format of each line: framenumber frametype QP\n");
-    H0("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
-    H0("                                 QPs are restricted by qpmin/qpmax.\n");
 #undef OPT
 #undef H0
     printf("\n\nFull documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");

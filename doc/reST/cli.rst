@@ -774,9 +774,7 @@ Bitstream options
 	If enabled, x265 will emit VPS, SPS, and PPS headers with every
 	keyframe. This is intended for use when you do not have a container
 	to keep the stream headers for you and you want keyframes to be
-	random access points.
-
-	**API ONLY**
+	random access points. Default disabled
 
 .. option:: --aud, --no-aud
 
