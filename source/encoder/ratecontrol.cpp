@@ -649,10 +649,17 @@ double RateControl::predictSize(Predictor *p, double q, double var)
 double RateControl::clipQscale(TComPic* pic, double q)
 {
     // B-frames are not directly subject to VBV,
-    // since they are controlled by the P-frames' QPs.
+    // since they are controlled by referenced P-frames' QPs.
     double q0 = q;
-    if (param->lookaheadDepth)
+
+    if (param->lookaheadDepth || param->rc.cuTree ||
+       param->scenecutThreshold ||
+       (param->bFrameAdaptive && param->bframes))
     {
+       /* Lookahead VBV: If lookahead is done, raise the quantizer as necessary
+        * such that no frames in the lookahead overflow and such that the buffer
+        * is in a reasonable state by the end of the lookahead. */
+
         int terminate = 0;
 
         /* Avoid an infinite loop. */
@@ -701,6 +708,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
     }
     else
     {
+        /* Fallback to old purely-reactive algorithm: no lookahead. */
         if ((sliceType == P_SLICE ||
                 (sliceType == I_SLICE && lastNonBPictType == I_SLICE)) &&
             bufferFill / bufferSize < 0.5)
