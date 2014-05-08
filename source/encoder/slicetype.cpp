@@ -255,6 +255,10 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
         uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0;
         uint32_t scale = param->maxCUSize / (2 * X265_LOWRES_CU_SIZE);
         uint32_t widthInLowresCu = (uint32_t)widthInCU, heightInLowresCu = (uint32_t)heightInCU;
+        double *qp_offset = 0;
+        /* Factor in qpoffsets based on Aq/Cutree in CU costs */
+        if (param->rc.aqMode)
+            qp_offset = (frames[b]->sliceType == X265_TYPE_B || !param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpOffset;
 
         for (uint32_t row = 0; row < pic->getFrameHeightInCU(); row++)
         {
@@ -265,9 +269,16 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
                 lowresCuIdx = lowresRow * widthInLowresCu;
                 for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
                 {
-                    sum += pic->m_lowres.lowresCostForRc[lowresCuIdx] & LOWRES_COST_MASK;
+                    uint16_t lowresCuCost = pic->m_lowres.lowresCostForRc[lowresCuIdx] & LOWRES_COST_MASK;
+                    if (qp_offset)
+                    {
+                        lowresCuCost = (lowresCuCost * x265_exp2fix8(qp_offset[lowresCuIdx]) + 128) >> 8;
+                        uint16_t intraCuCost = pic->m_lowres.intraCost[lowresCuIdx]; 
+                        pic->m_lowres.intraCost[lowresCuIdx] = (intraCuCost * x265_exp2fix8(qp_offset[lowresCuIdx]) + 128) >> 8;
+                    }
+                    pic->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
+                    sum += lowresCuCost;
                 }
-
                 pic->m_rowSatdForVbv[row] += sum;
             }
         }
@@ -1651,17 +1662,20 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
             if (cost < icost)
                 icost = cost;
         }
-
         const int intraPenalty = 5 * lookAheadLambda;
         icost += intraPenalty + lowresPenalty;
         fenc->intraCost[cuXY] = icost;
-        fenc->rowSatds[0][0][cuy] += icost;
+        int icostAq = icost;
         if (bFrameScoreCU)
         {
             costIntra += icost;
             if (fenc->invQscaleFactor)
-                costIntraAq += (icost * fenc->invQscaleFactor[cuXY] + 128) >> 8;
+            {
+                icostAq = (icost * fenc->invQscaleFactor[cuXY] + 128) >> 8;
+                costIntraAq += icostAq;
+            }
         }
+        fenc->rowSatds[0][0][cuy] += icostAq;
     }
     bcost += lowresPenalty;
     if (!bBidir)
@@ -1677,13 +1691,17 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     /* For I frames these costs were accumulated earlier */
     if (p0 != p1)
     {
-        fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
+        int bcostAq = bcost;
         if (bFrameScoreCU)
         {
             costEst += bcost;
             if (fenc->invQscaleFactor)
-                costEstAq += (bcost * fenc->invQscaleFactor[cuXY] + 128) >> 8;
+            {
+                bcostAq = (bcost * fenc->invQscaleFactor[cuXY] + 128) >> 8;
+                costEstAq += bcostAq;
+            }
         }
+        fenc->rowSatds[b - p0][p1 - b][cuy] += bcostAq;
     }
     fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
