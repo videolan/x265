@@ -272,8 +272,8 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
                     uint16_t lowresCuCost = pic->m_lowres.lowresCostForRc[lowresCuIdx] & LOWRES_COST_MASK;
                     if (qp_offset)
                     {
-                        lowresCuCost = (lowresCuCost * x265_exp2fix8(qp_offset[lowresCuIdx]) + 128) >> 8;
-                        uint16_t intraCuCost = pic->m_lowres.intraCost[lowresCuIdx]; 
+                        lowresCuCost = (uint16_t)((lowresCuCost * x265_exp2fix8(qp_offset[lowresCuIdx]) + 128) >> 8);
+                        int32_t intraCuCost = pic->m_lowres.intraCost[lowresCuIdx]; 
                         pic->m_lowres.intraCost[lowresCuIdx] = (intraCuCost * x265_exp2fix8(qp_offset[lowresCuIdx]) + 128) >> 8;
                     }
                     pic->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
