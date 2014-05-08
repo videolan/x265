@@ -157,7 +157,6 @@ public:
     bool               m_loopFilterAcrossTilesEnabledFlag;
 
     int                m_bufferingPeriodSEIEnabled;
-    int                m_recoveryPointSEIEnabled;
     int                m_displayOrientationSEIAngle;
     int                m_gradualDecodingRefreshInfoEnabled;
     int                m_decodingUnitInfoSEIEnabled;

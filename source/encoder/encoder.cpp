@@ -1420,7 +1420,6 @@ void Encoder::configure(x265_param *p)
 
     m_nonPackedConstraintFlag = false;
     m_frameOnlyConstraintFlag = false;
-    m_recoveryPointSEIEnabled = 0;
     m_bufferingPeriodSEIEnabled = 0;
     m_displayOrientationSEIAngle = 0;
     m_gradualDecodingRefreshInfoEnabled = 0;
