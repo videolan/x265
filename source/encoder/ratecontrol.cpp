@@ -602,6 +602,9 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             lastQScaleFor[P_SLICE] = q * fabs(param->rc.ipFactor);
 
         rce->frameSizePlanned = predictSize(&pred[sliceType], q, (double)currentSatd);
+        /* Always use up the whole VBV in this case. */
+        if (singleFrameVbv)
+            rce->frameSizePlanned = bufferRate;
 
         return q;
     }
@@ -743,7 +746,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
 
     // Check B-frame complexity, and use up any bits that would
     // overflow before the next P-frame.
-    if (sliceType == P_SLICE)
+    if (sliceType == P_SLICE && !singleFrameVbv)
     {
         int nb = bframes;
         double bits = predictSize(&pred[sliceType], q, (double)currentSatd);
@@ -762,6 +765,14 @@ double RateControl::clipQscale(TComPic* pic, double q)
     }
     if (!vbvMinRate)
         q = X265_MAX(q0, q);
+
+    if (rateFactorMaxIncrement)
+    {
+        double qpNoVbv = x265_qScale2qp(q0);
+        double qmax = X265_MIN(MAX_MAX_QPSCALE,x265_qp2qScale(qpNoVbv + rateFactorMaxIncrement));
+        return Clip3(MIN_QPSCALE, qmax, q);
+    }
+
     return Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
 }
 
