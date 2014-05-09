@@ -1188,11 +1188,11 @@ void TComDataCU::getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList)
 *\param   mode          it is set with MPM mode in case both MPM are equal. It is used to restrict RD search at encode side.
 *\returns Number of MPM
 */
-int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDirPred)
+int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred)
 {
     TComDataCU* tempCU;
     uint32_t    tempPartIdx;
-    int         leftIntraDir, aboveIntraDir;
+    uint32_t    leftIntraDir, aboveIntraDir;
 
     // Get intra direction of left PU
     tempCU = getPULeft(tempPartIdx, m_absIdxInLCU + absPartIdx);

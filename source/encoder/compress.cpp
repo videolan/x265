@@ -139,11 +139,17 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     int log2SizeMinus2 = g_convertToBit[scaleWidth];
     pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
 
+    uint32_t preds[3];
+    cu->getIntraDirLumaPredictor(partOffset, preds);
+
+    uint64_t mpms;
+    uint32_t rbits = m_search->xModeBitsRemIntra(cu, partOffset, depth, preds, mpms);
+
     // DC
     primitives.intra_pred[log2SizeMinus2][DC_IDX](tmp, scaleStride, left, above, 0, (scaleWidth <= 16));
     bsad = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
     bmode = mode = DC_IDX;
-    bbits  = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
+    bbits = !(mpms & ((uint64_t)1 << mode)) ? rbits : m_search->xModeBitsIntra(cu, mode, partOffset, depth);
     bcost = m_rdCost->calcRdSADCost(bsad, bbits);
 
     pixel *abovePlanar   = above;
@@ -159,7 +165,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     primitives.intra_pred[log2SizeMinus2][PLANAR_IDX](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
     sad = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
     mode = PLANAR_IDX;
-    bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
+    bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : m_search->xModeBitsIntra(cu, mode, partOffset, depth);
     cost = m_rdCost->calcRdSADCost(sad, bits);
     COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
@@ -174,7 +180,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
         pixel *cmp = (modeHor ? buf_trans : fenc);
         intptr_t srcStride = (modeHor ? scaleWidth : scaleStride);
         sad  = costMultiplier * sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleWidth * scaleWidth)], scaleWidth);
-        bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
+        bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : m_search->xModeBitsIntra(cu, mode, partOffset, depth);
         cost = m_rdCost->calcRdSADCost(sad, bits);
         COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
     }

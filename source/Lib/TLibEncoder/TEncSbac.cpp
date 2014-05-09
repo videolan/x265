@@ -1636,7 +1636,7 @@ void TEncSbac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple)
 {
     uint32_t dir[4], j;
-    int preds[4][3];
+    uint32_t preds[4][3];
     int predIdx[4];
     PartSize mode = cu->getPartitionSize(absPartIdx);
     uint32_t partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;

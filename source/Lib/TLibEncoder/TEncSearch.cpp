@@ -1657,22 +1657,25 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleSize * scaleSize)], scaleSize) << costShift;
             }
 
+            uint32_t preds[3];
+            int numCand = cu->getIntraDirLumaPredictor(partOffset, preds);
+
+            uint64_t mpms;
+            uint32_t rbits = xModeBitsRemIntra(cu, partOffset, depth, preds, mpms);
+
             // Find N least cost modes. N = numModesForFullRD
             for (uint32_t mode = 0; mode < numModesAvailable; mode++)
             {
                 uint32_t sad = modeCosts[mode];
-                uint32_t bits = xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
+                uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
                 uint64_t cost = m_rdCost->calcRdSADCost(sad, bits);
                 candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
             }
 
-            int preds[3];
-            int numCand = cu->getIntraDirLumaPredictor(partOffset, preds);
-
             for (int j = 0; j < numCand; j++)
             {
                 bool mostProbableModeIncluded = false;
-                int mostProbableMode = preds[j];
+                uint32_t mostProbableMode = preds[j];
 
                 for (int i = 0; i < numModesForFullRD; i++)
                 {
@@ -3977,17 +3980,34 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_
     }
 }
 
-uint32_t TEncSearch::xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth, uint32_t initTrDepth)
+uint32_t TEncSearch::xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
 {
     // Reload only contexts required for coding intra mode information
     m_rdGoOnSbacCoder->loadIntraDirModeLuma(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
-    cu->setLumaIntraDirSubParts(mode, partOffset, depth + initTrDepth);
+    cu->getLumaIntraDir()[partOffset] = (uint8_t)mode;
 
     m_entropyCoder->resetBits();
     m_entropyCoder->encodeIntraDirModeLuma(cu, partOffset);
 
     return m_entropyCoder->getNumberOfWrittenBits();
+}
+
+uint32_t TEncSearch::xModeBitsRemIntra(TComDataCU* cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
+{
+    mpms = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+        mpms |= ((uint64_t)1 << preds[i]);
+    }
+
+    uint32_t mode = 34;
+    while (mpms & ((uint64_t)1 << mode))
+    {
+        --mode;
+    }
+
+    return xModeBitsIntra(cu, mode, partOffset, depth);
 }
 
 uint32_t TEncSearch::xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fastCandNum, uint32_t* CandModeList, uint64_t* CandCostList)

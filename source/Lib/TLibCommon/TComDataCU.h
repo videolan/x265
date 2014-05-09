@@ -431,7 +431,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     void          getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList);
-    int           getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDirPred);
+    int           getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for SBAC context
