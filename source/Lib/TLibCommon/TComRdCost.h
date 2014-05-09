@@ -54,9 +54,9 @@ class TComRdCost
 {
 private:
 
-    uint64_t  m_lambdaMotionSSE;  // m_lambda2 w/ 16 bits of fraction
+    uint64_t  m_lambdaMotionSSE;  // m_lambda2 w/ 8 bits of fraction
 
-    uint64_t  m_lambdaMotionSAD;  // m_lambda w/ 16 bits of fraction
+    uint64_t  m_lambdaMotionSAD;  // m_lambda w/ 8 bits of fraction
 
     uint64_t  m_cbDistortionWeight;
 
