@@ -906,7 +906,7 @@ X265_API extern const char *x265_build_info_str;
 
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro
- * is x265_encoder_open_##X264_BUILD (for purposes of dlopen). */
+ * is x265_encoder_open_##X265_BUILD (for purposes of dlopen). */
 #define x265_encoder_glue1(x, y) x ## y
 #define x265_encoder_glue2(x, y) x265_encoder_glue1(x, y)
 #define x265_encoder_open x265_encoder_glue2(x265_encoder_open_, X265_BUILD)
