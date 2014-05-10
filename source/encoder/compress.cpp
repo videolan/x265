@@ -82,21 +82,21 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     cu->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
 
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-    uint32_t width       = cu->getCUSize(0) >> initTrDepth;
-    uint32_t partOffset  = 0;
+    uint32_t tuSize      = cu->getCUSize(0) >> initTrDepth;
+    const uint32_t partOffset  = 0;
 
     // Reference sample smoothing
-    TComPattern::initAdiPattern(cu, partOffset, initTrDepth, m_search->m_predBuf, m_search->m_predBufStride,
-                                m_search->m_predBufHeight, m_search->m_refAbove, m_search->m_refLeft,
-                                m_search->m_refAboveFlt, m_search->m_refLeftFlt);
+    TComPattern::initAdiPattern(cu, partOffset, initTrDepth, m_search->m_predBuf,
+                                m_search->m_refAbove, m_search->m_refLeft,
+                                m_search->m_refAboveFlt, m_search->m_refLeftFlt, ALL_IDX);
 
     pixel* fenc     = m_origYuv[depth]->getLumaAddr();
     uint32_t stride = m_modePredYuv[5][depth]->getStride();
 
-    pixel *above         = m_search->m_refAbove    + width - 1;
-    pixel *aboveFiltered = m_search->m_refAboveFlt + width - 1;
-    pixel *left          = m_search->m_refLeft     + width - 1;
-    pixel *leftFiltered  = m_search->m_refLeftFlt  + width - 1;
+    pixel *above         = m_search->m_refAbove    + tuSize - 1;
+    pixel *aboveFiltered = m_search->m_refAboveFlt + tuSize - 1;
+    pixel *left          = m_search->m_refLeft     + tuSize - 1;
+    pixel *leftFiltered  = m_search->m_refLeftFlt  + tuSize - 1;
     int sad, bsad;
     uint32_t bits, bbits, mode, bmode;
     uint64_t cost, bcost;
@@ -104,11 +104,11 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     // 33 Angle modes once
     ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
     ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
-    int scaleWidth = width;
+    int scaleTuSize = tuSize;
     int scaleStride = stride;
     int costMultiplier = 1;
 
-    if (width > 32)
+    if (tuSize > 32)
     {
         // origin is 64x64, we scale to 32x32 and setup required parameters
         ALIGN_VAR_32(pixel, bufScale[32 * 32]);
@@ -125,7 +125,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
         primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
         primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
 
-        scaleWidth = 32;
+        scaleTuSize = 32;
         scaleStride = 32;
         costMultiplier = 4;
 
@@ -136,7 +136,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
         leftFiltered  = leftScale;
     }
 
-    int log2SizeMinus2 = g_convertToBit[scaleWidth];
+    int log2SizeMinus2 = g_convertToBit[scaleTuSize];
     pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
 
     uint32_t preds[3];
@@ -146,7 +146,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     uint32_t rbits = m_search->xModeBitsRemIntra(cu, partOffset, depth, preds, mpms);
 
     // DC
-    primitives.intra_pred[log2SizeMinus2][DC_IDX](tmp, scaleStride, left, above, 0, (scaleWidth <= 16));
+    primitives.intra_pred[log2SizeMinus2][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
     bsad = costMultiplier * sa8d(fenc, scaleStride, tmp, scaleStride);
     bmode = mode = DC_IDX;
     bbits = !(mpms & ((uint64_t)1 << mode)) ? rbits : m_search->xModeBitsIntra(cu, mode, partOffset, depth);
@@ -155,7 +155,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     pixel *abovePlanar   = above;
     pixel *leftPlanar    = left;
 
-    if (width >= 8 && width <= 32)
+    if (tuSize >= 8 && tuSize <= 32)
     {
         abovePlanar = aboveFiltered;
         leftPlanar  = leftFiltered;
@@ -172,14 +172,14 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
     // Transpose NxN
     primitives.transpose[log2SizeMinus2](buf_trans, fenc, scaleStride);
 
-    primitives.intra_pred_allangs[log2SizeMinus2](tmp, above, left, aboveFiltered, leftFiltered, (scaleWidth <= 16));
+    primitives.intra_pred_allangs[log2SizeMinus2](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
 
     for (mode = 2; mode < 35; mode++)
     {
         bool modeHor = (mode < 18);
         pixel *cmp = (modeHor ? buf_trans : fenc);
-        intptr_t srcStride = (modeHor ? scaleWidth : scaleStride);
-        sad  = costMultiplier * sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleWidth * scaleWidth)], scaleWidth);
+        intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
+        sad  = costMultiplier * sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize);
         bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : m_search->xModeBitsIntra(cu, mode, partOffset, depth);
         cost = m_rdCost->calcRdSADCost(sad, bits);
         COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);

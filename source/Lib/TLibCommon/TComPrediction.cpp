@@ -90,9 +90,9 @@ void TComPrediction::initTempBuff(int csp)
 
     if (m_predBuf == NULL)
     {
-        m_predBufHeight = ((MAX_CU_SIZE + 2) << 4);
-        m_predBufStride = ((MAX_CU_SIZE + 8) << 4);
-        m_predBuf = X265_MALLOC(pixel, m_predBufStride * m_predBufHeight);
+        int predBufHeight = ((MAX_CU_SIZE + 2) << 4);
+        int predBufStride = ((MAX_CU_SIZE + 8) << 4);
+        m_predBuf = X265_MALLOC(pixel, predBufStride * predBufHeight);
 
         m_refAbove = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
         m_refAboveFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
@@ -113,7 +113,7 @@ void TComPrediction::initTempBuff(int csp)
 // Public member functions
 // ====================================================================================================================
 
-bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t width)
+bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t tuSize)
 {
     bool bFilter;
 
@@ -124,39 +124,38 @@ bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t w
     else
     {
         int diff = std::min<int>(abs((int)dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
-        uint32_t sizeIndex = g_convertToBit[width];
+        uint32_t sizeIndex = g_convertToBit[tuSize];
         bFilter = diff > intraFilterThreshold[sizeIndex];
     }
 
     return bFilter;
 }
 
-void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, int width)
+void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, int tuSize)
 {
-    assert(width >= 4 && width <= 64);
-    int log2BlkSize = g_convertToBit[width];
-    bool bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, width);
+    assert(tuSize >= 4 && tuSize <= 64);
+    int log2BlkSize = g_convertToBit[tuSize];
+    bool bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, tuSize);
 
     pixel *refLft, *refAbv;
-    refLft = m_refLeft + width - 1;
-    refAbv = m_refAbove + width - 1;
+    refLft = m_refLeft + tuSize - 1;
+    refAbv = m_refAbove + tuSize - 1;
 
-    pixel *src = m_predBuf;
     if (bUseFilteredPredictions)
     {
-        src += ADI_BUF_STRIDE * (2 * width + 1);
-        refLft = m_refLeftFlt + width - 1;
-        refAbv = m_refAboveFlt + width - 1;
+        refLft = m_refLeftFlt + tuSize - 1;
+        refAbv = m_refAboveFlt + tuSize - 1;
     }
 
-    bool bFilter = width <= 16 && dirMode != PLANAR_IDX;
+    bool bFilter = tuSize <= 16 && dirMode != PLANAR_IDX;
     primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
 }
 
 // Angular chroma
-void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, int width, int height, int chFmt)
+void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, int tuSize, int chFmt)
 {
-    int log2BlkSize = g_convertToBit[width];
+    int log2BlkSize = g_convertToBit[tuSize];
+    uint32_t tuSize2 = tuSize << 1;
 
     // Create the prediction
     pixel refAbv[3 * MAX_CU_SIZE];
@@ -170,36 +169,32 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
     }
     else
     {
-        assert(width >= 4 && height >= 4 && width < 128 && height < 128);
-        bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, width);
+        assert(tuSize >= 4 && tuSize < 128);
+        bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, tuSize);
     }
 
     if (bUseFilteredPredictions)
     {
-        uint32_t cuWidth2  = width << 1;
-        uint32_t cuHeight2 = height << 1;
         // generate filtered intra prediction samples
         // left and left above border + above and above right border + top left corner = length of 3. filter buffer
-        int bufSize = cuHeight2 + cuWidth2 + 1;
-        uint32_t wh = ADI_BUF_STRIDE * height;         // number of elements in one buffer
+        int bufSize = tuSize2 + tuSize2 + 1;
+        uint32_t wh = ADI_BUF_STRIDE * (tuSize2 + 1);         // number of elements in one buffer
 
-        pixel* filteredBuf1 = src + wh;             // 1. filter buffer
-        pixel* filteredBuf2 = filteredBuf1 + wh;    // 2. filter buffer
-        pixel* filterBuf    = filteredBuf2 + wh;    // buffer for 2. filtering (sequential)
-        pixel* filterBufN   = filterBuf + bufSize;  // buffer for 1. filtering (sequential)
+        pixel* filterBuf  = src + wh;            // buffer for 2. filtering (sequential)
+        pixel* filterBufN = filterBuf + bufSize; // buffer for 1. filtering (sequential)
 
         int l = 0;
         // left border from bottom to top
-        for (int i = 0; i < cuHeight2; i++)
+        for (int i = 0; i < tuSize2; i++)
         {
-            filterBuf[l++] = src[ADI_BUF_STRIDE * (cuHeight2 - i)];
+            filterBuf[l++] = src[ADI_BUF_STRIDE * (tuSize2 - i)];
         }
 
         // top left corner
         filterBuf[l++] = src[0];
 
         // above border from left to right
-        memcpy(&filterBuf[l], &src[1], cuWidth2 * sizeof(*filterBuf));
+        memcpy(&filterBuf[l], &src[1], tuSize2 * sizeof(*filterBuf));
 
         // 1. filtering with [1 2 1]
         filterBufN[0] = filterBuf[0];
@@ -209,35 +204,25 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
             filterBufN[i] = (filterBuf[i - 1] + 2 * filterBuf[i] + filterBuf[i + 1] + 2) >> 2;
         }
 
-        // fill 1. filter buffer with filtered values
-        l = 0;
-        for (int i = 0; i < cuHeight2; i++)
-        {
-            filteredBuf1[ADI_BUF_STRIDE * (cuHeight2 - i)] = filterBufN[l++];
-        }
-
-        filteredBuf1[0] = filterBufN[l++];
-        memcpy(&filteredBuf1[1], &filterBufN[l], cuWidth2 * sizeof(*filteredBuf1));
-
-        int limit = (2 * width + 1);
-        src += wh;
-        memcpy(refAbv + width - 1, src, (limit) * sizeof(pixel));
+        // initialization of ADI buffers
+        int limit = tuSize2 + 1;
+        memcpy(refAbv + tuSize - 1, filterBufN + tuSize2, limit * sizeof(pixel));
         for (int k = 0; k < limit; k++)
         {
-            refLft[k + width - 1] = src[k * ADI_BUF_STRIDE];
+            refLft[k + tuSize - 1] = filterBufN[tuSize2 - k];   // Smoothened
         }
     }
     else
     {
-        int limit = (dirMode <= 25 && dirMode >= 11) ? (width + 1 + 1) : (2 * width + 1);
-        memcpy(refAbv + width - 1, src, (limit) * sizeof(pixel));
+        int limit = (dirMode <= 25 && dirMode >= 11) ? (tuSize + 1 + 1) : (tuSize2 + 1);
+        memcpy(refAbv + tuSize - 1, src, (limit) * sizeof(pixel));
         for (int k = 0; k < limit; k++)
         {
-            refLft[k + width - 1] = src[k * ADI_BUF_STRIDE];
+            refLft[k + tuSize - 1] = src[k * ADI_BUF_STRIDE];
         }
     }
 
-    primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft + width - 1, refAbv + width - 1, dirMode, 0);
+    primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft + tuSize - 1, refAbv + tuSize - 1, dirMode, 0);
 }
 
 /** Function for checking identical motion.

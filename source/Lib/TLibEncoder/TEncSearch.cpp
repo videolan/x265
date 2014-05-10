@@ -396,13 +396,12 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
                                      bool        bReusePred)
 {
     uint32_t fullDepth    = cu->getDepth(0)  + trDepth;
-    uint32_t width        = cu->getCUSize(0) >> trDepth;
-    uint32_t height       = cu->getCUSize(0) >> trDepth;
+    uint32_t tuSize       = cu->getCUSize(0) >> trDepth;
     uint32_t stride       = fencYuv->getStride();
     pixel*   fenc         = fencYuv->getLumaAddr(absPartIdx);
     pixel*   pred         = predYuv->getLumaAddr(absPartIdx);
     int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
-    int      part         = partitionFromSizes(width, height);
+    int      part         = partitionFromSizes(tuSize, tuSize);
 
     uint32_t trSizeLog2     = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
     uint32_t qtLayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
@@ -421,23 +420,23 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     if (!bReusePred)
     {
         //===== init availability pattern =====
-        TComPattern::initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt);
         uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
+        TComPattern::initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, lumaPredMode);
         //===== get prediction signal =====
-        predIntraLumaAng(lumaPredMode, pred, stride, width);
+        predIntraLumaAng(lumaPredMode, pred, stride, tuSize);
     }
 
     //===== get residual signal =====
-    assert(!((uint32_t)(size_t)fenc & (width - 1)));
-    assert(!((uint32_t)(size_t)pred & (width - 1)));
-    assert(!((uint32_t)(size_t)residual & (width - 1)));
-    primitives.calcresidual[(int)g_convertToBit[width]](fenc, pred, residual, stride);
+    assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
+    assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
+    assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+    primitives.calcresidual[(int)g_convertToBit[tuSize]](fenc, pred, residual, stride);
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
     if (useTransformSkip ? m_cfg->bEnableRDOQTS : m_cfg->bEnableRDOQ)
     {
-        m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, TEXT_LUMA);
+        m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, tuSize, TEXT_LUMA);
     }
 
     //--- transform and quantization ---
@@ -449,27 +448,27 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
     m_trQuant->selectLambda(TEXT_LUMA);
 
-    absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, TEXT_LUMA, absPartIdx, &lastPos, useTransformSkip);
+    absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, tuSize, TEXT_LUMA, absPartIdx, &lastPos, useTransformSkip);
 
     //--- set coded block flag ---
     cu->setCbfSubParts((absSum ? 1 : 0) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
     //--- inverse transform ---
-    int size = g_convertToBit[width];
+    int size = g_convertToBit[tuSize];
     if (absSum)
     {
         int scalingListType = 0 + TEXT_LUMA;
         assert(scalingListType < 6);
-        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, scalingListType, useTransformSkip, lastPos);
+        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, tuSize, scalingListType, useTransformSkip, lastPos);
     }
     else
     {
         int16_t* resiTmp = residual;
-        memset(coeff, 0, sizeof(coeff_t) * width * height);
+        memset(coeff, 0, sizeof(coeff_t) * tuSize * tuSize);
         primitives.blockfill_s[size](resiTmp, stride, 0);
     }
 
-    assert(width <= 32);
+    assert(tuSize <= 32);
     //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
     //===== update distortion =====
@@ -507,8 +506,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     }
 
     TextType ttype          = (chromaId == 1) ? TEXT_CHROMA_U : TEXT_CHROMA_V;
-    uint32_t width          = cu->getCUSize(absPartIdx)  >> (trDepth + m_hChromaShift);
-    uint32_t height         = width;
+    uint32_t tuSize         = cu->getCUSize(0) >> (trDepth + m_hChromaShift);
     uint32_t stride         = fencYuv->getCStride();
     pixel*   fenc           = (chromaId == 1) ? fencYuv->getCbAddr(absPartIdx) : fencYuv->getCrAddr(absPartIdx);
     pixel*   pred           = (chromaId == 1) ? predYuv->getCbAddr(absPartIdx) : predYuv->getCrAddr(absPartIdx);
@@ -523,13 +521,13 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     pixel*   reconIPred       = (chromaId == 1) ? cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder) : cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
     uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
     bool     useTransformSkipChroma = cu->getTransformSkip(absPartIdx, ttype);
-    int      part = partitionFromSizes(width, height);
+    int      part = partitionFromSizes(tuSize, tuSize);
 
     if (!bReusePred)
     {
         //===== init availability pattern =====
-        TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, chromaId);
-        pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
+        TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, chromaId);
+        pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, tuSize, m_predBuf);
 
         uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdx);
         //===== update chroma mode =====
@@ -540,14 +538,14 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         }
         chromaPredMode = (chFmt == CHROMA_422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
         //===== get prediction signal =====
-        predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
+        predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, tuSize, chFmt);
     }
 
     //===== get residual signal =====
-    assert(!((uint32_t)(size_t)fenc & (width - 1)));
-    assert(!((uint32_t)(size_t)pred & (width - 1)));
-    assert(!((uint32_t)(size_t)residual & (width - 1)));
-    int size = g_convertToBit[width];
+    assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
+    assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
+    assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+    int size = g_convertToBit[tuSize];
     primitives.calcresidual[size](fenc, pred, residual, stride);
 
     //===== transform and quantization =====
@@ -555,7 +553,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         //--- init rate estimation arrays for RDOQ ---
         if (useTransformSkipChroma ? m_cfg->bEnableRDOQTS : m_cfg->bEnableRDOQ)
         {
-            m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, ttype);
+            m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, tuSize, ttype);
         }
         //--- transform and quantization ---
         uint32_t absSum = 0;
@@ -574,7 +572,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
         m_trQuant->selectLambda(TEXT_CHROMA);
 
-        absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, ttype, absPartIdx, &lastPos, useTransformSkipChroma);
+        absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, tuSize, ttype, absPartIdx, &lastPos, useTransformSkipChroma);
 
         //--- set coded block flag ---
         cu->setCbfPartRange((((absSum > 0) ? 1 : 0) << origTrDepth), ttype, absPartIdx, absPartIdxStep);
@@ -584,18 +582,18 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         {
             int scalingListType = 0 + ttype;
             assert(scalingListType < 6);
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, residual, stride, coeff, width, scalingListType, useTransformSkipChroma, lastPos);
+            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, residual, stride, coeff, tuSize, scalingListType, useTransformSkipChroma, lastPos);
         }
         else
         {
             int16_t* resiTmp = residual;
-            memset(coeff, 0, sizeof(coeff_t) * width * height);
+            memset(coeff, 0, sizeof(coeff_t) * tuSize * tuSize);
             primitives.blockfill_s[size](resiTmp, stride, 0);
         }
     }
 
-    assert(((intptr_t)residual & (width - 1)) == 0);
-    assert(width <= 32);
+    assert(((intptr_t)residual & (tuSize - 1)) == 0);
+    assert(tuSize <= 32);
     //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
     //===== update distortion =====
@@ -852,8 +850,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         //----- code luma block with given intra prediction mode and store Cbf-----
         uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
-        uint32_t width        = cu->getCUSize(0) >> trDepth;
-        uint32_t height       = cu->getCUSize(0) >> trDepth;
+        uint32_t tuSize       = cu->getCUSize(0) >> trDepth;
         int      chFmt        = cu->getChromaFormat();
         uint32_t stride       = fencYuv->getStride();
         pixel*   fenc         = fencYuv->getLumaAddr(absPartIdx);
@@ -871,16 +868,15 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         bool     useTransformSkip = cu->getTransformSkip(absPartIdx, TEXT_LUMA);
 
         //===== init availability pattern =====
-
-        TComPattern::initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt);
+        TComPattern::initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, lumaPredMode);
         //===== get prediction signal =====
-        predIntraLumaAng(lumaPredMode, pred, stride, width);
+        predIntraLumaAng(lumaPredMode, pred, stride, tuSize);
 
         //===== get residual signal =====
-        assert(!((uint32_t)(size_t)fenc & (width - 1)));
-        assert(!((uint32_t)(size_t)pred & (width - 1)));
-        assert(!((uint32_t)(size_t)residual & (width - 1)));
-        primitives.calcresidual[(int)g_convertToBit[width]](fenc, pred, residual, stride);
+        assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
+        assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
+        assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+        primitives.calcresidual[(int)g_convertToBit[tuSize]](fenc, pred, residual, stride);
 
         //===== transform and quantization =====
         uint32_t absSum = 0;
@@ -889,31 +885,31 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
         m_trQuant->selectLambda(TEXT_LUMA);
-        absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, TEXT_LUMA, absPartIdx, &lastPos, useTransformSkip);
+        absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, tuSize, TEXT_LUMA, absPartIdx, &lastPos, useTransformSkip);
 
         //--- set coded block flag ---
         cu->setCbfSubParts((absSum ? 1 : 0) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
         //--- inverse transform ---
-        int size = g_convertToBit[width];
+        int size = g_convertToBit[tuSize];
         if (absSum)
         {
             int scalingListType = 0 + TEXT_LUMA;
             assert(scalingListType < 6);
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, scalingListType, useTransformSkip, lastPos);
+            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, tuSize, scalingListType, useTransformSkip, lastPos);
         }
         else
         {
             int16_t* resiTmp = residual;
-            memset(coeff, 0, sizeof(coeff_t) * width * height);
+            memset(coeff, 0, sizeof(coeff_t) * tuSize * tuSize);
             primitives.blockfill_s[size](resiTmp, stride, 0);
         }
 
         //Generate Recon
-        assert(width <= 32);
-        int part = partitionFromSizes(width, height);
+        assert(tuSize <= 32);
+        int part = partitionFromSizes(tuSize, tuSize);
         primitives.luma_add_ps[part](recon, stride, pred, residual, stride, stride);
-        primitives.blockcpy_pp(width, height, reconIPred, reconIPredStride, recon, stride);
+        primitives.blockcpy_pp(tuSize, tuSize, reconIPred, reconIPredStride, recon, stride);
     }
 
     if (bCheckSplit && !bCheckFull)
@@ -1417,8 +1413,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
             }
         }
 
-        uint32_t width  = cu->getCUSize(0) >> (actualTrDepth + m_hChromaShift);
-        uint32_t height = width;
+        uint32_t tuSize = cu->getCUSize(0) >> (actualTrDepth + m_hChromaShift);
         uint32_t stride = fencYuv->getCStride();
         const bool splitIntoSubTUs = (chFmt == CHROMA_422);
 
@@ -1455,17 +1450,17 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 }
                 chromaPredMode = (chFmt == CHROMA_422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
                 //===== init availability pattern =====
-                TComPattern::initAdiPatternChroma(cu, absTUPartIdxC, actualTrDepth, m_predBuf, m_predBufStride, m_predBufHeight, chromaId);
-                pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, height, m_predBuf);
+                TComPattern::initAdiPatternChroma(cu, absTUPartIdxC, actualTrDepth, m_predBuf, chromaId);
+                pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, tuSize, m_predBuf);
 
                 //===== get prediction signal =====
-                predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
+                predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, tuSize, chFmt);
 
                 //===== get residual signal =====
-                assert(!((uint32_t)(size_t)fenc & (width - 1)));
-                assert(!((uint32_t)(size_t)pred & (width - 1)));
-                assert(!((uint32_t)(size_t)residual & (width - 1)));
-                int size = g_convertToBit[width];
+                assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
+                assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
+                assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+                int size = g_convertToBit[tuSize];
                 primitives.calcresidual[size](fenc, pred, residual, stride);
 
                 //--- transform and quantization ---
@@ -1485,7 +1480,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
 
                 m_trQuant->selectLambda(TEXT_CHROMA);
 
-                absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, width, ttype, absTUPartIdxC, &lastPos, useTransformSkipChroma);
+                absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, tuSize, ttype, absTUPartIdxC, &lastPos, useTransformSkipChroma);
 
                 //--- set coded block flag ---
                 cu->setCbfPartRange((((absSum > 0) ? 1 : 0) << origTrDepth), ttype, absTUPartIdxC, tuIterator.m_absPartIdxStep);
@@ -1495,21 +1490,21 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 {
                     int scalingListType = 0 + ttype;
                     assert(scalingListType < 6);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absTUPartIdxC), REG_DCT, residual, stride, coeff, width, scalingListType, useTransformSkipChroma, lastPos);
+                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absTUPartIdxC), REG_DCT, residual, stride, coeff, tuSize, scalingListType, useTransformSkipChroma, lastPos);
                 }
                 else
                 {
                     int16_t* resiTmp = residual;
-                    memset(coeff, 0, sizeof(coeff_t) * width * height);
+                    memset(coeff, 0, sizeof(coeff_t) * tuSize * tuSize);
                     primitives.blockfill_s[size](resiTmp, stride, 0);
                 }
 
                 //===== reconstruction =====
-                assert(((intptr_t)residual & (width - 1)) == 0);
-                assert(width <= 32);
+                assert(((intptr_t)residual & (tuSize - 1)) == 0);
+                assert(tuSize <= 32);
 
                 // use square primitive
-                int part = partitionFromSizes(width, width);
+                int part = partitionFromSizes(tuSize, tuSize);
                 primitives.chroma[CHROMA_444].add_ps[part](recon, stride, pred, residual, stride, stride);
                 primitives.chroma[CHROMA_444].copy_pp[part](reconIPred, reconIPredStride, recon, stride);
             }
@@ -1547,13 +1542,13 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     uint32_t depth        = cu->getDepth(0);
     uint32_t initTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
     uint32_t numPU        = 1 << (2 * initTrDepth);
-    uint32_t puSize       = cu->getCUSize(0) >> initTrDepth;
+    uint32_t tuSize       = cu->getCUSize(0) >> initTrDepth;
     uint32_t qNumParts    = cu->getTotalNumPart() >> 2;
     uint32_t qPartNum     = cu->getPic()->getNumPartInCU() >> ((depth + initTrDepth) << 1);
     uint32_t overallDistY = 0;
     uint32_t candNum;
     uint64_t candCostList[FAST_UDI_MAX_RDMODE_NUM];
-    uint32_t puSizeIdx    = g_convertToBit[puSize]; // log2(puSize) - 2
+    uint32_t tuSizeIdx    = g_convertToBit[tuSize]; // log2(tuSize) - 2
     static const uint8_t intraModeNumFast[] = { 8, 8, 3, 3, 3 }; // 4x4, 8x8, 16x16, 32x32, 64x64
 
     //===== loop over partitions =====
@@ -1562,14 +1557,14 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
     {
         // Reference sample smoothing
-        TComPattern::initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_predBufStride, m_predBufHeight, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt);
+        TComPattern::initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
         const int numModesAvailable = 35; //total number of Intra modes
-        pixel*   fenc   = fencYuv->getLumaAddr(pu, puSize);
+        pixel*   fenc   = fencYuv->getLumaAddr(pu, tuSize);
         uint32_t stride = predYuv->getStride();
         uint32_t rdModeList[FAST_UDI_MAX_RDMODE_NUM];
-        int numModesForFullRD = intraModeNumFast[puSizeIdx];
+        int numModesForFullRD = intraModeNumFast[tuSizeIdx];
 
         bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)
@@ -1584,10 +1579,10 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             candNum = 0;
             uint32_t modeCosts[35];
 
-            pixel *above         = m_refAbove    + puSize - 1;
-            pixel *aboveFiltered = m_refAboveFlt + puSize - 1;
-            pixel *left          = m_refLeft     + puSize - 1;
-            pixel *leftFiltered  = m_refLeftFlt  + puSize - 1;
+            pixel *above         = m_refAbove    + tuSize - 1;
+            pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
+            pixel *left          = m_refLeft     + tuSize - 1;
+            pixel *leftFiltered  = m_refLeftFlt  + tuSize - 1;
 
             // 33 Angle modes once
             ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
@@ -1595,14 +1590,15 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             ALIGN_VAR_32(pixel, bufScale[32 * 32]);
             pixel _above[4 * 32 + 1];
             pixel _left[4 * 32 + 1];
-            pixel *aboveScale  = _above + 2 * 32;
-            pixel *leftScale   = _left + 2 * 32;
-            int scaleSize = puSize;
+            int scaleTuSize = tuSize;
             int scaleStride = stride;
             int costShift = 0;
 
-            if (puSize > 32)
+            if (tuSize > 32)
             {
+                pixel *aboveScale  = _above + 2 * 32;
+                pixel *leftScale   = _left + 2 * 32;
+
                 // origin is 64x64, we scale to 32x32 and setup required parameters
                 primitives.scale2D_64to32(bufScale, fenc, stride);
                 fenc = bufScale;
@@ -1613,7 +1609,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
                 primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
 
-                scaleSize = 32;
+                scaleTuSize = 32;
                 scaleStride = 32;
                 costShift = 2;
 
@@ -1624,17 +1620,17 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 leftFiltered  = leftScale;
             }
 
-            int log2SizeMinus2 = g_convertToBit[scaleSize];
+            int log2SizeMinus2 = g_convertToBit[scaleTuSize];
             pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
 
             // DC
-            primitives.intra_pred[log2SizeMinus2][DC_IDX](tmp, scaleStride, left, above, 0, (scaleSize <= 16));
+            primitives.intra_pred[log2SizeMinus2][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
             modeCosts[DC_IDX] = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
 
             pixel *abovePlanar   = above;
             pixel *leftPlanar    = left;
 
-            if (puSize >= 8 && puSize <= 32)
+            if (tuSize >= 8 && tuSize <= 32)
             {
                 abovePlanar = aboveFiltered;
                 leftPlanar  = leftFiltered;
@@ -1647,14 +1643,14 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             // Transpose NxN
             primitives.transpose[log2SizeMinus2](buf_trans, fenc, scaleStride);
 
-            primitives.intra_pred_allangs[log2SizeMinus2](tmp, above, left, aboveFiltered, leftFiltered, (scaleSize <= 16));
+            primitives.intra_pred_allangs[log2SizeMinus2](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
 
             for (uint32_t mode = 2; mode < numModesAvailable; mode++)
             {
                 bool modeHor = (mode < 18);
                 pixel *cmp = (modeHor ? buf_trans : fenc);
-                intptr_t srcStride = (modeHor ? scaleSize : scaleStride);
-                modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleSize * scaleSize)], scaleSize) << costShift;
+                intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
+                modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
             }
 
             uint32_t preds[3];
@@ -1773,7 +1769,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         if (pu != numPU - 1)
         {
             uint32_t zorder      = cu->getZorderIdxInCU() + partOffset;
-            int      part        = partitionFromSizes(puSize, puSize);
+            int      part        = partitionFromSizes(tuSize, tuSize);
             pixel*   dst         = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
             uint32_t dststride   = cu->getPic()->getPicYuvRec()->getStride();
             pixel*   src         = reconYuv->getLumaAddr(partOffset);
@@ -1820,44 +1816,44 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
     uint32_t maxMode = NUM_CHROMA_MODE;
     uint32_t modeList[NUM_CHROMA_MODE];
 
-    uint32_t width          = cu->getCUSize(0) >> (trDepth + m_hChromaShift);
-    uint32_t height         = cu->getCUSize(0) >> (trDepth + m_vChromaShift);
+    uint32_t tuSize         = cu->getCUSize(0) >> (trDepth + m_hChromaShift);
     int      chFmt          = cu->getChromaFormat();
     uint32_t stride         = fencYuv->getCStride();
-    int scaleWidth = width;
+    int scaleTuSize = tuSize;
     int scaleStride = stride;
     int costShift = 0;
 
-    if (width > 32)
+    if (tuSize > 32)
     {
-        scaleWidth = 32;
+        scaleTuSize = 32;
         scaleStride = 32;
         costShift = 2;
     }
 
-    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, 1);
-    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, 2);
+    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, 1);
+    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, 2);
     cu->getAllowedChromaDir(0, modeList);
     //----- check chroma modes -----
     for (uint32_t mode = minMode; mode < maxMode; mode++)
     {
+        uint32_t chromaPredMode = modeList[mode];
+        if (chromaPredMode == DM_CHROMA_IDX)
+        {
+            chromaPredMode = cu->getLumaIntraDir(0);
+        }
+        chromaPredMode = (chFmt == CHROMA_422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
         uint64_t cost = 0;
         for (int chromaId = 0; chromaId < 2; chromaId++)
         {
-            int sad = 0;
-            uint32_t chromaPredMode = modeList[mode];
-            if (chromaPredMode == DM_CHROMA_IDX)
-                chromaPredMode = cu->getLumaIntraDir(0);
             pixel* fenc = (chromaId > 0 ? fencYuv->getCrAddr(absPartIdx) : fencYuv->getCbAddr(absPartIdx));
             pixel* pred = (chromaId > 0 ? predYuv->getCrAddr(absPartIdx) : predYuv->getCbAddr(absPartIdx));
-            pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId + 1, height, m_predBuf);
+            pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId + 1, tuSize, m_predBuf);
 
             //===== get prediction signal =====
-            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width, height, chFmt);
-            int log2SizeMinus2 = g_convertToBit[scaleWidth];
+            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, scaleTuSize, chFmt);
+            int log2SizeMinus2 = g_convertToBit[scaleTuSize];
             pixelcmp_t sa8d = primitives.sa8d[log2SizeMinus2];
-            sad = sa8d(fenc, scaleStride, pred, scaleStride) << costShift;
-            cost += sad;
+            cost += sa8d(fenc, stride, pred, stride) << costShift;
         }
 
         //----- compare -----

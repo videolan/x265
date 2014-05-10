@@ -93,8 +93,6 @@ public:
     pixel*    m_refAboveFlt;
     pixel*    m_refLeft;
     pixel*    m_refLeftFlt;
-    int       m_predBufStride;
-    int       m_predBufHeight;
 
     TComPrediction();
     virtual ~TComPrediction();
@@ -105,9 +103,9 @@ public:
     void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList = REF_PIC_LIST_X, int partIdx = -1, bool bLuma = true, bool bChroma = true);
 
     // Angular Intra
-    void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, int width);
-    void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, int width, int height, int chFmt);
-    bool filteringIntraReferenceSamples(uint32_t dirMode, uint32_t width);
+    void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, int tuSize);
+    void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, int tuSize, int chFmt);
+    static bool filteringIntraReferenceSamples(uint32_t dirMode, uint32_t tuSize);
 };
 }
 //! \}
