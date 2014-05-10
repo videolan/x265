@@ -819,7 +819,7 @@ x265_param *x265_param_alloc();
 
 /* x265_param_free:
  *  Use x265_param_free() to release storage for an x265_param instance
- *  allocated by x26_param_alloc() */
+ *  allocated by x265_param_alloc() */
 void x265_param_free(x265_param *);
 
 /***
