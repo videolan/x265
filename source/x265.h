@@ -823,7 +823,7 @@ x265_param *x265_param_alloc();
 void x265_param_free(x265_param *);
 
 /***
- * Initialize an x265_param_t structure to default values
+ * Initialize an x265_param structure to default values
  */
 void x265_param_default(x265_param *param);
 
@@ -913,7 +913,7 @@ X265_API extern const char *x265_build_info_str;
 #define x265_encoder_open x265_encoder_glue2(x265_encoder_open_, X265_BUILD)
 
 /* x265_encoder_open:
- *      create a new encoder handler, all parameters from x265_param_t are copied */
+ *      create a new encoder handler, all parameters from x265_param are copied */
 x265_encoder* x265_encoder_open(x265_param *);
 
 /* x265_encoder_headers:
