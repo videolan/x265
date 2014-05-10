@@ -877,7 +877,7 @@ x265_picture *x265_picture_alloc();
 
 /* x265_picture_free:
  *  Use x265_picture_free() to release storage for an x265_picture instance
- *  allocated by x26_picture_alloc() */
+ *  allocated by x265_picture_alloc() */
 void x265_picture_free(x265_picture *);
 
 /***
