@@ -831,8 +831,7 @@ void x265_param_default(x265_param *param);
  *  set one parameter by name.
  *  returns 0 on success, or returns one of the following errors.
  *  note: BAD_VALUE occurs only if it can't even parse the value,
- *  numerical range is not checked until x265_encoder_open() or
- *  x265_encoder_reconfig().
+ *  numerical range is not checked until x265_encoder_open().
  *  value=NULL means "true" for boolean options, but is a BAD_VALUE for non-booleans. */
 #define X265_PARAM_BAD_NAME  (-1)
 #define X265_PARAM_BAD_VALUE (-2)
