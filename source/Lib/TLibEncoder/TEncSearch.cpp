@@ -3147,11 +3147,11 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 cu->setCbfPartRange(absSum[TEXT_CHROMA_V][tuIterator.m_section] ? setCbf : 0, TEXT_CHROMA_V, tuIterator.m_absPartIdxTURelCU, tuIterator.m_absPartIdxStep);
 
                 m_entropyCoder->encodeQtCbf(cu, tuIterator.m_absPartIdxTURelCU, tuIterator.m_absPartIdxStep, widthC, heightC, TEXT_CHROMA_U, trMode, true);
-                m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, tuIterator.m_absPartIdxTURelCU, widthC, heightC, depth, TEXT_CHROMA_U);
+                m_entropyCoder->encodeCoeffNxN(cu, coeffCurU + subTUBufferOffset, tuIterator.m_absPartIdxTURelCU, widthC, heightC, depth, TEXT_CHROMA_U);
                 singleBitsComp[TEXT_CHROMA_U][tuIterator.m_section] = m_entropyCoder->getNumberOfWrittenBits() - singleBitsPrev;
 
                 m_entropyCoder->encodeQtCbf(cu, tuIterator.m_absPartIdxTURelCU, tuIterator.m_absPartIdxStep, widthC, heightC, TEXT_CHROMA_V, trMode, true);
-                m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, tuIterator.m_absPartIdxTURelCU, widthC, heightC, depth, TEXT_CHROMA_V);
+                m_entropyCoder->encodeCoeffNxN(cu, coeffCurV + subTUBufferOffset, tuIterator.m_absPartIdxTURelCU, widthC, heightC, depth, TEXT_CHROMA_V);
                 uint32_t newBits = m_entropyCoder->getNumberOfWrittenBits();
                 singleBitsComp[TEXT_CHROMA_V][tuIterator.m_section] = newBits - (singleBitsPrev + singleBitsComp[TEXT_CHROMA_U][tuIterator.m_section]);
 
