@@ -13,7 +13,7 @@ variables and enumerations meant to be used by the end-user are present
 in this header.
 
 Where possible, x265 has tried to keep its public API as close as
-possible to x264'a public API. So those familiar with using x264 through
+possible to x264's public API. So those familiar with using x264 through
 its C interface will find x265 quite familiar.
 
 This file is meant to be read in-order; the narrative follows linearly
