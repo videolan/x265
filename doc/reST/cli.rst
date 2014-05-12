@@ -2,6 +2,8 @@
 Command Line Options
 *********************
 
+.. _string-options-ref:
+
 Note that unless an option is listed as **CLI ONLY** the option is also
 supported by x265_param_parse(). The CLI uses getopt to parse the
 command line options so the short or long versions may be used and the

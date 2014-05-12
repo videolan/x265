@@ -2,6 +2,8 @@
 Presets
 *******
 
+.. _preset-tune-ref:
+
 x265 has a number of predefined :option:`--preset` options that make
 trade-offs between encode speed (encoded frames per second) and
 compression efficiency (quality per bit in the bitstream).  The default
