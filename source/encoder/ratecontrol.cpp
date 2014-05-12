@@ -584,10 +584,9 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         }
         else if (framesDone == 0 && !isVbv)
         {
-            /* for ABR alone, clipe the first I frame qp within the range (ABR_INIT_QP_MIN, ABR_INIT_QP_MAX) to ensure quality. */
-            double lqmin = x265_qp2qScale(ABR_INIT_QP_MIN) / lstep;
+            /* for ABR alone, clip the first I frame qp */
             double lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * lstep;
-            q = Clip3(lqmin, lqmax, q);
+            q = X265_MIN(lqmax, q);
         }
 
         q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
