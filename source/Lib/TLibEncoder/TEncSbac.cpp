@@ -1328,7 +1328,7 @@ void TEncSbac::codeSliceFinish()
 
 void TEncSbac::xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
 {
-    assert(maxSymbol > 0);
+    X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
     m_binIf->encodeBin(symbol ? 1 : 0, scmModel[0]);
 
@@ -1369,7 +1369,7 @@ void TEncSbac::xWriteEpExGolomb(uint32_t symbol, uint32_t count)
     bins = (bins << count) | symbol;
     numBins += count;
 
-    assert(numBins <= 32);
+    X265_CHECK(numBins <= 32, "numBins too large\n");
     m_binIf->encodeBinsEP(bins, numBins);
 }
 
@@ -1387,9 +1387,8 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absG
     {
         length = codeNumber >> absGoRice;
 
-        assert(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)));
-
-        assert(length + 1 + absGoRice < 32);
+        X265_CHECK(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)), "codeNumber failure\n");
+        X265_CHECK(length + 1 + absGoRice < 32, "length failure\n");
         m_binIf->encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
     }
     else
@@ -1511,7 +1510,8 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         break;
 
     default:
-        assert(0);
+        X265_CHECK(0, "invalid CU partition\n");
+        break;
     }
 }
 
@@ -1591,7 +1591,7 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
         uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
         m_binIf->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
 
-        assert(unaryIdx < numCand);
+        X265_CHECK(unaryIdx < numCand, "unaryIdx out of range\n");
 
         if (unaryIdx != 0)
         {
@@ -1615,7 +1615,7 @@ void TEncSbac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth
     uint32_t ctx           = cu->getCtxSplitFlag(absPartIdx, depth);
     uint32_t currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;
 
-    assert(ctx < 3);
+    X265_CHECK(ctx < 3, "ctx out of range\n");
     m_binIf->encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tSplitFlag\n")
@@ -1662,7 +1662,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
     {
         if (predIdx[j] != -1)
         {
-            assert((predIdx[j] >= 0) && (predIdx[j] <= 2));
+            X265_CHECK((predIdx[j] >= 0) && (predIdx[j] <= 2), "predIdx out of range\n");
             // NOTE: Mapping
             //       0 = 0
             //       1 = 10
@@ -2037,7 +2037,7 @@ void TEncSbac::codeQtRootCbfZero(TComDataCU*)
  */
 void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx)
 {
-    assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
+    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     // swap
     if (scanIdx == SCAN_VER)
     {
@@ -2120,7 +2120,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     (void)depth;
 #endif // if ENC_DEC_TRACE
 
-    assert(trSize <= m_slice->getSPS()->getMaxTrSize());
+    X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");
 
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, trSize * trSize);
@@ -2331,7 +2331,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
 
 void TEncSbac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
 {
-    assert(maxSymbol > 0);
+    X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
     uint32_t isCodeLast = (maxSymbol > code) ? 1 : 0;
     uint32_t isCodeNonZero = (code != 0) ? 1 : 0;
@@ -2362,7 +2362,7 @@ void TEncSbac::codeSaoUflc(uint32_t length, uint32_t code)
  */
 void TEncSbac::codeSaoMerge(uint32_t code)
 {
-    assert((code == 0) || (code == 1));
+    X265_CHECK((code == 0) || (code == 1), "SAO code out of range\n");
     m_binIf->encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
 }
 
@@ -2430,7 +2430,7 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
  */
 void TEncSbac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype)
 {
-    assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
+    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
 
     for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
@@ -2500,7 +2500,7 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, 
     int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);
     uint32_t maxGroupIdx = log2TrSize * 2 - 1;
 
-    assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
+    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int ctx;
     const ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
     for (ctx = 0; ctx < maxGroupIdx; ctx++)

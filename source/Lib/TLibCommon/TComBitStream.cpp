@@ -82,8 +82,8 @@ void TComOutputBitstream::clear()
 
 void TComOutputBitstream::write(uint32_t bits, uint32_t numBits)
 {
-    assert(numBits <= 32);
-    assert(numBits == 32 || (bits & (~0 << numBits)) == 0);
+    X265_CHECK(numBits <= 32, "numBits out of range\n");
+    X265_CHECK(numBits == 32 || (bits & (~0 << numBits)) == 0, "numBits & bits out of range\n");
 
     /* any modulo 8 remainder of num_total_bits cannot be written this time,
      * and will be held until next time. */
@@ -127,7 +127,7 @@ void TComOutputBitstream::write(uint32_t bits, uint32_t numBits)
 void TComOutputBitstream::writeByte(uint32_t val)
 {
     // NOTE: we are here only in Cabac
-    assert(m_num_held_bits == 0);
+    X265_CHECK(!m_num_held_bits, "expecting m_num_held_bits = 0\n");
 
     push_back(val);
 }

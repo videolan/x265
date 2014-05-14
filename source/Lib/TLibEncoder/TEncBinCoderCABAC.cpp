@@ -74,13 +74,11 @@ void TEncBinCABAC::finish()
         // TODO: why write 0 bits?
         m_bitIf->write(0, uint32_t(m_fracBits >> 15));
         m_fracBits &= 32767;
-        assert(0);
+        X265_CHECK(0, "should not get here\n");
     }
 
     if (m_low >> (21 + m_bitsLeft))
     {
-        //assert( m_numBufferedBytes > 0 );
-        //assert( m_bufferedByte != 0xff );
         m_bitIf->writeByte(m_bufferedByte + 1);
         while (m_numBufferedBytes > 1)
         {
@@ -195,25 +193,25 @@ void TEncBinCABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
     uint32_t lps = g_lpsTable[state][((uint8_t)range >> 6)];
     range -= lps;
 
-    assert(lps >= 2);
+    X265_CHECK(lps >= 2, "lps is too small\n");
 
     int numBits = (uint32_t)(range - 256) >> 31;
     uint32_t low = m_low;
 
     // NOTE: MPS must be LOWEST bit in mstate
-    assert(((binValue ^ mstate) & 1) == (binValue != sbacGetMps(mstate)));
+    X265_CHECK(((binValue ^ mstate) & 1) == (binValue != sbacGetMps(mstate)), "binValue failure\n");
     if ((binValue ^ mstate) & 1)
     {
         // NOTE: lps is non-zero and the maximum of idx is 8 because lps less than 256
         //numBits   = g_renormTable[lps >> 3];
         unsigned long idx;
         CLZ32(idx, lps);
-        assert(state != 63 || idx == 1);
+        X265_CHECK(state != 63 || idx == 1, "state failure\n");
 
         numBits = 8 - idx;
         if (state >= 63)
             numBits = 6;
-        assert(numBits <= 6);
+        X265_CHECK(numBits <= 6, "numBits failure\n");
 
         low    += range;
         range   = lps;

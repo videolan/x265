@@ -247,9 +247,9 @@ void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, ui
         heightInBaseUnits = cu->getPic()->getNumPartInCUSize() >> depth;
     }
     const uint32_t numElem = dir == 0 ? heightInBaseUnits : widthInBaseUnits;
-    assert(numElem > 0);
-    assert(widthInBaseUnits > 0);
-    assert(heightInBaseUnits > 0);
+    X265_CHECK(numElem > 0, "numElem edge filter check\n");
+    X265_CHECK(widthInBaseUnits > 0, "widthInBaseUnits edge filter check\n");
+    X265_CHECK(heightInBaseUnits > 0, "heightInBaseUnits edge filter check\n");
     for (uint32_t i = 0; i < numElem; i++)
     {
         const uint32_t bsidx = xCalcBsIdx(cu, scanIdx, dir, edgeIdx, i);
@@ -357,7 +357,7 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx)
     uint32_t        tempPartIdx;
 
     // We can't here when DeblockingDisable flag is true
-    assert(!cu->getSlice()->getDeblockingFilterDisable());
+    X265_CHECK(!cu->getSlice()->getDeblockingFilterDisable(), "internal deblock state failure\n");
 
     if (x == 0)
     {

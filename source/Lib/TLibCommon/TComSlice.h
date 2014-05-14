@@ -869,9 +869,9 @@ public:
 
     bool getSeparateColorPlaneFlag()      { return m_colorPlaneFlag; }
 
-    static int getWinUnitX(int chromaFormatIdc) { assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return g_winUnitX[chromaFormatIdc]; }
+    static int getWinUnitX(int chromaFormatIdc) { return g_winUnitX[chromaFormatIdc]; }
 
-    static int getWinUnitY(int chromaFormatIdc) { assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return g_winUnitY[chromaFormatIdc]; }
+    static int getWinUnitY(int chromaFormatIdc) { return g_winUnitY[chromaFormatIdc]; }
 
     // structure
     void setPicWidthInLumaSamples(uint32_t u) { m_picWidthInLumaSamples = u; }
@@ -979,7 +979,7 @@ public:
     // AMP accuracy
     int       getAMPAcc(uint32_t depth) const { return m_iAMPAcc[depth]; }
 
-    void      setAMPAcc(uint32_t depth, int iAccu) { assert(depth < g_maxCUDepth);  m_iAMPAcc[depth] = iAccu; }
+    void      setAMPAcc(uint32_t depth, int iAccu) { X265_CHECK(depth < g_maxCUDepth, "AMP Acc depth\n");  m_iAMPAcc[depth] = iAccu; }
 
     // Bit-depth
     int      getBitDepthY() const { return m_bitDepthY; }
@@ -1004,7 +1004,7 @@ public:
 
     uint32_t      getMaxTLayers() const                   { return m_maxTLayers; }
 
-    void      setMaxTLayers(uint32_t maxTLayers)          { assert(maxTLayers <= MAX_TLAYER); m_maxTLayers = maxTLayers; }
+    void      setMaxTLayers(uint32_t maxTLayers)          { m_maxTLayers = maxTLayers; }
 
     bool      getTemporalIdNestingFlag() const        { return m_bTemporalIdNestingFlag; }
 
@@ -1360,7 +1360,7 @@ public:
 
     TComSPS*  getSPS()                        { return m_sps; }
 
-    void      setPPS(TComPPS* pps)            { assert(pps != NULL); m_pps = pps; m_ppsId = pps->getPPSId(); }
+    void      setPPS(TComPPS* pps)            { m_pps = pps; m_ppsId = pps->getPPSId(); }
 
     TComPPS*  getPPS()                        { return m_pps; }
 
@@ -1376,9 +1376,9 @@ public:
 
     bool      getSaoEnabledFlag()             { return m_saoEnabledFlag; }
 
-    void      setSaoEnabledFlagChroma(bool s) { m_saoEnabledFlagChroma = s; }   //!< set SAO Cb&Cr enabled flag
+    void      setSaoEnabledFlagChroma(bool s) { m_saoEnabledFlagChroma = s; }
 
-    bool      getSaoEnabledFlagChroma()       { return m_saoEnabledFlagChroma; }      //!< get SAO Cb&Cr enabled flag
+    bool      getSaoEnabledFlagChroma()       { return m_saoEnabledFlagChroma; }
 
     void      setRPS(TComReferencePictureSet *rps) { m_rps = rps; }
 

@@ -519,7 +519,7 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
     }
     else
     {
-        assert(0);
+        X265_CHECK(0, "unexpected wpScaling configuration\n");
     }
 
     if (refIdx0 < 0)
@@ -590,7 +590,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
     }
     else
     {
-        assert(0);
+        X265_CHECK(0, "unexpected biprediction configuration\n");
     }
 }
 
@@ -626,7 +626,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, ShortYuv* srcYu
     }
     else
     {
-        assert(0);
+        X265_CHECK(0, "unexpected weighte biprediction configuration\n");
     }
 }
 
@@ -648,9 +648,9 @@ void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* srcYu
 
     if (refIdx < 0)
     {
-        refIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
+        refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
     }
-    assert(refIdx >= 0);
+    X265_CHECK(refIdx >= 0, "invalid refidx\n");
 
     if (picList == REF_PIC_LIST_0)
     {
@@ -681,9 +681,9 @@ void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, ShortYuv* srcY
 
     if (refIdx < 0)
     {
-        refIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
+        refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
     }
-    assert(refIdx >= 0);
+    X265_CHECK(refIdx >= 0, "invalid refidx\n");
 
     if (picList == REF_PIC_LIST_0)
     {

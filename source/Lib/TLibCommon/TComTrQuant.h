@@ -178,22 +178,22 @@ public:
         if (log2TrSize == 2)
         {
             result.firstSignificanceMapContext = 0;
-            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4] == 0);
+            X265_CHECK(!significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4], "context failure\n");
         }
         else if (log2TrSize == 3)
         {
             result.firstSignificanceMapContext = 9;
-            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8] == 9);
+            X265_CHECK(significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8] == 9, "context failure\n");
             if (result.scanType != SCAN_DIAG && !ctype)
             {
                 result.firstSignificanceMapContext += 6;
-                assert(nonDiagonalScan8x8ContextOffset[ctype] == 6);
+                X265_CHECK(nonDiagonalScan8x8ContextOffset[ctype] == 6, "context failure\n");
             }
         }
         else
         {
             result.firstSignificanceMapContext = (ctype ? 12 : 21);
-            assert(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21));
+            X265_CHECK(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21), "context failure\n");
         }
     }
 

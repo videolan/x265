@@ -112,7 +112,7 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t cuSize, int unitSize, in
 
     uint32_t tmp = 4 * AMVP_DECIMATION_FACTOR / unitSize;
     tmp = tmp * tmp;
-    assert(tmp == (1 << (g_convertToBit[tmp] + 2)));
+    X265_CHECK(tmp == (1 << (g_convertToBit[tmp] + 2)), "unexpected pixel count\n");
     tmp = g_convertToBit[tmp] + 2;
     m_unitMask = ~((1 << tmp) - 1);
 
@@ -229,7 +229,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
 
     // CHECK_ME: why partStartIdx always negative
     int numElements = m_numPartitions;
-    assert(numElements > 0);
+    X265_CHECK(numElements > 0, "unexpected partition count\n");
 
     {
         memset(m_skipFlag,           false,         numElements * sizeof(*m_skipFlag));
@@ -377,7 +377,7 @@ void TComDataCU::initEstData(uint32_t depth)
 // initialize Sub partition
 void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp)
 {
-    assert(partUnitIdx < 4);
+    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
     uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
@@ -441,7 +441,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
 // initialize Sub partition
 void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
 {
-    assert(partUnitIdx < 4);
+    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
     uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
@@ -504,7 +504,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
 
 void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
 {
-    assert(partUnitIdx < 4);
+    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
     uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
@@ -544,7 +544,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
 // One of quarter parts overwritten by predicted sub part.
 void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis)
 {
-    assert(partUnitIdx < 4);
+    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
     if (isRDObasedAnalysis)
         m_totalCost += cu->m_totalCost;
 
@@ -1355,7 +1355,7 @@ bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth)
 
 void TComDataCU::setPartSizeSubParts(PartSize mode, uint32_t absPartIdx, uint32_t depth)
 {
-    assert(sizeof(*m_partSizes) == 1);
+    X265_CHECK(sizeof(*m_partSizes) == 1, "size check failure\n");
     memset(m_partSizes + absPartIdx, mode, m_pic->getNumPartInCU() >> (2 * depth));
 }
 
@@ -1366,13 +1366,13 @@ void TComDataCU::setCUTransquantBypassSubParts(bool flag, uint32_t absPartIdx, u
 
 void TComDataCU::setSkipFlagSubParts(bool skip, uint32_t absPartIdx, uint32_t depth)
 {
-    assert(sizeof(*m_skipFlag) == 1);
+    X265_CHECK(sizeof(*m_skipFlag) == 1, "size check failure\n");
     memset(m_skipFlag + absPartIdx, skip, m_pic->getNumPartInCU() >> (2 * depth));
 }
 
 void TComDataCU::setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth)
 {
-    assert(sizeof(*m_predModes) == 1);
+    X265_CHECK(sizeof(*m_predModes) == 1, "size check failure\n");
     memset(m_predModes + absPartIdx, eMode, m_pic->getNumPartInCU() >> (2 * depth));
 }
 
@@ -1424,7 +1424,7 @@ void TComDataCU::setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint
 template<typename T>
 void TComDataCU::setSubPart(T param, T* baseLCU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx)
 {
-    assert(sizeof(T) == 1); // Using memset() works only for types of size 1
+    X265_CHECK(sizeof(T) == 1, "size check failure\n"); // Using memset() works only for types of size 1
 
     uint32_t curPartNumQ = (m_pic->getNumPartInCU() >> (2 * cuDepth)) >> 2;
     switch (m_partSizes[cuAddr])
@@ -1455,7 +1455,7 @@ void TComDataCU::setSubPart(T param, T* baseLCU, uint32_t cuAddr, uint32_t cuDep
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part unit index\n");
         }
         break;
     case SIZE_2NxnD:
@@ -1471,7 +1471,7 @@ void TComDataCU::setSubPart(T param, T* baseLCU, uint32_t cuAddr, uint32_t cuDep
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part unit index\n");
         }
         break;
     case SIZE_nLx2N:
@@ -1491,7 +1491,7 @@ void TComDataCU::setSubPart(T param, T* baseLCU, uint32_t cuAddr, uint32_t cuDep
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part unit index\n");
         }
         break;
     case SIZE_nRx2N:
@@ -1511,11 +1511,11 @@ void TComDataCU::setSubPart(T param, T* baseLCU, uint32_t cuAddr, uint32_t cuDep
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part unit index\n");
         }
         break;
     default:
-        assert(0);
+        X265_CHECK(0, "unexpected part type\n");
     }
 }
 
@@ -1581,7 +1581,7 @@ uint8_t TComDataCU::getNumPartInter()
         break;
     case SIZE_nRx2N:    numPart = 2;
         break;
-    default:            assert(0);
+    default:            X265_CHECK(0, "unexpected part type\n");
         break;
     }
 
@@ -1630,7 +1630,7 @@ void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, in
         outPartAddr = (partIdx == 0) ? 0 : (m_numPartitions >> 2) + (m_numPartitions >> 4);
         break;
     default:
-        assert(m_partSizes[0] == SIZE_2Nx2N);
+        X265_CHECK(m_partSizes[0] == SIZE_2Nx2N, "unexpected part type\n");
         outWidth = cuSize;
         outHeight = cuSize;
         outPartAddr = 0;
@@ -1682,7 +1682,7 @@ void TComDataCU::deriveLeftRightTopIdxGeneral(uint32_t absPartIdx, uint32_t part
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part index\n");
         }
         break;
     case SIZE_nRx2N:
@@ -1696,11 +1696,11 @@ void TComDataCU::deriveLeftRightTopIdxGeneral(uint32_t absPartIdx, uint32_t part
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part index\n");
         }
         break;
     default:
-        assert(0);
+        X265_CHECK(0, "unexpected part type\n");
         break;
     }
 
@@ -1733,7 +1733,7 @@ void TComDataCU::deriveLeftBottomIdxGeneral(uint32_t absPartIdx, uint32_t partId
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part index\n");
         }
         break;
     case SIZE_2NxnD:
@@ -1747,7 +1747,7 @@ void TComDataCU::deriveLeftBottomIdxGeneral(uint32_t absPartIdx, uint32_t partId
         }
         else
         {
-            assert(0);
+            X265_CHECK(0, "unexpected part index\n");
         }
         break;
     case SIZE_nLx2N: puHeight = cuSize;
@@ -1755,7 +1755,7 @@ void TComDataCU::deriveLeftBottomIdxGeneral(uint32_t absPartIdx, uint32_t partId
     case SIZE_nRx2N: puHeight = cuSize;
         break;
     default:
-        assert(0);
+        X265_CHECK(0, "unexpected part type\n");
         break;
     }
 
@@ -1799,7 +1799,7 @@ void TComDataCU::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& ruiPartIdxLT,
         ruiPartIdxRT -= (partIdx == 1) ? 0 : m_numPartitions >> 4;
         break;
     default:
-        assert(0);
+        X265_CHECK(0, "unexpected part index\n");
         break;
     }
 }
@@ -1835,7 +1835,7 @@ void TComDataCU::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB)
         outPartIdxLB += (partIdx == 0) ? m_numPartitions >> 1 : (m_numPartitions >> 1) + (m_numPartitions >> 2) + (m_numPartitions >> 4);
         break;
     default:
-        assert(0);
+        X265_CHECK(0, "unexpected part index\n");
         break;
     }
 }
@@ -1877,7 +1877,7 @@ void TComDataCU::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB)
         outPartIdxRB += (partIdx == 0) ? (m_numPartitions >> 2) + (m_numPartitions >> 3) + (m_numPartitions >> 4) : m_numPartitions >> 1;
         break;
     default:
-        assert(0);
+        X265_CHECK(0, "unexpected part index\n");
         break;
     }
 }
@@ -2305,7 +2305,7 @@ void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, 
         yP   = row;
         break;
     default:
-        assert(m_partSizes[0] == SIZE_2Nx2N);
+        X265_CHECK(m_partSizes[0] == SIZE_2Nx2N, "unexpected part type\n");
         nPSW = cuSize;
         nPSH = cuSize;
         xP   = col;

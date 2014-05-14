@@ -241,34 +241,34 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 
     if (cu->getPredictionMode(absPartIdx) == MODE_INTRA && cu->getPartitionSize(absPartIdx) == SIZE_NxN && depth == cu->getDepth(absPartIdx))
     {
-        assert(subdiv);
+        X265_CHECK(subdiv, "subdivision state failure\n");
     }
     else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&  (cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1))
     {
         if (log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         {
-            assert(subdiv);
+            X265_CHECK(subdiv, "subdivision state failure\n");
         }
         else
         {
-            assert(!subdiv);
+            X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
     else if (log2TrafoSize > cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
     {
-        assert(subdiv);
+        X265_CHECK(subdiv, "subdivision state failure\n");
     }
     else if (log2TrafoSize == cu->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
     {
-        assert(!subdiv);
+        X265_CHECK(!subdiv, "subdivision state failure\n");
     }
     else if (log2TrafoSize == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
     {
-        assert(!subdiv);
+        X265_CHECK(!subdiv, "subdivision state failure\n");
     }
     else
     {
-        assert(log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
+        X265_CHECK(log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size failure\n");
         m_entropyCoderIf->codeTransformSubdivFlag(subdiv, 5 - log2TrafoSize);
     }
 
@@ -295,8 +295,8 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     }
     else
     {
-        assert(cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1));
-        assert(cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1));
+        X265_CHECK(cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1), "chroma xform size match failure\n");
+        X265_CHECK(cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1), "chroma xform size match failure\n");
     }
 
     if (subdiv)
@@ -342,8 +342,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 
         if (cu->getPredictionMode(absPartIdx) != MODE_INTRA && depth == cu->getDepth(absPartIdx) && !cu->getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu->getCbf(absPartIdx, TEXT_CHROMA_V, 0))
         {
-            assert(cu->getCbf(absPartIdx, TEXT_LUMA, 0));
-            //      printf( "saved one bin! " );
+            X265_CHECK(cu->getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
         }
         else
         {
@@ -487,7 +486,7 @@ void TEncEntropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx)
             {
                 if (interDir & (1 << refListIdx))
                 {
-                    assert(cu->getSlice()->getNumRefIdx(refListIdx) > 0);
+                    X265_CHECK(cu->getSlice()->getNumRefIdx(refListIdx) > 0, "numRefs should have been > 0\n");
 
                     encodeRefFrmIdxPU(cu, subPartIdx, refListIdx);
                     encodeMvdPU(cu, subPartIdx, refListIdx);
@@ -516,14 +515,14 @@ void TEncEntropy::encodeInterDirPU(TComDataCU* cu, uint32_t absPartIdx)
  */
 void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    assert(!cu->isIntra(absPartIdx));
+    X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
     {
         if ((cu->getSlice()->getNumRefIdx(list) == 1))
         {
             return;
         }
 
-        assert(cu->getInterDir(absPartIdx) & (1 << list));
+        X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
         {
             m_entropyCoderIf->codeRefFrmIdx(cu, absPartIdx, list);
         }
@@ -538,20 +537,15 @@ void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int lis
  */
 void TEncEntropy::encodeMvdPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    assert(!cu->isIntra(absPartIdx));
-
-    assert(cu->getInterDir(absPartIdx) & (1 << list));
-    {
-        m_entropyCoderIf->codeMvd(cu, absPartIdx, list);
-    }
+    X265_CHECK(!cu->isIntra(absPartIdx), "intra found where inter expected\n");
+    X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir check failed\n");
+    m_entropyCoderIf->codeMvd(cu, absPartIdx, list);
 }
 
 void TEncEntropy::encodeMVPIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    assert(cu->getInterDir(absPartIdx) & (1 << list));
-    {
-        m_entropyCoderIf->codeMVPIdx(cu->getMVPIdx(list, absPartIdx));
-    }
+    X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir check failed\n");
+    m_entropyCoderIf->codeMVPIdx(cu->getMVPIdx(list, absPartIdx));
 }
 
 void TEncEntropy::encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)

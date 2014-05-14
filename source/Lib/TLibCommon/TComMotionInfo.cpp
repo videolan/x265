@@ -83,7 +83,7 @@ void TComCUMvField::destroy()
 
 void TComCUMvField::clearMvField()
 {
-    assert(sizeof(*m_refIdx) == 1);
+    X265_CHECK(sizeof(*m_refIdx) == 1, "size check\n");
     memset(m_refIdx, NOT_VALID, m_numPartitions * sizeof(*m_refIdx));
 }
 
@@ -294,7 +294,7 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
         break;
     }
     default:
-        assert(0);
+        X265_CHECK(0, "unknown partition type\n");
         break;
     }
 }

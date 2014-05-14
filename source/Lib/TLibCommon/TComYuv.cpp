@@ -157,7 +157,7 @@ void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t w
 {
     int part = partitionFromSizes(width, height);
 
-    assert(width != 4 || height != 4);
+    X265_CHECK(width != 4 || height != 4, "4x4 partition detected\n");
 
     if (bLuma)
     {

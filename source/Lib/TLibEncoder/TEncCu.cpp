@@ -666,7 +666,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
             {
                 bool foundNonZeroCbf = false;
                 outTempCU->setQPSubCUs(outTempCU->getRefQP(targetPartIdx), outTempCU, 0, depth, foundNonZeroCbf);
-                assert(foundNonZeroCbf);
+                X265_CHECK(foundNonZeroCbf, "expected to find non-zero CBF\n");
             }
             else
             {
@@ -684,11 +684,9 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     // Copy Yuv data to picture Yuv
     xCopyYuv2Pic(pic, outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth);
 
-    // Assert if Best prediction mode is NONE
-    // Selected mode's RD-cost must be not MAX_INT64.
-    assert(outBestCU->getPartitionSize(0) != SIZE_NONE);
-    assert(outBestCU->getPredictionMode(0) != MODE_NONE);
-    assert(outBestCU->m_totalCost != MAX_INT64);
+    X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
+    X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
+    X265_CHECK(outBestCU->m_totalCost != MAX_INT64, "no best partition cost\n");
 }
 
 void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, PartSize parentSize)
@@ -1002,7 +1000,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
             {
                 bool foundNonZeroCbf = false;
                 outTempCU->setQPSubCUs(outTempCU->getRefQP(targetPartIdx), outTempCU, 0, depth, foundNonZeroCbf);
-                assert(foundNonZeroCbf);
+                X265_CHECK(foundNonZeroCbf, "expected to find non-zero CBF\n");
             }
             else
             {
@@ -1020,11 +1018,9 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     // Copy Yuv data to picture Yuv
     xCopyYuv2Pic(pic, outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth);
 
-    // Assert if Best prediction mode is NONE
-    // Selected mode's RD-cost must be not MAX_INT64.
-    assert(outBestCU->getPartitionSize(0) != SIZE_NONE);
-    assert(outBestCU->getPredictionMode(0) != MODE_NONE);
-    assert(outBestCU->m_totalCost != MAX_INT64);
+    X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
+    X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
+    X265_CHECK(outBestCU->m_totalCost != MAX_INT64, "no best partition cost\n");
 }
 
 /** finish encoding a cu and handle end-of-slice conditions
@@ -1211,7 +1207,7 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
  */
 void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode, TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest)
 {
-    assert(outTempCU->getSlice()->getSliceType() != I_SLICE);
+    X265_CHECK(outTempCU->getSlice()->getSliceType() != I_SLICE, "I slice not expected\n");
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
     int numValidMergeCand = 0;

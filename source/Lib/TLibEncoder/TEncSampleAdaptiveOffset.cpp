@@ -486,9 +486,8 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     int numLcu = m_numCuInWidth * m_numCuInHeight;
     if (m_countPreDblk == NULL)
     {
-        assert(m_offsetOrgPreDblk == NULL);
-
-        m_countPreDblk  = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+        X265_CHECK(!m_offsetOrgPreDblk, "m_offsetOrgPreDblk was not NULL\n");
+        m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
         m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     }
 
@@ -1219,7 +1218,7 @@ void TEncSampleAdaptiveOffset::resetStats()
  */
 void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam)
 {
-    assert(m_saoLcuBasedOptimization == false);
+    X265_CHECK(!m_saoLcuBasedOptimization, "SAO LCU mode failure\n"); 
     double costFinal = 0;
     saoParam->bSaoFlag[0] = 1;
     saoParam->bSaoFlag[1] = 0;
