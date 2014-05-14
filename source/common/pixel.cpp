@@ -395,7 +395,7 @@ void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, int16_t *b, intpt
     {
         for (int x = 0; x < bx; x++)
         {
-            assert((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)));
+            X265_CHECK((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)), "blockcopy error\n");
             a[x] = (pixel)b[x];
         }
 
@@ -511,7 +511,7 @@ void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride,
 {
     int x, y;
 
-    assert(!(width & 15));
+    X265_CHECK(!(width & 15), "weightp alignment error\n");
 
     for (y = 0; y <= height - 1; y++)
     {
@@ -654,12 +654,12 @@ float ssim_end_1(int s1, int s2, int ss, int s12)
 
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 #if HIGH_BIT_DEPTH
-    assert(X265_DEPTH == 10);
+    X265_CHECK(X265_DEPTH == 10, "ssim invalid depth\n");
 #define type float
     static const float ssim_c1 = (float)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64);
     static const float ssim_c2 = (float)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63);
 #else
-    assert(X265_DEPTH == 8);
+    X265_CHECK(X265_DEPTH == 8, "ssim invalid depth\n");
 #define type int
     static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5);
     static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5);
@@ -760,7 +760,7 @@ void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
     {
         for (int x = 0; x < bx; x++)
         {
-            assert((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)));
+            X265_CHECK((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)), "blockcopy pixel size fail\n");
             a[x] = (pixel)b[x];
         }
 

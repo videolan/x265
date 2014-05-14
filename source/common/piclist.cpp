@@ -28,7 +28,7 @@ using namespace x265;
 
 void PicList::pushFront(TComPic& pic)
 {
-    assert(!pic.m_next && !pic.m_prev); // ensure pic is not in a list
+    X265_CHECK(!pic.m_next && !pic.m_prev, "piclist: picture already in list\n"); // ensure pic is not in a list
     pic.m_next = m_start;
     pic.m_prev = NULL;
 
@@ -46,7 +46,7 @@ void PicList::pushFront(TComPic& pic)
 
 void PicList::pushBack(TComPic& pic)
 {
-    assert(!pic.m_next && !pic.m_prev); // ensure pic is not in a list
+    X265_CHECK(!pic.m_next && !pic.m_prev, "piclist: picture already in list\n"); // ensure pic is not in a list
     pic.m_next = NULL;
     pic.m_prev = m_end;
 
@@ -117,7 +117,7 @@ void PicList::remove(TComPic& pic)
         tmp = tmp->m_next;
     }
 
-    assert(tmp == &pic); // verify pic is in this list
+    X265_CHECK(tmp == &pic, "piclist: pic being removed was not in list\n"); // verify pic is in this list
 #endif
 
     m_count--;

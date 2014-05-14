@@ -38,7 +38,7 @@ using namespace x265;
 namespace {
 void dequant_scaling(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
 {
-    assert(num <= 32 * 32);
+    X265_CHECK(num <= 32 * 32, "dequant num too large\n");
 
     int valueToAdd;
 

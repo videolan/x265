@@ -78,12 +78,13 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         x265_log(NULL, X265_LOG_WARNING, "y4m: forcing reconstructed pixels to 8 bits\n");
     }
 #endif
-    assert(pic.colorSpace == colorSpace);
+
+    X265_CHECK(pic.colorSpace == colorSpace, "invalid color space\n");
 
 #if HIGH_BIT_DEPTH
 
     // encoder gave us short pixels, downshift, then write
-    assert(pic.bitDepth > 8);
+    X265_CHECK(pic.bitDepth > 8, "invalid bit depth\n");
     int shift = pic.bitDepth - 8;
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
@@ -102,7 +103,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
 
 #else // if HIGH_BIT_DEPTH
 
-    assert(pic.bitDepth == 8);
+    X265_CHECK(pic.bitDepth == 8, "invalid bit depth\n");
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {
         char *src = (char*)pic.planes[i];

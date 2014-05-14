@@ -446,7 +446,7 @@ void FrameEncoder::compressFrame()
     bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
     if (bUseWeightP || bUseWeightB)
     {
-        assert(slice->getPPS()->getUseWP());
+        X265_CHECK(slice->getPPS()->getUseWP(), "weightp not enabled in PPS, but in use\n");
         weightAnalyse(*slice, *m_cfg->param);
     }
 
@@ -1294,7 +1294,7 @@ TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)
         if (nalunits)
         {
             // move NALs from member variable to user's container
-            assert(m_nalCount <= MAX_NAL_UNITS);
+            X265_CHECK(m_nalCount <= MAX_NAL_UNITS, "NAL unit overflow\n");
             ::memcpy(nalunits, m_nalList, sizeof(NALUnitEBSP*) * m_nalCount);
             m_nalCount = 0;
         }

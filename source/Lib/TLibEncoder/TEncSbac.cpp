@@ -289,7 +289,7 @@ void TEncSbac::codeVPS(TComVPS* vps)
     WRITE_CODE(0,                                  6,        "vps_reserved_zero_6bits");
     WRITE_CODE(vps->getMaxTLayers() - 1,           3,        "vps_max_sub_layers_minus1");
     WRITE_FLAG(vps->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag");
-    assert(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag());
+    X265_CHECK(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag(), "layer flags not matchin\n");
     WRITE_CODE(0xffff,                            16,        "vps_reserved_ffff_16bits");
     codePTL(vps->getPTL(), true, vps->getMaxTLayers() - 1);
     WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
@@ -300,8 +300,8 @@ void TEncSbac::codeVPS(TComVPS* vps)
         WRITE_UVLC(vps->getMaxLatencyIncrease(i),           "vps_max_latency_increase_plus1[i]");
     }
 
-    assert(vps->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS);
-    assert(vps->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1);
+    X265_CHECK(vps->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS, "invalid HRD param\n");
+    X265_CHECK(vps->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1, "invalid layer\n");
     WRITE_CODE(vps->getMaxNuhReservedZeroLayerId(), 6,     "vps_max_nuh_reserved_zero_layer_id");
     vps->setMaxOpSets(1);
     WRITE_UVLC(vps->getMaxOpSets() - 1,                    "vps_max_op_sets_minus1");
@@ -471,7 +471,7 @@ void TEncSbac::codeSPS(TComSPS* sps)
         WRITE_FLAG(sps->getPCMFilterDisableFlag() ? 1 : 0,               "pcm_loop_filter_disable_flag");
     }
 
-    assert(sps->getMaxTLayers() > 0);
+    X265_CHECK(sps->getMaxTLayers() > 0, "max layers must be positive\n");
 
     TComRPSList* rpsList = sps->getRPSList();
     TComReferencePictureSet* rps;
@@ -879,7 +879,7 @@ void TEncSbac::xCodePredWeightTable(TComSlice* slice)
             }
         }
 
-        assert(totalSignalledWeightFlags <= 24);
+        X265_CHECK(totalSignalledWeightFlags <= 24, "total weights must be <= 24\n");
     }
 }
 
@@ -1011,7 +1011,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
     {
         for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
         {
-            assert(!!"slice_reserved_undetermined_flag[]");
+            X265_CHECK(0, "slice_reserved_undetermined_flag[]");
             WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
         }
 
@@ -1043,7 +1043,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
             {
                 for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
                 {
-                    assert(!rps->getUsed(picIdx));
+                    X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
                 }
             }
 
@@ -1134,7 +1134,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
                         else
                         {
                             int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
-                            assert(differenceInDeltaMSB >= 0);
+                            X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
                             WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
                         }
                         prevLSB = rps->getPocLSBLT(i);
@@ -1219,7 +1219,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
         {
             xCodePredWeightTable(slice);
         }
-        assert(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS);
+        X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
         if (!slice->isIntra())
         {
             WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
@@ -1299,7 +1299,7 @@ void  TEncSbac::codeTilesWPPEntryPoint(TComSlice* slice)
     while (maxOffset >= (1u << (offsetLenMinus1 + 1)))
     {
         offsetLenMinus1++;
-        assert(offsetLenMinus1 + 1 < 32);
+        X265_CHECK(offsetLenMinus1 + 1 < 32, "offsetLenMinus1 is too large\n");
     }
 
     WRITE_UVLC(numEntryPointOffsets, "num_entry_point_offsets");

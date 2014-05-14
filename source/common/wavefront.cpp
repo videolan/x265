@@ -66,7 +66,7 @@ void WaveFront::enqueueRow(int row)
     // thread safe
     uint64_t bit = 1LL << (row & 63);
 
-    assert(row < m_numRows);
+    X265_CHECK(row < m_numRows, "invalid row\n");
     ATOMIC_OR(&m_internalDependencyBitmap[row >> 6], bit);
     m_pool->pokeIdleThread();
 }
@@ -76,7 +76,7 @@ void WaveFront::enableRow(int row)
     // thread safe
     uint64_t bit = 1LL << (row & 63);
 
-    assert(row < m_numRows);
+    X265_CHECK(row < m_numRows, "invalid row\n");
     ATOMIC_OR(&m_externalDependencyBitmap[row >> 6], bit);
 }
 

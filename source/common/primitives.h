@@ -102,12 +102,12 @@ enum IDcts
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
 inline int partitionFromSizes(int width, int height)
 {
-    assert(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
+    X265_CHECK(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block width/height\n");
     extern uint8_t lumaPartitioneMapTable[];
     int w = (width >> 2) - 1;
     int h = (height >> 2) - 1;
     int part = (int)lumaPartitioneMapTable[(w << 4) + h];
-    assert(part != 255);
+    X265_CHECK(part != 255, "Invalid block width %d height %d\n", width, height);
     return part;
 }
 

@@ -244,7 +244,7 @@ uint32_t cpu_detect(void)
             if (model == 9 || model == 13 || model == 14)
             {
                 cpu &= ~(X265_CPU_SSE2 | X265_CPU_SSE3);
-                assert(!(cpu & (X265_CPU_SSSE3 | X265_CPU_SSE4)));
+                X265_CHECK(!(cpu & (X265_CPU_SSSE3 | X265_CPU_SSE4)), "unexpected CPU ID %d\n", cpu);
             }
             /* Detect Atom CPU */
             else if (model == 28)

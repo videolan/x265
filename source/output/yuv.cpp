@@ -58,8 +58,8 @@ bool YUVOutput::writePicture(const x265_picture& pic)
     uint64_t fileOffset = pic.poc;
     fileOffset *= frameSize;
 
-    assert(pic.colorSpace == colorSpace);
-    assert(pic.bitDepth == (int)depth);
+    X265_CHECK(pic.colorSpace == colorSpace, "invalid color space\n");
+    X265_CHECK(pic.bitDepth == (int)depth, "invalid bit depth\n");
 
 #if HIGH_BIT_DEPTH
     if (depth == 8)

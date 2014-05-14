@@ -164,23 +164,23 @@ void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
 
     if (cu->getPredictionMode(0) == MODE_INTRA && cu->getPartitionSize(0) == SIZE_NxN && trDepth == 0)
     {
-        assert(subdiv);
+        X265_CHECK(subdiv, "subdivision not present\n");
     }
     else if (trSizeLog2 > cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
     {
-        assert(subdiv);
+        X265_CHECK(subdiv, "subdivision not present\n");
     }
     else if (trSizeLog2 == cu->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
     {
-        assert(!subdiv);
+        X265_CHECK(!subdiv, "subdivision present\n");
     }
     else if (trSizeLog2 == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
     {
-        assert(!subdiv);
+        X265_CHECK(!subdiv, "subdivision present\n");
     }
     else
     {
-        assert(trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
+        X265_CHECK(trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size too small\n");
         if (bLuma)
         {
             m_entropyCoder->encodeTransformSubdivFlag(subdiv, 5 - trSizeLog2);
@@ -244,7 +244,7 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
     int chFmt           = cu->getChromaFormat();
     if ((ttype != TEXT_LUMA) && (trSizeLog2 == 2) && !(chFmt == CHROMA_444))
     {
-        assert(trDepth > 0);
+        X265_CHECK(trDepth > 0, "transform size too small\n");
         trDepth--;
         uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
         bool bFirstQ = ((absPartIdx % qpdiv) == 0);
@@ -272,7 +272,7 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
         break;
     case TEXT_CHROMA_V: coeff = m_qtTempCoeffCr[qtLayer];
         break;
-    default: assert(0);
+    default: X265_CHECK(0, "invalid texture type\n");
     }
 
     coeff += coeffOffset;
@@ -322,7 +322,7 @@ void TEncSearch::xEncIntraHeader(TComDataCU* cu, uint32_t trDepth, uint32_t absP
             uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
             if (trDepth == 0)
             {
-                assert(absPartIdx == 0);
+                X265_CHECK(absPartIdx == 0, "unexpected absPartIdx %d\n", absPartIdx);
                 for (uint32_t part = 0; part < 4; part++)
                 {
                     m_entropyCoder->encodeIntraDirModeLuma(cu, part * qtNumParts);
@@ -347,7 +347,7 @@ void TEncSearch::xEncIntraHeader(TComDataCU* cu, uint32_t trDepth, uint32_t absP
         else
         {
             uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
-            assert(trDepth > 0);
+            X265_CHECK(trDepth > 0, "unexpected trDepth %d\n", trDepth);
             if ((absPartIdx % qtNumParts) == 0)
                 m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx);
         }
@@ -410,7 +410,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 
     int16_t* reconQt        = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
 
-    assert(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE);
+    X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width is not max CU size\n");
 
     uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
     pixel*   reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
@@ -427,9 +427,9 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     }
 
     //===== get residual signal =====
-    assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
-    assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
-    assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+    X265_CHECK(!((uint32_t)(size_t)fenc & (tuSize - 1)), "fenc alignment check fail\n");
+    X265_CHECK(!((uint32_t)(size_t)pred & (tuSize - 1)), "pred alignment check fail\n");
+    X265_CHECK(!((uint32_t)(size_t)residual & (tuSize - 1)), "residual alignment check fail\n");
     primitives.calcresidual[(int)g_convertToBit[tuSize]](fenc, pred, residual, stride);
 
     //===== transform and quantization =====
@@ -458,7 +458,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     if (absSum)
     {
         int scalingListType = 0 + TEXT_LUMA;
-        assert(scalingListType < 6);
+        X265_CHECK(scalingListType < 6, "scalingListType is too large %d\n", scalingListType);
         m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, tuSize, scalingListType, useTransformSkip, lastPos);
     }
     else
@@ -468,7 +468,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
         primitives.blockfill_s[size](resiTmp, stride, 0);
     }
 
-    assert(tuSize <= 32);
+    X265_CHECK(tuSize <= 32, "tuSize is too large %d\n", tuSize);
     //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, reconQt, reconIPred, stride, MAX_CU_SIZE, reconIPredStride);
     //===== update distortion =====
@@ -494,7 +494,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
     if ((trSizeLog2 == 2) && !(chFmt == CHROMA_444))
     {
-        assert(trDepth > 0);
+        X265_CHECK(trDepth > 0, "trDepth should be non-zero\n");
         trDepth--;
         uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
         bool bFirstQ = ((absPartIdx % qpdiv) == 0);
@@ -542,9 +542,9 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     }
 
     //===== get residual signal =====
-    assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
-    assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
-    assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+    X265_CHECK(!((uint32_t)(size_t)fenc & (tuSize - 1)), "fenc alignment check fail\n");
+    X265_CHECK(!((uint32_t)(size_t)pred & (tuSize - 1)), "pred alignment check fail\n");
+    X265_CHECK(!((uint32_t)(size_t)residual & (tuSize - 1)), "residual alignment check fail\n");
     int size = g_convertToBit[tuSize];
     primitives.calcresidual[size](fenc, pred, residual, stride);
 
@@ -581,7 +581,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         if (absSum)
         {
             int scalingListType = 0 + ttype;
-            assert(scalingListType < 6);
+            X265_CHECK(scalingListType < 6, "scalingListType invalid %d\n", scalingListType);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, residual, stride, coeff, tuSize, scalingListType, useTransformSkipChroma, lastPos);
         }
         else
@@ -592,8 +592,8 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         }
     }
 
-    assert(((intptr_t)residual & (tuSize - 1)) == 0);
-    assert(tuSize <= 32);
+    X265_CHECK(((intptr_t)residual & (tuSize - 1)) == 0, "residual alignment check failure\n");
+    X265_CHECK(tuSize <= 32, "tuSize invalud\n");
     //===== reconstruction =====
     primitives.calcrecon[size](pred, residual, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
     //===== update distortion =====
@@ -810,7 +810,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         uint32_t qtLayer   = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
         uint32_t zorder    = cu->getZorderIdxInCU() + absPartIdx;
         int16_t* src       = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
-        assert(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE);
+        X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width is not max CU size\n");
         pixel*   dst       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
         uint32_t dststride = cu->getPic()->getPicYuvRec()->getStride();
         primitives.blockcpy_ps(width, height, dst, dststride, src, MAX_CU_SIZE);
@@ -873,9 +873,9 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         predIntraLumaAng(lumaPredMode, pred, stride, tuSize);
 
         //===== get residual signal =====
-        assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
-        assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
-        assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+        X265_CHECK(!((uint32_t)(size_t)fenc & (tuSize - 1)), "fenc alignment failure\n");
+        X265_CHECK(!((uint32_t)(size_t)pred & (tuSize - 1)), "pred alignment failure\n");
+        X265_CHECK(!((uint32_t)(size_t)residual & (tuSize - 1)), "residual alignment failure\n");
         primitives.calcresidual[(int)g_convertToBit[tuSize]](fenc, pred, residual, stride);
 
         //===== transform and quantization =====
@@ -895,7 +895,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         if (absSum)
         {
             int scalingListType = 0 + TEXT_LUMA;
-            assert(scalingListType < 6);
+            X265_CHECK(scalingListType < 6, "scalingListType %d\n", scalingListType);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, tuSize, scalingListType, useTransformSkip, lastPos);
         }
         else
@@ -906,7 +906,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         }
 
         //Generate Recon
-        assert(tuSize <= 32);
+        X265_CHECK(tuSize <= 32, "tuSize is too large\n");
         int part = partitionFromSizes(tuSize, tuSize);
         primitives.luma_add_ps[part](recon, stride, pred, residual, stride, stride);
         primitives.blockcpy_pp(tuSize, tuSize, reconIPred, reconIPredStride, recon, stride);
@@ -1008,7 +1008,7 @@ void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t a
     uint32_t   reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
     int16_t*   reconQt          = m_qtTempShortYuv[qtlayer].getLumaAddr(absPartIdx);
     primitives.blockcpy_ps(trSize, trSize, reconIPred, reconIPredStride, reconQt, MAX_CU_SIZE);
-    assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
+    X265_CHECK(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE, "width is not max CU size\n");
 }
 
 void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t stateU0V1Both2, const bool splitIntoSubTUs)
@@ -1025,7 +1025,7 @@ void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uin
         bool bChromaSame = false;
         if (trSizeLog2 == 2 && !(chFmt == CHROMA_444))
         {
-            assert(trDepth > 0);
+            X265_CHECK(trDepth > 0, "trDepth is invalid\n");
             trDepth--;
             uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
             bool bFirstQ = ((absPartIdx % qpdiv) == 0);
@@ -1075,7 +1075,7 @@ void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint
         bool bChromaSame = false;
         if (trSizeLog2 == 2 && !(chFmt == CHROMA_444))
         {
-            assert(trDepth > 0);
+            X265_CHECK(trDepth > 0, "invalid trDepth\n");
             trDepth--;
             uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
             bool bFirstQ = ((absPartIdx % qpdiv) == 0);
@@ -1141,7 +1141,7 @@ void TEncSearch::offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDept
 
     if ((trSizeLog2 == 2) && !(cu->getChromaFormat() == CHROMA_444))
     {
-        assert(actualTrDepth > 0);
+        X265_CHECK(actualTrDepth > 0, "actualTrDepth invalid\n");
         actualTrDepth--;
     }
 
@@ -1181,13 +1181,13 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
 
     if (trMode == trDepth)
     {
-        int      chFmt     = cu->getChromaFormat();
+        int chFmt = cu->getChromaFormat();
         bool checkTransformSkip = cu->getSlice()->getPPS()->getUseTransformSkip();
         uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
         uint32_t actualTrDepth = trDepth;
         if ((trSizeLog2 == 2) && !(chFmt == CHROMA_444))
         {
-            assert(trDepth > 0);
+            X265_CHECK(trDepth > 0, "invalid trDepth\n");
             actualTrDepth--;
             uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + actualTrDepth) << 1);
             bool bFirstQ = ((absPartIdx % qpdiv) == 0);
@@ -1347,7 +1347,7 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
         bool bChromaSame  = false;
         if ((trSizeLog2 == 2) && !(chFmt == CHROMA_444))
         {
-            assert(trDepth > 0);
+            X265_CHECK(trDepth > 0, "invalid trDepth\n");
             trDepth--;
             uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
             if ((absPartIdx % qpdiv) != 0)
@@ -1403,7 +1403,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
         uint32_t actualTrDepth = trDepth;
         if ((trSizeLog2 == 2) && !(chFmt == CHROMA_444))
         {
-            assert(trDepth > 0);
+            X265_CHECK(trDepth > 0, "invalid trDepth\n");
             actualTrDepth--;
             uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + actualTrDepth) << 1);
             bool bFirstQ = ((absPartIdx % qpdiv) == 0);
@@ -1457,9 +1457,9 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, tuSize, chFmt);
 
                 //===== get residual signal =====
-                assert(!((uint32_t)(size_t)fenc & (tuSize - 1)));
-                assert(!((uint32_t)(size_t)pred & (tuSize - 1)));
-                assert(!((uint32_t)(size_t)residual & (tuSize - 1)));
+                X265_CHECK(!((uint32_t)(size_t)fenc & (tuSize - 1)), "fenc alignment failure\n");
+                X265_CHECK(!((uint32_t)(size_t)pred & (tuSize - 1)), "pred alignment failure\n");
+                X265_CHECK(!((uint32_t)(size_t)residual & (tuSize - 1)), "residual alignment failure\n");
                 int size = g_convertToBit[tuSize];
                 primitives.calcresidual[size](fenc, pred, residual, stride);
 
@@ -1489,7 +1489,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 if (absSum)
                 {
                     int scalingListType = 0 + ttype;
-                    assert(scalingListType < 6);
+                    X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
                     m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absTUPartIdxC), REG_DCT, residual, stride, coeff, tuSize, scalingListType, useTransformSkipChroma, lastPos);
                 }
                 else
@@ -1500,8 +1500,8 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 }
 
                 //===== reconstruction =====
-                assert(((intptr_t)residual & (tuSize - 1)) == 0);
-                assert(tuSize <= 32);
+                X265_CHECK(((intptr_t)residual & (tuSize - 1)) == 0, "residual alignment check failed\n");
+                X265_CHECK(tuSize <= 32, "tuSize out of range\n");
 
                 // use square primitive
                 int part = partitionFromSizes(tuSize, tuSize);
@@ -1569,7 +1569,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)
         {
-            assert(numModesForFullRD < numModesAvailable);
+            X265_CHECK(numModesForFullRD < numModesAvailable, "numModesAvailable too large\n");
 
             for (int i = 0; i < numModesForFullRD; i++)
             {
@@ -2573,15 +2573,14 @@ void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_
     }
     else
     {
-        printf("Wrong!\n");
-        assert(0);
+        X265_CHECK(0, "xGetBlkBits: unknown cuMode\n");
     }
 }
 
 /* Check if using an alternative MVP would result in a smaller MVD + signal bits */
 void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost)
 {
-    assert(amvpInfo->m_mvCand[outMvpIdx] == mvPred);
+    X265_CHECK(amvpInfo->m_mvCand[outMvpIdx] == mvPred, "xCheckBestMVP: unexpected mvPred\n");
 
     m_me.setMVP(mvPred);
     int bestMvpIdx = outMvpIdx;
@@ -2759,7 +2758,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
     }
 
-    assert(bcost != MAX_INT64);
+    X265_CHECK(bcost != MAX_INT64, "no best cost\n");
 
     if (cu->getQtRootCbf(0))
     {
@@ -2830,7 +2829,7 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
 
 void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, ShortYuv* resiYuv, const uint32_t depth, bool curuseRDOQ)
 {
-    assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
+    X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "invalid depth\n");
     const uint32_t trMode = depth - cu->getDepth(0);
     const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> depth] + 2;
     uint32_t  trSizeCLog2     = trSizeLog2 - m_hChromaShift;
@@ -2844,7 +2843,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
     else
         bCheckFull = (trSizeLog2 <= cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize());
     const bool bCheckSplit = (trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
-    assert(bCheckFull || bCheckSplit);
+    X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
     bool bCodeChroma = true;
     uint32_t trModeC = trMode;
@@ -2893,13 +2892,13 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
 
             int scalingListType = 3 + TEXT_LUMA;
-            assert(scalingListType < 6);
+            X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, resiYuv->m_width,  coeffCurY, trWidth, scalingListType, false, lastPosY); //this is for inter mode only
         }
         else
         {
             int16_t *ptr =  resiYuv->getLumaAddr(absTUPartIdx);
-            assert(trWidth == trHeight);
+            X265_CHECK(trWidth == trHeight, "square transform expected\n");
             primitives.blockfill_s[(int)g_convertToBit[trWidth]](ptr, resiYuv->m_width, 0);
         }
         cu->setCbfSubParts(absSumY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
@@ -2944,13 +2943,13 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                     int scalingListType = 3 + TEXT_CHROMA_U;
-                    assert(scalingListType < 6);
+                    X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
                     m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absTUPartIdxC), REG_DCT, pcResiCurrU, resiYuv->m_cwidth, coeffCurU + subTUBufferOffset, trWidthC, scalingListType, false, lastPosU);
                 }
                 else
                 {
                     int16_t *ptr = resiYuv->getCbAddr(absTUPartIdxC);
-                    assert(trWidthC == trHeightC);
+                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, resiYuv->m_cwidth, 0);
                 }
                 if (absSumV)
@@ -2960,13 +2959,13 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                     int scalingListType = 3 + TEXT_CHROMA_V;
-                    assert(scalingListType < 6);
+                    X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
                     m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absTUPartIdxC), REG_DCT, curResiV, resiYuv->m_cwidth, coeffCurV + subTUBufferOffset, trWidthC, scalingListType, false, lastPosV);
                 }
                 else
                 {
                     int16_t *ptr =  resiYuv->getCrAddr(absTUPartIdxC);
-                    assert(trWidthC == trHeightC);
+                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, resiYuv->m_cwidth, 0);
                 }
                 cu->setCbfPartRange(absSumU ? setCbf : 0, TEXT_CHROMA_U, absTUPartIdxC, tuIterator.m_absPartIdxStep);
@@ -3025,7 +3024,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                                      uint32_t *     outZeroDist,
                                      bool           curuseRDOQ)
 {
-    assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
+    X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t trMode = depth - cu->getDepth(0);
     const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> depth] + 2;
     uint32_t  trSizeCLog2     = trSizeLog2 - m_hChromaShift;
@@ -3040,7 +3039,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     else
         bCheckFull = (trSizeLog2 <= cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize());
     const bool bCheckSplit = (trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
-    assert(bCheckFull || bCheckSplit);
+    X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
     bool bCodeChroma = true;
     uint32_t trModeC = trMode;
@@ -3185,8 +3184,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
 
             int scalingListType = 3 + TEXT_LUMA;
-            assert(scalingListType < 6);
-            assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
+            X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
+            X265_CHECK(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE, "width not full CU\n");
             m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, MAX_CU_SIZE,  coeffCurY, trWidth, scalingListType, false, lastPos[TEXT_LUMA][0]); //this is for inter mode only
 
             const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx), MAX_CU_SIZE);
@@ -3233,9 +3232,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         if (!absSum[TEXT_LUMA][0])
         {
             int16_t *ptr =  m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx);
-            assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
-
-            assert(trWidth == trHeight);
+            X265_CHECK(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE, "width not full CU\n");
+            X265_CHECK(trWidth == trHeight, "not square block\n");
             primitives.blockfill_s[(int)g_convertToBit[trWidth]](ptr, MAX_CU_SIZE, 0);
         }
         cu->setCbfSubParts(absSum[TEXT_LUMA][0] ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
@@ -3271,7 +3269,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                     int scalingListType = 3 + TEXT_CHROMA_U;
-                    assert(scalingListType < 6);
+                    X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
                     m_trQuant->invtransformNxN(cu->getCUTransquantBypass(tuIterator.m_absPartIdxTURelCU), REG_DCT, pcResiCurrU, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurU + subTUBufferOffset,
                                                widthC, scalingListType, false, lastPos[TEXT_CHROMA_U][tuIterator.m_section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth,
@@ -3323,7 +3321,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 {
                     int16_t *ptr = m_qtTempShortYuv[qtlayer].getCbAddr(tuIterator.m_absPartIdxTURelCU);
                     const uint32_t stride = m_qtTempShortYuv[qtlayer].m_cwidth;
-                    assert(widthC == heightC);
+                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[widthC]](ptr, stride, 0);
                 }
 
@@ -3339,7 +3337,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                     int scalingListType = 3 + TEXT_CHROMA_V;
-                    assert(scalingListType < 6);
+                    X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
                     m_trQuant->invtransformNxN(cu->getCUTransquantBypass(tuIterator.m_absPartIdxTURelCU), REG_DCT, curResiV, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurV + subTUBufferOffset,
                                                widthC, scalingListType, false, lastPos[TEXT_CHROMA_V][tuIterator.m_section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth,
@@ -3391,7 +3389,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 {
                     int16_t *ptr =  m_qtTempShortYuv[qtlayer].getCrAddr(tuIterator.m_absPartIdxTURelCU);
                     const uint32_t stride = m_qtTempShortYuv[qtlayer].m_cwidth;
-                    assert(widthC == heightC);
+                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[widthC]](ptr, stride, 0);
                 }
 
@@ -3408,7 +3406,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             uint64_t singleCostY = MAX_INT64;
 
             int16_t *curResiY = m_qtTempShortYuv[qtlayer].getLumaAddr(absTUPartIdx);
-            assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
+            X265_CHECK(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE, "width not full CU\n");
 
             coeff_t bestCoeffY[32 * 32];
             memcpy(bestCoeffY, coeffCurY, sizeof(coeff_t) * numSamplesLuma);
@@ -3445,8 +3443,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
 
                 int scalingListType = 3 + TEXT_LUMA;
-                assert(scalingListType < 6);
-                assert(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE);
+                X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
+                X265_CHECK(m_qtTempShortYuv[qtlayer].m_width == MAX_CU_SIZE, "width not full CU\n");
 
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, MAX_CU_SIZE,  coeffCurY, trWidth, scalingListType, true, lastPosTransformSkip[TEXT_LUMA][0]);
 
@@ -3547,7 +3545,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                     int scalingListType = 3 + TEXT_CHROMA_U;
-                    assert(scalingListType < 6);
+                    X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
                     m_trQuant->invtransformNxN(cu->getCUTransquantBypass(tuIterator.m_absPartIdxTURelCU), REG_DCT, curResiU, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurU + subTUBufferOffset,
                                                widthC, scalingListType, true, lastPosTransformSkip[TEXT_CHROMA_U][tuIterator.m_section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth,
@@ -3584,7 +3582,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
 
                     int scalingListType = 3 + TEXT_CHROMA_V;
-                    assert(scalingListType < 6);
+                    X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
                     m_trQuant->invtransformNxN(cu->getCUTransquantBypass(tuIterator.m_absPartIdxTURelCU), REG_DCT, curResiV, m_qtTempShortYuv[qtlayer].m_cwidth, coeffCurV + subTUBufferOffset,
                                                widthC, scalingListType, true, lastPosTransformSkip[TEXT_CHROMA_V][tuIterator.m_section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth,
@@ -3764,7 +3762,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 cu->setTransformSkipPartRange(bestTransformMode[TEXT_CHROMA_V][subTUIndex], TEXT_CHROMA_V, subTUPartIdx, partIdxesPerSubTU);
             }
         }
-        assert(bCheckFull);
+        X265_CHECK(bCheckFull, "check-full must be set\n");
         m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_TEST]);
     }
 
@@ -3802,7 +3800,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
 void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype)
 {
-    assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
+    X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t curTrMode   = depth - cu->getDepth(0);
     const uint32_t trMode      = cu->getTransformIdx(absPartIdx);
     const bool     bSubdiv     = curTrMode != trMode;
@@ -3815,7 +3813,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
         m_entropyCoder->encodeTransformSubdivFlag(bSubdiv, 5 - trSizeLog2);
     }
 
-    assert(cu->getPredictionMode(absPartIdx) != MODE_INTRA);
+    X265_CHECK(cu->getPredictionMode(absPartIdx) != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
 
     bool mCodeAll = true;
     uint32_t trWidth   = 1 << trSizeLog2;
@@ -3846,8 +3844,8 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
         }
         else
         {
-            assert(cu->getCbf(absPartIdx, TEXT_CHROMA_U, curTrMode) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, curTrMode - 1));
-            assert(cu->getCbf(absPartIdx, TEXT_CHROMA_V, curTrMode) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, curTrMode - 1));
+            X265_CHECK(cu->getCbf(absPartIdx, TEXT_CHROMA_U, curTrMode) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, curTrMode - 1), "chroma CBF not matching\n");
+            X265_CHECK(cu->getCbf(absPartIdx, TEXT_CHROMA_V, curTrMode) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, curTrMode - 1), "chroma CBF not matching\n");
         }
     }
 
@@ -3909,13 +3907,13 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
 
 void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial)
 {
-    assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
+    X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t curTrMode = depth - cu->getDepth(0);
     const uint32_t trMode    = cu->getTransformIdx(absPartIdx);
 
     if (curTrMode == trMode)
     {
-        int            chFmt     = cu->getChromaFormat();
+        int            chFmt      = cu->getChromaFormat();
         const uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> depth] + 2;
         uint32_t  trSizeCLog2     = trSizeLog2 - m_hChromaShift;
         const uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;

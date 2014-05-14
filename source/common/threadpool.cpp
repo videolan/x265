@@ -231,7 +231,7 @@ ThreadPool *ThreadPool::allocThreadPool(int numthreads)
 
 ThreadPool *ThreadPool::getThreadPool()
 {
-    assert(ThreadPoolImpl::s_instance);
+    X265_CHECK(ThreadPoolImpl::s_instance, "getThreadPool() called prior to allocThreadPool()\n");
     return ThreadPoolImpl::s_instance;
 }
 
@@ -239,7 +239,7 @@ void ThreadPoolImpl::release()
 {
     if (--m_referenceCount == 0)
     {
-        assert(this == ThreadPoolImpl::s_instance);
+        X265_CHECK(this == ThreadPoolImpl::s_instance, "multiple thread pool instances detected\n");
         ThreadPoolImpl::s_instance = NULL;
         this->Stop();
         delete this;
@@ -424,7 +424,7 @@ void JobProvider::flush()
 void JobProvider::enqueue()
 {
     // Add this provider to the end of the thread pool's job provider list
-    assert(!m_nextProvider && !m_prevProvider && m_pool);
+    X265_CHECK(!m_nextProvider && !m_prevProvider && m_pool, "job provider was already queued\n");
     m_pool->enqueueJobProvider(*this);
     m_pool->pokeIdleThread();
 }
