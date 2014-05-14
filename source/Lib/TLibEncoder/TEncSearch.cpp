@@ -2659,8 +2659,6 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     {
         cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
 
-        outResiYuv->clear();
-
         predYuv->copyToPartYuv(outReconYuv, 0);
         //Luma
         int part = partitionFromSizes(width, height);
@@ -2742,11 +2740,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     if (cost < bcost)
     {
-        if (!cu->getQtRootCbf(0))
-        {
-            outBestResiYuv->clear();
-        }
-        else
+        if (cu->getQtRootCbf(0))
         {
             xSetResidualQTData(cu, 0, 0, outBestResiYuv, cu->getDepth(0), true);
         }

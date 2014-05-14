@@ -1354,8 +1354,6 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
 
-    m_tmpRecoYuv[depth]->clear(); // TODO: Are either of these clears necessary?
-    m_tmpResiYuv[depth]->clear();
     if (m_search->predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG, true))
     {
         m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
