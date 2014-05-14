@@ -1820,13 +1820,11 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
     int      chFmt          = cu->getChromaFormat();
     uint32_t stride         = fencYuv->getCStride();
     int scaleTuSize = tuSize;
-    int scaleStride = stride;
     int costShift = 0;
 
     if (tuSize > 32)
     {
         scaleTuSize = 32;
-        scaleStride = 32;
         costShift = 2;
     }
 
