@@ -1148,7 +1148,7 @@ int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
 {
     int64_t score = 0;
     int *rowSatd = frames[b]->rowSatds[b - p0][p1 - b];
-    double *qp_offset = IS_X265_TYPE_B(frames[b]->sliceType) ? frames[b]->qpAqOffset : frames[b]->qpOffset;
+    double *qp_offset = (frames[b]->sliceType = X265_TYPE_B) ? frames[b]->qpAqOffset : frames[b]->qpOffset;
 
     x265_emms();
     for (int cuy = heightInCU - 1; cuy >= 0; cuy--)
