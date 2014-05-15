@@ -915,6 +915,14 @@ X265_API extern const char *x265_build_info_str;
  *      create a new encoder handler, all parameters from x265_param are copied */
 x265_encoder* x265_encoder_open(x265_param *);
 
+/* x265_encoder_parameters:
+ *      copies the current internal set of parameters to the pointer provided
+ *      by the caller.  useful when the calling application needs to know
+ *      how x265_encoder_open has changed the parameters.
+ *      note that the data accessible through pointers in the returned param struct
+ *      (e.g. filenames) should not be modified by the calling application. */
+void x265_encoder_parameters(x265_encoder *, x265_param *);
+
 /* x265_encoder_headers:
  *      return the SPS and PPS that will be used for the whole stream.
  *      *pi_nal is the number of NAL units outputted in pp_nal.

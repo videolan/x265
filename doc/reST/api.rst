@@ -136,7 +136,7 @@ Finally you configure any remaining options by name using repeated calls to::
 	int x265_param_parse(x265_param *p, const char *name, const char *value);
 
 See :ref:`string options <string-options-ref>` for the list of options (and their
-descriptions) which can be set by **x265_param_parse**.
+descriptions) which can be set by **x265_param_parse()**.
 
 After the encoder has been created, you may release the param structure::
 
@@ -152,6 +152,18 @@ After the encoder has been created, you may release the param structure::
 	versioned in such a way that we prevent linkage against a build of
 	x265 that does not match the version of the header you are compiling
 	against. This is function of the X265_BUILD macro.
+
+**x265_encoder_parameters()** may be used to get a copy of the param
+structure from the encoder after it has been opened, in order to see the
+changes made to the parameters for auto-detection and other reasons::
+
+	/* x265_encoder_parameters:
+	 *      copies the current internal set of parameters to the pointer provided
+	 *      by the caller.  useful when the calling application needs to know
+	 *      how x265_encoder_open has changed the parameters.
+	 *      note that the data accessible through pointers in the returned param struct
+	 *      (e.g. filenames) should not be modified by the calling application. */
+	void x265_encoder_parameters(x265_encoder *, x265_param *);                                                                      
 
 Pictures
 ========

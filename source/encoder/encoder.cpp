@@ -1199,6 +1199,8 @@ void Encoder::initPPS(TComPPS *pps)
 
 void Encoder::configure(x265_param *p)
 {
+    this->param = p;
+
     // Trim the thread pool if WPP is disabled
     if (!p->bEnableWavefront)
         p->poolNumThreads = 1;

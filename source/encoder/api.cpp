@@ -30,11 +30,16 @@
 using namespace x265;
 
 extern "C"
-x265_encoder *x265_encoder_open(x265_param *param)
+x265_encoder *x265_encoder_open(x265_param *p)
 {
+    if (!p)
+        return NULL;
+
+    x265_param *param = X265_MALLOC(x265_param, 1);
     if (!param)
         return NULL;
 
+    memcpy(param, p, sizeof(x265_param));
     x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
     x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
 
@@ -53,14 +58,6 @@ x265_encoder *x265_encoder_open(x265_param *param)
         encoder->configure(param);
         determineLevel(*param, encoder->m_profile, encoder->m_level, encoder->m_levelTier);
 
-        encoder->param = X265_MALLOC(x265_param, 1);
-        if (!encoder->param)
-        {
-            encoder->destroy();
-            return NULL;
-        }
-
-        memcpy(encoder->param, param, sizeof(x265_param));
         x265_print_params(param);
         encoder->create();
         encoder->init();
@@ -101,6 +98,16 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     }
 
     return ret;
+}
+
+extern "C"
+void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
+{
+    if (enc && out)
+    {
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        memcpy(out, encoder->param, sizeof(x265_param));
+    }
 }
 
 extern "C"
