@@ -82,16 +82,16 @@ public:
 
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
     {
-        X265_CHECK(abs(distortion + ((bits * m_lambdaMotionSSE + 128) >> 8)) -
-                      (distortion + (float)bits * m_lambdaMotionSSE / 256.0) < 2,
+        X265_CHECK(abs((float)((bits * m_lambdaMotionSSE + 128) >> 8) -
+                       (float)bits * m_lambdaMotionSSE / 256.0) < 2,
                    "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambdaMotionSSE);
         return distortion + ((bits * m_lambdaMotionSSE + 128) >> 8);
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
     {
-        X265_CHECK(abs(sadCost + ((bits * m_lambdaMotionSAD + 128) >> 8)) -
-                      (sadCost + (float)bits * m_lambdaMotionSAD / 256.0) < 2,
+        X265_CHECK(abs((float)((bits * m_lambdaMotionSAD + 128) >> 8) -
+                       (float)bits * m_lambdaMotionSAD / 256.0) < 2,
                    "calcRdSADCost wrap detected dist: %d, bits %d, lambda: %d\n", sadCost, bits, (int)m_lambdaMotionSAD);
         return sadCost + ((bits * m_lambdaMotionSAD + 128) >> 8);
     }
@@ -100,16 +100,16 @@ public:
 
     inline uint32_t scaleChromaDistCb(uint32_t dist)
     {
-        X265_CHECK(abs(((dist * m_cbDistortionWeight + 128) >> 8) -
-                      (float)dist * m_cbDistortionWeight / 256.0) < 2,
+        X265_CHECK(abs((float)((dist * m_cbDistortionWeight + 128) >> 8) -
+                       (float)dist * m_cbDistortionWeight / 256.0) < 2,
                    "scaleChromaDistCb wrap detected dist: %d, lambda: %d\n", dist, (int)m_cbDistortionWeight);
         return (uint32_t)(((dist * m_cbDistortionWeight) + 128) >> 8);
     }
 
     inline uint32_t scaleChromaDistCr(uint32_t dist)
     {
-        X265_CHECK(abs(((dist * m_crDistortionWeight + 128) >> 8) -
-                      (float)dist * m_crDistortionWeight / 256.0) < 2,
+        X265_CHECK(abs((float)((dist * m_crDistortionWeight + 128) >> 8) -
+                       (float)dist * m_crDistortionWeight / 256.0) < 2,
                    "scaleChromaDistCr wrap detected dist: %d, lambda: %d\n", dist, (int)m_crDistortionWeight);
         return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8);
     }
