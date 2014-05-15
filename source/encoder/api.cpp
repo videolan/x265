@@ -56,6 +56,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
     {
         // these may change params for auto-detect, etc
         encoder->configure(param);
+        enforceLevel(*param);
         determineLevel(*param, encoder->m_profile, encoder->m_level, encoder->m_levelTier);
 
         x265_print_params(param);

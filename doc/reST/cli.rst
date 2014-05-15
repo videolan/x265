@@ -520,6 +520,22 @@ Slice decision options
 
 	Use B-frames as references, when possible. Default enabled
 
+.. option:: --level <integer|float>
+
+	Minimum decoder requirement level. Defaults to -1, which implies
+	auto-detection by the encoder. If specified, the encoder will
+	attempt to bring the encode specifications within that specified
+	level. If the encoder is unable to reach the level it issues a
+	warning and emits the actual decoder requirement. If the requested
+	requirement level is higher than the actual level, the actual
+	requirement level is signaled.
+
+	The value is specified as a float or as an integer with the level
+	times 10, for example level **5.1** is specified as "5.1" or "51",
+	and level **5.0** is specified as "5.0" or "50".
+
+	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+
 Quality, rate control and rate distortion options
 =================================================
 

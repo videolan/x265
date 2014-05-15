@@ -30,7 +30,7 @@
 
 namespace x265 {
 void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name& level, Level::Tier& tier);
-void enforceLevel(x265_param& param, int level, bool bHighTier);
+void enforceLevel(x265_param& param);
 }
 
 #endif // ifndef X265_LEVEL_H

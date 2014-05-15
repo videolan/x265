@@ -35,25 +35,26 @@ typedef struct
     uint32_t minCompressionRatio;
     Level::Name levelEnum;
     const char* name;
+    int levelIdc;
 } LevelSpec;
 
 LevelSpec levels[] =
 {
-    { MAX_UINT, MAX_UINT,   MAX_UINT, MAX_UINT, 0, Level::NONE,     "none" },
-    { 36864,    552960,     128,      MAX_UINT, 2, Level::LEVEL1,   "1" },
-    { 122880,   3686400,    1500,     MAX_UINT, 2, Level::LEVEL2,   "2" },
-    { 245760,   7372800,    3000,     MAX_UINT, 2, Level::LEVEL2_1, "2.1" },
-    { 552960,   16588800,   6000,     MAX_UINT, 2, Level::LEVEL3,   "3" },
-    { 983040,   33177600,   10000,    MAX_UINT, 2, Level::LEVEL3_1, "3.1" },
-    { 2228224,  66846720,   12000,    30000,    4, Level::LEVEL4,   "4" },
-    { 2228224,  133693440,  20000,    50000,    4, Level::LEVEL4_1, "4.1" },
-    { 8912896,  267386880,  25000,    100000,   6, Level::LEVEL5,   "5" },
-    { 8912896,  534773760,  40000,    160000,   8, Level::LEVEL5_1, "5.1" },
-    { 8912896,  1069547520, 60000,    240000,   8, Level::LEVEL5_2, "5.2" },
-    { 35651584, 1069547520, 60000,    240000,   8, Level::LEVEL6,   "6" },
-    { 35651584, 2139095040, 120000,   480000,   8, Level::LEVEL6_1, "6.1" },
-    { 35651584, 4278190080U, 240000,  800000,   6, Level::LEVEL6_2, "6.2" },
-    { 0, 0, 0, 0, 0, Level::NONE, "\0" }
+    { MAX_UINT, MAX_UINT,   MAX_UINT, MAX_UINT, 0, Level::NONE,     "none", 0 },
+    { 36864,    552960,     128,      MAX_UINT, 2, Level::LEVEL1,   "1",   10 },
+    { 122880,   3686400,    1500,     MAX_UINT, 2, Level::LEVEL2,   "2",   20 },
+    { 245760,   7372800,    3000,     MAX_UINT, 2, Level::LEVEL2_1, "2.1", 21 },
+    { 552960,   16588800,   6000,     MAX_UINT, 2, Level::LEVEL3,   "3",   30 },
+    { 983040,   33177600,   10000,    MAX_UINT, 2, Level::LEVEL3_1, "3.1", 31 },
+    { 2228224,  66846720,   12000,    30000,    4, Level::LEVEL4,   "4",   40 },
+    { 2228224,  133693440,  20000,    50000,    4, Level::LEVEL4_1, "4.1", 41 },
+    { 8912896,  267386880,  25000,    100000,   6, Level::LEVEL5,   "5",   50 },
+    { 8912896,  534773760,  40000,    160000,   8, Level::LEVEL5_1, "5.1", 51 },
+    { 8912896,  1069547520, 60000,    240000,   8, Level::LEVEL5_2, "5.2", 52 },
+    { 35651584, 1069547520, 60000,    240000,   8, Level::LEVEL6,   "6",   60 },
+    { 35651584, 2139095040, 120000,   480000,   8, Level::LEVEL6_1, "6.1", 61 },
+    { 35651584, 4278190080U, 240000,  800000,   6, Level::LEVEL6_2, "6.2", 62 },
+    { 0, 0, 0, 0, 0, Level::NONE, "\0", 0 }
 };
 
 /* determine minimum decoder level requiremented to decode the described video */
@@ -82,7 +83,7 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
 
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
-    uint32_t bitrate = param.rc.bitrate; /* TODO: vbv-maxrate? */
+    uint32_t bitrate = param.rc.bitrate ? param.rc.bitrate : param.rc.vbvMaxBitrate;
 
     /* TODO; Keep in sync with encoder.cpp, or pass in maxDecPicBuffering */
     int numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
@@ -145,11 +146,25 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
  * decoder meeting this level of requirement.  Some parameters (resolution and
  * frame rate) are non-negotiable and thus this function may fail. In those
  * circumstances it will be quite noisy */
-void enforceLevel(x265_param& param, int level, bool bHighTier)
+void enforceLevel(x265_param& param)
 {
+    if (param.levelIdc < 0)
+        return;
+
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
+    int level = 1;
+    while (levels[level].levelIdc < param.levelIdc && levels[level].levelIdc)
+        level++;
     LevelSpec& l = levels[level];
+
+    if (!l.levelIdc)
+    {
+        x265_log(&param, X265_LOG_WARNING, "specified level does not exist\n");
+        return;
+    }
+    if (l.levelIdc != param.levelIdc)
+        x265_log(&param, X265_LOG_WARNING, "Using nearest matching level %s\n", l.name);
 
     bool ok = true;
 
@@ -164,15 +179,10 @@ void enforceLevel(x265_param& param, int level, bool bHighTier)
     else if (samplesPerSec > l.maxLumaSamplesPerSecond)
         x265_log(&param, X265_LOG_WARNING, "frame rate is out of range for specified level\n");
 
-    if (bHighTier && param.rc.bitrate > (int)l.maxBitrateHigh && l.maxBitrateHigh != MAX_UINT)
+    if (param.rc.bitrate > (int)l.maxBitrateHigh && l.maxBitrateHigh != MAX_UINT)
     {
         param.rc.bitrate = l.maxBitrateHigh;
         x265_log(&param, X265_LOG_INFO, "Lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
-    }
-    else if (!bHighTier && param.rc.bitrate > (int)l.maxBitrateMain)
-    {
-        param.rc.bitrate = l.maxBitrateMain;
-        x265_log(&param, X265_LOG_INFO, "Lowering target bitrate to Main tier limit of %dKbps\n", param.rc.bitrate);
     }
 
     const int MaxDpbPicBuf = 6;
@@ -198,7 +208,7 @@ void enforceLevel(x265_param& param, int level, bool bHighTier)
 
     if (param.maxNumReferences != savedRefCount)
     {
-        x265_log(&param, X265_LOG_INFO, "Lowering max references to %d\n", param.maxNumReferences);
+        x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
     }
 }
 }

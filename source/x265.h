@@ -386,6 +386,16 @@ typedef struct x265_param
      * minimum requirement. All valid HEVC heights are supported */
     int       sourceHeight;
 
+    /* Minimum decoder requirement level. Defaults to -1, which implies auto-
+     * detection by the encoder. If specified, the encoder will attempt to bring
+     * the encode specifications within that specified level. If the encoder is
+     * unable to reach the level it issues a warning and emits the actual
+     * decoder requirement. If the requested requirement level is higher than
+     * the actual level, the actual requirement level is signaled. The value is
+     * an specified as an integer with the level times 10, for example level
+     * "5.1" is specified as 51, and level "5.0" is specified as 50. */
+    int       levelIdc;
+
     /* Interlace type of source pictures. 0 - progressive pictures (default).
      * 1 - top field first, 2 - bottom field first. HEVC encodes interlaced
      * content as fields, they must be provided to the encoder in the correct

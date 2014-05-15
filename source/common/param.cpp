@@ -107,6 +107,7 @@ void x265_param_default(x265_param *param)
     /* Source specifications */
     param->internalBitDepth = x265_max_bit_depth;
     param->internalCsp = X265_CSP_I420;
+    param->levelIdc = -1;
 
     /* CU definitions */
     param->maxCUSize = 64;
@@ -529,6 +530,14 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("csv") p->csvfn = value;
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
+    OPT2("level-idc", "level")
+    {
+        /* allow "5.1" or "51", both converted to integer 51 */
+        if (atof(value) < 7)
+            p->levelIdc = (int)(10 * atof(value) + .5);
+        else
+            p->levelIdc = atoi(value);
+    }
     OPT2("log-level", "log")
     {
         p->logLevel = atoi(value);
