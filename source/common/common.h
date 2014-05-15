@@ -66,7 +66,7 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 
 /* If compiled with CHECKED_BUILD perform run-time checks and log any that
  * fail, both to stderr and to a file */
-#if CHECKED_BUILD
+#if CHECKED_BUILD || _DEBUG
 #define X265_CHECK(expr, ...) if (!(expr)) { \
     x265_log(NULL, X265_LOG_ERROR, __VA_ARGS__); \
     FILE *fp = fopen("x265_check_failures.txt", "a"); \
