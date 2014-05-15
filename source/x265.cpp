@@ -424,8 +424,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *inputfn = NULL;
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
-    const char *preset = "medium";
-    const char *tune = "ssim";
+    const char *preset = NULL;
+    const char *tune = NULL;
 
     if (argc <= 1)
     {
