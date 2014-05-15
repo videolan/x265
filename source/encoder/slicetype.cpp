@@ -1112,7 +1112,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
         }
     }
 
-    if (param->rc.vbvBufferSize && param->logLevel && referenced)
+    if (param->rc.vbvBufferSize && param->lookaheadDepth && referenced)
         cuTreeFinish(frames[b], averageDuration, b == p1 ? b - p0 : 0);
 }
 
