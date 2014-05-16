@@ -58,6 +58,7 @@ Lookahead::Lookahead(Encoder *_cfg, ThreadPool* pool)
     : JobProvider(pool)
     , est(pool)
 {
+    bReady = 0;
     param = _cfg->param;
     lastKeyframe = -param->keyframeMax;
     lastNonB = NULL;
