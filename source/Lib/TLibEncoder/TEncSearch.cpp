@@ -2780,7 +2780,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     {
         int size = g_convertToBit[cu->getCUSize(0)];
         uint32_t psyRdCost = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
-            outReconYuv->getLumaAddr(), outReconYuv->getStride());
+                                                     outReconYuv->getLumaAddr(), outReconYuv->getStride());
         bcost = m_rdCost->calcPsyRdCost(bdist, bestBits, psyRdCost);
     }
     else

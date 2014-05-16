@@ -1386,7 +1386,6 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
     m_entropyCoder->encodeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), outTempCU->getCUSize(0), bCodeDQP);
-
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
 
@@ -1402,7 +1401,6 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     {
         outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
     }
-
     xCheckDQP(outTempCU);
     xCheckBestMode(outBestCU, outTempCU, depth);
 }
@@ -1444,7 +1442,7 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
         int part = g_convertToBit[outTempCU->getCUSize(0)];
         TComPicYuv *recon = outTempCU->getPic()->getPicYuvRec();
         uint32_t psyRdCost = m_rdCost->psyCost(part, m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-            recon->getLumaAddr(outTempCU->getAddr()), recon->getStride());
+                                                     recon->getLumaAddr(outTempCU->getAddr()), recon->getStride());
         outTempCU->m_totalCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, psyRdCost);
     }
     else
