@@ -2089,7 +2089,7 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     }
 }
 
-void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype)
+void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
 #if ENC_DEC_TRACE
     DTRACE_CABAC_VL(g_nSymbolCounter++)
@@ -2099,8 +2099,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     DTRACE_CABAC_V(trSize)
     DTRACE_CABAC_T("\theight=")
     DTRACE_CABAC_V(trSize)
-    DTRACE_CABAC_T("\tdepth=")
-    DTRACE_CABAC_V(depth)
     DTRACE_CABAC_T("\tabspartidx=")
     DTRACE_CABAC_V(absPartIdx)
     DTRACE_CABAC_T("\ttoCU-X=")
@@ -2116,8 +2114,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     DTRACE_CABAC_T("\tpredmode=")
     DTRACE_CABAC_V(cu->getPredictionMode(absPartIdx))
     DTRACE_CABAC_T("\n")
-#else // if ENC_DEC_TRACE
-    (void)depth;
 #endif // if ENC_DEC_TRACE
 
     X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");

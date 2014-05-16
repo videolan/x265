@@ -135,7 +135,7 @@ public:
     void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
 
     void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
-    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype);
+    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
     void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     // -------------------------------------------------------------------------------------------------------------------
