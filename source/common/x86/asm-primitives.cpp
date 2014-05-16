@@ -1332,6 +1332,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
     primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
 
+    primitives.sad_square[BLOCK_4x4]   = primitives.sad[LUMA_4x4];
+    primitives.sad_square[BLOCK_8x8]   = primitives.sad[LUMA_8x8];
+    primitives.sad_square[BLOCK_16x16] = primitives.sad[LUMA_16x16];
+    primitives.sad_square[BLOCK_32x32] = primitives.sad[LUMA_32x32];
+    primitives.sad_square[BLOCK_64x64] = primitives.sad[LUMA_64x64];
+
     // SA8D devolves to SATD for blocks not even multiples of 8x8
     primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];
     primitives.sa8d_inter[LUMA_4x8]   = primitives.satd[LUMA_4x8];

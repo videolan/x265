@@ -190,6 +190,7 @@ struct EncoderPrimitives
     pixelcmp_t      satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
     pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
     pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
+    pixelcmp_t      sad_square[NUM_SQUARE_BLOCKS];   // sad primitives for square coding blocks
 
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     blockcpy_pp_t   blockcpy_pp;                     // block copy pixel from pixel
