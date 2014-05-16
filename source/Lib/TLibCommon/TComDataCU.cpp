@@ -1304,13 +1304,13 @@ uint32_t TComDataCU::getCtxInterDir(uint32_t absPartIdx)
     return getDepth(absPartIdx);
 }
 
-void TComDataCU::setCbfSubParts(uint32_t cbfY, uint32_t cbfU, uint32_t cbfV, uint32_t absPartIdx, uint32_t depth)
+void TComDataCU::clearCbf(uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    memset(m_cbf[0] + absPartIdx, cbfY, sizeof(uint8_t) * curPartNum);
-    memset(m_cbf[1] + absPartIdx, cbfU, sizeof(uint8_t) * curPartNum);
-    memset(m_cbf[2] + absPartIdx, cbfV, sizeof(uint8_t) * curPartNum);
+    memset(m_cbf[0] + absPartIdx, 0, sizeof(uint8_t) * curPartNum);
+    memset(m_cbf[1] + absPartIdx, 0, sizeof(uint8_t) * curPartNum);
+    memset(m_cbf[2] + absPartIdx, 0, sizeof(uint8_t) * curPartNum);
 }
 
 void TComDataCU::setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth)
@@ -1318,19 +1318,6 @@ void TComDataCU::setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartId
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
     memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(uint8_t) * curPartNum);
-}
-
-/** Sets a coded block flag for all sub-partitions of a partition
- * \param uiCbf The value of the coded block flag to be set
- * \param ttype
- * \param absPartIdx
- * \param partIdx
- * \param depth
- * \returns void
- */
-void TComDataCU::setCbfSubParts(uint32_t uiCbf, TextType ttype, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
-{
-    setSubPart<uint8_t>(uiCbf, m_cbf[ttype], absPartIdx, depth, partIdx);
 }
 
 void TComDataCU::setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes)

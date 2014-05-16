@@ -65,7 +65,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
-    m_entropyCoder->encodeCoeff(cu, 0, depth, cu->getCUSize(0), cu->getCUSize(0), bCodeDQP);
+    m_entropyCoder->encodeCoeff(cu, 0, depth, cu->getCUSize(0), bCodeDQP);
 
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 

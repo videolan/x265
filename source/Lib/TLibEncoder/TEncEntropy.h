@@ -198,11 +198,11 @@ public:
 
 private:
 
-    void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t width, uint32_t height, uint32_t uiTrIdx, bool& bCodeDQP);
+    void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
 
 public:
 
-    void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP);
+    void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);
 
     void encodeCoeffNxN(TComDataCU* cu, coeff_t* pcCoeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t trHeight, uint32_t depth, TextType ttype);
 

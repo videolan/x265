@@ -1193,7 +1193,7 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
-    m_entropyCoder->encodeCoeff(cu, absPartIdx, depth, cu->getCUSize(absPartIdx), cu->getCUSize(absPartIdx), bCodeDQP);
+    m_entropyCoder->encodeCoeff(cu, absPartIdx, depth, cu->getCUSize(absPartIdx), bCodeDQP);
     setdQPFlag(bCodeDQP);
 
     // --- write terminating bit ---
@@ -1385,7 +1385,7 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
-    m_entropyCoder->encodeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), outTempCU->getCUSize(0), bCodeDQP);
+    m_entropyCoder->encodeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bCodeDQP);
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
 
@@ -1432,7 +1432,7 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
-    m_entropyCoder->encodeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), outTempCU->getCUSize(0), bCodeDQP);
+    m_entropyCoder->encodeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bCodeDQP);
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
 

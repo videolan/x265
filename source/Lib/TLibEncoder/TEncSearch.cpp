@@ -2695,7 +2695,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
 
-        cu->setCbfSubParts(0, 0, 0, 0, cu->getDepth(0));
+        cu->clearCbf(0, cu->getDepth(0));
         cu->setTrIdxSubParts(0, 0, cu->getDepth(0));
         return;
     }
@@ -2793,7 +2793,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     if (cu->isSkipped(0))
     {
-        cu->setCbfSubParts(0, 0, 0, 0, cu->getDepth(0));
+        cu->clearCbf(0, cu->getDepth(0));
     }
 }
 
@@ -2802,9 +2802,7 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
     if (skipRes && cu->getPredictionMode(0) == MODE_INTER && cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
     {
         predYuv->copyToPartYuv(reconYuv, 0);
-        cu->setCbfSubParts(0, TEXT_LUMA, 0, 0, cu->getDepth(0));
-        cu->setCbfSubParts(0, TEXT_CHROMA_U, 0, 0, cu->getDepth(0));
-        cu->setCbfSubParts(0, TEXT_CHROMA_V, 0, 0, cu->getDepth(0));
+        cu->clearCbf(0, cu->getDepth(0));
         return;
     }
     if (cu->getPredictionMode(0) == MODE_INTER)
@@ -4068,7 +4066,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0));
         m_entropyCoder->encodePredInfo(cu, 0);
         bool bDummy = false;
-        m_entropyCoder->encodeCoeff(cu, 0, cu->getDepth(0), cu->getCUSize(0), cu->getCUSize(0), bDummy);
+        m_entropyCoder->encodeCoeff(cu, 0, cu->getDepth(0), cu->getCUSize(0), bDummy);
         return m_entropyCoder->getNumberOfWrittenBits();
     }
 }
