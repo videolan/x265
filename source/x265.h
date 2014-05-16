@@ -640,6 +640,12 @@ typedef struct x265_param
      * Default is 0, which is recommended */
     int       crQpOffset;
 
+    /* Specify whether to attempt to encode intra modes in B frames. By default
+     * enabled, but only applicable for the presets which use rdLevel 5 or 6
+     * (veryslow and placebo). All other presets will not try intra in B frames
+     * regardless of this setting. */
+    int       bIntraInBFrames;
+
     /*== Rate Control ==*/
 
     struct

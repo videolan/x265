@@ -414,6 +414,12 @@ Spatial/intra options
 
 	**Values:** 0:disabled 1:RD-penalty 2:maximum
 
+.. option:: --b-intra, --no-b-intra
+
+	Enables the use of intra modes in very slow presets (rdLevel 5 or
+	6). Presets slow to ultrafast do not try intra in B frames
+	regardless of this setting. Default enabled.
+
 .. option:: --tskip, --no-tskip
 
 	Enable intra transform skipping (encode residual as coefficients)

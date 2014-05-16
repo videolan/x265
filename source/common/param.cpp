@@ -157,6 +157,7 @@ void x265_param_default(x265_param *param)
     param->crQpOffset = 0;
     param->rdPenalty = 0;
     param->psyRd = 0.0;
+    param->bIntraInBFrames = 1;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -384,6 +385,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableSAO = 0;
             param->bEnableWeightedPred = 0;
             param->bEnableWeightedBiPred = 0;
+            param->bIntraInBFrames = 0;
         }
         else if (!strcmp(tune, "zerolatency") ||
                  !strcmp(tune, "zero-latency"))
@@ -591,6 +593,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("rd") p->rdLevel = atoi(value);
     OPT("psy-rd") p->psyRd = atof(value);
     OPT("signhide") p->bEnableSignHiding = atobool(value);
+    OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value);
     OPT("sao") p->bEnableSAO = atobool(value);
     OPT("sao-lcu-bounds") p->saoLcuBoundary = atoi(value);
