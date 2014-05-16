@@ -246,6 +246,7 @@ RateControl::RateControl(Encoder * _cfg)
     param->rc.vbvMaxBitrate = Clip3(0, 2000000, param->rc.vbvMaxBitrate);
     param->rc.vbvBufferInit = Clip3(0.0, 2000000.0, param->rc.vbvBufferInit);
     vbvMinRate = 0;
+    singleFrameVbv = 0;
     if (param->rc.vbvBufferSize)
     {
         if (param->rc.rateControlMode == X265_RC_CQP)
