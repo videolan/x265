@@ -416,8 +416,8 @@ Spatial/intra options
 
 .. option:: --b-intra, --no-b-intra
 
-	Enables the use of intra modes in very slow presets (rdLevel 5 or
-	6). Presets slow to ultrafast do not try intra in B frames
+	Enables the use of intra modes in very slow presets (:option:`--rd`
+	5 or 6). Presets slow to ultrafast do not try intra in B frames
 	regardless of this setting. Default enabled.
 
 .. option:: --tskip, --no-tskip
@@ -622,6 +622,27 @@ Quality, rate control and rate distortion options
 	exhaustive the analysis and the more rate distortion optimization is
 	used. The lower the value the faster the encode, the higher the
 	value the smaller the bitstream (in general). Default 3
+
+	Note that this table aims for accuracy, but is not necessarily our
+	final target behavior for each mode.
+
+	+-------+-------------------------------------------------------+
+	| Level | Description                                           |
+	+=======+=======================================================+
+	| 0     | sa8d mode and split decisions, intra w/ source pixels |
+	+-------+-------------------------------------------------------+
+	| 1     | recon generated (better intra), RDO merge residual    |
+	+-------+-------------------------------------------------------+
+	| 2     | RDO splits and merge residual choice                  |
+	+-------+-------------------------------------------------------+
+	| 3     | RDO mode decision and splits                          |
+	+-------+-------------------------------------------------------+
+	| 4     | Adds RDO Quant                                        |
+	+-------+-------------------------------------------------------+
+	| 5     | Enables intra modes in B slices                       |
+	+-------+-------------------------------------------------------+
+	| 6     | Currently same as 5                                   |
+	+-------+-------------------------------------------------------+
 
 	**Range of values:** 0: least .. 6: full RDO analysis
 
