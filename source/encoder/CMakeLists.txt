@@ -39,11 +39,6 @@ if(MSVC)
         "/wd4244 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 
-check_include_files(inttypes.h HAVE_INT_TYPES_H)
-if(HAVE_INT_TYPES_H)
-    add_definitions(-DHAVE_INT_TYPES_H=1)
-endif()
-
 add_library(encoder OBJECT ../x265.h
     ${LIBENCODER_SRC} ${LIBENCODER_HDR}
     bitcost.cpp bitcost.h

@@ -64,6 +64,14 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 
 #endif // if defined(__GNUC__)
 
+#if HAVE_INT_TYPES_H
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+#define X265_LL "%" PRIu64
+#else
+#define X265_LL "%lld"
+#endif
+
 /* If compiled with CHECKED_BUILD perform run-time checks and log any that
  * fail, both to stderr and to a file */
 #if CHECKED_BUILD || _DEBUG

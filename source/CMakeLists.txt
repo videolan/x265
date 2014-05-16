@@ -103,6 +103,11 @@ if(MSVC)
     endif()
 endif(MSVC)
 
+check_include_files(inttypes.h HAVE_INT_TYPES_H)
+if(HAVE_INT_TYPES_H)
+    add_definitions(-DHAVE_INT_TYPES_H=1)
+endif()
+
 if(INTEL_CXX AND UNIX)
     # treat icpc roughly like gcc
     set(GCC 1)

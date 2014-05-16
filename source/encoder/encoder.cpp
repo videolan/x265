@@ -41,14 +41,6 @@
 
 #include "x265.h"
 
-#if HAVE_INT_TYPES_H
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#define LL "%" PRIu64
-#else
-#define LL "%lld"
-#endif
-
 using namespace x265;
 
 Encoder::Encoder()
@@ -637,39 +629,39 @@ void Encoder::printSummary()
             int len = 0;
             if (sliceType != I_SLICE)
             {
-                len += sprintf(stats + len, "EncCU "LL "%% Merge "LL "%%", encCu, cntSkipCu);
+                len += sprintf(stats + len, "EncCU "X265_LL "%% Merge "X265_LL "%%", encCu, cntSkipCu);
             }
             if (cntInter)
             {
-                len += sprintf(stats + len, " Inter "LL "%%", cntInter);
+                len += sprintf(stats + len, " Inter "X265_LL "%%", cntInter);
                 if (param->bEnableAMP)
-                    len += sprintf(stats + len, "(%dx%d "LL "%% %dx%d "LL "%% %dx%d "LL "%% AMP "LL "%%)",
+                    len += sprintf(stats + len, "(%dx%d "X265_LL "%% %dx%d "X265_LL "%% %dx%d "X265_LL "%% AMP "X265_LL "%%)",
                                    cuSize, cuSize, cuInterDistribution[0],
                                    cuSize / 2, cuSize, cuInterDistribution[2],
                                    cuSize, cuSize / 2, cuInterDistribution[1],
                                    cuInterDistribution[3]);
                 else if (param->bEnableRectInter)
-                    len += sprintf(stats + len, "(%dx%d "LL "%% %dx%d "LL "%% %dx%d "LL "%%)",
+                    len += sprintf(stats + len, "(%dx%d "X265_LL "%% %dx%d "X265_LL "%% %dx%d "X265_LL "%%)",
                                    cuSize, cuSize, cuInterDistribution[0],
                                    cuSize / 2, cuSize, cuInterDistribution[2],
                                    cuSize, cuSize / 2, cuInterDistribution[1]);
             }
             if (cntIntra)
             {
-                len += sprintf(stats + len, " Intra "LL "%%(DC "LL "%% P "LL "%% Ang "LL "%%",
+                len += sprintf(stats + len, " Intra "X265_LL "%%(DC "X265_LL "%% P "X265_LL "%% Ang "X265_LL "%%",
                                cntIntra, cuIntraDistribution[0],
                                cuIntraDistribution[1], cuIntraDistribution[2]);
                 if (sliceType != I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d "LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
+                        len += sprintf(stats + len, " %dx%d "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
 
                 len += sprintf(stats + len, ")");
                 if (sliceType == I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d: "LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
+                        len += sprintf(stats + len, " %dx%d: "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
             const char slicechars[] = "BPI";
