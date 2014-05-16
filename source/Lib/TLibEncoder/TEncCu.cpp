@@ -1392,9 +1392,8 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     if (m_rdCost->psyRdEnabled())
     {
         int part = g_convertToBit[outTempCU->getCUSize(0)];
-        TComPicYuv *recon = outTempCU->getPic()->getPicYuvRec();
         uint32_t psyRdCost = m_rdCost->psyCost(part, m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                                     recon->getLumaAddr(outTempCU->getAddr()), recon->getStride());
+                                                     m_tmpRecoYuv[depth]->getLumaAddr(), m_tmpRecoYuv[depth]->getStride());
         outTempCU->m_totalCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, psyRdCost);
     }
     else
@@ -1440,9 +1439,8 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     if (m_rdCost->psyRdEnabled())
     {
         int part = g_convertToBit[outTempCU->getCUSize(0)];
-        TComPicYuv *recon = outTempCU->getPic()->getPicYuvRec();
         uint32_t psyRdCost = m_rdCost->psyCost(part, m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                                     recon->getLumaAddr(outTempCU->getAddr()), recon->getStride());
+                                                     m_tmpRecoYuv[depth]->getLumaAddr(), m_tmpRecoYuv[depth]->getStride());
         outTempCU->m_totalCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, psyRdCost);
     }
     else
