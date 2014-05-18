@@ -1420,6 +1420,8 @@ public:
 
     int       getNumRefIdx(int e)                 { return m_numRefIdx[e]; }
 
+    const int* getNumRefIdx() const               { return m_numRefIdx; }
+
     TComPic*  getPic()                            { return m_pic; }
 
     TComPic*  getRefPic(int e, int refIdx) { return m_refPicList[e][refIdx]; }

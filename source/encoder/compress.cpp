@@ -225,19 +225,14 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
 void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
 {
     X265_CHECK(outTempCU->getSlice()->getSliceType() != I_SLICE, "Evaluating merge in I slice\n");
-    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
+    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    int numValidMergeCand = 0;
-
-    for (uint32_t i = 0; i < outTempCU->getSlice()->getMaxNumMergeCand(); ++i)
-    {
-        interDirNeighbours[i] = 0;
-    }
+    uint32_t maxNumMergeCand = outTempCU->getSlice()->getMaxNumMergeCand();
 
     uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
-    outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+    outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setMergeFlag(0, true);
 
@@ -248,27 +243,22 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     int part = g_convertToBit[outTempCU->getCUSize(0)];
     int bestMergeCand = -1;
-    uint32_t bitsCand = 0;
 
-    for (int mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
+    for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
     {
         if (m_param->frameNumThreads <= 1 ||
-            (mvFieldNeighbours[0 + 2 * mergeCand].mv.y < (m_param->searchRange + 1) * 4 &&
-             mvFieldNeighbours[1 + 2 * mergeCand].mv.y < (m_param->searchRange + 1) * 4))
+            (mvFieldNeighbours[mergeCand][0].mv.y < (m_param->searchRange + 1) * 4 &&
+             mvFieldNeighbours[mergeCand][1].mv.y < (m_param->searchRange + 1) * 4))
         {
             // set MC parameters, interprets depth relative to LCU level
             outTempCU->setMergeIndex(0, mergeCand);
             outTempCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
-            outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
-            outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
+            outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
+            outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
 
             // do MC only for Luma part
             m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, 0, true, false);
-            bitsCand = mergeCand + 1;
-            if (mergeCand == (int)m_param->maxNumMergeCand - 1)
-            {
-                bitsCand--;
-            }
+            uint32_t bitsCand = getTUBits(mergeCand, maxNumMergeCand);
             outTempCU->m_totalBits = bitsCand;
             outTempCU->m_totalDistortion = primitives.sa8d[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                                  m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
@@ -297,8 +287,8 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     {
         outTempCU->setMergeIndex(0, bestMergeCand);
         outTempCU->setInterDirSubParts(interDirNeighbours[bestMergeCand], 0, 0, depth);
-        outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
-        outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * bestMergeCand], SIZE_2Nx2N, 0, 0);
+        outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[bestMergeCand][0], SIZE_2Nx2N, 0, 0);
+        outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[bestMergeCand][1], SIZE_2Nx2N, 0, 0);
         outTempCU->m_totalBits = outBestCU->m_totalBits;
         outTempCU->m_totalDistortion = outBestCU->m_totalDistortion;
         outTempCU->m_totalBits = 0;

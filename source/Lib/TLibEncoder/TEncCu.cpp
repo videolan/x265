@@ -1208,22 +1208,17 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode, TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest)
 {
     X265_CHECK(outTempCU->getSlice()->getSliceType() != I_SLICE, "I slice not expected\n");
-    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
+    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    int numValidMergeCand = 0;
-
-    for (uint32_t i = 0; i < outTempCU->getSlice()->getMaxNumMergeCand(); ++i)
-    {
-        interDirNeighbours[i] = 0;
-    }
+    uint32_t maxNumMergeCand = outTempCU->getSlice()->getMaxNumMergeCand();
 
     uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
-    outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
+    outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
     int mergeCandBuffer[MRG_MAX_NUM_CANDS];
-    for (uint32_t i = 0; i < numValidMergeCand; ++i)
+    for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
         mergeCandBuffer[i] = 0;
     }
@@ -1242,11 +1237,11 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     for (uint32_t noResidual = 0; noResidual < iteration; ++noResidual)
     {
-        for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
+        for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
         {
             if (m_param->frameNumThreads > 1 &&
-                (mvFieldNeighbours[0 + 2 * mergeCand].mv.y >= (m_param->searchRange + 1) * 4 ||
-                 mvFieldNeighbours[1 + 2 * mergeCand].mv.y >= (m_param->searchRange + 1) * 4))
+                (mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                 mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
             {
                 continue;
             }
@@ -1261,8 +1256,8 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     outTempCU->setMergeFlag(0, true);
                     outTempCU->setMergeIndex(0, mergeCand);
                     outTempCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth); // interprets depth relative to LCU level
-                    outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
-                    outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * mergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
+                    outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
+                    outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
 
                     // do MC
                     m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, 0);

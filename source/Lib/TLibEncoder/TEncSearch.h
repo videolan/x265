@@ -74,9 +74,9 @@ struct MotionData
 struct MergeData
 {
     /* merge candidate data, cached between calls to xMergeEstimation */
-    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS << 1];
+    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
     uint8_t     interDirNeighbours[MRG_MAX_NUM_CANDS];
-    int         numValidMergeCand;
+    uint32_t    maxNumMergeCand;
 
     /* data updated for each partition */
     uint32_t    absPartIdx;
@@ -89,6 +89,11 @@ struct MergeData
     uint32_t    index;
     uint32_t    bits;
 };
+
+inline int getTUBits(int idx, int numIdx)
+{
+    return idx + (idx < numIdx - 1);
+}
 
 // ====================================================================================================================
 // Class definition

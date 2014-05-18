@@ -1210,7 +1210,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
 
             if (slice->getSliceType() != I_SLICE &&
                 ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
-                 (slice->getColFromL0Flag() == 0  && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
+                 (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
             {
                 WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
             }
