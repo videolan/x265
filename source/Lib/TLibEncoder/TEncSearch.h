@@ -183,11 +183,11 @@ public:
 
     void generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, bool skipRes);
 
-    void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, ShortYuv* resiYuv, uint32_t depth,
+    void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth,
                              uint64_t &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist, bool curUseRDOQ = true);
-    void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
+    void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
 
-    void residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, uint32_t absTUPartIdx, ShortYuv* resiYuv, uint32_t depth, bool curUseRDOQ = true);
+    void residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool curUseRDOQ = true);
 
     // -------------------------------------------------------------------------------------------------------------------
     // compute symbol bits
@@ -212,10 +212,10 @@ protected:
     uint32_t xGetIntraBitsQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, bool bLuma, bool bChroma);
     uint32_t xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t chromaId, const bool splitIntoSubTUs);
     void xIntraCodingLumaBlk(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                             ShortYuv* resiYuv, uint32_t& outDist, bool bReusePred = false);
+                             ShortYuv* resiYuv, uint32_t& outDist);
 
     void xIntraCodingChromaBlk(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, TComYuv* fencYuv, TComYuv* predYuv,
-                               ShortYuv* resiYuv, uint32_t& outDist, uint32_t uiChromaId, bool bReusePred = false);
+                               ShortYuv* resiYuv, uint32_t& outDist, uint32_t chromaId);
 
     void xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
                                    TComYuv* predYuv, ShortYuv* resiYuv, uint32_t& outDist);
