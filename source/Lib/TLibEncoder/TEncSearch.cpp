@@ -2969,7 +2969,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 else
                 {
                     int16_t *ptr = resiYuv->getCbAddr(absTUPartIdxC);
-                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
+                    X265_CHECK(widthC == heightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, resiYuv->m_cwidth, 0);
                 }
                 if (absSumV)
@@ -2985,7 +2985,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 else
                 {
                     int16_t *ptr =  resiYuv->getCrAddr(absTUPartIdxC);
-                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
+                    X265_CHECK(widthC == heightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[trWidthC]](ptr, resiYuv->m_cwidth, 0);
                 }
                 cu->setCbfPartRange(absSumU ? setCbf : 0, TEXT_CHROMA_U, absTUPartIdxC, tuIterator.m_absPartIdxStep);
@@ -3342,7 +3342,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 {
                     int16_t *ptr = m_qtTempShortYuv[qtlayer].getCbAddr(tuIterator.m_absPartIdxTURelCU);
                     const uint32_t stride = m_qtTempShortYuv[qtlayer].m_cwidth;
-                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
+                    X265_CHECK(widthC == heightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[widthC]](ptr, stride, 0);
                 }
 
@@ -3410,7 +3410,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 {
                     int16_t *ptr =  m_qtTempShortYuv[qtlayer].getCrAddr(tuIterator.m_absPartIdxTURelCU);
                     const uint32_t stride = m_qtTempShortYuv[qtlayer].m_cwidth;
-                    X265_CHECK(trWidthC == trHeightC, "square chroma transform expected\n");
+                    X265_CHECK(widthC == heightC, "square chroma transform expected\n");
                     primitives.blockfill_s[(int)g_convertToBit[widthC]](ptr, stride, 0);
                 }
 
