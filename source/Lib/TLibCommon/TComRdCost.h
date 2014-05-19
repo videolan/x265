@@ -120,9 +120,12 @@ public:
     inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
     {
         uint64_t tot = bits + (((psycost * m_psyRdScale) + 128) >> 8);
+#if CHECKED_BUILD || _DEBUG
+        x265_emms();
         X265_CHECK(abs((float)((tot * m_lambdaMotionSSE + 128) >> 8) -
                        (float)tot * m_lambdaMotionSSE / 256.0) < 2,
                    "calcPsyRdCost wrap detected tot: "X265_LL", lambda: "X265_LL"\n", tot, m_lambdaMotionSSE);
+#endif
         return distortion + ((tot * m_lambdaMotionSSE + 128) >> 8);
     }
 
