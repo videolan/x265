@@ -369,9 +369,9 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nRate control and rate distortion options:\n");
     H0("   --bitrate <integer>           Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
     H0("   --crf <float>                 Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
-    H0("   --crf-max <float>             With CRF+VBV, limit RF to this value. 0 for no limit (default)\n");
+    H0("   --crf-max <float>             With CRF+VBV, limit RF to this value. Default %f\n", param->rc.rfConstantMax);
     H0("                                 May cause VBV underflows!\n");
-    H0("   --crf-min <float>             With CRF+VBV, limit RF to this value. 0 for no limit (default)\n");
+    H0("   --crf-min <float>             With CRF+VBV, limit RF to this value. Default %f\n", param->rc.rfConstantMin);
     H0("                                 this specifies a minimum rate factor value for encode!\n");
     H0("   --vbv-maxrate <integer>       Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
     H0("   --vbv-bufsize <integer>       Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);

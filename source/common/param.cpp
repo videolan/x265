@@ -175,6 +175,8 @@ void x265_param_default(x265_param *param)
     param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
     param->rc.aqStrength = 1.0;
     param->rc.cuTree = 1;
+	param->rc.rfConstantMax = 0;
+	param->rc.rfConstantMin = 0;
 
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 0;
