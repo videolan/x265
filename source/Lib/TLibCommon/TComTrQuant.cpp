@@ -502,8 +502,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     uint32_t absSum = 0;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-    uint32_t       goRiceParam      = 0;
-    double     blockUncodedCost = 0;
+    uint32_t goRiceParam = 0;
+    double blockUncodedCost = 0;
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
@@ -528,14 +528,14 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     const uint32_t cgSize = (1 << MLS_CG_SIZE); // 16
     double costCoeffGroupSig[MLS_GRP_NUM];
     uint64_t sigCoeffGroupFlag64 = 0;
-    uint32_t   ctxSet    = 0;
+    uint32_t ctxSet      = 0;
     int    c1            = 1;
     int    c2            = 0;
     double baseCost      = 0;
     int    lastScanPos   = -1;
-    uint32_t   c1Idx     = 0;
-    uint32_t   c2Idx     = 0;
-    int    cgLastScanPos = -1;
+    uint32_t c1Idx       = 0;
+    uint32_t c2Idx       = 0;
+    int cgLastScanPos    = -1;
     uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
 
     int scanPos;
@@ -663,11 +663,11 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                 //===== context set update =====
                 if ((scanPos % SCAN_SET_SIZE == 0) && (scanPos > 0))
                 {
-                    c2                = 0;
-                    goRiceParam     = 0;
+                    c2 = 0;
+                    goRiceParam = 0;
 
-                    c1Idx   = 0;
-                    c2Idx   = 0;
+                    c1Idx = 0;
+                    c2Idx = 0;
                     ctxSet = (scanPos == SCAN_SET_SIZE || ttype != TEXT_LUMA) ? 0 : 2;
                     X265_CHECK(c1 >= 0, "c1 is negative\n");
                     ctxSet -= ((int32_t)(c1 - 1) >> 31);
@@ -711,7 +711,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                 {
                     if (cgScanPos < cgLastScanPos) //skip the last coefficient group, which will be handled together with last position below.
                     {
-                        if (rdStats.nnzBeforePos0 == 0)
+                        if (!rdStats.nnzBeforePos0)
                         {
                             baseCost -= rdStats.sigCost0;
                             rdStats.sigCost -= rdStats.sigCost0;
