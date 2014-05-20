@@ -30,6 +30,12 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
         set(X265_VERSION "${hg_latesttag}+${hg_latesttagdistance}-${hg_id}")
     endif()
 elseif(HG_EXECUTABLE AND EXISTS ${CMAKE_SOURCE_DIR}/../.hg)
+    if(EXISTS "${HG_EXECUTABLE}.bat")
+        # mercurial source installs on Windows require .bat extension
+        set(HG_EXECUTABLE "${HG_EXECUTABLE}.bat")
+    endif()
+    message(STATUS "hg found at ${HG_EXECUTABLE}")
+
     execute_process(COMMAND
         ${HG_EXECUTABLE} log -r. --template "{latesttag}"
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
