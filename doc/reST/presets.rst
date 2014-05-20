@@ -83,14 +83,14 @@ after the preset.
 	encode using PSNR or SSIM for the purpose of benchmarking, we highly
 	recommend you configure x265 to tune for that particular metric.
 
-+--------------+--------------------------------------+
-| --tune       | effect                               |
-+==============+======================================+
-| psnr         | disables adaptive quant and cutree   |
-+--------------+--------------------------------------+
-| ssim         | enables adaptive quant auto-mode     |
-+--------------+--------------------------------------+
-| fastdecode   | no loop filters, no weighted pred    |
-+--------------+--------------------------------------+
-| zerolatency  | no lookahead, no B frames, no cutree |
-+--------------+--------------------------------------+
++--------------+-----------------------------------------------------+
+| --tune       | effect                                              |
++==============+=====================================================+
+| psnr         | disables adaptive quant and cutree                  |
++--------------+-----------------------------------------------------+
+| ssim         | enables adaptive quant auto-mode                    |
++--------------+-----------------------------------------------------+
+| fastdecode   | no loop filters, no weighted pred, no intra in B    |
++--------------+-----------------------------------------------------+
+| zerolatency  | no lookahead, no B frames, no cutree                |
++--------------+-----------------------------------------------------+
