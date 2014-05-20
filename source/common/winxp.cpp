@@ -123,4 +123,8 @@ void cond_destroy(ConditionVariable *cond)
 }
 } // namespace x265
 
+#else
+
+namespace { int _avoid_linker_warnings = 0; }
+
 #endif // _WIN32_WINNT <= _WIN32_WINNT_WINXP
