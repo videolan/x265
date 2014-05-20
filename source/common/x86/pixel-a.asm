@@ -2959,8 +2959,8 @@ cglobal pixel_sa8d_32x16, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3025,8 +3025,8 @@ cglobal pixel_sa8d_32x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3037,8 +3037,8 @@ cglobal pixel_sa8d_32x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3058,8 +3058,8 @@ cglobal pixel_sa8d_32x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3070,8 +3070,8 @@ cglobal pixel_sa8d_32x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3082,8 +3082,8 @@ cglobal pixel_sa8d_32x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3094,8 +3094,8 @@ cglobal pixel_sa8d_32x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3115,8 +3115,8 @@ cglobal pixel_sa8d_48x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3124,50 +3124,8 @@ cglobal pixel_sa8d_48x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    add  r2, 16*SIZEOF_PIXEL
-    add  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea r0, [r0+8*r1]
-    lea r2, [r2+8*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    sub  r2, 16*SIZEOF_PIXEL
-    sub  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    sub  r2, 16*SIZEOF_PIXEL
-    sub  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea r0, [r0+8*r1]
-    lea r2, [r2+8*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    add  r2, 16*SIZEOF_PIXEL
-    add  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3178,8 +3136,8 @@ cglobal pixel_sa8d_48x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3187,8 +3145,50 @@ cglobal pixel_sa8d_48x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
+    sub  r2, 16*SIZEOF_PIXEL
+    sub  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    add  r2, 16*SIZEOF_PIXEL
+    add  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    add  r2, 16*SIZEOF_PIXEL
+    add  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    sub  r2, 16*SIZEOF_PIXEL
+    sub  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3208,8 +3208,8 @@ cglobal pixel_sa8d_64x16, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3217,8 +3217,8 @@ cglobal pixel_sa8d_64x16, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3226,8 +3226,8 @@ cglobal pixel_sa8d_64x16, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3247,8 +3247,8 @@ cglobal pixel_sa8d_64x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3256,8 +3256,8 @@ cglobal pixel_sa8d_64x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3265,8 +3265,8 @@ cglobal pixel_sa8d_64x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3277,8 +3277,8 @@ cglobal pixel_sa8d_64x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3286,8 +3286,8 @@ cglobal pixel_sa8d_64x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3295,8 +3295,8 @@ cglobal pixel_sa8d_64x32, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3316,8 +3316,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3325,8 +3325,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3334,8 +3334,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3346,8 +3346,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3355,8 +3355,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3364,8 +3364,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3376,8 +3376,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3385,8 +3385,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3394,8 +3394,8 @@ cglobal pixel_sa8d_64x48, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3415,8 +3415,8 @@ cglobal pixel_sa8d_64x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3424,8 +3424,8 @@ cglobal pixel_sa8d_64x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3433,68 +3433,8 @@ cglobal pixel_sa8d_64x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    add  r2, 16*SIZEOF_PIXEL
-    add  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea r0, [r0+8*r1]
-    lea r2, [r2+8*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    sub  r2, 16*SIZEOF_PIXEL
-    sub  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    sub  r2, 16*SIZEOF_PIXEL
-    sub  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    sub  r2, 16*SIZEOF_PIXEL
-    sub  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea r0, [r0+8*r1]
-    lea r2, [r2+8*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    add  r2, 16*SIZEOF_PIXEL
-    add  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
-    add  r2, 16*SIZEOF_PIXEL
-    add  r0, 16*SIZEOF_PIXEL
-    lea  r4, [3*r1]
-    lea  r5, [3*r3]
-    SA8D_16x16
-    lea  r4, [8*r1]
-    lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     add  r2, 16*SIZEOF_PIXEL
     add  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3505,8 +3445,8 @@ cglobal pixel_sa8d_64x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3514,8 +3454,8 @@ cglobal pixel_sa8d_64x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
@@ -3523,8 +3463,68 @@ cglobal pixel_sa8d_64x64, 4,8,13
     SA8D_16x16
     lea  r4, [8*r1]
     lea  r5, [8*r3]
-    sub  r2, r4
-    sub  r0, r5
+    sub  r0, r4
+    sub  r2, r5
+    sub  r2, 16*SIZEOF_PIXEL
+    sub  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    add  r2, 16*SIZEOF_PIXEL
+    add  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    add  r2, 16*SIZEOF_PIXEL
+    add  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    add  r2, 16*SIZEOF_PIXEL
+    add  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea r0, [r0+8*r1]
+    lea r2, [r2+8*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    sub  r2, 16*SIZEOF_PIXEL
+    sub  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
+    sub  r2, 16*SIZEOF_PIXEL
+    sub  r0, 16*SIZEOF_PIXEL
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    SA8D_16x16
+    lea  r4, [8*r1]
+    lea  r5, [8*r3]
+    sub  r0, r4
+    sub  r2, r5
     sub  r2, 16*SIZEOF_PIXEL
     sub  r0, 16*SIZEOF_PIXEL
     lea  r4, [3*r1]
