@@ -45,10 +45,7 @@ set(SSE41 vec/dct-sse41.cpp)
 
 if(MSVC AND X86)
     set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
-    # wd4127 conditional expression is constant
-    # wd4244 'argument' : conversion from 'int' to 'char', possible loss of data
-    # wd4100 unreferenced formal parameter
-    set(WARNDISABLE "/wd4244 /wd4127 /wd4100")
+    set(WARNDISABLE "/wd4100") # unreferenced formal parameter
     if(INTEL_CXX)
         add_definitions(/Qwd111) # statement is unreachable
         add_definitions(/Qwd128) # loop is unreachable
