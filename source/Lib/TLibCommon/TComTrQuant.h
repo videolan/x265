@@ -199,6 +199,8 @@ public:
 
     estBitsSbacStruct* m_estBitsSbac;
 
+    NoiseReduction* m_nr;
+
 protected:
 
     QpParam  m_qpParam;

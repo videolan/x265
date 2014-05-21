@@ -142,7 +142,14 @@ compression efficiency. Because of this, the output of encodes with
 frame parallelism disabled will not match the output of encodes with
 frame parallelism enabled; but when enabled the number of frame threads
 should have no effect on the output bitstream except when using ABR or
-VBV rate control.
+VBV rate control or noise reduction.
+
+When :option:`--nr` is enabled, the outputs of each number of frame threads
+will be deterministic but none of them will match becaue each frame
+encoder maintains a cumulative noise reduction state.
+
+VBV introduces non-determinism in the encoder, at this point in time,
+regardless of the amount of frame parallelism.
 
 By default frame parallelism and WPP are enabled together. The number of
 frame threads used is auto-detected from the (hyperthreaded) CPU core

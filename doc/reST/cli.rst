@@ -186,6 +186,21 @@ Input Options
 
 	**CLI ONLY**
 
+.. option:: --nr <integer>
+
+	Noise reduction - an adaptive deadzone applied after DCT
+	(subtracting from DCT coefficients), before quantization, on inter
+	blocks. It does no pixel-level filtering, doesn't cross DCT block
+	boundaries, has no overlap, doesn't affect intra blocks. The higher
+	the strength value parameter, the more aggressively it will reduce
+	noise.
+
+	Enabling noise reduction will make outputs diverge between different
+	numbers of frame threads. Outputs will be deterministic but the
+	outputs of -F2 will no longer match the outputs of -F3, etc.
+
+	**Values:** any value in range of 100 to 1000. Default disabled.
+
 .. option:: --input-res <wxh>
 
 	YUV only: Source picture size [w x h]

@@ -696,6 +696,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
                          &p->vui.defDispWinRightOffset,
                          &p->vui.defDispWinBottomOffset) != 4;
     }
+    OPT("nr") p->noiseReduction = atoi(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -988,6 +989,8 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.bitrate < 0,
           "Target bitrate can not be less than zero");
     CHECK(param->bFrameBias < 0, "Bias towards B frame decisions must be 0 or greater");
+    if (param->noiseReduction)
+        CHECK(100 > param->noiseReduction || param->noiseReduction > 1000, "Valid noise reduction range 100 - 1000");
     return check_failed;
 }
 

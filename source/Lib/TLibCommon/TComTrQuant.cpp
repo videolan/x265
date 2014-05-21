@@ -95,6 +95,19 @@ TComTrQuant::~TComTrQuant()
     destroyScalingList();
 }
 
+static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        int level = dctCoef[i];
+        int sign = level >> 31;
+        level = (level + sign) ^ sign;
+        resSum[i] += level;
+        level -= offset[i];
+        dctCoef[i] = level < 0 ? 0 : (level ^ sign) - sign;
+    }
+}
+
 /** Set qP for Quantization.
  * \param qpy QPy
  * \param bLowpass
@@ -346,6 +359,15 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         // TODO: this may need larger data types for X265_DEPTH > 8
         const uint32_t log2BlockSize = g_convertToBit[trSize];
         primitives.dct[DCT_4x4 + log2BlockSize - ((trSize == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
+        if (m_nr->bNoiseReduction)
+        {
+            int index = (DCT_4x4 + log2BlockSize - ((trSize == 4) && (mode != REG_DCT)));
+            if (index > 0 && index < 5)
+            {
+                denoiseDct(m_tmpCoeff, m_nr->residualSum[index - 1], m_nr->offset[index - 1], (16 << (index - 1) * 2));
+                m_nr->count[index - 1]++;
+            }
+        }
     }
     return xQuant(cu, m_tmpCoeff, coeff, trSize, ttype, absPartIdx, lastPos, curUseRDOQ);
 }

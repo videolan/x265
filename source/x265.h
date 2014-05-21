@@ -646,6 +646,10 @@ typedef struct x265_param
      * regardless of this setting. */
     int       bIntraInBFrames;
 
+    /* An integer value in range of 100 to 1000, which denotes strength of noise
+     * reduction */
+    int       noiseReduction;
+
     /*== Rate Control ==*/
 
     struct

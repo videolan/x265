@@ -173,6 +173,8 @@ protected:
 
     void determineSliceBounds();
     int calcQpForCu(uint32_t cuAddr, double baseQp);
+    void noiseReductionUpdate();
+
     Encoder*                 m_top;
     Encoder*                 m_cfg;
 
@@ -181,6 +183,7 @@ protected:
     TEncBinCABAC             m_binCoderCABAC;
     FrameFilter              m_frameFilter;
     TComBitCounter           m_bitCounter;
+    NoiseReduction           m_nr;
 
     /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;

@@ -179,8 +179,59 @@ bool FrameEncoder::init(Encoder *top, int numRows)
         ok = false;
     }
 
+    memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
+    memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0][0]) * 4 * 8 * 1024);
+    memset(m_nr.countBuf, 0, sizeof(m_nr.countBuf[0][0]) * 4 * 8);
+
+    m_nr.offset = m_nr.offsetDenoise;
+    m_nr.residualSum = m_nr.residualSumBuf[0];
+    m_nr.count = m_nr.countBuf[0];
+
+    m_nr.bNoiseReduction = !!m_cfg->param->noiseReduction;
+
     start();
     return ok;
+}
+
+/****************************************************************************
+ * DCT-domain noise reduction / adaptive deadzone
+ * from libavcodec
+ ****************************************************************************/
+
+void FrameEncoder::noiseReductionUpdate()
+{
+    if (!m_nr.bNoiseReduction)
+        return;
+
+    m_nr.offset = m_nr.offsetDenoise;
+    m_nr.residualSum = m_nr.residualSumBuf[0];
+    m_nr.count = m_nr.countBuf[0];
+
+    int transformSize[4] = {16, 64, 256, 1024};
+    uint32_t blockCount[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
+
+    int isCspI444 = (m_cfg->param->internalCsp == X265_CSP_I444) ? 1 : 0;
+    for (int cat = 0; cat < 7 + isCspI444; cat++)
+    {
+        int index = cat % 4;
+        int size = transformSize[index];
+
+        if (m_nr.count[cat] > blockCount[index])
+        {
+            for (int i = 0; i < size; i++)
+                m_nr.residualSum[cat][i] >>= 1;
+            m_nr.count[cat] >>= 1;
+        }
+
+        for (int i = 0; i < size; i++)
+            m_nr.offset[cat][i] =
+                (uint16_t)(((uint64_t)m_cfg->param->noiseReduction * m_nr.count[cat]
+                 + m_nr.residualSum[cat][i] / 2)
+              / ((uint64_t)m_nr.residualSum[cat][i] + 1));
+
+        // Don't denoise DC coefficients
+        m_nr.offset[cat][0] = 0;
+    }
 }
 
 int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
@@ -735,6 +786,8 @@ void FrameEncoder::compressFrame()
         }
     }
 
+    noiseReductionUpdate();
+
     m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
     delete[] outStreams;
     delete bitstreamRedirect;
@@ -1079,6 +1132,7 @@ void FrameEncoder::processRowEncoder(int row)
     {
         int col = curRow.m_completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
+        curRow.m_trQuant.m_nr = &m_nr;
         TComDataCU* cu = m_pic->getCU(cuAddr);
         cu->initCU(m_pic, cuAddr);
         cu->setQPSubParts(m_pic->getSlice()->getSliceQp(), 0, 0);

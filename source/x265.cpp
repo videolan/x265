@@ -176,6 +176,7 @@ static const struct option long_options[] =
     { "qpfile",         required_argument, NULL, 0 },
     { "b-intra",              no_argument, NULL, 0 },
     { "no-b-intra",           no_argument, NULL, 0 },
+    { "nr",             required_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -313,6 +314,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless of file extension\n");
     H0("   --input-depth <integer>       Bit-depth of input file. Default 8\n");
     H0("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
+    H0("   --nr <integer>                An integer value in range of 100 to 1000, which denotes strength of noise reduction. Default disabled\n");
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp <string>          Source color space: i420, i444 or i422, auto-detected if Y4M. Default: i420\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
