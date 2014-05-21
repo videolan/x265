@@ -668,7 +668,7 @@ void TComReferencePictureSet::setDeltaPOC(int bufferNum, int deltaPOC)
     m_deltaPOC[bufferNum] = deltaPOC;
 }
 
-int TComReferencePictureSet::getUsed(int bufferNum) const
+bool TComReferencePictureSet::getUsed(int bufferNum) const
 {
     return m_used[bufferNum];
 }

@@ -184,8 +184,8 @@ public:
     x265_param*        param;
     RateControl*       m_rateControl;
 
-    int                bEnableRDOQ;
-    int                bEnableRDOQTS;
+    bool               bEnableRDOQ;
+    bool               bEnableRDOQTS;
 
     int                m_pad[2];
     Window             m_conformanceWindow;

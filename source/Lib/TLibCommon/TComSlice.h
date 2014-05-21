@@ -111,7 +111,7 @@ public:
     void setCheckLTMSBPresent(int bufferNum, bool b);
     bool getCheckLTMSBPresent(int bufferNum);
 
-    int  getUsed(int bufferNum) const;
+    bool getUsed(int bufferNum) const;
     int  getDeltaPOC(int bufferNum) const;
     int  getPOC(int bufferNum) const;
     int  getNumberOfPictures() const;

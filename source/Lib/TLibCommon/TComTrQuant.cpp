@@ -305,7 +305,7 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, int 
     return acSum;
 }
 
-void TComTrQuant::init(uint32_t maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast)
+void TComTrQuant::init(uint32_t maxTrSize, bool useRDOQ, bool useRDOQTS, bool useTransformSkipFast)
 {
     m_maxTrSize            = maxTrSize;
     m_useRDOQ              = useRDOQ;
