@@ -38,8 +38,10 @@
 #include "TEncCu.h"
 
 #include "primitives.h"
-#include "encoder.h"
 #include "common.h"
+
+#include "rdcost.h"
+#include "encoder.h"
 
 #include "PPA/ppa.h"
 

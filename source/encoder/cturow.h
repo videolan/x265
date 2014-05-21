@@ -33,6 +33,8 @@
 #include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
 
+#include "rdcost.h"
+
 namespace x265 {
 // private x265 namespace
 
@@ -53,7 +55,7 @@ public:
     TEncBinCABAC           m_binCoderCABAC;
     TEncBinCABAC           m_rdGoOnBinCodersCABAC;
     TComBitCounter         m_bitCounter;
-    TComRdCost             m_rdCost;
+    RDCost                 m_rdCost;
     TEncEntropy            m_entropyCoder;
     TEncSearch             m_search;
     TEncCu                 m_cuCoder;

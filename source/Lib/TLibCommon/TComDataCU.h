@@ -42,7 +42,6 @@
 #include "CommonDef.h"
 #include "TComMotionInfo.h"
 #include "TComSlice.h"
-#include "TComRdCost.h"
 #include "TComPattern.h"
 
 namespace x265 {

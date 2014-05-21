@@ -39,6 +39,7 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TEncSearch.h"
+#include "rdcost.h"
 #include "encoder.h"
 
 #include "common.h"
@@ -47,7 +48,7 @@
 
 using namespace x265;
 
-ALIGN_VAR_32(const pixel, TComRdCost::zeroPel[MAX_CU_SIZE * MAX_CU_SIZE]) = { 0 };
+ALIGN_VAR_32(const pixel, RDCost::zeroPel[MAX_CU_SIZE * MAX_CU_SIZE]) = { 0 };
 
 TEncSearch::TEncSearch()
 {
@@ -94,7 +95,7 @@ TEncSearch::~TEncSearch()
     m_qtTempTransformSkipYuv.destroy();
 }
 
-bool TEncSearch::init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
+bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
 {
     m_cfg     = cfg;
     m_trQuant = trQuant;
@@ -3192,7 +3193,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         }
 
         int partSize = partitionFromSizes(trWidth, trHeight);
-        uint32_t distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, (pixel*)TComRdCost::zeroPel, trWidth);
+        uint32_t distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->m_width, (pixel*)RDCost::zeroPel, trWidth);
 
         if (outZeroDist)
         {
@@ -3276,7 +3277,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             {
                 uint32_t subTUBufferOffset = widthC * heightC * tuIterator.m_section;
 
-                distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth, (pixel*)TComRdCost::zeroPel, widthC));
+                distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, widthC));
 
                 if (outZeroDist)
                 {
@@ -3346,7 +3347,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     primitives.blockfill_s[(int)g_convertToBit[widthC]](ptr, stride, 0);
                 }
 
-                distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth, (pixel*)TComRdCost::zeroPel, widthC));
+                distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(tuIterator.m_absPartIdxTURelCU), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, widthC));
                 if (outZeroDist)
                 {
                     *outZeroDist += distV;

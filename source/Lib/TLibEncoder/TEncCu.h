@@ -114,7 +114,7 @@ private:
     x265_param*  m_param;
     TEncSearch*  m_search;
     TComTrQuant* m_trQuant;
-    TComRdCost*  m_rdCost;
+    RDCost*      m_rdCost;
     TEncEntropy* m_entropyCoder;
     TComBitCounter* m_bitCounter;
 
@@ -151,7 +151,7 @@ public:
 
     void setTrQuant(TComTrQuant* trQuant) { m_trQuant = trQuant; }
 
-    void setRdCost(TComRdCost* rdCost) { m_rdCost = rdCost; }
+    void setRdCost(RDCost* rdCost) { m_rdCost = rdCost; }
 
     void setBitCounter(TComBitCounter* pcBitCounter) { m_bitCounter = pcBitCounter; }
 

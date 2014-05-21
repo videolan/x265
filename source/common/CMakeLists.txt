@@ -14,7 +14,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComPicYuv.h
     ../Lib/TLibCommon/TComPrediction.h
-    ../Lib/TLibCommon/TComRdCost.h
     ../Lib/TLibCommon/TComRom.h
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
     ../Lib/TLibCommon/TComSlice.h

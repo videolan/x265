@@ -60,6 +60,7 @@ namespace x265 {
 // private namespace
 class TEncCu;
 class Encoder;
+class RDCost;
 
 struct MotionData
 {
@@ -131,7 +132,7 @@ protected:
 
     // interface to classes
     TComTrQuant*    m_trQuant;
-    TComRdCost*     m_rdCost;
+    RDCost*         m_rdCost;
     TEncEntropy*    m_entropyCoder;
 
     // ME parameters
@@ -150,7 +151,7 @@ public:
     TEncSearch();
     virtual ~TEncSearch();
 
-    bool init(Encoder* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
+    bool init(Encoder* cfg, RDCost* rdCost, TComTrQuant *trQuant);
 
     uint32_t xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
     uint32_t xModeBitsRemIntra(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t & mpms);

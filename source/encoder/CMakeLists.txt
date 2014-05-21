@@ -41,7 +41,7 @@ endif(MSVC)
 
 add_library(encoder OBJECT ../x265.h
     ${LIBENCODER_SRC} ${LIBENCODER_HDR}
-    bitcost.cpp bitcost.h
+    bitcost.cpp bitcost.h rdcost.h
     motion.cpp motion.h
     slicetype.cpp slicetype.h
     frameencoder.cpp frameencoder.h
