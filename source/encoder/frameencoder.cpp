@@ -1310,7 +1310,7 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
 
     /* Use cuTree offsets in m_pic->m_lowres.qpOffset if cuTree enabled and
      * frame is referenced, else use AQ offsets */
-    double *qpoffs = (m_isReferenced && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpOffset : m_pic->m_lowres.qpAqOffset;
+    double *qpoffs = (m_isReferenced && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpCuTreeOffset : m_pic->m_lowres.qpAqOffset;
 
     int cnt = 0, idx = 0;
     for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)

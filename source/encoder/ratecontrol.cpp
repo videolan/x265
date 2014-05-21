@@ -99,7 +99,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
 
         if (param->rc.aqMode && param->rc.aqStrength == 0)
         {
-            memset(pic->m_lowres.qpOffset, 0, cuCount * sizeof(double));
+            memset(pic->m_lowres.qpCuTreeOffset, 0, cuCount * sizeof(double));
             memset(pic->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
             for (int cuxy = 0; cuxy < cuCount; cuxy++)
             {
@@ -132,7 +132,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
                 {
                     uint32_t energy = acEnergyCu(pic, block_x, block_y);
                     qp_adj = pow(energy + 1, 0.1);
-                    pic->m_lowres.qpOffset[block_xy] = qp_adj;
+                    pic->m_lowres.qpCuTreeOffset[block_xy] = qp_adj;
                     avg_adj += qp_adj;
                     avg_adj_pow2 += qp_adj * qp_adj;
                     block_xy++;
@@ -154,7 +154,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             {
                 if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
                 {
-                    qp_adj = pic->m_lowres.qpOffset[block_xy];
+                    qp_adj = pic->m_lowres.qpCuTreeOffset[block_xy];
                     qp_adj = strength * (qp_adj - avg_adj);
                 }
                 else
@@ -163,7 +163,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
                     qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (14.427f + 2 * (X265_DEPTH - 8)));
                 }
                 pic->m_lowres.qpAqOffset[block_xy] = qp_adj;
-                pic->m_lowres.qpOffset[block_xy] = qp_adj;
+                pic->m_lowres.qpCuTreeOffset[block_xy] = qp_adj;
                 pic->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
                 block_xy++;
             }

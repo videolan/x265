@@ -259,7 +259,7 @@ int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
         double *qp_offset = 0;
         /* Factor in qpoffsets based on Aq/Cutree in CU costs */
         if (param->rc.aqMode)
-            qp_offset = (frames[b]->sliceType == X265_TYPE_B || !param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpOffset;
+            qp_offset = (frames[b]->sliceType == X265_TYPE_B || !param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
 
         for (uint32_t row = 0; row < pic->getFrameHeightInCU(); row++)
         {
@@ -946,7 +946,7 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
         if (bIntra)
         {
             memset(frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
-            memcpy(frames[0]->qpOffset, frames[0]->qpAqOffset, cuCount * sizeof(double));
+            memcpy(frames[0]->qpCuTreeOffset, frames[0]->qpAqOffset, cuCount * sizeof(double));
             return;
         }
         std::swap(frames[lastnonb]->propagateCost, frames[0]->propagateCost);
@@ -1138,7 +1138,7 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
         {
             int propagateCost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
             double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
-            frame->qpOffset[cuIndex] = frame->qpAqOffset[cuIndex] - strength * log2_ratio;
+            frame->qpCuTreeOffset[cuIndex] = frame->qpAqOffset[cuIndex] - strength * log2_ratio;
         }
     }
 }
@@ -1149,7 +1149,7 @@ int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
 {
     int64_t score = 0;
     int *rowSatd = frames[b]->rowSatds[b - p0][p1 - b];
-    double *qp_offset = (frames[b]->sliceType == X265_TYPE_B) ? frames[b]->qpAqOffset : frames[b]->qpOffset;
+    double *qp_offset = (frames[b]->sliceType == X265_TYPE_B) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
 
     x265_emms();
     for (int cuy = heightInCU - 1; cuy >= 0; cuy--)
