@@ -207,15 +207,15 @@ protected:
     double   m_lumaLambda;
     double   m_chromaLambda;
 
-    uint32_t     m_maxTrSize;
+    uint32_t m_maxTrSize;
     bool     m_useRDOQ;
     bool     m_useRDOQTS;
     bool     m_useTransformSkipFast;
     bool     m_scalingListEnabledFlag;
 
-    int32_t*     m_tmpCoeff;
-    int32_t*     m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
-    int32_t*     m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
+    int32_t* m_tmpCoeff;
+    int32_t* m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
+    int32_t* m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
 
     double  *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];
 
@@ -244,7 +244,7 @@ private:
 
     inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
 
-    inline uint32_t xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
+    inline uint32_t xGetIEPRate() const        { return 32768; }           ///< Get the cost of an equal probable bit
 
     void xITransformSkip(int32_t* coeff, int16_t* residual, uint32_t stride, int trSize);
 };
