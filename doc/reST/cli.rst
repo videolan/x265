@@ -650,7 +650,8 @@ Quality, rate control and rate distortion options
 
 	Influence rate distortion optimizations to try to preserve the
 	energy of the source image in the encoded image, at the expense of
-	compression efficiency. 1.0 is a typical value. Default disabled
+	compression efficiency. 1.0 is a typical value. Default disabled. It
+	only has effect on presets which use RDO (slow and below)
 
 	**Range of values:** 0 .. 2.0
 
