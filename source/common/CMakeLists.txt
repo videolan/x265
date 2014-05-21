@@ -116,19 +116,18 @@ if(GCC AND GCC_HAS_NO_NARROWING)
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
 endif()
 if(WIN32)
-    set(WINXP winxp.cpp)
+    set(WINXP winxp.h winxp.cpp)
 endif(WIN32)
 
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
-    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
+    ${LIBCOMMON_SRC} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
-    winxp.h ${WINXP}
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h
