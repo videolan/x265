@@ -278,10 +278,6 @@ extern const double x265_lambda2_tab[MAX_MAX_QP + 1];
 // CABAC tables
 extern const uint8_t g_lpsTable[64][4];
 extern const uint8_t x265_exp2_lut[64];
-
-// DCT denoise tables
-extern const uint32_t g_dctDenoiseWeight4x4[16];
-extern const uint32_t g_dctDenoiseWeight8x8[64];
 }
 
 #endif  //ifndef X265_TCOMROM_H
