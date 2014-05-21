@@ -131,7 +131,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
                 for (block_x = 0; block_x < maxCol; block_x += 16)
                 {
                     uint32_t energy = acEnergyCu(pic, block_x, block_y);
-                    qp_adj = pow(energy + 1, 0.125);
+                    qp_adj = pow(energy + 1, 0.1);
                     pic->m_lowres.qpOffset[block_xy] = qp_adj;
                     avg_adj += qp_adj;
                     avg_adj_pow2 += qp_adj * qp_adj;
@@ -142,7 +142,7 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
             avg_adj /= ncu;
             avg_adj_pow2 /= ncu;
             strength = param->rc.aqStrength * avg_adj / bit_depth_correction;
-            avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (14.f * bit_depth_correction)) / avg_adj;
+            avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (11.f * bit_depth_correction)) / avg_adj;
         }
         else
             strength = param->rc.aqStrength * 1.0397f;
