@@ -34,9 +34,8 @@ if(MSVC)
     # /wd4244 type conversion, possible loss of data
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
-    # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4244 /wd4389 /wd4018 /wd4800")
+        "/wd4244 /wd4389 /wd4018")
 endif(MSVC)
 
 add_library(encoder OBJECT ../x265.h

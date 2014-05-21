@@ -433,7 +433,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
     pixel*   reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
     uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
-    bool     useTransformSkip = cu->getTransformSkip(absPartIdx, TEXT_LUMA);
+    bool     useTransformSkip = !!cu->getTransformSkip(absPartIdx, TEXT_LUMA);
 
     if (!bReusePred)
     {
@@ -538,7 +538,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
     pixel*   reconIPred       = (chromaId == 1) ? cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder) : cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
     uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
-    bool     useTransformSkipChroma = cu->getTransformSkip(absPartIdx, ttype);
+    bool     useTransformSkipChroma = !!cu->getTransformSkip(absPartIdx, ttype);
     int      part = partitionFromSizes(tuSize, tuSize);
 
     if (!bReusePred)
@@ -883,7 +883,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         pixel*   reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
         uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
 
-        bool     useTransformSkip = cu->getTransformSkip(absPartIdx, TEXT_LUMA);
+        bool     useTransformSkip = !!cu->getTransformSkip(absPartIdx, TEXT_LUMA);
 
         //===== init availability pattern =====
         TComPattern::initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, lumaPredMode);
