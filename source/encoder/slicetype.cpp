@@ -420,7 +420,7 @@ void Lookahead::slicetypeDecide()
     }
 
     /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
-    if (param->rc.rateControlMode != X265_RC_CQP)
+    if (param->rc.rateControlMode != X265_RC_CQP && maxSearch > 0)
     {
         int p0, p1, b;
 
