@@ -659,8 +659,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             }
         }
 
-        uint32_t stride       = fencYuv->getStride();
-        pixel*   pred         = predYuv->getLumaAddr(absPartIdx);
+        uint32_t stride = fencYuv->getStride();
+        pixel*   pred   = predYuv->getLumaAddr(absPartIdx);
 
         //===== init availability pattern =====
         uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
@@ -668,15 +668,15 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, tuSize);
 
-        if (checkTransformSkip == true)
+        if (checkTransformSkip)
         {
             //----- store original entropy coding status -----
             m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
-            uint32_t singleDistYTmp     = 0;
-            uint32_t singleCbfYTmp      = 0;
-            uint64_t singleCostTmp      = 0;
-            const int firstCheckId      = 0;
+            uint32_t singleDistYTmp = 0;
+            uint32_t singleCbfYTmp  = 0;
+            uint64_t singleCostTmp  = 0;
+            const int firstCheckId  = 0;
 
             for (int modeId = firstCheckId; modeId < 2; modeId++)
             {
@@ -699,10 +699,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
 
                 if (singleCostTmp < singleCost)
                 {
-                    singleCost   = singleCostTmp;
+                    singleCost  = singleCostTmp;
                     singleDistY = singleDistYTmp;
                     singleCbfY  = singleCbfYTmp;
-                    bestModeId    = modeId;
+                    bestModeId  = modeId;
                     if (bestModeId == firstCheckId)
                     {
                         xStoreIntraResultQT(cu, trDepth, absPartIdx);
@@ -836,13 +836,10 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
     int maxTuSize = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
     int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
 
-    if (m_cfg->param->rdPenalty && !isIntraSlice)
+    if (m_cfg->param->rdPenalty == 2 && !isIntraSlice)
     {
         // if maximum RD-penalty don't check TU size 32x32
-        if (m_cfg->param->rdPenalty == 2)
-        {
-            bCheckFull = (trSizeLog2 <= X265_MIN(maxTuSize, 4));
-        }
+        bCheckFull = (trSizeLog2 <= X265_MIN(maxTuSize, 4));
     }
     if (bCheckFull)
     {
@@ -1360,11 +1357,11 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
 
     if (trMode == trDepth)
     {
-        int      chFmt     = cu->getChromaFormat();
+        int      chFmt      = cu->getChromaFormat();
         uint32_t trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize() >> fullDepth] + 2;
         uint32_t qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
-        bool bChromaSame  = false;
+        bool bChromaSame = false;
         if ((trSizeLog2 == 2) && !(chFmt == CHROMA_444))
         {
             X265_CHECK(trDepth > 0, "invalid trDepth\n");
@@ -1379,8 +1376,8 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
 
         //===== copy transform coefficients =====
 
-        uint32_t width          = cu->getCUSize(absPartIdx) >> (trDepth + m_hChromaShift);
-        uint32_t height         = cu->getCUSize(absPartIdx) >> (trDepth + m_vChromaShift);
+        uint32_t width     = cu->getCUSize(absPartIdx) >> (trDepth + m_hChromaShift);
+        uint32_t height    = cu->getCUSize(absPartIdx) >> (trDepth + m_vChromaShift);
         uint32_t numCoeffC = width * height;
         uint32_t numCoeffIncC = ((cu->getSlice()->getSPS()->getMaxCUSize() >> m_hChromaShift) * (cu->getSlice()->getSPS()->getMaxCUSize() >> m_vChromaShift)) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
 
@@ -1454,9 +1451,9 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 int16_t* residual       = (chromaId == 1) ? resiYuv->getCbAddr(absPartIdxC) : resiYuv->getCrAddr(absPartIdxC);
                 pixel*   recon          = (chromaId == 1) ? reconYuv->getCbAddr(absPartIdxC) : reconYuv->getCrAddr(absPartIdxC);
                 uint32_t numCoeffPerInc = (cu->getSlice()->getSPS()->getMaxCUSize() * cu->getSlice()->getSPS()->getMaxCUSize() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1)) >> (m_hChromaShift + m_vChromaShift);
-                coeff_t*  coeff         = (chromaId == 1 ? cu->getCoeffCb() : cu->getCoeffCr()) + numCoeffPerInc * absPartIdxC;
-                uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdxC;
-                pixel*   reconIPred       = (chromaId == 1) ? cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder) : cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
+                coeff_t* coeff          = (chromaId == 1 ? cu->getCoeffCb() : cu->getCoeffCr()) + numCoeffPerInc * absPartIdxC;
+                uint32_t zorder         = cu->getZorderIdxInCU() + absPartIdxC;
+                pixel*   reconIPred     = (chromaId == 1) ? cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder) : cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
                 uint32_t reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
                 //bool     useTransformSkipChroma = cu->getTransformSkip(absPartIdxC, ttype);
                 const bool useTransformSkipChroma = false;
@@ -2668,16 +2665,16 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     uint32_t width  = cu->getCUSize(0);
     uint32_t height = cu->getCUSize(0);
 
-    //  No residual coding : SKIP mode
+    // No residual coding : SKIP mode
     if (bSkipRes)
     {
         cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
 
         predYuv->copyToPartYuv(outReconYuv, 0);
-        //Luma
+        // Luma
         int part = partitionFromSizes(width, height);
         distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
-        //Chroma
+        // Chroma
         part = partitionFromSizes(width >> m_hChromaShift, height >> m_vChromaShift);
         distortion += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
         distortion += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
@@ -2715,23 +2712,19 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         return;
     }
 
-    //  Residual coding.
-    uint64_t cost, bcost = MAX_INT64;
-
-    outResiYuv->subtract(fencYuv, predYuv, width);
-
-    cost = 0;
+    // Residual coding.
+    uint64_t cost = 0, bcost = MAX_INT64;
+    uint32_t zeroDistortion = 0;
     bits = 0;
     distortion = 0;
-    m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
 
-    uint32_t zeroDistortion = 0;
+    outResiYuv->subtract(fencYuv, predYuv, width);
+    m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
     xEstimateResidualQT(cu, 0, outResiYuv, cu->getDepth(0), cost, bits, distortion, &zeroDistortion, curUseRDOQ);
 
     m_entropyCoder->resetBits();
     m_entropyCoder->encodeQtRootCbfZero(cu);
     uint32_t zeroResiBits = m_entropyCoder->getNumberOfWrittenBits();
-
     uint64_t zeroCost = m_rdCost->calcRdCost(zeroDistortion, zeroResiBits);
     if (cu->isLosslessCoded(0))
     {
