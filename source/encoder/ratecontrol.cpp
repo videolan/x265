@@ -245,7 +245,7 @@ RateControl::RateControl(Encoder * _cfg)
     param->rc.vbvBufferSize = Clip3(0, 2000000, param->rc.vbvBufferSize);
     param->rc.vbvMaxBitrate = Clip3(0, 2000000, param->rc.vbvMaxBitrate);
     param->rc.vbvBufferInit = Clip3(0.0, 2000000.0, param->rc.vbvBufferInit);
-    vbvMinRate = 0;
+    isCbr = false;
     singleFrameVbv = 0;
     if (param->rc.vbvBufferSize)
     {
@@ -305,7 +305,7 @@ RateControl::RateControl(Encoder * _cfg)
             param->rc.vbvBufferInit = Clip3(0.0, 1.0, param->rc.vbvBufferInit / param->rc.vbvBufferSize);
         param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(param->rc.vbvBufferInit, bufferRate / bufferSize));
         bufferFillFinal = bufferSize * param->rc.vbvBufferInit;
-        vbvMinRate = /*!rc->b_2pass && */ param->rc.rateControlMode == X265_RC_ABR
+        isCbr = param->rc.rateControlMode == X265_RC_ABR
             && param->rc.vbvMaxBitrate <= param->rc.bitrate;
     }
 
@@ -545,7 +545,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
             /* ABR code can potentially be counterproductive in CBR, so just
              * don't bother.  Don't run it if the frame complexity is zero
              * either. */
-            if (!vbvMinRate && currentSatd)
+            if (!isCbr && currentSatd)
             {
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
                 double timeDone = (double)(framesDone - param->frameNumThreads + 1) * frameDuration;
@@ -700,7 +700,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
             }
             /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
             targetFill = Clip3(bufferSize * 0.8, bufferSize, bufferFill - totalDuration * vbvMaxRate * 0.5);
-            if (vbvMinRate && bufferFillCur > targetFill)
+            if (isCbr && bufferFillCur > targetFill)
             {
                 q /= 1.01;
                 terminate |= 2;
@@ -763,7 +763,7 @@ double RateControl::clipQscale(TComPic* pic, double q)
         }
         q = X265_MAX(q0 / 2, q);
     }
-    if (!vbvMinRate)
+    if (!isCbr)
         q = X265_MAX(q0, q);
 
     if (rateFactorMaxIncrement)
@@ -910,7 +910,7 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
         if (rce->sliceType != I_SLICE)
             rcTol *= 0.5;
 
-        if (!vbvMinRate)
+        if (!isCbr)
             qpMin = X265_MAX(qpMin, rce->qpNoVbv);
 
         while (qpVbv < qpMax
