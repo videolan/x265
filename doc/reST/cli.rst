@@ -641,23 +641,23 @@ Quality, rate control and rate distortion options
 	Note that this table aims for accuracy, but is not necessarily our
 	final target behavior for each mode.
 
-	+-------+-------------------------------------------------------+
-	| Level | Description                                           |
-	+=======+=======================================================+
-	| 0     | sa8d mode and split decisions, intra w/ source pixels |
-	+-------+-------------------------------------------------------+
-	| 1     | recon generated (better intra), RDO merge residual    |
-	+-------+-------------------------------------------------------+
-	| 2     | RDO splits and merge residual choice                  |
-	+-------+-------------------------------------------------------+
-	| 3     | RDO mode decision and splits                          |
-	+-------+-------------------------------------------------------+
-	| 4     | Adds RDO Quant                                        |
-	+-------+-------------------------------------------------------+
-	| 5     | Enables intra modes in B slices                       |
-	+-------+-------------------------------------------------------+
-	| 6     | Currently same as 5                                   |
-	+-------+-------------------------------------------------------+
+	+-------+---------------------------------------------------------------+
+	| Level | Description                                                   |
+	+=======+===============================================================+
+	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
+	+-------+---------------------------------------------------------------+
+	| 1     | recon generated (better intra), RDO merge residual            |
+	+-------+---------------------------------------------------------------+
+	| 2     | RDO splits and merge residual choice                          |
+	+-------+---------------------------------------------------------------+
+	| 3     | RDO mode and split decisions                                  |
+	+-------+---------------------------------------------------------------+
+	| 4     | Adds RDO Quant                                                |
+	+-------+---------------------------------------------------------------+
+	| 5     | Adds RDO prediction decisions, enables intra modes in B slices|
+	+-------+---------------------------------------------------------------+
+	| 6     | Currently same as 5                                           |
+	+-------+---------------------------------------------------------------+
 
 	**Range of values:** 0: least .. 6: full RDO analysis
 
