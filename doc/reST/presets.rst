@@ -86,9 +86,9 @@ after the preset.
 +--------------+-----------------------------------------------------+
 | --tune       | effect                                              |
 +==============+=====================================================+
-| psnr         | disables adaptive quant and cutree                  |
+| psnr         | disables adaptive quant, psy-rd, and cutree         |
 +--------------+-----------------------------------------------------+
-| ssim         | enables adaptive quant auto-mode                    |
+| ssim         | enables adaptive quant auto-mode, disables psy-rd   |
 +--------------+-----------------------------------------------------+
 | fastdecode   | no loop filters, no weighted pred, no intra in B    |
 +--------------+-----------------------------------------------------+

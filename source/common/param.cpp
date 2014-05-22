@@ -375,10 +375,12 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         if (!strcmp(tune, "psnr"))
         {
             param->rc.aqStrength = 0.0;
+            param->psyRd = 0.0;
         }
         else if (!strcmp(tune, "ssim"))
         {
             param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
+            param->psyRd = 0.0;
         }
         else if (!strcmp(tune, "fastdecode") ||
                  !strcmp(tune, "fast-decode"))
@@ -856,6 +858,40 @@ int x265_check_params(x265_param *param)
     CHECK(param->internalBitDepth != 8,
           "x265 was compiled for 8bit encodes, only 8bit internal depth supported");
 #endif
+
+    if (param->rdLevel < 5)
+        param->psyRd = 0;
+    if (param->rc.aqStrength == 0)
+        param->rc.aqMode = 0;
+    if (param->logLevel < X265_LOG_INFO)
+    {
+        /* don't measure these metrics if they will not be reported */
+        param->bEnablePsnr = 0;
+        param->bEnableSsim = 0;
+    }
+    /* Warn users trying to measure PSNR/SSIM with psy opts on. */
+    if (param->bEnablePsnr || param->bEnableSsim)
+    {
+        const char *s = NULL;
+
+        if (param->psyRd != 0)
+        {
+            s = param->bEnablePsnr ? "psnr" : "ssim";
+            x265_log(param, X265_LOG_WARNING, "--%s used with psy on: results will be invalid!\n", s);
+        }
+        else if (!param->rc.aqMode && param->bEnableSsim)
+        {
+            x265_log(param, X265_LOG_WARNING, "--ssim used with AQ off: results will be invalid!\n");
+            s = "ssim";
+        }
+        else if (param->rc.aqMode && param->bEnablePsnr)
+        {
+            x265_log(param, X265_LOG_WARNING, "--psnr used with AQ on: results will be invalid!\n");
+            s = "psnr";
+        }
+        if (s)
+            x265_log(param, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
+    }
 
     CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");
