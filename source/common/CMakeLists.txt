@@ -1,28 +1,45 @@
 # vim: syntax=cmake
 set(LIBCOMMON_SRC
+    ../Lib/TLibCommon/TComBitStream.cpp
+    ../Lib/TLibCommon/TComDataCU.cpp
+    ../Lib/TLibCommon/TComLoopFilter.cpp
+    ../Lib/TLibCommon/TComMotionInfo.cpp
+    ../Lib/TLibCommon/TComPattern.cpp
+    ../Lib/TLibCommon/TComPic.cpp
+    ../Lib/TLibCommon/TComPicSym.cpp
+    ../Lib/TLibCommon/TComPicYuv.cpp
+    ../Lib/TLibCommon/TComPicYuvMD5.cpp
+    ../Lib/TLibCommon/TComPrediction.cpp
+    ../Lib/TLibCommon/TComRom.cpp
+    ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
+    ../Lib/TLibCommon/TComSlice.cpp
+    ../Lib/TLibCommon/TComTrQuant.cpp
+    ../Lib/TLibCommon/TComWeightPrediction.cpp
+    ../Lib/TLibCommon/TComYuv.cpp)
+set(LIBCOMMON_HDR
     ../Lib/TLibCommon/NAL.h
     ../Lib/TLibCommon/SEI.h
     ../Lib/TLibCommon/TComBitCounter.h
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/TComBitStream.cpp            ../Lib/TLibCommon/TComBitStream.h
-    ../Lib/TLibCommon/TComDataCU.cpp               ../Lib/TLibCommon/TComDataCU.h
-    ../Lib/TLibCommon/TComLoopFilter.cpp           ../Lib/TLibCommon/TComLoopFilter.h
-    ../Lib/TLibCommon/TComMotionInfo.cpp           ../Lib/TLibCommon/TComMotionInfo.h
-    ../Lib/TLibCommon/TComPattern.cpp              ../Lib/TLibCommon/TComPattern.h
-    ../Lib/TLibCommon/TComPic.cpp                  ../Lib/TLibCommon/TComPic.h
-    ../Lib/TLibCommon/TComPicSym.cpp               ../Lib/TLibCommon/TComPicSym.h
-    ../Lib/TLibCommon/TComPicYuv.cpp               ../Lib/TLibCommon/TComPicYuv.h
-    ../Lib/TLibCommon/TComPicYuvMD5.cpp
-    ../Lib/TLibCommon/TComPrediction.cpp           ../Lib/TLibCommon/TComPrediction.h
-    ../Lib/TLibCommon/TComRom.cpp                  ../Lib/TLibCommon/TComRom.h
-    ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
-    ../Lib/TLibCommon/TComSlice.cpp                ../Lib/TLibCommon/TComSlice.h
-    ../Lib/TLibCommon/TComTrQuant.cpp              ../Lib/TLibCommon/TComTrQuant.h
-    ../Lib/TLibCommon/TComWeightPrediction.cpp     ../Lib/TLibCommon/TComWeightPrediction.h
-    ../Lib/TLibCommon/TComYuv.cpp                  ../Lib/TLibCommon/TComYuv.h)
-source_group(TLibCommon FILES ${LIBCOMMON_SRC})
+    ../Lib/TLibCommon/TComBitStream.h
+    ../Lib/TLibCommon/TComDataCU.h
+    ../Lib/TLibCommon/TComLoopFilter.h
+    ../Lib/TLibCommon/TComMotionInfo.h
+    ../Lib/TLibCommon/TComPattern.h
+    ../Lib/TLibCommon/TComPic.h
+    ../Lib/TLibCommon/TComPicSym.h
+    ../Lib/TLibCommon/TComPicYuv.h
+    ../Lib/TLibCommon/TComPrediction.h
+    ../Lib/TLibCommon/TComRom.h
+    ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
+    ../Lib/TLibCommon/TComSlice.h
+    ../Lib/TLibCommon/TComTrQuant.h
+    ../Lib/TLibCommon/TComWeightPrediction.h
+    ../Lib/TLibCommon/TComYuv.h)
+
+source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
 if(GCC)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-sign-compare")
@@ -123,7 +140,7 @@ set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=
 
 add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
-    ${LIBCOMMON_SRC} ${WINXP}
+    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
     cpu.cpp cpu.h version.cpp
