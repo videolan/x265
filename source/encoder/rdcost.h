@@ -84,11 +84,10 @@ public:
     /* return the difference in energy between the source block and the recon block */
     inline uint32_t psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
     {
-        int pixelCountShift = (size + 2) * 2 - 1; // width * height / satd-scale(2)
-        int sdc = primitives.sad_square[size](source, sstride, (pixel*)zeroPel, MAX_CU_SIZE) >> pixelCountShift;
+        int sdc = primitives.sad_square[size](source, sstride, (pixel*)zeroPel, MAX_CU_SIZE) >> 2;
         int sEnergy = primitives.sa8d[size](source, sstride, (pixel*)zeroPel, MAX_CU_SIZE) - sdc;
 
-        int rdc = primitives.sad_square[size](recon, rstride, (pixel*)zeroPel, MAX_CU_SIZE) >> pixelCountShift;
+        int rdc = primitives.sad_square[size](recon, rstride, (pixel*)zeroPel, MAX_CU_SIZE) >> 2;
         int rEnergy = primitives.sa8d[size](recon, rstride, (pixel*)zeroPel, MAX_CU_SIZE) - rdc;
 
         X265_CHECK(sdc <= sEnergy && rdc <= rEnergy, "DC component of energy is more than total cost\n")
