@@ -41,7 +41,7 @@ private:
 
     uint64_t  m_crDistortionWeight;
 
-    uint64_t  m_psyRdScale; // Psy RD strength w/ 8 bits of fraction
+    double    m_psyRdScale;
 
 public:
 
@@ -65,12 +65,12 @@ public:
 
     void setPsyRdScale(double scale)
     {
-        m_psyRdScale = (uint64_t)floor(256.0 * scale);
+        m_psyRdScale = scale;
     }
 
     inline bool psyRdEnabled() const
     {
-        return !!m_psyRdScale;
+        return m_psyRdScale != 0;
     }
 
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
@@ -97,14 +97,10 @@ public:
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
     {
-        uint64_t tot = bits + (((psycost * m_psyRdScale) + 128) >> 8);
-#if CHECKED_BUILD || _DEBUG
         x265_emms();
-        X265_CHECK(abs((float)((tot * m_lambdaSSE + 128) >> 8) -
-                       (float)tot * m_lambdaSSE / 256.0) < 2,
-                   "calcPsyRdCost wrap detected tot: "X265_LL", lambda: "X265_LL"\n", tot, m_lambdaSSE);
-#endif
-        return distortion + ((tot * m_lambdaSSE + 128) >> 8);
+        double cost = distortion + (m_psyRdScale * psycost + bits) * m_lambdaSSE / 256.0;
+        X265_CHECK(cost < (double)MAX_INT64, "calcPsyRdCost overflow\n");
+        return (uint64_t)cost;
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
