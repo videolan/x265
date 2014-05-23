@@ -1151,11 +1151,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.calcrecon[BLOCK_32x32] = calcRecons<32>;
     p.calcrecon[BLOCK_64x64] = NULL;
 
-    p.transpose[0] = transpose<4>;
-    p.transpose[1] = transpose<8>;
-    p.transpose[2] = transpose<16>;
-    p.transpose[3] = transpose<32>;
-    p.transpose[4] = transpose<64>;
+    p.transpose[BLOCK_4x4] = transpose<4>;
+    p.transpose[BLOCK_8x8] = transpose<8>;
+    p.transpose[BLOCK_16x16] = transpose<16>;
+    p.transpose[BLOCK_32x32] = transpose<32>;
+    p.transpose[BLOCK_64x64] = transpose<64>;
 
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;

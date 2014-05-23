@@ -186,7 +186,7 @@ void TComYuv::copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t w
 
 void TComYuv::copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize)
 {
-    int part = partitionFromSizes(lumaSize, lumaSize);
+    int part = partitionFromSize(lumaSize);
 
     int16_t* dst = dstPicYuv->getLumaAddr(partIdx);
     uint32_t dststride = dstPicYuv->m_width;
@@ -196,7 +196,7 @@ void TComYuv::copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t
 
 void TComYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs)
 {
-    int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS422 : partitionFromSizes(lumaSize, lumaSize);
+    int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS422 : partitionFromSize(lumaSize);
 
     if (chromaId == 1)
     {
@@ -235,7 +235,7 @@ void TComYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32
 
 void TComYuv::addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize)
 {
-    int part = partitionFromSizes(partSize, partSize);
+    int part = partitionFromSize(partSize);
 
     addClipLuma(srcYuv0, srcYuv1, part);
     addClipChroma(srcYuv0, srcYuv1, part);

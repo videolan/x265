@@ -906,6 +906,8 @@ public:
 
     void setLog2DiffMaxMinCodingBlockSize(int val) { m_log2DiffMaxMinCodingBlockSize = val; }
 
+    int  getLog2MaxCodingBlockSize() const { return m_log2MinCodingBlockSize + m_log2DiffMaxMinCodingBlockSize; }
+
     void setMaxCUSize(uint32_t u) { m_maxCUSize = u; }
 
     uint32_t getMaxCUSize() const  { return m_maxCUSize; }

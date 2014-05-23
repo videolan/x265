@@ -1604,7 +1604,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     }
     if (!fenc->bIntraCalculated)
     {
-        int nLog2SizeMinus2 = g_convertToBit[cuSize]; // partition size
+        int sizeIdx = g_convertToBit[cuSize]; // partition size
 
         pixel _above0[X265_LOWRES_CU_SIZE * 4 + 1], *const above0 = _above0 + 2 * X265_LOWRES_CU_SIZE;
         pixel _above1[X265_LOWRES_CU_SIZE * 4 + 1], *const above1 = _above1 + 2 * X265_LOWRES_CU_SIZE;
@@ -1643,16 +1643,16 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         int predsize = cuSize * cuSize;
 
         // generate 35 intra predictions into tmp
-        primitives.intra_pred[nLog2SizeMinus2][DC_IDX](predictions, cuSize, left0, above0, 0, (cuSize <= 16));
+        primitives.intra_pred[sizeIdx][DC_IDX](predictions, cuSize, left0, above0, 0, (cuSize <= 16));
         pixel *above = (cuSize >= 8) ? above1 : above0;
         pixel *left  = (cuSize >= 8) ? left1 : left0;
-        primitives.intra_pred[nLog2SizeMinus2][PLANAR_IDX](predictions + predsize, cuSize, left, above, 0, 0);
-        primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
+        primitives.intra_pred[sizeIdx][PLANAR_IDX](predictions + predsize, cuSize, left, above, 0, 0);
+        primitives.intra_pred_allangs[sizeIdx](predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
 
         // calculate 35 satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
-        primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
-        pixelcmp_t satd = primitives.satd[partitionFromSizes(cuSize, cuSize)];
+        primitives.transpose[sizeIdx](buf_trans, me.fenc, FENC_STRIDE);
+        pixelcmp_t satd = primitives.satd[partitionFromSize(cuSize)];
         int icost = me.COST_MAX, cost;
         for (uint32_t mode = 0; mode < 35; mode++)
         {

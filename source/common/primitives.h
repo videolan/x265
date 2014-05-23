@@ -103,11 +103,20 @@ enum IDcts
 inline int partitionFromSizes(int width, int height)
 {
     X265_CHECK(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block width/height\n");
-    extern uint8_t lumaPartitioneMapTable[];
+    extern const uint8_t lumaPartitionMapTable[];
     int w = (width >> 2) - 1;
     int h = (height >> 2) - 1;
-    int part = (int)lumaPartitioneMapTable[(w << 4) + h];
+    int part = (int)lumaPartitionMapTable[(w << 4) + h];
     X265_CHECK(part != 255, "Invalid block width %d height %d\n", width, height);
+    return part;
+}
+
+inline int partitionFromSize(int size)
+{
+    X265_CHECK((size & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block size\n");
+    extern const uint8_t lumaSquarePartitionMapTable[];
+    int part = (int)lumaSquarePartitionMapTable[(size >> 2) - 1];
+    X265_CHECK(part != 255, "Invalid block size %d\n", size);
     return part;
 }
 

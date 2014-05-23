@@ -117,15 +117,15 @@ bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t t
 {
     bool bFilter;
 
-    if (dirMode == DC_IDX)
+    if (dirMode == DC_IDX || tuSize <= 4)
     {
-        bFilter = false; // no smoothing for DC or LM chroma
+        bFilter = false; // no smoothing for DC
     }
     else
     {
         int diff = std::min<int>(abs((int)dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
-        uint32_t sizeIndex = g_convertToBit[tuSize];
-        bFilter = diff > intraFilterThreshold[sizeIndex];
+        uint32_t sizeIdx = g_convertToBit[tuSize];
+        bFilter = diff > intraFilterThreshold[sizeIdx];
     }
 
     return bFilter;
@@ -134,7 +134,7 @@ bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t t
 void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, int tuSize)
 {
     X265_CHECK(tuSize >= 4 && tuSize <= 64, "intra block size is out of range\n");
-    int log2BlkSize = g_convertToBit[tuSize];
+    int sizeIdx = g_convertToBit[tuSize];
     bool bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, tuSize);
 
     pixel *refLft, *refAbv;
@@ -148,13 +148,13 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t str
     }
 
     bool bFilter = tuSize <= 16 && dirMode != PLANAR_IDX;
-    primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
+    primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
 }
 
 // Angular chroma
 void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, int tuSize, int chFmt)
 {
-    int log2BlkSize = g_convertToBit[tuSize];
+    int sizeIdx = g_convertToBit[tuSize];
     uint32_t tuSize2 = tuSize << 1;
 
     // Create the prediction
@@ -222,7 +222,7 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
         }
     }
 
-    primitives.intra_pred[log2BlkSize][dirMode](dst, stride, refLft + tuSize - 1, refAbv + tuSize - 1, dirMode, 0);
+    primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft + tuSize - 1, refAbv + tuSize - 1, dirMode, 0);
 }
 
 /** Function for checking identical motion.

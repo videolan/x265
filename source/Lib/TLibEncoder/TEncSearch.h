@@ -229,8 +229,8 @@ protected:
 
     void xStoreIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
     void xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
-    void xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t stateU0V1Both2, const bool splitIntoSubTUs);
-    void xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t stateU0V1Both2, const bool splitIntoSubTUs);
+    void xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t chromaId, const bool splitIntoSubTUs);
+    void xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t chromaId, const bool splitIntoSubTUs);
 
     // --------------------------------------------------------------------------------------------
     // Inter search (AMP)

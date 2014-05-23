@@ -1337,7 +1337,7 @@ bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
 
-    return ((m_absIdxInLCU + absPartIdx) % curPartNum) == 0;
+    return ((m_absIdxInLCU + absPartIdx) & (curPartNum - 1)) == 0;
 }
 
 void TComDataCU::setPartSizeSubParts(PartSize mode, uint32_t absPartIdx, uint32_t depth)

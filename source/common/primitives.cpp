@@ -29,7 +29,7 @@
 namespace x265 {
 // x265 private namespace
 
-uint8_t lumaPartitioneMapTable[] =
+extern const uint8_t lumaPartitionMapTable[] =
 {
 //  4          8          12          16          20  24          28  32          36  40  44  48          52  56  60  64
     LUMA_4x4,  LUMA_4x8,  255,        LUMA_4x16,  255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 4
@@ -48,6 +48,11 @@ uint8_t lumaPartitioneMapTable[] =
     255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 56
     255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 60
     255,        255,      255,        LUMA_64x16, 255, 255,        255, LUMA_64x32, 255, 255, 255, LUMA_64x48, 255, 255, 255, LUMA_64x64  // 64
+};
+
+extern const uint8_t lumaSquarePartitionMapTable[] =
+{
+    LUMA_4x4,  LUMA_8x8,  255,        LUMA_16x16, 255, 255,        255, LUMA_32x32, 255, 255, 255, 255,        255, 255, 255, LUMA_64x64
 };
 
 /* the "authoritative" set of encoder primitives */

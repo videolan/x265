@@ -88,7 +88,7 @@ void TComOutputBitstream::write(uint32_t bits, uint32_t numBits)
     /* any modulo 8 remainder of num_total_bits cannot be written this time,
      * and will be held until next time. */
     uint32_t num_total_bits = numBits + m_num_held_bits;
-    uint32_t next_num_held_bits = num_total_bits % 8;
+    uint32_t next_num_held_bits = num_total_bits & 7;
 
     /* form a byte aligned word (write_bits), by concatenating any held bits
      * with the new bits, discarding the bits that will form the next_held_bits.

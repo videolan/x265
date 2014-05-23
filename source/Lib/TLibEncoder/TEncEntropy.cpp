@@ -212,7 +212,7 @@ void TEncEntropy::initTUEntropySection(TComTURecurse *tuIterator, uint32_t split
 void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
-    const uint32_t log2TrafoSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize()] + 2 - depth;
+    const uint32_t log2TrafoSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
     uint32_t hChromaShift        = cu->getHorzChromaShift();
     uint32_t vChromaShift        = cu->getVertChromaShift();
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
@@ -227,12 +227,12 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     if ((log2TrafoSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
     {
         uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
-        if ((absPartIdx % partNum) == 0)
+        if ((absPartIdx & (partNum - 1)) == 0)
         {
             m_bakAbsPartIdx   = absPartIdx;
             m_bakChromaOffset = offsetChroma;
         }
-        else if ((absPartIdx % partNum) == (partNum - 1))
+        else if ((absPartIdx & (partNum - 1)) == (partNum - 1))
         {
             cbfU = cu->getCbf(m_bakAbsPartIdx, TEXT_CHROMA_U, trIdx);
             cbfV = cu->getCbf(m_bakAbsPartIdx, TEXT_CHROMA_V, trIdx);
@@ -369,9 +369,9 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         if ((log2TrafoSize == 2) && !(chFmt == CHROMA_444))
         {
             uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
-            if ((absPartIdx % partNum) == (partNum - 1))
+            if ((absPartIdx & (partNum - 1)) == (partNum - 1))
             {
-                uint32_t trWidthC          = log2TrafoSize << 1;
+                uint32_t trSizeC           = 1 << log2TrafoSize;
                 const bool splitIntoSubTUs = (chFmt == CHROMA_422);
 
                 uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
@@ -384,10 +384,10 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
                     do
                     {
                         uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
-                        uint32_t subTUIndex = tuIterator.m_section * trWidthC * trWidthC;
+                        uint32_t subTUIndex = tuIterator.m_section * trSizeC * trSizeC;
                         if (cbf)
                         {
-                            m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + m_bakChromaOffset + subTUIndex), tuIterator.m_absPartIdxTURelCU, trWidthC, (TextType)chromaId);
+                            m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + m_bakChromaOffset + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
                         }
                     }
                     while (isNextTUSection(&tuIterator));
@@ -396,10 +396,8 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
         else
         {
-            uint32_t trWidthC  = tuSize >> hChromaShift;
-            uint32_t trHeightC = tuSize >> vChromaShift;
+            uint32_t trSizeC  = tuSize >> hChromaShift;
             const bool splitIntoSubTUs = (chFmt == CHROMA_422);
-            trHeightC = splitIntoSubTUs ? trHeightC >> 1 : trHeightC;
             uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
             for (uint32_t chromaId = TEXT_CHROMA; chromaId < MAX_NUM_COMPONENT; chromaId++)
             {
@@ -409,10 +407,10 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
                 do
                 {
                     uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
-                    uint32_t subTUIndex = tuIterator.m_section * trWidthC * trHeightC;
+                    uint32_t subTUIndex = tuIterator.m_section * trSizeC * trSizeC;
                     if (cbf)
                     {
-                        m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUIndex), tuIterator.m_absPartIdxTURelCU, trWidthC, (TextType)chromaId);
+                        m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
                     }
                 }
                 while (isNextTUSection(&tuIterator));
