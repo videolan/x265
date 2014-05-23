@@ -75,8 +75,7 @@ public:
 
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
     {
-        X265_CHECK(abs((float)((bits * m_lambdaSSE + 128) >> 8) -
-                       (float)bits * m_lambdaSSE / 256.0) < 2,
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambdaSSE,
                    "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambdaSSE);
         return distortion + ((bits * m_lambdaSSE + 128) >> 8);
     }
@@ -105,8 +104,7 @@ public:
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
     {
-        X265_CHECK(abs((float)((bits * m_lambdaSAD + 128) >> 8) -
-                       (float)bits * m_lambdaSAD / 256.0) < 2,
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambdaSAD,
                    "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambdaSAD);
         return sadCost + ((bits * m_lambdaSAD + 128) >> 8);
     }
@@ -118,16 +116,14 @@ public:
 
     inline uint32_t scaleChromaDistCb(uint32_t dist)
     {
-        X265_CHECK(abs((float)((dist * m_cbDistortionWeight + 128) >> 8) -
-                       (float)dist * m_cbDistortionWeight / 256.0) < 2,
+        X265_CHECK(dist <= (UINT64_MAX - 128) / m_cbDistortionWeight,
                    "scaleChromaDistCb wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_cbDistortionWeight);
         return (uint32_t)(((dist * m_cbDistortionWeight) + 128) >> 8);
     }
 
     inline uint32_t scaleChromaDistCr(uint32_t dist)
     {
-        X265_CHECK(abs((float)((dist * m_crDistortionWeight + 128) >> 8) -
-                       (float)dist * m_crDistortionWeight / 256.0) < 2,
+        X265_CHECK(dist <= (UINT64_MAX - 128) / m_crDistortionWeight,
                    "scaleChromaDistCr wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_crDistortionWeight);
         return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8);
     }
