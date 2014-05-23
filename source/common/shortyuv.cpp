@@ -214,7 +214,7 @@ void ShortYuv::copyPartToPartShortChroma(ShortYuv* dstPicYuv, uint32_t partIdx, 
 
 void ShortYuv::copyPartToPartYuvChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs)
 {
-    assert(chromaId == 1 || chromaId == 2);
+    X265_CHECK(chromaId == 1 || chromaId == 2, "invalid chroma id");
 
     int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS422 : partitionFromSize(lumaSize);
 
