@@ -665,6 +665,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         //===== init availability pattern =====
         uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
         TComPattern::initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, lumaPredMode);
+
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, tuSize);
 
@@ -682,18 +683,19 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             {
                 singleDistYTmp = 0;
                 cu->setTransformSkipSubParts(modeId, TEXT_LUMA, absPartIdx, fullDepth);
+
                 //----- code luma block with given intra prediction mode and store Cbf-----
                 xIntraCodingLumaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistYTmp);
                 singleCbfYTmp = cu->getCbf(absPartIdx, TEXT_LUMA, trDepth);
-                //----- determine rate and r-d cost -----
+
                 if (modeId == 1 && singleCbfYTmp == 0)
                 {
-                    //In order not to code TS flag when cbf is zero, the case for TS with cbf being zero is forbidden.
+                    // In order not to code TS flag when cbf is zero, the case for TS with cbf being zero is forbidden.
                     singleCostTmp = MAX_INT64;
                 }
                 else
                 {
-                    uint32_t singleBits = xGetIntraBitsQT(cu, trDepth, absPartIdx,  0, true, false);
+                    uint32_t singleBits = xGetIntraBitsQT(cu, trDepth, absPartIdx, 0, true, false);
                     singleCostTmp = m_rdCost->calcRdCost(singleDistYTmp, singleBits);
                 }
 
@@ -726,23 +728,19 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         }
         else
         {
-            cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
-
-            //----- store original entropy coding status -----
             m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
             //----- code luma block with given intra prediction mode and store Cbf-----
+            cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
             xIntraCodingLumaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistY);
+
             if (bCheckSplit)
-            {
                 singleCbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trDepth);
-            }
-            //----- determine rate and r-d cost -----
+
             uint32_t singleBits = xGetIntraBitsQT(cu, trDepth, absPartIdx, 0, true, false);
             if (m_cfg->param->rdPenalty && (trSizeLog2 == 5) && !isIntraSlice)
-            {
-                singleBits = singleBits * 4;
-            }
+                singleBits *= 4;
+
             singleCost = m_rdCost->calcRdCost(singleDistY, singleBits);
         }
     }

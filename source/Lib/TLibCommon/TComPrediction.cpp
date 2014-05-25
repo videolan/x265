@@ -400,7 +400,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
 void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic)
 {
     int dstStride = dstPic->getStride();
-    pixel *dst      = dstPic->getLumaAddr(partAddr);
+    pixel *dst    = dstPic->getLumaAddr(partAddr);
 
     int srcStride = refPic->getStride();
     int srcOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
