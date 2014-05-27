@@ -602,7 +602,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
         m_entropyCoder->resetBits();
         m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth);
         outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
-        outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
+        outBestCU->m_totalRDCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
     }
 
     outTempCU->initEstData(depth);
@@ -649,7 +649,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
             m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth);
             outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         }
-        outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+        outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
         if ((g_maxCUSize >> depth) == slice->getPPS()->getMinCuDQPSize() && slice->getPPS()->getUseDQP())
         {
@@ -689,7 +689,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 
     X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
     X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
-    X265_CHECK(outBestCU->m_totalCost != MAX_INT64, "no best partition cost\n");
+    X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
 }
 
 void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, PartSize parentSize)
@@ -915,7 +915,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
             {
                 uint32_t rawbits = (2 * X265_DEPTH + X265_DEPTH) * cuSize * cuSize / 2;
                 uint32_t bestbits = outBestCU->m_totalBits;
-                if ((bestbits > rawbits) || (outBestCU->m_totalCost > m_rdCost->calcRdCost(0, rawbits)))
+                if ((bestbits > rawbits) || (outBestCU->m_totalRDCost > m_rdCost->calcRdCost(0, rawbits)))
                 {
                     xCheckIntraPCM(outBestCU, outTempCU);
                 }
@@ -925,7 +925,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
         m_entropyCoder->resetBits();
         m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth);
         outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
-        outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
+        outBestCU->m_totalRDCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
 
         // Early CU determination
         if (outBestCU->isSkipped(0))
@@ -984,7 +984,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
             m_entropyCoder->encodeSplitFlag(outTempCU, 0, depth);
             outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         }
-        outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+        outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
         if ((g_maxCUSize >> depth) == slice->getPPS()->getMinCuDQPSize() && slice->getPPS()->getUseDQP())
         {
@@ -1024,7 +1024,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
 
     X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
     X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
-    X265_CHECK(outBestCU->m_totalCost != MAX_INT64, "no best partition cost\n");
+    X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
 }
 
 /** finish encoding a cu and handle end-of-slice conditions
@@ -1283,7 +1283,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     outTempCU->setSkipFlagSubParts(!outTempCU->getQtRootCbf(0), 0, depth);
                     int origQP = outTempCU->getQP(0);
                     xCheckDQP(outTempCU);
-                    if (outTempCU->m_totalCost < outBestCU->m_totalCost)
+                    if (outTempCU->m_totalRDCost < outBestCU->m_totalRDCost)
                     {
                         TComDataCU* tmp = outTempCU;
                         outTempCU = outBestCU;
@@ -1394,11 +1394,11 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
         int part = g_convertToBit[outTempCU->getCUSize(0)];
         uint32_t psyRdCost = m_rdCost->psyCost(part, m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                      m_tmpRecoYuv[depth]->getLumaAddr(), m_tmpRecoYuv[depth]->getStride());
-        outTempCU->m_totalCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, psyRdCost);
+        outTempCU->m_totalRDCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, psyRdCost);
     }
     else
     {
-        outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+        outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
     }
     xCheckDQP(outTempCU);
     xCheckBestMode(outBestCU, outTempCU, depth);
@@ -1441,11 +1441,11 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
         int part = g_convertToBit[outTempCU->getCUSize(0)];
         uint32_t psyRdCost = m_rdCost->psyCost(part, m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                      m_tmpRecoYuv[depth]->getLumaAddr(), m_tmpRecoYuv[depth]->getStride());
-        outTempCU->m_totalCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, psyRdCost);
+        outTempCU->m_totalRDCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, psyRdCost);
     }
     else
     {
-        outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+        outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
     }
     xCheckDQP(outTempCU);
     xCheckBestMode(outBestCU, outTempCU, depth);
@@ -1489,7 +1489,7 @@ void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
-    outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+    outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
     xCheckDQP(outTempCU);
     xCheckBestMode(outBestCU, outTempCU, depth);
@@ -1502,7 +1502,7 @@ void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
  */
 void TEncCu::xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth)
 {
-    if (outTempCU->m_totalCost < outBestCU->m_totalCost)
+    if (outTempCU->m_totalRDCost < outBestCU->m_totalRDCost)
     {
         TComYuv* yuv;
         // Change Information data

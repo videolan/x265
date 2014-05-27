@@ -214,7 +214,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
     m_cuPelX           = (cuAddr % pic->getFrameWidthInCU()) * g_maxCUSize;
     m_cuPelY           = (cuAddr / pic->getFrameWidthInCU()) * g_maxCUSize;
     m_absIdxInLCU      = 0;
-    m_totalCost        = MAX_INT64;
+    m_totalRDCost        = MAX_INT64;
     m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
@@ -305,7 +305,7 @@ void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
 */
 void TComDataCU::initEstData(uint32_t depth, int qp)
 {
-    m_totalCost        = MAX_INT64;
+    m_totalRDCost        = MAX_INT64;
     m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
@@ -341,7 +341,7 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
 
 void TComDataCU::initEstData(uint32_t depth)
 {
-    m_totalCost        = MAX_INT64;
+    m_totalRDCost        = MAX_INT64;
     m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
@@ -389,7 +389,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_cuPelX           = cu->getCUPelX() + (g_maxCUSize >> depth) * (partUnitIdx &  1);
     m_cuPelY           = cu->getCUPelY() + (g_maxCUSize >> depth) * (partUnitIdx >> 1);
 
-    m_totalCost        = MAX_INT64;
+    m_totalRDCost        = MAX_INT64;
     m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
@@ -453,7 +453,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
     m_cuPelX           = cu->getCUPelX() + (g_maxCUSize >> depth) * (partUnitIdx &  1);
     m_cuPelY           = cu->getCUPelY() + (g_maxCUSize >> depth) * (partUnitIdx >> 1);
 
-    m_totalCost        = MAX_INT64;
+    m_totalRDCost        = MAX_INT64;
     m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
@@ -516,7 +516,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
     m_cuPelX           = cu->getCUPelX() + (g_maxCUSize >> depth) * (partUnitIdx & 1);
     m_cuPelY           = cu->getCUPelY() + (g_maxCUSize >> depth) * (partUnitIdx >> 1);
 
-    m_totalCost        = MAX_INT64;
+    m_totalRDCost        = MAX_INT64;
     m_sa8dCost         = MAX_INT64;
     m_totalDistortion  = 0;
     m_totalBits        = 0;
@@ -546,7 +546,7 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
     if (isRDObasedAnalysis)
-        m_totalCost += cu->m_totalCost;
+        m_totalRDCost += cu->m_totalRDCost;
 
     m_totalDistortion  += cu->m_totalDistortion;
     m_totalBits        += cu->m_totalBits;
@@ -607,7 +607,7 @@ void TComDataCU::copyToPic(uint8_t depth)
 {
     TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
 
-    rpcCU->m_totalCost       = m_totalCost;
+    rpcCU->m_totalRDCost       = m_totalRDCost;
     rpcCU->m_totalDistortion = m_totalDistortion;
     rpcCU->m_totalBits       = m_totalBits;
 
@@ -692,7 +692,7 @@ void TComDataCU::copyToPic(uint8_t depth, uint32_t partIdx, uint32_t partDepth)
     uint32_t partStart = partIdx * qNumPart;
     uint32_t partOffset  = m_absIdxInLCU + partStart;
 
-    cu->m_totalCost       = m_totalCost;
+    cu->m_totalRDCost       = m_totalRDCost;
     cu->m_totalDistortion = m_totalDistortion;
     cu->m_totalBits       = m_totalBits;
 

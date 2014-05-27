@@ -165,7 +165,7 @@ public:
     TComDataCU();
     virtual ~TComDataCU();
 
-    uint64_t      m_totalCost;       ///< sum of partition RD costs
+    uint64_t      m_totalRDCost;       ///< sum of partition RD costs
     uint32_t      m_totalDistortion; ///< sum of partition distortion
     uint32_t      m_totalBits;       ///< sum of partition signal bits
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth

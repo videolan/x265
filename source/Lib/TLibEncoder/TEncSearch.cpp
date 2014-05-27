@@ -2168,7 +2168,7 @@ void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     cu->m_totalBits       = bits;
-    cu->m_totalCost       = cost;
+    cu->m_totalRDCost       = cost;
     cu->m_totalDistortion = distortion;
 
     cu->copyToPic(depth, 0, 0);
@@ -2695,11 +2695,11 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
             int size = g_convertToBit[cuSize];
             uint32_t psyRdCost = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
                                                    outReconYuv->getLumaAddr(), outReconYuv->getStride());
-            cu->m_totalCost = m_rdCost->calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, psyRdCost);
+            cu->m_totalRDCost = m_rdCost->calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, psyRdCost);
         }
         else
         {
-            cu->m_totalCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+            cu->m_totalRDCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
         }
 
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
@@ -2794,7 +2794,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     }
     cu->m_totalBits       = bestBits;
     cu->m_totalDistortion = bdist;
-    cu->m_totalCost       = bcost;
+    cu->m_totalRDCost       = bcost;
 
     if (cu->isSkipped(0))
     {
