@@ -2695,7 +2695,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
             int size = g_convertToBit[cuSize];
             cu->m_psyEnergy = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
                                                    outReconYuv->getLumaAddr(), outReconYuv->getStride());
-            cu->m_totalRDCost = m_rdCost->calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
+            cu->m_totalPsyCost = m_rdCost->calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
         }
         else
         {
@@ -2786,16 +2786,15 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         int size = g_convertToBit[cuSize];
         cu->m_psyEnergy = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
                                                outReconYuv->getLumaAddr(), outReconYuv->getStride());
-        bcost = m_rdCost->calcPsyRdCost(bdist, bestBits, cu->m_psyEnergy);
+        cu->m_totalPsyCost = m_rdCost->calcPsyRdCost(bdist, bestBits, cu->m_psyEnergy);
     }
     else
     {
-        bcost = m_rdCost->calcRdCost(bdist, bestBits);
+        cu->m_totalRDCost = m_rdCost->calcRdCost(bdist, bestBits);
     }
     cu->m_totalBits       = bestBits;
     cu->m_totalDistortion = bdist;
-    cu->m_totalRDCost       = bcost;
-
+    
     if (cu->isSkipped(0))
     {
         cu->clearCbf(0, cu->getDepth(0));
