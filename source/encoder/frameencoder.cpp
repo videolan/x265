@@ -573,7 +573,14 @@ void FrameEncoder::compressFrame()
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
 
         SEIPictureTiming sei;
-        sei.m_picStruct = (slice->getPOC() & 1) && m_cfg->param->interlaceMode == 2 ? 1 /* top */ : 2 /* bot */;
+        if (m_cfg->param->interlaceMode == 2)
+        {
+            sei.m_picStruct = (slice->getPOC() & 1) ? 1 /* top */ : 2 /* bottom */;
+        }
+        else
+        {
+            sei.m_picStruct = (slice->getPOC() & 1) ? 2 /* bottom */ : 1 /* top */;
+        }
         sei.m_sourceScanType = 0;
         sei.m_duplicateFlag = 0;
 
