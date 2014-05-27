@@ -165,6 +165,7 @@ public:
     TComDataCU();
     virtual ~TComDataCU();
 
+    uint32_t      m_psyEnergy;
     uint64_t      m_totalPsyCost;
     uint64_t      m_totalRDCost;       ///< sum of partition RD costs
     uint32_t      m_totalDistortion; ///< sum of partition distortion
