@@ -839,7 +839,7 @@ VUI fields must be manually specified.
 Bitstream options
 =================
 
-.. option:: --repeat-headers
+.. option:: --repeat-headers, --no-repeat-headers
 
 	If enabled, x265 will emit VPS, SPS, and PPS headers with every
 	keyframe. This is intended for use when you do not have a container
