@@ -115,15 +115,11 @@ protected:
 
     ShortYuv*       m_qtTempShortYuv;
 
-    coeff_t**       m_qtTempCoeffY;
-    coeff_t**       m_qtTempCoeffCb;
-    coeff_t**       m_qtTempCoeffCr;
+    coeff_t**       m_qtTempCoeff[3];
     uint8_t*        m_qtTempTrIdx;
     uint8_t*        m_qtTempCbf[3];
 
-    coeff_t*        m_qtTempTUCoeffY;
-    coeff_t*        m_qtTempTUCoeffCb;
-    coeff_t*        m_qtTempTUCoeffCr;
+    coeff_t*        m_qtTempTUCoeff[3];
     uint8_t*        m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipYuv;
 
@@ -230,7 +226,7 @@ protected:
     void xStoreIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
     void xLoadIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
     void xStoreIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t chromaId, const bool splitIntoSubTUs);
-    void xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t chromaId, const bool splitIntoSubTUs);
+    void xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t chromaId);
 
     // --------------------------------------------------------------------------------------------
     // Inter search (AMP)

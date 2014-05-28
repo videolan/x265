@@ -163,7 +163,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     }
 }
 
-void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf, int chromaId)
+void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf, uint32_t chromaId)
 {
     pixel*  roiOrigin;
     pixel*  adiTemp;
@@ -175,7 +175,7 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     initIntraNeighbors(cu, zOrderIdxInPart, partDepth, TEXT_CHROMA, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    roiOrigin = (chromaId == 1) ? cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart) : cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
+    roiOrigin = cu->getPic()->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = getAdiChromaBuf(chromaId, tuSize, adiBuf);
 
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);

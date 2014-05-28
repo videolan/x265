@@ -70,7 +70,7 @@ class TComPattern
 public:
 
     // access functions of ADI buffers
-    static pixel* getAdiChromaBuf(int chromaId, int tuSize, pixel* adiBuf)
+    static pixel* getAdiChromaBuf(uint32_t chromaId, int tuSize, pixel* adiBuf)
     {
         return adiBuf + (chromaId == 1 ? 0 : 2 * ADI_BUF_STRIDE * (tuSize * 2 + 1));
     }
@@ -86,7 +86,7 @@ public:
 
     /// set chroma parameters from CU data for accessing ADI data
     static void initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
-                                     pixel* adiBuf, int chromaId);
+                                     pixel* adiBuf, uint32_t chromaId);
 
     static void initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, TextType cType, IntraNeighbors *IntraNeighbors);
 

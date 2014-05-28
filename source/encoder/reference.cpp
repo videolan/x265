@@ -43,7 +43,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
     intptr_t startpad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
 
     /* directly reference the pre-extended integer pel plane */
-    fpelPlane = pic->m_picBufY + startpad;
+    fpelPlane = pic->m_picBuf[0] + startpad;
     isWeighted = false;
 
     if (w)

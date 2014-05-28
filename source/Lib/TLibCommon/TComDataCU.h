@@ -112,9 +112,7 @@ private:
     uint8_t*      m_transformSkip[3];   ///< array of transform skipping flags
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
-    coeff_t*      m_trCoeffY;           ///< transformed coefficient buffer (Y)
-    coeff_t*      m_trCoeffCb;          ///< transformed coefficient buffer (Cb)
-    coeff_t*      m_trCoeffCr;          ///< transformed coefficient buffer (Cr)
+    coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
 
     pixel*        m_iPCMSampleY;        ///< PCM sample buffer (Y)
     pixel*        m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
@@ -279,11 +277,13 @@ public:
 
     TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
 
-    coeff_t*&     getCoeffY()                 { return m_trCoeffY; }
+    coeff_t*      getCoeffY()                 { return m_trCoeff[0]; }
 
-    coeff_t*&     getCoeffCb()                { return m_trCoeffCb; }
+    coeff_t*      getCoeffCb()                { return m_trCoeff[1]; }
 
-    coeff_t*&     getCoeffCr()                { return m_trCoeffCr; }
+    coeff_t*      getCoeffCr()                { return m_trCoeff[2]; }
+
+    coeff_t*      getCoeff(TextType ttype)    { return m_trCoeff[ttype]; }
 
     pixel*&       getPCMSampleY()             { return m_iPCMSampleY; }
 
