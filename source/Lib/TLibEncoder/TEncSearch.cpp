@@ -453,7 +453,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     int lastPos = -1;
     cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
 
-    int      chFmt        = cu->getChromaFormat();
+    int chFmt = cu->getChromaFormat();
     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
     m_trQuant->selectLambda(TEXT_LUMA);
 

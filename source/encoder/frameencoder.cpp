@@ -1124,7 +1124,7 @@ void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
              * believe the problem is fixed, but are leaving this check in place
              * to prevent crashes in case it is not */
             x265_log(m_cfg->param, X265_LOG_WARNING,
-                     "internal error - simulaneous row access detected. Please report HW to x265-devel@videolan.org\n");
+                     "internal error - simultaneous row access detected. Please report HW to x265-devel@videolan.org\n");
             return;
         }
         curRow.m_busy = true;
