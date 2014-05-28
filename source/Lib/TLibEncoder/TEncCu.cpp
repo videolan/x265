@@ -706,7 +706,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 
     X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
     X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
-    if(m_rdCost->psyRdEnabled())
+    if (m_rdCost->psyRdEnabled())
     {
         X265_CHECK(outBestCU->m_totalPsyCost != MAX_INT64, "no best partition cost\n");
     }
@@ -1065,7 +1065,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
 
     X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
     X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
-    if(m_rdCost->psyRdEnabled())
+    if (m_rdCost->psyRdEnabled())
     {
         X265_CHECK(outBestCU->m_totalPsyCost != MAX_INT64, "no best partition cost\n");
     }
