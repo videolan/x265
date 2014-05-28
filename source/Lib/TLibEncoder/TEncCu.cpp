@@ -706,7 +706,14 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 
     X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
     X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
-    X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
+    if(m_rdCost->psyRdEnabled())
+    {
+        X265_CHECK(outBestCU->m_totalPsyCost != MAX_INT64, "no best partition cost\n");
+    }
+    else
+    {
+        X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
+    }
 }
 
 void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, PartSize parentSize)
@@ -1058,7 +1065,14 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
 
     X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
     X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best partition mode\n");
-    X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
+    if(m_rdCost->psyRdEnabled())
+    {
+        X265_CHECK(outBestCU->m_totalPsyCost != MAX_INT64, "no best partition cost\n");
+    }
+    else
+    {
+        X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
+    }
 }
 
 /** finish encoding a cu and handle end-of-slice conditions
