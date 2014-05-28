@@ -63,7 +63,7 @@ public:
 
     void destroy();
 
-    void processRowEncoder(int row);
+    void processRowEncoder(int row, const int threadId);
 
     void processRowFilter(int row)
     {
@@ -90,7 +90,7 @@ public:
         WaveFront::enableRow(row * 2 + 1);
     }
 
-    void processRow(int row)
+    void processRow(int row, int threadId)
     {
         const int realRow = row >> 1;
         const int typeNum = row & 1;
@@ -98,7 +98,7 @@ public:
         // TODO: use switch when more type
         if (typeNum == 0)
         {
-            processRowEncoder(realRow);
+            processRowEncoder(realRow, threadId);
         }
         else
         {

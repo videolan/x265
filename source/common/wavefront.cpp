@@ -112,7 +112,7 @@ bool WaveFront::dequeueRow(int row)
     return ATOMIC_CAS(&m_internalDependencyBitmap[row >> 6], oldval, newval) == oldval;
 }
 
-bool WaveFront::findJob()
+bool WaveFront::findJob(int threadId)
 {
     unsigned long id;
 
@@ -130,7 +130,7 @@ bool WaveFront::findJob()
             if (ATOMIC_CAS(&m_internalDependencyBitmap[w], oldval, newval) == oldval)
             {
                 // we cleared the bit, process row
-                processRow(w * 64 + id);
+                processRow(w * 64 + id, threadId);
                 return true;
             }
             // some other thread cleared the bit, try another bit

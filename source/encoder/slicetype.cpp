@@ -189,7 +189,7 @@ TComPic* Lookahead::getDecidedPicture()
 }
 
 /* Called by pool worker threads */
-bool Lookahead::findJob()
+bool Lookahead::findJob(int)
 {
     if (bReady && ATOMIC_CAS32(&bReady, 1, 0) == 1)
     {
@@ -1289,7 +1289,7 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
             enqueueRow(0);
             while (!bFrameCompleted)
             {
-                WaveFront::findJob();
+                WaveFront::findJob(-1);
             }
 
             WaveFront::dequeue();
@@ -1298,7 +1298,7 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
         {
             for (int row = 0; row < heightInCU; row++)
             {
-                processRow(row);
+                processRow(row, -1);
             }
 
             x265_emms();
@@ -1455,7 +1455,7 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
     }
 }
 
-void CostEstimate::processRow(int row)
+void CostEstimate::processRow(int row, int /*threadId*/)
 {
     int realrow = heightInCU - 1 - row;
     Lowres **frames = curframes;

@@ -156,7 +156,7 @@ void PoolThread::threadMain()
         {
             // FindJob() may perform actual work and return true.  If
             // it does we restart the job search
-            if (cur->findJob() == true)
+            if (cur->findJob(m_id) == true)
                 break;
 
             cur = cur->m_nextProvider;

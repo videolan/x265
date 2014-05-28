@@ -87,11 +87,11 @@ public:
     // WaveFront's implementation of JobProvider::findJob. Consults
     // m_queuedBitmap and calls ProcessRow(row) for lowest numbered queued row
     // or returns false
-    bool findJob();
+    bool findJob(int threadId);
 
     // Start or resume encode processing of this row, must be implemented by
     // derived classes.
-    virtual void processRow(int row) = 0;
+    virtual void processRow(int row, int threadId) = 0;
 
     // Returns true if a row above curRow is available for processing.  The processRow()
     // method may call this function periodically and voluntarily exit

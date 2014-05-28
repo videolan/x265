@@ -1088,13 +1088,13 @@ void FrameEncoder::compressCTURows()
                     }
                 }
 
-                processRow(i * 2 + 0);
+                processRow(i * 2 + 0, -1);
             }
 
             // Filter
             if (i >= m_filterRowDelay)
             {
-                processRow((i - m_filterRowDelay) * 2 + 1);
+                processRow((i - m_filterRowDelay) * 2 + 1, -1);
             }
         }
     }
@@ -1103,7 +1103,7 @@ void FrameEncoder::compressCTURows()
 }
 
 // Called by worker threads
-void FrameEncoder::processRowEncoder(int row)
+void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
 {
     PPAScopeEvent(Thread_ProcessRow);
 

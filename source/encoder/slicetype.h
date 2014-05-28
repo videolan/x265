@@ -110,7 +110,7 @@ struct CostEstimate : public WaveFront
     volatile bool    bFrameCompleted;
     int              curb, curp0, curp1;
 
-    void     processRow(int row);
+    void     processRow(int row, int threadId);
     int64_t  estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
 
 protected:
@@ -155,7 +155,7 @@ protected:
     volatile bool bFilling;
     volatile bool bFlushed;
 
-    bool findJob();
+    bool findJob(int);
 
     /* called by addPicture() or flush() to trigger slice decisions */
     void slicetypeDecide();

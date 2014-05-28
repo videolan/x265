@@ -87,7 +87,7 @@ public:
 
     void encode();
 
-    void processRow(int row);
+    void processRow(int row, int threadid);
 };
 
 void MD5Frame::initialize(int cols, int rows)
@@ -130,7 +130,7 @@ void MD5Frame::encode()
         std::cout << "Bad hash: " << ss.str() << std::endl;
 }
 
-void MD5Frame::processRow(int rownum)
+void MD5Frame::processRow(int rownum, int)
 {
     // Called by worker thread
     RowData &curRow = this->row[rownum];
