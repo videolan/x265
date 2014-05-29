@@ -365,7 +365,7 @@ Temporal / motion search options
 .. option:: --rect, --no-rect
 
 	Enable analysis of rectangular motion partitions Nx2N and 2NxN
-	(50/50 splits, two directions). Default enabled
+	(50/50 splits, two directions). Default disabled
 
 .. option:: --amp, --no-amp
 
@@ -373,7 +373,7 @@ Temporal / motion search options
 	directions). This setting has no effect if rectangular partitions
 	are disabled. Even though there are four possible AMP partitions,
 	only the most likely candidate is tested, based on the results of
-	the rectangular mode tests. Default enabled
+	the rectangular mode tests. Default disabled
 
 .. option:: --max-merge <1..5>
 
