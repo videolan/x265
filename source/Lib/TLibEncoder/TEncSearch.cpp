@@ -1959,8 +1959,8 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
                 m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
             }
 
-            uint32_t   bits = xGetIntraBitsQT(cu, initTrDepth, tuIterator.m_absPartIdxTURelCU, tuIterator.m_absPartIdxStep, false, true);
-            uint64_t cost  = m_rdCost->calcRdCost(dist, bits);
+            uint32_t bits = xGetIntraBitsQT(cu, initTrDepth, tuIterator.m_absPartIdxTURelCU, tuIterator.m_absPartIdxStep, false, true);
+            uint64_t cost = m_rdCost->calcRdCost(dist, bits);
 
             //----- compare -----
             if (cost < bestCost)
@@ -2168,7 +2168,7 @@ void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     cu->m_totalBits       = bits;
-    cu->m_totalRDCost       = cost;
+    cu->m_totalRDCost     = cost;
     cu->m_totalDistortion = distortion;
 
     cu->copyToPic(depth, 0, 0);
