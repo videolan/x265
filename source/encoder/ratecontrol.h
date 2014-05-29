@@ -132,6 +132,12 @@ struct RateControl
 
 protected:
 
+    static const double amortizeFraction;
+    static const int amortizeFrames;
+
+    int residualFrames;
+    int residualCost;
+
     void init();
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR

@@ -30,6 +30,10 @@
 
 using namespace x265;
 
+/* Amortize the partial cost of I frames over the next N frames */
+const double RateControl::amortizeFraction = 0.85;
+const int RateControl::amortizeFrames = 75;
+
 /* Compute variance to derive AC energy of each block */
 static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, int i)
 {
@@ -204,6 +208,8 @@ RateControl::RateControl(Encoder * _cfg)
         qCompress = param->rc.qCompress;
 
     // validate for param->rc, maybe it is need to add a function like x265_parameters_valiate()
+    residualFrames = 0;
+    residualCost = 0;
     param->rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstant);
     param->rc.rfConstantMax = Clip3((double)-QP_BD_OFFSET, (double)51, param->rc.rfConstantMax);
     rateFactorMaxIncrement = 0;
@@ -316,7 +322,7 @@ RateControl::RateControl(Encoder * _cfg)
     {
         /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
-#define ABR_INIT_QP_MAX (34 + QP_BD_OFFSET)
+#define ABR_INIT_QP_MAX (40 + QP_BD_OFFSET)
     }
     else if (param->rc.rateControlMode == X265_RC_CRF)
     {
@@ -353,9 +359,12 @@ void RateControl::init()
 {
     totalBits = 0;
     framesDone = 0;
-
+    double tuneCplxFactor = 1;
+    /* 720p videos seem to be a good cutoff for cplxrSum */
+    if (param->rc.cuTree && ncu > 3600)
+        tuneCplxFactor = 2.5;
     /* estimated ratio that produces a reasonable QP for the first I-frame */
-    cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5);
+    cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5) * tuneCplxFactor;
     wantedBitsWindow = bitrate * frameDuration;
     accumPNorm = .01;
     accumPQp = (param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN) * accumPNorm;
@@ -550,7 +559,7 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
                 double timeDone = (double)(framesDone - param->frameNumThreads + 1) * frameDuration;
                 wantedBits = timeDone * bitrate;
-                if (wantedBits > 0 && totalBits > 0)
+                if (wantedBits > 0 && totalBits > 0 && !residualFrames)
                 {
                     abrBuffer *= X265_MAX(1, sqrt(timeDone));
                     overflow = Clip3(.5, 2.0, 1.0 + (totalBits - wantedBits) / abrBuffer);
@@ -572,10 +581,13 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
                 double lqmin = 0, lqmax = 0;
                 lqmin = lastQScaleFor[sliceType] / lstep;
                 lqmax = lastQScaleFor[sliceType] * lstep;
-                if (overflow > 1.1 && framesDone > 3)
-                    lqmax *= lstep;
-                else if (overflow < 0.9)
-                    lqmin /= lstep;
+                if (!residualFrames)
+                {
+                    if (overflow > 1.1 && framesDone > 3)
+                        lqmax *= lstep;
+                    else if (overflow < 0.9)
+                        lqmin /= lstep;
+                }
                 q = Clip3(lqmin, lqmax, q);
             }
         }
@@ -1083,6 +1095,24 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
                 }
             }
 
+            /* amortize part of each I slice over the next several frames, up to
+             * keyint-max, to avoid over-compensating for the large I slice cost */
+            if (rce->sliceType == I_SLICE)
+            {
+                /* previous I still had a residual; roll it into the new loan */
+                if (residualFrames)
+                    bits += residualCost * residualFrames;
+
+                residualFrames = X265_MIN(amortizeFrames, param->keyframeMax);
+                residualCost = (int)((bits * amortizeFraction) / residualFrames);
+                bits -= residualCost * residualFrames;
+            }
+            else if (residualFrames)
+            {
+                bits += residualCost;
+                residualFrames--;
+            }
+
             if (rce->sliceType != B_SLICE)
                 /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
                  * to improve short term compensation for next frame. */
@@ -1111,7 +1141,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
             }
         }
         updateVbv(bits, rce);
-        rce->isActive = false;
     }
+    rce->isActive = false;
     return 0;
 }

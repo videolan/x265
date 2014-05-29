@@ -90,6 +90,7 @@ private:
     DPB*               m_dpb;
     /* frame parallelism */
     int                m_curEncoder;
+    int                m_totalFrameThreads;
 
     /* Collect statistics globally */
     EncStats           m_analyzeAll;

@@ -186,6 +186,7 @@ void Encoder::init()
     }
     m_lookahead->init();
     m_encodeStartTime = x265_mdate();
+    m_totalFrameThreads = param->frameNumThreads;
 }
 
 int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
@@ -322,6 +323,20 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 
     if (flush)
         m_lookahead->flush();
+
+    if (param->rc.rateControlMode == X265_RC_ABR)
+    {
+        // delay frame parallelism for non-VBV ABR
+        if (m_pocLast == 0 && !param->rc.vbvBufferSize && !param->rc.vbvMaxBitrate)
+            param->frameNumThreads = 1;
+        else if (param->frameNumThreads != m_totalFrameThreads)
+        {
+            // re-enable frame parallelism after the first few P frames are encoded
+            uint32_t frameCnt = (uint32_t)((0.5 * param->fpsNum / param->fpsDenom) / (param->bframes + 1));
+            if (m_analyzeP.m_numPics > frameCnt)
+                param->frameNumThreads = m_totalFrameThreads;
+        }
+    }
 
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
     m_curEncoder = (m_curEncoder + 1) % param->frameNumThreads;
