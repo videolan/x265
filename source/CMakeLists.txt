@@ -115,7 +115,7 @@ if(INTEL_CXX AND UNIX)
 elseif(CLANG)
     # treat clang roughly like gcc
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Wshadow -ffast-math)
+    add_definitions(-Wall -Wextra -Wshadow -ffast-math -fno-exceptions)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -Wextra -Wshadow -ffast-math)
     check_cxx_compiler_flag(-Wno-narrowing GCC_HAS_NO_NARROWING) 
