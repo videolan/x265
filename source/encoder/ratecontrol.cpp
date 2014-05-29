@@ -318,24 +318,16 @@ RateControl::RateControl(Encoder * _cfg)
     bframes = param->bframes;
     bframeBits = 0;
     leadingNoBSatd = 0;
-    if (param->rc.rateControlMode == X265_RC_ABR)
-    {
-        /* Adjust the first frame in order to stabilize the quality level compared to the rest */
-#define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
-#define ABR_INIT_QP_MAX (40 + QP_BD_OFFSET)
-    }
-    else if (param->rc.rateControlMode == X265_RC_CRF)
-    {
-#define CRF_INIT_QP ((int)param->rc.rfConstant) + QP_BD_OFFSET
-    }
-    init();
-
     ipOffset = 6.0 * X265_LOG2(param->rc.ipFactor);
     pbOffset = 6.0 * X265_LOG2(param->rc.pbFactor);
+    init();
+
+    /* Adjust the first frame in order to stabilize the quality level compared to the rest */
+#define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
+#define ABR_INIT_QP_MAX (40 + QP_BD_OFFSET)
+#define CRF_INIT_QP ((int)param->rc.rfConstant) + QP_BD_OFFSET
     for (int i = 0; i < 3; i++)
-    {
         lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN);
-    }
 
     if (param->rc.rateControlMode == X265_RC_CQP)
     {
