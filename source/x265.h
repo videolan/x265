@@ -660,6 +660,16 @@ typedef struct x265_param
      * reduction */
     int       noiseReduction;
 
+    /* The lossless flag enables true lossless coding, by bypassing scaling, transform,
+     * quantization and in-loop filter processes. This is used for ultra-high bitrates with
+     * zero loss of quality. */
+    int bLossless;
+
+    /* The CU Lossless flag, when enabled, compares the rate-distortion costs for normal
+     * and lossless encoding, and chooses the best mode for each CU. If lossless mode is 
+     * chosen, the cu-transquant-bypass flag is set for that CU. */
+    int bCULossless;
+
     /*== Rate Control ==*/
 
     struct

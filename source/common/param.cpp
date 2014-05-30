@@ -567,6 +567,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("no-tskip-fast") p->bEnableTSkipFast = atobool(value);
     OPT("tskip-fast") p->bEnableTSkipFast = atobool(value);
     OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = atobool(value);
+    OPT("lossless") p->bLossless = atobool(value);
+    OPT("cu-lossless") p->bCULossless = atobool(value);
     OPT("constrained-intra") p->bEnableConstrainedIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
     OPT("scenecut")
@@ -1120,7 +1122,9 @@ void x265_print_params(x265_param *param)
     x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb / refs: %d / %d / %d / %d\n",
              param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred, param->maxNumReferences);
 
-    switch (param->rc.rateControlMode)
+    if (param->bLossless)
+        x265_log(param, X265_LOG_INFO, "Rate Control                        : Lossless\n");
+    else switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
         x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : ABR-%d kbps / %0.1f / %d\n", param->rc.bitrate,
@@ -1161,6 +1165,7 @@ void x265_print_params(x265_param *param)
             fprintf(stderr, "sao-frame ");
     }
     TOOLOPT(param->bEnableSignHiding, "signhide");
+    TOOLOPT(param->bCULossless, "cu-lossless");
     if (param->bEnableTransformSkip)
     {
         if (param->bEnableTSkipFast)
@@ -1200,6 +1205,8 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableTransformSkip, "tskip");
     BOOL(p->bEnableTSkipFast, "tskip-fast");
     BOOL(p->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
+    BOOL(p->bLossless, "lossless");
+    BOOL(p->bCULossless, "cu-lossless");
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
     BOOL(p->bOpenGOP, "open-gop");
     s += sprintf(s, " interlace=%d", p->interlaceMode);

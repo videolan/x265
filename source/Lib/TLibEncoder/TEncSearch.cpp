@@ -133,9 +133,9 @@ bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTransformSkipFlag[1] = m_qtTempTransformSkipFlag[0] + numPartitions;
     m_qtTempTransformSkipFlag[2] = m_qtTempTransformSkipFlag[0] + numPartitions * 2;
 
-    CHECKED_MALLOC(m_qtTempTUCoeff[0], coeff_t, MAX_TS_SIZE * MAX_TS_SIZE * 3);
-    m_qtTempTUCoeff[1] = m_qtTempTUCoeff[0] + MAX_TS_SIZE * MAX_TS_SIZE;
-    m_qtTempTUCoeff[2] = m_qtTempTUCoeff[0] + MAX_TS_SIZE * MAX_TS_SIZE * 2;
+    CHECKED_MALLOC(m_qtTempTUCoeff[0], coeff_t, MAX_CU_SIZE * MAX_CU_SIZE * 3);
+    m_qtTempTUCoeff[1] = m_qtTempTUCoeff[0] + MAX_CU_SIZE * MAX_CU_SIZE;
+    m_qtTempTUCoeff[2] = m_qtTempTUCoeff[0] + MAX_CU_SIZE * MAX_CU_SIZE * 2;
 
     return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->param->internalCsp);
 
@@ -619,10 +619,11 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         bCheckSplit = false;
     }
 
-    uint64_t singleCost  = MAX_INT64;
-    uint32_t singleDistY = 0;
-    uint32_t singleCbfY  = 0;
-    int    bestModeId    = 0;
+    uint64_t singleCost   = MAX_INT64;
+    uint32_t singleDistY  = 0;
+    uint32_t singleCbfY   = 0;
+    int      bestModeId   = 0;
+    bool     bestTQbypass = 0;
 
     if (bCheckFull)
     {
@@ -640,6 +641,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             }
         }
 
+        bool checkTQbypass = cu->getSlice()->getPPS()->getTransquantBypassEnableFlag() && !m_cfg->m_CUTransquantBypassFlagValue;
+
         uint32_t stride = fencYuv->getStride();
         pixel*   pred   = predYuv->getLumaAddr(absPartIdx);
 
@@ -650,26 +653,34 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         //===== get prediction signal =====
         predIntraLumaAng(lumaPredMode, pred, stride, tuSize);
 
-        if (checkTransformSkip)
+        if (checkTransformSkip || checkTQbypass)
         {
             //----- store original entropy coding status -----
             m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
-            uint32_t singleDistYTmp = 0;
-            uint32_t singleCbfYTmp  = 0;
-            uint64_t singleCostTmp  = 0;
-            const int firstCheckId  = 0;
+            uint32_t  singleDistYTmp = 0;
+            uint32_t  singleCbfYTmp  = 0;
+            uint64_t  singleCostTmp  = 0;
+            bool      singleTQbypass = 0;
+            const int firstCheckId   = 0;
 
             for (int modeId = firstCheckId; modeId < 2; modeId++)
             {
                 singleDistYTmp = 0;
-                cu->setTransformSkipSubParts(modeId, TEXT_LUMA, absPartIdx, fullDepth);
+                cu->setTransformSkipSubParts(checkTransformSkip ? modeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
+
+                bool bIsLossLess = modeId != firstCheckId;
+                if ((cu->getSlice()->getPPS()->getTransquantBypassEnableFlag()))
+                {
+                    cu->setCUTransquantBypassSubParts(bIsLossLess, absPartIdx, fullDepth);
+                }
 
                 //----- code luma block with given intra prediction mode and store Cbf-----
                 xIntraCodingLumaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistYTmp);
-                singleCbfYTmp = cu->getCbf(absPartIdx, TEXT_LUMA, trDepth);
+                singleCbfYTmp  = cu->getCbf(absPartIdx, TEXT_LUMA, trDepth);
+                singleTQbypass = cu->getCUTransquantBypass(absPartIdx);
 
-                if (modeId == 1 && singleCbfYTmp == 0)
+                if ((modeId == 1) && (singleCbfYTmp == 0) && checkTransformSkip)
                 {
                     // In order not to code TS flag when cbf is zero, the case for TS with cbf being zero is forbidden.
                     singleCostTmp = MAX_INT64;
@@ -682,10 +693,11 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
 
                 if (singleCostTmp < singleCost)
                 {
-                    singleCost  = singleCostTmp;
-                    singleDistY = singleDistYTmp;
-                    singleCbfY  = singleCbfYTmp;
-                    bestModeId  = modeId;
+                    singleCost   = singleCostTmp;
+                    singleDistY  = singleDistYTmp;
+                    singleCbfY   = singleCbfYTmp;
+                    bestTQbypass = singleTQbypass;
+                    bestModeId   = modeId;
                     if (bestModeId == firstCheckId)
                     {
                         xStoreIntraResultQT(cu, trDepth, absPartIdx);
@@ -698,7 +710,11 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 }
             }
 
-            cu->setTransformSkipSubParts(bestModeId, TEXT_LUMA, absPartIdx, fullDepth);
+            cu->setTransformSkipSubParts(checkTransformSkip ? bestModeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
+            if ((cu->getSlice()->getPPS()->getTransquantBypassEnableFlag()))
+            {
+                cu->setCUTransquantBypassSubParts(bestTQbypass, absPartIdx, fullDepth);
+            }
 
             if (bestModeId == firstCheckId)
             {
@@ -2607,14 +2623,15 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     }
 
     uint32_t bits = 0, bestBits = 0;
-    uint32_t distortion = 0, bdist = 0;
+    uint32_t distortion = 0, bestDist = 0;
 
     uint32_t cuSize = cu->getCUSize(0);
+    uint8_t  depth  = cu->getDepth(0);
 
     // No residual coding : SKIP mode
     if (bSkipRes)
     {
-        cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
+        cu->setSkipFlagSubParts(true, 0, depth);
 
         predYuv->copyToPartYuv(outReconYuv, 0);
         // Luma
@@ -2625,7 +2642,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         distortion += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
         distortion += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
 
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
+        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
         m_entropyCoder->resetBits();
         if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
         {
@@ -2635,7 +2652,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         m_entropyCoder->encodeMergeIndex(cu, 0);
 
         bits = m_entropyCoder->getNumberOfWrittenBits();
-        m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
+        m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
         cu->m_totalBits       = bits;
         cu->m_totalDistortion = distortion;
@@ -2651,102 +2668,123 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
             cu->m_totalRDCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
         }
 
-        m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
+        m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
-        cu->clearCbf(0, cu->getDepth(0));
-        cu->setTrIdxSubParts(0, 0, cu->getDepth(0));
+        cu->clearCbf(0, depth);
+        cu->setTrIdxSubParts(0, 0, depth);
         return;
     }
 
-    // Residual coding.
-    uint64_t cost = 0, bcost = MAX_INT64;
-    uint32_t zeroDistortion = 0;
-    bits = 0;
-    distortion = 0;
-
     outResiYuv->subtract(fencYuv, predYuv, cuSize);
-    m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
-    xEstimateResidualQT(cu, 0, outResiYuv, cu->getDepth(0), cost, bits, distortion, &zeroDistortion, curUseRDOQ);
 
-    m_entropyCoder->resetBits();
-    m_entropyCoder->encodeQtRootCbfZero(cu);
-    uint32_t zeroResiBits = m_entropyCoder->getNumberOfWrittenBits();
-    uint64_t zeroCost = m_rdCost->calcRdCost(zeroDistortion, zeroResiBits);
-    if (cu->isLosslessCoded(0))
-    {
-        zeroCost = cost + 1;
-    }
-    if (zeroCost < cost)
-    {
-        distortion = zeroDistortion;
+    // Residual coding.
+    bool bIsTQBypassEnable = false, bIsLosslessMode = false;
+    uint32_t tqBypassMode  = 1;
 
-        const uint32_t qpartnum = cu->getPic()->getNumPartInCU() >> (cu->getDepth(0) << 1);
-        ::memset(cu->getTransformIdx(), 0, qpartnum * sizeof(uint8_t));
-        ::memset(cu->getCbf(TEXT_LUMA), 0, qpartnum * sizeof(uint8_t));
-        ::memset(cu->getCbf(TEXT_CHROMA_U), 0, qpartnum * sizeof(uint8_t));
-        ::memset(cu->getCbf(TEXT_CHROMA_V), 0, qpartnum * sizeof(uint8_t));
-        ::memset(cu->getCoeffY(), 0, cuSize * cuSize * sizeof(coeff_t));
-        ::memset(cu->getCoeffCb(), 0, cuSize * cuSize * sizeof(coeff_t) >> (m_hChromaShift + m_vChromaShift));
-        ::memset(cu->getCoeffCr(), 0, cuSize * cuSize * sizeof(coeff_t) >> (m_hChromaShift + m_vChromaShift));
-        cu->setTransformSkipSubParts(0, 0, 0, 0, cu->getDepth(0));
-    }
-    else
+    if ((cu->getSlice()->getPPS()->getTransquantBypassEnableFlag()))
     {
-        xSetResidualQTData(cu, 0, NULL, cu->getDepth(0), false);
+        bIsTQBypassEnable = true; // mark that the first iteration is to cost TQB mode.
+        tqBypassMode = 2;
+        if (m_cfg->m_CUTransquantBypassFlagValue)
+            tqBypassMode = 1;
     }
 
-    m_rdGoOnSbacCoder->load(m_rdSbacCoders[cu->getDepth(0)][CI_CURR_BEST]);
+    uint64_t bestCost = MAX_INT64;
 
-    bits = xSymbolBitsInter(cu);
-
-    cost = m_rdCost->calcRdCost(distortion, bits);
-
-    if (cost < bcost)
+    for (uint32_t modeId = 0; modeId < tqBypassMode; modeId++)
     {
-        if (cu->getQtRootCbf(0))
+        bIsLosslessMode = bIsTQBypassEnable && !modeId;
+
+        cu->setCUTransquantBypassSubParts(bIsLosslessMode, 0, depth);
+
+        uint64_t cost = 0;
+        uint32_t zeroDistortion = 0;
+        bits = 0;
+        distortion = 0;
+
+        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+        xEstimateResidualQT(cu, 0, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, curUseRDOQ);
+
+        m_entropyCoder->resetBits();
+        m_entropyCoder->encodeQtRootCbfZero(cu);
+        uint32_t zeroResiBits = m_entropyCoder->getNumberOfWrittenBits();
+        uint64_t zeroCost = m_rdCost->calcRdCost(zeroDistortion, zeroResiBits);
+        if (cu->isLosslessCoded(0))
         {
-            xSetResidualQTData(cu, 0, outBestResiYuv, cu->getDepth(0), true);
+            zeroCost = cost + 1;
+        }
+        if (zeroCost < cost)
+        {
+            distortion = zeroDistortion;
+
+            const uint32_t qpartnum = cu->getPic()->getNumPartInCU() >> (depth << 1);
+            ::memset(cu->getTransformIdx(), 0, qpartnum * sizeof(uint8_t));
+            ::memset(cu->getCbf(TEXT_LUMA), 0, qpartnum * sizeof(uint8_t));
+            ::memset(cu->getCbf(TEXT_CHROMA_U), 0, qpartnum * sizeof(uint8_t));
+            ::memset(cu->getCbf(TEXT_CHROMA_V), 0, qpartnum * sizeof(uint8_t));
+            ::memset(cu->getCoeffY(), 0, cuSize * cuSize * sizeof(coeff_t));
+            ::memset(cu->getCoeffCb(), 0, cuSize * cuSize * sizeof(coeff_t) >> (m_hChromaShift + m_vChromaShift));
+            ::memset(cu->getCoeffCr(), 0, cuSize * cuSize * sizeof(coeff_t) >> (m_hChromaShift + m_vChromaShift));
+            cu->setTransformSkipSubParts(0, 0, 0, 0, depth);
+        }
+        else
+        {
+            xSetResidualQTData(cu, 0, NULL, depth, false);
         }
 
-        bestBits = bits;
-        bcost    = cost;
-        m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
-    }
+        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
-    X265_CHECK(bcost != MAX_INT64, "no best cost\n");
+        bits = xSymbolBitsInter(cu);
 
-    if (cu->getQtRootCbf(0))
-    {
-        outReconYuv->addClip(predYuv, outBestResiYuv, cuSize);
-    }
-    else
-    {
-        predYuv->copyToPartYuv(outReconYuv, 0);
-    }
+        cost = m_rdCost->calcRdCost(distortion, bits);
 
-    // update with clipped distortion and cost (qp estimation loop uses unclipped values)
-    int part = partitionFromSize(cuSize);
-    bdist = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
-    part = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-    bdist += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
-    bdist += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
-    if (m_rdCost->psyRdEnabled())
-    {
-        int size = g_convertToBit[cuSize];
-        cu->m_psyEnergy = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
-                                               outReconYuv->getLumaAddr(), outReconYuv->getStride());
-        cu->m_totalPsyCost = m_rdCost->calcPsyRdCost(bdist, bestBits, cu->m_psyEnergy);
-    }
-    else
-    {
-        cu->m_totalRDCost = m_rdCost->calcRdCost(bdist, bestBits);
-    }
-    cu->m_totalBits       = bestBits;
-    cu->m_totalDistortion = bdist;
-    
-    if (cu->isSkipped(0))
-    {
-        cu->clearCbf(0, cu->getDepth(0));
+        if (cost < bestCost)
+        {
+            if (cu->getQtRootCbf(0))
+            {
+                xSetResidualQTData(cu, 0, outBestResiYuv, depth, true);
+            }
+
+            bestBits = bits;
+            bestCost = cost;
+            m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+        }
+
+        X265_CHECK(bestCost != MAX_INT64, "no best cost\n");
+
+        if (cu->getQtRootCbf(0))
+        {
+            outReconYuv->addClip(predYuv, outBestResiYuv, cuSize);
+        }
+        else
+        {
+            predYuv->copyToPartYuv(outReconYuv, 0);
+        }
+
+        // update with clipped distortion and cost (qp estimation loop uses unclipped values)
+        int part = partitionFromSize(cuSize);
+        bestDist = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
+        part = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
+        bestDist += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+        bestDist += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+        if (m_rdCost->psyRdEnabled())
+        {
+            int size = g_convertToBit[cuSize];
+            cu->m_psyEnergy = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
+                                                   outReconYuv->getLumaAddr(), outReconYuv->getStride());
+            cu->m_totalPsyCost = m_rdCost->calcPsyRdCost(bestDist, bestBits, cu->m_psyEnergy);
+        }
+        else
+        {
+            cu->m_totalRDCost = m_rdCost->calcRdCost(bestDist, bestBits);
+        }
+        cu->m_totalBits       = bestBits;
+        cu->m_totalDistortion = bestDist;
+
+        if (cu->isSkipped(0))
+        {
+            cu->clearCbf(0, depth);
+        }
     }
 }
 

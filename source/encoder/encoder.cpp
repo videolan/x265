@@ -54,6 +54,8 @@ Encoder::Encoder()
     m_numChromaWPFrames = 0;
     m_numLumaWPBiFrames = 0;
     m_numChromaWPBiFrames = 0;
+    m_TransquantBypassEnableFlag = false;
+    m_CUTransquantBypassFlagValue = false;
     m_lookahead = NULL;
     m_frameEncoder = NULL;
     m_rateControl = NULL;
@@ -1446,8 +1448,17 @@ void Encoder::configure(x265_param *p)
     m_bPCMFilterDisableFlag = false;
 
     m_useLossless = false;  // x264 configures this via --qp=0
-    m_TransquantBypassEnableFlag = false;
-    m_CUTransquantBypassFlagValue = false;
+    
+    if (p->bLossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+        m_CUTransquantBypassFlagValue = true; 
+    }
+    
+    if (p->bCULossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+    }
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)

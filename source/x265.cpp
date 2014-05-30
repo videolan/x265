@@ -142,6 +142,10 @@ static const struct option long_options[] =
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
     { "psy-rd",         required_argument, NULL, 0 },
+    { "lossless",             no_argument, NULL, 0 },
+    { "no-lossless",          no_argument, NULL, 0 },
+    { "cu-lossless",          no_argument, NULL, 0 },
+    { "no-cu-lossless",       no_argument, NULL, 0 },
     { "no-signhide",          no_argument, NULL, 0 },
     { "signhide",             no_argument, NULL, 0 },
     { "no-lft",               no_argument, NULL, 0 },
@@ -370,6 +374,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
     H0("   --[no-]weightb                Enable weighted prediction in B slices. Default %s\n", OPT(param->bEnableWeightedBiPred));
+    H0("   --[no-]lossless               Enable lossless mode, bypassing transform, quantization and in-loop filters globally. Default %s\n", OPT(param->bLossless));
+    H0("   --[no-]cu-lossless            Consider lossless mode in CU RDO decisions. Default %s\n", OPT(param->bCULossless));
     H0("\nRate control and rate distortion options:\n");
     H0("   --bitrate <integer>           Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
     H0("   --crf <float>                 Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);

@@ -297,6 +297,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         outTempCU->m_totalRDCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
         outTempCU->m_sa8dCost = outTempCU->m_totalRDCost;
         outBestCU->m_sa8dCost = outTempCU->m_sa8dCost;
+        TComYuv* yuv;
         if (m_param->rdLevel >= 1)
         {
             //calculate the motion compensation for chroma for the best mode selected
@@ -306,12 +307,19 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                 m_search->motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, partIdx, false, true);
             }
 
-            //No-residue mode
-            m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true, true);
+            if (outTempCU->isLosslessCoded(0))
+            {
+                outBestCU->m_totalRDCost = MAX_INT64;
+            }
+            else
+            {
+                //No-residue mode
+                m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true, true);
 
-            TComYuv* yuv = yuvReconBest;
-            yuvReconBest = m_tmpRecoYuv[depth];
-            m_tmpRecoYuv[depth] = yuv;
+                yuv = yuvReconBest;
+                yuvReconBest = m_tmpRecoYuv[depth];
+                m_tmpRecoYuv[depth] = yuv;
+            }
 
             //Encode with residue
             m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
@@ -618,6 +626,12 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth);
                 outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
                 outBestCU->m_totalRDCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
+            }
+
+            // copy original YUV samples to PCM buffer
+            if (outBestCU->isLosslessCoded(0) && (outBestCU->getIPCMFlag(0) == false))
+            {
+                xFillPCMBuffer(outBestCU, m_origYuv[depth]);
             }
         }
     }

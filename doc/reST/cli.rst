@@ -303,7 +303,6 @@ Quad-Tree analysis
 	This setting limits the number of extra recursion depth which can be
 	attempted for inter coded units. Default: 1
 
-
 Temporal / motion search options
 ================================
 
@@ -597,10 +596,15 @@ Quality, rate control and rate distortion options
 	slices using param->rc.ipFactor and param->rc.pbFactor unless QP 0
 	is specified, in which case QP 0 is used for all slice types.  Note
 	that QP 0 does not cause lossless encoding, it only disables
-	quantization. A truly lossless option may be added in a later
-	release. Default disabled (CRF)
+	quantization. Default disabled (CRF)
 
 	**Range of values:** an integer from 0 to 51
+
+.. option:: --lossless, --no-lossless
+
+	Enables true lossless coding by bypassing scaling, transform,
+	quantization and in-loop filter processes. This is used for
+	ultra-high bitrates with zero loss of quality. Default disabled.
 
 .. option:: --aq-mode <0|1|2>
 
@@ -686,6 +690,14 @@ Quality, rate control and rate distortion options
 	veryslow and placebo)
 
 	**Range of values:** 0 .. 2.0
+
+.. option:: --cu-lossless, --no-cu-lossless
+
+	For each CU, evaluate lossless encode (transform and quant bypass)
+	as a potential rate distortion optimization. If :option:`--lossless`
+	has been specified, all CUs will use this option unconditionally
+	regardless of whether this option was seperately enabled. Default
+	disabled.
 
 .. option:: --signhide, --no-signhide
 

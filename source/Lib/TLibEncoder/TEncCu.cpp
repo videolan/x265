@@ -613,6 +613,12 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
         }
     }
 
+    // copy original YUV samples to PCM buffer
+    if (outBestCU->isLosslessCoded(0) && (outBestCU->getIPCMFlag(0) == false))
+    {
+        xFillPCMBuffer(outBestCU, m_origYuv[depth]);
+    }
+
     outTempCU->initEstData(depth);
 
     // further split
