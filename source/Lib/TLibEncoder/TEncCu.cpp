@@ -1630,8 +1630,8 @@ void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
     pixel* dstCr = cu->getPCMSampleCr();
 
     uint32_t srcStrideC = fencYuv->getCStride();
-    uint32_t heightC = height >> 1;
-    uint32_t widthC = width >> 1;
+    uint32_t widthC  = width  >> cu->getHorzChromaShift();
+    uint32_t heightC = height >> cu->getVertChromaShift();
 
     for (int y = 0; y < heightC; y++)
     {
