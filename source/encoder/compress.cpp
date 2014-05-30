@@ -248,7 +248,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
     {
-        if (m_param->frameNumThreads <= 1 ||
+        if (m_search->m_cfg->m_totalFrameThreads <= 1 ||
             (mvFieldNeighbours[mergeCand][0].mv.y < (m_param->searchRange + 1) * 4 &&
              mvFieldNeighbours[mergeCand][1].mv.y < (m_param->searchRange + 1) * 4))
         {

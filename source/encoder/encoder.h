@@ -90,7 +90,7 @@ private:
     DPB*               m_dpb;
     /* frame parallelism */
     int                m_curEncoder;
-    int                m_totalFrameThreads;
+
 
     /* Collect statistics globally */
     EncStats           m_analyzeAll;
@@ -194,6 +194,7 @@ public:
 
     x265_nal*          m_nals;
     char*              m_packetData;
+    int                m_totalFrameThreads;
 
     Encoder();
 

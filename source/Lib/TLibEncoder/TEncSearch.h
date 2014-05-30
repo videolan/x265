@@ -123,9 +123,6 @@ protected:
     uint8_t*        m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipYuv;
 
-    // interface to option
-    Encoder*        m_cfg;
-
     // interface to classes
     TComTrQuant*    m_trQuant;
     RDCost*         m_rdCost;
@@ -135,6 +132,9 @@ protected:
     int             m_refLagPixels;
 
 public:
+
+    // interface to option
+    Encoder*        m_cfg;
 
     void setRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
 

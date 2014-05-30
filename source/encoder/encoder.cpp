@@ -133,7 +133,7 @@ void Encoder::destroy()
 {
     if (m_frameEncoder)
     {
-        for (int i = 0; i < param->frameNumThreads; i++)
+        for (int i = 0; i < m_totalFrameThreads; i++)
         {
             // Ensure frame encoder is idle before destroying it
             m_frameEncoder[i].getEncodedPicture(NULL);
@@ -544,7 +544,7 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (int depth = 0; depth < (int)g_maxCUDepth; depth++)
         {
-            for (int j = 0; j < param->frameNumThreads; j++)
+            for (int j = 0; j < m_totalFrameThreads; j++)
             {
                 for (int row = 0; row < m_frameEncoder[0].m_numRows; row++)
                 {

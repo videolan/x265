@@ -107,7 +107,7 @@ bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
-    m_refLagPixels = cfg->param->frameNumThreads > 1 ? cfg->param->searchRange : cfg->param->sourceHeight;
+    m_refLagPixels = cfg->m_totalFrameThreads > 1 ? cfg->param->searchRange : cfg->param->sourceHeight;
 
     const uint32_t numLayersToAllocate = cfg->m_quadtreeTULog2MaxSize - cfg->m_quadtreeTULog2MinSize + 1;
     m_qtTempCoeff[0] = new coeff_t*[numLayersToAllocate * 3];
@@ -2166,7 +2166,7 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
     for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
-        if (m_cfg->param->frameNumThreads > 1 &&
+        if (m_cfg->m_totalFrameThreads > 1 &&
             (m.mvFieldNeighbours[mergeCand][0].mv.y >= (m_cfg->param->searchRange + 1) * 4 ||
              m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_cfg->param->searchRange + 1) * 4))
         {
