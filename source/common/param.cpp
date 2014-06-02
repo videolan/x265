@@ -264,7 +264,9 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
             param->bEnableWeightedPred = 0;
+            param->rdLevel = 2;
             param->maxNumReferences = 1;
+            param->bEnableLoopFilter = 1;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
