@@ -97,7 +97,7 @@ public:
     inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
     {
         x265_emms();
-        double cost = distortion + (m_psyRdScale * psycost + bits) * m_lambdaSSE / 256.0;
+        double cost = distortion + ((m_psyRdScale * psycost * m_lambdaSAD) + (bits * m_lambdaSSE)) / 256.0;
         X265_CHECK(cost < (double)MAX_INT64, "calcPsyRdCost overflow\n");
         return (uint64_t)cost;
     }
